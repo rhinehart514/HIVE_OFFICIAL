@@ -1,0 +1,30 @@
+{
+  "name": "hive-ui",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@9.1.1",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.1.1"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "NODE_OPTIONS='--max-old-space-size=4096' tsc --build --verbose",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "storybook:dev": "pnpm --filter @hive/ui storybook",
+    "storybook:dev:6008": "pnpm --filter @hive/ui storybook --port 6008",
+    "storybook:build": "pnpm --filter @hive/ui build-storybook",
+    "storybook:clean": "rm -rf packages/ui/storybook-static",
+    "seed:emulator": "node scripts/seed-emulator.mjs",
+    "seed:emulator:heavy": "node scripts/seed-emulator.mjs --heavy"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "turbo": "^2.6.1",
+    "typescript": "^5.9.3"
+  }
+}

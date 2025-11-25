@@ -1,0 +1,205 @@
+/**
+ * HIVE Design System Tokens
+ * Ultra-Minimal YC/SF Aesthetic
+ *
+ * Philosophy: 99% Black + White, 1% Gold (#FFD700)
+ * Like Vercel, OpenAI, Linear - the restraint IS the design
+ *
+ * ONLY 3 COLORS:
+ * - #000000 (Black)
+ * - #FFFFFF (White)
+ * - #FFD700 (Gold - CTAs, achievements, online indicators only)
+ *
+ * Grays derived from rgba(255,255,255, opacity) - not separate colors
+ *
+ * @see docs/DESIGN_SYSTEM.md for usage guidelines
+ */
+
+:root {
+  /* ============================================================================
+   * FOUNDATION: The Only 3 Colors
+   * ============================================================================ */
+
+  --hive-black: #000000;
+  --hive-white: #FFFFFF;
+  --hive-gold: #FFD700;
+
+  /* ============================================================================
+   * SEMANTIC: Background (Black-based)
+   * ============================================================================ */
+
+  --hive-bg: var(--hive-black);
+  --hive-bg-elevated: rgba(255, 255, 255, 0.02);
+  --hive-bg-subtle: rgba(255, 255, 255, 0.04);
+  --hive-bg-interactive: rgba(255, 255, 255, 0.06);
+  --hive-bg-overlay: rgba(0, 0, 0, 0.60);
+
+  /* ============================================================================
+   * SEMANTIC: Text (White-based)
+   * ============================================================================ */
+
+  --hive-text: var(--hive-white);
+  --hive-text-secondary: rgba(255, 255, 255, 0.70);
+  --hive-text-muted: rgba(255, 255, 255, 0.50);
+  --hive-text-disabled: rgba(255, 255, 255, 0.30);
+  --hive-text-inverse: var(--hive-black);
+
+  /* ============================================================================
+   * SEMANTIC: Border (White opacity-based)
+   * ============================================================================ */
+
+  --hive-border: rgba(255, 255, 255, 0.08);
+  --hive-border-subtle: rgba(255, 255, 255, 0.04);
+  --hive-border-hover: rgba(255, 255, 255, 0.16);
+  --hive-border-focus: rgba(255, 255, 255, 0.24);
+  --hive-border-strong: rgba(255, 255, 255, 0.20);
+
+  /* ============================================================================
+   * SEMANTIC: Interactive States
+   * ============================================================================ */
+
+  --hive-hover: rgba(255, 255, 255, 0.04);
+  --hive-active: rgba(255, 255, 255, 0.08);
+  --hive-focus: rgba(255, 255, 255, 0.12);
+
+  /* ============================================================================
+   * SEMANTIC: Gold (Reserved for dopamine moments - 1% rule)
+   * Use ONLY for: Primary CTAs, achievements, online indicators
+   * ============================================================================ */
+
+  --hive-cta: var(--hive-gold);
+  --hive-cta-hover: rgba(255, 215, 0, 0.90);
+  --hive-cta-text: var(--hive-black);
+  --hive-achievement: var(--hive-gold);
+  --hive-presence: var(--hive-gold);
+  --hive-glow: rgba(255, 215, 0, 0.30);
+
+  /* ============================================================================
+   * SEMANTIC: Status (Minimal - only when needed)
+   * ============================================================================ */
+
+  --hive-success: #00D46A;
+  --hive-error: #FF3737;
+  --hive-warning: var(--hive-gold);  /* Use gold for warnings too */
+
+  /* ============================================================================
+   * COMPONENT: Button Variants (Vercel-style)
+   * ============================================================================ */
+
+  /* Default: White on black */
+  --hive-btn-default-bg: var(--hive-white);
+  --hive-btn-default-text: var(--hive-black);
+  --hive-btn-default-hover: rgba(255, 255, 255, 0.90);
+
+  /* Primary: Gold CTA (sparingly) */
+  --hive-btn-primary-bg: var(--hive-gold);
+  --hive-btn-primary-text: var(--hive-black);
+  --hive-btn-primary-hover: rgba(255, 215, 0, 0.90);
+
+  /* Ghost: Transparent with white text */
+  --hive-btn-ghost-bg: transparent;
+  --hive-btn-ghost-text: var(--hive-white);
+  --hive-btn-ghost-hover: rgba(255, 255, 255, 0.04);
+
+  /* Outline: Border only */
+  --hive-btn-outline-bg: transparent;
+  --hive-btn-outline-text: var(--hive-white);
+  --hive-btn-outline-border: rgba(255, 255, 255, 0.08);
+  --hive-btn-outline-hover: rgba(255, 255, 255, 0.04);
+
+  /* ============================================================================
+   * COMPONENT: Card (OpenAI-style)
+   * ============================================================================ */
+
+  --hive-card-bg: var(--hive-black);
+  --hive-card-border: rgba(255, 255, 255, 0.08);
+  --hive-card-hover-border: rgba(255, 255, 255, 0.16);
+
+  /* ============================================================================
+   * COMPONENT: Input (Linear-style)
+   * ============================================================================ */
+
+  --hive-input-bg: transparent;
+  --hive-input-border: rgba(255, 255, 255, 0.08);
+  --hive-input-focus-border: rgba(255, 255, 255, 0.20);
+  --hive-input-placeholder: rgba(255, 255, 255, 0.40);
+
+  /* ============================================================================
+   * LAYOUT: Radius (Sharp, minimal)
+   * ============================================================================ */
+
+  --hive-radius: 0.5rem;      /* 8px base */
+  --hive-radius-sm: 0.375rem; /* 6px */
+  --hive-radius-md: 0.5rem;   /* 8px */
+  --hive-radius-lg: 0.75rem;  /* 12px */
+  --hive-radius-xl: 1rem;     /* 16px */
+  --hive-radius-full: 9999px;
+
+  /* ============================================================================
+   * MOTION: Snappy YC/SF Feel (Framer Spring)
+   * ============================================================================ */
+
+  --hive-duration-instant: 50ms;
+  --hive-duration-fast: 100ms;
+  --hive-duration-normal: 150ms;
+  --hive-duration-slow: 200ms;
+
+  --hive-spring-stiffness: 400;
+  --hive-spring-damping: 25;
+  --hive-easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --hive-easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ============================================================================
+   * SHADOWS (Minimal, subtle)
+   * ============================================================================ */
+
+  --hive-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --hive-shadow-md: 0 4px 8px rgba(0, 0, 0, 0.25);
+  --hive-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.30);
+  --hive-shadow-gold: 0 0 20px rgba(255, 215, 0, 0.30);
+
+  /* ============================================================================
+   * Z-INDEX
+   * ============================================================================ */
+
+  --hive-z-sticky: 50;
+  --hive-z-sidebar: 100;
+  --hive-z-dropdown: 200;
+  --hive-z-modal-backdrop: 300;
+  --hive-z-modal: 400;
+  --hive-z-popover: 500;
+  --hive-z-toast: 600;
+
+  /* ============================================================================
+   * LEGACY COMPATIBILITY (Map old tokens to new)
+   * These allow gradual migration - remove once all components updated
+   * ============================================================================ */
+
+  /* Old gray scale -> new opacity-based */
+  --hive-gray-1: var(--hive-black);
+  --hive-gray-2: var(--hive-bg-elevated);
+  --hive-gray-3: var(--hive-bg-subtle);
+  --hive-gray-4: var(--hive-bg-interactive);
+  --hive-gray-12: var(--hive-text);
+  --hive-gray-11: var(--hive-text-secondary);
+
+  /* Old gold scale -> single gold */
+  --hive-gold-9: var(--hive-gold);
+  --hive-gold-10: var(--hive-cta-hover);
+
+  /* Old semantic -> new */
+  --hive-background-primary: var(--hive-bg);
+  --hive-foreground: var(--hive-text);
+  --hive-brand-primary: var(--hive-gold);
+  --hive-primary: var(--hive-gold);
+  --hive-primary-foreground: var(--hive-black);
+  --hive-border-default: var(--hive-border);
+  --hive-text-primary: var(--hive-text);
+
+  /* Status colors */
+  --hive-green-9: var(--hive-success);
+  --hive-red-9: var(--hive-error);
+  --hive-status-success: var(--hive-success);
+  --hive-status-error: var(--hive-error);
+  --hive-destructive: var(--hive-error);
+}

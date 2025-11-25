@@ -1,0 +1,20 @@
+
+> @hive/hooks@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/hooks
+> tsc --noEmit
+
+../../node_modules/.pnpm/@google-cloud+storage@7.17.3_encoding@0.1.13/node_modules/@google-cloud/storage/build/cjs/src/crc32c.d.ts(66,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/@google-cloud+storage@7.17.3_encoding@0.1.13/node_modules/@google-cloud/storage/build/cjs/src/file.d.ts(327,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/@google-cloud+storage@7.17.3_encoding@0.1.13/node_modules/@google-cloud/storage/build/cjs/src/hash-stream-validator.d.ts(20,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/@google-cloud+storage@7.17.3_encoding@0.1.13/node_modules/@google-cloud/storage/build/cjs/src/resumable-upload.d.ts(204,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/gaxios@6.7.1_encoding@0.1.13/node_modules/gaxios/build/src/gaxios.d.ts(6,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/google-auth-library@9.15.1_encoding@0.1.13/node_modules/google-auth-library/build/src/auth/awsclient.d.ts(84,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/google-auth-library@9.15.1_encoding@0.1.13/node_modules/google-auth-library/build/src/auth/baseexternalclient.d.ts(176,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/google-auth-library@9.15.1_encoding@0.1.13/node_modules/google-auth-library/build/src/auth/googleauth.d.ts(90,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/google-auth-library@9.15.1_encoding@0.1.13/node_modules/google-auth-library/build/src/util.d.ts(134,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/gtoken@7.1.0_encoding@0.1.13/node_modules/gtoken/build/src/index.d.ts(38,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+src/topology/use-cognitive-budget.ts(2,25): error TS2307: Cannot find module '@hive/tokens' or its corresponding type declarations.
+src/use-creation-analytics.ts(2,25): error TS2307: Cannot find module '@hive/auth-logic' or its corresponding type declarations.
+src/use-creation-analytics.ts(10,36): error TS2307: Cannot find module '@hive/auth-logic' or its corresponding type declarations.
+src/use-profile.ts(4,25): error TS2307: Cannot find module '@hive/auth-logic' or its corresponding type declarations.
+src/use-spaces.ts(2,25): error TS2307: Cannot find module '@hive/auth-logic' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 2.

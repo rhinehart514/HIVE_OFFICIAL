@@ -1,0 +1,896 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+
+// Silk easing - smooth, confident
+const SILK_EASE = [0.22, 1, 0.36, 1];
+
+// Spring config for OpenAI-style fluid motion
+const SPRING_CONFIG = {
+  type: "spring" as const,
+  stiffness: 400,
+  damping: 30,
+};
+
+// Smooth transition for content reveals
+const CONTENT_TRANSITION = {
+  duration: 0.2,
+  ease: [0.4, 0, 0.2, 1],
+};
+
+// Staggered nav item variants
+const navContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const navItemVariants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: SPRING_CONFIG,
+  },
+};
+
+// HIVE Logo SVG Component - Actual brand mark
+const HiveLogo = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 1500 1500"
+    className={className}
+    aria-label="HIVE"
+    fill="currentColor"
+  >
+    <path d="M432.83,133.2l373.8,216.95v173.77s-111.81,64.31-111.81,64.31v-173.76l-262.47-150.64-262.27,150.84.28,303.16,259.55,150.31,5.53-.33,633.4-365.81,374.52,215.84v433.92l-372.35,215.04h-2.88l-372.84-215.99-.27-174.53,112.08-63.56v173.76c87.89,49.22,174.62,101.14,262.48,150.69l261.99-151.64v-302.41s-261.51-151.27-261.51-151.27l-2.58.31-635.13,366.97c-121.32-69.01-241.36-140.28-362.59-209.44-4.21-2.4-8.42-5.15-13.12-6.55v-433.92l375.23-216h.96Z"/>
+  </svg>
+);
+
+// Minimal icons - thinner strokes for OpenAI feel
+const HomeIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
+);
+
+const UsersIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const UserIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const ChevronDownIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+);
+
+const BeakerIcon = () => (
+  <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+  </svg>
+);
+
+const SidebarIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
+const NAV_ICONS: Record<string, React.FC> = {
+  feed: HomeIcon,
+  spaces: UsersIcon,
+  profile: UserIcon,
+  hivelab: BeakerIcon,
+  notifications: BellIcon,
+  schedules: CalendarIcon,
+};
+
+// Collapsible Section Component - like Income > Earnings/Refunds in reference
+interface CollapsibleSectionProps {
+  id: string;
+  label: string;
+  icon?: React.FC;
+  badge?: number;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  isCollapsed?: boolean;
+}
+
+const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
+  id,
+  label,
+  icon: Icon,
+  badge,
+  children,
+  defaultOpen = false,
+  isCollapsed = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  if (isCollapsed) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <motion.button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+          text-neutral-400 hover:text-neutral-200
+          hover:bg-neutral-900/50
+          transition-colors duration-150
+        `}
+        whileTap={{ scale: 0.98 }}
+      >
+        {Icon && <Icon />}
+        <span className="flex-1 text-left text-[14px] font-medium">{label}</span>
+        {badge && badge > 0 && (
+          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-[#F5C842]/20 text-[#F5C842] rounded-md">
+            {badge}
+          </span>
+        )}
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          className="text-neutral-500"
+        >
+          <ChevronDownIcon />
+        </motion.div>
+      </motion.button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="pl-4 border-l border-neutral-800/50 ml-5 space-y-0.5">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export interface ShellNavItem {
+  id: string;
+  label: string;
+  href?: string;
+  icon?: React.ElementType;
+  badge?: number;
+  children?: ShellNavItem[];
+  comingSoon?: boolean;
+}
+
+// Coming soon badge tooltip
+const ComingSoonTooltip = ({ children, show }: { children: React.ReactNode; show: boolean }) => {
+  if (!show) return <>{children}</>;
+
+  return (
+    <div className="relative group">
+      {children}
+      <div className="
+        absolute left-full top-1/2 -translate-y-1/2 ml-3
+        px-2.5 py-1.5 rounded-lg bg-neutral-800
+        text-[13px] text-white whitespace-nowrap
+        opacity-0 group-hover:opacity-100
+        pointer-events-none
+        transition-opacity duration-100
+        z-50 shadow-lg
+      ">
+        Launching soon
+      </div>
+    </div>
+  );
+}
+
+export interface ShellMobileNavItem {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+  path?: string;
+  badge?: number;
+  onClick?: () => void;
+  comingSoon?: boolean;
+}
+
+export interface ShellSpaceLink {
+  id: string;
+  label: string;
+  href: string;
+  status?: 'new' | 'live' | 'quiet';
+  meta?: string;
+}
+
+export interface ShellSpaceSection {
+  id: string;
+  label: string;
+  description?: string;
+  spaces: ShellSpaceLink[];
+  actionLabel?: string;
+  actionHref?: string;
+  emptyCopy?: string;
+}
+
+export interface UniversalShellProps {
+  children: React.ReactNode;
+  variant?: 'full' | 'minimal';
+  sidebarStyle?: string;
+  headerStyle?: string;
+  navItems?: ShellNavItem[];
+  secondaryNavItems?: ShellNavItem[];
+  mobileNavItems?: ShellMobileNavItem[];
+  notificationCount?: number;
+  messageCount?: number;
+  notifications?: Array<Record<string, unknown>>;
+  notificationsLoading?: boolean;
+  notificationsError?: string | null;
+  mySpaces?: ShellSpaceSection[];
+  showContextRail?: boolean;
+  showBreadcrumbs?: boolean;
+  onNotificationNavigate?: (url: string) => void;
+  // User profile card props
+  userAvatarUrl?: string;
+  userName?: string;
+  userHandle?: string;
+}
+
+export const DEFAULT_SIDEBAR_NAV_ITEMS: ShellNavItem[] = [
+  { id: 'feed', label: 'Feed', href: '/feed', comingSoon: true },
+  { id: 'spaces', label: 'Spaces', href: '/spaces' },
+  { id: 'hivelab', label: 'HiveLab', href: '/tools' },
+];
+
+// Secondary nav items (bottom section)
+export const DEFAULT_SECONDARY_NAV_ITEMS: ShellNavItem[] = [
+  { id: 'notifications', label: 'Notifications', href: '/notifications' },
+];
+
+export const DEFAULT_MOBILE_NAV_ITEMS: ShellMobileNavItem[] = [
+  { id: 'feed', icon: () => null, label: 'Feed', path: '/feed', comingSoon: true },
+  { id: 'spaces', icon: () => null, label: 'Spaces', path: '/spaces' },
+  { id: 'hivelab', icon: () => null, label: 'Lab', path: '/tools' },
+  { id: 'notifications', icon: () => null, label: 'Notif', path: '/notifications' },
+  { id: 'profile', icon: () => null, label: 'Profile', path: '/profile' },
+];
+
+// Tooltip component - minimal style
+const Tooltip = ({ children, label, show }: { children: React.ReactNode; label: string; show: boolean }) => {
+  if (!show) return <>{children}</>;
+
+  return (
+    <div className="relative group">
+      {children}
+      <div className="
+        absolute left-full top-1/2 -translate-y-1/2 ml-3
+        px-2.5 py-1.5 rounded-lg bg-neutral-800
+        text-[13px] text-white whitespace-nowrap
+        opacity-0 group-hover:opacity-100
+        pointer-events-none
+        transition-opacity duration-100
+        z-50 shadow-lg
+      ">
+        {label}
+      </div>
+    </div>
+  );
+};
+
+export const UniversalShell: React.FC<UniversalShellProps> = ({
+  children,
+  variant = 'full',
+  navItems = DEFAULT_SIDEBAR_NAV_ITEMS,
+  secondaryNavItems = DEFAULT_SECONDARY_NAV_ITEMS,
+  mobileNavItems = DEFAULT_MOBILE_NAV_ITEMS,
+  notificationCount = 0,
+  mySpaces = [],
+  userAvatarUrl,
+  userName,
+  userHandle,
+}) => {
+  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  // Accessibility: simplified animations for reduced motion
+  const springTransition = shouldReduceMotion
+    ? { duration: 0.01 }
+    : SPRING_CONFIG;
+
+  const contentTransition = shouldReduceMotion
+    ? { duration: 0.01 }
+    : CONTENT_TRANSITION;
+
+  // Load collapse state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('hive-sidebar-collapsed');
+    if (saved !== null) {
+      setIsCollapsed(JSON.parse(saved));
+    }
+  }, []);
+
+  // Save collapse state
+  const toggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('hive-sidebar-collapsed', JSON.stringify(newState));
+  };
+
+  if (variant === 'minimal') {
+    return <>{children}</>;
+  }
+
+  const isActive = (href?: string) => {
+    if (!href) return false;
+    if (href === '/feed' && pathname === '/') return true;
+    return pathname === href || pathname?.startsWith(href + '/');
+  };
+
+  // Flatten all spaces from sections
+  const allSpaces = mySpaces.flatMap(section => section.spaces);
+  const hasSpaces = allSpaces.length > 0;
+
+  return (
+    <div className="flex min-h-screen bg-black">
+      {/* Desktop Sidebar - OpenAI style: clean, spacious, minimal */}
+      <motion.aside
+        layout
+        className="hidden md:flex flex-col bg-neutral-950 fixed h-full z-40"
+        animate={{ width: isCollapsed ? 68 : 260 }}
+        transition={springTransition}
+      >
+        {/* Logo area - lots of breathing room */}
+        <motion.div
+          layout
+          className={`h-14 flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-4'}`}
+          transition={springTransition}
+        >
+          <motion.button
+            layout
+            onClick={() => {
+              if (isCollapsed) {
+                toggleCollapse();
+              } else {
+                window.location.href = '/feed';
+              }
+            }}
+            className={`flex items-center outline-none ${isCollapsed ? 'justify-center p-2' : 'gap-3'} focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:rounded-md`}
+            whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
+            whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+            transition={springTransition}
+            aria-label={isCollapsed ? "Expand sidebar" : "Go to feed"}
+          >
+            <motion.div
+              layout
+              animate={{
+                width: isCollapsed ? 32 : 28,
+                height: isCollapsed ? 32 : 28,
+              }}
+              transition={springTransition}
+              className="flex items-center justify-center"
+            >
+              <HiveLogo className="text-white w-full h-full" />
+            </motion.div>
+            <AnimatePresence mode="wait">
+              {!isCollapsed && (
+                <motion.span
+                  className="text-white text-[15px] font-medium"
+                  initial={{ opacity: 0, x: -8, width: 0 }}
+                  animate={{ opacity: 1, x: 0, width: 'auto' }}
+                  exit={{ opacity: 0, x: -8, width: 0 }}
+                  transition={contentTransition}
+                >
+                  HIVE
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+
+          {/* Collapse toggle - subtle, hidden when collapsed */}
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.button
+                onClick={toggleCollapse}
+                className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+                whileHover={shouldReduceMotion ? {} : { scale: 1.1, rotate: 180 }}
+                whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
+                initial={{ opacity: 0, rotate: shouldReduceMotion ? 0 : -90 }}
+                animate={{ opacity: 1, rotate: 0 }}
+                exit={{ opacity: 0, rotate: shouldReduceMotion ? 0 : 90 }}
+                transition={springTransition}
+                aria-label="Collapse sidebar"
+              >
+                <SidebarIcon />
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Primary Navigation - generous spacing */}
+        <nav className="flex-1 px-3 py-3 overflow-y-auto">
+          <motion.div
+            className="space-y-0.5"
+            variants={navContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {navItems.map((item) => {
+              const Icon = NAV_ICONS[item.id];
+              const active = isActive(item.href);
+              const isComingSoon = item.comingSoon;
+
+              // Use ComingSoonTooltip for coming soon items when collapsed
+              const TooltipWrapper = isComingSoon && isCollapsed ? ComingSoonTooltip : Tooltip;
+              const tooltipLabel = isComingSoon ? 'Launching soon' : item.label;
+
+              return (
+                <TooltipWrapper key={item.id} label={tooltipLabel} show={isCollapsed}>
+                  <motion.a
+                    href={isComingSoon ? undefined : item.href}
+                    onClick={isComingSoon ? (e: React.MouseEvent) => e.preventDefault() : undefined}
+                    variants={navItemVariants}
+                    className={`
+                      relative flex items-center gap-3 px-3 py-2.5 rounded-md
+                      transition-colors duration-75 outline-none
+                      ${isCollapsed ? 'justify-center' : ''}
+                      ${isComingSoon
+                        ? 'text-neutral-600 cursor-not-allowed'
+                        : active
+                          ? 'text-white bg-neutral-800 border border-neutral-700/50'
+                          : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
+                      }
+                      focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950
+                    `}
+                    whileHover={shouldReduceMotion || isComingSoon ? {} : { x: isCollapsed ? 0 : 2 }}
+                    whileTap={shouldReduceMotion || isComingSoon ? {} : { scale: 0.97 }}
+                    whileFocus={isComingSoon ? {} : { backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+                    transition={springTransition}
+                  >
+                    <motion.div
+                      whileHover={shouldReduceMotion || isComingSoon ? {} : { scale: 1.1 }}
+                      transition={springTransition}
+                    >
+                      {Icon && <Icon />}
+                    </motion.div>
+
+                    <AnimatePresence mode="wait">
+                      {!isCollapsed && (
+                        <motion.span
+                          className="text-[14px]"
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -4 }}
+                          transition={contentTransition}
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Coming soon badge */}
+                    {isComingSoon && !isCollapsed && (
+                      <motion.span
+                        className="ml-auto text-[10px] text-neutral-600 uppercase tracking-wider"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={springTransition}
+                      >
+                        Soon
+                      </motion.span>
+                    )}
+
+                    {/* Badge - HIVE gold pill style */}
+                    {!isComingSoon && item.badge && item.badge > 0 && !isCollapsed && (
+                      <motion.span
+                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-[#F5C842] text-black rounded-full tabular-nums"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={springTransition}
+                      >
+                        {item.badge}
+                      </motion.span>
+                    )}
+
+                    {/* Badge dot for collapsed */}
+                    {!isComingSoon && item.badge && item.badge > 0 && isCollapsed && (
+                      <motion.span
+                        className="absolute top-2 right-2 w-1.5 h-1.5 bg-white rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={springTransition}
+                      />
+                    )}
+                  </motion.a>
+                </TooltipWrapper>
+              );
+            })}
+          </motion.div>
+
+          {/* My Spaces - YC-style section with divider */}
+          <AnimatePresence mode="wait">
+            {!isCollapsed && (
+              <motion.div
+                className="mt-6 pt-6 border-t border-neutral-800/50"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={CONTENT_TRANSITION}
+              >
+                <div className="flex items-center justify-between px-3 mb-3">
+                  <h3 className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+                    Your Spaces
+                  </h3>
+                  <a
+                    href="/spaces?tab=discover"
+                    className="text-neutral-600 hover:text-[#F5C842] transition-colors"
+                    title="Browse spaces"
+                  >
+                    <PlusIcon />
+                  </a>
+                </div>
+
+                {hasSpaces ? (
+                  <div className="space-y-0.5">
+                    {allSpaces.slice(0, 5).map((space) => (
+                      <a
+                        key={space.id}
+                        href={space.href}
+                        className="
+                          flex items-center gap-2.5 px-3 py-2 rounded-lg
+                          text-neutral-400 hover:text-white hover:bg-neutral-800/50
+                          transition-colors duration-75
+                        "
+                      >
+                        <span className={`
+                          w-2 h-2 rounded-sm flex-shrink-0
+                          ${space.status === 'live' ? 'bg-emerald-500' :
+                            space.status === 'new' ? 'bg-[#F5C842]' : 'bg-neutral-600'}
+                        `} />
+                        <span className="text-[13px] truncate font-medium">{space.label}</span>
+                      </a>
+                    ))}
+
+                    {allSpaces.length > 5 && (
+                      <a
+                        href="/spaces?tab=joined"
+                        className="
+                          flex items-center px-3 py-2 text-[12px] text-neutral-500
+                          hover:text-[#F5C842] transition-colors
+                        "
+                      >
+                        View all {allSpaces.length} spaces →
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-3 py-2">
+                    <p className="text-[13px] text-neutral-500 mb-2">
+                      Join spaces to see them here
+                    </p>
+                    <a
+                      href="/spaces?tab=discover"
+                      className="
+                        inline-flex items-center gap-1.5 text-[12px] text-neutral-400
+                        hover:text-[#F5C842] transition-colors
+                      "
+                    >
+                      Browse spaces →
+                    </a>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </nav>
+
+        {/* Secondary Nav - Settings, Notifications */}
+        <div className="px-3 py-2 border-t border-neutral-800/50">
+          <motion.div
+            className="space-y-0.5"
+            variants={navContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {secondaryNavItems.map((item) => {
+              const Icon = NAV_ICONS[item.id];
+              const active = isActive(item.href);
+              const showBadge = item.id === 'notifications' && notificationCount > 0;
+
+              return (
+                <Tooltip key={item.id} label={item.label} show={isCollapsed}>
+                  <motion.a
+                    href={item.href}
+                    variants={navItemVariants}
+                    className={`
+                      relative flex items-center gap-3 px-3 py-2 rounded-md
+                      transition-colors duration-75 outline-none
+                      ${isCollapsed ? 'justify-center' : ''}
+                      ${active
+                        ? 'text-white bg-neutral-800'
+                        : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'
+                      }
+                    `}
+                    whileHover={shouldReduceMotion ? {} : { x: isCollapsed ? 0 : 2 }}
+                    whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
+                    transition={springTransition}
+                  >
+                    {Icon && <Icon />}
+
+                    <AnimatePresence mode="wait">
+                      {!isCollapsed && (
+                        <motion.span
+                          className="text-[13px]"
+                          initial={{ opacity: 0, x: -4 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -4 }}
+                          transition={contentTransition}
+                        >
+                          {item.label}
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Notification badge */}
+                    {showBadge && !isCollapsed && (
+                      <motion.span
+                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-[#F5C842] text-black rounded-full tabular-nums"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={springTransition}
+                      >
+                        {notificationCount > 99 ? '99+' : notificationCount}
+                      </motion.span>
+                    )}
+
+                    {/* Badge dot for collapsed */}
+                    {showBadge && isCollapsed && (
+                      <motion.span
+                        className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F5C842] rounded-full"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={springTransition}
+                      />
+                    )}
+                  </motion.a>
+                </Tooltip>
+              );
+            })}
+
+            {/* Settings - always show */}
+            <Tooltip label="Settings" show={isCollapsed}>
+              <motion.a
+                href="/profile/settings"
+                variants={navItemVariants}
+                className={`
+                  flex items-center gap-3 px-3 py-2 rounded-md
+                  transition-colors duration-75 outline-none
+                  ${isCollapsed ? 'justify-center' : ''}
+                  ${pathname?.includes('/settings')
+                    ? 'text-white bg-neutral-800'
+                    : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'
+                  }
+                `}
+                whileHover={shouldReduceMotion ? {} : { x: isCollapsed ? 0 : 2 }}
+                whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
+                transition={springTransition}
+              >
+                <SettingsIcon />
+
+                <AnimatePresence mode="wait">
+                  {!isCollapsed && (
+                    <motion.span
+                      className="text-[13px]"
+                      initial={{ opacity: 0, x: -4 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -4 }}
+                      transition={contentTransition}
+                    >
+                      Settings
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.a>
+            </Tooltip>
+          </motion.div>
+        </div>
+
+        {/* Bottom - User Portrait Card (YC-style rectangular card) */}
+        <div className="px-3 py-4 mt-auto">
+          <AnimatePresence mode="wait">
+            {!isCollapsed ? (
+              <motion.a
+                href="/profile"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={contentTransition}
+                className="
+                  block p-3 rounded-xl
+                  bg-neutral-900/80 border border-neutral-800
+                  hover:bg-neutral-800/80 hover:border-neutral-700
+                  transition-all duration-150
+                  group
+                "
+              >
+                <div className="flex items-start gap-3">
+                  {/* Portrait Avatar - Square with rounded corners */}
+                  <div className="relative flex-shrink-0">
+                    {userAvatarUrl ? (
+                      <img
+                        src={userAvatarUrl}
+                        alt={userName || 'Profile'}
+                        className="w-11 h-11 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#F5C842] to-[#E5B732] flex items-center justify-center text-black text-base font-bold">
+                        {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    )}
+                  </div>
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-semibold text-white truncate group-hover:text-[#F5C842] transition-colors">
+                      {userName || 'Your Profile'}
+                    </p>
+                    <p className="text-[12px] text-neutral-500 truncate">
+                      {userHandle ? `@${userHandle}` : 'Complete your profile'}
+                    </p>
+                  </div>
+                  {/* Chevron indicator */}
+                  <div className="text-neutral-600 group-hover:text-neutral-400 transition-colors mt-0.5">
+                    <ChevronRightIcon />
+                  </div>
+                </div>
+              </motion.a>
+            ) : (
+              <Tooltip label={userName || 'Profile'} show={true}>
+                <motion.a
+                  href="/profile"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="
+                    flex items-center justify-center p-2 rounded-lg
+                    hover:bg-neutral-800/50 transition-colors
+                  "
+                >
+                  {userAvatarUrl ? (
+                    <img
+                      src={userAvatarUrl}
+                      alt={userName || 'Profile'}
+                      className="w-9 h-9 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#F5C842] to-[#E5B732] flex items-center justify-center text-black text-sm font-bold">
+                      {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                </motion.a>
+              </Tooltip>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.aside>
+
+      {/* Main Content */}
+      <motion.main
+        className="flex-1"
+        animate={{ marginLeft: isCollapsed ? 68 : 260 }}
+        transition={springTransition}
+      >
+        {children}
+      </motion.main>
+
+      {/* Mobile Bottom Nav - OpenAI style */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800/50 z-50 safe-area-pb">
+        <div className="flex justify-around items-center h-14">
+          {mobileNavItems.slice(0, 5).map((item) => {
+            const Icon = NAV_ICONS[item.id];
+            const active = isActive(item.path);
+            const isComingSoon = item.comingSoon;
+
+            const baseClassName = `
+              relative flex flex-col items-center justify-center gap-1
+              px-4 py-2 min-w-[48px]
+              transition-colors duration-100
+              ${isComingSoon
+                ? 'text-neutral-700 cursor-not-allowed'
+                : active ? 'text-white' : 'text-neutral-500'
+              }
+            `;
+
+            const content = (
+              <>
+                {Icon && <Icon />}
+                <span className="text-[10px]">{item.label}</span>
+
+                {/* Coming soon indicator dot */}
+                {isComingSoon && (
+                  <span className="absolute top-1 right-2 w-1.5 h-1.5 bg-neutral-600 rounded-full" />
+                )}
+
+                {!isComingSoon && item.badge && item.badge > 0 && (
+                  <span className="absolute top-1 right-2 w-1.5 h-1.5 bg-white rounded-full" />
+                )}
+              </>
+            );
+
+            if (isComingSoon) {
+              return (
+                <span key={item.id} className={baseClassName} aria-disabled="true">
+                  {content}
+                </span>
+              );
+            }
+
+            return (
+              <a key={item.id} href={item.path} className={baseClassName}>
+                {content}
+              </a>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Notification indicator (accessibility) */}
+      {notificationCount > 0 && (
+        <div className="sr-only" role="status">
+          {notificationCount} unread notifications
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UniversalShell;

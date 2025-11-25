@@ -1,0 +1,21 @@
+{
+  "name": "@hive/infrastructure-firebase",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "emulators": "firebase emulators:start",
+    "deploy": "firebase deploy",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:indexes": "firebase deploy --only firestore:indexes"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.1",
+    "firebase-functions": "^6.3.0"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.29.1",
+    "typescript": "^5.9.3"
+  }
+}

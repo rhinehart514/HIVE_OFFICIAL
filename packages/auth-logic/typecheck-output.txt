@@ -1,0 +1,25 @@
+
+> @hive/auth-logic@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/auth-logic
+> tsc --noEmit
+
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(6,21): error TS2300: Duplicate identifier 'Message'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(7,21): error TS2300: Duplicate identifier 'ObjectProperty'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(80,21): error TS2300: Duplicate identifier 'ChaiPlugin'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(107,21): error TS2300: Duplicate identifier 'AssertionArgs'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(147,21): error TS2300: Duplicate identifier 'Operator'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(149,21): error TS2300: Duplicate identifier 'OperatorComparable'.
+../../node_modules/.pnpm/@types+chai@5.2.3/node_modules/@types/chai/index.d.ts(2132,23): error TS2484: Export declaration conflicts with exported declaration of 'AssertionError'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(17,10): error TS2300: Duplicate identifier 'Message'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(18,10): error TS2300: Duplicate identifier 'ObjectProperty'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(85,10): error TS2300: Duplicate identifier 'ChaiPlugin'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(112,10): error TS2300: Duplicate identifier 'AssertionArgs'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(156,17): error TS2300: Duplicate identifier 'Operator'.
+../../node_modules/.pnpm/@vitest+expect@2.1.9/node_modules/@vitest/expect/dist/chai.d.cts(158,17): error TS2300: Duplicate identifier 'OperatorComparable'.
+../../node_modules/.pnpm/vite@5.4.21_@types+node@20.19.25/node_modules/vite/dist/node/index.d.ts(5,41): error TS2307: Cannot find module 'rollup/parseAst' or its corresponding type declarations.
+  There are types at '/Users/laneyfraass/Desktop/HIVE/node_modules/.pnpm/vite@5.4.21_@types+node@20.19.25/node_modules/rollup/dist/parseAst.d.ts', but this result could not be resolved under your current 'moduleResolution' setting. Consider updating to 'node16', 'nodenext', or 'bundler'.
+../../node_modules/.pnpm/vitest@2.1.9_@types+node@20.19.25_@vitest+ui@3.2.4_vitest@3.2.4__jsdom@25.0.1/node_modules/vitest/dist/chunks/reporters.nr4dxCkA.d.ts(639,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/vitest@2.1.9_@types+node@20.19.25_@vitest+ui@3.2.4_vitest@3.2.4__jsdom@25.0.1/node_modules/vitest/dist/chunks/reporters.nr4dxCkA.d.ts(683,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+../../node_modules/.pnpm/vitest@2.1.9_@types+node@20.19.25_@vitest+ui@3.2.4_vitest@3.2.4__jsdom@25.0.1/node_modules/vitest/dist/chunks/reporters.nr4dxCkA.d.ts(725,5): error TS18028: Private identifiers are only available when targeting ECMAScript 2015 and higher.
+src/join-waitlist.ts(1,42): error TS2307: Cannot find module 'firebase-admin/firestore' or its corresponding type declarations.
+vitest.config.ts(3,8): error TS1259: Module '"path"' can only be default-imported using the 'esModuleInterop' flag
+ ELIFECYCLE  Command failed with exit code 2.

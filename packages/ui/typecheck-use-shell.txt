@@ -1,0 +1,23 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/hooks/use-shell.ts(83,29): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(93,22): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(97,20): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(101,26): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(105,33): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(109,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(123,30): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(130,32): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(139,30): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(143,20): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-shell.ts(147,19): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/hooks/use-welcome-mat.ts(66,27): error TS2304: Cannot find name 'createContext'.
+src/hooks/use-welcome-mat.ts(101,3): error TS2322: Type 'string | number | true | ServerContextJSONArray | { [key: string]: ServerContextJSONValue; }' is not assignable to type 'WelcomeMatContextType'.
+  Type 'string' is not assignable to type 'WelcomeMatContextType'.
+src/hooks/use-welcome-mat.ts(230,26): error TS2304: Cannot find name 'useCallback'.
+src/hooks/use-welcome-mat.ts(241,29): error TS2304: Cannot find name 'useCallback'.
+src/hooks/use-welcome-mat.ts(252,21): error TS2304: Cannot find name 'useCallback'.
+src/hooks/use-welcome-mat.ts(263,25): error TS2304: Cannot find name 'useCallback'.
+ ELIFECYCLE  Command failed with exit code 1.

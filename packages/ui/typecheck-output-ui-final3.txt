@@ -1,0 +1,26 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/atomic/00-Global/molecules/privacy-control.tsx(86,17): error TS2322: Type '{ value: PrivacyLevel; label: string; description: string; icon: ComponentType<{ className?: string | undefined; }>; tone: string; } | undefined' is not assignable to type '{ value: PrivacyLevel; label: string; description: string; icon: ComponentType<{ className?: string | undefined; }>; tone: string; }'.
+  Type 'undefined' is not assignable to type '{ value: PrivacyLevel; label: string; description: string; icon: ComponentType<{ className?: string | undefined; }>; tone: string; }'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(86,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(86,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(86,82): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/06-Rituals/organisms/ritual-tournament-bracket.tsx(36,49): error TS2488: Type 'TournamentMatchup[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/lib/hivelab/local-tool-storage.ts(8,15): error TS2305: Module '"@hive/core"' has no exported member 'ToolComposition'.
+src/lib/hivelab/local-tool-storage.ts(138,5): error TS2322: Type '{ composition: ToolComposition; updatedAt: string; id?: string | undefined; createdAt?: string | undefined; }' is not assignable to type 'LocalTool'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/typography/text.tsx(87,3): error TS2345: Argument of type '<T extends React.ElementType = "p">({ as, className, size, tone, weight, align, leading, uppercase, tracking, truncate, ...props }: TextProps<T>, ref: PolymorphicRef<T>) => JSX.Element' is not assignable to parameter of type 'ForwardRefRenderFunction<unknown, Omit<TextProps<ElementType<any, keyof IntrinsicElements>>, "ref">>'.
+  Types of parameters 'ref' and 'ref' are incompatible.
+    Type 'ForwardedRef<unknown>' is not assignable to type '((instance: HTMLParagraphElement | null) => void | (() => VoidOrUndefinedOnly)) | RefObject<HTMLParagraphElement> | null | undefined'.
+      Type 'MutableRefObject<unknown>' is not assignable to type '((instance: HTMLParagraphElement | null) => void | (() => VoidOrUndefinedOnly)) | RefObject<HTMLParagraphElement> | null | undefined'.
+        Type 'MutableRefObject<unknown>' is not assignable to type 'RefObject<HTMLParagraphElement>'.
+          Types of property 'current' are incompatible.
+            Type 'unknown' is not assignable to type 'HTMLParagraphElement | null'.
+ ELIFECYCLE  Command failed with exit code 2.

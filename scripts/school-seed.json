@@ -1,0 +1,17 @@
+{
+  "id": "ub-buffalo",
+  "name": "University at Buffalo",
+  "domain": "buffalo.edu",
+  "active": true,
+  "campusId": "ub-buffalo",
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-01T00:00:00.000Z",
+  "settings": {
+    "allowedEmailDomains": ["buffalo.edu"],
+    "features": {
+      "spaces": true,
+      "rituals": true,
+      "hiveLab": true
+    }
+  }
+}

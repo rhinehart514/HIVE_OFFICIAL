@@ -1,0 +1,77 @@
+
+> @hive/core@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/core
+> tsc --noEmit
+
+src/application/hivelab/ai-tool-generator.service.ts(261,33): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/application/hivelab/ai-tool-generator.service.ts(281,18): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/application/ritual-participation.service.ts(381,35): error TS18048: 'participation' is possibly 'undefined'.
+src/application/search/queries/search.query.ts(87,17): error TS2538: Type 'undefined' cannot be used as an index type.
+src/application/shared/temporary-types.ts(61,34): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/constants/majors.ts(497,5): error TS2532: Object is possibly 'undefined'.
+src/domain/creation/placement.ts(40,53): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/domain/creation/placement.ts(40,68): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/domain/creation/tool.ts(53,3): error TS2532: Object is possibly 'undefined'.
+src/domain/feed/enhanced-feed.ts(175,45): error TS2532: Object is possibly 'undefined'.
+src/domain/profile/aggregates/connection.ts(151,39): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/domain/profile/aggregates/connection.ts(152,39): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/domain/profile/spec-compliant-profile.ts(103,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/domain/spaces/aggregates/enhanced-space.ts(255,9): error TS18048: 'member' is possibly 'undefined'.
+src/infrastructure/realtime/feed-listener.ts(17,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/connection.repository.ts(20,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/connection.repository.ts(65,28): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/connection.repository.ts(65,36): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/feed.repository.ts(22,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/feed.repository.ts(71,46): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/feed.repository.ts(71,54): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/feed.repository.ts(165,25): error TS2532: Object is possibly 'undefined'.
+src/infrastructure/repositories/firebase/profile.repository.ts(20,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/profile.repository.ts(67,28): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/profile.repository.ts(67,36): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/profile.repository.ts(87,28): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/profile.repository.ts(87,36): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/ritual-config.repository.ts(14,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/ritual-config.repository.ts(79,28): error TS18048: 'docSnap' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/ritual-config.repository.ts(79,40): error TS18048: 'docSnap' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/ritual.repository.ts(20,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/ritual.repository.ts(151,28): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/ritual.repository.ts(151,36): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/space.repository.ts(20,20): error TS2307: Cannot find module '@hive/firebase' or its corresponding type declarations.
+src/infrastructure/repositories/firebase/space.repository.ts(68,28): error TS18048: 'doc' is possibly 'undefined'.
+src/infrastructure/repositories/firebase/space.repository.ts(68,36): error TS18048: 'doc' is possibly 'undefined'.
+src/utils/activity-tracker.tsx(4,19): error TS7016: Could not find a declaration file for module 'react'. '/Users/laneyfraass/Desktop/HIVE/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/utils/privacy-utils.tsx(4,19): error TS7016: Could not find a declaration file for module 'react'. '/Users/laneyfraass/Desktop/HIVE/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/utils/privacy-utils.tsx(341,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/privacy-utils.tsx(341,29): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/privacy-utils.tsx(345,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/privacy-utils.tsx(345,38): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(4,19): error TS7016: Could not find a declaration file for module 'react'. '/Users/laneyfraass/Desktop/HIVE/node_modules/.pnpm/react@18.3.1/node_modules/react/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/react` if it exists or add a new declaration (.d.ts) file containing `declare module 'react';`
+src/utils/profile-aggregator.tsx(110,9): error TS2322: Type 'Record<string, unknown> | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(111,9): error TS2322: Type 'Record<string, unknown> | null | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(112,9): error TS2322: Type 'Record<string, unknown> | null | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(113,9): error TS2322: Type 'Record<string, unknown> | null | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(114,9): error TS2322: Type 'Record<string, unknown> | null | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(115,9): error TS2322: Type 'Record<string, unknown> | null | undefined' is not assignable to type 'Record<string, unknown> | null'.
+  Type 'undefined' is not assignable to type 'Record<string, unknown> | null'.
+src/utils/profile-aggregator.tsx(358,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(358,42): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(362,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(362,49): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(366,14): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+src/utils/profile-aggregator.tsx(366,44): error TS7026: JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.
+ ELIFECYCLE  Command failed with exit code 1.

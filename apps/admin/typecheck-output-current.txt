@@ -1,0 +1,78 @@
+
+> @hive/admin@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/apps/admin
+> tsc --noEmit
+
+src/app/layout.tsx(2,27): error TS2307: Cannot find module 'geist/font/sans' or its corresponding type declarations.
+src/app/layout.tsx(3,27): error TS2307: Cannot find module 'geist/font/mono' or its corresponding type declarations.
+src/lib/admin-activity-logger.ts(1,25): error TS2307: Cannot find module '@hive/core/server' or its corresponding type declarations.
+src/lib/admin-activity-logger.ts(292,28): error TS7006: Parameter 'doc' implicitly has an 'any' type.
+../../packages/ui/src/atomic/00-Global/atoms/button.tsx(163,8): error TS2322: Type '{ children: Element; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; formEncType?: string | undefined; ... 288 more ...; disabled: boolean | undefined; } | { ...; }' is not assignable to type 'IntrinsicAttributes & SlotProps & RefAttributes<HTMLElement> & Omit<HTMLMotionProps<"button">, "ref"> & RefAttributes<...>'.
+  Type '{ children: Element; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; formEncType?: string | undefined; ... 288 more ...; disabled: boolean | undefined; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+    Types of property 'onDrag' are incompatible.
+      Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+        Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+          Types of parameters 'event' and 'event' are incompatible.
+            Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+              Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/hive-card.tsx(85,8): error TS2322: Type '{ defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; suppressHydrationWarning?: boolean | undefined; ... 277 more ...; whileTap: string | undefined; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/input.tsx(162,8): error TS2322: Type '{ value: string | number | readonly string[]; resource?: string | undefined; content?: string | undefined; role?: AriaRole | undefined; security?: string | undefined; title?: string | undefined; ... 302 more ...; animate: string; } | { ...; }' is not assignable to type 'IntrinsicAttributes & Omit<HTMLMotionProps<"input">, "ref"> & RefAttributes<HTMLInputElement>'.
+  Type '{ value: string | number | readonly string[]; resource?: string | undefined; content?: string | undefined; role?: AriaRole | undefined; security?: string | undefined; title?: string | undefined; ... 302 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"input">, "ref">'.
+    Types of property 'onDrag' are incompatible.
+      Type 'DragEventHandler<HTMLInputElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+        Type 'DragEventHandler<HTMLInputElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+          Types of parameters 'event' and 'event' are incompatible.
+            Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLInputElement>'.
+              Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLInputElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/select.tsx(158,8): error TS2322: Type '{ children: Element[]; disabled?: boolean | undefined; form?: string | undefined; formAction?: string | ((formData: FormData) => void | Promise<void>) | undefined; ... 286 more ...; transition: { ...; }; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/select.tsx(229,12): error TS2322: Type '{ children: ReactNode; id?: string | undefined; resource?: string | undefined; content?: string | undefined; role: AriaRole; security?: string | undefined; title?: string | undefined; ... 275 more ...; className: string; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/select.tsx(267,8): error TS2322: Type '{ children: (Element | ReactNode)[]; defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; ... 277 more ...; transition: { ...; }; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/switch.tsx(122,12): error TS2322: Type '{ children: Element; id: string; resource?: string | undefined; content?: string | undefined; role: AriaRole; security?: string | undefined; type: "reset" | "button" | "submit"; ... 283 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/00-Global/atoms/textarea.tsx(207,8): error TS2322: Type '{ value: string | number | readonly string[]; autoComplete?: string | undefined; cols?: number | undefined; dirName?: string | undefined; form?: string | undefined; minLength?: number | undefined; ... 287 more ...; animate: string; } | { ...; }' is not assignable to type 'IntrinsicAttributes & Omit<HTMLMotionProps<"textarea">, "ref"> & RefAttributes<HTMLTextAreaElement>'.
+  Type '{ value: string | number | readonly string[]; autoComplete?: string | undefined; cols?: number | undefined; dirName?: string | undefined; form?: string | undefined; minLength?: number | undefined; ... 287 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"textarea">, "ref">'.
+    Types of property 'onDrag' are incompatible.
+      Type 'DragEventHandler<HTMLTextAreaElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+        Type 'DragEventHandler<HTMLTextAreaElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+          Types of parameters 'event' and 'event' are incompatible.
+            Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLTextAreaElement>'.
+              Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLTextAreaElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/atomic/06-Rituals/organisms/ritual-card.tsx(77,8): error TS2322: Type '{ children: (false | Element)[]; defaultChecked?: boolean | undefined; defaultValue?: string | number | readonly string[] | undefined; suppressContentEditableWarning?: boolean | undefined; ... 279 more ...; onHoverEnd: () => void; }' is not assignable to type 'Omit<HTMLMotionProps<"div">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLDivElement> | undefined' is not assignable to type '((event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLDivElement>' is not assignable to type '(event: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'PointerEvent | MouseEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLDivElement>'.
+            Type 'PointerEvent' is missing the following properties from type 'DragEvent<HTMLDivElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+../../packages/ui/src/lib/motion-variants.ts(519,3): error TS2322: Type 'readonly [0.22, 1, 0.36, 1]' is not assignable to type 'string | number[]'.
+  The type 'readonly [0.22, 1, 0.36, 1]' is 'readonly' and cannot be assigned to the mutable type 'number[]'.
+../../packages/ui/src/types/notifications.ts(11,27): error TS2307: Cannot find module 'firebase/firestore' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 2.

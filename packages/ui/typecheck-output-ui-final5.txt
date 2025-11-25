@@ -1,0 +1,7 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(87,27): error TS2352: Conversion of type 'RegExpExecArray' to type '[string, string, string, string]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+src/atomic/06-Rituals/organisms/ritual-tournament-bracket.tsx(37,49): error TS2488: Type 'TournamentMatchup[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+ ELIFECYCLE  Command failed with exit code 2.

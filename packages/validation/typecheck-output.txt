@@ -1,0 +1,4 @@
+
+> @hive/validation@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/validation
+> tsc --noEmit
+

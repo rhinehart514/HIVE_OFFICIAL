@@ -1,0 +1,17 @@
+{
+  "name": "@hive/config-typescript",
+  "version": "1.0.0",
+  "private": true,
+  "main": "base.json",
+  "exports": {
+    ".": "./base.json",
+    "./base": "./base.json",
+    "./nextjs": "./nextjs.json",
+    "./react-library": "./react-library.json"
+  },
+  "files": [
+    "base.json",
+    "nextjs.json",
+    "react-library.json"
+  ]
+}

@@ -1,0 +1,6 @@
+
+> @hive/firebase@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/firebase
+> tsc --noEmit
+
+src/app-check.ts(234,37): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 2.

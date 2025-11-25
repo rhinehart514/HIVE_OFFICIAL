@@ -1,0 +1,13 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/atomic/00-Global/atoms/input.tsx(158,8): error TS2322: Type '{ value: string | number | readonly string[]; accept?: string | undefined; alt?: string | undefined; autoComplete?: HTMLInputAutoCompleteAttribute | undefined; ... 303 more ...; animate: string; } | { ...; }' is not assignable to type 'IntrinsicAttributes & Omit<HTMLMotionProps<"input">, "ref"> & RefAttributes<HTMLInputElement>'.
+  Type '{ value: string | number | readonly string[]; accept?: string | undefined; alt?: string | undefined; autoComplete?: HTMLInputAutoCompleteAttribute | undefined; ... 303 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"input">, "ref">'.
+    Types of property 'onDrag' are incompatible.
+      Type 'DragEventHandler<HTMLInputElement> | undefined' is not assignable to type '((event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void) | undefined'.
+        Type 'DragEventHandler<HTMLInputElement>' is not assignable to type '(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => void'.
+          Types of parameters 'event' and 'event' are incompatible.
+            Type 'MouseEvent | TouchEvent | PointerEvent' is not assignable to type 'DragEvent<HTMLInputElement>'.
+              Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLInputElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+ ELIFECYCLE  Command failed with exit code 2.

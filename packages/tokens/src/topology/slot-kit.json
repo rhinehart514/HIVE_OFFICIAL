@@ -1,0 +1,32 @@
+{
+  "cognitiveBudgets": {
+    "spaceBoard": {
+      "maxPins": 2,
+      "maxRailWidgets": 3,
+      "railNowItems": 5,
+      "composerActions": 4,
+      "cardPrimaryCtas": 2,
+      "sheetQuickActions": 3,
+      "recommendationCtas": 3,
+      "toolFields": 8,
+      "proofExportsPerDay": 1
+    },
+    "feed": {
+      "maxRailWidgets": 3,
+      "recommendationCtas": 3
+    },
+    "profile": {
+      "maxRailWidgets": 3,
+      "cardPrimaryCtas": 2
+    },
+    "hivelab": {
+      "toolFields": 12,
+      "sheetQuickActions": 5
+    }
+  },
+  "capabilities": {
+    "pinned": {
+      "maxPins": 2
+    }
+  }
+}

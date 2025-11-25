@@ -1,0 +1,23 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(87,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(87,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(87,82): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/06-Rituals/organisms/ritual-tournament-bracket.tsx(37,49): error TS2488: Type 'TournamentMatchup[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/components/hivelab/StreamingCanvasView.tsx(13,15): error TS2305: Module '"@hive/core"' has no exported member 'CanvasElement'.
+src/components/hivelab/StreamingCanvasView.tsx(13,30): error TS2305: Module '"@hive/core"' has no exported member 'ToolComposition'.
+src/lib/hivelab/local-tool-storage.ts(145,5): error TS2322: Type '{ composition: ToolComposition; updatedAt: string; id?: string | undefined; createdAt?: string | undefined; }' is not assignable to type 'LocalTool'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/typography/text.tsx(125,21): error TS2352: Conversion of type 'ForwardRefExoticComponent<PropsWithoutRef<{ as?: T | undefined; } & TextVariantProps & Omit<PropsWithoutRef<ComponentProps<T>>, "size" | "tone" | "weight" | ... 5 more ... | "as"> & { ...; }> & RefAttributes<...>>' to type '<T extends React.ElementType = "p">(props: { as?: T | undefined; } & TextVariantProps & Omit<PropsWithoutRef<ComponentProps<T>>, "size" | ... 7 more ... | "as"> & { ...; }) => ReactElement<...>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of parameters 'props' and 'props' are incompatible.
+    Type '{ as?: any; } & TextVariantProps & Omit<Omit<any, "ref">, "size" | "tone" | "weight" | "align" | "leading" | "uppercase" | "tracking" | "truncate" | "as"> & { ...; }' is not comparable to type 'PropsWithoutRef<{ as?: T | undefined; } & TextVariantProps & Omit<PropsWithoutRef<ComponentProps<T>>, "size" | "tone" | "weight" | ... 5 more ... | "as"> & { ...; }> & RefAttributes<...>'.
+      Type '{ as?: any; } & TextVariantProps & Omit<Omit<any, "ref">, "size" | "tone" | "weight" | "align" | "leading" | "uppercase" | "tracking" | "truncate" | "as"> & { ...; }' is not comparable to type 'PropsWithoutRef<{ as?: T | undefined; } & TextVariantProps & Omit<PropsWithoutRef<ComponentProps<T>>, "size" | "tone" | "weight" | ... 5 more ... | "as"> & { ...; }>'.
+src/typography/text.tsx(128,6): error TS2339: Property 'displayName' does not exist on type '<T extends React.ElementType = "p">(props: { as?: T | undefined; } & TextVariantProps & Omit<PropsWithoutRef<ComponentProps<T>>, "size" | ... 7 more ... | "as"> & { ...; }) => ReactElement<...>'.
+ ELIFECYCLE  Command failed with exit code 2.

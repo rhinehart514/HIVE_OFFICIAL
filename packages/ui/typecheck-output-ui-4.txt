@@ -1,0 +1,71 @@
+
+> @hive/ui@0.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/ui
+> npx tsc --noEmit
+
+src/atomic/00-Global/atoms/slider.tsx(131,27): error TS2532: Object is possibly 'undefined'.
+src/atomic/00-Global/atoms/slider.tsx(166,28): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/atomic/00-Global/atoms/slider.tsx(216,34): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+src/atomic/00-Global/atoms/switch.tsx(122,12): error TS2322: Type '{ children: Element; color?: string | undefined; content?: string | undefined; translate?: "no" | "yes" | undefined; hidden?: boolean | undefined; suppressHydrationWarning?: boolean | undefined; ... 283 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"button">, "ref">'.
+  Types of property 'onDrag' are incompatible.
+    Type 'DragEventHandler<HTMLButtonElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+      Type 'DragEventHandler<HTMLButtonElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+        Types of parameters 'event' and 'event' are incompatible.
+          Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLButtonElement>'.
+            Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLButtonElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+src/atomic/00-Global/atoms/textarea.tsx(207,8): error TS2322: Type '{ value: string | number | readonly string[]; autoComplete?: string | undefined; cols?: number | undefined; dirName?: string | undefined; form?: string | undefined; minLength?: number | undefined; ... 286 more ...; animate: string; } | { ...; }' is not assignable to type 'IntrinsicAttributes & Omit<HTMLMotionProps<"textarea">, "ref"> & RefAttributes<HTMLTextAreaElement>'.
+  Type '{ value: string | number | readonly string[]; autoComplete?: string | undefined; cols?: number | undefined; dirName?: string | undefined; form?: string | undefined; minLength?: number | undefined; ... 286 more ...; animate: string; }' is not assignable to type 'Omit<HTMLMotionProps<"textarea">, "ref">'.
+    Types of property 'onDrag' are incompatible.
+      Type 'DragEventHandler<HTMLTextAreaElement> | undefined' is not assignable to type '((event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void) | undefined'.
+        Type 'DragEventHandler<HTMLTextAreaElement>' is not assignable to type '(event: MouseEvent | PointerEvent | TouchEvent, info: PanInfo) => void'.
+          Types of parameters 'event' and 'event' are incompatible.
+            Type 'MouseEvent | PointerEvent | TouchEvent' is not assignable to type 'DragEvent<HTMLTextAreaElement>'.
+              Type 'MouseEvent' is missing the following properties from type 'DragEvent<HTMLTextAreaElement>': dataTransfer, nativeEvent, isDefaultPrevented, isPropagationStopped, persist
+src/atomic/00-Global/molecules/keyboard-shortcuts-overlay.tsx(135,7): error TS2532: Object is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(77,16): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(87,25): error TS18048: 'next' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(89,49): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(92,16): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(108,46): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(109,22): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/00-Global/molecules/privacy-control.tsx(137,71): error TS18048: 'current' is possibly 'undefined'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(85,26): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(85,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/molecules/feed-space-chip.tsx(85,82): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/atomic/02-Feed/organisms/feed-virtualized-list.tsx(46,15): error TS2532: Object is possibly 'undefined'.
+src/atomic/04-Profile/molecules/profile-bento-grid.tsx(4,15): error TS2305: Module '"@hive/core"' has no exported member 'BentoGridLayout'.
+src/atomic/04-Profile/molecules/profile-bento-grid.tsx(4,32): error TS2305: Module '"@hive/core"' has no exported member 'ProfileSystem'.
+src/atomic/04-Profile/molecules/profile-bento-grid.tsx(4,47): error TS2305: Module '"@hive/core"' has no exported member 'GridSize'.
+src/atomic/04-Profile/templates/profile-view-layout.tsx(18,15): error TS2305: Module '"@hive/core"' has no exported member 'ProfileSystem'.
+src/atomic/04-Profile/templates/profile-view-layout.tsx(128,68): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/atomic/04-Profile/templates/profile-view-layout.tsx(129,60): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/atomic/06-Rituals/organisms/ritual-tournament-bracket.tsx(35,49): error TS2488: Type 'TournamentMatchup[] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/components/hivelab/StreamingCanvasView.tsx(15,15): error TS2305: Module '"@hive/core"' has no exported member 'CanvasElement'.
+src/components/hivelab/StreamingCanvasView.tsx(15,30): error TS2305: Module '"@hive/core"' has no exported member 'ToolComposition'.
+src/components/hivelab/StreamingCanvasView.tsx(210,45): error TS7006: Parameter 'conn' implicitly has an 'any' type.
+src/components/hivelab/StreamingCanvasView.tsx(210,51): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/lib/hivelab/local-tool-storage.ts(8,15): error TS2305: Module '"@hive/core"' has no exported member 'ToolComposition'.
+src/lib/hivelab/local-tool-storage.ts(138,5): error TS2322: Type '{ composition: ToolComposition; updatedAt: string; id?: string | undefined; createdAt?: string | undefined; }' is not assignable to type 'LocalTool'.
+  Types of property 'id' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+src/lib/motion-variants.ts(519,3): error TS2322: Type 'readonly [0.22, 1, 0.36, 1]' is not assignable to type 'string | number[]'.
+  The type 'readonly [0.22, 1, 0.36, 1]' is 'readonly' and cannot be assigned to the mutable type 'number[]'.
+src/pages/feed/FeedPage.tsx(260,12): error TS2532: Object is possibly 'undefined'.
+src/pages/feed/FeedPage.tsx(262,20): error TS2532: Object is possibly 'undefined'.
+src/pages/feed/FeedPage.tsx(263,20): error TS2532: Object is possibly 'undefined'.
+src/pages/hivelab/AILandingPage.tsx(12,24): error TS2307: Cannot find module '../../components/atomic/atoms/Button' or its corresponding type declarations.
+src/pages/hivelab/AILandingPage.tsx(16,40): error TS2307: Cannot find module '@hive/hooks' or its corresponding type declarations.
+src/pages/hivelab/AILandingPage.tsx(68,18): error TS7006: Parameter 'composition' implicitly has an 'any' type.
+src/typography/text.tsx(87,3): error TS2345: Argument of type '<T extends React.ElementType = "p">({ as, className, size, tone, weight, align, leading, uppercase, tracking, truncate, ...props }: TextProps<T>, ref: PolymorphicRef<T>) => JSX.Element' is not assignable to parameter of type 'ForwardRefRenderFunction<unknown, Omit<TextProps<ElementType<any, keyof IntrinsicElements>>, "ref">>'.
+  Types of parameters 'ref' and 'ref' are incompatible.
+    Type 'ForwardedRef<unknown>' is not assignable to type '((instance: HTMLParagraphElement | null) => void | (() => VoidOrUndefinedOnly)) | RefObject<HTMLParagraphElement> | null | undefined'.
+      Type 'MutableRefObject<unknown>' is not assignable to type '((instance: HTMLParagraphElement | null) => void | (() => VoidOrUndefinedOnly)) | RefObject<HTMLParagraphElement> | null | undefined'.
+        Type 'MutableRefObject<unknown>' is not assignable to type 'RefObject<HTMLParagraphElement>'.
+          Types of property 'current' are incompatible.
+            Type 'unknown' is not assignable to type 'HTMLParagraphElement | null'.
+ ELIFECYCLE  Command failed with exit code 2.

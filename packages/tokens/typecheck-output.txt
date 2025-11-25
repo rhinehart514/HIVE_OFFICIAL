@@ -1,0 +1,4 @@
+
+> @hive/tokens@1.0.0 typecheck /Users/laneyfraass/Desktop/HIVE/packages/tokens
+> tsc --noEmit
+
