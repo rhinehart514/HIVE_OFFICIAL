@@ -27,16 +27,16 @@ function MenuItem({ href, onClick, icon: Icon, children }: MenuItemProps) {
 
   if (href) {
     return (
-      <Link href={href} className={className}>
-        <Icon className="w-4 h-4" />
+      <Link href={href} className={className} role="menuitem">
+        <Icon className="w-4 h-4" aria-hidden="true" />
         {children}
       </Link>
     )
   }
 
   return (
-    <button onClick={onClick} className={className}>
-      <Icon className="w-4 h-4" />
+    <button onClick={onClick} className={className} role="menuitem">
+      <Icon className="w-4 h-4" aria-hidden="true" />
       {children}
     </button>
   )
@@ -61,11 +61,13 @@ export function ProfileDropdown({
 
   return (
     <div className="relative">
-      {/* Avatar trigger - Gold (#FFD700) for brand */}
+      {/* Avatar trigger - Gold for brand */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-8 h-8 rounded-full bg-[#FFD700] overflow-hidden ring-2 ring-transparent hover:ring-[#FFD700]/20 transition-all"
-        aria-label="Profile menu"
+        className="w-8 h-8 rounded-full bg-gold-500 overflow-hidden ring-2 ring-transparent hover:ring-gold-500/20 transition-all"
+        aria-label={`Profile menu for ${user.displayName}`}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
       >
         {user.photoURL ? (
           <img
@@ -94,6 +96,8 @@ export function ProfileDropdown({
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-white/[0.08] bg-black shadow-lg z-50"
+              role="menu"
+              aria-label="Profile options"
             >
               {/* User info - Campus context */}
               <div className="p-4 border-b border-white/[0.06]">
@@ -107,8 +111,8 @@ export function ProfileDropdown({
                 )}
                 {user.campus && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
-                    <span className="text-xs text-white/50">
+                    <div className="w-2 h-2 rounded-full bg-gold-500" />
+                    <span className="text-xs text-white/60">
                       {user.campus}
                     </span>
                   </div>

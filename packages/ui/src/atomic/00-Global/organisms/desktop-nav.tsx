@@ -23,14 +23,15 @@ function NavLink({ href, active, children }: NavLinkProps) {
           ? 'text-white'
           : 'text-white/70 hover:text-white'
       )}
+      aria-current={active ? 'page' : undefined}
     >
       {children}
 
-      {/* Active indicator - HIVE gold (#FFD700) */}
+      {/* Active indicator - HIVE gold */}
       {active && (
         <motion.div
           layoutId="activeDesktopNav"
-          className="absolute -bottom-4 left-0 right-0 h-0.5 bg-[#FFD700]"
+          className="absolute -bottom-4 left-0 right-0 h-0.5 bg-gold-500"
           transition={{
             type: 'spring',
             damping: 20,
@@ -70,12 +71,16 @@ export function DesktopNav({
   const pathname = usePathname()
 
   return (
-    <nav className="hidden md:flex sticky top-0 z-50 border-b border-white/[0.08] bg-black/95 backdrop-blur-xl">
+    <nav
+      className="hidden md:flex sticky top-0 z-50 border-b border-white/[0.08] bg-black/95 backdrop-blur-xl"
+      aria-label="Main navigation"
+    >
       <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-6 h-16">
         {/* Logo - Left */}
         <Link
           href="/feed"
           className="hover:opacity-80 transition-opacity"
+          aria-label="HIVE - Go to feed"
         >
           <HiveLogo size="default" variant="default" />
         </Link>
@@ -95,11 +100,11 @@ export function DesktopNav({
 
         {/* Right - Actions & Campus Context */}
         <div className="flex items-center gap-4">
-          {/* Campus indicator - HIVE gold (#FFD700) */}
+          {/* Campus indicator - HIVE gold */}
           {showCampusIndicator && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold-500/10 border border-gold-500/20">
               <motion.div
-                className="w-2 h-2 rounded-full bg-[#FFD700]"
+                className="w-2 h-2 rounded-full bg-gold-500"
                 animate={{
                   scale: [1, 1.2, 1],
                   opacity: [0.7, 1, 0.7],
@@ -123,11 +128,13 @@ export function DesktopNav({
                 new KeyboardEvent('keydown', { key: 'k', metaKey: true })
               )
             }
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-white/50 text-sm hover:border-white/[0.16] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-white/60 text-sm hover:border-white/[0.16] transition-colors"
+            aria-label="Search (Command + K)"
+            aria-keyshortcuts="Meta+K"
           >
-            <SearchIcon className="w-4 h-4" />
+            <SearchIcon className="w-4 h-4" aria-hidden="true" />
             <span className="hidden lg:inline">Search</span>
-            <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-white/[0.06] rounded">
+            <kbd className="hidden lg:inline px-1.5 py-0.5 text-xs bg-white/[0.06] rounded" aria-hidden="true">
               ⌘K
             </kbd>
           </button>

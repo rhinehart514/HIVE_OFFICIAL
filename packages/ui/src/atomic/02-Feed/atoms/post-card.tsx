@@ -181,13 +181,13 @@ export const PostCardListItem = React.forwardRef<HTMLDivElement, PostCardListIte
                   </svg>
                 )}
 
-                <span className="text-xs text-neutral-500">·</span>
-                <span className="text-xs text-neutral-500">{post.timeAgo}</span>
+                <span className="text-xs text-neutral-400">·</span>
+                <span className="text-xs text-neutral-400">{post.timeAgo}</span>
               </div>
 
               {/* Space context (subtle) */}
               {post.space && (
-                <div className="text-xs text-neutral-600 truncate mt-0.5">
+                <div className="text-xs text-neutral-400 truncate mt-0.5">
                   in {post.space}
                 </div>
               )}

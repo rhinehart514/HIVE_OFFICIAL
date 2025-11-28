@@ -155,7 +155,7 @@ export function ChatInput({
               rows={1}
               className={cn(
                 'w-full px-6 py-4 pr-14',
-                'bg-transparent text-white placeholder:text-white/40',
+                'bg-transparent text-white placeholder:text-white/60',
                 'resize-none outline-none scrollbar-hide',
                 'text-[15px] leading-relaxed font-normal',
                 'transition-[height] duration-200 ease-out'
