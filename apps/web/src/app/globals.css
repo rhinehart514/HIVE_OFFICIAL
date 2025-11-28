@@ -9,6 +9,12 @@
   --hive-foundation-white: #FFFFFF;
   --hive-foundation-gold-500: #FFD700;
 
+  /* Gold Convenience Aliases (for inline styles) */
+  --hive-gold: #FFD700;
+  --hive-gold-muted: rgba(255, 215, 0, 0.1);
+  --hive-gold-border: rgba(255, 215, 0, 0.2);
+  --hive-gold-hover: rgba(255, 215, 0, 0.9);
+
   /* Gray Scale */
   --hive-gray-1000: #0A0A0A;
   --hive-gray-900: #171717;
@@ -29,16 +35,36 @@
   --hive-text-primary: var(--hive-gray-900);
   --hive-text-secondary: var(--hive-gray-600);
   --hive-text-tertiary: var(--hive-gray-500);
+  --hive-text-muted: var(--hive-gray-500);
+  --hive-text-inverse: var(--hive-foundation-white);
   --hive-brand-primary: var(--hive-foundation-gold-500);
   --hive-brand-hover: #E6C200;
   --hive-border-default: var(--hive-gray-200);
   --hive-border-strong: var(--hive-gray-300);
 
-  /* Status Colors */
+  /* Interactive States */
+  --hive-interactive-hover: rgba(0, 0, 0, 0.04);
+  --hive-interactive-focus: var(--hive-foundation-gold-500);
+  --hive-interactive-active: rgba(0, 0, 0, 0.08);
+
+  /* Status Colors - Canonical values from @hive/tokens */
   --hive-status-success: #00D46A;
   --hive-status-warning: #FFB800;
-  --hive-status-error: #FF3B30;
-  --hive-status-info: #0A84FF;
+  --hive-status-error: #FF3737;
+  --hive-status-info: #0070F3;
+
+  /* Typography */
+  --hive-font-family-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
+  --hive-font-family-mono: 'Geist Mono', ui-monospace, monospace;
+  --hive-font-size-body-xs: 0.75rem;
+  --hive-font-size-body-sm: 0.875rem;
+  --hive-font-size-body-md: 1rem;
+  --hive-font-size-body-lg: 1.125rem;
+  --hive-font-size-heading-sm: 1.25rem;
+  --hive-font-size-heading-md: 1.5rem;
+  --hive-font-size-heading-lg: 2rem;
+  --hive-font-size-heading-xl: 2.5rem;
+  --hive-font-size-display: 3rem;
 
   /* Spacing */
   --hive-space-0: 0;
@@ -54,6 +80,10 @@
   --hive-space-16: 4rem;
   --hive-space-20: 5rem;
   --hive-space-24: 6rem;
+
+  /* Touch Targets (A11y) */
+  --hive-touch-target: 44px;
+  --hive-touch-target-sm: 36px;
 
   /* Border Radius */
   --hive-radius-sm: 0.25rem;
@@ -82,8 +112,13 @@
   --hive-text-primary: var(--hive-foundation-white);
   --hive-text-secondary: var(--hive-gray-400);
   --hive-text-tertiary: var(--hive-gray-500);
+  --hive-text-muted: var(--hive-gray-500);
+  --hive-text-inverse: var(--hive-foundation-black);
   --hive-border-default: var(--hive-gray-800);
   --hive-border-strong: var(--hive-gray-700);
+  --hive-interactive-hover: rgba(255, 255, 255, 0.04);
+  --hive-interactive-focus: var(--hive-foundation-gold-500);
+  --hive-interactive-active: rgba(255, 255, 255, 0.08);
   --hive-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --hive-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   --hive-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
@@ -188,6 +223,18 @@
   }
 }
 
+/* Reduced Motion Support (A11y) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Utility classes */
 @layer utilities {
   /* Text gradient */
@@ -249,6 +296,82 @@
     }
     50% {
       box-shadow: 0 0 0 8px rgba(255, 215, 0, 0);
+    }
+  }
+
+  /* Premium UI Animations - Billion-Dollar Patterns */
+
+  /* ShineBorder: Rotating gradient border effect */
+  .animate-shine-rotate {
+    animation: shineRotate var(--shine-duration, 14s) linear infinite;
+  }
+
+  @keyframes shineRotate {
+    0% {
+      background-position: 0% 0%;
+    }
+    50% {
+      background-position: 100% 100%;
+    }
+    100% {
+      background-position: 0% 0%;
+    }
+  }
+
+  /* BorderBeam: Light traveling around borders */
+  .animate-border-beam {
+    animation: borderBeam var(--beam-duration, 12s) linear infinite;
+  }
+
+  @keyframes borderBeam {
+    0% {
+      offset-distance: 0%;
+    }
+    100% {
+      offset-distance: 100%;
+    }
+  }
+
+  /* Shimmer: Text/element shimmer effect */
+  .animate-shimmer {
+    animation: shimmer 2.5s linear infinite;
+    background-size: 200% 100%;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Float: Subtle floating animation */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  /* Sparkle spin for particle effects */
+  .animate-sparkle-spin {
+    animation: sparkleSpin 2s linear infinite;
+  }
+
+  @keyframes sparkleSpin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(180deg);
     }
   }
 }

@@ -2,10 +2,14 @@
 
 import { cva, type VariantProps } from "class-variance-authority"
 import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion"
+import { Check, X, Loader2, Eye, EyeOff } from "lucide-react"
 import * as React from "react"
 
 import { duration, easing } from "../../../lib/motion-variants"
 import { cn } from "../../../lib/utils"
+
+/** Input status for loading/validation flows */
+export type InputStatus = 'idle' | 'loading' | 'success' | 'error'
 
 /**
  * Input Variants - Ultra-Minimal YC/SF Aesthetic (Linear-style)
@@ -27,22 +31,22 @@ const inputVariants = cva(
         // Subtle: Same as default (for backwards compat)
         subtle: "hover:border-white/[0.16]",
         // Destructive/Error: Red border
-        destructive: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/30",
-        error: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/30",
+        destructive: "border-status-error/50 focus:border-status-error focus:ring-status-error/30",
+        error: "border-status-error/50 focus:border-status-error focus:ring-status-error/30",
         // Success: Green border
-        success: "border-[#00D46A]/50 focus:border-[#00D46A] focus:ring-[#00D46A]/30",
+        success: "border-status-success/50 focus:border-status-success focus:ring-status-success/30",
         // Brand: Gold border (use sparingly)
-        brand: "border-[#FFD700]/30 focus:border-[#FFD700] focus:ring-[#FFD700]/30",
+        brand: "border-gold-500/30 focus:border-gold-500 focus:ring-gold-500/30",
         // Ghost: No border until focus
         ghost: "border-transparent bg-transparent focus:border-white/[0.08] focus:ring-white/10",
         // Warning: Gold border
-        warning: "border-[#FFD700]/30 focus:border-[#FFD700] focus:ring-[#FFD700]/30",
+        warning: "border-gold-500/30 focus:border-gold-500 focus:ring-gold-500/30",
       },
       size: {
-        sm: "h-8 text-sm px-3",
-        default: "h-10 text-sm",
-        lg: "h-12 text-sm px-4",
-        xl: "h-14 text-base px-5",
+        sm: "h-9 min-h-[36px] text-sm px-3", // 36px for compact areas
+        default: "h-11 min-h-[44px] text-sm", // 44px - mobile touch target
+        lg: "h-12 min-h-[48px] text-sm px-4",
+        xl: "h-14 min-h-[56px] text-base px-5",
       },
       width: {
         full: "w-full",
@@ -65,13 +69,25 @@ export interface InputProps
     VariantProps<typeof inputVariants> {
   label?: React.ReactNode
   helperText?: React.ReactNode
+  /** @deprecated Use helperText instead */
+  hint?: string
   description?: React.ReactNode
   error?: React.ReactNode
+  /** Success message (green text) */
+  success?: string
   leftIcon?: React.ReactNode
+  /** @deprecated Use leftIcon instead */
+  prefixIcon?: React.ReactNode
   rightIcon?: React.ReactNode
   onClear?: () => void
   showClearButton?: boolean
   wrapperClassName?: string
+  /** Input status for validation/loading flows (PremiumInput compat) */
+  status?: InputStatus
+  /** Suffix text (e.g., "@buffalo.edu") */
+  suffix?: string
+  /** Show password toggle for password inputs */
+  showPasswordToggle?: boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -85,9 +101,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       disabled,
       label,
       helperText,
+      hint,
       description,
       error,
+      success,
       leftIcon,
+      prefixIcon,
       rightIcon,
       onClear,
       showClearButton,
@@ -96,12 +115,28 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       wrapperClassName,
       onFocus,
       onBlur,
+      status = 'idle',
+      suffix,
+      showPasswordToggle,
       ...props
     },
     ref
   ) => {
     const [isFocused, setIsFocused] = React.useState(false)
     const [hasError, setHasError] = React.useState(!!error)
+    const [showPassword, setShowPassword] = React.useState(false)
+
+    // Merge prefixIcon with leftIcon for backwards compat
+    const mergedLeftIcon = leftIcon ?? prefixIcon
+    // Merge hint with helperText for backwards compat
+    const mergedHelperText = helperText ?? hint
+
+    // Determine effective status based on error/success props
+    const effectiveStatus = error ? 'error' : success ? 'success' : status
+
+    // Password toggle logic
+    const isPassword = type === 'password'
+    const inputType = isPassword && showPassword ? 'text' : type
 
     // Update error state when prop changes
     React.useEffect(() => {
@@ -109,16 +144,21 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     }, [error])
 
     const inputId = React.useId()
-    const computedVariant = error ? "destructive" : variant
+    const computedVariant = error ? "destructive" : success ? "success" : variant
     const shouldWrap =
-      Boolean(label || helperText || description || error || leftIcon || rightIcon || showClearButton)
+      Boolean(label || mergedHelperText || description || error || success || mergedLeftIcon || rightIcon || showClearButton || suffix || showPasswordToggle || effectiveStatus !== 'idle')
     const hasValue =
       value !== undefined && `${value}`.length > 0
 
+    // Calculate right padding based on what's on the right side
+    const hasRightContent = rightIcon || suffix || (showClearButton && hasValue) ||
+      (isPassword && showPasswordToggle) || effectiveStatus === 'loading' ||
+      (effectiveStatus === 'success' && !suffix) || (effectiveStatus === 'error' && !suffix)
+
     const inputClassName = cn(
       inputVariants({ variant: computedVariant, size, width }),
-      leftIcon && "pl-11",
-      (rightIcon || (showClearButton && hasValue)) && "pr-11",
+      mergedLeftIcon && "pl-11",
+      hasRightContent && "pr-11",
       disabled
         ? "bg-white/[0.02] text-white/30"
         : "",
@@ -164,7 +204,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputNode = (
       <MotionInput
         id={inputId}
-        type={type}
+        type={inputType}
         className={inputClassName}
         disabled={disabled}
         aria-invalid={
@@ -188,10 +228,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       />
     )
 
-    const inputWithDecorations = leftIcon || rightIcon || (showClearButton && hasValue && !disabled)
+    const inputWithDecorations = hasRightContent || mergedLeftIcon
       ? (
         <div className="relative">
-          {leftIcon ? (
+          {mergedLeftIcon ? (
             <motion.span
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
               aria-hidden
@@ -202,13 +242,47 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
             >
-              {leftIcon}
+              {mergedLeftIcon}
             </motion.span>
           ) : null}
           {inputNode}
-          {(rightIcon || (showClearButton && hasValue && !disabled)) ? (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-white/50">
+          {hasRightContent ? (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white/50">
+              {/* Status indicators */}
               <AnimatePresence mode="wait">
+                {effectiveStatus === 'loading' && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: duration.quick, ease: easing.smooth }}
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-white/50" />
+                  </motion.div>
+                )}
+                {effectiveStatus === 'success' && !suffix && (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: duration.quick, ease: easing.smooth }}
+                  >
+                    <Check className="h-4 w-4 text-status-success" />
+                  </motion.div>
+                )}
+                {effectiveStatus === 'error' && !suffix && (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: duration.quick, ease: easing.smooth }}
+                  >
+                    <X className="h-4 w-4 text-status-error" />
+                  </motion.div>
+                )}
                 {showClearButton && hasValue && !disabled && onClear ? (
                   <motion.button
                     key="clear-button"
@@ -223,23 +297,36 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     whileTap={{ scale: 0.9 }}
                     transition={{ duration: duration.quick, ease: easing.smooth }}
                   >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden="true"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </motion.button>
                 ) : null}
               </AnimatePresence>
+
+              {/* Password toggle */}
+              {isPassword && showPasswordToggle && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-white/50 hover:text-white transition-colors"
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+
+              {/* Suffix */}
+              {suffix && (
+                <span className="text-sm text-white/50 select-none">
+                  {suffix}
+                </span>
+              )}
+
+              {/* Right icon */}
               {rightIcon ? (
                 <motion.span
                   aria-hidden
@@ -292,14 +379,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {inputWithDecorations}
 
         <AnimatePresence mode="wait">
-          {(helperText || error) ? (
+          {(error || success || mergedHelperText) ? (
             <motion.p
-              key={error ? "error" : "helper"}
+              key={error ? "error" : success ? "success" : "helper"}
               id={`${inputId}-description`}
               className={cn(
                 "text-xs",
                 error
-                  ? "text-[#FF3737]"
+                  ? "text-status-error"
+                  : success
+                  ? "text-status-success"
                   : "text-white/50"
               )}
               initial={{ opacity: 0, y: -4 }}
@@ -308,7 +397,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               transition={{ duration: duration.quick, ease: easing.smooth }}
               role={error ? "alert" : undefined}
             >
-              {error || helperText}
+              {error || success || mergedHelperText}
             </motion.p>
           ) : null}
         </AnimatePresence>

@@ -5,6 +5,42 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      // Premium UI Animations (Billion-Dollar Patterns)
+      keyframes: {
+        'shine-rotate': {
+          '0%': { backgroundPosition: '0% 0%' },
+          '50%': { backgroundPosition: '100% 100%' },
+          '100%': { backgroundPosition: '0% 0%' },
+        },
+        'border-beam': {
+          '0%': { offsetDistance: '0%' },
+          '100%': { offsetDistance: '100%' },
+        },
+        'sparkle-spin': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(180deg)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-5px)' },
+        },
+        'pulse-gold': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(255, 215, 0, 0.4)' },
+          '50%': { boxShadow: '0 0 0 8px rgba(255, 215, 0, 0)' },
+        },
+      },
+      animation: {
+        'shine-rotate': 'shine-rotate var(--shine-duration, 14s) linear infinite',
+        'border-beam': 'border-beam var(--beam-duration, 12s) linear infinite',
+        'sparkle-spin': 'sparkle-spin 2s linear infinite',
+        shimmer: 'shimmer 2.5s linear infinite',
+        float: 'float 3s ease-in-out infinite',
+        'pulse-gold': 'pulse-gold 2s ease-in-out infinite',
+      },
       colors: {
         foundation: {
           black: '#000000',
@@ -39,10 +75,10 @@ const config: Config = {
           hover: 'var(--hive-brand-hover)',
         },
         status: {
-          success: '#00D46A',
-          warning: '#FFB800',
-          error: '#FF3B30',
-          info: '#0A84FF',
+          success: 'var(--hive-status-success)',
+          warning: 'var(--hive-status-warning)',
+          error: 'var(--hive-status-error)',
+          info: 'var(--hive-status-info)',
         },
       },
     },
