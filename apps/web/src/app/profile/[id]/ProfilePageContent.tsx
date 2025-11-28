@@ -1,17 +1,44 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { useSession } from '@/hooks/use-session';
-import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, Badge } from '@hive/ui';
+import {
+  Button,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  Badge,
+  ProfileBentoGrid,
+  premiumContainerVariants,
+  premiumItemVariants,
+  InView,
+  AnimatedNumber,
+  numberSpringPresets,
+} from '@hive/ui';
 import { profileApiResponseToProfileSystem, type ProfileV2ApiResponse } from '@/components/profile/profile-adapter';
-import type { ProfileSystem, PresenceData } from '@hive/core';
+import type { ProfileSystem, BentoGridLayout, PresenceData } from '@hive/core';
 import { db } from '@hive/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { Users, Sparkles, Zap, Flame } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Users,
+  Sparkles,
+  Flame,
+  Star,
+  Pencil,
+  MessageCircle,
+  UserPlus,
+  MapPin,
+  GraduationCap,
+  ChevronRight,
+} from 'lucide-react';
 
-const formatRelativeTime = (iso?: string | null) => {
+// ============================================================================
+// Utilities
+// ============================================================================
+const formatRelativeTime = (iso?: string | null): string => {
   if (!iso) return 'Just now';
   const date = new Date(iso);
   const diff = Date.now() - date.getTime();
@@ -26,17 +53,52 @@ const formatRelativeTime = (iso?: string | null) => {
   return date.toLocaleDateString();
 };
 
-const presenceLabel = (status?: string, lastSeen?: string | null) => {
-  switch (status) {
-    case 'online':
-      return 'Online now';
-    case 'away':
-      return 'Away';
-    default:
-      return lastSeen ? `Last seen ${formatRelativeTime(lastSeen)}` : 'Offline';
-  }
+const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 };
 
+// ============================================================================
+// Premium Dark Stat Component (Billion-dollar UI)
+// Spring-animated counters on scroll-into-view, one gold accent for reputation
+// ============================================================================
+function Stat({
+  label,
+  value,
+  accent = false,
+  delay = 0,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+  delay?: number;
+}) {
+  return (
+    <div className="text-center px-4 sm:px-6">
+      <AnimatedNumber
+        value={value}
+        animateOnView
+        springOptions={{
+          ...numberSpringPresets.standard,
+          duration: 1500 + delay * 200,
+        }}
+        className={`text-2xl font-semibold ${accent ? 'text-gold-500' : 'text-white'}`}
+      />
+      <div className="text-xs text-neutral-500 uppercase tracking-wider mt-1">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
 export default function ProfilePageContent() {
   const params = useParams();
   const router = useRouter();
@@ -48,6 +110,9 @@ export default function ProfilePageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isOwnProfile = currentUser?.id === profileId;
+
+  // Fetch profile data
   useEffect(() => {
     let cancelled = false;
     const loadProfile = async () => {
@@ -56,11 +121,6 @@ export default function ProfilePageContent() {
       try {
         setIsLoading(true);
         setError(null);
-
-        if (currentUser?.id === profileId) {
-          router.replace('/profile/edit');
-          return;
-        }
 
         const response = await fetch(`/api/profile/v2?id=${profileId}`, {
           credentials: 'include',
@@ -86,7 +146,9 @@ export default function ProfilePageContent() {
 
         const payload = json.data as ProfileV2ApiResponse;
         setProfileData(payload);
-        setProfileSystem(profileApiResponseToProfileSystem(payload));
+        // Transform to ProfileSystem for bento grid
+        const system = profileApiResponseToProfileSystem(payload);
+        setProfileSystem(system);
         setIsLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -97,13 +159,12 @@ export default function ProfilePageContent() {
     };
 
     loadProfile();
-    return () => {
-      cancelled = true;
-    };
-  }, [profileId, currentUser?.id, router]);
+    return () => { cancelled = true; };
+  }, [profileId]);
 
+  // Subscribe to presence updates
   useEffect(() => {
-    if (!profileId || !profileData || profileData.viewer.isOwnProfile) return;
+    if (!profileId || !profileData || isOwnProfile) return;
 
     const presenceRef = doc(db, 'presence', profileId);
     const unsubscribe = onSnapshot(presenceRef, (snapshot) => {
@@ -125,77 +186,100 @@ export default function ProfilePageContent() {
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only depend on profileId
-  }, [profileId, profileData?.viewer?.isOwnProfile]);
+  }, [profileId, isOwnProfile, profileData]);
 
-   
-  useEffect(() => {
-    if (!profileData) return;
-    setProfileSystem(profileApiResponseToProfileSystem(profileData));
-  }, [profileData]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- stats is derived from profileData
+  // Computed values
   const stats = profileData?.stats ?? {};
-  const statItems = useMemo(
-    () => [
-      { label: 'Spaces', value: stats.spacesJoined ?? profileData?.spaces.length ?? 0, icon: Users },
-      { label: 'Friends', value: stats.friends ?? profileData?.connections.filter((c) => c.isFriend).length ?? 0, icon: Sparkles },
-      { label: 'Tools', value: stats.toolsCreated ?? 0, icon: Zap },
-      { label: 'Streak', value: stats.currentStreak ?? 0, icon: Flame },
-    ],
-    [stats, profileData?.spaces, profileData?.connections],
-  );
+  const statItems = useMemo(() => [
+    { label: 'Spaces', value: stats.spacesJoined ?? profileData?.spaces.length ?? 0, icon: Users },
+    { label: 'Friends', value: stats.friends ?? profileData?.connections.filter((c) => c.isFriend).length ?? 0, icon: Sparkles },
+    { label: 'Streak', value: stats.currentStreak ?? 0, icon: Flame },
+    { label: 'Reputation', value: stats.reputation ?? 0, icon: Star },
+  ], [stats, profileData?.spaces, profileData?.connections]);
 
   const initials = useMemo(() => {
     if (!profileData?.profile.fullName) return '';
-    return profileData.profile.fullName
-      .split(' ')
-      .filter(Boolean)
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+    return getInitials(profileData.profile.fullName);
   }, [profileData?.profile.fullName]);
 
+  // Sample activities (in real app, from API)
+  const activities = useMemo(() => {
+    if (!profileData) return [];
+    return [
+      ...(profileData.spaces.slice(0, 2).map((s) => ({
+        type: 'space' as const,
+        text: `Joined ${s.name}`,
+        timestamp: s.lastActivityAt ?? new Date().toISOString(),
+      }))),
+    ];
+  }, [profileData]);
+
+  const handleEditProfile = () => router.push('/profile/edit');
+
+  // Handle bento grid layout changes
+  const handleLayoutChange = async (layout: BentoGridLayout) => {
+    if (!isOwnProfile || !currentUser?.id) return;
+
+    // Update local state immediately for optimistic UI
+    setProfileSystem((prev) => prev ? { ...prev, grid: layout } : prev);
+
+    // Persist to API
+    try {
+      await fetch('/api/profile/v2', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grid: layout }),
+      });
+    } catch (err) {
+      console.error('Failed to save layout:', err);
+    }
+  };
+
+  // ========== LOADING STATE (Premium Dark - Simple) ==========
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--hive-brand-primary)] mx-auto mb-4"></div>
-          <p className="text-white mb-2">Loading profile...</p>
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-2 border-neutral-800 border-t-white animate-spin" />
+          <p className="text-sm text-neutral-500">Loading profile...</p>
         </div>
       </div>
     );
   }
 
+  // ========== ERROR STATE (Premium Dark - Simple) ==========
   if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Profile Not Available</h1>
-          <p className="text-gray-400 mb-6">{error}</p>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-950">
+        <div className="text-center max-w-md">
+          <p className="text-neutral-500 text-sm mb-2">Profile Not Available</p>
+          <p className="text-neutral-400 mb-6">{error}</p>
           <button
-            onClick={() => router.push('/spaces/browse')}
-            className="px-6 py-2 bg-[var(--hive-brand-primary)] text-black rounded-lg font-medium hover:bg-[var(--hive-brand-primary)]/90 transition-colors"
+            onClick={() => router.push('/spaces')}
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
           >
-            Browse Spaces Instead
+            Browse Spaces →
           </button>
         </div>
       </div>
     );
   }
 
-  if (!profileData || !profileSystem) {
+  // ========== NOT FOUND STATE (Premium Dark - Simple) ==========
+  if (!profileData) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Profile Not Found</h1>
-          <p className="text-gray-400 mb-6">This profile doesn't exist or has been removed.</p>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-neutral-950">
+        <div className="text-center max-w-md">
+          <p className="text-neutral-500 text-sm mb-2">Profile Not Found</p>
+          <p className="text-neutral-400 mb-6">
+            This profile doesn&apos;t exist or has been removed.
+          </p>
           <button
-            onClick={() => router.push('/')}
-            className="px-6 py-2 bg-[var(--hive-brand-primary)] text-black rounded-lg font-medium hover:bg-[var(--hive-brand-primary)]/90 transition-colors"
+            onClick={() => router.push('/feed')}
+            className="text-sm text-neutral-400 hover:text-white transition-colors"
           >
-            Go Home
+            Back to Feed →
           </button>
         </div>
       </div>
@@ -203,152 +287,181 @@ export default function ProfilePageContent() {
   }
 
   const presenceStatus = profileData.profile.presence?.status;
-  const presenceText = presenceLabel(presenceStatus, profileData.profile.presence?.lastSeen ?? null);
+  const isOnline = presenceStatus === 'online';
+  const presenceText = isOnline
+    ? 'Online now'
+    : presenceStatus === 'away'
+    ? 'Away'
+    : profileData.profile.presence?.lastSeen
+    ? `Last seen ${formatRelativeTime(profileData.profile.presence.lastSeen)}`
+    : 'Offline';
 
+  // ========== MAIN CONTENT (Premium Dark - Vercel/Linear style) ==========
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[var(--hive-background-page,#07080d)] text-[var(--hive-text-primary,#f7f7ff)] pb-16">
-        <section className="bg-[radial-gradient(circle_at_top,rgba(66,56,140,0.45),transparent)]">
-          <div className="mx-auto w-full max-w-5xl px-4 pb-12 pt-20">
-            <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-              <div className="flex flex-1 flex-col gap-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20 shadow-[0_0_0_3px_rgba(250,204,21,0.35)]">
-                    <AvatarImage src={profileData.profile.avatarUrl ?? undefined} alt={profileData.profile.fullName} />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <h1 className="text-3xl font-semibold tracking-tight text-[var(--hive-text-primary,#f7f7ff)]">
-                        {profileData.profile.fullName}
-                      </h1>
-                      <Badge variant="primary">
-                        {profileData.profile.campusId.replace('-', ' ').toUpperCase()}
-                      </Badge>
-                    </div>
-                    {profileData.profile.pronouns ? (
-                      <p className="text-sm text-[var(--hive-text-secondary,#c0c2cc)]">
-                        {profileData.profile.pronouns}
-                      </p>
-                    ) : null}
-                    <p className="text-sm text-[var(--hive-text-secondary,#c0c2cc)]">
-                      {profileData.profile.major || 'Campus builder'}
-                    </p>
-                  </div>
-                </div>
-                <p className="max-w-2xl text-sm text-[var(--hive-text-secondary,#c0c2cc)]">
-                  {profileData.profile.bio || 'UB student building the next wave of campus experiences.'}
+      <div className="min-h-screen pb-20 bg-neutral-950">
+        {/* ============ HERO HEADER ============ */}
+        <motion.header
+          variants={premiumContainerVariants}
+          initial="hidden"
+          animate="visible"
+          className="relative w-full border-b border-neutral-800"
+        >
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+            {/* Avatar + Identity Row */}
+            <motion.div
+              variants={premiumItemVariants}
+              className="flex flex-col sm:flex-row items-center sm:items-start gap-6"
+            >
+              {/* Avatar - Clean, no breathing animations */}
+              <div className="relative flex-shrink-0">
+                <Avatar className="h-32 w-32 border-2 border-neutral-800">
+                  <AvatarImage
+                    src={profileData.profile.avatarUrl ?? undefined}
+                    alt={profileData.profile.fullName}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="text-4xl font-bold bg-neutral-900 text-white">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Simple online indicator */}
+                {isOnline && (
+                  <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-neutral-950" />
+                )}
+              </div>
+
+              {/* Identity - Typography-forward */}
+              <div className="flex-1 text-center sm:text-left space-y-3">
+                <h1 className="text-3xl font-bold tracking-tight text-white">
+                  {profileData.profile.fullName}
+                </h1>
+                <p className="text-neutral-400 text-base">
+                  @{profileData.profile.handle}
                 </p>
-                <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.32em] text-[color-mix(in_srgb,var(--hive-text-muted,#9396aa) 85%,transparent)]">
-                  <span>{presenceText}</span>
-                  <span aria-hidden>•</span>
-                  <span>{stats.spacesJoined ?? profileData.spaces.length ?? 0} spaces active</span>
-                  <span aria-hidden>•</span>
-                  <span>{stats.friends ?? profileData.connections.filter((c) => c.isFriend).length ?? 0} close friends</span>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="secondary" className="rounded-full">
-                  Message
-                </Button>
-                <Button variant="default" className="rounded-full">
-                  Connect
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {statItems.map(({ label, value, icon: Icon }) => (
-                <div
-                  key={label}
-                  className="rounded-3xl border border-[color-mix(in_srgb,var(--hive-border-default,#292c3c) 65%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary,#0f1019) 88%,transparent)] px-5 py-4 shadow-[0_18px_36px_rgba(8,9,16,0.45)] backdrop-blur-lg"
-                >
-                  <div className="flex items-center justify-between text-[var(--hive-text-secondary,#c0c2cc)]">
-                    <span className="text-xs uppercase tracking-[0.24em]">{label}</span>
-                    <Icon className="h-4 w-4 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
-                  </div>
-                  <div className="mt-2 text-2xl font-semibold text-[var(--hive-text-primary,#f7f7ff)]">{value}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="mx-auto mt-10 w-full max-w-6xl px-4">
-          <ProfileBentoGrid profile={profileSystem} editable={false} />
-        </div>
-
-        {profileData.spaces.length > 0 ? (
-          <section className="mx-auto mt-14 w-full max-w-6xl px-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--hive-text-primary,#f7f7ff)]">Spaces</h2>
-              <Button variant="ghost" size="sm" className="text-[var(--hive-text-secondary,#c0c2cc)]">
-                View all
-              </Button>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {profileData.spaces.slice(0, 4).map((space) => (
-                <div
-                  key={space.id}
-                  className="rounded-3xl border border-[color-mix(in_srgb,var(--hive-border-default,#292c3c) 45%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-overlay,rgba(15,16,25,0.95)) 88%,transparent)] p-5"
-                >
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="font-medium text-[var(--hive-text-primary,#f7f7ff)]">{space.name}</div>
-                    <span className="rounded-full bg-[color-mix(in_srgb,var(--hive-brand-primary,#facc15) 12%,transparent)] px-3 py-1 text-xs text-[var(--hive-brand-primary,#facc15)]">
-                      {space.role}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-[var(--hive-text-secondary,#c0c2cc)]">
-                    {space.headline || 'Student-led experiences across UB.'}
+                {profileData.profile.bio && (
+                  <p className="text-neutral-300 text-base leading-relaxed max-w-md">
+                    {profileData.profile.bio}
                   </p>
-                  <div className="mt-4 flex items-center justify-between text-[color-mix(in_srgb,var(--hive-text-muted,#9396aa) 82%,transparent)]">
-                    <span className="text-xs uppercase tracking-[0.28em]">{space.memberCount} members</span>
-                    <span className="text-xs uppercase tracking-[0.28em]">Active {formatRelativeTime(space.lastActivityAt)}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+                )}
 
-        {profileData.connections.length > 0 ? (
-          <section className="mx-auto mt-14 w-full max-w-6xl px-4">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--hive-text-primary,#f7f7ff)]">Connections</h2>
-              <span className="text-sm text-[var(--hive-text-secondary,#c0c2cc)]">
-                {profileData.connections.length} total
-              </span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {profileData.connections.slice(0, 6).map((connection) => (
-                <div
-                  key={connection.id}
-                  className="rounded-3xl border border-[color-mix(in_srgb,var(--hive-border-default,#292c3c) 45%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-overlay,rgba(13,14,22,0.96)) 88%,transparent)] p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--hive-brand-primary,#facc15) 18%,transparent)] text-sm font-semibold text-[var(--hive-background-primary,#090a14)]">
-                      {connection.name
-                        .split(' ')
-                        .filter(Boolean)
-                        .map((part) => part[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-[var(--hive-text-primary,#f7f7ff)]">
-                        {connection.name}
-                      </div>
-                      <div className="text-xs text-[var(--hive-text-secondary,#c0c2cc)]">
-                        {connection.sharedSpaces?.length || 0} shared spaces
-                      </div>
-                    </div>
-                  </div>
+                {/* Location/Major - Simple text */}
+                <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-500">
+                  <span className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5" />
+                    {profileData.profile.campusId.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </span>
+                  {profileData.profile.major && (
+                    <span className="flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      {profileData.profile.major}
+                    </span>
+                  )}
+                  <span className={`flex items-center gap-1.5 ${isOnline ? 'text-emerald-500' : ''}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-neutral-500'}`} />
+                    {presenceText}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+              </div>
+            </motion.div>
+
+            {/* Stats Bar - Spring-animated counters (billion-dollar pattern) */}
+            <motion.div
+              variants={premiumItemVariants}
+              className="mt-8 flex items-center gap-8 py-4 border-t border-b border-neutral-800"
+            >
+              <Stat label="Spaces" value={statItems[0].value} delay={0} />
+              <Stat label="Friends" value={statItems[1].value} delay={1} />
+              <Stat label="Streak" value={statItems[2].value} delay={2} />
+              <Stat label="Rep" value={statItems[3].value} delay={3} accent />
+            </motion.div>
+
+            {/* Action Buttons */}
+            <motion.div
+              variants={premiumItemVariants}
+              className="mt-6 flex items-center gap-3"
+            >
+              {isOwnProfile ? (
+                <Button
+                  onClick={handleEditProfile}
+                  className="rounded-lg px-4 py-2 text-sm font-medium bg-white text-neutral-950 hover:bg-neutral-200 transition-colors"
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+              ) : (
+                <>
+                  <Button className="rounded-lg px-4 py-2 text-sm font-medium bg-gold-500 text-neutral-950 hover:bg-gold-400 transition-colors">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Connect
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="rounded-lg px-4 py-2 text-sm font-medium bg-neutral-900 text-white border border-neutral-800 hover:border-neutral-700 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Message
+                  </Button>
+                </>
+              )}
+            </motion.div>
+
+            {/* Interests - Simple pills, no animation on each */}
+            {profileData.profile.interests && profileData.profile.interests.length > 0 && (
+              <motion.div
+                variants={premiumItemVariants}
+                className="mt-6 flex flex-wrap gap-2"
+              >
+                {profileData.profile.interests.slice(0, 8).map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 rounded-full text-sm text-neutral-400 bg-neutral-900 border border-neutral-800"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {profileData.profile.interests.length > 8 && (
+                  <span className="px-3 py-1 text-sm text-neutral-500">
+                    +{profileData.profile.interests.length - 8} more
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </div>
+        </motion.header>
+
+        {/* ============ BENTO GRID ============ */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {profileSystem && (
+            <InView
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+              viewOptions={{ once: true, margin: '0px 0px -100px 0px' }}
+            >
+              <ProfileBentoGrid
+                profile={profileSystem}
+                editable={isOwnProfile}
+                onLayoutChange={isOwnProfile ? handleLayoutChange : undefined}
+              />
+            </InView>
+          )}
+        </main>
+
+        {/* ============ EMPTY STATE (Premium Dark - Text only) ============ */}
+        {isOwnProfile && profileData.spaces.length === 0 && profileData.connections.length === 0 && (
+          <div className="max-w-md mx-auto px-4 py-8 text-center">
+            <p className="text-neutral-500 text-sm">No spaces or connections yet</p>
+            <button
+              onClick={() => router.push('/spaces')}
+              className="mt-3 text-sm text-neutral-400 hover:text-white transition-colors"
+            >
+              Find classmates →
+            </button>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

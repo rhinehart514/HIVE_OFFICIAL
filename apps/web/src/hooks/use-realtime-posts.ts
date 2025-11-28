@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot, _Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { api } from '@/lib/api-client';
 import type { User } from '@hive/core';
@@ -172,28 +172,73 @@ export function useRealtimePosts({ spaceId, enabled = true, limitCount = 50 }: U
      
   }, [spaceId, enabled, limitCount, fetchInitialPosts]);
 
-  // Create a new post
+  // Create a new post with optimistic update
   const createPost = useCallback(async (content: string, parentId?: string) => {
     if (!spaceId) return null;
+
+    // Create optimistic post with temporary ID
+    const tempId = `temp-${Date.now()}`;
+    const optimisticPost: Post = {
+      id: tempId,
+      content,
+      authorId: 'current-user', // Will be replaced by server
+      spaceId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isPinned: false,
+      reactions: {},
+      replyCount: 0,
+    };
+
+    // Optimistically add to UI immediately
+    setPosts(prev => [optimisticPost, ...prev]);
 
     try {
       const response = await api.spaces.posts.create(spaceId, content, parentId);
 
       if (!response.ok) {
+        // Remove optimistic post on failure
+        setPosts(prev => prev.filter(p => p.id !== tempId));
         throw new Error('Failed to create post');
       }
 
       const data = await response.json();
+
+      // Replace optimistic post with real post from server
+      setPosts(prev => prev.map(p => p.id === tempId ? { ...data.post, createdAt: new Date(data.post.createdAt), updatedAt: new Date(data.post.updatedAt) } : p));
+
       return data.post;
     } catch (err) {
+      // Remove optimistic post on error
+      setPosts(prev => prev.filter(p => p.id !== tempId));
       console.error('Failed to create post:', err);
       throw err;
     }
   }, [spaceId]);
 
-  // React to a post
-  const reactToPost = useCallback(async (postId: string, emoji: string) => {
+  // React to a post with optimistic update
+  const reactToPost = useCallback(async (postId: string, emoji: string, userId?: string) => {
     if (!spaceId) return;
+
+    // Store previous reactions for rollback
+    const previousPosts = posts;
+
+    // Optimistically update the reaction
+    setPosts(prev => prev.map(post => {
+      if (post.id !== postId) return post;
+
+      const reactions = { ...post.reactions };
+      const emojiReactions = reactions[emoji] || [];
+
+      // Toggle reaction (add if not present, remove if present)
+      if (userId && emojiReactions.includes(userId)) {
+        reactions[emoji] = emojiReactions.filter(id => id !== userId);
+      } else if (userId) {
+        reactions[emoji] = [...emojiReactions, userId];
+      }
+
+      return { ...post, reactions };
+    }));
 
     try {
       const response = await fetch(`/api/spaces/${spaceId}/posts/${postId}/reactions`, {
@@ -203,13 +248,17 @@ export function useRealtimePosts({ spaceId, enabled = true, limitCount = 50 }: U
       });
 
       if (!response.ok) {
+        // Revert on failure
+        setPosts(previousPosts);
         throw new Error('Failed to react to post');
       }
     } catch (err) {
+      // Revert on error
+      setPosts(previousPosts);
       console.error('Failed to react to post:', err);
       throw err;
     }
-  }, [spaceId]);
+  }, [spaceId, posts]);
 
   return {
     posts,
