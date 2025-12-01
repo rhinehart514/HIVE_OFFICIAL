@@ -75,7 +75,7 @@ const schools = [
   "Syracuse",
 ];
 
-export default function PreLaunch(): JSX.Element {
+export default function PreLaunch() {
   const targetUtcMs = useMemo(() => getTargetUtcMsForNov1MidnightET(new Date()), []);
   const countdown = useCountdown(targetUtcMs);
 

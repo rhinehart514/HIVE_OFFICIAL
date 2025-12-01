@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { withAuth, ApiResponse as _ApiResponse } from '@/lib/api-auth-middleware';
@@ -47,7 +47,7 @@ const fetchUsageStats = async (_userId: string): Promise<ToolUsageStats> => {
  * Get tool usage statistics for the authenticated user
  * GET /api/tools/usage-stats
  */
-export const GET = withAuth(async (request: NextRequest, authContext) => {
+export const GET = withAuth(async (request, authContext) => {
   try {
     const stats = await fetchUsageStats(authContext.userId);
     
@@ -62,7 +62,7 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
   } catch (error) {
     logger.error(
       `Usage stats fetch error at /api/tools/usage-stats`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       { 
@@ -72,16 +72,15 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, { 
-  allowDevelopmentBypass: true, // Usage stats are non-sensitive
-  operation: 'fetch_usage_stats' 
+}, {
+  operation: 'fetch_usage_stats'
 });
 
 /**
  * Record a tool usage event
  * POST /api/tools/usage-stats
  */
-export const POST = withAuth(async (request: NextRequest, authContext) => {
+export const POST = withAuth(async (request, authContext) => {
   try {
     const body = await request.json();
     const { toolId, action, _metadata } = body;
@@ -111,7 +110,7 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
   } catch (error) {
     logger.error(
       `Usage tracking error at /api/tools/usage-stats`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       { 
@@ -121,7 +120,6 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, { 
-  allowDevelopmentBypass: true, // Usage tracking is non-sensitive
-  operation: 'record_usage_event' 
+}, {
+  operation: 'record_usage_event'
 });

@@ -70,21 +70,21 @@ function FeatureCard({ title, description, icon: Icon, size, badge, index }: Fea
         group relative p-6 md:p-8 rounded-2xl
         bg-neutral-950 border border-neutral-800
         transition-all duration-300
-        hover:border-[#FFD700]/30 hover:shadow-[0_0_30px_rgba(255,215,0,0.05)]
+        hover:border-gold-500/30 hover:shadow-[0_0_30px_rgba(255,215,0,0.05)]
         cursor-pointer
         ${sizeClasses[size]}
       `}
     >
       {/* Badge */}
       {badge && (
-        <div className="absolute top-4 right-4 px-2 py-0.5 text-xs font-semibold bg-[#FFD700] text-black rounded-full">
+        <div className="absolute top-4 right-4 px-2 py-0.5 text-xs font-semibold bg-gold-500 text-black rounded-full">
           {badge}
         </div>
       )}
 
       {/* Icon */}
       <div className="mb-4">
-        <Icon className="h-8 w-8 text-neutral-400 group-hover:text-[#FFD700] group-hover:scale-110 transition-all duration-300" />
+        <Icon className="h-8 w-8 text-neutral-400 group-hover:text-gold-500 group-hover:scale-110 transition-all duration-300" />
       </div>
 
       {/* Content */}
@@ -136,7 +136,7 @@ export function SolutionSection() {
               description={feature.description}
               icon={feature.icon}
               size={feature.size}
-              badge={feature.badge}
+              badge={'badge' in feature ? feature.badge : undefined}
               index={index}
             />
           ))}

@@ -28,7 +28,7 @@ export interface SSEConnection {
   userId: string;
   connectionId: string;
   channels: Set<string>;
-  response: Response;
+  controller: ReadableStreamDefaultController | null;
   lastActivity: number;
 }
 
@@ -56,15 +56,15 @@ export class SSERealtimeService {
     
     const stream = new ReadableStream({
       start: (controller) => {
-        // Store connection
+        // Store connection with controller reference for broadcasting
         const connection: SSEConnection = {
           userId,
           connectionId,
           channels: new Set(channels),
-          response: null as unknown as Response, // Will be set by caller
+          controller, // Store controller for later broadcasts
           lastActivity: Date.now()
         };
-        
+
         this.connections.set(connectionId, connection);
         
         // Send initial connection confirmation
@@ -80,9 +80,15 @@ export class SSERealtimeService {
       },
       
       cancel: () => {
+        // Null out controller to prevent writes to closed stream
+        const conn = this.connections.get(connectionId);
+        if (conn) {
+          conn.controller = null;
+        }
+
         // Unregister from optimization manager
         realtimeOptimizationManager.unregisterConnection(connectionId);
-        
+
         // Clean up connection
         this.connections.delete(connectionId);
         logger.info('SSE connection closed', { userId, connectionId });
@@ -136,7 +142,7 @@ export class SSERealtimeService {
 
       return messageId;
     } catch (error) {
-      logger.error('Error sending SSE message', { error: error instanceof Error ? error : new Error(String(error)), messageId });
+      logger.error('Error sending SSE message', { error: { error: error instanceof Error ? error.message : String(error) }, messageId });
       throw error;
     }
   }
@@ -279,7 +285,7 @@ export class SSERealtimeService {
 
       return messagesSnapshot.docs.map(doc => doc.data() as RealtimeMessage);
     } catch (error) {
-      logger.error('Error getting message history', { error: error instanceof Error ? error : new Error(String(error)), channel });
+      logger.error('Error getting message history', { error: { error: error instanceof Error ? error.message : String(error) }, channel });
       return [];
     }
   }
@@ -289,23 +295,30 @@ export class SSERealtimeService {
    */
   private broadcastMessage(message: RealtimeMessage): void {
     const targetConnections = this.getTargetConnections(message);
-    
+
     for (const connection of targetConnections) {
       try {
-        // Create a dummy controller for broadcasting
-        // In actual implementation, this would use the stored response stream
-        this.sendSSEMessage(null, {
-          type: 'message',
-          data: message
-        });
-        
-        connection.lastActivity = Date.now();
+        // Use the stored controller for broadcasting
+        if (connection.controller) {
+          this.sendSSEMessage(connection.controller, {
+            type: 'message',
+            data: message
+          });
+          connection.lastActivity = Date.now();
+        } else {
+          logger.warn('No controller for SSE connection', {
+            connectionId: connection.connectionId,
+            userId: connection.userId
+          });
+        }
       } catch (error) {
-        logger.error('Error broadcasting to connection', { 
-          error, 
-          connectionId: connection.connectionId 
+        logger.error('Error broadcasting to connection', {
+          error: error instanceof Error ? error.message : String(error),
+          connectionId: connection.connectionId
         });
+        // Connection may have closed, clean it up
         this.connections.delete(connection.connectionId);
+        realtimeOptimizationManager.unregisterConnection(connection.connectionId);
       }
     }
   }

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error logging activity at /api/activity`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to log activity", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
     const summaries = summariesSnapshot.docs.map((doc: QueryDocumentSnapshot) => ({
       id: doc.id,
       ...doc.data()
-    })) as ActivitySummary[];
+    })) as unknown as ActivitySummary[];
 
     // Generate analytics
     const analytics = generateAnalytics(summaries, timeRange);
@@ -160,7 +160,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching activity analytics at /api/activity`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch activity analytics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -221,7 +221,7 @@ async function updateDailySummary(userId: string, event: ActivityEvent) {
   } catch (error) {
     logger.error(
       `Error updating daily summary at /api/activity`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

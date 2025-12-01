@@ -13,8 +13,8 @@ import {
 
 const SearchToolsSchema = z.object({
   query: z.string().min(1).max(100),
-  limit: z.coerce.number().min(1).max(50).default(20),
-  offset: z.coerce.number().min(0).default(0),
+  limit: z.coerce.number().min(1).max(50).optional(),
+  offset: z.coerce.number().min(0).optional(),
   category: z
     .enum([
       "productivity",
@@ -29,8 +29,8 @@ const SearchToolsSchema = z.object({
   minDeployments: z.coerce.number().min(0).optional(),
   sortBy: z
     .enum(["relevance", "deployments", "rating", "created"])
-    .default("relevance"),
-  includePrivate: z.coerce.boolean().default(false),
+    .optional(),
+  includePrivate: z.coerce.boolean().optional(),
 });
 
 type SearchToolsInput = z.infer<typeof SearchToolsSchema>;
@@ -90,21 +90,21 @@ function highlightSnippet(text: string, queryLower: string) {
 export const POST = withAuthValidationAndErrors(
   SearchToolsSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context: {},
     searchParams: SearchToolsInput,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const {
       query,
-      limit,
-      offset,
+      limit = 20,
+      offset = 0,
       category,
       verified,
       minDeployments,
-      sortBy,
-      includePrivate,
+      sortBy = 'relevance',
+      includePrivate = false,
     } = searchParams;
 
     try {
@@ -220,7 +220,7 @@ export const POST = withAuthValidationAndErrors(
           } catch (error) {
             logger.warn(
               "Failed to fetch creator info at /api/tools/search",
-              error instanceof Error ? error : new Error(String(error)),
+              { error: error instanceof Error ? error.message : String(error) },
             );
           }
         }
@@ -251,7 +251,7 @@ export const POST = withAuthValidationAndErrors(
         } catch (error) {
           logger.warn(
             "Failed to check user deployment at /api/tools/search",
-            error instanceof Error ? error : new Error(String(error)),
+            { error: error instanceof Error ? error.message : String(error) },
           );
         }
 
@@ -329,7 +329,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error searching tools at /api/tools/search",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to search tools", "INTERNAL_ERROR", {
         status: 500,

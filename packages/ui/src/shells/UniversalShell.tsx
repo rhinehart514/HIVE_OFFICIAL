@@ -171,7 +171,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         {Icon && <Icon />}
         <span className="flex-1 text-left text-[14px] font-medium">{label}</span>
         {badge && badge > 0 && (
-          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-[#F5C842]/20 text-[#F5C842] rounded-md">
+          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-gold-500/20 text-gold-500 rounded-md">
             {badge}
           </span>
         )}
@@ -287,8 +287,9 @@ export interface UniversalShellProps {
 }
 
 export const DEFAULT_SIDEBAR_NAV_ITEMS: ShellNavItem[] = [
-  { id: 'feed', label: 'Feed', href: '/feed', comingSoon: true },
+  { id: 'feed', label: 'Feed', href: '/feed' },
   { id: 'spaces', label: 'Spaces', href: '/spaces' },
+  { id: 'schedules', label: 'Calendar', href: '/calendar' },
   { id: 'hivelab', label: 'HiveLab', href: '/tools' },
 ];
 
@@ -298,11 +299,11 @@ export const DEFAULT_SECONDARY_NAV_ITEMS: ShellNavItem[] = [
 ];
 
 export const DEFAULT_MOBILE_NAV_ITEMS: ShellMobileNavItem[] = [
-  { id: 'feed', icon: () => null, label: 'Feed', path: '/feed', comingSoon: true },
-  { id: 'spaces', icon: () => null, label: 'Spaces', path: '/spaces' },
-  { id: 'hivelab', icon: () => null, label: 'Lab', path: '/tools' },
-  { id: 'notifications', icon: () => null, label: 'Notif', path: '/notifications' },
-  { id: 'profile', icon: () => null, label: 'Profile', path: '/profile' },
+  { id: 'feed', icon: HomeIcon, label: 'Feed', path: '/feed' },
+  { id: 'spaces', icon: UsersIcon, label: 'Spaces', path: '/spaces' },
+  { id: 'schedules', icon: CalendarIcon, label: 'Calendar', path: '/calendar' },
+  { id: 'hivelab', icon: BeakerIcon, label: 'Lab', path: '/tools' },
+  { id: 'profile', icon: UserIcon, label: 'Profile', path: '/profile' },
 ];
 
 // Tooltip component - minimal style
@@ -341,7 +342,24 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
 }) => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const shouldReduceMotion = useReducedMotion();
+
+  // Toggle a space section's expanded state
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
+  };
+
+  // Check if section is expanded (default to true for sections with spaces)
+  const isSectionExpanded = (sectionId: string, hasSpaces: boolean) => {
+    if (expandedSections[sectionId] !== undefined) {
+      return expandedSections[sectionId];
+    }
+    return hasSpaces; // Default: expanded if has spaces
+  };
 
   // Accessibility: simplified animations for reduced motion
   const springTransition = shouldReduceMotion
@@ -352,19 +370,42 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
     ? { duration: 0.01 }
     : CONTENT_TRANSITION;
 
-  // Load collapse state from localStorage
+  // Load sidebar state from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('hive-sidebar-collapsed');
-    if (saved !== null) {
-      setIsCollapsed(JSON.parse(saved));
+    try {
+      const savedCollapsed = localStorage.getItem('hive-sidebar-collapsed');
+      if (savedCollapsed !== null) {
+        setIsCollapsed(JSON.parse(savedCollapsed));
+      }
+      const savedSections = localStorage.getItem('hive-sidebar-sections');
+      if (savedSections !== null) {
+        setExpandedSections(JSON.parse(savedSections));
+      }
+    } catch {
+      // Ignore localStorage errors
     }
   }, []);
+
+  // Persist expanded sections when they change
+  useEffect(() => {
+    if (Object.keys(expandedSections).length > 0) {
+      try {
+        localStorage.setItem('hive-sidebar-sections', JSON.stringify(expandedSections));
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+  }, [expandedSections]);
 
   // Save collapse state
   const toggleCollapse = () => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
-    localStorage.setItem('hive-sidebar-collapsed', JSON.stringify(newState));
+    try {
+      localStorage.setItem('hive-sidebar-collapsed', JSON.stringify(newState));
+    } catch {
+      // Ignore localStorage errors
+    }
   };
 
   if (variant === 'minimal') {
@@ -533,7 +574,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                     {/* Badge - HIVE gold pill style */}
                     {!isComingSoon && item.badge && item.badge > 0 && !isCollapsed && (
                       <motion.span
-                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-[#F5C842] text-black rounded-full tabular-nums"
+                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-gold-500 text-black rounded-full tabular-nums"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={springTransition}
@@ -557,7 +598,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
             })}
           </motion.div>
 
-          {/* My Spaces - YC-style section with divider */}
+          {/* My Spaces - Grouped collapsible sections */}
           <AnimatePresence mode="wait">
             {!isCollapsed && (
               <motion.div
@@ -573,7 +614,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                   </h3>
                   <a
                     href="/spaces?tab=discover"
-                    className="text-neutral-600 hover:text-[#F5C842] transition-colors"
+                    className="text-neutral-600 hover:text-gold-500 transition-colors"
                     title="Browse spaces"
                   >
                     <PlusIcon />
@@ -581,33 +622,119 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                 </div>
 
                 {hasSpaces ? (
-                  <div className="space-y-0.5">
-                    {allSpaces.slice(0, 5).map((space) => (
-                      <a
-                        key={space.id}
-                        href={space.href}
-                        className="
-                          flex items-center gap-2.5 px-3 py-2 rounded-lg
-                          text-neutral-400 hover:text-white hover:bg-neutral-800/50
-                          transition-colors duration-75
-                        "
-                      >
-                        <span className={`
-                          w-2 h-2 rounded-sm flex-shrink-0
-                          ${space.status === 'live' ? 'bg-emerald-500' :
-                            space.status === 'new' ? 'bg-[#F5C842]' : 'bg-neutral-600'}
-                        `} />
-                        <span className="text-[13px] truncate font-medium">{space.label}</span>
-                      </a>
-                    ))}
+                  <div className="space-y-1">
+                    {mySpaces.map((section) => {
+                      const sectionHasSpaces = section.spaces.length > 0;
+                      const isExpanded = isSectionExpanded(section.id, sectionHasSpaces);
 
-                    {allSpaces.length > 5 && (
+                      return (
+                        <div key={section.id} className="space-y-0.5">
+                          {/* Section Header - Collapsible */}
+                          <button
+                            onClick={() => toggleSection(section.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowRight' && !isExpanded) {
+                                e.preventDefault();
+                                toggleSection(section.id);
+                              } else if (e.key === 'ArrowLeft' && isExpanded) {
+                                e.preventDefault();
+                                toggleSection(section.id);
+                              }
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-left hover:bg-neutral-800/30 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
+                            aria-expanded={isExpanded}
+                            aria-controls={`spaces-section-${section.id}`}
+                          >
+                            <motion.div
+                              animate={{ rotate: isExpanded ? 90 : 0 }}
+                              transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                              className="text-neutral-600 group-hover:text-neutral-400"
+                            >
+                              <ChevronRightIcon />
+                            </motion.div>
+                            <span className="text-[12px] font-medium text-neutral-500 group-hover:text-neutral-300 flex-1">
+                              {section.label}
+                            </span>
+                            {sectionHasSpaces && (
+                              <span className="text-[10px] text-neutral-600 tabular-nums">
+                                {section.spaces.length}
+                              </span>
+                            )}
+                          </button>
+
+                          {/* Section Content */}
+                          <AnimatePresence initial={false}>
+                            {isExpanded && (
+                              <motion.div
+                                id={`spaces-section-${section.id}`}
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                                className="overflow-hidden"
+                              >
+                                {sectionHasSpaces ? (
+                                  <div className="pl-6 space-y-0.5" role="group" aria-label={`${section.label} spaces`}>
+                                    {section.spaces.slice(0, 4).map((space) => (
+                                      <a
+                                        key={space.id}
+                                        href={space.href}
+                                        className="
+                                          flex items-center gap-2.5 px-2 py-1.5 rounded-md
+                                          text-neutral-400 hover:text-white hover:bg-neutral-800/50
+                                          transition-colors duration-75
+                                          outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950
+                                        "
+                                      >
+                                        <span
+                                          className={`
+                                            w-1.5 h-1.5 rounded-full flex-shrink-0
+                                            ${space.status === 'live' ? 'bg-emerald-500' :
+                                              space.status === 'new' ? 'bg-gold-500' : 'bg-neutral-600'}
+                                          `}
+                                          aria-hidden="true"
+                                        />
+                                        <span className="text-[13px] truncate">{space.label}</span>
+                                        {space.status === 'new' && <span className="sr-only">(new)</span>}
+                                        {space.status === 'live' && <span className="sr-only">(active)</span>}
+                                      </a>
+                                    ))}
+                                    {section.spaces.length > 4 && (
+                                      <a
+                                        href={section.actionHref || '/spaces?tab=joined'}
+                                        className="flex items-center px-2 py-1 text-[11px] text-neutral-500 hover:text-gold-500 transition-colors outline-none focus-visible:text-gold-500"
+                                      >
+                                        +{section.spaces.length - 4} more
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="pl-6 pr-3 py-2">
+                                    <p className="text-[11px] text-neutral-600 mb-1.5">
+                                      {section.emptyCopy || 'No spaces yet'}
+                                    </p>
+                                    {section.actionLabel && section.actionHref && (
+                                      <a
+                                        href={section.actionHref}
+                                        className="text-[11px] text-neutral-500 hover:text-gold-500 transition-colors"
+                                      >
+                                        {section.actionLabel} →
+                                      </a>
+                                    )}
+                                  </div>
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+
+                    {/* View all link */}
+                    {allSpaces.length > 8 && (
                       <a
                         href="/spaces?tab=joined"
-                        className="
-                          flex items-center px-3 py-2 text-[12px] text-neutral-500
-                          hover:text-[#F5C842] transition-colors
-                        "
+                        className="flex items-center px-3 py-2 text-[12px] text-neutral-500 hover:text-gold-500 transition-colors"
                       >
                         View all {allSpaces.length} spaces →
                       </a>
@@ -620,10 +747,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                     </p>
                     <a
                       href="/spaces?tab=discover"
-                      className="
-                        inline-flex items-center gap-1.5 text-[12px] text-neutral-400
-                        hover:text-[#F5C842] transition-colors
-                      "
+                      className="inline-flex items-center gap-1.5 text-[12px] text-neutral-400 hover:text-gold-500 transition-colors"
                     >
                       Browse spaces →
                     </a>
@@ -684,7 +808,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                     {/* Notification badge */}
                     {showBadge && !isCollapsed && (
                       <motion.span
-                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-[#F5C842] text-black rounded-full tabular-nums"
+                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-gold-500 text-black rounded-full tabular-nums"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={springTransition}
@@ -696,7 +820,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                     {/* Badge dot for collapsed */}
                     {showBadge && isCollapsed && (
                       <motion.span
-                        className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#F5C842] rounded-full"
+                        className="absolute top-1.5 right-1.5 w-2 h-2 bg-gold-500 rounded-full"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={springTransition}
@@ -773,14 +897,14 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                         className="w-11 h-11 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-[#F5C842] to-[#E5B732] flex items-center justify-center text-black text-base font-bold">
+                      <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-black text-base font-bold">
                         {userName ? userName.charAt(0).toUpperCase() : 'U'}
                       </div>
                     )}
                   </div>
                   {/* User Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-semibold text-white truncate group-hover:text-[#F5C842] transition-colors">
+                    <p className="text-[14px] font-semibold text-white truncate group-hover:text-gold-500 transition-colors">
                       {userName || 'Your Profile'}
                     </p>
                     <p className="text-[12px] text-neutral-500 truncate">
@@ -812,7 +936,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
                       className="w-9 h-9 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#F5C842] to-[#E5B732] flex items-center justify-center text-black text-sm font-bold">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-black text-sm font-bold">
                       {userName ? userName.charAt(0).toUpperCase() : 'U'}
                     </div>
                   )}

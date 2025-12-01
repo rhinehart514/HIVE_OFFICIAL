@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
@@ -10,8 +10,20 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerSpaceRepository } from "@hive/core/server";
+
+/**
+ * Check if content should be hidden from results
+ * Filters out moderated/hidden/removed content
+ */
+function isContentHidden(data: Record<string, unknown>): boolean {
+  if (data.isHidden === true) return true;
+  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
+  if (data.isDeleted === true) return true;
+  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
+  return false;
+}
 
 const EditPostSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -22,17 +34,22 @@ const ReactionSchema = z.object({
 });
 
 async function loadSpaceMembership(spaceId: string, userId: string) {
-  const membership = await requireSpaceMembership(spaceId, userId);
-  if (!membership.ok) {
+  // Use DDD repository for space validation
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
     return {
       ok: false as const,
-      status: membership.status,
-      message: membership.error,
+      status: HttpStatus.NOT_FOUND,
+      message: "Space not found",
     };
   }
 
-  const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  const space = spaceResult.getValue();
+
+  // Enforce campus isolation
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -40,10 +57,38 @@ async function loadSpaceMembership(spaceId: string, userId: string) {
     };
   }
 
+  // Check membership in flat collection
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    // Allow public spaces to be viewable without membership
+    if (!space.isPublic) {
+      return {
+        ok: false as const,
+        status: HttpStatus.FORBIDDEN,
+        message: "You must be a member of this space",
+      };
+    }
+    return {
+      ok: true as const,
+      space,
+      membershipData: { role: 'guest' },
+    };
+  }
+
+  const membershipData = membershipSnapshot.docs[0].data();
+
   return {
     ok: true as const,
-    spaceData,
-    membershipData: membership.membership,
+    space,
+    membershipData,
   };
 }
 
@@ -64,17 +109,21 @@ async function loadPost(spaceId: string, postId: string) {
   if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied for this campus" };
   }
+  // SECURITY: Don't allow access to hidden/moderated posts
+  if (isContentHidden(postData)) {
+    return { ok: false as const, status: 404, message: "Post not found" };
+  }
   return { ok: true as const, postDoc, postData };
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -108,7 +157,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching post at /api/spaces/[spaceId]/posts/[postId]",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch post", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -119,14 +168,14 @@ export const GET = withAuthAndErrors(async (
 export const PATCH = withAuthValidationAndErrors(
   EditPostSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await loadSpaceMembership(spaceId, userId);
       if (!membership.ok) {
@@ -190,7 +239,7 @@ export const PATCH = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error editing post at /api/spaces/[spaceId]/posts/[postId]",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to edit post", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -200,13 +249,13 @@ export const PATCH = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -240,7 +289,7 @@ export const DELETE = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error deleting post at /api/spaces/[spaceId]/posts/[postId]",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to delete post", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -251,14 +300,14 @@ export const DELETE = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   ReactionSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -308,7 +357,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error updating reaction at /api/spaces/[spaceId]/posts/[postId]",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to update reaction", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

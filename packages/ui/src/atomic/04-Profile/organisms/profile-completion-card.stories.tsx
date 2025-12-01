@@ -70,6 +70,9 @@ export const Completed: Story = {
 // ===== INTERACTIVE EXAMPLES =====
 
 export const InteractiveCompletion: Story = {
+  args: {
+    completionPercentage: 0,
+  },
   render: () => {
     const allSteps = [
       { id: 'avatar', title: 'Add a profile photo' },
@@ -102,6 +105,9 @@ export const InteractiveCompletion: Story = {
 };
 
 export const WithCustomSteps: Story = {
+  args: {
+    completionPercentage: 20,
+  },
   render: () => {
     const customSteps: ProfileCompletionStep[] = [
       { id: 'verify_email', title: 'Verify your @buffalo.edu email' },
@@ -127,6 +133,9 @@ export const WithCustomSteps: Story = {
 };
 
 export const ProgressAnimation: Story = {
+  args: {
+    completionPercentage: 0,
+  },
   render: () => {
     const [progress, setProgress] = React.useState(0);
     const [completedSteps, setCompletedSteps] = React.useState<string[]>([]);
@@ -169,6 +178,9 @@ export const ProgressAnimation: Story = {
 };
 
 export const StaggerDemo: Story = {
+  args: {
+    completionPercentage: 35,
+  },
   render: () => {
     const [show, setShow] = React.useState(false);
 
@@ -203,6 +215,9 @@ export const StaggerDemo: Story = {
 // ===== COMPARISON =====
 
 export const CompletionStages: Story = {
+  args: {
+    completionPercentage: 15,
+  },
   render: () => {
     return (
       <div className="flex flex-col gap-6 w-[400px]">

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { _logger } from "@/lib/structured-logger";
+import { logger as _logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
@@ -30,7 +30,7 @@ const PatchStateSchema = z.object({
   value: z.unknown().optional(),
   operation: z
     .enum(["set", "delete", "increment", "append"])
-    .default("set"),
+    .optional(),
 });
 
 type DeploymentDoc =
@@ -208,7 +208,8 @@ function applyPatchOperation(
   state: Record<string, unknown>,
   patch: z.infer<typeof PatchStateSchema>,
 ) {
-  switch (patch.operation) {
+  const operation = patch.operation || 'set';
+  switch (operation) {
     case "set":
       setNestedValue(state, patch.path, patch.value);
       break;
@@ -271,11 +272,11 @@ function createStatePayload(
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId);
@@ -292,7 +293,7 @@ export const GET = withAuthAndErrors(async (
     });
   }
 
-  const { _placementContext, placementStateDoc, globalStateDoc } =
+  const { placementContext: _placementContext, placementStateDoc, globalStateDoc } =
     await fetchStateDocuments(deploymentResult.doc, userId);
 
   const stateDoc =
@@ -328,12 +329,12 @@ export const GET = withAuthAndErrors(async (
 export const PUT = withAuthValidationAndErrors(
   UpdateStateSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ deploymentId: string }> },
     body,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
     const deploymentResult = await loadDeployment(deploymentId);
@@ -409,12 +410,12 @@ export const PUT = withAuthValidationAndErrors(
 export const PATCH = withAuthValidationAndErrors(
   PatchStateSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ deploymentId: string }> },
     body,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
     const deploymentResult = await loadDeployment(deploymentId);
@@ -500,11 +501,11 @@ export const PATCH = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId);

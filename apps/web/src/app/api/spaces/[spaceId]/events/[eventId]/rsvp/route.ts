@@ -1,19 +1,56 @@
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { _ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { HttpStatus } from '@/lib/api-response-types';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { requireSpaceMembership } from '@/lib/space-security';
+import { notifyEventRsvp } from '@/lib/notification-service';
+import { getServerSpaceRepository } from '@hive/core/server';
 
 const RSVPSchema = z.object({
   status: z.enum(['going', 'maybe', 'not_going']),
 });
+
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Space not found' };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Membership required' };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
 
 async function loadEvent(spaceId: string, eventId: string) {
   const eventDoc = await dbAdmin
@@ -48,20 +85,20 @@ async function loadEvent(spaceId: string, eventId: string) {
 export const POST = withAuthValidationAndErrors(
   RSVPSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; eventId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, eventId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
-      const membership = await requireSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
+      const validation = await validateSpaceAndMembership(spaceId, userId);
+      if (!validation.ok) {
         const code =
-          membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-        return respond.error(membership.error, code, { status: membership.status });
+          validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
       const load = await loadEvent(spaceId, eventId);
@@ -130,6 +167,32 @@ export const POST = withAuthValidationAndErrors(
         .where('status', '==', 'going')
         .get();
 
+      // Notify event organizer about RSVP (only for 'going' or 'maybe')
+      if (body.status !== 'not_going' && load.eventData.organizerId) {
+        try {
+          // Get user's name for notification
+          const userDoc = await dbAdmin.collection('users').doc(userId).get();
+          const userName = userDoc.data()?.fullName || 'Someone';
+
+          await notifyEventRsvp({
+            organizerId: load.eventData.organizerId,
+            attendeeId: userId,
+            attendeeName: userName,
+            eventId,
+            eventTitle: load.eventData.title || 'an event',
+            spaceId,
+            rsvpStatus: body.status === 'going' ? 'going' : 'interested',
+          });
+        } catch (notifyError) {
+          // Don't fail the RSVP if notification fails
+          logger.warn('Failed to send RSVP notification', {
+            error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+            eventId,
+            spaceId,
+          });
+        }
+      }
+
       return respond.success({
         rsvp: rsvpData,
         currentAttendees: updatedCount.size,
@@ -144,7 +207,7 @@ export const POST = withAuthValidationAndErrors(
 
       logger.error(
         `Error creating RSVP at /api/spaces/[spaceId]/events/[eventId]/rsvp`,
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error('Failed to RSVP to event', 'INTERNAL_ERROR', {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -154,19 +217,19 @@ export const POST = withAuthValidationAndErrors(
 );
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; eventId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, eventId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
       const code =
-        membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-      return respond.error(membership.error, code, { status: membership.status });
+        validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const load = await loadEvent(spaceId, eventId);
@@ -190,7 +253,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error fetching RSVP status at /api/spaces/[spaceId]/events/[eventId]/rsvp`,
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error('Failed to fetch RSVP status', 'INTERNAL_ERROR', {
       status: HttpStatus.INTERNAL_SERVER_ERROR,

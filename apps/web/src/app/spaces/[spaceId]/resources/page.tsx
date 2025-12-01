@@ -8,7 +8,7 @@ const ResourcesPanel = dynamic(() => import("@/components/spaces/panels/resource
 
 export default function SpaceResourcesPage() {
   const { spaceId } = useParams<{ spaceId: string }>();
-  const { _user } = useAuth();
+  const { user: _user } = useAuth();
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">

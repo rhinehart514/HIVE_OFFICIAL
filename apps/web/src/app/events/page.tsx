@@ -22,7 +22,7 @@ import {
 import { useSession } from "../../hooks/use-session";
 import { ErrorBoundary } from "../../components/error-boundary";
 import { EventsLoadingSkeleton } from "../../components/events/events-loading-skeleton";
-import { CreateEventModal } from "../../components/events/create-event-modal";
+import { CreateEventModal, type CreateEventData } from "../../components/events/create-event-modal";
 import { EventDetailsModal } from "../../components/events/event-details-modal";
 
 // Event interfaces
@@ -658,7 +658,7 @@ export default function EventsPage() {
               id: `event-${Date.now()}`,
               title: eventData.title,
               description: eventData.description,
-              type: eventData.type,
+              type: eventData.type as EventData['type'],
               organizer: {
                 id: user?.id || 'current-user',
                 name: user?.fullName || 'You',
@@ -668,17 +668,17 @@ export default function EventsPage() {
               datetime: {
                 start: eventData.datetime.start,
                 end: eventData.datetime.end,
-                timezone: eventData.datetime.timezone
+                timezone: eventData.datetime.timezone || 'America/New_York'
               },
-              location: eventData.location,
+              location: { ...eventData.location, type: 'physical' as const },
               capacity: {
-                max: eventData.capacity,
+                max: 100,
                 current: 0,
                 waitlist: 0
               },
-              tools: eventData.tools,
-              tags: eventData.tags,
-              visibility: eventData.visibility,
+              tools: [],
+              tags: [],
+              visibility: 'public' as const,
               rsvpStatus: null,
               isBookmarked: false,
               engagement: {
@@ -687,7 +687,7 @@ export default function EventsPage() {
                 comments: 0,
                 shares: 0
               },
-              requirements: eventData.requirements,
+              requirements: [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             };

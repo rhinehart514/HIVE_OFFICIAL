@@ -21,7 +21,7 @@ export function WhySection() {
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 0.03 } : {}}
         transition={{ duration: 1 }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[#FFD700] blur-[120px] rounded-full pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gold-500 blur-[120px] rounded-full pointer-events-none"
       />
 
       <div ref={contentRef} className="relative z-10 max-w-3xl mx-auto text-center">
@@ -67,7 +67,7 @@ export function WhySection() {
               }}
               className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 border border-neutral-800"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+              <div className="w-1.5 h-1.5 rounded-full bg-gold-500" />
               <span className="text-sm font-medium text-white">{value}</span>
             </motion.div>
           ))}

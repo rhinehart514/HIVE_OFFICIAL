@@ -83,7 +83,61 @@ export class Widget extends Entity<WidgetProps> {
     if (!title || title.trim().length === 0) {
       return Result.fail<void>('Widget title cannot be empty');
     }
-    this.props.title = title;
+    if (title.length > 100) {
+      return Result.fail<void>('Widget title cannot exceed 100 characters');
+    }
+    this.props.title = title.trim();
     return Result.ok<void>();
+  }
+
+  /**
+   * Enable or disable the widget
+   */
+  public setEnabled(isEnabled: boolean): void {
+    this.props.isEnabled = isEnabled;
+  }
+
+  /**
+   * Update multiple properties at once
+   * Returns list of fields that were actually changed
+   */
+  public update(updates: {
+    title?: string;
+    config?: Record<string, any>;
+    order?: number;
+    isVisible?: boolean;
+    isEnabled?: boolean;
+  }): Result<{ changedFields: string[] }> {
+    const changedFields: string[] = [];
+
+    if (updates.title !== undefined && updates.title !== this.props.title) {
+      const titleResult = this.setTitle(updates.title);
+      if (titleResult.isFailure) {
+        return Result.fail<{ changedFields: string[] }>(titleResult.error ?? 'Title update failed');
+      }
+      changedFields.push('title');
+    }
+
+    if (updates.config !== undefined) {
+      this.updateConfig(updates.config);
+      changedFields.push('config');
+    }
+
+    if (updates.order !== undefined && updates.order !== this.props.order) {
+      this.setOrder(updates.order);
+      changedFields.push('order');
+    }
+
+    if (updates.isVisible !== undefined && updates.isVisible !== this.props.isVisible) {
+      this.setVisibility(updates.isVisible);
+      changedFields.push('isVisible');
+    }
+
+    if (updates.isEnabled !== undefined && updates.isEnabled !== this.props.isEnabled) {
+      this.setEnabled(updates.isEnabled);
+      changedFields.push('isEnabled');
+    }
+
+    return Result.ok<{ changedFields: string[] }>({ changedFields });
   }
 }

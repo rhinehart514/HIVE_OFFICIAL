@@ -75,13 +75,13 @@ async function listUserSpaceIds(userId: string) {
 export const POST = withAuthValidationAndErrors(
   ConflictCheckSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     body,
     respond,
   ) => {
     try {
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
       const { startDate, endDate, excludeEventId } = body;
 
       const proposedStart = new Date(startDate);
@@ -197,7 +197,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error checking conflicts at /api/calendar/conflicts",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to check conflicts", "INTERNAL_ERROR", {
         status: 500,

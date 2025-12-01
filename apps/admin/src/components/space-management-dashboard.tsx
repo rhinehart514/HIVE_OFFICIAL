@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 
@@ -49,7 +49,7 @@ export function SpaceManagementDashboard() {
     { value: 'university_organizations', label: 'University Orgs' },
   ];
 
-  const searchSpaces = async () => {
+  const searchSpaces = useCallback(async () => {
     if (!admin) return;
 
     setLoading(true);
@@ -82,7 +82,7 @@ export function SpaceManagementDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [admin, searchTerm, selectedStatus, selectedType]);
 
   const handleSpaceAction = async (action: string, spaceId: string) => {
     if (!admin) return;
@@ -154,7 +154,7 @@ export function SpaceManagementDashboard() {
 
   useEffect(() => {
     searchSpaces();
-  }, [admin, selectedType, selectedStatus]);
+  }, [searchSpaces]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

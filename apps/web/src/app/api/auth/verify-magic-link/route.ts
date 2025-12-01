@@ -3,14 +3,14 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
-import { type Timestamp } from "firebase-admin/firestore";
+import { type Timestamp as _Timestamp } from "firebase-admin/firestore";
 import { handleApiError, AuthenticationError as _AuthenticationError, ValidationError } from "@/lib/api-error-handler";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
 import { validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/structured-logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { createSession, setSessionCookie } from "@/lib/session";
 import { isAdminEmail } from '@/lib/admin/roles';
 
@@ -49,7 +49,7 @@ async function validateSchoolDomain(email: string, schoolId: string): Promise<bo
     
     return emailDomain === schoolDomain;
   } catch (error) {
-    logger.error('School domain validation failed', error instanceof Error ? error : new Error(String(error)), { metadata: { endpoint: '/api/auth/verify-magic-link' } });
+    logger.error('School domain validation failed', { error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/auth/verify-magic-link' });
     return false;
   }
 }
@@ -134,11 +134,10 @@ export async function POST(request: NextRequest) {
 
     try {
       // Verify as a Firebase action code (magic link)
-      actionCodeInfo = await (auth as { checkActionCode: (token: string) => Promise<{ data: { email: string } }> }).checkActionCode(token);
+      actionCodeInfo = await (auth as unknown as { checkActionCode: (token: string) => Promise<{ data: { email: string } }> }).checkActionCode(token);
     } catch (firebaseError) {
       logger.error('Firebase action code verification failed',
-        firebaseError instanceof Error ? firebaseError : new Error(String(firebaseError)),
-        { metadata: { endpoint: '/api/auth/verify-magic-link' } }
+        { error: { error: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) }, endpoint: '/api/auth/verify-magic-link' }
       );
 
       await auditAuthEvent('failure', request, {
@@ -161,7 +160,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Apply the action code to complete the sign-in
-    await (auth as { applyActionCode: (token: string) => Promise<void> }).applyActionCode(token);
+    await (auth as unknown as { applyActionCode: (token: string) => Promise<void> }).applyActionCode(token);
     
     // Get or create user record
     let userRecord;
@@ -291,12 +290,11 @@ export async function POST(request: NextRequest) {
             });
           }
         } catch (adminError) {
-          logger.error('Failed to grant admin permissions',
-            adminError instanceof Error ? adminError : new Error(String(adminError)),
-            {
-              userId: userRecord.uid,
-              metadata: { email: email }
-            });
+          logger.error('Failed to grant admin permissions', {
+            error: { error: adminError instanceof Error ? adminError.message : String(adminError) },
+            userId: userRecord.uid,
+            email: email
+          });
           // Don't fail the login if admin grant fails
         }
       }

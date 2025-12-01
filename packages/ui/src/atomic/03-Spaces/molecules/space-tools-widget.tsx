@@ -1,16 +1,23 @@
 'use client';
 
+/**
+ * SpaceToolsWidget - Active tools section for space sidebar
+ *
+ * Refactored to use CollapsibleWidget pattern and glass morphism.
+ * Now leverages centralized motion variants for consistent animation.
+ */
+
 import * as React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Zap, Clock, ChevronRight, Wrench } from 'lucide-react';
 
 import { cn } from '../../../lib/utils';
+import { CollapsibleWidget } from './collapsible-widget';
+import { SpaceEmptyState, ToolsEmptyState } from './space-empty-state';
+import { railWidgetVariants, staggerFadeItemVariants, listStaggerVariants } from '../../../lib/motion-variants-spaces';
 import {
   Badge,
   Button,
-  ZapIcon,
-  ClockIcon,
-  ChevronRightIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
 } from '../../00-Global/atoms';
 
 export interface SpaceTool {
@@ -41,6 +48,13 @@ export interface SpaceToolsWidgetProps
   maxVisible?: number;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  /** Compact mode for mobile inline sections */
+  compact?: boolean;
+  /**
+   * Inline mode: renders content without any wrapper styling
+   * Used when widget is rendered inside a unified container (SpaceSidebar unified mode)
+   */
+  inline?: boolean;
 }
 
 export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidgetProps>(
@@ -50,6 +64,8 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
       maxVisible = 3,
       collapsible = true,
       defaultCollapsed = false,
+      compact = false,
+      inline = false,
       onToolClick,
       onViewAll,
       className,
@@ -57,151 +73,136 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
     },
     ref
   ) => {
-    const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
+    const shouldReduceMotion = useReducedMotion();
     const visibleTools = data.tools.slice(0, maxVisible);
     const hiddenCount = Math.max(0, data.tools.length - maxVisible);
 
-    const handleToggle = () => {
-      if (collapsible) {
-        setIsCollapsed(!isCollapsed);
-      }
-    };
-
-    return (
-      <aside
-        ref={ref}
-        className={cn(
-          'flex flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--hive-border-default) 65%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 98%,transparent)]',
-          className
-        )}
-        {...props}
-      >
-        {/* Header */}
-        <header
-          className={cn(
-            'flex items-center justify-between gap-3 border-b border-[color-mix(in_srgb,var(--hive-border-default) 50%,transparent)] px-5 py-4',
-            collapsible && 'cursor-pointer'
-          )}
+    const content = data.tools.length === 0 ? (
+      <ToolsEmptyState
+        size={compact ? 'sm' : 'md'}
+        animate={false}
+      />
+    ) : (
+      <>
+        {/* Tool List */}
+        <motion.div
+          className="flex flex-col gap-2"
+          variants={shouldReduceMotion ? undefined : listStaggerVariants}
+          initial="hidden"
+          animate="visible"
         >
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold uppercase tracking-caps text-[var(--hive-text-secondary)]">
-              Active Tools
-            </h3>
-            {data.tools.length > 0 && (
-              <Badge
-                variant="outline"
-                className="text-[var(--hive-brand-primary)] border-[var(--hive-brand-primary)]/30"
-              >
-                {data.tools.length}
-              </Badge>
-            )}
-          </div>
-          {collapsible && (
-            <button
-              className="text-[var(--hive-text-tertiary)] transition-colors hover:text-[var(--hive-text-secondary)]"
-              aria-label={isCollapsed ? 'Expand' : 'Collapse'}
-              type="button"
-              onClick={handleToggle}
-            >
-              {isCollapsed ? (
-                <ChevronDownIcon className="h-4 w-4" />
-              ) : (
-                <ChevronUpIcon className="h-4 w-4" />
+          {visibleTools.map((tool) => (
+            <motion.button
+              key={tool.id}
+              onClick={() => onToolClick?.(tool.id)}
+              variants={shouldReduceMotion ? undefined : staggerFadeItemVariants}
+              className={cn(
+                'group flex items-start gap-3 rounded-xl border border-transparent p-3 text-left',
+                'transition-colors duration-150',
+                'hover:border-neutral-800/50 hover:bg-neutral-900/50',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50'
               )}
-            </button>
-          )}
-        </header>
-
-        {/* Content */}
-        {!isCollapsed && (
-          <div className="flex flex-col p-3">
-            {data.tools.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--hive-background-tertiary)]">
-                  <ZapIcon className="h-6 w-6 text-[var(--hive-text-tertiary)]" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-[var(--hive-text-secondary)]">
-                    No active tools
-                  </p>
-                  <p className="text-xs text-[var(--hive-text-tertiary)]">
-                    Leaders can create tools in HiveLab
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Tool List */}
-                <div className="flex flex-col gap-2">
-                  {visibleTools.map((tool) => (
-                    <button
-                      key={tool.id}
-                      onClick={() => onToolClick?.(tool.id)}
-                      className="group flex items-start gap-3 rounded-xl border border-transparent p-3 text-left transition-colors hover:border-[color-mix(in_srgb,var(--hive-border-default) 40%,transparent)] hover:bg-[var(--hive-background-tertiary)]"
-                    >
-                      {/* Tool Icon */}
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--hive-brand-primary)]/10 text-lg">
-                        {tool.icon ? (
-                          <span>{tool.icon}</span>
-                        ) : (
-                          <ZapIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                        )}
-                      </div>
-
-                      {/* Tool Info */}
-                      <div className="flex flex-1 flex-col gap-2 min-w-0">
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-semibold text-[var(--hive-text-primary)] truncate">
-                            {tool.name}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="text-body-xs text-[var(--hive-text-tertiary)]"
-                            >
-                              {tool.type}
-                            </Badge>
-                            {tool.responseCount !== undefined && tool.responseCount > 0 && (
-                              <span className="text-body-meta text-[var(--hive-text-tertiary)]">
-                                {tool.responseCount} responses
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Close Time Countdown */}
-                        {tool.closeTime && (
-                          <div className="flex items-center gap-1.5 text-xs text-[var(--hive-text-secondary)]">
-                            <ClockIcon className="h-3.5 w-3.5 text-[var(--hive-brand-primary)]" />
-                            <span>{tool.closeTime}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Chevron */}
-                      <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--hive-text-tertiary)] transition-colors group-hover:text-[var(--hive-text-secondary)]" />
-                    </button>
-                  ))}
-                </div>
-
-                {/* View All Link */}
-                {(hiddenCount > 0 || data.hasMore) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onViewAll?.(data.spaceId)}
-                    className="mt-3 w-full text-[var(--hive-text-secondary)]"
-                  >
-                    View all tools
-                    {hiddenCount > 0 && ` (+${hiddenCount} more)`}
-                    <ChevronRightIcon className="ml-1 h-4 w-4" />
-                  </Button>
+              whileHover={shouldReduceMotion ? undefined : { x: 4 }}
+              whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+            >
+              {/* Tool Icon */}
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-500/10 text-lg">
+                {tool.icon ? (
+                  <span>{tool.icon}</span>
+                ) : (
+                  <Zap className="h-5 w-5 text-gold-400" />
                 )}
-              </>
+              </div>
+
+              {/* Tool Info */}
+              <div className="flex flex-1 flex-col gap-2 min-w-0">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-semibold text-neutral-100 truncate group-hover:text-gold-400 transition-colors">
+                    {tool.name}
+                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] text-neutral-500 border-neutral-700"
+                    >
+                      {tool.type}
+                    </Badge>
+                    {tool.responseCount !== undefined && tool.responseCount > 0 && (
+                      <span className="text-[10px] text-neutral-500">
+                        {tool.responseCount} responses
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Close Time Countdown */}
+                {tool.closeTime && (
+                  <div className="flex items-center gap-1.5 text-xs text-neutral-400">
+                    <Clock className="h-3.5 w-3.5 text-gold-400" />
+                    <span>{tool.closeTime}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Chevron */}
+              <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-400" />
+            </motion.button>
+          ))}
+        </motion.div>
+
+        {/* View All Link */}
+        {(hiddenCount > 0 || data.hasMore) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewAll?.(data.spaceId)}
+            className="mt-3 w-full text-neutral-400 hover:text-neutral-200"
+          >
+            View all tools
+            {hiddenCount > 0 && ` (+${hiddenCount} more)`}
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Button>
+        )}
+      </>
+    );
+
+    // INLINE MODE: No wrapper, just content with horizontal padding
+    // Used when rendered inside a unified sidebar container
+    if (inline || !collapsible) {
+      return (
+        <div ref={ref} className={cn('px-4', className)} {...props}>
+          {/* Section header for inline mode */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-neutral-400" />
+              <span className="font-medium text-sm text-neutral-100">Active Tools</span>
+            </div>
+            {data.tools.length > 0 && (
+              <span className="text-xs text-neutral-500 bg-neutral-800/50 px-1.5 py-0.5 rounded-full">
+                {data.tools.length}
+              </span>
             )}
           </div>
-        )}
-      </aside>
+          {content}
+        </div>
+      );
+    }
+
+    // STANDALONE MODE: Use CollapsibleWidget for collapsible version
+    return (
+      <div ref={ref} className={className} {...props}>
+        <CollapsibleWidget
+          title="Active Tools"
+          icon={<Wrench className="h-4 w-4" />}
+          badge={data.tools.length > 0 ? data.tools.length : undefined}
+          defaultCollapsed={defaultCollapsed}
+          persistKey={`space-tools-${data.spaceId}`}
+          glass
+          isEmpty={data.tools.length === 0}
+        >
+          {content}
+        </CollapsibleWidget>
+      </div>
     );
   }
 );

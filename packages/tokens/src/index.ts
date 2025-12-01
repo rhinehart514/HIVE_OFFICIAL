@@ -50,6 +50,7 @@ export {
   springPresets,
   staggerPresets,
   performance,
+  tinderSprings,
 } from './motion';
 
 // Tailwind config

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching ghost mode status at /api/privacy/ghost-mode`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch ghost mode status", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating ghost mode at /api/privacy/ghost-mode`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update ghost mode", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -284,7 +284,7 @@ async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boole
   } catch (error) {
     logger.error(
       `Error applying ghost mode changes at /api/privacy/ghost-mode`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

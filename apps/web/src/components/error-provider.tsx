@@ -15,7 +15,7 @@ function GlobalErrorBoundary({ children }: GlobalErrorBoundaryProps) {
 
 function useGlobalErrorBoundary() {
   return {
-    trackError: (error: Error, context?: Record<string, unknown>) => logger.error('Error tracked', error, { component: 'error-provider', ...context }),
+    trackError: (error: Error, context?: Record<string, unknown>) => logger.error('Error tracked', { error: error.message, stack: error.stack, component: 'error-provider', ...context }),
     getAnalytics: () => ({}),
     reset: () => {}
   };
@@ -93,7 +93,8 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
   useEffect(() => {
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      logger.error('Unhandled promise rejection', event.reason instanceof Error ? event.reason : new Error(String(event.reason)), { component: 'error-provider' });
+      const err = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      logger.error('Unhandled promise rejection', { error: err.message, stack: err.stack, component: 'error-provider' });
       trackError(new Error(event.reason), {
         type: 'unhandled-promise-rejection',
         user,
@@ -104,7 +105,8 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
 
     // Handle global JavaScript errors
     const handleGlobalError = (event: ErrorEvent) => {
-      logger.error('Global JavaScript error', event.error || new Error(event.message || 'Unknown error'), { component: 'error-provider', filename: event.filename, lineno: event.lineno, colno: event.colno });
+      const jsErr = event.error || new Error(event.message || 'Unknown error');
+      logger.error('Global JavaScript error', { error: jsErr.message, stack: jsErr.stack, component: 'error-provider', filename: event.filename, lineno: event.lineno, colno: event.colno });
       trackError(event.error, {
         type: 'global-js-error',
         filename: event.filename,
@@ -148,12 +150,7 @@ export function ErrorProvider({ children }: ErrorProviderProps) {
         enableAutoRecovery={true}
         maxRetryAttempts={3}
         context={{
-          user: user ? {
-            id: user.id,
-            name: user.fullName || undefined,
-            email: user.email || undefined,
-            isAdmin: user.isAdmin || false,
-          } : undefined,
+          user: undefined, // User auth temporarily disabled for SSG
           campus: campusInfo ? {
             id: campusInfo.id,
             name: campusInfo.name,

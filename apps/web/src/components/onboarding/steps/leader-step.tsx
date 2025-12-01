@@ -1,8 +1,14 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Button } from "@hive/ui";
-import { staggerContainer, staggerItem, transition } from "../shared/animations";
+import { motion } from 'framer-motion';
+import { Users, Compass } from 'lucide-react';
+import { Button } from '@hive/ui';
+import {
+  staggerContainer,
+  staggerItem,
+  transitionSilk,
+  transitionSpring,
+} from '@/lib/motion-primitives';
 
 interface LeaderStepProps {
   onChoice: (isLeader: boolean) => void;
@@ -15,29 +21,63 @@ export function LeaderStep({ onChoice }: LeaderStepProps) {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-4"
+      className="space-y-6"
     >
-      <motion.div variants={staggerItem} transition={transition}>
+      {/* Context */}
+      <motion.div
+        variants={staggerItem}
+        transition={transitionSilk}
+        className="text-center space-y-2"
+      >
+        <motion.div
+          className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neutral-900 border border-neutral-800 mb-2"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ ...transitionSpring, delay: 0.2 }}
+        >
+          <Users className="w-8 h-8 text-gold-500" />
+        </motion.div>
+        <p className="text-sm text-neutral-400">
+          Leaders get tools to manage their club's space,
+          <br />
+          invite members, and post updates.
+        </p>
+      </motion.div>
+
+      {/* Primary CTA - Leader */}
+      <motion.div variants={staggerItem} transition={transitionSilk}>
         <Button
-          type="button"
           onClick={() => onChoice(true)}
-          className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold text-sm transition-all"
-          style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+          leadingIcon={<Users className="h-5 w-5" />}
+          showArrow
+          fullWidth
+          size="lg"
         >
           Yes, I lead a club
         </Button>
       </motion.div>
 
-      <motion.div variants={staggerItem} transition={transition}>
+      {/* Secondary CTA - Explorer */}
+      <motion.div variants={staggerItem} transition={transitionSilk}>
         <Button
-          type="button"
           variant="secondary"
           onClick={() => onChoice(false)}
-          className="w-full h-12 text-base font-medium bg-neutral-900 border-neutral-800 text-white hover:bg-neutral-800"
+          leadingIcon={<Compass className="h-5 w-5" />}
+          fullWidth
+          size="lg"
         >
           No, just exploring
         </Button>
       </motion.div>
+
+      {/* Note */}
+      <motion.p
+        variants={staggerItem}
+        transition={transitionSilk}
+        className="text-xs text-center text-neutral-600"
+      >
+        You can claim a space later from your profile
+      </motion.p>
     </motion.div>
   );
 }

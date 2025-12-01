@@ -9,15 +9,27 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { postCreationRateLimit } from "@/lib/rate-limit";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/structured-logger";
 import { sseRealtimeService } from "@/lib/sse-realtime-service";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
 
 const profanityWords = ["spam", "scam"];
 const containsProfanity = (text: string) =>
   profanityWords.some((word) => text.toLowerCase().includes(word));
+
+/**
+ * Check if content should be hidden from results
+ * Filters out moderated/hidden/removed content
+ */
+function isContentHidden(data: Record<string, unknown>): boolean {
+  if (data.isHidden === true) return true;
+  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
+  if (data.isDeleted === true) return true;
+  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
+  return false;
+}
 
 const GetPostsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -35,17 +47,22 @@ const CreatePostSchema = z.object({
 });
 
 async function ensureSpaceAndMembership(spaceId: string, userId: string) {
-  const membership = await requireSpaceMembership(spaceId, userId);
-  if (!membership.ok) {
+  // Use DDD repository for space validation
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
     return {
       ok: false as const,
-      status: membership.status,
-      message: membership.error,
+      status: HttpStatus.NOT_FOUND,
+      message: "Space not found",
     };
   }
 
-  const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  const space = spaceResult.getValue();
+
+  // Enforce campus isolation
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -53,23 +70,52 @@ async function ensureSpaceAndMembership(spaceId: string, userId: string) {
     };
   }
 
+  // Check membership in flat collection
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    // Allow public spaces to be viewable without membership
+    if (!space.isPublic) {
+      return {
+        ok: false as const,
+        status: HttpStatus.FORBIDDEN,
+        message: "You must be a member of this space",
+      };
+    }
+    // Public space, guest access
+    return {
+      ok: true as const,
+      space,
+      membershipData: { role: 'guest' },
+    };
+  }
+
+  const membershipData = membershipSnapshot.docs[0].data();
+
   return {
     ok: true as const,
-    spaceData,
-    membershipData: membership.membership,
+    space,
+    membershipData,
   };
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
   try {
     const { spaceId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const queryParams = GetPostsSchema.parse(
-      Object.fromEntries(request.nextUrl.searchParams.entries()),
+      Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
     const membership = await ensureSpaceAndMembership(spaceId, userId);
@@ -134,7 +180,12 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of pinnedSnapshot.docs) {
       const data = doc.data();
+      // SECURITY: Skip posts from other campuses
       if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+        continue;
+      }
+      // SECURITY: Skip hidden/moderated/removed content
+      if (isContentHidden(data)) {
         continue;
       }
       pinnedPosts.push({
@@ -147,7 +198,12 @@ export const GET = withAuthAndErrors(async (
     for (const doc of postsSnapshot.docs) {
       const data = doc.data();
       if (data.isPinned) continue;
+      // SECURITY: Skip posts from other campuses
       if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+        continue;
+      }
+      // SECURITY: Skip hidden/moderated/removed content
+      if (isContentHidden(data)) {
         continue;
       }
       posts.push({
@@ -168,7 +224,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching posts at /api/spaces/[spaceId]/posts",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch posts", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -179,7 +235,7 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreatePostSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
@@ -189,7 +245,7 @@ export const POST = withAuthValidationAndErrors(
     try {
       const resolved = await params;
       spaceId = resolved.spaceId;
-      userId = getUserId(request);
+      userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await ensureSpaceAndMembership(spaceId, userId);
       if (!membership.ok) {
@@ -274,8 +330,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating post at /api/spaces/[spaceId]/posts",
-        error instanceof Error ? error : new Error(String(error)),
-        { spaceId, userId },
+        { error: error instanceof Error ? error.message : String(error), spaceId, userId },
       );
       return respond.error("Failed to create post", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

@@ -1,16 +1,17 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerProfileRepository } from '@hive/core/server';
 
 /**
  * GET /api/profile/stats
  * Returns lightweight profile stats used by charts and insights
  * Response shape: { success, data: { ... } }
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const timeRange = (searchParams.get('timeRange') || 'week').toLowerCase();
 
@@ -32,7 +33,29 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
       default: start.setMonth(now.getMonth() - 1); break;
     }
 
-    // Get user summary counters (if present)
+    // Try DDD repository first for profile data
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(userId);
+
+    let dddProfileStats: {
+      activityScore: number;
+      connectionCount: number;
+      spacesCount: number;
+      completionPercentage: number;
+    } | null = null;
+
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      dddProfileStats = {
+        activityScore: profile.activityScore,
+        connectionCount: profile.connectionCount,
+        spacesCount: profile.spaces.length,
+        completionPercentage: profile.getCompletionPercentage(),
+      };
+      logger.debug('Stats using DDD profile data', { userId, activityScore: profile.activityScore });
+    }
+
+    // Get user summary counters (if present) - fallback for non-DDD data
     const userSnap = await dbAdmin.collection('users').doc(userId).get();
     const userData = userSnap.exists ? userSnap.data() || {} : {};
 
@@ -40,7 +63,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
     const membershipsSnap = await dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isActive', '==', true)
       .get();
 
@@ -51,7 +74,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
         membershipsSnap.docs.map(async (doc) => {
           const spaceId = (doc.data() as { spaceId?: string }).spaceId || doc.id;
           const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
-          return spaceDoc.exists && (spaceDoc.data()?.campusId === CURRENT_CAMPUS_ID);
+          return spaceDoc.exists && (spaceDoc.data()?.campusId === campusId);
         })
       );
       totalSpaces = spaceChecks.filter(Boolean).length;
@@ -66,7 +89,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
       const summariesSnap = await dbAdmin
         .collection('activitySummaries')
         .where('userId', '==', userId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('date', '>=', start.toISOString().slice(0, 10))
         .get();
       summariesSnap.forEach(doc => {
@@ -100,14 +123,20 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
       range: timeRange,
       totals: { posts, comments, reactions, toolsUsed, timeSpentMinutes: timeSpent },
       streak,
-      spaces: { total: totalSpaces },
+      spaces: { total: dddProfileStats?.spacesCount || totalSpaces },
       engagementScore,
+      // DDD-sourced stats
+      profile: dddProfileStats ? {
+        activityScore: dddProfileStats.activityScore,
+        connectionCount: dddProfileStats.connectionCount,
+        completionPercentage: dddProfileStats.completionPercentage,
+      } : null,
       generatedAt: new Date().toISOString(),
     };
 
     return respond.success({ data });
   } catch (error) {
-    logger.error('Failed to fetch profile stats', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to fetch profile stats', { error: error instanceof Error ? error.message : String(error) });
     return respond.error('Failed to fetch profile stats', 'INTERNAL_ERROR', {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });

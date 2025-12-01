@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface TypewriterTextProps {
@@ -22,6 +22,10 @@ export function TypewriterText({
 }: TypewriterTextProps) {
   const [displayedChars, setDisplayedChars] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+
+  // Keep ref updated
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const startTimeout = setTimeout(() => {
@@ -29,8 +33,6 @@ export function TypewriterText({
         setDisplayedChars((prev) => {
           if (prev >= text.length) {
             clearInterval(interval);
-            setIsComplete(true);
-            onComplete?.();
             return prev;
           }
           return prev + 1;
@@ -41,7 +43,15 @@ export function TypewriterText({
     }, startDelay);
 
     return () => clearTimeout(startTimeout);
-  }, [text, charDelay, startDelay, onComplete]);
+  }, [text, charDelay, startDelay]);
+
+  // Handle completion separately to avoid setState during render
+  useEffect(() => {
+    if (displayedChars >= text.length && !isComplete) {
+      setIsComplete(true);
+      onCompleteRef.current?.();
+    }
+  }, [displayedChars, text.length, isComplete]);
 
   return (
     <span className={className}>
@@ -50,7 +60,7 @@ export function TypewriterText({
         <motion.span
           animate={{ opacity: [1, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
-          className="inline-block w-[3px] h-[0.85em] bg-[#FFD700] ml-1 align-middle"
+          className="inline-block w-[3px] h-[0.85em] bg-gold-500 ml-1 align-middle"
         />
       )}
     </span>

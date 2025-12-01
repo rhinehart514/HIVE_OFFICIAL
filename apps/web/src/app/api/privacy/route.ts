@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Privacy settings interface
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching privacy settings at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch privacy settings", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -169,7 +169,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating privacy settings at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update privacy settings", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -194,7 +194,7 @@ async function applyPrivacyChanges(userId: string, settings: PrivacySettings) {
   } catch (error) {
     logger.error(
       `Error applying privacy changes at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -234,7 +234,7 @@ async function updateSpaceVisibility(userId: string, settings: PrivacySettings) 
   } catch (error) {
     logger.error(
       `Error updating space visibility at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -266,7 +266,7 @@ async function updateProfileVisibility(userId: string, profileVisibility: Privac
   } catch (error) {
     logger.error(
       `Error updating profile visibility at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -314,7 +314,7 @@ async function cleanupOldActivityData(userId: string, retentionPeriod: number) {
   } catch (error) {
     logger.error(
       `Error cleaning up old activity data at /api/privacy`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

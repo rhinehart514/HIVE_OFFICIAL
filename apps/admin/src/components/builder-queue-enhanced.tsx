@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button as Button, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 
@@ -26,7 +26,7 @@ export function BuilderQueueEnhanced() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchRequests = async () => {
+  const fetchRequests = useCallback(async () => {
     if (!admin) return;
 
     setLoading(true);
@@ -51,7 +51,7 @@ export function BuilderQueueEnhanced() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [admin]);
 
   const handleRequest = async (requestId: string, action: 'approve' | 'reject') => {
     if (!admin) return;
@@ -90,7 +90,7 @@ export function BuilderQueueEnhanced() {
     // Auto-refresh every 30 seconds
     const interval = setInterval(fetchRequests, 30000);
     return () => clearInterval(interval);
-  }, [admin]);
+  }, [fetchRequests]);
 
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

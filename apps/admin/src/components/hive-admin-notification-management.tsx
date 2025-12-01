@@ -496,18 +496,8 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
   const [statusFilter, setStatusFilter] = useState<NotificationStatus | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Notification management system is not available</p>
-      </div>
-    );
-  }
-
   const loadNotifications = useCallback(async () => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     try {
@@ -532,11 +522,21 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, [admin, enableFeatureFlag]);
 
   useEffect(() => {
+    if (!enableFeatureFlag) return;
     loadNotifications();
-  }, [loadNotifications]);
+  }, [enableFeatureFlag, loadNotifications]);
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">Notification management system is not available</p>
+      </div>
+    );
+  }
 
   const filteredNotifications = notifications.filter(notification => {
     const matchesSearch = searchTerm === '' || 
@@ -778,10 +778,10 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                   <NotificationCard
                     key={notification.id}
                     notification={notification}
-                    onViewDetails={() => console.log('View details:', notification.id)}
-                    onEdit={() => console.log('Edit notification:', notification.id)}
-                    onCancel={() => console.log('Cancel notification:', notification.id)}
-                    onResend={() => console.log('Resend notification:', notification.id)}
+                    onViewDetails={() => console.warn('View details:', notification.id)}
+                    onEdit={() => console.warn('Edit notification:', notification.id)}
+                    onCancel={() => console.warn('Cancel notification:', notification.id)}
+                    onResend={() => console.warn('Resend notification:', notification.id)}
                   />
                 ))}
               </div>

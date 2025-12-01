@@ -1,16 +1,21 @@
-"use client";
+'use client';
 
-// Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
-// 🚀 **PROFILE SETTINGS STORYBOOK MIGRATION**
-// Replacing complex temp-stubs implementation with sophisticated @hive/ui components
-// Following the successful profile edit page pattern
-
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { logger } from '@/lib/structured-logger';
-import { Card, Button, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from "@hive/ui";
+import {
+  Card,
+  Button,
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Breadcrumbs,
+} from '@hive/ui';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
 import { ErrorBoundary } from '@/components/error-boundary';
 import {
@@ -28,15 +33,14 @@ import {
   Moon,
   Trash2,
   Check,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  X,
 } from 'lucide-react';
 
 // =============================================================================
-// 🎯 **TRANSFORMATION STRATEGY**
+// Types
 // =============================================================================
-// BEFORE: Complex temp-stubs + custom components with hardcoded styling
-// AFTER: Sophisticated @hive/ui components with UB student context
-// PATTERN: Platform hooks provide data → Transform → Storybook components handle UX
 
 interface NotificationSettings {
   email: {
@@ -63,6 +67,12 @@ interface NotificationSettings {
     desktopNotifications: boolean;
     emailPreview: boolean;
   };
+  quietHours: {
+    enabled: boolean;
+    startTime: string;
+    endTime: string;
+  };
+  spaceSettings: Record<string, { muted: boolean; pinned: boolean }>;
 }
 
 interface PrivacySettings {
@@ -75,6 +85,8 @@ interface PrivacySettings {
   ghostMode: {
     enabled: boolean;
     level: 'minimal' | 'moderate' | 'maximum';
+    duration: '30m' | '1h' | '4h' | 'indefinite';
+    expiresAt: Date | null;
   };
 }
 
@@ -83,92 +95,90 @@ interface AccountSettings {
   language: 'en' | 'es' | 'fr';
   timezone: string;
   emailFrequency: 'immediate' | 'daily' | 'weekly' | 'never';
-  dataExport: boolean;
-  accountDeletion: boolean;
+  dataRetention: {
+    autoDelete: boolean;
+    retentionDays: 90 | 180 | 365;
+  };
 }
 
-function PageContainer(props: {
-  title?: string;
-  subtitle?: string;
-  breadcrumbs?: Array<{ label: string; icon?: React.ComponentType<Record<string, unknown>> }>;
-  actions?: React.ReactNode;
-  maxWidth?: string;
-  children: React.ReactNode;
-}) {
-  const { title, subtitle, breadcrumbs, actions, maxWidth, children } = props;
-  const widthClass =
-    maxWidth === "2xl"
-      ? "max-w-5xl"
-      : maxWidth === "lg"
-      ? "max-w-4xl"
-      : "max-w-6xl";
-
-  return (
-    <div className={`${widthClass} mx-auto p-6 space-y-4`}>
-      <header className="space-y-2 flex items-center justify-between">
-        <div>
-          {breadcrumbs && (
-            <nav className="text-xs text-hive-text-muted mb-1">
-              {breadcrumbs.map((crumb, index) => (
-                <span key={index}>
-                  {index > 0 && " / "}
-                  {crumb.icon ? <crumb.icon className="inline h-3 w-3 mr-1" /> : null}
-                  {crumb.label}
-                </span>
-              ))}
-            </nav>
-          )}
-          {title && <h1 className="text-2xl font-semibold text-white">{title}</h1>}
-          {subtitle && (
-            <p className="text-sm text-hive-text-muted">{subtitle}</p>
-          )}
-        </div>
-        {actions}
-      </header>
-      {children}
-    </div>
-  );
+interface UserSpace {
+  id: string;
+  name: string;
+  avatarUrl?: string;
 }
 
-function FormField(props: { children: React.ReactNode }) {
-  return <div className="space-y-1">{props.children}</div>;
-}
+// =============================================================================
+// Components
+// =============================================================================
 
-function FormLabel(props: { children: React.ReactNode }) {
-  return <label className="text-sm font-medium text-white">{props.children}</label>;
-}
-
-function FormControl(props: { children: React.ReactNode }) {
-  return <div className="mt-1">{props.children}</div>;
-}
-
-function FormDescription(props: { children: React.ReactNode }) {
-  return <p className="text-xs text-hive-text-muted mt-1">{props.children}</p>;
-}
-
-function Switch(props: {
+function Switch({
+  checked = false,
+  onCheckedChange,
+  disabled = false,
+}: {
   checked?: boolean;
   onCheckedChange?: (checked: boolean) => void;
+  disabled?: boolean;
 }) {
-  const { checked, onCheckedChange } = props;
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
       onClick={() => onCheckedChange?.(!checked)}
-      className={`inline-flex h-5 w-9 items-center rounded-full border border-white/20 transition ${
-        checked ? "bg-[var(--hive-brand-primary)]" : "bg-gray-700"
-      }`}
+      className={`
+        relative inline-flex h-5 w-9 items-center rounded-full
+        transition-colors duration-200 ease-in-out
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black
+        disabled:opacity-50 disabled:cursor-not-allowed
+        ${checked ? 'bg-gold-500' : 'bg-white/20'}
+      `}
     >
       <span
-        className={`h-4 w-4 rounded-full bg-white transform transition ${
-          checked ? "translate-x-4" : "translate-x-0"
-        }`}
+        className={`
+          inline-block h-4 w-4 transform rounded-full bg-white shadow-sm
+          transition-transform duration-200 ease-in-out
+          ${checked ? 'translate-x-4' : 'translate-x-0.5'}
+        `}
       />
     </button>
   );
 }
 
-function HiveConfirmModal(props: {
+function SettingRow({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between py-3 border-b border-white/[0.06] last:border-0">
+      <div className="flex-1 pr-4">
+        <p className="text-sm font-medium text-white">{label}</p>
+        <p className="text-xs text-white/50 mt-0.5">{description}</p>
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  );
+}
+
+function ConfirmModal({
+  open,
+  onOpenChange,
+  title,
+  description,
+  confirmText,
+  cancelText,
+  onConfirm,
+  variant = 'default',
+  isLoading = false,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -176,52 +186,74 @@ function HiveConfirmModal(props: {
   confirmText: string;
   cancelText: string;
   onConfirm: () => void;
-  variant?: "default" | "danger";
+  variant?: 'default' | 'danger';
   isLoading?: boolean;
 }) {
-  const {
-    open,
-    onOpenChange,
-    title,
-    description,
-    confirmText,
-    cancelText,
-    onConfirm,
-    variant = "default",
-    isLoading,
-  } = props;
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-md rounded-lg bg-[var(--hive-background-primary,#050713)] p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <p className="text-sm text-hive-text-muted">{description}</p>
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            variant="secondary"
-            onClick={() => onOpenChange(false)}
-            className="border-white/20"
-          >
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={() => onOpenChange(false)}
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-md rounded-xl bg-neutral-950 border border-white/[0.08] p-6 shadow-2xl"
+      >
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
+        <p className="text-sm text-white/60 mb-6">{description}</p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {cancelText}
           </Button>
           <Button
+            variant={variant === 'danger' ? 'destructive' : 'primary'}
             onClick={onConfirm}
             disabled={isLoading}
-            className={
-              variant === "danger"
-                ? "bg-red-600 text-white hover:bg-red-500"
-                : "bg-[var(--hive-brand-primary)] text-hive-obsidian hover:bg-hive-champagne"
-            }
           >
+            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             {confirmText}
           </Button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
+
+function SuccessToast({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+    >
+      <Check className="h-4 w-4" />
+      <span className="text-sm font-medium">{message}</span>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// Main Content
+// =============================================================================
 
 function ProfileSettingsContent() {
   const router = useRouter();
@@ -231,11 +263,8 @@ function ProfileSettingsContent() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showGhostModeModal, setShowGhostModeModal] = useState(false);
-  
-  // =============================================================================
-  // 🎓 **UB STUDENT CONTEXT SETTINGS**
-  // =============================================================================
-  
+
+  // Settings state
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     email: {
       spaceInvites: true,
@@ -245,7 +274,7 @@ function ProfileSettingsContent() {
       securityAlerts: true,
       directMessages: true,
       mentionsAndReplies: true,
-      builderUpdates: false
+      builderUpdates: false,
     },
     push: {
       spaceActivity: true,
@@ -253,15 +282,27 @@ function ProfileSettingsContent() {
       eventReminders: true,
       directMessages: true,
       weeklyDigest: false,
-      emergencyAlerts: true
+      emergencyAlerts: true,
     },
     inApp: {
       realTimeNotifications: true,
       soundEffects: true,
       desktopNotifications: true,
-      emailPreview: true
-    }
+      emailPreview: true,
+    },
+    quietHours: {
+      enabled: false,
+      startTime: '22:00',
+      endTime: '08:00',
+    },
+    spaceSettings: {},
   });
+
+  const [userSpaces] = useState<UserSpace[]>([
+    { id: 'space-1', name: 'CS Study Group' },
+    { id: 'space-2', name: 'Dorm Life @ Ellicott' },
+    { id: 'space-3', name: 'UB Gaming Club' },
+  ]);
 
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
     profileVisibility: 'public',
@@ -272,8 +313,10 @@ function ProfileSettingsContent() {
     allowDirectMessages: true,
     ghostMode: {
       enabled: false,
-      level: 'minimal'
-    }
+      level: 'moderate',
+      duration: '1h',
+      expiresAt: null,
+    },
   });
 
   const [accountSettings, setAccountSettings] = useState<AccountSettings>({
@@ -281,21 +324,18 @@ function ProfileSettingsContent() {
     language: 'en',
     timezone: 'America/New_York',
     emailFrequency: 'daily',
-    dataExport: false,
-    accountDeletion: false
+    dataRetention: {
+      autoDelete: false,
+      retentionDays: 365,
+    },
   });
 
-  // =============================================================================
-  // 🔄 **DATA TRANSFORMATION LAYER**
-  // =============================================================================
-  
-  // Populate settings when profile loads
+  // Populate settings from profile
   useEffect(() => {
-    if (!profile || !profile.privacy) return;
-
+    if (!profile?.privacy) return;
     const privacy = profile.privacy as Record<string, unknown>;
 
-    setPrivacySettings(prev => ({
+    setPrivacySettings((prev) => ({
       ...prev,
       profileVisibility: privacy.isPublic ? 'public' : 'private',
       showActivity: Boolean(privacy.showActivity),
@@ -307,44 +347,31 @@ function ProfileSettingsContent() {
     }));
   }, [profile]);
 
-  // =============================================================================
-  // 🎨 **SOPHISTICATED INTERACTION HANDLERS**
-  // =============================================================================
-  
-  const handleNotificationChange = (category: keyof NotificationSettings, setting: string, value: boolean) => {
-    setNotificationSettings(prev => ({
-      ...prev,
-      [category]: {
-        ...prev[category],
-        [setting]: value
-      }
-    }));
-    setHasChanges(true);
-    setSaveSuccess(false);
-  };
+  // Handlers
+  const handleNotificationChange = useCallback(
+    (category: keyof NotificationSettings, setting: string, value: boolean) => {
+      setNotificationSettings((prev) => ({
+        ...prev,
+        [category]: { ...prev[category], [setting]: value },
+      }));
+      setHasChanges(true);
+    },
+    []
+  );
 
-  const handlePrivacyChange = (setting: keyof PrivacySettings, value: unknown) => {
-    setPrivacySettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
+  const handlePrivacyChange = useCallback((setting: keyof PrivacySettings, value: unknown) => {
+    setPrivacySettings((prev) => ({ ...prev, [setting]: value }));
     setHasChanges(true);
-    setSaveSuccess(false);
-  };
+  }, []);
 
-  const handleAccountChange = (setting: keyof AccountSettings, value: unknown) => {
-    setAccountSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
+  const handleAccountChange = useCallback((setting: keyof AccountSettings, value: unknown) => {
+    setAccountSettings((prev) => ({ ...prev, [setting]: value }));
     setHasChanges(true);
-    setSaveSuccess(false);
-  };
+  }, []);
 
   const handleSaveSettings = async () => {
     try {
-      // Transform settings back to profile format
-      const updateData = {
+      await updateProfile({
         privacy: {
           isPublic: privacySettings.profileVisibility === 'public',
           showActivity: privacySettings.showActivity,
@@ -352,18 +379,14 @@ function ProfileSettingsContent() {
           showConnections: privacySettings.showConnections,
           showOnlineStatus: privacySettings.showOnlineStatus,
           allowDirectMessages: privacySettings.allowDirectMessages,
-          ghostMode: privacySettings.ghostMode
-        }
-      };
-
-      await updateProfile(updateData);
+          ghostMode: privacySettings.ghostMode,
+        },
+      });
       setHasChanges(false);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       logger.error('Failed to save settings', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
       });
     }
   };
@@ -373,469 +396,570 @@ function ProfileSettingsContent() {
       await toggleGhostMode(!privacySettings.ghostMode.enabled);
       setShowGhostModeModal(false);
       handlePrivacyChange('ghostMode', {
+        ...privacySettings.ghostMode,
         enabled: !privacySettings.ghostMode.enabled,
-        level: 'moderate'
       });
     } catch (error) {
       logger.error('Failed to toggle ghost mode', {
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
       });
     }
   };
 
-  // Current user context for components
-  const _currentUser = useMemo(() => {
+  const currentUser = useMemo(() => {
     if (!profile) return null;
     return {
       id: profile.identity?.id ?? '',
       name: profile.identity?.fullName || '',
       handle: profile.identity?.handle || '',
       email: profile.identity?.email || '',
-      role: profile.builder?.isBuilder ? 'builder' : 'member',
-      campus: 'ub-buffalo',
       isVerified: profile.verification?.emailVerified ?? false,
     };
   }, [profile]);
 
+  // Loading state
   if (isLoading || !profile) {
     return (
-      <PageContainer title="Loading..." maxWidth="2xl">
+      <div className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="w-8 h-8 bg-[var(--hive-brand-primary)] rounded-lg animate-pulse mx-auto mb-4" />
-            <p className="text-white">Loading your settings...</p>
+            <Loader2 className="h-8 w-8 text-gold-500 animate-spin mx-auto mb-4" />
+            <p className="text-white/60">Loading your settings...</p>
           </div>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   return (
-    <div>
-      {/* 🚀 **SOPHISTICATED PAGE CONTAINER** - From @hive/ui */}
-      <PageContainer
-        title="Account Settings"
-        subtitle="Manage your HIVE account preferences and privacy settings"
-        breadcrumbs={[
-          { label: "Profile" },
-          { label: "Settings" }
-        ]}
-        actions={
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header */}
+      <header className="mb-8">
+        <Breadcrumbs
+          items={[
+            { label: 'Profile', href: '/profile' },
+            { label: 'Settings' },
+          ]}
+          className="mb-4"
+        />
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Account Settings</h1>
+            <p className="text-sm text-white/50 mt-1">
+              Manage your HIVE account preferences and privacy
+            </p>
+          </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => router.push('/profile')}
-            >
+            <Button variant="secondary" onClick={() => router.push('/profile')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Profile
+              Back
             </Button>
             {hasChanges && (
-              <Button
-                onClick={handleSaveSettings}
-                disabled={isUpdating}
-                className="bg-[var(--hive-brand-primary)] text-hive-obsidian hover:bg-hive-champagne"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {isUpdating ? 'Saving...' : 'Save Changes'}
+              <Button variant="primary" onClick={handleSaveSettings} disabled={isUpdating}>
+                {isUpdating ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Changes
               </Button>
             )}
           </div>
-        }
-        maxWidth="2xl"
-      >
-        {/* ✅ **SUCCESS MESSAGE** */}
+        </div>
+      </header>
+
+      {/* Success Toast */}
+      <AnimatePresence>
         {saveSuccess && (
-          <Card className="p-4 bg-green-500/10 border-green-500/20 mb-6">
-            <div className="flex items-center gap-2 text-green-400">
-              <Check className="h-5 w-5" />
-              <span>Settings saved successfully!</span>
+          <SuccessToast message="Settings saved successfully!" onClose={() => setSaveSuccess(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="privacy" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Privacy</span>
+          </TabsTrigger>
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Account</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Mail className="h-5 w-5 text-gold-500" />
+              Email Notifications
+            </h3>
+            <div className="divide-y divide-white/[0.06]">
+              <SettingRow
+                label="Space Invitations"
+                description="Get notified when you're invited to join a space"
+                checked={notificationSettings.email.spaceInvites}
+                onCheckedChange={(v) => handleNotificationChange('email', 'spaceInvites', v)}
+              />
+              <SettingRow
+                label="Event Reminders"
+                description="Reminders for upcoming events and meetings"
+                checked={notificationSettings.email.eventReminders}
+                onCheckedChange={(v) => handleNotificationChange('email', 'eventReminders', v)}
+              />
+              <SettingRow
+                label="Tool Updates"
+                description="New tool launches and updates from builders"
+                checked={notificationSettings.email.toolUpdates}
+                onCheckedChange={(v) => handleNotificationChange('email', 'toolUpdates', v)}
+              />
+              <SettingRow
+                label="Weekly Digest"
+                description="Summary of your week's activity and highlights"
+                checked={notificationSettings.email.weeklyDigest}
+                onCheckedChange={(v) => handleNotificationChange('email', 'weeklyDigest', v)}
+              />
+              <SettingRow
+                label="Security Alerts"
+                description="Important security and account notifications"
+                checked={notificationSettings.email.securityAlerts}
+                onCheckedChange={(v) => handleNotificationChange('email', 'securityAlerts', v)}
+              />
             </div>
           </Card>
-        )}
 
-        {/* 📱 **SOPHISTICATED TABS SYSTEM** */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Privacy
-            </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Account
-            </TabsTrigger>
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Security
-            </TabsTrigger>
-          </TabsList>
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-gold-500" />
+              Push Notifications
+            </h3>
+            <div className="divide-y divide-white/[0.06]">
+              <SettingRow
+                label="Space Activity"
+                description="Real-time notifications for space updates"
+                checked={notificationSettings.push.spaceActivity}
+                onCheckedChange={(v) => handleNotificationChange('push', 'spaceActivity', v)}
+              />
+              <SettingRow
+                label="Tool Launches"
+                description="Notifications when new tools are available"
+                checked={notificationSettings.push.toolLaunches}
+                onCheckedChange={(v) => handleNotificationChange('push', 'toolLaunches', v)}
+              />
+              <SettingRow
+                label="Direct Messages"
+                description="Instant notifications for direct messages"
+                checked={notificationSettings.push.directMessages}
+                onCheckedChange={(v) => handleNotificationChange('push', 'directMessages', v)}
+              />
+            </div>
+          </Card>
 
-          {/* 🔔 **NOTIFICATION SETTINGS** */}
-          <TabsContent value="notifications" className="space-y-6">
-            {/* Email Notifications */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Mail className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                Email Notifications
-              </h3>
-              
-              <div className="space-y-4">
-                <FormField>
-                  <FormLabel>Space Invitations</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.email.spaceInvites}
-                    onCheckedChange={(checked) => handleNotificationChange('email', 'spaceInvites', checked)}
+          {/* Quiet Hours */}
+          <Card className="p-6 border-gold-500/20 bg-gold-500/5">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Moon className="h-5 w-5 text-gold-500" />
+              Quiet Hours
+              <Badge variant="default" className="text-xs bg-gold-500/20 text-gold-500 border-0">
+                Focus Mode
+              </Badge>
+            </h3>
+            <p className="text-sm text-white/50 mb-4">
+              Pause non-urgent notifications during study time or when you need to focus.
+            </p>
+            <SettingRow
+              label="Enable Quiet Hours"
+              description="Emergency alerts will still come through"
+              checked={notificationSettings.quietHours.enabled}
+              onCheckedChange={(v) => {
+                setNotificationSettings((prev) => ({
+                  ...prev,
+                  quietHours: { ...prev.quietHours, enabled: v },
+                }));
+                setHasChanges(true);
+              }}
+            />
+            {notificationSettings.quietHours.enabled && (
+              <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/[0.06]">
+                <div>
+                  <label className="text-sm font-medium text-white mb-2 block">Start Time</label>
+                  <input
+                    type="time"
+                    value={notificationSettings.quietHours.startTime}
+                    onChange={(e) => {
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        quietHours: { ...prev.quietHours, startTime: e.target.value },
+                      }));
+                      setHasChanges(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm focus:border-gold-500/50 focus:outline-none"
                   />
-                </FormControl>
-                <FormDescription>Get notified when you're invited to join a space</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Event Reminders</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.email.eventReminders}
-                    onCheckedChange={(checked) => handleNotificationChange('email', 'eventReminders', checked)}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-white mb-2 block">End Time</label>
+                  <input
+                    type="time"
+                    value={notificationSettings.quietHours.endTime}
+                    onChange={(e) => {
+                      setNotificationSettings((prev) => ({
+                        ...prev,
+                        quietHours: { ...prev.quietHours, endTime: e.target.value },
+                      }));
+                      setHasChanges(true);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/[0.08] text-white text-sm focus:border-gold-500/50 focus:outline-none"
                   />
-                </FormControl>
-                <FormDescription>Reminders for upcoming events and meetings</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Tool Updates</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.email.toolUpdates}
-                    onCheckedChange={(checked) => handleNotificationChange('email', 'toolUpdates', checked)}
-                  />
-                </FormControl>
-                <FormDescription>New tool launches and updates from builders</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Weekly Digest</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.email.weeklyDigest}
-                    onCheckedChange={(checked) => handleNotificationChange('email', 'weeklyDigest', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Summary of your week's activity and highlights</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Security Alerts</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.email.securityAlerts}
-                    onCheckedChange={(checked) => handleNotificationChange('email', 'securityAlerts', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Important security and account notifications</FormDescription>
-                </FormField>
+                </div>
               </div>
-            </Card>
+            )}
+          </Card>
 
-            {/* Push Notifications */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Smartphone className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                Push Notifications
-              </h3>
-              
-              <div className="space-y-4">
-                <FormField>
-                  <FormLabel>Space Activity</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.push.spaceActivity}
-                    onCheckedChange={(checked) => handleNotificationChange('push', 'spaceActivity', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Real-time notifications for space updates</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Tool Launches</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.push.toolLaunches}
-                    onCheckedChange={(checked) => handleNotificationChange('push', 'toolLaunches', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Notifications when new tools are available</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Direct Messages</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={notificationSettings.push.directMessages}
-                    onCheckedChange={(checked) => handleNotificationChange('push', 'directMessages', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Instant notifications for direct messages</FormDescription>
-                </FormField>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* 🛡️ **PRIVACY SETTINGS** */}
-          <TabsContent value="privacy" className="space-y-6">
-            {/* Profile Visibility */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Eye className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                Profile Visibility
-              </h3>
-              
-              <div className="space-y-4">
-                <FormField>
-                  <FormLabel>Show Activity Feed</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={privacySettings.showActivity}
-                    onCheckedChange={(checked) => handlePrivacyChange('showActivity', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Let others see your recent activity and interactions</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Show Spaces</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={privacySettings.showSpaces}
-                    onCheckedChange={(checked) => handlePrivacyChange('showSpaces', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Display the spaces you're part of on your profile</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Show Connections</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={privacySettings.showConnections}
-                    onCheckedChange={(checked) => handlePrivacyChange('showConnections', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Display your connections and network on your profile</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Show Online Status</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={privacySettings.showOnlineStatus}
-                    onCheckedChange={(checked) => handlePrivacyChange('showOnlineStatus', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Let others see when you're active on HIVE</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Allow Direct Messages</FormLabel>
-                  <FormControl>
-                    <Switch
-                    checked={privacySettings.allowDirectMessages}
-                    onCheckedChange={(checked) => handlePrivacyChange('allowDirectMessages', checked)}
-                  />
-                </FormControl>
-                <FormDescription>Let other students send you direct messages</FormDescription>
-                </FormField>
-              </div>
-            </Card>
-
-            {/* 👻 **UB GHOST MODE** */}
-            <Card className="p-6 border-purple-500/20 bg-purple-500/5">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Moon className="h-5 w-5 text-purple-400" />
-                Ghost Mode
-                <Badge variant="sophomore" className="text-xs">UB Exclusive</Badge>
-              </h3>
-              
-              <div className="space-y-4">
-                <p className="text-sm text-gray-400 mb-4">
-                  Ghost Mode helps you stay focused during finals, study sessions, or when you need a break from social interactions while still accessing your tools and spaces.
-                </p>
-                
-                <FormField>
-                  <FormLabel>Enable Ghost Mode</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-3">
-                      <Switch
-                        checked={privacySettings.ghostMode.enabled}
-                        onCheckedChange={() => setShowGhostModeModal(true)}
-                      />
-                      {privacySettings.ghostMode.enabled && (
-                        <Badge variant="sophomore" className="text-xs bg-purple-500/20 text-purple-300">
-                          Active - {privacySettings.ghostMode.level}
-                        </Badge>
-                      )}
+          {/* Per-Space Notifications */}
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-gold-500" />
+              Space Notifications
+            </h3>
+            <p className="text-sm text-white/50 mb-4">
+              Customize notifications for individual spaces.
+            </p>
+            <div className="space-y-2">
+              {userSpaces.map((space) => (
+                <div
+                  key={space.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/[0.02] border border-white/[0.06]"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gold-500/10 flex items-center justify-center text-sm font-medium text-gold-500">
+                      {space.name.charAt(0)}
                     </div>
-                  </FormControl>
-                  <FormDescription>
-                    {privacySettings.ghostMode.enabled
-                      ? "You're currently in ghost mode - reduced visibility across campus"
-                      : "Temporarily reduce your visibility and campus social presence"}
-                  </FormDescription>
-                </FormField>
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* ⚙️ **ACCOUNT SETTINGS** */}
-          <TabsContent value="account" className="space-y-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                Account Preferences
-              </h3>
-              
-              <div className="space-y-4">
-                <FormField>
-                  <FormLabel>Theme</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={accountSettings.theme === 'dark' ? 'primary' : 'secondary'}>
-                        Dark
-                      </Badge>
-                      <span className="text-sm text-gray-400">(Currently locked to dark theme for vBETA)</span>
-                    </div>
-                  </FormControl>
-                  <FormDescription>Choose your preferred color scheme</FormDescription>
-                </FormField>
-                
-                <FormField>
-                  <FormLabel>Email Frequency</FormLabel>
-                  <FormControl>
-                    <div className="flex items-center gap-2">
-                      {['immediate', 'daily', 'weekly', 'never'].map((freq) => (
-                        <Badge
-                          key={freq}
-                          variant={accountSettings.emailFrequency === freq ? 'primary' : 'secondary'}
-                          className="cursor-pointer"
-                          onClick={() => handleAccountChange('emailFrequency', freq)}
-                        >
-                          {freq}
-                        </Badge>
-                      ))}
-                    </div>
-                  </FormControl>
-                  <FormDescription>How often you receive email updates</FormDescription>
-                </FormField>
-              </div>
-            </Card>
-
-            {/* 🏫 **UB STUDENT ACCOUNT INFO** */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Users className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                UB Student Account
-              </h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-300">Email</span>
+                    <span className="text-sm text-white">{space.name}</span>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-white">{_currentUser?.email}</span>
-                    {_currentUser?.isVerified && (
-                      <Badge variant="senior" className="text-xs">Verified</Badge>
-                    )}
+                    <button
+                      onClick={() => {
+                        setNotificationSettings((prev) => ({
+                          ...prev,
+                          spaceSettings: {
+                            ...prev.spaceSettings,
+                            [space.id]: {
+                              ...prev.spaceSettings[space.id],
+                              muted: !prev.spaceSettings[space.id]?.muted,
+                            },
+                          },
+                        }));
+                        setHasChanges(true);
+                      }}
+                      className={`px-2.5 py-1 rounded text-xs font-medium transition ${
+                        notificationSettings.spaceSettings[space.id]?.muted
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-white/10 text-white/50 hover:bg-white/20'
+                      }`}
+                    >
+                      {notificationSettings.spaceSettings[space.id]?.muted ? 'Muted' : 'Mute'}
+                    </button>
                   </div>
                 </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-300">Campus</span>
-                  <span className="text-sm text-white">University at Buffalo</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-gray-300">Student Status</span>
-                  <Badge variant="senior" className="text-xs">Active</Badge>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
+              ))}
+            </div>
+          </Card>
+        </TabsContent>
 
-          {/* 🔒 **SECURITY SETTINGS** */}
-          <TabsContent value="security" className="space-y-6">
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Shield className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                Account Security
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-400 mb-2">
-                    <Check className="h-4 w-4" />
-                    <span className="text-sm font-medium">Your account is secure</span>
+        {/* Privacy Tab */}
+        <TabsContent value="privacy" className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Eye className="h-5 w-5 text-gold-500" />
+              Profile Visibility
+            </h3>
+            <div className="divide-y divide-white/[0.06]">
+              <SettingRow
+                label="Show Activity Feed"
+                description="Let others see your recent activity and interactions"
+                checked={privacySettings.showActivity}
+                onCheckedChange={(v) => handlePrivacyChange('showActivity', v)}
+              />
+              <SettingRow
+                label="Show Spaces"
+                description="Display the spaces you're part of on your profile"
+                checked={privacySettings.showSpaces}
+                onCheckedChange={(v) => handlePrivacyChange('showSpaces', v)}
+              />
+              <SettingRow
+                label="Show Connections"
+                description="Display your connections and network on your profile"
+                checked={privacySettings.showConnections}
+                onCheckedChange={(v) => handlePrivacyChange('showConnections', v)}
+              />
+              <SettingRow
+                label="Show Online Status"
+                description="Let others see when you're active on HIVE"
+                checked={privacySettings.showOnlineStatus}
+                onCheckedChange={(v) => handlePrivacyChange('showOnlineStatus', v)}
+              />
+              <SettingRow
+                label="Allow Direct Messages"
+                description="Let other students send you direct messages"
+                checked={privacySettings.allowDirectMessages}
+                onCheckedChange={(v) => handlePrivacyChange('allowDirectMessages', v)}
+              />
+            </div>
+          </Card>
+
+          {/* Ghost Mode */}
+          <Card className="p-6 border-purple-500/20 bg-purple-500/5">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Moon className="h-5 w-5 text-purple-400" />
+              Ghost Mode
+              <Badge variant="default" className="text-xs bg-purple-500/20 text-purple-400 border-0">
+                Focus Feature
+              </Badge>
+            </h3>
+            <p className="text-sm text-white/50 mb-4">
+              Stay focused during finals or study sessions while still accessing your tools and spaces.
+            </p>
+            <SettingRow
+              label="Enable Ghost Mode"
+              description="Reduce your visibility across campus"
+              checked={privacySettings.ghostMode.enabled}
+              onCheckedChange={() => setShowGhostModeModal(true)}
+            />
+            {privacySettings.ghostMode.enabled && (
+              <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-white mb-2 block">Duration</label>
+                  <div className="flex flex-wrap gap-2">
+                    {(['30m', '1h', '4h', 'indefinite'] as const).map((d) => (
+                      <button
+                        key={d}
+                        onClick={() =>
+                          handlePrivacyChange('ghostMode', { ...privacySettings.ghostMode, duration: d })
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                          privacySettings.ghostMode.duration === d
+                            ? 'bg-purple-500 text-white'
+                            : 'bg-white/10 text-white/50 hover:bg-white/20'
+                        }`}
+                      >
+                        {d === '30m' ? '30 min' : d === '1h' ? '1 hour' : d === '4h' ? '4 hours' : 'Until off'}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-xs text-gray-400">
-                    Last login: Today • IP: Campus Network • Buffalo, NY
-                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-white mb-2 block">Level</label>
+                  <div className="space-y-2">
+                    {([
+                      { value: 'minimal', label: 'Minimal', desc: 'Hide online status only' },
+                      { value: 'moderate', label: 'Moderate', desc: 'Hide status + activity feed' },
+                      { value: 'maximum', label: 'Maximum', desc: 'Full stealth - appear offline everywhere' },
+                    ] as const).map((level) => (
+                      <button
+                        key={level.value}
+                        onClick={() =>
+                          handlePrivacyChange('ghostMode', { ...privacySettings.ghostMode, level: level.value })
+                        }
+                        className={`w-full p-3 rounded-lg text-left transition border ${
+                          privacySettings.ghostMode.level === level.value
+                            ? 'border-purple-500/50 bg-purple-500/10'
+                            : 'border-white/[0.06] bg-white/[0.02] hover:border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-white">{level.label}</span>
+                          {privacySettings.ghostMode.level === level.value && (
+                            <Check className="h-4 w-4 text-purple-400" />
+                          )}
+                        </div>
+                        <p className="text-xs text-white/50 mt-0.5">{level.desc}</p>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </Card>
+            )}
+          </Card>
+        </TabsContent>
 
-            {/* ⚠️ **DANGER ZONE** */}
-            <Card className="p-6 border-red-500/20 bg-red-500/5">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-red-400" />
-                Danger Zone
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="p-4 border border-red-500/20 rounded-lg">
-                  <h4 className="text-sm font-medium text-red-400 mb-2">Delete Account</h4>
-                  <p className="text-xs text-gray-400 mb-3">
-                    Permanently delete your HIVE account and all associated data. This action cannot be undone.
-                  </p>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => setShowDeleteModal(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Account
-                  </Button>
+        {/* Account Tab */}
+        <TabsContent value="account" className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <SettingsIcon className="h-5 w-5 text-gold-500" />
+              Preferences
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-white mb-2 block">Theme</label>
+                <div className="flex items-center gap-2">
+                  <Badge variant="default" className="bg-gold-500/20 text-gold-500 border-0">
+                    Dark
+                  </Badge>
+                  <span className="text-xs text-white/40">(Locked to dark for vBETA)</span>
                 </div>
               </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              <div>
+                <label className="text-sm font-medium text-white mb-2 block">Email Frequency</label>
+                <div className="flex flex-wrap gap-2">
+                  {(['immediate', 'daily', 'weekly', 'never'] as const).map((freq) => (
+                    <button
+                      key={freq}
+                      onClick={() => handleAccountChange('emailFrequency', freq)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition ${
+                        accountSettings.emailFrequency === freq
+                          ? 'bg-gold-500 text-black'
+                          : 'bg-white/10 text-white/50 hover:bg-white/20'
+                      }`}
+                    >
+                      {freq}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
 
-        {/* 🚨 **SOPHISTICATED MODALS** */}
-        
-        {/* Ghost Mode Confirmation */}
-        <HiveConfirmModal
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-gold-500" />
+              Account Info
+            </h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-white/[0.06]">
+                <span className="text-sm text-white/60">Email</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-white">{currentUser?.email}</span>
+                  {currentUser?.isVerified && (
+                    <Badge variant="default" className="text-xs bg-emerald-500/20 text-emerald-400 border-0">
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-white/[0.06]">
+                <span className="text-sm text-white/60">Campus</span>
+                <span className="text-sm text-white">University at Buffalo</span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-white/60">Status</span>
+                <Badge variant="default" className="text-xs bg-emerald-500/20 text-emerald-400 border-0">
+                  Active
+                </Badge>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-gold-500" />
+              Data & Privacy
+            </h3>
+            <SettingRow
+              label="Auto-Delete Old Activity"
+              description="Automatically delete your old posts and activity after a set period"
+              checked={accountSettings.dataRetention.autoDelete}
+              onCheckedChange={(v) =>
+                handleAccountChange('dataRetention', { ...accountSettings.dataRetention, autoDelete: v })
+              }
+            />
+            {accountSettings.dataRetention.autoDelete && (
+              <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                <label className="text-sm font-medium text-white mb-2 block">Keep Data For</label>
+                <div className="flex gap-2">
+                  {([90, 180, 365] as const).map((days) => (
+                    <button
+                      key={days}
+                      onClick={() =>
+                        handleAccountChange('dataRetention', { ...accountSettings.dataRetention, retentionDays: days })
+                      }
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        accountSettings.dataRetention.retentionDays === days
+                          ? 'bg-gold-500 text-black'
+                          : 'bg-white/10 text-white/50 hover:bg-white/20'
+                      }`}
+                    >
+                      {days === 365 ? '1 year' : `${days} days`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="mt-4 pt-4 border-t border-white/[0.06]">
+              <Button variant="secondary" size="sm">
+                <Save className="h-4 w-4 mr-2" />
+                Download My Data
+              </Button>
+              <p className="text-xs text-white/40 mt-2">Get a copy of all your data</p>
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security" className="space-y-6">
+          <Card className="p-6">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-gold-500" />
+              Account Security
+            </h3>
+            <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center gap-2 text-emerald-400 mb-2">
+                <Check className="h-4 w-4" />
+                <span className="text-sm font-medium">Your account is secure</span>
+              </div>
+              <p className="text-xs text-white/50">Last login: Today • Campus Network • Buffalo, NY</p>
+            </div>
+          </Card>
+
+          <Card className="p-6 border-red-500/20 bg-red-500/5">
+            <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              Danger Zone
+            </h3>
+            <div className="p-4 border border-red-500/20 rounded-lg">
+              <h4 className="text-sm font-medium text-red-400 mb-2">Delete Account</h4>
+              <p className="text-xs text-white/50 mb-3">
+                Permanently delete your HIVE account and all associated data. This cannot be undone.
+              </p>
+              <Button variant="destructive" size="sm" onClick={() => setShowDeleteModal(true)}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Account
+              </Button>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modals */}
+      <AnimatePresence>
+        <ConfirmModal
           open={showGhostModeModal}
           onOpenChange={setShowGhostModeModal}
-          title={privacySettings.ghostMode.enabled ? "Disable Ghost Mode?" : "Enable Ghost Mode?"}
-          description={privacySettings.ghostMode.enabled 
-            ? "You'll return to normal visibility across campus. Your activity and presence will be visible to other students."
-            : "This will reduce your visibility across campus. You'll still have access to all tools and spaces, but with limited social presence."
+          title={privacySettings.ghostMode.enabled ? 'Disable Ghost Mode?' : 'Enable Ghost Mode?'}
+          description={
+            privacySettings.ghostMode.enabled
+              ? "You'll return to normal visibility. Your activity and presence will be visible again."
+              : "This will reduce your visibility. You'll still have access to all features with limited social presence."
           }
-          confirmText={privacySettings.ghostMode.enabled ? "Disable" : "Enable"}
+          confirmText={privacySettings.ghostMode.enabled ? 'Disable' : 'Enable'}
           cancelText="Cancel"
           onConfirm={handleToggleGhostMode}
-          variant={privacySettings.ghostMode.enabled ? "default" : "danger"}
         />
 
-        {/* Delete Account Confirmation */}
-        <HiveConfirmModal
+        <ConfirmModal
           open={showDeleteModal}
           onOpenChange={setShowDeleteModal}
           title="Delete Your Account?"
-          description="This will permanently delete your HIVE account, all your data, tools, and connections. This action cannot be undone and you'll lose access to all campus spaces."
+          description="This will permanently delete your HIVE account, all your data, tools, and connections. This cannot be undone."
           confirmText="Delete Forever"
           cancelText="Keep Account"
           onConfirm={() => {
@@ -843,17 +967,13 @@ function ProfileSettingsContent() {
             setShowDeleteModal(false);
           }}
           variant="danger"
-          isLoading={false}
         />
-      </PageContainer>
+      </AnimatePresence>
     </div>
   );
 }
 
-/**
- * Main Profile Settings Page - Unified with ProfileContextProvider
- */
-export default function ProfileSettingsStorybook() {
+export default function ProfileSettingsPage() {
   return (
     <ErrorBoundary>
       <ProfileContextProvider>
@@ -862,48 +982,3 @@ export default function ProfileSettingsStorybook() {
     </ErrorBoundary>
   );
 }
-
-// =============================================================================
-// 🎯 **STORYBOOK MIGRATION BENEFITS ACHIEVED**
-// =============================================================================
-
-/**
- * ✅ **BEFORE vs AFTER COMPARISON**:
- * 
- * BEFORE (temp-stubs + custom implementation):
- * - PageContainer from temp-stubs
- * - Mixed component sources and styling
- * - Basic switch components
- * - Custom modal implementations
- * - No UB-specific context
- * 
- * AFTER (@hive/ui components):
- * - Sophisticated PageContainer with breadcrumbs and actions
- * - FormField components with consistent labeling and descriptions
- * - Enhanced Switch components with better UX
- * - HiveModal and HiveConfirmModal with sophisticated animations
- * - UB Ghost Mode feature with campus context
- * 
- * 🎓 **ENHANCED UB STUDENT CONTEXT**:
- * - Ghost Mode for finals week and study focus
- * - Campus-specific notification settings
- * - UB student account verification display
- * - University-focused privacy options
- * - Academic semester-aware settings
- * 
- * ⚡ **SOPHISTICATED INTERACTIONS**:
- * - Tabbed interface with consistent navigation
- * - Real-time settings sync with visual feedback
- * - Confirmation modals for dangerous actions
- * - Success states with auto-hide functionality
- * - Contextual help text and descriptions
- * 
- * 🏗️ **MAINTAINABLE ARCHITECTURE**:
- * - Consistent FormField pattern across all settings
- * - Type-safe settings interfaces
- * - Proper state management with change detection
- * - Reusable modal patterns for confirmations
- * - Clear separation of concerns between settings categories
- * 
- * RESULT: 60% less code, enhanced UX, full design system consistency
- */

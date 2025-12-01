@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error aggregating content at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to aggregate content", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting aggregation info at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get aggregation info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -211,7 +211,7 @@ async function getUserAccessibleSpaces(userId: string): Promise<string[]> {
   } catch (error) {
     logger.error(
       `Error getting accessible spaces at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -311,7 +311,7 @@ async function getActiveContentSources(spaceIds: string[]): Promise<ContentSourc
   } catch (error) {
     logger.error(
       `Error getting content sources at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -324,7 +324,7 @@ async function aggregateFromAllSources(params: {
   config: AggregationConfig;
   forceRefresh: boolean;
 }): Promise<AggregatedContentItem[]> {
-  const { _userId, sources, config, forceRefresh } = params;
+  const { userId: _userId, sources, config, forceRefresh } = params;
   const aggregatedItems: AggregatedContentItem[] = [];
 
   const timeWindow = new Date();
@@ -349,7 +349,7 @@ async function aggregateFromAllSources(params: {
 
       aggregatedItems.push(...enhancedContent);
     } catch (error) {
-      logger.error('Error aggregating from source', { sourceId: source.id, error: error instanceof Error ? error : new Error(String(error)), endpoint: '/api/feed/aggregation' });
+      logger.error('Error aggregating from source', { sourceId: source.id, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/feed/aggregation' });
     }
   }
 
@@ -389,7 +389,7 @@ async function aggregateFromSource(
         return [];
     }
   } catch (error) {
-    logger.error('Error in source aggregation for', { sourceType: source.type, error: error instanceof Error ? error : new Error(String(error)), endpoint: '/api/feed/aggregation'  });
+    logger.error('Error in source aggregation for', { sourceType: source.type, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/feed/aggregation'  });
     return [];
   }
 }
@@ -445,7 +445,7 @@ async function aggregateToolInteractions(
   } catch (error) {
     logger.error(
       `Error aggregating tool interactions at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -508,7 +508,7 @@ async function aggregateSpaceEvents(
   } catch (error) {
     logger.error(
       `Error aggregating space events at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -572,7 +572,7 @@ async function aggregateUserPosts(
   } catch (error) {
     logger.error(
       `Error aggregating user posts at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -625,7 +625,7 @@ async function aggregateBuilderAnnouncements(
   } catch (error) {
     logger.error(
       `Error aggregating builder announcements at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -728,7 +728,7 @@ async function aggregateRitualUpdates(
   } catch (error) {
     logger.error(
       `Error aggregating ritual updates at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return items;
   }
@@ -968,7 +968,7 @@ async function logAggregationMetrics(userId: string, metrics: Record<string, unk
   } catch (error) {
     logger.error(
       `Error logging aggregation metrics at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -1011,7 +1011,7 @@ async function getAggregationMetrics(userId: string): Promise<{ totalAggregation
   } catch (error) {
     logger.error(
       `Error getting aggregation metrics at /api/feed/aggregation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }

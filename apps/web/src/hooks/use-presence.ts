@@ -66,7 +66,7 @@ export function usePresence() {
           }
         }, { merge: true });
       } catch (error) {
-        logger.error('Failed to update presence', { error: error instanceof Error ? error : new Error(String(error)) });
+        logger.error('Failed to update presence', { error: { error: error instanceof Error ? error.message : String(error) } });
       }
     };
 
@@ -174,7 +174,7 @@ export function useOnlineUsers(spaceId?: string) {
               });
             }
           } catch (error) {
-            logger.error('Failed to fetch user data', { error: error instanceof Error ? error : new Error(String(error)), userId: presence.userId });
+            logger.error('Failed to fetch user data', { error: { error: error instanceof Error ? error.message : String(error) }, userId: presence.userId });
           }
         });
 
@@ -184,7 +184,7 @@ export function useOnlineUsers(spaceId?: string) {
         setLoading(false);
       },
       (error) => {
-        logger.error('Failed to subscribe to online users', { error: error instanceof Error ? error : new Error(String(error)) });
+        logger.error('Failed to subscribe to online users', { error: { error: error instanceof Error ? error.message : String(error) } });
         setLoading(false);
       }
     );
@@ -201,7 +201,7 @@ export function useOnlineUsers(spaceId?: string) {
 export function useTypingIndicator(contextId: string) {
   const { user } = useAuth();
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!contextId) return;
@@ -292,7 +292,7 @@ export function useUserStatus(userId: string) {
         }
       },
       (error) => {
-        logger.error('Failed to get user status', { error: error instanceof Error ? error : new Error(String(error)), userId });
+        logger.error('Failed to get user status', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
         setStatus('offline');
       }
     );

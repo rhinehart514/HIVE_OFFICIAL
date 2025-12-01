@@ -1,251 +1,344 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button, Input, Card, _Avatar } from '@hive/ui';
-import { useToast } from '@/hooks/use-toast';
-import { Search, Plus, Users, ChevronRight, Zap, UserPlus, Star } from 'lucide-react';
-import { useAuth } from '@hive/auth-logic';
-import { secureApiFetch } from '@/lib/secure-auth-utils';
-import { SpacesErrorBoundary } from '@/components/error-boundaries';
-import { motion, useReducedMotion } from 'framer-motion';
+/**
+ * SpacesDiscoveryPage - Premium Redesign
+ *
+ * Enhanced discovery experience with:
+ * - useSpaceDiscovery hook for unified data management
+ * - T1 Premium hero section with Ken Burns effect
+ * - T2 motion tier for discovery cards
+ * - Join celebration animations
+ * - Category filtering with optimistic updates
+ *
+ * @author HIVE Frontend Team
+ * @version 2.0.0
+ */
 
-// Spring config for fluid motion
-const SPRING_CONFIG = {
-  type: "spring" as const,
-  stiffness: 400,
-  damping: 25,
-};
+import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import {
+  Search,
+  Plus,
+  Zap,
+  TrendingUp,
+  Sparkles,
+  Users,
+  Check,
+  Loader2,
+} from "lucide-react";
 
-// Stagger children animation
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
+// HIVE UI Components
+import {
+  Button,
+  Input,
+  Card,
+  SpacesHeroSection,
+  SpacesDiscoveryGrid,
+  CategoryFilterBar,
+  DiscoverySectionHeader,
+  toast,
+} from "@hive/ui";
+import type {
+  SpaceDiscoveryCardData,
+  SpaceHeroCardData,
+  CategoryFilterItem,
+} from "@hive/ui";
+import { springPresets, easingArrays } from "@hive/tokens";
+
+// App imports
+import { useAuth } from "@hive/auth-logic";
+import { useSpaceDiscovery, type SpaceCategory } from "@/hooks/use-space-discovery";
+import { SpacesErrorBoundary } from "@/components/error-boundaries";
+
+// =============================================================================
+// CATEGORY CONFIGURATION
+// =============================================================================
+
+const CATEGORIES: CategoryFilterItem[] = [
+  { id: "all", label: "All" },
+  { id: "club", label: "Clubs", icon: <Users className="w-3.5 h-3.5" /> },
+  { id: "student_org", label: "Student Orgs", icon: <Users className="w-3.5 h-3.5" /> },
+  { id: "academic", label: "Academic" },
+  { id: "residential", label: "Residential" },
+  { id: "university_org", label: "University" },
+  { id: "greek_life", label: "Greek Life" },
+  { id: "sports", label: "Sports" },
+  { id: "arts", label: "Arts" },
+];
+
+// =============================================================================
+// MOTION VARIANTS
+// =============================================================================
+
+const pageTransitionVariants = {
+  initial: { opacity: 0 },
+  animate: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.06,
+      duration: 0.3,
+      ease: easingArrays.silk,
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.2 },
+  },
+};
+
+const headerVariants = {
+  initial: { opacity: 0, y: -20 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: easingArrays.silk,
+      staggerChildren: 0.05,
     },
   },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 8 },
-  visible: {
+const headerItemVariants = {
+  initial: { opacity: 0, y: -10 },
+  animate: {
     opacity: 1,
     y: 0,
-    transition: SPRING_CONFIG,
+    transition: springPresets.snappy,
+  },
+};
+
+const joinCelebrationVariants = {
+  initial: { scale: 0.5, opacity: 0 },
+  animate: {
+    scale: [0.5, 1.2, 1],
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+      ease: easingArrays.dramatic,
+      times: [0, 0.6, 1],
+    },
+  },
+  exit: {
+    scale: 0.8,
+    opacity: 0,
+    transition: { duration: 0.2 },
   },
 };
 
 // =============================================================================
-// TYPES
+// DATA TRANSFORMERS
 // =============================================================================
 
-interface SpaceData {
+function toDiscoveryCard(space: {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   memberCount: number;
-  bannerImage?: string;
+  bannerUrl?: string;
+  iconUrl?: string;
   category: string;
+  isVerified?: boolean;
+  activityLevel?: string;
+  creator?: { id: string; name: string; avatar?: string };
+}): SpaceDiscoveryCardData {
+  const activityMap: Record<string, "high" | "live" | "quiet"> = {
+    high: "high",
+    medium: "live",
+    low: "quiet",
+  };
+
+  return {
+    id: space.id,
+    name: space.name,
+    description: space.description,
+    bannerImage: space.bannerUrl,
+    memberCount: space.memberCount ?? 0,
+    category: space.category ?? "general",
+    isVerified: space.isVerified,
+    activityLevel: activityMap[space.activityLevel || "low"] ?? "quiet",
+  };
 }
 
-type CategoryKey = 'all' | 'student_org' | 'residential' | 'university_org' | 'greek_life';
-
-const CATEGORIES: Record<CategoryKey, string> = {
-  all: 'All',
-  student_org: 'Student Orgs',
-  residential: 'Residential',
-  university_org: 'University',
-  greek_life: 'Greek Life',
-};
+function toHeroCard(space: {
+  id: string;
+  name: string;
+  description?: string;
+  memberCount: number;
+  bannerUrl?: string;
+  iconUrl?: string;
+  category: string;
+  isVerified?: boolean;
+  activityLevel?: string;
+}): SpaceHeroCardData {
+  return toDiscoveryCard(space);
+}
 
 // =============================================================================
-// SPACE CARD COMPONENT
+// JOIN CELEBRATION TOAST
 // =============================================================================
 
-function SpaceListItem({
-  space,
-  onJoin,
-  onClick,
-}: {
-  space: SpaceData;
-  onJoin: () => void;
-  onClick: () => void;
-}) {
-  const shouldReduceMotion = useReducedMotion();
+interface JoinCelebrationProps {
+  spaceName: string;
+  visible: boolean;
+}
 
+function JoinCelebration({ spaceName, visible }: JoinCelebrationProps) {
   return (
-    <motion.div
-      variants={itemVariants}
-      onClick={onClick}
-      className="flex items-center gap-4 p-4 rounded-xl bg-[var(--hive-background-secondary)] border border-[var(--hive-border-default)] hover:border-[var(--hive-border-hover)] cursor-pointer group focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
-      whileHover={shouldReduceMotion ? {} : { y: -2, scale: 1.01 }}
-      whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
-      transition={SPRING_CONFIG}
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onClick()}
-    >
-      {/* Avatar/Icon */}
-      <div className="h-12 w-12 rounded-xl bg-[var(--hive-background-tertiary)] flex items-center justify-center flex-shrink-0">
-        {space.bannerImage ? (
-          <img src={space.bannerImage} alt={space.name} className="h-full w-full rounded-xl object-cover" />
-        ) : (
-          <span className="text-lg font-bold text-[var(--hive-text-primary)]">
-            {space.name.charAt(0).toUpperCase()}
-          </span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-[var(--hive-text-primary)] truncate group-hover:text-white transition-colors">
-          {space.name}
-        </h3>
-        <p className="text-sm text-[var(--hive-text-secondary)] truncate">
-          {space.memberCount} members
-        </p>
-      </div>
-
-      {/* Join button */}
-      <motion.div
-        whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-        whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-      >
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={(e) => {
-            e.stopPropagation();
-            onJoin();
-          }}
-          className="flex-shrink-0 focus-visible:ring-2 focus-visible:ring-white/20"
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          variants={joinCelebrationVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
         >
-          Join
-        </Button>
-      </motion.div>
-    </motion.div>
+          <div className="flex flex-col items-center gap-3 px-8 py-6 bg-black/90 backdrop-blur-xl rounded-2xl border border-[#FFD700]/30 shadow-2xl shadow-[#FFD700]/20">
+            <motion.div
+              animate={{
+                boxShadow: [
+                  "0 0 0 0 rgba(255,215,0,0)",
+                  "0 0 40px 20px rgba(255,215,0,0.3)",
+                  "0 0 0 0 rgba(255,215,0,0)",
+                ],
+              }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-12 h-12 rounded-full bg-[#FFD700] flex items-center justify-center"
+            >
+              <Check className="w-6 h-6 text-black" />
+            </motion.div>
+            <div className="text-center">
+              <p className="text-lg font-semibold text-white">Welcome!</p>
+              <p className="text-sm text-neutral-400">
+                You joined {spaceName}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
 // =============================================================================
-// MAIN PAGE
+// MAIN PAGE COMPONENT
 // =============================================================================
 
 export default function SpacesDiscoveryPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('all');
+  const shouldReduceMotion = useReducedMotion();
 
-  // Discovery sections
-  const [recommendedSpaces, setRecommendedSpaces] = useState<SpaceData[]>([]);
-  const [popularSpaces, setPopularSpaces] = useState<SpaceData[]>([]);
-  const [newSpaces, setNewSpaces] = useState<SpaceData[]>([]);
+  // Local state for celebration
+  const [celebratingSpace, setCelebratingSpace] = useState<string | null>(null);
+  const [celebratingSpaceName, setCelebratingSpaceName] = useState("");
 
-  // Load recommendations
-  useEffect(() => {
-    loadSpaces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, selectedCategory]);
+  // Use the discovery hook
+  const {
+    spaces,
+    sections,
+    filters,
+    setCategory,
+    setQuery,
+    hasActiveFilters,
+    isLoading,
+    error,
+    joinSpace,
+    isJoining,
+    joiningIds,
+    refresh,
+  } = useSpaceDiscovery({
+    enableSections: true,
+    limit: 20,
+  });
 
-  const loadSpaces = async () => {
-    if (!user) return;
+  // Handle join with celebration
+  const handleJoinSpace = useCallback(
+    async (spaceId: string) => {
+      // Find space name for celebration
+      const allSpaces = [
+        ...(sections?.featured ?? []),
+        ...(sections?.recommended ?? []),
+        ...(sections?.popular ?? []),
+        ...(sections?.new ?? []),
+        ...spaces,
+      ];
+      const space = allSpaces.find((s) => s.id === spaceId);
 
-    try {
-      setLoading(true);
+      const success = await joinSpace(spaceId);
 
-      // Fetch recommended spaces
-      const res = await secureApiFetch('/api/spaces/recommended', { method: 'GET' });
-      const response = await res.json();
+      if (success && space) {
+        // Show celebration
+        setCelebratingSpaceName(space.name);
+        setCelebratingSpace(spaceId);
 
-      // Map API response to our format
-      const mapSpace = (space: { id: string; name: string; description?: string; memberCount?: number; bannerImage?: string; category?: string }): SpaceData => ({
-        id: space.id,
-        name: space.name,
-        description: space.description || '',
-        memberCount: space.memberCount ?? 0,
-        bannerImage: space.bannerImage,
-        category: space.category,
-      });
+        // Hide celebration after delay and navigate
+        setTimeout(() => {
+          setCelebratingSpace(null);
+          router.push(`/spaces/${spaceId}`);
+        }, 1500);
+      } else if (!success) {
+        toast.error("Failed to join", "Please try again.");
+      }
+    },
+    [sections, spaces, joinSpace, router]
+  );
 
-      setRecommendedSpaces((response?.panicRelief || []).map(mapSpace));
-      setPopularSpaces((response?.whereYourFriendsAre || []).map(mapSpace));
-      setNewSpaces((response?.insiderAccess || []).map(mapSpace));
-
-    } catch (error) {
-      console.error('Failed to load spaces:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      loadSpaces();
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await secureApiFetch('/api/spaces/search', {
-        method: 'POST',
-        body: JSON.stringify({ q: searchQuery, limit: 20 })
-      });
-      const response = await res.json();
-
-      const spaces = (response?.spaces || []).map((space: { id: string; name: string; description?: string; memberCount?: number; bannerImage?: string; category?: string }) => ({
-        id: space.id,
-        name: space.name,
-        description: space.description || '',
-        memberCount: space.memberCount ?? 0,
-        bannerImage: space.bannerImage,
-        category: space.category,
-      }));
-
-      setRecommendedSpaces(spaces.slice(0, 6));
-      setPopularSpaces([]);
-      setNewSpaces([]);
-    } catch (error) {
-      console.error('Search failed:', error);
-      toast({
-        title: 'Search failed',
-        description: 'Please try again.',
-        type: 'error',
-        duration: 5000
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoinSpace = async (spaceId: string) => {
-    try {
-      const res = await secureApiFetch('/api/spaces/join', {
-        method: 'POST',
-        body: JSON.stringify({ spaceId }),
-      });
-      if (!res.ok) throw new Error(`Join failed: ${res.status}`);
-
-      toast({
-        title: 'Joined space',
-        description: 'Welcome aboard!',
-        type: 'success',
-        duration: 3000
-      });
+  const handleSpaceClick = useCallback(
+    (spaceId: string) => {
       router.push(`/spaces/${spaceId}`);
-    } catch (error) {
-      console.error('Failed to join space:', error);
-      toast({
-        title: 'Failed to join',
-        description: 'Please try again.',
-        type: 'error',
-        duration: 5000
-      });
-    }
-  };
+    },
+    [router]
+  );
+
+  const handleCategoryChange = useCallback(
+    (categoryId: string) => {
+      setCategory(categoryId as SpaceCategory);
+    },
+    [setCategory]
+  );
+
+  const handleSearch = useCallback(() => {
+    // Search is debounced in the hook
+  }, []);
+
+  // Transform sections data
+  const heroSpaces = useMemo(
+    () => (sections?.featured ?? []).slice(0, 3).map(toHeroCard),
+    [sections?.featured]
+  );
+
+  const recommendedCards = useMemo(
+    () => (sections?.recommended ?? []).map(toDiscoveryCard),
+    [sections?.recommended]
+  );
+
+  const popularCards = useMemo(
+    () => (sections?.popular ?? []).map(toDiscoveryCard),
+    [sections?.popular]
+  );
+
+  const newCards = useMemo(
+    () => (sections?.new ?? []).map(toDiscoveryCard),
+    [sections?.new]
+  );
+
+  // For search results, use filtered spaces
+  const searchResultCards = useMemo(
+    () => spaces.map(toDiscoveryCard),
+    [spaces]
+  );
+
+  const hasNoSpaces =
+    !isLoading &&
+    heroSpaces.length === 0 &&
+    recommendedCards.length === 0 &&
+    popularCards.length === 0 &&
+    newCards.length === 0 &&
+    searchResultCards.length === 0;
+
+  const showSearchResults = hasActiveFilters && searchResultCards.length > 0;
 
   // =============================================================================
   // RENDER
@@ -253,187 +346,259 @@ export default function SpacesDiscoveryPage() {
 
   return (
     <SpacesErrorBoundary context="directory">
-      <div className="min-h-screen bg-[var(--hive-background-primary)]">
-        {/* Header */}
-        <header className="sticky top-0 z-30 bg-[var(--hive-background-primary)]/80 backdrop-blur-xl border-b border-[var(--hive-border-default)]">
-          <div className="max-w-4xl mx-auto px-4 pt-6 pb-4">
-            {/* Title row */}
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-[var(--hive-text-primary)] mb-1">Spaces</h1>
-                <p className="text-sm text-[var(--hive-text-secondary)]">
-                  Find your communities at UB
-                </p>
-              </div>
+      <div className="min-h-screen bg-black">
+        {/* Join Celebration Overlay */}
+        <JoinCelebration
+          spaceName={celebratingSpaceName}
+          visible={!!celebratingSpace}
+        />
 
-              <Button
-                className="bg-white text-black hover:bg-neutral-100 font-semibold focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
-                size="sm"
-                onClick={() => router.push('/spaces/create')}
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                Create
-              </Button>
+        {/* Sticky Header */}
+        <motion.header
+          variants={shouldReduceMotion ? undefined : headerVariants}
+          initial="initial"
+          animate="animate"
+          className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-neutral-800/50"
+        >
+          <div className="max-w-5xl mx-auto px-6 pt-6 pb-4">
+            {/* Title Row */}
+            <div className="flex items-start justify-between mb-6">
+              <motion.div variants={headerItemVariants}>
+                <h1 className="text-2xl font-bold text-white mb-1">Spaces</h1>
+                <p className="text-sm text-neutral-400">
+                  Find your communities
+                </p>
+              </motion.div>
+
+              <motion.div variants={headerItemVariants}>
+                <Button
+                  className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-semibold"
+                  size="sm"
+                  onClick={() => router.push("/spaces/create")}
+                >
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  Create
+                </Button>
+              </motion.div>
             </div>
 
-            {/* Search */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--hive-text-tertiary)] w-4 h-4" />
+            {/* Search Input */}
+            <motion.div
+              className="relative mb-4"
+              variants={headerItemVariants}
+            >
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" />
               <Input
                 placeholder="Search spaces..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="pl-10 bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]"
+                value={filters.query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="pl-10 bg-neutral-900/50 border-neutral-800 focus:border-[#FFD700]/50 focus:ring-[#FFD700]/20"
               />
-            </div>
+            </motion.div>
 
-            {/* Category pills */}
-            <div className="flex gap-2 overflow-x-auto pb-1 -mb-1">
-              {(Object.entries(CATEGORIES) as [CategoryKey, string][]).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedCategory(key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${
-                    selectedCategory === key
-                      ? 'bg-[var(--hive-text-primary)] text-[var(--hive-background-primary)]'
-                      : 'bg-[var(--hive-background-secondary)] text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)]'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            {/* Category Filter Bar */}
+            <motion.div variants={headerItemVariants}>
+              <CategoryFilterBar
+                categories={CATEGORIES}
+                selectedCategory={filters.category}
+                onSelect={handleCategoryChange}
+              />
+            </motion.div>
           </div>
-        </header>
+        </motion.header>
 
-        {/* Content */}
-        <main className="max-w-4xl mx-auto px-4 py-6 space-y-8">
-          {loading ? (
-            // Loading skeletons
-            <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-[var(--hive-background-secondary)] border border-[var(--hive-border-default)] animate-pulse">
-                  <div className="h-12 w-12 rounded-xl bg-[var(--hive-background-tertiary)]" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-[var(--hive-background-tertiary)] rounded" />
-                    <div className="h-3 w-20 bg-[var(--hive-background-tertiary)] rounded" />
-                  </div>
+        {/* Main Content */}
+        <main className="max-w-5xl mx-auto px-6 py-8 space-y-12">
+          <AnimatePresence mode="wait">
+            {isLoading ? (
+              // Loading State
+              <motion.div
+                key="loading"
+                variants={pageTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-8"
+              >
+                {/* Hero skeleton */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 row-span-2 h-80 rounded-2xl bg-neutral-900/50 animate-pulse" />
+                  <div className="h-[152px] rounded-2xl bg-neutral-900/50 animate-pulse" />
+                  <div className="h-[152px] rounded-2xl bg-neutral-900/50 animate-pulse" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <>
-              {/* Recommended for You */}
-              {recommendedSpaces.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                      <h2 className="text-lg font-semibold text-[var(--hive-text-primary)]">
-                        Recommended for You
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => router.push('/spaces/browse')}
-                      className="text-sm text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)] flex items-center gap-1 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none rounded"
-                    >
-                      View all <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <motion.div
-                    className="space-y-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {recommendedSpaces.map(space => (
-                      <SpaceListItem
-                        key={space.id}
-                        space={space}
-                        onJoin={() => handleJoinSpace(space.id)}
-                        onClick={() => router.push(`/spaces/${space.id}`)}
-                      />
-                    ))}
-                  </motion.div>
-                </section>
-              )}
 
-              {/* Popular Spaces */}
-              {popularSpaces.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Star className="h-5 w-5 text-[var(--hive-text-secondary)]" />
-                    <h2 className="text-lg font-semibold text-[var(--hive-text-primary)]">
-                      Popular on Campus
-                    </h2>
+                {/* Grid skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="h-24 rounded-xl bg-neutral-900/50 animate-pulse"
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            ) : hasNoSpaces ? (
+              // Empty State
+              <motion.div
+                key="empty"
+                variants={pageTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <Card className="p-12 text-center bg-neutral-900/50 border-neutral-800">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-neutral-800 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-neutral-500" />
                   </div>
-                  <motion.div
-                    className="space-y-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {popularSpaces.map(space => (
-                      <SpaceListItem
-                        key={space.id}
-                        space={space}
-                        onJoin={() => handleJoinSpace(space.id)}
-                        onClick={() => router.push(`/spaces/${space.id}`)}
-                      />
-                    ))}
-                  </motion.div>
-                </section>
-              )}
-
-              {/* New Spaces */}
-              {newSpaces.length > 0 && (
-                <section>
-                  <div className="flex items-center gap-2 mb-4">
-                    <UserPlus className="h-5 w-5 text-[var(--hive-text-secondary)]" />
-                    <h2 className="text-lg font-semibold text-[var(--hive-text-primary)]">
-                      New Spaces
-                    </h2>
-                  </div>
-                  <motion.div
-                    className="space-y-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {newSpaces.map(space => (
-                      <SpaceListItem
-                        key={space.id}
-                        space={space}
-                        onJoin={() => handleJoinSpace(space.id)}
-                        onClick={() => router.push(`/spaces/${space.id}`)}
-                      />
-                    ))}
-                  </motion.div>
-                </section>
-              )}
-
-              {/* Empty state */}
-              {recommendedSpaces.length === 0 && popularSpaces.length === 0 && newSpaces.length === 0 && (
-                <Card className="p-12 text-center bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]">
-                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--hive-background-tertiary)] flex items-center justify-center">
-                    <Users className="h-6 w-6 text-[var(--hive-text-tertiary)]" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-[var(--hive-text-primary)] mb-2">
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     No Spaces Found
                   </h3>
-                  <p className="text-[var(--hive-text-secondary)] mb-6">
-                    {searchQuery ? 'Try a different search term' : 'Be the first to create a space!'}
+                  <p className="text-neutral-400 mb-6 max-w-sm mx-auto">
+                    {filters.query
+                      ? "Try a different search term or browse categories"
+                      : "Be the first to create a space for your community!"}
                   </p>
                   <Button
-                    className="bg-white text-black hover:bg-neutral-100"
-                    onClick={() => router.push('/spaces/create')}
+                    className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90"
+                    onClick={() => router.push("/spaces/create")}
                   >
+                    <Plus className="h-4 w-4 mr-2" />
                     Create Space
                   </Button>
                 </Card>
-              )}
-            </>
+              </motion.div>
+            ) : showSearchResults ? (
+              // Search Results
+              <motion.div
+                key="search-results"
+                variants={pageTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-6"
+              >
+                <DiscoverySectionHeader
+                  title={`Search Results`}
+                  subtitle={`${searchResultCards.length} spaces found`}
+                  icon={<Search className="w-5 h-5" />}
+                />
+                <SpacesDiscoveryGrid
+                  spaces={searchResultCards}
+                  onJoin={handleJoinSpace}
+                  onSpaceClick={handleSpaceClick}
+                  joiningIds={joiningIds}
+                  columns={3}
+                />
+              </motion.div>
+            ) : (
+              // Discovery Sections
+              <motion.div
+                key="content"
+                variants={pageTransitionVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                className="space-y-12"
+              >
+                {/* Featured Hero Section (Bento Grid) */}
+                {heroSpaces.length > 0 && (
+                  <section>
+                    <DiscoverySectionHeader
+                      title="Featured"
+                      subtitle="Trending on campus"
+                      icon={<Sparkles className="w-5 h-5" />}
+                      onViewAll={() =>
+                        router.push("/spaces/browse?filter=featured")
+                      }
+                    />
+                    <SpacesHeroSection
+                      spaces={heroSpaces}
+                      onJoin={handleJoinSpace}
+                      onSpaceClick={handleSpaceClick}
+                    />
+                  </section>
+                )}
+
+                {/* Recommended Section */}
+                {recommendedCards.length > 0 && (
+                  <section>
+                    <DiscoverySectionHeader
+                      title="Recommended for You"
+                      icon={<Zap className="w-5 h-5" />}
+                      onViewAll={() =>
+                        router.push("/spaces/browse?filter=recommended")
+                      }
+                    />
+                    <SpacesDiscoveryGrid
+                      spaces={recommendedCards}
+                      onJoin={handleJoinSpace}
+                      onSpaceClick={handleSpaceClick}
+                      joiningIds={joiningIds}
+                      columns={3}
+                    />
+                  </section>
+                )}
+
+                {/* Popular Section */}
+                {popularCards.length > 0 && (
+                  <section>
+                    <DiscoverySectionHeader
+                      title="Popular on Campus"
+                      subtitle="Where your friends are"
+                      icon={<TrendingUp className="w-5 h-5" />}
+                      onViewAll={() =>
+                        router.push("/spaces/browse?filter=popular")
+                      }
+                    />
+                    <SpacesDiscoveryGrid
+                      spaces={popularCards}
+                      onJoin={handleJoinSpace}
+                      onSpaceClick={handleSpaceClick}
+                      joiningIds={joiningIds}
+                      columns={3}
+                    />
+                  </section>
+                )}
+
+                {/* New Spaces Section */}
+                {newCards.length > 0 && (
+                  <section>
+                    <DiscoverySectionHeader
+                      title="Just Launched"
+                      subtitle="Be an early member"
+                      icon={<Sparkles className="w-5 h-5" />}
+                      onViewAll={() =>
+                        router.push("/spaces/browse?filter=new")
+                      }
+                    />
+                    <SpacesDiscoveryGrid
+                      spaces={newCards}
+                      onJoin={handleJoinSpace}
+                      onSpaceClick={handleSpaceClick}
+                      joiningIds={joiningIds}
+                      columns={3}
+                    />
+                  </section>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Error state */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50"
+            >
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 backdrop-blur-sm">
+                {error}
+                <button onClick={refresh} className="ml-3 underline">
+                  Retry
+                </button>
+              </div>
+            </motion.div>
           )}
         </main>
       </div>

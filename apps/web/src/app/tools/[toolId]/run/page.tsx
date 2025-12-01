@@ -1,518 +1,652 @@
 "use client";
 
-// Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-// LiveToolRuntime not exported from @hive/ui yet
-import { ArrowLeft, Settings, Share, Download, Activity, Zap, Clock, AlertCircle } from "lucide-react";
-import { useSession } from "../../../../hooks/use-session";
-import type { Tool } from "@hive/core";
-import { logger } from "@/lib/logger";
-// Temp fix for chunk 2073 useRef errors
-const Button = ({ children, _variant = 'default', _size = 'default', className = '', ...props }: Record<string, unknown>) => <button className={`px-4 py-2 rounded ${className}`} {...props}>{children}</button>;
-const Card = ({ children, className = '', ...props }: Record<string, unknown>) => <div className={`border rounded-lg p-4 ${className}`} {...props}>{children}</div>;
+import { useCallback, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowLeft, Settings, Share, Activity, Zap, CheckCircle2, AlertCircle, Loader2, CloudOff, LogIn } from "lucide-react";
+import { ToolCanvas } from "@hive/ui";
+import { useToolRuntime } from "@/hooks/use-tool-runtime";
+import { cn } from "@/lib/utils";
 
+// ============================================================================
+// DESIGN TOKENS (from HIVE design system)
+// ============================================================================
 
-type RuntimeElementInstance = {
-  id: string;
-  elementId: string;
-  config: Record<string, unknown>;
-  position?: { x: number; y: number };
-  parentId?: string;
-  order?: number;
-  isVisible?: boolean;
-  isLocked?: boolean;
+const glass = {
+  card: "bg-white/[0.03] backdrop-blur-[8px] border border-white/[0.06]",
+  header: "bg-gray-950/80 backdrop-blur-[16px] border-b border-white/[0.08]",
 };
 
-interface ToolWithInstances {
-  tool: Tool;
-  instances: RuntimeElementInstance[];
-  spaceId: string;
-  deploymentId: string;
-  permissions: {
-    canUse: boolean;
-    canConfigure: boolean;
-    canViewAnalytics: boolean;
-  };
+const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950";
+
+// Motion variants (T2: Standard interactions)
+const fadeInUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.23, 1, 0.32, 1] } },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
+
+const scaleOnHover = {
+  rest: { scale: 1 },
+  hover: { scale: 1.02, transition: { duration: 0.2 } },
+};
+
+// ============================================================================
+// COMPONENTS
+// ============================================================================
+
+// Status indicator with semantic colors
+function SyncStatus({
+  isSynced,
+  isSaving,
+  lastSaved
+}: {
+  isSynced: boolean;
+  isSaving: boolean;
+  lastSaved: Date | null;
+}) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (isSaving) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <Loader2 className={cn("h-3 w-3", !prefersReducedMotion && "animate-spin")} />
+        <span>Saving...</span>
+      </div>
+    );
+  }
+
+  if (isSynced) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-emerald-400">
+        <CheckCircle2 className="h-3 w-3" />
+        <span>
+          {lastSaved
+            ? `Saved ${lastSaved.toLocaleTimeString()}`
+            : 'All changes saved'
+          }
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-xs text-amber-400">
+      <motion.div
+        className="h-2 w-2 rounded-full bg-amber-400"
+        animate={prefersReducedMotion ? {} : { opacity: [1, 0.5, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity }}
+      />
+      <span>Unsaved changes</span>
+    </div>
+  );
 }
 
-// Sample tool instances for demonstration
-const SAMPLE_INSTANCES: RuntimeElementInstance[] = [
-  {
-    id: 'title-input',
-    elementId: 'textInput-v1',
-    config: {
-      label: 'Poll Question',
-      placeholder: 'What should we order for lunch?',
-      required: true,
-      style: { width: 'full' }
-    },
-    position: { x: 20, y: 20 },
-    parentId: undefined,
-    order: 1,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'option1-input',
-    elementId: 'textInput-v1',
-    config: {
-      label: 'Option 1',
-      placeholder: 'Pizza',
-      required: true
-    },
-    position: { x: 20, y: 100 },
-    parentId: undefined,
-    order: 2,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'option2-input',
-    elementId: 'textInput-v1',
-    config: {
-      label: 'Option 2',
-      placeholder: 'Sandwiches',
-      required: true
-    },
-    position: { x: 20, y: 180 },
-    parentId: undefined,
-    order: 3,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'anonymous-toggle',
-    elementId: 'choiceSelect-v1',
-    config: {
-      label: 'Poll Settings',
-      options: [
-        { value: 'anonymous', label: 'Allow Anonymous Voting' },
-        { value: 'showResults', label: 'Show Results After Voting' }
-      ],
-      multiple: true
-    },
-    position: { x: 20, y: 260 },
-    parentId: undefined,
-    order: 4,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'create-button',
-    elementId: 'button-v1',
-    config: {
-      text: 'Create Poll',
-      variant: 'primary',
-      onClick: {
-        type: 'submit',
-        data: { action: 'createPoll' }
-      }
-    },
-    position: { x: 20, y: 360 },
-    parentId: undefined,
-    order: 5,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'countdown-timer',
-    elementId: 'countdownTimer-v1',
-    config: {
-      label: 'Poll Deadline',
-      targetDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-      format: 'dhms',
-      onComplete: {
-        type: 'message',
-        value: 'Poll deadline reached!'
-      }
-    },
-    position: { x: 20, y: 420 },
-    parentId: undefined,
-    order: 6,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'progress-bar',
-    elementId: 'progressBar-v1',
-    config: {
-      label: 'Poll Completion',
-      value: 65,
-      max: 100,
-      showPercentage: true,
-      color: 'var(--hive-brand-primary)'
-    },
-    position: { x: 20, y: 500 },
-    parentId: undefined,
-    order: 7,
-    isVisible: true,
-    isLocked: false
-  },
-  {
-    id: 'rating-stars',
-    elementId: 'ratingStars-v1',
-    config: {
-      label: 'Rate This Poll Tool',
-      maxRating: 5,
-      allowHalf: true,
-      required: false,
-      size: 'md'
-    },
-    position: { x: 20, y: 580 },
-    parentId: undefined,
-    order: 8,
-    isVisible: true,
-    isLocked: false
-  }
-];
+// Icon button with proper 44px touch target
+function IconButton({
+  onClick,
+  title,
+  children,
+  className,
+}: {
+  onClick?: () => void;
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.button
+      onClick={onClick}
+      title={title}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className={cn(
+        // 44px touch target (h-11 = 44px)
+        "h-11 w-11 flex items-center justify-center",
+        "rounded-lg text-gray-400 hover:text-white",
+        "bg-transparent hover:bg-white/[0.06]",
+        "transition-colors duration-150",
+        focusRing,
+        className
+      )}
+    >
+      {children}
+    </motion.button>
+  );
+}
 
-const SAMPLE_TOOL: Tool = {
-  id: 'poll-maker',
-  name: 'Interactive Poll Creator',
-  status: 'published',
-  // Use metadata/config to carry extra display fields
-  metadata: {
-    description: 'Create engaging polls with multiple question types and real-time results',
-    currentVersion: '1.2.0',
-    rating: 4.8,
-    useCount: 1250,
-    viewCount: 2340,
-    tags: ['polls', 'voting', 'surveys', 'engagement'],
-  },
-  config: {
-    backgroundColor: 'var(--hive-background-secondary)',
-    theme: 'dark' as const,
-    primaryColor: 'var(--hive-brand-primary)',
-  },
-};
+// Glass card component
+function GlassCard({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      className={cn(
+        "rounded-2xl p-4",
+        glass.card,
+        className
+      )}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
-// Tool data fetching
-const useToolData = (toolId: string, spaceId?: string) => {
-  const [toolData, setToolData] = useState<ToolWithInstances | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Status dot with semantic colors (NO PURPLE)
+function StatusDot({
+  status
+}: {
+  status: 'success' | 'warning' | 'error' | 'info' | 'active'
+}) {
+  const prefersReducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    const fetchToolData = async () => {
-      try {
-        setLoading(true);
-        
-        // For demo purposes, use sample data
-        // In production, this would fetch from your API
-        if (toolId === 'poll-maker') {
-          setToolData({
-            tool: SAMPLE_TOOL,
-            instances: SAMPLE_INSTANCES,
-            spaceId: spaceId || 'demo-space',
-            deploymentId: `${toolId}_${spaceId || 'demo-space'}`,
-            permissions: {
-              canUse: true,
-              canConfigure: false,
-              canViewAnalytics: false
-            }
-          });
-        } else {
-          throw new Error('Tool not found');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load tool');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const colors = {
+    success: "bg-emerald-400",
+    warning: "bg-amber-400",
+    error: "bg-red-400",
+    info: "bg-sky-400",
+    active: "bg-gold-500", // Using gold for "active" instead of purple
+  };
 
-    fetchToolData();
-  }, [toolId, spaceId]);
+  return (
+    <motion.div
+      className={cn("w-2 h-2 rounded-full", colors[status])}
+      animate={prefersReducedMotion ? {} : { opacity: [1, 0.6, 1] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    />
+  );
+}
 
-  return { toolData, loading, error };
-};
+// Action log entry type
+interface ActionLogEntry {
+  time: string;
+  instanceId: string;
+  action: string;
+  data?: unknown;
+}
+
+// ============================================================================
+// MAIN PAGE
+// ============================================================================
 
 export default function ToolRunPage() {
   const params = useParams();
   const router = useRouter();
-  const { sessionData: _sessionData } = useSession();
+  const searchParams = useSearchParams();
+  const prefersReducedMotion = useReducedMotion();
+
   const toolId = params.toolId as string;
-  const spaceId = 'demo-space'; // In production, get from query params or context
+  const spaceId = searchParams.get('spaceId') || undefined;
+  const deploymentId = searchParams.get('deploymentId') || undefined;
 
-  const { toolData, loading, error } = useToolData(toolId, spaceId);
-  const [actionLog, setActionLog] = useState<Array<{ time: string; action: string; data?: Record<string, unknown> }>>([]);
+  // Use the runtime hook
+  const {
+    tool,
+    deployment,
+    state,
+    isLoading,
+    isExecuting,
+    isSaving,
+    isSynced,
+    lastSaved,
+    error,
+    executeAction,
+    updateState,
+  } = useToolRuntime({
+    toolId,
+    spaceId,
+    deploymentId,
+    autoSave: true,
+    autoSaveDelay: 1500,
+  });
 
-  const _handleToolAction = (instanceId: string, action: string, data?: Record<string, unknown>) => {
-    logger.debug('Tool action', { toolId, action, data: { instanceId, ...data } });
-    
-    // Log the action
+  // Action logging for debug panel
+  const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
+
+  const logAction = useCallback((instanceId: string, action: string, data?: unknown) => {
     setActionLog(prev => [{
       time: new Date().toLocaleTimeString(),
-      action: `${instanceId}: ${action}`,
-      data
-    }, ...prev.slice(0, 9)]); // Keep last 10 actions
-    
-    // Handle specific actions
-    if (action === 'click' && data?.type === 'submit') {
-      logger.debug('Form submitted with poll data', { data });
-      // Here you would typically send data to your backend
-    }
-  };
+      instanceId,
+      action,
+      data,
+    }, ...prev.slice(0, 19)]);
+  }, []);
 
-  if (loading) {
+  // Handle element state changes
+  const handleElementChange = useCallback((instanceId: string, data: unknown) => {
+    updateState(instanceId, data);
+    logAction(instanceId, 'change', data);
+  }, [updateState, logAction]);
+
+  // Handle element actions (like button clicks)
+  const handleElementAction = useCallback(async (
+    instanceId: string,
+    action: string,
+    payload: unknown
+  ) => {
+    logAction(instanceId, action, payload);
+    const result = await executeAction(action, instanceId, payload as Record<string, unknown>);
+
+    if (result.success) {
+      logAction(instanceId, `${action}:success`, result.data);
+    } else {
+      logAction(instanceId, `${action}:error`, { error: result.error });
+    }
+  }, [executeAction, logAction]);
+
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hive-background-primary via-hive-background-tertiary to-hive-background-secondary flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--hive-brand-primary)] mx-auto mb-4"></div>
-          <p className="text-white">Loading tool...</p>
-        </div>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <Loader2 className={cn(
+            "h-8 w-8 text-gold-500 mx-auto mb-4",
+            !prefersReducedMotion && "animate-spin"
+          )} />
+          <p className="text-gray-300 font-medium">Loading tool...</p>
+        </motion.div>
       </div>
     );
   }
 
-  if (error || !toolData) {
+  // Check if it's an auth error (401)
+  const isAuthError = error?.includes('401') || error?.toLowerCase().includes('unauthorized');
+
+  // Error state
+  if (error || !tool) {
+    // Auth error - show login prompt
+    if (isAuthError) {
+      const returnUrl = typeof window !== 'undefined'
+        ? encodeURIComponent(window.location.pathname + window.location.search)
+        : '';
+
+      return (
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-md"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-gold-500/10 flex items-center justify-center mx-auto mb-6">
+              <LogIn className="h-8 w-8 text-gold-500" />
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">Sign in required</h2>
+            <p className="text-gray-400 mb-8">
+              You need to be signed in to use this tool. Sign in to continue.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <motion.button
+                onClick={() => router.back()}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "h-11 px-6 rounded-lg",
+                  "bg-white/[0.06] text-white border border-white/[0.08]",
+                  "hover:bg-white/[0.1] transition-colors",
+                  focusRing
+                )}
+              >
+                Go Back
+              </motion.button>
+              <motion.button
+                onClick={() => router.push(`/auth/login?returnUrl=${returnUrl}`)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={cn(
+                  "h-11 px-6 rounded-lg",
+                  "bg-gold-500 text-gray-950 font-medium",
+                  "hover:bg-gold-400 transition-colors",
+                  focusRing
+                )}
+              >
+                Sign In
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
+    // Other errors
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hive-background-primary via-hive-background-tertiary to-hive-background-secondary flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-4" />
-          <p className="text-white mb-2">Failed to load tool</p>
-          <p className="text-hive-text-tertiary text-sm">{error}</p>
-          <Button 
-            onClick={() => router.back()} 
-            className="mt-4"
-            variant="outline"
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center max-w-md"
+        >
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-8 w-8 text-red-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Failed to load tool</h2>
+          <p className="text-gray-400 mb-8">{error || 'Tool not found'}</p>
+          <motion.button
+            onClick={() => router.back()}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className={cn(
+              "h-11 px-6 rounded-lg",
+              "bg-white/[0.06] text-white border border-white/[0.08]",
+              "hover:bg-white/[0.1] transition-colors",
+              focusRing
+            )}
           >
             Go Back
-          </Button>
-        </div>
+          </motion.button>
+        </motion.div>
       </div>
     );
   }
 
-  const { tool, instances, permissions } = toolData;
+  // Get elements from tool definition
+  const elements = tool.elements || [];
+  const toolConfig = tool.config || {};
+  const toolMetadata = tool.metadata || {};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-hive-background-primary via-hive-background-tertiary to-hive-background-secondary">
-      {/* Header */}
-      <div className="border-b border-[rgba(255,255,255,0.1)] bg-[rgba(0,0,0,0.8)] backdrop-blur-lg sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                size="sm"
-                variant="ghost"
+    <div className="min-h-screen bg-gray-950">
+      {/* Header with glass morphism */}
+      <header className={cn("sticky top-0 z-40", glass.header)}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16">
+            {/* Left section */}
+            <div className="flex items-center gap-3">
+              {/* Back button - 44px touch target */}
+              <motion.button
                 onClick={() => router.back()}
-                className="text-hive-text-tertiary hover:text-white"
+                whileHover={{ x: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "h-11 px-3 flex items-center gap-2",
+                  "rounded-lg text-gray-400 hover:text-white",
+                  "hover:bg-white/[0.04] transition-colors",
+                  focusRing
+                )}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div>
-                <h1 className="text-xl font-semibold text-white">
-                  {tool.name} - Live Tool
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline text-sm font-medium">Back</span>
+              </motion.button>
+
+              <div className="h-6 w-px bg-white/[0.08] hidden sm:block" />
+
+              {/* Tool info */}
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2 truncate">
+                  {tool.name}
+                  {isExecuting && (
+                    <Loader2 className={cn(
+                      "h-4 w-4 text-gold-500 shrink-0",
+                      !prefersReducedMotion && "animate-spin"
+                    )} />
+                  )}
                 </h1>
-                <p className="text-sm text-hive-text-tertiary">
-                  {tool.metadata?.description ?? ''} • Running v{tool.metadata?.currentVersion ?? tool.version ?? '1.0.0'}
+                <p className="text-sm text-gray-500 truncate hidden sm:block">
+                  {tool.description || 'Interactive tool'}
+                  {tool.currentVersion && ` · v${tool.currentVersion}`}
                 </p>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => router.push(`/tools/${tool.id}/settings`)}
-                className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
-              </Button>
-              
-              <Button
-                size="sm"
-                variant="secondary"
-                className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white"
-              >
-                <Share className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+
+            {/* Right section */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <SyncStatus
+                  isSynced={isSynced}
+                  isSaving={isSaving}
+                  lastSaved={lastSaved}
+                />
+              </div>
+
+              <div className="flex items-center gap-1">
+                <IconButton
+                  onClick={() => router.push(`/tools/${toolId}`)}
+                  title="Tool settings"
+                >
+                  <Settings className="h-5 w-5" />
+                </IconButton>
+
+                <IconButton title="Share tool">
+                  <Share className="h-5 w-5" />
+                </IconButton>
+              </div>
             </div>
           </div>
         </div>
+      </header>
+
+      {/* Mobile sync status */}
+      <div className="sm:hidden px-4 py-2 border-b border-white/[0.06]">
+        <SyncStatus isSynced={isSynced} isSaving={isSaving} lastSaved={lastSaved} />
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Main Tool Interface */}
-          <div className="lg:col-span-3">
-            <div className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.1)] rounded-lg overflow-hidden">
-              <div className="min-h-[600px] flex items-center justify-center">
-                <div className="text-center max-w-md">
-                  <div className="w-16 h-16 bg-[var(--hive-brand-primary)] rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Zap className="h-8 w-8 text-hive-obsidian" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-2">Tool Runtime</h3>
-                  <p className="text-hive-text-tertiary mb-4">
-                    Live tool runtime is coming soon. This will provide an interactive environment 
-                    for running and testing your tools.
-                  </p>
-                  <div className="space-y-2 text-sm text-hive-text-tertiary">
-                    <p>Tool: {tool.name}</p>
-                    <p>Version: {tool.metadata?.currentVersion ?? tool.version ?? '1.0.0'}</p>
-                    <p>Elements: {instances.length}</p>
-                  </div>
+      {/* Main content */}
+      <motion.div
+        className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8"
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Tool Canvas */}
+          <motion.div
+            className="lg:col-span-3"
+            variants={fadeInUp}
+          >
+            <div
+              className={cn(
+                "rounded-2xl p-4 sm:p-6 min-h-[400px] sm:min-h-[600px]",
+                glass.card
+              )}
+              style={{
+                backgroundColor: typeof toolConfig.backgroundColor === 'string'
+                  ? toolConfig.backgroundColor
+                  : undefined,
+              }}
+            >
+              {elements.length > 0 ? (
+                <ToolCanvas
+                  elements={elements}
+                  state={state}
+                  layout={(toolConfig.layout as 'grid' | 'flow' | 'stack') || 'stack'}
+                  onElementChange={handleElementChange}
+                  onElementAction={handleElementAction}
+                  isLoading={isLoading}
+                  error={error}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center py-16">
+                  <motion.div
+                    className="text-center max-w-sm"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <div className="w-16 h-16 bg-gold-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <Zap className="h-8 w-8 text-gold-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      No Elements Configured
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-4">
+                      This tool hasn't been configured with any elements yet.
+                    </p>
+                    {deployment && (
+                      <p className="text-xs text-gray-600 font-mono">
+                        {deployment.deploymentId}
+                      </p>
+                    )}
+                  </motion.div>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Side Panel */}
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-4"
+            variants={staggerContainer}
+          >
             {/* Tool Info */}
-            <Card className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <h3 className="font-semibold text-white mb-3">Tool Information</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-hive-text-tertiary">Version:</span>
-                  <span className="text-white">{tool.metadata?.currentVersion ?? tool.version ?? '1.0.0'}</span>
+            <GlassCard>
+              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+                Tool Info
+              </h3>
+              <div className="space-y-2.5 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">Status</span>
+                  <span className="text-white capitalize">{tool.status}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-hive-text-tertiary">Elements:</span>
-                  <span className="text-white">{instances.length}</span>
+                {tool.currentVersion && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Version</span>
+                    <span className="text-white font-mono text-xs">{tool.currentVersion}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">Elements</span>
+                  <span className="text-white">{elements.length}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-hive-text-tertiary">Rating:</span>
-                  <span className="text-white">
-                    {typeof tool.metadata === 'object' && tool.metadata && 'rating' in tool.metadata ? (tool.metadata.rating as number) : 0}/5
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-hive-text-tertiary">Usage:</span>
-                  <span className="text-white">
-                    {typeof tool.metadata === 'object' && tool.metadata && 'useCount' in tool.metadata ? (tool.metadata.useCount as number) : 0} times
-                  </span>
-                </div>
-              </div>
-            </Card>
-
-            {/* Status */}
-            <Card className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <h3 className="font-semibold text-white mb-3">Runtime Status</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm text-white">Live Runtime Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span className="text-sm text-white">State Persistence On</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                  <span className="text-sm text-white">Real-time Sync</span>
-                </div>
-                {permissions.canUse && (
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                    <span className="text-sm text-white">Full Access</span>
+                {tool.category && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Category</span>
+                    <span className="text-white capitalize">{tool.category}</span>
+                  </div>
+                )}
+                {typeof toolMetadata.useCount === 'number' && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Uses</span>
+                    <span className="text-white">{toolMetadata.useCount.toLocaleString()}</span>
                   </div>
                 )}
               </div>
-            </Card>
-            
+            </GlassCard>
+
+            {/* Deployment Info */}
+            {deployment && (
+              <GlassCard>
+                <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+                  Deployment
+                </h3>
+                <div className="space-y-2.5 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Status</span>
+                    <span className={cn(
+                      "capitalize",
+                      deployment.status === 'active' ? 'text-emerald-400' : 'text-gray-400'
+                    )}>
+                      {deployment.status}
+                    </span>
+                  </div>
+                  {spaceId && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Space</span>
+                      <button
+                        onClick={() => router.push(`/spaces/${spaceId}`)}
+                        className={cn(
+                          "text-gray-300 hover:text-white underline underline-offset-2",
+                          "transition-colors",
+                          focusRing
+                        )}
+                      >
+                        View Space
+                      </button>
+                    </div>
+                  )}
+                  {typeof deployment.usageCount === 'number' && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">Usage</span>
+                      <span className="text-white">{deployment.usageCount} times</span>
+                    </div>
+                  )}
+                </div>
+              </GlassCard>
+            )}
+
+            {/* Runtime Status - NO PURPLE, using semantic colors */}
+            <GlassCard>
+              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+                Runtime
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <StatusDot status={!error ? 'success' : 'error'} />
+                  <span className="text-sm text-white">
+                    {!error ? 'Runtime Active' : 'Runtime Error'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusDot status={isSynced ? 'info' : 'warning'} />
+                  <span className="text-sm text-white">
+                    {isSynced ? 'State Synced' : 'Pending Sync'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusDot status="active" />
+                  <span className="text-sm text-white">Auto-save Enabled</span>
+                </div>
+              </div>
+            </GlassCard>
+
             {/* Action Log */}
-            <Card className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                <Activity className="h-4 w-4" />
+            <GlassCard>
+              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide flex items-center gap-2">
+                <Activity className="h-4 w-4 text-gray-500" />
                 Action Log
               </h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {actionLog.length === 0 ? (
-                  <p className="text-xs text-hive-text-tertiary text-center py-4">
-                    No actions yet. Interact with the tool to see logs.
-                  </p>
+                  <div className="text-center py-6">
+                    <CloudOff className="h-6 w-6 text-gray-600 mx-auto mb-2" />
+                    <p className="text-xs text-gray-500">
+                      No actions yet
+                    </p>
+                  </div>
                 ) : (
                   actionLog.map((log, index) => (
-                    <div key={index} className="text-xs border-l-2 border-[var(--hive-brand-primary)]/30 pl-2">
-                      <div className="text-hive-text-tertiary">{log.time}</div>
-                      <div className="text-white font-mono">{log.action}</div>
-                      {log.data && (
-                        <div className="text-hive-text-tertiary mt-1">
-                          {JSON.stringify(log.data, null, 2)}
-                        </div>
-                      )}
-                    </div>
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="text-xs border-l-2 border-gold-500/30 pl-3 py-1"
+                    >
+                      <div className="text-gray-600">{log.time}</div>
+                      <div className="text-white font-mono truncate">
+                        {log.instanceId}: {log.action}
+                      </div>
+                    </motion.div>
                   ))
                 )}
               </div>
-            </Card>
+            </GlassCard>
 
-            {/* Quick Actions */}
-            <Card className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <h3 className="font-semibold text-white mb-3">Actions</h3>
-              <div className="space-y-2">
-                <Button
-                  size="sm"
-                  onClick={() => router.push(`/tools/${tool.id}/edit`)}
-                  className="w-full bg-[rgba(255,255,255,0.05)] text-white hover:bg-[rgba(255,255,255,0.1)] justify-start"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Edit Tool
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => router.push(`/tools/${tool.id}/analytics`)}
-                  className="w-full bg-[rgba(255,255,255,0.05)] text-white hover:bg-[rgba(255,255,255,0.1)] justify-start"
-                  disabled={!permissions.canViewAnalytics}
-                >
-                  <Activity className="h-4 w-4 mr-2" />
-                  View Analytics
-                </Button>
-                <Button
-                  size="sm"
-                  className="w-full bg-[rgba(255,255,255,0.05)] text-white hover:bg-[rgba(255,255,255,0.1)] justify-start"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
-                </Button>
-              </div>
-            </Card>
-
-            {/* Usage Help */}
-            <Card className="p-4 bg-gradient-to-r from-[rgba(255,215,0,0.05)] to-[rgba(255,215,0,0.02)] border-[rgba(255,215,0,0.1)]">
-              <h3 className="font-semibold text-white mb-2 flex items-center gap-2">
-                <Zap className="h-4 w-4" />
-                Live Tool Features
-              </h3>
-              <div className="space-y-2 mb-3">
-                <div className="flex items-center gap-2 text-xs text-hive-text-tertiary">
-                  <div className="w-1 h-1 bg-[var(--hive-brand-primary)] rounded-full"></div>
-                  State automatically saves
-                </div>
-                <div className="flex items-center gap-2 text-xs text-hive-text-tertiary">
-                  <div className="w-1 h-1 bg-[var(--hive-brand-primary)] rounded-full"></div>
-                  Real-time element interactions
-                </div>
-                <div className="flex items-center gap-2 text-xs text-hive-text-tertiary">
-                  <div className="w-1 h-1 bg-[var(--hive-brand-primary)] rounded-full"></div>
-                  Conditional logic execution
-                </div>
-                <div className="flex items-center gap-2 text-xs text-hive-text-tertiary">
-                  <div className="w-1 h-1 bg-[var(--hive-brand-primary)] rounded-full"></div>
-                  Works offline with sync
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="w-full border-[var(--hive-brand-primary)]/30 text-[var(--hive-brand-primary)] hover:bg-[var(--hive-brand-primary)]/10"
-                onClick={() => router.push(`/tools/${tool.id}/preview`)}
-              >
-                <Clock className="h-4 w-4 mr-1" />
-                Preview Mode
-              </Button>
-            </Card>
-          </div>
+            {/* State Debug (dev only) */}
+            {process.env.NODE_ENV === 'development' && Object.keys(state).length > 0 && (
+              <GlassCard className="border-amber-500/20">
+                <h3 className="text-sm font-semibold text-amber-400 mb-3 uppercase tracking-wide">
+                  State (Dev)
+                </h3>
+                <pre className="text-xs text-gray-400 overflow-auto max-h-32 font-mono">
+                  {JSON.stringify(state, null, 2)}
+                </pre>
+              </GlassCard>
+            )}
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

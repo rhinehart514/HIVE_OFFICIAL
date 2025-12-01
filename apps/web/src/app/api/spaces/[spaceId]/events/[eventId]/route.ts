@@ -1,16 +1,28 @@
 import { z } from 'zod';
 import type { DocumentData, DocumentSnapshot } from 'firebase-admin/firestore';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { _ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { HttpStatus } from '@/lib/api-response-types';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { requireSpaceMembership } from '@/lib/space-security';
+import { getServerSpaceRepository } from '@hive/core/server';
+
+/**
+ * Check if content should be hidden from results
+ * Filters out moderated/hidden/removed content
+ */
+function isContentHidden(data: Record<string, unknown>): boolean {
+  if (data.isHidden === true) return true;
+  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
+  if (data.isDeleted === true) return true;
+  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
+  return false;
+}
 
 const UpdateEventSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -33,6 +45,42 @@ const UpdateEventSchema = z.object({
   currency: z.string().length(3).optional(),
   status: z.enum(['draft', 'published', 'ongoing', 'completed', 'cancelled']).optional(),
 });
+
+/**
+ * Validate space and membership using DDD repository
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Space not found' };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Membership required' };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
 
 async function loadEvent(spaceId: string, eventId: string) {
   const eventDoc = await dbAdmin
@@ -59,6 +107,11 @@ async function loadEvent(spaceId: string, eventId: string) {
       currentCampusId: CURRENT_CAMPUS_ID,
     });
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
+  }
+
+  // SECURITY: Don't allow access to hidden/moderated events
+  if (isContentHidden(eventData)) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event not found' };
   }
 
   return { ok: true as const, eventDoc, eventData };
@@ -100,19 +153,18 @@ async function serializeEvent(
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; eventId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, eventId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
-      const code =
-        membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-      return respond.error(membership.error, code, { status: membership.status });
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const event = await loadEvent(spaceId, eventId);
@@ -127,7 +179,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error fetching event at /api/spaces/[spaceId]/events/[eventId]`,
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error('Failed to fetch event', 'INTERNAL_ERROR', {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -138,20 +190,19 @@ export const GET = withAuthAndErrors(async (
 export const PATCH = withAuthValidationAndErrors(
   UpdateEventSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; eventId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, eventId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
-      const membership = await requireSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
-        const code =
-          membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-        return respond.error(membership.error, code, { status: membership.status });
+      const validation = await validateSpaceAndMembership(spaceId, userId);
+      if (!validation.ok) {
+        const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
       const load = await loadEvent(spaceId, eventId);
@@ -161,7 +212,7 @@ export const PATCH = withAuthValidationAndErrors(
       }
 
       const eventData = load.eventData;
-      const memberRole = membership.membership.role as string | undefined;
+      const memberRole = validation.membership.role as string | undefined;
       const canEdit =
         eventData.organizerId === userId || ['owner', 'admin', 'moderator'].includes(memberRole || '');
 
@@ -220,7 +271,7 @@ export const PATCH = withAuthValidationAndErrors(
         eventId,
       });
     } catch (error) {
-      logger.error('Error updating event', error instanceof Error ? error : new Error(String(error)));
+      logger.error('Error updating event', { error: error instanceof Error ? error.message : String(error) });
       return respond.error('Failed to update event', 'INTERNAL_ERROR', {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       });
@@ -229,19 +280,18 @@ export const PATCH = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; eventId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, eventId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
-      const code =
-        membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-      return respond.error(membership.error, code, { status: membership.status });
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const load = await loadEvent(spaceId, eventId);
@@ -250,7 +300,7 @@ export const DELETE = withAuthAndErrors(async (
       return respond.error(load.message, code, { status: load.status });
     }
 
-    const memberRole = membership.membership.role as string | undefined;
+    const memberRole = validation.membership.role as string | undefined;
     const canDelete =
       load.eventData.organizerId === userId || ['owner', 'admin'].includes(memberRole || '');
 
@@ -295,7 +345,7 @@ export const DELETE = withAuthAndErrors(async (
 
     return respond.success({ message: 'Event deleted successfully' });
   } catch (error) {
-    logger.error('Error deleting event', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Error deleting event', { error: error instanceof Error ? error.message : String(error) });
     return respond.error('Failed to delete event', 'INTERNAL_ERROR', {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });

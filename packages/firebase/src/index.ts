@@ -20,6 +20,7 @@ import {
 import { getStorage, connectStorageEmulator } from 'firebase/storage';
 import type { FirebaseStorage } from 'firebase/storage';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
+import { getAI, getGenerativeModel, GoogleAIBackend, Schema } from 'firebase/ai';
 
 // Firebase configuration - IMPORTANT: Use direct references for Next.js build-time inlining
 const firebaseConfig = {
@@ -178,7 +179,11 @@ if (typeof window !== 'undefined') {
   }, 60000); // Clean up every minute
 }
 
-export { app, auth, db, storage, analytics };
+// Initialize Firebase AI (Gemini)
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+export { app, auth, db, storage, analytics, ai, getGenerativeModel, Schema };
 
 // Type exports
 export type { FirebaseApp, Auth, Firestore, FirebaseStorage, Analytics };
+export { GoogleAIBackend } from 'firebase/ai';

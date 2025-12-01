@@ -5,6 +5,7 @@ import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
+import { getServerProfileRepository } from '@hive/core/server';
 
 // Validation schemas
 const createEventSchema = z.object({
@@ -37,8 +38,8 @@ const updateEventSchema = z.object({
  * - startDate: ISO string
  * - endDate: ISO string
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
@@ -111,11 +112,31 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       })
       .filter(event => !event.campusId || event.campusId === CURRENT_CAMPUS_ID);
 
-    return respond.success({ events });
+    // Get DDD profile data for context (user's spaces for event relevance)
+    let profileContext: {
+      spaces: string[];
+      connectionCount: number;
+    } | null = null;
+
+    try {
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(userId);
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        profileContext = {
+          spaces: profile.spaces,
+          connectionCount: profile.connectionCount,
+        };
+      }
+    } catch {
+      // Non-fatal: continue without profile context
+    }
+
+    return respond.success({ events, profile: profileContext });
   } catch (error) {
     logger.error(
       `Failed to fetch calendar events for user ${userId}`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return respond.error(
         'Failed to fetch calendar events',
@@ -131,8 +152,8 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
  */
 export const POST = withAuthValidationAndErrors(
   createEventSchema,
-  async (request: AuthenticatedRequest, context, eventData: z.infer<typeof createEventSchema>, respond) => {
-    const userId = getUserId(request);
+  async (request, context, eventData: z.infer<typeof createEventSchema>, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
 
     try {
       // Development mode
@@ -186,7 +207,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         `Failed to create calendar event for user ${userId}`,
-        error instanceof Error ? error : new Error(String(error))
+        { error: error instanceof Error ? error.message : String(error) }
       );
       return respond.error(
         'Failed to create calendar event',
@@ -203,8 +224,8 @@ export const POST = withAuthValidationAndErrors(
  */
 export const PUT = withAuthValidationAndErrors(
   updateEventSchema,
-  async (request: AuthenticatedRequest, context, updateData: z.infer<typeof updateEventSchema>, respond) => {
-    const userId = getUserId(request);
+  async (request, context, updateData: z.infer<typeof updateEventSchema>, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
     const { id, ...updates } = updateData;
 
     try {
@@ -275,8 +296,8 @@ export const PUT = withAuthValidationAndErrors(
  * Query params:
  * - id: event ID
  */
-export const DELETE = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const DELETE = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get('id');
 

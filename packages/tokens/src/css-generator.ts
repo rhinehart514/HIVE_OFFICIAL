@@ -5,6 +5,7 @@ import { spacing, layoutSizes } from './spacing';
 import { radius } from './radius';
 import { motion } from './motion';
 import { effects } from './effects';
+import { zIndex } from './design-system-v2';
 
 // Generate CSS custom properties from design tokens
 export function generateCSSCustomProperties(): string {
@@ -141,7 +142,7 @@ export function generateCSSCustomProperties(): string {
     cssVars.push(`  --hive-opacity-${key}: ${value};`);
   });
   
-  Object.entries(effects.zIndex).forEach(([key, value]) => {
+  Object.entries(zIndex).forEach(([key, value]) => {
     cssVars.push(`  --hive-z-${key}: ${value};`);
   });
   

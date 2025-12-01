@@ -263,8 +263,7 @@ function ExpiredPageContent() {
                 <Button
                   onClick={handleResendLink}
                   disabled={isResending || countdown > 0 || !email}
-                  className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold disabled:opacity-40"
-                  style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+                  className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold disabled:opacity-40 transition-colors"
                 >
                   {isResending ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -315,7 +314,7 @@ function ExpiredPageContent() {
                 transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 25 }}
                 className="h-16 w-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center"
               >
-                <Mail className="h-7 w-7 text-[#FFD700]" />
+                <Mail className="h-7 w-7 text-white" />
               </motion.div>
             </div>
 
@@ -338,8 +337,7 @@ function ExpiredPageContent() {
                   localStorage.removeItem("hive_resend_attempts");
                 }
               }}
-              className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold"
-              style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+              className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold transition-colors"
             >
               Got it
             </Button>

@@ -30,8 +30,8 @@ const createToolLimiter = rateLimit({
 });
 
 // GET /api/tools - List user's tools
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   const { searchParams } = new URL(request.url);
   const spaceId = searchParams.get("spaceId");
@@ -95,8 +95,8 @@ const EnhancedCreateToolSchema = CreateToolSchema.extend({
 // POST /api/tools - Create new tool (supports templates)
 export const POST = withAuthValidationAndErrors(
   EnhancedCreateToolSchema,
-  async (request: AuthenticatedRequest, context, validatedData: Record<string, unknown>, respond) => {
-    const userId = getUserId(request);
+  async (request, context, validatedData: Record<string, unknown>, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
 
     // Rate limiting
     try {
@@ -108,10 +108,11 @@ export const POST = withAuthValidationAndErrors(
     logger.info('🔨 Creating tool for user', { userUid: userId, endpoint: '/api/tools'  });
 
     // If creating a space tool, verify user has builder permissions
-    if (validatedData.isSpaceTool && validatedData.spaceId) {
+    const spaceIdStr = typeof validatedData.spaceId === 'string' ? validatedData.spaceId : null;
+    if (validatedData.isSpaceTool && spaceIdStr) {
       const spaceDoc = await adminDb
         .collection("spaces")
-        .doc(validatedData.spaceId)
+        .doc(spaceIdStr)
         .get();
       if (!spaceDoc.exists) {
         return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
@@ -128,11 +129,12 @@ export const POST = withAuthValidationAndErrors(
     // Handle template-based creation
     let templateElements = [];
     let templateConfig = {};
-    if (validatedData.templateId) {
+    const templateIdStr = typeof validatedData.templateId === 'string' ? validatedData.templateId : null;
+    if (templateIdStr) {
       try {
         const templateDoc = await adminDb
           .collection("tool_templates")
-          .doc(validatedData.templateId)
+          .doc(templateIdStr)
           .get();
         
         if (templateDoc.exists) {
@@ -143,7 +145,7 @@ export const POST = withAuthValidationAndErrors(
       } catch (error) {
         logger.warn(
       `Failed to load template at /api/tools`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
         // Continue without template
       }
@@ -162,7 +164,7 @@ export const POST = withAuthValidationAndErrors(
         : templateElements,
       config: { ...(toolData.config || {}), ...templateConfig, ...(validatedData.config || {}) }, // Merge configs
       metadata: {
-        ...toolData.metadata,
+        ...(toolData.metadata as Record<string, unknown> || {}),
         templateId: validatedData.templateId,
         toolType: validatedData.type,
       },
@@ -187,12 +189,12 @@ export const POST = withAuthValidationAndErrors(
 
     await toolRef.collection("versions").doc("1.0.0").set(initialVersion);
 
-    if (validatedData.spaceId && validatedData.spaceId !== 'personal') {
+    if (spaceIdStr && spaceIdStr !== 'personal') {
       try {
         const placementRecord = {
           toolId: toolRef.id,
           targetType: 'space' as PlacementTargetType,
-          targetId: validatedData.spaceId,
+          targetId: spaceIdStr,
           surface: 'tools',
           status: 'draft',
           position: 0,
@@ -220,20 +222,20 @@ export const POST = withAuthValidationAndErrors(
 
         const placement = await createPlacementDocument({
           deployedTo: 'space',
-          targetId: validatedData.spaceId,
+          targetId: spaceIdStr,
           toolId: toolRef.id,
           deploymentId: `tool_${Date.now()}`,
           surface: 'tools',
           permissions: placementRecord.permissions,
           settings: placementRecord.config,
         });
-        const compositeId = buildPlacementCompositeId('space', validatedData.spaceId);
+        const compositeId = buildPlacementCompositeId('space', spaceIdStr);
 
         await adminDb.collection('deployedTools').doc(compositeId).set({
           toolId: toolRef.id,
           deployedBy: userId,
           deployedTo: 'space',
-          targetId: validatedData.spaceId,
+          targetId: spaceIdStr,
           surface: 'tools',
           permissions: placementRecord.permissions,
           status: 'draft',
@@ -244,13 +246,13 @@ export const POST = withAuthValidationAndErrors(
           placementId: placement.id,
           targetType: 'space',
           creatorId: userId,
-          spaceId: validatedData.spaceId,
+          spaceId: spaceIdStr,
           profileId: null,
         });
       } catch (error) {
         logger.warn(
           `Failed to create placement for tool at /api/tools`,
-          error instanceof Error ? error : new Error(String(error))
+          { error: error instanceof Error ? error.message : String(error) }
         );
       }
     }
@@ -268,7 +270,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.warn(
       `Failed to update user stats at /api/tools`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     }
 
@@ -277,8 +279,8 @@ export const POST = withAuthValidationAndErrors(
       eventType: "tool_created",
       userId: userId,
       toolId: toolRef.id,
-      spaceId: validatedData.spaceId || null,
-      isSpaceTool: validatedData.isSpaceTool,
+      spaceId: spaceIdStr || null,
+      isSpaceTool: !!validatedData.isSpaceTool,
       timestamp: now,
       metadata: {
         toolName: validatedData.name,
@@ -310,11 +312,16 @@ const UpdateToolSchema = z.object({
 // PUT /api/tools - Update existing tool
 export const PUT = withAuthValidationAndErrors(
   UpdateToolSchema,
-  async (request: AuthenticatedRequest, context, validatedData: Record<string, unknown>, respond) => {
-    const userId = getUserId(request);
-    const { toolId, ...updateData } = validatedData;
+  async (request, context, validatedData: Record<string, unknown>, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
+    const { toolId: rawToolId, ...updateData } = validatedData;
+    const toolId = typeof rawToolId === 'string' ? rawToolId : '';
 
     logger.info('🔨 Updating tool for user', { toolId, userId, endpoint: '/api/tools' });
+
+    if (!toolId) {
+      return respond.error("Tool ID is required", "VALIDATION_ERROR", { status: 400 });
+    }
 
     // Get existing tool
     const toolDoc = await adminDb.collection("tools").doc(toolId).get();
@@ -373,7 +380,7 @@ export const PUT = withAuthValidationAndErrors(
 
     return respond.success({
       tool: result,
-      message: `Tool "${updatedTool.name}" updated successfully`
+      message: `Tool "${(updatedTool as Record<string, unknown>).name || 'Tool'}" updated successfully`
     });
   }
 );

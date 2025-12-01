@@ -48,13 +48,13 @@ const FeedIntegrationSchema = z.object({
 export const POST = withAuthValidationAndErrors(
   FeedIntegrationSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     body,
     respond
   ) => {
     try {
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
       const { deploymentId, toolId, action, data, elementId, generateContent = true } = body;
 
     // Get deployment details
@@ -132,7 +132,7 @@ export const POST = withAuthValidationAndErrors(
   } catch (error) {
     logger.error(
       `Error generating feed content at /api/tools/feed-integration`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return respond.error("Failed to generate feed content", "INTERNAL_ERROR", { status: 500 });
   }
@@ -141,12 +141,12 @@ export const POST = withAuthValidationAndErrors(
 
 // GET - Get feed content templates for a tool
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond
 ) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const toolId = searchParams.get('toolId');
@@ -194,7 +194,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error fetching feed templates at /api/tools/feed-integration`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error("Failed to fetch feed templates", "INTERNAL_ERROR", { status: 500 });
   }
@@ -238,7 +238,7 @@ async function generateFeedContentFromAction(params: {
   } catch (error) {
     logger.error(
       `Error generating content from action at /api/tools/feed-integration`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return generateDefaultContent(tool, action, data, elementId);
   }
@@ -426,7 +426,7 @@ async function createFeedPost(
     content: content.content,
     visibility: content.visibility || 'space_members',
     metadata: {
-      ...content.metadata,
+      ...(content.metadata as Record<string, unknown> || {}),
       generatedBy: 'tool_interaction',
       surface: deployment.surface,
       includeData: content.includeData || false

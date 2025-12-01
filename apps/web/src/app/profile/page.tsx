@@ -6,15 +6,18 @@ import { useSession } from '@/hooks/use-session';
 
 export default function ProfileIndexPage() {
   const router = useRouter();
-  const { user } = useSession();
+  const { user, isLoading } = useSession();
 
   useEffect(() => {
+    // Wait for session check to complete before redirecting
+    if (isLoading) return;
+
     if (user?.id) {
       router.replace(`/profile/${user.id}`);
     } else {
       router.replace('/auth/login?from=/profile');
     }
-  }, [user?.id, router]);
+  }, [user?.id, isLoading, router]);
 
   // Lightweight fallback while redirecting
   return (

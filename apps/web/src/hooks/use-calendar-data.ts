@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchCalendarEvents, transformApiEvent, type CalendarApiEvent, type _Event } from '../lib/calendar-api';
+import { fetchCalendarEvents, transformApiEvent, type CalendarApiEvent, type Event } from '../lib/calendar-api';
 
 // Local type definitions since these are not exported from @hive/ui
 type CalendarCardState = 'idle' | 'loading' | 'success' | 'error' | 'empty' | 'default';
@@ -13,13 +13,13 @@ interface CalendarConnection {
 }
 
 interface CalendarCardData {
-  nextEvent?: _Event;
-  upcomingEvents?: _Event[];
-  todaysEvents?: _Event[];
+  nextEvent?: Event;
+  upcomingEvents?: Event[];
+  todaysEvents?: Event[];
   connections?: CalendarConnection[];
   conflicts?: unknown[];
   lastUpdated?: Date;
-  events?: _Event[];
+  events?: Event[];
   upcomingCount?: number;
 }
 
@@ -94,7 +94,7 @@ export const useCalendarData = (options: UseCalendarDataOptions = {}): UseCalend
         const events = apiEvents.map(transformApiEvent);
 
         // Sort events by time to get the next upcoming event
-        const sortedEvents = events.sort((a: _Event, b: _Event) => {
+        const sortedEvents = events.sort((a: Event, b: Event) => {
           const timeA = convertTimeToMinutes(a.time || '');
           const timeB = convertTimeToMinutes(b.time || '');
           return timeA - timeB;

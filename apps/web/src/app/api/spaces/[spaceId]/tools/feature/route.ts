@@ -4,33 +4,69 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { requireSpaceMembership } from '@/lib/space-security';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
+import { getServerSpaceRepository } from '@hive/core/server';
 
 const FeatureToolSchema = z.object({
   toolId: z.string().min(1)
 });
 
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Space not found' };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Membership required' };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
 // POST /api/spaces/[spaceId]/tools/feature - Feature a tool in a space (server-side)
 export const POST = withAuthValidationAndErrors(
   FeatureToolSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     { toolId }: z.infer<typeof FeatureToolSchema>,
     respond
   ) => {
     const { spaceId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    // Validate space membership and permissions
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
-      const code = membership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-      return respond.error(membership.error, code, { status: membership.status });
+    // Validate space membership and permissions using DDD repository
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const role = membership.membership.role;
+    const role = validation.membership.role as string;
     const canFeature = ['owner', 'admin', 'builder'].includes(role);
     if (!canFeature) {
       return respond.error('Insufficient permissions to feature tools', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });

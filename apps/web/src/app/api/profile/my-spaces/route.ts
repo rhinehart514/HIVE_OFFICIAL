@@ -1,10 +1,11 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { getCampusIdFromAuth } from "@/lib/campus-context";
 import { withAuth } from '@/lib/api-auth-middleware';
+import { getServerProfileRepository } from '@hive/core/server';
 
 const mySpacesQuerySchema = z.object({
   includeInactive: z.coerce.boolean().default(false),
@@ -15,13 +16,25 @@ const mySpacesQuerySchema = z.object({
  * Get current user's spaces - joined, owned, favorited
  * Updated to use flat collection structure
  */
-export const GET = withAuth(async (request: NextRequest, authContext) => {
+export const GET = withAuth(async (request, authContext) => {
   try {
     const url = new URL(request.url);
     const queryParams = Object.fromEntries(url.searchParams.entries());
     const { includeInactive, limit } = mySpacesQuerySchema.parse(queryParams);
-    
+
     const userId = authContext.userId;
+    const campusId = getCampusIdFromAuth(authContext);
+
+    // Try DDD repository first for profile validation
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(userId);
+
+    let dddSpaceIds: string[] | null = null;
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      dddSpaceIds = profile.spaces;
+      logger.debug('DDD profile found for my-spaces', { userId, spaceCount: dddSpaceIds.length });
+    }
 
     // Get user's space memberships using flat collection
     let membershipQuery = dbAdmin
@@ -29,7 +42,7 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
       .where('userId', '==', userId);
     
     // Enforce campus isolation
-    membershipQuery = membershipQuery.where('campusId', '==', CURRENT_CAMPUS_ID);
+    membershipQuery = membershipQuery.where('campusId', '==', campusId);
 
     if (!includeInactive) {
       membershipQuery = membershipQuery.where('isActive', '==', true);
@@ -57,7 +70,7 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
 
     membershipsSnapshot.docs.forEach((doc) => {
       const data = doc.data();
-      if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) return;
+      if (data.campusId && data.campusId !== campusId) return;
       const spaceId = data.spaceId;
       if (spaceId) {
         spaceIds.push(spaceId);
@@ -116,9 +129,9 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
     const joined = spaces.filter(space => !['owner', 'admin'].includes(space.membership.role));
     
     // Sort by activity (most recent interaction first)
-    const sortByActivity = (a: { membership: { joinedAt?: { toMillis?: () => number } } }, b: { membership: { joinedAt?: { toMillis?: () => number } } }) => {
-      const aTime = a.membership.joinedAt?.toMillis?.() || 0;
-      const bTime = b.membership.joinedAt?.toMillis?.() || 0;
+    const sortByActivity = (a: { membership: { joinedAt?: unknown } }, b: { membership: { joinedAt?: unknown } }) => {
+      const aTime = (a.membership.joinedAt as { toMillis?: () => number } | undefined)?.toMillis?.() || 0;
+      const bTime = (b.membership.joinedAt as { toMillis?: () => number } | undefined)?.toMillis?.() || 0;
       return bTime - aTime;
     };
 
@@ -159,7 +172,12 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
         joined: joined.length,
         favorited: favorited.length,
         active: spaces.filter(s => s.status === 'active').length
-      }
+      },
+      // Include DDD-sourced space count for comparison/debugging
+      profile: dddSpaceIds ? {
+        dddSpaceCount: dddSpaceIds.length,
+        syncStatus: dddSpaceIds.length === spaces.length ? 'synced' : 'needs_sync'
+      } : null
     });
 
   } catch (error) {
@@ -181,7 +199,6 @@ export const GET = withAuth(async (request: NextRequest, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, { 
-  allowDevelopmentBypass: true, 
-  operation: 'get_my_spaces' 
+}, {
+  operation: 'get_my_spaces'
 });

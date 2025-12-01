@@ -14,6 +14,7 @@ import {
   createPlacementDocument,
   buildPlacementCompositeId,
 } from "@/lib/tool-placement";
+import { notifyToolDeployment } from "@/lib/notification-service";
 
 const SurfaceSchema = z.enum([
   "pinned",
@@ -240,7 +241,7 @@ async function getNextPosition(
   } catch (error) {
     logger.error(
       "Error determining deployment order",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return 0;
   }
@@ -287,12 +288,12 @@ async function canUserAccessDeployment(
 export const POST = withAuthValidationAndErrors(
   DeployToolSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context: {},
     payload: DeployToolInput,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     logger.info("Deploying tool", {
       toolId: payload.toolId,
@@ -453,6 +454,48 @@ export const POST = withAuthValidationAndErrors(
       },
     });
 
+    // Notify space members about tool deployment (only for space deployments)
+    if (payload.deployTo === "space") {
+      try {
+        // Get deployer's name
+        const userDoc = await dbAdmin.collection("users").doc(userId).get();
+        const deployerName = userDoc.data()?.fullName || "Someone";
+
+        // Get space name and members
+        const spaceDoc = await dbAdmin.collection("spaces").doc(payload.targetId).get();
+        const spaceData = spaceDoc.data();
+        const spaceName = spaceData?.name || "a space";
+
+        // Get active space members
+        const membersSnapshot = await dbAdmin.collection("spaceMembers")
+          .where("spaceId", "==", payload.targetId)
+          .where("campusId", "==", CURRENT_CAMPUS_ID)
+          .where("isActive", "==", true)
+          .get();
+
+        const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
+
+        if (memberIds.length > 0) {
+          await notifyToolDeployment({
+            memberIds,
+            deployerId: userId,
+            deployerName,
+            toolId: payload.toolId,
+            toolName: toolResult.toolData.name,
+            spaceId: payload.targetId,
+            spaceName,
+          });
+        }
+      } catch (notifyError) {
+        // Don't fail deployment if notification fails
+        logger.warn("Failed to send tool deployment notifications", {
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          toolId: payload.toolId,
+          spaceId: payload.targetId,
+        });
+      }
+    }
+
     return respond.created(
       {
         deployment: deploymentDoc,
@@ -464,13 +507,13 @@ export const POST = withAuthValidationAndErrors(
 );
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond,
 ) => {
   try {
-    const userId = getUserId(request);
-    const searchParams = request.nextUrl.searchParams;
+    const userId = getUserId(request as AuthenticatedRequest);
+    const searchParams = new URL(request.url).searchParams;
     const deployedTo = searchParams.get("deployedTo");
     const targetId = searchParams.get("targetId");
     const surface = searchParams.get("surface");
@@ -531,7 +574,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching deployed tools",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch deployed tools", "INTERNAL_ERROR", {
       status: 500,

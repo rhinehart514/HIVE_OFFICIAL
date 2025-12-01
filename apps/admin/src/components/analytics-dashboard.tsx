@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 
@@ -65,7 +65,7 @@ export function AnalyticsDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!admin) return;
 
     setLoading(true);
@@ -91,14 +91,14 @@ export function AnalyticsDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [admin]);
 
   useEffect(() => {
     fetchStats();
     // Auto-refresh every 5 minutes
     const interval = setInterval(fetchStats, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [admin]);
+  }, [fetchStats]);
 
   const formatUptime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);

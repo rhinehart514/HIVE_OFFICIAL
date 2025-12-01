@@ -162,13 +162,13 @@ async function loadInstallation(
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond,
 ) => {
   try {
-    const userId = getUserId(request);
-    const searchParams = request.nextUrl.searchParams;
+    const userId = getUserId(request as AuthenticatedRequest);
+    const searchParams = new URL(request.url).searchParams;
     const spaceId = searchParams.get("spaceId");
     const includeEvents = searchParams.get("includeEvents") === "true";
 
@@ -253,7 +253,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
     `Error fetching Event System data at /api/tools/event-system`,
-    error instanceof Error ? error : new Error(String(error))
+    { error: error instanceof Error ? error.message : String(error) }
   );
     return respond.error("Failed to fetch Event System data", "INTERNAL_ERROR", {
       status: 500,
@@ -264,12 +264,12 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   EventActionSchema as unknown as z.ZodType<EventAction>,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context: {},
     payload: EventAction,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const now = new Date();
 
     try {
@@ -452,7 +452,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error in Event System API at /api/tools/event-system",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Internal server error", "INTERNAL_ERROR", {
         status: 500,
@@ -469,12 +469,12 @@ const UpdateConfigSchema = z.object({
 export const PUT = withAuthValidationAndErrors(
   UpdateConfigSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context: {},
     payload,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     try {
       const installationResult = await loadInstallation(
@@ -519,7 +519,7 @@ export const PUT = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error updating Event System configuration at /api/tools/event-system",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error(
         "Failed to update configuration",
@@ -531,12 +531,12 @@ export const PUT = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond,
 ) => {
-  const userId = getUserId(request);
-  const installationId = request.nextUrl.searchParams.get("installationId");
+  const userId = getUserId(request as AuthenticatedRequest);
+  const installationId = new URL(request.url).searchParams.get("installationId");
 
   if (!installationId) {
     return respond.error("Installation ID required", "INVALID_INPUT", {
@@ -597,7 +597,7 @@ export const DELETE = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error uninstalling Event System at /api/tools/event-system",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error(
       "Failed to uninstall Event System",

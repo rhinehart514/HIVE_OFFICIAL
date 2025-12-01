@@ -1,343 +1,455 @@
+/**
+ * Platform-wide Search API Route
+ *
+ * Searches across:
+ * - Spaces (name, description, category)
+ * - Profiles (display name, handle, bio)
+ * - Posts (content, title)
+ * - Tools (name, description)
+ *
+ * Uses Firestore queries with campus isolation.
+ * For better full-text search, consider Algolia/Typesense integration.
+ */
+
 import { type NextRequest, NextResponse } from 'next/server';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { logger } from "@/lib/structured-logger";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { logger } from '@/lib/structured-logger';
+import { HttpStatus } from '@/lib/api-response-types';
 
 interface SearchResult {
   id: string;
   title: string;
   description?: string;
-  type: 'space' | 'tool' | 'person' | 'event' | 'post' | 'navigation';
+  type: 'space' | 'tool' | 'person' | 'event' | 'post';
   category: string;
   url: string;
   metadata?: Record<string, unknown>;
   relevanceScore: number;
 }
 
-type SearchCategory = 'spaces' | 'tools' | 'people' | 'events' | 'posts';
+type SearchCategory = 'spaces' | 'tools' | 'people' | 'posts' | 'all';
 
-interface SearchIndexItem extends Omit<SearchResult, 'relevanceScore' | 'category'> {
-  category: SearchCategory;
-  keywords: string[];
+/**
+ * Search spaces collection
+ */
+async function searchSpaces(
+  query: string,
+  campusId: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
+  const lowercaseQuery = query.toLowerCase();
+
+  try {
+    // Search by name_lowercase prefix
+    const nameSnapshot = await dbAdmin
+      .collection('spaces')
+      .where('campusId', '==', campusId)
+      .where('isActive', '==', true)
+      .where('name_lowercase', '>=', lowercaseQuery)
+      .where('name_lowercase', '<=', lowercaseQuery + '\uf8ff')
+      .limit(limit)
+      .get();
+
+    for (const doc of nameSnapshot.docs) {
+      const data = doc.data();
+      results.push({
+        id: doc.id,
+        title: data.name || 'Unnamed Space',
+        description: data.description,
+        type: 'space',
+        category: 'spaces',
+        url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
+        metadata: {
+          memberCount: data.memberCount || data.metrics?.memberCount || 0,
+          category: data.category,
+          type: data.type
+        },
+        relevanceScore: 100 // Exact prefix match
+      });
+    }
+
+    // Also search by category if query matches known categories
+    const categoryMatches = ['student_org', 'residential', 'greek_life', 'university_org', 'academic']
+      .filter(cat => cat.includes(lowercaseQuery));
+
+    if (categoryMatches.length > 0 && results.length < limit) {
+      const categorySnapshot = await dbAdmin
+        .collection('spaces')
+        .where('campusId', '==', campusId)
+        .where('isActive', '==', true)
+        .where('category', 'in', categoryMatches)
+        .limit(limit - results.length)
+        .get();
+
+      for (const doc of categorySnapshot.docs) {
+        // Avoid duplicates
+        if (results.some(r => r.id === doc.id)) continue;
+
+        const data = doc.data();
+        results.push({
+          id: doc.id,
+          title: data.name || 'Unnamed Space',
+          description: data.description,
+          type: 'space',
+          category: 'spaces',
+          url: data.slug ? `/spaces/s/${data.slug}` : `/spaces/${doc.id}`,
+          metadata: {
+            memberCount: data.memberCount || data.metrics?.memberCount || 0,
+            category: data.category
+          },
+          relevanceScore: 70 // Category match
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Error searching spaces', { error: String(error), query });
+  }
+
+  return results;
 }
 
-// Mock data for comprehensive search
-const MOCK_SEARCH_DATA: {
-  spaces: SearchIndexItem[];
-  tools: SearchIndexItem[];
-  people: SearchIndexItem[];
-  events: SearchIndexItem[];
-  posts: SearchIndexItem[];
-} = {
-  spaces: [
-    {
-      id: 'space-cs-majors',
-      title: 'Computer Science Majors',
-      description: 'Study groups, internship tips, and career advice',
-      type: 'space' as const,
-      category: 'spaces',
-      url: '/spaces/cs-majors',
-      metadata: { memberCount: 234, status: 'active', tags: ['computer', 'science', 'tech'] },
-      keywords: ['computer', 'science', 'programming', 'coding', 'tech', 'cs', 'software']
-    },
-    {
-      id: 'space-study-groups',
-      title: 'Study Groups',
-      description: 'Find study partners for all subjects',
-      type: 'space' as const,
-      category: 'spaces',
-      url: '/spaces/study-groups',
-      metadata: { memberCount: 156, status: 'active', tags: ['study', 'academic'] },
-      keywords: ['study', 'groups', 'academic', 'learning', 'homework']
-    },
-    {
-      id: 'space-greek-life',
-      title: 'Greek Life',
-      description: 'Fraternities and sororities community',
-      type: 'space' as const,
-      category: 'spaces',
-      url: '/spaces/greek-life',
-      metadata: { memberCount: 89, status: 'active', tags: ['greek', 'social'] },
-      keywords: ['greek', 'fraternity', 'sorority', 'social', 'brotherhood', 'sisterhood']
-    },
-    {
-      id: 'space-engineering',
-      title: 'Engineering Club',
-      description: 'All engineering disciplines welcome',
-      type: 'space' as const,
-      category: 'spaces',
-      url: '/spaces/engineering-club',
-      metadata: { memberCount: 178, status: 'active', tags: ['engineering', 'stem'] },
-      keywords: ['engineering', 'mechanical', 'electrical', 'civil', 'chemical', 'stem']
-    }
-  ],
-  tools: [
-    {
-      id: 'tool-poll-maker',
-      title: 'Poll Maker',
-      description: 'Create interactive polls for spaces',
-      type: 'tool' as const,
-      category: 'tools',
-      url: '/tools/poll-maker',
-      metadata: { rating: 4.8, creator: 'HIVE Team', downloads: 1247 },
-      keywords: ['poll', 'vote', 'survey', 'feedback', 'decision', 'voting']
-    },
-    {
-      id: 'tool-study-timer',
-      title: 'Study Timer',
-      description: 'Pomodoro timer with focus tracking',
-      type: 'tool' as const,
-      category: 'tools',
-      url: '/tools/study-timer',
-      metadata: { rating: 4.6, creator: 'Focus Labs', downloads: 892 },
-      keywords: ['timer', 'pomodoro', 'focus', 'study', 'productivity', 'break']
-    },
-    {
-      id: 'tool-grade-calculator',
-      title: 'Grade Calculator',
-      description: 'Calculate GPA and track academic progress',
-      type: 'tool' as const,
-      category: 'tools',
-      url: '/tools/grade-calculator',
-      metadata: { rating: 4.9, creator: 'Academic Tools', downloads: 2156 },
-      keywords: ['grade', 'gpa', 'calculator', 'academic', 'transcript', 'scores']
-    },
-    {
-      id: 'tool-event-planner',
-      title: 'Event Planner',
-      description: 'Plan and manage campus events with RSVP',
-      type: 'tool' as const,
-      category: 'tools',
-      url: '/tools/event-planner',
-      metadata: { rating: 4.7, creator: 'Event Pro', downloads: 657 },
-      keywords: ['event', 'planning', 'rsvp', 'calendar', 'schedule', 'organize']
-    }
-  ],
-  people: [
-    {
-      id: 'user-sarah-chen',
-      title: 'Sarah Chen',
-      description: 'Computer Science • Junior • Study Group Leader',
-      type: 'person' as const,
-      category: 'people',
-      url: '/profile/sarah-chen',
-      metadata: { year: 'Junior', major: 'Computer Science', role: 'Study Group Leader' },
-      keywords: ['sarah', 'chen', 'cs', 'computer', 'science', 'junior']
-    },
-    {
-      id: 'user-alex-kim',
-      title: 'Alex Kim',
-      description: 'Engineering • Senior • Event Organizer',
-      type: 'person' as const,
-      category: 'people',
-      url: '/profile/alex-kim',
-      metadata: { year: 'Senior', major: 'Engineering', role: 'Event Organizer' },
-      keywords: ['alex', 'kim', 'engineering', 'senior', 'events']
-    },
-    {
-      id: 'user-jamie-rivera',
-      title: 'Jamie Rivera',
-      description: 'Business • Sophomore • Space Builder',
-      type: 'person' as const,
-      category: 'people',
-      url: '/profile/jamie-rivera',
-      metadata: { year: 'Sophomore', major: 'Business', role: 'Space Builder' },
-      keywords: ['jamie', 'rivera', 'business', 'sophomore', 'builder']
-    }
-  ],
-  events: [
-    {
-      id: 'event-career-fair',
-      title: 'Spring Career Fair',
-      description: 'Connect with top employers and explore opportunities',
-      type: 'event' as const,
-      category: 'events',
-      url: '/events/career-fair-2024',
-      metadata: { date: '2024-03-15', time: '10:00 AM', location: 'Student Center' },
-      keywords: ['career', 'fair', 'jobs', 'networking', 'employers', 'internship']
-    },
-    {
-      id: 'event-hackathon',
-      title: 'HIVE Hackathon',
-      description: '48-hour coding competition with amazing prizes',
-      type: 'event' as const,
-      category: 'events',
-      url: '/events/hive-hackathon',
-      metadata: { date: '2024-04-20', duration: '48 hours', prizes: '$5000' },
-      keywords: ['hackathon', 'coding', 'programming', 'competition', 'tech']
-    },
-    {
-      id: 'event-study-session',
-      title: 'Group Study Session - Calculus',
-      description: 'Prepare for midterm exam together',
-      type: 'event' as const,
-      category: 'events',
-      url: '/events/calculus-study',
-      metadata: { date: 'Tomorrow', time: '7:00 PM', subject: 'Calculus' },
-      keywords: ['study', 'calculus', 'math', 'midterm', 'group', 'exam']
-    }
-  ],
-  posts: [
-    {
-      id: 'post-internship-tips',
-      title: 'Top 10 Internship Application Tips',
-      description: 'Sarah Chen shared her experience landing at Google',
-      type: 'post' as const,
-      category: 'posts',
-      url: '/posts/internship-tips',
-      metadata: { author: 'Sarah Chen', likes: 45, comments: 12 },
-      keywords: ['internship', 'tips', 'application', 'career', 'google', 'advice']
-    },
-    {
-      id: 'post-study-spots',
-      title: 'Best Study Spots on Campus',
-      description: 'Community-curated list of quiet places to study',
-      type: 'post' as const,
-      category: 'posts',
-      url: '/posts/study-spots',
-      metadata: { author: 'Study Groups Space', likes: 78, comments: 23 },
-      keywords: ['study', 'spots', 'campus', 'quiet', 'library', 'places']
-    },
-    {
-      id: 'post-tool-showcase',
-      title: 'New Tool: Course Scheduler',
-      description: 'Alex built an amazing tool for planning next semester',
-      type: 'post' as const,
-      category: 'posts',
-      url: '/posts/course-scheduler-tool',
-      metadata: { author: 'Alex Kim', likes: 34, comments: 8 },
-      keywords: ['tool', 'scheduler', 'course', 'planning', 'semester']
-    }
-  ]
-};
-
-function calculateRelevanceScore(
-  item: SearchIndexItem,
+/**
+ * Search profiles collection
+ */
+async function searchProfiles(
   query: string,
-  category?: string
-): number {
-  let score = 0;
+  campusId: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
-  
-  // Exact title match gets highest score
-  if (item.title.toLowerCase() === lowercaseQuery) {
-    score += 100;
-  } else if (item.title.toLowerCase().includes(lowercaseQuery)) {
-    score += 80;
-  }
-  
-  // Description matches
-  if (item.description?.toLowerCase().includes(lowercaseQuery)) {
-    score += 60;
-  }
-  
-  // Keyword matches
-  const keywordMatches = item.keywords?.filter((keyword: string) =>
-    keyword.toLowerCase().includes(lowercaseQuery)
-  ).length || 0;
-  score += keywordMatches * 20;
-  
-  // Category match bonus
-  if (category && item.category === category) {
-    score += 10;
-  }
-  
-  // Metadata-based scoring
-  if (item.metadata) {
-    const rating = (item.metadata as { rating?: number } | undefined)?.rating;
-    if (typeof rating === 'number') {
-      score += rating; // Higher rated items get slight boost
+
+  try {
+    // Search by handle prefix (handles are lowercase)
+    const handleSnapshot = await dbAdmin
+      .collection('profiles')
+      .where('campusId', '==', campusId)
+      .where('handle', '>=', lowercaseQuery)
+      .where('handle', '<=', lowercaseQuery + '\uf8ff')
+      .limit(limit)
+      .get();
+
+    for (const doc of handleSnapshot.docs) {
+      const data = doc.data();
+      // Respect privacy settings
+      if (data.privacy?.profileVisibility === 'private') continue;
+
+      results.push({
+        id: doc.id,
+        title: data.displayName || data.handle || 'Anonymous',
+        description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
+        type: 'person',
+        category: 'people',
+        url: data.handle ? `/user/${data.handle}` : `/profile/${doc.id}`,
+        metadata: {
+          handle: data.handle,
+          photoURL: data.photoURL,
+          major: data.major,
+          year: data.graduationYear
+        },
+        relevanceScore: 100 // Exact prefix match
+      });
     }
-    const memberCount = (item.metadata as { memberCount?: number } | undefined)?.memberCount;
-    if (typeof memberCount === 'number') {
-      score += Math.min(memberCount / 100, 5); // Popular spaces get boost
+
+    // Search by displayName_lowercase if we have room
+    if (results.length < limit) {
+      const nameSnapshot = await dbAdmin
+        .collection('profiles')
+        .where('campusId', '==', campusId)
+        .where('displayName_lowercase', '>=', lowercaseQuery)
+        .where('displayName_lowercase', '<=', lowercaseQuery + '\uf8ff')
+        .limit(limit - results.length)
+        .get();
+
+      for (const doc of nameSnapshot.docs) {
+        if (results.some(r => r.id === doc.id)) continue;
+
+        const data = doc.data();
+        if (data.privacy?.profileVisibility === 'private') continue;
+
+        results.push({
+          id: doc.id,
+          title: data.displayName || data.handle || 'Anonymous',
+          description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
+          type: 'person',
+          category: 'people',
+          url: data.handle ? `/user/${data.handle}` : `/profile/${doc.id}`,
+          metadata: {
+            handle: data.handle,
+            photoURL: data.photoURL,
+            major: data.major
+          },
+          relevanceScore: 90 // Name match
+        });
+      }
     }
+  } catch (error) {
+    logger.error('Error searching profiles', { error: String(error), query });
   }
-  
-  return score;
+
+  return results;
+}
+
+/**
+ * Search posts collection
+ */
+async function searchPosts(
+  query: string,
+  campusId: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
+  const lowercaseQuery = query.toLowerCase();
+
+  try {
+    // Search by title if posts have titles
+    const titleSnapshot = await dbAdmin
+      .collection('posts')
+      .where('campusId', '==', campusId)
+      .where('title_lowercase', '>=', lowercaseQuery)
+      .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
+      .limit(limit)
+      .get();
+
+    for (const doc of titleSnapshot.docs) {
+      const data = doc.data();
+      // Skip hidden/moderated content
+      if (data.isHidden || data.status === 'hidden') continue;
+
+      results.push({
+        id: doc.id,
+        title: data.title || data.content?.substring(0, 50) || 'Post',
+        description: data.content?.substring(0, 150),
+        type: 'post',
+        category: 'posts',
+        url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
+        metadata: {
+          authorId: data.authorId,
+          spaceId: data.spaceId,
+          likes: data.likes || data.engagement?.likes || 0,
+          createdAt: data.createdAt
+        },
+        relevanceScore: 80
+      });
+    }
+
+    // Search by tags if available
+    if (results.length < limit) {
+      const tagSnapshot = await dbAdmin
+        .collection('posts')
+        .where('campusId', '==', campusId)
+        .where('tags', 'array-contains', lowercaseQuery)
+        .limit(limit - results.length)
+        .get();
+
+      for (const doc of tagSnapshot.docs) {
+        if (results.some(r => r.id === doc.id)) continue;
+
+        const data = doc.data();
+        if (data.isHidden || data.status === 'hidden') continue;
+
+        results.push({
+          id: doc.id,
+          title: data.title || data.content?.substring(0, 50) || 'Post',
+          description: data.content?.substring(0, 150),
+          type: 'post',
+          category: 'posts',
+          url: data.spaceId ? `/spaces/${data.spaceId}?post=${doc.id}` : `/posts/${doc.id}`,
+          metadata: {
+            authorId: data.authorId,
+            tags: data.tags
+          },
+          relevanceScore: 60 // Tag match
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Error searching posts', { error: String(error), query });
+  }
+
+  return results;
+}
+
+/**
+ * Search tools collection
+ */
+async function searchTools(
+  query: string,
+  campusId: string,
+  limit: number
+): Promise<SearchResult[]> {
+  const results: SearchResult[] = [];
+  const lowercaseQuery = query.toLowerCase();
+
+  try {
+    // Search by name_lowercase
+    const nameSnapshot = await dbAdmin
+      .collection('tools')
+      .where('name_lowercase', '>=', lowercaseQuery)
+      .where('name_lowercase', '<=', lowercaseQuery + '\uf8ff')
+      .where('isPublic', '==', true)
+      .limit(limit)
+      .get();
+
+    for (const doc of nameSnapshot.docs) {
+      const data = doc.data();
+      // Filter by campus if tool has campusId
+      if (data.campusId && data.campusId !== campusId) continue;
+
+      results.push({
+        id: doc.id,
+        title: data.name || 'Unnamed Tool',
+        description: data.description,
+        type: 'tool',
+        category: 'tools',
+        url: `/tools/${doc.id}`,
+        metadata: {
+          type: data.type,
+          creatorId: data.creatorId,
+          deploymentCount: data.deploymentCount || 0,
+          rating: data.rating
+        },
+        relevanceScore: 100
+      });
+    }
+
+    // Search by type/category
+    const toolTypes = ['poll', 'form', 'calculator', 'timer', 'scheduler', 'tracker']
+      .filter(t => t.includes(lowercaseQuery));
+
+    if (toolTypes.length > 0 && results.length < limit) {
+      const typeSnapshot = await dbAdmin
+        .collection('tools')
+        .where('type', 'in', toolTypes)
+        .where('isPublic', '==', true)
+        .limit(limit - results.length)
+        .get();
+
+      for (const doc of typeSnapshot.docs) {
+        if (results.some(r => r.id === doc.id)) continue;
+
+        const data = doc.data();
+        if (data.campusId && data.campusId !== campusId) continue;
+
+        results.push({
+          id: doc.id,
+          title: data.name || 'Unnamed Tool',
+          description: data.description,
+          type: 'tool',
+          category: 'tools',
+          url: `/tools/${doc.id}`,
+          metadata: {
+            type: data.type,
+            creatorId: data.creatorId
+          },
+          relevanceScore: 70
+        });
+      }
+    }
+  } catch (error) {
+    logger.error('Error searching tools', { error: String(error), query });
+  }
+
+  return results;
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
-    const category = searchParams.get('category');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    // Carry campus context even in mock search responses
-    const campusId = (searchParams.get('campusId') || CURRENT_CAMPUS_ID).toLowerCase();
+    const category = (searchParams.get('category') || 'all') as SearchCategory;
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
+    const campusId = searchParams.get('campusId') || CURRENT_CAMPUS_ID;
 
-    if (!query) {
+    if (!query || query.length < 2) {
       return NextResponse.json({
         results: [],
         totalCount: 0,
-        query: '',
-        category: category || null
+        query: query || '',
+        category,
+        campusId,
+        message: query ? 'Query must be at least 2 characters' : 'No query provided'
       });
     }
 
-    let allItems: SearchIndexItem[] = [];
+    const startTime = Date.now();
+    let allResults: SearchResult[] = [];
 
-    // Collect items based on category filter
-    if (!category || category === 'all') {
-      allItems = [
-        ...MOCK_SEARCH_DATA.spaces,
-        ...MOCK_SEARCH_DATA.tools,
-        ...MOCK_SEARCH_DATA.people,
-        ...MOCK_SEARCH_DATA.events,
-        ...MOCK_SEARCH_DATA.posts
-      ];
-    } else {
-      switch (category as SearchCategory) {
-        case 'spaces':
-          allItems = MOCK_SEARCH_DATA.spaces;
-          break;
-        case 'tools':
-          allItems = MOCK_SEARCH_DATA.tools;
-          break;
-        case 'people':
-          allItems = MOCK_SEARCH_DATA.people;
-          break;
-        case 'events':
-          allItems = MOCK_SEARCH_DATA.events;
-          break;
-        case 'posts':
-          allItems = MOCK_SEARCH_DATA.posts;
-          break;
-      }
+    // Execute searches based on category filter
+    const searchPromises: Promise<SearchResult[]>[] = [];
+
+    if (category === 'all' || category === 'spaces') {
+      searchPromises.push(searchSpaces(query, campusId, limit));
+    }
+    if (category === 'all' || category === 'people') {
+      searchPromises.push(searchProfiles(query, campusId, limit));
+    }
+    if (category === 'all' || category === 'posts') {
+      searchPromises.push(searchPosts(query, campusId, limit));
+    }
+    if (category === 'all' || category === 'tools') {
+      searchPromises.push(searchTools(query, campusId, limit));
     }
 
-    // Filter and score results
-    const results: SearchResult[] = allItems
-      .map((item) => ({
-        ...item,
-        relevanceScore: calculateRelevanceScore(item, query, category ?? undefined)
-      }))
-      .filter(item => item.relevanceScore > 0)
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, limit)
-      .map(({ _keywords, ...item }) => item); // Remove keywords from response
+    // Execute all searches in parallel
+    const searchResults = await Promise.all(searchPromises);
+    allResults = searchResults.flat();
+
+    // Sort by relevance score and limit
+    allResults.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    const finalResults = allResults.slice(0, limit);
+
+    const searchDuration = Date.now() - startTime;
+
+    logger.info('Search completed', {
+      query,
+      category,
+      campusId,
+      resultCount: finalResults.length,
+      durationMs: searchDuration
+    });
 
     return NextResponse.json({
-      results,
-      totalCount: results.length,
+      results: finalResults,
+      totalCount: finalResults.length,
       query,
-      category: category || null,
+      category,
       campusId,
-      suggestions: query.length > 2 ? [
-        `${query} in spaces`,
-        `${query} tools`,
-        `${query} events`
-      ] : []
+      metadata: {
+        searchDurationMs: searchDuration,
+        searchedCategories: category === 'all'
+          ? ['spaces', 'people', 'posts', 'tools']
+          : [category]
+      },
+      suggestions: query.length >= 3 ? generateSuggestions(query, finalResults) : []
     });
 
   } catch (error) {
-    logger.error(
-      `Search error at /api/search`,
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Search error', {
+      error: error instanceof Error ? error.message : String(error)
+    });
     return NextResponse.json(
       { error: 'Search failed', results: [], totalCount: 0 },
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
+}
+
+/**
+ * Generate search suggestions based on results
+ */
+function generateSuggestions(query: string, results: SearchResult[]): string[] {
+  const suggestions: string[] = [];
+
+  // Suggest specific categories if results span multiple types
+  const types = new Set(results.map(r => r.type));
+  if (types.size > 1) {
+    if (types.has('space')) suggestions.push(`${query} in spaces`);
+    if (types.has('person')) suggestions.push(`${query} people`);
+    if (types.has('tool')) suggestions.push(`${query} tools`);
+  }
+
+  return suggestions.slice(0, 3);
 }

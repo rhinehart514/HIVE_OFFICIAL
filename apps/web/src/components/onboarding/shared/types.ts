@@ -26,6 +26,10 @@ export interface OnboardingData {
   courseCode: string;
   alumniEmail: string;
   termsAccepted: boolean;
+  // Spaces selected during onboarding
+  initialSpaceIds?: string[];
+  // Spaces user wants to lead (builder requests)
+  builderRequestSpaces?: string[];
 }
 
 export interface StepProps {

@@ -447,18 +447,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   // const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Space system management is not available</p>
-      </div>
-    );
-  }
-
   const loadSpaces = useCallback(async () => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     try {
@@ -480,11 +470,12 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, [admin, enableFeatureFlag]);
 
   useEffect(() => {
+    if (!enableFeatureFlag) return;
     loadSpaces();
-  }, [loadSpaces]);
+  }, [enableFeatureFlag, loadSpaces]);
 
   const filteredSpaces = spaces.filter(space => {
     const matchesCategory = selectedCategory === 'all' || space.category === selectedCategory;
@@ -511,6 +502,15 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
   };
 
   const stats = getSpaceStats();
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">Space system management is not available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -693,8 +693,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <SpaceCard
                   key={space.id}
                   space={space}
-                  onViewDetails={() => console.log('View details:', space.id)}
-                  onEdit={() => console.log('Edit space:', space.id)}
+                  onViewDetails={() => console.warn('View details:', space.id)}
+                  onEdit={() => console.warn('Edit space:', space.id)}
                   onAudit={() => onAuditSpace?.(space.id)}
                 />
               ))}

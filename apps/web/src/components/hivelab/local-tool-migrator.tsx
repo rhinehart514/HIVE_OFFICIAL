@@ -88,9 +88,10 @@ export function LocalToolMigrator() {
         );
 
       } catch (error) {
-        logger.error('[LocalToolMigrator] Migration failed', error as Error, {
+        logger.error('[LocalToolMigrator] Migration failed', {
           userId: user.uid,
-          toolCount: localTools.length
+          toolCount: localTools.length,
+          errorMessage: error instanceof Error ? error.message : String(error)
         });
 
         // Show error message but don't clear localStorage

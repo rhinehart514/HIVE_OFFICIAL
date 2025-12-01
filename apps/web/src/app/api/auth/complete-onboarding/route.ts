@@ -1,9 +1,10 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter } from '@/lib/middleware';
+import * as admin from 'firebase-admin';
+import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { _currentEnvironment } from '@/lib/env';
+import { currentEnvironment as _currentEnvironment } from '@/lib/env';
 import { createSession, setSessionCookie, getSession } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
@@ -23,15 +24,19 @@ const schema = z.object({
   academicLevel: z.enum(['undergraduate', 'graduate', 'doctoral']).optional(),
   bio: z.string().max(200).optional(),
   livingSituation: z.enum(['on-campus', 'off-campus', 'commuter', 'not-sure']).optional(),
+  // Leadership status - important for space builder requests
+  isLeader: z.boolean().optional(),
+  // Initial spaces to join during onboarding
+  initialSpaceIds: z.array(z.string()).optional(),
 });
 
 type OnboardingBody = z.infer<typeof schema>;
 
-export const POST = withAuthValidationAndErrors(schema, async (request: NextRequest, _ctx: Record<string, string | string[]>, body: OnboardingBody, respondFmt: typeof ResponseFormatter) => {
-  const userId = getUserId(request as NextRequest & { userId?: string });
+export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
+  const userId = getUserId(request as unknown as AuthenticatedRequest);
 
   // Get session for campus isolation
-  const session = await getSession(request);
+  const session = await getSession(request as unknown as NextRequest);
   if (!session) {
     return respond.error('Session not found', 'UNAUTHORIZED', { status: 401 });
   }
@@ -70,22 +75,79 @@ export const POST = withAuthValidationAndErrors(schema, async (request: NextRequ
 
       // Update user document with all onboarding data
       transaction.set(userRef, {
+        // Identity
         fullName: body.fullName,
+        firstName: body.firstName || body.fullName.split(' ')[0] || '',
+        lastName: body.lastName || body.fullName.split(' ').slice(1).join(' ') || '',
         handle: normalizedHandle,
+        email: email || '',
+        // Academic
         major: body.major,
         graduationYear: body.graduationYear,
-        interests: body.interests || [],
         academicLevel: body.academicLevel || null,
+        // Profile
         bio: body.bio || null,
+        interests: body.interests || [],
         livingSituation: body.livingSituation || null,
+        // Status
         userType: body.userType,
-        campusId, // Ensure campus isolation
+        isLeader: body.isLeader || false,
+        // Campus isolation
+        campusId,
         schoolId: campusId, // Keep both for compatibility
+        // State
         onboardingCompleted: true,
+        onboardingComplete: true, // Both formats for compatibility
+        isActive: true,
+        // Timestamps
         updatedAt: new Date().toISOString(),
-        // Save avatar URL if provided
-        ...(body.avatarUrl && { avatarUrl: body.avatarUrl }),
+        createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
+        // Avatar
+        ...(body.avatarUrl && {
+          avatarUrl: body.avatarUrl,
+          profileImageUrl: body.avatarUrl
+        }),
       }, { merge: true });
+
+      // Create builder requests for spaces if user indicated leadership interest
+      if (body.isLeader && body.builderRequestSpaces && body.builderRequestSpaces.length > 0) {
+        for (const spaceId of body.builderRequestSpaces) {
+          const requestRef = dbAdmin.collection('builderRequests').doc();
+          transaction.set(requestRef, {
+            userId,
+            spaceId,
+            campusId,
+            status: 'pending',
+            requestedAt: new Date().toISOString(),
+            userHandle: normalizedHandle,
+            userName: body.fullName,
+          });
+        }
+      }
+
+      // Join initial spaces if provided
+      if (body.initialSpaceIds && body.initialSpaceIds.length > 0) {
+        for (const spaceId of body.initialSpaceIds) {
+          const memberRef = dbAdmin.collection('spaceMembers').doc();
+          transaction.set(memberRef, {
+            userId,
+            spaceId,
+            campusId,
+            role: 'member',
+            joinedAt: new Date().toISOString(),
+            isActive: true,
+            permissions: ['post', 'comment', 'react'],
+            joinMethod: 'onboarding',
+          });
+
+          // Increment space member count
+          const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
+          transaction.update(spaceRef, {
+            'metrics.memberCount': admin.firestore.FieldValue.increment(1),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
     });
 
     logger.info('Onboarding completed successfully', {
@@ -113,7 +175,8 @@ export const POST = withAuthValidationAndErrors(schema, async (request: NextRequ
 
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'Failed to complete onboarding';
-    logger.error('Onboarding failed', e instanceof Error ? e : new Error(String(e)), {
+    logger.error('Onboarding failed', {
+      error: { error: e instanceof Error ? e.message : String(e) },
       userId,
       handle: normalizedHandle,
       endpoint: '/api/auth/complete-onboarding'

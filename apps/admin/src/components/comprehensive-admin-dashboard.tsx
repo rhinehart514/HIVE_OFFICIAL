@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { AdminNavigation } from "./admin-navigation";
@@ -26,7 +26,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
     userReports: 0,
   });
 
-  const fetchPendingCounts = async () => {
+  const fetchPendingCounts = useCallback(async () => {
     if (!admin) return;
 
     try {
@@ -50,14 +50,14 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
     } catch (error) {
       console.error('Failed to fetch pending counts:', error);
     }
-  };
+  }, [admin]);
 
   useEffect(() => {
     fetchPendingCounts();
     // Refresh counts every 30 seconds
     const interval = setInterval(fetchPendingCounts, 30000);
     return () => clearInterval(interval);
-  }, [admin]);
+  }, [fetchPendingCounts]);
 
   const renderTabContent = () => {
     switch (activeTab) {

@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Home, Users, User, Bell, MessageCircle, Search } from 'lucide-react'
 
 import { TopBarNav } from './top-bar-nav'

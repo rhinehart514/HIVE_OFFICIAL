@@ -1,14 +1,17 @@
-import { withAuthAndErrors, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getUserEmail, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
+// SECURITY: Use centralized admin auth
+import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
 
 /**
  * Check if user has permission to create spaces
  * Implements multiple locks and restrictions
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = request.user.uid;
-  const userEmail = request.user.email || '';
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const userEmail = getUserEmail(req);
 
   try {
     // Get user document
@@ -24,7 +27,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
     const accountAge = Math.floor((Date.now() - accountCreated.getTime()) / (1000 * 60 * 60 * 24));
 
     // Check email verification
-    const emailVerified = request.user.decodedToken.email_verified || false;
+    const emailVerified = req.user.decodedToken.email_verified || false;
 
     // Count spaces created today
     const todayStart = new Date();
@@ -38,8 +41,8 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
 
     const spacesCreatedToday = spacesCreatedTodaySnapshot.size;
 
-    // Check if user is admin
-    const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
+    // SECURITY: Use centralized admin check (checks custom claims + Firestore)
+    const isAdmin = await checkIsAdmin(userId, userEmail);
 
     // Check if user is banned from creating spaces
     const isBanned = userData.spaceBanned === true || userData.banned === true;
@@ -102,7 +105,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
     });
 
   } catch (error) {
-    logger.error('Error checking space creation permission', { error: error instanceof Error ? error : new Error(String(error)), userId });
+    logger.error('Error checking space creation permission', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
     return respond.error("Failed to check permissions", "INTERNAL_ERROR", { status: 500 });
   }
 });

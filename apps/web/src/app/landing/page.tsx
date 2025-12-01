@@ -182,7 +182,7 @@ export default function LandingPage() {
       <Suspense fallback={
         <div className="flex items-center justify-center w-full h-screen bg-[#0A0A0B]">
           <div className="text-center space-y-4">
-            <div className="w-12 h-12 border-4 border-white/20 border-t-[#F5C842] rounded-full animate-spin mx-auto" />
+            <div className="w-12 h-12 border-4 border-white/20 border-t-gold-500 rounded-full animate-spin mx-auto" />
             <p className="text-white/70 text-sm">Loading your campus...</p>
           </div>
         </div>

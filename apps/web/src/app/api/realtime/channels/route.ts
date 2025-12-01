@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Chat channel interfaces
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Broadcast channel creation to space
-    await broadcastChannelUpdate(spaceId, channelId, 'channel_created', channel);
+    await broadcastChannelUpdate(spaceId, channelId, 'channel_created', channel as unknown as Record<string, unknown>);
 
     return NextResponse.json({
       success: true,
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error creating chat channel at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to create channel", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -231,7 +231,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting chat channels at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get channels", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -341,7 +341,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating chat channel at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update channel", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -395,7 +395,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Broadcast channel deletion
-    await broadcastChannelUpdate(channel.spaceId, channelId, 'channel_deleted', channel);
+    await broadcastChannelUpdate(channel.spaceId, channelId, 'channel_deleted', channel as unknown as Record<string, unknown>);
 
     return NextResponse.json({
       success: true,
@@ -405,7 +405,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error deleting chat channel at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to delete channel", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -442,7 +442,7 @@ async function verifyChannelCreatePermission(userId: string, spaceId: string): P
   } catch (error) {
     logger.error(
       `Error verifying channel create permission at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -461,7 +461,7 @@ async function checkChannelNameExists(spaceId: string, name: string): Promise<bo
   } catch (error) {
     logger.error(
       `Error checking channel name exists at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -480,7 +480,7 @@ async function getSpaceMembers(spaceId: string): Promise<string[]> {
   } catch (error) {
     logger.error(
       `Error getting space members at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -515,7 +515,7 @@ async function createChannelMemberships(
   } catch (error) {
     logger.error(
       `Error creating channel memberships at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -534,7 +534,7 @@ async function verifySpaceAccess(userId: string, spaceId: string): Promise<boole
   } catch (error) {
     logger.error(
       `Error verifying space access at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -563,7 +563,7 @@ async function getUnreadCount(userId: string, channelId: string): Promise<number
   } catch (error) {
     logger.error(
       `Error getting unread count at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }
@@ -594,7 +594,7 @@ async function verifyChannelModifyPermission(userId: string, channel: ChatChanne
   } catch (error) {
     logger.error(
       `Error verifying channel modify permission at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -623,7 +623,7 @@ async function verifyChannelDeletePermission(userId: string, channel: ChatChanne
   } catch (error) {
     logger.error(
       `Error verifying channel delete permission at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -643,7 +643,7 @@ async function deactivateChannelMemberships(channelId: string, userIds: string[]
   } catch (error) {
     logger.error(
       `Error deactivating channel memberships at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -667,7 +667,7 @@ async function deactivateAllChannelMemberships(channelId: string): Promise<void>
   } catch (error) {
     logger.error(
       `Error deactivating all channel memberships at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -711,7 +711,7 @@ async function sendChannelSystemMessage(
   } catch (error) {
     logger.error(
       `Error sending system message at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -752,7 +752,7 @@ async function broadcastChannelUpdate(
           id: channelData.id,
           name: channelData.name,
           type: channelData.type,
-          participantCount: channelData.participants?.length || 0
+          participantCount: (channelData.participants as unknown[] | undefined)?.length || 0
         }
       },
       metadata: {
@@ -773,7 +773,7 @@ async function broadcastChannelUpdate(
   } catch (error) {
     logger.error(
       `Error broadcasting channel update at /api/realtime/channels`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

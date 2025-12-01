@@ -5,19 +5,18 @@
 export { cn } from "./lib/utils";
 
 // Design Kit - Composition Patterns (Nov 2025)
-// TODO: Re-enable when pattern type errors are fixed
-// export {
-//   createCompoundComponent,
-//   createPolymorphicComponent,
-//   createSlotComponent,
-//   createComponentContext,
-//   Slot,
-// } from "./patterns";
-// export type {
-//   CompoundComponent,
-//   PolymorphicComponentProps,
-//   SlotProps,
-// } from "./patterns";
+export {
+  createCompoundComponent,
+  createPolymorphicComponent,
+  createSlotComponent,
+  createComponentContext,
+  Slot,
+} from "./patterns";
+export type {
+  CompoundComponent,
+  PolymorphicComponentProps,
+  SlotProps,
+} from "./patterns";
 
 // Design Kit - Design Recipes (Nov 2025)
 export {
@@ -99,9 +98,11 @@ export { DesktopNav } from "./atomic/00-Global/organisms/desktop-nav";
 export { MobileNav, defaultNavItems } from "./atomic/00-Global/organisms/mobile-nav";
 export { NotificationDropdown } from "./atomic/00-Global/organisms/notification-dropdown-branded";
 export { ProfileDropdown } from "./atomic/00-Global/organisms/profile-dropdown-branded";
+export { Breadcrumbs, BreadcrumbsCompact } from "./atomic/00-Global/molecules/breadcrumbs";
+export type { BreadcrumbItem, BreadcrumbsProps } from "./atomic/00-Global/molecules/breadcrumbs";
 export { HiveNavigationExample, HiveNavigationLayout } from "./atomic/00-Global/organisms/hive-navigation-example";
 export type { DesktopNavProps } from "./atomic/00-Global/organisms/desktop-nav";
-export type { MobileNavProps, NavItem } from "./atomic/00-Global/organisms/mobile-nav";
+export type { MobileNavProps, NavItem, MySpaceItem } from "./atomic/00-Global/organisms/mobile-nav";
 export type { NotificationDropdownProps } from "./atomic/00-Global/organisms/notification-dropdown-branded";
 export type { ProfileDropdownProps } from "./atomic/00-Global/organisms/profile-dropdown-branded";
 
@@ -114,16 +115,103 @@ export {
   InView,
   AutoAnimated,
   useAutoAnimate,
+  AnimatedNumber,
+  numberSpringPresets,
   LottieAnimation,
   LottieCelebration,
   LottieLoading,
   LottieSuccess,
   lottiePresets,
+  GlowEffect,
+  AnimatedGoldIcon,
+  // Premium Card Effects (Billion-Dollar UI)
+  ShineBorder,
+  ShineBorderCard,
+  BorderBeam,
+  BorderBeamCard,
+  SparklesText,
+  sparklePresets,
 } from "./components/motion-primitives";
+
+// Premium Subtle Motion Variants (Dec 2025 - Vercel/Linear style)
+export {
+  premiumContainerVariants,
+  premiumItemVariants,
+  premiumStatVariants,
+  premiumCardHover,
+  fadeInUpVariants,
+  scaleInVariants,
+  staggerContainerVariants,
+  staggerItemVariants,
+} from "./lib/motion-variants";
+
+// Spaces Motion Variants (Nov 2025 - Motion-Rich Premium)
+export {
+  // Tier 1: High motion
+  spaceHeroCardVariants,
+  spaceJoinCelebrationVariants,
+  goldGlowPulseVariants,
+  kenBurnsVariants,
+  // Tier 2: Medium motion
+  spaceDiscoveryCardVariants,
+  categoryPillVariants,
+  momentumPulseVariants,
+  filterBarVariants,
+  // Tier 3: Subtle motion
+  railWidgetVariants,
+  nowCardVariants,
+  spaceHeaderVariants,
+  sectionRevealVariants,
+  collapsibleVariants,
+  chevronRotateVariants,
+  // Tier 4: Minimal
+  staticVariants,
+  // Scroll-triggered
+  scrollRevealVariants,
+  scrollFadeVariants,
+  parallaxVariants,
+  // Stagger containers
+  sectionStaggerVariants,
+  gridStaggerVariants,
+  heroStaggerVariants,
+  listStaggerVariants,
+  // Stagger items
+  staggerItemVariants as spaceStaggerItemVariants,
+  staggerFadeItemVariants,
+  // Celebrations
+  confettiParticleVariants,
+  successCheckVariants,
+  // Utility
+  withReducedMotion,
+} from "./lib/motion-variants-spaces";
+
+// Glass Morphism System (Nov 2025 - Subtle 8px blur)
+export {
+  glass,
+  glassPresets,
+  glassCSSVars,
+} from "./lib/glass-morphism";
+export type {
+  GlassPanel,
+  GlassElevated,
+  GlassSticky,
+  GlassGlow,
+  GlassDepth,
+  GlassBorder,
+  GlassPreset,
+} from "./lib/glass-morphism";
 export type {
   InViewProps,
   AutoAnimatedProps,
+  AnimatedNumberProps,
   LottieAnimationProps,
+  GlowEffectProps,
+  // Premium Card Effects Types (Billion-Dollar UI)
+  ShineBorderProps,
+  ShineBorderCardProps,
+  BorderBeamProps,
+  BorderBeamCardProps,
+  SparklesTextProps,
 } from "./components/motion-primitives";
 
 export type { PresenceStatus } from "./identity";
@@ -132,6 +220,19 @@ export type {
   ToolComposition,
   ElementDefinition,
   ElementProps,
+  ElementTier,
+  DataSource,
+  UserContext,
+} from "./lib/hivelab/element-system";
+
+export {
+  CORE_ELEMENTS,
+  getAvailableElements,
+  canUseElement,
+  getElementsByTier,
+  canUseComposition,
+  getRequiredContext,
+  initializeElementSystem,
 } from "./lib/hivelab/element-system";
 export {
   VisuallyHidden,
@@ -161,8 +262,10 @@ export type {
 } from "./a11y";
 
 // Core atoms
-export { Button } from "./atomic/00-Global/atoms/button";
-export { Input } from "./atomic/00-Global/atoms/input";
+export { Button, buttonVariants } from "./atomic/00-Global/atoms/button";
+export type { ButtonProps, ButtonState } from "./atomic/00-Global/atoms/button";
+export { Input, inputVariants } from "./atomic/00-Global/atoms/input";
+export type { InputProps, InputStatus } from "./atomic/00-Global/atoms/input";
 export { Label } from "./atomic/00-Global/atoms/label";
 export { Textarea } from "./atomic/00-Global/atoms/textarea";
 export { Skeleton } from "./atomic/00-Global/atoms/skeleton";
@@ -439,6 +542,16 @@ export type { FeedCardPostData } from "./atomic/02-Feed/organisms/feed-card-post
 export { FeedCardEvent } from "./atomic/02-Feed/organisms/feed-card-event";
 export { FeedCardTool } from "./atomic/02-Feed/organisms/feed-card-tool";
 
+// Post Detail Modal
+export { PostDetailModal } from "./atomic/02-Feed/organisms/post-detail-modal";
+export type {
+  PostDetailModalProps,
+  PostDetailData,
+  PostDetailComment,
+  PostDetailAuthor,
+  PostDetailSpace,
+} from "./atomic/02-Feed/organisms/post-detail-modal";
+
 // Feed Molecules
 export { FeedFilterBar } from "./atomic/02-Feed/molecules/feed-filter-bar";
 
@@ -477,6 +590,43 @@ export { useWelcomeMat } from "./hooks/use-welcome-mat";
 export { VisualToolComposer } from "./components/hivelab/visual-tool-composer";
 export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-composer";
 
+// HiveLab: Tool Canvas (runtime rendering)
+export { ToolCanvas } from "./components/hivelab/tool-canvas";
+export type { ToolCanvasProps, ToolElement } from "./components/hivelab/tool-canvas";
+
+// HiveLab: Element Renderers
+export { renderElement } from "./components/hivelab/element-renderers";
+
+// HiveLab: Element Showcase (ChatGPT-style - Dec 2025)
+export {
+  // Components
+  ElementShowcase,
+  ElementBundleCard,
+  ElementShowcaseGrid,
+  ElementShowcaseSidebar,
+  // Hook
+  useElementShowcase,
+  // Data
+  ELEMENT_BUNDLES,
+  ELEMENT_SHOWCASE_DATA,
+  BUNDLE_ORDER,
+  getBundleElements,
+  getElementBundle,
+  getAllShowcaseElements,
+  getRandomPrompt,
+} from "./components/hivelab/showcase";
+export type {
+  ElementShowcaseProps,
+  ElementBundleCardProps,
+  ElementShowcaseGridProps,
+  ElementShowcaseSidebarProps,
+  ShowcaseState,
+  UseElementShowcaseOptions,
+  UseElementShowcaseReturn,
+  ElementBundleDefinition,
+  ElementShowcaseMetadata,
+} from "./components/hivelab/showcase";
+
 // HiveLab: Modern @dnd-kit Studio Components (Nov 2025)
 export { DndStudioProvider } from "./components/hivelab/studio/DndStudioProvider";
 export type { DndStudioProviderProps } from "./components/hivelab/studio/DndStudioProvider";
@@ -509,7 +659,7 @@ export {
 } from "./lib/hivelab/tool-state-manager";
 export type {
   Tool,
-  ToolElement,
+  ToolElement as ToolStateElement,
   ToolHistory,
   ToolAction,
 } from "./lib/hivelab/tool-state-manager";
@@ -534,6 +684,152 @@ export type {
   SpaceToolsWidgetData,
   SpaceTool,
 } from "./atomic/03-Spaces/molecules/space-tools-widget";
+
+// Space Discovery Components (Dec 2025)
+// Atoms
+export { MomentumIndicator } from "./atomic/03-Spaces/atoms/momentum-indicator";
+export type { MomentumIndicatorProps, MomentumLevel } from "./atomic/03-Spaces/atoms/momentum-indicator";
+
+export { CategoryPill } from "./atomic/03-Spaces/atoms/category-pill";
+export type { CategoryPillProps } from "./atomic/03-Spaces/atoms/category-pill";
+
+export { MemberStack } from "./atomic/03-Spaces/atoms/member-stack";
+export type { MemberStackProps, MemberStackMember } from "./atomic/03-Spaces/atoms/member-stack";
+
+export { ActivityBadge } from "./atomic/03-Spaces/atoms/activity-badge";
+export type { ActivityBadgeProps } from "./atomic/03-Spaces/atoms/activity-badge";
+
+// Glass morphism primitives
+export {
+  GlassSurface,
+  GlassCard,
+  GlassWidget,
+  GlassModal,
+  GlassHeader,
+} from "./atomic/03-Spaces/atoms/glass-surface";
+export type { GlassSurfaceProps } from "./atomic/03-Spaces/atoms/glass-surface";
+
+// Sticky rail primitives
+export {
+  StickyRail,
+  SpaceSidebarRail,
+} from "./atomic/03-Spaces/atoms/sticky-rail";
+export type { StickyRailProps, SpaceSidebarRailProps } from "./atomic/03-Spaces/atoms/sticky-rail";
+
+// Molecules
+export { SpaceDiscoveryCard } from "./atomic/03-Spaces/molecules/space-discovery-card";
+export type { SpaceDiscoveryCardProps, SpaceDiscoveryCardData } from "./atomic/03-Spaces/molecules/space-discovery-card";
+
+export { SpaceHeroCard } from "./atomic/03-Spaces/molecules/space-hero-card";
+export type { SpaceHeroCardProps, SpaceHeroCardData } from "./atomic/03-Spaces/molecules/space-hero-card";
+
+export { CategoryFilterBar } from "./atomic/03-Spaces/molecules/category-filter-bar";
+export type { CategoryFilterBarProps, CategoryFilterItem } from "./atomic/03-Spaces/molecules/category-filter-bar";
+
+export { DiscoverySectionHeader } from "./atomic/03-Spaces/molecules/discovery-section-header";
+export type { DiscoverySectionHeaderProps } from "./atomic/03-Spaces/molecules/discovery-section-header";
+
+// Collapsible widget pattern
+export {
+  CollapsibleWidget,
+  CompactCollapsibleWidget,
+} from "./atomic/03-Spaces/molecules/collapsible-widget";
+export type {
+  CollapsibleWidgetProps,
+  CompactCollapsibleWidgetProps,
+} from "./atomic/03-Spaces/molecules/collapsible-widget";
+
+// Mobile inline sections
+export {
+  MobileInlineSection,
+  MobileAboutSection,
+  MobileToolsSection,
+} from "./atomic/03-Spaces/molecules/mobile-inline-section";
+export type { MobileInlineSectionProps } from "./atomic/03-Spaces/molecules/mobile-inline-section";
+
+// Space empty states
+export {
+  SpaceEmptyState,
+  PostsEmptyState,
+  MembersEmptyState,
+  EventsEmptyState,
+  ToolsEmptyState,
+  SpacesEmptyState,
+  SearchEmptyState,
+} from "./atomic/03-Spaces/molecules/space-empty-state";
+export type { SpaceEmptyStateProps } from "./atomic/03-Spaces/molecules/space-empty-state";
+
+// Space layout primitives
+export {
+  SpaceSplitLayout,
+  SpaceFullWidthLayout,
+  SpaceCenteredLayout,
+  SpacePageLayout,
+} from "./atomic/03-Spaces/layouts/space-split-layout";
+export type {
+  SpaceSplitLayoutProps,
+  SpaceFullWidthLayoutProps,
+  SpaceCenteredLayoutProps,
+  SpacePageLayoutProps,
+} from "./atomic/03-Spaces/layouts/space-split-layout";
+
+// Organisms
+export { SpacesHeroSection } from "./atomic/03-Spaces/organisms/spaces-hero-section";
+export type { SpacesHeroSectionProps } from "./atomic/03-Spaces/organisms/spaces-hero-section";
+
+export { SpacesDiscoveryGrid } from "./atomic/03-Spaces/organisms/spaces-discovery-grid";
+export type { SpacesDiscoveryGridProps } from "./atomic/03-Spaces/organisms/spaces-discovery-grid";
+
+// Unified Space Sidebar (Nov 2025 - Motion-Rich Premium)
+export {
+  SpaceSidebar,
+  SpaceSidebarMinimal,
+} from "./atomic/03-Spaces/organisms/space-sidebar";
+export type {
+  SpaceSidebarProps,
+  SpaceSidebarData,
+  SpaceSidebarCallbacks,
+  SpaceSidebarAbout,
+  SpaceSidebarTools,
+  SpaceSidebarEvent,
+  SpaceSidebarMinimalProps,
+} from "./atomic/03-Spaces/organisms/space-sidebar";
+
+// Space Detail Premium Components (Nov 2025 - T1 Premium)
+export { SpaceDetailHeader } from "./atomic/03-Spaces/organisms/space-detail-header";
+export type {
+  SpaceDetailHeaderProps,
+  SpaceDetailData,
+  SpaceMembershipState as SpaceDetailMembershipState,
+} from "./atomic/03-Spaces/organisms/space-detail-header";
+
+export { SpaceDynamicContent } from "./atomic/03-Spaces/organisms/space-dynamic-content";
+export type {
+  SpaceDynamicContentProps,
+  SpaceWidget as DynamicSpaceWidget,
+  TabContentType,
+} from "./atomic/03-Spaces/organisms/space-dynamic-content";
+
+// Space Tab Navigation (Nov 2025)
+export { SpaceTabBar } from "./atomic/03-Spaces/molecules/space-tab-bar";
+export type {
+  SpaceTabBarProps,
+  SpaceTabItem,
+} from "./atomic/03-Spaces/molecules/space-tab-bar";
+
+// Space Celebrations
+export {
+  GoldConfettiBurst,
+  JoinCelebration,
+  FirstPostCelebration,
+  MilestoneBadge,
+} from "./components/motion-primitives/space-celebrations";
+export type {
+  GoldConfettiBurstProps,
+  JoinCelebrationProps,
+  FirstPostCelebrationProps,
+  MilestoneBadgeProps,
+} from "./components/motion-primitives/space-celebrations";
 
 // Ritual Molecules
 export { RitualProgressBar } from "./atomic/06-Rituals/molecules/ritual-progress-bar";
@@ -627,6 +923,13 @@ export type {
 
 export { SpacePostComposer } from "./atomic/03-Spaces/organisms/space-post-composer";
 export type { SpacePostComposerProps } from "./atomic/03-Spaces/organisms/space-post-composer";
+
+// Space Modals
+export { AddTabModal } from "./atomic/03-Spaces/organisms/add-tab-modal";
+export type { AddTabModalProps, AddTabInput, TabType } from "./atomic/03-Spaces/organisms/add-tab-modal";
+
+export { AddWidgetModal } from "./atomic/03-Spaces/organisms/add-widget-modal";
+export type { AddWidgetModalProps, AddWidgetInput as AddWidgetInputUI, WidgetType } from "./atomic/03-Spaces/organisms/add-widget-modal";
 
 // Space Templates
 export { SpaceBoardTemplate } from "./atomic/03-Spaces/templates/space-board-template";
@@ -760,5 +1063,10 @@ export {
   exportLocalTools,
   importLocalTools,
   useLocalToolStorage,
+  // WIP (Work In Progress) storage
+  saveWIPTool,
+  getWIPTool,
+  clearWIPTool,
+  hasRecentWIPTool,
 } from "./lib/hivelab/local-tool-storage";
-export type { LocalTool } from "./lib/hivelab/local-tool-storage";
+export type { LocalTool, WIPToolData } from "./lib/hivelab/local-tool-storage";

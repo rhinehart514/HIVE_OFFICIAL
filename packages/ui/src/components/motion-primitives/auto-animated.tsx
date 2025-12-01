@@ -14,6 +14,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { useEffect, useRef, type ReactNode, type HTMLAttributes } from 'react';
 import autoAnimate, { type AutoAnimateOptions, type AutoAnimationPlugin } from '@formkit/auto-animate';
 import { motion as motionTokens } from '@hive/tokens';
@@ -23,7 +24,7 @@ export interface AutoAnimatedProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 
   /** HTML element to render as (default: 'div') */
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
 
   /** Animation duration in ms (default: from motion tokens) */
   duration?: number;

@@ -2,7 +2,7 @@ import { getStorage } from 'firebase-admin/storage';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from "@/lib/logger";
-import { _ApiResponseHelper, _HttpStatus } from "@/lib/api-response-types";
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 
@@ -10,11 +10,11 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/m
 const devProfileStore: Record<string, unknown> = {};
 
 export const POST = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   context,
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
 
     const formData = await request.formData();
     const file = formData.get('photo') as File;
@@ -23,14 +23,21 @@ export const POST = withAuthAndErrors(async (
       return respond.error("No photo file provided", "INVALID_INPUT", { status: 400 });
     }
 
-    // Handle development mode
-    if (userId === 'test-user' || userId === 'dev_user_123') {
+    // Handle development mode - check for any dev user patterns
+    const isDevUser = userId === 'test-user' ||
+                      userId === 'dev_user_123' ||
+                      userId.startsWith('dev-test') ||
+                      userId.startsWith('dev-user') ||
+                      userId.startsWith('dev_');
+
+    if (isDevUser) {
       // In development, simulate successful upload with a unique URL
       const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
       
       // Store the avatar URL in development profile store
+      const existingProfile = (devProfileStore[userId] as Record<string, unknown>) || {};
       devProfileStore[userId] = {
-        ...devProfileStore[userId],
+        ...existingProfile,
         avatarUrl,
         profilePhoto: avatarUrl,
       };

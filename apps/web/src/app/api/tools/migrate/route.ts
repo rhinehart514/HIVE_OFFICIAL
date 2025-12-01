@@ -25,8 +25,8 @@ const MigrationSchema = z.object({
   }))
 });
 
-export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const POST = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   if (!userId) {
     return respond.error(

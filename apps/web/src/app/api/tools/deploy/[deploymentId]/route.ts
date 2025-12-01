@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { _logger } from "@/lib/structured-logger";
+import { logger as _logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
@@ -134,11 +134,11 @@ const UpdateDeploymentSchema = z.object({
 type UpdateDeploymentInput = z.infer<typeof UpdateDeploymentSchema>;
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId);
@@ -176,12 +176,12 @@ export const GET = withAuthAndErrors(async (
 export const PUT = withAuthValidationAndErrors(
   UpdateDeploymentSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ deploymentId: string }> },
     payload: UpdateDeploymentInput,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
     const deploymentResult = await loadDeployment(deploymentId);
@@ -283,11 +283,11 @@ export const PUT = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ deploymentId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
   const deploymentResult = await loadDeployment(deploymentId);

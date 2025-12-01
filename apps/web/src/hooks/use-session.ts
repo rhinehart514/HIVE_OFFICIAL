@@ -38,7 +38,15 @@ interface SessionData {
  * Use useUnifiedAuth directly in new code
  */
  
-export function useSession(): { isLoading: boolean; user: LegacySessionUser | null; session: SessionData | null; logout: () => Promise<void> } {
+export function useSession(): {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: LegacySessionUser | null;
+  session: SessionData | null;
+  sessionData: SessionData | null;
+  logout: () => Promise<void>;
+  getIdToken?: (() => Promise<string | null>) | (() => Promise<string>);
+} {
   const hiveAuth = useAuth();
 
   // Transform HiveAuth data to match useSession interface
@@ -58,7 +66,7 @@ export function useSession(): { isLoading: boolean; user: LegacySessionUser | nu
 
   const sessionData: SessionData | null = hiveAuth.user ? {
     userId: hiveAuth.user.id,
-    email: hiveAuth.user.email,
+    email: hiveAuth.user.email ?? undefined,
     schoolId: hiveAuth.user.schoolId || '',
     needsOnboarding: !hiveAuth.user.onboardingCompleted,
     onboardingCompleted: hiveAuth.user.onboardingCompleted,

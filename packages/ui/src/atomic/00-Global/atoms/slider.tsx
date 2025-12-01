@@ -42,7 +42,7 @@ const sliderTrackVariants = cva(
 );
 
 const sliderRangeVariants = cva(
-  "absolute h-full bg-[#ffd700] transition-all duration-150",
+  "absolute h-full bg-brand-primary transition-all duration-150",
   {
     variants: {
       variant: {
@@ -63,7 +63,7 @@ const sliderThumbVariants = cva(
   {
     variants: {
       variant: {
-        default: "data-[state=active]:shadow-[0_8px_24px_rgba(255,215,0,0.24)] data-[state=active]:border-[#ffd700] data-[state=active]:bg-[color-mix(in_srgb,#ffd700 35%,var(--hive-background-primary) 65%)]",
+        default: "data-[state=active]:shadow-[0_8px_24px_rgba(255,215,0,0.24)] data-[state=active]:border-brand-primary data-[state=active]:bg-[color-mix(in_srgb,var(--hive-brand-primary) 35%,var(--hive-background-primary) 65%)]",
         destructive: "border-[var(--hive-status-error)] bg-[color-mix(in_srgb,var(--hive-status-error) 88%,rgba(0,0,0,0.12))] data-[state=active]:shadow-[0_8px_22px_rgba(212,60,60,0.18)] data-[state=active]:bg-[color-mix(in_srgb,var(--hive-status-error) 42%,var(--hive-background-primary) 58%)]",
         success: "border-[var(--hive-status-success)] bg-[color-mix(in_srgb,var(--hive-status-success) 88%,rgba(0,0,0,0.12))] data-[state=active]:shadow-[0_8px_22px_rgba(51,178,73,0.18)] data-[state=active]:bg-[color-mix(in_srgb,var(--hive-status-success) 40%,var(--hive-background-primary) 60%)]",
         subtle: "",

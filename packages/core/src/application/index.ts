@@ -32,17 +32,62 @@ export type {
   OnboardingResult
 } from './profile-onboarding.service';
 
-// Space domain services
+// Space Discovery Service (query operations)
 export {
-  SpaceDiscoveryService
-} from './space-discovery.service';
+  SpaceDiscoveryService,
+  createSpaceDiscoveryService,
+} from './spaces/space-discovery.service';
 
 export type {
-  SpaceCreationData,
-  SpaceDiscoveryFilters,
-  SpaceJoinResult,
-  SpaceActivityData
-} from './space-discovery.service';
+  BrowseSpacesInput,
+  BrowseSpacesResult,
+  SearchSpacesInput,
+  RecommendedSpacesInput,
+  UserSpacesInput,
+  CheckMembershipFn,
+  GetMembershipsFn,
+} from './spaces/space-discovery.service';
+
+// Space DTOs and Presenters
+export type {
+  SpaceBaseDTO,
+  SpaceBrowseDTO,
+  SpaceDetailDTO,
+  SpaceMembershipDTO,
+  SpaceWithMembersDTO,
+  MembershipDTO,
+  SpaceActivityDTO,
+  SpaceWidgetStatsDTO,
+  SpaceMemberDTO,
+  TabSummaryDTO,
+  TabDetailDTO,
+  WidgetSummaryDTO,
+  WidgetDetailDTO,
+} from './spaces';
+
+export {
+  toSpaceBrowseDTO,
+  toSpaceDetailDTO,
+  toSpaceMembershipDTO,
+  toSpaceWithMembersDTO,
+  toSpaceBrowseDTOList,
+  toSpaceMembershipDTOList,
+} from './spaces';
+
+export {
+  SpaceManagementService
+} from './space-management.service';
+
+export type {
+  CreateSpaceInput,
+  CreateSpaceResult,
+  LeaderRequestInput,
+  LeaderRequestResult,
+  LeaderRequestDecision,
+  LeaderRequestDecisionResult,
+  RoleChangeInput,
+  OwnershipTransferInput
+} from './space-management.service';
 
 // Feed domain services
 export {

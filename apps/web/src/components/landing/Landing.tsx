@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Heading,
-  _Text,
+  Text,
   Card,
   CardContent,
   HiveLogo,
@@ -37,7 +37,7 @@ const experienceHighlights = [
   }
 ] as const;
 
-export function Landing(): JSX.Element {
+export function Landing() {
   const router = useRouter();
   const [code, setCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

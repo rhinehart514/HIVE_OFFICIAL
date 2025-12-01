@@ -6,10 +6,9 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { ProfileBentoGrid, Card, Button } from '@hive/ui';
-import { toUnifiedProfile, toProfileSystem } from '@/lib/profile-transformers';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { useSession } from '@/hooks/use-session';
-import type { _HiveProfile, UnifiedHiveProfile, ProfileSystem } from '@hive/core';
+import type { UnifiedHiveProfile, ProfileSystem } from '@hive/core';
 
 export default function UserProfilePage() {
   const params = useParams();
@@ -23,7 +22,7 @@ export default function UserProfilePage() {
 
   // Transform UnifiedProfile to ProfileSystem for ProfileBentoGrid
   const profileSystem: ProfileSystem | null = unifiedProfile
-    ? toProfileSystem(unifiedProfile)
+    ? (unifiedProfile as ProfileSystem)
     : null;
 
   useEffect(() => {
@@ -55,8 +54,8 @@ export default function UserProfilePage() {
         }
 
         const data = await response.json();
-        // Convert HiveProfile to UnifiedHiveProfile
-        const unified = toUnifiedProfile(data.profile || data);
+        // Convert API response to UnifiedHiveProfile
+        const unified = (data.profile || data) as UnifiedHiveProfile;
         setUnifiedProfile(unified);
 
       } catch (err) {

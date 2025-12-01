@@ -1,5 +1,31 @@
 // HIVE Element System - Composable building blocks for tools
+//
+// ARCHITECTURE PRINCIPLES:
+// 1. Elements are platform primitives, not "tool templates"
+// 2. Anyone can CREATE anything - tiers restrict DATA ACCESS, not imagination
+// 3. Like ChatGPT: describe what you want, get a composition, decide what to do with it
+// 4. The system doesn't assume intent - user decides where to deploy/share
+//
+import * as React from 'react';
 import { renderElement } from '../../components/hivelab/element-renderers';
+
+// Element access tiers - determines what DATA an element can access
+export type ElementTier =
+  | 'universal'   // Everyone - no HIVE data needed
+  | 'connected'   // Everyone - pulls from public HIVE data (events, spaces, users)
+  | 'space';      // Leaders only - pulls from their space's private data
+
+// Data source types for connected/space elements
+export type DataSource =
+  | 'none'           // Universal elements - user provides data
+  | 'campus-events'  // UBLinked imported events
+  | 'campus-spaces'  // Space directory
+  | 'campus-users'   // User search/directory
+  | 'user-connections' // Current user's connections
+  | 'space-members'  // Specific space's members (leader only)
+  | 'space-events'   // Specific space's events (leader only)
+  | 'space-feed'     // Specific space's posts (leader only)
+  | 'space-stats';   // Specific space's metrics (leader only)
 
 export interface ElementProps {
   id: string;
@@ -7,6 +33,13 @@ export interface ElementProps {
   data?: any;
   onChange?: (data: any) => void;
   onAction?: (action: string, payload: any) => void;
+  // New: context for data access
+  context?: {
+    userId?: string;
+    campusId?: string;
+    spaceId?: string;      // Only set if user is a leader of this space
+    isSpaceLeader?: boolean;
+  };
 }
 
 export interface ElementDefinition {
@@ -14,10 +47,12 @@ export interface ElementDefinition {
   name: string;
   description: string;
   category: 'input' | 'display' | 'filter' | 'action' | 'layout';
+  tier: ElementTier;           // NEW: access tier
+  dataSource: DataSource;      // NEW: what data this element can pull
   icon: string;
   configSchema: Record<string, any>;
   defaultConfig: Record<string, any>;
-  render: (props: ElementProps) => JSX.Element;
+  render: (props: ElementProps) => React.JSX.Element;
 }
 
 export interface ToolComposition {
@@ -122,13 +157,20 @@ export class ElementEngine {
   }
 }
 
-// Predefined Element Templates
-export const CORE_ELEMENTS: ElementDefinition[] = [
+// =============================================================================
+// TIER 1: UNIVERSAL ELEMENTS
+// Everyone can use these. No HIVE data access required.
+// These are pure primitives - user provides all data through config or forms.
+// =============================================================================
+
+const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
   {
     id: 'search-input',
     name: 'Search Input',
     description: 'Text input for search queries with autocomplete',
     category: 'input',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Search',
     configSchema: {
       placeholder: { type: 'string', default: 'Search...' },
@@ -142,12 +184,14 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
     },
     render: (props) => renderElement('search-input', props)
   },
-  
+
   {
     id: 'filter-selector',
     name: 'Filter Selector',
     description: 'Multi-select filter with categories',
     category: 'filter',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Filter',
     configSchema: {
       options: { type: 'array', default: [] },
@@ -165,8 +209,10 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
   {
     id: 'result-list',
     name: 'Result List',
-    description: 'Displays search results in a list format',
+    description: 'Displays items in a list format',
     category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'List',
     configSchema: {
       itemsPerPage: { type: 'number', default: 10 },
@@ -186,6 +232,8 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
     name: 'Date Picker',
     description: 'Date and time selection component',
     category: 'input',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Calendar',
     configSchema: {
       includeTime: { type: 'boolean', default: false },
@@ -203,29 +251,12 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
   },
 
   {
-    id: 'user-selector',
-    name: 'User Selector',
-    description: 'Select users from the platform',
-    category: 'input',
-    icon: 'Users',
-    configSchema: {
-      allowMultiple: { type: 'boolean', default: false },
-      filterBySpace: { type: 'boolean', default: false },
-      showAvatars: { type: 'boolean', default: true }
-    },
-    defaultConfig: {
-      allowMultiple: false,
-      filterBySpace: false,
-      showAvatars: true
-    },
-    render: (props) => renderElement('user-selector', props)
-  },
-
-  {
     id: 'tag-cloud',
     name: 'Tag Cloud',
     description: 'Visual display of tags with frequency weighting',
     category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Tag',
     configSchema: {
       maxTags: { type: 'number', default: 50 },
@@ -237,7 +268,7 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
       sortBy: 'frequency',
       showCounts: true
     },
-    render: (props) => renderElement('chart-display', props)
+    render: (props) => renderElement('tag-cloud', props)
   },
 
   {
@@ -245,6 +276,8 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
     name: 'Map View',
     description: 'Geographic map for location-based features',
     category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Map',
     configSchema: {
       defaultZoom: { type: 'number', default: 10 },
@@ -256,7 +289,7 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
       allowMarkers: true,
       showControls: true
     },
-    render: (props) => renderElement('chart-display', props)
+    render: (props) => renderElement('map-view', props)
   },
 
   {
@@ -264,6 +297,8 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
     name: 'Chart Display',
     description: 'Data visualization charts',
     category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'BarChart',
     configSchema: {
       chartType: { type: 'string', default: 'bar' },
@@ -283,6 +318,8 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
     name: 'Form Builder',
     description: 'Dynamic form creation and validation',
     category: 'input',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'FileText',
     configSchema: {
       fields: { type: 'array', default: [] },
@@ -298,10 +335,85 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
   },
 
   {
-    id: 'notification-center',
-    name: 'Notification Center',
-    description: 'Display and manage notifications',
+    id: 'countdown-timer',
+    name: 'Countdown Timer',
+    description: 'Live countdown to any date/time',
     category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Timer',
+    configSchema: {
+      seconds: { type: 'number', default: 3600 },
+      label: { type: 'string', default: 'Time Remaining' },
+      showDays: { type: 'boolean', default: true },
+      onComplete: { type: 'string', default: '' }
+    },
+    defaultConfig: {
+      seconds: 3600,
+      label: 'Time Remaining',
+      showDays: true,
+      onComplete: ''
+    },
+    render: (props) => renderElement('countdown-timer', props)
+  },
+
+  {
+    id: 'poll-element',
+    name: 'Poll / Voting',
+    description: 'Create polls and collect votes from anyone',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Vote',
+    configSchema: {
+      question: { type: 'string', default: 'What do you think?' },
+      options: { type: 'array', default: ['Option 1', 'Option 2'] },
+      allowMultipleVotes: { type: 'boolean', default: false },
+      showResults: { type: 'boolean', default: true },
+      anonymousVoting: { type: 'boolean', default: false }
+    },
+    defaultConfig: {
+      question: 'What do you think?',
+      options: ['Option 1', 'Option 2'],
+      allowMultipleVotes: false,
+      showResults: true,
+      anonymousVoting: false
+    },
+    render: (props) => renderElement('poll-element', props)
+  },
+
+  {
+    id: 'leaderboard',
+    name: 'Leaderboard',
+    description: 'Display ranked standings with scores',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Trophy',
+    configSchema: {
+      maxEntries: { type: 'number', default: 10 },
+      showRank: { type: 'boolean', default: true },
+      showScore: { type: 'boolean', default: true },
+      scoreLabel: { type: 'string', default: 'Points' },
+      highlightTop: { type: 'number', default: 3 }
+    },
+    defaultConfig: {
+      maxEntries: 10,
+      showRank: true,
+      showScore: true,
+      scoreLabel: 'Points',
+      highlightTop: 3
+    },
+    render: (props) => renderElement('leaderboard', props)
+  },
+
+  {
+    id: 'notification-display',
+    name: 'Notification Display',
+    description: 'Display notifications or alerts',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
     icon: 'Bell',
     configSchema: {
       maxNotifications: { type: 'number', default: 10 },
@@ -313,9 +425,370 @@ export const CORE_ELEMENTS: ElementDefinition[] = [
       groupByType: true,
       autoMarkRead: false
     },
-    render: (props) => renderElement('result-list', props)
-  }
+    render: (props) => renderElement('notification-center', props)
+  },
 ];
+
+// =============================================================================
+// TIER 2: CONNECTED ELEMENTS
+// Everyone can use these. They connect to PUBLIC HIVE data.
+// Campus events, space directory, user search - all public.
+// =============================================================================
+
+const CONNECTED_ELEMENTS: ElementDefinition[] = [
+  {
+    id: 'event-picker',
+    name: 'Event Picker',
+    description: 'Browse and select from campus events',
+    category: 'input',
+    tier: 'connected',
+    dataSource: 'campus-events',
+    icon: 'CalendarDays',
+    configSchema: {
+      showPastEvents: { type: 'boolean', default: false },
+      filterByCategory: { type: 'string', default: '' },
+      maxEvents: { type: 'number', default: 20 }
+    },
+    defaultConfig: {
+      showPastEvents: false,
+      filterByCategory: '',
+      maxEvents: 20
+    },
+    render: (props) => renderElement('event-picker', props)
+  },
+
+  {
+    id: 'space-picker',
+    name: 'Space Picker',
+    description: 'Browse and select from campus spaces',
+    category: 'input',
+    tier: 'connected',
+    dataSource: 'campus-spaces',
+    icon: 'Building',
+    configSchema: {
+      filterByCategory: { type: 'string', default: '' },
+      showMemberCount: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      filterByCategory: '',
+      showMemberCount: true
+    },
+    render: (props) => renderElement('space-picker', props)
+  },
+
+  {
+    id: 'user-selector',
+    name: 'User Selector',
+    description: 'Search and select campus users',
+    category: 'input',
+    tier: 'connected',
+    dataSource: 'campus-users',
+    icon: 'Users',
+    configSchema: {
+      allowMultiple: { type: 'boolean', default: false },
+      showAvatars: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      allowMultiple: false,
+      showAvatars: true
+    },
+    render: (props) => renderElement('user-selector', props)
+  },
+
+  {
+    id: 'rsvp-button',
+    name: 'RSVP Button',
+    description: 'Event signup with capacity tracking',
+    category: 'action',
+    tier: 'connected',
+    dataSource: 'campus-events',
+    icon: 'UserPlus',
+    configSchema: {
+      eventName: { type: 'string', default: 'Event' },
+      maxAttendees: { type: 'number', default: 100 },
+      showCount: { type: 'boolean', default: true },
+      requireConfirmation: { type: 'boolean', default: false },
+      allowWaitlist: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      eventName: 'Event',
+      maxAttendees: 100,
+      showCount: true,
+      requireConfirmation: false,
+      allowWaitlist: true
+    },
+    render: (props) => renderElement('rsvp-button', props)
+  },
+
+  {
+    id: 'connection-list',
+    name: 'Connection List',
+    description: 'Display your connections',
+    category: 'display',
+    tier: 'connected',
+    dataSource: 'user-connections',
+    icon: 'Network',
+    configSchema: {
+      maxConnections: { type: 'number', default: 10 },
+      showMutual: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      maxConnections: 10,
+      showMutual: true
+    },
+    render: (props) => renderElement('connection-list', props)
+  },
+];
+
+// =============================================================================
+// TIER 3: SPACE ELEMENTS
+// Only space leaders can use these. They access PRIVATE space data.
+// Members, space-specific events, feed, metrics.
+// =============================================================================
+
+const SPACE_ELEMENTS: ElementDefinition[] = [
+  {
+    id: 'member-list',
+    name: 'Member List',
+    description: 'Display your space\'s members',
+    category: 'display',
+    tier: 'space',
+    dataSource: 'space-members',
+    icon: 'UsersRound',
+    configSchema: {
+      maxMembers: { type: 'number', default: 20 },
+      showRole: { type: 'boolean', default: true },
+      showJoinDate: { type: 'boolean', default: false }
+    },
+    defaultConfig: {
+      maxMembers: 20,
+      showRole: true,
+      showJoinDate: false
+    },
+    render: (props) => renderElement('member-list', props)
+  },
+
+  {
+    id: 'member-selector',
+    name: 'Member Selector',
+    description: 'Select from your space\'s members',
+    category: 'input',
+    tier: 'space',
+    dataSource: 'space-members',
+    icon: 'UserCheck',
+    configSchema: {
+      allowMultiple: { type: 'boolean', default: true },
+      filterByRole: { type: 'string', default: '' },
+      showAvatars: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      allowMultiple: true,
+      filterByRole: '',
+      showAvatars: true
+    },
+    render: (props) => renderElement('member-selector', props)
+  },
+
+  {
+    id: 'space-events',
+    name: 'Space Events',
+    description: 'Display your space\'s events',
+    category: 'display',
+    tier: 'space',
+    dataSource: 'space-events',
+    icon: 'CalendarRange',
+    configSchema: {
+      showPast: { type: 'boolean', default: false },
+      maxEvents: { type: 'number', default: 5 },
+      showRsvpCount: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      showPast: false,
+      maxEvents: 5,
+      showRsvpCount: true
+    },
+    render: (props) => renderElement('space-events', props)
+  },
+
+  {
+    id: 'space-feed',
+    name: 'Space Feed',
+    description: 'Display your space\'s recent posts',
+    category: 'display',
+    tier: 'space',
+    dataSource: 'space-feed',
+    icon: 'Newspaper',
+    configSchema: {
+      maxPosts: { type: 'number', default: 5 },
+      showEngagement: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      maxPosts: 5,
+      showEngagement: true
+    },
+    render: (props) => renderElement('space-feed', props)
+  },
+
+  {
+    id: 'space-stats',
+    name: 'Space Stats',
+    description: 'Display your space\'s engagement metrics',
+    category: 'display',
+    tier: 'space',
+    dataSource: 'space-stats',
+    icon: 'TrendingUp',
+    configSchema: {
+      metrics: { type: 'array', default: ['members', 'posts', 'events'] },
+      showTrends: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      metrics: ['members', 'posts', 'events'],
+      showTrends: true
+    },
+    render: (props) => renderElement('space-stats', props)
+  },
+
+  {
+    id: 'announcement',
+    name: 'Announcement',
+    description: 'Create announcements for your space members',
+    category: 'action',
+    tier: 'space',
+    dataSource: 'space-members',
+    icon: 'Megaphone',
+    configSchema: {
+      pinned: { type: 'boolean', default: false },
+      sendNotification: { type: 'boolean', default: true },
+      expiresAt: { type: 'string', default: '' }
+    },
+    defaultConfig: {
+      pinned: false,
+      sendNotification: true,
+      expiresAt: ''
+    },
+    render: (props) => renderElement('announcement', props)
+  },
+
+  {
+    id: 'role-gate',
+    name: 'Role Gate',
+    description: 'Show/hide content based on member role',
+    category: 'layout',
+    tier: 'space',
+    dataSource: 'space-members',
+    icon: 'Shield',
+    configSchema: {
+      allowedRoles: { type: 'array', default: ['admin', 'moderator'] },
+      fallbackMessage: { type: 'string', default: 'This content is restricted.' }
+    },
+    defaultConfig: {
+      allowedRoles: ['admin', 'moderator'],
+      fallbackMessage: 'This content is restricted.'
+    },
+    render: (props) => renderElement('role-gate', props)
+  },
+];
+
+// Combine all elements
+export const CORE_ELEMENTS: ElementDefinition[] = [
+  ...UNIVERSAL_ELEMENTS,
+  ...CONNECTED_ELEMENTS,
+  ...SPACE_ELEMENTS,
+];
+
+// =============================================================================
+// ACCESS CONTROL UTILITIES
+// These determine what elements a user can use based on their context.
+// Key insight: This restricts DATA ACCESS, not what they can CREATE.
+// =============================================================================
+
+export interface UserContext {
+  userId: string;
+  campusId: string;
+  isSpaceLeader: boolean;
+  leadingSpaceIds?: string[]; // IDs of spaces they lead
+}
+
+/**
+ * Get all elements available to a user based on their context.
+ * - Everyone gets universal + connected elements
+ * - Space leaders also get space elements
+ */
+export function getAvailableElements(context: UserContext): ElementDefinition[] {
+  const available: ElementDefinition[] = [
+    ...UNIVERSAL_ELEMENTS,
+    ...CONNECTED_ELEMENTS,
+  ];
+
+  if (context.isSpaceLeader) {
+    available.push(...SPACE_ELEMENTS);
+  }
+
+  return available;
+}
+
+/**
+ * Check if a user can use a specific element.
+ */
+export function canUseElement(element: ElementDefinition, context: UserContext): boolean {
+  if (element.tier === 'universal') return true;
+  if (element.tier === 'connected') return true;
+  if (element.tier === 'space') return context.isSpaceLeader;
+  return false;
+}
+
+/**
+ * Get elements by tier (for UI grouping).
+ */
+export function getElementsByTier(tier: ElementTier): ElementDefinition[] {
+  switch (tier) {
+    case 'universal':
+      return UNIVERSAL_ELEMENTS;
+    case 'connected':
+      return CONNECTED_ELEMENTS;
+    case 'space':
+      return SPACE_ELEMENTS;
+    default:
+      return [];
+  }
+}
+
+/**
+ * Check if a tool composition is valid for a user.
+ * A composition is valid if the user has access to ALL elements in it.
+ */
+export function canUseComposition(
+  composition: ToolComposition,
+  context: UserContext
+): { valid: boolean; blockedElements: string[] } {
+  const blockedElements: string[] = [];
+
+  for (const instance of composition.elements) {
+    const elementDef = CORE_ELEMENTS.find(e => e.id === instance.elementId);
+    if (elementDef && !canUseElement(elementDef, context)) {
+      blockedElements.push(elementDef.name);
+    }
+  }
+
+  return {
+    valid: blockedElements.length === 0,
+    blockedElements,
+  };
+}
+
+/**
+ * Validate element data source access.
+ * Returns the required context for an element to function.
+ */
+export function getRequiredContext(element: ElementDefinition): string[] {
+  const required: string[] = ['userId', 'campusId'];
+
+  if (element.tier === 'space') {
+    required.push('spaceId');
+  }
+
+  return required;
+}
 
 // Tool Templates built from elements
 export const TOOL_TEMPLATES: ToolComposition[] = [

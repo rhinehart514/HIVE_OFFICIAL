@@ -12,9 +12,19 @@
       "default": "./src/index.ts"
     },
     "./server": {
-      "types": "./src/firebase-admin.ts",
-      "import": "./src/firebase-admin.ts",
-      "default": "./src/firebase-admin.ts"
+      "types": "./src/server.ts",
+      "import": "./src/server.ts",
+      "default": "./src/server.ts"
+    },
+    "./domain": {
+      "types": "./src/domain/index.ts",
+      "import": "./src/domain/index.ts",
+      "default": "./src/domain/index.ts"
+    },
+    "./domain/feed/services/feed-ranking.service": {
+      "types": "./src/domain/feed/services/feed-ranking.service.ts",
+      "import": "./src/domain/feed/services/feed-ranking.service.ts",
+      "default": "./src/domain/feed/services/feed-ranking.service.ts"
     }
   },
   "scripts": {

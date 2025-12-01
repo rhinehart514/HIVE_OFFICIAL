@@ -7,6 +7,13 @@
 import { type NextRequest } from 'next/server';
 import { logger } from './logger';
 
+/**
+ * Check if running in production environment
+ */
+export function isProductionEnvironment(): boolean {
+  return process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production';
+}
+
 type AuthEventType = 'success' | 'failure' | 'suspicious' | 'forbidden';
 
 interface AuthEventContext {

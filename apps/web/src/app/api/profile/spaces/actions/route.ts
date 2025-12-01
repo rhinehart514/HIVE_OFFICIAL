@@ -3,8 +3,9 @@ import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
+import { getServerProfileRepository } from '@hive/core/server';
 
 // Space quick actions for profile
 interface SpaceQuickAction {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error performing space action at /api/profile/spaces/actions`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to perform space action", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -113,18 +114,19 @@ async function performSpaceAction(
     case 'mute': {
       // Toggle mute status
       const isMuted = value !== undefined ? value : !membershipData.isMuted;
+      const duration = typeof metadata?.duration === 'number' ? metadata.duration : 0;
       await membershipRef.update({
         isMuted,
-        muteUntil: isMuted && metadata?.duration
-          ? new Date(Date.now() + metadata.duration * 60000).toISOString()
+        muteUntil: isMuted && duration > 0
+          ? new Date(Date.now() + duration * 60000).toISOString()
           : null,
         updatedAt: firestoreNow
       });
-      
+
       return {
         isMuted,
-        muteUntil: isMuted && metadata?.duration
-          ? new Date(Date.now() + metadata.duration * 60000).toISOString()
+        muteUntil: isMuted && duration > 0
+          ? new Date(Date.now() + duration * 60000).toISOString()
           : null,
       };
     }
@@ -162,10 +164,29 @@ async function performSpaceAction(
         leftAt: firestoreNow,
         updatedAt: firestoreNow
       });
-      
+
       // Update space member count
       await updateSpaceMemberCount(spaceId, -1);
-      
+
+      // Sync with DDD profile aggregate
+      try {
+        const profileRepository = getServerProfileRepository();
+        const profileResult = await profileRepository.findById(userId);
+        if (profileResult.isSuccess) {
+          const profile = profileResult.getValue();
+          profile.leaveSpace(spaceId);
+          await profileRepository.save(profile);
+          logger.debug('DDD profile synced after leaving space', { userId, spaceId });
+        }
+      } catch (dddError) {
+        // Non-fatal: log but don't fail the action
+        logger.warn('Failed to sync DDD profile after leaving space', {
+          userId,
+          spaceId,
+          error: dddError instanceof Error ? dddError.message : String(dddError)
+        });
+      }
+
       return { hasLeft: true };
     }
 
@@ -230,7 +251,7 @@ async function updateUserSpacePreferences(userId: string, spaceId: string, prefe
   } catch (error) {
     logger.error(
       `Error updating user space preferences at /api/profile/spaces/actions`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -246,7 +267,7 @@ async function updateSpaceMemberCount(spaceId: string, change: number) {
   } catch (error) {
     logger.error(
       `Error updating space member count at /api/profile/spaces/actions`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -299,6 +320,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Get DDD profile data for space context
+    let dddProfileData: {
+      totalSpaces: number;
+      isSpaceInProfile: boolean;
+    } | null = null;
+
+    try {
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(user.uid);
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        dddProfileData = {
+          totalSpaces: profile.spaces.length,
+          isSpaceInProfile: profile.spaces.includes(spaceId),
+        };
+      }
+    } catch {
+      // Non-fatal: continue without DDD data
+    }
+
     return NextResponse.json({
       spaceId,
       actions: {
@@ -322,11 +363,12 @@ export async function GET(request: NextRequest) {
           membershipData.lastActive ||
           null,
       },
+      profile: dddProfileData,
     });
   } catch (error) {
     logger.error(
       `Error getting space action status at /api/profile/spaces/actions`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get space action status", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }

@@ -192,7 +192,8 @@ export function useDashboardData(): DashboardState & {
   updateSpaceFavorite: (_spaceId: string, _isFavorite: boolean) => void;
   updateToolFavorite: (_toolId: string, _isFavorite: boolean) => void;
 } {
-  const { user, isAuthenticated } = useSession();
+  const session = useSession();
+  const { user, isAuthenticated } = session;
   const [state, setState] = useState<DashboardState>({
     data: null,
     isLoading: true,
@@ -202,7 +203,7 @@ export function useDashboardData(): DashboardState & {
   });
 
   // Generate comprehensive mock data based on user
-  const generateMockData = useCallback((userData: { id?: string; fullName?: string; handle?: string }): ComprehensiveDashboardData => {
+  const generateMockData = useCallback((userData: { id?: string; fullName?: string; handle?: string; email?: string; major?: string; avatarUrl?: string } | null): ComprehensiveDashboardData => {
     const now = new Date();
     const userId = userData?.id || 'user-1';
     const userName = userData?.fullName || 'Student User';

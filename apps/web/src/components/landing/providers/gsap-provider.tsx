@@ -203,7 +203,7 @@ export function createStaggerReveal(
     ...animationVars,
     delay: options?.delay || 0,
     scrollTrigger: {
-      trigger: container || elements,
+      trigger: (container || elements) as gsap.DOMTarget,
       ...SCROLL_TRIGGER_DEFAULTS.standard,
     },
   });

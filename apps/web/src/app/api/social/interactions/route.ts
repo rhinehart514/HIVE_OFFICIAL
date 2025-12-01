@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
@@ -18,7 +18,7 @@ const InteractionSchema = z.object({
  * Social Interactions API
  * POST - Like, comment, share, bookmark posts
  */
-export const POST = withAuth(async (request: NextRequest, authContext) => {
+export const POST = withAuth(async (request, authContext) => {
   try {
     const userId = authContext.userId;
     const body = await request.json();
@@ -231,7 +231,7 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
   } catch (error: unknown) {
     logger.error(
       `Social interaction error at /api/social/interactions`,
-      error instanceof Error ? error.message : String(error)
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     if (error instanceof z.ZodError) {
@@ -246,7 +246,6 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, { 
-  allowDevelopmentBypass: false, // Social interactions require authentication
-  operation: 'social_interaction' 
+}, {
+  operation: 'social_interaction'
 });

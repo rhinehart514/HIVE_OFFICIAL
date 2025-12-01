@@ -38,10 +38,9 @@ const NO_SHELL_ROUTES = [
   '/debug-auth',
 ];
 
-// Routes that should have a minimal shell (public profiles)
-const MINIMAL_SHELL_ROUTES = [
-  '/profile/', // Public profile pages
-];
+// Routes that should have a minimal shell
+// Note: Profile pages now use full shell with sidebar
+const MINIMAL_SHELL_ROUTES: string[] = [];
 
 export function UniversalShellProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -105,6 +104,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
   ], []);
 
   const [mySpaces, setMySpaces] = React.useState<ShellSpaceSection[]>(emptySections);
+  const [isSpaceLeader, setIsSpaceLeader] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -125,7 +125,9 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
     };
 
     const determineStatus = (space: Record<string, unknown>): ShellSpaceLink['status'] => {
-      const joinedAt = resolveJoinedAt(space?.membership?.joinedAt);
+      const membership = space?.membership as Record<string, unknown> | undefined;
+      const metrics = space?.metrics as Record<string, unknown> | undefined;
+      const joinedAt = resolveJoinedAt(membership?.joinedAt);
       if (joinedAt) {
         const hoursSinceJoin = (Date.now() - joinedAt.getTime()) / 36e5;
         if (hoursSinceJoin < 120) {
@@ -133,11 +135,11 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         }
       }
 
-      if (space?.membership?.isOwner || space?.membership?.isAdmin || ['owner', 'admin'].includes(space?.membership?.role)) {
+      if (membership?.isOwner || membership?.isAdmin || ['owner', 'admin'].includes(membership?.role as string)) {
         return 'live';
       }
 
-      const memberCount = typeof space?.metrics?.memberCount === 'number' ? space.metrics.memberCount : 0;
+      const memberCount = typeof metrics?.memberCount === 'number' ? metrics.memberCount : 0;
       if (memberCount >= 40) {
         return 'live';
       }
@@ -147,15 +149,18 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
 
     const resolveTimestamp = (value: unknown): number => {
       if (!value) return 0;
-      if (typeof value.toMillis === 'function') return value.toMillis();
-      if (typeof value.toDate === 'function') return value.toDate().getTime();
       if (value instanceof Date) return value.getTime();
       if (typeof value === 'number') return value;
       if (typeof value === 'string') {
         const parsed = Date.parse(value);
         return Number.isNaN(parsed) ? 0 : parsed;
       }
-      if (typeof value.seconds === 'number') return value.seconds * 1000;
+      if (typeof value === 'object' && value !== null) {
+        const obj = value as Record<string, unknown>;
+        if (typeof obj.toMillis === 'function') return (obj.toMillis as () => number)();
+        if (typeof obj.toDate === 'function') return ((obj.toDate as () => Date)()).getTime();
+        if (typeof obj.seconds === 'number') return obj.seconds * 1000;
+      }
       return 0;
     };
 
@@ -173,11 +178,11 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
 
     const categorizeSpace = (space: Record<string, unknown>): 'residential' | 'greek' | 'student_org' | 'university_org' => {
       const tokens = normalizeTokens(
-        space?.category,
-        space?.type,
-        ...(Array.isArray(space?.tags) ? space.tags : []),
-        space?.name,
-        space?.description
+        space?.category as string | undefined,
+        space?.type as string | undefined,
+        ...(Array.isArray(space?.tags) ? space.tags as string[] : []),
+        space?.name as string | undefined,
+        space?.description as string | undefined
       );
 
       const includesAny = (keywords: string[]) => keywords.some(keyword => tokens.some(token => token.includes(keyword)));
@@ -198,13 +203,14 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
     };
 
     const formatMeta = (space: Record<string, unknown>) => {
-      const membership = space?.membership ?? {};
-      const role = membership.role;
+      const membership = (space?.membership ?? {}) as Record<string, unknown>;
+      const metrics = space?.metrics as Record<string, unknown> | undefined;
+      const role = membership.role as string | undefined;
       const isPinned = membership.isPinned;
       const isFavorite = membership.isFavorite;
       const memberCount =
-        typeof space?.metrics?.memberCount === 'number'
-          ? space.metrics.memberCount
+        typeof metrics?.memberCount === 'number'
+          ? metrics.memberCount
           : typeof space?.memberCount === 'number'
             ? space.memberCount
             : undefined;
@@ -252,15 +258,18 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         const spaceIndex = new Map<string, Record<string, unknown>>();
         candidateLists.forEach((list) => {
           list.forEach((item) => {
-            if (item?.id && !spaceIndex.has(item.id)) {
-              spaceIndex.set(item.id, item);
-            } else if (item?.id) {
+            const itemId = item?.id as string | undefined;
+            const existingMembership = (spaceIndex.get(itemId ?? '')?.membership ?? {}) as Record<string, unknown>;
+            const itemMembership = (item.membership ?? {}) as Record<string, unknown>;
+            if (itemId && !spaceIndex.has(itemId)) {
+              spaceIndex.set(itemId, item);
+            } else if (itemId) {
               // Merge membership data if missing on existing record
-              const existing = spaceIndex.get(item.id);
-              spaceIndex.set(item.id, {
+              const existing = spaceIndex.get(itemId);
+              spaceIndex.set(itemId, {
                 ...item,
                 ...existing,
-                membership: { ...(existing?.membership ?? {}), ...(item.membership ?? {}) },
+                membership: { ...existingMembership, ...itemMembership },
               });
             }
           });
@@ -279,9 +288,9 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         };
 
         const makeLink = (space: Record<string, unknown>): ShellSpaceLink => ({
-          id: space.id,
-          label: space.name ?? 'Untitled Space',
-          href: `/spaces/${space.id}`,
+          id: space.id as string,
+          label: (space.name as string) ?? 'Untitled Space',
+          href: `/spaces/${space.id as string}`,
           status: determineStatus(space),
           meta: formatMeta(space),
         });
@@ -289,7 +298,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         spaceIndex.forEach((space) => {
           if (!space?.id) return;
           const sectionId = categorizeSpace(space);
-          const membership = space?.membership ?? {};
+          const membership = (space?.membership ?? {}) as Record<string, unknown>;
           const priority =
             membership.role === 'owner'
               ? 0
@@ -332,8 +341,14 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
 
         if (cancelled) return;
         setMySpaces(sections);
+
+        // Determine if user is a space leader (owner or admin of any space)
+        const ownedCount = payload?.counts?.owned ?? payload?.categorized?.owned?.length ?? 0;
+        const adminCount = payload?.counts?.adminned ?? payload?.categorized?.adminned?.length ?? 0;
+        setIsSpaceLeader(ownedCount > 0 || adminCount > 0);
       } catch (error) {
-        logger.error('shell: error loading my-spaces', error as Error, {
+        logger.error('shell: error loading my-spaces', {
+          error: error instanceof Error ? error.message : String(error),
           component: 'UniversalShellProvider',
         });
       }
@@ -346,7 +361,8 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
     };
   }, [emptySections]);
 
-  const _isLeader = auth.user?.isBuilder ?? auth.user?.builderOptIn ?? false;
+  // HiveLAB access is granted to space leaders (owners/admins of any space)
+  const canAccessHiveLab = isSpaceLeader || auth.user?.isBuilder || auth.user?.builderOptIn;
 
   const desktopNavItems: ShellNavItem[] = React.useMemo(() => {
     const cloneItems = (items: ShellNavItem[]): ShellNavItem[] =>
@@ -356,15 +372,21 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
       }));
 
     const items = cloneItems(DEFAULT_SIDEBAR_NAV_ITEMS ?? []);
-    // HiveLab/AI Studio disabled for now
-    return items.filter((item) => item.id !== 'hivelab');
-  }, []);
+    // Show HiveLab only for space leaders
+    if (!canAccessHiveLab) {
+      return items.filter((item) => item.id !== 'hivelab');
+    }
+    return items;
+  }, [canAccessHiveLab]);
 
   const mobileNavItems: ShellMobileNavItem[] = React.useMemo(() => {
     const items = (DEFAULT_MOBILE_NAV_ITEMS ?? []).map((item) => ({ ...item }));
-    // HiveLab/AI Studio disabled for now
-    return items.filter((item) => item.id !== 'hivelab');
-  }, []);
+    // Show HiveLab only for space leaders
+    if (!canAccessHiveLab) {
+      return items.filter((item) => item.id !== 'hivelab');
+    }
+    return items;
+  }, [canAccessHiveLab]);
 
   // Check if current route should have no shell
   const shouldHaveNoShell = NO_SHELL_ROUTES.some(route =>

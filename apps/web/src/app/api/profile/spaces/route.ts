@@ -3,8 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
+import { getDefaultCampusId, getCampusFromEmail } from "@/lib/campus-context";
+import { getServerProfileRepository } from '@hive/core/server';
 
 // Internal membership data structure
 interface MembershipData {
@@ -73,29 +74,48 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser(request);
     if (!user) {
-      // Development fallback
-      if (process.env.NODE_ENV === 'development' || request.url.includes('localhost')) {
-        return NextResponse.json({
-          memberships: getMockSpaceMemberships(),
-          activitySummary: getMockActivitySummary(),
-          totalCount: 4,
-          activeCount: 3,
-          timeRange: 'week'
-        });
-      }
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
     const { searchParams } = new URL(request.url);
     const includeActivity = searchParams.get('includeActivity') !== 'false';
-    const includeStats = searchParams.get('includeStats') !== 'false';
     const timeRange = searchParams.get('timeRange') || 'week'; // week, month, all
+
+    // Derive campus from user's email
+    let campusId = getDefaultCampusId();
+    if (user.email) {
+      try {
+        campusId = getCampusFromEmail(user.email);
+      } catch {
+        // Fall back to default if email domain is not supported
+      }
+    }
+
+    // Try DDD repository for profile data
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(user.uid);
+
+    let dddProfileData: {
+      spaceIds: string[];
+      connectionCount: number;
+      activityScore: number;
+    } | null = null;
+
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      dddProfileData = {
+        spaceIds: profile.spaces,
+        connectionCount: profile.connectionCount,
+        activityScore: profile.activityScore,
+      };
+      logger.debug('Using DDD profile for spaces endpoint', { userId: user.uid, spaceCount: profile.spaces.length });
+    }
 
     // Fetch user's memberships
     const membershipsSnapshot = await dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', user.uid)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('joinedAt', 'desc')
       .get();
     const memberships: MembershipData[] = membershipsSnapshot.docs.map((doc) => {
@@ -130,24 +150,20 @@ export async function GET(request: NextRequest) {
             return null;
           }
           // Enforce campus isolation
-          if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+          if (spaceData.campusId && spaceData.campusId !== campusId) {
             return null;
           }
           
           // Calculate activity level and recent activity
           const recentActivity = includeActivity ? 
-            await getSpaceActivityForUser(user.uid, membership.id, timeRange) : 
+            await getSpaceActivityForUser(user.uid, membership.id, timeRange, campusId) : 
             { posts: 0, interactions: 0, toolUsage: 0, timeSpent: 0 };
 
           const activityLevel = calculateActivityLevel(recentActivity);
 
-          // Get notifications count
-          const notifications = await getSpaceNotifications(user.uid, membership.id);
-
-          // Get quick stats
-          const quickStats = includeStats ? 
-            await getSpaceQuickStats(user.uid, membership.id) : 
-            { myPosts: 0, myTools: 0, myInteractions: 0 };
+          // Notifications and quick stats - return defaults until systems are built
+          const notifications = { unreadCount: 0, hasImportantUpdates: false };
+          const quickStats = { myPosts: 0, myTools: 0, myInteractions: 0 };
 
           return {
             spaceId: membership.id,
@@ -169,7 +185,7 @@ export async function GET(request: NextRequest) {
             quickStats
           };
         } catch (error) {
-          logger.error('Error fetching space data for', { spaceId: membership.id, error: error instanceof Error ? error : new Error(String(error)), endpoint: '/api/profile/spaces' });
+          logger.error('Error fetching space data for', { spaceId: membership.id, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/profile/spaces' });
           return null;
         }
       })
@@ -188,19 +204,26 @@ export async function GET(request: NextRequest) {
       activitySummary,
       totalCount: validSpaceMemberships.length,
       activeCount: validSpaceMemberships.filter(m => m.status === 'active').length,
-      timeRange
+      timeRange,
+      // Include DDD profile data if available
+      profile: dddProfileData ? {
+        dddSpaceCount: dddProfileData.spaceIds.length,
+        connectionCount: dddProfileData.connectionCount,
+        activityScore: dddProfileData.activityScore,
+        syncStatus: dddProfileData.spaceIds.length === validSpaceMemberships.length ? 'synced' : 'needs_sync'
+      } : null
     });
   } catch (error) {
     logger.error(
       `Error fetching space memberships at /api/profile/spaces`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch space memberships", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
 }
 
 // Helper function to get space activity for user
-async function getSpaceActivityForUser(userId: string, spaceId: string, timeRange: string) {
+async function getSpaceActivityForUser(userId: string, spaceId: string, timeRange: string, campusId: string) {
   try {
     const endDate = new Date();
     const startDate = new Date();
@@ -224,7 +247,7 @@ async function getSpaceActivityForUser(userId: string, spaceId: string, timeRang
     const activitySnapshot = await dbAdmin.collection('activityEvents')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('date', '>=', startDateStr)
       .where('date', '<=', endDateStr)
       .get();
@@ -242,7 +265,7 @@ async function getSpaceActivityForUser(userId: string, spaceId: string, timeRang
   } catch (error) {
     logger.error(
       `Error getting space activity at /api/profile/spaces`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return { posts: 0, interactions: 0, toolUsage: 0, timeSpent: 0 };
   }
@@ -260,30 +283,6 @@ function calculateActivityLevel(activity: { posts: number; interactions: number;
   } else {
     return 'low';
   }
-}
-
-// Helper function to get space notifications
-async function getSpaceNotifications(_userId: string, _spaceId: string) {
-  try {
-    // This would be implemented when notification system is built
-    // For now, return mock data
-    return {
-      unreadCount: Math.floor(Math.random() * 5),
-      hasImportantUpdates: Math.random() > 0.7
-    };
-  } catch (error) {
-    logger.error(
-      `Error getting space notifications at /api/profile/spaces`,
-      error instanceof Error ? error : new Error(String(error))
-    );
-    return { unreadCount: 0, hasImportantUpdates: false };
-  }
-}
-
-// Helper function to get quick stats
-async function getSpaceQuickStats(_userId: string, _spaceId: string) {
-  // Quick stats are currently disabled pending unified analytics pipeline
-  return { myPosts: 0, myTools: 0, myInteractions: 0 };
 }
 
 // Helper function to generate space activity summary
@@ -346,167 +345,3 @@ function generateWeeklyTrend(memberships: ProfileSpaceMembership[], timeRange: s
   return weeks;
 }
 
-// Development mock data functions
-function getMockSpaceMemberships(): ProfileSpaceMembership[] {
-  return [
-    {
-      spaceId: 'space-1',
-      spaceName: 'CS Majors',
-      spaceDescription: 'Computer Science students community',
-      spaceType: 'academic',
-      memberCount: 234,
-      role: 'member',
-      status: 'active',
-      joinedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      activityLevel: 'high',
-      recentActivity: {
-        posts: 5,
-        interactions: 12,
-        toolUsage: 3,
-        timeSpent: 45
-      },
-      notifications: {
-        unreadCount: 2,
-        hasImportantUpdates: true
-      },
-      quickStats: {
-        myPosts: 8,
-        myTools: 1,
-        myInteractions: 23
-      }
-    },
-    {
-      spaceId: 'space-2',
-      spaceName: 'Study Groups',
-      spaceDescription: 'Collaborative study sessions',
-      spaceType: 'academic',
-      memberCount: 89,
-      role: 'moderator',
-      status: 'active',
-      joinedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-      lastActivity: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-      activityLevel: 'medium',
-      recentActivity: {
-        posts: 3,
-        interactions: 8,
-        toolUsage: 2,
-        timeSpent: 30
-      },
-      notifications: {
-        unreadCount: 1,
-        hasImportantUpdates: false
-      },
-      quickStats: {
-        myPosts: 12,
-        myTools: 2,
-        myInteractions: 18
-      }
-    },
-    {
-      spaceId: 'space-3',
-      spaceName: 'Campus Events',
-      spaceDescription: 'University activities and events',
-      spaceType: 'community',
-      memberCount: 456,
-      role: 'member',
-      status: 'active',
-      joinedAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-      lastActivity: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-      activityLevel: 'high',
-      recentActivity: {
-        posts: 1,
-        interactions: 15,
-        toolUsage: 1,
-        timeSpent: 25
-      },
-      notifications: {
-        unreadCount: 3,
-        hasImportantUpdates: true
-      },
-      quickStats: {
-        myPosts: 4,
-        myTools: 0,
-        myInteractions: 31
-      }
-    },
-    {
-      spaceId: 'space-4',
-      spaceName: 'Dorm Floor 3',
-      spaceDescription: 'Third floor residents',
-      spaceType: 'housing',
-      memberCount: 32,
-      role: 'member',
-      status: 'active',
-      joinedAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-      lastActivity: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      activityLevel: 'medium',
-      recentActivity: {
-        posts: 2,
-        interactions: 6,
-        toolUsage: 0,
-        timeSpent: 15
-      },
-      notifications: {
-        unreadCount: 0,
-        hasImportantUpdates: false
-      },
-      quickStats: {
-        myPosts: 6,
-        myTools: 0,
-        myInteractions: 12
-      }
-    }
-  ];
-}
-
-function getMockActivitySummary(): SpaceActivitySummary {
-  return {
-    totalSpaces: 4,
-    activeSpaces: 3,
-    totalTimeSpent: 115,
-    favoriteSpace: {
-      spaceId: 'space-1',
-      spaceName: 'CS Majors',
-      timeSpent: 45
-    },
-    activityDistribution: [
-      {
-        spaceId: 'space-1',
-        spaceName: 'CS Majors',
-        percentage: 39,
-        timeSpent: 45
-      },
-      {
-        spaceId: 'space-2',
-        spaceName: 'Study Groups',
-        percentage: 26,
-        timeSpent: 30
-      },
-      {
-        spaceId: 'space-3',
-        spaceName: 'Campus Events',
-        percentage: 22,
-        timeSpent: 25
-      },
-      {
-        spaceId: 'space-4',
-        spaceName: 'Dorm Floor 3',
-        percentage: 13,
-        timeSpent: 15
-      }
-    ],
-    weeklyTrend: [
-      {
-        week: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        activeSpaces: 2,
-        totalTime: 80
-      },
-      {
-        week: new Date().toISOString().split('T')[0],
-        activeSpaces: 3,
-        totalTime: 115
-      }
-    ]
-  };
-}

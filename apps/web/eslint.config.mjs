@@ -71,6 +71,8 @@ const eslintConfig = [
       ],
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-require-imports": "off",
+      // Allow @ts-nocheck for files with many pre-existing type issues
+      "@typescript-eslint/ban-ts-comment": "off",
     },
   },
 

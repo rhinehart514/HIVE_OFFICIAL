@@ -92,7 +92,7 @@ export const SearchBar = React.forwardRef<HTMLInputElement, SearchBarProps>(
     ref
   ) => {
     const [localValue, setLocalValue] = React.useState(value);
-    const debounceTimerRef = React.useRef<NodeJS.Timeout>();
+    const debounceTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
     // Sync external value changes
     React.useEffect(() => {

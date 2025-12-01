@@ -12,7 +12,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { Rocket, Edit3, Loader2, Smartphone, Tablet, Monitor, Code2 } from 'lucide-react';
+import { Save, Link2, Edit3, Loader2, Smartphone, Tablet, Monitor, Code2, Rocket, Play } from 'lucide-react';
 import React, { useState } from 'react';
 import { durationSeconds } from '@hive/tokens';
 
@@ -35,11 +35,23 @@ export interface ToolPreviewCardProps {
   /** Canvas/preview content */
   children: React.ReactNode;
 
-  /** Deploy callback */
-  onDeploy?: () => void;
+  /** Save callback - primary action */
+  onSave?: () => void;
+
+  /** Share link callback */
+  onShare?: () => void;
 
   /** Edit callback */
   onEdit?: () => void;
+
+  /** Deploy callback (for space leaders) */
+  onDeploy?: () => void;
+
+  /** Test/Run callback */
+  onTest?: () => void;
+
+  /** Is user a space leader? Shows deploy option */
+  isSpaceLeader?: boolean;
 
   /** Tool composition data (for code view) */
   composition?: any;
@@ -63,8 +75,12 @@ export function ToolPreviewCard({
   isGenerating = false,
   isComplete = false,
   children,
-  onDeploy,
+  onSave,
+  onShare,
   onEdit,
+  onDeploy,
+  onTest,
+  isSpaceLeader = false,
   composition,
   className
 }: ToolPreviewCardProps) {
@@ -111,15 +127,44 @@ export function ToolPreviewCard({
 
           {/* Actions (shown when complete) */}
           {isComplete && (
-            <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4">
+              {/* Primary: Save */}
               <Button
-                onClick={onDeploy}
+                onClick={onSave}
                 size="sm"
                 className="gap-2 bg-[var(--hive-gold-cta)] hover:brightness-110 text-black"
               >
-                <Rocket className="h-3.5 w-3.5" />
-                Deploy to your org
+                <Save className="h-3.5 w-3.5" />
+                Save
               </Button>
+
+              {/* Test/Try it */}
+              {onTest && (
+                <Button
+                  onClick={onTest}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  Test
+                </Button>
+              )}
+
+              {/* Share Link */}
+              {onShare && (
+                <Button
+                  onClick={onShare}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Link2 className="h-3.5 w-3.5" />
+                  Share
+                </Button>
+              )}
+
+              {/* Edit */}
               <Button
                 onClick={onEdit}
                 size="sm"
@@ -129,6 +174,19 @@ export function ToolPreviewCard({
                 <Edit3 className="h-3.5 w-3.5" />
                 Edit
               </Button>
+
+              {/* Deploy to Space (only for leaders) */}
+              {isSpaceLeader && onDeploy && (
+                <Button
+                  onClick={onDeploy}
+                  size="sm"
+                  variant="outline"
+                  className="gap-2 border-[var(--hive-gold-cta)]/30 text-[var(--hive-gold-cta)] hover:bg-[var(--hive-gold-cta)]/10"
+                >
+                  <Rocket className="h-3.5 w-3.5" />
+                  Deploy to Space
+                </Button>
+              )}
             </div>
           )}
         </div>

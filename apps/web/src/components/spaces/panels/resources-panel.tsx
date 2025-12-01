@@ -8,7 +8,7 @@
 import React from 'react';
 import { Card } from '@hive/ui';
 
-export const ResourcesPanel = ({ _spaceId }: { spaceId: string }) => {
+export const ResourcesPanel = ({ spaceId: _spaceId }: { spaceId: string }) => {
   return (
     <Card className="p-6">
       <h2 className="text-xl font-bold text-[var(--hive-text-primary)] mb-4">Resources</h2>

@@ -3,21 +3,87 @@ import * as admin from 'firebase-admin';
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { HttpStatus } from "@/lib/api-response-types";
-import { requireSpaceMembership } from "@/lib/space-security";
-import { logger } from "@/lib/logger";
+import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { logger } from "@/lib/structured-logger";
+import { getServerSpaceRepository } from "@hive/core/server";
 
 const UpdateMemberRoleSchema = z.object({
   role: z.enum(['owner', 'admin', 'moderator', 'member', 'guest'])
 });
 
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' }, membershipRef: null };
+  }
+
+  return {
+    ok: true as const,
+    space,
+    membership: membershipSnapshot.docs[0].data(),
+    membershipRef: membershipSnapshot.docs[0].ref
+  };
+}
+
+/**
+ * Get membership for a specific user (target member)
+ */
+async function getMembershipByUserId(spaceId: string, userId: string) {
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Member not found" };
+  }
+
+  return {
+    ok: true as const,
+    membership: membershipSnapshot.docs[0].data(),
+    membershipRef: membershipSnapshot.docs[0].ref
+  };
+}
+
 // PATCH /api/spaces/[spaceId]/members/[memberId] - Update a member's role (flat membership model)
 export const PATCH = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; memberId: string }> },
   respond
 ) => {
   const { spaceId, memberId } = await params;
-  const requesterId = getUserId(request);
+  const requesterId = getUserId(request as AuthenticatedRequest);
 
   // Validate payload
   let body: unknown;
@@ -32,20 +98,19 @@ export const PATCH = withAuthAndErrors(async (
   }
   const { role: newRole } = parse.data;
 
-  const requesterMembership = await requireSpaceMembership(spaceId, requesterId);
-  if (!requesterMembership.ok) {
+  // Validate space and requester membership using DDD
+  const validation = await validateSpaceAndMembership(spaceId, requesterId);
+  if (!validation.ok) {
     const code =
-      requesterMembership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(requesterMembership.error, code, { status: requesterMembership.status });
+      validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+    return respond.error(validation.message, code, { status: validation.status });
   }
-  const requesterRole = requesterMembership.membership.role as string;
+  const requesterRole = validation.membership.role as string;
 
-  const targetMembership = await requireSpaceMembership(spaceId, memberId);
+  // Get target member
+  const targetMembership = await getMembershipByUserId(spaceId, memberId);
   if (!targetMembership.ok) {
-    const isNotMember = targetMembership.error === 'User is not a member of this space';
-    const status = isNotMember ? HttpStatus.NOT_FOUND : targetMembership.status;
-    const code = status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(isNotMember ? "Member not found" : targetMembership.error, code, { status });
+    return respond.error(targetMembership.message, "RESOURCE_NOT_FOUND", { status: targetMembership.status });
   }
   const targetRole = targetMembership.membership.role as string;
 
@@ -75,27 +140,26 @@ export const PATCH = withAuthAndErrors(async (
 
 // DELETE /api/spaces/[spaceId]/members/[memberId] - Remove a member (soft remove: mark inactive)
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; memberId: string }> },
   respond
 ) => {
   const { spaceId, memberId } = await params;
-  const requesterId = getUserId(request);
+  const requesterId = getUserId(request as AuthenticatedRequest);
 
-  const requesterMembership = await requireSpaceMembership(spaceId, requesterId);
-  if (!requesterMembership.ok) {
+  // Validate space and requester membership using DDD
+  const validation = await validateSpaceAndMembership(spaceId, requesterId);
+  if (!validation.ok) {
     const code =
-      requesterMembership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(requesterMembership.error, code, { status: requesterMembership.status });
+      validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
+    return respond.error(validation.message, code, { status: validation.status });
   }
-  const requesterRole = requesterMembership.membership.role as string;
+  const requesterRole = validation.membership.role as string;
 
-  const targetMembership = await requireSpaceMembership(spaceId, memberId);
+  // Get target member
+  const targetMembership = await getMembershipByUserId(spaceId, memberId);
   if (!targetMembership.ok) {
-    const isNotMember = targetMembership.error === 'User is not a member of this space';
-    const status = isNotMember ? HttpStatus.NOT_FOUND : targetMembership.status;
-    const code = status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(isNotMember ? "Member not found" : targetMembership.error, code, { status });
+    return respond.error(targetMembership.message, "RESOURCE_NOT_FOUND", { status: targetMembership.status });
   }
   const targetRole = targetMembership.membership.role as string;
 

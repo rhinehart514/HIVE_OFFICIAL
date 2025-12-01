@@ -43,6 +43,7 @@ export interface IConnectionRepository extends IRepository<Connection> {
 // Space repository
 export interface ISpaceRepository extends IRepository<EnhancedSpace> {
   findByName(name: string, campusId: string): Promise<Result<EnhancedSpace>>;
+  findBySlug(slug: string, campusId: string): Promise<Result<EnhancedSpace>>;
   findByCampus(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;
   findByCategory(category: string, campusId: string): Promise<Result<EnhancedSpace[]>>;
   findByType(type: string, campusId: string): Promise<Result<EnhancedSpace[]>>;
@@ -54,6 +55,15 @@ export interface ISpaceRepository extends IRepository<EnhancedSpace> {
   findRecommended(campusId: string, interests: string[], major?: string): Promise<Result<EnhancedSpace[]>>;
   searchSpaces(query: string, campusId: string): Promise<Result<EnhancedSpace[]>>;
   searchEnhancedSpaces(query: string, campusId: string): Promise<Result<EnhancedSpace[]>>;
+  findWithPagination(options: {
+    campusId: string;
+    type?: string;
+    searchTerm?: string;
+    limit?: number;
+    cursor?: string;
+    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount';
+    orderDirection?: 'asc' | 'desc';
+  }): Promise<Result<{ spaces: EnhancedSpace[]; hasMore: boolean; nextCursor?: string }>>;
 }
 
 // Feed repository

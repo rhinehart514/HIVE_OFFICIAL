@@ -417,7 +417,7 @@ export class RealtimeOptimizationManager {
       
       logger.info('Health check completed', { metadata: { sseHealthy, firebaseHealthy } });
     } catch (error) {
-      logger.error('Health check failed', { error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('Health check failed', { error: { error: error instanceof Error ? error.message : String(error) } });
     }
   }
 
@@ -440,7 +440,7 @@ export class RealtimeOptimizationManager {
       await sseRealtimeService.sendMessage(testMessage);
       return true;
     } catch (error) {
-      logger.error('SSE health check failed', { error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('SSE health check failed', { error: { error: error instanceof Error ? error.message : String(error) } });
       return false;
     }
   }
@@ -453,7 +453,7 @@ export class RealtimeOptimizationManager {
       // Firebase Realtime fallback is currently disabled; rely on SSE health.
       return false;
     } catch (error) {
-      logger.error('Firebase health check failed', { error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('Firebase health check failed', { error: { error: error instanceof Error ? error.message : String(error) } });
       return false;
     }
   }
@@ -524,7 +524,7 @@ export class RealtimeOptimizationManager {
       // Firebase Realtime fallback disabled at build time to avoid RTDB initialization on server
       logger.error('Message delivery failed and Firebase fallback disabled', { messageId: message.id });
     } catch (error) {
-      logger.error('Fallback delivery also failed', { messageId: message.id, error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('Fallback delivery also failed', { messageId: message.id, error: { error: error instanceof Error ? error.message : String(error) } });
     }
   }
 

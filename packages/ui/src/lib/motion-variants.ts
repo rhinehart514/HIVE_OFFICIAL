@@ -15,6 +15,7 @@ import {
   easingArrays,
   durationSeconds,
   springPresets,
+  tinderSprings,
   staggerPresets,
 } from '@hive/tokens';
 
@@ -409,21 +410,24 @@ export const staggerContainerVariants: Variants = {
 export const staggerItemVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 24,
+    y: 30,
+    scale: 0.92,
+    rotateX: 12,  // "Falling from above" Tinder-style entry
   },
   animate: {
     opacity: 1,
     y: 0,
+    scale: 1,
+    rotateX: 0,
     transition: {
-      type: 'spring',
-      stiffness: 100,
-      damping: 28,
-      mass: 0.9,
+      // Tinder-style settling bounce - bouncy with quick settle
+      ...tinderSprings.settle,
     },
   },
   exit: {
     opacity: 0,
     y: -12,
+    scale: 0.96,
     transition: {
       duration: duration.quick,
       ease: easing.silk,
@@ -505,6 +509,52 @@ export const slideInFromLeftVariants: Variants = {
       duration: duration.standard,
       ease: easing.silk,
     },
+  },
+};
+
+// ===== PREMIUM SUBTLE VARIANTS (Vercel/Linear style) =====
+// Minimal motion - only animate on interaction, not ambient
+
+export const premiumContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: duration.standard,
+      ease: easing.smooth,
+    },
+  },
+};
+
+export const premiumItemVariants: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: duration.standard,
+      ease: easing.smooth,
+    },
+  },
+};
+
+export const premiumStatVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: duration.quick,
+      ease: easing.smooth,
+    },
+  },
+};
+
+// Premium hover - subtle border/background change only
+export const premiumCardHover = {
+  initial: {},
+  hover: {
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    transition: { duration: duration.quick },
   },
 };
 

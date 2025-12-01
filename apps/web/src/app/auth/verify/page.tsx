@@ -135,7 +135,7 @@ function VerifyContent() {
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="mx-auto w-fit"
             >
-              <Loader2 className="h-10 w-10 text-[#FFD700]" />
+              <Loader2 className="h-10 w-10 text-white" />
             </motion.div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
@@ -206,8 +206,7 @@ function VerifyContent() {
                         `/auth/expired?email=${encodeURIComponent(email || "")}&schoolId=${schoolId}`
                       );
                     }}
-                    className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold"
-                    style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+                    className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold transition-colors"
                   >
                     <span className="flex items-center justify-center gap-2">
                       Get new link
@@ -226,8 +225,7 @@ function VerifyContent() {
                 <Button
                   type="button"
                   onClick={() => router.push("/auth/login")}
-                  className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold"
-                  style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+                  className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold transition-colors"
                 >
                   <span className="flex items-center justify-center gap-2">
                     Try again

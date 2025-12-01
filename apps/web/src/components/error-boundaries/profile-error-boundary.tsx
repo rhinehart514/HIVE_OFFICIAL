@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { AlertTriangle, RefreshCw, _User, Settings, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, User, Settings, Home } from 'lucide-react';
 import { Button, Card } from "@hive/ui";
 import { ErrorBoundary } from '../error-boundary';
 
@@ -11,7 +11,7 @@ interface ProfileErrorFallbackProps {
   errorId?: string;
 }
 
-function ProfileErrorFallback({ _error, retry, errorId }: ProfileErrorFallbackProps) {
+function ProfileErrorFallback({ error: _error, retry, errorId }: ProfileErrorFallbackProps) {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
       <Card className="p-8 bg-hive-surface border-hive-border text-center">

@@ -11,9 +11,9 @@ import {
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { buildPlacementCompositeId, createPlacementDocument } from "@/lib/tool-placement";
-import { logger } from "@/lib/logger";
-import { requireSpaceMembership } from "@/lib/space-security";
+import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerSpaceRepository } from "@hive/core/server";
 
 const GetSpaceToolsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -40,40 +40,56 @@ const CreateSpaceToolSchema = z.object({
     .optional(),
 });
 
-async function ensureSpaceMembership(spaceId: string, userId: string) {
-  const membership = await requireSpaceMembership(spaceId, userId);
-  if (!membership.ok) {
-    return {
-      ok: false as const,
-      status: membership.status,
-      message: membership.error,
-    };
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
   }
 
-  return {
-    ok: true as const,
-    spaceData: membership.space,
-    membershipData: membership.membership,
-  };
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
   try {
     const { spaceId } = await params;
-    const userId = getUserId(request);
-    const membership = await ensureSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
+    const userId = getUserId(request as AuthenticatedRequest);
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
       const code =
-        membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(membership.message, code, { status: membership.status });
+        validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const queryParams = GetSpaceToolsSchema.parse(
-      Object.fromEntries(request.nextUrl.searchParams.entries()),
+      Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
     const placementsSnapshot = await dbAdmin
@@ -132,14 +148,16 @@ export const GET = withAuthAndErrors(async (
     }
 
     if (tools.length === 0) {
+      // Check deployedTools collection (primary deployment location)
       const deploymentsSnapshot = await dbAdmin
-        .collection("deployments")
-        .where("spaceId", "==", spaceId)
+        .collection("deployedTools")
+        .where("targetId", "==", spaceId)
+        .where("targetType", "==", "space")
+        .where("campusId", "==", CURRENT_CAMPUS_ID)
         .get();
 
       for (const deploymentDoc of deploymentsSnapshot.docs) {
         const deploymentData = deploymentDoc.data();
-        if (deploymentData.campusId && deploymentData.campusId !== CURRENT_CAMPUS_ID) continue;
         if (queryParams.status !== "all" && deploymentData.status !== queryParams.status) {
           continue;
         }
@@ -154,30 +172,32 @@ export const GET = withAuthAndErrors(async (
         tools.push({
           deploymentId: deploymentDoc.id,
           toolId: deploymentData.toolId,
-          name: toolData.name,
+          name: deploymentData.metadata?.toolName || toolData.name,
           description: toolData.description,
           category: toolData.category,
-          version: deploymentData.version || "1.0.0",
+          version: deploymentData.metadata?.toolVersion || toolData.currentVersion || "1.0.0",
           status: deploymentData.status,
-          configuration: deploymentData.configuration || {},
+          configuration: deploymentData.config || {},
           permissions: deploymentData.permissions || {
             canEdit: [],
             canView: [],
             isPublic: true,
           },
-          isShared: deploymentData.isShared ?? true,
-          deployer: null,
-          deployedAt:
-            deploymentData.deployedAt?.toDate?.()?.toISOString() ||
-            new Date().toISOString(),
-          lastUsed: deploymentData.lastUsedAt?.toDate?.()?.toISOString() || null,
+          isShared: deploymentData.settings?.allowSharing ?? true,
+          deployer: {
+            id: deploymentData.deployedBy || deploymentData.creatorId || "",
+            name: "",
+            avatar: null,
+          },
+          deployedAt: deploymentData.deployedAt || new Date().toISOString(),
+          lastUsed: null,
           usageCount: deploymentData.usageCount || 0,
           originalTool: {
             averageRating: toolData.averageRating || 0,
             ratingCount: toolData.ratingCount || 0,
             totalDeployments: toolData.deploymentCount || 0,
             isVerified: toolData.isVerified || false,
-            creatorId: toolData.creatorId,
+            creatorId: toolData.creatorId || toolData.ownerId,
           },
         });
       }
@@ -199,7 +219,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching space tools",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch space tools", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -210,20 +230,20 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreateSpaceToolSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
-      const membership = await ensureSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
+      const validation = await validateSpaceAndMembership(spaceId, userId);
+      if (!validation.ok) {
         const code =
-          membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(membership.message, code, { status: membership.status });
+          validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
       const toolDoc = await dbAdmin.collection("tools").doc(body.toolId).get();
@@ -321,7 +341,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error deploying tool to space",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to deploy tool", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

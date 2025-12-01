@@ -27,7 +27,7 @@ import { useSession } from "../../hooks/use-session";
 // import { useCalendarData } from "../../hooks/use-calendar-data";
 import { ErrorBoundary } from "../../components/error-boundary";
 import { EventDetailsModal } from "../../components/events/event-details-modal";
-import { CreateEventModal } from "../../components/events/create-event-modal";
+import { CreateEventModal, type CreateEventData } from "../../components/events/create-event-modal";
 
 // Calendar interfaces
 interface CalendarEvent {
@@ -595,7 +595,7 @@ export default function CalendarPage() {
               source: 'hive',
               attendees: [],
               rsvpStatus: 'going',
-              tools: eventData.tools,
+              tools: [],
               space: undefined
             };
             

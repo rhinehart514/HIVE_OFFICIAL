@@ -40,7 +40,6 @@ export function PushPin({
   });
 
   return (
-    // @ts-expect-error - react-spring types
     <AnimatedGroup ref={groupRef} position-z={positionZ} position={[position[0], position[1], 0]}>
       {/* Pin Head (Cone) */}
       <mesh position={[0, 0, 0.08]} castShadow onClick={() => setPressed(true)}>

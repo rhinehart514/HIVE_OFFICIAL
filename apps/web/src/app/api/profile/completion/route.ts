@@ -1,8 +1,8 @@
 import { dbAdmin } from '@/lib/firebase-admin';
-import { _logger } from "@/lib/logger";
-import { _ApiResponseHelper, _HttpStatus } from "@/lib/api-response-types";
+import { logger } from "@/lib/logger";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getServerProfileRepository } from '@hive/core/server';
 
 interface ProfileCompletionCheck {
   isComplete: boolean;
@@ -41,46 +41,100 @@ const OPTIONAL_FIELDS = [
 /**
  * Check profile completion status
  * GET /api/profile/completion
+ *
+ * Uses DDD EnhancedProfile.getCompletionPercentage() when available,
+ * falls back to legacy field checking for additional detail.
  */
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
-  context,
+  request,
+  _context,
   respond
 ) => {
-  const userId = getUserId(request);
-    
-    // Handle development mode
-    if (userId === 'test-user') {
-      const mockCompletion: ProfileCompletionCheck = {
-        isComplete: true,
-        completionPercentage: 100,
-        missingFields: [],
-        completedFields: [...REQUIRED_FIELDS, ...OPTIONAL_FIELDS],
-        requiredFields: REQUIRED_FIELDS,
-        optionalFields: OPTIONAL_FIELDS,
-        nextSteps: ['Your profile is complete!']
-      };
+  const userId = getUserId(request as AuthenticatedRequest);
 
-      return respond.success({ completion: mockCompletion });
-    }
+  // Try DDD repository first for accurate completion percentage
+  const profileRepository = getServerProfileRepository();
+  const profileResult = await profileRepository.findById(userId);
 
-    // Get user document from Firestore
-    const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    
-    if (!userDoc.exists) {
+  if (profileResult.isSuccess) {
+    const profile = profileResult.getValue();
+
+    // Campus isolation check
+    if (profile.campusId.id !== CURRENT_CAMPUS_ID) {
       return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
-    const userData = userDoc.data();
-    if (userData?.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
-      return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
-    }
-    
-    // Check completion status (get email from userData since middleware doesn't provide it)
-    const completion = checkProfileCompletion(userData, userData?.email || '');
+    // Use DDD aggregate method for completion percentage
+    const dddCompletionPercentage = profile.getCompletionPercentage();
+    const isProfileComplete = profile.isProfileComplete();
+
+    // Build detailed completion info from domain model
+    const completedFields: string[] = [];
+    const missingFields: string[] = [];
+
+    // Check required fields from domain model
+    if (profile.firstName && profile.lastName) completedFields.push('fullName');
+    else missingFields.push('fullName');
+
+    if (profile.handle.value) completedFields.push('handle');
+    else missingFields.push('handle');
+
+    if (profile.email.value) completedFields.push('email');
+    else missingFields.push('email');
+
+    if (profile.major) completedFields.push('major');
+    else missingFields.push('major');
+
+    if (profile.campusId.id) completedFields.push('schoolId');
+    else missingFields.push('schoolId');
+
+    // Consent is implied by onboarded status
+    if (profile.isOnboarded) completedFields.push('consentGiven');
+    else missingFields.push('consentGiven');
+
+    // Check optional fields
+    if (profile.personalInfo.profilePhoto) completedFields.push('avatarUrl');
+    if (profile.bio) completedFields.push('bio');
+    if (profile.graduationYear) completedFields.push('graduationYear');
+    if (profile.interests.length > 0) completedFields.push('interests');
+
+    const completion: ProfileCompletionCheck = {
+      isComplete: isProfileComplete,
+      completionPercentage: dddCompletionPercentage,
+      missingFields,
+      completedFields,
+      requiredFields: REQUIRED_FIELDS,
+      optionalFields: OPTIONAL_FIELDS,
+      nextSteps: generateNextSteps(missingFields, completedFields.filter(f => OPTIONAL_FIELDS.includes(f))),
+    };
+
+    logger.debug('Profile completion via DDD', {
+      userId,
+      percentage: dddCompletionPercentage,
+      isComplete: isProfileComplete,
+    });
 
     return respond.success({ completion });
+  }
 
+  // Fallback to legacy Firestore check if DDD fails
+  logger.debug('Profile completion fallback to Firestore', { userId });
+
+  const userDoc = await dbAdmin.collection('users').doc(userId).get();
+
+  if (!userDoc.exists) {
+    return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
+  }
+
+  const userData = userDoc.data();
+  if (userData?.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
+    return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
+  }
+
+  // Check completion status using legacy method
+  const completion = checkProfileCompletion(userData, userData?.email || '');
+
+  return respond.success({ completion });
 });
 
 /**

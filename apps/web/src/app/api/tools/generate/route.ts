@@ -1,15 +1,21 @@
 /**
  * AI Tool Generation API (Streaming)
  *
- * Generates HiveLab tools from natural language prompts using Gemini AI.
+ * Generates HiveLab tools from natural language prompts using Firebase AI (Gemini).
  * Returns streaming response for real-time canvas updates.
  *
- * DEVELOPMENT MODE: Uses mock generator (no Firebase/GCP required)
- * PRODUCTION MODE: Uses real Gemini AI (requires Google Cloud credentials)
+ * Uses Firebase AI with Gemini 2.0 Flash for fast, structured tool generation.
+ * Falls back to mock generator if Firebase AI is unavailable.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { mockGenerateToolStreaming, type StreamingChunk } from '@/lib/mock-ai-generator';
+import {
+  firebaseGenerateToolStreaming,
+  isFirebaseAIAvailable,
+} from '@/lib/firebase-ai-generator';
+import { canGenerate, recordGeneration, USAGE_LIMITS } from '@/lib/ai-usage-tracker';
+import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { z } from 'zod';
 
 /**
@@ -21,7 +27,22 @@ const GenerateToolRequestSchema = z.object({
   constraints: z.object({
     maxElements: z.number().optional(),
     allowedCategories: z.array(z.string()).optional()
-  }).optional()
+  }).optional(),
+  // Space context for contextual tool generation
+  spaceContext: z.object({
+    spaceId: z.string(),
+    spaceName: z.string(),
+    spaceType: z.string().optional(), // 'club', 'dorm', 'class', 'organization', etc.
+    category: z.string().optional(),
+    memberCount: z.number().optional(),
+    description: z.string().optional(),
+  }).optional(),
+  // Iteration support - modify existing tool
+  existingComposition: z.object({
+    elements: z.array(z.any()),
+    name: z.string().optional(),
+  }).optional(),
+  isIteration: z.boolean().optional(),
 });
 
 /**
@@ -30,23 +51,57 @@ const GenerateToolRequestSchema = z.object({
  * Generate a tool from a natural language prompt (streaming)
  */
 export async function POST(request: NextRequest) {
+  // Track user ID for usage (optional - allow unauthenticated for demo)
+  let userId: string | null = null;
+
   try {
+    // Try to get authenticated user (optional)
+    try {
+      const auth = await validateApiAuth(request, { operation: 'tool-generate' });
+      userId = auth.userId;
+    } catch {
+      // Unauthenticated - allow for demo but with stricter limits
+      userId = null;
+    }
+
+    // Check usage limits for authenticated users
+    if (userId) {
+      const usage = await canGenerate(userId);
+      if (!usage.allowed) {
+        return NextResponse.json(
+          {
+            error: 'Usage limit reached',
+            tier: usage.tier,
+            limit: usage.limit,
+            message: `You've used all ${usage.limit} tool generations this month. Upgrade for more.`,
+            upgradeUrl: '/settings/subscription',
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     // Parse request body
     const body = await request.json();
     const validated = GenerateToolRequestSchema.parse(body);
 
-    // Check if we should use real AI or mock
-    const useMock = process.env.NODE_ENV === 'development' || !process.env.GOOGLE_CLOUD_PROJECT;
+    // Check if Firebase AI is available
+    const useFirebaseAI = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
 
     // Create streaming response
     const encoder = new TextEncoder();
+    let generationSuccessful = false;
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // AI Studio disabled - always use mock for now
-          const generator = mockGenerateToolStreaming(validated);
-          void useMock; // Silence unused variable warning
+          // Use Firebase AI (Gemini) if available, otherwise fall back to mock
+          const generator = useFirebaseAI
+            ? firebaseGenerateToolStreaming(validated)
+            : mockGenerateToolStreaming(validated);
+
+          const mode = validated.isIteration ? 'iteration' : 'new';
+          console.log(`[API] Tool generation (${mode}) using: ${useFirebaseAI ? 'Firebase AI (Gemini)' : 'Mock generator'}${userId ? ` for user ${userId}` : ' (anonymous)'}`);
 
           // Start streaming generation
           for await (const chunk of generator) {
@@ -54,13 +109,25 @@ export async function POST(request: NextRequest) {
             const data = JSON.stringify(chunk) + '\n';
             controller.enqueue(encoder.encode(data));
 
-            // If generation is complete, close stream
-            if (chunk.type === 'generation_complete') {
+            // If generation is complete, record usage and close stream
+            if (chunk.type === 'complete') {
+              generationSuccessful = true;
+
+              // Record usage for authenticated users
+              if (userId) {
+                try {
+                  await recordGeneration(userId, 500); // Estimate ~500 tokens
+                  console.log(`[API] Recorded generation for user ${userId}`);
+                } catch (err) {
+                  console.error('[API] Failed to record usage:', err);
+                }
+              }
+
               controller.close();
               return;
             }
 
-            // If error, close stream
+            // If error, close stream (don't count as usage)
             if (chunk.type === 'error') {
               controller.close();
               return;
@@ -75,7 +142,7 @@ export async function POST(request: NextRequest) {
           // Send error chunk
           const errorChunk: StreamingChunk = {
             type: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
+            data: { error: error instanceof Error ? error.message : 'Unknown error' }
           };
           controller.enqueue(encoder.encode(JSON.stringify(errorChunk) + '\n'));
           controller.close();
@@ -122,15 +189,22 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/tools/generate
  *
- * Get demo prompts
+ * Get generation info and demo prompts
  */
 export async function GET() {
   const { DEMO_PROMPTS } = await import('@hive/core');
+  const firebaseAvailable = isFirebaseAIAvailable();
 
   return NextResponse.json({
     demoPrompts: Array.from(DEMO_PROMPTS),
-    model: 'gemini-1.5-pro',
+    model: firebaseAvailable ? 'gemini-2.0-flash' : 'mock',
+    backend: firebaseAvailable ? 'firebase-ai' : 'mock',
     maxPromptLength: 1000,
-    streamingSupported: true
+    streamingSupported: true,
+    features: {
+      structuredOutput: firebaseAvailable,
+      complexTools: firebaseAvailable,
+      multiStage: firebaseAvailable,
+    },
   });
 }

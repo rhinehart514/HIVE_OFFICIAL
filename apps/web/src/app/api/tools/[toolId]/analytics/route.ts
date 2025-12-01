@@ -1,16 +1,16 @@
-import type { _NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { withAuthAndErrors, type AuthenticatedRequest, getUserId } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { _ApiResponseHelper } from '@/lib/api-response-types';
+import { ApiResponseHelper } from '@/lib/api-response-types';
 
 // GET /api/tools/[toolId]/analytics
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond,
 ) => {
-  const _userId = getUserId(request);
+  const _userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
 
   // Ensure tool exists and campus matches
@@ -51,12 +51,12 @@ export const GET = withAuthAndErrors(async (
   let totalUsage = 0;
   const activeUsersSet = new Set<string>();
   for (const ev of events) {
-    const ts = ev.timestamp ? new Date(ev.timestamp) : new Date();
+    const ts = ev.timestamp && (typeof ev.timestamp === 'string' || typeof ev.timestamp === 'number' || ev.timestamp instanceof Date) ? new Date(ev.timestamp) : new Date();
     const key = ts.toISOString().slice(0, 10);
     if (!dailyMap.has(key)) continue;
     const bucket = dailyMap.get(key)!;
     bucket.usage += 1;
-    if (ev.userId) {
+    if (ev.userId && typeof ev.userId === 'string') {
       bucket.users.add(ev.userId);
       activeUsersSet.add(ev.userId);
     }

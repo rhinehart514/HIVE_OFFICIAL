@@ -214,6 +214,27 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       onHoverEnd: () => setIsHovered(false),
     } : {}
 
+    // When asChild is true, Slot expects a single child - pass through directly
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(
+            buttonVariants({
+              variant: resolvedVariant,
+              size: computedSize as any,
+              loading: isLoading ? true : undefined,
+            }),
+            fullWidth && "w-full",
+            className
+          )}
+          ref={ref}
+          {...(props as React.HTMLAttributes<HTMLElement>)}
+        >
+          {children as React.ReactNode}
+        </Slot>
+      )
+    }
+
     return (
       <Comp
         className={cn(

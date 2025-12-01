@@ -1,6 +1,6 @@
 'use client';
 
-import React, { _lazy, _Suspense } from 'react';
+import React, { lazy, Suspense } from 'react';
 
 // Lazy load page components for better performance
 // const LazyProfilePage = lazy(() => import('../app/(dashboard)/profile/page')); // Deleted in refactor
@@ -84,7 +84,7 @@ interface LazyPageLoaderProps {
   };
 }
 
-export function LazyPageLoader({ pageType, _context }: LazyPageLoaderProps) {
+export function LazyPageLoader({ pageType, context: _context }: LazyPageLoaderProps) {
   switch (pageType) {
     case 'profile':
       return <LoadingFallback pageName="Profile" />; // Profile page was deleted

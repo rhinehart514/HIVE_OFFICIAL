@@ -11,6 +11,10 @@ import { ProfileHandle } from '../value-objects/profile-handle.value';
 import { UserType } from '../value-objects/user-type.value';
 import { ProfilePrivacy } from '../value-objects/profile-privacy.value';
 import { UBEmail } from '../../identity/value-objects/ub-email.value';
+// Value objects for domain logic
+import { GraduationYear } from '../value-objects/graduation-year.value';
+import { Major, AcademicSchool } from '../value-objects/major.value';
+import { Interest, InterestCollection, InterestCategory } from '../value-objects/interest.value';
 
 export interface PersonalInfo {
   firstName: string;
@@ -472,11 +476,177 @@ export class EnhancedProfile extends AggregateRoot<EnhancedProfileProps> {
     return Math.round((completed / total) * 100);
   }
 
+  // ============================================
+  // Value Object-Powered Domain Methods
+  // ============================================
+
+  /**
+   * Get academic standing label using GraduationYear value object
+   * Returns: 'Alumni' | 'Senior' | 'Junior' | 'Sophomore' | 'Freshman' | 'Incoming' | null
+   */
+  public getAcademicStanding(): string | null {
+    const year = this.props.personalInfo.graduationYear;
+    if (!year) return null;
+
+    const gradYearResult = GraduationYear.create(year);
+    if (gradYearResult.isFailure) return null;
+
+    return gradYearResult.getValue().getStandingLabel();
+  }
+
+  /**
+   * Check if user is an alumni based on graduation year
+   */
+  public isAlumni(): boolean {
+    const year = this.props.personalInfo.graduationYear;
+    if (!year) return false;
+
+    const gradYearResult = GraduationYear.create(year);
+    if (gradYearResult.isFailure) return false;
+
+    return gradYearResult.getValue().isPast();
+  }
+
+  /**
+   * Check if user is a current student (not yet graduated)
+   */
+  public isCurrentStudent(): boolean {
+    const year = this.props.personalInfo.graduationYear;
+    if (!year) return this.props.userType.isStudent();
+
+    const gradYearResult = GraduationYear.create(year);
+    if (gradYearResult.isFailure) return this.props.userType.isStudent();
+
+    return gradYearResult.getValue().isFuture() || gradYearResult.getValue().isCurrentYear();
+  }
+
+  /**
+   * Get major info including school classification using Major value object
+   */
+  public getMajorInfo(): { name: string; school: AcademicSchool; isSTEM: boolean; isValidated: boolean } | null {
+    const major = this.props.personalInfo.major;
+    if (!major) return null;
+
+    const majorResult = Major.create(major);
+    if (majorResult.isFailure) {
+      return {
+        name: major,
+        school: AcademicSchool.OTHER,
+        isSTEM: false,
+        isValidated: false
+      };
+    }
+
+    const majorObj = majorResult.getValue();
+    return {
+      name: majorObj.value,
+      school: majorObj.school,
+      isSTEM: majorObj.isSTEM(),
+      isValidated: majorObj.isValidated
+    };
+  }
+
+  /**
+   * Check if user is in a STEM major
+   */
+  public isSTEMMajor(): boolean {
+    const majorInfo = this.getMajorInfo();
+    return majorInfo?.isSTEM ?? false;
+  }
+
+  /**
+   * Get InterestCollection for similarity calculations and categorization
+   */
+  public getInterestCollection(): InterestCollection {
+    const result = InterestCollection.create(this.props.socialInfo.interests);
+    return result.isSuccess ? result.getValue() : InterestCollection.createEmpty();
+  }
+
+  /**
+   * Calculate interest similarity with another profile (0-100)
+   */
+  public getInterestSimilarity(other: EnhancedProfile): number {
+    const myInterests = this.getInterestCollection();
+    const theirInterests = other.getInterestCollection();
+    return myInterests.similarityWith(theirInterests);
+  }
+
+  /**
+   * Get distribution of interests by category
+   */
+  public getInterestCategories(): Map<InterestCategory, number> {
+    return this.getInterestCollection().getCategoryDistribution();
+  }
+
+  /**
+   * Check if user has enough interests (meets recommended minimum)
+   */
+  public hasEnoughInterests(): boolean {
+    return this.getInterestCollection().meetsRecommendedMin();
+  }
+
+  /**
+   * Add interest using InterestCollection validation
+   * Validates against max limit and deduplication
+   */
+  public addInterestValidated(interest: string): Result<void> {
+    const collection = this.getInterestCollection();
+    const addResult = collection.add(interest);
+
+    if (addResult.isFailure) {
+      return Result.fail<void>(addResult.error!);
+    }
+
+    this.props.socialInfo.interests = addResult.getValue().toStringArray();
+    this.props.updatedAt = new Date();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set all interests using InterestCollection validation
+   * Validates, deduplicates, and normalizes
+   */
+  public setInterestsValidated(interests: string[]): Result<void> {
+    const result = InterestCollection.create(interests);
+    if (result.isFailure) {
+      return Result.fail<void>(result.error!);
+    }
+
+    this.props.socialInfo.interests = result.getValue().toStringArray();
+    this.props.updatedAt = new Date();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Get formatted graduation year display string
+   */
+  public getGraduationYearDisplay(): string | null {
+    const year = this.props.personalInfo.graduationYear;
+    if (!year) return null;
+
+    const gradYearResult = GraduationYear.create(year);
+    if (gradYearResult.isFailure) return `${year}`;
+
+    return gradYearResult.getValue().toDisplayString();
+  }
+
+  // ============================================
+  // End Value Object-Powered Domain Methods
+  // ============================================
+
   public toData(): any {
     return this.toDTO();
   }
 
   public toDTO(): any {
+    // Get enriched domain data from value objects
+    const majorInfo = this.getMajorInfo();
+    const interestCategories = this.getInterestCategories();
+    const categoryArray = Array.from(interestCategories.entries()).map(([cat, count]) => ({
+      category: cat,
+      count
+    }));
+
     return {
       id: this.props.profileId.value,
       email: this.props.email.value,
@@ -495,7 +665,20 @@ export class EnhancedProfile extends AggregateRoot<EnhancedProfileProps> {
       createdAt: this.props.createdAt,
       updatedAt: this.props.updatedAt,
       displayName: this.displayName,
-      completionPercentage: this.getCompletionPercentage()
+      completionPercentage: this.getCompletionPercentage(),
+      // Value object enriched data
+      academicStanding: this.getAcademicStanding(),
+      graduationYearDisplay: this.getGraduationYearDisplay(),
+      isAlumni: this.isAlumni(),
+      isCurrentStudent: this.isCurrentStudent(),
+      majorInfo: majorInfo ? {
+        name: majorInfo.name,
+        school: majorInfo.school,
+        isSTEM: majorInfo.isSTEM,
+        isValidated: majorInfo.isValidated
+      } : null,
+      interestCategories: categoryArray,
+      hasEnoughInterests: this.hasEnoughInterests()
     };
   }
 }

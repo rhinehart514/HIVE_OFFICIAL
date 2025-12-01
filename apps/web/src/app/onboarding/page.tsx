@@ -2,10 +2,12 @@
 
 import { Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, WifiOff } from "lucide-react";
 
 import { OnboardingHeader } from "@/components/onboarding/ui/onboarding-header";
 import { OnboardingPreview } from "@/components/onboarding/onboarding-preview";
+import { DraftRecoveryBanner } from "@/components/onboarding/ui/draft-recovery-banner";
+import { ErrorRecoveryModal } from "@/components/onboarding/ui/error-recovery-modal";
 import { useOnboarding } from "@/components/onboarding/hooks/use-onboarding";
 import { STEP_CONFIG } from "@/components/onboarding/shared/types";
 
@@ -35,6 +37,11 @@ function OnboardingContent() {
     isSubmitting,
     handleStatus,
     handleSuggestions,
+    isOnline,
+    hasRestoredDraft,
+    savedDraftTime,
+    showErrorModal,
+    isRetrying,
     setError,
     updateData,
     stepNumber,
@@ -44,6 +51,10 @@ function OnboardingContent() {
     handleNext,
     handleLeaderChoice,
     submitOnboarding,
+    discardDraft,
+    retrySubmission,
+    dismissErrorModal,
+    saveLocallyAndContinue,
   } = useOnboarding();
 
   const currentConfig = STEP_CONFIG[step];
@@ -83,7 +94,7 @@ function OnboardingContent() {
           <InterestsStep
             data={data}
             onUpdate={updateData}
-            onNext={submitOnboarding}
+            onNext={() => handleNext("leader")}
             error={error}
             setError={setError}
             isSubmitting={isSubmitting}
@@ -94,7 +105,30 @@ function OnboardingContent() {
         return <LeaderStep onChoice={handleLeaderChoice} />;
 
       case "spaces":
-        return <SpacesStep userType={data.userType} />;
+        return (
+          <SpacesStep
+            userType={data.userType}
+            isSubmitting={isSubmitting}
+            mustSelectSpace={data.userType === "faculty" || data.isLeader}
+            onComplete={async (redirectTo, selectedSpaceIds) => {
+              // Update data with selected spaces before submitting
+              if (selectedSpaceIds && selectedSpaceIds.length > 0) {
+                // For leaders, these become builder requests; for others, join requests
+                if (data.isLeader) {
+                  updateData({ builderRequestSpaces: selectedSpaceIds });
+                } else {
+                  updateData({ initialSpaceIds: selectedSpaceIds });
+                }
+              }
+              return submitOnboarding({
+                isLeaderOverride: data.userType === "student" ? data.isLeader : false,
+                redirectTo,
+                // Pass spaces directly since state update might not complete in time
+                selectedSpaceIds,
+              });
+            }}
+          />
+        );
 
       case "alumniWaitlist":
         return <AlumniWaitlistStep onBack={handleBack} />;
@@ -156,7 +190,7 @@ function OnboardingContent() {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#FFD700] rounded-full blur-[120px] pointer-events-none lg:left-[67.5%]"
+            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gold-500 rounded-full blur-[120px] pointer-events-none lg:left-[67.5%]"
           />
 
           <div className="w-full max-w-lg relative z-10">
@@ -176,6 +210,34 @@ function OnboardingContent() {
               </p>
             </motion.div>
 
+            {/* Draft Recovery Banner */}
+            <AnimatePresence>
+              {hasRestoredDraft && savedDraftTime && step === "userType" && (
+                <DraftRecoveryBanner
+                  savedAt={savedDraftTime}
+                  onContinue={() => {}} // Already restored, just dismiss
+                  onDiscard={discardDraft}
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Offline Warning */}
+            <AnimatePresence>
+              {!isOnline && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-4"
+                >
+                  <WifiOff className="w-4 h-4 text-amber-400" />
+                  <p className="text-sm text-amber-300">
+                    You're offline. Your progress is saved locally.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Form content */}
             <div className="w-full">
               <motion.div
@@ -190,6 +252,16 @@ function OnboardingContent() {
           </div>
         </main>
       </div>
+
+      {/* Error Recovery Modal */}
+      <ErrorRecoveryModal
+        isOpen={showErrorModal}
+        error={error || "An unexpected error occurred"}
+        isRetrying={isRetrying}
+        onRetry={retrySubmission}
+        onSaveLocally={saveLocallyAndContinue}
+        onDismiss={dismissErrorModal}
+      />
     </div>
   );
 }
@@ -208,7 +280,7 @@ function OnboardingPageFallback() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#FFD700] rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500 rounded-full blur-[120px] pointer-events-none"
       />
       <Loader2 className="h-6 w-6 animate-spin text-neutral-500 relative z-10" />
     </div>

@@ -2,6 +2,7 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/m
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { getServerProfileRepository } from '@hive/core/server';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 type Channel = 'in_app' | 'push' | 'email' | 'desktop';
@@ -32,8 +33,8 @@ const defaultPreferences: NotificationPreferences = {
 };
 
 // GET /api/profile/notifications/preferences?userId=... -> returns raw preferences object
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx, respond) => {
-  const currentUserId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
+  const currentUserId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const targetUserId = searchParams.get('userId') || currentUserId;
 
@@ -61,19 +62,40 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
     if (prefs?.campusId && prefs.campusId !== userCampus) {
       return new Response(JSON.stringify({ error: 'Access denied for this campus' }), { status: 403 });
     }
-    return new Response(JSON.stringify(prefs), {
+
+    // Get DDD profile data for space notification context
+    let profileContext: {
+      spaces: string[];
+      connectionCount: number;
+    } | null = null;
+
+    try {
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(targetUserId);
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        profileContext = {
+          spaces: profile.spaces,
+          connectionCount: profile.connectionCount,
+        };
+      }
+    } catch {
+      // Non-fatal: continue without profile context
+    }
+
+    return new Response(JSON.stringify({ ...prefs, profile: profileContext }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    logger.error('Failed to fetch notification preferences', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to fetch notification preferences', { error: error instanceof Error ? error.message : String(error) });
     return new Response(JSON.stringify({ error: 'Failed to fetch preferences' }), { status: 500 });
   }
 });
 
 // PUT /api/profile/notifications/preferences -> updates own preferences (partial)
-export const PUT = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx, respond) => {
-  const userId = getUserId(request);
+export const PUT = withAuthAndErrors(async (request, _ctx, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   try {
     const body = await request.json();
     const { preferences } = body || {};
@@ -109,7 +131,7 @@ export const PUT = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
     // Return 200 OK with no body required; callers only check .ok
     return new Response(null, { status: 200 });
   } catch (error) {
-    logger.error('Failed to update notification preferences', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to update notification preferences', { error: error instanceof Error ? error.message : String(error) });
     return respond.error('Failed to update preferences', 'INTERNAL_ERROR', { status: 500 });
   }
 });

@@ -2,9 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { getDefaultActionCodeSettings, validateEmailDomain } from "@hive/core";
+import { CampusEmail, EmailType } from '@hive/core/server';
 import { getAuth } from "firebase-admin/auth";
 // Email sending handled by Firebase Auth - no SendGrid needed
-import { _ValidationError } from "@/lib/api-error-handler";
+import { ValidationError as _ValidationError } from "@/lib/api-error-handler";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
 import { validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
@@ -85,7 +86,7 @@ async function validateSchool(schoolId: string): Promise<SchoolData | null> {
     } catch (error) {
       logger.error(
         `School validation failed at /api/auth/send-magic-link (Admin SDK)`,
-        error instanceof Error ? error : new Error(String(error))
+        { error: error instanceof Error ? error.message : String(error) }
       );
       // Fall through to Client SDK fallback in development
     }
@@ -123,7 +124,7 @@ async function validateSchool(schoolId: string): Promise<SchoolData | null> {
     } catch (error) {
       logger.error(
         `School validation failed at /api/auth/send-magic-link (Client SDK fallback)`,
-        error instanceof Error ? error : new Error(String(error))
+        { error: error instanceof Error ? error.message : String(error) }
       );
       return null;
     }
@@ -137,7 +138,7 @@ async function validateSchool(schoolId: string): Promise<SchoolData | null> {
  */
 export const POST = withValidation(
   sendMagicLinkSchema,
-  async (request: NextRequest, _context: Record<string, string | string[]>, body: z.infer<typeof sendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
+  async (request, _context: Record<string, string | string[]>, body: z.infer<typeof sendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
     const { email, schoolId } = body;
     const _requestId = request.headers.get('x-request-id') || `req_${Date.now()}`;
 
@@ -157,7 +158,7 @@ export const POST = withValidation(
       });
 
       if (!validationResult.success || validationResult.securityLevel === 'dangerous') {
-        await auditAuthEvent('suspicious', request, {
+        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
           operation: 'send_magic_link',
           threats: validationResult.errors?.map((e: { field: string; message: string; code: string }) => e.code).join(',') || 'unknown',
           securityLevel: validationResult.securityLevel
@@ -171,7 +172,7 @@ export const POST = withValidation(
     // Validate school exists and is active (only for non-development users)
     const schoolData = await validateSchool(schoolId);
     if (!schoolData) {
-      await auditAuthEvent('failure', request, {
+      await auditAuthEvent('failure', request as unknown as NextRequest, {
         operation: 'send_magic_link',
         error: 'invalid_school'
       });
@@ -181,7 +182,7 @@ export const POST = withValidation(
     
     // SECURITY: Validate email domain matches school domain
     if (!validateEmailDomain(email, [schoolData.domain])) {
-      await auditAuthEvent('failure', request, {
+      await auditAuthEvent('failure', request as unknown as NextRequest, {
         operation: 'send_magic_link',
         error: 'domain_mismatch'
       });
@@ -192,48 +193,45 @@ export const POST = withValidation(
       );
     }
     
-    // Additional security checks for production
-    if (currentEnvironment === 'production') {
-      // Check if user has been rate limited recently
-      const _rateLimitKey = `magic_link_${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
-      // This would integrate with Redis rate limiting
-      
-      // Validate the email is from a legitimate educational domain
-      const emailDomain = email.split('@')[1]?.toLowerCase() || '';
+    // SECURITY: Validate email using CampusEmail value object
+    // This ensures only supported campus domains are allowed
+    const campusEmailResult = CampusEmail.create(email);
 
-      // For UB launch - ONLY allow buffalo.edu emails
-      const allowedDomains = ['buffalo.edu'];
-      const isAllowedDomain = allowedDomains.includes(emailDomain);
+    if (campusEmailResult.isFailure) {
+      await auditAuthEvent('forbidden', request as unknown as NextRequest, {
+        operation: 'send_magic_link',
+        error: `invalid_campus_email: ${campusEmailResult.error}`
+      });
 
-      // Fallback to general .edu validation if not UB-specific
-      const eduDomains = ['.edu', '.ac.', '.university', '.college'];
-      const isEduDomain = isAllowedDomain || (
-        process.env.NEXT_PUBLIC_CAMPUS_ID !== 'ub-buffalo' &&
-        eduDomains.some(suffix => emailDomain.endsWith(suffix))
+      // Mask email manually since CampusEmail creation failed
+      const maskedEmail = email.includes('@')
+        ? `${email[0]}***@${email.split('@')[1]}`
+        : email.substring(0, 3) + '***';
+
+      logger.error('BLOCKED: Invalid campus email', {
+        error: campusEmailResult.error,
+        maskedEmail,
+        endpoint: '/api/auth/send-magic-link'
+      });
+
+      return NextResponse.json(
+        ApiResponseHelper.error(
+          campusEmailResult.error || "Only supported campus emails are allowed",
+          "INVALID_EMAIL_DOMAIN"
+        ),
+        { status: HttpStatus.FORBIDDEN }
       );
-      
-      if (!isEduDomain) {
-        await auditAuthEvent('forbidden', request, {
-          operation: 'send_magic_link',
-          error: `non_edu_domain: ${emailDomain}`
-        });
-
-        // SECURITY: Block non-educational domains in production
-        logger.error('BLOCKED: Non-educational domain attempted', {
-          emailDomain,
-          email: email.replace(/(.{3}).*@/, '$1***@'),
-          endpoint: '/api/auth/send-magic-link'
-        });
-
-        return NextResponse.json(
-          ApiResponseHelper.error(
-            "Only educational email addresses (.edu) are allowed",
-            "INVALID_EMAIL_DOMAIN"
-          ),
-          { status: HttpStatus.FORBIDDEN }
-        );
-      }
     }
+
+    const campusEmail = campusEmailResult.getValue();
+
+    // Log email type detection for analytics
+    logger.info('Campus email validated', {
+      emailType: campusEmail.emailType,
+      campusId: campusEmail.campusId,
+      maskedEmail: campusEmail.getMasked(),
+      endpoint: '/api/auth/send-magic-link'
+    });
     
     // Use Firebase Admin SDK to generate magic link
     const auth = getAuth();
@@ -248,10 +246,10 @@ export const POST = withValidation(
     } catch (firebaseError: unknown) {
       logger.error(
         `Firebase magic link generation failed at /api/auth/send-magic-link`,
-        firebaseError instanceof Error ? firebaseError : new Error(String(firebaseError))
+        { error: { error: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) } }
       );
 
-      await auditAuthEvent('failure', request, {
+      await auditAuthEvent('failure', request as unknown as NextRequest, {
         operation: 'send_magic_link',
         error: 'firebase_generation_failed'
       });
@@ -280,13 +278,15 @@ export const POST = withValidation(
     // Firebase Auth sends the email automatically when configured
     // The magic link was generated above - Firebase handles delivery
     logger.info('✅ Magic link generated', {
-      email: email.replace(/(.{3}).*@/, '$1***@'),
+      email: campusEmail.getMasked(),
+      emailType: campusEmail.emailType,
       schoolId: schoolData.name,
+      campusId: campusEmail.campusId,
       endpoint: '/api/auth/send-magic-link'
     });
     
     // Log successful operation
-    await auditAuthEvent('success', request, {
+    await auditAuthEvent('success', request as unknown as NextRequest, {
       operation: 'send_magic_link'
     });
 
@@ -297,7 +297,7 @@ export const POST = withValidation(
     });
 
     } catch (error) {
-      await auditAuthEvent('failure', request, {
+      await auditAuthEvent('failure', request as unknown as NextRequest, {
         operation: 'send_magic_link',
         error: error instanceof Error ? error.message : 'unknown'
       });

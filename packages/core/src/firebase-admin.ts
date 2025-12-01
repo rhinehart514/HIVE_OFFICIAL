@@ -24,8 +24,26 @@ try {
     let credential: admin.credential.Credential | undefined;
 
     // Try different credential formats
-    if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-      // Format 1: Individual environment variables (Vercel recommended)
+    if (process.env.FIREBASE_PRIVATE_KEY_BASE64 && process.env.FIREBASE_CLIENT_EMAIL) {
+      // Format 1: Base64 encoded private key (Recommended for Vercel)
+      try {
+        const decodedKey = Buffer.from(
+          process.env.FIREBASE_PRIVATE_KEY_BASE64,
+          "base64"
+        ).toString("utf-8");
+        credential = admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: decodedKey,
+        });
+        console.log(
+          `🔐 Firebase Admin: Using base64 private key for ${currentEnvironment}`
+        );
+      } catch (error) {
+        console.error("Failed to decode base64 private key:", error);
+      }
+    } else if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
+      // Format 2: Individual environment variables (raw key with \n escapes)
       credential = admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID || "hive-dev-2025",
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,

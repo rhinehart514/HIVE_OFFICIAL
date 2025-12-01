@@ -25,13 +25,13 @@ function normalizeText(value: unknown) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond,
 ) => {
   try {
-    const viewerId = getUserId(request);
-    const searchParams = request.nextUrl.searchParams;
+    const viewerId = getUserId(request as AuthenticatedRequest);
+    const searchParams = new URL(request.url).searchParams;
 
     const requestedUserId = searchParams.get("userId") ?? undefined;
     const statusParam = searchParams.get("status") ?? undefined;
@@ -120,7 +120,7 @@ export const GET = withAuthAndErrors(async (
         } catch (error) {
           logger.warn("Failed to fetch tool creator", {
             toolOwnerId: toolData.ownerId,
-            error: error instanceof Error ? error : new Error(String(error)),
+            error: { error: error instanceof Error ? error.message : String(error) },
             endpoint: "/api/tools/browse",
           });
         }
@@ -200,7 +200,7 @@ export const GET = withAuthAndErrors(async (
         total = countSnapshot.data().count;
       } catch (error) {
         logger.warn("Failed to count tools for browse", {
-          error: error instanceof Error ? error : new Error(String(error)),
+          error: { error: error instanceof Error ? error.message : String(error) },
           endpoint: "/api/tools/browse",
         });
       }
@@ -219,7 +219,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error browsing tools",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to browse tools", "INTERNAL_ERROR", {
       status: 500,

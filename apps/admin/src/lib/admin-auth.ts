@@ -1,57 +1,125 @@
+/**
+ * Admin Panel Authentication
+ *
+ * SECURITY: Uses Firestore admins collection + Firebase custom claims
+ * No hardcoded admin emails or test tokens
+ */
+
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 import { NextRequest } from 'next/server';
 
 export interface AdminUser {
   id: string;
   email: string;
-  role: 'admin' | 'moderator';
+  role: 'super_admin' | 'admin' | 'moderator' | 'viewer';
   permissions: string[];
   lastLogin: Date;
+  campusId?: string;
+}
+
+// Get Firestore instance for admin checks
+function getAdminDb() {
+  return getFirestore();
 }
 
 /**
- * Get admin user IDs from environment variables
+ * Get permissions based on admin role
  */
-function getAdminUserIds(): string[] {
-  const adminIds = process.env.ADMIN_USER_IDS;
-  if (!adminIds) {
-    console.warn('ADMIN_USER_IDS environment variable not set');
-    return ['test-user']; // Fallback for development
-  }
-  return adminIds.split(',').map(id => id.trim());
+function getPermissionsForRole(role: AdminUser['role']): string[] {
+  const rolePermissions: Record<AdminUser['role'], string[]> = {
+    'viewer': ['read'],
+    'moderator': ['read', 'moderate', 'delete_content'],
+    'admin': ['read', 'write', 'moderate', 'delete_content', 'manage_users'],
+    'super_admin': ['read', 'write', 'moderate', 'delete_content', 'manage_users', 'manage_admins', 'system_config']
+  };
+
+  return rolePermissions[role] || rolePermissions['viewer'];
 }
 
 /**
  * Check if user is an admin
+ * SECURITY: Uses Firestore admins collection + Firebase custom claims
  */
 export async function isAdmin(userId: string): Promise<boolean> {
-  const adminUserIds = getAdminUserIds();
-  return adminUserIds.includes(userId);
+  try {
+    const auth = getAuth();
+    const user = await auth.getUser(userId);
+
+    // First check: Firebase custom claims (fastest)
+    if (user.customClaims?.admin === true) {
+      return true;
+    }
+
+    // Second check: Firestore admins collection
+    const db = getAdminDb();
+    const adminDoc = await db.collection('admins').doc(userId).get();
+
+    if (adminDoc.exists && adminDoc.data()?.active === true) {
+      // Grant admin claim for faster future checks
+      await auth.setCustomUserClaims(userId, {
+        ...user.customClaims,
+        admin: true,
+        adminRole: adminDoc.data()?.role
+      });
+      return true;
+    }
+
+    // Third check: By email in Firestore
+    if (user.email) {
+      const emailQuery = await db
+        .collection('admins')
+        .where('email', '==', user.email.toLowerCase())
+        .where('active', '==', true)
+        .limit(1)
+        .get();
+
+      if (!emailQuery.empty) {
+        const adminData = emailQuery.docs[0].data();
+        await auth.setCustomUserClaims(userId, {
+          ...user.customClaims,
+          admin: true,
+          adminRole: adminData.role
+        });
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
 }
 
 /**
  * Get admin user details
  */
 export async function getAdminUser(userId: string): Promise<AdminUser | null> {
-  if (!(await isAdmin(userId))) {
-    return null;
-  }
-
   try {
+    const hasAdmin = await isAdmin(userId);
+    if (!hasAdmin) {
+      return null;
+    }
+
     const auth = getAuth();
     const userRecord = await auth.getUser(userId);
-    
-    // Get custom claims for permissions
-    const customClaims = userRecord.customClaims || {};
-    const role = customClaims.role || 'admin';
-    const permissions = customClaims.permissions || ['read', 'write', 'delete'];
+
+    // Get admin details from Firestore
+    const db = getAdminDb();
+    const adminDoc = await db.collection('admins').doc(userId).get();
+
+    const adminData = adminDoc.exists ? adminDoc.data() : {};
+    const role = (adminData?.role || userRecord.customClaims?.adminRole || 'admin') as AdminUser['role'];
+    const permissions = getPermissionsForRole(role);
 
     return {
       id: userId,
       email: userRecord.email || '',
-      role: role as 'admin' | 'moderator',
+      role,
       permissions,
       lastLogin: new Date(),
+      campusId: adminData?.campusId
     };
   } catch (error) {
     console.error('Error getting admin user:', error);
@@ -61,6 +129,7 @@ export async function getAdminUser(userId: string): Promise<AdminUser | null> {
 
 /**
  * Verify admin token from request
+ * SECURITY: Verifies Firebase ID token, then checks admin status
  */
 export async function verifyAdminToken(request: NextRequest): Promise<AdminUser | null> {
   try {
@@ -71,21 +140,11 @@ export async function verifyAdminToken(request: NextRequest): Promise<AdminUser 
     }
 
     const token = authHeader.substring(7);
-    let userId: string;
 
-    // Handle test tokens in development
-    if (token === 'test-token' && process.env.NODE_ENV === 'development') {
-      userId = 'test-user';
-    } else {
-      try {
-        const auth = getAuth();
-        const decodedToken = await auth.verifyIdToken(token);
-        userId = decodedToken.uid;
-      } catch (authError) {
-        console.error('Token verification failed:', authError);
-        return null;
-      }
-    }
+    // SECURITY: Always verify token with Firebase Admin
+    const auth = getAuth();
+    const decodedToken = await auth.verifyIdToken(token);
+    const userId = decodedToken.uid;
 
     return await getAdminUser(userId);
   } catch (error) {
@@ -98,36 +157,16 @@ export async function verifyAdminToken(request: NextRequest): Promise<AdminUser 
  * Verify admin session from cookies
  */
 export async function verifyAdminSession(): Promise<AdminUser | null> {
-  try {
-    // TODO: Implement cookies() properly for Next.js 14+
-    // const cookieStore = cookies();
-    // const sessionToken = cookieStore.get('admin-session')?.value;
-    const sessionToken = 'test-session'; // Mock for development
-    
-    if (!sessionToken) {
-      return null;
-    }
-
-    // Handle test session in development
-    if (sessionToken === 'test-session' && process.env.NODE_ENV === 'development') {
-      return await getAdminUser('test-user');
-    }
-
-    // TODO: Implement proper session verification with JWT
-    // For now, assume the session token is the user ID
-    return await getAdminUser(sessionToken);
-  } catch (error) {
-    console.error('Admin session verification error:', error);
-    return null;
-  }
+  // TODO: Implement proper session cookie verification with jose
+  // For now, require API token authentication
+  return null;
 }
 
 /**
  * Create admin session
  */
 export function createAdminSession(userId: string): string {
-  // TODO: Implement proper JWT session creation
-  // For now, return the user ID as the session token
+  // TODO: Implement proper JWT session creation with jose
   return userId;
 }
 
@@ -135,7 +174,7 @@ export function createAdminSession(userId: string): string {
  * Check if admin has permission
  */
 export function hasPermission(admin: AdminUser, permission: string): boolean {
-  return admin.permissions.includes(permission) || admin.role === 'admin';
+  return admin.permissions.includes(permission) || admin.role === 'super_admin';
 }
 
 /**
@@ -148,7 +187,7 @@ export async function requireAdmin(request: NextRequest): Promise<{
   status?: number;
 }> {
   const admin = await verifyAdminToken(request);
-  
+
   if (!admin) {
     return {
       success: false,
@@ -173,11 +212,13 @@ export async function logAdminActivity(
   ipAddress?: string
 ) {
   try {
-    // TODO: Implement admin activity logging to database
-    console.log(`[ADMIN] ${adminId} performed ${action}`, {
-      timestamp: new Date().toISOString(),
+    const db = getAdminDb();
+    await db.collection('admin_logs').add({
+      adminId,
+      action,
       details,
-      ipAddress
+      ipAddress,
+      timestamp: new Date()
     });
   } catch (error) {
     console.error('Failed to log admin activity:', error);

@@ -7,6 +7,31 @@ import type {
 } from "@hive/core";
 import { ProfileSystemConnectionType as ConnectionType } from "@hive/core";
 
+// Mirror the VisibilityLevel enum from @hive/core/types/profile-system
+enum VisibilityLevel {
+  GHOST = 'ghost',
+  FRIENDS_ONLY = 'friends',
+  CONNECTIONS = 'connections',
+  CAMPUS = 'campus'
+}
+
+const mapVisibilityLevel = (level?: string): VisibilityLevel => {
+  switch (level) {
+    case 'ghost':
+    case 'private':
+      return VisibilityLevel.GHOST;
+    case 'friends':
+    case 'friends_only':
+      return VisibilityLevel.FRIENDS_ONLY;
+    case 'connections':
+      return VisibilityLevel.CONNECTIONS;
+    case 'campus':
+    case 'public':
+    default:
+      return VisibilityLevel.CAMPUS;
+  }
+};
+
 type ViewerMeta = {
   relationship: "self" | "friend" | "connection" | "campus";
   isOwnProfile: boolean;
@@ -157,8 +182,8 @@ const buildSuggestions = (suggestions: ApiSuggestion[] | undefined) => {
 };
 
 const buildGrid = (grid: ProfileV2ApiResponse["grid"]): BentoGridLayout => ({
-  cards: grid.cards as BentoGridLayout["cards"],
-  mobileLayout: grid.mobileLayout as BentoGridLayout["mobileLayout"],
+  cards: grid.cards as unknown as BentoGridLayout["cards"],
+  mobileLayout: grid.mobileLayout as unknown as BentoGridLayout["mobileLayout"],
   lastModified: toDate(grid.lastModified ?? Date.now()),
 });
 
@@ -190,7 +215,7 @@ export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse)
         name: profile.fullName,
         majors: profile.major ? [profile.major] : [],
         minors: [],
-        year: 'junior' as ProfileSystem["identity"]["academic"]["year"],
+        year: 'junior' as 'freshman' | 'sophomore' | 'junior' | 'senior' | 'graduate',
         pronouns: profile.pronouns ?? undefined,
         graduationYear: profile.graduationYear ?? now.getFullYear(),
       },
@@ -218,7 +243,7 @@ export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse)
     grid: buildGrid(grid),
     privacy: {
       ghostMode: profile.presence?.isGhostMode ?? false,
-      visibilityLevel: (payload.privacy?.profileLevel ?? 'public') as ProfileSystem["privacy"]["visibilityLevel"],
+      visibilityLevel: mapVisibilityLevel(payload.privacy?.profileLevel),
       scheduleSharing: { friends: true, connections: true },
       availabilityBroadcast: { friends: true, connections: false, campus: false },
       discoveryParticipation: true,
@@ -232,17 +257,17 @@ export const profileApiResponseToProfileSystem = (payload: ProfileV2ApiResponse)
     },
     createdAt: now,
     updatedAt: now,
-    completeness: primaryStats?.completionPercentage ?? 70,
+    completeness: (primaryStats as Record<string, unknown> | undefined)?.completionPercentage as number ?? 70,
     isSetupComplete: true,
   };
 
-  (system as Record<string, unknown>).stats = {
+  (system as unknown as Record<string, unknown>).stats = {
     ...primaryStats,
   };
-  (system as Record<string, unknown>).spaces = payload.spaces;
-  (system as Record<string, unknown>).activities = payload.activities;
-  (system as Record<string, unknown>).connectionSummaries = summaries;
-  (system as Record<string, unknown>).viewer = payload.viewer;
+  (system as unknown as Record<string, unknown>).spaces = payload.spaces;
+  (system as unknown as Record<string, unknown>).activities = payload.activities;
+  (system as unknown as Record<string, unknown>).connectionSummaries = summaries;
+  (system as unknown as Record<string, unknown>).viewer = payload.viewer;
 
   return system;
 };
@@ -257,7 +282,7 @@ export function toProfileSystemFromMinimal(specLike: Record<string, unknown>): P
     identity: {
       academic: {
         name: ((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.name as string || (specLike.fullName as string) || 'Student',
-        year: (((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.year as ProfileSystem["identity"]["academic"]["year"]) || 'junior',
+        year: (((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.year as 'freshman' | 'sophomore' | 'junior' | 'senior' | 'graduate') || 'junior',
         majors: ((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.majors as string[] || (specLike.major ? [specLike.major as string] : []),
         minors: (((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.minors as string[]) || [],
         pronouns: ((specLike.identity as Record<string, unknown> | undefined)?.academic as Record<string, unknown> | undefined)?.pronouns as string | undefined,
@@ -282,7 +307,7 @@ export function toProfileSystemFromMinimal(specLike: Record<string, unknown>): P
     grid: (specLike.grid as BentoGridLayout) || ({ cards: [], mobileLayout: [], lastModified: now } as BentoGridLayout),
     privacy: (specLike.privacy as ProfileSystem["privacy"]) || {
       ghostMode: false,
-      visibilityLevel: 'campus',
+      visibilityLevel: VisibilityLevel.CAMPUS,
       scheduleSharing: { friends: true, connections: false },
       availabilityBroadcast: { friends: true, connections: false, campus: false },
       discoveryParticipation: true,

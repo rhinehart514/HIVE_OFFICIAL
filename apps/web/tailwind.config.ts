@@ -10,6 +10,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Gold - primary brand accent (for bg-gold-500, text-gold-500, etc.)
+        gold: {
+          500: '#FFD700',
+          400: '#FFE033',
+          600: '#E6C200',
+        },
         // Foundation colors
         foundation: {
           black: '#000000',
@@ -47,10 +53,10 @@ const config: Config = {
           hover: 'var(--hive-brand-hover)',
         },
         status: {
-          success: '#00D46A',
-          warning: '#FFB800',
-          error: '#FF3B30',
-          info: '#0A84FF',
+          success: 'var(--hive-status-success)',
+          warning: 'var(--hive-status-warning)',
+          error: 'var(--hive-status-error)',
+          info: 'var(--hive-status-info)',
         },
       },
       borderRadius: {

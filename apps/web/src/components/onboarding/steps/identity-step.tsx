@@ -1,10 +1,15 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { Check, X, Loader2, AtSign } from "lucide-react";
-import { Button, Input } from "@hive/ui";
-import { staggerContainer, staggerItem, transition } from "../shared/animations";
-import type { OnboardingData, HandleStatus } from "../shared/types";
+import { motion } from 'framer-motion';
+import { AtSign } from 'lucide-react';
+import { Button, Input, type InputStatus } from '@hive/ui';
+import {
+  staggerContainer,
+  staggerItem,
+  transitionSilk,
+  transitionSpring,
+} from '@/lib/motion-primitives';
+import type { OnboardingData, HandleStatus } from '../shared/types';
 
 interface IdentityStepProps {
   data: OnboardingData;
@@ -30,27 +35,27 @@ export function IdentityStep({
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      setError("Enter your name");
+      setError('Enter your name');
       return;
     }
 
     if (!handle.trim()) {
-      setError("Choose a handle");
+      setError('Choose a handle');
       return;
     }
 
-    if (handleStatus === "invalid") {
-      setError("Handle must be 3-20 characters (letters, numbers, . _ -)");
+    if (handleStatus === 'invalid') {
+      setError('Handle must be 3-20 characters (letters, numbers, . _ -)');
       return;
     }
 
-    if (handleStatus === "taken") {
-      setError("That handle is taken");
+    if (handleStatus === 'taken') {
+      setError('That handle is taken');
       return;
     }
 
-    if (handleStatus !== "available") {
-      setError("Checking handle availability...");
+    if (handleStatus !== 'available') {
+      setError('Checking handle availability...');
       return;
     }
 
@@ -58,39 +63,40 @@ export function IdentityStep({
     onNext();
   };
 
-  const getHandleIcon = () => {
+  // Map handleStatus to InputStatus for Input
+  const getInputStatus = (): InputStatus => {
     switch (handleStatus) {
-      case "checking":
-        return <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />;
-      case "available":
-        return <Check className="h-4 w-4 text-green-500" />;
-      case "taken":
-      case "invalid":
-        return <X className="h-4 w-4 text-red-500" />;
+      case 'checking':
+        return 'loading';
+      case 'available':
+        return 'success';
+      case 'taken':
+      case 'invalid':
+        return 'error';
       default:
-        return <AtSign className="h-4 w-4 text-neutral-500" />;
+        return 'idle';
     }
   };
 
-  const getHandleHint = () => {
+  const getHandleMessage = () => {
     switch (handleStatus) {
-      case "checking":
-        return "Checking...";
-      case "available":
-        return "Available!";
-      case "taken":
-        return "Already taken";
-      case "invalid":
-        return "3-20 chars: letters, numbers, . _ -";
+      case 'checking':
+        return undefined; // Loading state shows spinner
+      case 'available':
+        return 'Available!';
+      case 'taken':
+        return 'Already taken';
+      case 'invalid':
+        return '3-20 chars: letters, numbers, . _ -';
       default:
-        return "hive.so/your-handle";
+        return undefined;
     }
   };
 
   const canContinue =
     name.trim().length > 0 &&
     handle.trim().length > 0 &&
-    handleStatus === "available";
+    handleStatus === 'available';
 
   return (
     <motion.div
@@ -98,113 +104,102 @@ export function IdentityStep({
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-5"
+      className="space-y-6"
     >
       {/* Full name input */}
-      <motion.div variants={staggerItem} transition={transition}>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-neutral-400">
-            Your name
-          </label>
-          <Input
-            type="text"
-            autoComplete="name"
-            autoFocus
-            value={name}
-            onChange={(e) => {
-              onUpdate({ name: e.target.value });
-              setError(null);
-            }}
-            placeholder="First Last"
-            className="h-12 bg-black border-neutral-800 text-white placeholder:text-neutral-600 focus:border-neutral-600"
-          />
-        </div>
+      <motion.div variants={staggerItem} transition={transitionSilk}>
+        <Input
+          label="Your name"
+          type="text"
+          autoComplete="name"
+          autoFocus
+          value={name}
+          onChange={(e) => {
+            onUpdate({ name: e.target.value });
+            setError(null);
+          }}
+          placeholder="First Last"
+          error={error && !name.trim() ? error : undefined}
+        />
       </motion.div>
 
       {/* Handle input */}
-      <motion.div variants={staggerItem} transition={transition}>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-neutral-400">
-            Choose your handle
-          </label>
-          <div className="relative">
-            <Input
-              type="text"
-              autoComplete="username"
-              value={handle}
-              onChange={(e) => {
-                onUpdate({ handle: e.target.value.toLowerCase() });
-                setError(null);
-              }}
-              placeholder="yourhandle"
-              className={`h-12 pr-10 bg-black border-neutral-800 text-white placeholder:text-neutral-600 focus:border-neutral-600 ${
-                handleStatus === "taken" || handleStatus === "invalid"
-                  ? "border-red-500/50 focus:border-red-500"
-                  : handleStatus === "available"
-                  ? "border-green-500/50 focus:border-green-500"
-                  : ""
-              }`}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              {getHandleIcon()}
-            </div>
-          </div>
-          <p
-            className={`text-xs ${
-              handleStatus === "available"
-                ? "text-green-500"
-                : handleStatus === "taken" || handleStatus === "invalid"
-                ? "text-red-400"
-                : "text-neutral-500"
-            }`}
-          >
-            {getHandleHint()}
-          </p>
-        </div>
+      <motion.div variants={staggerItem} transition={transitionSilk}>
+        <Input
+          label="Choose your handle"
+          type="text"
+          autoComplete="username"
+          value={handle}
+          onChange={(e) => {
+            onUpdate({ handle: e.target.value.toLowerCase() });
+            setError(null);
+          }}
+          placeholder="yourhandle"
+          prefixIcon={<AtSign className="h-4 w-4" />}
+          status={getInputStatus()}
+          hint={handleStatus === 'idle' ? 'hive.so/your-handle' : undefined}
+          success={handleStatus === 'available' ? getHandleMessage() : undefined}
+          error={
+            handleStatus === 'taken' || handleStatus === 'invalid'
+              ? getHandleMessage()
+              : undefined
+          }
+        />
       </motion.div>
 
       {/* Handle suggestions when taken */}
-      {handleStatus === "taken" && handleSuggestions.length > 0 && (
+      {handleStatus === 'taken' && handleSuggestions.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          transition={{ duration: 0.2 }}
-          className="space-y-2"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={transitionSilk}
+          className="space-y-3"
         >
           <p className="text-xs text-neutral-500">Try one of these:</p>
-          <div className="flex flex-wrap gap-2">
-            {handleSuggestions.map((suggestion) => (
-              <button
+          <motion.div
+            className="flex flex-wrap gap-2"
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+          >
+            {handleSuggestions.map((suggestion, index) => (
+              <motion.button
                 key={suggestion}
                 type="button"
                 onClick={() => onUpdate({ handle: suggestion })}
-                className="px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 transition-colors"
+                variants={staggerItem}
+                transition={{ ...transitionSpring, delay: index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-3 py-1.5 text-xs rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white hover:border-gold-500/50 hover:bg-neutral-800 transition-colors"
               >
                 @{suggestion}
-              </button>
+              </motion.button>
             ))}
-          </div>
+          </motion.div>
         </motion.div>
       )}
 
-      {error && (
+      {/* General error */}
+      {error && name.trim() && handle.trim() && (
         <motion.p
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
           className="text-sm font-medium text-red-400"
         >
           {error}
         </motion.p>
       )}
 
-      <motion.div variants={staggerItem} transition={transition}>
+      {/* Continue button */}
+      <motion.div variants={staggerItem} transition={transitionSilk}>
         <Button
-          type="button"
           onClick={handleSubmit}
           disabled={!canContinue}
-          className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold text-sm disabled:opacity-40 transition-all"
-          style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+          showArrow
+          fullWidth
+          size="lg"
         >
           Continue
         </Button>

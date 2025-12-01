@@ -83,7 +83,7 @@ const AvatarImage = React.forwardRef<
   );
 
   React.useEffect(() => {
-    if (!src) {
+    if (!src || typeof src !== 'string') {
       setLoadingStatus("error");
       return;
     }
@@ -102,7 +102,7 @@ const AvatarImage = React.forwardRef<
     img.src = src;
   }, [src, onLoadingStatusChange]);
 
-  if (loadingStatus === "loaded") {
+  if (loadingStatus === "loaded" && typeof src === 'string') {
     return (
       <img
         ref={ref}

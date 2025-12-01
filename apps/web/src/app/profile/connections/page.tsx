@@ -15,7 +15,7 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
-  _getDoc
+  getDoc
 } from 'firebase/firestore';
 
 interface Connection {
@@ -371,7 +371,7 @@ export default function ConnectionsPage() {
 function ConnectionCard({
   connection,
   onSendFriendRequest,
-  _onRemoveConnection,
+  onRemoveConnection: _onRemoveConnection,
   getStrengthColor
 }: {
   connection: Connection;

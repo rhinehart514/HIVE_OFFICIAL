@@ -1,4 +1,4 @@
-import { _NextRequest, _NextResponse } from 'next/server';
+import { NextRequest as _NextRequest, NextResponse as _NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
@@ -22,9 +22,9 @@ const APPROVED_ADMIN_EMAILS = (process.env.HIVE_ADMIN_EMAILS || '')
 // Super admin email (founder) - separate env var for highest privileges
 const SUPER_ADMIN_EMAIL = (process.env.HIVE_SUPER_ADMIN_EMAIL || '').trim().toLowerCase();
 
-export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
+export const POST = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     // Get user from Firebase Auth
     const auth = getAuth();
@@ -140,7 +140,7 @@ export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _con
   } catch (error) {
     logger.error(
       `Error granting admin permissions at /api/auth/check-admin-grant`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     return respond.error(

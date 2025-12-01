@@ -1,10 +1,12 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { dbAdmin } from '@/lib/firebase-admin';
+import { NextResponse, NextRequest } from 'next/server';
+import { getServerSpaceRepository } from '@hive/core/server';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { _withAuthAndErrors, type _AuthenticatedRequest } from '@/lib/middleware';
 
+/**
+ * Resolve a space slug to its ID using the DDD repository
+ */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
@@ -17,36 +19,31 @@ export async function GET(
   }
 
   try {
-    // First try to resolve as a slug
-    const slugSnapshot = await dbAdmin
-      .collection('spaces')
-      .where('slug', '==', slug)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1)
-      .get();
+    const spaceRepo = getServerSpaceRepository();
 
-    if (!slugSnapshot.empty) {
-      const space = slugSnapshot.docs[0];
+    // First try to resolve as a slug
+    const slugResult = await spaceRepo.findBySlug(slug, CURRENT_CAMPUS_ID);
+
+    if (slugResult.isSuccess) {
+      const space = slugResult.getValue();
       return NextResponse.json({
-        spaceId: space.id,
-        slug: slug,
+        spaceId: space.spaceId.value,
+        slug: space.slug?.value || slug,
         found: true
       });
     }
 
     // If no slug match, try to resolve as legacy space ID
     // This handles the case where old URLs with IDs are redirected here
-    const idSnapshot = await dbAdmin
-      .collection('spaces')
-      .doc(slug)
-      .get();
+    const idResult = await spaceRepo.findById(slug);
 
-    if (idSnapshot.exists) {
-      const spaceData = idSnapshot.data();
-      if (spaceData && spaceData.campusId === CURRENT_CAMPUS_ID) {
+    if (idResult.isSuccess) {
+      const space = idResult.getValue();
+      // Verify campus isolation
+      if (space.campusId.id === CURRENT_CAMPUS_ID) {
         return NextResponse.json({
-          spaceId: idSnapshot.id,
-          slug: spaceData.slug || slug,
+          spaceId: space.spaceId.value,
+          slug: space.slug?.value || slug,
           found: true,
           isLegacyId: true
         });

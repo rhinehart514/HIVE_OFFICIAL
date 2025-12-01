@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       logger.error(
       `Invalid ID token at /api/auth/session`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return NextResponse.json(
         { 
@@ -69,9 +69,9 @@ export async function GET(request: NextRequest) {
       }
     } catch (firestoreError) {
       logger.error(
-      `Error fetching user profile at /api/auth/session`,
-      firestoreError instanceof Error ? firestoreError : new Error(String(firestoreError))
-    );
+        `Error fetching user profile at /api/auth/session`,
+        { error: { error: firestoreError instanceof Error ? firestoreError.message : String(firestoreError) } }
+      );
       // Continue without profile data
     }
 
@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error validating session at /api/auth/session`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       { 
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error refreshing session at /api/auth/session`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       { 

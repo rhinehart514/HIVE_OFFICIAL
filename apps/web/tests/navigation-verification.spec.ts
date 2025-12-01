@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Install @playwright/test types
 import { test, expect } from '@playwright/test';
 
 test.describe('HIVE Navigation System Verification', () => {

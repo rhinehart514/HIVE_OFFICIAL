@@ -1,10 +1,10 @@
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
 import { sseRealtimeService } from '@/lib/sse-realtime-service';
-import { requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getServerSpaceRepository } from '@hive/core/server';
 
 /**
  * RSS Feed Seeding for Spaces
@@ -36,24 +36,60 @@ const RSS_FEEDS = {
   ]
 };
 
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Space not found' };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Membership required' };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
 export const POST = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
       const code =
-        membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(membership.error, code, { status: membership.status });
+        validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const spaceData = membership.space;
-    const membershipRole = membership.membership.role as string | undefined;
+    const space = validation.space;
+    const membershipRole = validation.membership.role as string | undefined;
     if (!['owner', 'admin', 'moderator', 'builder', 'leader'].includes(membershipRole || '')) {
       return respond.error("Only space leaders can seed RSS content", "FORBIDDEN", {
         status: HttpStatus.FORBIDDEN,
@@ -61,7 +97,12 @@ export const POST = withAuthAndErrors(async (
     }
 
     // Get appropriate RSS feeds for space category
-    const categoryFeeds = RSS_FEEDS[spaceData.type as keyof typeof RSS_FEEDS] || RSS_FEEDS['student_org'];
+    // Use default if category doesn't match RSS_FEEDS keys
+    const categoryKey = space.category.value as string;
+    const rssFeedsKeys = Object.keys(RSS_FEEDS) as Array<keyof typeof RSS_FEEDS>;
+    const categoryFeeds = rssFeedsKeys.includes(categoryKey as keyof typeof RSS_FEEDS)
+      ? RSS_FEEDS[categoryKey as keyof typeof RSS_FEEDS]
+      : RSS_FEEDS['student_org'];
 
     let totalSeeded = 0;
 
@@ -137,10 +178,11 @@ export const POST = withAuthAndErrors(async (
       }
     }
 
-    // Update space metadata
+    // Update space metadata - use increment for rssSeededCount
+    const { FieldValue } = await import('firebase-admin/firestore');
     await dbAdmin.collection('spaces').doc(spaceId).update({
       lastRSSSeeded: new Date(),
-      rssSeededCount: (spaceData.rssSeededCount || 0) + totalSeeded,
+      rssSeededCount: FieldValue.increment(totalSeeded),
       updatedAt: new Date()
     });
 
@@ -152,7 +194,7 @@ export const POST = withAuthAndErrors(async (
     });
 
   } catch (error) {
-    logger.error('Error seeding RSS content', { error: error instanceof Error ? error : new Error(String(error)), spaceId, userId });
+    logger.error('Error seeding RSS content', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId, userId });
     return respond.error("Failed to seed RSS content", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });

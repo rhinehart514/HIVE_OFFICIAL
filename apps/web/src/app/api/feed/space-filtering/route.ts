@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error applying space-aware filtering at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to apply space filtering", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting space access info at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get space access info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -206,7 +206,7 @@ async function getUserSpaceContexts(userId: string): Promise<UserSpaceContext[]>
   } catch (error) {
     logger.error(
       `Error getting user space contexts at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -248,7 +248,7 @@ async function getSpaceVisibilityRules(spaceIds: string[]): Promise<Map<string, 
   } catch (error) {
     logger.error(
       `Error getting space visibility rules at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return rulesMap;
   }
@@ -293,7 +293,7 @@ async function applySpaceAwareFiltering(params: {
   sortBy: string;
   timeRange: string;
 }): Promise<FilteredFeedResult[]> {
-  const { _userId, userSpaceContexts, visibilityRules, contentTypes, maxContentPerSpace, sortBy, timeRange } = params;
+  const { userId: _userId, userSpaceContexts, visibilityRules, contentTypes, maxContentPerSpace, sortBy, timeRange } = params;
   
   const results: FilteredFeedResult[] = [];
 
@@ -403,7 +403,7 @@ async function getSpaceContent(
   } catch (error) {
     logger.error(
       `Error getting space content at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -567,7 +567,7 @@ async function calculateUserEngagementInSpace(userId: string, spaceId: string): 
   } catch (error) {
     logger.error(
       `Error calculating engagement at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 20;
   }
@@ -648,7 +648,7 @@ async function getSpaceAccessInfo(userId: string, spaceId: string, includePrevie
   } catch (error) {
     logger.error(
       `Error getting space access info at /api/feed/space-filtering`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return { spaceId, accessible: false, reason: 'Error checking access' };
   }

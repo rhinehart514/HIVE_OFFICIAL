@@ -8,7 +8,7 @@ const EventsPanel = dynamic(() => import("@/components/spaces/panels/events-pane
 
 export default function SpaceEventsPage() {
   const { spaceId } = useParams<{ spaceId: string }>();
-  const { _user } = useAuth();
+  const { user: _user } = useAuth();
 
   // Role resolution can be refined; default to guest
   return (

@@ -1,10 +1,10 @@
-import { type NextRequest, NextResponse } from 'next/server';
-import { _headers } from 'next/headers';
+import { type NextRequest as _NextRequest, NextResponse } from 'next/server';
+import { headers as _headers } from 'next/headers';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { _getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser as _getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
-import { withAuth, _ApiResponse, type AuthContext } from '@/lib/api-auth-middleware';
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { withAuth, ApiResponse as _ApiResponse, type AuthContext } from '@/lib/api-auth-middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import type { QueryDocumentSnapshot, QuerySnapshot } from 'firebase-admin/firestore';
 
@@ -98,20 +98,20 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
         };
       }),
       ...spaceEvents.map(data => ({
-        id: data.id,
-        title: data.title,
-        description: data.description || '',
-        startDate: data.startDate,
-        endDate: data.endDate,
-        location: data.location,
-        isAllDay: data.isAllDay || false,
+        id: data.id as string,
+        title: data.title as string,
+        description: (data.description as string) || '',
+        startDate: data.startDate as string,
+        endDate: data.endDate as string,
+        location: data.location as string,
+        isAllDay: (data.isAllDay as boolean) || false,
         type: 'space' as const,
-        source: data.spaceName || 'Unknown Space',
-        spaceId: data.spaceId,
-        spaceName: data.spaceName,
+        source: (data.spaceName as string) || 'Unknown Space',
+        spaceId: data.spaceId as string,
+        spaceName: data.spaceName as string,
         canEdit: false,
-        eventType: data.eventType || 'event',
-        organizerName: data.organizerName
+        eventType: (data.eventType as string) || 'event',
+        organizerName: data.organizerName as string
       }))
     ];
 
@@ -123,7 +123,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 }
 
 // GET - Fetch calendar events (personal + space events)
-export const GET = withAuth(async (request: NextRequest, authContext: AuthContext) => {
+export const GET = withAuth(async (request, authContext: AuthContext) => {
   try {
     const userId = authContext.userId;
     
@@ -287,17 +287,16 @@ export const GET = withAuth(async (request: NextRequest, authContext: AuthContex
   } catch (error) {
     logger.error(
       `Error fetching calendar events at /api/calendar`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch calendar events", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}, { 
-  allowDevelopmentBypass: true,
-  operation: 'get_calendar_events' 
+}, {
+  operation: 'get_calendar_events'
 });
 
 // POST - Create personal event
-export const POST = withAuth(async (request: NextRequest, authContext: AuthContext) => {
+export const POST = withAuth(async (request, authContext: AuthContext) => {
   try {
     const userId = authContext.userId;
 
@@ -341,11 +340,10 @@ export const POST = withAuth(async (request: NextRequest, authContext: AuthConte
   } catch (error) {
     logger.error(
       `Error creating personal event at /api/calendar`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to create personal event", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}, { 
-  allowDevelopmentBypass: true,
-  operation: 'create_calendar_event' 
+}, {
+  operation: 'create_calendar_event'
 });

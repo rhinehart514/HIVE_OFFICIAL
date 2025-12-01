@@ -1,171 +1,224 @@
-"use client";
+'use client';
 
-import { useState, Suspense } from "react";
-import { Loader2, Mail, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { getAuth, sendSignInLinkToEmail } from "firebase/auth";
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { useState, Suspense } from 'react';
+import { Loader2, Mail, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Button, Input } from '@hive/ui';
+import {
+  transitionSilk,
+  staggerContainer,
+  staggerItem,
+  breathingGlow,
+  GLOW_GOLD_SUBTLE,
+} from '@/lib/motion-primitives';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-// Initialize Firebase Client SDK
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-// Campus configuration - configurable via env vars for multi-tenant support
+// Campus configuration
 const CAMPUS_CONFIG = {
-  id: process.env.NEXT_PUBLIC_CAMPUS_ID || "ub-buffalo",
-  domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || "buffalo.edu",
-  name: process.env.NEXT_PUBLIC_CAMPUS_NAME || "UB",
-  fullName: process.env.NEXT_PUBLIC_CAMPUS_FULL_NAME || "University at Buffalo",
+  id: process.env.NEXT_PUBLIC_CAMPUS_ID || 'ub-buffalo',
+  domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
+  name: process.env.NEXT_PUBLIC_CAMPUS_NAME || 'UB',
+  fullName: process.env.NEXT_PUBLIC_CAMPUS_FULL_NAME || 'University at Buffalo',
+  schoolId: process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub',
 };
 
-type Step = "email" | "sent";
-
-const RESEND_DELAY_MS = 30_000;
-
-const transition = {
-  duration: 0.4,
-  ease: [0.22, 1, 0.36, 1],
-};
+type LoginState = 'input' | 'sending' | 'sent';
 
 function LoginContent() {
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sentAt, setSentAt] = useState<number | null>(null);
+  const [loginState, setLoginState] = useState<LoginState>('input');
 
-  const canResend = sentAt ? Date.now() - sentAt >= RESEND_DELAY_MS : true;
-  const fullEmail = email.includes("@") ? email : `${email}@${CAMPUS_CONFIG.domain}`;
+  const fullEmail = email.includes('@') ? email : `${email}@${CAMPUS_CONFIG.domain}`;
 
   const handleSubmit = async () => {
     if (!email) {
-      setError("Enter your email");
+      setError('Enter your email');
       return;
     }
 
-    if (!fullEmail.endsWith(`@${CAMPUS_CONFIG.domain}`)) {
-      setError(`Use your @${CAMPUS_CONFIG.domain} email`);
+    // Basic email format validation
+    const emailToSend = fullEmail;
+    if (!emailToSend.includes('@') || !emailToSend.includes('.')) {
+      setError('Enter a valid email address');
       return;
     }
 
-    setIsSubmitting(true);
+    setLoginState('sending');
     setError(null);
 
     try {
-      // Store email for verification page
-      if (typeof window !== "undefined") {
-        localStorage.setItem("hive_pending_email", fullEmail);
-      }
+      const response = await fetch('/api/auth/send-magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailToSend,
+          schoolId: CAMPUS_CONFIG.schoolId
+        }),
+      });
 
-      // Configure where the magic link redirects to
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const actionCodeSettings = {
-        url: `${appUrl}/auth/verify?schoolId=${CAMPUS_CONFIG.id}&email=${encodeURIComponent(fullEmail)}`,
-        handleCodeInApp: true,
-      };
+      const data = await response.json();
 
-      // Use Firebase Client SDK - this sends the email automatically!
-      await sendSignInLinkToEmail(auth, fullEmail, actionCodeSettings);
-
-      setStep("sent");
-      setSentAt(Date.now());
-    } catch (err: unknown) {
-      console.error("Magic link error:", err);
-      const firebaseError = err as { code?: string; message?: string };
-
-      // Handle specific Firebase errors
-      if (firebaseError.code === "auth/invalid-email") {
-        setError("Invalid email address");
-      } else if (firebaseError.code === "auth/missing-android-pkg-name" ||
-                 firebaseError.code === "auth/missing-continue-uri" ||
-                 firebaseError.code === "auth/invalid-continue-uri") {
-        setError("Configuration error. Please try again later.");
+      if (response.ok && data.success !== false) {
+        setLoginState('sent');
       } else {
-        setError(firebaseError.message || "Unable to send link");
+        setError(data.error || 'Failed to send magic link');
+        setLoginState('input');
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleResend = async () => {
-    if (!email || !canResend) return;
-
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      // Configure where the magic link redirects to
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
-      const actionCodeSettings = {
-        url: `${appUrl}/auth/verify?schoolId=${CAMPUS_CONFIG.id}&email=${encodeURIComponent(fullEmail)}`,
-        handleCodeInApp: true,
-      };
-
-      // Use Firebase Client SDK - this sends the email automatically!
-      await sendSignInLinkToEmail(auth, fullEmail, actionCodeSettings);
-
-      setSentAt(Date.now());
-    } catch (err: unknown) {
-      console.error("Resend magic link error:", err);
-      const firebaseError = err as { code?: string; message?: string };
-      setError(firebaseError.message || "Unable to resend link");
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Magic link error:', err);
+      setError('Unable to send magic link. Please try again.');
+      setLoginState('input');
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isSubmitting) {
+    if (e.key === 'Enter' && loginState === 'input') {
       handleSubmit();
     }
   };
 
-  return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <AnimatePresence mode="wait">
-        {step === "email" && (
-          <motion.div
-            key="email"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={transition}
-            className="w-full max-w-sm space-y-8"
-          >
-            {/* Logo */}
-            <div className="text-center">
-              <div className="inline-flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-[#FFD700] rounded-lg" />
-                <span className="text-xl font-bold text-white">HIVE</span>
-              </div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">
-                Join the movement
-              </h1>
-              <p className="mt-2 text-neutral-400">
-                Sign in with your {CAMPUS_CONFIG.name} email
-              </p>
-            </div>
+  const handleBackToInput = () => {
+    setLoginState('input');
+    setError(null);
+  };
 
-            {/* Form */}
-            <div className="bg-neutral-950 rounded-2xl p-6 border border-neutral-800 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-neutral-400 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <input
+  return (
+    <div className="relative min-h-screen bg-black flex items-center justify-center p-6 overflow-hidden">
+      {/* Ambient background effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
+            backgroundSize: '32px 32px',
+          }}
+        />
+
+        {/* Breathing gold orb */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gold-500"
+          style={{ filter: 'blur(120px)' }}
+          variants={breathingGlow}
+          animate="animate"
+        />
+      </div>
+
+      {/* Main content */}
+      <motion.div
+        className="relative w-full max-w-sm"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+      >
+        {/* Logo & Header */}
+        <motion.div variants={staggerItem} transition={transitionSilk} className="text-center mb-8">
+          {/* Logo */}
+          <motion.div
+            className="inline-flex items-center gap-3 mb-6"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+          >
+            <div
+              className="w-10 h-10 rounded-xl border-2 border-gold-500 bg-gold-500/10 flex items-center justify-center"
+              style={{ boxShadow: GLOW_GOLD_SUBTLE }}
+            >
+              <img src="/assets/hive-logo-gold.svg" alt="" className="w-6 h-6" />
+            </div>
+            <span className="text-2xl font-bold text-white tracking-tight">HIVE</span>
+          </motion.div>
+
+          <AnimatePresence mode="wait">
+            {loginState === 'sent' ? (
+              <motion.div
+                key="sent"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <h1 className="text-3xl font-bold text-white tracking-tight">Check your email</h1>
+                <p className="mt-2 text-neutral-400">
+                  We sent a magic link to sign you in
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="input"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <h1 className="text-3xl font-bold text-white tracking-tight">Welcome to HIVE</h1>
+                <p className="mt-2 text-neutral-400">
+                  Sign in with your {CAMPUS_CONFIG.name} email
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Form Card */}
+        <motion.div
+          variants={staggerItem}
+          transition={transitionSilk}
+          className="bg-neutral-950/80 backdrop-blur-xl rounded-2xl p-6 border border-neutral-800/50"
+        >
+          <AnimatePresence mode="wait">
+            {loginState === 'sent' ? (
+              <motion.div
+                key="sent-state"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center py-4 space-y-6"
+              >
+                {/* Success Icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                  className="mx-auto w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center"
+                >
+                  <CheckCircle2 className="w-8 h-8 text-green-400" />
+                </motion.div>
+
+                {/* Email Display */}
+                <div className="space-y-2">
+                  <p className="text-neutral-300 font-medium">{fullEmail}</p>
+                  <p className="text-sm text-neutral-500">
+                    Click the link in your email to sign in.
+                    <br />
+                    The link expires in 15 minutes.
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-3 pt-2">
+                  <Button
+                    variant="ghost"
+                    onClick={handleBackToInput}
+                    fullWidth
+                    className="text-neutral-400 hover:text-white"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Use a different email
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="input-state"
+                variants={staggerContainer}
+                initial="initial"
+                animate="animate"
+                className="space-y-5"
+              >
+                {/* Email Input */}
+                <motion.div variants={staggerItem} transition={transitionSilk}>
+                  <Input
+                    label="Email"
                     type="text"
                     autoComplete="email"
                     autoFocus
@@ -176,125 +229,69 @@ function LoginContent() {
                     }}
                     onKeyDown={handleKeyDown}
                     placeholder="yourname"
-                    className={`w-full h-12 px-4 pr-[120px] bg-black border rounded-lg text-white placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-neutral-600 ${
-                      error ? "border-red-500" : "border-neutral-800"
-                    }`}
+                    suffix={`@${CAMPUS_CONFIG.domain}`}
+                    error={error || undefined}
+                    disabled={loginState === 'sending'}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-neutral-500">
-                    @{CAMPUS_CONFIG.domain}
-                  </span>
-                </div>
-              </div>
+                </motion.div>
 
-              {error && (
+                {/* Submit Button */}
+                <motion.div variants={staggerItem} transition={transitionSilk}>
+                  <Button
+                    onClick={handleSubmit}
+                    state={loginState === 'sending' ? 'loading' : 'idle'}
+                    fullWidth
+                    size="lg"
+                    disabled={loginState === 'sending'}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    {loginState === 'sending' ? 'Sending...' : 'Send Magic Link'}
+                  </Button>
+                </motion.div>
+
+                {/* Info Text */}
                 <motion.p
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-sm text-red-400"
+                  variants={staggerItem}
+                  transition={transitionSilk}
+                  className="text-xs text-center text-neutral-500"
                 >
-                  {error}
+                  We&apos;ll email you a secure sign-in link.
+                  <br />
+                  No password needed.
                 </motion.p>
-              )}
 
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="w-full h-12 bg-[#FFD700] text-black font-semibold rounded-lg hover:brightness-110 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-
-              <p className="text-xs text-center text-neutral-500">
-                By continuing, you agree to our{" "}
-                <a href="/legal/terms" className="underline hover:text-neutral-300">
-                  Terms
-                </a>{" "}
-                and{" "}
-                <a href="/legal/privacy" className="underline hover:text-neutral-300">
-                  Privacy Policy
-                </a>
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {step === "sent" && (
-          <motion.div
-            key="sent"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={transition}
-            className="w-full max-w-sm space-y-8"
-          >
-            <div className="flex justify-center">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 25 }}
-                className="h-16 w-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center"
-              >
-                <Mail className="h-7 w-7 text-[#FFD700]" />
+                {/* Legal */}
+                <motion.p
+                  variants={staggerItem}
+                  transition={transitionSilk}
+                  className="text-xs text-center text-neutral-500 pt-2"
+                >
+                  By continuing, you agree to our{' '}
+                  <a href="/legal/terms" className="underline hover:text-neutral-300 transition-colors">
+                    Terms
+                  </a>{' '}
+                  and{' '}
+                  <a href="/legal/privacy" className="underline hover:text-neutral-300 transition-colors">
+                    Privacy Policy
+                  </a>
+                </motion.p>
               </motion.div>
-            </div>
-
-            <div className="text-center space-y-3">
-              <h1 className="text-3xl font-bold text-white tracking-tight">
-                Check your inbox
-              </h1>
-              <p className="text-neutral-400">
-                We sent a magic link to{" "}
-                <span className="text-white font-medium">{fullEmail}</span>
-              </p>
-            </div>
-
-            {error && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-sm text-center text-red-400"
-              >
-                {error}
-              </motion.p>
             )}
+          </AnimatePresence>
+        </motion.div>
 
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={!canResend || isSubmitting}
-                className="w-full h-12 bg-neutral-900 border border-neutral-800 text-white font-medium rounded-lg hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  "Resend link"
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStep("email");
-                  setError(null);
-                }}
-                className="w-full text-sm text-neutral-500 hover:text-white py-3 transition-colors"
-              >
-                Use different email
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Campus Badge */}
+        <motion.div
+          variants={staggerItem}
+          transition={transitionSilk}
+          className="mt-6 flex justify-center"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900/50 border border-neutral-800/50">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs text-neutral-400">{CAMPUS_CONFIG.fullName}</span>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
@@ -302,7 +299,14 @@ function LoginContent() {
 function LoginPageFallback() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
-      <Loader2 className="h-5 w-5 animate-spin text-neutral-500" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex flex-col items-center gap-4"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-white" />
+        <span className="text-sm text-neutral-500">Loading...</span>
+      </motion.div>
     </div>
   );
 }

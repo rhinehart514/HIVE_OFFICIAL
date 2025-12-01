@@ -551,18 +551,8 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Enhanced user management is not available</p>
-      </div>
-    );
-  }
-
   const searchUsers = useCallback(async () => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     setError(null);
@@ -609,10 +599,10 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
     } finally {
       setLoading(false);
     }
-  }, [admin, searchTerm, selectedRole, selectedStatus, selectedVerification, selectedUniversity, sortBy, sortOrder]);
+  }, [admin, enableFeatureFlag, searchTerm, selectedRole, selectedStatus, selectedVerification, selectedUniversity, sortBy, sortOrder]);
 
   const handleUserAction = useCallback(async (action: string, userId: string) => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     setError(null);
@@ -645,15 +635,15 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
     } finally {
       setLoading(false);
     }
-  }, [admin, searchUsers, selectedUser]);
+  }, [admin, enableFeatureFlag, searchUsers, selectedUser]);
 
   const handleBulkAction = useCallback(async (action: string) => {
-    if (selectedUsers.length === 0) return;
+    if (selectedUsers.length === 0 || !enableFeatureFlag) return;
     
     await onBulkAction?.(selectedUsers, action);
     await searchUsers();
     setSelectedUsers([]);
-  }, [selectedUsers, onBulkAction, searchUsers]);
+  }, [selectedUsers, enableFeatureFlag, onBulkAction, searchUsers]);
 
   const handleUserSelect = useCallback((userId: string) => {
     setSelectedUsers(prev => 
@@ -674,8 +664,9 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
   }, [users, selectedUsers]);
 
   useEffect(() => {
+    if (!enableFeatureFlag) return;
     searchUsers();
-  }, [searchUsers]);
+  }, [enableFeatureFlag, searchUsers]);
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
@@ -694,6 +685,15 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
   };
 
   const stats = getStatsOverview();
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">Enhanced user management is not available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

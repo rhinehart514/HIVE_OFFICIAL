@@ -2,17 +2,26 @@ import * as admin from 'firebase-admin';
 import { unstable_cache } from 'next/cache';
 import { z } from "zod";
 import type { Space, SpaceType } from "@hive/core";
+import { Result } from "@hive/core/domain";
+import {
+  createServerSpaceManagementService,
+  getServerSpaceRepository,
+  toSpaceBrowseDTOList,
+  type SpaceMemberData
+} from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
-import { _getSecureSpacesQuery, getSecureSpacesWithCursor, addSecureCampusMetadata, _CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getUserEmail, type AuthenticatedRequest } from "@/lib/middleware";
+import { addSecureCampusMetadata, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+// SECURITY: Use centralized admin auth
+import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
 
 const createSpaceSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().min(1).max(500),
   category: z.enum(['student_org', 'residential', 'university_org', 'greek_life']),
-  joinPolicy: z.enum(['open', 'approval', 'invite_only']).default('open'),
-  tags: z.array(z.string()).default([]),
+  joinPolicy: z.enum(['open', 'approval', 'invite_only']),
+  tags: z.array(z.string()),
   agreedToGuidelines: z.boolean(),
   visibility: z.enum(['public', 'members_only']).optional(),
   settings: z.object({
@@ -21,33 +30,13 @@ const createSpaceSchema = z.object({
   }).optional()
 });
 
-// Cached spaces fetcher - 300 second cache (5 minutes) with tags for revalidation
-const getCachedSpaces = unstable_cache(
-  async (
-    filterType?: SpaceType,
-    searchTerm?: string,
-    limit: number = 50,
-    cursor?: string,
-    orderBy: 'name_lowercase' | 'createdAt' = 'createdAt',
-    orderDirection: 'asc' | 'desc' = 'desc'
-  ) => {
-    return await getSecureSpacesWithCursor({
-      filterType,
-      searchTerm,
-      limit,
-      cursor,
-      orderBy,
-      orderDirection
-    });
-  },
-  ['spaces-cache'],
-  {
-    revalidate: 300, // Cache for 5 minutes
-    tags: ['spaces']
-  }
-);
-
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
+/**
+ * GET /api/spaces - List spaces with DDD repository
+ * Supports filtering by type, search, and cursor-based pagination.
+ * Uses unstable_cache for 5-minute caching.
+ */
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const filterType = searchParams.get("type") as SpaceType | "all" | null;
   const searchTerm = searchParams.get("q")?.toLowerCase() || null;
@@ -60,28 +49,63 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       await ensureSampleSpaces();
     }
 
-    // SECURITY: Use secure cursor-based pagination with campus isolation (cached)
-    const result = await getCachedSpaces(
-      filterType === "all" ? undefined : filterType || undefined,
-      searchTerm || undefined,
+    // Use DDD repository for space queries
+    const spaceRepo = getServerSpaceRepository();
+
+    const queryResult = await spaceRepo.findWithPagination({
+      campusId: CURRENT_CAMPUS_ID,
+      type: filterType === "all" ? undefined : filterType || undefined,
+      searchTerm: searchTerm || undefined,
       limit,
       cursor,
-      searchTerm ? 'name_lowercase' : 'createdAt',
-      searchTerm ? 'asc' : 'desc'
+      orderBy: searchTerm ? 'name_lowercase' : 'createdAt',
+      orderDirection: searchTerm ? 'asc' : 'desc'
+    });
+
+    if (queryResult.isFailure) {
+      logger.error('Failed to fetch spaces via DDD', { error: queryResult.error });
+      return respond.error("Failed to fetch spaces", "INTERNAL_ERROR", { status: 500 });
+    }
+
+    const { spaces, hasMore, nextCursor } = queryResult.getValue();
+
+    // Get user's joined spaces to mark them
+    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    const userSpaceIds = new Set(
+      userSpacesResult.isSuccess
+        ? userSpacesResult.getValue().map(s => s.spaceId.value)
+        : []
     );
 
+    // Transform using unified DTOs
+    const transformedSpaces = toSpaceBrowseDTOList(spaces, userSpaceIds);
+
+    logger.info('Fetched spaces via DDD repository', {
+      count: transformedSpaces.length,
+      hasMore,
+      filterType,
+      searchTerm,
+      endpoint: '/api/spaces'
+    });
+
     return respond.success({
-      spaces: result.spaces as Space[],
+      spaces: transformedSpaces,
       pagination: {
         limit,
-        hasMore: result.hasMore,
-        nextCursor: result.nextCursor,
+        hasMore,
+        nextCursor,
         // For backwards compatibility with offset-based clients
-        count: result.spaces.length
+        count: transformedSpaces.length
       }
     });
   } catch (error) {
-    logger.error('Error fetching spaces', { error: error instanceof Error ? error : new Error(String(error)), filterType: filterType || undefined, searchTerm: searchTerm || undefined, limit, cursor });
+    logger.error('Error fetching spaces', {
+      error: error instanceof Error ? error.message : String(error),
+      filterType: filterType || undefined,
+      searchTerm: searchTerm || undefined,
+      limit,
+      cursor
+    });
     return respond.error("Failed to fetch spaces", "INTERNAL_ERROR", { status: 500 });
   }
 });
@@ -90,10 +114,11 @@ type CreateSpaceData = z.infer<typeof createSpaceSchema>;
 
 export const POST = withAuthValidationAndErrors(
   createSpaceSchema,
-  async (request: AuthenticatedRequest, context, body: CreateSpaceData, respond) => {
+  async (request, context, body: CreateSpaceData, respond) => {
   const { name, description, category, joinPolicy, tags, agreedToGuidelines, visibility, settings } = body;
-  const userId = getUserId(request);
-  const userEmail = request.user.email || '';
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const userEmail = getUserEmail(req);
 
   // CHECK 1: Agreement to guidelines
   if (!agreedToGuidelines) {
@@ -111,14 +136,15 @@ export const POST = withAuthValidationAndErrors(
   // CHECK 3: Account age (7 days minimum)
   const accountCreated = userData.createdAt?.toDate() || new Date();
   const accountAge = Math.floor((Date.now() - accountCreated.getTime()) / (1000 * 60 * 60 * 24));
-  const isAdmin = userData.role === 'admin' || userData.isAdmin === true;
+  // SECURITY: Use centralized admin check (checks custom claims + Firestore admins collection)
+  const isAdmin = await checkIsAdmin(userId, req.user.decodedToken.email);
 
   if (accountAge < 7 && !isAdmin) {
     return respond.error(`Account must be at least 7 days old (current: ${accountAge} days)`, "PERMISSION_DENIED", { status: 403 });
   }
 
   // CHECK 4: Email verification
-  const emailVerified = request.user.decodedToken.email_verified || false;
+  const emailVerified = req.user.decodedToken.email_verified || false;
   if (!emailVerified && !isAdmin) {
     return respond.error("Email verification required", "PERMISSION_DENIED", { status: 403 });
   }
@@ -151,10 +177,10 @@ export const POST = withAuthValidationAndErrors(
     return respond.error("Your space creation privileges have been revoked", "PERMISSION_DENIED", { status: 403 });
   }
 
-  // CHECK 8: Name uniqueness
+  // CHECK 8: Name uniqueness (use CURRENT_CAMPUS_ID instead of hardcoded)
   const existingSpaceSnapshot = await dbAdmin
     .collection('spaces')
-    .where('campusId', '==', 'ub-buffalo')
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
     .where('name_lowercase', '==', name.toLowerCase())
     .limit(1)
     .get();
@@ -163,117 +189,113 @@ export const POST = withAuthValidationAndErrors(
     return respond.error("A space with this name already exists", "CONFLICT", { status: 409 });
   }
 
-  // Generate space ID and create space document - use secure metadata
-  const spaceRef = dbAdmin.collection('spaces').doc();
-  const spaceId = spaceRef.id;
-  const now = admin.firestore.FieldValue.serverTimestamp();
-
-  // Map category to old type for compatibility
-  const typeMapping = {
-    'student_org': 'student_organizations',
-    'residential': 'residential_spaces',
-    'university_org': 'university_organizations',
-    'greek_life': 'greek_life_spaces'
+  // Create space member save callback for cross-collection write
+  const saveSpaceMember = async (member: SpaceMemberData): Promise<Result<void>> => {
+    try {
+      const memberRef = dbAdmin.collection('spaceMembers').doc();
+      await memberRef.set(addSecureCampusMetadata({
+        spaceId: member.spaceId,
+        userId: member.userId,
+        role: member.role,
+        joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+        isActive: member.isActive,
+        permissions: member.permissions,
+        joinMethod: member.joinMethod
+      }));
+      return Result.ok<void>();
+    } catch (error) {
+      return Result.fail<void>(`Failed to save space member: ${error}`);
+    }
   };
 
-  // SECURITY: Use secure campus metadata function
-  const spaceData = addSecureCampusMetadata({
+  // Use DDD SpaceManagementService for space creation
+  const spaceService = createServerSpaceManagementService(
+    { userId, campusId: CURRENT_CAMPUS_ID },
+    saveSpaceMember
+  );
+
+  const createResult = await spaceService.createSpace(userId, {
     name,
-    name_lowercase: name.toLowerCase(),
     description,
-    category,
-    type: typeMapping[category], // For backward compatibility
-    joinPolicy,
-    visibility: visibility || 'public',
-    tags: tags || [],
-    status: 'active',
-    isActive: true,
-
-    // Creator info
-    createdBy: userId,
-    leaders: [userId],
-    moderators: [],
-
-    // Settings
+    category, // Service handles API→domain category mapping
+    visibility: visibility === 'members_only' ? 'private' : 'public',
     settings: {
-      maxPinnedPosts: settings?.maxPinnedPosts || 3,
-      autoArchiveDays: settings?.autoArchiveDays || 7,
-      allowGuestView: visibility === 'public',
+      allowInvites: true,
       requireApproval: joinPolicy === 'approval',
-      notifyOnJoin: true
-    },
-
-    // Metrics
-    memberCount: 1,
-    onlineCount: 0,
-    activityLevel: 'quiet',
-    lastActivity: admin.firestore.FieldValue.serverTimestamp(),
-
-    // Behavioral scores (will be calculated daily)
-    anxietyReliefScore: 0,
-    socialProofScore: 0,
-    insiderAccessScore: joinPolicy === 'invite_only' ? 0.5 : 0,
-    joinToActiveRate: 0,
-
-    // Promotion
-    promotedPostsToday: 0,
-    autoPromotionEnabled: false,
-
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      allowRSS: false,
+      maxMembers: undefined
+    }
   });
 
-  // Use batch write for atomicity
-  const batch = dbAdmin.batch();
+  if (createResult.isFailure) {
+    logger.error('Failed to create space via DDD service', {
+      error: createResult.error,
+      userId,
+      spaceName: name
+    });
+    return respond.error(
+      createResult.error || 'Failed to create space',
+      'INTERNAL_ERROR',
+      { status: 500 }
+    );
+  }
 
-  // Create space in nested structure
-  batch.set(spaceRef, spaceData);
+  const { space, slug } = createResult.getValue().data;
+  const spaceId = space.spaceId.value;
 
-  // Add creator as owner in flat spaceMembers collection with secure metadata
-  const memberRef = dbAdmin.collection('spaceMembers').doc();
-  batch.set(memberRef, addSecureCampusMetadata({
-    spaceId,
-    userId,
-    role: 'owner',
-    joinedAt: now,
-    isActive: true,
-    permissions: ['admin', 'moderate', 'post', 'invite'],
-    joinMethod: 'created'
-  }));
-
-  // Add audit log for space creation
-  const auditRef = dbAdmin.collection('audit_logs').doc();
-  batch.set(auditRef, {
+  // Add audit log for space creation (kept separate from DDD for now)
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  await dbAdmin.collection('audit_logs').doc().set({
     type: 'space_created',
     userId,
     userEmail,
     spaceId,
     spaceName: name,
+    slug,
     category,
     joinPolicy,
     timestamp: now,
     metadata: {
       accountAge,
       emailVerified,
-      spacesCreatedToday: spacesCreatedTodaySnapshot.size + 1
+      spacesCreatedToday: spacesCreatedTodaySnapshot.size + 1,
+      createdViaDDD: true
     }
   });
 
-  // Commit all changes atomically
-  await batch.commit();
-
-  logger.info('✅ Created space by user', {
+  logger.info('✅ Created space via DDD service', {
     category,
     userId,
     spaceId,
     spaceName: name,
+    slug,
     endpoint: '/api/spaces'
   });
+
+  // Map category to type for backward compatibility in response
+  const typeMapping: Record<string, string> = {
+    'student_org': 'student_organizations',
+    'residential': 'residential_spaces',
+    'university_org': 'university_organizations',
+    'greek_life': 'greek_life_spaces'
+  };
 
   return respond.success({
     space: {
       id: spaceId,
-      ...spaceData
+      name,
+      name_lowercase: name.toLowerCase(),
+      slug,
+      description,
+      category,
+      type: typeMapping[category] || 'student_organizations',
+      campusId: CURRENT_CAMPUS_ID,
+      visibility: visibility || 'public',
+      joinPolicy,
+      tags: tags || [],
+      createdBy: userId,
+      memberCount: 1,
+      isActive: true
     }
   }, { status: 201 });
   }

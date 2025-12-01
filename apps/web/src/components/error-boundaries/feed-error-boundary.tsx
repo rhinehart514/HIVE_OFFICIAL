@@ -11,7 +11,7 @@ interface FeedErrorFallbackProps {
   errorId?: string;
 }
 
-function FeedErrorFallback({ _error, retry, errorId }: FeedErrorFallbackProps) {
+function FeedErrorFallback({ error: _error, retry, errorId }: FeedErrorFallbackProps) {
   return (
     <div className="max-w-2xl mx-auto px-6 py-8">
       <Card className="p-8 bg-hive-surface border-hive-border text-center">

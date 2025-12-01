@@ -24,13 +24,13 @@ const ReviewActionSchema = z.object({
 export const POST = withAuthValidationAndErrors(
   ReviewActionSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     validatedData,
     respond
   ) => {
     try {
-      const reviewerId = getUserId(request);
+      const reviewerId = getUserId(request as AuthenticatedRequest);
 
     // Check if user is admin/reviewer
     const userDoc = await adminDb.collection('users').doc(reviewerId).get();
@@ -176,7 +176,7 @@ export const POST = withAuthValidationAndErrors(
   } catch (error) {
     logger.error(
       `Error reviewing tool at /api/tools/review`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return respond.error("Failed to review tool", "INTERNAL_ERROR", { status: 500 });
   }
@@ -185,12 +185,12 @@ export const POST = withAuthValidationAndErrors(
 
 // GET - Get pending review requests (Admin only)
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond
 ) => {
   try {
-    const reviewerId = getUserId(request);
+    const reviewerId = getUserId(request as AuthenticatedRequest);
 
     // Check if user is admin/reviewer
     const userDoc = await adminDb.collection('users').doc(reviewerId).get();
@@ -254,7 +254,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error fetching review requests at /api/tools/review`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error("Failed to fetch review requests", "INTERNAL_ERROR", { status: 500 });
   }

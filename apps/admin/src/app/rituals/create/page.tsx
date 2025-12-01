@@ -20,14 +20,13 @@ import {
 } from '@hive/ui';
 import {
   RITUAL_TEMPLATES,
-  getAvailableTemplates,
-  RitualArchetype,
   type RitualTemplate,
   type RitualTemplateId,
 } from '@hive/core';
 import { ChevronRight, ChevronLeft, Check, Sparkles } from 'lucide-react';
 
 type WizardStep = 'template' | 'basic' | 'config' | 'presentation' | 'review';
+type RitualFormData = Record<string, string | number | boolean | undefined>;
 
 export default function CreateRitualPage() {
   const router = useRouter();
@@ -35,12 +34,11 @@ export default function CreateRitualPage() {
 
   const [currentStep, setCurrentStep] = useState<WizardStep>('template');
   const [selectedTemplate, setSelectedTemplate] = useState<RitualTemplate | null>(null);
-  const [ritualData, setRitualData] = useState<any>({});
+  const [ritualData, setRitualData] = useState<RitualFormData>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Mock: Get current user count (in production, fetch from API)
   const currentUsers = 150;
-  const availableTemplates = getAvailableTemplates(currentUsers);
 
   const steps: { id: WizardStep; label: string; number: number }[] = [
     { id: 'template', label: 'Choose Template', number: 1 },
@@ -102,7 +100,7 @@ export default function CreateRitualPage() {
         throw new Error(error.error || 'Failed to create ritual');
       }
 
-      const { data } = await res.json();
+      await res.json();
 
       toast({
         title: 'Ritual Created!',

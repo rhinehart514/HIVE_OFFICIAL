@@ -32,10 +32,10 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
     unreadCount,
     loading,
     error,
-    _markAsRead,
-    _markAllAsRead,
-    _deleteNotification,
-    _clearAll,
+    markAsRead: _markAsRead,
+    markAllAsRead: _markAllAsRead,
+    deleteNotification: _deleteNotification,
+    clearAll: _clearAll,
   } = useRealtimeNotifications();
 
   // Handle navigation to notification targets
@@ -52,7 +52,7 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
       // Navigate using Next.js router
       router.push(url);
     } catch (error) {
-      logger.error('Navigation error from notification', { error: error instanceof Error ? error : new Error(String(error)), url });
+      logger.error('Navigation error from notification', { error: { error: error instanceof Error ? error.message : String(error) }, url });
     }
   };
 

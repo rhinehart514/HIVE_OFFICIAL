@@ -12,7 +12,7 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
-  _deleteDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
   increment
@@ -20,7 +20,7 @@ import {
 import { db } from '@hive/firebase';
 import { useAuth } from '@hive/auth-logic';
 import { logger } from '@/lib/logger';
-import { _sendNotification } from './use-notifications';
+import { sendNotification } from './use-notifications';
 
 export interface Comment {
   id: string;
@@ -137,7 +137,7 @@ export function useRealtimeComments(postId: string | null) {
         });
       },
       (error) => {
-        logger.error('Comments subscription error', { error: error instanceof Error ? error : new Error(String(error)), postId });
+        logger.error('Comments subscription error', { error: { error: error instanceof Error ? error.message : String(error) }, postId });
         setState(prev => ({
           ...prev,
           loading: false,
@@ -186,7 +186,7 @@ export function useRealtimeComments(postId: string | null) {
 
       return true;
     } catch (error) {
-      logger.error('Failed to add comment', { error: error instanceof Error ? error : new Error(String(error)), postId });
+      logger.error('Failed to add comment', { error: { error: error instanceof Error ? error.message : String(error) }, postId });
       return false;
     }
   }, [user, postId]);
@@ -213,7 +213,7 @@ export function useRealtimeComments(postId: string | null) {
       logger.info('Comment like toggled', { commentId, liked: !hasLiked });
       return true;
     } catch (error) {
-      logger.error('Failed to like comment', { error: error instanceof Error ? error : new Error(String(error)), commentId });
+      logger.error('Failed to like comment', { error: { error: error instanceof Error ? error.message : String(error) }, commentId });
       return false;
     }
   }, [user?.uid, postId, state.comments]);
@@ -247,7 +247,7 @@ export function useRealtimeComments(postId: string | null) {
       logger.info('Comment deleted', { commentId });
       return true;
     } catch (error) {
-      logger.error('Failed to delete comment', { error: error instanceof Error ? error : new Error(String(error)), commentId });
+      logger.error('Failed to delete comment', { error: { error: error instanceof Error ? error.message : String(error) }, commentId });
       return false;
     }
   }, [user?.uid, postId, state.comments]);
@@ -278,7 +278,7 @@ export function useRealtimeComments(postId: string | null) {
       logger.info('Comment edited', { commentId });
       return true;
     } catch (error) {
-      logger.error('Failed to edit comment', { error: error instanceof Error ? error : new Error(String(error)), commentId });
+      logger.error('Failed to edit comment', { error: { error: error instanceof Error ? error.message : String(error) }, commentId });
       return false;
     }
   }, [user?.uid, postId, state.comments]);

@@ -41,10 +41,10 @@ export function AuthTest() {
           <h4 className="font-medium text-purple-600">✅ Legacy useSession Hook</h4>
           <p className="text-sm">
             User: {session.user?.email || 'Not authenticated'}
-            ({session.isLoading ? 'Loading...' : session.isAuthenticated ? 'Authenticated' : 'Not authenticated'})
+            ({session.isLoading ? 'Loading...' : session.user ? 'Authenticated' : 'Not authenticated'})
           </p>
           <p className="text-sm">
-            School: {session.sessionData?.schoolId || 'N/A'}
+            School: {session.session?.schoolId || 'N/A'}
           </p>
         </div>
 

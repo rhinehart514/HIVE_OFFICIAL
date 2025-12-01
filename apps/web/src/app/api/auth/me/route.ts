@@ -58,8 +58,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       "Session verification failed",
-      error instanceof Error ? error : new Error(String(error)),
-      { metadata: { endpoint: "/api/auth/me" } }
+      { error: { error: error instanceof Error ? error.message : String(error) }, endpoint: "/api/auth/me" }
     );
 
     return NextResponse.json(

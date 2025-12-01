@@ -8,7 +8,7 @@
  * Flow: Example prompts → User message → AI response with streaming → Tool preview updates
  */
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   MessageBubble,
@@ -17,7 +17,8 @@ import {
   EmptyChatState,
   ChatInput,
   TypingIndicator,
-  ToolPreviewCard
+  ToolPreviewCard,
+  type ChatInputHandle
 } from '../../atomic/03-Chat';
 import { StreamingCanvasView } from '../../components/hivelab/StreamingCanvasView';
 import { SignupGateModal } from '../../components/auth/SignupGateModal';
@@ -27,7 +28,8 @@ import type { ToolComposition } from '../../lib/hivelab/element-system';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ResizableDivider } from '../../atomic/molecules/resizable-divider';
 import { cn } from '../../lib/utils';
-import { Command } from 'lucide-react';
+import { Command, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ElementShowcaseSidebar } from '../../components/hivelab/showcase';
 
 const EXAMPLE_PROMPTS = [
   {
@@ -55,11 +57,32 @@ export interface AILandingPageChatProps {
   /** Is user authenticated */
   isAuthenticated?: boolean;
 
+  /** Is user a space leader (shows deploy option) */
+  isSpaceLeader?: boolean;
+
   /** Handle signup */
   onSignup?: (email: string, password: string) => Promise<void>;
 
   /** Redirect to signup page */
   redirectToSignup?: () => void;
+
+  /** Save tool callback - returns { toolId } */
+  onSave?: (composition: ToolComposition) => Promise<{ toolId: string } | void>;
+
+  /** Share tool callback - returns share URL */
+  onShare?: (composition: ToolComposition) => Promise<string>;
+
+  /** Called after successful save with toolId and name */
+  onSaveComplete?: (toolId: string, toolName: string) => void;
+
+  /** Called when composition changes (for WIP auto-save) */
+  onCompositionChange?: (composition: ToolComposition) => void;
+
+  /** Initial composition (for WIP restore) */
+  initialComposition?: ToolComposition | null;
+
+  /** Server ID if tool already saved */
+  serverId?: string | null;
 }
 
 interface Message {
@@ -78,14 +101,28 @@ interface Message {
 export function AILandingPageChat({
   userId,
   isAuthenticated = false,
+  isSpaceLeader = false,
   onSignup,
-  redirectToSignup
+  redirectToSignup,
+  onSave,
+  onShare,
+  onSaveComplete,
+  onCompositionChange,
+  initialComposition,
+  serverId
 }: AILandingPageChatProps) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [showSignupGate, setShowSignupGate] = useState(false);
   const [currentAIMessage, setCurrentAIMessage] = useState('');
   const generationStepsRef = useRef<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
+
+  // Element showcase sidebar state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
 
   // Layout state management
   const [chatWidth, setChatWidth] = useState<number>(() => {
@@ -99,7 +136,7 @@ export function AILandingPageChat({
   const [userHasManuallyResized, setUserHasManuallyResized] = useState(false);
 
   // Streaming generation hook
-  const { state, generate, reset } = useStreamingGeneration({
+  const { state, generate, reset, hydrate } = useStreamingGeneration({
     onElementAdded: (element, status) => {
       // Track generation steps for conversational output
       const stepMessage = getStepMessage(element.elementId, status);
@@ -116,7 +153,7 @@ export function AILandingPageChat({
       const finalMessage =
         "I'll create that for you. Let me add:\n\n" +
         generationStepsRef.current.map((step, i) => `${i + 1}. ${step} ✓`).join('\n') +
-        `\n\nYour ${composition.name} is ready! You can see it previewed on the right. Click "Deploy to your org" when you're ready to launch it.`;
+        `\n\nYour ${composition.name} is ready! You can see it previewed on the right. Try it out with "Test", then "Save" when you're happy with it.`;
 
       // Add final AI message
       addAIMessage(finalMessage);
@@ -127,6 +164,11 @@ export function AILandingPageChat({
       if (!isAuthenticated && typeof window !== 'undefined') {
         saveLocalTool(composition);
       }
+
+      // Notify parent of composition change (for WIP auto-save)
+      if (onCompositionChange) {
+        onCompositionChange(composition);
+      }
     },
     onError: (error) => {
       addAIMessage(`I encountered an error while building your tool: ${error}. Please try again or rephrase your request.`);
@@ -134,6 +176,15 @@ export function AILandingPageChat({
       generationStepsRef.current = [];
     }
   });
+
+  // Hydrate from initialComposition (WIP restore)
+  useEffect(() => {
+    if (initialComposition && initialComposition.elements?.length > 0) {
+      hydrate(initialComposition);
+      // Add welcome back message
+      addAIMessage(`Welcome back! Your "${initialComposition.name || 'tool'}" has been restored. Continue building or save when you're ready.`);
+    }
+  }, [initialComposition]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-collapse chat when generation starts (unless user manually resized)
   const prevIsGeneratingRef = useRef(false);
@@ -173,14 +224,58 @@ export function AILandingPageChat({
     generationStepsRef.current = [];
     setCurrentAIMessage('');
 
-    // Start generation
-    await generate({ prompt: message });
+    // Check if we have an existing composition (for iteration)
+    const existingComposition = state.composition;
+    const hasExisting = existingComposition && existingComposition.elements.length > 0;
+
+    // Detect if this is likely an iteration request
+    const iterationSignals = ['add', 'also', 'include', 'change', 'modify', 'update', 'remove', 'make it', 'can you'];
+    const lowerMessage = message.toLowerCase().trim();
+    const isIteration = Boolean(hasExisting && iterationSignals.some(
+      signal => lowerMessage.startsWith(signal) || lowerMessage.includes(` ${signal} `)
+    ));
+
+    // Start generation (passing existing composition for iteration)
+    await generate({
+      prompt: message,
+      existingComposition: isIteration ? existingComposition ?? undefined : undefined,
+      isIteration,
+    });
   };
 
   // Handle example prompt click
   const handleExampleClick = (prompt: string) => {
     handleUserMessage(prompt);
   };
+
+  // Handle element showcase element selection
+  const handleElementSelect = useCallback((elementId: string) => {
+    // Could show element details or highlight in chat
+    console.log('[AILandingPageChat] Element selected:', elementId);
+  }, []);
+
+  // Handle element showcase prompt click
+  const handleShowcasePromptClick = useCallback((prompt: string) => {
+    // Pre-fill the chat input with the suggested prompt
+    setPendingPrompt(prompt);
+    // Collapse sidebar to show chat
+    setSidebarCollapsed(true);
+  }, []);
+
+  // Apply pending prompt when sidebar collapses
+  useEffect(() => {
+    if (pendingPrompt && sidebarCollapsed) {
+      // Small delay to let animation complete
+      const timer = setTimeout(() => {
+        if (chatInputRef.current) {
+          chatInputRef.current.setValue(pendingPrompt);
+          chatInputRef.current.focus();
+        }
+        setPendingPrompt(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingPrompt, sidebarCollapsed]);
 
   // Add user message
   const addUserMessage = (content: string) => {
@@ -204,7 +299,70 @@ export function AILandingPageChat({
     setMessages(prev => [...prev, newMessage]);
   };
 
-  // Handle deploy click
+  // Handle save click - primary action
+  const handleSave = async () => {
+    if (!state.composition) return;
+
+    if (!isAuthenticated) {
+      // Save to localStorage for anonymous users
+      saveLocalTool(state.composition);
+      addAIMessage("Saved! Your tool is stored locally. Sign up to sync it across devices and share it with others.");
+      return;
+    }
+
+    // For authenticated users, call the save callback
+    if (onSave) {
+      setIsSaving(true);
+      try {
+        const result = await onSave(state.composition);
+        const toolId = result?.toolId;
+        const toolName = state.composition.name || 'Your tool';
+
+        if (toolId && onSaveComplete) {
+          // Trigger success state + redirect in parent
+          onSaveComplete(toolId, toolName);
+        } else {
+          // Fallback: just show message (no redirect)
+          addAIMessage(`"${toolName}" saved to your creations!`);
+        }
+      } catch (error) {
+        addAIMessage("Failed to save. Please try again.");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  // Handle share click
+  const handleShare = async () => {
+    if (!state.composition) return;
+
+    if (!isAuthenticated) {
+      setShowSignupGate(true);
+      return;
+    }
+
+    if (onShare) {
+      try {
+        const shareUrl = await onShare(state.composition);
+        // Copy to clipboard
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(shareUrl);
+          addAIMessage(`Share link copied! Anyone with the link can use your tool.`);
+        }
+      } catch (error) {
+        addAIMessage("Failed to create share link. Please try again.");
+      }
+    }
+  };
+
+  // Handle test click - enable interactive preview
+  const handleTest = () => {
+    setIsTestMode(true);
+    addAIMessage("Test mode enabled! Try interacting with your tool in the preview.");
+  };
+
+  // Handle deploy click (for space leaders)
   const handleDeploy = () => {
     if (!isAuthenticated) {
       setShowSignupGate(true);
@@ -253,6 +411,27 @@ export function AILandingPageChat({
     <div className="flex flex-col h-screen bg-neutral-950">
       {/* Main: Split View - Full height, no navbar */}
       <div className="flex-1 flex overflow-hidden">
+        {/* Element Showcase Sidebar (Collapsible) */}
+        <AnimatePresence mode="wait">
+          {!sidebarCollapsed && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 320, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="h-full border-r border-neutral-800 bg-neutral-900/50 overflow-hidden"
+            >
+              <ElementShowcaseSidebar
+                onElementSelect={handleElementSelect}
+                onPromptClick={handleShowcasePromptClick}
+                collapsed={false}
+                onCollapseChange={() => setSidebarCollapsed(true)}
+                className="h-full"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Left: Chat (Dynamic Width) */}
         <motion.div
           className="flex flex-col relative"
@@ -289,6 +468,33 @@ export function AILandingPageChat({
               Expand
             </motion.button>
           )}
+
+          {/* Elements Sidebar Toggle Button */}
+          <AnimatePresence>
+            {sidebarCollapsed && (
+              <motion.button
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                onClick={() => setSidebarCollapsed(false)}
+                className={cn(
+                  'absolute left-4 top-4 z-10',
+                  'flex items-center gap-2 px-3 py-2 rounded-lg',
+                  'bg-neutral-900/90 hover:bg-neutral-800',
+                  'border border-neutral-800 hover:border-[#D4AF37]/30',
+                  'text-neutral-400 hover:text-[#D4AF37]',
+                  'transition-colors duration-200',
+                  'backdrop-blur-sm'
+                )}
+                title="Browse elements"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="text-xs font-medium hidden sm:inline">Elements</span>
+                <ChevronRight className="w-3 h-3" />
+              </motion.button>
+            )}
+          </AnimatePresence>
 
           <ConversationThread
             autoScroll={true}
@@ -337,6 +543,7 @@ export function AILandingPageChat({
 
           {/* Chat Input */}
           <ChatInput
+            ref={chatInputRef}
             onSubmit={handleUserMessage}
             onStop={() => {/* TODO: Implement stop generation */}}
             isGenerating={isGenerating}
@@ -372,8 +579,12 @@ export function AILandingPageChat({
             toolDescription={state.composition?.description}
             isGenerating={isGenerating}
             isComplete={hasComposition && !isGenerating}
-            onDeploy={handleDeploy}
+            onSave={handleSave}
+            onShare={isAuthenticated ? handleShare : undefined}
+            onTest={handleTest}
             onEdit={handleEdit}
+            onDeploy={isSpaceLeader ? handleDeploy : undefined}
+            isSpaceLeader={isSpaceLeader}
             composition={state.composition}
           >
             {/* Canvas Preview */}
@@ -384,6 +595,11 @@ export function AILandingPageChat({
                 isGenerating={isGenerating}
                 composition={state.composition}
                 progress={state.progress}
+                interactive={isTestMode}
+                onInteraction={(elementId, action, data) => {
+                  console.log('[Test Mode] Interaction:', { elementId, action, data });
+                  // Could show interaction feedback in chat
+                }}
               />
             )}
           </ToolPreviewCard>

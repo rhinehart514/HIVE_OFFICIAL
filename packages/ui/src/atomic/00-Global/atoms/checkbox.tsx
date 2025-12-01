@@ -19,9 +19,9 @@ const checkboxVariants = cva(
     "disabled:cursor-not-allowed disabled:opacity-40",
     "data-[state=unchecked]:bg-[color-mix(in_srgb,var(--hive-background-secondary) 97%,#ffd700 2%)]",
     "data-[state=unchecked]:border-[color-mix(in_srgb,var(--hive-border-default) 82%,#ffd700 6%)]",
-    "data-[state=checked]:bg-[#ffd700] data-[state=checked]:border-[#ffd700]",
+    "data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary",
     "data-[state=checked]:shadow-[0_12px_30px_rgba(255,215,0,0.35)]",
-    "data-[state=indeterminate]:bg-[#ffd700] data-[state=indeterminate]:border-[#ffd700]",
+    "data-[state=indeterminate]:bg-brand-primary data-[state=indeterminate]:border-brand-primary",
   ].join(" "),
   {
     variants: {

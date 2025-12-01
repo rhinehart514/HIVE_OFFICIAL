@@ -280,3 +280,84 @@ export function useLocalToolStorage() {
     importTools: importLocalTools
   };
 }
+
+// ============================================================================
+// WIP (Work In Progress) Tool Storage
+// Separate from main local tools - for caching current editing session
+// ============================================================================
+
+const WIP_STORAGE_KEY = 'hive_wip_tool';
+
+/**
+ * WIP Tool Data - current editing session
+ */
+export interface WIPToolData {
+  clientId: string;
+  serverId: string | null;
+  composition: ToolComposition;
+  lastModified: number;
+  prompt?: string;
+}
+
+/**
+ * Save current WIP tool to localStorage
+ */
+export function saveWIPTool(data: WIPToolData): boolean {
+  if (!isLocalStorageAvailable()) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(WIP_STORAGE_KEY, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('[WIPStorage] Failed to save WIP tool:', error);
+    return false;
+  }
+}
+
+/**
+ * Get current WIP tool from localStorage
+ */
+export function getWIPTool(): WIPToolData | null {
+  if (!isLocalStorageAvailable()) {
+    return null;
+  }
+
+  try {
+    const raw = localStorage.getItem(WIP_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as WIPToolData;
+  } catch (error) {
+    console.error('[WIPStorage] Failed to get WIP tool:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear WIP tool from localStorage (after successful save)
+ */
+export function clearWIPTool(): boolean {
+  if (!isLocalStorageAvailable()) {
+    return false;
+  }
+
+  try {
+    localStorage.removeItem(WIP_STORAGE_KEY);
+    return true;
+  } catch (error) {
+    console.error('[WIPStorage] Failed to clear WIP tool:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if WIP tool exists and is recent (within 24 hours)
+ */
+export function hasRecentWIPTool(): boolean {
+  const wip = getWIPTool();
+  if (!wip) return false;
+
+  const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+  return Date.now() - wip.lastModified < twentyFourHoursMs;
+}

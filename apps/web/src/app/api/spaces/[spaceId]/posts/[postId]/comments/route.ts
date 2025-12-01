@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
@@ -11,34 +11,58 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
+import { notifyNewComment, notifyCommentReply } from "@/lib/notification-service";
+import { getServerSpaceRepository } from "@hive/core/server";
+
+/**
+ * Check if content should be hidden from results
+ * Filters out moderated/hidden/removed content
+ */
+function isContentHidden(data: Record<string, unknown>): boolean {
+  if (data.isHidden === true) return true;
+  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
+  if (data.isDeleted === true) return true;
+  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
+  return false;
+}
 
 const CreateCommentSchema = z.object({
   content: z.string().min(1).max(1000),
   parentCommentId: z.string().optional(),
 });
 
-async function ensureSpaceMembership(spaceId: string, userId: string) {
-  const membership = await requireSpaceMembership(spaceId, userId);
-  if (!membership.ok) {
-    return {
-      ok: false as const,
-      status: membership.status,
-      message: membership.error,
-    };
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
   }
 
-  const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
-    return {
-      ok: false as const,
-      status: HttpStatus.FORBIDDEN,
-      message: "Access denied for this campus",
-    };
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
-  return { ok: true as const };
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
 async function ensurePostExists(spaceId: string, postId: string) {
@@ -59,24 +83,28 @@ async function ensurePostExists(spaceId: string, postId: string) {
   if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied for this campus" };
   }
+  // SECURITY: Don't allow access to hidden/moderated posts
+  if (isContentHidden(postData)) {
+    return { ok: false as const, status: 404, message: "Post not found" };
+  }
 
   return { ok: true as const, postDoc, postData };
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    const membership = await ensureSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
       const code =
-        membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(membership.message, code, { status: membership.status });
+        validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const post = await ensurePostExists(spaceId, postId);
@@ -98,7 +126,12 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of commentsSnapshot.docs) {
       const data = doc.data();
+      // SECURITY: Skip comments from other campuses
       if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+        continue;
+      }
+      // SECURITY: Skip hidden/moderated/removed comments
+      if (isContentHidden(data)) {
         continue;
       }
       const authorDoc = await dbAdmin.collection("users").doc(data.authorId).get();
@@ -123,7 +156,7 @@ export const GET = withAuthAndErrors(async (
             },
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
-        parentCommentId: data.parentCommentId || null,
+        parentCommentId: (data.parentCommentId as string) || null,
         replies: [],
         reactions: data.reactions || { heart: 0 },
         isEdited: Boolean(data.isEdited),
@@ -135,9 +168,9 @@ export const GET = withAuthAndErrors(async (
 
     for (const comment of commentMap.values()) {
       if (comment.parentCommentId) {
-        const parent = commentMap.get(comment.parentCommentId);
+        const parent = commentMap.get(comment.parentCommentId as string);
         if (parent) {
-          parent.replies.push(comment);
+          (parent.replies as typeof comment[]).push(comment);
         }
       } else {
         rootComments.push(comment);
@@ -151,7 +184,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching comments at /api/spaces/[spaceId]/posts/[postId]/comments",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch comments", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -162,20 +195,20 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreateCommentSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
-      const membership = await ensureSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
+      const validation = await validateSpaceAndMembership(spaceId, userId);
+      if (!validation.ok) {
         const code =
-          membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(membership.message, code, { status: membership.status });
+          validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
       const post = await ensurePostExists(spaceId, postId);
@@ -236,6 +269,57 @@ export const POST = withAuthValidationAndErrors(
           updatedAt: now,
         });
 
+      // Get space name for notification from DDD aggregate
+      const spaceName = validation.space.name.value;
+
+      // Send notification to post author or parent comment author
+      try {
+        if (body.parentCommentId) {
+          // Replying to a comment - notify the comment author
+          const parentCommentDoc = await dbAdmin
+            .collection("spaces")
+            .doc(spaceId)
+            .collection("posts")
+            .doc(postId)
+            .collection("comments")
+            .doc(body.parentCommentId)
+            .get();
+          const parentCommentData = parentCommentDoc.data();
+
+          if (parentCommentData && parentCommentData.authorId !== userId) {
+            await notifyCommentReply({
+              originalCommentAuthorId: parentCommentData.authorId,
+              replierId: userId,
+              replierName: userData?.fullName || 'Someone',
+              postId,
+              commentId: commentRef.id,
+              spaceId,
+              replyPreview: body.content,
+            });
+          }
+        } else {
+          // New comment on post - notify post author
+          if (post.postData && post.postData.authorId !== userId) {
+            await notifyNewComment({
+              postAuthorId: post.postData.authorId,
+              commenterId: userId,
+              commenterName: userData?.fullName || 'Someone',
+              postId,
+              spaceId,
+              spaceName,
+              commentPreview: body.content,
+            });
+          }
+        }
+      } catch (notifyError) {
+        // Don't fail the comment creation if notification fails
+        logger.warn('Failed to send comment notification', {
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          postId,
+          spaceId,
+        });
+      }
+
       return respond.created({
         id: commentRef.id,
         ...commentData,
@@ -257,7 +341,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating comment at /api/spaces/[spaceId]/posts/[postId]/comments",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to create comment", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

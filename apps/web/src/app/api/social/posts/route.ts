@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
@@ -40,7 +40,7 @@ const CreatePostSchema = z.object({
  * Posts API
  * POST - Create new post
  */
-export const POST = withAuth(async (request: NextRequest, authContext) => {
+export const POST = withAuth(async (request, authContext) => {
   try {
     const userId = authContext.userId;
     const body = await request.json();
@@ -127,7 +127,7 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
   } catch (error: unknown) {
     logger.error(
       `Create post error at /api/social/posts`,
-      error instanceof Error ? error.message : String(error)
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     if (error instanceof z.ZodError) {
@@ -142,7 +142,6 @@ export const POST = withAuth(async (request: NextRequest, authContext) => {
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }
-}, { 
-  allowDevelopmentBypass: false, // Post creation requires authentication
-  operation: 'create_post' 
+}, {
+  operation: 'create_post'
 });

@@ -1,78 +1,31 @@
 /**
  * Secure Authentication Utilities for HIVE
- * 
- * SECURITY: This file provides hardened authentication utilities
- * to replace all insecure dev token patterns across the application.
- * 
+ *
+ * SECURITY: This file provides hardened authentication utilities.
+ * All auth relies on HttpOnly session cookies - no localStorage tokens in production.
+ *
  * @author HIVE Security Team
- * @version 1.0.0 - Production Ready
+ * @version 2.0.0 - Production Ready
  */
 
 export interface SecureAuthHeaders extends Record<string, string | undefined> {
   'Content-Type': string;
-  // Optional: omitted in production when using HttpOnly cookies
-  'Authorization'?: string;
   'X-Hive-Client': string;
 }
 
 /**
  * Get secure authentication headers for API requests
- * 
+ *
  * SECURITY FEATURES:
  * - No development token bypasses
- * - Token validation and length checks
- * - Client identification headers
- * - Automatic error handling for missing/invalid tokens
- * 
- * @throws {Error} When authentication token is missing or invalid
- * @returns {SecureAuthHeaders} Validated headers ready for API requests
+ * - Relies on HttpOnly session cookies for authentication
+ * - Client identification headers for audit trails
+ *
+ * @returns {SecureAuthHeaders} Headers ready for API requests
  */
 export function getSecureAuthHeaders(): SecureAuthHeaders {
-  // DEVELOPMENT MODE: Check for dev session
-  if (process.env.NODE_ENV === 'development') {
-    // First check for dev session cookie
-    const cookies = document.cookie.split(';').map(c => c.trim());
-    const sessionCookie = cookies.find(c => c.startsWith('session-token='));
-    const devModeCookie = cookies.find(c => c.startsWith('dev-mode='));
-
-    if (sessionCookie && devModeCookie) {
-      // Extract the session token value
-      const sessionToken = sessionCookie.split('=')[1];
-
-      // For dev mode, convert session token to dev_token format for API
-      // The middleware expects dev_token_ prefix
-      const devToken = sessionToken.startsWith('dev_session_')
-        ? sessionToken.replace('dev_session_', 'dev_token_')
-        : `dev_token_${sessionToken}`;
-
-      return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${devToken}`,
-        'X-Hive-Client': 'web-app-v1-dev'
-      };
-    }
-
-    // Check localStorage session for development
-    const sessionJson = localStorage.getItem('hive_session');
-    if (sessionJson) {
-      try {
-        const session = JSON.parse(sessionJson);
-        if (session.developmentMode) {
-          const devToken = `dev_token_${session.userId || 'debug-user'}`;
-          return {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${devToken}`,
-            'X-Hive-Client': 'web-app-v1-dev'
-          };
-        }
-      } catch (e) {
-        console.error('Failed to parse dev session:', e);
-      }
-    }
-  }
-
-  // PRODUCTION MODE: Prefer secure HttpOnly session cookie
-  // Do NOT rely on localStorage tokens in production.
+  // SECURITY: Rely on HttpOnly session cookies for authentication
+  // The server validates auth via the hive_session cookie
   return {
     'Content-Type': 'application/json',
     'X-Hive-Client': 'web-app-v1'
@@ -81,13 +34,13 @@ export function getSecureAuthHeaders(): SecureAuthHeaders {
 
 /**
  * Secure fetch wrapper that automatically includes authentication
- * 
+ *
  * @param url - API endpoint URL
  * @param options - Fetch options (method, body, etc.)
  * @returns {Promise<Response>} Authenticated fetch response
  */
 export async function secureApiFetch(
-  url: string, 
+  url: string,
   options: globalThis.RequestInit = {}
 ): Promise<Response> {
   try {
@@ -99,7 +52,7 @@ export async function secureApiFetch(
       const csrfMeta = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
       if (csrfMeta) csrfHeaders['X-CSRF-Token'] = csrfMeta;
     }
-    
+
     return fetch(url, {
       ...options,
       headers: {
@@ -120,39 +73,27 @@ export async function secureApiFetch(
 
 /**
  * Check if user has valid authentication
- * 
- * @returns {boolean} True if user is properly authenticated
+ * SECURITY: Client-side hints only; server validates real auth via HttpOnly cookies.
+ *
+ * @returns {boolean} True if user appears to be authenticated
  */
 export function isAuthenticated(): boolean {
   // Client-side hints only; server validates real auth via HttpOnly cookies.
   if (typeof window === 'undefined') return false;
 
-  if (process.env.NODE_ENV === 'development') {
-    // Dev: allow based on explicit dev session markers only.
-    const cookies = document.cookie.split(';').map(c => c.trim());
-    const sessionCookie = cookies.find(c => c.startsWith('session-token='));
-    const devModeCookie = cookies.find(c => c.startsWith('dev-mode='));
-    if (sessionCookie && devModeCookie) return true;
+  // Check for auth indicator cookie (not the actual session - that's HttpOnly)
+  const cookies = document.cookie.split(';').map(c => c.trim());
+  const authIndicator = cookies.find(c => c.startsWith('hive_authenticated='));
 
-    const sessionJson = localStorage.getItem('hive_session');
-    if (sessionJson) {
-      try {
-        const session = JSON.parse(sessionJson);
-        if (session.developmentMode) return true;
-      } catch {
-        // Silently ignore session parsing errors
-      }
-    }
-  }
-
-  // Production: never infer auth from localStorage; rely on server session only.
-  return false;
+  return authIndicator?.split('=')[1] === 'true';
 }
 
 /**
  * Clear user authentication (logout)
  */
 export function clearAuthentication(): void {
+  if (typeof window === 'undefined') return;
+
   localStorage.removeItem('hive_session_token');
   localStorage.removeItem('hive_session');
   localStorage.removeItem('auth_token'); // Clear legacy tokens
@@ -160,14 +101,14 @@ export function clearAuthentication(): void {
 
 /**
  * Handle authentication errors consistently
- * 
+ *
  * @param error - Error from API call
  * @param redirectToLogin - Whether to redirect to login page
  */
 export function handleAuthError(error: Error, redirectToLogin: boolean = true): void {
-  if (error.message.includes('HIVE_AUTH_')) {
+  if (error.message.includes('HIVE_AUTH_') || error.message.includes('401') || error.message.includes('Unauthorized')) {
     clearAuthentication();
-    
+
     if (redirectToLogin && typeof window !== 'undefined') {
       window.location.href = '/auth/login?reason=session_expired';
     }

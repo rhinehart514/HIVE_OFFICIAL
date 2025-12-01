@@ -81,12 +81,12 @@ async function validateSpaceAccess(spaceId: string, userId: string) {
 export const POST = withAuthValidationAndErrors(
   ShareActionSchema as unknown as z.ZodType<ShareAction>,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ toolId: string }> },
     payload: ShareAction,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
     const toolResult = await loadTool(toolId);

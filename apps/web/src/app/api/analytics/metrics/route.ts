@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     logger.error(
       `Error storing metrics at /api/analytics/metrics`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to store metrics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -129,11 +129,11 @@ export async function GET(request: NextRequest) {
 
     if (userId) {
       // Users can only access their own metrics unless they're admin
-      if (userId !== decodedToken.uid && !isAdmin(decodedToken)) {
+      if (userId !== decodedToken.uid && !isAdminFromClaims(decodedToken)) {
         return NextResponse.json(ApiResponseHelper.error("Access denied", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
       }
       query = query.where('userId', '==', userId);
-    } else if (!isAdmin(decodedToken)) {
+    } else if (!isAdminFromClaims(decodedToken)) {
       // Non-admin users can only see their own metrics
       query = query.where('userId', '==', decodedToken.uid);
     }
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error retrieving metrics at /api/analytics/metrics`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to retrieve metrics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -198,10 +198,16 @@ function getClientIp(request: NextRequest): string {
   return 'unknown';
 }
 
-// Helper function to check if user is admin
-function isAdmin(decodedToken: DecodedIdToken): boolean {
+// Helper function to check if user is admin (using custom claims for sync check)
+// NOTE: For full admin verification, use @/lib/admin-auth.isAdmin() which also checks Firestore
+function isAdminFromClaims(decodedToken: DecodedIdToken): boolean {
+  // Check standard admin claim
+  if ((decodedToken as unknown as { admin?: boolean }).admin === true) {
+    return true;
+  }
+  // Check custom claims structure
   const claims = (decodedToken as unknown as { customClaims?: Record<string, unknown> }).customClaims;
-  return claims?.role === 'admin' || claims?.admin === true;
+  return claims?.role === 'admin' || claims?.admin === true || claims?.adminRole != null;
 }
 
 // Metric shape persisted in analytics_metrics
@@ -300,7 +306,7 @@ async function aggregateMetrics(metrics: StoredMetric[]): Promise<void> {
   } catch (error) {
     logger.error(
       `Error aggregating metrics at /api/analytics/metrics`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

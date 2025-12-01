@@ -2,7 +2,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { NextResponse } from "next/server";
 import { currentEnvironment } from "@/lib/env";
 import { logger } from "@/lib/structured-logger";
-import { ApiResponseHelper, HttpStatus as _HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 
 // Local response type aligned with our Firestore shape
 type SchoolSummary = {
@@ -40,7 +40,7 @@ export async function GET() {
   } catch (error) {
     logger.error(
       `Firebase connection failed at /api/schools`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     
     // SECURITY: Never return mock data in production

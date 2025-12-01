@@ -62,6 +62,35 @@ export const springPresets = {
   },
 } as const;
 
+// Tinder-optimized springs for card interactions
+export const tinderSprings = {
+  // Card lift on hover - bouncy with mass for weight
+  cardLift: {
+    type: 'spring' as const,
+    stiffness: 300,
+    damping: 20,
+    mass: 0.8,
+  },
+  // Quick snap back after interaction
+  snapBack: {
+    type: 'spring' as const,
+    stiffness: 500,
+    damping: 25,
+  },
+  // Gentle settling after card lands
+  settle: {
+    type: 'spring' as const,
+    stiffness: 150,
+    damping: 18,
+  },
+  // Achievement/celebration pop
+  bounce: {
+    type: 'spring' as const,
+    stiffness: 400,
+    damping: 12,
+  },
+} as const;
+
 // Stagger configurations
 export const staggerPresets = {
   fast: 0.03,     // Fast lists
@@ -235,4 +264,5 @@ export type MotionCascade = keyof typeof motion.cascade;
 export type EasingArray = keyof typeof easingArrays;
 export type DurationSeconds = keyof typeof durationSeconds;
 export type SpringPreset = keyof typeof springPresets;
+export type TinderSpring = keyof typeof tinderSprings;
 export type StaggerPreset = keyof typeof staggerPresets;

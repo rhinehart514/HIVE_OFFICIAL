@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { sseRealtimeService } from '@/lib/sse-realtime-service';
 
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       spaceId,
       senderId: user.uid,
       senderName: user.displayName || user.email || 'Unknown User',
-      senderRole: userContext.role,
+      senderRole: (userContext.role as string) || 'member',
       content,
       messageType,
       metadata: {
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error sending chat message at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to send message", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -284,7 +284,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting chat messages at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get messages", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -381,7 +381,7 @@ export async function PUT(request: NextRequest) {
         if (message.senderId !== user.uid) {
           // Check if user is admin/moderator
           const userContext = await getUserSpaceContext(user.uid, message.spaceId);
-          if (!userContext || !['admin', 'moderator'].includes(userContext.role)) {
+          if (!userContext || !['admin', 'moderator'].includes(userContext.role as string)) {
             return NextResponse.json(ApiResponseHelper.error("Not authorized to delete this message", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
           }
         }
@@ -412,7 +412,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating chat message at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update message", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -466,7 +466,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error deleting chat message at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to delete message", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -502,7 +502,7 @@ async function verifyChannelAccess(userId: string, channelId: string, spaceId: s
   } catch (error) {
     logger.error(
       `Error verifying channel access at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -519,7 +519,7 @@ async function getChannel(channelId: string): Promise<ChatChannel | null> {
   } catch (error) {
     logger.error(
       `Error getting channel at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }
@@ -543,7 +543,7 @@ async function getUserSpaceContext(userId: string, spaceId: string): Promise<Rec
   } catch (error) {
     logger.error(
       `Error getting user space context at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }
@@ -579,7 +579,7 @@ async function updateChannelLastMessage(channelId: string, message: ChatMessage)
   } catch (error) {
     logger.error(
       `Error updating channel last message at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -616,7 +616,7 @@ async function broadcastMessageToChannel(message: ChatMessage, channel: ChatChan
   } catch (error) {
     logger.error(
       `Error broadcasting message at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -658,7 +658,7 @@ async function handleMessageMentions(message: ChatMessage, mentions: string[]): 
   } catch (error) {
     logger.error(
       `Error handling mentions at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -687,11 +687,11 @@ async function verifyMessageAction(userId: string, message: ChatMessage, action:
 async function hasModeratorPermissions(userId: string, spaceId: string): Promise<boolean> {
   try {
     const userContext = await getUserSpaceContext(userId, spaceId);
-    return userContext && ['admin', 'moderator'].includes(userContext.role);
+    return !!userContext && ['admin', 'moderator'].includes(userContext.role as string);
   } catch (error) {
     logger.error(
       `Error checking moderator permissions at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -711,7 +711,7 @@ async function markMessagesAsRead(userId: string, channelId: string, messageIds:
   } catch (error) {
     logger.error(
       `Error marking messages as read at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -733,7 +733,7 @@ async function getThreadMessages(parentMessageId: string): Promise<ChatMessage[]
   } catch (error) {
     logger.error(
       `Error getting thread messages at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -771,7 +771,7 @@ async function broadcastMessageUpdate(messageId: string, action: string, updates
   } catch (error) {
     logger.error(
       `Error broadcasting message update at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -806,7 +806,7 @@ async function broadcastMessageDeletion(messageId: string, channelId: string): P
   } catch (error) {
     logger.error(
       `Error broadcasting message deletion at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -841,7 +841,7 @@ async function updateChatAnalytics(spaceId: string, messageType: string): Promis
   } catch (error) {
     logger.error(
       `Error updating chat analytics at /api/realtime/chat`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
@@ -83,9 +83,12 @@ export async function POST(request: NextRequest) {
 
     // Get user's algorithm configuration
     const algorithmConfig = await getUserAlgorithmConfig(user.uid);
-    
+
+    // Get campus ID from user's email
+    const campusId = user.email ? getCampusFromEmail(user.email) : getDefaultCampusId();
+
     // Get user's space memberships with engagement data
-    const userMemberships = await getUserSpaceMemberships(user.uid);
+    const userMemberships = await getUserSpaceMemberships(user.uid, campusId);
     
     if (userMemberships.length === 0) {
       return NextResponse.json({
@@ -110,7 +113,8 @@ export async function POST(request: NextRequest) {
       feedType,
       includeTrending,
       diversityMode,
-      timeRange
+      timeRange,
+      campusId
     });
 
     // Apply final ranking and filtering
@@ -141,7 +145,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error in enhanced feed algorithm at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to generate feed", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -174,7 +178,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching algorithm config at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch algorithm config", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -215,7 +219,7 @@ async function getUserAlgorithmConfig(userId: string): Promise<FeedAlgorithmConf
   } catch (error) {
     logger.error(
       `Error getting algorithm config at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     throw error;
   }
@@ -231,12 +235,12 @@ interface UserSpaceMembership {
   [key: string]: unknown;
 }
 
-async function getUserSpaceMemberships(userId: string): Promise<UserSpaceMembership[]> {
+async function getUserSpaceMemberships(userId: string, campusId: string): Promise<UserSpaceMembership[]> {
   try {
     const membershipsSnapshot = await dbAdmin.collection('members')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
     const memberships: UserSpaceMembership[] = [];
 
@@ -248,7 +252,7 @@ async function getUserSpaceMemberships(userId: string): Promise<UserSpaceMembers
       const spaceData = spaceDoc.exists ? spaceDoc.data() || {} : {};
 
       // Calculate engagement score
-      const engagementScore = await calculateSpaceEngagementScore(userId, memberData.spaceId);
+      const engagementScore = await calculateSpaceEngagementScore(userId, memberData.spaceId, campusId);
 
       memberships.push({
         ...(memberData as Record<string, unknown>),
@@ -264,23 +268,23 @@ async function getUserSpaceMemberships(userId: string): Promise<UserSpaceMembers
   } catch (error) {
     logger.error(
       `Error getting user memberships at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
 }
 
 // Helper function to calculate space engagement score
-async function calculateSpaceEngagementScore(userId: string, spaceId: string): Promise<number> {
+async function calculateSpaceEngagementScore(userId: string, spaceId: string, campusId: string): Promise<number> {
   try {
     // Get user's activity in this space over last 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+
     const activitySnapshot = await dbAdmin.collection('activityEvents')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('date', '>=', thirtyDaysAgo.toISOString().split('T')[0])
       .get();
     const activities = activitySnapshot.docs.map(doc => doc.data());
@@ -311,7 +315,7 @@ async function calculateSpaceEngagementScore(userId: string, spaceId: string): P
   } catch (error) {
     logger.error(
       `Error calculating engagement score at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 20; // Default base score
   }
@@ -328,8 +332,9 @@ async function getEnhancedFeedContent(params: {
   includeTrending: boolean;
   diversityMode: string;
   timeRange: string;
+  campusId: string;
 }): Promise<EnhancedFeedItem[]> {
-  const { userId, memberships, config, limit, _feedType, timeRange } = params;
+  const { userId, memberships, config, limit, feedType: _feedType, timeRange, campusId } = params;
   
   try {
     const feedItems: EnhancedFeedItem[] = [];
@@ -343,14 +348,15 @@ async function getEnhancedFeedContent(params: {
     // Get posts from user's spaces
     for (const membership of memberships) {
       const spacePosts = await getSpacePostsWithQuality(
-        membership.spaceId, 
+        membership.spaceId,
         Math.ceil(limit * 1.5), // Get more candidates for filtering
-        cutoffTime
+        cutoffTime,
+        campusId
       );
 
       for (const post of spacePosts) {
         // Calculate relevance factors
-        const factors = await calculateRelevanceFactors(post, membership, config, userId);
+        const factors = await calculateRelevanceFactors(post, membership, config, userId, campusId);
         
         // Calculate overall relevance score
         const relevanceScore = calculateOverallRelevance(factors, config);
@@ -362,12 +368,12 @@ async function getEnhancedFeedContent(params: {
             spaceId: membership.spaceId,
             spaceName: membership.spaceName,
             authorId: post.authorId ?? 'unknown',
-            authorName: (post as Record<string, unknown>).authorName as string || 'Unknown',
+            authorName: (post as unknown as Record<string, unknown>).authorName as string || 'Unknown',
             content: post,
             contentType: determineContentType(post),
             toolId: post.toolId,
-            toolName: (post as Record<string, unknown>).toolName as string,
-            deploymentId: (post as Record<string, unknown>).deploymentId as string,
+            toolName: (post as unknown as Record<string, unknown>).toolName as string,
+            deploymentId: (post as unknown as Record<string, unknown>).deploymentId as string,
             relevanceScore,
             qualityScore: factors.contentQuality,
             factors,
@@ -380,8 +386,8 @@ async function getEnhancedFeedContent(params: {
               interactions: 0,
             },
             metadata: {
-              surface: (post as Record<string, unknown>).surface as string,
-              generatedBy: (post.metadata as Record<string, unknown> | undefined)?.generatedBy as string,
+              surface: (post as unknown as Record<string, unknown>).surface as string,
+              generatedBy: (post.metadata as unknown as Record<string, unknown> | undefined)?.generatedBy as string,
               validationConfidence: factors.contentQuality,
               isPromoted: post.isPinned || false,
               isFromPreferredSpace: config.userPersonalization.preferredSpaces.includes(membership.spaceId)
@@ -397,7 +403,7 @@ async function getEnhancedFeedContent(params: {
   } catch (error) {
     logger.error(
       `Error getting enhanced feed content at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -420,11 +426,11 @@ interface MinimalPost {
   spaceId?: string;
 }
 
-async function getSpacePostsWithQuality(spaceId: string, limit: number, cutoffTime: Date): Promise<MinimalPost[]> {
+async function getSpacePostsWithQuality(spaceId: string, limit: number, cutoffTime: Date, campusId: string): Promise<MinimalPost[]> {
   try {
     const postsSnapshot = await dbAdmin.collection('posts')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', 'published')
       .where('createdAt', '>=', cutoffTime.toISOString())
       .orderBy('createdAt', 'desc')
@@ -437,7 +443,7 @@ async function getSpacePostsWithQuality(spaceId: string, limit: number, cutoffTi
   } catch (error) {
     logger.error(
       `Error getting space posts at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -447,8 +453,9 @@ async function getSpacePostsWithQuality(spaceId: string, limit: number, cutoffTi
 async function calculateRelevanceFactors(
   post: MinimalPost,
   membership: UserSpaceMembership,
-  config: FeedAlgorithmConfig, 
-  _userId: string
+  config: FeedAlgorithmConfig,
+  _userId: string,
+  campusId: string
 ): Promise<RelevanceFactors> {
   const now = new Date();
   const postTime = new Date(post.createdAt as string);
@@ -464,16 +471,16 @@ async function calculateRelevanceFactors(
   const contentQuality = calculateContentQuality(post);
 
   // Tool interaction value
-  const toolInteractionValue = post.toolId ? await getToolInteractionValue(post.toolId) : 50;
+  const toolInteractionValue = post.toolId ? await getToolInteractionValue(post.toolId, campusId) : 50;
 
   // Social signals
-  const totalEngagement = (post.engagement?.likes || 0) + 
-                         (post.engagement?.comments || 0) * 2 + 
+  const totalEngagement = (post.engagement?.likes || 0) +
+                         (post.engagement?.comments || 0) * 2 +
                          (post.engagement?.shares || 0) * 3;
   const socialSignals = Math.min(100, totalEngagement * 5);
 
   // Creator influence
-  const creatorInfluence = await getCreatorInfluence((post.authorId as string) || '', membership.spaceId);
+  const creatorInfluence = await getCreatorInfluence((post.authorId as string) || '', membership.spaceId, campusId);
 
   // Diversity factor (bonus for content type variety)
   const diversityFactor = 50; // Base value, calculated contextually in final ranking
@@ -530,7 +537,7 @@ function calculateContentQuality(post: MinimalPost): number {
   return Math.min(100, quality);
 }
 
-async function getToolInteractionValue(toolId: string): Promise<number> {
+async function getToolInteractionValue(toolId: string, campusId: string): Promise<number> {
   try {
     const toolDoc = await dbAdmin.collection('tools').doc(toolId).get();
     if (!toolDoc.exists) return 50;
@@ -538,7 +545,7 @@ async function getToolInteractionValue(toolId: string): Promise<number> {
     const tool = toolDoc.data();
     if (!tool) return 50;
     // Enforce campus isolation
-    if (tool.campusId && tool.campusId !== CURRENT_CAMPUS_ID) return 50;
+    if (tool.campusId && tool.campusId !== campusId) return 50;
     
     let value = 50;
 
@@ -556,13 +563,13 @@ async function getToolInteractionValue(toolId: string): Promise<number> {
   }
 }
 
-async function getCreatorInfluence(authorId: string, spaceId: string): Promise<number> {
+async function getCreatorInfluence(authorId: string, spaceId: string, campusId: string): Promise<number> {
   try {
     // Get author's role and activity in space
     const memberSnapshot = await dbAdmin.collection('members')
       .where('userId', '==', authorId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
     if (memberSnapshot.empty) return 30;
 
@@ -702,7 +709,7 @@ async function logAlgorithmMetrics(userId: string, metrics: Record<string, unkno
   } catch (error) {
     logger.error(
       `Error logging algorithm metrics at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -740,7 +747,7 @@ async function getAlgorithmMetrics(userId: string): Promise<{ weeklyAverages: { 
   } catch (error) {
     logger.error(
       `Error getting algorithm metrics at /api/feed/algorithm`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }

@@ -19,14 +19,16 @@ import { ToolDeployModal } from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/error-boundary';
-import { _logger } from '@/lib/logger';
+import { useIsSpaceLeader } from '@/hooks/use-is-space-leader';
+import { logger as _logger } from '@/lib/logger';
 import {
   Plus,
   Play,
   Edit,
   BarChart3,
   Rocket,
-  _Settings,
+  Users,
+  Sparkles,
 } from 'lucide-react';
 
 /**
@@ -79,23 +81,28 @@ type ToolDeploymentConfig = {
 export default function ToolsPage() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const { isSpaceLeader, isLoading: leaderLoading } = useIsSpaceLeader();
   const { toast } = useToast();
 
   const [deployOpen, setDeployOpen] = useState(false);
   const [deployTool, setDeployTool] = useState<{ id: string; name: string } | null>(null);
   const [targets, setTargets] = useState<ToolDeploymentTarget[]>([]);
 
-  // Fetch personal tools
+  // Everyone can create tools - space leaders get extra deploy options
+  // No longer gating creation behind space leadership
+  const hasBuilderAccess = true; // Universal creation access
+
+  // Fetch personal tools (user's own creations)
   const { data: personalTools, isLoading: personalLoading } = useQuery({
-    queryKey: ['personal-tools'],
+    queryKey: ['personal-tools', user?.uid],
     queryFn: async () => {
-      const response = await apiClient.get('/api/tools/personal');
+      const response = await apiClient.get('/api/tools');
       if (!response.ok) throw new Error('Failed to fetch personal tools');
       const data = await response.json();
       return (data.tools || []) as Tool[];
     },
     enabled: !!user,
-    staleTime: 300000, // 5 minutes
+    staleTime: 60000, // 1 minute (refresh more frequently to see new saves)
   });
 
   // Fetch marketplace tools
@@ -153,6 +160,9 @@ export default function ToolsPage() {
     router.push('/auth/login?redirect=/tools');
     return null;
   }
+
+  // Access gate removed - everyone can create tools
+  // Space leaders get additional deploy targets (their spaces)
 
   const handleCreateTool = () => {
     router.push('/tools/create');
@@ -218,7 +228,7 @@ export default function ToolsPage() {
     }
   };
 
-  const isLoading = authLoading || personalLoading || marketplaceLoading;
+  const isLoading = authLoading || leaderLoading || personalLoading || marketplaceLoading;
 
   // Show loading skeleton
   if (isLoading) {
@@ -244,10 +254,10 @@ export default function ToolsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-hive-text-primary">
-                  HiveLab Tools
+                  My Creations
                 </h1>
                 <p className="text-sm text-hive-text-secondary mt-1">
-                  Build campus utilities, deploy to your profile or spaces
+                  Build tools with AI, share them, use them anywhere
                 </p>
               </div>
               <Button
@@ -264,84 +274,106 @@ export default function ToolsPage() {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-6 py-8 space-y-12">
-          {/* My Tools */}
+          {/* My Creations */}
           <section>
-            <h2 className="text-xl font-semibold text-hive-text-primary mb-4">
-              My Tools ({myTools.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-hive-text-primary">
+                My Creations
+              </h2>
+              {myTools.length > 0 && (
+                <span className="text-sm text-hive-text-tertiary">
+                  {myTools.length} tool{myTools.length !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
 
             {myTools.length === 0 ? (
-              <Card className="border-dashed border-2">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <div className="text-center space-y-3">
-                    <p className="text-hive-text-secondary">
-                      No tools yet. Create your first tool!
+              <Card className="border-dashed border-2 border-[var(--hive-brand-primary)]/20">
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[var(--hive-brand-primary)]/20 to-transparent rounded-2xl flex items-center justify-center mb-6">
+                    <Sparkles className="w-8 h-8 text-[var(--hive-brand-primary)]" />
+                  </div>
+                  <div className="text-center space-y-3 max-w-sm">
+                    <h3 className="text-lg font-medium text-hive-text-primary">
+                      Create your first tool
+                    </h3>
+                    <p className="text-hive-text-secondary text-sm">
+                      Describe what you want to build and AI will create it for you. No coding required.
                     </p>
-                    <Button onClick={handleCreateTool} variant="outline">
+                    <Button
+                      onClick={handleCreateTool}
+                      className="mt-4 bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
-                      Create Tool
+                      Start Creating
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {myTools.map((tool) => (
-                  <Card
-                    key={tool.id}
-                    className="hover:border-hive-brand-primary transition-colors"
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-lg">{tool.name}</CardTitle>
-                      <CardDescription>
-                        {tool.description || 'No description'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="flex items-center gap-2 text-xs text-hive-text-tertiary">
-                        <span className="px-2 py-1 bg-hive-background-secondary rounded">
-                          {tool.type}
-                        </span>
-                        <span className="px-2 py-1 bg-hive-background-secondary rounded">
-                          {tool.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRunTool(tool.id)}
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          Run
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditTool(tool.id)}
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeployTool(tool)}
-                        >
-                          <Rocket className="w-3 h-3 mr-1" />
-                          Deploy
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleViewAnalytics(tool.id)}
-                        >
-                          <BarChart3 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {myTools.map((tool) => {
+                  // Determine status badge
+                  const statusConfig = {
+                    draft: { label: 'Draft', className: 'bg-neutral-500/20 text-neutral-400' },
+                    published: { label: 'Shared', className: 'bg-blue-500/20 text-blue-400' },
+                    deployed: { label: 'Deployed', className: 'bg-emerald-500/20 text-emerald-400' },
+                  }[tool.status] || { label: tool.status, className: 'bg-neutral-500/20 text-neutral-400' };
+
+                  return (
+                    <Card
+                      key={tool.id}
+                      className="hover:border-[var(--hive-brand-primary)]/50 transition-colors group"
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg">{tool.name}</CardTitle>
+                          <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.className}`}>
+                            {statusConfig.label}
+                          </span>
+                        </div>
+                        <CardDescription className="line-clamp-2">
+                          {tool.description || 'No description'}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 pt-1">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
+                            onClick={() => handleRunTool(tool.id)}
+                          >
+                            <Play className="w-3 h-3 mr-1" />
+                            Use
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditTool(tool.id)}
+                          >
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          {isSpaceLeader && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeployTool(tool)}
+                            >
+                              <Rocket className="w-3 h-3" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleViewAnalytics(tool.id)}
+                          >
+                            <BarChart3 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </section>

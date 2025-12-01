@@ -2,6 +2,7 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/m
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { getServerProfileRepository } from '@hive/core/server';
 
 /**
  * Get profile dashboard data
@@ -11,8 +12,8 @@ import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
  * - timeRange: 'day' | 'week' | 'month' | 'all'
  * - includeRecommendations: boolean
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const timeRange = searchParams.get('timeRange') || 'week';
   const includeRecommendations = searchParams.get('includeRecommendations') === 'true';
@@ -138,7 +139,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       });
     }
 
-    // Production implementation with Firestore
+    // Production implementation - try DDD first for user data
     const now = new Date();
     const timeRangeMs = {
       day: 86400000,
@@ -147,6 +148,30 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       all: Date.now(),
     }[timeRange] || 604800000;
     const _startDate = new Date(now.getTime() - timeRangeMs);
+
+    // Get user profile via DDD for stats
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(userId);
+
+    let userProfileData: {
+      activityScore: number;
+      connectionCount: number;
+      spaces: string[];
+      currentStreak?: number;
+      longestStreak?: number;
+    } | null = null;
+
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      userProfileData = {
+        activityScore: profile.activityScore,
+        connectionCount: profile.connectionCount,
+        spaces: profile.spaces,
+        currentStreak: 0, // Would need to add to domain model
+        longestStreak: 0,
+      };
+      logger.debug('Dashboard using DDD profile data', { userId, spaceCount: profile.spaces.length });
+    }
 
     // Get user's spaces with optimized limits
     const spaceMemberships = await dbAdmin
@@ -214,9 +239,12 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       upcomingEvents.push(...eventResults.flat());
     }
 
-    // Get user stats
-    const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    const userData = userDoc.data();
+    // Get user stats - prefer DDD data, fallback to Firestore
+    let userData: Record<string, unknown> = {};
+    if (!userProfileData) {
+      const userDoc = await dbAdmin.collection('users').doc(userId).get();
+      userData = userDoc.data() || {};
+    }
 
     const dashboard = {
       quickActions: {
@@ -227,16 +255,20 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       upcomingEvents: upcomingEvents.slice(0, 5),
       stats: {
         weeklyActivity: {
-          posts: userData?.weeklyPosts || 0,
-          comments: userData?.weeklyComments || 0,
-          reactions: userData?.weeklyReactions || 0,
-          toolsUsed: userData?.weeklyToolsUsed || 0,
+          posts: (userData.weeklyPosts as number) || 0,
+          comments: (userData.weeklyComments as number) || 0,
+          reactions: (userData.weeklyReactions as number) || 0,
+          toolsUsed: (userData.weeklyToolsUsed as number) || 0,
         },
         streakInfo: {
-          current: userData?.currentStreak || 0,
-          longest: userData?.longestStreak || 0,
+          current: userProfileData?.currentStreak || (userData.currentStreak as number) || 0,
+          longest: userProfileData?.longestStreak || (userData.longestStreak as number) || 0,
           nextMilestone: 14,
         },
+        // Add DDD-sourced stats
+        activityScore: userProfileData?.activityScore || 0,
+        connectionCount: userProfileData?.connectionCount || 0,
+        spacesJoined: userProfileData?.spaces?.length || favoriteSpaces.length,
       },
     };
 

@@ -42,7 +42,8 @@ interface Tool {
 export default function ToolPage() {
   const params = useParams();
   const router = useRouter();
-  const { user: _user, isAuthenticated } = useSession();
+  const { user: _user } = useSession();
+  const isAuthenticated = !!_user;
   const toolId = params.toolId as string;
   
   const [tool, setTool] = useState<Tool | null>(null);

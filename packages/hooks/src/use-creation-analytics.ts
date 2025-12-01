@@ -48,7 +48,7 @@ export const useCreationAnalytics = (
 
   // Event batching
   const eventQueue = useRef<CreationAnalyticsEvent[]>([]);
-  const flushTimer = useRef<NodeJS.Timeout | undefined>();
+  const flushTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastFlushTime = useRef(Date.now());
 
   // User preferences

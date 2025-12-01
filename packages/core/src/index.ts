@@ -10,15 +10,26 @@ export { isProfileComplete, getProfileCompletionPercentage, createDefaultProfile
 export { Connection, ConnectionType, ConnectionSource } from "./domain/profile/aggregates/connection";
 export { SpaceId } from "./domain/spaces/value-objects/space-id.value";
 export { SpaceName } from "./domain/spaces/value-objects/space-name.value";
+export { SpaceSlug } from "./domain/spaces/value-objects/space-slug.value";
 export { SpaceDescription } from "./domain/spaces/value-objects/space-description.value";
-export { SpaceCategory } from "./domain/spaces/value-objects/space-category.value";
+export { SpaceCategory, SpaceCategoryEnum, ApiCategoryEnum } from "./domain/spaces/value-objects/space-category.value";
 export { EnhancedSpace } from "./domain/spaces/aggregates/enhanced-space";
+export type { SpaceMemberRole, LeaderRequestStatus } from "./domain/spaces/aggregates/enhanced-space";
 export { Tab } from "./domain/spaces/entities/tab";
 export { Widget } from "./domain/spaces/entities/widget";
 export { RitualId } from "./domain/rituals/value-objects/ritual-id.value";
 export { EnhancedRitual } from "./domain/rituals/aggregates/enhanced-ritual";
 export { FeedItem } from "./domain/feed/feed-item";
 export { EnhancedFeed } from "./domain/feed/enhanced-feed";
+export { FeedRankingService, DEFAULT_RANKING_CONFIG } from "./domain/feed/services/feed-ranking.service";
+export type {
+  RelevanceFactors,
+  RankingWeights,
+  FeedRankingConfig,
+  UserRankingContext,
+  RankingCandidate,
+  RankedItem
+} from "./domain/feed/services/feed-ranking.service";
 export {
   RitualArchetype,
   type RitualPhase,
@@ -72,6 +83,24 @@ export {
   type RitualTemplateId,
 } from "./domain/rituals/templates";
 
+// Space Templates
+export {
+  SPACE_TEMPLATES,
+  getAllTemplates as getAllSpaceTemplates,
+  getTemplateById as getSpaceTemplateById,
+  getTemplatesByCategory as getSpaceTemplatesByCategory,
+  getTemplatesSuggestedFor,
+  getTemplatesByDifficulty,
+  searchTemplates as searchSpaceTemplates,
+  type SpaceTemplate,
+  type SpaceTemplateMetadata,
+  type SpaceTemplateId,
+  type SpaceTemplateCategory,
+  type TemplateTab,
+  type TemplateWidget,
+  type TemplateSettings,
+} from "./domain/spaces/templates";
+
 // HiveLab Domain Types
 export type {
   ToolComposition,
@@ -80,6 +109,30 @@ export type {
   ElementDefinition,
   ElementCategory
 } from "./domain/hivelab/tool-composition.types";
+
+// HiveLab Element Registry
+export {
+  registerElement,
+  getElementById,
+  getAllElements,
+  getElementsByCategory,
+  getElementsByAction,
+  elementSupportsAction,
+  getElementDefaultConfig,
+  getStatefulElements,
+  getRealtimeElements,
+  searchElements,
+  generateElementCatalog,
+  INPUT_ELEMENTS,
+  FILTER_ELEMENTS,
+  DISPLAY_ELEMENTS,
+  ACTION_ELEMENTS,
+  LAYOUT_ELEMENTS,
+  ELEMENT_COUNT,
+  ELEMENT_IDS,
+  CATEGORY_COUNTS,
+} from "./domain/hivelab/element-registry";
+export type { ElementSpec } from "./domain/hivelab/element-registry";
 
 // HiveLab Services - MOVED TO @hive/core/server for client/server separation
 // Import from '@hive/core/server' for server-side usage
@@ -175,6 +228,8 @@ export { feedListener } from "./infrastructure/realtime/feed-listener";
 export type { FeedUpdate, FeedListenerOptions } from "./infrastructure/realtime/feed-listener";
 export { GetFeedQueryHandler } from "./application/feed/queries/get-feed.query";
 export type { GetFeedQuery, GetFeedQueryResult } from "./application/feed/queries/get-feed.query";
+export { GetPersonalizedFeedQueryHandler, createPersonalizedFeedHandler } from "./application/feed/queries/get-personalized-feed.query";
+export type { GetPersonalizedFeedQuery, PersonalizedFeedResult } from "./application/feed/queries/get-personalized-feed.query";
 export { SearchType, SearchQueryHandler } from "./application/search/queries/search.query";
 export type { SearchResultItem, SearchQuery, SearchQueryResult } from "./application/search/queries/search.query";
 

@@ -31,8 +31,8 @@ const ErrorReportSchema = z.object({
  * POST /api/errors/report
  * Report client-side errors for monitoring and debugging
  */
-export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
-  const userId = getUserId(request);
+export const POST = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   try {
     const body = await request.json();
@@ -116,7 +116,7 @@ export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _con
 
     logger.error(
       `Failed to process error report from user ${userId} at /api/errors/report`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error('Failed to process error report', 'PROCESSING_ERROR', { status: 500 });
   }
@@ -215,7 +215,7 @@ async function sendCriticalErrorAlert(errorReport: { errorId: string; message: s
   } catch (alertError) {
     logger.error(
       'Failed to send critical error alert',
-      alertError instanceof Error ? alertError : new Error(String(alertError))
+      { error: { error: alertError instanceof Error ? alertError.message : String(alertError) } }
     );
   }
 }

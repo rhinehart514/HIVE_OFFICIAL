@@ -53,7 +53,7 @@ export function DeployModalProvider({ toolId, children }: { toolId?: string; chi
     return () => { cancelled = true; };
   }, [toolId]);
 
-  const handleDeploy = async (config: { targetType: string; targetId: string; surface: string; permissions: unknown; settings: unknown }) => {
+  const handleDeploy = async (config: { targetType: string; targetId: string; surface?: string; permissions: unknown; settings: unknown }) => {
     if (!toolId) {
       setOpen(false);
       router.push('/tools');

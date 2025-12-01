@@ -79,12 +79,12 @@ async function userHasUsedTool(toolId: string, userId: string) {
 export const POST = withAuthValidationAndErrors(
   ReviewSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ toolId: string }> },
     body: ReviewPayload,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
     const toolValidation = await ensureToolIsReviewable(toolId);

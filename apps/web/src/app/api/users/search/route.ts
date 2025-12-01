@@ -27,7 +27,8 @@ const SearchUsersSchema = z.object({
   graduationYear: z.coerce.number().optional(),
   spaceId: z.string().optional(), // Filter to users in a specific space
   sortBy: z.enum(['relevance', 'recent', 'alphabetical']).default('relevance'),
-  includePrivateProfiles: z.coerce.boolean().default(false) });
+  // NOTE: includePrivateProfiles removed - privacy must be enforced
+});
 
 const db = dbAdmin;
 
@@ -44,7 +45,21 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const searchParams = SearchUsersSchema.parse(body);
-    const { query, limit, offset, userType, major, graduationYear, spaceId, sortBy, includePrivateProfiles } = searchParams;
+    const { query, limit, offset, userType, major, graduationYear, spaceId, sortBy } = searchParams;
+
+    // Get viewer's connections for privacy checks
+    const viewerConnectionIds = new Set<string>();
+    try {
+      const connectionsSnapshot = await db
+        .collection('users')
+        .doc(decodedToken.uid)
+        .collection('connections')
+        .where('status', '==', 'connected')
+        .get();
+      connectionsSnapshot.docs.forEach(doc => viewerConnectionIds.add(doc.id));
+    } catch {
+      // Continue without connections - will be conservative with privacy
+    }
 
     interface RawUserDoc {
       id: string;
@@ -102,7 +117,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         logger.warn(
       `Failed to fetch space members at /api/users/search`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       }
     } else {
@@ -130,9 +145,24 @@ export async function POST(request: NextRequest) {
 
     // Process each user and apply text search + privacy filters
     for (const userData of usersToSearch) {
-      // Skip private profiles unless explicitly requested or it's the current user
-      if (!includePrivateProfiles && userData.privacy?.profileVisibility === 'private' && userData.id !== decodedToken.uid) {
-        continue;
+      // SECURITY: Enforce privacy levels
+      const profileVisibility = userData.privacy?.profileVisibility || 'public';
+      const isOwnProfile = userData.id === decodedToken.uid;
+      const isConnected = viewerConnectionIds.has(userData.id);
+
+      // Skip based on privacy level:
+      // - 'private': Only the user themselves can see
+      // - 'connections': Only connected users can see
+      // - 'campus': Anyone on campus can see (already filtered by campusId)
+      // - 'public': Anyone can see
+      if (!isOwnProfile) {
+        if (profileVisibility === 'private') {
+          continue; // Skip completely private profiles
+        }
+        if (profileVisibility === 'connections' && !isConnected) {
+          continue; // Skip connections-only profiles if not connected
+        }
+        // 'campus' and 'public' are visible (campus already filtered by query)
       }
 
       // Text matching
@@ -185,7 +215,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         logger.warn(
       `Failed to check connection status at /api/users/search`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       }
 
@@ -223,7 +253,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         logger.warn(
       `Failed to calculate mutual spaces at /api/users/search`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       }
 
@@ -309,7 +339,7 @@ export async function POST(request: NextRequest) {
 
     logger.error(
       `Error searching users at /api/users/search`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to search users", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }

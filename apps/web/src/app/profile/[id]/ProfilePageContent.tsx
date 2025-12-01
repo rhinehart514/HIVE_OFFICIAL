@@ -444,7 +444,7 @@ export default function ProfilePageContent() {
               <ProfileBentoGrid
                 profile={profileSystem}
                 editable={isOwnProfile}
-                onLayoutChange={isOwnProfile ? handleLayoutChange : undefined}
+                onLayoutChange={isOwnProfile ? (layout) => { handleLayoutChange(layout as unknown as BentoGridLayout); } : undefined}
               />
             </InView>
           )}

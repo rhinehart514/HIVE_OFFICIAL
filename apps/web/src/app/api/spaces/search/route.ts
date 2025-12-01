@@ -1,8 +1,7 @@
-"use server";
-
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/logger";
+import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
+import { logger } from "@/lib/structured-logger";
 import {
   withAuthValidationAndErrors,
   getUserId,
@@ -15,7 +14,7 @@ const SearchSpacesSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
   offset: z.coerce.number().min(0).default(0),
   type: z
-    .enum(["academic", "social", "recreational", "cultural", "general"])
+    .enum(["academic", "social", "recreational", "cultural", "general", "club", "dorm", "sports"])
     .optional(),
   verified: z.coerce.boolean().optional(),
   minMembers: z.coerce.number().min(0).optional(),
@@ -25,219 +24,216 @@ const SearchSpacesSchema = z.object({
     .default("relevance"),
 });
 
+/**
+ * Calculate relevance score for a space based on search query
+ */
+function calculateRelevance(
+  space: EnhancedSpace,
+  queryLower: string
+): { score: number; highlights: { name: string[]; description: string[]; tags: string[] } } {
+  const name = space.name.value.toLowerCase();
+  const description = space.description.value.toLowerCase();
+
+  const nameMatch = name.includes(queryLower);
+  const descriptionMatch = description.includes(queryLower);
+
+  let score = 0;
+  const highlights = { name: [] as string[], description: [] as string[], tags: [] as string[] };
+
+  if (nameMatch) {
+    score += name === queryLower ? 100 : 80;
+    highlights.name = [space.name.value];
+  }
+
+  if (descriptionMatch) {
+    score += 60;
+    // Extract context around match
+    const matchIndex = description.indexOf(queryLower);
+    if (matchIndex >= 0) {
+      const start = Math.max(0, matchIndex - 30);
+      const end = Math.min(description.length, matchIndex + queryLower.length + 30);
+      highlights.description = [space.description.value.substring(start, end)];
+    }
+  }
+
+  // Verified spaces get a boost
+  if (space.isVerified) {
+    score += 20;
+  }
+
+  // Member count gives a small boost
+  score += Math.min(20, space.memberCount / 10);
+
+  return { score, highlights };
+}
+
+/**
+ * Transform EnhancedSpace to search result format
+ */
+function transformSearchResult(
+  space: EnhancedSpace,
+  relevanceScore: number,
+  highlights: { name: string[]; description: string[]; tags: string[] },
+  isMember: boolean,
+  creator: { id: string; name: string; avatar: string | null } | null
+) {
+  return {
+    id: space.spaceId.value,
+    name: space.name.value,
+    slug: space.slug?.value,
+    description: space.description.value,
+    type: space.category.value,
+    tags: [], // Tags not currently on aggregate
+    memberCount: space.memberCount,
+    isVerified: space.isVerified,
+    isPrivate: !space.isPublic,
+    createdAt: space.createdAt.toISOString(),
+    creator,
+    isMember,
+    relevanceScore,
+    highlights,
+  };
+}
+
+/**
+ * POST /api/spaces/search - Search spaces with advanced filtering
+ *
+ * Uses DDD repository's searchSpaces as base, then applies
+ * additional filtering and relevance scoring.
+ */
 export const POST = withAuthValidationAndErrors(
   SearchSpacesSchema,
-  async (
-    request: AuthenticatedRequest,
-    _context,
-    searchParams,
-    respond,
-  ) => {
-    try {
-      const userId = getUserId(request);
-      const {
-        query,
-        limit = 20,
-        offset = 0,
-        type,
-        verified,
-        minMembers,
-        maxMembers,
-        sortBy,
-      } = searchParams;
+  async (request, _context, searchParams, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
+    const {
+      query,
+      limit = 20,
+      offset = 0,
+      type,
+      verified,
+      minMembers,
+      maxMembers,
+      sortBy,
+    } = searchParams;
 
-      let spacesQuery = dbAdmin
-        .collection("spaces")
-        .where("campusId", "==", CURRENT_CAMPUS_ID);
+    logger.info('Space search request', {
+      query,
+      limit,
+      offset,
+      type,
+      sortBy,
+      userId,
+      endpoint: '/api/spaces/search'
+    });
 
-      if (type) {
-        spacesQuery = spacesQuery.where("type", "==", type);
-      }
+    const spaceRepo = getServerSpaceRepository();
+    const queryLower = query.toLowerCase();
 
-      if (verified !== undefined) {
-        spacesQuery = spacesQuery.where("isVerified", "==", verified);
-      }
+    // Use repository search as base
+    const searchResult = await spaceRepo.searchSpaces(query, CURRENT_CAMPUS_ID);
 
-      const spacesSnapshot = await spacesQuery.get();
-      const spaces: Array<{
-        id: string;
-        name: string;
-        description: string;
-        type: string;
-        tags: string[];
-        memberCount: number;
-        isVerified: boolean;
-        isPrivate: boolean;
-        createdAt: string;
-        creator: { id: string; name: string; avatar: string | null } | null;
-        isMember: boolean;
-        relevanceScore: number;
-        highlights: {
-          name: string[];
-          description: string[];
-          tags: string[];
-        };
-      }> = [];
-
-      const queryLower = query.toLowerCase();
-
-      for (const doc of spacesSnapshot.docs) {
-        const spaceData = doc.data();
-
-        const name = String(spaceData.name || "").toLowerCase();
-        const description = String(spaceData.description || "").toLowerCase();
-        const tags = (spaceData.tags || []).map((tag: string) =>
-          String(tag).toLowerCase(),
-        );
-
-        const nameMatch = name.includes(queryLower);
-        const descriptionMatch = description.includes(queryLower);
-        const tagMatch = tags.some((tag: string) => tag.includes(queryLower));
-
-        if (!nameMatch && !descriptionMatch && !tagMatch) {
-          continue;
-        }
-
-        const memberCount = spaceData.memberCount || 0;
-        if (minMembers !== undefined && memberCount < minMembers) continue;
-        if (maxMembers !== undefined && memberCount > maxMembers) continue;
-
-        let relevanceScore = 0;
-        if (nameMatch) relevanceScore += name === queryLower ? 100 : 80;
-        if (descriptionMatch) relevanceScore += 60;
-        if (tagMatch) relevanceScore += 40;
-        if (spaceData.isVerified) relevanceScore += 20;
-        relevanceScore += Math.min(20, memberCount / 10);
-
-        let creator: { id: string; name: string; avatar: string | null } | null =
-          null;
-        if (spaceData.creatorId) {
-          try {
-            const creatorDoc = await dbAdmin
-              .collection("users")
-              .doc(spaceData.creatorId)
-              .get();
-            if (creatorDoc.exists) {
-              const creatorData = creatorDoc.data();
-              creator = {
-                id: creatorDoc.id,
-                name:
-                  creatorData?.fullName ||
-                  creatorData?.displayName ||
-                  "Unknown",
-                avatar: creatorData?.photoURL || null,
-              };
-            }
-          } catch (error) {
-            logger.warn(
-              "Failed to fetch creator info at /api/spaces/search",
-              error instanceof Error ? error : new Error(String(error)),
-            );
-          }
-        }
-
-        let isMember = false;
-        try {
-          const memberDoc = await dbAdmin
-            .collection("spaces")
-            .doc(doc.id)
-            .collection("members")
-            .doc(userId)
-            .get();
-          isMember = memberDoc.exists;
-        } catch (error) {
-          logger.warn(
-            "Failed to check membership at /api/spaces/search",
-            error instanceof Error ? error : new Error(String(error)),
-          );
-        }
-
-        spaces.push({
-          id: doc.id,
-          name: spaceData.name,
-          description: spaceData.description,
-          type: spaceData.type,
-          tags: spaceData.tags || [],
-          memberCount,
-          isVerified: Boolean(spaceData.isVerified),
-          isPrivate: Boolean(spaceData.isPrivate),
-          createdAt:
-            spaceData.createdAt?.toDate?.()?.toISOString() ??
-            new Date().toISOString(),
-          creator,
-          isMember,
-          relevanceScore,
-          highlights: {
-            name: nameMatch ? [spaceData.name] : [],
-            description: descriptionMatch
-              ? [
-                  description.substring(
-                    Math.max(0, description.indexOf(queryLower) - 30),
-                    Math.min(
-                      description.length,
-                      description.indexOf(queryLower) +
-                        queryLower.length +
-                        30,
-                    ),
-                  ),
-                ]
-              : [],
-            tags: tagMatch
-              ? tags.filter((tag: string) => tag.includes(queryLower))
-              : [],
-          },
-        });
-      }
-
-      spaces.sort((a, b) => {
-        switch (sortBy) {
-          case "members":
-            return b.memberCount - a.memberCount;
-          case "activity": {
-            const aActivity =
-              a.memberCount +
-              (Date.now() - new Date(a.createdAt).getTime()) /
-                (1000 * 60 * 60 * 24);
-            const bActivity =
-              b.memberCount +
-              (Date.now() - new Date(b.createdAt).getTime()) /
-                (1000 * 60 * 60 * 24);
-            return bActivity - aActivity;
-          }
-          case "created":
-            return (
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
-          case "relevance":
-          default:
-            return b.relevanceScore - a.relevanceScore;
-        }
-      });
-
-      const paginatedSpaces = spaces.slice(offset, offset + limit);
-
-      return respond.success({
-        spaces: paginatedSpaces,
-        total: spaces.length,
-        hasMore: spaces.length > offset + limit,
-        pagination: {
-          limit,
-          offset,
-          nextOffset: spaces.length > offset + limit ? offset + limit : null,
-        },
-        query: {
-          ...searchParams,
-          executedAt: new Date().toISOString(),
-        },
-      });
-    } catch (error) {
-      logger.error(
-        "Error searching spaces at /api/spaces/search",
-        error instanceof Error ? error : new Error(String(error)),
-      );
-      return respond.error("Failed to search spaces", "INTERNAL_ERROR", {
-        status: 500,
-      });
+    if (searchResult.isFailure) {
+      logger.error('Search failed', { error: searchResult.error });
+      return respond.error('Failed to search spaces', 'INTERNAL_ERROR', { status: 500 });
     }
-  },
+
+    let spaces = searchResult.getValue();
+
+    // Apply additional filters
+    if (type) {
+      spaces = spaces.filter(s => s.category.value === type);
+    }
+
+    if (verified !== undefined) {
+      spaces = spaces.filter(s => s.isVerified === verified);
+    }
+
+    if (minMembers !== undefined) {
+      spaces = spaces.filter(s => s.memberCount >= minMembers);
+    }
+
+    if (maxMembers !== undefined) {
+      spaces = spaces.filter(s => s.memberCount <= maxMembers);
+    }
+
+    // Calculate relevance scores
+    const scoredSpaces = spaces.map(space => {
+      const { score, highlights } = calculateRelevance(space, queryLower);
+      return { space, score, highlights };
+    });
+
+    // Sort based on sortBy param
+    scoredSpaces.sort((a, b) => {
+      switch (sortBy) {
+        case "members":
+          return b.space.memberCount - a.space.memberCount;
+        case "activity":
+          return b.space.lastActivityAt.getTime() - a.space.lastActivityAt.getTime();
+        case "created":
+          return b.space.createdAt.getTime() - a.space.createdAt.getTime();
+        case "relevance":
+        default:
+          return b.score - a.score;
+      }
+    });
+
+    // Get user's memberships to mark joined spaces
+    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    const userSpaceIds = new Set(
+      userSpacesResult.isSuccess
+        ? userSpacesResult.getValue().map(s => s.spaceId.value)
+        : []
+    );
+
+    // Paginate
+    const paginatedSpaces = scoredSpaces.slice(offset, offset + limit);
+
+    // Fetch creator info for results (batch lookup)
+    const creatorCache = new Map<string, { id: string; name: string; avatar: string | null }>();
+
+    for (const { space } of paginatedSpaces) {
+      const creatorId = space.owner.value;
+      if (creatorId && !creatorCache.has(creatorId)) {
+        try {
+          const creatorDoc = await dbAdmin.collection('users').doc(creatorId).get();
+          if (creatorDoc.exists) {
+            const data = creatorDoc.data();
+            creatorCache.set(creatorId, {
+              id: creatorDoc.id,
+              name: data?.fullName || data?.displayName || 'Unknown',
+              avatar: data?.photoURL || null,
+            });
+          }
+        } catch {
+          // Ignore creator lookup failures
+        }
+      }
+    }
+
+    // Transform results
+    const results = paginatedSpaces.map(({ space, score, highlights }) =>
+      transformSearchResult(
+        space,
+        score,
+        highlights,
+        userSpaceIds.has(space.spaceId.value),
+        creatorCache.get(space.owner.value) || null
+      )
+    );
+
+    return respond.success({
+      spaces: results,
+      total: scoredSpaces.length,
+      hasMore: scoredSpaces.length > offset + limit,
+      pagination: {
+        limit,
+        offset,
+        nextOffset: scoredSpaces.length > offset + limit ? offset + limit : null,
+      },
+      query: {
+        ...searchParams,
+        executedAt: new Date().toISOString(),
+      },
+    });
+  }
 );

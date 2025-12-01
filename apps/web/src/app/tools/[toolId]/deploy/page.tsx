@@ -412,7 +412,7 @@ export default function ToolDeployPage() {
             <div className="flex justify-between">
               <span className="text-[var(--hive-text-secondary)]">Tool:</span>
               <span className="text-[var(--hive-text-primary)] font-medium">
-                {toolData?.name}
+                {toolData?.name as string}
               </span>
             </div>
             <div className="flex justify-between">
@@ -533,7 +533,7 @@ export default function ToolDeployPage() {
           </Button>
           <div>
             <h1 className="text-lg font-semibold text-[var(--hive-text-primary)]">
-              Deploy Tool: {toolData.name}
+              Deploy Tool: {String(toolData.name || '')}
             </h1>
             <div className="flex items-center gap-4 mt-1">
               <span className="text-sm text-[var(--hive-text-secondary)]">

@@ -5,11 +5,11 @@ import { getAuth } from "firebase-admin/auth";
 import { sendFirebaseMagicLinkEmail, isFirebaseEmailAuthEnabled } from "@/lib/firebase-auth-email";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
-import { _validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
+import { validateWithSecurity as _validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
-import { _ApiResponseHelper, _HttpStatus } from '@/lib/api-response-types';
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from '@/lib/api-response-types';
 import { getDefaultActionCodeSettings } from "@hive/core";
 
 /**
@@ -44,8 +44,8 @@ function cleanupOldAttempts() {
 
 export const POST = withValidation(
   resendMagicLinkSchema,
-  async (request: NextRequest, _context: Record<string, string | string[]>, body: z.infer<typeof resendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
-    const { email, schoolId, _attemptNumber = 1 } = body;
+  async (request, _context: Record<string, string | string[]>, body: z.infer<typeof resendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
+    const { email, schoolId, attemptNumber: _attemptNumber = 1 } = body;
     const _requestId = request.headers.get('x-request-id') || `resend_${Date.now()}`;
 
     try {
@@ -65,7 +65,7 @@ export const POST = withValidation(
       if (timeSinceLastAttempt < requiredDelay) {
         const remainingTime = Math.ceil((requiredDelay - timeSinceLastAttempt) / 1000);
 
-        await auditAuthEvent('failure', request, {
+        await auditAuthEvent('failure', request as unknown as NextRequest, {
           operation: 'resend_magic_link',
           error: 'rate_limited'
         });
@@ -94,7 +94,7 @@ export const POST = withValidation(
 
       // Check maximum attempts
       if (attempts.count >= 5) {
-        await auditAuthEvent('forbidden', request, {
+        await auditAuthEvent('forbidden', request as unknown as NextRequest, {
           operation: 'resend_magic_link',
           error: 'max_attempts_exceeded'
         });
@@ -161,7 +161,7 @@ export const POST = withValidation(
         // User doesn't exist yet, which is fine
         if ((error as { code?: string }).code !== 'auth/user-not-found') {
           logger.error('Error checking user status', {
-            error: error instanceof Error ? error : new Error(String(error)),
+            error: { error: error instanceof Error ? error.message : String(error) },
             endpoint: '/api/auth/resend-magic-link'
           });
         }
@@ -227,7 +227,7 @@ export const POST = withValidation(
           endpoint: '/api/auth/resend-magic-link'
         });
 
-        await auditAuthEvent('success', request, {
+        await auditAuthEvent('success', request as unknown as NextRequest, {
           operation: 'resend_magic_link'
         });
 
@@ -240,11 +240,11 @@ export const POST = withValidation(
 
       } catch (firebaseError: unknown) {
         logger.error(
-      `Failed to resend magic link at /api/auth/resend-magic-link`,
-      firebaseError instanceof Error ? firebaseError : new Error(String(firebaseError))
-    );
+          `Failed to resend magic link at /api/auth/resend-magic-link`,
+          { error: { error: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) } }
+        );
 
-        await auditAuthEvent('failure', request, {
+        await auditAuthEvent('failure', request as unknown as NextRequest, {
           operation: 'resend_magic_link',
           error: firebaseError instanceof Error ? firebaseError.message : String(firebaseError)
         });
@@ -257,7 +257,7 @@ export const POST = withValidation(
       }
 
     } catch (error) {
-      await auditAuthEvent('failure', request, {
+      await auditAuthEvent('failure', request as unknown as NextRequest, {
         operation: 'resend_magic_link',
         error: error instanceof Error ? error.message : 'unknown'
       });

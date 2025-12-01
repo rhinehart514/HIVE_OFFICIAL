@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home, Bug, _ExternalLink } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Home, Bug, ExternalLink } from 'lucide-react';
 import { Button, Card } from "@hive/ui";
 import { logger } from '../lib/logger';
 import { errorReporting } from '../lib/error-reporting';

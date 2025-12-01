@@ -5,14 +5,14 @@ export const metadata: Metadata = {
   title: 'Space · HIVE',
 };
 
-export default function SpaceLayout({
+export default async function SpaceLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { spaceId: string };
+  params: Promise<{ spaceId: string }>;
 }) {
-  const { spaceId } = params;
+  const { spaceId } = await params;
   return (
     <div className="min-h-screen bg-black">
       <SpaceSubnav spaceId={spaceId} />

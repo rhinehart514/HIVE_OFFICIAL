@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Feedback submission error at /api/feedback`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     
     return NextResponse.json(ApiResponseHelper.error("Failed to submit feedback", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });

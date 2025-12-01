@@ -126,6 +126,7 @@ export const HttpStatus = {
   UNPROCESSABLE_ENTITY: 422, // Validation errors
   TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
+  NOT_IMPLEMENTED: 501,
   SERVICE_UNAVAILABLE: 503
 } as const;
 

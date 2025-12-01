@@ -19,6 +19,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@hive/core": "workspace:*",
     "react": "^19.0.0"
   },
   "devDependencies": {

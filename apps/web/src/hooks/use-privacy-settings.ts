@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { profileAPI, type PrivacySettings } from '../lib/profile-api';
+import { updatePrivacySettings as updateSettings, type PrivacySettings } from '../lib/profile-api';
+import { useAuth } from '@hive/auth-logic';
 
 interface UsePrivacySettingsReturn {
   isLoading: boolean;
@@ -10,6 +11,7 @@ interface UsePrivacySettingsReturn {
 }
 
 export function usePrivacySettings(): UsePrivacySettingsReturn {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -18,11 +20,16 @@ export function usePrivacySettings(): UsePrivacySettingsReturn {
   }, []);
 
   const updatePrivacySettings = useCallback(async (settings: Partial<PrivacySettings>): Promise<boolean> => {
+    if (!user?.uid) {
+      setError('Not authenticated');
+      return false;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
 
-      await profileAPI.updatePrivacySettings(settings);
+      await updateSettings(user.uid, settings);
       return true;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update privacy settings';
@@ -31,10 +38,10 @@ export function usePrivacySettings(): UsePrivacySettingsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user?.uid]);
 
   const togglePublicProfile = useCallback(async (isPublic: boolean): Promise<boolean> => {
-    return updatePrivacySettings({ isPublic });
+    return updatePrivacySettings({ profileVisibility: isPublic ? 'public' : 'campus' });
   }, [updatePrivacySettings]);
 
   return {

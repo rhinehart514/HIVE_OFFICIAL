@@ -105,15 +105,15 @@ export const useFeedAnalytics = ({
   const [isSessionActive, setIsSessionActive] = useState(false)
   
   // Session and heartbeat management
-  const sessionIdRef = useRef<string>()
-  const heartbeatIntervalRef = useRef<NodeJS.Timeout>()
+  const sessionIdRef = useRef<string | undefined>(undefined)
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const lastInteractionRef = useRef<Date>(new Date())
   const activeTimeRef = useRef<number>(0)
   const lastHeartbeatRef = useRef<Date>(new Date())
-  
+
   // Event batching
   const eventBatchRef = useRef<FeedAnalyticsEvent[]>([])
-  const batchTimeoutRef = useRef<NodeJS.Timeout>()
+  const batchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   
   // Configuration with defaults
   const analyticsConfig: FeedAnalyticsConfig = {

@@ -6,10 +6,10 @@
  * Admin view for managing all rituals across phases.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Badge, useToast } from '@hive/ui';
-import { Plus, Play, Pause, StopCircle, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Play, Pause, StopCircle, Eye } from 'lucide-react';
 import type { RitualUnion } from '@hive/core';
 
 export default function RitualsPage() {
@@ -19,11 +19,7 @@ export default function RitualsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPhase, setSelectedPhase] = useState<string>('all');
 
-  useEffect(() => {
-    fetchRituals();
-  }, [selectedPhase]);
-
-  const fetchRituals = async () => {
+  const fetchRituals = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -34,7 +30,7 @@ export default function RitualsPage() {
       if (!res.ok) throw new Error('Failed to fetch rituals');
       const { data } = await res.json();
       setRituals(data || []);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         message: 'Failed to load rituals',
@@ -43,7 +39,11 @@ export default function RitualsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedPhase, toast]);
+
+  useEffect(() => {
+    fetchRituals();
+  }, [fetchRituals]);
 
   const handlePhaseChange = async (ritualId: string, newPhase: string) => {
     try {
@@ -59,7 +59,7 @@ export default function RitualsPage() {
         type: 'success',
       });
       fetchRituals();
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         message: 'Failed to update ritual phase',

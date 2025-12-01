@@ -289,12 +289,12 @@ class AdminActivityLogger {
         .get();
 
       const batch = dbAdmin.batch();
-      oldLogs.docs.forEach((doc: any) => {
+      oldLogs.docs.forEach((doc) => {
         batch.delete(doc.ref);
       });
 
       await batch.commit();
-      console.log(`Cleaned up ${oldLogs.docs.length} old activity logs`);
+      console.warn(`Cleaned up ${oldLogs.docs.length} old activity logs`);
     } catch (error) {
       console.error('Failed to cleanup old logs from database:', error);
     }

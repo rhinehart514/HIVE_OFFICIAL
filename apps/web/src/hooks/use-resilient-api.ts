@@ -34,7 +34,7 @@ export function useResilientApi<T>(
     immediate = true,
     staleTime = 5 * 60 * 1000, // 5 minutes
     cacheKey,
-    _retryOnMount = true,
+    retryOnMount: _retryOnMount = true,
     offlineSupport = false
   } = options;
 
@@ -48,8 +48,8 @@ export function useResilientApi<T>(
     hasOfflineData: false
   });
 
-  const clientRef = useRef<ResilientHiveApiClient>();
-  const abortControllerRef = useRef<AbortController>();
+  const clientRef = useRef<ResilientHiveApiClient | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Initialize API client
   useEffect(() => {
@@ -362,7 +362,7 @@ export function useResilientMutation<TData, TVariables>(
     error: null
   });
 
-  const clientRef = useRef<ResilientHiveApiClient>();
+  const clientRef = useRef<ResilientHiveApiClient | null>(null);
 
   useEffect(() => {
     clientRef.current = createResilientApiClient();

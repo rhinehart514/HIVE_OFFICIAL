@@ -61,6 +61,6 @@ export function ClickAwayListener({ children, onClickAway, active = true }: Clic
     [childRef],
   );
 
-  return React.cloneElement(child, { ref: setRef });
+  return React.cloneElement(child, { ref: setRef } as React.HTMLAttributes<HTMLElement>);
 }
 

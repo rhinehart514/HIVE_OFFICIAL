@@ -55,7 +55,7 @@ export function FacultyProfileStep({
   error,
   setError,
 }: FacultyProfileStepProps) {
-  const { name, _courseCode } = data;
+  const { name } = data;
   const [department, setDepartment] = useState("");
   const [departmentOpen, setDepartmentOpen] = useState(false);
 
@@ -91,7 +91,7 @@ export function FacultyProfileStep({
         className="flex justify-center mb-2"
       >
         <div className="h-16 w-16 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center">
-          <Building2 className="h-8 w-8 text-[#FFD700]" />
+          <Building2 className="h-8 w-8 text-gold-500" />
         </div>
       </motion.div>
 
@@ -205,8 +205,7 @@ export function FacultyProfileStep({
           type="button"
           onClick={handleSubmit}
           disabled={!name.trim() || !department}
-          className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold text-sm disabled:opacity-40 transition-all"
-          style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+          className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold text-sm disabled:opacity-40 transition-colors"
         >
           Continue
         </Button>

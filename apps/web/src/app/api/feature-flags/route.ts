@@ -7,6 +7,13 @@ import { featureFlagService, type UserFeatureContext, HIVE_FEATURE_FLAGS } from 
 import { dbAdmin } from '@/lib/firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
+// Type for feature flag results
+interface FlagResult {
+  enabled: boolean;
+  config?: Record<string, unknown>;
+  variant?: string;
+}
+
 /**
  * User Feature Flags API
  * Allows users to check which features are enabled for them
@@ -31,27 +38,27 @@ export async function GET(request: NextRequest) {
     // Build user context
     const userContext = await buildUserContext(user.uid);
 
-    let results: Record<string, unknown> = {};
+    let results: Record<string, FlagResult> = {};
 
     if (flagIds.length > 0) {
       // Get specific flags
-      results = await featureFlagService.getUserFeatureFlags(flagIds, userContext);
+      results = await featureFlagService.getUserFeatureFlags(flagIds, userContext) as Record<string, FlagResult>;
     } else if (category) {
       // Get flags by category
       results = await featureFlagService.getCategoryFeatureFlags(
         category as 'core' | 'experimental' | 'infrastructure' | 'ui_ux' | 'tools' | 'spaces' | 'admin',
         userContext
-      );
+      ) as Record<string, FlagResult>;
     } else {
       // Get all predefined HIVE flags
       const allHiveFlagIds = Object.values(HIVE_FEATURE_FLAGS);
-      results = await featureFlagService.getUserFeatureFlags(allHiveFlagIds, userContext);
+      results = await featureFlagService.getUserFeatureFlags(allHiveFlagIds, userContext) as Record<string, FlagResult>;
     }
 
     // Remove config if not requested (for security)
     if (!includeConfig) {
       Object.keys(results).forEach(flagId => {
-        if (results[flagId].config) {
+        if (results[flagId]?.config) {
           delete results[flagId].config;
         }
       });
@@ -71,7 +78,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting user feature flags at /api/feature-flags`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       ApiResponseHelper.error('Failed to get feature flags', 'INTERNAL_ERROR'), 
@@ -125,7 +132,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error checking feature flags at /api/feature-flags`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       ApiResponseHelper.error('Failed to check feature flags', 'INTERNAL_ERROR'), 
@@ -173,7 +180,7 @@ async function buildUserContext(userId: string): Promise<UserFeatureContext> {
       }
     };
   } catch (error) {
-    logger.error('Error building user context', { error: error instanceof Error ? error : new Error(String(error)), userId });
+    logger.error('Error building user context', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
     
     // Return minimal context on error
     return {
@@ -261,7 +268,7 @@ export async function OPTIONS(_request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting feature flag metadata at /api/feature-flags`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
       ApiResponseHelper.error('Failed to get metadata', 'INTERNAL_ERROR'), 

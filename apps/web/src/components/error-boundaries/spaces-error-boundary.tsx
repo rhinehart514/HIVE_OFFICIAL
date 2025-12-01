@@ -11,7 +11,7 @@ interface SpacesErrorFallbackProps {
   errorId?: string;
 }
 
-function SpacesErrorFallback({ _error, retry, errorId }: SpacesErrorFallbackProps) {
+function SpacesErrorFallback({ error: _error, retry, errorId }: SpacesErrorFallbackProps) {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <Card className="p-8 bg-hive-surface border-hive-border text-center">

@@ -1,5 +1,5 @@
-import { _NextRequest, NextResponse } from 'next/server';
-import { _getFirestore, _FieldValue } from "firebase-admin/firestore";
+import { NextRequest as _NextRequest, NextResponse } from 'next/server';
+import { getFirestore as _getFirestore, FieldValue as _FieldValue } from "firebase-admin/firestore";
 import * as admin from 'firebase-admin';
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
@@ -17,12 +17,12 @@ const DeployToolSchema = z.object({
 export const POST = withAuthValidationAndErrors(
   DeployToolSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ toolId: string }> },
     { spaceId, configuration, permissions },
     respond
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { toolId } = await params;
     const db = dbAdmin;
 
@@ -188,13 +188,13 @@ export const POST = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
 
   if (!spaceId) {
@@ -291,13 +291,13 @@ export const DELETE = withAuthAndErrors(async (
 });
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
 
   if (!spaceId) {

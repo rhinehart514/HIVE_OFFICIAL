@@ -3,9 +3,9 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { _sseRealtimeService } from '@/lib/sse-realtime-service';
+import { sseRealtimeService as _sseRealtimeService } from '@/lib/sse-realtime-service';
 
 // WebSocket connection interfaces
 interface WebSocketConnection {
@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error establishing WebSocket connection at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to establish connection", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -174,8 +174,8 @@ export async function GET(request: NextRequest) {
       }
 
       const connection = { id: connectionDoc.id, ...connectionDoc.data() };
-      
-      let channels = [];
+
+      let channels: Array<Record<string, unknown>> = [];
       if (includeChannels) {
         channels = await getUserChannelSubscriptions(user.uid);
       }
@@ -209,7 +209,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting connection info at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get connection info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -270,7 +270,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating connection at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update connection", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -339,7 +339,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error closing connection at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to close connection", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -419,7 +419,7 @@ async function getUserSpaces(userId: string): Promise<string[]> {
   } catch (error) {
     logger.error(
       `Error getting user spaces at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -462,7 +462,7 @@ async function subscribeToChannels(connectionId: string, userId: string, channel
   } catch (error) {
     logger.error(
       `Error subscribing to channels at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -536,7 +536,7 @@ async function unsubscribeFromChannels(connectionId: string, userId: string, cha
   } catch (error) {
     logger.error(
       `Error unsubscribing from channels at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -560,7 +560,7 @@ async function replaceChannelSubscriptions(connectionId: string, userId: string,
   } catch (error) {
     logger.error(
       `Error replacing channel subscriptions at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -579,7 +579,7 @@ async function getUserChannelSubscriptions(userId: string): Promise<Array<Record
   } catch (error) {
     logger.error(
       `Error getting channel subscriptions at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -606,7 +606,7 @@ async function updateUserPresence(userId: string, status: 'online' | 'offline' |
   } catch (error) {
     logger.error(
       `Error updating user presence at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -642,7 +642,7 @@ async function broadcastPresenceUpdate(spaceId: string, userId: string, status: 
   } catch (error) {
     logger.error(
       `Error broadcasting presence update at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -675,7 +675,7 @@ async function closeConnection(connectionId: string, userId: string): Promise<bo
   } catch (error) {
     logger.error(
       `Error closing connection at /api/realtime/websocket`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }

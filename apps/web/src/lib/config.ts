@@ -14,7 +14,6 @@ export const config = {
   auth: {
     tokenStorageKey: 'hive_session',
     tokenExpiryHours: parseInt(process.env.NEXT_PUBLIC_TOKEN_EXPIRY_HOURS || '24', 10),
-    enableTestMode: process.env.NODE_ENV === 'development',
   },
 
   // Cache Configuration

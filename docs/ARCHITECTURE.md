@@ -96,8 +96,112 @@ apps/admin → depends on → @hive/ui, @hive/core
 - [Deployment](./deployment/) - Deploy guides
 - [Architecture](./architecture/) - System design
 
+### Key Architecture Documents
+
+| Document | Purpose |
+|----------|---------|
+| [VERTICAL_SLICE_AUDIT.md](./architecture/VERTICAL_SLICE_AUDIT.md) | Complete analysis of all 22 vertical slices |
+| [IMPLEMENTATION_ROADMAP.md](./architecture/IMPLEMENTATION_ROADMAP.md) | Ordered implementation with AI-first analysis |
+| [CAMPUS_TOPOLOGY.md](./architecture/CAMPUS_TOPOLOGY.md) | Campus ecosystem + wedge strategy |
+
 ---
 
-**Last Updated:** November 15, 2025  
-**Branch:** main (formerly storybook-production-rebuild)  
-**Clean Architecture:** 30+ dirs → 13 dirs
+## 🏫 Campus Topology
+
+### Target Environment: University at Buffalo (UB)
+
+**Campus Scale:**
+- ~32,000 students (undergraduate + graduate)
+- ~6,000 faculty/staff
+- 300+ registered student organizations
+- 3 campuses (North, South, Downtown)
+
+**Existing Digital Ecosystem:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    CAMPUS DIGITAL LAYER                      │
+├─────────────────────────────────────────────────────────────┤
+│ Official                                                     │
+│ ├── MyUB Portal (Blackboard, grades, official comms)        │
+│ ├── UB Mobile App (maps, dining, transit)                   │
+│ ├── Campus Labs (org registration, events)                  │
+│ └── Email (official communications)                         │
+├─────────────────────────────────────────────────────────────┤
+│ Social (Where Students Actually Are)                         │
+│ ├── Instagram (club promotion, events, social)              │
+│ ├── GroupMe (group chats, class groups, club comms)         │
+│ ├── Discord (gaming, tech clubs, study groups)              │
+│ ├── Snapchat (social, stories)                              │
+│ └── TikTok (discovery, trends)                              │
+├─────────────────────────────────────────────────────────────┤
+│ Functional                                                   │
+│ ├── Google Calendar (personal scheduling)                   │
+│ ├── LinkedIn (career, professional)                         │
+│ ├── Handshake (jobs, internships)                           │
+│ └── When2Meet (group scheduling)                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Wedge Opportunities
+
+**Primary Wedge: Space Discovery**
+- Problem: New students don't know what clubs exist
+- Current: Campus Labs listing (static, boring, unused)
+- HIVE: Dynamic discovery with social proof, activity feeds
+
+**Secondary Wedge: Event Fragmentation**
+- Problem: Events scattered across Instagram stories, flyers, GroupMe
+- Current: No single source of truth
+- HIVE: Unified event calendar with RSVP + social layer
+
+**Tertiary Wedge: Leader Burden**
+- Problem: Club leaders manage 5+ platforms manually
+- Current: Post same content to Instagram, GroupMe, email
+- HIVE: Single hub that distributes to where members are
+
+### Competitive Positioning
+
+| Competitor | Weakness | HIVE Advantage |
+|------------|----------|----------------|
+| GroupMe | No discovery, no profiles, no persistence | Rich profiles, discoverability |
+| Instagram | No membership, no structure | Structured communities |
+| Discord | Too complex for casual users | Simple, campus-native |
+| Campus Labs | Static, no engagement | Dynamic, social, engaging |
+| Slack/Teams | Professional, not social | Social-first, campus-native |
+
+---
+
+## 🔄 Vertical Slice Overview
+
+### Platform Readiness
+
+| Tier | Slices | Status | Launch Blocker |
+|------|--------|--------|----------------|
+| **Core** | Auth, Onboarding, Profiles, Spaces, Feed | 50% | Yes |
+| **Engagement** | Tools, Rituals, Calendar, Social, Notifications | 25% | Partial |
+| **Infrastructure** | Real-time, Search, Privacy, Admin, Moderation | 20% | Yes |
+
+### Critical Path to Launch
+
+```
+Week 1: Security (Auth hardening, remove dev backdoors)
+Week 1-2: Data Integrity (Onboarding fix, Profile cleanup)
+Week 2-3: Core Experience (Feed algorithm, Spaces permissions)
+Week 3-4: Infrastructure (Real-time, Notifications)
+Week 4: Discovery (Search)
+```
+
+### AI Integration Readiness
+
+Each slice has documented AI opportunities:
+- **Near-term**: Rule-based, deterministic enhancements
+- **Medium-term**: ML-powered personalization
+- **Long-term**: Generative AI features
+
+See `IMPLEMENTATION_ROADMAP.md` for slice-by-slice AI analysis.
+
+---
+
+**Last Updated:** November 28, 2024
+**Branch:** main
+**Platform Status:** Pre-launch (50% core ready)

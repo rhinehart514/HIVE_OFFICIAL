@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error handling feed cache request at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to process feed request", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error handling cache GET request at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get cache info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -229,7 +229,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error clearing cache at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to clear cache", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -295,7 +295,7 @@ async function getCachedFeed(cacheKey: string, userId: string): Promise<FeedCach
   } catch (error) {
     logger.error(
       `Error getting cached feed at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }
@@ -322,8 +322,8 @@ async function cacheFeedContent(params: {
       cacheKey,
       feedType: feedType as FeedCache['feedType'],
       content,
-      metadata,
-      parameters,
+      metadata: metadata as FeedCache['metadata'],
+      parameters: parameters as FeedCache['parameters'],
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       lastAccessed: now.toISOString(),
@@ -335,7 +335,7 @@ async function cacheFeedContent(params: {
   } catch (error) {
     logger.error(
       `Error caching feed content at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -350,7 +350,7 @@ async function updateCacheAccess(cacheId: string): Promise<void> {
   } catch (error) {
     logger.error(
       `Error updating cache access at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -438,7 +438,7 @@ async function getCacheStats(userId: string): Promise<CacheStats> {
   } catch (error) {
     logger.error(
       `Error getting cache stats at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return {
       hitRate: 0,
@@ -466,7 +466,7 @@ async function getUserCaches(userId: string): Promise<FeedCache[]> {
   } catch (error) {
     logger.error(
       `Error getting user caches at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -489,7 +489,7 @@ async function clearUserCaches(userId: string): Promise<number> {
   } catch (error) {
     logger.error(
       `Error clearing user caches at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }
@@ -516,7 +516,7 @@ async function clearSpecificCache(cacheKey: string, userId: string): Promise<boo
   } catch (error) {
     logger.error(
       `Error clearing specific cache at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -540,7 +540,7 @@ async function _cleanupExpiredCaches(): Promise<number> {
   } catch (error) {
     logger.error(
       `Error cleaning up expired caches at /api/feed/cache`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }

@@ -21,14 +21,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate events and add timestamps
-    const validEvents = events.map((event: unknown): ActivityEvent => {
-      if (!event.type || !['space_visit', 'tool_interaction', 'content_creation', 'social_interaction', 'session_start', 'session_end'].includes(event.type)) {
-        throw new Error(`Invalid activity type: ${event.type}`);
+    const validEvents = events.map((rawEvent: unknown): ActivityEvent => {
+      const event = rawEvent as Record<string, unknown>;
+      const eventType = event.type as string | undefined;
+      if (!eventType || !['space_visit', 'tool_interaction', 'content_creation', 'social_interaction', 'session_start', 'session_end'].includes(eventType)) {
+        throw new Error(`Invalid activity type: ${eventType}`);
       }
 
       const now = new Date();
       return {
-        type: event.type as string,
+        type: eventType,
         spaceId: event.spaceId as string | undefined,
         toolId: event.toolId as string | undefined,
         contentId: event.contentId as string | undefined,
@@ -55,9 +57,9 @@ export async function POST(request: NextRequest) {
     validEvents.forEach(event => {
       updateDailySummary(user.uid, event).catch(error => {
         logger.error(
-      `Error updating daily summary at /api/activity/batch`,
-      error instanceof Error ? error : new Error(String(error))
-    );
+          `Error updating daily summary at /api/activity/batch`,
+          { error: error instanceof Error ? error.message : String(error) }
+        );
       });
     });
 
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error logging batch activities at /api/activity/batch`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to log batch activities", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -143,7 +145,7 @@ async function updateDailySummary(userId: string, event: ActivityEvent) {
   } catch (error) {
     logger.error(
       `Error updating daily summary at /api/activity/batch`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

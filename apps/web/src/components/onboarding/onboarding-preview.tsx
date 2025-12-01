@@ -1,8 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { User, GraduationCap, Briefcase, Check } from "lucide-react";
-import Image from "next/image";
+import { User, GraduationCap, Briefcase, Check, Shield } from "lucide-react";
 import type { HandleStatus, UserType, OnboardingStep } from "./shared/types";
 
 interface OnboardingPreviewProps {
@@ -34,7 +33,7 @@ export function OnboardingPreview({
       case "student":
         return { icon: GraduationCap, label: "Student" };
       case "alumni":
-        return { icon: User, label: "Alumni" };
+        return { icon: Shield, label: "Alumni" };
       case "faculty":
         return { icon: Briefcase, label: "Faculty" };
       default:
@@ -43,201 +42,171 @@ export function OnboardingPreview({
   };
 
   const roleBadge = getRoleBadge();
-  const hasContent = name || handle || userType;
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center p-8 relative">
-      {/* Subtle dot grid pattern */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
-          backgroundSize: "24px 24px",
-        }}
-      />
-
-      {/* Breathing gold ambient glow */}
-      <motion.div
-        animate={{
-          scale: [1, 1.1, 1],
-          opacity: [0.03, 0.05, 0.03],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#FFD700] rounded-full blur-[100px] pointer-events-none"
-      />
-
-      {/* Profile Card Preview */}
+    <div className="h-full w-full flex flex-col items-center justify-center p-6 bg-black">
+      {/* Profile Card */}
       <motion.div
         layout
-        className={`relative w-full max-w-sm bg-neutral-900 rounded-2xl border overflow-hidden shadow-2xl ${
-          hasContent ? "border-neutral-800/50" : "border-neutral-800/30"
-        }`}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-[280px] flex flex-col items-center"
       >
-        {/* Header with photo */}
-        <div className="relative h-24 bg-gradient-to-br from-neutral-800 to-neutral-900">
-          {/* Gold accent line */}
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#FFD700]/30 to-transparent" />
+        {/* Avatar - portrait rectangle */}
+        <motion.div
+          layout
+          className="relative w-[88px] h-[112px] rounded-2xl overflow-hidden bg-neutral-800 border-[3px] border-neutral-700 shadow-lg"
+        >
+          {profilePhoto ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profilePhoto}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User className="w-10 h-10 text-neutral-500" strokeWidth={1.5} />
+            </div>
+          )}
+        </motion.div>
 
-          {/* Profile photo */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2">
-            <motion.div
-              layout
-              className={`w-20 h-20 rounded-2xl overflow-hidden border-4 border-neutral-900 ${
-                profilePhoto ? "" : "bg-neutral-800"
-              } flex items-center justify-center shadow-lg`}
+        {/* Name */}
+        <div className="mt-4 text-center">
+          <AnimatePresence mode="wait">
+            <motion.h2
+              key={name || "placeholder"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className={`text-2xl font-bold tracking-tight ${
+                name ? "text-white" : "text-neutral-600"
+              }`}
             >
-              {profilePhoto ? (
-                <Image
-                  src={profilePhoto}
-                  alt="Profile"
-                  width={80}
-                  height={80}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-8 h-8 text-neutral-500" />
-              )}
-            </motion.div>
-          </div>
-        </div>
+              {name || "Your Name"}
+            </motion.h2>
+          </AnimatePresence>
 
-        {/* Content */}
-        <div className="pt-14 pb-6 px-6 space-y-4">
-          {/* Name and handle */}
-          <div className="text-center">
-            <AnimatePresence mode="wait">
-              {name ? (
-                <motion.h3
-                  key="name"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className="font-semibold text-lg text-white"
-                >
-                  {name}
-                </motion.h3>
-              ) : (
-                <motion.h3
-                  key="placeholder-name"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="font-semibold text-lg text-neutral-600"
-                >
-                  Your name
-                </motion.h3>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-              {handle ? (
-                <motion.p
-                  key="handle"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  className={`text-sm font-medium ${
-                    handleStatus === "available"
-                      ? "text-green-400"
+          {/* Handle */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={handle || "placeholder-handle"}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex items-center justify-center gap-1.5 mt-1"
+            >
+              <span
+                className={`text-sm ${
+                  handle
+                    ? handleStatus === "available"
+                      ? "text-emerald-400"
                       : handleStatus === "taken" || handleStatus === "invalid"
                       ? "text-red-400"
                       : "text-neutral-400"
-                  }`}
-                >
-                  @{handle}
-                  {handleStatus === "available" && (
-                    <Check className="inline-block w-3.5 h-3.5 ml-1" />
-                  )}
-                </motion.p>
-              ) : (
-                <motion.p
-                  key="placeholder-handle"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-sm text-neutral-600"
-                >
-                  @handle
-                </motion.p>
+                    : "text-neutral-600"
+                }`}
+              >
+                @{handle || "username"}
+              </span>
+              {handle && handleStatus === "available" && (
+                <Check className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2.5} />
               )}
-            </AnimatePresence>
-          </div>
-
-          {/* Role badge */}
-          <AnimatePresence>
-            {roleBadge && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="flex justify-center"
-              >
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-neutral-800 text-neutral-300 rounded-full">
-                  <roleBadge.icon className="w-3.5 h-3.5" />
-                  {roleBadge.label}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Academic info */}
-          <AnimatePresence>
-            {(major || graduationYear) && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="text-center text-sm text-neutral-400"
-              >
-                {major && <span>{major}</span>}
-                {major && graduationYear && <span className="mx-1.5">•</span>}
-                {graduationYear && <span>Class of {graduationYear}</span>}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Course code for faculty */}
-          <AnimatePresence>
-            {courseCode && userType === "faculty" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="text-center"
-              >
-                <span className="text-xs font-mono bg-neutral-800 px-3 py-1.5 rounded-lg text-neutral-300">
-                  {courseCode}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Interests */}
-          <AnimatePresence>
-            {interests.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="flex flex-wrap justify-center gap-1.5 pt-2"
-              >
-                {interests.map((interest) => (
-                  <motion.span
-                    key={interest}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="px-2.5 py-1 text-xs bg-[#FFD700] text-black rounded-full font-medium"
-                  >
-                    {interest}
-                  </motion.span>
-                ))}
-              </motion.div>
-            )}
+            </motion.div>
           </AnimatePresence>
         </div>
+
+        {/* Badges row */}
+        <AnimatePresence>
+          {(roleBadge || major || graduationYear) && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-wrap justify-center gap-2 mt-4"
+            >
+              {/* Role badge */}
+              {roleBadge && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-gold-500 border border-gold-500/40 rounded bg-transparent">
+                  <roleBadge.icon className="w-3 h-3" />
+                  {roleBadge.label}
+                </span>
+              )}
+
+              {/* Class year badge */}
+              {graduationYear && (
+                <span className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-400 border border-neutral-600 rounded bg-transparent">
+                  Class of {graduationYear}
+                </span>
+              )}
+
+              {/* Major/School badge */}
+              {major && (
+                <span className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-400 border border-neutral-600 rounded bg-transparent">
+                  {major}
+                </span>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Course code for faculty */}
+        <AnimatePresence>
+          {courseCode && userType === "faculty" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mt-3"
+            >
+              <span className="text-xs font-mono px-3 py-1.5 rounded text-neutral-300 border border-neutral-600 bg-transparent">
+                {courseCode}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Interests - outline style */}
+        <AnimatePresence>
+          {interests.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-wrap justify-center gap-1.5 mt-4"
+            >
+              {interests.slice(0, 4).map((interest, index) => (
+                <motion.span
+                  key={interest}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="px-2.5 py-1 text-xs font-medium text-gold-500 border border-gold-500/40 rounded-full bg-transparent"
+                >
+                  {interest}
+                </motion.span>
+              ))}
+              {interests.length > 4 && (
+                <span className="px-2.5 py-1 text-xs font-medium text-neutral-400 border border-neutral-600 rounded-full bg-transparent">
+                  +{interests.length - 4}
+                </span>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Edit Profile button */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mt-6"
+        >
+          <div className="px-5 py-2 text-sm font-medium text-neutral-500 border border-neutral-700 rounded-lg bg-transparent">
+            Edit Profile
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );

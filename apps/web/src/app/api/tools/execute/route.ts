@@ -10,6 +10,14 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { z } from "zod";
+import {
+  executeAction,
+  type ActionContext,
+  type ActionResult,
+  type ToolElement as ActionToolElement,
+  type ToolData as ActionToolData,
+  type DeploymentData as ActionDeploymentData,
+} from '@/lib/tool-action-handlers';
 
 // Deployment data interface
 interface DeploymentData {
@@ -92,31 +100,101 @@ const ToolExecutionSchema = z.object({
   context: z.record(z.unknown()).optional(),
 });
 
+/**
+ * Resolve deployment document from various ID formats:
+ * 1. Composite ID: "space:spaceId_placementId" → placed_tools subcollection
+ * 2. Direct ID → deployedTools collection
+ */
+async function resolveDeployment(deploymentId: string): Promise<{
+  doc: admin.firestore.DocumentSnapshot | null;
+  ref: admin.firestore.DocumentReference | null;
+  placementRef: admin.firestore.DocumentReference | null;
+  spaceId: string | null;
+}> {
+  // Check for composite ID format: "space:spaceId_placementId"
+  if (deploymentId.startsWith('space:')) {
+    const rest = deploymentId.slice(6); // Remove 'space:' prefix
+    const underscoreIndex = rest.indexOf('_');
+    if (underscoreIndex > 0) {
+      const spaceId = rest.slice(0, underscoreIndex);
+      const placementId = rest.slice(underscoreIndex + 1);
+
+      // Get from placed_tools subcollection
+      const placementRef = dbAdmin
+        .collection('spaces')
+        .doc(spaceId)
+        .collection('placed_tools')
+        .doc(placementId);
+
+      const placementDoc = await placementRef.get();
+      if (placementDoc.exists) {
+        return {
+          doc: placementDoc,
+          ref: placementRef,
+          placementRef,
+          spaceId,
+        };
+      }
+    }
+  }
+
+  // Fallback: Check deployedTools collection
+  const deploymentRef = dbAdmin.collection('deployedTools').doc(deploymentId);
+  const deploymentDoc = await deploymentRef.get();
+
+  if (deploymentDoc.exists) {
+    const data = deploymentDoc.data();
+    return {
+      doc: deploymentDoc,
+      ref: deploymentRef,
+      placementRef: null,
+      spaceId: data?.targetId || null,
+    };
+  }
+
+  return { doc: null, ref: null, placementRef: null, spaceId: null };
+}
+
 // POST - Execute tool action
 export const POST = withAuthValidationAndErrors(
   ToolExecutionSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     body,
     respond
   ) => {
     try {
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
       const { deploymentId, action, elementId, data, context } = body;
 
-    // Get deployment details
-    const deploymentDoc = await dbAdmin.collection('deployedTools').doc(deploymentId).get();
-    if (!deploymentDoc.exists) {
+    // Get deployment details from either placed_tools or deployedTools
+    const resolved = await resolveDeployment(deploymentId);
+    if (!resolved.doc) {
         return respond.error("Deployment not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
-    const deployment = { id: deploymentDoc.id, ...deploymentDoc.data() } as DeploymentData;
+    const deploymentDocData = resolved.doc.data() || {};
+    const deployment = { id: resolved.doc.id, ...deploymentDocData } as DeploymentData;
+
+    // For placed_tools, fill in missing fields
+    if (resolved.placementRef && resolved.spaceId) {
+      deployment.deployedTo = 'space';
+      deployment.targetId = resolved.spaceId;
+    }
+
     // Enforce campus isolation
     if ((deployment as Record<string, unknown>)?.campusId && (deployment as Record<string, unknown>).campusId !== CURRENT_CAMPUS_ID) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
-    const placementContext = await getPlacementFromDeploymentDoc(deploymentDoc);
+
+    // Use resolved placementRef or fall back to getPlacementFromDeploymentDoc
+    let placementContext: { snapshot: admin.firestore.DocumentSnapshot; ref: admin.firestore.DocumentReference } | null = null;
+    if (resolved.placementRef) {
+      placementContext = { snapshot: resolved.doc, ref: resolved.placementRef };
+    } else {
+      placementContext = await getPlacementFromDeploymentDoc(resolved.doc);
+    }
     const placementData = placementContext?.snapshot?.data() as (Record<string, unknown> | undefined);
 
     // Check if deployment is active
@@ -161,15 +239,19 @@ export const POST = withAuthValidationAndErrors(
 
     // Update deployment usage stats
     const nowIso = new Date().toISOString();
-    await dbAdmin.collection('deployedTools').doc(deploymentId).update({
-      usageCount: (deployment.usageCount || 0) + 1,
-      lastUsed: nowIso
-    });
 
+    // Update the appropriate deployment document based on source
     if (placementContext) {
+      // For placed_tools, update via placementContext.ref
       await placementContext.ref.update({
         usageCount: admin.firestore.FieldValue.increment(1),
         lastUsedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } else if (resolved.ref) {
+      // For deployedTools, update directly
+      await resolved.ref.update({
+        usageCount: admin.firestore.FieldValue.increment(1),
+        lastUsed: nowIso
       });
     }
 
@@ -216,7 +298,7 @@ export const POST = withAuthValidationAndErrors(
   } catch (error) {
     logger.error(
       `Error executing tool at /api/tools/execute`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return respond.error("Failed to execute tool", "INTERNAL_ERROR", { status: 500 });
   }
@@ -230,7 +312,7 @@ async function canUserExecuteTool(
   placement?: Record<string, unknown>
 ): Promise<boolean> {
   try {
-    const permissionConfig = placement?.permissions || deployment.permissions;
+    const permissionConfig = (placement?.permissions || deployment.permissions) as { canInteract?: boolean; allowedRoles?: string[] } | undefined;
     if (permissionConfig?.canInteract === false) {
       return false;
     }
@@ -263,7 +345,7 @@ async function canUserExecuteTool(
   } catch (error) {
     logger.error(
       `Error checking tool execution permissions at /api/tools/execute`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -300,7 +382,7 @@ async function executeToolAction(params: {
     }
 
     // Find the target element if elementId is provided
-    let targetElement = null;
+    let targetElement: ToolElement | null = null;
     if (elementId) {
       targetElement = tool.elements?.find((el: ToolElement) => el.id === elementId) || null;
       if (!targetElement) {
@@ -311,44 +393,20 @@ async function executeToolAction(params: {
       }
     }
 
-    // Execute action based on type
-    let result: ToolExecutionResult;
-    
-    switch (action) {
-      case 'initialize':
-        result = await initializeTool(tool, deployment, currentState);
-        break;
-      
-      case 'submit_form':
-        result = await handleFormSubmission(tool, targetElement, data, currentState);
-        break;
-      
-      case 'update_counter':
-        result = await handleCounterUpdate(targetElement, data, currentState);
-        break;
-      
-      case 'start_timer':
-        result = await handleTimerStart(targetElement, data, currentState);
-        break;
-      
-      case 'stop_timer':
-        result = await handleTimerStop(targetElement, data, currentState);
-        break;
-      
-      case 'submit_poll':
-        result = await handlePollSubmission(tool, targetElement, data, currentState, user.uid);
-        break;
-      
-      case 'save_data':
-        result = await handleDataSave(tool, data, currentState);
-        break;
-      
-      default:
-        result = {
-          success: false,
-          error: `Unknown action: ${action}`
-        };
-    }
+    // Build action context for the extensible handler system
+    const actionContext: ActionContext = {
+      deployment: deployment as ActionDeploymentData,
+      tool: tool as ActionToolData,
+      userId: user.uid,
+      elementId,
+      element: targetElement as ActionToolElement | null,
+      data,
+      state: currentState,
+      metadata: params.context,
+    };
+
+    // Execute action through the extensible handler registry
+    const result = await executeAction(action, actionContext) as ToolExecutionResult;
 
     // Save updated state if action was successful
     if (result.success && result.state) {
@@ -397,230 +455,13 @@ async function executeToolAction(params: {
   } catch (error) {
     logger.error(
       `Error in tool execution at /api/tools/execute`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return {
       success: false,
       error: 'Tool execution failed'
     };
   }
-}
-
-// Tool action handlers
-async function initializeTool(tool: ToolData, deployment: DeploymentData, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const initialState = { ...currentState };
-  
-  // Initialize state for each element
-  tool.elements?.forEach((element: ToolElement) => {
-    if (!initialState[element.id]) {
-      switch (element.type) {
-        case 'counter':
-          initialState[element.id] = { value: element.config?.initialValue || 0 };
-          break;
-        case 'timer':
-          initialState[element.id] = { 
-            startTime: null, 
-            elapsed: 0, 
-            isRunning: false 
-          };
-          break;
-        case 'poll':
-          initialState[element.id] = { 
-            responses: {},
-            totalVotes: 0
-          };
-          break;
-        case 'progressBar':
-          initialState[element.id] = { 
-            value: element.config?.value || 0,
-            max: element.config?.max || 100
-          };
-          break;
-        case 'countdownTimer':
-          initialState[element.id] = { 
-            targetDate: element.config?.targetDate,
-            isComplete: false
-          };
-          break;
-        default:
-          initialState[element.id] = {};
-      }
-    }
-  });
-
-  return {
-    success: true,
-    state: initialState,
-    data: { initialized: true }
-  };
-}
-
-async function handleFormSubmission(tool: ToolData, element: ToolElement | null, data: Record<string, unknown>, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const newState = { ...currentState };
-  
-  if (element) {
-    const currentElementState = (newState[element.id] as Record<string, unknown>) || {};
-    newState[element.id] = {
-      ...currentElementState,
-      lastSubmission: data,
-      submissionCount: ((currentElementState.submissionCount as number) || 0) + 1,
-      lastSubmittedAt: new Date().toISOString()
-    };
-  }
-
-  // Generate feed content for form submissions
-  const feedContent = {
-    type: 'post' as const,
-    content: `Used ${tool.name} tool`,
-    metadata: {
-      toolId: tool.id,
-      formData: data,
-      submissionTime: new Date().toISOString()
-    }
-  };
-
-  return {
-    success: true,
-    state: newState,
-    data: { submitted: true, formData: data },
-    feedContent
-  };
-}
-
-async function handleCounterUpdate(element: ToolElement | null, data: Record<string, unknown>, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  if (!element || element.type !== 'counter') {
-    return { success: false, error: 'Invalid counter element' };
-  }
-
-  const newState = { ...currentState };
-  const currentElementState = (newState[element.id] as Record<string, unknown>) || {};
-  const currentValue = (currentElementState.value as number) || 0;
-  const increment = (data.increment as number) || 1;
-  const newValue = currentValue + increment;
-
-  newState[element.id] = {
-    ...currentElementState,
-    value: newValue,
-    lastUpdated: new Date().toISOString()
-  };
-
-  return {
-    success: true,
-    state: newState,
-    data: { value: newValue, increment }
-  };
-}
-
-async function handleTimerStart(element: ToolElement | null, data: Record<string, unknown>, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  if (!element || element.type !== 'timer') {
-    return { success: false, error: 'Invalid timer element' };
-  }
-
-  const newState = { ...currentState };
-  const currentElementState = (newState[element.id] as Record<string, unknown>) || {};
-  const startTime = new Date().toISOString();
-  
-  newState[element.id] = {
-    ...currentElementState,
-    startTime,
-    isRunning: true,
-    elapsed: (currentElementState.elapsed as number) || 0
-  };
-
-  return {
-    success: true,
-    state: newState,
-    data: { started: true, startTime }
-  };
-}
-
-async function handleTimerStop(element: ToolElement | null, data: Record<string, unknown>, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  if (!element || element.type !== 'timer') {
-    return { success: false, error: 'Invalid timer element' };
-  }
-
-  const newState = { ...currentState };
-  const timerState = (newState[element.id] as Record<string, unknown>) || {};
-  
-  if (!(timerState.isRunning as boolean)) {
-    return { success: false, error: 'Timer is not running' };
-  }
-
-  const startTime = new Date(timerState.startTime as string).getTime();
-  const sessionElapsed = Date.now() - startTime;
-  newState[element.id] = {
-    ...timerState,
-    isRunning: false,
-    elapsed: (timerState.elapsed as number || 0) + sessionElapsed,
-    lastSession: sessionElapsed
-  };
-
-  const totalTime = (timerState.elapsed as number || 0) + sessionElapsed;
-  
-  return {
-    success: true,
-    state: newState,
-    data: { 
-      stopped: true, 
-      sessionTime: sessionElapsed, 
-      totalTime 
-    },
-    feedContent: {
-      type: 'update' as const,
-      content: `Completed ${Math.round(sessionElapsed / 1000 / 60)} minute session`,
-      metadata: { sessionTime: sessionElapsed, totalTime }
-    }
-  };
-}
-
-async function handlePollSubmission(tool: ToolData, element: ToolElement | null, data: Record<string, unknown>, currentState: Record<string, unknown>, userId: string): Promise<ToolExecutionResult> {
-  if (!element || element.type !== 'poll') {
-    return { success: false, error: 'Invalid poll element' };
-  }
-
-  const newState = { ...currentState };
-  const currentPollState = (newState[element.id] as Record<string, unknown>) || {};
-  const responses = (currentPollState.responses as Record<string, unknown>) || {};
-  const totalVotes = (currentPollState.totalVotes as number) || 0;
-  
-  // Check if user already voted
-  if (responses[userId]) {
-    return { success: false, error: 'User has already voted' };
-  }
-
-  const updatedResponses = {
-    ...responses,
-    [userId]: {
-      choice: data.choice,
-      timestamp: new Date().toISOString()
-    }
-  };
-  
-  newState[element.id] = {
-    ...currentPollState,
-    responses: updatedResponses,
-    totalVotes: totalVotes + 1
-  };
-
-  return {
-    success: true,
-    state: newState,
-    data: { 
-      voted: true, 
-      choice: data.choice, 
-      totalVotes: totalVotes + 1
-    }
-  };
-}
-
-async function handleDataSave(tool: ToolData, data: Record<string, unknown>, currentState: Record<string, unknown>): Promise<ToolExecutionResult> {
-  const newState = { ...currentState, ...data };
-  
-  return {
-    success: true,
-    state: newState,
-    data: { saved: true }
-  };
 }
 
 // Helper function to generate feed content
@@ -648,7 +489,7 @@ async function generateFeedContent(deployment: DeploymentData, tool: ToolData, u
   } catch (error) {
     logger.error(
       `Error generating feed content at /api/tools/execute`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -673,7 +514,7 @@ async function processNotifications(deployment: DeploymentData, notifications: T
   } catch (error) {
     logger.error(
       `Error processing notifications at /api/tools/execute`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

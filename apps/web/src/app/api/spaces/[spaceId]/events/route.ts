@@ -9,9 +9,21 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { logger } from "@/lib/logger";
-import { requireSpaceMembership } from "@/lib/space-security";
+import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerSpaceRepository } from "@hive/core/server";
+
+/**
+ * Check if content should be hidden from results
+ * Filters out moderated/hidden/removed content
+ */
+function isContentHidden(data: Record<string, unknown>): boolean {
+  if (data.isHidden === true) return true;
+  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
+  if (data.isDeleted === true) return true;
+  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
+  return false;
+}
 
 const GetEventsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -43,24 +55,59 @@ const CreateEventSchema = z.object({
   currency: z.string().length(3).optional(),
 });
 
+/**
+ * Helper to validate space and membership using DDD repository
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
   try {
     const { spaceId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
-      const code =
-        membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(membership.error, code, { status: membership.status });
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const queryParams = GetEventsSchema.parse(
-      Object.fromEntries(request.nextUrl.searchParams.entries()),
+      Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
     let query: FirebaseFirestore.Query = dbAdmin
@@ -86,7 +133,12 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of eventsSnapshot.docs) {
       const eventData = doc.data();
+      // SECURITY: Skip events from other campuses
       if (eventData.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+        continue;
+      }
+      // SECURITY: Skip hidden/moderated/removed content
+      if (isContentHidden(eventData)) {
         continue;
       }
       const organizerDoc = await dbAdmin.collection("users").doc(eventData.organizerId).get();
@@ -141,7 +193,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching events at /api/spaces/[spaceId]/events",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Failed to fetch events", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -152,23 +204,22 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreateEventSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
-      const membership = await requireSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
-        const code =
-          membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(membership.error, code, { status: membership.status });
+      const validation = await validateSpaceAndMembership(spaceId, userId);
+      if (!validation.ok) {
+        const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
-      const role = membership.membership.role;
+      const role = validation.membership.role;
       if (!["owner", "admin", "moderator", "builder"].includes(role)) {
         return respond.error("Insufficient permissions to create events", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
@@ -209,7 +260,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating event at /api/spaces/[spaceId]/events",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to create event", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

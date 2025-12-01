@@ -211,15 +211,15 @@ export function ProblemSection() {
           {/* After */}
           <div
             ref={afterCardRef}
-            className="p-6 md:p-8 rounded-2xl bg-neutral-950 border border-[#F5C842]/20 shadow-[0_0_30px_rgba(245,200,66,0.05)]"
+            className="p-6 md:p-8 rounded-2xl bg-neutral-950 border border-gold-500/20 shadow-[0_0_30px_rgba(245,200,66,0.05)]"
           >
-            <div className="text-sm font-medium text-[#F5C842] uppercase tracking-wider mb-6">
+            <div className="text-sm font-medium text-gold-500 uppercase tracking-wider mb-6">
               With HIVE
             </div>
             <ul className="space-y-4">
               {after.map((item) => (
                 <li key={item} className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-[#F5C842] mt-0.5 shrink-0" />
+                  <Check className="h-5 w-5 text-gold-500 mt-0.5 shrink-0" />
                   <span className="text-white">{item}</span>
                 </li>
               ))}

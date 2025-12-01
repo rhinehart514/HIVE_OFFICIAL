@@ -6,7 +6,7 @@ import { z } from "zod";
 import { logger } from "@/lib/structured-logger";
 import {
   createPlacementDocument,
-  _buildPlacementCompositeId,
+  buildPlacementCompositeId,
 } from "@/lib/tool-placement";
 import {
   CURRENT_CAMPUS_ID,
@@ -84,13 +84,13 @@ async function validateSpaceMembership(userId: string, spaceId: string) {
 export const POST = withAuthValidationAndErrors(
   InstallRequestSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context: {},
     validatedData: InstallRequest,
     respond,
   ) => {
     try {
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       // Ensure marketplace entry exists within campus
       const marketplaceSnapshot = await adminDb
@@ -281,7 +281,7 @@ export const POST = withAuthValidationAndErrors(
       );
     } catch (error) {
       logger.error("Tool installation failed", {
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: { error: error instanceof Error ? error.message : String(error) },
         requestBody: validatedData,
       });
 

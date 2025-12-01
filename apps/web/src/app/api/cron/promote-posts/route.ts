@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // Check each space for high-velocity posts
     for (const spaceDoc of spacesSnapshot.docs) {
       const spaceId = spaceDoc.id;
-      const spaceData = spaceDoc.data();
+      const spaceData = spaceDoc.data() as SpaceData;
 
       try {
         // Get recent posts that aren't already promoted
@@ -65,22 +65,22 @@ export async function GET(request: NextRequest) {
 
         for (const postDoc of postsQuery.docs) {
           checkedCount++;
-          const postData = postDoc.data();
+          const postData = postDoc.data() as PostData;
           const postId = postDoc.id;
 
           // Calculate engagement velocity
           const postAgeHours = (Date.now() - postData.createdAt.toMillis()) / (60 * 60 * 1000);
           const totalEngagement = (postData.reactions?.heart || 0) +
-                                 (postData.commentCount || 0) * 2 + // Comments weighted more
-                                 (postData.shareCount || 0) * 3;     // Shares weighted most
+                                 (postData.commentCount ?? 0) * 2 + // Comments weighted more
+                                 (postData.shareCount ?? 0) * 3;     // Shares weighted most
 
           const engagementVelocity = totalEngagement / Math.max(1, postAgeHours);
 
           // Check if post meets promotion criteria
           const meetsVelocity = engagementVelocity >= PROMOTION_THRESHOLDS.engagement_per_hour;
           const meetsMinimum = totalEngagement >= PROMOTION_THRESHOLDS.minimum_engagement;
-          const isHotThread = postData.commentCount >= PROMOTION_THRESHOLDS.comment_threshold;
-          const isViral = postData.shareCount >= PROMOTION_THRESHOLDS.share_threshold;
+          const isHotThread = (postData.commentCount ?? 0) >= PROMOTION_THRESHOLDS.comment_threshold;
+          const isViral = (postData.shareCount ?? 0) >= PROMOTION_THRESHOLDS.share_threshold;
 
           if (meetsVelocity && meetsMinimum && (isHotThread || isViral)) {
             // Promote this post to feed
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
               errors.push({
                 spaceId,
                 postId,
-                error: promotionResult.error
+                error: promotionResult.error || 'Unknown error'
               });
             }
           }
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
       } catch (spaceError) {
         logger.error(
           `Error processing space for auto-promotion: ${spaceId}`,
-          spaceError instanceof Error ? spaceError : new Error(String(spaceError))
+          { error: { error: spaceError instanceof Error ? spaceError.message : String(spaceError) } }
         );
         errors.push({
           spaceId,
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Critical error in auto-promotion cron job', { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error('Critical error in auto-promotion cron job', { error: { error: error instanceof Error ? error.message : String(error) } });
     return NextResponse.json(
       {
         success: false,
@@ -240,8 +240,8 @@ async function promotePostToFeed(
       velocityScore: velocity,
       scoreBreakdown: {
         recency: postData.createdAt,
-        engagement: (postData.reactions?.heart || 0) + (postData.commentCount || 0) * 2,
-        shareability: postData.shareCount || 0,
+        engagement: (postData.reactions?.heart || 0) + (postData.commentCount ?? 0) * 2,
+        shareability: postData.shareCount ?? 0,
         persistence: calculatePersistenceScore(postData),
         variability: Math.random() * 0.2
       },
@@ -249,8 +249,8 @@ async function promotePostToFeed(
       // Engagement metrics (carried over)
       reactions: postData.reactions || { heart: 0 },
       reactedUsers: postData.reactedUsers || { heart: [] },
-      commentCount: postData.commentCount || 0,
-      shareCount: postData.shareCount || 0,
+      commentCount: postData.commentCount ?? 0,
+      shareCount: postData.shareCount ?? 0,
       viewCount: postData.viewCount || 0,
 
       // Behavioral psychology metrics
@@ -263,7 +263,7 @@ async function promotePostToFeed(
       },
 
       // Hot thread indicator
-      isHotThread: postData.commentCount >= 10,
+      isHotThread: postData.commentCount ?? 0 >= 10,
 
       // Campus isolation
       campusId: 'ub-buffalo',
@@ -317,7 +317,7 @@ async function promotePostToFeed(
   } catch (error) {
     logger.error(
       `Failed to promote post to feed: ${spaceId}/${postId}`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return { success: false, error: String(error) };
   }
@@ -333,8 +333,8 @@ function calculateFeedScore(postData: PostData, velocity: number): number {
   // Engagement (E): Normalized by expected engagement
   const engagementScore = Math.min(1, (
     (postData.reactions?.heart || 0) +
-    (postData.commentCount || 0) * 2 +
-    (postData.shareCount || 0) * 3
+    (postData.commentCount ?? 0) * 2 +
+    (postData.shareCount ?? 0) * 3
   ) / 100);
 
   // Velocity bonus for automatic promotion
@@ -374,8 +374,8 @@ function calculatePanicReliefScore(postData: PostData): number {
 
 function calculateSocialProofScore(postData: PostData, velocity: number): number {
   const engagementCount = (postData.reactions?.heart || 0) +
-                         (postData.commentCount || 0) +
-                         (postData.shareCount || 0);
+                         (postData.commentCount ?? 0) +
+                         (postData.shareCount ?? 0);
 
   const engagementScore = Math.min(1, engagementCount / 50);
   const velocityScore = Math.min(1, velocity / 10);
@@ -406,7 +406,7 @@ function calculateUrgencyFactor(postData: PostData): number {
 
   // Boost if it's a recent post with high engagement
   const isRecent = (Date.now() - postData.createdAt.toMillis()) < 3 * 60 * 60 * 1000; // 3 hours
-  if (isRecent && postData.commentCount > 5) {
+  if (isRecent && (postData.commentCount ?? 0) > 5) {
     score += 0.3;
   }
 

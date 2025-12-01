@@ -373,18 +373,8 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
   const [geographicData, setGeographicData] = useState<GeographicData[]>([]);
   const [realTimeMetrics, setRealTimeMetrics] = useState<RealTimeMetrics | null>(null);
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Analytics dashboard is not available</p>
-      </div>
-    );
-  }
-
   const loadAnalyticsData = useCallback(async () => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     try {
@@ -413,10 +403,10 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
     } finally {
       setLoading(false);
     }
-  }, [admin, selectedTimeRange]);
+  }, [admin, enableFeatureFlag, selectedTimeRange]);
 
   const loadRealTimeMetrics = useCallback(async () => {
-    if (!admin || !realTimeEnabled) return;
+    if (!admin || !realTimeEnabled || !enableFeatureFlag) return;
 
     try {
       const response = await fetch('/api/admin/analytics/realtime', {
@@ -433,27 +423,37 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
     } catch (error) {
       console.error('Failed to load real-time metrics:', error);
     }
-  }, [admin, realTimeEnabled]);
+  }, [admin, enableFeatureFlag, realTimeEnabled]);
 
   useEffect(() => {
+    if (!enableFeatureFlag) return;
     loadAnalyticsData();
-  }, [loadAnalyticsData]);
+  }, [enableFeatureFlag, loadAnalyticsData]);
 
   // Real-time metrics update
   useEffect(() => {
-    if (!realTimeEnabled) return;
+    if (!realTimeEnabled || !enableFeatureFlag) return;
 
     loadRealTimeMetrics();
     const interval = setInterval(loadRealTimeMetrics, 30000); // Update every 30 seconds
 
     return () => clearInterval(interval);
-  }, [loadRealTimeMetrics, realTimeEnabled]);
+  }, [enableFeatureFlag, loadRealTimeMetrics, realTimeEnabled]);
 
   const handleExport = async () => {
     if (onExportData) {
       await onExportData(selectedTimeRange, ['all']);
     }
   };
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">Analytics dashboard is not available</p>
+      </div>
+    );
+  }
 
   const handleRefresh = async () => {
     if (onRefreshData) {
@@ -630,7 +630,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       {violationData && (
         <ViolationAlert 
           violations={violationData} 
-          onViewDetails={() => console.log('View violation details')} 
+          onViewDetails={() => console.warn('View violation details')} 
         />
       )}
 
@@ -648,7 +648,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             <SpaceCategoryCard
               key={category.category}
               category={category}
-              onViewDetails={() => console.log('View category details:', category.category)}
+              onViewDetails={() => console.warn('View category details:', category.category)}
             />
           ))}
         </div>

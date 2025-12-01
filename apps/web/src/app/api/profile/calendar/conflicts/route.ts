@@ -3,6 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { z } from 'zod';
+import { getServerProfileRepository } from '@hive/core/server';
 
 // Validation schema for conflict resolution
 const resolveConflictSchema = z.object({
@@ -44,8 +45,8 @@ interface CalendarConflict {
  * - includeNewEvent: JSON string of new event to check for conflicts
  * - suggestTimes: boolean - whether to suggest alternative times
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const includeNewEventStr = searchParams.get('includeNewEvent');
   const suggestTimes = searchParams.get('suggestTimes') === 'true';
@@ -237,12 +238,31 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       }
     }
 
-    return respond.success({ conflicts });
+    // Get DDD profile data for context
+    let profileContext: {
+      spaces: string[];
+      activityScore: number;
+    } | null = null;
+
+    try {
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(userId);
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        profileContext = {
+          spaces: profile.spaces,
+          activityScore: profile.activityScore,
+        };
+      }
+    } catch {
+      // Non-fatal: continue without profile context
+    }
+
+    return respond.success({ conflicts, profile: profileContext });
   } catch (error) {
     logger.error(
       'Failed to detect calendar conflicts',
-      error instanceof Error ? error : new Error(String(error)),
-      { userId }
+      { error: { error: error instanceof Error ? error.message : String(error) }, userId }
     );
     return respond.error(
       'Failed to detect calendar conflicts',
@@ -258,8 +278,8 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
  */
 export const POST = withAuthValidationAndErrors(
   resolveConflictSchema,
-  async (request: AuthenticatedRequest, context, data: z.infer<typeof resolveConflictSchema>, respond) => {
-    const userId = getUserId(request);
+  async (request, context, data: z.infer<typeof resolveConflictSchema>, respond) => {
+    const userId = getUserId(request as AuthenticatedRequest);
     const { conflictId, resolution, eventId, newTime } = data;
 
     try {
@@ -316,8 +336,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         'Failed to resolve calendar conflict',
-        error instanceof Error ? error : new Error(String(error)),
-        { userId, conflictId }
+        { error: { error: error instanceof Error ? error.message : String(error) }, userId, conflictId }
       );
       return respond.error(
         'Failed to resolve calendar conflict',

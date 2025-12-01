@@ -25,8 +25,8 @@ type FirestoreConnection = {
  * Get user's connections
  * GET /api/connections
  */
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   try {
     // Get all automatic connections
@@ -128,8 +128,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _cont
   } catch (error) {
     logger.error(
       'Error fetching connections',
-      error instanceof Error ? error : new Error(String(error)),
-      { userId }
+      { error: { error: error instanceof Error ? error.message : String(error) }, userId }
     );
     return respond.error('Failed to fetch connections', 'INTERNAL_ERROR');
   }
@@ -139,8 +138,8 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _cont
  * Detect and create automatic connections
  * POST /api/connections/detect
  */
-export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
-  const userId = getUserId(request);
+export const POST = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   try {
     // Get user's profile
@@ -299,8 +298,7 @@ export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _con
   } catch (error) {
     logger.error(
       'Error detecting connections',
-      error instanceof Error ? error : new Error(String(error)),
-      { userId }
+      { error: { error: error instanceof Error ? error.message : String(error) }, userId }
     );
     return respond.error('Failed to detect connections', 'INTERNAL_ERROR');
   }

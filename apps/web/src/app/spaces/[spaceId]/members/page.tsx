@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Input, Card } from '@hive/ui';
+import { Button, Input, Card, toast } from '@hive/ui';
 import {
   ChevronLeft,
   Search,
@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
-import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
 // Spring config for fluid motion
@@ -67,9 +66,8 @@ interface MembersSummary {
 export default function SpaceMembersPage() {
   const router = useRouter();
   const params = useParams<{ spaceId: string }>();
-  const spaceId = params.spaceId;
+  const spaceId = params?.spaceId;
   const { user } = useAuth();
-  const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
@@ -120,12 +118,7 @@ export default function SpaceMembersPage() {
         setSummary(data.summary || null);
       } catch (error) {
         console.error('Failed to load members:', error);
-        toast({
-          title: 'Failed to load members',
-          description: 'Please try again.',
-          type: 'error',
-          duration: 5000,
-        });
+        toast.error('Failed to load members', 'Please try again.');
       } finally {
         setLoading(false);
       }
@@ -158,20 +151,10 @@ export default function SpaceMembersPage() {
         prev.map((m) => (m.id === memberId ? { ...m, role: newRole as Member['role'] } : m))
       );
 
-      toast({
-        title: 'Role updated',
-        description: `Member role changed to ${newRole}.`,
-        type: 'success',
-        duration: 3000,
-      });
+      toast.success('Role updated', `Member role changed to ${newRole}.`);
     } catch (error) {
       console.error('Failed to update role:', error);
-      toast({
-        title: 'Failed to update role',
-        description: error instanceof Error ? error.message : 'Please try again.',
-        type: 'error',
-        duration: 5000,
-      });
+      toast.error('Failed to update role', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setActionLoading(false);
       setSelectedMember(null);
@@ -199,20 +182,10 @@ export default function SpaceMembersPage() {
         setSummary({ ...summary, totalMembers: summary.totalMembers - 1 });
       }
 
-      toast({
-        title: 'Member removed',
-        description: 'The member has been removed from this space.',
-        type: 'success',
-        duration: 3000,
-      });
+      toast.success('Member removed', 'The member has been removed from this space.');
     } catch (error) {
       console.error('Failed to remove member:', error);
-      toast({
-        title: 'Failed to remove member',
-        description: error instanceof Error ? error.message : 'Please try again.',
-        type: 'error',
-        duration: 5000,
-      });
+      toast.error('Failed to remove member', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setActionLoading(false);
       setSelectedMember(null);
@@ -281,12 +254,7 @@ export default function SpaceMembersPage() {
             {canManageMembers && (
               <Button
                 onClick={() => {
-                  toast({
-                    title: 'Coming soon',
-                    description: 'Member invite will be available soon.',
-                    type: 'info',
-                    duration: 3000,
-                  });
+                  toast.info('Coming soon', 'Member invite will be available soon.');
                 }}
                 className="bg-white text-black hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
               >

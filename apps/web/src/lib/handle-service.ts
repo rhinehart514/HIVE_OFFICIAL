@@ -1,10 +1,15 @@
-import { dbAdmin } from './firebase-admin';
+import 'server-only';
+import { dbAdmin, isFirebaseConfigured } from './firebase-admin';
+import { currentEnvironment } from './env';
 import type { Transaction } from 'firebase-admin/firestore';
 
 /**
  * Centralized handle validation service
  * Fixes race condition between check-handle and complete-onboarding APIs
  */
+
+// Check if we're in development mode
+const isDevelopmentMode = currentEnvironment === 'development' || process.env.NODE_ENV === 'development';
 
 export interface HandleValidationResult {
   isAvailable: boolean;
@@ -163,9 +168,9 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
 
   const normalizedHandle = formatResult.normalizedHandle!;
 
-  // Development mode: Skip Firestore queries entirely
-  if (process.env.NODE_ENV === 'development') {
-    console.warn('🔧 Development mode: Skipping Firestore handle check');
+  // Development mode or Firebase not configured: Skip Firestore queries entirely
+  if (isDevelopmentMode || !isFirebaseConfigured) {
+    console.warn('🔧 Development mode: Skipping Firestore handle check, handle automatically available');
     return {
       isAvailable: true,
       normalizedHandle
@@ -183,10 +188,10 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
     ]);
 
     if (!userQuery.empty || handleDoc.exists) {
-      return { 
-        isAvailable: false, 
+      return {
+        isAvailable: false,
         error: 'This handle is already taken',
-        normalizedHandle 
+        normalizedHandle
       };
     }
 
@@ -198,7 +203,7 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
     console.error('Error checking handle availability:', error);
 
     // In development, allow handles when Firebase is unavailable
-    if ((process.env.NODE_ENV as string) === 'development') {
+    if (isDevelopmentMode) {
       console.warn('🔧 Development mode: Allowing handle due to Firebase unavailability');
       return {
         isAvailable: true,
@@ -217,6 +222,11 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
  * Release a handle reservation (for cleanup or error recovery)
  */
 export async function releaseHandleReservation(handle: string): Promise<void> {
+  // Skip in development mode
+  if (isDevelopmentMode || !isFirebaseConfigured) {
+    return;
+  }
+
   try {
     await dbAdmin.collection('handles').doc(handle).delete();
   } catch (error) {
@@ -224,4 +234,184 @@ export async function releaseHandleReservation(handle: string): Promise<void> {
     // Don't throw - this is cleanup, should not break the main flow
   }
 }
-import 'server-only';
+
+/**
+ * Handle change rate limit configuration
+ */
+const HANDLE_CHANGE_COOLDOWN_MS = 6 * 30 * 24 * 60 * 60 * 1000; // 6 months in milliseconds
+
+export interface HandleChangeResult {
+  success: boolean;
+  error?: string;
+  nextChangeDate?: Date;
+}
+
+/**
+ * Change a user's handle with rate limiting and proper cleanup
+ * - First change after onboarding is FREE
+ * - Subsequent changes require 6-month cooldown
+ * - Old handle is released, new handle is reserved atomically
+ * - Full handle history is tracked
+ */
+export async function changeHandle(
+  userId: string,
+  newHandle: string
+): Promise<HandleChangeResult> {
+  // Validate format first
+  const formatResult = validateHandleFormat(newHandle);
+  if (!formatResult.isAvailable) {
+    return { success: false, error: formatResult.error };
+  }
+
+  const normalizedHandle = formatResult.normalizedHandle!;
+
+  // Skip full validation in development mode
+  if (isDevelopmentMode || !isFirebaseConfigured) {
+    console.warn('🔧 Development mode: Skipping handle change transaction');
+    return { success: true };
+  }
+
+  try {
+    const result = await dbAdmin.runTransaction(async (transaction) => {
+      // 1. Get current user data
+      const userRef = dbAdmin.collection('users').doc(userId);
+      const userDoc = await transaction.get(userRef);
+
+      if (!userDoc.exists) {
+        return { success: false, error: 'User not found' };
+      }
+
+      const userData = userDoc.data()!;
+      const currentHandle = userData.handle;
+
+      // If handle is the same, no change needed
+      if (currentHandle === normalizedHandle) {
+        return { success: true };
+      }
+
+      // 2. Check rate limit - FIRST CHANGE IS FREE
+      const handleChangeCount = userData.handleChangeCount || 0;
+      const lastHandleChange = userData.lastHandleChange;
+
+      if (handleChangeCount > 0 && lastHandleChange) {
+        const lastChangeMs = lastHandleChange.toMillis ? lastHandleChange.toMillis() : new Date(lastHandleChange).getTime();
+        const nextChangeAllowedMs = lastChangeMs + HANDLE_CHANGE_COOLDOWN_MS;
+
+        if (Date.now() < nextChangeAllowedMs) {
+          const nextChangeDate = new Date(nextChangeAllowedMs);
+          return {
+            success: false,
+            error: `Handle can only be changed once every 6 months. Next change available on ${nextChangeDate.toLocaleDateString()}`,
+            nextChangeDate
+          };
+        }
+      }
+
+      // 3. Check if new handle is available (atomically in transaction)
+      const availabilityResult = await checkHandleAvailabilityInTransaction(transaction, normalizedHandle);
+      if (!availabilityResult.isAvailable) {
+        return { success: false, error: availabilityResult.error || 'Handle is not available' };
+      }
+
+      // 4. Release old handle reservation (if exists)
+      if (currentHandle) {
+        const oldHandleRef = dbAdmin.collection('handles').doc(currentHandle);
+        transaction.delete(oldHandleRef);
+      }
+
+      // 5. Reserve new handle
+      const newHandleRef = dbAdmin.collection('handles').doc(normalizedHandle);
+      transaction.set(newHandleRef, {
+        userId,
+        userEmail: userData.email,
+        reservedAt: new Date(),
+        handle: normalizedHandle
+      });
+
+      // 6. Update user document with new handle and tracking fields
+      const updateData: Record<string, unknown> = {
+        handle: normalizedHandle,
+        lastHandleChange: new Date(),
+        handleChangeCount: (handleChangeCount || 0) + 1,
+        updatedAt: new Date()
+      };
+
+      // Add to handle history if there was a previous handle
+      if (currentHandle) {
+        // Use array union pattern for history
+        const currentHistory = userData.handleHistory || [];
+        updateData.handleHistory = [
+          ...currentHistory,
+          {
+            handle: currentHandle,
+            changedAt: new Date()
+          }
+        ];
+      }
+
+      transaction.update(userRef, updateData);
+
+      return { success: true };
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Error changing handle:', error);
+    return {
+      success: false,
+      error: 'Unable to change handle. Please try again.'
+    };
+  }
+}
+
+/**
+ * Get handle change status for a user
+ * Returns whether they can change their handle and when
+ */
+export async function getHandleChangeStatus(userId: string): Promise<{
+  canChange: boolean;
+  nextChangeDate?: Date;
+  changeCount: number;
+  isFirstChangeFree: boolean;
+}> {
+  if (isDevelopmentMode || !isFirebaseConfigured) {
+    return { canChange: true, changeCount: 0, isFirstChangeFree: true };
+  }
+
+  try {
+    const userDoc = await dbAdmin.collection('users').doc(userId).get();
+
+    if (!userDoc.exists) {
+      return { canChange: false, changeCount: 0, isFirstChangeFree: true };
+    }
+
+    const userData = userDoc.data()!;
+    const handleChangeCount = userData.handleChangeCount || 0;
+    const lastHandleChange = userData.lastHandleChange;
+
+    // First change is always free
+    if (handleChangeCount === 0) {
+      return { canChange: true, changeCount: 0, isFirstChangeFree: true };
+    }
+
+    // Check cooldown for subsequent changes
+    if (lastHandleChange) {
+      const lastChangeMs = lastHandleChange.toMillis ? lastHandleChange.toMillis() : new Date(lastHandleChange).getTime();
+      const nextChangeAllowedMs = lastChangeMs + HANDLE_CHANGE_COOLDOWN_MS;
+
+      if (Date.now() < nextChangeAllowedMs) {
+        return {
+          canChange: false,
+          nextChangeDate: new Date(nextChangeAllowedMs),
+          changeCount: handleChangeCount,
+          isFirstChangeFree: false
+        };
+      }
+    }
+
+    return { canChange: true, changeCount: handleChangeCount, isFirstChangeFree: false };
+  } catch (error) {
+    console.error('Error getting handle change status:', error);
+    return { canChange: false, changeCount: 0, isFirstChangeFree: true };
+  }
+}

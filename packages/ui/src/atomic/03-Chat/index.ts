@@ -16,7 +16,7 @@ export {
   type ConversationThreadProps,
   type EmptyChatStateProps
 } from './conversation-thread';
-export { ChatInput, type ChatInputProps } from './chat-input';
+export { ChatInput, type ChatInputProps, type ChatInputHandle } from './chat-input';
 export { TypingIndicator, type TypingIndicatorProps } from './typing-indicator';
 export {
   ToolPreviewCard,

@@ -59,11 +59,11 @@ export function HeroSection() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[600px] h-[300px] md:h-[400px] bg-[#FFD700] blur-[120px] rounded-full pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[600px] h-[300px] md:h-[400px] bg-gold-500 blur-[120px] rounded-full pointer-events-none"
       />
 
       {/* Secondary subtle glow */}
-      <div className="absolute top-1/3 right-1/4 w-[300px] h-[200px] bg-[#FFD700] opacity-[0.02] blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/3 right-1/4 w-[300px] h-[200px] bg-gold-500 opacity-[0.02] blur-[100px] rounded-full pointer-events-none" />
 
       {/* Content */}
       <div className="hero-content relative z-10 max-w-4xl mx-auto text-center">
@@ -106,10 +106,7 @@ export function HeroSection() {
           <MagneticButton strength={0.2}>
             <Link
               href="/auth/login"
-              className="inline-flex items-center justify-center px-8 py-4 bg-[#FFD700] text-black font-semibold rounded-xl transition-all duration-300 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                boxShadow: "0 0 40px rgba(255, 215, 0, 0.2)",
-              }}
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-black font-semibold rounded-xl transition-all duration-200 hover:bg-neutral-200 hover:scale-[1.02] active:scale-[0.98]"
             >
               Join the Movement
             </Link>

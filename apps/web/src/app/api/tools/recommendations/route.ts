@@ -8,6 +8,56 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
+// Type definition for tool data from Firestore
+interface ToolData {
+  id: string;
+  toolId?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  tags?: string[];
+  stats?: {
+    rating?: number;
+    downloads?: number;
+  };
+  ownerId?: string;
+  ownerName?: string;
+  pricing?: {
+    type: 'free' | 'paid' | 'freemium';
+    price?: number;
+  };
+  verified?: boolean;
+  featured?: boolean;
+  screenshots?: string[];
+  targetAudience?: string[];
+  campusId?: string;
+}
+
+// Helper to safely build a ToolRecommendation from ToolData
+function buildRecommendation(
+  tool: ToolData,
+  reason: string,
+  score: number
+): ToolRecommendation {
+  return {
+    toolId: tool.toolId || tool.id,
+    name: tool.name || 'Unknown Tool',
+    description: tool.description || '',
+    category: tool.category || 'uncategorized',
+    tags: tool.tags || [],
+    rating: tool.stats?.rating ?? 0,
+    downloads: tool.stats?.downloads ?? 0,
+    ownerId: tool.ownerId || '',
+    ownerName: tool.ownerName || 'Unknown',
+    pricing: tool.pricing || { type: 'free' },
+    recommendationReason: reason,
+    relevanceScore: score,
+    isVerified: tool.verified ?? false,
+    isFeatured: tool.featured ?? false,
+    screenshots: tool.screenshots,
+  };
+}
+
 interface RecommendationContext {
   userId: string;
   userType?: string;
@@ -57,12 +107,12 @@ interface RecommendationResponse {
 
 // GET - Get personalized tool recommendations
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond
 ) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') ?? undefined;
@@ -84,7 +134,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error generating recommendations at /api/tools/recommendations`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
   }
@@ -179,12 +229,13 @@ async function generateRecommendations(
   }));
 
   // Filter to current campus by checking underlying tool's campusId
-  const allTools: Array<Record<string, unknown> & { id: string; toolId?: string }> = [];
+  const allTools: ToolData[] = [];
   for (const t of allToolsRaw) {
-    if (!t.toolId) continue;
-    const tDoc = await adminDb.collection('tools').doc(t.toolId).get();
+    const toolData = t as ToolData;
+    if (!toolData.toolId) continue;
+    const tDoc = await adminDb.collection('tools').doc(toolData.toolId).get();
     if (tDoc.exists && (tDoc.data()?.campusId === CURRENT_CAMPUS_ID)) {
-      allTools.push(t);
+      allTools.push(toolData);
     }
   }
 
@@ -239,7 +290,7 @@ async function generateRecommendations(
 // Content-based recommendations (based on user interests and activity)
 async function generateContentBasedRecommendations(
   context: RecommendationContext,
-  tools: Array<Record<string, unknown>>
+  tools: ToolData[]
 ): Promise<ToolRecommendation[]> {
   const recommendations: ToolRecommendation[] = [];
 
@@ -248,14 +299,14 @@ async function generateContentBasedRecommendations(
     const reasons = [];
 
     // Score based on user interests
-    if (context.interests?.length) {
+    if (context.interests?.length && tool.tags?.length) {
       const interestMatches = tool.tags.filter((tag: string) =>
-        context.interests!.some(interest => 
+        context.interests!.some(interest =>
           interest.toLowerCase().includes(tag.toLowerCase()) ||
           tag.toLowerCase().includes(interest.toLowerCase())
         )
       ).length;
-      
+
       if (interestMatches > 0) {
         score += interestMatches * 20;
         reasons.push(`Matches your interests: ${tool.tags.slice(0, 2).join(', ')}`);
@@ -285,7 +336,7 @@ async function generateContentBasedRecommendations(
     }
 
     // Bonus for high-quality tools
-    if (tool.stats.rating >= 4.5) {
+    if ((tool.stats?.rating ?? 0) >= 4.5) {
       score += 10;
       reasons.push('Highly rated by users');
     }
@@ -296,23 +347,7 @@ async function generateContentBasedRecommendations(
     }
 
     if (score > 10) {
-      recommendations.push({
-        toolId: tool.toolId,
-        name: tool.name,
-        description: tool.description,
-        category: tool.category,
-        tags: tool.tags,
-        rating: tool.stats.rating,
-        downloads: tool.stats.downloads,
-        ownerId: tool.ownerId,
-        ownerName: tool.ownerName || 'Unknown',
-        pricing: tool.pricing,
-        recommendationReason: reasons[0] || 'Recommended for you',
-        relevanceScore: score,
-        isVerified: tool.verified,
-        isFeatured: tool.featured,
-        screenshots: tool.screenshots
-      });
+      recommendations.push(buildRecommendation(tool, reasons[0] || 'Recommended for you', score));
     }
   }
 
@@ -322,13 +357,13 @@ async function generateContentBasedRecommendations(
 // Collaborative filtering recommendations (based on similar users)
 async function generateCollaborativeRecommendations(
   context: RecommendationContext,
-  tools: Array<Record<string, unknown>>
+  tools: ToolData[]
 ): Promise<ToolRecommendation[]> {
   // Find users with similar tool usage patterns
   const similarUsers = await findSimilarUsers(context);
   
   // Get tools used by similar users that current user hasn't installed
-  const collaborativeTools = new Map<string, { tool: Record<string, unknown>; score: number; userCount: number }>();
+  const collaborativeTools = new Map<string, { tool: ToolData; score: number; userCount: number }>();
 
   for (const similarUser of similarUsers) {
     const userInstallationsSnapshot = await adminDb
@@ -361,28 +396,16 @@ async function generateCollaborativeRecommendations(
 
   // Convert to recommendations
   const recommendations: ToolRecommendation[] = [];
-  
+
   for (const [_toolId, data] of collaborativeTools) {
     const { tool, score, userCount } = data;
-    
+
     if (score > 5 && userCount >= 2) {
-      recommendations.push({
-        toolId: tool.toolId,
-        name: tool.name,
-        description: tool.description,
-        category: tool.category,
-        tags: tool.tags,
-        rating: tool.stats.rating,
-        downloads: tool.stats.downloads,
-        ownerId: tool.ownerId,
-        ownerName: tool.ownerName || 'Unknown',
-        pricing: tool.pricing,
-        recommendationReason: `Used by ${userCount} similar users`,
-        relevanceScore: score + (userCount * 5),
-        isVerified: tool.verified,
-        isFeatured: tool.featured,
-        screenshots: tool.screenshots
-      });
+      recommendations.push(buildRecommendation(
+        tool,
+        `Used by ${userCount} similar users`,
+        score + (userCount * 5)
+      ));
     }
   }
 
@@ -390,7 +413,7 @@ async function generateCollaborativeRecommendations(
 }
 
 // Trending recommendations (based on recent popularity)
-async function generateTrendingRecommendations(tools: Array<Record<string, unknown>>): Promise<ToolRecommendation[]> {
+async function generateTrendingRecommendations(tools: ToolData[]): Promise<ToolRecommendation[]> {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -410,26 +433,15 @@ async function generateTrendingRecommendations(tools: Array<Record<string, unkno
   // Score tools based on recent activity
   const trendingTools = tools
     .map(tool => {
-      const recentInstalls = installCounts[tool.toolId] || 0;
-      const trendScore = recentInstalls * 10 + (tool.stats.rating * 5);
-      
-      return {
-        toolId: tool.toolId,
-        name: tool.name,
-        description: tool.description,
-        category: tool.category,
-        tags: tool.tags,
-        rating: tool.stats.rating,
-        downloads: tool.stats.downloads,
-        ownerId: tool.ownerId,
-        ownerName: tool.ownerName || 'Unknown',
-        pricing: tool.pricing,
-        recommendationReason: `Trending with ${recentInstalls} recent installs`,
-        relevanceScore: trendScore,
-        isVerified: tool.verified,
-        isFeatured: tool.featured,
-        screenshots: tool.screenshots
-      };
+      const toolId = tool.toolId || tool.id;
+      const recentInstalls = installCounts[toolId] || 0;
+      const trendScore = recentInstalls * 10 + ((tool.stats?.rating ?? 0) * 5);
+
+      return buildRecommendation(
+        tool,
+        `Trending with ${recentInstalls} recent installs`,
+        trendScore
+      );
     })
     .filter(tool => tool.relevanceScore > 0)
     .sort((a, b) => b.relevanceScore - a.relevanceScore);
@@ -440,14 +452,14 @@ async function generateTrendingRecommendations(tools: Array<Record<string, unkno
 // Category-based recommendations
 async function generateCategoryRecommendations(
   context: RecommendationContext,
-  tools: Array<Record<string, unknown>>
+  tools: ToolData[]
 ): Promise<ToolRecommendation[]> {
   // Determine user's preferred categories based on installed tools
   const categoryPreferences = new Map<string, number>();
   
   for (const toolId of context.installedToolIds || []) {
     const tool = tools.find(t => t.toolId === toolId);
-    if (tool) {
+    if (tool && tool.category) {
       const count = categoryPreferences.get(tool.category) || 0;
       categoryPreferences.set(tool.category, count + 1);
     }
@@ -455,32 +467,20 @@ async function generateCategoryRecommendations(
 
   // Get top tools from preferred categories
   const recommendations: ToolRecommendation[] = [];
-  
+
   for (const [category, preference] of categoryPreferences) {
     const categoryTools = tools
       .filter(tool => tool.category === category)
-      .filter(tool => !context.installedToolIds?.includes(tool.toolId))
-      .sort((a, b) => b.stats.rating - a.stats.rating)
+      .filter(tool => {
+        const tid = tool.toolId || tool.id;
+        return !context.installedToolIds?.includes(tid);
+      })
+      .sort((a, b) => (b.stats?.rating ?? 0) - (a.stats?.rating ?? 0))
       .slice(0, 5);
 
     for (const tool of categoryTools) {
-      recommendations.push({
-        toolId: tool.toolId,
-        name: tool.name,
-        description: tool.description,
-        category: tool.category,
-        tags: tool.tags,
-        rating: tool.stats.rating,
-        downloads: tool.stats.downloads,
-        ownerId: tool.ownerId,
-        ownerName: tool.ownerName || 'Unknown',
-        pricing: tool.pricing,
-        recommendationReason: `Top-rated ${category} tool`,
-        relevanceScore: preference * 10 + tool.stats.rating * 5,
-        isVerified: tool.verified,
-        isFeatured: tool.featured,
-        screenshots: tool.screenshots
-      });
+      const score = preference * 10 + (tool.stats?.rating ?? 0) * 5;
+      recommendations.push(buildRecommendation(tool, `Top-rated ${category} tool`, score));
     }
   }
 

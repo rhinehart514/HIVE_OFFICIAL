@@ -3,7 +3,20 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { type HiveNotification } from "@/lib/notifications-service";
+
+// Local type definition for notifications
+interface HiveNotification {
+  id: string;
+  userId: string;
+  title: string;
+  body?: string;
+  type: string;
+  category: string;
+  isRead: boolean;
+  readAt?: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
 
 // Real notification fetching from Firebase
 async function getUserNotifications(
@@ -42,7 +55,7 @@ async function getUserNotifications(
 
     return { notifications, unreadCount };
   } catch (error) {
-    logger.error('Error fetching user notifications', { error: error instanceof Error ? error : new Error(String(error)), userId });
+    logger.error('Error fetching user notifications', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
     return { notifications: [], unreadCount: 0 };
   }
 }
@@ -75,7 +88,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching notifications at /api/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch notifications", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -165,7 +178,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error handling notification action at /api/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to process notification action", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -217,7 +230,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating notification at /api/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update notification", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }

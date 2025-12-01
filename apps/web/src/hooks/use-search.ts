@@ -150,7 +150,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchReturn {
     } catch (err: unknown) {
       if ((err as { name?: string }).name !== 'AbortError') {
         console.error('Search error:', err);
-        setError(err);
+        setError(err instanceof Error ? err : new Error(String(err)));
         toast({
           title: "Search failed",
           description: "Please try again",

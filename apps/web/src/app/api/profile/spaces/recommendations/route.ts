@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import {
   withProfileSecurity,
   enforceCompusIsolation,
@@ -12,6 +12,7 @@ import {
   ConnectionType
 } from '@/lib/profile-security';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getServerProfileRepository } from '@hive/core/server';
 
 // Space recommendation interface
 interface SpaceRecommendation {
@@ -78,9 +79,40 @@ export const GET = withProfileSecurity(async (request: NextRequest) => {
       .map((doc) => doc.data().spaceId)
       .filter(Boolean);
 
-    // Get user profile for interest matching
+    // Try DDD repository for profile data (interests, connections)
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(user.uid);
+
+    let dddProfileData: {
+      interests: string[];
+      major: string | undefined;
+      connectionCount: number;
+      spaceCount: number;
+    } | null = null;
+
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      dddProfileData = {
+        interests: profile.interests,
+        major: profile.major,
+        connectionCount: profile.connectionCount,
+        spaceCount: profile.spaces.length,
+      };
+      logger.debug('Using DDD profile for recommendations', { userId: user.uid, interestCount: profile.interests.length });
+    }
+
+    // Get user profile for interest matching (fallback/supplement)
     const userDoc = await dbAdmin.collection('users').doc(user.uid).get();
-    const userData = userDoc.exists ? userDoc.data() : null;
+    const userData = userDoc.exists ? (userDoc.data() ?? null) : null;
+
+    // Merge DDD interests with Firestore interests for better matching
+    if (dddProfileData?.interests.length && userData) {
+      const mergedInterests = [...new Set([
+        ...(dddProfileData.interests || []),
+        ...((userData.interests as string[]) || [])
+      ])];
+      (userData as Record<string, unknown>).interests = mergedInterests;
+    }
 
     // Get all available spaces (excluding current memberships) with campus isolation
     const allSpacesQuery = dbAdmin.collection('spaces')
@@ -162,12 +194,18 @@ export const GET = withProfileSecurity(async (request: NextRequest) => {
       recommendations: uniqueRecommendations,
       totalAvailable: availableSpaces.length,
       currentMemberships: currentSpaceIds.length,
-      recommendationType: type
+      recommendationType: type,
+      // Include DDD profile context for recommendations
+      profile: dddProfileData ? {
+        interestCount: dddProfileData.interests.length,
+        connectionCount: dddProfileData.connectionCount,
+        currentSpaceCount: dddProfileData.spaceCount,
+      } : null
     });
   } catch (error) {
     logger.error(
       `Error generating space recommendations at /api/profile/spaces/recommendations`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to generate space recommendations", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -184,16 +222,17 @@ async function generateInterestBasedRecommendations(
   userData: Record<string, unknown> | null,
   _currentSpaceIds: string[]
 ): Promise<SpaceRecommendation[]> {
-  if (!userData?.interests || userData.interests.length === 0) {
+  const interests = userData?.interests as string[] | undefined;
+  if (!interests || interests.length === 0) {
     return [];
   }
 
-  const userInterests = userData.interests.map((interest: string) => interest.toLowerCase());
+  const userInterests = interests.map((interest: string) => interest.toLowerCase());
   
   return availableSpaces
     .map(space => {
-      const spaceTags = (space.tags || []).map((tag: string) => tag.toLowerCase());
-      const spaceKeywords = (space.name + ' ' + space.description).toLowerCase().split(/\s+/);
+      const spaceTags = ((space.tags as string[]) || []).map((tag: string) => tag.toLowerCase());
+      const spaceKeywords = ((space.name as string || '') + ' ' + (space.description as string || '')).toLowerCase().split(/\s+/);
       
       // Calculate interest match score
       const tagMatches = spaceTags.filter((tag: string) => userInterests.includes(tag)).length;
@@ -236,20 +275,20 @@ async function generateTrendingRecommendations(
 ): Promise<SpaceRecommendation[]> {
   return availableSpaces
     .filter(space => getSpaceMemberCount(space) > 10) // Only spaces with decent activity
-    .sort((a, b) => (b.recentActivity || 0) - (a.recentActivity || 0))
+    .sort((a, b) => ((b.recentActivity as number) || 0) - ((a.recentActivity as number) || 0))
     .slice(0, 5)
     .map(space => ({
-      spaceId: space.id,
-      spaceName: space.name,
-      spaceDescription: space.description,
-      spaceType: space.type || 'general',
+      spaceId: space.id as string,
+      spaceName: space.name as string,
+      spaceDescription: space.description as string,
+      spaceType: (space.type as string) || 'general',
       memberCount: getSpaceMemberCount(space),
       isActive: space.status === 'active',
-      matchScore: Math.min(100, (space.recentActivity || 0) / 10),
+      matchScore: Math.min(100, ((space.recentActivity as number) || 0) / 10),
       matchReasons: ['Trending on campus', 'High recent activity'],
       commonMembers: 0,
-      recentActivity: space.recentActivity || 0,
-      tags: space.tags || [],
+      recentActivity: (space.recentActivity as number) || 0,
+      tags: (space.tags as string[]) || [],
       recommendationType: 'trending' as const
     }));
 }
@@ -261,33 +300,42 @@ async function generateNewSpaceRecommendations(
 ): Promise<SpaceRecommendation[]> {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  
+
   return availableSpaces
     .filter(space => {
-      const createdAt = space.createdAt?.toDate?.() || (space.createdAt ? new Date(space.createdAt) : null);
+      const createdAtValue = space.createdAt as { toDate?: () => Date } | string | undefined;
+      const createdAt = (createdAtValue && typeof createdAtValue === 'object' && 'toDate' in createdAtValue)
+        ? createdAtValue.toDate?.()
+        : (createdAtValue ? new Date(createdAtValue as string) : null);
       if (!createdAt) {
         return false;
       }
       return createdAt > oneWeekAgo;
     })
     .sort((a, b) => {
-      const aDate = a.createdAt?.toDate?.() || (a.createdAt ? new Date(a.createdAt) : 0);
-      const bDate = b.createdAt?.toDate?.() || (b.createdAt ? new Date(b.createdAt) : 0);
+      const aCreatedAt = a.createdAt as { toDate?: () => Date } | string | undefined;
+      const bCreatedAt = b.createdAt as { toDate?: () => Date } | string | undefined;
+      const aDate = (aCreatedAt && typeof aCreatedAt === 'object' && 'toDate' in aCreatedAt)
+        ? aCreatedAt.toDate?.()
+        : (aCreatedAt ? new Date(aCreatedAt as string) : null);
+      const bDate = (bCreatedAt && typeof bCreatedAt === 'object' && 'toDate' in bCreatedAt)
+        ? bCreatedAt.toDate?.()
+        : (bCreatedAt ? new Date(bCreatedAt as string) : null);
       return (bDate ? bDate.getTime() : 0) - (aDate ? aDate.getTime() : 0);
     })
     .slice(0, 3)
     .map(space => ({
-      spaceId: space.id,
-      spaceName: space.name,
-      spaceDescription: space.description,
-      spaceType: space.type || 'general',
+      spaceId: space.id as string,
+      spaceName: space.name as string,
+      spaceDescription: space.description as string,
+      spaceType: (space.type as string) || 'general',
       memberCount: getSpaceMemberCount(space),
       isActive: space.status === 'active',
       matchScore: 60,
       matchReasons: ['New space', 'Recently created'],
       commonMembers: 0,
-      recentActivity: space.recentActivity || 0,
-      tags: space.tags || [],
+      recentActivity: (space.recentActivity as number) || 0,
+      tags: (space.tags as string[]) || [],
       recommendationType: 'new_spaces' as const
     }));
 }
@@ -356,19 +404,19 @@ async function generateFriendActivityRecommendations(
 
     // Generate recommendations based on friend activity
     return availableSpaces
-      .filter(space => spaceFriendCounts[space.id] > 0)
+      .filter(space => spaceFriendCounts[space.id as string] > 0)
       .map(space => ({
-        spaceId: space.id,
-        spaceName: space.name,
-        spaceDescription: space.description,
-        spaceType: space.type || 'general',
+        spaceId: space.id as string,
+        spaceName: space.name as string,
+        spaceDescription: space.description as string,
+        spaceType: (space.type as string) || 'general',
         memberCount: getSpaceMemberCount(space),
         isActive: space.status === 'active',
-        matchScore: Math.min(100, spaceFriendCounts[space.id] * 15),
-        matchReasons: [`${spaceFriendCounts[space.id]} people you know are members`],
-        commonMembers: spaceFriendCounts[space.id],
-        recentActivity: space.recentActivity || 0,
-        tags: space.tags || [],
+        matchScore: Math.min(100, spaceFriendCounts[space.id as string] * 15),
+        matchReasons: [`${spaceFriendCounts[space.id as string]} people you know are members`],
+        commonMembers: spaceFriendCounts[space.id as string],
+        recentActivity: (space.recentActivity as number) || 0,
+        tags: (space.tags as string[]) || [],
         recommendationType: 'friend_activity' as const
       }))
       .sort((a, b) => b.commonMembers - a.commonMembers)
@@ -376,7 +424,7 @@ async function generateFriendActivityRecommendations(
   } catch (error) {
     logger.error(
       `Error generating friend activity recommendations at /api/profile/spaces/recommendations`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -392,60 +440,60 @@ async function generateAcademicRecommendations(
     return [];
   }
 
-  const userMajor = userData.major?.toLowerCase();
-  const userYear = userData.academicYear;
+  const userMajor = (userData.major as string | undefined)?.toLowerCase();
+  const userYear = userData.academicYear as string | undefined;
 
   return availableSpaces
     .filter(space => {
-      const spaceName = (space.name || '').toLowerCase();
-      const spaceDescription = (space.description || '').toLowerCase();
-      const spaceType = space.type?.toLowerCase();
-      
+      const spaceName = ((space.name as string) || '').toLowerCase();
+      const spaceDescription = ((space.description as string) || '').toLowerCase();
+      const spaceType = (space.type as string | undefined)?.toLowerCase();
+
       // Check for academic relevance
       const isMajorMatch = userMajor && (
-        spaceName.includes(userMajor) || 
+        spaceName.includes(userMajor) ||
         spaceDescription.includes(userMajor) ||
-        (space.tags || []).some((tag: string) => tag.toLowerCase().includes(userMajor))
+        ((space.tags as string[]) || []).some((tag: string) => tag.toLowerCase().includes(userMajor))
       );
-      
+
       const isYearMatch = userYear && (
-        spaceName.includes(userYear) || 
+        spaceName.includes(userYear) ||
         spaceDescription.includes(userYear)
       );
-      
+
       const isAcademicType = spaceType === 'academic' || spaceType === 'study';
-      
+
       return isMajorMatch || isYearMatch || isAcademicType;
     })
     .map(space => {
-      const matchReasons = [];
-      const spaceName = (space.name || '').toLowerCase();
-      const spaceDescription = (space.description || '').toLowerCase();
-      
+      const matchReasons: string[] = [];
+      const spaceName = ((space.name as string) || '').toLowerCase();
+      const spaceDescription = ((space.description as string) || '').toLowerCase();
+
       if (userMajor && (spaceName.includes(userMajor) || spaceDescription.includes(userMajor))) {
         matchReasons.push(`Matches your major: ${userData.major}`);
       }
-      
+
       if (userYear && (spaceName.includes(userYear) || spaceDescription.includes(userYear))) {
         matchReasons.push(`Relevant to ${userYear}s`);
       }
-      
+
       if (space.type === 'academic' || space.type === 'study') {
         matchReasons.push('Academic focus');
       }
-      
+
       return {
-        spaceId: space.id,
-        spaceName: space.name,
-        spaceDescription: space.description,
-        spaceType: space.type || 'general',
+        spaceId: space.id as string,
+        spaceName: space.name as string,
+        spaceDescription: space.description as string,
+        spaceType: (space.type as string) || 'general',
         memberCount: getSpaceMemberCount(space),
         isActive: space.status === 'active',
         matchScore: matchReasons.length * 25,
         matchReasons,
         commonMembers: 0,
-        recentActivity: space.recentActivity || 0,
-        tags: space.tags || [],
+        recentActivity: (space.recentActivity as number) || 0,
+        tags: (space.tags as string[]) || [],
         recommendationType: 'academic_match' as const
       };
     })

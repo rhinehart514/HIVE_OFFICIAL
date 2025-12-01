@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error submitting content report', { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error('Error submitting content report', { error: { error: error instanceof Error ? error.message : String(error) } });
     
     if (error instanceof Error && error.message.includes('Content not found')) {
       return NextResponse.json(
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    logger.error('Error getting user reports', { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error('Error getting user reports', { error: { error: error instanceof Error ? error.message : String(error) } });
     return NextResponse.json(
       ApiResponseHelper.error('Failed to get reports', 'INTERNAL_ERROR'),
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
@@ -168,7 +168,7 @@ async function checkRecentReports(userId: string): Promise<number> {
     
     return snapshot.size;
   } catch (error) {
-    logger.error('Error checking recent reports', { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error('Error checking recent reports', { error: { error: error instanceof Error ? error.message : String(error) } });
     return 0;
   }
 }
@@ -197,7 +197,7 @@ async function getUserReports(userId: string, status: string, limit: number) {
       assignedModerator: undefined
     }));
   } catch (error) {
-    logger.error('Error getting user reports', { error: error instanceof Error ? error : new Error(String(error)), userId });
+    logger.error('Error getting user reports', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
     return [];
   }
 }

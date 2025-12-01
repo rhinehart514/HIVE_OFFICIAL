@@ -73,6 +73,7 @@ try {
       admin.initializeApp({
         credential: credential,
         projectId: env.FIREBASE_PROJECT_ID,
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${env.FIREBASE_PROJECT_ID}.appspot.com`,
       });
 
       dbAdmin = getFirestore();

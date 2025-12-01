@@ -1,9 +1,9 @@
-import { _getFirestore, _FieldValue } from "firebase-admin/firestore";
+import { getFirestore as _getFirestore, FieldValue as _FieldValue } from "firebase-admin/firestore";
 import * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
-import { _ApiResponseHelper, _HttpStatus } from "@/lib/api-response-types";
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Schema for tool state update requests
@@ -14,13 +14,13 @@ const ToolStateSchema = z.object({
 });
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const authenticatedUserId = getUserId(request);
+  const authenticatedUserId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
   const userId = searchParams.get("userId") || authenticatedUserId;
 
@@ -56,13 +56,13 @@ type ToolStateData = z.infer<typeof ToolStateSchema>;
 export const POST = withAuthValidationAndErrors(
   ToolStateSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ toolId: string }> },
     body: ToolStateData,
     respond
   ) => {
     const { spaceId, userId: requestUserId, state } = body;
-    const authenticatedUserId = getUserId(request);
+    const authenticatedUserId = getUserId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
     // Ensure user can only update their own state
@@ -157,13 +157,13 @@ export const POST = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const authenticatedUserId = getUserId(request);
+  const authenticatedUserId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
-  const searchParams = request.nextUrl.searchParams;
+  const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
   const userId = searchParams.get("userId") || authenticatedUserId;
 

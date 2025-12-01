@@ -1,4 +1,4 @@
-import type { _Element } from '@hive/core';
+import type { Element } from '@hive/core';
 import { 
   Type, 
   KeyRound as InputIcon, 

@@ -10,6 +10,9 @@ import {
 } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
+// SECURITY: Use centralized admin auth
+import { isAdmin, getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
+import { notifyBuilderApproved, notifyBuilderRejected } from '@/lib/notification-service';
 
 const ReviewRequestSchema = z.object({
   requestId: z.string().min(1),
@@ -17,17 +20,9 @@ const ReviewRequestSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Check if user is admin
-async function isAdmin(userId: string): Promise<boolean> {
-  const userDoc = await dbAdmin.collection('users').doc(userId).get();
-  if (!userDoc.exists) return false;
-  const userData = userDoc.data();
-  return userData?.role === 'admin' || userData?.isAdmin === true;
-}
-
 // GET: List all pending builder requests
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   // Check admin permission
   if (!(await isAdmin(userId))) {
@@ -90,7 +85,7 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _cont
     });
   } catch (error) {
     logger.error('Failed to fetch builder requests', {
-      error: error instanceof Error ? error : new Error(String(error)),
+      error: { error: error instanceof Error ? error.message : String(error) },
       userId,
     });
     return respond.error('Failed to fetch requests', 'INTERNAL_ERROR', {
@@ -103,12 +98,12 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _cont
 export const POST = withAuthValidationAndErrors(
   ReviewRequestSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     body: z.infer<typeof ReviewRequestSchema>,
     respond
   ) => {
-    const adminId = getUserId(request);
+    const adminId = getUserId(request as AuthenticatedRequest);
 
     // Check admin permission
     if (!(await isAdmin(adminId))) {
@@ -203,6 +198,39 @@ export const POST = withAuthValidationAndErrors(
 
       await batch.commit();
 
+      // Get admin name for notification
+      const adminDoc = await dbAdmin.collection('users').doc(adminId).get();
+      const adminName = adminDoc.data()?.fullName || 'Admin';
+
+      // Send notification to the user
+      try {
+        if (action === 'approve') {
+          await notifyBuilderApproved({
+            userId: requestData.userId,
+            adminId,
+            adminName,
+            spaceId: requestData.spaceId,
+            spaceName: requestData.spaceName,
+          });
+        } else {
+          await notifyBuilderRejected({
+            userId: requestData.userId,
+            adminId,
+            adminName,
+            spaceId: requestData.spaceId,
+            spaceName: requestData.spaceName,
+            reason: notes,
+          });
+        }
+      } catch (notifyError) {
+        // Don't fail the action if notification fails
+        logger.warn('Failed to send builder request notification', {
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          requestId,
+          action,
+        });
+      }
+
       logger.info(`Builder request ${action}d`, {
         requestId,
         spaceId: requestData.spaceId,
@@ -217,7 +245,7 @@ export const POST = withAuthValidationAndErrors(
       });
     } catch (error) {
       logger.error('Failed to process builder request', {
-        error: error instanceof Error ? error : new Error(String(error)),
+        error: { error: error instanceof Error ? error.message : String(error) },
         requestId,
         action,
         adminId,

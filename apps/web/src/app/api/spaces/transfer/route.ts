@@ -7,8 +7,8 @@ import {
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
-import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
+import { getServerSpaceRepository, type EnhancedSpace } from '@hive/core/server';
 
 interface MovementRestriction {
   spaceType: 'campus_living' | 'cohort' | 'fraternity_and_sorority';
@@ -60,10 +60,11 @@ interface SpaceInfo {
   id: string;
   data: Record<string, unknown>;
   movementType: string | null;
+  space?: EnhancedSpace;
 }
 
-export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
-  const userId = getUserId(request);
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { fromSpaceId, toSpaceId, reason, adminOverride = false } = await request.json();
 
   if (!fromSpaceId || !toSpaceId) {
@@ -78,20 +79,7 @@ export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _con
     });
   }
 
-  const fromMembership = await requireSpaceMembership(fromSpaceId, userId);
-  if (!fromMembership.ok) {
-    const code =
-      fromMembership.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(fromMembership.error, code, { status: fromMembership.status });
-  }
-
-  const toSpaceAccess = await requireSpaceAccess(toSpaceId, userId);
-  if (!toSpaceAccess.ok) {
-    const code =
-      toSpaceAccess.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
-    return respond.error(toSpaceAccess.error, code, { status: toSpaceAccess.status });
-  }
-
+  // Load space info using DDD repository (includes campus validation)
   const fromSpace = await loadSpaceInfo(fromSpaceId);
   const toSpace = await loadSpaceInfo(toSpaceId);
 
@@ -282,8 +270,8 @@ export const POST = withAuthAndErrors(async (request: AuthenticatedRequest, _con
   });
 });
 
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _context, respond) => {
-  const userId = getUserId(request);
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const spaceType = searchParams.get('spaceType');
   const fromSpaceId = searchParams.get('fromSpaceId');
@@ -376,20 +364,37 @@ function resolveMovementType(space: Record<string, unknown>): string | null {
 }
 
 async function loadSpaceInfo(spaceId: string): Promise<SpaceInfo | null> {
-  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
-  if (!spaceDoc.exists) {
+  // Use DDD repository for space data
+  const spaceRepo = getServerSpaceRepository();
+  const result = await spaceRepo.findById(spaceId);
+
+  if (result.isFailure) {
     return null;
   }
 
-  const data = spaceDoc.data() ?? {};
-  if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+  const space = result.getValue();
+
+  // Enforce campus isolation
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
     return null;
   }
+
+  // Build data object for backward compatibility with existing code
+  const data: Record<string, unknown> = {
+    name: space.name.value,
+    description: space.description.value,
+    category: space.category.value,
+    type: space.category.value,
+    memberCount: space.memberCount,
+    isPublic: space.isPublic,
+    campusId: space.campusId.id,
+  };
 
   return {
-    id: spaceDoc.id,
+    id: space.spaceId.value,
     data,
     movementType: resolveMovementType(data),
+    space,
   };
 }
 

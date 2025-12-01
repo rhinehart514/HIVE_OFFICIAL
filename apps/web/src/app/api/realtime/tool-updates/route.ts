@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Real-time tool update interfaces
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error processing tool update at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to process tool update", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -257,7 +257,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting tool updates at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get tool updates", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -365,7 +365,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error syncing tool state at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to sync tool state", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -431,7 +431,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error cleaning up tool updates at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to clean up tool updates", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -486,7 +486,7 @@ async function verifyToolUpdatePermission(
   } catch (error) {
     logger.error(
       `Error verifying tool update permission at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -546,7 +546,7 @@ async function verifyToolAccess(
   } catch (error) {
     logger.error(
       `Error verifying tool access at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return false;
   }
@@ -593,7 +593,7 @@ async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: str
   } catch (error) {
     logger.error(
       `Error getting tool users at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -612,7 +612,7 @@ async function getSpaceMembers(spaceId: string): Promise<string[]> {
   } catch (error) {
     logger.error(
       `Error getting space members at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -633,7 +633,7 @@ async function getNextSequenceNumber(toolId: string, deploymentId?: string): Pro
   } catch (error) {
     logger.error(
       `Error getting next sequence number at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return Date.now(); // Fallback to timestamp
   }
@@ -678,7 +678,7 @@ async function getToolStateSnapshot(toolId: string, deploymentId?: string): Prom
   } catch (error) {
     logger.error(
       `Error getting tool state snapshot at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return null;
   }
@@ -725,7 +725,7 @@ async function updateToolStateSnapshot(updateEvent: ToolUpdateEvent, currentSnap
   } catch (error) {
     logger.error(
       `Error updating tool state snapshot at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -759,7 +759,7 @@ async function createToolStateSnapshot(
   } catch (error) {
     logger.error(
       `Error creating tool state snapshot at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -805,7 +805,7 @@ async function broadcastToolUpdate(updateEvent: ToolUpdateEvent): Promise<void> 
   } catch (error) {
     logger.error(
       `Error broadcasting tool update at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -837,7 +837,7 @@ async function notifyAffectedUsers(updateEvent: ToolUpdateEvent, userIds: string
   } catch (error) {
     logger.error(
       `Error notifying affected users at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -859,7 +859,7 @@ async function initializeAckTracking(updateEvent: ToolUpdateEvent): Promise<void
   } catch (error) {
     logger.error(
       `Error initializing ack tracking at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -888,7 +888,7 @@ async function getToolSyncStatus(toolId: string, deploymentId?: string, _userId?
   } catch (error) {
     logger.error(
       `Error getting tool sync status at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return {
       status: 'error',
@@ -988,7 +988,7 @@ async function resolveToolStateConflict(
   } catch (error) {
     logger.error(
       `Error resolving tool state conflict at /api/realtime/tool-updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     throw error;
   }

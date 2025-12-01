@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 
 // Live notifications interfaces
 interface LiveNotification {
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error creating live notification at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to create notification", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -292,7 +292,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error getting live notifications at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to get notifications", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -395,7 +395,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error updating notification status at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to update notification status", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -455,7 +455,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error deleting notifications at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to delete notifications", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -475,7 +475,7 @@ async function getUserNotificationPreferences(userId: string): Promise<Notificat
   } catch (error) {
     logger.error(
       `Error getting notification preferences at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return getDefaultNotificationPreferences(userId);
   }
@@ -680,7 +680,7 @@ async function addToBatch(notification: LiveNotification): Promise<void> {
   } catch (error) {
     logger.error(
       `Error adding notification to batch at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -700,7 +700,7 @@ async function sendNotificationImmediately(notification: LiveNotification): Prom
   } catch (error) {
     logger.error(
       `Error sending notification immediately at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -745,7 +745,7 @@ async function broadcastNotificationToUser(notification: LiveNotification): Prom
   } catch (error) {
     logger.error(
       `Error broadcasting notification to user at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -763,7 +763,7 @@ async function getUnreadNotificationCount(userId: string): Promise<number> {
   } catch (error) {
     logger.error(
       `Error getting unread notification count at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }
@@ -781,7 +781,7 @@ async function getTotalNotificationCount(userId: string): Promise<number> {
   } catch (error) {
     logger.error(
       `Error getting total notification count at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }
@@ -801,7 +801,7 @@ async function getRecentNotificationCount(userId: string, minutes: number): Prom
   } catch (error) {
     logger.error(
       `Error getting recent notification count at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return 0;
   }
@@ -843,7 +843,7 @@ async function broadcastNotificationStatusUpdate(
   } catch (error) {
     logger.error(
       `Error broadcasting notification status update at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -879,7 +879,7 @@ async function updateNotificationStats(userId: string, type: string, spaceId?: s
   } catch (error) {
     logger.error(
       `Error updating notification stats at /api/realtime/notifications`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }

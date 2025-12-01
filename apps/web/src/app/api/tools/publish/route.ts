@@ -62,13 +62,13 @@ interface PublishRequest {
 export const POST = withAuthValidationAndErrors(
   PublishRequestSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     _context,
     validatedData,
     respond
   ) => {
     try {
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
     // Get tool details
     const toolDoc = await adminDb.collection('tools').doc(validatedData.toolId).get();
@@ -179,7 +179,7 @@ export const POST = withAuthValidationAndErrors(
   } catch (error) {
     logger.error(
       `Error submitting publish request at /api/tools/publish`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
       return respond.error("Failed to submit publish request", "INTERNAL_ERROR", { status: 500 });
   }
@@ -188,12 +188,12 @@ export const POST = withAuthValidationAndErrors(
 
 // GET - Get publish request status
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond
 ) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const toolId = searchParams.get('toolId');
@@ -235,7 +235,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error fetching publish request at /api/tools/publish`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error("Failed to fetch publish request", "INTERNAL_ERROR", { status: 500 });
   }

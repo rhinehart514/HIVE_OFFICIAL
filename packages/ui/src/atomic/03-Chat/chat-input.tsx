@@ -13,11 +13,23 @@
  */
 
 import { Send, Square } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
 import { Button } from '../00-Global/atoms/button';
 import '../../styles/scrollbar.css';
+
+/** Imperative handle for ChatInput */
+export interface ChatInputHandle {
+  /** Set the input value programmatically */
+  setValue: (value: string) => void;
+  /** Focus the input */
+  focus: () => void;
+  /** Get current value */
+  getValue: () => string;
+  /** Clear the input */
+  clear: () => void;
+}
 
 export interface ChatInputProps {
   /** Callback when user submits message */
@@ -54,7 +66,7 @@ export interface ChatInputProps {
  * - Enter to send, Shift+Enter for newline
  * - Clean, minimal styling
  */
-export function ChatInput({
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
   onSubmit,
   onStop,
   isGenerating = false,
@@ -63,10 +75,27 @@ export function ChatInput({
   showCounter = false,
   disabled = false,
   className
-}: ChatInputProps) {
+}, ref) {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Expose imperative methods via ref
+  useImperativeHandle(ref, () => ({
+    setValue: (value: string) => {
+      setMessage(value);
+    },
+    focus: () => {
+      textareaRef.current?.focus();
+    },
+    getValue: () => message,
+    clear: () => {
+      setMessage('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+    },
+  }), [message]);
 
   // Auto-resize textarea (wrapper handles max-height)
   useEffect(() => {
@@ -218,4 +247,4 @@ export function ChatInput({
       </div>
     </div>
   );
-}
+});

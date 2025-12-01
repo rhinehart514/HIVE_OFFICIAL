@@ -13,7 +13,7 @@ const switchVariants = cva(
     variants: {
       variant: {
         default:
-          "data-[state=checked]:bg-[#ffd700] data-[state=checked]:border-[#ffd700] data-[state=checked]:shadow-[0_14px_38px_rgba(255,215,0,0.4)]",
+          "data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary data-[state=checked]:shadow-[0_14px_38px_rgba(255,215,0,0.4)]",
         destructive:
           "data-[state=checked]:bg-[var(--hive-status-error)] data-[state=checked]:border-[var(--hive-status-error)]",
         success:

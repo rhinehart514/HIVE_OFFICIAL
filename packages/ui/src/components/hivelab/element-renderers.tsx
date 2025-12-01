@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import {
   Search,
   Filter,
@@ -11,6 +12,13 @@ import {
   FileText,
   Bell,
   MapPin,
+  Timer,
+  Vote,
+  Trophy,
+  UserPlus,
+  Check,
+  Crown,
+  Medal,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -476,8 +484,403 @@ export function NotificationCenterElement({ config }: ElementProps) {
   );
 }
 
+// Countdown Timer Element
+export function CountdownTimerElement({ config, onChange }: ElementProps) {
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (config.targetDate) {
+      const target = new Date(config.targetDate).getTime();
+      const now = Date.now();
+      return Math.max(0, Math.floor((target - now) / 1000));
+    }
+    return config.seconds || 3600; // Default 1 hour
+  });
+
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      onChange?.({ finished: true, timeLeft: 0 });
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        const next = prev - 1;
+        if (next <= 0) {
+          onChange?.({ finished: true, timeLeft: 0 });
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, onChange]);
+
+  const formatTime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (days > 0) {
+      return { days, hours, mins, secs, format: 'days' };
+    }
+    return { hours, mins, secs, format: 'hours' };
+  };
+
+  const time = formatTime(timeLeft);
+
+  return (
+    <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
+      <CardContent className="p-6 text-center">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Timer className="h-5 w-5 text-amber-500" />
+          <span className="text-sm font-medium text-muted-foreground">
+            {config.label || 'Time Remaining'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          {time.format === 'days' && (
+            <div className="text-center">
+              <div className="text-4xl font-bold tabular-nums">{time.days}</div>
+              <div className="text-xs text-muted-foreground uppercase">Days</div>
+            </div>
+          )}
+          <div className="text-center">
+            <div className="text-4xl font-bold tabular-nums">{time.hours.toString().padStart(2, '0')}</div>
+            <div className="text-xs text-muted-foreground uppercase">Hours</div>
+          </div>
+          <div className="text-2xl font-bold text-muted-foreground">:</div>
+          <div className="text-center">
+            <div className="text-4xl font-bold tabular-nums">{time.mins.toString().padStart(2, '0')}</div>
+            <div className="text-xs text-muted-foreground uppercase">Mins</div>
+          </div>
+          <div className="text-2xl font-bold text-muted-foreground">:</div>
+          <div className="text-center">
+            <div className="text-4xl font-bold tabular-nums">{time.secs.toString().padStart(2, '0')}</div>
+            <div className="text-xs text-muted-foreground uppercase">Secs</div>
+          </div>
+        </div>
+
+        {timeLeft <= 0 && (
+          <div className="mt-4 text-amber-500 font-medium">Time's up!</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Poll Element
+export function PollElement({ config, data, onChange, onAction }: ElementProps) {
+  const options = config.options || ['Option A', 'Option B', 'Option C'];
+
+  // Hydrate from server state (data prop) or initialize empty
+  const serverResponses = (data?.responses as Record<string, { choice: string }>) || {};
+  const serverTotalVotes = (data?.totalVotes as number) || 0;
+  const serverUserVote = (data?.userVote as string) || null;
+
+  // Calculate vote counts from server responses
+  const calculateVoteCounts = (): Record<string, number> => {
+    const counts: Record<string, number> = {};
+    options.forEach((opt: string) => { counts[opt] = 0; });
+    Object.values(serverResponses).forEach((response) => {
+      if (response?.choice && counts[response.choice] !== undefined) {
+        counts[response.choice]++;
+      }
+    });
+    return counts;
+  };
+
+  const [votes, setVotes] = useState<Record<string, number>>(calculateVoteCounts);
+  const [userVote, setUserVote] = useState<string | null>(serverUserVote);
+  const [hasVoted, setHasVoted] = useState(!!serverUserVote);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Sync with server state when data changes
+  useEffect(() => {
+    setVotes(calculateVoteCounts());
+    if (serverUserVote) {
+      setUserVote(serverUserVote);
+      setHasVoted(true);
+    }
+  }, [data?.responses, data?.totalVotes, serverUserVote]);
+
+  const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0) || serverTotalVotes;
+  const showResults = config.showResultsBeforeVoting || hasVoted;
+
+  const handleVote = async (option: string) => {
+    if ((hasVoted && !config.allowChangeVote) || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    // Optimistic update
+    setVotes((prev) => ({
+      ...prev,
+      [option]: (prev[option] || 0) + 1,
+      ...(userVote ? { [userVote]: Math.max(0, (prev[userVote] || 0) - 1) } : {}),
+    }));
+    setUserVote(option);
+    setHasVoted(true);
+
+    // Call server action
+    onChange?.({ selectedOption: option, votes });
+    onAction?.('vote', { choice: option });
+
+    setIsSubmitting(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Vote className="h-5 w-5 text-primary" />
+          <span className="font-semibold">{config.question || 'Cast your vote'}</span>
+        </div>
+
+        <div className="space-y-3">
+          {options.map((option: string) => {
+            const voteCount = votes[option] || 0;
+            const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+            const isSelected = userVote === option;
+
+            return (
+              <button
+                key={option}
+                onClick={() => handleVote(option)}
+                disabled={(hasVoted && !config.allowChangeVote) || isSubmitting}
+                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                  isSelected
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                } ${(hasVoted && !config.allowChangeVote) || isSubmitting ? 'cursor-default opacity-70' : 'cursor-pointer'}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {isSelected && <Check className="h-4 w-4 text-primary" />}
+                    <span className={isSelected ? 'font-medium' : ''}>{option}</span>
+                  </div>
+                  {showResults && (
+                    <span className="text-sm text-muted-foreground">{percentage}%</span>
+                  )}
+                </div>
+                {showResults && (
+                  <div className="mt-2">
+                    <Progress value={percentage} className="h-2" />
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+          {config.deadline && <span>Ends {config.deadline}</span>}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Leaderboard Element
+export function LeaderboardElement({ config, data }: ElementProps) {
+  // Hydrate from server state - convert entries object to sorted array
+  const serverEntries = data?.entries as Record<string, { score: number; name?: string; updatedAt?: string }> | undefined;
+
+  const entries = useMemo(() => {
+    if (serverEntries && Object.keys(serverEntries).length > 0) {
+      // Convert server entries object to sorted array with ranks
+      return Object.entries(serverEntries)
+        .map(([id, entry]) => ({
+          id,
+          name: entry.name || `User ${id.slice(0, 6)}`,
+          score: entry.score || 0,
+          updatedAt: entry.updatedAt,
+        }))
+        .sort((a, b) => b.score - a.score)
+        .map((entry, index) => ({
+          ...entry,
+          rank: index + 1,
+          change: 'same' as const, // Could track previous rank for change indicator
+        }));
+    }
+    // Fallback to empty state (no mock data in production)
+    return [];
+  }, [serverEntries]);
+
+  const maxEntries = config.maxEntries || 10;
+  const displayEntries = entries.slice(0, maxEntries);
+  const hasData = displayEntries.length > 0;
+
+  const getRankIcon = (rank: number) => {
+    if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
+    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
+    if (rank === 3) return <Medal className="h-5 w-5 text-amber-600" />;
+    return <span className="w-5 text-center text-muted-foreground font-mono">{rank}</span>;
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <div className="px-6 py-4 border-b border-border flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-yellow-500" />
+          <span className="font-semibold">{config.title || 'Leaderboard'}</span>
+        </div>
+
+        <div className="divide-y divide-border">
+          {hasData ? (
+            displayEntries.map((entry: any, index: number) => (
+              <div
+                key={entry.id || index}
+                className={`px-6 py-3 flex items-center gap-4 ${
+                  entry.rank <= 3 ? 'bg-gradient-to-r from-yellow-500/5 to-transparent' : ''
+                }`}
+              >
+                <div className="flex items-center justify-center w-8">
+                  {getRankIcon(entry.rank)}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{entry.name}</div>
+                  {config.showSubtitle && entry.subtitle && (
+                    <div className="text-xs text-muted-foreground">{entry.subtitle}</div>
+                  )}
+                </div>
+
+                {config.showScore !== false && (
+                  <div className="text-right">
+                    <div className="font-semibold tabular-nums">
+                      {entry.score.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {config.scoreLabel || 'pts'}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="px-6 py-8 text-center text-muted-foreground">
+              <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No entries yet. Be the first to score!</p>
+            </div>
+          )}
+        </div>
+
+        {hasData && entries.length > maxEntries && (
+          <div className="px-6 py-3 border-t border-border text-center">
+            <Button variant="ghost" size="sm">
+              View all {entries.length} entries
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// RSVP Button Element
+export function RsvpButtonElement({ config, data, onChange, onAction }: ElementProps) {
+  // Hydrate from server state
+  const serverAttendees = (data?.attendees as Record<string, unknown>) || {};
+  const serverCount = (data?.count as number) || 0;
+  const serverWaitlist = (data?.waitlist as string[]) || [];
+  const serverUserRsvp = (data?.userRsvp as string) || null; // 'yes', 'maybe', 'no', or null
+
+  const [isRsvped, setIsRsvped] = useState(serverUserRsvp === 'yes');
+  const [rsvpCount, setRsvpCount] = useState(serverCount || Object.keys(serverAttendees).length);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync with server state when data changes
+  useEffect(() => {
+    const count = serverCount || Object.keys(serverAttendees).length;
+    setRsvpCount(count);
+    setIsRsvped(serverUserRsvp === 'yes');
+  }, [data?.attendees, data?.count, serverUserRsvp, serverCount, serverAttendees]);
+
+  const maxAttendees = config.maxAttendees || null;
+  const isFull = maxAttendees && rsvpCount >= maxAttendees;
+
+  const handleRsvp = async () => {
+    if ((isFull && !isRsvped) || isLoading) return;
+
+    setIsLoading(true);
+
+    const newState = !isRsvped;
+
+    // Optimistic update
+    setIsRsvped(newState);
+    setRsvpCount((prev: number) => (newState ? prev + 1 : Math.max(0, prev - 1)));
+
+    // Call server action
+    onChange?.({ isRsvped: newState, rsvpCount: rsvpCount + (newState ? 1 : -1) });
+    onAction?.(newState ? 'rsvp' : 'cancel_rsvp', {
+      response: newState ? 'yes' : 'no',
+      eventName: config.eventName
+    });
+
+    setIsLoading(false);
+  };
+
+  return (
+    <Card className={isRsvped ? 'border-green-500/50 bg-green-500/5' : ''}>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="font-semibold">{config.eventName || 'Event'}</div>
+            {config.eventDate && (
+              <div className="text-sm text-muted-foreground">{config.eventDate}</div>
+            )}
+          </div>
+
+          <Button
+            onClick={handleRsvp}
+            disabled={isLoading || (isFull && !isRsvped)}
+            variant={isRsvped ? 'outline' : 'default'}
+            className={isRsvped ? 'border-green-500 text-green-600 hover:bg-green-500/10' : ''}
+          >
+            {isLoading ? (
+              <span className="animate-pulse">...</span>
+            ) : isRsvped ? (
+              <>
+                <Check className="h-4 w-4 mr-2" />
+                Going
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4 mr-2" />
+                RSVP
+              </>
+            )}
+          </Button>
+        </div>
+
+        {config.showCount !== false && (
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              <Users className="h-4 w-4 inline mr-1" />
+              {rsvpCount} {rsvpCount === 1 ? 'person' : 'people'} going
+            </span>
+            {maxAttendees && (
+              <span className={isFull ? 'text-red-500' : 'text-muted-foreground'}>
+                {isFull ? 'Full' : `${maxAttendees - rsvpCount} spots left`}
+              </span>
+            )}
+          </div>
+        )}
+
+        {isFull && !isRsvped && (
+          <div className="mt-3 p-2 bg-amber-500/10 text-amber-600 text-sm rounded-lg text-center">
+            This event is full. Join the waitlist?
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // Element renderer map
-const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => JSX.Element> = {
+const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => React.JSX.Element> = {
   'search-input': SearchInputElement,
   'filter-selector': FilterSelectorElement,
   'result-list': ResultListElement,
@@ -488,6 +891,11 @@ const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => JSX.Element> = 
   'chart-display': ChartDisplayElement,
   'form-builder': FormBuilderElement,
   'notification-center': NotificationCenterElement,
+  // New elements
+  'countdown-timer': CountdownTimerElement,
+  'poll-element': PollElement,
+  'leaderboard': LeaderboardElement,
+  'rsvp-button': RsvpButtonElement,
 };
 
 export function renderElement(elementId: string, props: ElementProps) {

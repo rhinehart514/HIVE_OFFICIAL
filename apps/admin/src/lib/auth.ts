@@ -1,22 +1,55 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import type { AdminUser } from './admin-auth';
 
 /**
- * Get current admin user from session
+ * Admin Panel Client-Side Authentication
+ *
+ * SECURITY: Uses Firebase Auth for authentication
+ * Admin status verified via custom claims set by server
+ */
+
+/**
+ * Get Firebase auth instance for admin app
+ */
+function getFirebaseAuth() {
+  // Dynamic import to avoid SSR issues
+  return getAuth();
+}
+
+/**
+ * Get current admin user from Firebase Auth
+ * SECURITY: Relies on Firebase custom claims for admin verification
  */
 export async function getCurrentAdmin(): Promise<AdminUser | null> {
   try {
-    // TODO: Implement server-side admin session verification
-    // For now, return mock data for development
-    if (process.env.NODE_ENV === 'development') {
-      return {
-        id: 'test-admin',
-        email: 'admin@hive.com',
-        role: 'admin' as const,
-        permissions: ['read', 'write', 'delete'],
-        lastLogin: new Date(),
-      };
+    const auth = getFirebaseAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      return null;
     }
-    return null;
+
+    // Get ID token result to access custom claims
+    const tokenResult = await user.getIdTokenResult();
+    const claims = tokenResult.claims;
+
+    // Verify admin claim
+    if (claims.admin !== true) {
+      console.warn('User does not have admin claim');
+      return null;
+    }
+
+    return {
+      id: user.uid,
+      email: user.email || '',
+      role: (claims.adminRole as AdminUser['role']) || 'admin',
+      permissions: (claims.permissions as string[]) || ['read'],
+      lastLogin: new Date(),
+    };
   } catch (error) {
     console.error('Error getting current admin:', error);
     return null;
@@ -25,27 +58,63 @@ export async function getCurrentAdmin(): Promise<AdminUser | null> {
 
 /**
  * Client-side admin authentication hook
+ * SECURITY: Uses Firebase Auth state and custom claims
  */
 export function useAdminAuth() {
-  // TODO: Implement client-side admin authentication
-  // For now, return mock data for development
-  if (process.env.NODE_ENV === 'development') {
-    return {
-      admin: {
-        id: 'test-user',
-        email: 'admin@hive.com',
-        role: 'admin' as const,
-        permissions: ['read', 'write', 'delete'],
-        lastLogin: new Date(),
-      },
-      loading: false,
-      error: null,
-    };
-  }
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const auth = getFirebaseAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, async (user: FirebaseUser | null) => {
+      setLoading(true);
+      setError(null);
+
+      if (!user) {
+        setAdmin(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Get ID token result to access custom claims
+        const tokenResult = await user.getIdTokenResult();
+        const claims = tokenResult.claims;
+
+        // Verify admin claim
+        if (claims.admin !== true) {
+          setAdmin(null);
+          setError('Not authorized as admin');
+          setLoading(false);
+          return;
+        }
+
+        setAdmin({
+          id: user.uid,
+          email: user.email || '',
+          role: (claims.adminRole as AdminUser['role']) || 'admin',
+          permissions: (claims.permissions as string[]) || ['read'],
+          lastLogin: new Date(),
+        });
+      } catch (err) {
+        console.error('Error verifying admin status:', err);
+        setError(err instanceof Error ? err.message : 'Failed to verify admin status');
+        setAdmin(null);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return {
-    admin: null,
-    loading: false,
-    error: 'Authentication not implemented for production',
+    admin,
+    loading,
+    error,
+    isAuthenticated: !!admin,
+    hasPermission: (permission: string) => admin?.permissions.includes(permission) ?? false,
   };
 }

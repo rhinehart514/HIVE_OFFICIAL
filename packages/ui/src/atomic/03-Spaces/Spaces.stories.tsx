@@ -57,24 +57,20 @@ const mockTools = [
   {
     id: 'tool-1',
     name: 'Room Finder',
-    description: 'Find available study rooms in Davis Hall',
     icon: '📍',
-    usageCount: 342,
-    createdBy: {
-      id: 'user-1',
-      name: 'Alex Chen',
-    },
+    type: 'poll',
+    isActive: true,
+    closeTime: '2h 15m',
+    responseCount: 342,
   },
   {
     id: 'tool-2',
     name: 'Anonymous Feedback',
-    description: 'Submit anonymous course feedback',
     icon: '💬',
-    usageCount: 156,
-    createdBy: {
-      id: 'user-2',
-      name: 'Jordan Lee',
-    },
+    type: 'feedback',
+    isActive: true,
+    closeTime: '3 days',
+    responseCount: 156,
   },
 ];
 
@@ -212,11 +208,13 @@ export const ToolsWidget_Default: Story = {
   render: () => (
     <div className="max-w-[400px] p-6">
       <SpaceToolsWidget
-        spaceId={mockSpace.id}
-        tools={mockTools}
+        data={{
+          spaceId: mockSpace.id,
+          tools: mockTools,
+          hasMore: true,
+        }}
         onToolClick={(id) => console.log('Tool clicked:', id)}
-        onCreateTool={() => console.log('Create tool')}
-        onViewAll={() => console.log('View all tools')}
+        onViewAll={(spaceId) => console.log('View all tools for:', spaceId)}
       />
     </div>
   ),
@@ -226,11 +224,13 @@ export const ToolsWidget_Empty: Story = {
   render: () => (
     <div className="max-w-[400px] p-6">
       <SpaceToolsWidget
-        spaceId={mockSpace.id}
-        tools={[]}
+        data={{
+          spaceId: mockSpace.id,
+          tools: [],
+          hasMore: false,
+        }}
         onToolClick={(id) => console.log('Tool clicked:', id)}
-        onCreateTool={() => console.log('Create tool')}
-        onViewAll={() => console.log('View all tools')}
+        onViewAll={(spaceId) => console.log('View all tools for:', spaceId)}
       />
     </div>
   ),
@@ -302,19 +302,28 @@ export const PostComposer_Anonymous: Story = {
 
 // ===== FULL SPACE BOARD =====
 
+const mockFeedItems = [
+  { id: 'post-1', type: 'post' as const, data: { title: 'Sample Post' } },
+  { id: 'post-2', type: 'post' as const, data: { title: 'Another Post' } },
+];
+
 export const SpaceBoard_Member: Story = {
   render: () => (
     <SpaceBoardLayout
-      space={{
-        ...mockSpace,
-        memberCount: 848,
-        onlineCount: 23,
-      }}
-      userIsMember={true}
-      userIsLeader={false}
-      onJoin={() => console.log('Join')}
-      onLeave={() => console.log('Leave')}
-      onSettings={() => console.log('Settings')}
+      spaceId={mockSpace.id}
+      spaceName={mockSpace.name}
+      spaceIcon={mockSpace.iconUrl}
+      memberCount={848}
+      isMember={true}
+      isLeader={false}
+      feedItems={mockFeedItems}
+      renderFeedItem={(item) => (
+        <div key={item.id} className="p-4 border rounded-lg">
+          Feed Item: {item.id}
+        </div>
+      )}
+      onJoin={(id) => console.log('Join:', id)}
+      onLeave={(id) => console.log('Leave:', id)}
       onShare={() => console.log('Share')}
     />
   ),
@@ -323,14 +332,19 @@ export const SpaceBoard_Member: Story = {
 export const SpaceBoard_NonMember: Story = {
   render: () => (
     <SpaceBoardLayout
-      space={{
-        ...mockSpace,
-        memberCount: 847,
-        onlineCount: 23,
-      }}
-      userIsMember={false}
-      userIsLeader={false}
-      onJoin={() => console.log('Join')}
+      spaceId={mockSpace.id}
+      spaceName={mockSpace.name}
+      spaceIcon={mockSpace.iconUrl}
+      memberCount={847}
+      isMember={false}
+      isLeader={false}
+      feedItems={mockFeedItems}
+      renderFeedItem={(item) => (
+        <div key={item.id} className="p-4 border rounded-lg">
+          Feed Item: {item.id}
+        </div>
+      )}
+      onJoin={(id) => console.log('Join:', id)}
       onShare={() => console.log('Share')}
     />
   ),
@@ -339,15 +353,19 @@ export const SpaceBoard_NonMember: Story = {
 export const SpaceBoard_Leader: Story = {
   render: () => (
     <SpaceBoardLayout
-      space={{
-        ...mockSpace,
-        memberCount: 848,
-        onlineCount: 23,
-      }}
-      userIsMember={true}
-      userIsLeader={true}
-      onLeave={() => console.log('Leave')}
-      onSettings={() => console.log('Settings')}
+      spaceId={mockSpace.id}
+      spaceName={mockSpace.name}
+      spaceIcon={mockSpace.iconUrl}
+      memberCount={848}
+      isMember={true}
+      isLeader={true}
+      feedItems={mockFeedItems}
+      renderFeedItem={(item) => (
+        <div key={item.id} className="p-4 border rounded-lg">
+          Feed Item: {item.id}
+        </div>
+      )}
+      onLeave={(id) => console.log('Leave:', id)}
       onShare={() => console.log('Share')}
     />
   ),
@@ -359,14 +377,19 @@ export const SpaceBoard_Mobile: Story = {
   render: () => (
     <div className="max-w-[375px] mx-auto">
       <SpaceBoardLayout
-        space={{
-          ...mockSpace,
-          memberCount: 848,
-          onlineCount: 23,
-        }}
-        userIsMember={true}
-        userIsLeader={false}
-        onLeave={() => console.log('Leave')}
+        spaceId={mockSpace.id}
+        spaceName={mockSpace.name}
+        spaceIcon={mockSpace.iconUrl}
+        memberCount={848}
+        isMember={true}
+        isLeader={false}
+        feedItems={mockFeedItems}
+        renderFeedItem={(item) => (
+          <div key={item.id} className="p-4 border rounded-lg">
+            Feed Item: {item.id}
+          </div>
+        )}
+        onLeave={(id) => console.log('Leave:', id)}
         onShare={() => console.log('Share')}
       />
     </div>

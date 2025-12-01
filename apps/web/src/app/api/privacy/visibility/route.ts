@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Visibility check interface
@@ -51,11 +51,11 @@ export async function POST(request: NextRequest) {
 
     // Get target user's privacy settings
     const targetPrivacyDoc = await dbAdmin.collection('privacySettings').doc(targetUserId).get();
-    const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() : null;
+    const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() ?? null : null;
 
     // Get viewer's privacy settings (for mutual visibility checks)
     const viewerPrivacyDoc = await dbAdmin.collection('privacySettings').doc(user.uid).get();
-    const viewerPrivacy = viewerPrivacyDoc.exists ? viewerPrivacyDoc.data() : null;
+    const viewerPrivacy = viewerPrivacyDoc.exists ? viewerPrivacyDoc.data() ?? null : null;
 
     // Determine relationship and shared spaces
     const relationship = await determineRelationship(user.uid, targetUserId);
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error checking visibility at /api/privacy/visibility`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to check visibility", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 
           // Get target user's privacy settings
           const targetPrivacyDoc = await dbAdmin.collection('privacySettings').doc(targetUserId).get();
-          const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() : null;
+          const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() ?? null : null;
 
           // Determine relationship and shared spaces
           const relationship = await determineRelationship(user.uid, targetUserId);
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
             }
           };
         } catch (error) {
-          logger.error('Error checking visibility for user', { targetUserId, error: error instanceof Error ? error : new Error(String(error)), endpoint: '/api/privacy/visibility' });
+          logger.error('Error checking visibility for user', { targetUserId, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/privacy/visibility' });
           return {
             userId: targetUserId,
             visibility: {
@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error performing batch visibility check at /api/privacy/visibility`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to perform batch visibility check", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -226,7 +226,7 @@ async function getSharedSpaces(viewerId: string, targetId: string): Promise<stri
   } catch (error) {
     logger.error(
       `Error getting shared spaces at /api/privacy/visibility`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return [];
   }
@@ -257,10 +257,11 @@ function calculateVisibility(
 
   // If ghost mode is disabled, use profile visibility settings
   if (!ghostMode.enabled) {
-    const canSeeProfile = 
+    const canSeeProfile = Boolean(
       (relationship === 'space_member' && profileVisibility.showToSpaceMembers) ||
       (relationship === 'follower' && profileVisibility.showToFollowers) ||
-      profileVisibility.showToPublic;
+      profileVisibility.showToPublic
+    );
 
     return {
       canSeeProfile,

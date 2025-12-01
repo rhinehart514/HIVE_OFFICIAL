@@ -1,10 +1,17 @@
 import { z } from "zod";
 import * as admin from 'firebase-admin';
+import { Result } from "@hive/core/domain";
+import {
+  createServerSpaceManagementService,
+  type SpaceMemberData,
+  type SpaceServiceCallbacks
+} from "@hive/core/server";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
 import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { validateSpaceJoinability, addSecureCampusMetadata, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
+import { notifySpaceJoin } from "@/lib/notification-service";
 
 /**
  * Space Join API v2
@@ -21,10 +28,10 @@ const joinV2Schema = z.object({
 
 export const POST = withAuthValidationAndErrors(
   joinV2Schema,
-  async (request: AuthenticatedRequest, _context, body: z.infer<typeof joinV2Schema>, respond) => {
+  async (request, _context, body: z.infer<typeof joinV2Schema>, respond) => {
     const { spaceId, inviteCode, metadata } = body;
     const joinMethod = body.joinMethod ?? 'manual';
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     // SECURITY: Validate ability to join with campus isolation
     const joinValidation = await validateSpaceJoinability(userId, spaceId);
@@ -36,62 +43,163 @@ export const POST = withAuthValidationAndErrors(
 
     const space = joinValidation.space!;
 
-    // Check for existing membership (active or inactive)
-    const existingMembershipQuery = dbAdmin.collection('spaceMembers')
-      .where('spaceId', '==', spaceId)
-      .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1);
-
-    const existingMembershipSnapshot = await existingMembershipQuery.get();
-
-    const batch = dbAdmin.batch();
-    const now = admin.firestore.FieldValue.serverTimestamp();
-
-    if (!existingMembershipSnapshot.empty) {
-      const existingMemberDoc = existingMembershipSnapshot.docs[0];
-      const memberData = existingMemberDoc.data();
-      if (memberData.isActive) {
-        return respond.error("You are already a member of this space", "CONFLICT", {
-          status: HttpStatus.CONFLICT,
-        });
+    // Create callbacks for DDD service
+    const callbacks: SpaceServiceCallbacks = {
+      saveSpaceMember: async (member: SpaceMemberData): Promise<Result<void>> => {
+        try {
+          const memberRef = dbAdmin.collection('spaceMembers').doc();
+          await memberRef.set(addSecureCampusMetadata({
+            spaceId: member.spaceId,
+            userId: member.userId,
+            role: member.role,
+            joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+            isActive: member.isActive,
+            permissions: member.permissions,
+            joinMethod: member.joinMethod,
+            joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) }
+          }));
+          return Result.ok<void>();
+        } catch (error) {
+          return Result.fail<void>(`Failed to save space member: ${error}`);
+        }
+      },
+      findSpaceMember: async (spaceIdParam: string, userIdParam: string): Promise<Result<SpaceMemberData | null>> => {
+        try {
+          const query = dbAdmin.collection('spaceMembers')
+            .where('spaceId', '==', spaceIdParam)
+            .where('userId', '==', userIdParam)
+            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .limit(1);
+          const snapshot = await query.get();
+          if (snapshot.empty) {
+            return Result.ok(null);
+          }
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          return Result.ok({
+            spaceId: data.spaceId,
+            userId: data.userId,
+            campusId: data.campusId,
+            role: data.role,
+            joinedAt: data.joinedAt?.toDate?.() || new Date(),
+            isActive: data.isActive,
+            permissions: data.permissions || ['post'],
+            joinMethod: data.joinMethod || 'manual'
+          });
+        } catch (error) {
+          return Result.fail(`Failed to find member: ${error}`);
+        }
+      },
+      updateSpaceMember: async (spaceIdParam: string, userIdParam: string, updates): Promise<Result<void>> => {
+        try {
+          const query = dbAdmin.collection('spaceMembers')
+            .where('spaceId', '==', spaceIdParam)
+            .where('userId', '==', userIdParam)
+            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .limit(1);
+          const snapshot = await query.get();
+          if (!snapshot.empty) {
+            const updateData: Record<string, unknown> = { ...updates };
+            if (updates.joinedAt) updateData.joinedAt = admin.firestore.FieldValue.serverTimestamp();
+            updateData.joinMetadata = { inviteCode: inviteCode || null, ...(metadata || {}) };
+            await snapshot.docs[0].ref.update(updateData);
+          }
+          return Result.ok<void>();
+        } catch (error) {
+          return Result.fail<void>(`Failed to update member: ${error}`);
+        }
+      },
+      updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
+        try {
+          const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
+          const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+          if (metrics.memberCountDelta) {
+            updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
+          }
+          if (metrics.activeCountDelta) {
+            updates['metrics.activeMembers'] = admin.firestore.FieldValue.increment(metrics.activeCountDelta);
+          }
+          await spaceRef.update(updates);
+          return Result.ok<void>();
+        } catch (error) {
+          return Result.fail<void>(`Failed to update metrics: ${error}`);
+        }
       }
-      batch.update(existingMemberDoc.ref, {
-        isActive: true,
-        joinedAt: now,
-        joinMethod,
-        joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) },
-        permissions: memberData.permissions || ['post']
-      });
-    } else {
-      const memberRef = dbAdmin.collection('spaceMembers').doc();
-      batch.set(memberRef, addSecureCampusMetadata({
-        spaceId,
-        userId,
-        role: 'member',
-        joinedAt: now,
-        isActive: true,
-        permissions: ['post'],
-        joinMethod,
-        joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) }
-      }));
-    }
+    };
 
-    // Update space metrics
-    const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
-    batch.update(spaceRef, {
-      'metrics.memberCount': admin.firestore.FieldValue.increment(1),
-      'metrics.activeMembers': admin.firestore.FieldValue.increment(1),
-      updatedAt: now
+    // Use DDD SpaceManagementService
+    const spaceService = createServerSpaceManagementService(
+      { userId, campusId: CURRENT_CAMPUS_ID },
+      callbacks
+    );
+
+    const joinResult = await spaceService.joinSpace(userId, {
+      spaceId,
+      joinMethod,
+      inviteCode,
+      metadata
     });
 
-    await batch.commit();
+    if (joinResult.isFailure) {
+      const errorMessage = joinResult.error || 'Failed to join space';
+      if (errorMessage.includes('Already a member')) {
+        return respond.error(errorMessage, "CONFLICT", { status: HttpStatus.CONFLICT });
+      }
+      logger.error('Failed to join space via DDD service', { error: errorMessage, userId, spaceId });
+      return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
+    }
 
-    logger.info('✅ User joined space (v2)', { userId, spaceId, joinMethod, endpoint: '/api/spaces/join-v2' });
+    const result = joinResult.getValue().data;
+
+    logger.info('✅ User joined space via DDD (v2)', {
+      userId,
+      spaceId,
+      joinMethod,
+      isReactivation: result.isReactivation,
+      endpoint: '/api/spaces/join-v2'
+    });
+
+    // Notify space leaders about new member (only for new joins, not reactivations)
+    if (!result.isReactivation) {
+      try {
+        // Get user's name for notification
+        const userDoc = await dbAdmin.collection('users').doc(userId).get();
+        const userName = userDoc.data()?.fullName || 'Someone';
+
+        // Find space leaders/admins to notify
+        const leadersSnapshot = await dbAdmin.collection('spaceMembers')
+          .where('spaceId', '==', spaceId)
+          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('role', 'in', ['owner', 'admin', 'leader'])
+          .where('isActive', '==', true)
+          .get();
+
+        // Notify each leader
+        const notifyPromises = leadersSnapshot.docs.map(doc => {
+          const leaderUserId = doc.data().userId;
+          return notifySpaceJoin({
+            leaderUserId,
+            newMemberId: userId,
+            newMemberName: userName,
+            spaceId,
+            spaceName: space.name,
+          });
+        });
+
+        await Promise.all(notifyPromises);
+      } catch (notifyError) {
+        // Don't fail the join if notification fails
+        logger.warn('Failed to send space join notification', {
+          error: notifyError instanceof Error ? notifyError.message : String(notifyError),
+          spaceId,
+          userId,
+        });
+      }
+    }
 
     return respond.success({
       space: { id: spaceId, name: space.name, type: space.type, description: space.description },
-      membership: { userId, role: 'member', isActive: true, joinMethod }
+      membership: { userId, role: result.role, isActive: true, joinMethod }
     }, { message: 'Successfully joined the space' });
   }
 );

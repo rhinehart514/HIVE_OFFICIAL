@@ -1,31 +1,30 @@
-// Onboarding Animation Variants
+/**
+ * Onboarding Animation Variants
+ * Re-exports from the central motion primitives for consistency
+ */
 
-export const fadeSlideVariants = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
-};
+export {
+  // Variants
+  fadeSlideUp as fadeSlideVariants,
+  fadeSlideSubtle,
+  scaleFade,
+  staggerContainer,
+  staggerItem,
 
-export const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.06,
-    },
-  },
-};
+  // Transitions
+  transitionSilk as transition,
+  transitionSpring as springTransition,
+  transitionSpringBounce,
 
-export const staggerItem = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-};
+  // Easing
+  EASE_SILK,
+  EASE_SNAP,
 
-export const transition = {
-  duration: 0.4,
-  ease: [0.22, 1, 0.36, 1], // Silk easing
-};
+  // Duration
+  DURATION,
 
-export const springTransition = {
-  type: "spring" as const,
-  stiffness: 400,
-  damping: 25,
-};
+  // Glows
+  GLOW_GOLD,
+  GLOW_GOLD_SUBTLE,
+  GLOW_GOLD_STRONG,
+} from '@/lib/motion-primitives';

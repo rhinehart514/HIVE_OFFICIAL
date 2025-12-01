@@ -513,18 +513,8 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   // const [showBulkActions, setShowBulkActions] = useState(false);
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">User management system is not available</p>
-      </div>
-    );
-  }
-
   const loadUsers = useCallback(async () => {
-    if (!admin) return;
+    if (!admin || !enableFeatureFlag) return;
 
     setLoading(true);
     try {
@@ -546,11 +536,12 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
     } finally {
       setLoading(false);
     }
-  }, [admin]);
+  }, [admin, enableFeatureFlag]);
 
   useEffect(() => {
+    if (!enableFeatureFlag) return;
     loadUsers();
-  }, [loadUsers]);
+  }, [enableFeatureFlag, loadUsers]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = searchTerm === '' || 
@@ -603,6 +594,15 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
   };
 
   const stats = getUserStats();
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">User management system is not available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -832,10 +832,10 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <UserCard
                   key={user.id}
                   user={user}
-                  onViewDetails={() => console.log('View details:', user.id)}
-                  onEdit={() => console.log('Edit user:', user.id)}
-                  onSuspend={() => console.log('Suspend user:', user.id)}
-                  onDelete={() => console.log('Delete user:', user.id)}
+                  onViewDetails={() => console.warn('View details:', user.id)}
+                  onEdit={() => console.warn('Edit user:', user.id)}
+                  onSuspend={() => console.warn('Suspend user:', user.id)}
+                  onDelete={() => console.warn('Delete user:', user.id)}
                   isSelected={selectedUsers.has(user.id)}
                   onSelect={(selected) => handleSelectUser(user.id, selected)}
                 />

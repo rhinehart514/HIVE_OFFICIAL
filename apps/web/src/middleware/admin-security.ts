@@ -4,14 +4,35 @@ import { logger } from '@/lib/logger';
 /**
  * Enhanced Admin Security Middleware
  * Adds multiple layers of protection for admin routes
+ *
+ * SECURITY: Admin checks use Firestore 'admins' collection via isAdmin()
+ * This middleware only does rate limiting and security headers
  */
 
 // Allowed IP ranges (configure for your campus/home IPs)
 const ALLOWED_ADMIN_IPS = process.env.ADMIN_ALLOWED_IPS?.split(',') || [];
-const ADMIN_EMAILS = ['jwrhineh@buffalo.edu', 'noahowsh@gmail.com'];
 
 // Rate limiting map
 const adminAccessAttempts = new Map<string, { count: number; firstAttempt: number }>();
+
+/**
+ * Check if user has admin privileges (async Firestore check)
+ */
+async function checkAdminStatus(userId?: string, userEmail?: string): Promise<boolean> {
+  if (!userId) return false;
+
+  try {
+    // Import dynamically to avoid circular dependencies
+    const { isAdmin } = await import('@/lib/admin-auth');
+    return await isAdmin(userId, userEmail);
+  } catch (error) {
+    logger.error('Admin status check failed', {
+      userId,
+      metadata: { error: error instanceof Error ? error.message : String(error) }
+    });
+    return false;
+  }
+}
 
 export async function enforceAdminSecurity(
   request: NextRequest,
@@ -25,9 +46,10 @@ export async function enforceAdminSecurity(
     return null; // Not an admin route, skip checks
   }
 
-  // 1. Check if user is in admin whitelist
-  if (userEmail && !ADMIN_EMAILS.includes(userEmail)) {
-    logger.warn('🚫 Non-admin attempted admin access', {
+  // 1. Check if user is in admin collection (Firestore-based)
+  const hasAdminAccess = await checkAdminStatus(userId, userEmail);
+  if (!hasAdminAccess) {
+    logger.warn('Non-admin attempted admin access', {
       userId,
       metadata: {
         email: userEmail,

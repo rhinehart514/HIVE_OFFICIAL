@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import React, { useState, useEffect } from 'react';
 // import { useRouter } from 'next/navigation';
 import { Search, Users, ArrowRight, MapPin } from 'lucide-react';
-import { motion, _AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@hive/ui';
 import { SchoolsPageHeader } from '../../components/temp-stubs';
 
@@ -300,7 +300,7 @@ export default function SchoolsPage() {
               let locationString = school.location;
               if (typeof school.location === 'object' && school.location !== null) {
                 // Convert {city, state, country} object to string
-                const { city, state, country } = school.location;
+                const { city, state, country } = school.location as { city?: string; state?: string; country?: string };
                 locationString = [city, state, country].filter(Boolean).join(', ');
               }
               

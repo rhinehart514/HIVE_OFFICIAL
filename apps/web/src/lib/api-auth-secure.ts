@@ -72,10 +72,8 @@ export function withSecureAuth<T extends unknown[]>(
 
       // 2. Rate limiting checks
       if (rateLimit) {
-        const ip = request.headers.get('x-forwarded-for') || 'unknown';
-
         // IP-based rate limiting
-        const ipLimitResult = await checkIpRateLimit(ip, rateLimit.type);
+        const ipLimitResult = await checkIpRateLimit(request);
         if (!ipLimitResult.allowed) {
           return NextResponse.json(
             { error: 'Too many requests' },

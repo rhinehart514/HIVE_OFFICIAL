@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input, Card, Badge } from '@hive/ui';
+import { Button, Input, Card, Badge, toast } from '@hive/ui';
 import {
   Search,
   Users,
@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
-import { useToast } from '@/hooks/use-toast';
 import { motion, useReducedMotion } from 'framer-motion';
 
 // Spring config for fluid motion
@@ -157,8 +156,7 @@ function SpaceSearchCard({
 
 export default function SpacesBrowsePage() {
   const router = useRouter();
-  const { _user } = useAuth();
-  const { toast } = useToast();
+  const { user: _user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('all');
   const [showFilters, setShowFilters] = useState(false);
@@ -213,12 +211,7 @@ export default function SpacesBrowsePage() {
       setResults(response?.spaces || []);
     } catch (error) {
       console.error('Search failed:', error);
-      toast({
-        title: 'Search failed',
-        description: 'Please try again.',
-        type: 'error',
-        duration: 5000
-      });
+      toast.error('Search failed', 'Please try again.');
     } finally {
       setLoading(false);
     }
@@ -232,21 +225,11 @@ export default function SpacesBrowsePage() {
       });
       if (!res.ok) throw new Error(`Join failed: ${res.status}`);
 
-      toast({
-        title: 'Joined space',
-        description: 'Welcome aboard!',
-        type: 'success',
-        duration: 3000
-      });
+      toast.success('Joined space', 'Welcome aboard!');
       router.push(`/spaces/${spaceId}`);
     } catch (error) {
       console.error('Failed to join space:', error);
-      toast({
-        title: 'Failed to join',
-        description: 'Please try again.',
-        type: 'error',
-        duration: 5000
-      });
+      toast.error('Failed to join', 'Please try again.');
     }
   };
 

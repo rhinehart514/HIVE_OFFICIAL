@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const searchParams = SearchFeedSchema.parse(body);
-    const { query, limit, offset, type, spaceId, timeRange, sortBy, _includeUserContent } = searchParams;
+    const { query, limit, offset, type, spaceId, timeRange, sortBy, includeUserContent: _includeUserContent } = searchParams;
 
     // Calculate time filter
     let timeFilter = null;
@@ -410,7 +410,7 @@ export async function POST(request: NextRequest) {
 
     logger.error(
       `Error searching feed at /api/feed/search`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to search feed", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }

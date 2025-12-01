@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 
@@ -43,7 +43,7 @@ export function ContentModerationDashboard() {
     dateRange: 'today'
   });
 
-  const fetchFlaggedContent = async () => {
+  const fetchFlaggedContent = useCallback(async () => {
     if (!admin) return;
 
     setLoading(true);
@@ -68,7 +68,7 @@ export function ContentModerationDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [admin]);
 
   const handleModerationAction = async (contentId: string, action: string, reason?: string) => {
     if (!admin) return;
@@ -112,7 +112,7 @@ export function ContentModerationDashboard() {
     // Auto-refresh every 2 minutes
     const interval = setInterval(fetchFlaggedContent, 2 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [admin]);
+  }, [fetchFlaggedContent]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {

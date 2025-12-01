@@ -164,7 +164,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error generating activity insights at /api/activity/insights`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to generate activity insights", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -466,7 +466,7 @@ function detectBehaviorPatterns(summaries: ActivitySummary[], events: ActivityEv
       description: `Most active on ${topDay.day}s`,
       frequency: patterns.weeklyPattern.length,
       confidence: 80,
-      details: patterns.weeklyPattern
+      details: { weeklyPattern: patterns.weeklyPattern }
     });
   }
 

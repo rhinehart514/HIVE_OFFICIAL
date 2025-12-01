@@ -1,11 +1,11 @@
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from '@/lib/logger';
+import { logger } from '@/lib/structured-logger';
 import { sseRealtimeService } from '@/lib/sse-realtime-service';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { FieldValue } from 'firebase-admin/firestore';
-import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
+import { getServerSpaceRepository } from '@hive/core/server';
 
 /**
  * Space-to-Feed Promotion System
@@ -15,13 +15,49 @@ import { HttpStatus } from '@/lib/api-response-types';
  * - Feed algorithm scoring integration
  */
 
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
 // POST /api/spaces/[spaceId]/promote-post - Promote a space post to campus feed
 export const POST = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {
@@ -32,40 +68,25 @@ export const POST = withAuthAndErrors(async (
       return respond.error("Post ID is required", "INVALID_INPUT", { status: HttpStatus.BAD_REQUEST });
     }
 
-    let spaceData: Record<string, unknown> | undefined;
-    if (promotionType === 'manual') {
-      const membership = await requireSpaceMembership(spaceId, userId);
-      if (!membership.ok) {
-        const code =
-          membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(membership.error, code, { status: membership.status });
-      }
+    // Validate space and membership using DDD repository
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
+    }
 
-      const role = membership.membership.role as string;
+    // For manual promotion, require leader role
+    if (promotionType === 'manual') {
+      const role = validation.membership.role as string;
       const allowedRoles = ['owner', 'admin', 'moderator', 'builder', 'leader'];
       if (!allowedRoles.includes(role)) {
         return respond.error("Only space leaders can promote posts", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
       }
-
-      spaceData = membership.space;
-    } else {
-      const access = await requireSpaceAccess(spaceId, userId);
-      if (!access.ok) {
-        const code = access.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(access.error, code, { status: access.status });
-      }
-      spaceData = access.space;
     }
 
-    if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
-      return respond.error("Access denied for this campus", "FORBIDDEN", {
-        status: HttpStatus.FORBIDDEN,
-      });
-    }
-
-    const resolvedSpace = spaceData ?? {};
+    const space = validation.space;
 
     // Get the post to promote
     const postDoc = await dbAdmin
@@ -110,9 +131,9 @@ export const POST = withAuthAndErrors(async (
       // Promotion metadata
       sourceSpaceId: spaceId,
       sourcePostId: postId,
-      spaceName: resolvedSpace.name,
-      spaceEmoji: resolvedSpace.emoji || '🏫',
-      spaceType: resolvedSpace.type,
+      spaceName: space.name.value,
+      spaceEmoji: '🏫', // Default emoji - raw property not in DDD aggregate
+      spaceType: space.category.value,
 
       // Promotion details
       promotionType,
@@ -182,8 +203,8 @@ export const POST = withAuthAndErrors(async (
           },
           sourceSpace: {
             id: spaceId,
-            name: resolvedSpace.name,
-            emoji: resolvedSpace.emoji
+            name: space.name.value,
+            emoji: '🏫' // Default emoji - raw property not in DDD aggregate
           }
         },
         metadata: {
@@ -206,7 +227,7 @@ export const POST = withAuthAndErrors(async (
     });
 
   } catch (error) {
-    logger.error('Error promoting post to feed', { error: error instanceof Error ? error : new Error(String(error)), spaceId, userId });
+    logger.error('Error promoting post to feed', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId, userId });
     return respond.error("Failed to promote post", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });
@@ -328,11 +349,11 @@ function calculateViralityScore(postData: PostData): number {
  * GET /api/spaces/[spaceId]/promote-post - Check promotion eligibility
  */
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {
@@ -345,10 +366,11 @@ export const GET = withAuthAndErrors(async (
       });
     }
 
-    const access = await requireSpaceAccess(spaceId, userId);
-    if (!access.ok) {
-      const code = access.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(access.error, code, { status: access.status });
+    // Validate space and membership using DDD repository
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
+      const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     // Get the post
@@ -401,13 +423,11 @@ export const GET = withAuthAndErrors(async (
     }
 
     // Check if user is leader (can always promote)
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (membership.ok) {
-      const leaderRoles = ['owner', 'admin', 'moderator', 'builder', 'leader'];
-      if (leaderRoles.includes(membership.membership.role || '')) {
-        eligibility.canPromote = true;
-        eligibility.reasons.push('You are a space leader - can manually promote');
-      }
+    const leaderRoles = ['owner', 'admin', 'moderator', 'builder', 'leader'];
+    const userRole = validation.membership.role as string;
+    if (leaderRoles.includes(userRole)) {
+      eligibility.canPromote = true;
+      eligibility.reasons.push('You are a space leader - can manually promote');
     }
 
     if (!eligibility.canPromote) {
@@ -417,7 +437,7 @@ export const GET = withAuthAndErrors(async (
     return respond.success(eligibility);
 
   } catch (error) {
-    logger.error('Error checking promotion eligibility', { error: error instanceof Error ? error : new Error(String(error)), spaceId, userId });
+    logger.error('Error checking promotion eligibility', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId, userId });
     return respond.error("Failed to check eligibility", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });

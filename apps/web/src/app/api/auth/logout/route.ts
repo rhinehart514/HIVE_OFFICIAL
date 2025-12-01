@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { logger } from "@/lib/logger";
-import { _ApiResponseHelper, _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { clearSessionCookie } from '@/lib/session';
 
 /**
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         } catch (revokeError) {
           logger.error(
             `Error revoking refresh tokens at /api/auth/logout`,
-            revokeError instanceof Error ? revokeError : new Error(String(revokeError))
+            { error: { error: revokeError instanceof Error ? revokeError.message : String(revokeError) } }
           );
         }
       } catch (error) {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error during logout at /api/auth/logout`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     // Return success and clear cookie even on error

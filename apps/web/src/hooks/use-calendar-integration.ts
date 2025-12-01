@@ -65,12 +65,49 @@ export interface CalendarIntegration {
   }>;
 }
 
+/**
+ * Get Firebase auth token for API requests
+ * SECURITY: Uses real Firebase tokens only
+ */
+async function getAuthToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const { auth } = await import('@/lib/firebase');
+    if (auth?.currentUser) {
+      return await auth.currentUser.getIdToken();
+    }
+  } catch (error) {
+    console.warn('Failed to get auth token:', error);
+  }
+
+  return null;
+}
+
+/**
+ * Make authenticated API request with Firebase token
+ */
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token = await getAuthToken();
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string> || {})
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include'
+  });
+}
+
 // Calendar API functions
 async function fetchCalendarEvents(timeRange: 'day' | 'week' | 'month' = 'week'): Promise<CalendarEvent[]> {
-  const authHeader = process.env.NODE_ENV === 'development' 
-    ? 'Bearer test-token' 
-    : `Bearer ${getStoredToken()}`;
-
   // Calculate date range
   const now = new Date();
   const startDate = new Date(now);
@@ -102,13 +139,7 @@ async function fetchCalendarEvents(timeRange: 'day' | 'week' | 'month' = 'week')
   });
 
   try {
-    const response = await fetch(`/api/calendar/events?${searchParams}`, {
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
+    const response = await authenticatedFetch(`/api/calendar/events?${searchParams}`);
 
     if (!response.ok) {
       // Return mock data if API not available
@@ -124,18 +155,8 @@ async function fetchCalendarEvents(timeRange: 'day' | 'week' | 'month' = 'week')
 }
 
 async function fetchCalendarStats(): Promise<CalendarStats> {
-  const authHeader = process.env.NODE_ENV === 'development' 
-    ? 'Bearer test-token' 
-    : `Bearer ${getStoredToken()}`;
-
   try {
-    const response = await fetch('/api/calendar/stats', {
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
+    const response = await authenticatedFetch('/api/calendar/stats');
 
     if (!response.ok) {
       return getMockCalendarStats();
@@ -150,18 +171,8 @@ async function fetchCalendarStats(): Promise<CalendarStats> {
 }
 
 async function fetchCalendarIntegrations(): Promise<CalendarIntegration[]> {
-  const authHeader = process.env.NODE_ENV === 'development' 
-    ? 'Bearer test-token' 
-    : `Bearer ${getStoredToken()}`;
-
   try {
-    const response = await fetch('/api/calendar/integrations', {
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
+    const response = await authenticatedFetch('/api/calendar/integrations');
 
     if (!response.ok) {
       return getMockCalendarIntegrations();
@@ -187,7 +198,7 @@ function getMockCalendarEvents(timeRange: string): CalendarEvent[] {
     const startTime = new Date(now);
     startTime.setDate(now.getDate() + Math.floor(Math.random() * (timeRange === 'day' ? 1 : timeRange === 'week' ? 7 : 30)));
     startTime.setHours(8 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60));
-    
+
     const endTime = new Date(startTime);
     endTime.setMinutes(startTime.getMinutes() + 60 + Math.floor(Math.random() * 120));
 
@@ -284,23 +295,6 @@ function getMockCalendarIntegrations(): CalendarIntegration[] {
   ];
 }
 
-// Helper functions
-function getStoredToken(): string {
-  if (typeof window === 'undefined') return 'test-token';
-  
-  try {
-    const sessionJson = window.localStorage.getItem('hive_session');
-    if (sessionJson) {
-      const session = JSON.parse(sessionJson);
-      return session.token || 'test-token';
-    }
-  } catch (error) {
-    console.warn('Failed to get stored token:', error);
-  }
-  
-  return 'test-token';
-}
-
 // Main hook
 export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'week') {
   const { user } = useSession();
@@ -351,18 +345,9 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: async (eventData: Partial<CalendarEvent>) => {
-      const authHeader = process.env.NODE_ENV === 'development' 
-        ? 'Bearer test-token' 
-        : `Bearer ${getStoredToken()}`;
-
-      const response = await fetch('/api/calendar/events', {
+      const response = await authenticatedFetch('/api/calendar/events', {
         method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(eventData),
-        credentials: 'include'
+        body: JSON.stringify(eventData)
       });
 
       if (!response.ok) {
@@ -380,18 +365,9 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
   // Update event mutation
   const updateEventMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<CalendarEvent> }) => {
-      const authHeader = process.env.NODE_ENV === 'development' 
-        ? 'Bearer test-token' 
-        : `Bearer ${getStoredToken()}`;
-
-      const response = await fetch(`/api/calendar/events/${id}`, {
+      const response = await authenticatedFetch(`/api/calendar/events/${id}`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates),
-        credentials: 'include'
+        body: JSON.stringify(updates)
       });
 
       if (!response.ok) {
@@ -409,17 +385,8 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: async (eventId: string) => {
-      const authHeader = process.env.NODE_ENV === 'development' 
-        ? 'Bearer test-token' 
-        : `Bearer ${getStoredToken()}`;
-
-      const response = await fetch(`/api/calendar/events/${eventId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
+      const response = await authenticatedFetch(`/api/calendar/events/${eventId}`, {
+        method: 'DELETE'
       });
 
       if (!response.ok) {
@@ -437,18 +404,9 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
   // Connect integration mutation
   const connectIntegrationMutation = useMutation({
     mutationFn: async (provider: CalendarIntegration['provider']) => {
-      const authHeader = process.env.NODE_ENV === 'development' 
-        ? 'Bearer test-token' 
-        : `Bearer ${getStoredToken()}`;
-
-      const response = await fetch('/api/calendar/integrations/connect', {
+      const response = await authenticatedFetch('/api/calendar/integrations/connect', {
         method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ provider }),
-        credentials: 'include'
+        body: JSON.stringify({ provider })
       });
 
       if (!response.ok) {
@@ -479,7 +437,7 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
   const getUpcomingEvents = useCallback((count = 5) => {
     if (!events) return [];
     const now = new Date();
-    
+
     return events
       .filter(event => new Date(event.startTime) > now)
       .slice(0, count);
@@ -498,37 +456,37 @@ export function useCalendarIntegration(timeRange: 'day' | 'week' | 'month' = 'we
     events: events || [],
     stats,
     integrations: integrations || [],
-    
+
     // Loading states
     isLoading,
     isLoadingEvents: eventsLoading,
     isLoadingStats: statsLoading,
     isLoadingIntegrations: integrationsLoading,
-    
+
     // Error states
     hasError,
     eventsError,
     statsError,
     integrationsError,
-    
+
     // Actions
     createEvent: createEventMutation.mutateAsync,
     updateEvent: updateEventMutation.mutateAsync,
     deleteEvent: deleteEventMutation.mutateAsync,
     connectIntegration: connectIntegrationMutation.mutateAsync,
-    
+
     // Mutation states
     isCreating: createEventMutation.isPending,
     isUpdating: updateEventMutation.isPending,
     isDeleting: deleteEventMutation.isPending,
     isConnecting: connectIntegrationMutation.isPending,
-    
+
     // Utilities
     getTodayEvents,
     getUpcomingEvents,
     getEventsByType,
     refetchEvents,
-    
+
     refreshAll: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
       queryClient.invalidateQueries({ queryKey: ['calendar-stats'] });

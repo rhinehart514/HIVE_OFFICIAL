@@ -334,16 +334,6 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
 }) => {
   const [activeTab, setActiveTab] = useState<'surfaces' | 'tools'>('surfaces');
 
-  // Feature flag check
-  if (!enableFeatureFlag) {
-    return (
-      <div className="text-center py-8">
-        <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-400">Space surface management is not available</p>
-      </div>
-    );
-  }
-
   const handleSurfaceToggle = useCallback(async (surface: SpaceSurface) => {
     await onUpdateSurface(surface.id, { isEnabled: !surface.isEnabled });
   }, [onUpdateSurface]);
@@ -352,7 +342,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
     // This would open a tool marketplace modal
     // setSelectedSlot(slot);
     // For now, just log the action
-    console.log('Install tool in slot:', slot.id);
+    console.warn('Install tool in slot:', slot.id);
   }, []);
 
   const handleToolRemove = useCallback(async (slot: ToolSlot) => {
@@ -383,6 +373,15 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
       subLabel: space.subType.replace('_', ' ')
     };
   };
+
+  if (!enableFeatureFlag) {
+    return (
+      <div className="text-center py-8">
+        <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-400">Space surface management is not available</p>
+      </div>
+    );
+  }
 
   const typeInfo = getSpaceTypeInfo();
 

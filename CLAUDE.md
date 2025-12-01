@@ -153,3 +153,132 @@ Vercel handles deployment. Key config in `vercel.json`:
 - Build: `pnpm --filter=@hive/web build`
 - Output: `apps/web/.next`
 - Security headers configured for CSP, HSTS
+
+---
+
+## Implementation Roadmap
+
+**Reference:** `docs/architecture/IMPLEMENTATION_ROADMAP.md`
+
+### Implementation Order (Follow This Sequence)
+
+```
+PHASE 1: Security & Data (P0)
+├── Auth hardening (remove dev password, fix admin auth)
+└── Onboarding data loss fix (save before redirect)
+
+PHASE 2: Identity & Isolation
+├── Profiles (integrate EnhancedProfile, fix handle cleanup)
+└── Campus (fix CURRENT_CAMPUS_ID, runtime context)
+
+PHASE 3: Core Experience
+├── Spaces (unify permission model, enforce slugs)
+└── Feed (implement ranking algorithm - currently stub)
+
+PHASE 4: Infrastructure
+├── Real-time (fix SSE null broadcast)
+└── Notifications (implement generation triggers)
+
+PHASE 5: Discovery
+└── Search (replace mock data with real queries)
+
+PHASE 6: Engagement
+├── Social/Connections (fix hardcoded campus)
+└── Events/Calendar (creation UI)
+
+PHASE 7: Power Features
+├── Tools/HiveLab (real execution handlers)
+└── Rituals (CRUD APIs, participation tracking)
+
+PHASE 8: Operations
+├── Admin (complete audit logging)
+├── Moderation (enforce isHidden in queries)
+└── Privacy (enforce all settings)
+```
+
+### Platform Readiness (Current State)
+
+| Tier | Slices | Ready | Critical Issues |
+|------|--------|-------|-----------------|
+| Core | Auth, Onboarding, Profile, Spaces, Feed | 50% | Data loss, feed stub |
+| Engagement | Tools, Rituals, Calendar, Social, Notifications | 25% | AI mock, no generation |
+| Infrastructure | Real-time, Search, Privacy, Admin, Moderation | 20% | SSE broken, search mock |
+
+### Critical Files for Each Slice
+
+**Auth:**
+- `apps/web/src/app/api/auth/send-magic-link/route.ts`
+- `apps/web/src/app/auth/login/page.tsx` (has dev password hint)
+
+**Onboarding:**
+- `apps/web/src/components/onboarding/hooks/use-onboarding.ts` (data loss here)
+- `apps/web/src/components/onboarding/steps/leader-step.tsx`
+
+**Feed:**
+- `apps/web/src/app/api/feed/route.ts` (chronological only - needs algorithm)
+- `apps/web/src/app/api/feed/algorithm/route.ts` (exists but not called)
+
+**Real-time:**
+- `apps/web/src/lib/sse-realtime-service.ts` (broadcasts with null controller)
+
+**Search:**
+- `apps/web/src/app/api/search/route.ts` (returns hardcoded mock data)
+
+---
+
+## Vertical Slice Architecture
+
+**Reference:** `docs/architecture/VERTICAL_SLICE_AUDIT.md`
+
+### 22 Vertical Slices
+
+**Core Journey:** Auth, Onboarding, Profiles, Spaces, Feed
+**Engagement:** Tools/HiveLab, Rituals, Calendar/Events, Notifications, Social/Connections
+**Infrastructure:** Real-time, Search, Privacy, Admin, Moderation, Campus/Schools
+**Minor:** Feature Flags, Error Reporting, Feedback, Waitlist, Health/Cron
+
+### Known Broken Features (P0 Fixes Required)
+
+| Feature | Issue | File |
+|---------|-------|------|
+| SSE Broadcast | Passes `null` controller | `lib/sse-realtime-service.ts` |
+| Search | Returns mock data | `api/search/route.ts` |
+| Feed Algorithm | Chronological only | `api/feed/route.ts` |
+| Onboarding | Non-leaders lose data | `hooks/use-onboarding.ts` |
+| Privacy | Settings not enforced | All query files |
+| Moderation | isHidden not filtered | All query files |
+
+### DDD Models (Exist but Not Integrated)
+
+```typescript
+// These exist in @hive/core but APIs use raw Firestore:
+import { EnhancedProfile } from '@hive/core';  // packages/core/src/domain/profile/
+import { EnhancedSpace } from '@hive/core';    // packages/core/src/domain/spaces/
+import { EnhancedRitual } from '@hive/core';   // packages/core/src/domain/rituals/
+```
+
+---
+
+## AI Integration Notes
+
+When working on any slice, consider AI opportunities:
+
+| Slice | Near-term AI | Long-term AI |
+|-------|--------------|--------------|
+| Feed | Rule-based ranking | Intent prediction |
+| Search | Query expansion | Semantic search |
+| Moderation | Toxicity detection | Proactive detection |
+| Tools | Template suggestion | NL generation |
+| Notifications | Importance scoring | Predictive alerts |
+
+---
+
+## Documentation Index
+
+| Doc | Purpose |
+|-----|---------|
+| `docs/architecture/VERTICAL_SLICE_AUDIT.md` | Complete slice analysis + technical status |
+| `docs/architecture/IMPLEMENTATION_ROADMAP.md` | Ordered implementation with AI analysis |
+| `docs/ARCHITECTURE.md` | Codebase structure overview |
+| `docs/development/DATABASE_SCHEMA.md` | Firestore collections |
+| `docs/features/FEATURES.md` | Feature specifications |

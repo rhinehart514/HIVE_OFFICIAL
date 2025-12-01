@@ -147,6 +147,7 @@ export const PostCard_WithMedia: Story = {
             ...mockPostData.content,
             media: [
               {
+                type: 'image' as const,
                 url: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=600',
                 alt: 'UB Campus',
                 width: 600,
@@ -474,25 +475,29 @@ export const Feed_InteractionDemo: Story = {
 export const Feed_VirtualizedPerformance: Story = {
   render: () => {
     // Generate 1000 mock posts for virtualization testing
-    const posts = Array.from({ length: 1000 }, (_, i) => ({
-      ...mockPostData,
+    const feedItems = Array.from({ length: 1000 }, (_, i) => ({
       id: `post-${i}`,
-      content: {
-        ...mockPostData.content,
-        headline: `Post #${i + 1}: ${mockPostData.content.headline}`,
-      },
-      stats: {
-        ...mockPostData.stats,
-        upvotes: Math.floor(Math.random() * 200),
-        comments: Math.floor(Math.random() * 50),
+      type: 'post' as const,
+      data: {
+        ...mockPostData,
+        id: `post-${i}`,
+        content: {
+          ...mockPostData.content,
+          headline: `Post #${i + 1}: ${mockPostData.content.headline}`,
+        },
+        stats: {
+          ...mockPostData.stats,
+          upvotes: Math.floor(Math.random() * 200),
+          comments: Math.floor(Math.random() * 50),
+        },
       },
     }));
 
     return (
       <div className="h-screen">
         <FeedVirtualizedList
-          items={posts}
-          renderItem={(post) => <FeedCardPost key={post.id} post={post} />}
+          items={feedItems}
+          renderItem={(item) => <FeedCardPost key={item.id} post={item.data as typeof mockPostData} />}
         />
         <div className="fixed bottom-4 right-4 p-4 bg-muted/90 rounded-lg backdrop-blur">
           <p className="text-sm font-mono">

@@ -1,8 +1,10 @@
 import { z } from "zod";
-import { type Space } from "@hive/core";
-import { dbAdmin } from "@/lib/firebase-admin";
+import {
+  getServerSpaceRepository,
+  createServerSpaceManagementService,
+  toSpaceDetailDTO,
+} from "@hive/core/server";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { _findSpaceOptimized } from "@/lib/space-query-optimizer";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 
@@ -22,8 +24,10 @@ const UpdateSpaceSchema = z.object({
   }).optional()
 });
 
+// Using unified toSpaceDetailDTO from @hive/core/server
+
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
@@ -33,38 +37,40 @@ export const GET = withAuthAndErrors(async (
     return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
   }
 
-  // Get space from flat collection structure
-  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  // Use DDD repository for space lookup
+  const spaceRepo = getServerSpaceRepository();
+  const result = await spaceRepo.findById(spaceId);
 
-  if (!spaceDoc.exists) {
+  if (result.isFailure) {
     return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  const space = { id: spaceDoc.id, ...spaceDoc.data() } as Space;
+  const space = result.getValue();
 
   // Enforce campus isolation
-  if ((space as { campusId?: string }).campusId && (space as { campusId?: string }).campusId !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
     return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
   }
 
   logger.info(`Space fetched: ${spaceId}`, { spaceId, endpoint: "/api/spaces/[spaceId]" });
 
-  return respond.success(space);
+  return respond.success(toSpaceDetailDTO(space));
 });
 
 // PATCH /api/spaces/[spaceId] - Update space settings
+// Now uses DDD SpaceManagementService for all mutations
 type UpdateSpaceData = z.infer<typeof UpdateSpaceSchema>;
 
 export const PATCH = withAuthValidationAndErrors(
   UpdateSpaceSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     updates: UpdateSpaceData,
     respond
   ) => {
     const { spaceId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     if (!spaceId) {
       return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
@@ -75,63 +81,52 @@ export const PATCH = withAuthValidationAndErrors(
       return respond.error("No updates provided", "INVALID_INPUT", { status: 400 });
     }
 
-    // Get space from flat collection structure
-    const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
-    const spaceDoc = await spaceRef.get();
+    // Use DDD SpaceManagementService for space updates
+    // This enforces business rules through the aggregate and emits domain events
+    const spaceService = createServerSpaceManagementService(
+      { userId, campusId: CURRENT_CAMPUS_ID }
+    );
 
-    if (!spaceDoc.exists) {
-      return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
-    }
-
-    // Check if requesting user has permission to update space using flat spaceMembers collection
-    const memberQuery = dbAdmin.collection('spaceMembers')
-      .where('spaceId', '==', spaceId)
-      .where('userId', '==', userId)
-      .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1);
-
-    const memberSnapshot = await memberQuery.get();
-
-    if (memberSnapshot.empty) {
-      return respond.error("Not a member of this space", "FORBIDDEN", { status: 403 });
-    }
-
-    const memberData = memberSnapshot.docs[0].data();
-    const memberRole = memberData.role;
-    const canUpdateSpace = ['owner', 'admin'].includes(memberRole);
-
-    if (!canUpdateSpace) {
-      return respond.error("Insufficient permissions to update space", "FORBIDDEN", { status: 403 });
-    }
-
-    // Prepare update data
-    const updateData = {
-      ...updates,
-      updatedAt: new Date(),
-      updatedBy: userId
-    } as Record<string, unknown>;
-
-    // Update space document
-    await spaceRef.update(updateData);
-
-    // Log the action
-    await spaceRef.collection("activity").add({
-      type: 'space_updated',
-      performedBy: userId,
-      details: {
-        updates: updateKeys,
-        description: updates.description ? 'Updated space description' : undefined,
-        name: updates.name ? 'Updated space name' : undefined
-      },
-      timestamp: new Date()
+    // Map incoming request to service input
+    // Note: bannerUrl and tags are not yet supported in DDD - they would need
+    // to be added to the aggregate if needed
+    const result = await spaceService.updateSpace(userId, {
+      spaceId,
+      name: updates.name,
+      description: updates.description,
+      settings: updates.settings ? {
+        allowInvites: undefined, // Not in current schema
+        requireApproval: updates.settings.requireApproval,
+        allowRSS: undefined, // Not in current schema
+        maxMembers: updates.settings.maxMembers
+      } : undefined
     });
 
-    logger.info(`Space updated: ${spaceId} by ${userId}`, { updates: updateKeys });
+    if (result.isFailure) {
+      // Map DDD error messages to appropriate HTTP status codes
+      const errorMessage = result.error ?? 'Unknown error';
+
+      if (errorMessage.includes('not found')) {
+        return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
+      }
+      if (errorMessage.includes('permission') || errorMessage.includes('leader')) {
+        return respond.error("Insufficient permissions to update space", "FORBIDDEN", { status: 403 });
+      }
+      if (errorMessage.includes('Invalid')) {
+        return respond.error(errorMessage, "INVALID_INPUT", { status: 400 });
+      }
+
+      return respond.error(errorMessage, "UPDATE_FAILED", { status: 500 });
+    }
+
+    const space = result.getValue().data;
+
+    logger.info(`Space updated via DDD: ${spaceId} by ${userId}`, { updates: updateKeys });
 
     return respond.success({
       message: "Space updated successfully",
-      updates
+      space: toSpaceDetailDTO(space),
+      updates: updateKeys
     });
   }
 );

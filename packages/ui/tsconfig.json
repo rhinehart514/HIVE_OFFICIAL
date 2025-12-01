@@ -18,7 +18,11 @@
     "baseUrl": ".",
     "paths": {
       "@hive/tokens": ["../tokens/src"],
-      "@hive/tokens/*": ["../tokens/src/*"]
+      "@hive/tokens/*": ["../tokens/src/*"],
+      "@hive/core": ["../core/src"],
+      "@hive/core/*": ["../core/src/*"],
+      "@hive/hooks": ["../hooks/src"],
+      "@hive/hooks/*": ["../hooks/src/*"]
     }
   },
   "include": ["src/**/*"],

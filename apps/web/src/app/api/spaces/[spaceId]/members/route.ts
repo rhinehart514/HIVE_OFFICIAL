@@ -3,7 +3,14 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
-import { logger } from "@/lib/logger";
+import { Result } from "@hive/core/domain";
+import {
+  createServerSpaceManagementService,
+  getServerSpaceRepository,
+  type SpaceMemberData,
+  type SpaceServiceCallbacks
+} from "@hive/core/server";
+import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
@@ -14,7 +21,6 @@ import {
   CURRENT_CAMPUS_ID,
   addSecureCampusMetadata,
 } from "@/lib/secure-firebase-queries";
-import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
 const GetMembersQuerySchema = z.object({
@@ -42,16 +48,53 @@ const RemoveMemberQuerySchema = z.object({
   reason: z.string().optional(),
 });
 
-async function findActiveMember(spaceId: string, userId: string) {
-  const membership = await requireSpaceMembership(spaceId, userId);
-  if (membership.ok) {
-    return {
-      ok: true as const,
-      membership,
-    };
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
   }
 
-  if (membership.error === "User is not a member of this space") {
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
+async function findActiveMember(spaceId: string, userId: string) {
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
     return {
       ok: false as const,
       status: HttpStatus.NOT_FOUND,
@@ -60,9 +103,8 @@ async function findActiveMember(spaceId: string, userId: string) {
   }
 
   return {
-    ok: false as const,
-    status: membership.status,
-    message: membership.error,
+    ok: true as const,
+    membership: membershipSnapshot.docs[0].data(),
   };
 }
 
@@ -91,23 +133,125 @@ function ensureRoleChangeAllowed(
   return { ok: true as const };
 }
 
+/**
+ * Create callbacks for DDD SpaceManagementService
+ */
+function createSpaceCallbacks(): SpaceServiceCallbacks {
+  return {
+    saveSpaceMember: async (member: SpaceMemberData): Promise<Result<void>> => {
+      try {
+        const memberRef = dbAdmin.collection('spaceMembers').doc();
+        await memberRef.set(addSecureCampusMetadata({
+          spaceId: member.spaceId,
+          userId: member.userId,
+          role: member.role,
+          joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastActive: admin.firestore.FieldValue.serverTimestamp(),
+          isActive: member.isActive,
+          permissions: member.permissions,
+          joinMethod: member.joinMethod,
+          isOnline: false
+        }));
+        return Result.ok<void>();
+      } catch (error) {
+        return Result.fail<void>(`Failed to save space member: ${error}`);
+      }
+    },
+    findSpaceMember: async (spaceIdParam: string, userIdParam: string): Promise<Result<SpaceMemberData | null>> => {
+      try {
+        const query = dbAdmin.collection('spaceMembers')
+          .where('spaceId', '==', spaceIdParam)
+          .where('userId', '==', userIdParam)
+          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .limit(1);
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+          return Result.ok(null);
+        }
+        const doc = snapshot.docs[0];
+        const data = doc.data();
+        return Result.ok({
+          spaceId: data.spaceId,
+          userId: data.userId,
+          campusId: data.campusId,
+          role: data.role,
+          joinedAt: data.joinedAt?.toDate?.() || new Date(),
+          isActive: data.isActive,
+          permissions: data.permissions || ['post'],
+          joinMethod: data.joinMethod || 'manual'
+        });
+      } catch (error) {
+        return Result.fail(`Failed to find member: ${error}`);
+      }
+    },
+    updateSpaceMember: async (spaceIdParam: string, userIdParam: string, updates: Record<string, unknown>): Promise<Result<void>> => {
+      try {
+        const query = dbAdmin.collection('spaceMembers')
+          .where('spaceId', '==', spaceIdParam)
+          .where('userId', '==', userIdParam)
+          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .limit(1);
+        const snapshot = await query.get();
+        if (!snapshot.empty) {
+          const updateData: Record<string, unknown> = {};
+          if (updates.isActive !== undefined) updateData.isActive = updates.isActive;
+          if (updates.role) updateData.role = updates.role;
+          if (updates.permissions) updateData.permissions = updates.permissions;
+          if (updates.joinedAt) updateData.joinedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.leftAt) updateData.leftAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.removedAt) updateData.removedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.removedBy) updateData.removedBy = updates.removedBy;
+          // Suspend-related fields
+          if (updates.isSuspended !== undefined) updateData.isSuspended = updates.isSuspended;
+          if (updates.suspendedAt) updateData.suspendedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.suspendedBy) updateData.suspendedBy = updates.suspendedBy;
+          if (updates.suspensionReason) updateData.suspensionReason = updates.suspensionReason;
+          if (updates.unsuspendedAt) updateData.unsuspendedAt = admin.firestore.FieldValue.serverTimestamp();
+          if (updates.unsuspendedBy) updateData.unsuspendedBy = updates.unsuspendedBy;
+          updateData.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+          await snapshot.docs[0].ref.update(updateData);
+        }
+        return Result.ok<void>();
+      } catch (error) {
+        return Result.fail<void>(`Failed to update member: ${error}`);
+      }
+    },
+    updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
+      try {
+        const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
+        const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+        if (metrics.memberCountDelta) {
+          updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
+        }
+        if (metrics.activeCountDelta) {
+          updates['metrics.activeMembers'] = admin.firestore.FieldValue.increment(metrics.activeCountDelta);
+        }
+        await spaceRef.update(updates);
+        return Result.ok<void>();
+      } catch (error) {
+        return Result.fail<void>(`Failed to update metrics: ${error}`);
+      }
+    }
+  };
+}
+
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
-  const viewerMembership = await requireSpaceMembership(spaceId, userId);
-  if (!viewerMembership.ok) {
+  const validation = await validateSpaceAndMembership(spaceId, userId);
+  if (!validation.ok) {
     const code =
-      viewerMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-    return respond.error(viewerMembership.error, code, { status: viewerMembership.status });
+      validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+    return respond.error(validation.message, code, { status: validation.status });
   }
 
   const queryParams = GetMembersQuerySchema.parse(
-    Object.fromEntries(request.nextUrl.searchParams.entries()),
+    Object.fromEntries(new URL(request.url).searchParams.entries()),
   );
 
   const roleFilter = queryParams.role;
@@ -215,7 +359,7 @@ export const GET = withAuthAndErrors(async (
     if (roleDiff !== 0) return roleDiff;
     if (a.status !== "offline" && b.status === "offline") return -1;
     if (a.status === "offline" && b.status !== "offline") return 1;
-    return new Date(b.joinedAt).getTime() - new Date(a.joinedAt).getTime();
+    return new Date(b.joinedAt as string | number | Date).getTime() - new Date(a.joinedAt as string | number | Date).getTime();
   });
 
   const totalMembersSnapshot = await dbAdmin
@@ -234,7 +378,7 @@ export const GET = withAuthAndErrors(async (
       onlineMembers,
       activeMembers: members.filter((member) => {
         const daysSinceActive =
-          (Date.now() - new Date(member.lastActive).getTime()) / (1000 * 60 * 60 * 24);
+          (Date.now() - new Date(member.lastActive as string | number | Date).getTime()) / (1000 * 60 * 60 * 24);
         return daysSinceActive <= 7;
       }).length,
     },
@@ -252,29 +396,24 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   InviteMemberSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
   ) => {
     try {
-      const inviterId = getUserId(request);
+      const inviterId = getUserId(request as AuthenticatedRequest);
       const { spaceId } = await params;
 
-      const inviterMembership = await requireSpaceMembership(spaceId, inviterId);
-      if (!inviterMembership.ok) {
+      // Verify inviter has permission using DDD validation
+      const validation = await validateSpaceAndMembership(spaceId, inviterId);
+      if (!validation.ok) {
         const code =
-          inviterMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-        return respond.error(inviterMembership.error, code, { status: inviterMembership.status });
+          validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        return respond.error(validation.message, code, { status: validation.status });
       }
 
-      const inviterRole = inviterMembership.membership.role;
-      if (!["owner", "admin", "moderator"].includes(inviterRole)) {
-        return respond.error("Insufficient permissions to invite members", "FORBIDDEN", {
-          status: HttpStatus.FORBIDDEN,
-        });
-      }
-
+      // Verify target user exists
       const userDoc = await dbAdmin.collection("users").doc(body.userId).get();
       if (!userDoc.exists) {
         return respond.error("User not found", "RESOURCE_NOT_FOUND", {
@@ -282,73 +421,53 @@ export const POST = withAuthValidationAndErrors(
         });
       }
 
-      const existingSnapshot = await dbAdmin
-        .collection("spaceMembers")
-        .where("spaceId", "==", spaceId)
-        .where("userId", "==", body.userId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
-        .limit(1)
-        .get();
+      // Use DDD SpaceManagementService
+      const spaceService = createServerSpaceManagementService(
+        { userId: inviterId, campusId: CURRENT_CAMPUS_ID },
+        createSpaceCallbacks()
+      );
 
-      const now = admin.firestore.FieldValue.serverTimestamp();
-      if (!existingSnapshot.empty) {
-        const existingDoc = existingSnapshot.docs[0];
-        const existingData = existingDoc.data();
+      const inviteResult = await spaceService.inviteMember(inviterId, {
+        spaceId,
+        targetUserId: body.userId,
+        role: body.role as 'member' | 'moderator' | 'admin' | 'owner' | 'guest'
+      });
 
-        if (existingData.isActive) {
-          return respond.error("User is already a member of this space", "CONFLICT", {
-            status: HttpStatus.CONFLICT,
-          });
+      if (inviteResult.isFailure) {
+        const errorMessage = inviteResult.error || 'Failed to invite member';
+        if (errorMessage.includes('already a member') || errorMessage.includes('User is already')) {
+          return respond.error(errorMessage, "CONFLICT", { status: HttpStatus.CONFLICT });
         }
-
-        await existingDoc.ref.update({
-          role: body.role,
-          isActive: true,
-          invitedBy: inviterId,
-          joinedAt: now,
-          lastActive: now,
-          reactivatedAt: now,
-          reactivatedBy: inviterId,
-          updatedAt: now,
-          campusId: CURRENT_CAMPUS_ID,
-        });
-      } else {
-        const memberRef = dbAdmin.collection("spaceMembers").doc();
-        await memberRef.set(
-          addSecureCampusMetadata({
-            spaceId,
-            userId: body.userId,
-            role: body.role,
-            joinedAt: now,
-            lastActive: now,
-            invitedBy: inviterId,
-            isActive: true,
-            isOnline: false,
-          }),
-        );
+        if (errorMessage.includes('Insufficient permissions')) {
+          return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+        }
+        logger.error('Failed to invite member via DDD', { error: errorMessage, inviterId, spaceId, targetUserId: body.userId });
+        return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
       }
 
-      await dbAdmin
-        .collection("spaces")
-        .doc(spaceId)
-        .update({
-          "metrics.memberCount": admin.firestore.FieldValue.increment(1),
-          "metrics.activeMembers": admin.firestore.FieldValue.increment(1),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+      const result = inviteResult.getValue().data;
+
+      logger.info('✅ Member invited via DDD', {
+        inviterId,
+        spaceId,
+        targetUserId: body.userId,
+        role: result.role,
+        isReactivation: result.isReactivation,
+        endpoint: '/api/spaces/[spaceId]/members'
+      });
 
       return respond.success({
         success: true,
         message: "Member invited successfully",
         member: {
           id: body.userId,
-          role: body.role,
+          role: result.role,
         },
       });
     } catch (error) {
       logger.error(
         "Error inviting member at /api/spaces/[spaceId]/members",
-        error instanceof Error ? error : new Error(String(error)),
+        { error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to invite member", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -360,19 +479,20 @@ export const POST = withAuthValidationAndErrors(
 export const PATCH = withAuthValidationAndErrors(
   UpdateMemberSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
   ) => {
-    const requesterId = getUserId(request);
+    const requesterId = getUserId(request as AuthenticatedRequest);
     const { spaceId } = await params;
 
-    const requesterMembership = await requireSpaceMembership(spaceId, requesterId);
-    if (!requesterMembership.ok) {
+    // Verify requester has permission using DDD validation
+    const validation = await validateSpaceAndMembership(spaceId, requesterId);
+    if (!validation.ok) {
       const code =
-        requesterMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(requesterMembership.error, code, { status: requesterMembership.status });
+        validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     const targetMembership = await findActiveMember(spaceId, body.userId);
@@ -382,38 +502,72 @@ export const PATCH = withAuthValidationAndErrors(
       });
     }
 
-    const roleCheck = ensureRoleChangeAllowed(
-      requesterMembership.membership.membership.role,
-      targetMembership.membership.membership.role,
-      body.role,
-    );
-    if (!roleCheck.ok) {
-      return respond.error(roleCheck.message, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+    const oldRole = targetMembership.membership.role;
+
+    // Handle role changes via DDD service
+    if (body.role && body.role !== oldRole) {
+      const spaceService = createServerSpaceManagementService(
+        { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
+        createSpaceCallbacks()
+      );
+
+      const roleChangeResult = await spaceService.changeMemberRole(requesterId, {
+        spaceId,
+        targetUserId: body.userId,
+        newRole: body.role as 'member' | 'moderator' | 'admin' | 'owner' | 'guest'
+      });
+
+      if (roleChangeResult.isFailure) {
+        const errorMessage = roleChangeResult.error || 'Failed to change role';
+        if (errorMessage.includes('Only leaders') || errorMessage.includes('permission')) {
+          return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+        }
+        logger.error('Failed to change member role via DDD', { error: errorMessage, requesterId, spaceId, targetUserId: body.userId });
+        return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
+      }
     }
 
-    const updates: Record<string, unknown> = {
-      updatedAt: new Date(),
-      updatedBy: requesterId,
-    };
+    // Handle suspend/unsuspend actions via DDD service
+    if (body.action === "suspend" || body.action === "unsuspend") {
+      const spaceService = createServerSpaceManagementService(
+        { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
+        createSpaceCallbacks()
+      );
 
-    if (body.role) {
-      updates.role = body.role;
-      updates.roleChangedAt = new Date();
+      if (body.action === "suspend") {
+        const suspendResult = await spaceService.suspendMember(requesterId, {
+          spaceId,
+          targetUserId: body.userId,
+          reason: body.reason
+        });
+
+        if (suspendResult.isFailure) {
+          const errorMessage = suspendResult.error || 'Failed to suspend member';
+          if (errorMessage.includes('permission')) {
+            return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+          }
+          logger.error('Failed to suspend member via DDD', { error: errorMessage, requesterId, spaceId, targetUserId: body.userId });
+          return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
+        }
+      } else {
+        const unsuspendResult = await spaceService.unsuspendMember(requesterId, {
+          spaceId,
+          targetUserId: body.userId,
+          reason: body.reason
+        });
+
+        if (unsuspendResult.isFailure) {
+          const errorMessage = unsuspendResult.error || 'Failed to unsuspend member';
+          if (errorMessage.includes('permission')) {
+            return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+          }
+          logger.error('Failed to unsuspend member via DDD', { error: errorMessage, requesterId, spaceId, targetUserId: body.userId });
+          return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
+        }
+      }
     }
 
-    if (body.action === "suspend") {
-      updates.isSuspended = true;
-      updates.suspendedAt = new Date();
-      updates.suspendedBy = requesterId;
-      if (body.reason) updates.suspensionReason = body.reason;
-    } else if (body.action === "unsuspend") {
-      updates.isSuspended = false;
-      updates.unsuspendedAt = new Date();
-      updates.unsuspendedBy = requesterId;
-    }
-
-    await targetMembership.membership.membershipRef.update(updates);
-
+    // Record activity
     await dbAdmin
       .collection("spaces")
       .doc(spaceId)
@@ -423,35 +577,44 @@ export const PATCH = withAuthValidationAndErrors(
         performedBy: requesterId,
         targetUserId: body.userId,
         details: {
-          oldRole: targetMembership.membership.membership.role,
-          newRole: body.role || targetMembership.membership.membership.role,
+          oldRole,
+          newRole: body.role || oldRole,
           action: body.action || "role_change",
           reason: body.reason,
         },
         timestamp: new Date(),
       });
 
-    logger.info(
-      `Member ${body.action || "role change"}: ${body.userId} in space ${spaceId} by ${requesterId}`,
-    );
+    logger.info('✅ Member updated via DDD', {
+      requesterId,
+      spaceId,
+      targetUserId: body.userId,
+      action: body.action || 'role_change',
+      oldRole,
+      newRole: body.role || oldRole,
+      endpoint: '/api/spaces/[spaceId]/members'
+    });
 
     return respond.success({
       message: `Member ${body.action || "updated"} successfully`,
-      updates,
+      updates: {
+        role: body.role || oldRole,
+        action: body.action
+      },
     });
   },
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
-  const requesterId = getUserId(request);
+  const requesterId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   const query = RemoveMemberQuerySchema.safeParse(
-    Object.fromEntries(request.nextUrl.searchParams.entries()),
+    Object.fromEntries(new URL(request.url).searchParams.entries()),
   );
   if (!query.success) {
     return respond.error("User ID is required", "INVALID_INPUT", {
@@ -459,57 +622,47 @@ export const DELETE = withAuthAndErrors(async (
     });
   }
 
-  const requesterMembership = await requireSpaceMembership(spaceId, requesterId);
-  if (!requesterMembership.ok) {
+  // Verify requester has permission using DDD validation
+  const validation = await validateSpaceAndMembership(spaceId, requesterId);
+  if (!validation.ok) {
     const code =
-      requesterMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-    return respond.error(requesterMembership.error, code, { status: requesterMembership.status });
+      validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+    return respond.error(validation.message, code, { status: validation.status });
   }
 
-  const targetMembership = await findActiveMember(spaceId, query.data.userId);
-  if (!targetMembership.ok) {
-    return respond.error(targetMembership.message, targetMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN", {
-      status: targetMembership.status,
-    });
-  }
+  // Use DDD SpaceManagementService
+  const spaceService = createServerSpaceManagementService(
+    { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
+    createSpaceCallbacks()
+  );
 
-  const requesterRole = requesterMembership.membership.membership.role;
-  const targetRole = targetMembership.membership.membership.role;
-
-  if (targetRole === "owner") {
-    return respond.error("Cannot remove space owner", "FORBIDDEN", {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
-  if (targetRole === "admin" && requesterRole !== "owner") {
-    return respond.error("Only space owners can remove admins", "FORBIDDEN", {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
-  if (targetRole === "moderator" && !["owner", "admin"].includes(requesterRole)) {
-    return respond.error("Only admins and owners can remove moderators", "FORBIDDEN", {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
-
-  const removalTimestamp = admin.firestore.FieldValue.serverTimestamp();
-
-  await targetMembership.membership.membershipRef.update({
-    isActive: false,
-    removedAt: removalTimestamp,
-    removedBy: requesterId,
-    updatedAt: removalTimestamp,
+  const removeResult = await spaceService.removeMember(requesterId, {
+    spaceId,
+    targetUserId: query.data.userId,
+    reason: query.data.reason
   });
 
-  await dbAdmin
-    .collection("spaces")
-    .doc(spaceId)
-    .update({
-      "metrics.memberCount": admin.firestore.FieldValue.increment(-1),
-      "metrics.activeMembers": admin.firestore.FieldValue.increment(-1),
-      updatedAt: removalTimestamp,
-    });
+  if (removeResult.isFailure) {
+    const errorMessage = removeResult.error || 'Failed to remove member';
+    if (errorMessage.includes('Cannot remove') || errorMessage.includes('owner')) {
+      return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+    }
+    if (errorMessage.includes('Only owners')) {
+      return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+    }
+    if (errorMessage.includes('Insufficient permissions')) {
+      return respond.error(errorMessage, "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+    }
+    if (errorMessage.includes('not a member')) {
+      return respond.error(errorMessage, "RESOURCE_NOT_FOUND", { status: HttpStatus.NOT_FOUND });
+    }
+    logger.error('Failed to remove member via DDD', { error: errorMessage, requesterId, spaceId, targetUserId: query.data.userId });
+    return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  }
 
+  const result = removeResult.getValue().data;
+
+  // Record activity (kept separate from DDD for audit purposes)
   await dbAdmin
     .collection("spaces")
     .doc(spaceId)
@@ -519,13 +672,19 @@ export const DELETE = withAuthAndErrors(async (
       performedBy: requesterId,
       targetUserId: query.data.userId,
       details: {
-        removedRole: targetRole,
+        removedRole: result.previousRole,
         reason: query.data.reason,
       },
       timestamp: new Date(),
     });
 
-  logger.info(`Member removed: ${query.data.userId} from space ${spaceId} by ${requesterId}`);
+  logger.info('✅ Member removed via DDD', {
+    requesterId,
+    spaceId,
+    targetUserId: query.data.userId,
+    previousRole: result.previousRole,
+    endpoint: '/api/spaces/[spaceId]/members'
+  });
 
   return respond.success({ message: "Member removed successfully" });
 });

@@ -68,5 +68,5 @@ export function FocusRing({
       (children.props as { className?: string }).className,
     ),
     style: mergedStyle,
-  });
+  } as React.HTMLAttributes<HTMLElement>);
 }

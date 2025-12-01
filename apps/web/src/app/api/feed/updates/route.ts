@@ -33,16 +33,15 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let userId = 'test-user';
-    
-    if (token !== 'test-token') {
-      try {
-        const auth = getAuth();
-        const decodedToken = await auth.verifyIdToken(token);
-        userId = decodedToken.uid;
-      } catch {
-        return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-      }
+    let userId: string;
+
+    // SECURITY: Always verify token with Firebase Admin
+    try {
+      const auth = getAuth();
+      const decodedToken = await auth.verifyIdToken(token);
+      userId = decodedToken.uid;
+    } catch {
+      return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
     logger.info('🔄 Feed update request:for user', { action, userId, endpoint: '/api/feed/updates' });
@@ -77,7 +76,7 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     logger.error(
       `Feed updates API error at /api/feed/updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     if (error instanceof z.ZodError) {
@@ -104,16 +103,15 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7);
-    let userId = 'test-user';
-    
-    if (token !== 'test-token') {
-      try {
-        const auth = getAuth();
-        const decodedToken = await auth.verifyIdToken(token);
-        userId = decodedToken.uid;
-      } catch {
-        return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-      }
+    let userId: string;
+
+    // SECURITY: Always verify token with Firebase Admin
+    try {
+      const auth = getAuth();
+      const decodedToken = await auth.verifyIdToken(token);
+      userId = decodedToken.uid;
+    } catch {
+      return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
     logger.info('🔄 Feed POST request:for user', { action, userId, endpoint: '/api/feed/updates' });
@@ -158,7 +156,7 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     logger.error(
       `Feed updates POST API error at /api/feed/updates`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
 
     if (error instanceof z.ZodError) {

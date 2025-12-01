@@ -68,12 +68,13 @@ const renderIcon = (
   const dimension = iconSizeMap[size];
 
   if (React.isValidElement(icon)) {
+    const iconProps = icon.props as { className?: string; strokeWidth?: number }
     return (
       <span aria-hidden className={wrapper}>
         {React.cloneElement(icon, {
-          className: cn(dimension, icon.props.className),
-          strokeWidth: icon.props.strokeWidth ?? 1.5,
-        })}
+          className: cn(dimension, iconProps.className),
+          strokeWidth: iconProps.strokeWidth ?? 1.5,
+        } as React.SVGAttributes<SVGElement>)}
       </span>
     );
   }

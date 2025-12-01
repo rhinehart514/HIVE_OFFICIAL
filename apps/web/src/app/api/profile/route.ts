@@ -1,29 +1,58 @@
 /**
- * Profile API Route - Firebase Direct Implementation
- * Provides user profile data and updates
+ * Profile API Route - DDD Implementation with EnhancedProfile
+ * Provides user profile data and updates using domain aggregates
  */
 
 import { z } from 'zod';
 import { logger } from "@/lib/logger";
-import { _NextRequest, NextResponse } from 'next/server';
+import { NextRequest as _NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { withAuthAndErrors, getUserId } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
+import { changeHandle, getHandleChangeStatus } from '@/lib/handle-service';
+import {
+  getServerProfileRepository,
+  PrivacyLevel,
+  Major,
+  GraduationYear,
+  InterestCollection
+} from '@hive/core/server';
 
-// Profile update schema
+// Constants from value objects for schema validation
+const MAX_INTERESTS = InterestCollection.MAX_INTERESTS; // 10
+
+// Profile update schema with value object validation
 const ProfileUpdateSchema = z.object({
   handle: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_-]+$/).optional(),
   firstName: z.string().min(1).max(50).optional(),
   lastName: z.string().min(1).max(50).optional(),
   fullName: z.string().min(1).max(100).optional(),
   bio: z.string().max(500).optional(),
-  major: z.string().min(1).max(100).optional(),
-  graduationYear: z.number().int().min(2020).max(2030).optional(),
+  // Major: validate and normalize via Major value object
+  major: z.string().min(1).max(100).optional().transform((val) => {
+    if (!val) return val;
+    const result = Major.create(val);
+    // Return normalized value if valid, original otherwise (graceful)
+    return result.isSuccess ? result.getValue().value : val;
+  }),
+  // GraduationYear: validate via GraduationYear value object
+  graduationYear: z.number().int().optional().refine(
+    (val) => {
+      if (val === undefined || val === null) return true;
+      return GraduationYear.create(val).isSuccess;
+    },
+    { message: 'Graduation year must be between 2015 and 8 years from now' }
+  ),
   dorm: z.string().max(100).optional(),
   housing: z.string().max(200).optional(),
   pronouns: z.string().max(50).optional(),
   academicYear: z.string().max(50).optional(),
-  interests: z.array(z.string()).max(10).optional(),
+  // Interests: validate via InterestCollection value object
+  interests: z.array(z.string().min(2).max(50)).max(MAX_INTERESTS).optional().transform((arr) => {
+    if (!arr) return arr;
+    const result = InterestCollection.create(arr);
+    // Return deduplicated, normalized array
+    return result.isSuccess ? result.getValue().toStringArray() : arr;
+  }),
   profileImageUrl: z.string().url().optional(),
   photos: z.array(z.string().url()).max(5).optional(),
   statusMessage: z.string().max(200).optional(),
@@ -42,79 +71,130 @@ const ProfileUpdateSchema = z.object({
 
 /**
  * GET /api/profile
- * Get current user's profile
+ * Get current user's profile using DDD EnhancedProfile aggregate
  */
 export const GET = withAuthAndErrors(
   async (request, _context, _respond) => {
     try {
-      const userId = getUserId(request);
-      const campusId = CURRENT_CAMPUS_ID;
-      const userSnapshot = await dbAdmin.collection('users').doc(userId).get();
+      const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
-      if (!userSnapshot.exists) {
-        logger.warn('Profile not found', {
-          userId,
-          endpoint: '/api/profile'
-        });
+      // Use DDD repository to get profile
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(userId);
 
-        return NextResponse.json({
-          success: false,
-          error: 'Profile not found',
-          needsOnboarding: true
-        }, { status: 404 });
+      if (profileResult.isFailure) {
+        // Fallback to direct Firestore check for onboarding detection
+        const userSnapshot = await dbAdmin.collection('users').doc(userId).get();
+
+        if (!userSnapshot.exists) {
+          logger.warn('Profile not found', {
+            userId,
+            endpoint: '/api/profile'
+          });
+
+          return NextResponse.json({
+            success: false,
+            error: 'Profile not found',
+            needsOnboarding: true
+          }, { status: 404 });
+        }
+
+        // Profile exists but failed to load as domain object - use legacy path
+        const userData = userSnapshot.data()!;
+        return buildLegacyResponse(userId, userData, campusId);
       }
 
-      const userData = userSnapshot.data()!;
+      const profile = profileResult.getValue();
 
-      // Transform to API response format
+      // Get handle change status
+      const handleStatus = await getHandleChangeStatus(userId);
+
+      // Build response from DDD aggregate
       const response = {
         success: true,
         data: {
-          id: userId,
-          email: userData.email,
-          handle: userData.handle,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-          bio: userData.bio,
-          major: userData.major,
-          graduationYear: userData.graduationYear,
-          dorm: userData.dorm,
-          interests: userData.interests || [],
-          profileImageUrl: userData.profileImageUrl,
-          photos: userData.photos || [],
-          statusMessage: userData.statusMessage,
-          currentVibe: userData.currentVibe,
-          availabilityStatus: userData.availabilityStatus || 'online',
-          lookingFor: userData.lookingFor || [],
-          onboardingStatus: {
-            isComplete: userData.onboardingComplete || false,
-            currentStep: userData.onboardingStep || 1
+          id: profile.profileId.value,
+          email: profile.email.value,
+          handle: profile.handle.value,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          fullName: profile.displayName,
+          bio: profile.bio || '',
+          major: profile.major || '',
+          graduationYear: profile.graduationYear || null,
+          dorm: profile.personalInfo.dorm || '',
+          interests: profile.interests || [],
+          profileImageUrl: profile.personalInfo.profilePhoto || '',
+          coverPhoto: profile.personalInfo.coverPhoto || '',
+          photos: profile.photos || [],
+          // Social info
+          clubs: profile.socialInfo.clubs || [],
+          sports: profile.socialInfo.sports || [],
+          greek: profile.socialInfo.greek || '',
+          socials: {
+            instagram: profile.socialInfo.instagram || '',
+            snapchat: profile.socialInfo.snapchat || '',
+            twitter: profile.socialInfo.twitter || '',
+            linkedin: profile.socialInfo.linkedin || ''
           },
+          // Status (fetch from Firestore for now as not in aggregate)
+          statusMessage: '',
+          currentVibe: '',
+          availabilityStatus: 'online',
+          lookingFor: [],
+          onboardingStatus: {
+            isComplete: profile.isOnboarded,
+            currentStep: profile.isOnboarded ? 999 : 1
+          },
+          // Privacy settings from DDD value object
           privacy: {
-            isPublic: userData.privacySettings?.isPublic ?? true,
-            showActivity: userData.privacySettings?.showActivity ?? true,
-            showSpaces: userData.privacySettings?.showSpaces ?? true,
-            showConnections: userData.privacySettings?.showConnections ?? true,
-            allowDirectMessages: userData.privacySettings?.allowDirectMessages ?? true,
-            showOnlineStatus: userData.privacySettings?.showOnlineStatus ?? true
+            level: profile.privacy.level,
+            isPublic: profile.privacy.level === PrivacyLevel.PUBLIC,
+            showEmail: profile.privacy.showEmail,
+            showPhone: profile.privacy.showPhone,
+            showDorm: profile.privacy.showDorm,
+            showSchedule: profile.privacy.showSchedule,
+            showActivity: profile.privacy.showActivity,
+            // Legacy fields for backward compatibility
+            showSpaces: true,
+            showConnections: true,
+            allowDirectMessages: true,
+            showOnlineStatus: true
           },
           stats: {
-            connectionCount: userData.connections?.length || 0,
-            spacesJoined: userData.spaceIds?.length || 0
+            connectionCount: profile.connectionCount,
+            followerCount: profile.followerCount,
+            followingCount: profile.followingCount,
+            activityScore: profile.activityScore,
+            spacesJoined: profile.spaces.length
           },
+          spaces: profile.spaces || [],
+          connections: profile.connections || [],
+          achievements: profile.badges || [],
           metadata: {
-            campusId: userData.campusId || campusId,
-            createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            updatedAt: userData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
-          }
+            campusId: profile.campusId.id,
+            userType: profile.userType.value,
+            isVerified: profile.isVerified,
+            isActive: profile.isActive,
+            createdAt: profile.createdAt?.toISOString() || new Date().toISOString(),
+            updatedAt: profile.updatedAt?.toISOString() || new Date().toISOString(),
+            lastActive: profile.lastActive?.toISOString() || null
+          },
+          handleChange: {
+            canChange: handleStatus.canChange,
+            nextChangeDate: handleStatus.nextChangeDate?.toISOString(),
+            changeCount: handleStatus.changeCount,
+            isFirstChangeFree: handleStatus.isFirstChangeFree
+          },
+          completionPercentage: profile.getCompletionPercentage()
         }
       };
 
-      logger.info('Profile fetched successfully', {
-        // userId not available in catch block
-        handle: userData.handle,
-        endpoint: '/api/profile'
+      logger.info('Profile fetched successfully via DDD', {
+        handle: profile.handle.value,
+        endpoint: '/api/profile',
+        completionPercentage: response.data.completionPercentage
       });
 
       return NextResponse.json(response);
@@ -122,11 +202,7 @@ export const GET = withAuthAndErrors(
     } catch (error) {
       logger.error(
         'Error fetching profile',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          // userId not available in catch block
-          endpoint: '/api/profile'
-        }
+        { error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/profile' }
       );
       return NextResponse.json(
         { success: false, error: 'Internal server error' },
@@ -137,49 +213,204 @@ export const GET = withAuthAndErrors(
 );
 
 /**
+ * Legacy response builder for backward compatibility
+ */
+async function buildLegacyResponse(userId: string, userData: any, campusId: string) {
+  const handleStatus = await getHandleChangeStatus(userId);
+
+  return NextResponse.json({
+    success: true,
+    data: {
+      id: userId,
+      email: userData.email,
+      handle: userData.handle,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+      bio: userData.bio,
+      major: userData.major,
+      graduationYear: userData.graduationYear,
+      dorm: userData.dorm,
+      interests: userData.interests || [],
+      profileImageUrl: userData.profileImageUrl,
+      photos: userData.photos || [],
+      statusMessage: userData.statusMessage,
+      currentVibe: userData.currentVibe,
+      availabilityStatus: userData.availabilityStatus || 'online',
+      lookingFor: userData.lookingFor || [],
+      onboardingStatus: {
+        isComplete: userData.onboardingComplete || false,
+        currentStep: userData.onboardingStep || 1
+      },
+      privacy: {
+        isPublic: userData.privacySettings?.isPublic ?? true,
+        showActivity: userData.privacySettings?.showActivity ?? true,
+        showSpaces: userData.privacySettings?.showSpaces ?? true,
+        showConnections: userData.privacySettings?.showConnections ?? true,
+        allowDirectMessages: userData.privacySettings?.allowDirectMessages ?? true,
+        showOnlineStatus: userData.privacySettings?.showOnlineStatus ?? true
+      },
+      stats: {
+        connectionCount: userData.connections?.length || 0,
+        spacesJoined: userData.spaceIds?.length || 0
+      },
+      metadata: {
+        campusId: userData.campusId || campusId,
+        createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+        updatedAt: userData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+      },
+      handleChange: {
+        canChange: handleStatus.canChange,
+        nextChangeDate: handleStatus.nextChangeDate?.toISOString(),
+        changeCount: handleStatus.changeCount,
+        isFirstChangeFree: handleStatus.isFirstChangeFree
+      }
+    },
+    _legacy: true // Flag to indicate legacy path was used
+  });
+}
+
+/**
  * PUT /api/profile
- * Update current user's profile
+ * Update current user's profile using DDD aggregate methods
  */
 export const PUT = withAuthAndErrors(
   async (request, _context, _respond) => {
     try {
-      const userId = getUserId(request);
-      const campusId = CURRENT_CAMPUS_ID;
+      const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
       const body = await request.json();
 
       // Validate update data
       const updateData = ProfileUpdateSchema.parse(body);
 
       logger.info('Profile update request', {
-        // userId not available in catch block
         fields: Object.keys(updateData),
         endpoint: '/api/profile'
       });
 
-      // Check if handle is being updated and if it's unique
+      // Handle changes go through the dedicated changeHandle function
+      // which enforces rate limiting (first change free, then 6 months) and proper cleanup
       if (updateData.handle) {
-      const existingHandleSnapshot = await dbAdmin.collection('users')
-          .where('handle', '==', updateData.handle)
-          .where('campusId', '==', campusId)
-          .limit(1)
-          .get();
+        const handleResult = await changeHandle(userId, updateData.handle);
 
-        if (!existingHandleSnapshot.empty && existingHandleSnapshot.docs[0].id !== userId) {
+        if (!handleResult.success) {
           return NextResponse.json(
-            { success: false, error: 'Handle already taken' },
+            {
+              success: false,
+              error: handleResult.error,
+              nextChangeDate: handleResult.nextChangeDate?.toISOString()
+            },
             { status: 400 }
           );
         }
+        // Handle was changed successfully via transaction - remove from updateData
+        delete updateData.handle;
       }
 
-      // Update user document
+      // Try DDD path first - load profile aggregate
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(userId);
+
+      if (profileResult.isSuccess) {
+        // Use DDD domain methods
+        const profile = profileResult.getValue();
+        let hasChanges = false;
+
+        // Update personal info if any personal fields changed
+        const personalInfoFields = {
+          ...(updateData.firstName !== undefined && { firstName: updateData.firstName }),
+          ...(updateData.lastName !== undefined && { lastName: updateData.lastName }),
+          ...(updateData.bio !== undefined && { bio: updateData.bio }),
+          ...(updateData.major !== undefined && { major: updateData.major }),
+          ...(updateData.graduationYear !== undefined && { graduationYear: updateData.graduationYear }),
+          ...(updateData.dorm !== undefined && { dorm: updateData.dorm }),
+          ...(updateData.pronouns !== undefined && { pronouns: updateData.pronouns }),
+          ...(updateData.profileImageUrl !== undefined && { profilePhoto: updateData.profileImageUrl }),
+        };
+
+        if (Object.keys(personalInfoFields).length > 0) {
+          profile.updatePersonalInfo(personalInfoFields);
+          hasChanges = true;
+        }
+
+        // Update social info if any social fields changed
+        const socialInfoFields = {
+          ...(updateData.interests !== undefined && { interests: updateData.interests }),
+        };
+
+        if (Object.keys(socialInfoFields).length > 0) {
+          profile.updateSocialInfo(socialInfoFields);
+          hasChanges = true;
+        }
+
+        // Update privacy if any privacy fields changed
+        const hasPrivacyUpdate = updateData.isPublic !== undefined ||
+          updateData.showActivity !== undefined ||
+          updateData.showSpaces !== undefined ||
+          updateData.showConnections !== undefined ||
+          updateData.allowDirectMessages !== undefined ||
+          updateData.showOnlineStatus !== undefined;
+
+        if (hasPrivacyUpdate) {
+          // Get current privacy level and create new privacy value object
+          const currentPrivacy = profile.privacy;
+          const newPrivacyProps = {
+            level: updateData.isPublic !== undefined
+              ? (updateData.isPublic ? PrivacyLevel.PUBLIC : PrivacyLevel.CAMPUS_ONLY)
+              : currentPrivacy.level,
+            showEmail: currentPrivacy.showEmail,
+            showPhone: currentPrivacy.showPhone,
+            showDorm: currentPrivacy.showDorm,
+            showSchedule: currentPrivacy.showSchedule,
+            showActivity: updateData.showActivity ?? currentPrivacy.showActivity,
+          };
+
+          // Create new ProfilePrivacy - import it from core
+          const { ProfilePrivacy } = await import('@hive/core/server');
+          const newPrivacy = ProfilePrivacy.create(newPrivacyProps);
+          if (newPrivacy.isSuccess) {
+            profile.updatePrivacy(newPrivacy.getValue());
+            hasChanges = true;
+          }
+        }
+
+        // Save if there were changes via domain methods
+        if (hasChanges) {
+          const saveResult = await profileRepository.save(profile);
+          if (saveResult.isFailure) {
+            logger.warn('DDD save failed, falling back to direct update', {
+              error: saveResult.error,
+              userId
+            });
+          } else {
+            logger.info('Profile updated successfully via DDD', {
+              fieldsUpdated: Object.keys(updateData),
+              endpoint: '/api/profile'
+            });
+
+            return NextResponse.json({
+              success: true,
+              message: 'Profile updated successfully',
+              data: {
+                id: userId,
+                updatedFields: Object.keys(updateData),
+                completionPercentage: profile.getCompletionPercentage()
+              }
+            });
+          }
+        }
+      }
+
+      // Fallback to direct Firestore update for fields not in domain model
+      // or if DDD path didn't handle all updates
       const updateFields: Record<string, unknown> = {
         ...updateData,
         updatedAt: new Date(),
         campusId
       };
 
-      // Merge privacy settings properly
+      // Handle privacy settings merge for legacy fields
       if (updateData.isPublic !== undefined ||
           updateData.showActivity !== undefined ||
           updateData.showSpaces !== undefined ||
@@ -211,9 +442,7 @@ export const PUT = withAuthAndErrors(
 
       await dbAdmin.collection('users').doc(userId).update(updateFields);
 
-      logger.info('Profile updated successfully', {
-        // userId not available in catch block
-        handle: updateData.handle,
+      logger.info('Profile updated successfully (fallback)', {
         fieldsUpdated: Object.keys(updateData),
         endpoint: '/api/profile'
       });
@@ -223,7 +452,6 @@ export const PUT = withAuthAndErrors(
         message: 'Profile updated successfully',
         data: {
           id: userId,
-          handle: updateData.handle,
           updatedFields: Object.keys(updateData)
         }
       });
@@ -231,11 +459,7 @@ export const PUT = withAuthAndErrors(
     } catch (error) {
       logger.error(
         'Error updating profile',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          // userId not available in catch block
-          endpoint: '/api/profile'
-        }
+        { error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/profile' }
       );
       return NextResponse.json(
         { success: false, error: 'Internal server error' },

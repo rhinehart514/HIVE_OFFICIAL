@@ -51,6 +51,12 @@ export interface StreamingCanvasViewProps {
 
   /** Progress 0-100 */
   progress: number;
+
+  /** Enable interactive testing mode */
+  interactive?: boolean;
+
+  /** Callback when user interacts with an element in test mode */
+  onInteraction?: (elementId: string, action: string, data: any) => void;
 }
 
 /**
@@ -63,19 +69,32 @@ export interface StreamingCanvasViewProps {
 const IsolatedElementRenderer = memo(({
   elementId,
   instanceId,
-  config
+  config,
+  interactive,
+  onInteraction
 }: {
   elementId: string;
   instanceId: string;
   config: Record<string, any>;
+  interactive?: boolean;
+  onInteraction?: (elementId: string, action: string, data: any) => void;
 }) => {
+  // In interactive mode, pass real handlers
+  const handleChange = interactive
+    ? (data: any) => onInteraction?.(instanceId, 'change', data)
+    : () => {};
+
+  const handleAction = interactive
+    ? (action: string, payload: any) => onInteraction?.(instanceId, action, payload)
+    : () => {};
+
   return (
     <>
       {renderElement(elementId, {
         id: instanceId,
         config: config as Record<string, any>,
-        onChange: () => {},
-        onAction: () => {}
+        onChange: handleChange,
+        onAction: handleAction
       })}
     </>
   );
@@ -91,7 +110,9 @@ export function StreamingCanvasView({
   status,
   isGenerating,
   composition,
-  progress
+  progress,
+  interactive = false,
+  onInteraction
 }: StreamingCanvasViewProps) {
   const [displayedElements, setDisplayedElements] = useState<CanvasElement[]>([]);
   const [isComplete, setIsComplete] = useState(false);
@@ -114,6 +135,17 @@ export function StreamingCanvasView({
 
   return (
     <div className="w-full h-full flex flex-col">
+      {/* Test Mode Banner */}
+      {interactive && (
+        <div className="shrink-0 px-4 py-2 bg-emerald-500/10 border-b border-emerald-500/20">
+          <div className="flex items-center gap-2 text-emerald-400 text-sm">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-medium">Test Mode</span>
+            <span className="text-emerald-400/70">- Interact with your tool to try it out</span>
+          </div>
+        </div>
+      )}
+
       {/* Status Header */}
       <div className="shrink-0 px-6 py-4 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex items-center justify-between">
@@ -127,7 +159,7 @@ export function StreamingCanvasView({
             ) : composition ? (
               <>
                 <Check className="h-4 w-4 text-gold-achievement" />
-                <span className="text-sm font-medium">Generation complete!</span>
+                <span className="text-sm font-medium">{interactive ? 'Testing...' : 'Generation complete!'}</span>
               </>
             ) : (
               <span className="text-sm text-white/40">Ready to generate</span>
@@ -190,6 +222,8 @@ export function StreamingCanvasView({
                         elementId={element.elementId}
                         instanceId={element.instanceId}
                         config={(element.config ?? {}) as Record<string, any>}
+                        interactive={interactive}
+                        onInteraction={onInteraction}
                       />
                     </div>
                   </CardContent>

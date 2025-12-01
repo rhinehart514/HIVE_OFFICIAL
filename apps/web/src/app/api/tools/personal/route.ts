@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { _ApiResponseHelper, _HttpStatus } from "@/lib/api-response-types";
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
@@ -60,11 +60,11 @@ async function fetchPersonalTools(userId: string): Promise<PersonalTool[]> {
  * GET /api/tools/personal
  */
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   context,
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const tools = await fetchPersonalTools(userId);
 
   return respond.success({
@@ -83,12 +83,12 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   ToolActionSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     context,
     { toolId, action },
     respond
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     // Implement actual tool installation/uninstallation in database
     try {

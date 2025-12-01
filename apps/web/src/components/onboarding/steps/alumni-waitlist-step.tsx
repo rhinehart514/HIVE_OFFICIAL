@@ -30,7 +30,7 @@ export function AlumniWaitlistStep({ onBack }: AlumniWaitlistStepProps) {
           transition={{ delay: 0.1, type: "spring", stiffness: 400, damping: 25 }}
           className="h-20 w-20 rounded-2xl bg-neutral-900 border border-neutral-800 flex items-center justify-center"
         >
-          <GraduationCap className="h-10 w-10 text-[#FFD700]" />
+          <GraduationCap className="h-10 w-10 text-gold-500" />
         </motion.div>
       </motion.div>
 
@@ -55,15 +55,15 @@ export function AlumniWaitlistStep({ onBack }: AlumniWaitlistStepProps) {
           </p>
           <ul className="space-y-2 text-sm text-neutral-400">
             <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-500" />
               Connect with current students & mentors
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-500" />
               Exclusive alumni networking events
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold-500" />
               Campus news & updates tailored for you
             </li>
           </ul>
@@ -75,8 +75,7 @@ export function AlumniWaitlistStep({ onBack }: AlumniWaitlistStepProps) {
         <Button
           type="button"
           onClick={() => window.open("https://hive.so/alumni-waitlist", "_blank")}
-          className="w-full h-12 bg-[#FFD700] text-black hover:brightness-110 font-semibold text-sm transition-all"
-          style={{ boxShadow: "0 0 30px rgba(255, 215, 0, 0.15)" }}
+          className="w-full h-12 bg-white text-black hover:bg-neutral-200 font-semibold text-sm transition-colors"
         >
           <span className="flex items-center justify-center gap-2">
             <Bell className="h-4 w-4" />

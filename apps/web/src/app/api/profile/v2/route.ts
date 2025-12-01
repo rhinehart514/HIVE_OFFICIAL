@@ -3,6 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getServerProfileRepository, PrivacyLevel, ProfilePrivacy } from '@hive/core/server';
 
 type ViewerRelationship = 'self' | 'friend' | 'connection' | 'campus';
 
@@ -24,14 +25,14 @@ const visibilityRequirement: Record<string, number> = {
 
 const DEFAULT_GRID = {
   cards: [
-    { id: 'spaces_hub', type: 'spaces_hub', size: '2x1', visible: true },
-    { id: 'friends_network', type: 'friends_network', size: '2x1', visible: true },
-    { id: 'active_now', type: 'active_now', size: '1x1', visible: true },
-    { id: 'discovery', type: 'discovery', size: '1x1', visible: true },
+    { id: 'spaces_hub', type: 'spaces_hub', size: '2x1' as const, visible: true },
+    { id: 'friends_network', type: 'friends_network', size: '2x1' as const, visible: true },
+    { id: 'active_now', type: 'active_now', size: '1x1' as const, visible: true },
+    { id: 'discovery', type: 'discovery', size: '1x1' as const, visible: true },
   ],
   mobileLayout: [
-    { id: 'spaces_hub_mobile', type: 'spaces_hub', size: '2x1', visible: true },
-    { id: 'friends_network_mobile', type: 'friends_network', size: '2x1', visible: true },
+    { id: 'spaces_hub_mobile', type: 'spaces_hub', size: '2x1' as const, visible: true },
+    { id: 'friends_network_mobile', type: 'friends_network', size: '2x1' as const, visible: true },
   ],
 };
 
@@ -78,7 +79,7 @@ const formatTimestamp = (value: unknown): string | null => {
     try {
       return (value.toDate() as Date).toISOString();
     } catch (err) {
-      logger.warn('Failed to convert Firestore timestamp', err instanceof Error ? err : new Error(String(err)));
+      logger.warn('Failed to convert Firestore timestamp', { error: err instanceof Error ? err.message : String(err) });
       return null;
     }
   }
@@ -92,7 +93,7 @@ const normalizeGrid = (grid: unknown) => {
 
   const parsed = GridSchema.safeParse(grid);
   if (!parsed.success) {
-    logger.warn('Invalid profile grid stored in Firestore; defaulting', parsed.error);
+    logger.warn('Invalid profile grid stored in Firestore; defaulting', { error: parsed.error.message, issues: JSON.stringify(parsed.error.issues) });
     return { ...DEFAULT_GRID, lastModified: new Date().toISOString() };
   }
 
@@ -109,7 +110,9 @@ const normalizeWidgetLevel = (
   privacyDoc: Record<string, unknown> | undefined,
   defaults: { level: string },
 ) => {
-  const level = privacyDoc?.widgets?.[widget]?.level ?? privacyDoc?.[widget]?.level;
+  const widgets = privacyDoc?.widgets as Record<string, Record<string, unknown>> | undefined;
+  const widgetSettings = privacyDoc?.[widget] as Record<string, unknown> | undefined;
+  const level = widgets?.[widget]?.level ?? widgetSettings?.level;
   if (typeof level === 'string') return level;
 
   // Fall back to legacy boolean flags
@@ -148,9 +151,50 @@ const resolveRelationship = (
   return 'campus';
 };
 
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx, respond) => {
+/**
+ * Maps ViewerRelationship to DDD ProfilePrivacy viewer type
+ * Used for profile-level access control with 4-tier privacy
+ */
+const toDddViewerType = (relationship: ViewerRelationship): 'public' | 'campus' | 'connection' => {
+  switch (relationship) {
+    case 'self':
+      // Self always has access - handled separately
+      return 'connection';
+    case 'friend':
+    case 'connection':
+      return 'connection';
+    case 'campus':
+      return 'campus';
+    default:
+      return 'campus';
+  }
+};
+
+/**
+ * Maps legacy privacy level strings to DDD PrivacyLevel enum
+ */
+const toDddPrivacyLevel = (level: string | undefined): PrivacyLevel => {
+  switch (level) {
+    case 'public':
+      return PrivacyLevel.PUBLIC;
+    case 'campus':
+    case 'campus_only':
+      return PrivacyLevel.CAMPUS_ONLY;
+    case 'connections':
+    case 'connections_only':
+    case 'friends':
+      return PrivacyLevel.CONNECTIONS_ONLY;
+    case 'private':
+    case 'ghost':
+      return PrivacyLevel.PRIVATE;
+    default:
+      return PrivacyLevel.CAMPUS_ONLY;
+  }
+};
+
+export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
   try {
-    const viewerId = getUserId(request);
+    const viewerId = getUserId(request as AuthenticatedRequest);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const handle = searchParams.get('handle');
@@ -174,42 +218,140 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
     if (!targetUserId) targetUserId = viewerId;
 
     const userRef = dbAdmin.collection('users').doc(targetUserId);
-    const userSnap = await userRef.get();
-    if (!userSnap.exists) {
-      return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+    const isOwnProfile = targetUserId === viewerId;
+
+    // Try DDD repository first for profile data
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(targetUserId);
+
+    // Get connection status for viewer relationship
+    const connectionSnap = isOwnProfile
+      ? null
+      : await userRef.collection('connections').doc(viewerId).get().catch(() => null);
+
+    const viewerRelationship = resolveRelationship(isOwnProfile, connectionSnap);
+    const dddViewerType = toDddViewerType(viewerRelationship);
+
+    // If DDD profile found, use it for access control
+    let userData: Record<string, unknown> = {};
+    let profilePrivacy: ProfilePrivacy | null = null;
+
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+
+      // Use DDD 4-tier privacy for profile-level access control
+      profilePrivacy = profile.privacy;
+
+      // Check campus isolation
+      if (profile.campusId.id !== CURRENT_CAMPUS_ID) {
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
+
+      // Check profile-level access using DDD privacy
+      if (!isOwnProfile && !profilePrivacy.canViewProfile(dddViewerType)) {
+        logger.info('Profile access denied by DDD privacy', {
+          targetUserId,
+          viewerId,
+          viewerType: dddViewerType,
+          privacyLevel: profilePrivacy.level,
+        });
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
+
+      // Extract user data from DDD profile for compatibility
+      userData = {
+        handle: profile.handle.value,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        fullName: profile.displayName,
+        bio: profile.bio || '',
+        major: profile.major || '',
+        graduationYear: profile.graduationYear,
+        interests: profile.interests,
+        avatarUrl: profile.personalInfo.profilePhoto,
+        profileImageUrl: profile.personalInfo.profilePhoto,
+        pronouns: profile.personalInfo.dorm ? undefined : undefined, // Not in DDD yet
+        badges: profile.badges,
+        campusId: profile.campusId.id,
+        connectionCount: profile.connectionCount,
+        // Preserve privacy settings in legacy format for widget-level checks
+        privacySettings: {
+          level: profilePrivacy.level,
+          showEmail: profilePrivacy.showEmail,
+          showPhone: profilePrivacy.showPhone,
+          showDorm: profilePrivacy.showDorm,
+          showSchedule: profilePrivacy.showSchedule,
+          showActivity: profilePrivacy.showActivity,
+        },
+      };
+
+      logger.debug('Profile loaded via DDD repository', {
+        targetUserId,
+        handle: profile.handle.value,
+        privacyLevel: profilePrivacy.level,
+      });
+    } else {
+      // Fallback to direct Firestore if DDD fails
+      const userSnap = await userRef.get();
+      if (!userSnap.exists) {
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
+
+      userData = userSnap.data() || {};
+      if (userData.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
+
+      logger.debug('Profile loaded via Firestore fallback', { targetUserId });
     }
 
-    const userData = userSnap.data() || {};
-    if (userData.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
-      return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
-    }
-
-    const [privacySnap, connectionSnap, presenceSnap] = await Promise.all([
+    // Fetch additional data in parallel
+    const [privacySnap, presenceSnap] = await Promise.all([
       dbAdmin.collection('privacySettings').doc(targetUserId).get().catch(() => null),
-      targetUserId === viewerId
-        ? Promise.resolve(null)
-        : userRef.collection('connections').doc(viewerId).get().catch(() => null),
       dbAdmin.collection('presence').doc(targetUserId).get().catch(() => null),
     ]);
 
+    // Merge privacy settings from all sources for widget-level checks
     const privacyDoc = {
       ...(userData.privacySettings || {}),
       ...(userData.privacy || {}),
       ...(privacySnap?.exists ? privacySnap.data() : {}),
     } as Record<string, unknown>;
 
-    const isOwnProfile = targetUserId === viewerId;
-    const viewerRelationship = resolveRelationship(isOwnProfile, connectionSnap);
+    // Determine profile visibility level - prefer DDD privacy if available
+    let profileVisibilityLevel: string;
+    if (profilePrivacy) {
+      // Map DDD PrivacyLevel to legacy string format
+      switch (profilePrivacy.level) {
+        case PrivacyLevel.PUBLIC:
+          profileVisibilityLevel = 'public';
+          break;
+        case PrivacyLevel.CAMPUS_ONLY:
+          profileVisibilityLevel = 'campus';
+          break;
+        case PrivacyLevel.CONNECTIONS_ONLY:
+          profileVisibilityLevel = 'connections';
+          break;
+        case PrivacyLevel.PRIVATE:
+          profileVisibilityLevel = 'private';
+          break;
+        default:
+          profileVisibilityLevel = 'campus';
+      }
+    } else {
+      // Legacy path
+      const profileSettings = privacyDoc?.profile as Record<string, unknown> | undefined;
+      profileVisibilityLevel =
+        typeof profileSettings?.level === 'string'
+          ? profileSettings.level
+          : privacyDoc?.isPublic === false
+            ? 'connections'
+            : 'public';
 
-    const profileVisibilityLevel =
-      typeof privacyDoc?.profile?.level === 'string'
-        ? privacyDoc.profile.level
-        : privacyDoc?.isPublic === false
-          ? 'connections'
-          : 'public';
-
-    if (!canView(viewerRelationship, profileVisibilityLevel)) {
-      return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      // Apply legacy access check if DDD didn't handle it
+      if (!canView(viewerRelationship, profileVisibilityLevel)) {
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
     }
 
     const gridLayout = normalizeGrid(userData.profileGrid);
@@ -294,18 +436,21 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
 
     const friendCount = connections.filter((c) => c.isFriend).length;
 
+    // Cast nested stats object for safe property access
+    const userStats = (userData.stats || {}) as Record<string, unknown>;
+
     const stats = {
       spacesJoined: spaces.length,
-      connections: userData.connectionCount ?? connections.length,
-      friends: userData.friendCount ?? friendCount,
-      toolsCreated: userData.toolsCreated ?? userData.stats?.toolsCreated ?? 0,
-      toolsUsed: userData.toolsUsed ?? userData.stats?.toolsUsed ?? spaces.filter((space) => {
+      connections: (userData.connectionCount ?? connections.length) as number,
+      friends: (userData.friendCount ?? friendCount) as number,
+      toolsCreated: (userData.toolsCreated ?? userStats.toolsCreated ?? 0) as number,
+      toolsUsed: (userData.toolsUsed ?? userStats.toolsUsed ?? spaces.filter((space) => {
         const spaceData = space as Record<string, unknown>;
         return Array.isArray(spaceData.tools) && spaceData.tools.length > 0;
-      }).length ?? 0,
-      activeRituals: userData.activeRituals ?? userData.stats?.activeRituals ?? 0,
-      reputation: userData.reputation ?? userData.stats?.reputation ?? 68,
-      currentStreak: userData.currentStreak ?? userData.stats?.currentStreak ?? 0,
+      }).length ?? 0) as number,
+      activeRituals: (userData.activeRituals ?? userStats.activeRituals ?? 0) as number,
+      reputation: (userData.reputation ?? userStats.reputation ?? 68) as number,
+      currentStreak: (userData.currentStreak ?? userStats.currentStreak ?? 0) as number,
     };
 
     const presenceStatus = presenceSnap?.exists ? presenceSnap.data() : null;
@@ -372,37 +517,92 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx,
       },
     });
   } catch (error) {
-    logger.error('Failed to fetch profile v2', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to fetch profile v2', { error: error instanceof Error ? error.message : String(error) });
     return respond.error('Failed to fetch profile', 'INTERNAL_ERROR', { status: 500 });
   }
 });
 
-export const PATCH = withAuthAndErrors(async (request: AuthenticatedRequest, _ctx, respond) => {
+export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const payload = await request.json();
     const parsed = UpdateSchema.parse(payload);
 
     const updates: Array<Promise<unknown>> = [];
     let fieldsUpdated: string[] = [];
+    let usedDddPath = false;
 
+    // Try DDD path for privacy updates
     if (parsed.privacy) {
-      const privacyRef = dbAdmin.collection('privacySettings').doc(userId);
-      const existing = await privacyRef.get();
-      const now = new Date().toISOString();
-      const merged: Record<string, unknown> = {
-        ...(existing.exists ? existing.data() : {}),
-        ...parsed.privacy,
-        userId,
-        updatedAt: now,
-        campusId: existing.data()?.campusId || CURRENT_CAMPUS_ID,
-      };
-      if (!existing.exists) merged.createdAt = now;
+      const profileRepository = getServerProfileRepository();
+      const profileResult = await profileRepository.findById(userId);
 
-      updates.push(privacyRef.set(merged, { merge: true }));
-      fieldsUpdated = fieldsUpdated.concat(Object.keys(parsed.privacy));
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        const currentPrivacy = profile.privacy;
+        const privacyUpdate = parsed.privacy as Record<string, unknown>;
+
+        // Map incoming privacy fields to DDD ProfilePrivacy
+        const newLevel = privacyUpdate.level
+          ? toDddPrivacyLevel(privacyUpdate.level as string)
+          : currentPrivacy.level;
+
+        const newPrivacyResult = ProfilePrivacy.create({
+          level: newLevel,
+          showEmail: typeof privacyUpdate.showEmail === 'boolean'
+            ? privacyUpdate.showEmail
+            : currentPrivacy.showEmail,
+          showPhone: typeof privacyUpdate.showPhone === 'boolean'
+            ? privacyUpdate.showPhone
+            : currentPrivacy.showPhone,
+          showDorm: typeof privacyUpdate.showDorm === 'boolean'
+            ? privacyUpdate.showDorm
+            : currentPrivacy.showDorm,
+          showSchedule: typeof privacyUpdate.showSchedule === 'boolean'
+            ? privacyUpdate.showSchedule
+            : currentPrivacy.showSchedule,
+          showActivity: typeof privacyUpdate.showActivity === 'boolean'
+            ? privacyUpdate.showActivity
+            : currentPrivacy.showActivity,
+        });
+
+        if (newPrivacyResult.isSuccess) {
+          profile.updatePrivacy(newPrivacyResult.getValue());
+
+          const saveResult = await profileRepository.save(profile);
+          if (saveResult.isSuccess) {
+            fieldsUpdated = fieldsUpdated.concat(Object.keys(parsed.privacy));
+            usedDddPath = true;
+            logger.info('Privacy updated via DDD', { userId, fields: Object.keys(parsed.privacy) });
+          } else {
+            logger.warn('DDD save failed, falling back to direct update', {
+              userId,
+              error: saveResult.error,
+            });
+          }
+        }
+      }
+
+      // Fallback to direct Firestore if DDD didn't handle it
+      if (!usedDddPath) {
+        const privacyRef = dbAdmin.collection('privacySettings').doc(userId);
+        const existing = await privacyRef.get();
+        const now = new Date().toISOString();
+        const merged: Record<string, unknown> = {
+          ...(existing.exists ? existing.data() : {}),
+          ...parsed.privacy,
+          userId,
+          updatedAt: now,
+          campusId: existing.data()?.campusId || CURRENT_CAMPUS_ID,
+        };
+        if (!existing.exists) merged.createdAt = now;
+
+        updates.push(privacyRef.set(merged, { merge: true }));
+        fieldsUpdated = fieldsUpdated.concat(Object.keys(parsed.privacy));
+      }
     }
 
+    // Grid updates stay in Firestore (not in DDD domain model)
     if (parsed.grid) {
       const normalized = normalizeGrid(parsed.grid);
       updates.push(
@@ -422,7 +622,7 @@ export const PATCH = withAuthAndErrors(async (request: AuthenticatedRequest, _ct
 
     return respond.success({ fieldsUpdated, message: 'Profile updated' });
   } catch (error) {
-    logger.error('Failed to update profile v2', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to update profile v2', { error: error instanceof Error ? error.message : String(error) });
     return respond.error('Failed to update profile', 'INTERNAL_ERROR', { status: 500 });
   }
 });

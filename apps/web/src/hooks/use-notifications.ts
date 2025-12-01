@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   collection,
   query,
-  _where,
+  where,
   orderBy,
   limit,
   onSnapshot,
@@ -16,7 +16,7 @@ import {
   writeBatch,
   serverTimestamp,
   addDoc,
-  _Timestamp
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '@hive/firebase';
 import { useAuth } from '@hive/auth-logic';
@@ -114,7 +114,7 @@ export function useNotifications() {
         }
       },
       (error) => {
-        logger.error('Notification subscription error', { error: error instanceof Error ? error : new Error(String(error)) });
+        logger.error('Notification subscription error', { error: { error: error instanceof Error ? error.message : String(error) } });
         setState(prev => ({
           ...prev,
           loading: false,
@@ -137,7 +137,7 @@ export function useNotifications() {
         readAt: serverTimestamp()
       });
     } catch (error) {
-      logger.error('Failed to mark notification as read', { error: error instanceof Error ? error : new Error(String(error)), notificationId });
+      logger.error('Failed to mark notification as read', { error: { error: error instanceof Error ? error.message : String(error) }, notificationId });
     }
   }, [user?.uid]);
 
@@ -159,7 +159,7 @@ export function useNotifications() {
 
       await batch.commit();
     } catch (error) {
-      logger.error('Failed to mark all notifications as read', { error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('Failed to mark all notifications as read', { error: { error: error instanceof Error ? error.message : String(error) } });
     }
   }, [user?.uid, state.notifications, state.unreadCount]);
 
@@ -176,7 +176,7 @@ export function useNotifications() {
 
       await batch.commit();
     } catch (error) {
-      logger.error('Failed to clear notifications', { error: error instanceof Error ? error : new Error(String(error)) });
+      logger.error('Failed to clear notifications', { error: { error: error instanceof Error ? error.message : String(error) } });
     }
   }, [user?.uid, state.notifications]);
 
@@ -224,7 +224,7 @@ export async function sendNotification({
 
     logger.info('Notification sent', { toUserId, type, title });
   } catch (error) {
-    logger.error('Failed to send notification', { error: error instanceof Error ? error : new Error(String(error)), toUserId, type });
+    logger.error('Failed to send notification', { error: { error: error instanceof Error ? error.message : String(error) }, toUserId, type });
     throw error;
   }
 }
@@ -292,6 +292,6 @@ export function showBrowserNotification(title: string, options?: NotificationOpt
       notification.close();
     };
   } catch (error) {
-    logger.error('Failed to show browser notification', { error: error instanceof Error ? error : new Error(String(error)) });
+    logger.error('Failed to show browser notification', { error: { error: error instanceof Error ? error.message : String(error) } });
   }
 }

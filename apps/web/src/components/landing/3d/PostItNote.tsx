@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { _useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { animated, useSpring } from "@react-spring/three";
@@ -54,11 +54,8 @@ export function PostItNote({
         ref={meshRef}
         castShadow
         receiveShadow
-        // @ts-expect-error - react-spring animated props not in Three.js types
         position-z={positionZ}
-        // @ts-expect-error - react-spring animated props not in Three.js types
         rotation-y={rotationY}
-        // @ts-expect-error - react-spring animated props not in Three.js types
         scale={scale}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}

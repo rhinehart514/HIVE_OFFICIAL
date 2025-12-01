@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error validating content at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to validate content", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     logger.error(
       `Error fetching validation analytics at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(ApiResponseHelper.error("Failed to fetch analytics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
@@ -181,7 +181,7 @@ async function getContentEnforcementPolicy(spaceId?: string, enforcementLevel: s
   } catch (error) {
     logger.error(
       `Error getting enforcement policy at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     // Return safe default
     return DEFAULT_POLICIES.moderate;
@@ -209,7 +209,7 @@ async function validateContentItem(
       qualityScore += 30;
 
       // Get tool metadata
-      if (contentItem.toolId) {
+      if (contentItem.toolId && typeof contentItem.toolId === 'string') {
         const toolDoc = await dbAdmin.collection('tools').doc(contentItem.toolId).get();
         if (toolDoc.exists) {
           const tool = toolDoc.data();
@@ -217,9 +217,9 @@ async function validateContentItem(
             toolMetadata = {
               toolId: contentItem.toolId,
               toolName: tool.name || 'Unknown Tool',
-              deploymentId: contentItem.deploymentId,
-              elementIds: contentItem.elementIds || [],
-              interactionType: contentItem.metadata?.action || 'unknown'
+              deploymentId: contentItem.deploymentId as string | undefined,
+              elementIds: (contentItem.elementIds as string[]) || [],
+              interactionType: (contentItem.metadata as Record<string, unknown> | undefined)?.action as string || 'unknown'
             };
             
             // Quality bonus for sophisticated tools
@@ -230,7 +230,7 @@ async function validateContentItem(
       }
     }
     // Check if content is tool-enhanced
-    else if (contentItem.metadata?.enhancedByTool || contentItem.type === 'tool_enhanced') {
+    else if ((contentItem.metadata as Record<string, unknown> | undefined)?.enhancedByTool || contentItem.type === 'tool_enhanced') {
       contentType = 'tool_enhanced';
       validationReasons.push('Content enhanced by tool interaction');
       confidence = 85;
@@ -272,7 +272,7 @@ async function validateContentItem(
     }
 
     // Additional quality factors
-    if (contentItem.content && contentItem.content.length > 50) {
+    if (contentItem.content && typeof contentItem.content === 'string' && contentItem.content.length > 50) {
       qualityScore += 10;
       validationReasons.push('Content has sufficient length');
     }
@@ -333,7 +333,7 @@ async function validateContentItem(
   } catch (error) {
     logger.error(
       `Error validating content item at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return {
       isValid: false,
@@ -450,7 +450,7 @@ async function logValidationMetrics(userId: string, spaceId: string | undefined,
   } catch (error) {
     logger.error(
       `Error logging validation metrics at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
   }
 }
@@ -525,7 +525,7 @@ async function getContentValidationAnalytics(
   } catch (error) {
     logger.error(
       `Error getting validation analytics at /api/feed/content-validation`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return {
       totalPosts: 0,

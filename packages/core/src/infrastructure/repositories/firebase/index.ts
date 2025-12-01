@@ -1,3 +1,10 @@
+/**
+ * Repository Factory
+ *
+ * Provides singleton instances of Firebase repository implementations.
+ * This enables DDD patterns by abstracting persistence from domain logic.
+ */
+
 // Repository interfaces
 export type {
   IProfileRepository,
@@ -6,65 +13,75 @@ export type {
   IFeedRepository
 } from '../interfaces';
 
-// Temporary mock implementations (to be replaced with actual Firebase repos)
-export function getFeedRepository(): any {
-  return {
-    findByUserId: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    saveFeed: async () => ({ isSuccess: true }),
-    getFeedContent: async () => ({ isSuccess: true, getValue: () => [] }),
-    getTrendingContent: async () => ({ isSuccess: true, getValue: () => [] }),
-    getEventContent: async () => ({ isSuccess: true, getValue: () => [] }),
-    getRitualContent: async () => ({ isSuccess: true, getValue: () => [] }),
-    recordInteraction: async () => ({ isSuccess: true }),
-    subscribeToFeed: () => () => {}
-  };
+// Import actual repository implementations
+import { FirebaseSpaceRepository } from './space.repository';
+import { FirebaseProfileRepository } from './profile.repository';
+import { FirebaseFeedRepository } from './feed.repository';
+import { FirebaseRitualRepository } from './ritual.repository';
+import type {
+  IProfileRepository,
+  ISpaceRepository,
+  IRitualRepository,
+  IFeedRepository
+} from '../interfaces';
+
+// Singleton instances for repository reuse
+let spaceRepositoryInstance: ISpaceRepository | null = null;
+let profileRepositoryInstance: IProfileRepository | null = null;
+let feedRepositoryInstance: IFeedRepository | null = null;
+let ritualRepositoryInstance: IRitualRepository | null = null;
+
+/**
+ * Get the Space Repository instance
+ * Returns singleton instance of FirebaseSpaceRepository
+ */
+export function getSpaceRepository(): ISpaceRepository {
+  if (!spaceRepositoryInstance) {
+    spaceRepositoryInstance = new FirebaseSpaceRepository();
+  }
+  return spaceRepositoryInstance;
 }
 
-export function getProfileRepository(): any {
-  return {
-    findById: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    findByEmail: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    findByHandle: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    save: async () => ({ isSuccess: true }),
-    delete: async () => ({ isSuccess: true }),
-    findOnboardedProfiles: async () => ({ isSuccess: true, getValue: () => [] }),
-    findByInterest: async () => ({ isSuccess: true, getValue: () => [] }),
-    findByMajor: async () => ({ isSuccess: true, getValue: () => [] }),
-    findConnectionsOf: async () => ({ isSuccess: true, getValue: () => [] }),
-    getTotalCampusUsers: async () => ({ isSuccess: true, getValue: () => 0 }),
-    exists: async () => false,
-    searchByName: async () => ({ isSuccess: true, getValue: () => [] }),
-    findByCampus: async () => ({ isSuccess: true, getValue: () => [] })
-  };
+/**
+ * Get the Profile Repository instance
+ * Returns singleton instance of FirebaseProfileRepository
+ */
+export function getProfileRepository(): IProfileRepository {
+  if (!profileRepositoryInstance) {
+    profileRepositoryInstance = new FirebaseProfileRepository();
+  }
+  return profileRepositoryInstance;
 }
 
-export function getSpaceRepository(): any {
-  return {
-    findById: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    findByMember: async () => ({ isSuccess: true, getValue: () => [] }),
-    save: async () => ({ isSuccess: true }),
-    delete: async () => ({ isSuccess: true }),
-    findByName: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    findByCampus: async () => ({ isSuccess: true, getValue: () => [] }),
-    findByCategory: async () => ({ isSuccess: true, getValue: () => [] }),
-    findUserSpaces: async () => ({ isSuccess: true, getValue: () => [] }),
-    findTrending: async () => ({ isSuccess: true, getValue: () => [] }),
-    findRecommended: async () => ({ isSuccess: true, getValue: () => [] }),
-    searchSpaces: async () => ({ isSuccess: true, getValue: () => [] })
-  };
+/**
+ * Get the Feed Repository instance
+ * Returns singleton instance of FirebaseFeedRepository
+ */
+export function getFeedRepository(): IFeedRepository {
+  if (!feedRepositoryInstance) {
+    feedRepositoryInstance = new FirebaseFeedRepository();
+  }
+  return feedRepositoryInstance;
 }
 
-export function getRitualRepository(): any {
-  return {
-    findById: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    save: async () => ({ isSuccess: true }),
-    delete: async () => ({ isSuccess: true }),
-    findByCampus: async () => ({ isSuccess: true, getValue: () => [] }),
-    findActive: async () => ({ isSuccess: true, getValue: () => [] }),
-    findByType: async () => ({ isSuccess: true, getValue: () => [] }),
-    findActiveByType: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    findUserRituals: async () => ({ isSuccess: true, getValue: () => [] }),
-    findParticipation: async () => ({ isSuccess: false, error: 'Not implemented' }),
-    saveParticipation: async () => ({ isSuccess: true })
-  };
+/**
+ * Get the Ritual Repository instance
+ * Returns singleton instance of FirebaseRitualRepository
+ */
+export function getRitualRepository(): IRitualRepository {
+  if (!ritualRepositoryInstance) {
+    ritualRepositoryInstance = new FirebaseRitualRepository();
+  }
+  return ritualRepositoryInstance;
+}
+
+/**
+ * Reset all repository instances
+ * Useful for testing or when Firebase instance changes
+ */
+export function resetRepositories(): void {
+  spaceRepositoryInstance = null;
+  profileRepositoryInstance = null;
+  feedRepositoryInstance = null;
+  ritualRepositoryInstance = null;
 }

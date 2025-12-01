@@ -7,17 +7,55 @@ import { AggregateRoot } from '../../shared/base/AggregateRoot.base';
 import { Result } from '../../shared/base/Result';
 import { SpaceId } from '../value-objects/space-id.value';
 import { SpaceName } from '../value-objects/space-name.value';
+import { SpaceSlug } from '../value-objects/space-slug.value';
 import { SpaceDescription } from '../value-objects/space-description.value';
 import { SpaceCategory } from '../value-objects/space-category.value';
 import { CampusId } from '../../profile/value-objects/campus-id.value';
 import { ProfileId } from '../../profile/value-objects/profile-id.value';
 import { Tab } from '../entities/tab';
 import { Widget } from '../entities/widget';
+import {
+  SpaceUpdatedEvent,
+  TabCreatedEvent,
+  TabUpdatedEvent,
+  TabRemovedEvent,
+  TabsReorderedEvent,
+  WidgetCreatedEvent,
+  WidgetUpdatedEvent,
+  WidgetRemovedEvent,
+  WidgetAttachedToTabEvent,
+  WidgetDetachedFromTabEvent,
+} from '../events';
+
+/**
+ * Space member roles in order of permission level (highest to lowest)
+ * - owner: Full control, cannot be demoted, only one per space
+ * - admin: Full management permissions, can manage moderators and members
+ * - moderator: Can moderate content and manage members
+ * - member: Basic participation rights
+ * - guest: Read-only access (for private spaces)
+ */
+export type SpaceMemberRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
 
 interface SpaceMember {
   profileId: ProfileId;
-  role: 'admin' | 'moderator' | 'member';
+  role: SpaceMemberRole;
   joinedAt: Date;
+}
+
+/**
+ * Leader request status tracking
+ */
+export type LeaderRequestStatus = 'pending' | 'approved' | 'rejected';
+
+interface LeaderRequest {
+  profileId: ProfileId;
+  status: LeaderRequestStatus;
+  requestedAt: Date;
+  reason?: string;
+  reviewedBy?: ProfileId;
+  reviewedAt?: Date;
+  rejectionReason?: string;
 }
 
 interface SpaceSettings {
@@ -38,11 +76,13 @@ interface RushMode {
 interface EnhancedSpaceProps {
   spaceId: SpaceId;
   name: SpaceName;
+  slug?: SpaceSlug;
   description: SpaceDescription;
   category: SpaceCategory;
   campusId: CampusId;
   createdBy: ProfileId;
   members: SpaceMember[];
+  leaderRequests: LeaderRequest[];
   tabs: Tab[];
   widgets: Widget[];
   settings: SpaceSettings;
@@ -65,6 +105,24 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
   get name(): SpaceName {
     return this.props.name;
+  }
+
+  get slug(): SpaceSlug | undefined {
+    return this.props.slug;
+  }
+
+  get owner(): ProfileId {
+    const ownerMember = this.props.members.find(m => m.role === 'owner');
+    // Fall back to createdBy if no explicit owner (legacy data)
+    return ownerMember?.profileId || this.props.createdBy;
+  }
+
+  get leaderRequests(): LeaderRequest[] {
+    return this.props.leaderRequests;
+  }
+
+  get pendingLeaderRequests(): LeaderRequest[] {
+    return this.props.leaderRequests.filter(r => r.status === 'pending');
   }
 
   get description(): SpaceDescription {
@@ -140,6 +198,10 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.visibility;
   }
 
+  get isActive(): boolean {
+    return this.props.isActive;
+  }
+
   get settings(): SpaceSettings {
     return this.props.settings;
   }
@@ -166,6 +228,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     props: {
       spaceId: SpaceId;
       name: SpaceName;
+      slug?: SpaceSlug;
       description: SpaceDescription;
       category: SpaceCategory;
       campusId: CampusId;
@@ -184,20 +247,23 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       ...props.settings
     };
 
+    // Creator becomes the owner (highest permission level)
     const creator: SpaceMember = {
       profileId: props.createdBy,
-      role: 'admin',
+      role: 'owner',
       joinedAt: new Date()
     };
 
     const spaceProps: EnhancedSpaceProps = {
       spaceId: props.spaceId,
       name: props.name,
+      slug: props.slug,
       description: props.description,
       category: props.category,
       campusId: props.campusId,
       createdBy: props.createdBy,
       members: [creator],
+      leaderRequests: [],
       tabs: [],
       widgets: [],
       settings: defaultSettings,
@@ -275,7 +341,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
   public updateMemberRole(
     profileId: ProfileId,
-    newRole: 'admin' | 'moderator' | 'member'
+    newRole: SpaceMemberRole
   ): Result<void> {
     const member = this.props.members.find(m => m.profileId.value === profileId.value);
 
@@ -283,7 +349,17 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       return Result.fail<void>('User is not a member');
     }
 
-    // Can't demote last admin
+    // Cannot change owner role - use transferOwnership instead
+    if (member.role === 'owner') {
+      return Result.fail<void>('Cannot change owner role. Use transferOwnership instead.');
+    }
+
+    // Cannot promote to owner through this method
+    if (newRole === 'owner') {
+      return Result.fail<void>('Cannot promote to owner. Use transferOwnership instead.');
+    }
+
+    // Can't demote last admin (owner doesn't count, they're always there)
     if (member.role === 'admin' && newRole !== 'admin' && this.getAdminCount() === 1) {
       return Result.fail<void>('Cannot demote the last admin');
     }
@@ -291,6 +367,153 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     member.role = newRole;
     this.updateLastActivity();
     return Result.ok<void>();
+  }
+
+  /**
+   * Transfer ownership of the space to another member
+   * The current owner becomes an admin
+   */
+  public transferOwnership(newOwnerProfileId: ProfileId): Result<void> {
+    const currentOwner = this.props.members.find(m => m.role === 'owner');
+    const newOwner = this.props.members.find(m => m.profileId.value === newOwnerProfileId.value);
+
+    if (!newOwner) {
+      return Result.fail<void>('New owner must be a member of the space');
+    }
+
+    if (newOwner.role === 'owner') {
+      return Result.fail<void>('User is already the owner');
+    }
+
+    // Demote current owner to admin
+    if (currentOwner) {
+      currentOwner.role = 'admin';
+    }
+
+    // Promote new owner
+    newOwner.role = 'owner';
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Request to become a leader (admin) of this space
+   */
+  public requestToLead(profileId: ProfileId, reason?: string): Result<void> {
+    // Check if user is already a member with admin+ role
+    const existingMember = this.props.members.find(m => m.profileId.value === profileId.value);
+    if (existingMember && (existingMember.role === 'owner' || existingMember.role === 'admin')) {
+      return Result.fail<void>('User is already a leader of this space');
+    }
+
+    // Check for existing pending request
+    const existingRequest = this.props.leaderRequests.find(
+      r => r.profileId.value === profileId.value && r.status === 'pending'
+    );
+    if (existingRequest) {
+      return Result.fail<void>('A request is already pending for this user');
+    }
+
+    const request: LeaderRequest = {
+      profileId,
+      status: 'pending',
+      requestedAt: new Date(),
+      reason
+    };
+
+    this.props.leaderRequests.push(request);
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Approve a leader request, promoting the user to admin
+   */
+  public approveLeaderRequest(
+    requestProfileId: ProfileId,
+    approvedBy: ProfileId
+  ): Result<void> {
+    // Check if approver has permission (must be owner or admin)
+    const approverMember = this.props.members.find(m => m.profileId.value === approvedBy.value);
+    if (!approverMember || (approverMember.role !== 'owner' && approverMember.role !== 'admin')) {
+      return Result.fail<void>('Only owners and admins can approve leader requests');
+    }
+
+    // Find the pending request
+    const request = this.props.leaderRequests.find(
+      r => r.profileId.value === requestProfileId.value && r.status === 'pending'
+    );
+    if (!request) {
+      return Result.fail<void>('No pending request found for this user');
+    }
+
+    // Update request status
+    request.status = 'approved';
+    request.reviewedBy = approvedBy;
+    request.reviewedAt = new Date();
+
+    // Add or promote the user
+    const existingMember = this.props.members.find(m => m.profileId.value === requestProfileId.value);
+    if (existingMember) {
+      existingMember.role = 'admin';
+    } else {
+      this.props.members.push({
+        profileId: requestProfileId,
+        role: 'admin',
+        joinedAt: new Date()
+      });
+    }
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Reject a leader request
+   */
+  public rejectLeaderRequest(
+    requestProfileId: ProfileId,
+    rejectedBy: ProfileId,
+    rejectionReason?: string
+  ): Result<void> {
+    // Check if rejector has permission
+    const rejectorMember = this.props.members.find(m => m.profileId.value === rejectedBy.value);
+    if (!rejectorMember || (rejectorMember.role !== 'owner' && rejectorMember.role !== 'admin')) {
+      return Result.fail<void>('Only owners and admins can reject leader requests');
+    }
+
+    // Find the pending request
+    const request = this.props.leaderRequests.find(
+      r => r.profileId.value === requestProfileId.value && r.status === 'pending'
+    );
+    if (!request) {
+      return Result.fail<void>('No pending request found for this user');
+    }
+
+    // Update request status
+    request.status = 'rejected';
+    request.reviewedBy = rejectedBy;
+    request.reviewedAt = new Date();
+    request.rejectionReason = rejectionReason;
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Check if a user has admin-level permissions (owner or admin)
+   */
+  public isLeader(profileId: ProfileId): boolean {
+    const member = this.props.members.find(m => m.profileId.value === profileId.value);
+    return !!member && (member.role === 'owner' || member.role === 'admin');
+  }
+
+  /**
+   * Check if a user can manage the space (owner, admin, or moderator)
+   */
+  public canManage(profileId: ProfileId): boolean {
+    const member = this.props.members.find(m => m.profileId.value === profileId.value);
+    return !!member && (member.role === 'owner' || member.role === 'admin' || member.role === 'moderator');
   }
 
   public addTab(tab: Tab): Result<void> {
@@ -348,6 +571,33 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     (this.props as any).isVerified = isVerified;
   }
 
+  public setIsActive(isActive: boolean): void {
+    (this.props as any).isActive = isActive;
+    this.props.updatedAt = new Date();
+  }
+
+  /**
+   * Set moderation metadata (for audit trail)
+   */
+  public setModerationInfo(info: {
+    disabledAt?: Date;
+    disabledBy?: string;
+    disableReason?: string;
+    enabledAt?: Date;
+    enabledBy?: string;
+    verifiedAt?: Date;
+    verifiedBy?: string;
+    unverifiedAt?: Date;
+    unverifiedBy?: string;
+    unverifyReason?: string;
+  }): void {
+    // Store moderation info in props (will be persisted by mapper)
+    (this.props as any).moderationInfo = {
+      ...(this.props as any).moderationInfo,
+      ...info
+    };
+    this.props.updatedAt = new Date();
+  }
 
   public setPostCount(count: number): void {
     (this.props as any).postCount = count;
@@ -383,16 +633,408 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     (this.props as any).widgets = widgets;
   }
 
+  public setSlug(slug: SpaceSlug): void {
+    (this.props as any).slug = slug;
+  }
+
+  public setLeaderRequests(requests: LeaderRequest[]): void {
+    (this.props as any).leaderRequests = requests;
+  }
+
+  /**
+   * Set members from external data (e.g., loaded from spaceMembers collection)
+   * Used by repository layer to populate members after loading space document
+   */
+  public setMembers(members: Array<{ profileId: ProfileId; role: SpaceMemberRole; joinedAt: Date }>): void {
+    (this.props as any).members = members.map(m => ({
+      profileId: m.profileId,
+      role: m.role,
+      joinedAt: m.joinedAt
+    }));
+  }
+
+  // ============================================================
+  // Tab Management Methods (Phase 1 - DDD Foundation)
+  // ============================================================
+
+  /**
+   * Get a tab by its ID
+   */
+  public getTabById(tabId: string): Tab | undefined {
+    return this.props.tabs.find(t => t.id === tabId);
+  }
+
+  /**
+   * Update a tab's properties
+   */
+  public updateTab(
+    tabId: string,
+    updates: { name?: string; order?: number; isVisible?: boolean }
+  ): Result<void> {
+    const tab = this.getTabById(tabId);
+    if (!tab) {
+      return Result.fail<void>(`Tab with ID "${tabId}" not found`);
+    }
+
+    // Can't hide the default tab
+    if (updates.isVisible === false && tab.isDefault) {
+      return Result.fail<void>('Cannot hide the default tab');
+    }
+
+    const updateResult = tab.update(updates);
+    if (updateResult.isFailure) {
+      return Result.fail<void>(updateResult.error ?? 'Tab update failed');
+    }
+
+    const { changedFields } = updateResult.getValue();
+    if (changedFields.length > 0) {
+      this.addDomainEvent(new TabUpdatedEvent(this.id, tabId, changedFields));
+      this.updateLastActivity();
+    }
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Remove a tab from the space
+   * Cannot remove the default tab
+   */
+  public removeTab(tabId: string): Result<void> {
+    const tabIndex = this.props.tabs.findIndex(t => t.id === tabId);
+    if (tabIndex === -1) {
+      return Result.fail<void>(`Tab with ID "${tabId}" not found`);
+    }
+
+    const tab = this.props.tabs[tabIndex];
+    if (!tab) {
+      return Result.fail<void>('Tab not found');
+    }
+
+    // Cannot remove the default tab
+    if (tab.isDefault) {
+      return Result.fail<void>('Cannot remove the default tab');
+    }
+
+    // Remove any widget associations from this tab
+    const widgetIds = tab.widgets;
+
+    // Remove the tab
+    const removedTab = this.props.tabs.splice(tabIndex, 1)[0];
+    if (removedTab) {
+      this.addDomainEvent(new TabRemovedEvent(this.id, tabId, removedTab.name));
+    }
+
+    // Emit events for detached widgets
+    for (const widgetId of widgetIds) {
+      this.addDomainEvent(new WidgetDetachedFromTabEvent(this.id, widgetId, tabId));
+    }
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Reorder tabs by providing ordered list of tab IDs
+   */
+  public reorderTabs(orderedIds: string[]): Result<void> {
+    // Validate all IDs exist
+    const existingIds = new Set(this.props.tabs.map(t => t.id));
+    for (const id of orderedIds) {
+      if (!existingIds.has(id)) {
+        return Result.fail<void>(`Tab with ID "${id}" not found`);
+      }
+    }
+
+    // Ensure all tabs are included
+    if (orderedIds.length !== this.props.tabs.length) {
+      return Result.fail<void>('All tab IDs must be included in the reorder');
+    }
+
+    // Apply new order
+    for (let i = 0; i < orderedIds.length; i++) {
+      const tab = this.getTabById(orderedIds[i] as string);
+      if (tab) {
+        tab.setOrder(i);
+      }
+    }
+
+    // Sort tabs array by order
+    this.props.tabs.sort((a, b) => a.order - b.order);
+
+    this.addDomainEvent(new TabsReorderedEvent(this.id, orderedIds));
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  // ============================================================
+  // Widget Management Methods (Phase 1 - DDD Foundation)
+  // ============================================================
+
+  /**
+   * Get a widget by its ID
+   */
+  public getWidgetById(widgetId: string): Widget | undefined {
+    return this.props.widgets.find(w => w.id === widgetId);
+  }
+
+  /**
+   * Update a widget's properties
+   */
+  public updateWidget(
+    widgetId: string,
+    updates: {
+      title?: string;
+      config?: Record<string, any>;
+      order?: number;
+      isVisible?: boolean;
+      isEnabled?: boolean;
+    }
+  ): Result<void> {
+    const widget = this.getWidgetById(widgetId);
+    if (!widget) {
+      return Result.fail<void>(`Widget with ID "${widgetId}" not found`);
+    }
+
+    const updateResult = widget.update(updates);
+    if (updateResult.isFailure) {
+      return Result.fail<void>(updateResult.error ?? 'Widget update failed');
+    }
+
+    const { changedFields } = updateResult.getValue();
+    if (changedFields.length > 0) {
+      this.addDomainEvent(new WidgetUpdatedEvent(this.id, widgetId, changedFields));
+      this.updateLastActivity();
+    }
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Remove a widget from the space
+   * Also removes it from any tabs it's attached to
+   */
+  public removeWidget(widgetId: string): Result<void> {
+    const widgetIndex = this.props.widgets.findIndex(w => w.id === widgetId);
+    if (widgetIndex === -1) {
+      return Result.fail<void>(`Widget with ID "${widgetId}" not found`);
+    }
+
+    const widget = this.props.widgets[widgetIndex];
+    if (!widget) {
+      return Result.fail<void>('Widget not found');
+    }
+
+    // Remove widget from all tabs that contain it
+    for (const tab of this.props.tabs) {
+      if (tab.widgets.includes(widgetId)) {
+        tab.removeWidget(widgetId);
+        this.addDomainEvent(new WidgetDetachedFromTabEvent(this.id, widgetId, tab.id));
+      }
+    }
+
+    // Remove the widget
+    this.props.widgets.splice(widgetIndex, 1);
+    this.addDomainEvent(new WidgetRemovedEvent(this.id, widgetId, widget.title));
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Attach a widget to a tab
+   */
+  public attachWidgetToTab(widgetId: string, tabId: string): Result<void> {
+    const widget = this.getWidgetById(widgetId);
+    if (!widget) {
+      return Result.fail<void>(`Widget with ID "${widgetId}" not found`);
+    }
+
+    const tab = this.getTabById(tabId);
+    if (!tab) {
+      return Result.fail<void>(`Tab with ID "${tabId}" not found`);
+    }
+
+    // Check if already attached
+    if (tab.widgets.includes(widgetId)) {
+      return Result.ok<void>(); // Already attached, no-op
+    }
+
+    tab.addWidget(widgetId);
+    this.addDomainEvent(new WidgetAttachedToTabEvent(this.id, widgetId, tabId));
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Detach a widget from a tab
+   */
+  public detachWidgetFromTab(widgetId: string, tabId: string): Result<void> {
+    const tab = this.getTabById(tabId);
+    if (!tab) {
+      return Result.fail<void>(`Tab with ID "${tabId}" not found`);
+    }
+
+    if (!tab.widgets.includes(widgetId)) {
+      return Result.ok<void>(); // Not attached, no-op
+    }
+
+    tab.removeWidget(widgetId);
+    this.addDomainEvent(new WidgetDetachedFromTabEvent(this.id, widgetId, tabId));
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  // ============================================================
+  // Basic Info Update (Phase 1 - DDD Foundation)
+  // ============================================================
+
+  /**
+   * Update basic space info (name, description, visibility, settings)
+   * This is for the PATCH /api/spaces/[spaceId] refactor
+   */
+  public updateBasicInfo(
+    updates: {
+      name?: SpaceName;
+      description?: SpaceDescription;
+      visibility?: 'public' | 'private';
+      settings?: Partial<SpaceSettings>;
+    },
+    updatedBy: string
+  ): Result<void> {
+    const changedFields: string[] = [];
+
+    if (updates.name !== undefined && updates.name.value !== this.props.name.value) {
+      this.props.name = updates.name;
+      changedFields.push('name');
+    }
+
+    if (updates.description !== undefined && updates.description.value !== this.props.description.value) {
+      this.props.description = updates.description;
+      changedFields.push('description');
+    }
+
+    if (updates.visibility !== undefined && updates.visibility !== this.props.visibility) {
+      this.props.visibility = updates.visibility;
+      // Keep settings.isPublic in sync
+      this.props.settings.isPublic = updates.visibility === 'public';
+      changedFields.push('visibility');
+    }
+
+    if (updates.settings !== undefined) {
+      this.props.settings = { ...this.props.settings, ...updates.settings };
+      changedFields.push('settings');
+    }
+
+    if (changedFields.length > 0) {
+      this.addDomainEvent(new SpaceUpdatedEvent(this.id, changedFields, updatedBy));
+      this.updateLastActivity();
+    }
+
+    return Result.ok<void>();
+  }
+
+  // ============================================================
+  // Enhanced addTab and addWidget with events
+  // ============================================================
+
+  /**
+   * Create and add a new tab to the space
+   * Emits TabCreatedEvent
+   */
+  public createTab(props: {
+    name: string;
+    type: 'feed' | 'widget' | 'resource' | 'custom';
+    order?: number;
+    isVisible?: boolean;
+  }): Result<Tab> {
+    // Check for duplicate name
+    if (this.props.tabs.find(t => t.name.toLowerCase() === props.name.toLowerCase())) {
+      return Result.fail<Tab>('Tab with this name already exists');
+    }
+
+    // Determine order if not provided
+    const order = props.order ?? this.props.tabs.length;
+
+    const tabResult = Tab.create({
+      name: props.name,
+      type: props.type,
+      isDefault: false,
+      order,
+      widgets: [],
+      isVisible: props.isVisible ?? true,
+    });
+
+    if (tabResult.isFailure) {
+      return Result.fail<Tab>(tabResult.error ?? 'Tab creation failed');
+    }
+
+    const tab = tabResult.getValue();
+    this.props.tabs.push(tab);
+    this.addDomainEvent(new TabCreatedEvent(this.id, tab.id, tab.name, tab.type));
+    this.updateLastActivity();
+
+    return Result.ok<Tab>(tab);
+  }
+
+  /**
+   * Create and add a new widget to the space
+   * Emits WidgetCreatedEvent
+   */
+  public createWidget(props: {
+    type: 'calendar' | 'poll' | 'links' | 'files' | 'rss' | 'custom';
+    title: string;
+    config?: Record<string, any>;
+    order?: number;
+    position?: { x: number; y: number; width: number; height: number };
+  }): Result<Widget> {
+    const order = props.order ?? this.props.widgets.length;
+
+    const widgetResult = Widget.create({
+      type: props.type,
+      title: props.title,
+      config: props.config ?? {},
+      order,
+      position: props.position,
+      isVisible: true,
+      isEnabled: true,
+    });
+
+    if (widgetResult.isFailure) {
+      return Result.fail<Widget>(widgetResult.error ?? 'Widget creation failed');
+    }
+
+    const widget = widgetResult.getValue();
+    this.props.widgets.push(widget);
+    this.addDomainEvent(new WidgetCreatedEvent(this.id, widget.id, widget.type, widget.title));
+    this.updateLastActivity();
+
+    return Result.ok<Widget>(widget);
+  }
+
   public toData(): any {
     return {
       id: this.id,
       spaceId: this.props.spaceId,
       name: this.props.name,
+      slug: this.props.slug?.value,
       description: this.props.description,
       category: this.props.category,
       campusId: this.props.campusId,
       createdBy: this.props.createdBy,
-      members: this.props.members,
+      ownerId: this.owner.value,
+      members: this.props.members.map(m => ({
+        profileId: m.profileId.value,
+        role: m.role,
+        joinedAt: m.joinedAt
+      })),
+      leaderRequests: this.props.leaderRequests.map(r => ({
+        profileId: r.profileId.value,
+        status: r.status,
+        requestedAt: r.requestedAt,
+        reason: r.reason,
+        reviewedBy: r.reviewedBy?.value,
+        reviewedAt: r.reviewedAt,
+        rejectionReason: r.rejectionReason
+      })),
       tabs: this.props.tabs,
       widgets: this.props.widgets,
       settings: this.props.settings,

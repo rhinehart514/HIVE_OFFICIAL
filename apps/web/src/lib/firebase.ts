@@ -6,5 +6,17 @@
  * is handled in the @hive/firebase package.
  */
 
-export { app, auth, db, storage, validateCampusAccess, checkRateLimit } from '@hive/firebase';
+export {
+  app,
+  auth,
+  db,
+  storage,
+  validateCampusAccess,
+  checkRateLimit,
+  // Firebase AI (Gemini)
+  ai,
+  getGenerativeModel,
+  Schema,
+  GoogleAIBackend
+} from '@hive/firebase';
 export type { FirebaseApp, Auth, Firestore, FirebaseStorage, Analytics } from '@hive/firebase';

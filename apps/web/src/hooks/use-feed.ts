@@ -104,7 +104,37 @@ export interface PostInteraction {
   metadata?: Record<string, unknown>;
 }
 
-export function useFeed(options: FeedOptions = {}) {
+export interface CreatePostData {
+  content: string;
+  type: string;
+  visibility: string;
+  spaceId?: string;
+  attachments?: unknown[];
+  tags?: string[];
+  mentions?: string[];
+  poll?: Record<string, unknown>;
+  event?: Record<string, unknown>;
+  location?: Record<string, unknown>;
+}
+
+export interface UseFeedReturn {
+  posts: Post[];
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  error: string | null;
+  lastUpdated: Date | null;
+  createPost: (postData: CreatePostData) => Promise<void>;
+  likePost: (postId: string) => Promise<void>;
+  bookmarkPost: (postId: string) => Promise<void>;
+  sharePost: (postId: string) => Promise<void>;
+  commentOnPost: (postId: string, content: string) => Promise<void>;
+  loadMore: () => Promise<void>;
+  refresh: () => Promise<void>;
+  interactWithPost: (interaction: PostInteraction) => Promise<void>;
+}
+
+export function useFeed(options: FeedOptions = {}): UseFeedReturn {
   // Always call hooks at the top level
   const { user } = useAuth();
   const getAuthToken = user?.getIdToken;
@@ -160,17 +190,21 @@ export function useFeed(options: FeedOptions = {}) {
       const posts = Array.isArray(data.posts) ? data.posts : [];
 
       // Transform the posts to match our interface
-      const transformedPosts: Post[] = posts.map((post: Record<string, unknown>) => ({
-        ...post,
-        engagement: {
-          likes: post.engagement?.likes || 0,
-          comments: post.engagement?.comments || 0,
-          shares: post.engagement?.shares || 0,
-          views: post.engagement?.views || 0,
-          hasLiked: post.userInteractions?.hasLiked || false,
-          hasBookmarked: post.userInteractions?.hasBookmarked || false,
-        },
-      }));
+      const transformedPosts: Post[] = posts.map((post: Record<string, unknown>) => {
+        const engagement = post.engagement as Record<string, unknown> | undefined;
+        const userInteractions = post.userInteractions as Record<string, unknown> | undefined;
+        return {
+          ...post,
+          engagement: {
+            likes: (engagement?.likes as number) || 0,
+            comments: (engagement?.comments as number) || 0,
+            shares: (engagement?.shares as number) || 0,
+            views: (engagement?.views as number) || 0,
+            hasLiked: (userInteractions?.hasLiked as boolean) || false,
+            hasBookmarked: (userInteractions?.hasBookmarked as boolean) || false,
+          },
+        };
+      });
 
       setFeedState(prev => ({
         ...prev,
@@ -369,15 +403,15 @@ export function useFeed(options: FeedOptions = {}) {
   }, [interactWithPost]);
 
   // Load more posts
-  const loadMore = useCallback(() => {
+  const loadMore = useCallback(async () => {
     if (!feedState.isLoadingMore && feedState.hasMore) {
-      loadPosts(false);
+      await loadPosts(false);
     }
   }, [feedState.isLoadingMore, feedState.hasMore, loadPosts]);
 
   // Refresh feed
-  const refresh = useCallback(() => {
-    loadPosts(true);
+  const refresh = useCallback(async () => {
+    await loadPosts(true);
   }, [loadPosts]);
 
   // Stabilize options object to prevent unnecessary re-renders
@@ -412,7 +446,7 @@ export function useFeed(options: FeedOptions = {}) {
 
   // If real-time is enabled and available, return the real-time feed
   if (options.enableRealtime && realtimeFeedResult) {
-    return realtimeFeedResult;
+    return realtimeFeedResult as UseFeedReturn;
   }
 
   return {

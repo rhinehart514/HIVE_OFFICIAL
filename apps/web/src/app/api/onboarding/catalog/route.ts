@@ -1,12 +1,13 @@
-import { type NextRequest } from 'next/server';
-import { withErrors, _respond } from '@/lib/middleware';
+import { type NextRequest as _NextRequest } from 'next/server';
+import { withErrors } from '@/lib/middleware';
 import { getCatalog } from '@/server/onboarding-catalog-store';
 import { fetchCatalogFromFirestore } from '@/server/onboarding-catalog-firestore';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
-export const GET = withErrors(async (request: NextRequest, _ctx, respondFmt) => {
+export const GET = withErrors(async (request, _ctx, respondFmt) => {
   // Default to current campus when not specified
-  const campusId = (request.nextUrl.searchParams.get('campusId') || CURRENT_CAMPUS_ID).toLowerCase();
+  const url = new URL(request.url);
+  const campusId = (url.searchParams.get('campusId') || CURRENT_CAMPUS_ID).toLowerCase();
   const fs = await fetchCatalogFromFirestore(campusId);
   if (fs) return respondFmt.success(fs);
   // Fallback to in-memory defaults if Firestore not configured or no doc

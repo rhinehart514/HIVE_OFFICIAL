@@ -1,6 +1,16 @@
 /**
  * Feed Generation Service
  * Orchestrates personalized feed generation with SPEC.md algorithm
+ *
+ * Uses the 8-factor FeedRankingService for personalization:
+ * 1. Space Engagement (25%) - How engaged the user is with the source space
+ * 2. Content Recency (15%) - How recent the content is
+ * 3. Content Quality (20%) - Quality based on content type and completeness
+ * 4. Tool Interaction Value (15%) - Value of any tool that generated the content
+ * 5. Social Signals (10%) - Likes, comments, shares
+ * 6. Creator Influence (5%) - Creator's role and activity level
+ * 7. Diversity Factor (5%) - Bonus for content type variety
+ * 8. Temporal Relevance (5%) - Time-sensitive content (events, deadlines)
  */
 
 import { BaseApplicationService, ApplicationServiceContext, ServiceResult } from './base.service';
@@ -23,6 +33,15 @@ import {
   ISpaceRepository,
   IRitualRepository
 } from '../infrastructure/repositories/interfaces';
+import {
+  FeedRankingService,
+  RankedItem,
+  FeedRankingConfig
+} from '../domain/feed/services/feed-ranking.service';
+import {
+  GetPersonalizedFeedQueryHandler,
+  PersonalizedFeedResult
+} from './feed/queries/get-personalized-feed.query';
 
 export interface FeedGenerationOptions {
   limit?: number;
@@ -55,18 +74,86 @@ export class FeedGenerationService extends BaseApplicationService {
   private profileRepo: IProfileRepository;
   private spaceRepo: ISpaceRepository;
   private ritualRepo: IRitualRepository;
+  private rankingService: FeedRankingService;
+  private personalizedFeedHandler: GetPersonalizedFeedQueryHandler;
 
-  constructor(context?: Partial<ApplicationServiceContext>) {
+  constructor(
+    context?: Partial<ApplicationServiceContext>,
+    rankingConfig?: Partial<FeedRankingConfig>
+  ) {
     super(context);
     this.feedRepo = getFeedRepository();
     this.profileRepo = getProfileRepository();
     this.spaceRepo = getSpaceRepository();
     this.ritualRepo = getRitualRepository();
+    this.rankingService = new FeedRankingService(rankingConfig);
+    this.personalizedFeedHandler = new GetPersonalizedFeedQueryHandler(
+      this.feedRepo,
+      this.profileRepo,
+      this.spaceRepo,
+      rankingConfig
+    );
   }
 
   /**
-   * Generate personalized feed for a user
+   * Generate personalized feed using the 8-factor ranking algorithm
+   *
+   * This is the recommended method for feed generation as it uses the
+   * full ranking algorithm with diversity enforcement and quality thresholds.
+   *
+   * @param userId - User ID to generate feed for
+   * @param options - Feed generation options
+   * @returns Personalized feed with ranking metadata
+   */
+  async generatePersonalizedFeed(
+    userId: string,
+    options: {
+      limit?: number;
+      offset?: number;
+      spaceIds?: string[];
+      contentTypes?: ('tool_generated' | 'tool_enhanced' | 'space_event' | 'builder_announcement' | 'rss_import' | 'user_post')[];
+      minQualityScore?: number;
+      includeConnections?: boolean;
+      includeTrending?: boolean;
+    } = {}
+  ): Promise<Result<ServiceResult<PersonalizedFeedResult>>> {
+    return this.execute(async () => {
+      const result = await this.personalizedFeedHandler.execute({
+        userId,
+        campusId: this.context.campusId,
+        limit: options.limit,
+        offset: options.offset,
+        filters: {
+          spaceIds: options.spaceIds,
+          contentTypes: options.contentTypes,
+          minQualityScore: options.minQualityScore,
+          includeConnections: options.includeConnections,
+          includeTrending: options.includeTrending
+        }
+      });
+
+      if (result.isFailure) {
+        return Result.fail<ServiceResult<PersonalizedFeedResult>>(result.error!);
+      }
+
+      const feedResult = result.getValue();
+
+      return Result.ok<ServiceResult<PersonalizedFeedResult>>({
+        data: feedResult,
+        metadata: {
+          totalCount: feedResult.totalCount,
+          pageSize: options.limit || 20,
+          pageNumber: Math.floor((options.offset || 0) / (options.limit || 20)) + 1
+        }
+      });
+    }, 'FeedGeneration.generatePersonalizedFeed');
+  }
+
+  /**
+   * Generate personalized feed for a user (legacy method)
    * Implements SPEC.md algorithm with weighted factors
+   *
+   * @deprecated Use generatePersonalizedFeed for 8-factor ranking
    */
   async generateFeed(
     userId: string,

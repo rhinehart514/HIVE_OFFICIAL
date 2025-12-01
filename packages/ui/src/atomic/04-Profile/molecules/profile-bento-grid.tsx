@@ -1,22 +1,35 @@
 "use client";
 
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
   Calendar,
+  Flame,
   GripVertical,
   Maximize2,
   Minimize2,
   Search,
   Settings,
+  Sparkles,
+  Star,
   TrendingUp,
+  Trophy,
   Users,
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "../../../lib/utils";
+import {
+  premiumContainerVariants,
+  premiumItemVariants,
+} from "../../../lib/motion-variants";
 import { Button } from "../../00-Global/atoms/button";
 import { Card } from "../../00-Global/atoms/card";
+import { InView } from "../../../components/motion-primitives/in-view";
+import { ShineBorder } from "../../../components/motion-primitives/shine-border";
+import { BorderBeam } from "../../../components/motion-primitives/border-beam";
+import { SparklesText } from "../../../components/motion-primitives/sparkles-text";
 
 type GridCard = {
   id: string;
@@ -55,169 +68,95 @@ export interface ProfileBentoGridProps {
   className?: string;
 }
 
+// Identity & Connection focused default layout for profile bento grid
 const DEFAULT_LAYOUT: GridLayout = {
   cards: [
-    {
-      id: "spaces_hub",
-      type: "spaces_hub",
-      position: { x: 0, y: 0 },
-      size: "2x1",
-      visible: true,
-    },
-    {
-      id: "friends_network",
-      type: "friends_network",
-      position: { x: 1, y: 0 },
-      size: "2x1",
-      visible: true,
-    },
-    {
-      id: "active_now",
-      type: "active_now",
-      position: { x: 2, y: 0 },
-      size: "1x1",
-      visible: true,
-    },
-    {
-      id: "discovery",
-      type: "discovery",
-      position: { x: 3, y: 0 },
-      size: "1x1",
-      visible: true,
-    },
+    // Row 0: Friends (2x2 tall) + Spaces + Activity stacked
+    { id: "friends", type: "friends_network", position: { x: 0, y: 0 }, size: "2x2", visible: true },
+    { id: "spaces", type: "spaces_hub", position: { x: 2, y: 0 }, size: "2x1", visible: true },
+    { id: "mutual", type: "mutual_friends", position: { x: 2, y: 1 }, size: "2x1", visible: true },
+    // Row 2: Streak + Rep + Shared Spaces
+    { id: "streak", type: "streak", position: { x: 0, y: 2 }, size: "1x1", visible: true },
+    { id: "rep", type: "stats_rep", position: { x: 1, y: 2 }, size: "1x1", visible: true },
+    { id: "shared", type: "shared_spaces", position: { x: 2, y: 2 }, size: "2x1", visible: true },
   ],
   mobileLayout: [
-    {
-      id: "spaces_hub_mobile",
-      type: "spaces_hub",
-      position: { x: 0, y: 0 },
-      size: "2x1",
-      visible: true,
-    },
-    {
-      id: "friends_network_mobile",
-      type: "friends_network",
-      position: { x: 1, y: 0 },
-      size: "2x1",
-      visible: true,
-    },
+    // Mobile: 2-column layout, connection focused
+    { id: "friends_m", type: "friends_network", position: { x: 0, y: 0 }, size: "2x1", visible: true },
+    { id: "spaces_m", type: "spaces_hub", position: { x: 0, y: 1 }, size: "2x1", visible: true },
+    { id: "streak_m", type: "streak", position: { x: 0, y: 2 }, size: "1x1", visible: true },
+    { id: "rep_m", type: "stats_rep", position: { x: 1, y: 2 }, size: "1x1", visible: true },
   ],
-  lastModified: new Date(),
+  lastModified: null,
 };
 
+// HIVE Brand: "One bright note in a monochrome orchestra. Gold is scarce, purposeful, never decorative."
+// All cards are monochrome except achievements/rep which get gold accent
 const CARD_CONFIGS: Record<string, {
   title: string;
   icon: typeof Users;
-  color: string;
-  borderColor: string;
+  isGoldAccent?: boolean; // Only for achievements/rep
 }> = {
-  spaces_hub: {
-    title: "My Spaces",
-    icon: Users,
-    color: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
-    borderColor: "border-blue-500/20",
-  },
-  friends_network: {
-    title: "Friends Network",
-    icon: Users,
-    color: "bg-gradient-to-br from-purple-500/10 to-purple-600/10",
-    borderColor: "border-purple-500/20",
-  },
-  schedule_overlap: {
-    title: "Schedule Overlap",
-    icon: Calendar,
-    color: "bg-gradient-to-br from-green-500/10 to-green-600/10",
-    borderColor: "border-green-500/20",
-  },
-  active_now: {
-    title: "Active Now",
-    icon: Activity,
-    color: "bg-gradient-to-br from-orange-500/10 to-orange-600/10",
-    borderColor: "border-orange-500/20",
-  },
-  discovery: {
-    title: "Discover",
-    icon: Search,
-    color: "bg-gradient-to-br from-pink-500/10 to-pink-600/10",
-    borderColor: "border-pink-500/20",
-  },
-  vibe_check: {
-    title: "Campus Vibe",
-    icon: Zap,
-    color: "bg-gradient-to-br from-yellow-500/10 to-yellow-600/10",
-    borderColor: "border-yellow-500/20",
-  },
-  tools_created: {
-    title: "Tools",
-    icon: Zap,
-    color: "bg-gradient-to-br from-indigo-500/10 to-indigo-600/10",
-    borderColor: "border-indigo-500/20",
-  },
-  rituals_active: {
-    title: "Rituals",
-    icon: Activity,
-    color: "bg-gradient-to-br from-emerald-500/10 to-emerald-600/10",
-    borderColor: "border-emerald-500/20",
-  },
-  reputation: {
-    title: "Reputation",
-    icon: TrendingUp,
-    color: "bg-gradient-to-br from-amber-500/10 to-amber-600/10",
-    borderColor: "border-amber-500/20",
-  },
-} satisfies Record<
-  string,
-  {
-    title: string;
-    icon: typeof Users;
-    color: string;
-    borderColor: string;
-  }
->;
+  spaces_hub: { title: "Spaces", icon: Users },
+  friends_network: { title: "Network", icon: Users },
+  schedule_overlap: { title: "Schedule", icon: Calendar },
+  active_now: { title: "Active", icon: Activity },
+  discovery: { title: "Discover", icon: Search },
+  vibe_check: { title: "Vibe", icon: Zap },
+  tools_created: { title: "Tools", icon: Zap },
+  rituals_active: { title: "Rituals", icon: Activity },
+  reputation: { title: "Rep", icon: TrendingUp, isGoldAccent: true },
+  badges: { title: "Achievements", icon: Trophy, isGoldAccent: true },
+  interests: { title: "Interests", icon: Sparkles },
+  activity_timeline: { title: "Activity", icon: Activity },
+  streak: { title: "Streak", icon: Flame },
+  stats_spaces: { title: "Spaces", icon: Users },
+  stats_friends: { title: "Friends", icon: Users },
+  stats_rep: { title: "Rep", icon: Star, isGoldAccent: true },
+  mutual_friends: { title: "Mutuals", icon: Users },
+  shared_spaces: { title: "Shared", icon: Users },
+};
 
 function normalizeLayout(layout: Partial<GridLayout> | undefined): GridLayout {
-  if (!layout) {
-    return DEFAULT_LAYOUT;
-  }
+  // Use persisted layout if available and valid
+  if (layout?.cards && Array.isArray(layout.cards) && layout.cards.length > 0) {
+    // Validate each card has required properties
+    const validCards = layout.cards.filter(
+      (card): card is GridCard =>
+        card &&
+        typeof card.id === 'string' &&
+        typeof card.type === 'string' &&
+        card.position &&
+        typeof card.position.x === 'number' &&
+        typeof card.position.y === 'number' &&
+        typeof card.size === 'string'
+    );
 
-  const cards = Array.isArray(layout.cards) ? layout.cards : [];
-  const mobile = Array.isArray(layout.mobileLayout)
-    ? layout.mobileLayout
-    : cards;
+    if (validCards.length > 0) {
+      // Merge with defaults for missing properties
+      const normalizedCards = validCards.map((card) => ({
+        ...card,
+        visible: card.visible ?? true,
+      }));
 
-  const withPositions = (
-    items: Array<Partial<GridCard> | Record<string, any>>,
-    offset = 0,
-  ): GridCard[] =>
-    items.map((card, index) => {
-      const rawPos: any = (card as any).position;
-      const resolvedPos: { x: number; y: number } =
-        typeof rawPos === "number"
-          ? { x: rawPos, y: 0 }
-          : rawPos && typeof rawPos.x === "number" && typeof rawPos.y === "number"
-            ? rawPos
-            : { x: index + offset, y: 0 };
-
-      const size = ((card as any).size as GridSize) ?? "1x1";
-      const visible = (card as any).visible ?? true;
+      // Use persisted mobile layout or generate from cards
+      const mobileLayout = layout.mobileLayout && Array.isArray(layout.mobileLayout)
+        ? layout.mobileLayout.map((card) => ({
+            ...card,
+            visible: card.visible ?? true,
+          }))
+        : DEFAULT_LAYOUT.mobileLayout;
 
       return {
-        id: (card as any).id ?? `card-${index}`,
-        type: (card as any).type ?? "custom",
-        position: resolvedPos,
-        size,
-        visible,
-        customType: (card as any).customType,
-        title: (card as any).title,
-      } as GridCard;
-    });
+        cards: normalizedCards,
+        mobileLayout,
+        lastModified: layout.lastModified ?? null,
+      };
+    }
+  }
 
-  return {
-    ...layout,
-    cards: withPositions(cards as GridCard[]),
-    mobileLayout: withPositions(mobile as GridCard[]),
-    lastModified: layout.lastModified ?? null,
-  } as GridLayout;
+  // Fall back to default layout for new profiles or invalid data
+  return DEFAULT_LAYOUT;
 }
 
 /**
@@ -331,6 +270,7 @@ export function ProfileBentoGrid({
           cardProfile?.connections?.connections?.filter(
             (conn: any) => conn.sharedSpaces?.length > 0,
           ) ?? [];
+        const hasSpaces = activeSpaces.length > 0;
 
         return (
           <div className="mt-2 space-y-2">
@@ -338,26 +278,44 @@ export function ProfileBentoGrid({
               {activeSpaces.length || 0}
             </div>
             <div className="text-xs text-hive-text-secondary">
-              Active spaces
+              {hasSpaces ? "Active spaces" : "Discover your communities"}
             </div>
-            {card.size !== "1x1" && activeSpaces.length > 0 ? (
-              <div className="mt-3 space-y-1">
-                <div className="mb-1 text-xs text-hive-text-secondary">
+            {card.size !== "1x1" && hasSpaces ? (
+              <div className="mt-3">
+                <div className="mb-2 text-xs text-hive-text-secondary">
                   Recent activity
                 </div>
-                {activeSpaces.slice(0, 3).map((conn: any, index: number) => (
-                  <div
-                    key={index}
-                    className="truncate text-xs text-hive-text-primary"
-                  >
-                    {conn.sharedSpaces?.[0] ?? "Space"}
-                  </div>
-                ))}
+                {/* Tinder-style horizontal scroll with momentum */}
+                <div
+                  className="overflow-x-auto snap-x snap-mandatory scroll-smooth flex gap-2 pb-1 -mx-1 px-1"
+                  style={{
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                  }}
+                >
+                  {activeSpaces.slice(0, 5).map((conn: any, index: number) => (
+                    <motion.div
+                      key={index}
+                      className="snap-start flex-shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+                      whileHover={{ scale: 1.05, y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span className="text-xs text-hive-text-primary whitespace-nowrap">
+                        {conn.sharedSpaces?.[0] ?? "Space"}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
+            ) : card.size !== "1x1" ? (
+              <p className="mt-2 text-[10px] text-hive-text-secondary max-w-[160px]">
+                Join clubs, study groups, and campus communities
+              </p>
             ) : null}
             {card.size === "2x2" ? (
               <Button size="sm" variant="outline" className="mt-3 w-full">
-                Browse Spaces
+                {hasSpaces ? "Browse Spaces" : "Explore Spaces"}
               </Button>
             ) : null}
           </div>
@@ -371,9 +329,10 @@ export function ProfileBentoGrid({
           0;
         const connectionCount =
           cardProfile?.connections?.connections?.length ?? 0;
+        const hasConnections = friendCount > 0 || connectionCount > 0;
 
         return (
-          <div className="mt-2 space-y-2">
+          <div className="mt-2 space-y-2 h-full flex flex-col">
             <div className="flex gap-4">
               <div>
                 <div className="text-xl font-bold text-hive-text-primary">
@@ -391,23 +350,59 @@ export function ProfileBentoGrid({
               </div>
             </div>
 
-            {card.size === "2x2" && (friendCount > 0 || connectionCount > 0) ? (
-              <div className="mt-3">
-                <div className="mb-2 text-xs text-hive-text-secondary">
-                  Recently connected
-                </div>
-                <div className="flex -space-x-2">
-                  {Array.from({
-                    length: Math.min(5, friendCount + connectionCount),
-                  }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="h-8 w-8 rounded-full border-2 border-hive-background-primary bg-gradient-to-br from-hive-accent/40 to-hive-accent/20"
-                    />
-                  ))}
-                </div>
+            {card.size === "2x2" && (
+              <div className="mt-3 flex-1 flex flex-col">
+                {hasConnections ? (
+                  <>
+                    <div className="mb-2 text-xs text-hive-text-secondary">
+                      Recently connected
+                    </div>
+                    {/* Tinder-style avatar stack pop on hover */}
+                    <motion.div
+                      className="flex -space-x-2"
+                      whileHover="hover"
+                      initial="initial"
+                    >
+                      {Array.from({
+                        length: Math.min(5, friendCount + connectionCount),
+                      }).map((_, index) => (
+                        <motion.div
+                          key={index}
+                          className="h-8 w-8 rounded-full border-2 border-hive-background-primary bg-gradient-to-br from-hive-accent/40 to-hive-accent/20"
+                          variants={{
+                            initial: { y: 0, x: 0, scale: 1 },
+                            hover: {
+                              y: -4,
+                              x: index * 3,
+                              scale: 1.1,
+                              transition: {
+                                type: 'spring',
+                                stiffness: 300,
+                                damping: 20,
+                                delay: index * 0.05,
+                              },
+                            },
+                          }}
+                        />
+                      ))}
+                    </motion.div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-center items-center text-center py-4 rounded-xl bg-white/[0.02]">
+                    <Users className="w-8 h-8 text-neutral-400/40 mb-2" />
+                    <p className="text-[11px] font-medium text-white/70 mb-1">
+                      Your campus network starts here
+                    </p>
+                    <p className="text-[10px] text-hive-text-secondary max-w-[140px]">
+                      Find classmates and grow your HIVE
+                    </p>
+                  </div>
+                )}
+                <Button size="sm" variant="outline" className="mt-auto w-full text-xs rounded-lg">
+                  Find Friends
+                </Button>
               </div>
-            ) : null}
+            )}
           </div>
         );
       }
@@ -427,7 +422,7 @@ export function ProfileBentoGrid({
                 {activeFriends.length}
               </div>
               {isUserOnline ? (
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+                <div className="h-2 w-2 animate-pulse rounded-full bg-status-success" />
               ) : null}
             </div>
             <div className="text-xs text-hive-text-secondary">
@@ -439,7 +434,7 @@ export function ProfileBentoGrid({
                   {activeFriends.slice(0, 5).map((_: unknown, index: number) => (
                     <div
                       key={index}
-                      className="h-6 w-6 rounded-full border border-hive-background-primary bg-gradient-to-br from-green-400 to-green-600"
+                      className="h-6 w-6 rounded-full border border-neutral-950 bg-white/[0.08]"
                     />
                   ))}
                   {activeFriends.length > 5 ? (
@@ -505,8 +500,8 @@ export function ProfileBentoGrid({
                 : "No overlaps today"}
             </div>
             {beaconActive ? (
-              <div className="flex items-center gap-1 text-xs text-green-400">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-green-400" />
+              <div className="flex items-center gap-1 text-xs text-status-success">
+                <div className="h-2 w-2 animate-pulse rounded-full bg-status-success" />
                 Beacon at {beaconLocation}
               </div>
             ) : (
@@ -624,6 +619,7 @@ export function ProfileBentoGrid({
       }
 
       case "reputation": {
+        // HIVE Brand: reputation is an achievement, gold accent allowed
         const reputation = cardProfile?.stats?.reputation ?? 0;
         return (
           <div className="mt-2 space-y-2">
@@ -631,21 +627,337 @@ export function ProfileBentoGrid({
               <div className="text-2xl font-bold text-hive-text-primary">
                 {reputation}
               </div>
-              <TrendingUp size={14} className="text-green-400" />
+              <TrendingUp size={14} className="text-gold-500" />
             </div>
             <div className="text-xs text-hive-text-secondary">
               Reputation score
             </div>
             {card.size !== "1x1" ? (
               <div className="mt-2">
-                <div className="h-2 w-full rounded-full bg-hive-background-secondary">
+                <div className="h-2 w-full rounded-full bg-white/[0.06]">
                   <div
-                    className="h-2 rounded-full bg-gradient-to-r from-hive-accent to-green-500 transition-all duration-500"
+                    className="h-2 rounded-full bg-gold-500 transition-all duration-500"
                     style={{ width: `${Math.min(100, reputation)}%` }}
                   />
                 </div>
               </div>
             ) : null}
+          </div>
+        );
+      }
+
+      // ===== NEW MURU-INSPIRED CARD TYPES =====
+
+      case "badges": {
+        // Billion-dollar UI: SparklesText for achievements
+        const badges = cardProfile?.identity?.badges ?? cardProfile?.badges ?? [];
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <SparklesText
+                text={badges.length.toString()}
+                sparkleColor="#FFD700"
+                sparkleCount={8}
+                minSize={4}
+                maxSize={10}
+                className="text-3xl font-black text-white"
+              />
+              <Trophy size={18} className="text-gold-500" />
+            </div>
+            <div className="text-xs text-hive-text-secondary uppercase tracking-wider">
+              Achievements
+            </div>
+            {card.size !== "1x1" && badges.length > 0 && (
+              <motion.div
+                className="mt-3 flex flex-wrap gap-1.5"
+                whileHover="hover"
+                initial="initial"
+              >
+                {badges.slice(0, card.size === "2x2" ? 8 : 4).map((badge: any, i: number) => (
+                  <motion.span
+                    key={i}
+                    className="rounded-full bg-gold-500/15 px-2.5 py-1 text-xs font-medium text-gold-500 border border-gold-500/20"
+                    variants={{
+                      initial: { y: 0, scale: 1 },
+                      hover: {
+                        y: -3,
+                        scale: 1.08,
+                        transition: {
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 15,
+                          delay: i * 0.03,
+                        },
+                      },
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {badge.name ?? badge}
+                  </motion.span>
+                ))}
+                {badges.length > (card.size === "2x2" ? 8 : 4) && (
+                  <span className="text-xs text-hive-text-secondary">
+                    +{badges.length - (card.size === "2x2" ? 8 : 4)} more
+                  </span>
+                )}
+              </motion.div>
+            )}
+          </div>
+        );
+      }
+
+      case "interests": {
+        // HIVE Brand: monochrome tags, no colored decorative elements
+        const interests = cardProfile?.personal?.interests ?? cardProfile?.interests ?? [];
+        const maxTags = card.size === "1x1" ? 3 : card.size === "2x1" ? 6 : 10;
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="text-xs text-hive-text-secondary uppercase tracking-wider mb-2">
+              Into
+            </div>
+            {/* Tinder-style tag pop on hover */}
+            <motion.div
+              className="flex flex-wrap gap-1.5"
+              whileHover="hover"
+              initial="initial"
+            >
+              {interests.slice(0, maxTags).map((tag: string, i: number) => (
+                <motion.span
+                  key={i}
+                  className="rounded-full bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-neutral-400 border border-white/[0.08] hover:bg-white/[0.08] transition-colors cursor-pointer"
+                  variants={{
+                    initial: { y: 0, scale: 1 },
+                    hover: {
+                      y: -2,
+                      scale: 1.05,
+                      transition: {
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 20,
+                        delay: i * 0.02,
+                      },
+                    },
+                  }}
+                  whileHover={{ backgroundColor: 'rgba(255,255,255,0.12)' }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {tag}
+                </motion.span>
+              ))}
+            </motion.div>
+            {interests.length > maxTags && (
+              <div className="text-xs text-hive-text-secondary">
+                +{interests.length - maxTags} more
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case "activity_timeline": {
+        // HIVE Brand: monochrome accents
+        const activities = cardProfile?.activities ?? [];
+        const maxItems = card.size === "1x1" ? 2 : card.size === "2x1" ? 3 : 5;
+        return (
+          <div className="mt-2 space-y-2">
+            {activities.length > 0 ? (
+              <div className="space-y-2">
+                {activities.slice(0, maxItems).map((activity: any, i: number) => (
+                  <div key={i} className="flex items-start gap-2 text-xs">
+                    <div className="mt-1 h-1.5 w-1.5 rounded-full bg-neutral-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-hive-text-primary truncate block">
+                        {activity.action ?? activity.type ?? "Activity"}
+                        {activity.spaceName && ` in ${activity.spaceName}`}
+                      </span>
+                      <span className="text-hive-text-secondary text-[10px]">
+                        {activity.timestamp ? new Date(activity.timestamp).toLocaleDateString() : "Recently"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-hive-text-secondary">
+                No recent activity
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case "streak": {
+        const currentStreak = cardProfile?.stats?.currentStreak ?? 0;
+        const longestStreak = cardProfile?.stats?.longestStreak ?? currentStreak;
+        const hasStreak = currentStreak > 0;
+
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="text-3xl font-black text-white">{currentStreak}</div>
+              {/* Streak Ember: Charcoal ember at zero, lit flame when active */}
+              {hasStreak ? (
+                <Flame size={20} className="text-orange-400 animate-pulse" />
+              ) : (
+                <div className="relative">
+                  <Flame size={20} className="text-[#4A3830]" />
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{ opacity: [0.15, 0.3, 0.15] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Flame size={20} className="text-[#FF5722]" style={{ opacity: 0.2 }} />
+                  </motion.div>
+                </div>
+              )}
+            </div>
+            <div className="text-xs text-hive-text-secondary uppercase tracking-wider">
+              {hasStreak ? "Day Streak" : "Ready to ignite"}
+            </div>
+            {card.size !== "1x1" && (
+              <div className="mt-2 text-xs text-hive-text-secondary">
+                {hasStreak ? `Best: ${longestStreak} days` : "Return daily to build your streak"}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case "stats_spaces": {
+        const spacesCount = cardProfile?.stats?.spacesJoined ?? 0;
+        return (
+          <div className="mt-2 space-y-1">
+            <div className="text-3xl font-black text-white">{spacesCount}</div>
+            <div className="text-xs text-hive-text-secondary uppercase tracking-wider">
+              Spaces
+            </div>
+          </div>
+        );
+      }
+
+      case "stats_friends": {
+        const friendsCount = cardProfile?.stats?.friends ?? cardProfile?.connections?.friends?.length ?? 0;
+        return (
+          <div className="mt-2 space-y-1">
+            <div className="text-3xl font-black text-white">{friendsCount}</div>
+            <div className="text-xs text-hive-text-secondary uppercase tracking-wider">
+              Friends
+            </div>
+          </div>
+        );
+      }
+
+      case "stats_rep": {
+        // Premium Dark: Gold is the ONE accent, keep it clean
+        // Billion-dollar UI: SparklesText for premium feel
+        const rep = cardProfile?.stats?.reputation ?? 0;
+
+        return (
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center gap-2">
+              <SparklesText
+                text={rep.toLocaleString()}
+                sparkleColor="#FFD700"
+                sparkleCount={6}
+                minSize={3}
+                maxSize={8}
+                className="text-3xl font-bold text-gold-500 tabular-nums"
+              />
+              <Star size={18} className="text-gold-500" />
+            </div>
+            <div className="text-xs text-neutral-500 uppercase tracking-wider">
+              Rep
+            </div>
+          </div>
+        );
+      }
+
+      // ===== IDENTITY & CONNECTION CARD TYPES =====
+
+      case "mutual_friends": {
+        // HIVE Brand: monochrome styling
+        const connections = cardProfile?.connections?.connections ?? [];
+        const mutualFriends = connections.filter((conn: any) => conn.mutualCount > 0 || conn.isMutual);
+        const mutualCount = mutualFriends.length || (cardProfile?.stats?.mutualFriends ?? 0);
+        const maxDisplay = card.size === "1x1" ? 3 : card.size === "2x1" ? 5 : 8;
+
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="text-2xl font-bold text-white">{mutualCount}</div>
+              <Users size={16} className="text-neutral-400" />
+            </div>
+            <div className="text-xs text-hive-text-secondary">
+              Friends in common
+            </div>
+            {card.size !== "1x1" && mutualCount > 0 && (
+              <div className="mt-3">
+                <div className="flex -space-x-2">
+                  {Array.from({ length: Math.min(maxDisplay, mutualCount) }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-7 w-7 rounded-full border-2 border-neutral-950 bg-white/[0.08]"
+                    />
+                  ))}
+                  {mutualCount > maxDisplay && (
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-neutral-950 bg-neutral-900">
+                      <span className="text-[10px] text-hive-text-secondary">
+                        +{mutualCount - maxDisplay}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {card.size === "2x2" && (
+                  <Button size="sm" variant="outline" className="mt-4 w-full text-xs">
+                    View All Mutuals
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      case "shared_spaces": {
+        // HIVE Brand: monochrome, no colored accents
+        const connections = cardProfile?.connections?.connections ?? [];
+        const sharedSpacesList: string[] = [];
+        connections.forEach((conn: any) => {
+          if (conn.sharedSpaces) {
+            sharedSpacesList.push(...conn.sharedSpaces);
+          }
+        });
+        const uniqueSpaces = [...new Set(sharedSpacesList)];
+        const spaceCount = uniqueSpaces.length || (cardProfile?.stats?.sharedSpaces ?? 0);
+        const maxDisplay = card.size === "1x1" ? 2 : card.size === "2x1" ? 3 : 5;
+
+        return (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="text-2xl font-bold text-white">{spaceCount}</div>
+              <Users size={16} className="text-neutral-400" />
+            </div>
+            <div className="text-xs text-hive-text-secondary">
+              Spaces in common
+            </div>
+            {card.size !== "1x1" && spaceCount > 0 && (
+              <div className="mt-3 space-y-1.5">
+                {uniqueSpaces.slice(0, maxDisplay).map((space, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg bg-white/[0.04] px-2.5 py-1.5"
+                  >
+                    <div className="h-2 w-2 rounded-full bg-neutral-400" />
+                    <span className="text-xs text-white truncate">{space}</span>
+                  </div>
+                ))}
+                {spaceCount > maxDisplay && (
+                  <div className="text-xs text-hive-text-secondary px-2">
+                    +{spaceCount - maxDisplay} more spaces
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       }
@@ -661,7 +973,7 @@ export function ProfileBentoGrid({
     }
   };
 
-  const renderCard = (card: GridCard) => {
+  const renderCard = (card: GridCard, index: number) => {
     const resolvedType =
       card.type === "custom" ? (card.customType as string | undefined) ?? card.type : card.type;
 
@@ -670,92 +982,160 @@ export function ProfileBentoGrid({
       CARD_CONFIGS[card.customType ?? ""] ?? {
         title: card.title ?? "Widget",
         icon: Settings,
-        color: "bg-hive-background-secondary/60",
-        borderColor: "border-hive-border",
       };
 
-    return (
-      <Card
-        key={card.id}
-        draggable={editable}
-        onDragStart={(event) => handleDragStart(event, card.id)}
-        onDragOver={handleDragOver}
-        onDrop={(event) => handleDrop(event, card.position)}
-        className={cn(
-          "group relative overflow-hidden rounded-3xl border border-white/10 bg-[color-mix(in_srgb,var(--hive-background-overlay,rgba(10,10,18,0.9)) 80%,transparent)] shadow-[0_18px_45px_rgba(0,0,0,0.45)] backdrop-blur-2xl transition-shadow",
-          card.size === "2x2" ? "row-span-2" : undefined,
-          card.size === "2x1" ? "col-span-2" : undefined,
-          card.size === "1x2" ? "row-span-2" : undefined,
-          config.borderColor,
-        )}
-      >
-        <div className={cn("relative rounded-t-[inherit] px-4 pt-4", config.color)}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-caps text-[color-mix(in_srgb,var(--hive-text-secondary,#C0C2CC) 70%,transparent)]">
-                {config.title}
-              </div>
-              <div className="text-sm text-[color-mix(in_srgb,var(--hive-text-secondary,#C0C2CC) 78%,transparent)]">
-                {card.title ?? cardTypeLabel(resolvedType)}
-              </div>
-            </div>
-            <config.icon className="h-5 w-5 text-[var(--hive-brand-primary,#FFD700)]" />
-          </div>
+    // Gold accent ONLY for achievements/rep (brand rule)
+    const isGoldAccent = config.isGoldAccent ?? false;
 
-          {editable ? (
-            <div className="absolute right-3 top-3 flex gap-1 rounded-full bg-black/40 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+    // Calculate grid placement from card size and position
+    const [cols, rows] = card.size.split("x").map(Number);
+    const colspan = cols || 1;
+    const rowspan = rows || 1;
+
+    // Explicit CSS Grid positioning
+    const gridStyle = {
+      gridColumn: `${card.position.x + 1} / span ${colspan}`,
+      gridRow: `${card.position.y + 1} / span ${rowspan}`,
+    };
+
+    // Size-based min-heights for proper card sizing
+    const sizeClasses = {
+      "1x1": "min-h-[120px]",
+      "2x1": "min-h-[120px]",
+      "2x2": "min-h-[260px]",
+      "3x1": "min-h-[120px]",
+      "3x2": "min-h-[260px]",
+      "4x1": "min-h-[120px]",
+    };
+    const minHeightClass = sizeClasses[card.size as keyof typeof sizeClasses] ?? "min-h-[120px]";
+
+    // Determine if this is a hero card (2x2) vs stat card (1x1)
+    const isHeroCard = card.size === "2x2";
+    const isWideCard = card.size === "2x1" || card.size === "3x1";
+
+    // Premium Dark: Solid backgrounds, subtle border hover, no 3D transforms
+    // Billion-dollar UI: ShineBorder for gold cards, BorderBeam for hero cards
+    return (
+      <InView
+        key={card.id}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: { opacity: 1 },
+        }}
+        transition={{ duration: 0.3, delay: index * 0.03 }}
+        once={true}
+        style={gridStyle}
+        className="contents"
+      >
+        <div
+          className={cn(
+            "group relative overflow-hidden cursor-pointer rounded-xl",
+            minHeightClass,
+            // Premium Dark: Solid backgrounds, subtle borders
+            "bg-neutral-900 border border-neutral-800",
+            // Simple hover: border color change only
+            "transition-colors duration-200",
+            "hover:border-neutral-700",
+            // Gold accent cards get subtle gold border on hover
+            isGoldAccent && "hover:border-gold-500/30",
+          )}
+          style={gridStyle}
+        >
+          {/* Premium border effects - Billion-dollar UI patterns */}
+          {isGoldAccent && (
+            <ShineBorder
+              shineColor={['#FFD700', '#FFA500', '#FFD700']}
+              duration={8}
+              borderWidth={1}
+              className="opacity-60 group-hover:opacity-100 transition-opacity"
+            />
+          )}
+          {isHeroCard && !isGoldAccent && (
+            <BorderBeam
+              size={100}
+              duration={15}
+              colorFrom="#A1A1AA"
+              colorTo="#525252"
+              borderWidth={1}
+              className="opacity-0 group-hover:opacity-50 transition-opacity"
+            />
+          )}
+          {/* Card header */}
+          <div className={cn("px-4 pt-4 pb-1", isHeroCard && "px-5 pt-5")}>
+            <div className="flex items-center justify-between">
+              <span className={cn(
+                "uppercase tracking-wider text-neutral-500 font-medium",
+                isHeroCard ? "text-sm" : "text-xs"
+              )}>
+                {config.title}
+              </span>
+              <config.icon className={cn(
+                isGoldAccent ? "text-gold-500" : "text-neutral-600",
+                isHeroCard ? "h-5 w-5" : "h-4 w-4"
+              )} />
+            </div>
+
+            {/* Edit controls */}
+            {editable && (
               <button
                 type="button"
                 onClick={() => toggleCardSize(card.id)}
-                className="rounded p-1 hover:bg-white/10"
+                className="absolute right-3 top-3 w-6 h-6 rounded-md bg-neutral-800 flex items-center justify-center opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity"
               >
                 {card.size === "2x2" ? (
-                  <Minimize2 size={14} />
+                  <Minimize2 size={12} className="text-neutral-400" />
                 ) : (
-                  <Maximize2 size={14} />
+                  <Maximize2 size={12} className="text-neutral-400" />
                 )}
               </button>
-              <button
-                type="button"
-                className="cursor-move rounded p-1 hover:bg-white/10"
-              >
-                <GripVertical size={14} />
-              </button>
-            </div>
-          ) : null}
-        </div>
+            )}
+          </div>
 
-        <div className="px-4 pb-4">{renderCardContent(card)}</div>
-      </Card>
+          {/* Card content */}
+          <div className={cn("px-4 pb-4", isHeroCard && "px-5 pb-5")}>{renderCardContent(card)}</div>
+        </div>
+      </InView>
     );
   };
 
   return (
-    <div
+    <motion.div
       ref={gridRef}
+      variants={premiumContainerVariants}
+      initial="hidden"
+      animate="visible"
       className={cn(
-        "grid gap-4 p-4",
+        "grid gap-3",
         isMobile
-          ? "grid-cols-2"
-          : "sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
+          ? "grid-cols-2 auto-rows-[minmax(100px,auto)]"
+          : "grid-cols-4 auto-rows-[minmax(120px,auto)]",
         className,
       )}
     >
-      {activeCards.filter((card) => card.visible ?? true).map(renderCard)}
+      <AnimatePresence mode="popLayout">
+        {activeCards
+          .filter((card) => card.visible ?? true)
+          .map((card, index) => renderCard(card, index))}
+      </AnimatePresence>
 
-      {editable ? (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button
-            variant="default"
-            size="sm"
-            className="shadow-lg"
+      {editable && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => onLayoutChange?.(layout as BentoGridLayout)}
+            className="px-5 py-2.5 rounded-full text-sm font-medium bg-white/90 text-neutral-950 hover:bg-white shadow-[0_8px_32px_rgba(0,0,0,0.3)] backdrop-blur-sm transition-colors"
           >
             Save Layout
-          </Button>
-        </div>
-      ) : null}
-    </div>
+          </motion.button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 

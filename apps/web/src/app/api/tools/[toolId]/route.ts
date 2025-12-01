@@ -1,14 +1,14 @@
-import type { _NextRequest } from "next/server";
-import { _NextResponse } from "next/server";
-import { _getAuth } from "firebase-admin/auth";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { _z } from "zod";
-import { _ApiResponseHelper, _HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
-import { withAuthAndErrors, _withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { z } from "zod";
+import { ApiResponseHelper, HttpStatus, ErrorCodes } from "@/lib/api-response-types";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import {
   UpdateToolSchema,
-  _ToolSchema,
+  ToolSchema,
   getNextVersion,
   validateToolStructure,
 } from "@hive/core";
@@ -18,11 +18,11 @@ const db = getFirestore();
 
 // GET /api/tools/[toolId] - Get tool details
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -73,17 +73,17 @@ export const GET = withAuthAndErrors(async (
 
 // PUT /api/tools/[toolId] - Update tool
 export const PUT = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { toolId } = await params;
     const body = await request.json();
     // Best-effort validation using core's lightweight schema helpers
     let updateData: Record<string, unknown> = body as Record<string, unknown>;
     try {
-      const maybeSafeParse = (UpdateToolSchema as Record<string, unknown>)?.safeParse;
+      const maybeSafeParse = (UpdateToolSchema as unknown as Record<string, unknown>)?.safeParse;
       if (typeof maybeSafeParse === 'function') {
         const parsed = maybeSafeParse(body) as { success?: boolean; data?: Record<string, unknown> };
         if (parsed && parsed.success) {
@@ -125,9 +125,9 @@ export const PUT = withAuthAndErrors(async (
     }
 
     // Determine version change type if elements changed
-    let newVersion = currentTool.currentVersion;
+    let newVersion = (currentTool.currentVersion as string) || '1.0.0';
     if (updateData.elements && Array.isArray(updateData.elements) && Array.isArray(currentTool.elements) && updateData.elements.length !== currentTool.elements.length) {
-      newVersion = getNextVersion(currentTool.currentVersion as string);
+      newVersion = getNextVersion(newVersion);
     }
 
     // Prepare update data
@@ -165,7 +165,8 @@ export const PUT = withAuthAndErrors(async (
         versionChanged: newVersion !== currentTool.currentVersion,
         newVersion: newVersion,
         elementsCount:
-          updateData.elements?.length || currentTool.elements.length,
+          (Array.isArray(updateData.elements) ? updateData.elements.length : 0) ||
+          (Array.isArray(currentTool.elements) ? currentTool.elements.length : 0),
         changeType: updateData.elements ? 'minor' : 'config',
       } });
 
@@ -179,11 +180,11 @@ export const PUT = withAuthAndErrors(async (
 
 // DELETE /api/tools/[toolId] - Delete tool
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ toolId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 

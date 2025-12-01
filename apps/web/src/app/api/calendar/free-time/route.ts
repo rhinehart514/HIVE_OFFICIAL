@@ -18,12 +18,12 @@ interface FreeTimeSlot {
 
 // GET - Find free time slots
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   _context,
   respond
 ) => {
   try {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
@@ -49,7 +49,7 @@ export const GET = withAuthAndErrors(async (
       const dayEvents = await getEventsForDate(userId, dateStr);
       
       // Sort events by start time
-      dayEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+      dayEvents.sort((a, b) => new Date(a.startDate as string).getTime() - new Date(b.startDate as string).getTime());
 
       // Find free time slots for this day
       const dayFreeSlots = findFreeTimeSlotsForDay(
@@ -82,7 +82,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       `Error finding free time at /api/calendar/free-time`,
-      error instanceof Error ? error : new Error(String(error))
+      { error: error instanceof Error ? error.message : String(error) }
     );
     return respond.error("Failed to find free time", "INTERNAL_ERROR", { status: 500 });
   }
@@ -184,7 +184,7 @@ function findFreeTimeSlotsForDay(
 
   // Check time before first event
   const firstEvent = events[0];
-  const firstEventStart = new Date(firstEvent.startDate);
+  const firstEventStart = new Date(firstEvent.startDate as string);
   if (dayStart < firstEventStart) {
     const duration = (firstEventStart.getTime() - dayStart.getTime()) / (1000 * 60);
     if (duration >= minDuration) {
@@ -200,8 +200,8 @@ function findFreeTimeSlotsForDay(
 
   // Check gaps between events
   for (let i = 0; i < events.length - 1; i++) {
-    const currentEventEnd = new Date(events[i].endDate);
-    const nextEventStart = new Date(events[i + 1].startDate);
+    const currentEventEnd = new Date(events[i].endDate as string);
+    const nextEventStart = new Date(events[i + 1].startDate as string);
     
     if (currentEventEnd < nextEventStart) {
       const duration = (nextEventStart.getTime() - currentEventEnd.getTime()) / (1000 * 60);
@@ -219,7 +219,7 @@ function findFreeTimeSlotsForDay(
 
   // Check time after last event
   const lastEvent = events[events.length - 1];
-  const lastEventEnd = new Date(lastEvent.endDate);
+  const lastEventEnd = new Date(lastEvent.endDate as string);
   if (lastEventEnd < dayEnd) {
     const duration = (dayEnd.getTime() - lastEventEnd.getTime()) / (1000 * 60);
     if (duration >= minDuration) {

@@ -1,6 +1,11 @@
 import { z } from "zod";
-import { _getFirestore, _FieldValue } from "firebase-admin/firestore";
 import * as admin from 'firebase-admin';
+import { Result } from "@hive/core/domain";
+import {
+  createServerSpaceManagementService,
+  type SpaceMemberData,
+  type SpaceServiceCallbacks
+} from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
@@ -11,14 +16,14 @@ const leaveSpaceSchema = z.object({
 });
 
 /**
- * Leave a space manually - Updated for flat collection structure
+ * Leave a space manually - Updated for DDD with flat collection structure
  * POST /api/spaces/leave
  */
 export const POST = withAuthValidationAndErrors(
   leaveSpaceSchema,
-  async (request: AuthenticatedRequest, context, body: z.infer<typeof leaveSpaceSchema>, respond) => {
+  async (request, _context, body: z.infer<typeof leaveSpaceSchema>, respond) => {
     const { spaceId } = body;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     // SECURITY: Use secure membership validation with campus isolation
     const membershipValidation = await validateSecureSpaceMembership(userId, spaceId);
@@ -31,55 +36,97 @@ export const POST = withAuthValidationAndErrors(
     const space = membershipValidation.space!;
     const memberData = membershipValidation.membership!;
 
-    // Get the membership document for updating
-    const membershipQuery = dbAdmin.collection('spaceMembers')
-      .where('spaceId', '==', spaceId)
-      .where('userId', '==', userId)
-      .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1);
-
-    const membershipSnapshot = await membershipQuery.get();
-    const memberDoc = membershipSnapshot.docs[0];
-
-    // Prevent owners from leaving if they're the only owner
-    if (memberData.role === "owner") {
-      // Check if there are other owners
-      const otherOwnersQuery = dbAdmin.collection('spaceMembers')
-        .where('spaceId', '==', spaceId)
-        .where('role', '==', 'owner')
-        .where('isActive', '==', true)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
-        .limit(2);
-      
-      const otherOwnersSnapshot = await otherOwnersQuery.get();
-      
-      if (otherOwnersSnapshot.size <= 1) {
-        return respond.error("Cannot leave space: You are the only owner. Transfer ownership or promote another member first.", "BUSINESS_RULE_VIOLATION", { status: 409 });
+    // Create callbacks for DDD service
+    const callbacks: SpaceServiceCallbacks = {
+      findSpaceMember: async (spaceIdParam: string, userIdParam: string): Promise<Result<SpaceMemberData | null>> => {
+        try {
+          const query = dbAdmin.collection('spaceMembers')
+            .where('spaceId', '==', spaceIdParam)
+            .where('userId', '==', userIdParam)
+            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .limit(1);
+          const snapshot = await query.get();
+          if (snapshot.empty) {
+            return Result.ok(null);
+          }
+          const doc = snapshot.docs[0];
+          const data = doc.data();
+          return Result.ok({
+            spaceId: data.spaceId,
+            userId: data.userId,
+            campusId: data.campusId,
+            role: data.role,
+            joinedAt: data.joinedAt?.toDate?.() || new Date(),
+            isActive: data.isActive,
+            permissions: data.permissions || ['post'],
+            joinMethod: data.joinMethod || 'manual'
+          });
+        } catch (error) {
+          return Result.fail(`Failed to find member: ${error}`);
+        }
+      },
+      updateSpaceMember: async (spaceIdParam: string, userIdParam: string, updates): Promise<Result<void>> => {
+        try {
+          const query = dbAdmin.collection('spaceMembers')
+            .where('spaceId', '==', spaceIdParam)
+            .where('userId', '==', userIdParam)
+            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .limit(1);
+          const snapshot = await query.get();
+          if (!snapshot.empty) {
+            const updateData: Record<string, unknown> = {};
+            if (updates.isActive !== undefined) updateData.isActive = updates.isActive;
+            if (updates.leftAt) updateData.leftAt = admin.firestore.FieldValue.serverTimestamp();
+            await snapshot.docs[0].ref.update(updateData);
+          }
+          return Result.ok<void>();
+        } catch (error) {
+          return Result.fail<void>(`Failed to update member: ${error}`);
+        }
+      },
+      updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
+        try {
+          const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
+          const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+          if (metrics.memberCountDelta) {
+            updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
+          }
+          if (metrics.activeCountDelta) {
+            updates['metrics.activeMembers'] = admin.firestore.FieldValue.increment(metrics.activeCountDelta);
+          }
+          await spaceRef.update(updates);
+          return Result.ok<void>();
+        } catch (error) {
+          return Result.fail<void>(`Failed to update metrics: ${error}`);
+        }
       }
+    };
+
+    // Use DDD SpaceManagementService
+    const spaceService = createServerSpaceManagementService(
+      { userId, campusId: CURRENT_CAMPUS_ID },
+      callbacks
+    );
+
+    const leaveResult = await spaceService.leaveSpace(userId, { spaceId });
+
+    if (leaveResult.isFailure) {
+      const errorMessage = leaveResult.error || 'Failed to leave space';
+      if (errorMessage.includes('only owner')) {
+        return respond.error(errorMessage, "BUSINESS_RULE_VIOLATION", { status: 409 });
+      }
+      if (errorMessage.includes('Not a member')) {
+        return respond.error(errorMessage, "RESOURCE_NOT_FOUND", { status: 404 });
+      }
+      logger.error('Failed to leave space via DDD service', { error: errorMessage, userId, spaceId });
+      return respond.error(errorMessage, "INTERNAL_ERROR", { status: 500 });
     }
 
-    // Perform the leave operation atomically
-    const batch = dbAdmin.batch();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const result = leaveResult.getValue().data;
 
-    // Mark membership as inactive instead of deleting
-    batch.update(memberDoc.ref, {
-      isActive: false,
-      leftAt: now
-    });
-
-    // Decrement the space's member count
-    const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
-    batch.update(spaceRef, {
-      'metrics.memberCount': admin.firestore.FieldValue.increment(-1),
-      'metrics.activeMembers': admin.firestore.FieldValue.increment(-1),
-      updatedAt: now
-    });
-
-    // Record leave activity with secure campus metadata
+    // Record leave activity with secure campus metadata (kept separate from DDD for audit purposes)
     const activityRef = dbAdmin.collection('activityEvents').doc();
-    batch.set(activityRef, addSecureCampusMetadata({
+    await activityRef.set(addSecureCampusMetadata({
       userId,
       type: 'space_leave',
       spaceId,
@@ -88,18 +135,15 @@ export const POST = withAuthValidationAndErrors(
       metadata: {
         spaceName: space.name,
         spaceType: space.type,
-        previousRole: memberData.role
+        previousRole: result.previousRole
       }
     }));
 
-    // Execute all operations atomically
-    await batch.commit();
-
-    logger.info('✅ User left space successfully', {
+    logger.info('✅ User left space via DDD successfully', {
       userId,
       spaceId,
       spaceName: space.name,
-      previousRole: memberData.role,
+      previousRole: result.previousRole,
       endpoint: '/api/spaces/leave'
     });
 

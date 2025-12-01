@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { _NextRequest, NextResponse } from 'next/server';
+import { NextRequest as _NextRequest, NextResponse } from 'next/server';
 
 // Mock Next.js server components
 vi.mock('next/server', () => ({

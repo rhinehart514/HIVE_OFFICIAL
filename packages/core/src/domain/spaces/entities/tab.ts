@@ -120,4 +120,66 @@ export class Tab extends Entity<TabProps> {
   public setVisibility(isVisible: boolean): void {
     this.props.isVisible = isVisible;
   }
+
+  /**
+   * Update the tab name
+   */
+  public setName(name: string): Result<void> {
+    if (!name || name.trim().length === 0) {
+      return Result.fail<void>('Tab name cannot be empty');
+    }
+    if (name.length > 50) {
+      return Result.fail<void>('Tab name cannot exceed 50 characters');
+    }
+    this.props.name = name.trim();
+    this.props.title = name.trim(); // Keep title in sync
+    return Result.ok<void>();
+  }
+
+  /**
+   * Update multiple properties at once
+   * Returns list of fields that were actually changed
+   */
+  public update(updates: {
+    name?: string;
+    order?: number;
+    isVisible?: boolean;
+  }): Result<{ changedFields: string[] }> {
+    const changedFields: string[] = [];
+
+    if (updates.name !== undefined && updates.name !== this.props.name) {
+      const nameResult = this.setName(updates.name);
+      if (nameResult.isFailure) {
+        return Result.fail<{ changedFields: string[] }>(nameResult.error ?? 'Name update failed');
+      }
+      changedFields.push('name');
+    }
+
+    if (updates.order !== undefined && updates.order !== this.props.order) {
+      this.setOrder(updates.order);
+      changedFields.push('order');
+    }
+
+    if (updates.isVisible !== undefined && updates.isVisible !== this.props.isVisible) {
+      this.setVisibility(updates.isVisible);
+      changedFields.push('isVisible');
+    }
+
+    return Result.ok<{ changedFields: string[] }>({ changedFields });
+  }
+
+  /**
+   * Archive the tab (soft delete)
+   */
+  public archive(): void {
+    this.props.isArchived = true;
+    this.props.isVisible = false;
+  }
+
+  /**
+   * Unarchive the tab
+   */
+  public unarchive(): void {
+    this.props.isArchived = false;
+  }
 }

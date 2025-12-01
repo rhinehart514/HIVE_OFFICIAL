@@ -1,14 +1,22 @@
-import { withAuthAndErrors, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/logger";
-import type { _Space } from "@hive/core";
+import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
+import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 /**
  * SPEC.md Behavioral Psychology Algorithm:
  * Score = (AnxietyRelief × 0.4) + (SocialProof × 0.3) + (InsiderAccess × 0.3)
  */
-type BehavioralSpace = Record<string, unknown> & {
+interface BehavioralSpace {
+  id: string;
+  name: string;
+  slug?: string;
+  description: string;
+  category: string;
+  memberCount: number;
+  isVerified: boolean;
+  isPrivate: boolean;
   anxietyReliefScore: number;
   socialProofScore: number;
   insiderAccessScore: number;
@@ -16,10 +24,18 @@ type BehavioralSpace = Record<string, unknown> & {
   joinToActiveRate: number;
   mutualConnections: number;
   friendsInSpace: number;
-};
+}
 
-export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, context, respond) => {
-  const userId = request.user.uid;
+/**
+ * GET /api/spaces/recommended - Get personalized space recommendations
+ *
+ * Uses behavioral psychology algorithm from SPEC.md:
+ * - Anxiety Relief: Spaces that address common student anxieties
+ * - Social Proof: Spaces with friends/connections
+ * - Insider Access: Exclusive/invite-only spaces
+ */
+export const GET = withAuthAndErrors(async (request, context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
 
   try {
     // Get user profile for personalization
@@ -30,42 +46,41 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       return respond.error("User profile not found", "NOT_FOUND", { status: 404 });
     }
 
-    // Get user's connections and friends for social proof
+    // Get user's connections for social proof
     const connectionsSnapshot = await dbAdmin
       .collection('connections')
       .where('userId', '==', userId)
       .where('status', '==', 'connected')
       .get();
-
     const connectionIds = connectionsSnapshot.docs.map(doc => doc.data().connectedUserId);
 
+    // Get user's friends
     const friendsSnapshot = await dbAdmin
       .collection('friends')
       .where('userId', '==', userId)
       .where('status', '==', 'accepted')
       .get();
-
     const friendIds = friendsSnapshot.docs.map(doc => doc.data().friendId);
 
-    // Get all spaces with campus isolation
-    const spacesSnapshot = await dbAdmin
-      .collection('spaces')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .where('isActive', '==', true)
-      .limit(100)
-      .get();
+    // Use DDD repository to get spaces
+    const spaceRepo = getServerSpaceRepository();
+    const spacesResult = await spaceRepo.findByCampus(CURRENT_CAMPUS_ID, 100);
 
-    const spaces: BehavioralSpace[] = [];
+    if (spacesResult.isFailure) {
+      logger.error('Failed to load spaces for recommendations', { error: spacesResult.error });
+      return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
+    }
+
+    const allSpaces = spacesResult.getValue();
+    const scoredSpaces: BehavioralSpace[] = [];
 
     // Calculate behavioral scores for each space
-    for (const spaceDoc of spacesSnapshot.docs) {
-      const spaceData = spaceDoc.data() as Record<string, unknown>;
-
+    for (const space of allSpaces) {
       // Get member data for social proof calculation
       const membersSnapshot = await dbAdmin
         .collection('spaceMembers')
-        .where('spaceId', '==', spaceDoc.id)
-        .where('status', '==', 'active')
+        .where('spaceId', '==', space.spaceId.value)
+        .where('isActive', '==', true)
         .limit(100)
         .get();
 
@@ -75,18 +90,14 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       const mutualConnections = memberIds.filter(id => connectionIds.includes(id)).length;
       const friendsInSpace = memberIds.filter(id => friendIds.includes(id)).length;
 
-      // Calculate anxiety relief score based on space activity and category
-      const anxietyReliefScore = calculateAnxietyReliefScore(spaceData, userData);
-
-      // Calculate social proof score
+      // Calculate behavioral scores
+      const anxietyReliefScore = calculateAnxietyReliefScore(space, userData);
       const socialProofScore = calculateSocialProofScore(
         mutualConnections,
         friendsInSpace,
-        spaceData.memberCount || 0
+        space.memberCount
       );
-
-      // Calculate insider access score
-      const insiderAccessScore = calculateInsiderAccessScore(spaceData);
+      const insiderAccessScore = calculateInsiderAccessScore(space);
 
       // Overall recommendation score (SPEC.md formula)
       const recommendationScore =
@@ -95,11 +106,17 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
         (insiderAccessScore * 0.3);
 
       // Calculate join-to-active rate
-      const joinToActiveRate = calculateJoinToActiveRate(spaceData, membersSnapshot.size);
+      const joinToActiveRate = calculateJoinToActiveRate(space.memberCount, membersSnapshot.size);
 
-      spaces.push({
-        ...spaceData,
-        id: spaceDoc.id,
+      scoredSpaces.push({
+        id: space.spaceId.value,
+        name: space.name.value,
+        slug: space.slug?.value,
+        description: space.description.value,
+        category: space.category.value,
+        memberCount: space.memberCount,
+        isVerified: space.isVerified,
+        isPrivate: !space.isPublic,
         anxietyReliefScore,
         socialProofScore,
         insiderAccessScore,
@@ -111,18 +128,18 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
     }
 
     // Sort by recommendation score
-    spaces.sort((a, b) => b.recommendationScore - a.recommendationScore);
+    scoredSpaces.sort((a, b) => b.recommendationScore - a.recommendationScore);
 
     // Categorize spaces for SPEC.md sections
-    const panicRelief = spaces
+    const panicRelief = scoredSpaces
       .filter(s => s.anxietyReliefScore > 0.6)
       .slice(0, 5);
 
-    const whereYourFriendsAre = spaces
+    const whereYourFriendsAre = scoredSpaces
       .filter(s => s.socialProofScore > 0.5 && (s.friendsInSpace > 0 || s.mutualConnections > 2))
       .slice(0, 5);
 
-    const insiderAccess = spaces
+    const insiderAccess = scoredSpaces
       .filter(s => s.insiderAccessScore > 0.7)
       .slice(0, 5);
 
@@ -130,16 +147,19 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
       panicRelief,
       whereYourFriendsAre,
       insiderAccess,
-      recommendations: spaces.slice(0, 20), // Top 20 overall
+      recommendations: scoredSpaces.slice(0, 20),
       meta: {
-        totalSpaces: spacesSnapshot.size,
+        totalSpaces: allSpaces.length,
         userConnections: connectionIds.length,
         userFriends: friendIds.length
       }
     });
 
   } catch (error) {
-    logger.error('Error generating space recommendations', { error: error instanceof Error ? error : new Error(String(error)), userId });
+    logger.error('Error generating space recommendations', {
+      error: error instanceof Error ? error.message : String(error),
+      userId
+    });
     return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
   }
 });
@@ -148,26 +168,27 @@ export const GET = withAuthAndErrors(async (request: AuthenticatedRequest, conte
  * Calculate anxiety relief score based on space characteristics
  * Higher scores for spaces that address common student anxieties
  */
-function calculateAnxietyReliefScore(space: Record<string, unknown>, user: Record<string, unknown>): number {
+function calculateAnxietyReliefScore(space: EnhancedSpace, user: Record<string, unknown>): number {
   let score = 0;
+  const category = space.category.value;
 
-  // Study stress relief
-  if (space.category === 'student_org' && Array.isArray(space.tags) && (space.tags as string[]).includes('study')) {
+  // Study stress relief - academic/study spaces
+  if (category === 'academic' || category === 'study-group') {
     score += 0.3;
   }
 
   // Loneliness relief - active social spaces
-  if (space.activityLevel === 'very_active' || space.activityLevel === 'active') {
+  if (category === 'social' || category === 'club') {
     score += 0.2;
   }
 
   // FOMO relief - trending or popular spaces
-  if ((space.memberCount as number) > 50) {
+  if (space.memberCount > 50) {
     score += 0.2;
   }
 
   // Major-specific anxiety relief
-  if (user.major && Array.isArray(space.tags) && (space.tags as string[]).includes((user.major as string).toLowerCase())) {
+  if (user.major && space.category.value.toLowerCase().includes((user.major as string).toLowerCase())) {
     score += 0.3;
   }
 
@@ -211,31 +232,29 @@ function calculateSocialProofScore(
 /**
  * Calculate insider access score based on exclusivity
  */
-function calculateInsiderAccessScore(space: Record<string, unknown>): number {
+function calculateInsiderAccessScore(space: EnhancedSpace): number {
   let score = 0;
 
-  // Join policy affects exclusivity
-  if (space.joinPolicy === 'invite_only') {
-    score += 0.4;
-  } else if (space.joinPolicy === 'approval') {
-    score += 0.2;
-  }
-
   // Smaller spaces feel more exclusive
-  if ((space.memberCount as number) < 30) {
+  if (space.memberCount < 30) {
     score += 0.3;
-  } else if ((space.memberCount as number) < 50) {
+  } else if (space.memberCount < 50) {
     score += 0.1;
   }
 
   // Greek life and certain categories are inherently exclusive
-  if (space.category === 'greek_life') {
+  if (space.category.value === 'social') {
     score += 0.2;
   }
 
   // Private spaces are exclusive
-  if (space.visibility === 'members_only') {
-    score += 0.1;
+  if (!space.isPublic) {
+    score += 0.4;
+  }
+
+  // Settings-based exclusivity
+  if (space.settings.requireApproval) {
+    score += 0.2;
   }
 
   return Math.min(score, 1);
@@ -245,13 +264,7 @@ function calculateInsiderAccessScore(space: Record<string, unknown>): number {
  * Calculate the join-to-active member conversion rate
  * SPEC.md target: 70% for optimal behavioral change
  */
-function calculateJoinToActiveRate(space: Record<string, unknown>, activeMembers: number): number {
-  const totalMembers = (space.memberCount as number) || 1;
-  const rate = activeMembers / totalMembers;
-
-  // Simulate some variability for demo
-  // In production, this would be calculated from real engagement data
-  const variation = (Math.random() * 0.2) - 0.1; // +/- 10%
-
-  return Math.max(0, Math.min(1, rate + variation));
+function calculateJoinToActiveRate(totalMembers: number, activeMembers: number): number {
+  const rate = activeMembers / Math.max(totalMembers, 1);
+  return Math.max(0, Math.min(1, rate));
 }

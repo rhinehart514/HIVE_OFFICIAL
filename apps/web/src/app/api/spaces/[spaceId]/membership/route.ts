@@ -8,9 +8,9 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { logger } from "@/lib/logger";
-import { requireSpaceMembership } from "@/lib/space-security";
+import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
+import { getServerSpaceRepository } from "@hive/core/server";
 
 const MembershipQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -18,23 +18,59 @@ const MembershipQuerySchema = z.object({
   role: z.enum(["owner", "admin", "moderator", "member", "guest"]).optional(),
 });
 
+/**
+ * Validate space using DDD repository and check membership
+ */
+async function validateSpaceAndMembership(spaceId: string, userId: string) {
+  const spaceRepo = getServerSpaceRepository();
+  const spaceResult = await spaceRepo.findById(spaceId);
+
+  if (spaceResult.isFailure) {
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: "Space not found" };
+  }
+
+  const space = spaceResult.getValue();
+
+  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
+  }
+
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('spaceId', '==', spaceId)
+    .where('userId', '==', userId)
+    .where('isActive', '==', true)
+    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .limit(1)
+    .get();
+
+  if (membershipSnapshot.empty) {
+    if (!space.isPublic) {
+      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
+    }
+    return { ok: true as const, space, membership: { role: 'guest' } };
+  }
+
+  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+}
+
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
   try {
     const { spaceId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const queryParams = MembershipQuerySchema.parse(
-      Object.fromEntries(request.nextUrl.searchParams.entries()),
+      Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
-    const membership = await requireSpaceMembership(spaceId, userId);
-    if (!membership.ok) {
+    const validation = await validateSpaceAndMembership(spaceId, userId);
+    if (!validation.ok) {
       const code =
-        membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
-      return respond.error(membership.error, code, { status: membership.status });
+        validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+      return respond.error(validation.message, code, { status: validation.status });
     }
 
     let membersQuery = dbAdmin
@@ -91,7 +127,7 @@ export const GET = withAuthAndErrors(async (
       } catch (error) {
         logger.error("Error fetching user profile", {
           memberId,
-          error: error instanceof Error ? error : new Error(String(error)),
+          error: { error: error instanceof Error ? error.message : String(error) },
         });
         return {
           userId: memberId,
@@ -125,18 +161,24 @@ export const GET = withAuthAndErrors(async (
       {} as Record<string, number>,
     );
 
+    // Build space info from DDD aggregate
+    const space = validation.space;
+    const spaceInfo = {
+      id: space.spaceId.value,
+      name: space.name.value,
+      slug: space.slug?.value,
+      description: space.description.value,
+      type: space.category.value,
+      memberCount: space.memberCount,
+      isVerified: space.isVerified,
+    };
+
     return respond.success({
-      space: {
-        id: spaceId,
-        name: membership.space.name,
-        description: membership.space.description,
-        type: membership.space.type,
-        memberCount: membership.space.memberCount || 0,
-      },
+      space: spaceInfo,
       requestingUser: {
         userId,
-        role: membership.membership.role,
-        joinedAt: membership.membership.joinedAt,
+        role: validation.membership.role,
+        joinedAt: validation.membership.joinedAt,
       },
       members,
       membersByRole,
@@ -161,7 +203,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Get space membership error at /api/spaces/[spaceId]/membership",
-      error instanceof Error ? error : new Error(String(error)),
+      { error: error instanceof Error ? error.message : String(error) },
     );
     return respond.error("Internal server error", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,

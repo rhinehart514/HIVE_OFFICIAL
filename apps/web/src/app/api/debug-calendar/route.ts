@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, _ErrorCodes } from "@/lib/api-response-types";
+import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 
 export async function GET(_request: NextRequest) {
   try {

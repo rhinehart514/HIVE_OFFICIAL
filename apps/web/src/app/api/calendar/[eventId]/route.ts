@@ -1,7 +1,7 @@
 "use server";
 
 import { dbAdmin } from "@/lib/firebase-admin";
-import { _logger } from "@/lib/logger";
+import { logger as _logger } from "@/lib/logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
@@ -55,11 +55,11 @@ function validateChronology(startDate: string, endDate: string) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ eventId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { eventId } = await params;
 
   const loaded = await loadOwnedEvent(eventId, userId);
@@ -82,12 +82,12 @@ export const GET = withAuthAndErrors(async (
 export const PUT = withAuthValidationAndErrors(
   UpdateEventSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ eventId: string }> },
     body,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { eventId } = await params;
 
     if (!validateChronology(body.startDate, body.endDate)) {
@@ -133,12 +133,12 @@ export const PUT = withAuthValidationAndErrors(
 export const PATCH = withAuthValidationAndErrors(
   PatchEventSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ eventId: string }> },
     body,
     respond,
   ) => {
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
     const { eventId } = await params;
 
     if (body.startDate && body.endDate) {
@@ -187,11 +187,11 @@ export const PATCH = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ eventId: string }> },
   respond,
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { eventId } = await params;
 
   const loaded = await loadOwnedEvent(eventId, userId);

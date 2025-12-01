@@ -171,15 +171,18 @@ export const Widget_Identity: Story = {
     <div className="max-w-[400px] p-6">
       <ProfileIdentityWidget
         profile={{
-          name: mockProfile.name,
+          id: mockProfile.id,
+          displayName: mockProfile.name,
           handle: mockProfile.handle,
-          email: mockProfile.email,
           avatarUrl: mockProfile.avatarUrl,
           bio: mockProfile.bio,
           major: mockProfile.major,
-          minor: mockProfile.minor,
           gradYear: mockProfile.gradYear,
-          verified: true,
+          campusId: 'ub',
+          verification: {
+            email: mockProfile.email,
+            isVerified: true,
+          },
         }}
         isOwnProfile={false}
         onConnect={() => console.log('Connect clicked')}
@@ -194,13 +197,18 @@ export const Widget_Identity_OwnProfile: Story = {
     <div className="max-w-[400px] p-6">
       <ProfileIdentityWidget
         profile={{
-          name: mockProfile.name,
+          id: mockProfile.id,
+          displayName: mockProfile.name,
           handle: mockProfile.handle,
-          email: mockProfile.email,
           avatarUrl: mockProfile.avatarUrl,
           bio: mockProfile.bio,
           major: mockProfile.major,
           gradYear: mockProfile.gradYear,
+          campusId: 'ub',
+          verification: {
+            email: mockProfile.email,
+            isVerified: true,
+          },
         }}
         isOwnProfile={true}
         onEdit={() => console.log('Edit clicked')}
@@ -214,8 +222,7 @@ export const Widget_Spaces: Story = {
     <div className="max-w-[400px] p-6">
       <ProfileSpacesWidget
         spaces={mockSpaces}
-        onSpaceClick={(id) => console.log('Space clicked:', id)}
-        onViewAll={() => console.log('View all spaces')}
+        isOwnProfile={false}
       />
     </div>
   ),

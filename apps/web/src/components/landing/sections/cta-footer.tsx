@@ -110,7 +110,7 @@ export function CtaFooterSection() {
       {/* Animated gold glow */}
       <div
         ref={glowRef}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-[#F5C842] opacity-[0.02] blur-[100px] rounded-full"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gold-500 opacity-[0.02] blur-[100px] rounded-full"
       />
 
       <div className="relative z-10 max-w-3xl mx-auto text-center">
@@ -125,11 +125,7 @@ export function CtaFooterSection() {
           <MagneticButton strength={0.2}>
             <Link
               href="/auth/login"
-              className="inline-flex items-center justify-center px-8 py-4 bg-[#FFD700] text-black font-semibold rounded-xl transition-all duration-300 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98]"
-              style={{
-                boxShadow: "0 0 40px rgba(255, 215, 0, 0.2)",
-                transitionTimingFunction: SILK_EASE,
-              }}
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-black font-semibold rounded-xl transition-all duration-200 hover:bg-neutral-200 hover:scale-[1.02] active:scale-[0.98]"
             >
               Get Started with your .edu
             </Link>
