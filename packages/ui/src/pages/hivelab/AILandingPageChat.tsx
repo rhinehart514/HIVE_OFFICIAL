@@ -249,9 +249,9 @@ export function AILandingPageChat({
   };
 
   // Handle element showcase element selection
-  const handleElementSelect = useCallback((elementId: string) => {
+  const handleElementSelect = useCallback((_elementId: string) => {
     // Could show element details or highlight in chat
-    console.log('[AILandingPageChat] Element selected:', elementId);
+    // TODO: Implement element detail display or chat highlight
   }, []);
 
   // Handle element showcase prompt click
@@ -261,6 +261,16 @@ export function AILandingPageChat({
     // Collapse sidebar to show chat
     setSidebarCollapsed(true);
   }, []);
+
+  // Handle template selection from showcase
+  const handleTemplateSelect = useCallback((template: ToolComposition) => {
+    // Hydrate the composition state with the template
+    hydrate(template);
+    // Collapse sidebar
+    setSidebarCollapsed(true);
+    // Add message about template being loaded
+    addAIMessage(`I've loaded the "${template.name}" template for you. You can see it in the preview on the right. Feel free to test it or ask me to modify it!`);
+  }, [hydrate]);
 
   // Apply pending prompt when sidebar collapses
   useEffect(() => {
@@ -424,6 +434,7 @@ export function AILandingPageChat({
               <ElementShowcaseSidebar
                 onElementSelect={handleElementSelect}
                 onPromptClick={handleShowcasePromptClick}
+                onTemplateSelect={handleTemplateSelect}
                 collapsed={false}
                 onCollapseChange={() => setSidebarCollapsed(true)}
                 className="h-full"
@@ -596,9 +607,8 @@ export function AILandingPageChat({
                 composition={state.composition}
                 progress={state.progress}
                 interactive={isTestMode}
-                onInteraction={(elementId, action, data) => {
-                  console.log('[Test Mode] Interaction:', { elementId, action, data });
-                  // Could show interaction feedback in chat
+                onInteraction={(_elementId, _action, _data) => {
+                  // TODO: Show interaction feedback in chat
                 }}
               />
             )}

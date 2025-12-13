@@ -153,9 +153,8 @@ export const useFeedAnalytics = ({
           timestamp: new Date(),
         }
       })
-    } catch (error) {
-      console.error('Failed to flush analytics events:', error)
-      // Re-add events to batch for retry
+    } catch (_error) {
+      // Re-add events to batch for retry on failure
       eventBatchRef.current.unshift(...events)
     }
   }, [track, spaceId, userId, analyticsConfig.hashUserIds])

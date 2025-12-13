@@ -11,9 +11,29 @@ service firebase.storage {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Check if user has a verified campusId (multi-campus support)
+    function hasCampusId() {
+      return isAuthenticated() && request.auth.token.campusId != null;
+    }
+
+    // Check if user belongs to the specified campus
+    function belongsToCampus(campusId) {
+      return hasCampusId() && request.auth.token.campusId == campusId;
+    }
+
+    // Legacy UB-specific check (for backwards compatibility during migration)
     function isUBUser() {
-      return isAuthenticated() &&
-        request.auth.token.email.matches('.*@buffalo[.]edu$');
+      return isAuthenticated() && (
+        // Check campusId token claim first
+        request.auth.token.campusId == 'ub-buffalo' ||
+        // Fallback to email domain check
+        request.auth.token.email.matches('.*@buffalo[.]edu$')
+      );
+    }
+
+    // Check if user has a verified email from an allowed domain
+    function hasVerifiedCampusEmail() {
+      return isAuthenticated() && hasCampusId();
     }
 
     function isValidImageFile() {
@@ -33,6 +53,35 @@ service firebase.storage {
         request.resource.size < 25 * 1024 * 1024; // 25MB max
     }
 
+    // Campus-isolated user profile photos
+    // Path: /campuses/{campusId}/users/{userId}/profile/{fileName}
+    match /campuses/{campusId}/users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated() && belongsToCampus(campusId);
+      allow write: if isOwner(userId) && belongsToCampus(campusId) && isValidImageFile();
+      allow delete: if isOwner(userId) && belongsToCampus(campusId);
+    }
+
+    // Campus-isolated user uploaded content
+    // Path: /campuses/{campusId}/users/{userId}/uploads/{allPaths=**}
+    match /campuses/{campusId}/users/{userId}/uploads/{allPaths=**} {
+      allow read: if isAuthenticated() && belongsToCampus(campusId);
+      allow write: if isOwner(userId) && belongsToCampus(campusId) &&
+        (isValidImageFile() || isValidVideoFile() || isValidDocument());
+      allow delete: if isOwner(userId) && belongsToCampus(campusId);
+    }
+
+    // Campus-isolated space assets
+    // Path: /campuses/{campusId}/spaces/{spaceId}/{allPaths=**}
+    match /campuses/{campusId}/spaces/{spaceId}/{allPaths=**} {
+      allow read: if isAuthenticated() && belongsToCampus(campusId);
+      // Only space members can upload
+      allow write: if isAuthenticated() && belongsToCampus(campusId) &&
+        exists(/databases/(default)/documents/spaces/$(spaceId)/members/$(request.auth.uid)) &&
+        (isValidImageFile() || isValidDocument());
+      allow delete: if false; // No deletes, only soft delete in Firestore
+    }
+
+    // Legacy paths (backwards compatibility during migration)
     // User profile photos
     match /users/{userId}/profile/{fileName} {
       allow read: if isAuthenticated() && isUBUser();
@@ -58,11 +107,17 @@ service firebase.storage {
       allow delete: if false; // No deletes, only soft delete in Firestore
     }
 
-    // Temporary uploads (for processing)
+    // Temporary uploads (for processing) - campus isolated
+    match /temp/{campusId}/{userId}/{fileName} {
+      allow read: if isOwner(userId) && belongsToCampus(campusId);
+      allow write: if isOwner(userId) && belongsToCampus(campusId);
+      // Auto-cleanup after 24 hours via lifecycle rules
+    }
+
+    // Legacy temporary uploads
     match /temp/{userId}/{fileName} {
       allow read: if isOwner(userId) && isUBUser();
       allow write: if isOwner(userId) && isUBUser();
-      // Auto-cleanup after 24 hours via lifecycle rules
     }
 
     // System assets (read-only)

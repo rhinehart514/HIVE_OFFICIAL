@@ -1,35 +1,50 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { getServerSpaceRepository } from '@hive/core/server';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-
 /**
- * Resolve a space slug to its ID using the DDD repository
+ * Resolve Slug API - GET endpoint to resolve space slug to ID
+ *
+ * Public endpoint with rate limiting for URL resolution:
+ * - GET: Resolve slug or legacy ID to space ID
+ *
+ * @author HIVE Frontend Team
+ * @version 1.0.0
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+
+import { getServerSpaceRepository } from '@hive/core/server';
+import { logger } from '@/lib/structured-logger';
+import { withErrors } from '@/lib/middleware';
+import { HttpStatus } from '@/lib/api-response-types';
+import { getDefaultCampusId } from '@/lib/campus-context';
+
+// ============================================================
+// GET - Resolve slug to space ID (public with rate limiting)
+// ============================================================
+
+export const GET = withErrors(async (
+  request,
+  { params }: { params: Promise<{ slug: string }> },
+  respond,
+) => {
   const { slug } = await params;
 
   if (!slug) {
-    return NextResponse.json(
-      { error: 'Slug parameter is required' },
-      { status: 400 }
-    );
+    return respond.error('Slug parameter is required', 'INVALID_INPUT', { status: HttpStatus.BAD_REQUEST });
   }
+
+  // Note: This is a public endpoint, so we use the default campus for now
+  // In a multi-campus scenario, we'd need to pass the campus in the request or infer from domain
+  const campusId = getDefaultCampusId();
 
   try {
     const spaceRepo = getServerSpaceRepository();
 
     // First try to resolve as a slug
-    const slugResult = await spaceRepo.findBySlug(slug, CURRENT_CAMPUS_ID);
+    const slugResult = await spaceRepo.findBySlug(slug, campusId);
 
     if (slugResult.isSuccess) {
       const space = slugResult.getValue();
-      return NextResponse.json({
+      return respond.success({
         spaceId: space.spaceId.value,
         slug: space.slug?.value || slug,
-        found: true
+        found: true,
       });
     }
 
@@ -40,42 +55,76 @@ export async function GET(
     if (idResult.isSuccess) {
       const space = idResult.getValue();
       // Verify campus isolation
-      if (space.campusId.id === CURRENT_CAMPUS_ID) {
-        return NextResponse.json({
+      if (space.campusId.id === campusId) {
+        return respond.success({
           spaceId: space.spaceId.value,
           slug: space.slug?.value || slug,
           found: true,
-          isLegacyId: true
+          isLegacyId: true,
         });
       }
     }
 
     // Space not found
-    return NextResponse.json(
-      {
-        error: 'Space not found',
-        slug: slug,
-        found: false
-      },
-      { status: 404 }
-    );
-
+    return respond.error('Space not found', 'RESOURCE_NOT_FOUND', { status: HttpStatus.NOT_FOUND });
   } catch (error) {
-    console.error('Error resolving space slug:', error);
-    return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    logger.error('Error resolving space slug', {
+      error: error instanceof Error ? error.message : String(error),
+      slug,
+      endpoint: '/api/spaces/resolve-slug/[slug]',
+    });
+    return respond.error('Failed to resolve slug', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
+});
 
 // Handle legacy space ID redirects too
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
-  return GET(request, { params });
-}
+export const POST = withErrors(async (
+  request,
+  { params }: { params: Promise<{ slug: string }> },
+  respond,
+) => {
+  // Delegate to GET handler logic
+  const { slug } = await params;
+
+  if (!slug) {
+    return respond.error('Slug parameter is required', 'INVALID_INPUT', { status: HttpStatus.BAD_REQUEST });
+  }
+
+  const campusId = getDefaultCampusId();
+
+  try {
+    const spaceRepo = getServerSpaceRepository();
+
+    const slugResult = await spaceRepo.findBySlug(slug, campusId);
+    if (slugResult.isSuccess) {
+      const space = slugResult.getValue();
+      return respond.success({
+        spaceId: space.spaceId.value,
+        slug: space.slug?.value || slug,
+        found: true,
+      });
+    }
+
+    const idResult = await spaceRepo.findById(slug);
+    if (idResult.isSuccess) {
+      const space = idResult.getValue();
+      if (space.campusId.id === campusId) {
+        return respond.success({
+          spaceId: space.spaceId.value,
+          slug: space.slug?.value || slug,
+          found: true,
+          isLegacyId: true,
+        });
+      }
+    }
+
+    return respond.error('Space not found', 'RESOURCE_NOT_FOUND', { status: HttpStatus.NOT_FOUND });
+  } catch (error) {
+    logger.error('Error resolving space slug', {
+      error: error instanceof Error ? error.message : String(error),
+      slug,
+      endpoint: '/api/spaces/resolve-slug/[slug]',
+    });
+    return respond.error('Failed to resolve slug', 'INTERNAL_ERROR', { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  }
+});

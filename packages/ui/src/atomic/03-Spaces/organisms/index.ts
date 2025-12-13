@@ -47,3 +47,59 @@ export type { SpacePostComposerProps } from './space-post-composer';
 
 export { SpaceBoardSkeleton, SpaceCardSkeleton } from './space-board-skeleton';
 export type { SpaceBoardSkeletonProps } from './space-board-skeleton';
+
+// Real-time Chat Board (Dec 2025 - Discord-style)
+export { SpaceChatBoard } from './space-chat-board';
+export type {
+  SpaceChatBoardProps,
+  SpaceBoardData,
+  ChatMessageData,
+  TypingUser,
+} from './space-chat-board';
+
+// HiveLab-powered Configurable Sidebar (Dec 2025)
+export { SpaceSidebarConfigurable } from './space-sidebar-configurable';
+export type {
+  SpaceSidebarConfigurableProps,
+  SidebarEventData,
+  SidebarMemberData,
+  SidebarToolData,
+} from './space-sidebar-configurable';
+
+// Widget Gallery for adding sidebar widgets (Dec 2025)
+export { WidgetGallery } from './widget-gallery';
+export type {
+  WidgetGalleryProps,
+  WidgetTemplate,
+} from './widget-gallery';
+
+// Tab and Widget Modals (Dec 2025)
+export { AddTabModal } from './add-tab-modal';
+export type {
+  AddTabModalProps,
+  AddTabInput,
+  TabType,
+} from './add-tab-modal';
+
+export { AddWidgetModal } from './add-widget-modal';
+export type {
+  AddWidgetModalProps,
+} from './add-widget-modal';
+
+// Member Invite Modal (Dec 2025)
+export { MemberInviteModal } from './member-invite-modal';
+export type {
+  MemberInviteModalProps,
+  MemberInviteInput,
+  InviteableUser,
+  MemberRole,
+} from './member-invite-modal';
+
+// Event Creation Modal (Dec 2025)
+export { EventCreateModal } from './event-create-modal';
+export type {
+  EventCreateModalProps,
+  EventCreateInput,
+  EventType,
+  BoardOption,
+} from './event-create-modal';

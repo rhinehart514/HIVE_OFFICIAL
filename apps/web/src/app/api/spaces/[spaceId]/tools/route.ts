@@ -1,5 +1,17 @@
 "use server";
 
+/**
+ * Space Tools API Route
+ *
+ * Handles tool deployment and management for spaces using DDD services.
+ *
+ * GET /api/spaces/[spaceId]/tools - List deployed tools
+ * POST /api/spaces/[spaceId]/tools - Deploy a new tool
+ *
+ * @author HIVE Backend Team
+ * @version 2.0.0 - DDD Refactor
+ */
+
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
@@ -7,13 +19,23 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { buildPlacementCompositeId, createPlacementDocument } from "@/lib/tool-placement";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
-import { getServerSpaceRepository } from "@hive/core/server";
+import { Result, type PlacementLocation, type PlacementVisibility } from "@hive/core";
+import {
+  getServerSpaceRepository,
+  createServerSpaceDeploymentService,
+  type SpaceDeploymentCallbacks,
+  type PlacedToolData,
+} from "@hive/core/server";
+
+// ============================================================================
+// Validation Schemas
+// ============================================================================
 
 const GetSpaceToolsSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -22,25 +44,132 @@ const GetSpaceToolsSchema = z.object({
     .enum(["productivity", "academic", "social", "utility", "entertainment", "other"])
     .optional(),
   status: z.enum(["active", "inactive", "all"]).default("active"),
+  placement: z.enum(["sidebar", "inline", "modal", "tab", "all"]).default("all"),
   sortBy: z
-    .enum(["deployments", "rating", "recent", "alphabetical"])
-    .default("deployments"),
+    .enum(["order", "deployments", "rating", "recent", "alphabetical"])
+    .default("order"),
 });
 
-const CreateSpaceToolSchema = z.object({
+const PlaceToolSchema = z.object({
   toolId: z.string().min(1),
-  configuration: z.record(z.any()).optional(),
-  isShared: z.boolean().default(true),
-  permissions: z
-    .object({
-      canEdit: z.array(z.string()).default([]),
-      canView: z.array(z.string()).default([]),
-      isPublic: z.boolean().default(true),
-    })
-    .optional(),
+  placement: z.enum(["sidebar", "inline", "modal", "tab"]).default("sidebar"),
+  order: z.number().min(0).optional(),
+  configOverrides: z.record(z.any()).optional(),
+  visibility: z.enum(["all", "members", "leaders"]).default("all"),
+  titleOverride: z.string().max(100).optional(),
 });
 
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+// ============================================================================
+// Callbacks for SpaceDeploymentService
+// ============================================================================
+
+function createDeploymentCallbacks(spaceId: string, campusId: string): SpaceDeploymentCallbacks {
+  return {
+    savePlacedTool: async (_spaceId: string, placedTool: PlacedToolData): Promise<Result<void>> => {
+      try {
+        await dbAdmin
+          .collection("spaces")
+          .doc(spaceId)
+          .collection("placed_tools")
+          .doc(placedTool.id)
+          .set({
+            toolId: placedTool.toolId,
+            placement: placedTool.placement,
+            order: placedTool.order,
+            isActive: placedTool.isActive,
+            source: placedTool.source,
+            placedBy: placedTool.placedBy,
+            placedAt: placedTool.placedAt,
+            configOverrides: placedTool.configOverrides,
+            visibility: placedTool.visibility,
+            titleOverride: placedTool.titleOverride,
+            isEditable: placedTool.isEditable,
+            state: placedTool.state,
+            stateUpdatedAt: placedTool.stateUpdatedAt,
+            campusId: campusId,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        return Result.ok<void>(undefined);
+      } catch (error) {
+        return Result.fail<void>(error instanceof Error ? error.message : "Failed to save placed tool");
+      }
+    },
+
+    updatePlacedTool: async (_spaceId: string, placementId: string, updates: Partial<PlacedToolData>): Promise<Result<void>> => {
+      try {
+        await dbAdmin
+          .collection("spaces")
+          .doc(spaceId)
+          .collection("placed_tools")
+          .doc(placementId)
+          .update({
+            ...updates,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        return Result.ok<void>(undefined);
+      } catch (error) {
+        return Result.fail<void>(error instanceof Error ? error.message : "Failed to update placed tool");
+      }
+    },
+
+    deletePlacedTool: async (_spaceId: string, placementId: string): Promise<Result<void>> => {
+      try {
+        await dbAdmin
+          .collection("spaces")
+          .doc(spaceId)
+          .collection("placed_tools")
+          .doc(placementId)
+          .delete();
+        return Result.ok<void>(undefined);
+      } catch (error) {
+        return Result.fail<void>(error instanceof Error ? error.message : "Failed to delete placed tool");
+      }
+    },
+
+    getPlacedTools: async (_spaceId: string): Promise<Result<PlacedToolData[]>> => {
+      try {
+        const snapshot = await dbAdmin
+          .collection("spaces")
+          .doc(spaceId)
+          .collection("placed_tools")
+          .orderBy("order", "asc")
+          .get();
+
+        const tools: PlacedToolData[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            toolId: data.toolId,
+            spaceId: spaceId,
+            placement: data.placement || "sidebar",
+            order: data.order || 0,
+            isActive: data.isActive ?? true,
+            source: data.source || "leader",
+            placedBy: data.placedBy || null,
+            placedAt: data.placedAt?.toDate?.() || new Date(),
+            configOverrides: data.configOverrides || {},
+            visibility: data.visibility || "all",
+            titleOverride: data.titleOverride || null,
+            isEditable: data.isEditable ?? true,
+            state: data.state || {},
+            stateUpdatedAt: data.stateUpdatedAt?.toDate?.() || null,
+          };
+        });
+
+        return Result.ok<PlacedToolData[]>(tools);
+      } catch (error) {
+        return Result.fail<PlacedToolData[]>(error instanceof Error ? error.message : "Failed to get placed tools");
+      }
+    },
+  };
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+async function validateSpaceAccess(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -50,28 +179,95 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
+  // Check membership
   const membershipSnapshot = await dbAdmin
-    .collection('spaceMembers')
-    .where('spaceId', '==', spaceId)
-    .where('userId', '==', userId)
-    .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .collection("spaceMembers")
+    .where("spaceId", "==", spaceId)
+    .where("userId", "==", userId)
+    .where("isActive", "==", true)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
-  if (membershipSnapshot.empty) {
-    if (!space.isPublic) {
-      return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
-    }
-    return { ok: true as const, space, membership: { role: 'guest' } };
+  const membership = membershipSnapshot.empty
+    ? space.isPublic
+      ? { role: "guest" as const }
+      : null
+    : membershipSnapshot.docs[0]!.data();
+
+  if (!membership) {
+    return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Membership required" };
   }
 
-  return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
+  return { ok: true as const, space, membership };
 }
+
+async function enrichToolsWithMetadata(tools: PlacedToolData[]): Promise<Array<Record<string, unknown>>> {
+  if (tools.length === 0) return [];
+
+  // Batch fetch tool metadata
+  const toolIds = [...new Set(tools.map((t) => t.toolId))];
+  const toolDataMap = new Map<string, FirebaseFirestore.DocumentData>();
+
+  for (let i = 0; i < toolIds.length; i += 30) {
+    const chunk = toolIds.slice(i, i + 30);
+    const toolDocs = await dbAdmin
+      .collection("tools")
+      .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+      .get();
+    toolDocs.forEach((doc) => {
+      if (doc.exists) {
+        toolDataMap.set(doc.id, { id: doc.id, ...doc.data() });
+      }
+    });
+  }
+
+  return tools.map((placedTool) => {
+    const toolData = toolDataMap.get(placedTool.toolId);
+    return {
+      // Placement info
+      placementId: placedTool.id,
+      toolId: placedTool.toolId,
+      placement: placedTool.placement,
+      order: placedTool.order,
+      isActive: placedTool.isActive,
+      source: placedTool.source,
+      visibility: placedTool.visibility,
+      titleOverride: placedTool.titleOverride,
+      isEditable: placedTool.isEditable,
+      configOverrides: placedTool.configOverrides,
+      state: placedTool.state,
+      placedAt: placedTool.placedAt.toISOString(),
+      placedBy: placedTool.placedBy,
+
+      // Tool metadata
+      name: toolData?.name || "Unknown Tool",
+      description: toolData?.description || "",
+      category: toolData?.category || "other",
+      version: toolData?.currentVersion || "1.0.0",
+      elementType: toolData?.elementType || toolData?.elements?.[0]?.type || "unknown",
+
+      // Tool stats
+      originalTool: toolData
+        ? {
+            averageRating: toolData.averageRating || 0,
+            ratingCount: toolData.ratingCount || 0,
+            totalDeployments: toolData.deploymentCount || 0,
+            isVerified: toolData.isVerified || false,
+            creatorId: toolData.creatorId,
+          }
+        : null,
+    };
+  });
+}
+
+// ============================================================================
+// GET Handler
+// ============================================================================
 
 export const GET = withAuthAndErrors(async (
   request,
@@ -81,154 +277,106 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const campusId = getCampusId(request as AuthenticatedRequest);
+
+    // Validate access
+    const validation = await validateSpaceAccess(spaceId, userId, campusId);
     if (!validation.ok) {
       const code =
         validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(validation.message, code, { status: validation.status });
     }
 
+    // Parse query params
     const queryParams = GetSpaceToolsSchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
-    const placementsSnapshot = await dbAdmin
-      .collection("spaces")
-      .doc(spaceId)
-      .collection("placed_tools")
-      .get();
+    // Create deployment service
+    const callbacks = createDeploymentCallbacks(spaceId, campusId);
+    const deploymentService = createServerSpaceDeploymentService(
+      { userId, campusId },
+      callbacks
+    );
 
-    const tools: Array<Record<string, unknown>> = [];
+    // Get placed tools via service
+    const result = await deploymentService.getPlacedTools(spaceId);
 
-    if (!placementsSnapshot.empty) {
-      for (const placementDoc of placementsSnapshot.docs) {
-        const placementData = placementDoc.data();
-        if (
-          queryParams.status !== "all" &&
-          placementData.status !== queryParams.status
-        ) {
-          continue;
-        }
-
-        const toolDoc = await dbAdmin.collection("tools").doc(placementData.toolId).get();
-        if (!toolDoc.exists) continue;
-        const toolData = toolDoc.data();
-        if (!toolData) continue;
-        if (toolData.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) continue;
-        if (queryParams.category && toolData.category !== queryParams.category) continue;
-
-        tools.push({
-          deploymentId: buildPlacementCompositeId(`space:${spaceId}`, placementDoc.id),
-          toolId: placementData.toolId,
-          name: toolData.name,
-          description: toolData.description,
-          category: toolData.category,
-          version: placementData.version || toolData.currentVersion || "1.0.0",
-          status: placementData.status,
-          configuration: placementData.config || {},
-          permissions: placementData.permissions || {},
-          isShared: placementData.isShared ?? true,
-          deployer: {
-            id: placementData.createdBy || "",
-            name: "",
-            avatar: null,
-          },
-          deployedAt: placementData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          lastUsed: placementData.lastUsedAt?.toDate?.()?.toISOString() || null,
-          usageCount: placementData.usageCount || 0,
-          originalTool: {
-            averageRating: toolData.averageRating || 0,
-            ratingCount: toolData.ratingCount || 0,
-            totalDeployments: toolData.deploymentCount || 0,
-            isVerified: toolData.isVerified || false,
-            creatorId: toolData.creatorId,
-          },
-        });
-      }
+    if (result.isFailure) {
+      return respond.error("Failed to fetch tools", "INTERNAL_ERROR", {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
     }
 
-    if (tools.length === 0) {
-      // Check deployedTools collection (primary deployment location)
-      const deploymentsSnapshot = await dbAdmin
-        .collection("deployedTools")
-        .where("targetId", "==", spaceId)
-        .where("targetType", "==", "space")
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
-        .get();
+    const serviceResult = result.getValue();
+    let tools = serviceResult.data || [];
 
-      for (const deploymentDoc of deploymentsSnapshot.docs) {
-        const deploymentData = deploymentDoc.data();
-        if (queryParams.status !== "all" && deploymentData.status !== queryParams.status) {
-          continue;
-        }
-
-        const toolDoc = await dbAdmin.collection("tools").doc(deploymentData.toolId).get();
-        if (!toolDoc.exists) continue;
-        const toolData = toolDoc.data();
-        if (!toolData) continue;
-        if (toolData.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) continue;
-        if (queryParams.category && toolData.category !== queryParams.category) continue;
-
-        tools.push({
-          deploymentId: deploymentDoc.id,
-          toolId: deploymentData.toolId,
-          name: deploymentData.metadata?.toolName || toolData.name,
-          description: toolData.description,
-          category: toolData.category,
-          version: deploymentData.metadata?.toolVersion || toolData.currentVersion || "1.0.0",
-          status: deploymentData.status,
-          configuration: deploymentData.config || {},
-          permissions: deploymentData.permissions || {
-            canEdit: [],
-            canView: [],
-            isPublic: true,
-          },
-          isShared: deploymentData.settings?.allowSharing ?? true,
-          deployer: {
-            id: deploymentData.deployedBy || deploymentData.creatorId || "",
-            name: "",
-            avatar: null,
-          },
-          deployedAt: deploymentData.deployedAt || new Date().toISOString(),
-          lastUsed: null,
-          usageCount: deploymentData.usageCount || 0,
-          originalTool: {
-            averageRating: toolData.averageRating || 0,
-            ratingCount: toolData.ratingCount || 0,
-            totalDeployments: toolData.deploymentCount || 0,
-            isVerified: toolData.isVerified || false,
-            creatorId: toolData.creatorId || toolData.ownerId,
-          },
-        });
-      }
+    // Apply filters
+    if (queryParams.status !== "all") {
+      const isActive = queryParams.status === "active";
+      tools = tools.filter((t) => t.isActive === isActive);
     }
 
-    const offsetTools = tools.slice(queryParams.offset, queryParams.offset + queryParams.limit);
+    if (queryParams.placement !== "all") {
+      tools = tools.filter((t) => t.placement === queryParams.placement);
+    }
+
+    // Enrich with tool metadata
+    const enrichedTools = await enrichToolsWithMetadata(tools);
+
+    // Apply category filter (needs metadata)
+    let filteredTools = enrichedTools;
+    if (queryParams.category) {
+      filteredTools = enrichedTools.filter((t) => t.category === queryParams.category);
+    }
+
+    // Sort
+    switch (queryParams.sortBy) {
+      case "alphabetical":
+        filteredTools.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+        break;
+      case "recent":
+        filteredTools.sort((a, b) =>
+          new Date(String(b.placedAt)).getTime() - new Date(String(a.placedAt)).getTime()
+        );
+        break;
+      case "order":
+      default:
+        filteredTools.sort((a, b) => Number(a.order) - Number(b.order));
+        break;
+    }
+
+    // Paginate
+    const paginatedTools = filteredTools.slice(
+      queryParams.offset,
+      queryParams.offset + queryParams.limit
+    );
 
     return respond.success({
-      tools: offsetTools,
+      tools: paginatedTools,
       pagination: {
+        total: filteredTools.length,
         limit: queryParams.limit,
         offset: queryParams.offset,
-        nextOffset:
-          tools.length > queryParams.offset + queryParams.limit
-            ? queryParams.offset + queryParams.limit
-            : null,
+        hasMore: filteredTools.length > queryParams.offset + queryParams.limit,
       },
     });
   } catch (error) {
-    logger.error(
-      "Error fetching space tools",
-      { error: error instanceof Error ? error.message : String(error) },
-    );
+    logger.error("Error fetching space tools", {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return respond.error("Failed to fetch space tools", "INTERNAL_ERROR", {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
     });
   }
 });
 
+// ============================================================================
+// POST Handler
+// ============================================================================
+
 export const POST = withAuthValidationAndErrors(
-  CreateSpaceToolSchema,
+  PlaceToolSchema,
   async (
     request,
     { params }: { params: Promise<{ spaceId: string }> },
@@ -238,14 +386,26 @@ export const POST = withAuthValidationAndErrors(
     try {
       const { spaceId } = await params;
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
-      const validation = await validateSpaceAndMembership(spaceId, userId);
+      // Validate access
+      const validation = await validateSpaceAccess(spaceId, userId, campusId);
       if (!validation.ok) {
         const code =
           validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(validation.message, code, { status: validation.status });
       }
 
+      // Check permission (must be leader/admin to deploy tools)
+      const { membership } = validation;
+      const canDeploy = ["owner", "admin", "moderator"].includes(membership.role);
+      if (!canDeploy) {
+        return respond.error("Only space leaders can deploy tools", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+
+      // Verify tool exists
       const toolDoc = await dbAdmin.collection("tools").doc(body.toolId).get();
       if (!toolDoc.exists) {
         return respond.error("Tool not found", "RESOURCE_NOT_FOUND", {
@@ -254,95 +414,71 @@ export const POST = withAuthValidationAndErrors(
       }
 
       const toolData = toolDoc.data();
-      if (!toolData) {
-        return respond.error("Tool data missing", "RESOURCE_NOT_FOUND", {
-          status: HttpStatus.NOT_FOUND,
-        });
-      }
-      if (toolData.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+      if (toolData?.campusId && toolData.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", {
           status: HttpStatus.FORBIDDEN,
         });
       }
 
-      const existingSnapshot = await dbAdmin
-        .collection("spaces")
-        .doc(spaceId)
-        .collection("placed_tools")
-        .where("toolId", "==", body.toolId)
-        .where("status", "==", "active")
-        .get();
+      // Create deployment service and place tool
+      const callbacks = createDeploymentCallbacks(spaceId, campusId);
+      const deploymentService = createServerSpaceDeploymentService(
+        { userId, campusId },
+        callbacks
+      );
 
-      if (!existingSnapshot.empty) {
-        return respond.error("Tool is already deployed in this space", "CONFLICT", {
-          status: HttpStatus.CONFLICT,
+      const placeResult = await deploymentService.placeTool({
+        spaceId,
+        toolId: body.toolId,
+        placement: body.placement as PlacementLocation,
+        order: body.order,
+        configOverrides: body.configOverrides,
+        visibility: body.visibility as PlacementVisibility,
+        titleOverride: body.titleOverride,
+      });
+
+      if (placeResult.isFailure) {
+        // Check if duplicate
+        if (placeResult.error?.includes("already placed")) {
+          return respond.error("Tool is already deployed in this space", "CONFLICT", {
+            status: HttpStatus.CONFLICT,
+          });
+        }
+        return respond.error(placeResult.error || "Failed to deploy tool", "INTERNAL_ERROR", {
+          status: HttpStatus.INTERNAL_SERVER_ERROR,
         });
       }
 
-      const placement = await createPlacementDocument({
-        deployedTo: "space",
-        targetId: spaceId,
-        toolId: body.toolId,
-        deploymentId: `space_${spaceId}_${Date.now()}`,
-        surface: "tools",
-        permissions: body.permissions || {
-          canEdit: [],
-          canView: [],
-          isPublic: true,
-        },
-        settings: body.configuration || {},
-      });
+      const serviceResult = placeResult.getValue();
+      const placement = serviceResult.data!;
 
-      await dbAdmin
-        .collection("spaces")
-        .doc(spaceId)
-        .collection("placed_tools")
-        .doc(placement.id)
-        .set({
-          toolId: body.toolId,
-          status: "active",
-          config: body.configuration || {},
-          permissions: body.permissions || {
-            canEdit: [],
-            canView: [],
-            isPublic: true,
-          },
-          isShared: body.isShared,
-          createdAt: new Date(),
-          createdBy: userId,
-          updatedAt: new Date(),
-          usageCount: 0,
-          campusId: CURRENT_CAMPUS_ID,
-        });
-
+      // Update tool deployment count
       await dbAdmin.collection("tools").doc(body.toolId).update({
         deploymentCount: admin.firestore.FieldValue.increment(1),
-        lastDeployedAt: new Date(),
+        lastDeployedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
       return respond.created({
-        deployment: {
-          deploymentId: buildPlacementCompositeId(`space:${spaceId}`, placement.id),
-          toolId: body.toolId,
-          name: toolData.name,
-          description: toolData.description,
-          category: toolData.category,
-          version: toolData.currentVersion || "1.0.0",
-          status: "active",
-          configuration: body.configuration || {},
-          permissions: body.permissions || {},
-          isShared: body.isShared,
-          deployer: { id: userId },
+        placement: {
+          placementId: placement.placementId,
+          toolId: placement.toolId,
+          placement: placement.placement,
+          order: placement.order,
+          name: toolData?.name || "Tool",
+          description: toolData?.description || "",
+          category: toolData?.category || "other",
+          version: toolData?.currentVersion || "1.0.0",
+          isActive: true,
+          source: "leader",
+          visibility: body.visibility,
           deployedAt: new Date().toISOString(),
-          lastUsed: null,
-          usageCount: 0,
+          deployedBy: userId,
         },
       });
     } catch (error) {
-      logger.error(
-        "Error deploying tool to space",
-        { error: error instanceof Error ? error.message : String(error) },
-      );
+      logger.error("Error deploying tool to space", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return respond.error("Failed to deploy tool", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       });

@@ -393,9 +393,11 @@ export const POST = withAuthValidationAndErrors(
       targetId: payload.targetId,
       toolId: payload.toolId,
       deploymentId: `deployment_${Date.now()}`,
-      surface: placementData.surface,
-      permissions: placementData.permissions,
-      settings: placementData.config,
+      placedBy: userId,
+      campusId: CURRENT_CAMPUS_ID,
+      placement: 'sidebar',
+      visibility: 'all',
+      configOverrides: placementData.config,
     });
 
     const compositeId = buildPlacementCompositeId(

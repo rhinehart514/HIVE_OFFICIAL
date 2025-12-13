@@ -33,18 +33,24 @@ const createToolLimiter = rateLimit({
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
 
+  logger.info('[tools] GET request received', {
+    userId,
+    endpoint: '/api/tools'
+  });
+
   const { searchParams } = new URL(request.url);
   const spaceId = searchParams.get("spaceId");
   const status = searchParams.get("status");
   const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
   const offset = parseInt(searchParams.get("offset") || "0");
 
-  // Build query
-  let query = adminDb
-    .collection("tools")
-    .where("ownerId", "==", userId)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
-    .orderBy("updatedAt", "desc");
+  try {
+    // Build query
+    let query = adminDb
+      .collection("tools")
+      .where("campusId", "==", CURRENT_CAMPUS_ID)  // campusId first to match index
+      .where("ownerId", "==", userId)
+      .orderBy("updatedAt", "desc");
 
     // Filter by space if provided
     if (spaceId) {
@@ -67,10 +73,17 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
     // Get total count for pagination
     const countQuery = adminDb.collection("tools")
-      .where("ownerId", "==", userId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID);
+      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("ownerId", "==", userId);
     const countSnapshot = await countQuery.count().get();
     const total = countSnapshot.data().count;
+
+    logger.info('[tools] GET successful', {
+      userId,
+      count: tools.length,
+      total,
+      endpoint: '/api/tools'
+    });
 
     return respond.success({
       tools,
@@ -81,8 +94,25 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
         hasMore: offset + limit < total,
       }
     });
+  } catch (error: unknown) {
+    const errorCode = (error as { code?: string })?.code;
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    logger.error('[tools] GET failed', {
+      userId,
+      code: errorCode,
+      message: errorMessage,
+      endpoint: '/api/tools'
+    });
+
+    // Return specific error for missing index (code 9 = FAILED_PRECONDITION in Firestore)
+    if (errorCode === '9' || errorMessage.includes('index')) {
+      return respond.error('Database index not ready. Please try again in a few minutes.', "INTERNAL_ERROR", { status: 503 });
+    }
+
+    return respond.error('Failed to fetch tools', "INTERNAL_ERROR", { status: 500 });
   }
-);
+});
 
 // Enhanced schema to support template-based creation
 const EnhancedCreateToolSchema = CreateToolSchema.extend({
@@ -225,9 +255,11 @@ export const POST = withAuthValidationAndErrors(
           targetId: spaceIdStr,
           toolId: toolRef.id,
           deploymentId: `tool_${Date.now()}`,
-          surface: 'tools',
-          permissions: placementRecord.permissions,
-          settings: placementRecord.config,
+          placedBy: userId,
+          campusId: CURRENT_CAMPUS_ID,
+          placement: 'sidebar',
+          visibility: 'all',
+          configOverrides: placementRecord.config,
         });
         const compositeId = buildPlacementCompositeId('space', spaceIdStr);
 

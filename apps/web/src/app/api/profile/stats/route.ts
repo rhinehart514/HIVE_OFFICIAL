@@ -3,6 +3,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerProfileRepository } from '@hive/core/server';
+import { isTestUserId } from "@/lib/security-service";
 
 /**
  * GET /api/profile/stats
@@ -16,8 +17,8 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const timeRange = (searchParams.get('timeRange') || 'week').toLowerCase();
 
   try {
-    // Dev users: return stable mock stats
-    if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+    // Dev users: return stable mock stats (ONLY in development)
+    if (isTestUserId(userId)) {
       const mock = buildMockStats(timeRange);
       return respond.success({ data: mock });
     }

@@ -48,6 +48,24 @@ export type {
   GetMembershipsFn,
 } from './spaces/space-discovery.service';
 
+// Space Deployment Service (HiveLab → Spaces integration)
+export {
+  SpaceDeploymentService,
+  createSpaceDeploymentService,
+} from './spaces/space-deployment.service';
+
+export type {
+  PlaceToolInput,
+  PlaceToolResult,
+  UpdatePlacedToolInput,
+  RemovePlacedToolInput,
+  ReorderPlacedToolsInput,
+  AutoDeployInput,
+  AutoDeployResult,
+  SpaceDeploymentCallbacks,
+  PlacedToolData,
+} from './spaces/space-deployment.service';
+
 // Space DTOs and Presenters
 export type {
   SpaceBaseDTO,

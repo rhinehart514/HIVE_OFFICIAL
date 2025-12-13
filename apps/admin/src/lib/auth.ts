@@ -39,7 +39,6 @@ export async function getCurrentAdmin(): Promise<AdminUser | null> {
 
     // Verify admin claim
     if (claims.admin !== true) {
-      console.warn('User does not have admin claim');
       return null;
     }
 
@@ -50,8 +49,7 @@ export async function getCurrentAdmin(): Promise<AdminUser | null> {
       permissions: (claims.permissions as string[]) || ['read'],
       lastLogin: new Date(),
     };
-  } catch (error) {
-    console.error('Error getting current admin:', error);
+  } catch (_error) {
     return null;
   }
 }
@@ -99,7 +97,6 @@ export function useAdminAuth() {
           lastLogin: new Date(),
         });
       } catch (err) {
-        console.error('Error verifying admin status:', err);
         setError(err instanceof Error ? err.message : 'Failed to verify admin status');
         setAdmin(null);
       } finally {

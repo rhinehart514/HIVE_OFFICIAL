@@ -4,12 +4,22 @@ import { getAuth } from "firebase-admin/auth";
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { clearSessionCookie } from '@/lib/session';
+import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 
 /**
  * Logout endpoint - revokes user session
  * POST /api/auth/logout
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 requests per minute for logout (strict - prevent abuse)
+  const rateLimitResult = await enforceRateLimit('authentication', request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { success: false, error: rateLimitResult.error },
+      { status: rateLimitResult.status, headers: rateLimitResult.headers }
+    );
+  }
+
   try {
     // Always clear the session cookie for logout
     const baseResponse = NextResponse.json({

@@ -3,14 +3,15 @@ import {
   getServerSpaceRepository,
   createServerSpaceManagementService,
 } from "@hive/core/server";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
+import { SecurityScanner } from "@/lib/secure-input-validation";
 
 /**
  * Individual Widget CRUD API - Phase 4: DDD Foundation
@@ -37,6 +38,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const { spaceId, widgetId } = await params;
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId || !widgetId) {
     return respond.error("Space ID and Widget ID are required", "INVALID_INPUT", { status: 400 });
@@ -53,7 +55,7 @@ export const GET = withAuthAndErrors(async (
   const space = result.getValue();
 
   // Enforce campus isolation
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
   }
 
@@ -91,6 +93,7 @@ export const PATCH = withAuthValidationAndErrors(
   ) => {
     const { spaceId, widgetId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     if (!spaceId || !widgetId) {
       return respond.error("Space ID and Widget ID are required", "INVALID_INPUT", { status: 400 });
@@ -101,9 +104,20 @@ export const PATCH = withAuthValidationAndErrors(
       return respond.error("No updates provided", "INVALID_INPUT", { status: 400 });
     }
 
+    // SECURITY: Scan widget title for XSS/injection attacks
+    if (updates.title) {
+      const titleScan = SecurityScanner.scanInput(updates.title);
+      if (titleScan.level === 'dangerous') {
+        logger.warn("XSS attempt blocked in widget title update", {
+          userId, spaceId, widgetId, threats: titleScan.threats
+        });
+        return respond.error("Widget title contains invalid content", "INVALID_INPUT", { status: 400 });
+      }
+    }
+
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID }
+      { userId, campusId }
     );
 
     const result = await spaceService.updateWidget(userId, {
@@ -156,6 +170,7 @@ export const DELETE = withAuthAndErrors(async (
 ) => {
   const { spaceId, widgetId } = await params;
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId || !widgetId) {
     return respond.error("Space ID and Widget ID are required", "INVALID_INPUT", { status: 400 });
@@ -163,7 +178,7 @@ export const DELETE = withAuthAndErrors(async (
 
   // Use DDD SpaceManagementService
   const spaceService = createServerSpaceManagementService(
-    { userId, campusId: CURRENT_CAMPUS_ID }
+    { userId, campusId }
   );
 
   const result = await spaceService.removeWidget(userId, {

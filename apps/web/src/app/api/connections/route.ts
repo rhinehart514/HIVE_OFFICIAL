@@ -8,6 +8,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import type { ConnectionSource } from '@hive/core';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 // Extended connection type with additional properties from Firestore
 type FirestoreConnection = {
@@ -156,7 +157,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     if (userData.academic?.major) {
       const majorQuery = dbAdmin
         .collection('users')
-        .where('campusId', '==', 'ub-buffalo')
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
         .where('academic.major', '==', userData.academic.major)
         .limit(50);
 
@@ -178,7 +179,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     if (userData.academic?.housing) {
       const dormQuery = dbAdmin
         .collection('users')
-        .where('campusId', '==', 'ub-buffalo')
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
         .where('academic.housing', '==', userData.academic.housing)
         .limit(30);
 
@@ -206,7 +207,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     if (userData.academic?.academicYear) {
       const yearQuery = dbAdmin
         .collection('users')
-        .where('campusId', '==', 'ub-buffalo')
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
         .where('academic.academicYear', '==', userData.academic.academicYear)
         .limit(20);
 
@@ -228,7 +229,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     const userSpacesQuery = dbAdmin
       .collection('spaces')
       .where('members', 'array-contains', userId)
-      .where('campusId', '==', 'ub-buffalo')
+      .where('campusId', '==', CURRENT_CAMPUS_ID)
       .limit(10);
 
     const userSpaces = await userSpacesQuery.get();

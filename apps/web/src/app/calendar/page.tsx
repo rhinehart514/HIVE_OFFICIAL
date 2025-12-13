@@ -5,12 +5,11 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useMemo } from "react";
 import { Button, Card, Badge } from "@hive/ui";
-import { HiveModal, HiveModalContent } from "@/components/temp-stubs";
-import { PageContainer } from "@/components/temp-stubs";
 import { logger } from "@/lib/logger";
-import { 
-  Calendar, 
-  Plus, 
+import { useAuth } from "@hive/auth-logic";
+import {
+  Calendar,
+  Plus,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -23,11 +22,63 @@ import {
   Download,
   Settings
 } from "lucide-react";
-import { useSession } from "../../hooks/use-session";
-// import { useCalendarData } from "../../hooks/use-calendar-data";
-import { ErrorBoundary } from "../../components/error-boundary";
 import { EventDetailsModal } from "../../components/events/event-details-modal";
 import { CreateEventModal, type CreateEventData } from "../../components/events/create-event-modal";
+
+// Inline PageContainer to replace deleted temp-stubs
+function PageContainer({
+  title,
+  subtitle,
+  children,
+  actions,
+  maxWidth = "6xl"
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  breadcrumbs?: { label: string; icon?: React.ComponentType }[];
+  maxWidth?: string;
+}) {
+  return (
+    <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
+          {subtitle && <p className="text-zinc-400 mt-1">{subtitle}</p>}
+        </div>
+        {actions}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Inline Modal components
+function HiveModal({
+  open,
+  onOpenChange,
+  children
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  size?: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={() => onOpenChange(false)} />
+      <div className="relative bg-zinc-900 rounded-xl border border-zinc-700 p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function HiveModalContent({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
 // Calendar interfaces
 interface CalendarEvent {
@@ -73,7 +124,7 @@ function CalendarLoadingSkeleton() {
 }
 
 export default function CalendarPage() {
-  const { user } = useSession();
+  const { user } = useAuth();
   // Calendar hook data integration pending - currently using mock data
   // const { data: calendarHookData, state: calendarState } = useCalendarData();
   // Calendar hook data integration pending - currently using mock data
@@ -343,7 +394,6 @@ export default function CalendarPage() {
   }
 
   return (
-    <ErrorBoundary>
       <PageContainer
         title="Calendar"
         subtitle="Your personal schedule and campus coordination hub"
@@ -703,6 +753,5 @@ export default function CalendarPage() {
           }}
         />
       </PageContainer>
-    </ErrorBoundary>
   );
 }

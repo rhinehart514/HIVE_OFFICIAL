@@ -68,3 +68,25 @@ export {
 // Topology - Slot Kit for cognitive budgets
 export { slotKit } from './topology/slot-kit';
 export type { SlotKit, CognitiveBudgetSurface } from './topology/slot-kit';
+
+// IDE tokens - HiveLab design system
+export {
+  IDE_TOKENS,
+  ideSurface,
+  ideBorder,
+  ideText,
+  ideInteractive,
+  ideStatus,
+  ideAccent,
+  ideClasses,
+} from './ide';
+
+export type {
+  IDESurface,
+  IDEBorder,
+  IDEText,
+  IDEInteractive,
+  IDEStatus,
+  IDEAccent,
+  IDETokens,
+} from './ide';

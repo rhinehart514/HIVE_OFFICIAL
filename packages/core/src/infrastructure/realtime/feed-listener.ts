@@ -84,7 +84,6 @@ export class FeedListener {
         }
       },
       (error) => {
-        console.error('Feed listener error:', error);
         options.onError?.(error);
       }
     );
@@ -119,7 +118,6 @@ export class FeedListener {
         options.onUpdate(updates);
       },
       (error) => {
-        console.error('Space feed listener error:', error);
         options.onError?.(error);
       }
     );
@@ -160,7 +158,6 @@ export class FeedListener {
         options.onUpdate(updates);
       },
       (error) => {
-        console.error('Promoted feed listener error:', error);
         options.onError?.(error);
       }
     );
@@ -202,7 +199,6 @@ export class FeedListener {
         options.onUpdate(updates);
       },
       (error) => {
-        console.error('User feed listener error:', error);
         options.onError?.(error);
       }
     );
@@ -307,8 +303,7 @@ export class FeedListener {
       // Implementation would fetch the actual post
       // For now, return mapped promoted data
       return this.mapToFeedUpdate(promotedData.postId, promotedData);
-    } catch (error) {
-      console.error('Error fetching promoted post:', error);
+    } catch (_error) {
       return null;
     }
   }

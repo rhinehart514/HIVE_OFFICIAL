@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { FieldValue } from 'firebase-admin/firestore';
+import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 /**
  * Automatic Post Promotion Worker
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
     // Get all active spaces
     const spacesSnapshot = await dbAdmin
       .collection('spaces')
-      .where('campusId', '==', 'ub-buffalo')
+      .where('campusId', '==', CURRENT_CAMPUS_ID)
       .where('isActive', '==', true)
       .get();
 
@@ -266,7 +267,7 @@ async function promotePostToFeed(
       isHotThread: postData.commentCount ?? 0 >= 10,
 
       // Campus isolation
-      campusId: 'ub-buffalo',
+      campusId: CURRENT_CAMPUS_ID,
       isActive: true,
       isPinned: false,
       isDeleted: false,

@@ -338,11 +338,9 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
     await onUpdateSurface(surface.id, { isEnabled: !surface.isEnabled });
   }, [onUpdateSurface]);
 
-  const handleToolInstall = useCallback(async (slot: ToolSlot) => {
-    // This would open a tool marketplace modal
+  const handleToolInstall = useCallback(async (_slot: ToolSlot) => {
+    // TODO: Open tool marketplace modal
     // setSelectedSlot(slot);
-    // For now, just log the action
-    console.warn('Install tool in slot:', slot.id);
   }, []);
 
   const handleToolRemove = useCallback(async (slot: ToolSlot) => {

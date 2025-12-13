@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
+import { HiveLogo } from '../atomic/00-Global/atoms/hive-logo';
 
 /**
  * VoidShell - The Void Experience
@@ -54,18 +54,7 @@ export function VoidShell({
   const orbColorClass = orbColor === 'gold' ? 'bg-[#FFD700]' : 'bg-white';
 
   const LogoContent = () => (
-    <div className="flex items-center gap-2">
-      <Image
-        src="/assets/hive-logo-gold.svg"
-        alt="HIVE"
-        width={28}
-        height={28}
-        className="drop-shadow-sm"
-      />
-      <span className="text-lg font-bold text-white tracking-tight">
-        HIVE
-      </span>
-    </div>
+    <HiveLogo size="default" variant="default" showIcon showText />
   );
 
   return (

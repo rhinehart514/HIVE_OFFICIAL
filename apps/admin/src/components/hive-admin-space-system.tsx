@@ -465,8 +465,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
 
       const data = await response.json();
       setSpaces(data.spaces || []);
-    } catch (error) {
-      console.error('Failed to load spaces:', error);
+    } catch (_error) {
+      // Load spaces failed - UI will show empty state
     } finally {
       setLoading(false);
     }
@@ -693,8 +693,8 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <SpaceCard
                   key={space.id}
                   space={space}
-                  onViewDetails={() => console.warn('View details:', space.id)}
-                  onEdit={() => console.warn('Edit space:', space.id)}
+                  onViewDetails={() => { /* TODO: Navigate to space details */ }}
+                  onEdit={() => { /* TODO: Open space editor */ }}
                   onAudit={() => onAuditSpace?.(space.id)}
                 />
               ))}

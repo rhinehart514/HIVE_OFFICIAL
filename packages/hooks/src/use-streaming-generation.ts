@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix CanvasElement type issues
+// TODO: Fix CanvasElement type shape
 /**
  * useStreamingGeneration Hook
  *
@@ -262,9 +262,8 @@ export function useStreamingGeneration(callbacks?: {
               case 'error':
                 throw new Error(chunk.data.error || 'Unknown error');
             }
-          } catch (parseError) {
-            console.error('[useStreamingGeneration] Failed to parse chunk:', parseError);
-            // Continue - might be partial chunk
+          } catch (_parseError) {
+            // Continue - might be partial chunk, this is expected during streaming
           }
         }
       }

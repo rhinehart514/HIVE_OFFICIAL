@@ -14,6 +14,6 @@ export { FirebaseErrorHandler, useFirebaseErrorHandler } from './firebase-error-
 export { handleAuthError } from './error-handler';
 export type { AuthError as LegacyAuthError } from './error-handler';
 
-// Session management utilities
-export { SessionManager, trackUserActivity, useActivityTracking } from './session-manager';
-export type { SessionInfo } from './session-manager';
+// NOTE: SessionManager was removed on 2024-12-09
+// The app uses httpOnly JWT cookies with 30-day server-managed expiry.
+// Client-side token refresh is not needed.

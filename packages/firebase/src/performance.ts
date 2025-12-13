@@ -23,9 +23,8 @@ export function initializePerformance(app: FirebaseApp): void {
   if (isProduction && performanceEnabled) {
     try {
       performance = getPerformance(app);
-      console.log('✅ Firebase Performance Monitoring initialized');
-    } catch (error) {
-      console.error('Failed to initialize performance monitoring:', error);
+    } catch (_error) {
+      // Performance monitoring initialization failed - continue without it
     }
   }
 
@@ -34,9 +33,8 @@ export function initializePerformance(app: FirebaseApp): void {
   if (isProduction && analyticsEnabled) {
     try {
       analytics = getAnalytics(app);
-      console.log('✅ Firebase Analytics initialized');
-    } catch (error) {
-      console.error('Failed to initialize analytics:', error);
+    } catch (_error) {
+      // Analytics initialization failed - continue without it
     }
   }
 }
@@ -91,8 +89,7 @@ export async function startTrace(traceName: string): Promise<PerformanceTrace | 
     const customTrace = trace(performance, traceName);
     customTrace.start();
     return customTrace;
-  } catch (error) {
-    console.error(`Failed to start trace ${traceName}:`, error);
+  } catch (_error) {
     return null;
   }
 }
@@ -105,8 +102,8 @@ export function stopTrace(traceInstance: PerformanceTrace | null): void {
 
   try {
     traceInstance.stop();
-  } catch (error) {
-    console.error('Failed to stop trace:', error);
+  } catch (_error) {
+    // Trace stop failed - non-critical
   }
 }
 
@@ -122,8 +119,8 @@ export function trackMetric(
 
   try {
     traceInstance.putMetric(metricName, value);
-  } catch (error) {
-    console.error(`Failed to track metric ${metricName}:`, error);
+  } catch (_error) {
+    // Metric tracking failed - non-critical
   }
 }
 
@@ -139,8 +136,8 @@ export function trackAttribute(
 
   try {
     traceInstance.putAttribute(attributeName, value);
-  } catch (error) {
-    console.error(`Failed to track attribute ${attributeName}:`, error);
+  } catch (_error) {
+    // Attribute tracking failed - non-critical
   }
 }
 
@@ -195,8 +192,8 @@ export function logAnalyticsEvent(
     };
 
     logEvent(analytics, eventName, enrichedParams);
-  } catch (error) {
-    console.error(`Failed to log analytics event ${eventName}:`, error);
+  } catch (_error) {
+    // Analytics event logging failed - non-critical
   }
 }
 
@@ -242,10 +239,10 @@ export function trackPageLoadPerformance(pageName: string): void {
       first_paint_ms: firstPaintTime,
     });
 
-    // Log warning if load time exceeds threshold
+    // Track if load time exceeds threshold (logged via analytics, not console)
     const maxLoadTime = parseInt(process.env.NEXT_PUBLIC_MAX_LOAD_TIME || '3000');
     if (loadTime > maxLoadTime) {
-      console.warn(`⚠️ Page load time (${loadTime}ms) exceeded threshold (${maxLoadTime}ms)`);
+      // Threshold exceeded - already logged to analytics above
     }
   });
 }
@@ -271,11 +268,9 @@ export async function trackAPICall<T>(
       trackAttribute(trace, 'api_name', apiName);
       trackAttribute(trace, 'success', 'true');
 
-      // Log warning if API call exceeds threshold
-      const maxApiTime = parseInt(process.env.NEXT_PUBLIC_MAX_API_RESPONSE || '1000');
-      if (duration > maxApiTime) {
-        console.warn(`⚠️ API call ${apiName} (${duration}ms) exceeded threshold (${maxApiTime}ms)`);
-      }
+      // Track if API call exceeds threshold (metrics tracked above)
+      const _maxApiTime = parseInt(process.env.NEXT_PUBLIC_MAX_API_RESPONSE || '1000');
+      // Threshold check - duration already tracked via metrics
     }
 
     return result;

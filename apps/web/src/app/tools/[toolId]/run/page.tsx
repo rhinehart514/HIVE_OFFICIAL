@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, Settings, Share, Activity, Zap, CheckCircle2, AlertCircle, Loader2, CloudOff, LogIn } from "lucide-react";
@@ -193,7 +193,6 @@ export default function ToolRunPage() {
   // Use the runtime hook
   const {
     tool,
-    deployment,
     state,
     isLoading,
     isExecuting,
@@ -214,6 +213,45 @@ export default function ToolRunPage() {
   // Action logging for debug panel
   const [actionLog, setActionLog] = useState<ActionLogEntry[]>([]);
 
+  // Deployment state (must be before any early returns)
+  interface ToolDeployment {
+    deploymentId?: string;
+    status?: string;
+    usageCount?: number;
+  }
+  const [deployment, setDeployment] = useState<ToolDeployment | null>(null);
+  const [deploymentLoading, setDeploymentLoading] = useState(false);
+
+  // Fetch deployment info
+  useEffect(() => {
+    if (!spaceId || !toolId) {
+      setDeployment(null);
+      return;
+    }
+    let canceled = false;
+    setDeploymentLoading(true);
+    fetch(`/api/tools/${toolId}/deploy?spaceId=${encodeURIComponent(spaceId)}`, {
+      credentials: "include",
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const data = await res.json();
+        return (data?.deployment ?? null) as ToolDeployment | null;
+      })
+      .then((dep) => {
+        if (!canceled) setDeployment(dep);
+      })
+      .catch(() => {
+        if (!canceled) setDeployment(null);
+      })
+      .finally(() => {
+        if (!canceled) setDeploymentLoading(false);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [spaceId, toolId]);
+
   const logAction = useCallback((instanceId: string, action: string, data?: unknown) => {
     setActionLog(prev => [{
       time: new Date().toLocaleTimeString(),
@@ -225,7 +263,7 @@ export default function ToolRunPage() {
 
   // Handle element state changes
   const handleElementChange = useCallback((instanceId: string, data: unknown) => {
-    updateState(instanceId, data);
+    updateState({ [instanceId]: data });
     logAction(instanceId, 'change', data);
   }, [updateState, logAction]);
 
@@ -236,10 +274,10 @@ export default function ToolRunPage() {
     payload: unknown
   ) => {
     logAction(instanceId, action, payload);
-    const result = await executeAction(action, instanceId, payload as Record<string, unknown>);
+    const result = await executeAction(instanceId, action, payload as Record<string, unknown>);
 
     if (result.success) {
-      logAction(instanceId, `${action}:success`, result.data);
+      logAction(instanceId, `${action}:success`, result.result ?? result.state);
     } else {
       logAction(instanceId, `${action}:error`, { error: result.error });
     }
@@ -264,8 +302,11 @@ export default function ToolRunPage() {
     );
   }
 
+  const errorMessage = error instanceof Error ? error.message : (error ? String(error) : "");
   // Check if it's an auth error (401)
-  const isAuthError = error?.includes('401') || error?.toLowerCase().includes('unauthorized');
+  const isAuthError = errorMessage.includes('401') || errorMessage.toLowerCase().includes('unauthorized');
+
+  const isConnected = !deploymentLoading;
 
   // Error state
   if (error || !tool) {
@@ -334,7 +375,7 @@ export default function ToolRunPage() {
             <AlertCircle className="h-8 w-8 text-red-400" />
           </div>
           <h2 className="text-xl font-semibold text-white mb-2">Failed to load tool</h2>
-          <p className="text-gray-400 mb-8">{error || 'Tool not found'}</p>
+          <p className="text-gray-400 mb-8">{errorMessage || 'Tool not found'}</p>
           <motion.button
             onClick={() => router.back()}
             whileHover={{ scale: 1.02 }}
@@ -466,7 +507,7 @@ export default function ToolRunPage() {
                   onElementChange={handleElementChange}
                   onElementAction={handleElementAction}
                   isLoading={isLoading}
-                  error={error}
+                  error={errorMessage || null}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center py-16">
@@ -586,6 +627,12 @@ export default function ToolRunPage() {
                   <StatusDot status={!error ? 'success' : 'error'} />
                   <span className="text-sm text-white">
                     {!error ? 'Runtime Active' : 'Runtime Error'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusDot status={isConnected ? 'success' : 'warning'} />
+                  <span className="text-sm text-white">
+                    {isConnected ? 'Real-time Connected' : 'Connecting...'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

@@ -3,16 +3,31 @@
  * Uses DDD repository layer for space discovery
  */
 
+import { z } from 'zod';
 import {
   getServerSpaceRepository,
   getServerProfileRepository,
   toSpaceBrowseDTOList,
 } from '@hive/core/server';
 import { logger } from '@/lib/structured-logger';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withOptionalAuth, type ResponseFormatter } from '@/lib/middleware';
+import { currentEnvironment } from '@/lib/env';
+
+// Check if we're in development mode
+const isDevelopmentMode = currentEnvironment === 'development' || process.env.NODE_ENV === 'development';
 
 // Using unified toSpaceBrowseDTOList from @hive/core/server
+
+/**
+ * Zod schema for browse query params validation
+ * Supports cursor-based pagination via 'cursor' param
+ */
+const BrowseQuerySchema = z.object({
+  category: z.string().max(50).default('all'),
+  sort: z.enum(['trending', 'recommended', 'newest', 'popular']).default('trending'),
+  limit: z.coerce.number().min(1).max(50).default(20),
+  cursor: z.string().optional(), // Cursor for pagination (spaceId to start after)
+});
 
 /**
  * GET /api/spaces/browse-v2 - Browse/discover spaces
@@ -21,52 +36,103 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/m
  *   category: filter by category (or 'all')
  *   sort: 'trending' | 'recommended' | 'newest' | 'popular'
  *   limit: max results (default 20)
+ *
+ * Note: This endpoint uses optional auth to support both authenticated
+ * users and unauthenticated browsing (e.g., during onboarding).
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
-  const userId = getUserId(request as AuthenticatedRequest);
+export const GET = withOptionalAuth(async (request, context, respond) => {
+  // Extract auth info if available (attached by withOptionalAuth)
+  const user = (request as any).user;
+  const userId = user?.uid || null;
+  const campusId = user?.campusId || 'ub-buffalo'; // Default to UB for unauthenticated
   const { searchParams } = new URL(request.url);
 
-  const category = searchParams.get('category') || 'all';
-  const sort = searchParams.get('sort') || 'trending';
-  const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10), 50);
+  // Validate and parse query params
+  const parseResult = BrowseQuerySchema.safeParse(
+    Object.fromEntries(searchParams.entries())
+  );
+
+  if (!parseResult.success) {
+    return respond.error('Invalid query parameters', 'VALIDATION_ERROR', {
+      status: 400,
+      details: parseResult.error.flatten()
+    });
+  }
+
+  const { category, sort, limit, cursor } = parseResult.data;
 
   logger.info('Browse spaces request', {
     category,
     sort,
     limit,
+    cursor,
     userId,
     endpoint: '/api/spaces/browse-v2'
   });
+
+  // Development mode: Return mock data when Firestore isn't available
+  if (isDevelopmentMode) {
+    logger.info('Development mode: Returning mock spaces data', {
+      endpoint: '/api/spaces/browse-v2'
+    });
+
+    const mockSpaces = [
+      { id: 'mock-space-1', name: 'Computer Science Club', memberCount: 125, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
+      { id: 'mock-space-2', name: 'Engineering Society', memberCount: 89, category: 'student_org', hasLeader: true, leaderHandle: 'admin', createdAt: new Date().toISOString() },
+      { id: 'mock-space-3', name: 'Alpha Beta Gamma', memberCount: 45, category: 'greek_life', hasLeader: false, createdAt: new Date().toISOString() },
+      { id: 'mock-space-4', name: 'Ellicott Hall', memberCount: 234, category: 'residential', hasLeader: false, createdAt: new Date().toISOString() },
+      { id: 'mock-space-5', name: 'Student Government', memberCount: 56, category: 'university_org', hasLeader: true, leaderHandle: 'sgpres', createdAt: new Date().toISOString() },
+      { id: 'mock-space-6', name: 'Data Science Club', memberCount: 67, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
+      { id: 'mock-space-7', name: 'Debate Team', memberCount: 32, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
+      { id: 'mock-space-8', name: 'Phi Kappa Psi', memberCount: 78, category: 'greek_life', hasLeader: false, createdAt: new Date().toISOString() },
+    ];
+
+    // Filter by category if specified
+    const filteredSpaces = category !== 'all'
+      ? mockSpaces.filter(s => s.category === category)
+      : mockSpaces;
+
+    return respond.success({
+      spaces: filteredSpaces.slice(0, limit),
+      totalCount: filteredSpaces.length,
+      hasMore: false,
+      nextCursor: undefined,
+      devMode: true,
+    });
+  }
 
   const spaceRepo = getServerSpaceRepository();
   const profileRepo = getServerProfileRepository();
 
   // Get spaces based on sort/filter
+  // Strategy: Fetch spaces, then apply category filter + sort
   let spacesResult;
 
-  if (sort === 'trending') {
-    spacesResult = await spaceRepo.findTrending(CURRENT_CAMPUS_ID, limit);
+  // If filtering by category, use findByCategory (it's already optimized)
+  // Then we'll sort the results client-side
+  if (category !== 'all') {
+    spacesResult = await spaceRepo.findByCategory(category, campusId);
   } else if (sort === 'recommended') {
-    // Get user profile for personalized recommendations
-    const profileResult = await profileRepo.findById(userId);
+    // Get user profile for personalized recommendations (if authenticated)
     const interests: string[] = [];
     let major: string | undefined;
 
-    if (profileResult.isSuccess) {
-      const profile = profileResult.getValue();
-      // Extract interests and major from profile
-      // Note: Profile value objects may need accessors
+    if (userId) {
+      const profileResult = await profileRepo.findById(userId);
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+        // Extract interests and major from profile
+        // Note: Profile value objects may need accessors
+      }
     }
 
-    spacesResult = await spaceRepo.findRecommended(CURRENT_CAMPUS_ID, interests, major);
-  } else if (sort === 'newest') {
-    // findByCampus orders by memberCount desc, but we want newest
-    // For now, use findByCampus and sort client-side
-    spacesResult = await spaceRepo.findByCampus(CURRENT_CAMPUS_ID, limit);
-  } else if (category !== 'all') {
-    spacesResult = await spaceRepo.findByCategory(category, CURRENT_CAMPUS_ID);
+    spacesResult = await spaceRepo.findRecommended(campusId, interests, major);
+  } else if (sort === 'trending') {
+    // Fetch more than limit to account for filtering
+    spacesResult = await spaceRepo.findTrending(campusId, Math.min(limit * 2, 100));
   } else {
-    spacesResult = await spaceRepo.findByCampus(CURRENT_CAMPUS_ID, limit);
+    // Default: fetch by campus with generous limit for client-side filtering
+    spacesResult = await spaceRepo.findByCampus(campusId, Math.min(limit * 2, 100));
   }
 
   if (spacesResult.isFailure) {
@@ -76,29 +142,77 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
   const spaces = spacesResult.getValue();
 
-  // Get user's joined spaces to mark them
-  const userSpacesResult = await spaceRepo.findUserSpaces(userId);
-  const userSpaceIds = new Set(
-    userSpacesResult.isSuccess
-      ? userSpacesResult.getValue().map(s => s.spaceId.value)
-      : []
-  );
+  // Get user's joined spaces to mark them (only if authenticated)
+  const userSpaceIds = new Set<string>();
+  const leaderSpaceIds = new Set<string>();
+
+  if (userId) {
+    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    if (userSpacesResult.isSuccess) {
+      for (const space of userSpacesResult.getValue()) {
+        userSpaceIds.add(space.spaceId.value);
+        // Check if user is a leader (owner or admin)
+        const member = space.members.find(m => m.profileId.value === userId);
+        if (member && (member.role === 'owner' || member.role === 'admin')) {
+          leaderSpaceIds.add(space.spaceId.value);
+        }
+      }
+    }
+  }
+
+  // Filter spaces based on publish status:
+  // - Show all 'live' spaces
+  // - Only show 'stealth' spaces if user is a leader of that space
+  // - Never show 'rejected' spaces in browse
+  const visibleSpaces = spaces.filter(space => {
+    if (space.isLive) return true;
+    if (space.isStealth && leaderSpaceIds.has(space.spaceId.value)) return true;
+    return false;
+  });
 
   // Transform spaces for API response using unified DTO presenter
-  const transformedSpaces = toSpaceBrowseDTOList(spaces, userSpaceIds);
+  const transformedSpaces = toSpaceBrowseDTOList(visibleSpaces, userSpaceIds);
 
-  // Sort by newest if requested (repository doesn't support this sort)
+  // Apply sorting based on sort parameter
+  // This handles all sort types including when category filter is applied
   if (sort === 'newest') {
     transformedSpaces.sort((a, b) =>
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  } else if (sort === 'trending' || sort === 'popular') {
+    // Sort by trending score (falls back to member count)
+    transformedSpaces.sort((a, b) => {
+      // Primary: member count (proxy for trending/popular)
+      const memberDiff = (b.memberCount || 0) - (a.memberCount || 0);
+      if (memberDiff !== 0) return memberDiff;
+      // Secondary: alphabetical
+      return a.name.localeCompare(b.name);
+    });
   }
+  // 'recommended' sort is already handled by repository query
+
+  // Apply cursor-based pagination
+  let paginatedSpaces = transformedSpaces;
+  if (cursor) {
+    const cursorIndex = transformedSpaces.findIndex(s => s.id === cursor);
+    if (cursorIndex !== -1) {
+      paginatedSpaces = transformedSpaces.slice(cursorIndex + 1);
+    }
+  }
+
+  // Apply limit
+  const resultSpaces = paginatedSpaces.slice(0, limit);
+  const hasMore = paginatedSpaces.length > limit;
+  const nextCursor = hasMore && resultSpaces.length > 0
+    ? resultSpaces[resultSpaces.length - 1]?.id
+    : undefined;
 
   // Create response with cache headers
   const response = respond.success({
-    spaces: transformedSpaces.slice(0, limit),
+    spaces: resultSpaces,
     totalCount: transformedSpaces.length,
-    hasMore: transformedSpaces.length === limit
+    hasMore,
+    nextCursor
   });
 
   // Add cache headers for better performance

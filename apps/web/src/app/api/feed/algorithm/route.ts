@@ -237,7 +237,7 @@ interface UserSpaceMembership {
 
 async function getUserSpaceMemberships(userId: string, campusId: string): Promise<UserSpaceMembership[]> {
   try {
-    const membershipsSnapshot = await dbAdmin.collection('members')
+    const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', campusId)
@@ -566,7 +566,7 @@ async function getToolInteractionValue(toolId: string, campusId: string): Promis
 async function getCreatorInfluence(authorId: string, spaceId: string, campusId: string): Promise<number> {
   try {
     // Get author's role and activity in space
-    const memberSnapshot = await dbAdmin.collection('members')
+    const memberSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', authorId)
       .where('spaceId', '==', spaceId)
       .where('campusId', '==', campusId)

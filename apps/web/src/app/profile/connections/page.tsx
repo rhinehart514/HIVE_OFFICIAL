@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Input, Badge, Tabs, TabsList, TabsTrigger, TabsContent } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { db } from '@hive/firebase';
+import { logger } from '@/lib/logger';
 import {
   collection,
   query,
@@ -152,7 +153,7 @@ export default function ConnectionsPage() {
         )
       );
     } catch (error) {
-      console.error('Failed to send friend request:', error);
+      logger.error('Failed to send friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
     }
   };
 
@@ -174,7 +175,7 @@ export default function ConnectionsPage() {
       // Remove from pending requests
       setFriendRequests(prev => prev.filter(req => req.id !== requestId));
     } catch (error) {
-      console.error('Failed to accept friend request:', error);
+      logger.error('Failed to accept friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
     }
   };
 
@@ -186,7 +187,7 @@ export default function ConnectionsPage() {
       await deleteDoc(requestRef);
       setFriendRequests(prev => prev.filter(req => req.id !== requestId));
     } catch (error) {
-      console.error('Failed to reject friend request:', error);
+      logger.error('Failed to reject friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
     }
   };
 
@@ -198,7 +199,7 @@ export default function ConnectionsPage() {
       await deleteDoc(connRef);
       setConnections(prev => prev.filter(conn => conn.uid !== connectionId));
     } catch (error) {
-      console.error('Failed to remove connection:', error);
+      logger.error('Failed to remove connection', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
     }
   };
 

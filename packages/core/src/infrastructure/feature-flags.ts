@@ -73,8 +73,8 @@ class FeatureFlagService {
       try {
         const overrides = JSON.parse(envFlags);
         this.flags = { ...this.flags, ...overrides };
-      } catch (error) {
-        console.warn('Failed to parse HIVE_FEATURE_FLAGS:', error);
+      } catch (_error) {
+        // Invalid JSON in HIVE_FEATURE_FLAGS - use defaults
       }
     }
 

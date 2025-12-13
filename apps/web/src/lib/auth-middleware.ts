@@ -3,6 +3,7 @@
 
 import { type NextRequest } from 'next/server';
 import { getCurrentUser, type AuthenticatedUser } from './auth-server';
+import { logger } from './logger';
 
 /**
  * Authentication configuration for API routes
@@ -14,6 +15,8 @@ export interface AuthConfig {
   roles?: string[];
   /** Skip authentication entirely */
   skip?: boolean;
+  /** Operation name for logging/auditing */
+  operation?: string;
 }
 
 /**
@@ -72,7 +75,7 @@ export async function authenticateRequest(
 
     return authContext;
   } catch (error) {
-    console.error('[Auth Middleware] Authentication error:', error);
+    logger.error('Authentication error', { component: 'auth-middleware' }, error instanceof Error ? error : undefined);
     return null;
   }
 }

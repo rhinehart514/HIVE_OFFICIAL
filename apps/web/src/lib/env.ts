@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type issues
 import { z } from "zod";
 
 /**
@@ -65,6 +63,10 @@ const envSchema = z.object({
   // Error Monitoring Config
   SENTRY_DSN: z.string().url().optional(),
   NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
+
+  // Session Secret (for JWT signing)
+  // Must be at least 32 characters in production for security
+  SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters").optional(),
 });
 
 
@@ -141,6 +143,7 @@ function parseEnv() {
     FROM_EMAIL: process.env.FROM_EMAIL,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    SESSION_SECRET: process.env.SESSION_SECRET,
   };
 
   try {
@@ -171,39 +174,63 @@ function parseEnv() {
 /**
  * Validate production-specific requirements
  */
-function validateProductionConfig(config: Record<string, unknown>) {
+function validateProductionConfig(config: z.infer<typeof envSchema>) {
   const requiredInProduction = [
     'FIREBASE_CLIENT_EMAIL',
     'FIREBASE_PRIVATE_KEY',
     'NEXTAUTH_SECRET',
-  ];
-  
+    'SESSION_SECRET',
+  ] as const;
+
   const missing = requiredInProduction.filter(key => !config[key]);
-  
+
   if (missing.length > 0) {
     throw new Error(
       `PRODUCTION CRITICAL: Missing required environment variables: ${missing.join(', ')}. ` +
       'These are required for production deployment.'
     );
   }
-  
+
   // Validate Firebase Admin credentials format
-  if (config.FIREBASE_PRIVATE_KEY && !config.FIREBASE_PRIVATE_KEY.includes('BEGIN PRIVATE KEY')) {
+  const privateKey = config.FIREBASE_PRIVATE_KEY;
+  if (privateKey && !privateKey.includes('BEGIN PRIVATE KEY')) {
     throw new Error(
       'PRODUCTION CRITICAL: FIREBASE_PRIVATE_KEY appears to be invalid. It should be a properly formatted private key.'
     );
   }
-  
+
   // Production environment validation passed
 }
 
-// Parse environment on module load with fallbacks
+// Parse environment on module load
+// SECURITY: Fail fast in production, allow fallbacks only in development/build
 let env: ReturnType<typeof parseEnv>;
+
+const isProductionRuntime = process.env.NODE_ENV === 'production' &&
+  !process.env.VERCEL_ENV?.includes('preview') &&
+  typeof window === 'undefined'; // Server-side only for strict checks
+
+const isBuildTime = process.env.npm_lifecycle_event === 'build' ||
+  process.env.NEXT_PHASE === 'phase-production-build';
+
 try {
   env = parseEnv();
 } catch (error) {
-  console.error("❌ Environment parsing failed, using fallbacks:", error);
-  // Provide safe fallbacks for build time
+  // CRITICAL: In production runtime (not build), we MUST fail
+  if (isProductionRuntime && !isBuildTime) {
+    console.error("🚨 CRITICAL: Environment validation failed in production!");
+    console.error(error);
+    throw new Error(
+      `PRODUCTION STARTUP BLOCKED: Environment configuration is invalid. ` +
+      `Check server logs for details. Application cannot start with invalid configuration.`
+    );
+  }
+
+  // In development or build time, warn but continue with fallbacks
+  console.warn("⚠️ Environment parsing failed, using fallbacks:", error);
+  console.warn("⚠️ This is acceptable during build time or development.");
+
+  // Provide safe fallbacks for build time / development
   env = {
     NODE_ENV: (process.env.NODE_ENV as "development" | "staging" | "production" | "test") || "development",
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",

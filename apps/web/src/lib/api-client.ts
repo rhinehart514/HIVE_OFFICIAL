@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix logger context types
 /**
  * Authenticated API Client
  * SECURITY: Uses Firebase Auth tokens for all authenticated requests
@@ -45,7 +43,7 @@ class ApiClient {
 
       return null;
     } catch (error) {
-      logger.error('Failed to get auth token', error as Error, { component: 'api-client', action: 'get_auth_token' });
+      logger.error('Failed to get auth token', { component: 'api-client', action: 'get_auth_token' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -184,14 +182,6 @@ export const api = {
 
     leave: (spaceId: string) =>
       apiClient.post('/api/spaces/leave', { spaceId }),
-
-    posts: {
-      list: (spaceId: string) =>
-        apiClient.get(`/api/spaces/${spaceId}/posts`),
-
-      create: (spaceId: string, content: string, parentId?: string) =>
-        apiClient.post(`/api/spaces/${spaceId}/posts`, { content, parentId }),
-    },
 
     members: {
       list: (spaceId: string) =>

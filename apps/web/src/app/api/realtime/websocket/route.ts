@@ -409,7 +409,7 @@ async function getDefaultChannels(userId: string, connectionType: string, spaceI
 // Helper function to get user's spaces
 async function getUserSpaces(userId: string): Promise<string[]> {
   try {
-    const membershipsQuery = dbAdmin.collection('members')
+    const membershipsQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -482,7 +482,7 @@ async function getChannelPermissions(userId: string, channel: string): Promise<C
 
     case 'space': {
       // Check space membership and role
-      const membershipQuery = dbAdmin.collection('members')
+      const membershipQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', id)
         .where('status', '==', 'active')

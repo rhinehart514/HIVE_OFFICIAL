@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix Error type extension
 /**
  * API Error Handler
  *
@@ -106,7 +104,8 @@ export function handleApiError(error: unknown, request?: NextRequest, _userId?: 
   logger.error(`Unhandled API Error: ${errorMessage}`, {
     endpoint: request?.nextUrl?.pathname,
     metadata: { requestId },
-  }, { error: errorMessage, stack: errorStack });
+    errorStack,
+  }, error instanceof Error ? error : undefined);
 
   // Don't expose internal error details in production
   const isProduction = process.env.NODE_ENV === 'production';

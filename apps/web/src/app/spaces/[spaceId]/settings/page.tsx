@@ -37,7 +37,8 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Button, Input, Card, Switch, toast, cn } from "@hive/ui";
+import { Button, Input, Card, Switch, toast, cn, AddTabModal, AddWidgetModal } from "@hive/ui";
+import type { AddTabInput, AddWidgetInputUI } from "@hive/ui";
 import { springPresets, easingArrays } from "@hive/tokens";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
@@ -148,6 +149,10 @@ function SpaceSettingsContent() {
     requireApproval: false,
   });
 
+  // Modal state for Add Tab and Add Widget
+  const [addTabModalOpen, setAddTabModalOpen] = React.useState(false);
+  const [addWidgetModalOpen, setAddWidgetModalOpen] = React.useState(false);
+
   // Initialize form when space loads
   React.useEffect(() => {
     if (space) {
@@ -205,6 +210,30 @@ function SpaceSettingsContent() {
   const handleToggleTab = async (tabId: string, isVisible: boolean) => {
     if (!leaderActions) return;
     await leaderActions.updateTab(tabId, { isVisible });
+  };
+
+  // Handle adding a new tab
+  const handleAddTab = async (input: AddTabInput) => {
+    if (!leaderActions) return;
+    const result = await leaderActions.addTab(input);
+    if (result) {
+      toast.success("Tab added", `"${input.name}" tab has been created.`);
+      setAddTabModalOpen(false);
+    } else {
+      toast.error("Failed to add tab", "Please try again.");
+    }
+  };
+
+  // Handle adding a new widget
+  const handleAddWidget = async (input: AddWidgetInputUI) => {
+    if (!leaderActions) return;
+    const result = await leaderActions.addWidget(input);
+    if (result) {
+      toast.success("Widget added", "The widget has been created.");
+      setAddWidgetModalOpen(false);
+    } else {
+      toast.error("Failed to add widget", "Please try again.");
+    }
   };
 
   // Handle delete space
@@ -525,9 +554,7 @@ function SpaceSettingsContent() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Open add tab modal
-                          }}
+                          onClick={() => setAddTabModalOpen(true)}
                           className="border-neutral-700 text-neutral-300 hover:bg-white/5"
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
@@ -586,9 +613,7 @@ function SpaceSettingsContent() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            // TODO: Open add widget modal
-                          }}
+                          onClick={() => setAddWidgetModalOpen(true)}
                           className="border-neutral-700 text-neutral-300 hover:bg-white/5"
                         >
                           <Plus className="h-4 w-4 mr-1.5" />
@@ -800,6 +825,25 @@ function SpaceSettingsContent() {
             {error}
           </div>
         </motion.div>
+      )}
+
+      {/* Add Tab Modal */}
+      {leaderActions && (
+        <AddTabModal
+          open={addTabModalOpen}
+          onOpenChange={setAddTabModalOpen}
+          onSubmit={handleAddTab}
+          existingTabNames={tabs.map((t) => t.name)}
+        />
+      )}
+
+      {/* Add Widget Modal */}
+      {leaderActions && (
+        <AddWidgetModal
+          open={addWidgetModalOpen}
+          onOpenChange={setAddWidgetModalOpen}
+          onSubmit={handleAddWidget}
+        />
       )}
     </motion.div>
   );

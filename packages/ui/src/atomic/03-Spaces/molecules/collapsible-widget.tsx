@@ -59,6 +59,16 @@ export interface CollapsibleWidgetProps {
   animate?: boolean;
   /** Additional header actions */
   headerActions?: React.ReactNode;
+  /**
+   * Peek mode: Show a summary/preview when collapsed
+   * The peek content appears below the header when collapsed
+   */
+  peek?: React.ReactNode;
+  /**
+   * Whether to show peek content when collapsed
+   * Default: true if peek prop is provided
+   */
+  showPeek?: boolean;
   /** Children content */
   children: React.ReactNode;
   /** Additional className for wrapper */
@@ -78,6 +88,8 @@ export function CollapsibleWidget({
   isEmpty = false,
   animate = true,
   headerActions,
+  peek,
+  showPeek = true,
   children,
   className,
 }: CollapsibleWidgetProps) {
@@ -168,6 +180,35 @@ export function CollapsibleWidget({
             </motion.span>
           </div>
         </button>
+
+        {/* Peek content - shown when collapsed */}
+        <AnimatePresence initial={false}>
+          {isCollapsed && peek && showPeek && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div
+                className="px-4 pb-3 text-xs text-neutral-400 cursor-pointer"
+                onClick={handleToggle}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleToggle();
+                  }
+                }}
+                aria-label={`Expand ${title}`}
+              >
+                {peek}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Content - collapsible */}
         <AnimatePresence initial={false}>

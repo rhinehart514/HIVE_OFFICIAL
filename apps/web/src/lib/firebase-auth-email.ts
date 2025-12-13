@@ -1,6 +1,8 @@
 // Firebase Auth Email utilities
 // Stub implementation for magic link email functionality
 
+import { logger } from './logger';
+
 /**
  * Check if Firebase email auth is enabled
  */
@@ -34,10 +36,10 @@ export async function sendFirebaseMagicLinkEmail(
   try {
     // TODO: Implement actual Firebase email sending
     // eslint-disable-next-line no-console
-    console.log(`[Firebase Auth] Would send magic link to: ${options.email}`);
+    logger.debug('Would send magic link', { component: 'firebase-auth-email', email: options.email });
     return { success: true };
   } catch (error) {
-    console.error('[Firebase Auth] Error sending magic link:', error);
+    logger.error('Error sending magic link', { component: 'firebase-auth-email' }, error instanceof Error ? error : undefined);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email',

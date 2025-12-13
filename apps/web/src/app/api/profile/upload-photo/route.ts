@@ -5,6 +5,8 @@ import { logger } from "@/lib/logger";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { isTestUserId } from "@/lib/security-service";
+import { mlContentAnalyzer } from "@/lib/ml-content-analyzer";
 
 // In-memory store for development mode profile data (shared with profile route)
 const devProfileStore: Record<string, unknown> = {};
@@ -23,14 +25,8 @@ export const POST = withAuthAndErrors(async (
       return respond.error("No photo file provided", "INVALID_INPUT", { status: 400 });
     }
 
-    // Handle development mode - check for any dev user patterns
-    const isDevUser = userId === 'test-user' ||
-                      userId === 'dev_user_123' ||
-                      userId.startsWith('dev-test') ||
-                      userId.startsWith('dev-user') ||
-                      userId.startsWith('dev_');
-
-    if (isDevUser) {
+    // Handle development mode (ONLY in development environment)
+    if (isTestUserId(userId)) {
       // In development, simulate successful upload with a unique URL
       const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${Date.now()}`;
       
@@ -62,13 +58,60 @@ export const POST = withAuthAndErrors(async (
       return respond.error("File too large. Maximum size is 5MB.", "INVALID_INPUT", { status: 400 });
     }
 
+    // Read file buffer once (used for both moderation and upload)
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+
+    // ML Image Moderation Check
+    if (mlContentAnalyzer.isImageModerationAvailable()) {
+      try {
+        const base64Image = fileBuffer.toString('base64');
+
+        const imageAnalysis = await mlContentAnalyzer.analyzeImage(base64Image, {
+          contextType: 'profile_photo',
+          strictMode: true, // Profile photos require strict moderation
+        });
+
+        logger.info('Profile photo moderation result', {
+          userId,
+          isViolation: imageAnalysis.isViolation,
+          suggestedAction: imageAnalysis.suggestedAction,
+          confidence: imageAnalysis.confidence,
+          processingTime: imageAnalysis.processingTime,
+          endpoint: '/api/profile/upload-photo',
+        });
+
+        if (imageAnalysis.suggestedAction === 'block') {
+          return respond.error(
+            "This image cannot be used as a profile photo. Please choose a different image.",
+            "CONTENT_POLICY_VIOLATION",
+            { status: 400 }
+          );
+        }
+
+        if (imageAnalysis.suggestedAction === 'flag') {
+          // Log for moderator review but allow with warning
+          logger.warn('Profile photo flagged for review', {
+            userId,
+            flags: imageAnalysis.flags,
+            scores: imageAnalysis.scores,
+            reasoning: imageAnalysis.reasoning,
+          });
+        }
+      } catch (error) {
+        // Don't block upload if moderation fails - log and continue
+        logger.warn('Image moderation check failed, proceeding with upload', {
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+          endpoint: '/api/profile/upload-photo',
+        });
+      }
+    }
+
     // Upload to Firebase Storage (Admin SDK)
     const storage = getStorage();
     const bucket = storage.bucket();
     const fileName = `profile-photos/${userId}/${Date.now()}-${file.name}`;
-    
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
     
     // Upload file to Firebase Storage
     const fileRef = bucket.file(fileName);

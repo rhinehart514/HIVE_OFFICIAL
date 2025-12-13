@@ -28,27 +28,16 @@ export const leaveSpace = functions.https.onCall(async (data, context) => {
           .limit(1)
       );
 
-      let performed = false;
-      if (!flatQuery.empty) {
-        const ref = flatQuery.docs[0].ref;
-        tx.update(ref, {
-          isActive: false,
-          leftAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        performed = true;
-      }
-
-      // Legacy nested: delete if exists
-      const nestedRef = db.collection('spaces').doc(spaceId).collection('members').doc(userId);
-      const nestedDoc = await tx.get(nestedRef);
-      if (nestedDoc.exists) {
-        tx.delete(nestedRef);
-        performed = true;
-      }
-
-      if (!performed) {
+      // Use flat /spaceMembers collection only
+      if (flatQuery.empty) {
         throw new functions.https.HttpsError('not-found', 'You are not a member of this space.');
       }
+
+      const ref = flatQuery.docs[0].ref;
+      tx.update(ref, {
+        isActive: false,
+        leftAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
       // Update metrics on the space doc
       tx.update(spaceRef, {

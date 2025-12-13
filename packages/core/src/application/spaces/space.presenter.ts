@@ -12,13 +12,16 @@ import type {
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,
+  SpaceWithToolsDTO,
   MembershipDTO,
   TabSummaryDTO,
   TabDetailDTO,
   WidgetSummaryDTO,
   WidgetDetailDTO,
   SpaceMemberDTO,
+  PlacedToolDTO,
 } from './space.dto';
+import type { PlacedTool } from '../../domain/spaces/entities/placed-tool';
 
 /**
  * Extract base properties common to all space DTOs
@@ -33,6 +36,10 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     memberCount: space.memberCount,
     isVerified: space.isVerified,
     visibility: space.isPublic ? 'public' : 'private',
+    publishStatus: space.publishStatus,
+    isStealth: space.isStealth,
+    isLive: space.isLive,
+    wentLiveAt: space.wentLiveAt,
     createdAt: space.createdAt,
   };
 }
@@ -181,6 +188,42 @@ export function toSpaceWithMembersDTO(space: EnhancedSpace): SpaceWithMembersDTO
       role: member.role,
       joinedAt: member.joinedAt,
     })),
+  };
+}
+
+/**
+ * Transform PlacedTool entity to DTO
+ */
+function toPlacedToolDTO(tool: PlacedTool): PlacedToolDTO {
+  return {
+    id: tool.id,
+    toolId: tool.toolId,
+    placement: tool.placement,
+    order: tool.order,
+    isActive: tool.isActive,
+    source: tool.source,
+    placedBy: tool.placedBy,
+    placedAt: tool.placedAt.toISOString(),
+    configOverrides: tool.configOverrides,
+    visibility: tool.visibility,
+    titleOverride: tool.titleOverride,
+    isEditable: tool.isEditable,
+    state: tool.state,
+    stateUpdatedAt: tool.stateUpdatedAt?.toISOString() ?? null,
+  };
+}
+
+/**
+ * Transform EnhancedSpace to detail DTO with PlacedTools
+ *
+ * Used by: /api/spaces/[spaceId] when PlacedTools are loaded
+ *
+ * @param space - EnhancedSpace aggregate with placedTools loaded
+ */
+export function toSpaceWithToolsDTO(space: EnhancedSpace): SpaceWithToolsDTO {
+  return {
+    ...toSpaceDetailDTO(space),
+    placedTools: space.placedTools.map(toPlacedToolDTO),
   };
 }
 

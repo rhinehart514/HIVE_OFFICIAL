@@ -6,6 +6,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 
 // Schema for tool deployment requests
 const DeployToolSchema = z.object({
@@ -26,20 +27,22 @@ export const POST = withAuthValidationAndErrors(
     const { toolId } = await params;
     const db = dbAdmin;
 
-    // Verify user has admin access to the space
-    const spaceMemberDoc = await db
-      .collection("spaces")
-      .doc(spaceId)
-      .collection("members")
-      .doc(userId)
+    // Verify user has admin access to the space (using flat spaceMembers collection)
+    const membershipSnapshot = await db
+      .collection("spaceMembers")
+      .where("userId", "==", userId)
+      .where("spaceId", "==", spaceId)
+      .where("status", "==", "active")
+      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .limit(1)
       .get();
 
-    if (!spaceMemberDoc.exists) {
+    if (membershipSnapshot.empty) {
       return respond.error("Access denied to this space", "FORBIDDEN", { status: 403 });
     }
 
-    const memberData = spaceMemberDoc.data();
-    if (!['admin', 'owner', 'leader'].includes(memberData?.role)) {
+    const memberData = membershipSnapshot.docs[0].data();
+    if (!['admin', 'owner', 'leader', 'builder', 'moderator'].includes(memberData?.role)) {
       return respond.error("Admin access required to deploy tools", "FORBIDDEN", { status: 403 });
     }
 
@@ -143,6 +146,20 @@ export const POST = withAuthValidationAndErrors(
       .doc(deploymentId)
       .set(deploymentData);
 
+    // CRITICAL: Also write to placed_tools subcollection so Space page can find it
+    // The Space tools API reads from spaces/{spaceId}/placed_tools
+    await createPlacementDocument({
+      deployedTo: 'space',
+      targetId: spaceId,
+      toolId,
+      deploymentId,
+      placedBy: userId,
+      campusId: CURRENT_CAMPUS_ID,
+      placement: 'sidebar',
+      visibility: 'all',
+      configOverrides: configuration,
+    });
+
     // Update tool's deployment analytics
     await db
       .collection("tools")
@@ -203,20 +220,22 @@ export const DELETE = withAuthAndErrors(async (
 
   const db = dbAdmin;
 
-  // Verify user has admin access to the space
-  const spaceMemberDoc = await db
-    .collection("spaces")
-    .doc(spaceId)
-    .collection("members")
-    .doc(userId)
+  // Verify user has admin access to the space (using flat spaceMembers collection)
+  const membershipSnapshot = await db
+    .collection("spaceMembers")
+    .where("userId", "==", userId)
+    .where("spaceId", "==", spaceId)
+    .where("status", "==", "active")
+    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .limit(1)
     .get();
 
-  if (!spaceMemberDoc.exists) {
+  if (membershipSnapshot.empty) {
     return respond.error("Access denied to this space", "FORBIDDEN", { status: 403 });
   }
 
-  const memberData = spaceMemberDoc.data();
-  if (memberData?.role !== "admin") {
+  const memberData = membershipSnapshot.docs[0].data();
+  if (!['admin', 'owner', 'leader', 'builder', 'moderator'].includes(memberData?.role)) {
     return respond.error("Admin access required to undeploy tools", "FORBIDDEN", { status: 403 });
   }
 
@@ -241,6 +260,15 @@ export const DELETE = withAuthAndErrors(async (
         undeployedBy: userId,
         undeployedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+
+    // Also remove from placed_tools so Space page stops showing it
+    const placementId = buildPlacementCompositeId(deploymentId, toolId);
+    await db
+      .collection("spaces")
+      .doc(spaceId)
+      .collection("placed_tools")
+      .doc(placementId)
+      .delete();
 
     // Update tool's deployment count
     await db
@@ -306,15 +334,17 @@ export const GET = withAuthAndErrors(async (
 
   const db = dbAdmin;
 
-  // Verify user has access to the space
-  const spaceMemberDoc = await db
-    .collection("spaces")
-    .doc(spaceId)
-    .collection("members")
-    .doc(userId)
+  // Verify user has access to the space (using flat spaceMembers collection)
+  const membershipSnapshot = await db
+    .collection("spaceMembers")
+    .where("userId", "==", userId)
+    .where("spaceId", "==", spaceId)
+    .where("status", "==", "active")
+    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .limit(1)
     .get();
 
-  if (!spaceMemberDoc.exists) {
+  if (membershipSnapshot.empty) {
     return respond.error("Access denied to this space", "FORBIDDEN", { status: 403 });
   }
 
@@ -333,9 +363,10 @@ export const GET = withAuthAndErrors(async (
     const deploymentData = deploymentDoc.data();
 
     // Get analytics if user has permission
-    const memberData = spaceMemberDoc.data();
+    const memberDoc = membershipSnapshot.docs[0];
+    const memberData = memberDoc?.data();
     let analytics = null;
-    
+
     if (memberData?.role === "admin" || deploymentData?.permissions?.canViewAnalytics?.includes(memberData?.role)) {
       const analyticsDoc = await db
         .collection("tool_analytics")

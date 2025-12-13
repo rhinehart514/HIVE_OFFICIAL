@@ -7,7 +7,7 @@
  */
 
 import { Plus, Image, Calendar, Wrench } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { durationSeconds, easingArrays } from '@hive/tokens';
 
 import { MotionDiv } from '../../../shells/motion-safe';
@@ -31,17 +31,44 @@ export interface SpaceComposerProps {
   onSubmit?: (content: string, attachments: { type: 'image' | 'event' | 'tool'; data: unknown }[]) => void;
   /** Placeholder text */
   placeholder?: string;
+  /** Callback when image attachment is requested */
+  onAddImage?: () => void;
+  /** Callback when event attachment is requested */
+  onAddEvent?: () => void;
+  /** Callback when tool attachment is requested */
+  onAddTool?: () => void;
 }
 
-export function SpaceComposer({
+/** Ref handle for SpaceComposer - allows parent to add attachments */
+export interface SpaceComposerRef {
+  /** Add an attachment programmatically (after modal closes) */
+  addAttachment: (type: 'image' | 'event' | 'tool', data: unknown) => void;
+  /** Clear all attachments */
+  clearAttachments: () => void;
+}
+
+export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(function SpaceComposer({
   spaceName,
   canCreateEvents = false,
   canUseTools = false,
   onSubmit,
   placeholder = "What's happening?",
-}: SpaceComposerProps) {
+  onAddImage,
+  onAddEvent,
+  onAddTool,
+}, ref) {
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<Array<{ type: 'image' | 'event' | 'tool'; data: unknown }>>([]);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    addAttachment: (type: 'image' | 'event' | 'tool', data: unknown) => {
+      setAttachments((prev) => [...prev, { type, data }]);
+    },
+    clearAttachments: () => {
+      setAttachments([]);
+    },
+  }), []);
 
   const handleSubmit = () => {
     if (!content.trim() && attachments.length === 0) return;
@@ -51,8 +78,18 @@ export function SpaceComposer({
   };
 
   const handleAddAttachment = (type: 'image' | 'event' | 'tool') => {
-    // Placeholder - would open respective modals
-    console.log(`Add ${type}`);
+    // Invoke the appropriate callback based on attachment type
+    switch (type) {
+      case 'image':
+        onAddImage?.();
+        break;
+      case 'event':
+        onAddEvent?.();
+        break;
+      case 'tool':
+        onAddTool?.();
+        break;
+    }
   };
 
   const canPost = content.trim().length > 0 || attachments.length > 0;
@@ -146,4 +183,4 @@ export function SpaceComposer({
       </div>
     </MotionDiv>
   );
-}
+});

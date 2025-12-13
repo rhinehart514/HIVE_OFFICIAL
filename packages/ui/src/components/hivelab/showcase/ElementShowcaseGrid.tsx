@@ -161,6 +161,8 @@ export interface ElementShowcaseSidebarProps {
   onElementSelect?: (elementId: string) => void;
   /** Callback when a prompt suggestion is clicked */
   onPromptClick?: (prompt: string) => void;
+  /** Callback when a template is selected */
+  onTemplateSelect?: (template: ToolComposition) => void;
   /** Whether sidebar is collapsed */
   collapsed?: boolean;
   /** Callback for collapse toggle */
@@ -172,11 +174,13 @@ export interface ElementShowcaseSidebarProps {
 export function ElementShowcaseSidebar({
   onElementSelect,
   onPromptClick,
+  onTemplateSelect,
   collapsed = false,
   onCollapseChange,
   className,
 }: ElementShowcaseSidebarProps) {
   const [expandedBundle, setExpandedBundle] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'elements' | 'templates'>('elements');
 
   const handleExpand = useCallback((bundleId: string | null) => {
     setExpandedBundle(bundleId);
@@ -204,7 +208,7 @@ export function ElementShowcaseSidebar({
             animate={{ opacity: 1 }}
             className="text-sm font-semibold text-muted-foreground"
           >
-            Elements
+            Build Tools
           </motion.h3>
         )}
         <button
@@ -229,7 +233,35 @@ export function ElementShowcaseSidebar({
         </button>
       </div>
 
-      {/* Bundles */}
+      {/* Tab Switcher (only when expanded) */}
+      {!collapsed && (
+        <div className="flex gap-1 px-3">
+          <button
+            onClick={() => setActiveTab('elements')}
+            className={cn(
+              'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+              activeTab === 'elements'
+                ? 'bg-neutral-800 text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-neutral-800/50'
+            )}
+          >
+            Elements
+          </button>
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={cn(
+              'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+              activeTab === 'templates'
+                ? 'bg-neutral-800 text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-neutral-800/50'
+            )}
+          >
+            Templates
+          </button>
+        </div>
+      )}
+
+      {/* Content */}
       {collapsed ? (
         // Collapsed: Show only icons
         <div className="flex flex-col gap-2 px-2">
@@ -242,15 +274,40 @@ export function ElementShowcaseSidebar({
           ))}
         </div>
       ) : (
-        // Expanded: Show full bundle cards
+        // Expanded: Show elements or templates based on active tab
         <div className="flex flex-col gap-3 px-3 pb-3">
-          <ElementShowcaseGrid
-            layout="list"
-            expandedBundle={expandedBundle}
-            onExpandChange={handleExpand}
-            onElementSelect={onElementSelect}
-            onPromptClick={onPromptClick}
-          />
+          <AnimatePresence mode="wait">
+            {activeTab === 'elements' ? (
+              <motion.div
+                key="elements"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.15 }}
+              >
+                <ElementShowcaseGrid
+                  layout="list"
+                  expandedBundle={expandedBundle}
+                  onExpandChange={handleExpand}
+                  onElementSelect={onElementSelect}
+                  onPromptClick={onPromptClick}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="templates"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.15 }}
+              >
+                <TemplateBrowser
+                  onTemplateSelect={onTemplateSelect}
+                  compact
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </motion.aside>
@@ -262,6 +319,8 @@ export function ElementShowcaseSidebar({
 // ============================================================================
 
 import { ELEMENT_BUNDLES } from './element-showcase-data';
+import { TemplateBrowser } from './TemplateBrowser';
+import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 function CollapsedBundleButton({
   bundleId,

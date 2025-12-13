@@ -7,8 +7,7 @@ import {
   type SpaceMembershipDTO,
 } from '@hive/core/server';
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 
 const updateSpacePreferencesSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -26,6 +25,7 @@ const updateSpacePreferencesSchema = z.object({
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   logger.info('Fetching spaces for user', { userId, endpoint: '/api/spaces/my' });
 
@@ -35,7 +35,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     .collection('spaceMembers')
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(200)
     .get();
 
@@ -91,7 +91,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     if (result.isSuccess) {
       const space = result.getValue();
       // Enforce campus isolation
-      if (space.campusId.id !== CURRENT_CAMPUS_ID) continue;
+      if (space.campusId.id !== campusId) continue;
 
       const membership = membershipData.get(spaceId);
       if (membership) {
@@ -109,6 +109,30 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
   // Separate pinned spaces
   const pinnedSpaces = spaces.filter(s => s.membership.pinned).slice(0, 4);
 
+  // Get weekly activity from activitySummaries
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+  const weekStartStr = oneWeekAgo.toISOString().split('T')[0];
+
+  let weeklyActivityCount = 0;
+  try {
+    const activitySnapshot = await dbAdmin
+      .collection('activitySummaries')
+      .where('userId', '==', userId)
+      .where('date', '>=', weekStartStr)
+      .get();
+
+    // Sum up all activity metrics for the week
+    for (const doc of activitySnapshot.docs) {
+      const data = doc.data();
+      weeklyActivityCount += (data.contentCreated || 0) +
+        (data.socialInteractions || 0) +
+        (data.spacesVisited?.length || 0);
+    }
+  } catch {
+    // Activity collection may not exist yet - use 0
+  }
+
   // Calculate stats
   const stats = {
     totalSpaces: spaces.length,
@@ -116,7 +140,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       ['admin', 'owner'].includes(s.membership.role.toLowerCase())
     ).length,
     totalNotifications: spaces.reduce((sum, s) => sum + s.membership.notifications, 0),
-    weeklyActivity: 0 // Placeholder until real activity tracking
+    weeklyActivity: weeklyActivityCount
   };
 
   // Recent activity placeholder

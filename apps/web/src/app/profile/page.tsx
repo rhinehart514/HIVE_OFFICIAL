@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from '@/hooks/use-session';
+import { useAuth } from '@hive/auth-logic';
 
 export default function ProfileIndexPage() {
   const router = useRouter();
-  const { user, isLoading } = useSession();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     // Wait for session check to complete before redirecting

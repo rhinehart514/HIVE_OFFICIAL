@@ -159,7 +159,7 @@ async function buildUserContext(userId: string): Promise<RecommendationContext> 
 
   // Get user's spaces
   const spaceMembershipsSnapshot = await adminDb
-    .collection('members')
+    .collection('spaceMembers')
     .where('userId', '==', userId)
     .where('status', '==', 'active')
     .get();
@@ -513,7 +513,7 @@ async function findSimilarUsers(context: RecommendationContext): Promise<Array<{
 
     // Shared spaces
     const userSpacesSnapshot = await adminDb
-      .collection('members')
+      .collection('spaceMembers')
       .where('userId', '==', userData.id)
       .where('status', '==', 'active')
       .get();

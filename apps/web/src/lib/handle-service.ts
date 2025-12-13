@@ -1,6 +1,7 @@
 import 'server-only';
 import { dbAdmin, isFirebaseConfigured } from './firebase-admin';
 import { currentEnvironment } from './env';
+import { logger } from './logger';
 import type { Transaction } from 'firebase-admin/firestore';
 
 /**
@@ -126,10 +127,10 @@ export async function checkHandleAvailabilityInTransaction(
       normalizedHandle 
     };
   } catch (error) {
-    console.error('Error checking handle availability:', error);
-    return { 
-      isAvailable: false, 
-      error: 'Unable to verify handle availability. Please try again.' 
+    logger.error('Error checking handle availability', { component: 'handle-service' }, error instanceof Error ? error : undefined);
+    return {
+      isAvailable: false,
+      error: 'Unable to verify handle availability. Please try again.'
     };
   }
 }
@@ -170,7 +171,7 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
 
   // Development mode or Firebase not configured: Skip Firestore queries entirely
   if (isDevelopmentMode || !isFirebaseConfigured) {
-    console.warn('🔧 Development mode: Skipping Firestore handle check, handle automatically available');
+    logger.debug('Development mode: Skipping Firestore handle check', { component: 'handle-service', handle: normalizedHandle });
     return {
       isAvailable: true,
       normalizedHandle
@@ -200,11 +201,11 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
       normalizedHandle
     };
   } catch (error) {
-    console.error('Error checking handle availability:', error);
+    logger.error('Error checking handle availability', { component: 'handle-service' }, error instanceof Error ? error : undefined);
 
     // In development, allow handles when Firebase is unavailable
     if (isDevelopmentMode) {
-      console.warn('🔧 Development mode: Allowing handle due to Firebase unavailability');
+      logger.debug('Development mode: Allowing handle due to Firebase unavailability', { component: 'handle-service' });
       return {
         isAvailable: true,
         normalizedHandle
@@ -230,7 +231,7 @@ export async function releaseHandleReservation(handle: string): Promise<void> {
   try {
     await dbAdmin.collection('handles').doc(handle).delete();
   } catch (error) {
-    console.error('Error releasing handle reservation:', error);
+    logger.error('Error releasing handle reservation', { component: 'handle-service', handle }, error instanceof Error ? error : undefined);
     // Don't throw - this is cleanup, should not break the main flow
   }
 }
@@ -267,7 +268,7 @@ export async function changeHandle(
 
   // Skip full validation in development mode
   if (isDevelopmentMode || !isFirebaseConfigured) {
-    console.warn('🔧 Development mode: Skipping handle change transaction');
+    logger.debug('Development mode: Skipping handle change transaction', { component: 'handle-service' });
     return { success: true };
   }
 
@@ -356,7 +357,7 @@ export async function changeHandle(
 
     return result;
   } catch (error) {
-    console.error('Error changing handle:', error);
+    logger.error('Error changing handle', { component: 'handle-service' }, error instanceof Error ? error : undefined);
     return {
       success: false,
       error: 'Unable to change handle. Please try again.'
@@ -411,7 +412,7 @@ export async function getHandleChangeStatus(userId: string): Promise<{
 
     return { canChange: true, changeCount: handleChangeCount, isFirstChangeFree: false };
   } catch (error) {
-    console.error('Error getting handle change status:', error);
+    logger.error('Error getting handle change status', { component: 'handle-service', userId }, error instanceof Error ? error : undefined);
     return { canChange: false, changeCount: 0, isFirstChangeFree: true };
   }
 }

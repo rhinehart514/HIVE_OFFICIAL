@@ -144,3 +144,50 @@ export function shouldBlockRequest(request: NextRequest): { blocked: boolean; re
 
   return { blocked: false };
 }
+
+/**
+ * Validate a Firebase ID token in production
+ *
+ * Returns the decoded token if valid, throws error if invalid
+ */
+export async function validateProductionToken(
+  token: string,
+  _request: NextRequest,
+  context?: { operation?: string }
+): Promise<{ uid: string; email?: string }> {
+  // Dynamic import to avoid loading firebase-admin at module level
+  const { getAuth } = await import('firebase-admin/auth');
+
+  try {
+    const auth = getAuth();
+    const decodedToken = await auth.verifyIdToken(token);
+
+    if (!decodedToken.uid) {
+      throw Object.assign(
+        new Error('Token missing uid'),
+        { httpStatus: 401 }
+      );
+    }
+
+    // Log successful validation in production
+    if (isProductionEnvironment()) {
+      logger.info('Production token validated', {
+        action: 'token_validation',
+        operation: context?.operation,
+        uid: decodedToken.uid
+      });
+    }
+
+    return {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
+  } catch (error) {
+    // Re-throw with standardized format
+    const message = error instanceof Error ? error.message : 'Token validation failed';
+    throw Object.assign(
+      new Error(message),
+      { httpStatus: 401 }
+    );
+  }
+}

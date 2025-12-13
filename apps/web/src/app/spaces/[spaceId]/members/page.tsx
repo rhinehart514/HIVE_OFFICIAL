@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 // Spring config for fluid motion
 const SPRING_CONFIG = {
@@ -117,7 +118,7 @@ export default function SpaceMembersPage() {
         setMembers(data.members || []);
         setSummary(data.summary || null);
       } catch (error) {
-        console.error('Failed to load members:', error);
+        logger.error('Failed to load members', { component: 'MembersPage' }, error instanceof Error ? error : undefined);
         toast.error('Failed to load members', 'Please try again.');
       } finally {
         setLoading(false);
@@ -153,7 +154,7 @@ export default function SpaceMembersPage() {
 
       toast.success('Role updated', `Member role changed to ${newRole}.`);
     } catch (error) {
-      console.error('Failed to update role:', error);
+      logger.error('Failed to update role', { component: 'MembersPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to update role', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setActionLoading(false);
@@ -184,7 +185,7 @@ export default function SpaceMembersPage() {
 
       toast.success('Member removed', 'The member has been removed from this space.');
     } catch (error) {
-      console.error('Failed to remove member:', error);
+      logger.error('Failed to remove member', { component: 'MembersPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to remove member', error instanceof Error ? error.message : 'Please try again.');
     } finally {
       setActionLoading(false);

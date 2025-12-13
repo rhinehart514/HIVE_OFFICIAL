@@ -32,16 +32,24 @@ envContent.split('\n').forEach(line => {
 });
 
 const privateKeyBase64 = envVars.FIREBASE_PRIVATE_KEY_BASE64;
+const privateKeyDirect = envVars.FIREBASE_PRIVATE_KEY;
 const projectId = envVars.FIREBASE_PROJECT_ID || 'hive-9265c';
 const clientEmail = envVars.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@hive-9265c.iam.gserviceaccount.com';
 
-if (!privateKeyBase64) {
-  console.error('FIREBASE_PRIVATE_KEY_BASE64 not found in .env.local');
+if (!privateKeyBase64 && !privateKeyDirect) {
+  console.error('Neither FIREBASE_PRIVATE_KEY_BASE64 nor FIREBASE_PRIVATE_KEY found in .env.local');
   process.exit(1);
 }
 
 try {
-  const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+  // Support both base64 encoded and direct private key formats
+  let privateKey;
+  if (privateKeyBase64) {
+    privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+  } else {
+    // Direct private key - remove surrounding quotes if present and parse \n
+    privateKey = privateKeyDirect.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n');
+  }
 
   initializeApp({
     credential: cert({

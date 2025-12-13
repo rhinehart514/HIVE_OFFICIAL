@@ -36,6 +36,7 @@ import { cn } from "../../../lib/utils";
 import { springPresets, easingArrays, tinderSprings } from "@hive/tokens";
 import { Button } from "../../00-Global/atoms/button";
 import { SpaceTabBar, type SpaceTabItem } from "../molecules/space-tab-bar";
+import { SpaceBreadcrumb } from "../molecules/space-breadcrumb";
 import { glass, glassPresets } from "../../../lib/glass-morphism";
 
 // ============================================================
@@ -75,6 +76,13 @@ export interface SpaceDetailHeaderProps {
   onSettings?: () => void;
   onAddTab?: () => void;
   showTabs?: boolean;
+  /** Breadcrumb navigation - shows user's location in space hierarchy */
+  breadcrumb?: {
+    campusName?: string;
+    boardName?: string;
+    boardId?: string;
+    onNavigate?: (target: 'campus' | 'space' | 'board') => void;
+  };
   className?: string;
 }
 
@@ -252,6 +260,7 @@ export function SpaceDetailHeader({
   onSettings,
   onAddTab,
   showTabs = true,
+  breadcrumb,
   className,
 }: SpaceDetailHeaderProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -322,6 +331,7 @@ export function SpaceDetailHeader({
       animate="animate"
       style={shouldReduceMotion ? {} : { scale: headerScale }}
       className={cn("relative overflow-hidden", className)}
+      aria-label={`${name} space header`}
     >
       {/* Banner with Ken Burns */}
       {bannerUrl && (
@@ -368,32 +378,51 @@ export function SpaceDetailHeader({
             size="sm"
           />
 
-          {/* Name + inline stats */}
-          <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center md:gap-3">
-            <h1 className="text-xl md:text-2xl font-bold text-white truncate">
-              {name}
-            </h1>
+          {/* Name + inline stats + breadcrumb */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Title row with stats */}
+            <div className="flex flex-col md:flex-row md:items-center md:gap-3">
+              <h1 className="text-xl md:text-2xl font-bold text-white truncate">
+                {name}
+              </h1>
 
-            {/* Stats inline on desktop, below on mobile */}
-            <div className="flex items-center gap-3 text-xs md:text-sm text-neutral-400">
-              <span className="inline-flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                <span>{memberCount.toLocaleString()}</span>
-              </span>
-
-              {onlineCount !== undefined && onlineCount > 0 && (
-                <span className="inline-flex items-center gap-1 text-[#FFD700]">
-                  <span
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full bg-[#FFD700]",
-                      "shadow-[0_0_6px_#FFD700]",
-                      "animate-pulse"
-                    )}
-                  />
-                  <span>{onlineCount}</span>
+              {/* Stats inline on desktop, below on mobile */}
+              <div className="flex items-center gap-3 text-xs md:text-sm text-neutral-400">
+                <span className="inline-flex items-center gap-1" aria-label={`${memberCount.toLocaleString()} members`}>
+                  <Users className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{memberCount.toLocaleString()}</span>
                 </span>
-              )}
+
+                {onlineCount !== undefined && onlineCount > 0 && (
+                  <span className="inline-flex items-center gap-1 text-[#FFD700]" aria-label={`${onlineCount} members online`}>
+                    <span
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full bg-[#FFD700]",
+                        "shadow-[0_0_6px_#FFD700]",
+                        "animate-pulse"
+                      )}
+                      aria-hidden="true"
+                    />
+                    <span>{onlineCount}</span>
+                  </span>
+                )}
+              </div>
             </div>
+
+            {/* Breadcrumb navigation - shows location in hierarchy */}
+            {breadcrumb && (
+              <div className="mt-1">
+                <SpaceBreadcrumb
+                  campusName={breadcrumb.campusName}
+                  spaceName={name}
+                  spaceId={space.id}
+                  boardName={breadcrumb.boardName}
+                  boardId={breadcrumb.boardId}
+                  isCompact={false}
+                  onNavigate={breadcrumb.onNavigate}
+                />
+              </div>
+            )}
           </div>
 
           {/* Actions - More prominent */}
@@ -405,7 +434,7 @@ export function SpaceDetailHeader({
                 size="icon"
                 onClick={onShare}
                 aria-label="Share space"
-                className="h-9 w-9 text-neutral-400 hover:text-white hover:bg-white/10"
+                className="h-11 w-11 text-neutral-400 hover:text-white hover:bg-white/10"
               >
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -422,6 +451,7 @@ export function SpaceDetailHeader({
                 size="default"
                 onClick={isJoined ? handleLeaveClick : handleJoinClick}
                 disabled={isLoading || isPending || (!isJoinable && !isLeavable)}
+                aria-label={isJoined ? "Leave this space" : "Join this space"}
                 className={cn(
                   "min-w-[110px] h-10 font-semibold",
                   isJoined && "border-white/20 hover:border-red-500/50 hover:text-red-400",
@@ -464,7 +494,7 @@ export function SpaceDetailHeader({
                 size="icon"
                 onClick={onSettings}
                 aria-label="Space settings"
-                className="hidden md:flex h-9 w-9 text-neutral-400 hover:text-[#FFD700] hover:bg-white/10"
+                className="hidden md:flex h-11 w-11 text-neutral-400 hover:text-[#FFD700] hover:bg-white/10"
               >
                 <Settings className="w-4 h-4" />
               </Button>

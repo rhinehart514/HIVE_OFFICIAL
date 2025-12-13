@@ -30,7 +30,6 @@ if (!isDevWithoutFirebase) {
   auth = app ? getAuth(app) : null;
 } else {
   // In development without Firebase config, create mock objects
-  console.warn("🔥 Firebase not configured - using mock auth for development");
   auth = {
     currentUser: null,
     onAuthStateChanged: () => () => {},

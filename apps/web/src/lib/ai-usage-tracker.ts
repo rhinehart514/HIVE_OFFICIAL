@@ -15,6 +15,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
+import { logger } from './logger';
 
 // Usage limits by tier
 export const USAGE_LIMITS = {
@@ -63,7 +64,7 @@ export async function getUserTier(userId: string): Promise<UserTier> {
 
     return subscription.tier || 'free';
   } catch (error) {
-    console.error('[Usage] Error getting user tier:', error);
+    logger.error('Error getting user tier', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
     return 'free';
   }
 }
@@ -89,7 +90,7 @@ export async function getMonthlyUsage(userId: string): Promise<UsageRecord> {
 
     return usageDoc.data() as UsageRecord;
   } catch (error) {
-    console.error('[Usage] Error getting monthly usage:', error);
+    logger.error('Error getting monthly usage', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
     return {
       generations: 0,
       tokensUsed: 0,
@@ -151,9 +152,9 @@ export async function recordGeneration(
       });
     }
 
-    console.log(`[Usage] Recorded generation for user ${userId}`);
+    logger.debug('Recorded generation', { component: 'ai-usage-tracker', userId });
   } catch (error) {
-    console.error('[Usage] Error recording generation:', error);
+    logger.error('Error recording generation', { component: 'ai-usage-tracker' }, error instanceof Error ? error : undefined);
     // Don't throw - usage tracking failure shouldn't block generation
   }
 }

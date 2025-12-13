@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { currentEnvironment } from '@/lib/env';
+import { logger } from '@/lib/logger';
 
 /**
  * Development-only endpoint to seed the ub-buffalo school
@@ -39,7 +40,7 @@ export async function POST() {
       data: schoolData
     });
   } catch (error) {
-    console.error('Failed to seed school:', error);
+    logger.error('Failed to seed school', {}, error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json(
       { error: 'Failed to seed school', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

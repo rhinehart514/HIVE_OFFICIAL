@@ -79,8 +79,8 @@ export const useCreationAnalytics = (
           };
           setUserPreferences(parsedPrefs);
         }
-      } catch (error) {
-        console.error("Failed to load analytics preferences:", error);
+      } catch (_error) {
+        // Silently ignore preference loading failures - use defaults
       }
     };
 
@@ -125,12 +125,8 @@ export const useCreationAnalytics = (
             body: JSON.stringify({ events: batch }),
           });
 
-          if (enableDebugLogging) {
-            console.log(`Flushed ${batch.length} creation analytics events`);
-          }
         }
-      } catch (error) {
-        console.error("Failed to flush analytics events:", error);
+      } catch (_error) {
         // Re-queue events on failure
         eventQueue.current.unshift(...eventsToFlush);
       }
@@ -198,10 +194,6 @@ export const useCreationAnalytics = (
       }
 
       eventQueue.current.push(event);
-
-      if (enableDebugLogging) {
-        console.log("Tracked creation event:", eventType, metadata);
-      }
 
       // Flush if queue is full
       if (eventQueue.current.length >= batchSize) {

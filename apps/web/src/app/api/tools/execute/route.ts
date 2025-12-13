@@ -11,13 +11,238 @@ import {
 } from "@/lib/middleware";
 import { z } from "zod";
 import {
-  executeAction,
-  type ActionContext,
-  type ActionResult,
-  type ToolElement as ActionToolElement,
-  type ToolData as ActionToolData,
-  type DeploymentData as ActionDeploymentData,
-} from '@/lib/tool-action-handlers';
+  processActionConnections,
+  type ToolComposition,
+} from '@/lib/tool-connection-engine';
+
+// =============================================================================
+// Inlined Action Handlers (previously from @/lib/tool-action-handlers)
+// =============================================================================
+
+// Types for action handling
+export interface ActionToolElement {
+  id: string;
+  type: string;
+  config?: Record<string, unknown>;
+  actions?: Array<{ id: string; type: string; handler?: string; config?: Record<string, unknown> }>;
+  [key: string]: unknown;
+}
+
+export interface ActionToolData {
+  id?: string;
+  elements?: ActionToolElement[];
+  useCount?: number;
+  [key: string]: unknown;
+}
+
+export interface ActionDeploymentData {
+  id: string;
+  status?: string;
+  toolId?: string;
+  deployedTo?: 'profile' | 'space';
+  targetId?: string;
+  surface?: string;
+  permissions?: { canInteract?: boolean; allowedRoles?: string[] };
+  settings?: { collectAnalytics?: boolean; [key: string]: unknown };
+  usageCount?: number;
+  [key: string]: unknown;
+}
+
+export interface ActionContext {
+  deployment: ActionDeploymentData;
+  tool: ActionToolData;
+  userId: string;
+  elementId?: string;
+  element: ActionToolElement | null;
+  data: Record<string, unknown>;
+  state: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  spaceContext?: Record<string, unknown>;
+}
+
+export interface ActionResult {
+  success: boolean;
+  data?: Record<string, unknown>;
+  error?: string;
+  feedContent?: {
+    type: 'post' | 'update' | 'achievement';
+    content: string;
+    metadata?: Record<string, unknown>;
+  };
+  state?: Record<string, unknown>;
+  notifications?: Array<{
+    type: 'info' | 'success' | 'warning' | 'error';
+    message: string;
+    recipients?: string[];
+  }>;
+}
+
+// Action handler registry
+type ActionHandler = (context: ActionContext) => Promise<ActionResult>;
+
+const actionHandlers: Record<string, ActionHandler> = {
+  // Default handlers for common actions
+  async submit(context: ActionContext): Promise<ActionResult> {
+    return {
+      success: true,
+      state: { ...context.state, submitted: true, submittedAt: new Date().toISOString() },
+      data: { action: 'submit', elementId: context.elementId },
+    };
+  },
+
+  async vote(context: ActionContext): Promise<ActionResult> {
+    const { data, state, elementId } = context;
+    const optionId = data.optionId as string;
+    const pollState = (state[elementId || 'poll'] || { votes: {} }) as { votes: Record<string, number> };
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [elementId || 'poll']: {
+          ...pollState,
+          votes: {
+            ...pollState.votes,
+            [optionId]: (pollState.votes[optionId] || 0) + 1,
+          },
+          lastVotedAt: new Date().toISOString(),
+          votedBy: [...(((pollState as Record<string, unknown>).votedBy as string[]) || []), context.userId],
+        },
+      },
+    };
+  },
+
+  async increment(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'counter';
+    const currentValue = (state[key] as number) || 0;
+
+    return {
+      success: true,
+      state: { ...state, [key]: currentValue + 1 },
+    };
+  },
+
+  async decrement(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'counter';
+    const currentValue = (state[key] as number) || 0;
+
+    return {
+      success: true,
+      state: { ...state, [key]: Math.max(0, currentValue - 1) },
+    };
+  },
+
+  async toggle(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = (data.key as string) || elementId || 'toggle';
+    const currentValue = Boolean(state[key]);
+
+    return {
+      success: true,
+      state: { ...state, [key]: !currentValue },
+    };
+  },
+
+  async save_input(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'input';
+
+    return {
+      success: true,
+      state: { ...state, [key]: data.value },
+    };
+  },
+
+  async select(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'selection';
+
+    return {
+      success: true,
+      state: { ...state, [key]: data.selectedValue || data.value },
+    };
+  },
+
+  async rsvp(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data, userId } = context;
+    const eventKey = elementId || 'event';
+    const status = data.status as string || 'going';
+    const eventState = (state[eventKey] || { rsvps: {} }) as { rsvps: Record<string, string> };
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [eventKey]: {
+          ...eventState,
+          rsvps: { ...eventState.rsvps, [userId]: status },
+          lastUpdatedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+};
+
+/**
+ * Execute an action with the given context
+ */
+async function executeAction(actionName: string, context: ActionContext): Promise<ActionResult> {
+  // Normalize action name
+  const normalizedAction = actionName.toLowerCase().replace(/-/g, '_');
+
+  // Check if we have a handler for this action
+  const handler = actionHandlers[normalizedAction];
+
+  if (handler) {
+    try {
+      return await handler(context);
+    } catch (error) {
+      logger.error('Action handler error', { action: normalizedAction, error });
+      return {
+        success: false,
+        error: `Action handler failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
+  // Check if the element has a custom action defined
+  if (context.element?.actions) {
+    const customAction = context.element.actions.find(
+      a => a.type === actionName || a.id === actionName
+    );
+
+    if (customAction) {
+      // Execute custom action based on handler type
+      return {
+        success: true,
+        state: {
+          ...context.state,
+          [`${context.elementId}_${actionName}`]: {
+            executedAt: new Date().toISOString(),
+            data: context.data,
+          },
+        },
+      };
+    }
+  }
+
+  // Default: just record the action
+  logger.info('Unknown action executed', { action: actionName, elementId: context.elementId });
+  return {
+    success: true,
+    state: {
+      ...context.state,
+      lastAction: {
+        name: actionName,
+        elementId: context.elementId,
+        data: context.data,
+        executedAt: new Date().toISOString(),
+      },
+    },
+  };
+}
 
 // Deployment data interface
 interface DeploymentData {
@@ -204,8 +429,9 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Check user permissions
-    if (!await canUserExecuteTool(userId, deployment, placementData)) {
-        return respond.error("Insufficient permissions", "FORBIDDEN", { status: 403 });
+    const permissionCheck = await canUserExecuteTool(userId, deployment, placementData);
+    if (!permissionCheck.allowed) {
+        return respond.error(permissionCheck.reason, permissionCheck.code, { status: 403 });
     }
 
     // Get tool details
@@ -261,13 +487,11 @@ export const POST = withAuthValidationAndErrors(
       lastUsedAt: nowIso
     });
 
-    // Log activity event
-    await dbAdmin.collection('activityEvents').add({
-        userId,
+    // Log activity event (exclude undefined values for Firestore compatibility)
+    const activityEvent: Record<string, unknown> = {
+      userId,
       type: 'tool_interaction',
       toolId: deployment.toolId,
-      spaceId: deployment.deployedTo === 'space' ? deployment.targetId : undefined,
-      duration: context?.duration || undefined,
       metadata: {
         action,
         elementId,
@@ -276,9 +500,41 @@ export const POST = withAuthValidationAndErrors(
         surface: deployment.surface
       },
       timestamp: new Date().toISOString(),
-        date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0],
+      campusId: CURRENT_CAMPUS_ID,
+    };
+    // Only add optional fields if they have values
+    if (deployment.deployedTo === 'space' && deployment.targetId) {
+      activityEvent.spaceId = deployment.targetId;
+    }
+    if (context?.duration) {
+      activityEvent.duration = context.duration;
+    }
+    await dbAdmin.collection('activityEvents').add(activityEvent);
+
+    // Record analytics event for tool usage tracking
+    // This powers the analytics dashboard at /tools/[toolId]/analytics
+    if (executionResult.success) {
+      const analyticsEvent = {
+        toolId: deployment.toolId || tool.id,
+        deploymentId,
+        userId,
+        action,
+        elementId: elementId || null,
+        feature: action, // Track action as feature for feature usage breakdown
+        timestamp: new Date(),
         campusId: CURRENT_CAMPUS_ID,
-    });
+        spaceId: deployment.deployedTo === 'space' ? deployment.targetId : null,
+        metadata: {
+          elementType: data?.elementType || null,
+          feature: action,
+        },
+      };
+      // Fire and forget - don't block on analytics write
+      dbAdmin.collection('analytics_events').add(analyticsEvent).catch(err => {
+        logger.error('Failed to record analytics event', { error: err instanceof Error ? err.message : String(err) });
+      });
+    }
 
     // Generate feed content if requested and successful
     if (executionResult.success && executionResult.feedContent) {
@@ -305,49 +561,98 @@ export const POST = withAuthValidationAndErrors(
   }
 );
 
+// Permission check result type for detailed error messages
+type PermissionResult =
+  | { allowed: true }
+  | { allowed: false; reason: string; code: 'INTERACTION_DISABLED' | 'PROFILE_ACCESS_DENIED' | 'NOT_SPACE_MEMBER' | 'ROLE_NOT_ALLOWED' | 'UNKNOWN_TARGET_TYPE' | 'PERMISSION_CHECK_ERROR' };
+
 // Helper function to check tool execution permissions
 async function canUserExecuteTool(
   userId: string,
   deployment: DeploymentData,
   placement?: Record<string, unknown>
-): Promise<boolean> {
+): Promise<PermissionResult> {
   try {
     const permissionConfig = (placement?.permissions || deployment.permissions) as { canInteract?: boolean; allowedRoles?: string[] } | undefined;
     if (permissionConfig?.canInteract === false) {
-      return false;
+      return {
+        allowed: false,
+        reason: 'This tool does not allow interactions',
+        code: 'INTERACTION_DISABLED'
+      };
     }
 
     const targetType = placement?.targetType || deployment.deployedTo;
     const targetId = placement?.targetId || deployment.targetId;
 
     if (targetType === 'profile') {
-      return targetId === userId;
+      if (targetId === userId) {
+        return { allowed: true };
+      }
+      return {
+        allowed: false,
+        reason: 'You can only use tools deployed to your own profile',
+        code: 'PROFILE_ACCESS_DENIED'
+      };
     }
 
     if (targetType === 'space') {
-      const membershipQuery = dbAdmin.collection('members')
+      // Check both 'status' and 'isActive' fields for compatibility
+      const membershipQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', targetId)
-        .where('status', '==', 'active')
         .where('campusId', '==', CURRENT_CAMPUS_ID);
       const membershipSnapshot = await membershipQuery.get();
 
-      if (membershipSnapshot.empty) {
-        return false;
+      // Find an active membership (check both isActive and status fields)
+      const activeMembership = membershipSnapshot.docs.find(doc => {
+        const data = doc.data();
+        return data.isActive === true || data.status === 'active';
+      });
+
+      if (!activeMembership) {
+        return {
+          allowed: false,
+          reason: 'You must be a member of this space to use this tool',
+          code: 'NOT_SPACE_MEMBER'
+        };
       }
 
-      const memberData = membershipSnapshot.docs[0].data() as { role: string; [key: string]: unknown };
+      const memberData = activeMembership.data() as { role: string; [key: string]: unknown };
       const allowedRoles = permissionConfig?.allowedRoles || deployment.permissions?.allowedRoles;
-      return allowedRoles?.includes(memberData.role) || false;
+
+      // If no role restrictions, any member can access
+      if (!allowedRoles || allowedRoles.length === 0) {
+        return { allowed: true };
+      }
+
+      if (allowedRoles.includes(memberData.role)) {
+        return { allowed: true };
+      }
+
+      return {
+        allowed: false,
+        reason: `This tool requires one of these roles: ${allowedRoles.join(', ')}. Your role: ${memberData.role}`,
+        code: 'ROLE_NOT_ALLOWED'
+      };
     }
 
-    return false;
+    logger.warn('Unknown tool deployment target type', { targetType, deploymentId: deployment.id });
+    return {
+      allowed: false,
+      reason: `Unknown deployment target type: ${targetType}`,
+      code: 'UNKNOWN_TARGET_TYPE'
+    };
   } catch (error) {
     logger.error(
       `Error checking tool execution permissions at /api/tools/execute`,
       { error: error instanceof Error ? error.message : String(error) }
     );
-    return false;
+    return {
+      allowed: false,
+      reason: 'Permission check failed due to an internal error',
+      code: 'PERMISSION_CHECK_ERROR'
+    };
   }
 }
 
@@ -382,15 +687,30 @@ async function executeToolAction(params: {
     }
 
     // Find the target element if elementId is provided
+    // Elements may have 'id', 'instanceId', or 'elementId' as identifiers
     let targetElement: ToolElement | null = null;
     if (elementId) {
-      targetElement = tool.elements?.find((el: ToolElement) => el.id === elementId) || null;
+      targetElement = tool.elements?.find((el: ToolElement & { instanceId?: string; elementId?: string }) =>
+        el.id === elementId ||
+        el.instanceId === elementId ||
+        el.elementId === elementId
+      ) || null;
       if (!targetElement) {
         return {
           success: false,
           error: `Element ${elementId} not found in tool`
         };
       }
+    }
+
+    // Fetch space context if tool is deployed to a space
+    // This provides events, members, and other space data to HiveLab tools
+    let spaceContext: Record<string, unknown> | undefined;
+    const targetType = (placementContext?.snapshot?.data() as Record<string, unknown> | undefined)?.targetType || deployment.deployedTo;
+    const targetId = (placementContext?.snapshot?.data() as Record<string, unknown> | undefined)?.targetId || deployment.targetId;
+
+    if (targetType === 'space' && targetId) {
+      spaceContext = await fetchSpaceContext(targetId as string, user.uid);
     }
 
     // Build action context for the extensible handler system
@@ -403,52 +723,114 @@ async function executeToolAction(params: {
       data,
       state: currentState,
       metadata: params.context,
+      spaceContext, // Inject space data (events, members, etc.)
     };
 
     // Execute action through the extensible handler registry
-    const result = await executeAction(action, actionContext) as ToolExecutionResult;
+    let result = await executeAction(action, actionContext) as ToolExecutionResult;
 
-    // Save updated state if action was successful
-    if (result.success && result.state) {
-      const statePayload = {
-        deploymentId: deployment.id,
-        toolId: tool.id || deployment.toolId,
-        userId: user.uid,
-        state: result.state,
-        updatedAt: new Date().toISOString(),
-        campusId: CURRENT_CAMPUS_ID,
-      };
+    // Process connection cascades if action was successful and tool has connections
+    if (result.success && result.state && targetElement) {
+      const toolConnections = (tool as unknown as { connections?: Array<unknown> }).connections || [];
 
-      if (placementStateRef) {
-        await placementStateRef.set(statePayload, { merge: true });
+      if (toolConnections.length > 0) {
+        const composition: ToolComposition = {
+          elements: (tool.elements || []).map(el => ({
+            id: el.id,
+            elementId: el.type,
+            instanceId: el.id,
+            config: el.config,
+          })),
+          connections: toolConnections as ToolComposition['connections'],
+        };
+
+        const cascadeResult = await processActionConnections(
+          composition,
+          result.state,
+          action,
+          targetElement.type,
+          targetElement.id,
+          user.uid,
+          deployment.id
+        );
+
+        // Merge cascade state with result state
+        result = {
+          ...result,
+          state: cascadeResult.updatedState,
+          data: {
+            ...result.data,
+            cascadedElements: cascadeResult.executedElements,
+          },
+        };
       }
-
-      await dbAdmin.collection('toolStates').doc(stateId).set(statePayload);
     }
 
-    if (result.success && placementContext && action.startsWith('submit')) {
-      const submissionRecord = {
-        userId: user.uid,
-        actionName: action,
-        elementId: elementId || null,
-        payload: data || {},
-        response: result.data || {},
-        metadata: {},
-        submittedAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
+    // Save updated state and submission atomically using batch write
+    if (result.success && (result.state || (placementContext && action.startsWith('submit')))) {
+      const batch = dbAdmin.batch();
 
-      await placementContext.ref
-        .collection('responses')
-        .doc(user.uid)
-        .set(submissionRecord, { merge: true });
+      // State update
+      if (result.state) {
+        const statePayload = {
+          deploymentId: deployment.id,
+          toolId: tool.id || deployment.toolId,
+          userId: user.uid,
+          state: result.state,
+          updatedAt: new Date().toISOString(),
+          campusId: CURRENT_CAMPUS_ID,
+        };
 
-      await placementContext.ref.set(
-        {
-          responseCount: admin.firestore.FieldValue.increment(1),
-          lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+        if (placementStateRef) {
+          batch.set(placementStateRef, statePayload, { merge: true });
+        }
+
+        batch.set(dbAdmin.collection('toolStates').doc(stateId), statePayload, { merge: true });
+      }
+
+      // Submission record (if applicable)
+      if (placementContext && action.startsWith('submit')) {
+        const submissionRecord = {
+          userId: user.uid,
+          actionName: action,
+          elementId: elementId || null,
+          payload: data || {},
+          response: result.data || {},
+          metadata: {},
+          submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+
+        batch.set(
+          placementContext.ref.collection('responses').doc(user.uid),
+          submissionRecord,
+          { merge: true }
+        );
+
+        batch.set(
+          placementContext.ref,
+          {
+            responseCount: admin.firestore.FieldValue.increment(1),
+            lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      // Commit all writes atomically
+      try {
+        await batch.commit();
+      } catch (batchError) {
+        logger.error(
+          'Failed to save tool state atomically',
+          { error: batchError instanceof Error ? batchError.message : String(batchError) }
+        );
+        // Return error to indicate state wasn't saved - client should retry
+        return {
+          success: false,
+          error: 'Failed to save state. Please try again.',
+          data: result.data, // Still return the action result data
+        };
+      }
     }
 
     return result;
@@ -516,5 +898,134 @@ async function processNotifications(deployment: DeploymentData, notifications: T
       `Error processing notifications at /api/tools/execute`,
       { error: error instanceof Error ? error.message : String(error) }
     );
+  }
+}
+
+/**
+ * Fetch space context for HiveLab tool execution
+ *
+ * This provides space data (events, members, space info) to tools that need it.
+ * Used by elements like event-picker, member-selector, space-events, etc.
+ *
+ * @param spaceId - The space ID
+ * @param userId - The user executing the tool (for privacy filtering)
+ * @returns Space context with events, members, and space info
+ */
+async function fetchSpaceContext(spaceId: string, userId: string): Promise<Record<string, unknown>> {
+  try {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysFromNow = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+
+    // Fetch space, events, and members in parallel
+    const [spaceDoc, eventsSnapshot, membersSnapshot] = await Promise.all([
+      // Space info
+      dbAdmin.collection('spaces').doc(spaceId).get(),
+
+      // Upcoming and recent events (limited to 20)
+      dbAdmin.collection('events')
+        .where('spaceId', '==', spaceId)
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('startDate', '>=', thirtyDaysAgo.toISOString())
+        .where('startDate', '<=', sixtyDaysFromNow.toISOString())
+        .orderBy('startDate', 'asc')
+        .limit(20)
+        .get(),
+
+      // Active members (limited to 50)
+      dbAdmin.collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('isActive', '==', true)
+        .limit(50)
+        .get(),
+    ]);
+
+    // Process space info
+    const spaceData = spaceDoc.exists ? spaceDoc.data() : {};
+
+    // Process events with proper typing
+    interface EventData {
+      id: string;
+      startDate?: string;
+      [key: string]: unknown;
+    }
+    const events: EventData[] = eventsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Separate upcoming vs past events
+    const upcomingEvents = events.filter(e => e.startDate && new Date(e.startDate) >= now);
+    const recentEvents = events.filter(e => e.startDate && new Date(e.startDate) < now);
+
+    // Process members (basic info only for privacy)
+    const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
+
+    // Fetch user profiles for members
+    const memberProfiles: Record<string, unknown>[] = [];
+    if (memberIds.length > 0) {
+      // Batch fetch user profiles (Firestore limits to 10 per 'in' query)
+      const batches = [];
+      for (let i = 0; i < memberIds.length; i += 10) {
+        const batch = memberIds.slice(i, i + 10);
+        batches.push(
+          dbAdmin.collection('users')
+            .where(admin.firestore.FieldPath.documentId(), 'in', batch)
+            .get()
+        );
+      }
+
+      const profileSnapshots = await Promise.all(batches);
+      for (const snapshot of profileSnapshots) {
+        for (const doc of snapshot.docs) {
+          const userData = doc.data();
+          // Only include basic public info
+          memberProfiles.push({
+            id: doc.id,
+            displayName: userData.displayName || userData.fullName || 'Anonymous',
+            avatarUrl: userData.avatarUrl || null,
+            role: membersSnapshot.docs.find(m => m.data().userId === doc.id)?.data()?.role || 'member',
+          });
+        }
+      }
+    }
+
+    return {
+      space: {
+        id: spaceId,
+        name: spaceData?.name || 'Unknown Space',
+        description: spaceData?.description || '',
+        category: spaceData?.category || 'student_org',
+        memberCount: spaceData?.metrics?.memberCount || memberProfiles.length,
+      },
+      events: {
+        upcoming: upcomingEvents,
+        recent: recentEvents,
+        total: events.length,
+      },
+      members: {
+        list: memberProfiles,
+        total: memberProfiles.length,
+        currentUserIsMember: memberIds.includes(userId),
+      },
+      // Timestamps for cache invalidation
+      fetchedAt: now.toISOString(),
+    };
+  } catch (error) {
+    logger.error('Error fetching space context for tool execution', {
+      error: error instanceof Error ? error.message : String(error),
+      spaceId,
+      userId,
+    });
+
+    // Return minimal context on error
+    return {
+      space: { id: spaceId },
+      events: { upcoming: [], recent: [], total: 0 },
+      members: { list: [], total: 0, currentUserIsMember: false },
+      fetchedAt: new Date().toISOString(),
+      error: 'Failed to fetch complete space context',
+    };
   }
 }

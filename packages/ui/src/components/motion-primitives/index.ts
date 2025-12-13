@@ -60,3 +60,6 @@ export type {
   FirstPostCelebrationProps,
   MilestoneBadgeProps,
 } from './space-celebrations';
+
+// Brand Spinner (Dec 2025 - Design Elevation)
+export { GoldSpinner, GoldSpinnerInline, type GoldSpinnerProps } from './gold-spinner';

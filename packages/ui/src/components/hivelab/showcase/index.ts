@@ -21,6 +21,9 @@ export type {
   ElementShowcaseSidebarProps,
 } from './ElementShowcaseGrid';
 
+export { TemplateBrowser } from './TemplateBrowser';
+export type { TemplateBrowserProps } from './TemplateBrowser';
+
 // Hooks
 export { useElementShowcase } from './hooks/useElementShowcase';
 export type {

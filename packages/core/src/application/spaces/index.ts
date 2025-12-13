@@ -20,6 +20,24 @@ export type {
   GetMembershipsFn,
 } from './space-discovery.service';
 
+// Deployment Service (HiveLab → Spaces Integration)
+export {
+  SpaceDeploymentService,
+  createSpaceDeploymentService,
+} from './space-deployment.service';
+
+export type {
+  PlaceToolInput,
+  PlaceToolResult,
+  UpdatePlacedToolInput,
+  RemovePlacedToolInput,
+  ReorderPlacedToolsInput,
+  AutoDeployInput,
+  AutoDeployResult,
+  SpaceDeploymentCallbacks,
+  PlacedToolData,
+} from './space-deployment.service';
+
 // DTOs
 export type {
   SpaceBaseDTO,
@@ -27,6 +45,7 @@ export type {
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,
+  SpaceWithToolsDTO,
   MembershipDTO,
   SpaceActivityDTO,
   SpaceWidgetStatsDTO,
@@ -35,6 +54,7 @@ export type {
   TabDetailDTO,
   WidgetSummaryDTO,
   WidgetDetailDTO,
+  PlacedToolDTO,
 } from './space.dto';
 
 // Presenters
@@ -43,6 +63,28 @@ export {
   toSpaceDetailDTO,
   toSpaceMembershipDTO,
   toSpaceWithMembersDTO,
+  toSpaceWithToolsDTO,
   toSpaceBrowseDTOList,
   toSpaceMembershipDTOList,
 } from './space.presenter';
+
+// Chat Service (Boards + Messages)
+export {
+  SpaceChatService,
+  createSpaceChatService,
+} from './space-chat.service';
+
+export type {
+  CreateBoardInput,
+  UpdateBoardInput,
+  SendMessageInput,
+  ReactionInput,
+  BoardResult,
+  MessageResult,
+  ListMessagesOptions,
+  ListMessagesResult,
+  IBoardRepository,
+  IMessageRepository,
+  CheckPermissionFn,
+  GetUserProfileFn,
+} from './space-chat.service';

@@ -155,13 +155,17 @@ export async function logAdminAction(
   metadata?: unknown
 ) {
   try {
+    // Get admin's campusId from their record
+    const adminUser = await getAdminUser(adminId);
+    const campusId = adminUser?.campusId || 'unknown';
+
     await adminDb.collection('admin_logs').add({
       adminId,
       action,
       target,
       metadata,
       timestamp: new Date(),
-      campusId: 'ub-buffalo' // TODO: Get from admin record
+      campusId
     });
   } catch (error) {
     logger.error('Failed to log admin action', {

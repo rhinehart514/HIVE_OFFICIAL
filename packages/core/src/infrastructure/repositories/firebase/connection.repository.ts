@@ -170,8 +170,7 @@ export class FirebaseConnectionRepository implements IConnectionRepository {
       snapshot2.docs.forEach(doc => connectionIds.add(doc.id));
 
       return connectionIds.size;
-    } catch (error) {
-      console.error('Failed to count connections:', error);
+    } catch (_error) {
       return 0;
     }
   }

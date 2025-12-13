@@ -386,43 +386,115 @@ export class ContentModerationService {
   }
 
   /**
-   * Perform AI analysis on content
+   * Perform AI analysis on content using ML Content Analyzer
    */
   private async performAIAnalysis(report: ContentReport): Promise<AIAnalysisResult | null> {
     try {
       const startTime = Date.now();
 
-      // This would integrate with actual AI moderation services
-      // For now, we'll simulate the analysis
-      const mockAnalysis: AIAnalysisResult = {
-        confidence: this.calculateAIConfidence(),
-        suggestedAction: this.suggestAction(report),
-        riskScore: this.calculateRiskScore(),
-        categories: [{
-          category: report.category,
-          confidence: 0.85
-        }],
+      // Get content text from snapshot
+      const contentText = this.extractContentText(report.metadata.contentSnapshot);
+      if (!contentText) {
+        logger.warn('No content text found for AI analysis', { reportId: report.id });
+        return null;
+      }
+
+      // Use ML Content Analyzer for real analysis
+      const { mlContentAnalyzer } = await import('./ml-content-analyzer');
+      const mlResult = await mlContentAnalyzer.analyze(contentText, {
+        checkToxicity: true,
+        checkSpam: true,
+        checkPII: true,
+        contextType: this.mapContentTypeToContext(report.contentType),
+        userTrustScore: report.reporterInfo?.trustScore ?? 0.5,
+        isFirstPost: false,
+      });
+
+      // Map ML result to AIAnalysisResult format
+      const analysis: AIAnalysisResult = {
+        confidence: mlResult.confidence,
+        suggestedAction: this.mapMlActionToModerationAction(mlResult.suggestedAction),
+        riskScore: mlResult.riskScore,
+        categories: mlResult.categories.map(c => ({
+          category: c.category as ReportCategory,
+          confidence: c.confidence,
+        })),
         languageAnalysis: {
-          toxicity: Math.random() * 0.5,
-          threat: Math.random() * 0.3,
-          profanity: Math.random() * 0.4,
-          identity_attack: Math.random() * 0.2
+          toxicity: mlResult.toxicityScores.toxicity,
+          threat: mlResult.toxicityScores.threat,
+          profanity: mlResult.toxicityScores.profanity,
+          identity_attack: mlResult.toxicityScores.identityAttack,
         },
         contextualFactors: {
           userHistory: await this.getUserRiskScore(),
-          contentPopularity: Math.random(),
-          spaceContext: Math.random()
+          contentPopularity: 0.5, // Default until we have engagement data
+          spaceContext: report.spaceId ? 0.5 : 0.3,
         },
-        flags: this.generateFlags(),
-        reasoning: this.generateReasoning(report),
-        processingTime: Date.now() - startTime,
-        modelVersion: '1.0.0'
+        flags: mlResult.flags,
+        reasoning: mlResult.reasoning,
+        processingTime: mlResult.processingTime,
+        modelVersion: mlResult.modelVersion,
       };
 
-      return mockAnalysis;
+      logger.info('ML analysis completed', {
+        reportId: report.id,
+        riskScore: analysis.riskScore,
+        suggestedAction: analysis.suggestedAction,
+        processingTime: analysis.processingTime,
+      });
+
+      return analysis;
     } catch (error) {
       logger.error('Error performing AI analysis', { error: { error: error instanceof Error ? error.message : String(error) }, reportId: report.id });
       return null;
+    }
+  }
+
+  /**
+   * Extract text content from content snapshot
+   */
+  private extractContentText(snapshot: Record<string, unknown>): string | null {
+    // Try common content field names
+    const possibleFields = ['content', 'text', 'body', 'message', 'description', 'title', 'name', 'bio'];
+    const textParts: string[] = [];
+
+    for (const field of possibleFields) {
+      const value = snapshot[field];
+      if (typeof value === 'string' && value.trim()) {
+        textParts.push(value);
+      }
+    }
+
+    return textParts.length > 0 ? textParts.join(' ') : null;
+  }
+
+  /**
+   * Map content type to ML analysis context
+   */
+  private mapContentTypeToContext(contentType: ContentType): 'chat' | 'post' | 'profile' | 'event' | 'space' {
+    switch (contentType) {
+      case 'message': return 'chat';
+      case 'post': return 'post';
+      case 'comment': return 'chat';
+      case 'profile': return 'profile';
+      case 'event': return 'event';
+      case 'space': return 'space';
+      case 'tool': return 'post';
+      default: return 'post';
+    }
+  }
+
+  /**
+   * Map ML suggested action to moderation action
+   */
+  private mapMlActionToModerationAction(mlAction: string): ModerationAction {
+    switch (mlAction) {
+      case 'no_action': return 'no_action';
+      case 'flag': return 'warn_user';
+      case 'hide': return 'hide_content';
+      case 'remove': return 'remove_content';
+      case 'escalate': return 'escalate_human';
+      default: return 'no_action';
     }
   }
 
@@ -873,6 +945,235 @@ export class ContentModerationService {
   private applyQueueFilters(query: FirebaseFirestore.Query, _queue: ModerationQueue): FirebaseFirestore.Query {
     // Apply queue-specific filters
     return query;
+  }
+
+  // ============================================================================
+  // ML Feedback Loop - Learn from moderator decisions to improve accuracy
+  // ============================================================================
+
+  /**
+   * Record feedback on ML moderation decision
+   * Called when a moderator reviews and decides on flagged content
+   */
+  async recordModerationFeedback(params: {
+    contentId: string;
+    contentType: ContentType;
+    mlPrediction: {
+      scores: Record<string, number>;
+      action: 'allow' | 'flag' | 'block';
+      confidence: number;
+    };
+    humanDecision: {
+      action: 'allow' | 'flag' | 'block';
+      reason?: string;
+      moderatorId: string;
+    };
+  }): Promise<{ id: string; wasCorrect: boolean }> {
+    const { contentId, contentType, mlPrediction, humanDecision } = params;
+
+    // Determine if ML was correct
+    const wasCorrect = mlPrediction.action === humanDecision.action;
+
+    const feedbackId = `feedback_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+    const feedback = {
+      id: feedbackId,
+      contentId,
+      contentType,
+      campusId: CURRENT_CAMPUS_ID,
+      mlPrediction: {
+        ...mlPrediction,
+        timestamp: new Date().toISOString(),
+      },
+      humanDecision: {
+        ...humanDecision,
+        decidedAt: new Date().toISOString(),
+      },
+      wasCorrect,
+      // Calculate disagreement details for analysis
+      disagreement: !wasCorrect ? {
+        mlSaid: mlPrediction.action,
+        humanSaid: humanDecision.action,
+        wasOverride: mlPrediction.action !== 'allow' && humanDecision.action === 'allow',
+        wasEscalation: mlPrediction.action === 'allow' && humanDecision.action !== 'allow',
+      } : null,
+      createdAt: new Date().toISOString(),
+    };
+
+    await dbAdmin.collection('moderation_feedback').doc(feedbackId).set(feedback);
+
+    // Update moderator stats
+    await this.updateModeratorFeedbackStats(humanDecision.moderatorId, wasCorrect);
+
+    // Log for analysis
+    logger.info('ML moderation feedback recorded', {
+      feedbackId,
+      contentId,
+      wasCorrect,
+      mlAction: mlPrediction.action,
+      humanAction: humanDecision.action,
+      confidence: mlPrediction.confidence,
+    });
+
+    return { id: feedbackId, wasCorrect };
+  }
+
+  /**
+   * Get ML accuracy statistics over a time period
+   */
+  async getModerationAccuracyStats(params: {
+    startDate?: Date;
+    endDate?: Date;
+    contentType?: ContentType;
+  } = {}): Promise<{
+    totalFeedback: number;
+    correctPredictions: number;
+    accuracy: number;
+    falsePositiveRate: number;
+    falseNegativeRate: number;
+    confidenceCorrelation: {
+      highConfidence: { total: number; correct: number; accuracy: number };
+      mediumConfidence: { total: number; correct: number; accuracy: number };
+      lowConfidence: { total: number; correct: number; accuracy: number };
+    };
+    byContentType: Record<string, { total: number; correct: number; accuracy: number }>;
+    recentTrend: { period: string; accuracy: number }[];
+  }> {
+    const { startDate, endDate, contentType } = params;
+
+    let query: FirebaseFirestore.Query = dbAdmin.collection('moderation_feedback')
+      .where('campusId', '==', CURRENT_CAMPUS_ID);
+
+    if (startDate) {
+      query = query.where('createdAt', '>=', startDate.toISOString());
+    }
+    if (endDate) {
+      query = query.where('createdAt', '<=', endDate.toISOString());
+    }
+    if (contentType) {
+      query = query.where('contentType', '==', contentType);
+    }
+
+    const snapshot = await query.get();
+    const feedbacks = snapshot.docs.map(doc => doc.data());
+
+    // Calculate overall accuracy
+    const totalFeedback = feedbacks.length;
+    const correctPredictions = feedbacks.filter(f => f.wasCorrect).length;
+    const accuracy = totalFeedback > 0 ? correctPredictions / totalFeedback : 0;
+
+    // Calculate false positive/negative rates
+    const overrides = feedbacks.filter(f => f.disagreement?.wasOverride);
+    const escalations = feedbacks.filter(f => f.disagreement?.wasEscalation);
+    const falsePositiveRate = totalFeedback > 0 ? overrides.length / totalFeedback : 0;
+    const falseNegativeRate = totalFeedback > 0 ? escalations.length / totalFeedback : 0;
+
+    // Group by confidence level
+    const highConf = feedbacks.filter(f => f.mlPrediction.confidence >= 0.8);
+    const medConf = feedbacks.filter(f => f.mlPrediction.confidence >= 0.5 && f.mlPrediction.confidence < 0.8);
+    const lowConf = feedbacks.filter(f => f.mlPrediction.confidence < 0.5);
+
+    const calcAccuracy = (items: typeof feedbacks) => {
+      const correct = items.filter(i => i.wasCorrect).length;
+      return { total: items.length, correct, accuracy: items.length > 0 ? correct / items.length : 0 };
+    };
+
+    // Group by content type
+    const byContentType: Record<string, { total: number; correct: number; accuracy: number }> = {};
+    const contentTypes = [...new Set(feedbacks.map(f => f.contentType))];
+    for (const ct of contentTypes) {
+      const ctFeedbacks = feedbacks.filter(f => f.contentType === ct);
+      byContentType[ct] = calcAccuracy(ctFeedbacks);
+    }
+
+    // Calculate recent trend (last 4 weeks)
+    const recentTrend: { period: string; accuracy: number }[] = [];
+    const now = new Date();
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date(now.getTime() - (i + 1) * 7 * 24 * 60 * 60 * 1000);
+      const weekEnd = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
+      const weekFeedbacks = feedbacks.filter(f => {
+        const date = new Date(f.createdAt);
+        return date >= weekStart && date < weekEnd;
+      });
+      const weekAccuracy = weekFeedbacks.length > 0
+        ? weekFeedbacks.filter(f => f.wasCorrect).length / weekFeedbacks.length
+        : 0;
+      recentTrend.push({
+        period: `Week ${4 - i}`,
+        accuracy: weekAccuracy,
+      });
+    }
+
+    return {
+      totalFeedback,
+      correctPredictions,
+      accuracy,
+      falsePositiveRate,
+      falseNegativeRate,
+      confidenceCorrelation: {
+        highConfidence: calcAccuracy(highConf),
+        mediumConfidence: calcAccuracy(medConf),
+        lowConfidence: calcAccuracy(lowConf),
+      },
+      byContentType,
+      recentTrend,
+    };
+  }
+
+  /**
+   * Get feedback entries that need review (ML was confident but wrong)
+   * These indicate potential threshold adjustments needed
+   */
+  async getHighConfidenceErrors(limit: number = 20): Promise<{
+    feedbackId: string;
+    contentId: string;
+    contentType: ContentType;
+    mlConfidence: number;
+    mlAction: string;
+    humanAction: string;
+    reason?: string;
+    createdAt: string;
+  }[]> {
+    const snapshot = await dbAdmin.collection('moderation_feedback')
+      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('wasCorrect', '==', false)
+      .where('mlPrediction.confidence', '>=', 0.8)
+      .orderBy('mlPrediction.confidence', 'desc')
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        feedbackId: data.id,
+        contentId: data.contentId,
+        contentType: data.contentType,
+        mlConfidence: data.mlPrediction.confidence,
+        mlAction: data.mlPrediction.action,
+        humanAction: data.humanDecision.action,
+        reason: data.humanDecision.reason,
+        createdAt: data.createdAt,
+      };
+    });
+  }
+
+  /**
+   * Update moderator's feedback accuracy stats
+   */
+  private async updateModeratorFeedbackStats(moderatorId: string, wasCorrect: boolean): Promise<void> {
+    const updateData: Record<string, FirebaseFirestore.FieldValue | boolean | string> = {
+      'feedbackStats.totalReviews': FieldValue.increment(1),
+      'feedbackStats.lastReview': new Date().toISOString(),
+    };
+
+    if (wasCorrect) {
+      updateData['feedbackStats.agreedWithML'] = FieldValue.increment(1);
+    } else {
+      updateData['feedbackStats.disagreedWithML'] = FieldValue.increment(1);
+    }
+
+    await dbAdmin.collection('users').doc(moderatorId).update(updateData);
   }
 }
 

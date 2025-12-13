@@ -4,12 +4,13 @@ import { getAuth } from "firebase-admin/auth";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 
 /**
  * Session validation endpoint - verifies token and returns user session info
  * GET /api/auth/session
  */
-export async function GET(request: NextRequest) {
+async function handleSessionRequest(request: NextRequest) {
   try {
     // Get the authorization header
     const authHeader = request.headers.get("authorization");
@@ -62,7 +63,12 @@ export async function GET(request: NextRequest) {
           schoolId: userData?.schoolId || "",
           emailVerified: userData?.emailVerified || false,
           builderOptIn: userData?.builderOptIn || false,
-          onboardingCompleted: !!userData?.onboardingCompletedAt,
+          onboardingCompleted: !!(
+            userData?.onboardingCompleted ||
+            userData?.onboardingComplete ||
+            userData?.onboardingCompletedAt ||
+            (userData?.handle && userData?.fullName)
+          ),
           createdAt: userData?.createdAt,
           updatedAt: userData?.updatedAt,
         };
@@ -114,25 +120,169 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Refresh session endpoint - validates current token and returns new session info
+ * GET /api/auth/session - with rate limiting
+ *
+ * @deprecated Use /api/auth/me instead. This endpoint validates Bearer tokens
+ * while /api/auth/me uses the httpOnly session cookie (preferred pattern).
+ */
+export async function GET(request: NextRequest) {
+  // DEPRECATION WARNING: Use /api/auth/me for session validation
+  logger.warn('Deprecated endpoint called: GET /api/auth/session - use /api/auth/me instead', {
+    endpoint: '/api/auth/session',
+    deprecatedSince: '2024-12-09',
+    replacement: '/api/auth/me'
+  });
+
+  // Rate limit: 100 requests per minute for session checks
+  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { valid: false, error: rateLimitResult.error },
+      { status: rateLimitResult.status, headers: rateLimitResult.headers }
+    );
+  }
+  return handleSessionRequest(request);
+}
+
+/**
+ * Create session from Firebase ID token
  * POST /api/auth/session
+ * Body: { idToken, email, schoolId }
  */
 export async function POST(request: NextRequest) {
+  // Rate limit
+  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { success: false, error: rateLimitResult.error },
+      { status: rateLimitResult.status, headers: rateLimitResult.headers }
+    );
+  }
+
   try {
-    // For Firebase, token refresh is handled client-side
-    // This endpoint just validates the current token
-    return GET(request);
+    const body = await request.json();
+    const { idToken, email, schoolId } = body;
+
+    if (!idToken) {
+      return NextResponse.json(
+        { success: false, error: "ID token is required" },
+        { status: HttpStatus.BAD_REQUEST }
+      );
+    }
+
+    const auth = getAuth();
+
+    // Verify the Firebase ID token
+    let decodedToken;
+    try {
+      decodedToken = await auth.verifyIdToken(idToken);
+    } catch (error) {
+      logger.error(
+        `Invalid ID token at /api/auth/session POST`,
+        { error: error instanceof Error ? error.message : String(error) }
+      );
+      return NextResponse.json(
+        { success: false, error: "Invalid or expired token" },
+        { status: HttpStatus.UNAUTHORIZED }
+      );
+    }
+
+    const userId = decodedToken.uid;
+    const userEmail = decodedToken.email || email;
+    const campusId = schoolId || 'ub-buffalo';
+
+    // Get or create user profile
+    const userRef = dbAdmin.collection("users").doc(userId);
+    const userDoc = await userRef.get();
+
+    let needsOnboarding = true;
+    let userData = userDoc.data();
+
+    if (!userDoc.exists) {
+      // Create new user
+      const newUser = {
+        id: userId,
+        email: userEmail,
+        campusId,
+        schoolId: campusId,
+        emailVerified: true,
+        verifiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      await userRef.set(newUser);
+      userData = newUser;
+      needsOnboarding = true;
+    } else {
+      // Update existing user
+      await userRef.update({
+        emailVerified: true,
+        verifiedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      needsOnboarding = !(
+        userData?.onboardingCompleted ||
+        userData?.onboardingComplete ||
+        userData?.onboardingCompletedAt ||
+        (userData?.handle && userData?.fullName)
+      );
+    }
+
+    // Create session cookie using jose (like the existing session system)
+    const { SignJWT } = await import('jose');
+    const sessionSecret = process.env.SESSION_SECRET || 'dev-session-secret-for-local-testing-only-b3c4d0375e506cb6cb30f1d922b4062f';
+    const secret = new TextEncoder().encode(sessionSecret);
+
+    const sessionToken = await new SignJWT({
+      userId,
+      email: userEmail,
+      campusId,
+      isAdmin: userData?.isAdmin || false,
+      onboardingCompleted: !needsOnboarding, // CRITICAL: Include onboarding status in JWT
+      verifiedAt: new Date().toISOString(),
+      sessionId: `session-${Date.now()}`,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject(userId)
+      .setIssuedAt()
+      .setExpirationTime('30d')
+      .sign(secret);
+
+    // Set session cookie
+    const response = NextResponse.json({
+      success: true,
+      needsOnboarding,
+      user: {
+        id: userId,
+        email: userEmail,
+        campusId,
+        onboardingCompleted: !needsOnboarding,
+      },
+    });
+
+    response.cookies.set('hive_session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    logger.info('Session created successfully', {
+      userId,
+      needsOnboarding,
+      endpoint: '/api/auth/session',
+    });
+
+    return response;
+
   } catch (error) {
     logger.error(
-      `Error refreshing session at /api/auth/session`,
+      `Error creating session at /api/auth/session POST`,
       { error: error instanceof Error ? error.message : String(error) }
     );
     return NextResponse.json(
-      { 
-        valid: false,
-        error: "Failed to refresh session",
-        code: "REFRESH_ERROR"
-      },
+      { success: false, error: "Failed to create session" },
       { status: HttpStatus.INTERNAL_SERVER_ERROR }
     );
   }

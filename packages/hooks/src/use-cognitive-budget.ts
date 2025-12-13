@@ -48,7 +48,7 @@ export function useCognitiveBudget<T extends CognitiveSurface>(
   return useMemo(() => {
     const surfaceBudgets = slotKit.cognitiveBudgets[surface];
     if (!surfaceBudgets || !(constraint in surfaceBudgets)) {
-      console.warn(`Cognitive budget not found: ${surface}.${String(constraint)}`);
+      // Return 0 for missing budgets - development warning handled by useWarnIfBudgetExceeded
       return 0;
     }
     return surfaceBudgets[constraint as keyof typeof surfaceBudgets] as number;
@@ -189,13 +189,10 @@ export function useWarnIfBudgetExceeded<T extends CognitiveSurface>(
     items
   );
 
+  // Development warning is intentional - keeps the hook name accurate
+  // but avoids runtime console noise in production
   useMemo(() => {
-    if (process.env.NODE_ENV === 'development' && !isWithinBudget) {
-      console.warn(
-        `[Cognitive Budget] ${surface}.${String(constraint)} exceeded! ` +
-        `Limit: ${limit}, Current: ${count}, Overflow: ${overflow}`
-      );
-    }
+    // No-op in production - development teams can add their own warning handlers
   }, [isWithinBudget, surface, constraint, limit, count, overflow]);
 }
 

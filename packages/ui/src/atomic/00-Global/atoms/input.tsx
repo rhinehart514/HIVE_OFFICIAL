@@ -22,7 +22,7 @@ export type InputStatus = 'idle' | 'loading' | 'success' | 'error'
  * Colors: Only #000000, #FFFFFF, #FFD700 (gold only for errors/warnings)
  */
 const inputVariants = cva(
-  "flex w-full rounded-lg border border-white/[0.08] bg-transparent px-3 text-sm text-white transition-colors duration-100 placeholder:text-white/40 focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full rounded-lg border border-white/[0.08] bg-transparent px-3 text-sm text-white transition-colors duration-100 placeholder:text-white/40 focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/40 focus:ring-offset-1 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {

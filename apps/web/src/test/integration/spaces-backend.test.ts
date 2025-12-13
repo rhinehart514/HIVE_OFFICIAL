@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
@@ -149,8 +152,8 @@ describe('Spaces Backend Endpoints', () => {
     expect(postCreate.status).toBe(201);
     const postJson = await postCreate.json();
     const postId = postJson.post.id;
-    // Verify stored in in-memory collection
-    const postsColl = await getCollection(`spaces/${spaceId}/posts`).get();
+    // Verify stored in flat /posts collection
+    const postsColl = await getCollection('posts').get();
     expect(postsColl.docs.length).toBeGreaterThan(0);
 
     // List posts returns the post

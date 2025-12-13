@@ -20,19 +20,17 @@ let appCheck: AppCheck | null = null;
 export function initializeAppCheckSecurity(app: FirebaseApp): AppCheck | null {
   // Only enable in production
   if (process.env.NEXT_PUBLIC_ENVIRONMENT !== 'production') {
-    console.log('ℹ️ App Check disabled in development');
     return null;
   }
 
   // Check if App Check is enabled
   if (process.env.NEXT_PUBLIC_ENABLE_APP_CHECK !== 'true') {
-    console.log('ℹ️ App Check disabled via feature flag');
     return null;
   }
 
   const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
   if (!siteKey) {
-    console.error('❌ App Check enabled but RECAPTCHA_SITE_KEY not provided');
+    // App Check enabled but missing required key - fail silently
     return null;
   }
 
@@ -43,16 +41,9 @@ export function initializeAppCheckSecurity(app: FirebaseApp): AppCheck | null {
       isTokenAutoRefreshEnabled: true, // Auto-refresh tokens
     });
 
-    console.log('✅ Firebase App Check initialized');
-
-    // Log token refresh events in development
-    if (process.env.NODE_ENV === 'development') {
-      monitorAppCheckTokens();
-    }
-
     return appCheck;
-  } catch (error) {
-    console.error('❌ Failed to initialize App Check:', error);
+  } catch (_error) {
+    // App Check initialization failed - continue without it
     return null;
   }
 }
@@ -86,7 +77,7 @@ export function initializeAppCheckDebug(
   debugToken: string
 ): AppCheck | null {
   if (process.env.NODE_ENV !== 'development') {
-    console.error('❌ Debug App Check can only be used in development');
+    // Debug App Check only available in development
     return null;
   }
 
@@ -96,10 +87,9 @@ export function initializeAppCheckDebug(
       isTokenAutoRefreshEnabled: false,
     });
 
-    console.log('✅ Firebase App Check initialized in debug mode');
     return appCheck;
-  } catch (error) {
-    console.error('❌ Failed to initialize debug App Check:', error);
+  } catch (_error) {
+    // Debug App Check initialization failed
     return null;
   }
 }
@@ -111,38 +101,25 @@ export async function getAppCheckToken(
   forceRefresh = false
 ): Promise<string | null> {
   if (!appCheck) {
-    console.warn('App Check not initialized');
     return null;
   }
 
   try {
     const result = await getToken(appCheck, forceRefresh);
     return result.token;
-  } catch (error) {
-    console.error('Failed to get App Check token:', error);
+  } catch (_error) {
+    // Token retrieval failed - return null
     return null;
   }
 }
 
 /**
  * Monitor App Check token refresh (for debugging)
+ * Currently disabled - uncomment for debugging token refresh issues
  */
-function monitorAppCheckTokens(): void {
-  if (!appCheck) return;
-
-  // Log when tokens are refreshed
-  let tokenCount = 0;
-  setInterval(async () => {
-    try {
-      const token = await getAppCheckToken(false);
-      if (token) {
-        tokenCount++;
-        console.log(`🔐 App Check token #${tokenCount} active`);
-      }
-    } catch (error) {
-      console.error('Token monitoring error:', error);
-    }
-  }, 300000); // Check every 5 minutes
+function _monitorAppCheckTokens(): void {
+  // Token monitoring disabled - was only used for debugging
+  // Keeping function for potential future debugging needs
 }
 
 /**
@@ -173,21 +150,15 @@ export async function verifyAppCheckToken(
   _projectId: string
 ): Promise<boolean> {
   if (!token) {
-    console.warn('No App Check token provided');
     return false;
   }
 
   // In production, verify with Firebase Admin SDK
   if (process.env.NODE_ENV === 'production') {
-    try {
-      // This would be done server-side with admin SDK
-      // For now, we trust the token if it exists
-      // Real implementation would verify with Firebase Admin
-      return true;
-    } catch (error) {
-      console.error('App Check verification failed:', error);
-      return false;
-    }
+    // This would be done server-side with admin SDK
+    // For now, we trust the token if it exists
+    // Real implementation would verify with Firebase Admin
+    return true;
   }
 
   // In development, accept debug tokens

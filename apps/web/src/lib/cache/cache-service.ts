@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix logger context types
+// TODO: Fix logger.error() calls to use proper (message, context, error) signature
 // High-level caching service for HIVE platform
 // Provides domain-specific caching methods with optimized TTL and invalidation strategies
 

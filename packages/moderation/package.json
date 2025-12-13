@@ -1,0 +1,30 @@
+{
+  "name": "@hive/moderation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HIVE content moderation services - ML-based text and image analysis",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "firebase-admin": ">=12.0.0"
+  }
+}

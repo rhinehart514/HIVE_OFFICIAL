@@ -127,7 +127,7 @@ export function useAuth(): UseAuthReturn {
       return null;
 
     } catch (err) {
-      console.error("[useAuth] Failed to fetch session:", err);
+      // Re-throw to allow caller to handle
       throw err;
     }
   }, []);
@@ -168,9 +168,8 @@ export function useAuth(): UseAuthReturn {
         localStorage.setItem("hive_auth_event", `logout_${Date.now()}`);
         window.location.href = "/auth/login";
       }
-    } catch (err) {
-      console.error("[useAuth] Logout failed:", err);
-      // Still clear local state
+    } catch (_err) {
+      // Still clear local state on logout failure
       setUser(null);
       sessionCache = null;
     }
@@ -210,7 +209,9 @@ export function useAuth(): UseAuthReturn {
         // Another tab logged in/out - refresh
         fetchSession(true).then(userData => {
           if (mounted) setUser(userData);
-        }).catch(console.error);
+        }).catch(() => {
+          // Silently handle cross-tab sync errors
+        });
       }
     };
 

@@ -2,14 +2,15 @@ import { z } from "zod";
 import { checkHandleAvailability } from "@/lib/handle-service";
 import { createCrudHandler, type ApiContext } from "@/lib/api-wrapper";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { SecureSchemas } from "@/lib/secure-input-validation";
 
-// Validation schemas
+// Validation schemas using SecureSchemas for security validation
 const checkHandleBodySchema = z.object({
-  handle: z.string().min(1, "Handle is required")
+  handle: SecureSchemas.handle
 });
 
 const checkHandleQuerySchema = z.object({
-  handle: z.string().min(1, "Handle parameter is required")
+  handle: SecureSchemas.handle
 });
 
 interface CheckHandleResponse {

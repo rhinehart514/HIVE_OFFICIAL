@@ -58,7 +58,7 @@ async function validateSpaceMembership(userId: string, spaceId: string) {
   }
 
   const membershipSnapshot = await adminDb
-    .collection("members")
+    .collection("spaceMembers")
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
@@ -220,9 +220,11 @@ export const POST = withAuthValidationAndErrors(
         targetId: validatedData.targetId,
         toolId: validatedData.toolId,
         deploymentId: `install_${Date.now()}`,
-        surface: installation.surface || "tools",
-        permissions: installation.permissions,
-        settings: installation.config,
+        placedBy: userId,
+        campusId: CURRENT_CAMPUS_ID,
+        placement: 'sidebar',
+        visibility: 'all',
+        configOverrides: installation.config,
       });
 
       const batch = adminDb.batch();

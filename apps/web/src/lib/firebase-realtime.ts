@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix type issues
+// TODO: Fix timestamp arithmetic types
 import { type Database, getDatabase, ref, push, set, onValue, off, serverTimestamp, type DataSnapshot } from 'firebase/database';
 import { app } from '@hive/core';
 import { logger } from './structured-logger';
@@ -365,13 +365,13 @@ export class FirebaseRealtimeService {
    */
   listenToChat(spaceId: string, callback: (messages: ChatMessage[]) => void): () => void {
     const chatRef = ref(this.database, `chats/${spaceId}/messages`);
-    
+
     const listener = onValue(chatRef, (snapshot: DataSnapshot) => {
       const messages: ChatMessage[] = [];
       snapshot.forEach((childSnapshot) => {
         messages.push(childSnapshot.val());
       });
-      
+
       // Sort by timestamp
       messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       callback(messages);
@@ -394,6 +394,136 @@ export class FirebaseRealtimeService {
         }
       }
     };
+  }
+
+  /**
+   * Listen to chat messages for a specific board within a space
+   * Path: chats/{spaceId}/boards/{boardId}/messages
+   */
+  listenToChatBoard(
+    spaceId: string,
+    boardId: string,
+    callback: (messages: ChatMessage[]) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const boardChatRef = ref(this.database, `chats/${spaceId}/boards/${boardId}/messages`);
+
+    const listener = onValue(
+      boardChatRef,
+      (snapshot: DataSnapshot) => {
+        const messages: ChatMessage[] = [];
+        snapshot.forEach((childSnapshot) => {
+          const msg = childSnapshot.val();
+          messages.push({
+            ...msg,
+            id: msg.id || childSnapshot.key,
+          });
+        });
+
+        // Sort by timestamp (oldest first for chat)
+        messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        callback(messages);
+      },
+      (error) => {
+        logger.error('RTDB chat board listener error', {
+          spaceId,
+          boardId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+        onError?.(error);
+      }
+    );
+
+    // Store listener for cleanup
+    const listenerKey = `chat:${spaceId}:${boardId}`;
+    if (!this.listeners.has(listenerKey)) {
+      this.listeners.set(listenerKey, []);
+    }
+    this.listeners.get(listenerKey)!.push(listener);
+
+    logger.info('RTDB chat board listener started', { spaceId, boardId });
+
+    return () => {
+      off(boardChatRef, 'value', listener);
+      const chatListeners = this.listeners.get(listenerKey);
+      if (chatListeners) {
+        const index = chatListeners.indexOf(listener);
+        if (index > -1) {
+          chatListeners.splice(index, 1);
+        }
+      }
+      logger.info('RTDB chat board listener stopped', { spaceId, boardId });
+    };
+  }
+
+  /**
+   * Listen to typing indicators for a specific board
+   */
+  listenToBoardTyping(
+    spaceId: string,
+    boardId: string,
+    callback: (typing: Record<string, TypingIndicator>) => void
+  ): () => void {
+    const typingRef = ref(this.database, `typing/${spaceId}/${boardId}`);
+
+    const listener = onValue(typingRef, (snapshot: DataSnapshot) => {
+      const typing: Record<string, TypingIndicator> = {};
+      snapshot.forEach((childSnapshot) => {
+        typing[childSnapshot.key!] = childSnapshot.val();
+      });
+
+      callback(typing);
+    });
+
+    const listenerKey = `typing:${spaceId}:${boardId}`;
+    if (!this.listeners.has(listenerKey)) {
+      this.listeners.set(listenerKey, []);
+    }
+    this.listeners.get(listenerKey)!.push(listener);
+
+    return () => {
+      off(typingRef, 'value', listener);
+      const typingListeners = this.listeners.get(listenerKey);
+      if (typingListeners) {
+        const index = typingListeners.indexOf(listener);
+        if (index > -1) {
+          typingListeners.splice(index, 1);
+        }
+      }
+    };
+  }
+
+  /**
+   * Set typing indicator for a specific board
+   */
+  async setBoardTypingIndicator(
+    spaceId: string,
+    boardId: string,
+    userId: string,
+    isTyping: boolean
+  ): Promise<void> {
+    try {
+      const typingRef = ref(this.database, `typing/${spaceId}/${boardId}/${userId}`);
+
+      if (isTyping) {
+        const typingData: TypingIndicator = {
+          userId,
+          spaceId,
+          timestamp: serverTimestamp(),
+          isTyping: true
+        };
+        await set(typingRef, typingData);
+      } else {
+        await set(typingRef, null);
+      }
+    } catch (error) {
+      logger.error('Error setting board typing indicator', {
+        error: { error: error instanceof Error ? error.message : String(error) },
+        spaceId,
+        boardId,
+        userId
+      });
+    }
   }
 
   /**

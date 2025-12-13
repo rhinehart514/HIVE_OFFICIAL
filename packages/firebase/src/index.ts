@@ -65,7 +65,9 @@ const auth: Auth = getAuth(app);
 
 // Set persistence for web
 if (typeof window !== 'undefined') {
-  setPersistence(auth, browserLocalPersistence).catch(console.error);
+  setPersistence(auth, browserLocalPersistence).catch((_error) => {
+    // Persistence setting failed - auth will still work with session persistence
+  });
 }
 
 // Initialize Firestore with settings
@@ -78,12 +80,9 @@ const db: Firestore = initializeFirestore(app, {
 if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'test') {
   enableIndexedDbPersistence(db, {
     forceOwnership: false // Don't force ownership in tabs
-  }).catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn('Firestore persistence failed: Multiple tabs open');
-    } else if (err.code === 'unimplemented') {
-      console.warn('Firestore persistence not supported in this browser');
-    }
+  }).catch((_err) => {
+    // Persistence may fail due to multiple tabs or unsupported browser
+    // Firestore will still work without offline persistence
   });
 }
 
@@ -117,26 +116,17 @@ if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true') {
     connectStorageEmulator(storage, EMULATOR_HOST, 9199);
   }
 
-  console.log('🔧 Firebase Emulators Connected');
+  // Emulators connected - no logging needed
 }
 
 // Campus validation helper
 export const validateCampusAccess = (userCampusId: string, requestedCampusId: string): boolean => {
   if (!userCampusId || !requestedCampusId) {
-    console.error('Campus validation failed: Missing campus IDs');
+    // Missing campus IDs - validation fails silently
     return false;
   }
 
-  // In production, strictly enforce campus isolation
-  if (process.env.NODE_ENV === 'production') {
-    return userCampusId === requestedCampusId;
-  }
-
-  // In development, allow but warn
-  if (userCampusId !== requestedCampusId) {
-    console.warn(`⚠️ Campus mismatch: User campus ${userCampusId} accessing ${requestedCampusId}`);
-  }
-
+  // Strictly enforce campus isolation in all environments
   return userCampusId === requestedCampusId;
 };
 

@@ -3,8 +3,9 @@
 import { type ReactNode, useState } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastProvider } from "@/hooks/use-toast";
+import { Toaster } from "@/hooks/use-toast";
 import { UniversalShellProvider } from "./universal-shell-provider";
+import { PWAManager } from "@/components/pwa";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -32,11 +33,11 @@ export function Providers({ children }: ProvidersProps) {
         enableSystem
         disableTransitionOnChange
       >
-        <ToastProvider>
-          <UniversalShellProvider>
-            {children}
-          </UniversalShellProvider>
-        </ToastProvider>
+        <UniversalShellProvider>
+          {children}
+          <PWAManager />
+        </UniversalShellProvider>
+        <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
   );

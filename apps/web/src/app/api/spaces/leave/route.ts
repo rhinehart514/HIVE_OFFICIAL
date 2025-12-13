@@ -8,8 +8,8 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
-import { validateSecureSpaceMembership, addSecureCampusMetadata, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { validateSecureSpaceMembership, addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 
 const leaveSpaceSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required")
@@ -24,6 +24,7 @@ export const POST = withAuthValidationAndErrors(
   async (request, _context, body: z.infer<typeof leaveSpaceSchema>, respond) => {
     const { spaceId } = body;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // SECURITY: Use secure membership validation with campus isolation
     const membershipValidation = await validateSecureSpaceMembership(userId, spaceId);
@@ -43,7 +44,7 @@ export const POST = withAuthValidationAndErrors(
           const query = dbAdmin.collection('spaceMembers')
             .where('spaceId', '==', spaceIdParam)
             .where('userId', '==', userIdParam)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('campusId', '==', campusId)
             .limit(1);
           const snapshot = await query.get();
           if (snapshot.empty) {
@@ -70,7 +71,7 @@ export const POST = withAuthValidationAndErrors(
           const query = dbAdmin.collection('spaceMembers')
             .where('spaceId', '==', spaceIdParam)
             .where('userId', '==', userIdParam)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('campusId', '==', campusId)
             .limit(1);
           const snapshot = await query.get();
           if (!snapshot.empty) {
@@ -104,7 +105,7 @@ export const POST = withAuthValidationAndErrors(
 
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID },
+      { userId, campusId: campusId },
       callbacks
     );
 

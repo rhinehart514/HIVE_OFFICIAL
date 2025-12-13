@@ -2,6 +2,7 @@ import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/m
 import { db } from '@hive/firebase';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * localStorage Migration Endpoint
@@ -95,7 +96,7 @@ export const POST = withAuthAndErrors(async (request, context, respond) => {
     });
 
   } catch (error) {
-    console.error('Migration error:', error);
+    logger.error('Tool migration failed', {}, error instanceof Error ? error : new Error(String(error)));
 
     if (error instanceof z.ZodError) {
       return respond.error(

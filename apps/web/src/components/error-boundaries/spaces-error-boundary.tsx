@@ -1,9 +1,81 @@
 "use client";
 
-import React from 'react';
+import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Users, Plus, Search } from 'lucide-react';
 import { Button, Card } from "@hive/ui";
-import { ErrorBoundary } from '../error-boundary';
+
+// Inline ErrorBoundary to replace deleted component
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  context?: string;
+  enableRecovery?: boolean;
+  maxRetries?: number;
+  fallback?: React.ComponentType<{ error?: Error; retry: () => void; errorId?: string }>;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorId: string | null;
+  retryCount: number;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+    error: null,
+    errorId: null,
+    retryCount: 0
+  };
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return {
+      hasError: true,
+      error,
+      errorId: `err_${Date.now().toString(36)}`
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error(`[ErrorBoundary:${this.props.context}]`, error, errorInfo);
+  }
+
+  handleRetry = () => {
+    const { maxRetries = 3 } = this.props;
+    if (this.state.retryCount < maxRetries) {
+      this.setState(prev => ({
+        hasError: false,
+        error: null,
+        errorId: null,
+        retryCount: prev.retryCount + 1
+      }));
+    }
+  };
+
+  render() {
+    if (this.state.hasError) {
+      const FallbackComponent = this.props.fallback;
+      if (FallbackComponent) {
+        return (
+          <FallbackComponent
+            error={this.state.error || undefined}
+            retry={this.handleRetry}
+            errorId={this.state.errorId || undefined}
+          />
+        );
+      }
+      return (
+        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-center">
+          <p className="text-red-400">Something went wrong</p>
+          <button onClick={this.handleRetry} className="mt-2 text-sm underline">
+            Try again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface SpacesErrorFallbackProps {
   error?: Error;

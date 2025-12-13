@@ -202,7 +202,7 @@ function getDefaultAggregationConfig(): AggregationConfig {
 // Helper function to get user's accessible spaces
 async function getUserAccessibleSpaces(userId: string): Promise<string[]> {
   try {
-    const membershipsSnapshot = await dbAdmin.collection('members')
+    const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID)

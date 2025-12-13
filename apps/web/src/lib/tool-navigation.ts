@@ -3,6 +3,8 @@
  * Provides consistent navigation patterns throughout the HIVE tool system
  */
 
+import { logger } from './logger';
+
 export interface ToolNavigationOptions {
   toolId?: string;
   mode?: 'visual' | 'template' | 'wizard';
@@ -123,7 +125,7 @@ export class ToolNavigation {
       await navigator.clipboard.writeText(shareUrl);
       return true;
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error);
+      logger.error('Failed to copy to clipboard', { component: 'tool-navigation' }, error instanceof Error ? error : undefined);
       return false;
     }
   }

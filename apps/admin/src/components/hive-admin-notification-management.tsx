@@ -517,8 +517,8 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       setCampaigns(data.campaigns || []);
       setTemplates(data.templates || []);
       setAnalytics(data.analytics);
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
+    } catch (_error) {
+      // Load notifications failed - UI will show empty state
     } finally {
       setLoading(false);
     }
@@ -778,10 +778,10 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                   <NotificationCard
                     key={notification.id}
                     notification={notification}
-                    onViewDetails={() => console.warn('View details:', notification.id)}
-                    onEdit={() => console.warn('Edit notification:', notification.id)}
-                    onCancel={() => console.warn('Cancel notification:', notification.id)}
-                    onResend={() => console.warn('Resend notification:', notification.id)}
+                    onViewDetails={() => { /* TODO: Navigate to notification details */ }}
+                    onEdit={() => { /* TODO: Open notification editor */ }}
+                    onCancel={() => { /* TODO: Open cancel confirmation */ }}
+                    onResend={() => { /* TODO: Trigger resend */ }}
                   />
                 ))}
               </div>

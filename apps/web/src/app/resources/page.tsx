@@ -3,13 +3,47 @@
 // Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 
 // Temp fix for chunk 2073 useRef errors
 const Button = ({ children, _variant = "default", className = "", ...props }: { children: React.ReactNode; _variant?: string; className?: string; [key: string]: unknown }) => <button className={`px-4 py-2 rounded ${className}`} {...props}>{children}</button>;
 const Card = ({ children, className = "", ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) => <div className={`border rounded-lg p-4 ${className}`} {...props}>{children}</div>;
-import { PageContainer } from "@/components/temp-stubs";
 import { BookOpen, ExternalLink, Video, FileText, Code, Users, Star, Download } from 'lucide-react';
+
+// Inline PageContainer to replace deleted temp-stubs
+function PageContainer({
+  title,
+  subtitle,
+  breadcrumbs,
+  maxWidth = "6xl",
+  children
+}: {
+  title: string;
+  subtitle?: string;
+  breadcrumbs?: { label: string; icon?: React.ComponentType<{ className?: string }> }[];
+  maxWidth?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-black">
+      <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
+        {breadcrumbs && breadcrumbs.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
+            {breadcrumbs.map((item, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {item.icon && <item.icon className="h-4 w-4" />}
+                {item.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
+        {subtitle && <p className="text-white/60 mt-1">{subtitle}</p>}
+        <div className="mt-6">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResourcesPage() {
   const [mounted, setMounted] = useState(false);

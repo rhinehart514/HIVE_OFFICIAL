@@ -531,8 +531,8 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
 
       const data = await response.json();
       setUsers(data.users || []);
-    } catch (error) {
-      console.error('Failed to load users:', error);
+    } catch (_error) {
+      // Load users failed - UI will show empty state
     } finally {
       setLoading(false);
     }
@@ -832,10 +832,10 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <UserCard
                   key={user.id}
                   user={user}
-                  onViewDetails={() => console.warn('View details:', user.id)}
-                  onEdit={() => console.warn('Edit user:', user.id)}
-                  onSuspend={() => console.warn('Suspend user:', user.id)}
-                  onDelete={() => console.warn('Delete user:', user.id)}
+                  onViewDetails={() => { /* TODO: Navigate to user details */ }}
+                  onEdit={() => { /* TODO: Open user editor */ }}
+                  onSuspend={() => { /* TODO: Open suspend dialog */ }}
+                  onDelete={() => { /* TODO: Open delete confirmation */ }}
                   isSelected={selectedUsers.has(user.id)}
                   onSelect={(selected) => handleSelectUser(user.id, selected)}
                 />

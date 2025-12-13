@@ -8,6 +8,7 @@
  * - Send/Stop button toggle
  * - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
  * - Character counter (optional)
+ * - Tool insertion toolbar (polls, events, countdowns)
  * - Minimal, clean design
  * - Mobile-optimized
  */
@@ -17,7 +18,11 @@ import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } f
 
 import { cn } from '../../lib/utils';
 import { Button } from '../00-Global/atoms/button';
+import { ChatToolbar, type ToolInsertData, type ToolType } from './chat-toolbar';
 import '../../styles/scrollbar.css';
+
+// Re-export types from chat-toolbar for convenience
+export type { ToolInsertData, ToolType } from './chat-toolbar';
 
 /** Imperative handle for ChatInput */
 export interface ChatInputHandle {
@@ -38,8 +43,20 @@ export interface ChatInputProps {
   /** Callback when user stops generation */
   onStop?: () => void;
 
+  /** Callback when user inserts a tool (poll, event, countdown) */
+  onInsertTool?: (data: ToolInsertData) => void;
+
+  /** Callback when "More tools" is clicked */
+  onOpenToolGallery?: () => void;
+
   /** Is AI currently generating? */
   isGenerating?: boolean;
+
+  /** Show the tool insertion toolbar */
+  showToolbar?: boolean;
+
+  /** Whether user can insert tools */
+  canInsertTools?: boolean;
 
   /** Placeholder text */
   placeholder?: string;
@@ -69,7 +86,11 @@ export interface ChatInputProps {
 export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
   onSubmit,
   onStop,
+  onInsertTool,
+  onOpenToolGallery,
   isGenerating = false,
+  showToolbar = false,
+  canInsertTools = true,
   placeholder = 'Message HIVE AI...',
   maxLength = 2000,
   showCounter = false,
@@ -167,6 +188,16 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             ? 'border-white/[0.06] opacity-50'
             : 'border-white/[0.12] hover:border-white/[0.18] focus-within:border-white/25'
         )}>
+          {/* Tool insertion toolbar */}
+          {showToolbar && onInsertTool && (
+            <ChatToolbar
+              onInsertTool={onInsertTool}
+              onOpenGallery={onOpenToolGallery}
+              visible={showToolbar}
+              canInsert={canInsertTools && !disabled && !isGenerating}
+            />
+          )}
+
           {/* Scrollable wrapper */}
           <div
             ref={wrapperRef}

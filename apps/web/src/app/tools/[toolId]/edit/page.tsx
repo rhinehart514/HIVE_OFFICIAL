@@ -10,6 +10,7 @@ import type { ToolComposition } from '@hive/core';
 import { apiClient } from '@/lib/api-client';
 import { useAuth } from '@hive/auth-logic';
 import { ToolNavigation } from '@/lib/tool-navigation';
+import { logger } from '@/lib/logger';
 
 // Starter composition (replace with fetch for existing tools)
 const STARTER_COMPOSITION: ToolComposition = {
@@ -41,7 +42,7 @@ export default function ToolEditRoutePage() {
         localStorage.removeItem(savedKey);
         return composition as ToolComposition;
       } catch (e) {
-        console.error('Failed to parse saved composition', e);
+        logger.error('Failed to parse saved composition', { component: 'ToolEditPage' }, e instanceof Error ? e : undefined);
       }
     }
 

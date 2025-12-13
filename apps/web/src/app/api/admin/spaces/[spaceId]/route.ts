@@ -68,11 +68,14 @@ export const GET = withAuthAndErrors(async (
     const serviceResult = result.getValue();
     const space = serviceResult.data;
 
+    type SpaceWithModeration = { props?: { moderationInfo?: unknown } };
+    const moderationInfo = (space as unknown as SpaceWithModeration).props?.moderationInfo;
+
     // Transform to DTO with admin metadata
     const spaceDTO = {
       ...toSpaceDetailDTO(space),
       isActive: space.isActive,
-      moderationInfo: (space as any).props?.moderationInfo,
+      moderationInfo,
       internalMetrics: {
         memberCount: space.memberCount,
         trendingScore: space.trendingScore,
@@ -190,7 +193,7 @@ export const DELETE = withAuthAndErrors(async (
   respond
 ) => {
   const adminId = getUserId(request as AuthenticatedRequest);
-  const { spaceId } = await context.params;
+  const { spaceId: _spaceId } = await context.params;
 
   // Check super_admin permission (permanent deletion requires highest level)
   const adminRecord = await getAdminRecord(adminId);

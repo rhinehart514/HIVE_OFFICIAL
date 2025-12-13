@@ -9,7 +9,7 @@ const validateEmailDomain = vi.fn(
 );
 
 // Define response types
-interface MagicLinkResponse {
+interface OTPCodeResponse {
   success: boolean;
   message: string;
 }
@@ -70,11 +70,11 @@ describe("Auth Logic", () => {
     });
   });
 
-  describe("Magic Link API", () => {
-    it("should send magic link with valid data", async () => {
-      const mockResponse: MagicLinkResponse = {
+  describe("OTP Code API", () => {
+    it("should send OTP code with valid data", async () => {
+      const mockResponse: OTPCodeResponse = {
         success: true,
-        message: "Magic link sent",
+        message: "Verification code sent",
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -82,7 +82,7 @@ describe("Auth Logic", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const response = await fetch("/api/auth/send-magic-link", {
+      const response = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,9 +91,9 @@ describe("Auth Logic", () => {
         }),
       });
 
-      const data = (await response.json()) as MagicLinkResponse;
+      const data = (await response.json()) as OTPCodeResponse;
 
-      expect(mockFetch).toHaveBeenCalledWith("/api/auth/send-magic-link", {
+      expect(mockFetch).toHaveBeenCalledWith("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -102,7 +102,7 @@ describe("Auth Logic", () => {
         }),
       });
 
-      expect(data).toEqual({ success: true, message: "Magic link sent" });
+      expect(data).toEqual({ success: true, message: "Verification code sent" });
     });
 
     it("should reject invalid email format", async () => {
@@ -114,7 +114,7 @@ describe("Auth Logic", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const response = await fetch("/api/auth/send-magic-link", {
+      const response = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -219,8 +219,8 @@ describe("Auth Logic", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer fake-token",
         },
+        credentials: "include", // Uses httpOnly cookie
         body: JSON.stringify({
           fullName: "Test User",
           major: "Computer Science",
@@ -249,8 +249,8 @@ describe("Auth Logic", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer fake-token",
         },
+        credentials: "include",
         body: JSON.stringify({
           fullName: "Test User",
           major: "Computer Science",
@@ -277,8 +277,8 @@ describe("Auth Logic", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer fake-token",
         },
+        credentials: "include",
         body: JSON.stringify({
           fullName: "Test User",
           major: "Computer Science",
@@ -305,8 +305,8 @@ describe("Auth Logic", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer fake-token",
         },
+        credentials: "include",
         body: JSON.stringify({
           fullName: "Test User",
           major: "Computer Science",

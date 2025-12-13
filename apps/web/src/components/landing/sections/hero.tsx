@@ -105,7 +105,7 @@ export function HeroSection() {
         >
           <MagneticButton strength={0.2}>
             <Link
-              href="/auth/login"
+              href="/auth/login?new=true"
               className="inline-flex items-center justify-center px-8 py-4 bg-white text-black font-semibold rounded-xl transition-all duration-200 hover:bg-neutral-200 hover:scale-[1.02] active:scale-[0.98]"
             >
               Join the Movement

@@ -72,16 +72,18 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const db = dbAdmin;
-    
-    // Verify user has access to the space
-    const spaceMemberDoc = await db
-      .collection("spaces")
-      .doc(spaceId)
-      .collection("members")
-      .doc(userId)
+
+    // Verify user has access to the space (using flat spaceMembers collection)
+    const membershipSnapshot = await db
+      .collection("spaceMembers")
+      .where("userId", "==", userId)
+      .where("spaceId", "==", spaceId)
+      .where("status", "==", "active")
+      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .limit(1)
       .get();
 
-    if (!spaceMemberDoc.exists) {
+    if (membershipSnapshot.empty) {
       return respond.error("Access denied to this space", "FORBIDDEN", { status: 403 });
     }
 

@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix type issues
+// TODO: Fix generic type constraint
 /**
  * Security Middleware
  * Critical security checks for all API routes

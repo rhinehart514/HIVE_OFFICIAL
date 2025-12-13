@@ -1,6 +1,5 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { type Member } from '@hive/core/src/domain/firestore/member';
 
 const db = admin.firestore();
 
@@ -30,18 +29,12 @@ export const assertIsBuilder = async (uid: string | undefined, spaceId: string):
     if (role && (role === 'owner' || role === 'admin' || role === 'builder')) {
       return;
     }
-  }
-
-  // Legacy nested fallback: require role 'builder'
-  const memberRef = db.collection('spaces').doc(spaceId).collection('members').doc(uid);
-  const memberDoc = await memberRef.get();
-  if (!memberDoc.exists) {
-    throw new functions.https.HttpsError('permission-denied', 'You are not a member of this space.');
-  }
-  const memberData = memberDoc.data() as Member;
-  if (memberData.role !== 'builder') {
+    // User is a member but not a builder
     throw new functions.https.HttpsError('permission-denied', 'You must be a builder to perform this action.');
   }
+
+  // User is not a member of this space
+  throw new functions.https.HttpsError('permission-denied', 'You are not a member of this space.');
 };
 
 /**
@@ -56,7 +49,7 @@ export const assertIsMember = async (uid: string | undefined, spaceId: string): 
     throw new functions.https.HttpsError('unauthenticated', 'You must be logged in to perform this action.');
   }
 
-  // Prefer flat membership
+  // Use flat /spaceMembers collection
   const flatSnapshot = await db
     .collection('spaceMembers')
     .where('spaceId', '==', spaceId)
@@ -64,14 +57,8 @@ export const assertIsMember = async (uid: string | undefined, spaceId: string): 
     .where('isActive', '==', true)
     .limit(1)
     .get();
-  if (!flatSnapshot.empty) {
-    return;
-  }
 
-  // Fallback to nested
-  const memberRef = db.collection('spaces').doc(spaceId).collection('members').doc(uid);
-  const memberDoc = await memberRef.get();
-  if (!memberDoc.exists) {
+  if (flatSnapshot.empty) {
     throw new functions.https.HttpsError('permission-denied', 'You must be a member of this space to perform this action.');
   }
 };

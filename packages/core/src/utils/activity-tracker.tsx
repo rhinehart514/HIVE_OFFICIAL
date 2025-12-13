@@ -42,11 +42,9 @@ class ActivityTracker {
         body: JSON.stringify(options),
       });
 
-      if (!response.ok) {
-        console.warn('Failed to track activity:', response.statusText);
-      }
-    } catch (error) {
-      console.warn('Error tracking activity:', error);
+      // Activity tracked (or failed silently - non-critical)
+    } catch (_error) {
+      // Activity tracking is non-critical - fail silently
     }
   }
 
@@ -149,11 +147,9 @@ class ActivityTracker {
         body: JSON.stringify({ events }),
       });
 
-      if (!response.ok) {
-        console.warn('Failed to track batch activities:', response.statusText);
-      }
-    } catch (error) {
-      console.warn('Error tracking batch activities:', error);
+      // Batch activities tracked (or failed silently - non-critical)
+    } catch (_error) {
+      // Batch activity tracking is non-critical - fail silently
     }
   }
 }

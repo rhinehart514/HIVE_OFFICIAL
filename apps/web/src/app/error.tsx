@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
 import { AlertTriangle } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export default function Error({
   error,
@@ -12,8 +13,10 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log error to error reporting service
-    console.error('Application error:', error);
+    logger.error('Application error boundary triggered', {
+      digest: error.digest,
+      component: 'RootErrorBoundary',
+    }, error);
   }, [error]);
 
   return (

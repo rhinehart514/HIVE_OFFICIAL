@@ -4,11 +4,13 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
+import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerSpaceRepository, type EnhancedSpace } from '@hive/core/server';
+import { checkSpacePermission, getSpaceMembership } from '@/lib/space-permission-middleware';
 
 interface MovementRestriction {
   spaceType: 'campus_living' | 'cohort' | 'fraternity_and_sorority';
@@ -65,7 +67,16 @@ interface SpaceInfo {
 
 export const POST = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
-  const { fromSpaceId, toSpaceId, reason, adminOverride = false } = await request.json();
+  const campusId = getCampusId(request as AuthenticatedRequest);
+  // P0 SECURITY FIX: adminOverride is NO LONGER accepted from client
+  // It's derived from authenticated session's admin status
+  const body = await request.json();
+  const { fromSpaceId, toSpaceId, reason } = body;
+
+  // Derive admin override from session, not from client request
+  const authenticatedRequest = request as AuthenticatedRequest;
+  const decodedToken = authenticatedRequest.user.decodedToken as { admin?: boolean; role?: string };
+  const isSystemAdmin = decodedToken?.admin === true || decodedToken?.role === 'admin';
 
   if (!fromSpaceId || !toSpaceId) {
     return respond.error('Both fromSpaceId and toSpaceId are required', 'INVALID_INPUT', {
@@ -80,8 +91,8 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
   }
 
   // Load space info using DDD repository (includes campus validation)
-  const fromSpace = await loadSpaceInfo(fromSpaceId);
-  const toSpace = await loadSpaceInfo(toSpaceId);
+  const fromSpace = await loadSpaceInfo(fromSpaceId, campusId);
+  const toSpace = await loadSpaceInfo(toSpaceId, campusId);
 
   if (!fromSpace || !toSpace) {
     return respond.error('One or both spaces not found', 'RESOURCE_NOT_FOUND', {
@@ -101,18 +112,45 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     });
   }
 
+  // Use centralized permission check - require 'admin' level (owner or admin)
+  const permissionCheck = await checkSpacePermission(fromSpaceId, userId, 'admin');
+
+  if (!permissionCheck.hasPermission && !isSystemAdmin) {
+    logger.warn('Unauthorized transfer attempt', {
+      userId,
+      fromSpaceId,
+      toSpaceId,
+      error: permissionCheck.hasPermission ? undefined : permissionCheck.error,
+      endpoint: '/api/spaces/transfer',
+    });
+    return respond.error(
+      permissionCheck.hasPermission ? 'Permission denied' : (permissionCheck.error ?? 'Permission denied'),
+      'FORBIDDEN',
+      { status: HttpStatus.FORBIDDEN }
+    );
+  }
+
+  // Get membership for later use (role transfer, etc.)
+  const sourceMembership = await getSpaceMembership(fromSpaceId, userId);
+  if (!sourceMembership || !sourceMembership.isActive) {
+    return respond.error('You are not a member of the source space', 'FORBIDDEN', {
+      status: HttpStatus.FORBIDDEN,
+    });
+  }
+
+  // For source membership document updates, we need the doc reference
   const sourceMembershipSnapshot = await dbAdmin
     .collection('spaceMembers')
     .where('spaceId', '==', fromSpaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
   if (sourceMembershipSnapshot.empty) {
-    return respond.error('You are not a member of the source space', 'FORBIDDEN', {
-      status: HttpStatus.FORBIDDEN,
+    return respond.error('Membership record not found', 'RESOURCE_NOT_FOUND', {
+      status: HttpStatus.NOT_FOUND,
     });
   }
 
@@ -123,7 +161,7 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     .collection('spaceMembers')
     .where('spaceId', '==', toSpaceId)
     .where('userId', '==', userId)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -136,12 +174,14 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     }
   }
 
-  if (!adminOverride) {
+  // Only system admins can bypass movement restrictions
+  if (!isSystemAdmin) {
     const validation = await validateMovementRestrictions(
       userId,
       fromSpace.movementType,
       fromSpace,
       toSpace,
+      campusId,
     );
     if (!validation.canMove) {
       return respond.error(validation.reason || 'Movement restricted', 'FORBIDDEN', {
@@ -156,13 +196,13 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(10)
       .get();
 
     let greekCount = 0;
     for (const doc of activeGreekMemberships.docs) {
-      const membershipSpace = await loadSpaceInfo(doc.data().spaceId);
+      const membershipSpace = await loadSpaceInfo(doc.data().spaceId, campusId);
       if (membershipSpace?.movementType === 'fraternity_and_sorority') {
         greekCount += 1;
       }
@@ -235,9 +275,9 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     spaceType: fromSpace.movementType,
     movementType: 'transfer',
     timestamp: new Date().toISOString(),
-    campusId: CURRENT_CAMPUS_ID,
+    campusId: campusId,
     reason,
-    adminOverride,
+    adminOverride: isSystemAdmin, // Record whether this was an admin bypass
   };
   batch.set(movementRef, movementRecord);
 
@@ -248,7 +288,7 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
     fromSpaceId,
     toSpaceId,
     spaceType: fromSpace.movementType,
-    adminOverride,
+    adminOverride: isSystemAdmin,
     endpoint: '/api/spaces/transfer',
   });
 
@@ -272,14 +312,15 @@ export const POST = withAuthAndErrors(async (request, _context, respond) => {
 
 export const GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const spaceType = searchParams.get('spaceType');
   const fromSpaceId = searchParams.get('fromSpaceId');
   const toSpaceId = searchParams.get('toSpaceId');
 
   if (spaceType && fromSpaceId && toSpaceId) {
-    const fromSpace = await loadSpaceInfo(fromSpaceId);
-    const toSpace = await loadSpaceInfo(toSpaceId);
+    const fromSpace = await loadSpaceInfo(fromSpaceId, campusId);
+    const toSpace = await loadSpaceInfo(toSpaceId, campusId);
 
     if (!fromSpace || !toSpace) {
       return respond.error('Space not found', 'RESOURCE_NOT_FOUND', {
@@ -292,6 +333,7 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
       normalizeMovementType(spaceType),
       fromSpace,
       toSpace,
+      campusId,
     );
 
     return respond.success({
@@ -306,7 +348,7 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
   const movementHistorySnapshot = await dbAdmin
     .collection('spaceMovements')
     .where('userId', '==', userId)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .orderBy('timestamp', 'desc')
     .limit(20)
     .get();
@@ -319,14 +361,14 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(5)
       .get();
 
     for (const doc of activeMembershipSnapshot.docs) {
-      const membershipSpace = await loadSpaceInfo(doc.data().spaceId);
+      const membershipSpace = await loadSpaceInfo(doc.data().spaceId, campusId);
       if (membershipSpace?.movementType === restriction.spaceType) {
-        const validation = await validateMovementRestrictions(userId, restriction.spaceType, membershipSpace, null);
+        const validation = await validateMovementRestrictions(userId, restriction.spaceType, membershipSpace, null, campusId);
         restrictions[key] = validation;
         break;
       }
@@ -363,7 +405,7 @@ function resolveMovementType(space: Record<string, unknown>): string | null {
   return rawType;
 }
 
-async function loadSpaceInfo(spaceId: string): Promise<SpaceInfo | null> {
+async function loadSpaceInfo(spaceId: string, campusId: string): Promise<SpaceInfo | null> {
   // Use DDD repository for space data
   const spaceRepo = getServerSpaceRepository();
   const result = await spaceRepo.findById(spaceId);
@@ -375,7 +417,7 @@ async function loadSpaceInfo(spaceId: string): Promise<SpaceInfo | null> {
   const space = result.getValue();
 
   // Enforce campus isolation
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return null;
   }
 
@@ -403,6 +445,7 @@ async function validateMovementRestrictions(
   movementType: string,
   fromSpace: SpaceInfo | null,
   toSpace: SpaceInfo | null,
+  campusId: string,
 ): Promise<MovementValidationResult> {
   const restriction = MOVEMENT_RESTRICTIONS[movementType];
   if (!restriction) {
@@ -416,7 +459,7 @@ async function validateMovementRestrictions(
     .collection('spaceMovements')
     .where('userId', '==', userId)
     .where('spaceType', '==', movementType)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .where('timestamp', '>=', cooldownDate.toISOString())
     .get();
 
@@ -457,7 +500,7 @@ async function validateMovementRestrictions(
       .where('userId', '==', userId)
       .where('spaceId', '==', fromSpace.id)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 

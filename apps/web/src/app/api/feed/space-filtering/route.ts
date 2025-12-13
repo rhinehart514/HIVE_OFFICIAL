@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
 async function getUserSpaceContexts(userId: string): Promise<UserSpaceContext[]> {
   try {
     const membershipsSnapshot = await dbAdmin
-      .collection('members')
+      .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', 'in', ['active', 'inactive'])
       .where('campusId', '==', CURRENT_CAMPUS_ID)
@@ -611,7 +611,7 @@ async function getSpaceAccessInfo(userId: string, spaceId: string, includePrevie
     
     // Check membership
     const memberQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin
-      .collection('members')
+      .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('campusId', '==', CURRENT_CAMPUS_ID);

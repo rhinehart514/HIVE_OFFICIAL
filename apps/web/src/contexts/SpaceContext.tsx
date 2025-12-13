@@ -92,6 +92,26 @@ export interface LeaderActions {
   updateSpaceSettings: (settings: Partial<SpaceDetailDTO["settings"]>) => Promise<boolean>;
 }
 
+export interface SpaceEvent {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  location?: string;
+  virtualLink?: string;
+  currentAttendees: number;
+  maxAttendees?: number;
+  userRSVP: string | null;
+  organizer?: {
+    id: string;
+    fullName: string;
+    handle?: string;
+    photoURL?: string;
+  };
+}
+
 export interface SpaceContextValue {
   // Space data
   space: SpaceDetailDTO | null;
@@ -99,6 +119,10 @@ export interface SpaceContextValue {
 
   // Membership
   membership: SpaceMembership;
+
+  // Events
+  events: SpaceEvent[];
+  isEventsLoading: boolean;
 
   // Structure
   tabs: SpaceTab[];
@@ -163,6 +187,10 @@ export function SpaceContextProvider({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Events state
+  const [events, setEvents] = useState<SpaceEvent[]>([]);
+  const [isEventsLoading, setIsEventsLoading] = useState(false);
 
   // Active tab state
   const [activeTabId, setActiveTabId] = useState<string | null>(initialTab ?? null);
@@ -256,6 +284,55 @@ export function SpaceContextProvider({
       setError(e instanceof Error ? e.message : "Failed to load space");
     } finally {
       setIsLoading(false);
+    }
+  }, [spaceId]);
+
+  /**
+   * Fetch space events
+   */
+  const fetchEvents = useCallback(async () => {
+    if (!spaceId) return;
+
+    setIsEventsLoading(true);
+
+    try {
+      const res = await secureApiFetch(`/api/spaces/${spaceId}/events?limit=10&upcoming=true`);
+      if (!res.ok) {
+        // Don't fail the whole context for events
+        setEvents([]);
+        return;
+      }
+
+      const response = await res.json();
+      const data = response.data || response;
+      const eventsList = data.events || [];
+
+      // Map to SpaceEvent type
+      const mappedEvents: SpaceEvent[] = eventsList.map((e: Record<string, unknown>) => ({
+        id: e.id as string,
+        title: e.title as string,
+        description: e.description as string | undefined,
+        type: e.type as string,
+        startDate: e.startDate instanceof Date
+          ? (e.startDate as Date).toISOString()
+          : String(e.startDate),
+        endDate: e.endDate instanceof Date
+          ? (e.endDate as Date).toISOString()
+          : String(e.endDate),
+        location: e.location as string | undefined,
+        virtualLink: e.virtualLink as string | undefined,
+        currentAttendees: (e.currentAttendees as number) || 0,
+        maxAttendees: e.maxAttendees as number | undefined,
+        userRSVP: (e.userRSVP as string) || null,
+        organizer: e.organizer as SpaceEvent["organizer"],
+      }));
+
+      setEvents(mappedEvents);
+    } catch {
+      // Silently fail - events are not critical
+      setEvents([]);
+    } finally {
+      setIsEventsLoading(false);
     }
   }, [spaceId]);
 
@@ -365,8 +442,8 @@ export function SpaceContextProvider({
    * Refresh all data
    */
   const refresh = useCallback(async () => {
-    await Promise.all([fetchSpace(), reloadStructure()]);
-  }, [fetchSpace, reloadStructure]);
+    await Promise.all([fetchSpace(), reloadStructure(), fetchEvents()]);
+  }, [fetchSpace, reloadStructure, fetchEvents]);
 
   // Active tab derived state
   const activeTab = useMemo(() => {
@@ -390,6 +467,11 @@ export function SpaceContextProvider({
   useEffect(() => {
     void fetchSpace();
   }, [fetchSpace]);
+
+  // Load events on mount (separate call to not block main load)
+  useEffect(() => {
+    void fetchEvents();
+  }, [fetchEvents]);
 
   // Leader actions (only if user is leader)
   const leaderActions: LeaderActions | null = useMemo(() => {
@@ -431,6 +513,8 @@ export function SpaceContextProvider({
       space,
       spaceId,
       membership,
+      events,
+      isEventsLoading,
       tabs,
       widgets,
       permissions,
@@ -455,6 +539,8 @@ export function SpaceContextProvider({
       space,
       spaceId,
       membership,
+      events,
+      isEventsLoading,
       tabs,
       widgets,
       permissions,

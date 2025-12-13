@@ -44,7 +44,7 @@ describe("Auth Functions", () => {
       const wrapped = testEnv.wrap(sendMagicLink);
       const data = { email: "test@example.com" };
 
-      const result = await wrapped(data);
+      const result = await wrapped({ data } as unknown as Parameters<typeof wrapped>[0]);
 
       expect(result.success).to.be.true;
       expect(setStub.calledOnce).to.be.true;
@@ -56,7 +56,7 @@ describe("Auth Functions", () => {
       const data = { email: "invalid-email" };
 
       try {
-        await wrapped(data);
+        await wrapped({ data } as unknown as Parameters<typeof wrapped>[0]);
         // Should not reach here
         expect.fail("Expected function to throw an error");
       } catch (e: unknown) {

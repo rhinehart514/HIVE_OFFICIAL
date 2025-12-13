@@ -56,8 +56,8 @@ export default function BuilderRequestsPage() {
       const data = await res.json();
       setRequests(data.requests || []);
       setPendingCount(data.summary?.pending || 0);
-    } catch (error) {
-      console.error('Failed to load requests:', error);
+    } catch (_error) {
+      // Load requests failed - UI will show empty state
     } finally {
       setLoading(false);
     }
@@ -92,7 +92,6 @@ export default function BuilderRequestsPage() {
       setExpandedId(null);
       setReviewNotes('');
     } catch (error) {
-      console.error('Failed to process request:', error);
       alert(error instanceof Error ? error.message : 'Failed to process request');
     } finally {
       setProcessingId(null);

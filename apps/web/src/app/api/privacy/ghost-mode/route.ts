@@ -193,12 +193,12 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
   }
 
   // Check if users are in the same spaces
-  const targetMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('members')
+  const targetMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', targetUserId)
     .where('status', '==', 'active')
     .where('campusId', '==', CURRENT_CAMPUS_ID);
 
-  const viewerMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('members')
+  const viewerMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', viewerUserId)
     .where('status', '==', 'active')
     .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -237,7 +237,7 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
 async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boolean; level: string; hideFromDirectory: boolean; hideActivity: boolean; hideOnlineStatus: boolean; hideLastSeen: boolean }) {
   try {
     // Update user's visibility in spaces
-  const membershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('members')
+  const membershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);

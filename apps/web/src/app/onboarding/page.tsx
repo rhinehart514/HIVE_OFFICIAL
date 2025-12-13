@@ -1,35 +1,34 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, WifiOff } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { OnboardingHeader } from "@/components/onboarding/ui/onboarding-header";
-import { OnboardingPreview } from "@/components/onboarding/onboarding-preview";
+import { OnboardingLayout } from "@/components/onboarding/layout";
 import { DraftRecoveryBanner } from "@/components/onboarding/ui/draft-recovery-banner";
 import { ErrorRecoveryModal } from "@/components/onboarding/ui/error-recovery-modal";
 import { useOnboarding } from "@/components/onboarding/hooks/use-onboarding";
-import { STEP_CONFIG } from "@/components/onboarding/shared/types";
 
 import {
   UserTypeStep,
-  IdentityStep,
   ProfileStep,
   InterestsStep,
-  LeaderStep,
   SpacesStep,
-  AlumniWaitlistStep,
-  FacultyProfileStep,
+  CompletionStep,
 } from "@/components/onboarding/steps";
 
 export const dynamic = "force-dynamic";
 
-const transition = {
-  duration: 0.4,
-  ease: [0.22, 1, 0.36, 1],
-};
-
 function OnboardingContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Get redirect URL from query params (set by middleware when user tried to access protected route)
+  const redirectAfterOnboarding = searchParams.get('redirect') || '/feed';
+  // Prevent hydration mismatch from isOnline check (navigator.onLine differs server vs client)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const {
     step,
     data,
@@ -44,12 +43,10 @@ function OnboardingContent() {
     isRetrying,
     setError,
     updateData,
-    stepNumber,
-    totalSteps,
+    setStep,
     handleUserTypeSelect,
     handleBack,
     handleNext,
-    handleLeaderChoice,
     submitOnboarding,
     discardDraft,
     retrySubmission,
@@ -57,33 +54,32 @@ function OnboardingContent() {
     saveLocallyAndContinue,
   } = useOnboarding();
 
-  const currentConfig = STEP_CONFIG[step];
-
   const renderStep = () => {
     switch (step) {
       case "userType":
-        return <UserTypeStep onSelect={handleUserTypeSelect} />;
-
-      case "identity":
         return (
-          <IdentityStep
-            data={data}
-            handleStatus={handleStatus}
-            handleSuggestions={handleSuggestions}
-            onUpdate={updateData}
-            onNext={() => handleNext("profile")}
-            error={error}
-            setError={setError}
-            isSubmitting={isSubmitting}
+          <UserTypeStep
+            key="userType"
+            onSelect={(type, isLeader) => {
+              // Leader path: "I run a club" (isLeader = true)
+              // Explorer path: "Looking around" (isLeader = false)
+              handleUserTypeSelect(type, isLeader);
+            }}
           />
         );
 
       case "profile":
         return (
           <ProfileStep
+            key="profile"
             data={data}
+            handleStatus={handleStatus}
+            handleSuggestions={handleSuggestions}
             onUpdate={updateData}
-            onNext={() => handleNext("interests")}
+            onNext={() => {
+              // Go to interests step
+              handleNext("interests");
+            }}
             error={error}
             setError={setError}
           />
@@ -92,57 +88,96 @@ function OnboardingContent() {
       case "interests":
         return (
           <InterestsStep
+            key="interests"
             data={data}
             onUpdate={updateData}
-            onNext={() => handleNext("leader")}
+            onNext={() => {
+              // Accept terms implicitly and go to spaces
+              updateData({ termsAccepted: true });
+              handleNext("spaces");
+            }}
+            onBack={handleBack}
             error={error}
             setError={setError}
-            isSubmitting={isSubmitting}
           />
         );
-
-      case "leader":
-        return <LeaderStep onChoice={handleLeaderChoice} />;
 
       case "spaces":
         return (
           <SpacesStep
+            key="spaces"
             userType={data.userType}
             isSubmitting={isSubmitting}
-            mustSelectSpace={data.userType === "faculty" || data.isLeader}
+            mustSelectSpace={data.isLeader}
+            isExplorer={!data.isLeader}
             onComplete={async (redirectTo, selectedSpaceIds) => {
               // Update data with selected spaces before submitting
+              // For BOTH leaders AND explorers, track the first selected space
+              // This ensures explorers land on a space with content, not an empty feed
               if (selectedSpaceIds && selectedSpaceIds.length > 0) {
-                // For leaders, these become builder requests; for others, join requests
                 if (data.isLeader) {
-                  updateData({ builderRequestSpaces: selectedSpaceIds });
+                  updateData({
+                    builderRequestSpaces: selectedSpaceIds,
+                    claimedSpaceId: selectedSpaceIds[0],
+                  });
                 } else {
-                  updateData({ initialSpaceIds: selectedSpaceIds });
+                  // Explorers: also set claimedSpaceId so completion redirects to their first space
+                  updateData({
+                    initialSpaceIds: selectedSpaceIds,
+                    claimedSpaceId: selectedSpaceIds[0],
+                  });
                 }
               }
-              return submitOnboarding({
-                isLeaderOverride: data.userType === "student" ? data.isLeader : false,
-                redirectTo,
-                // Pass spaces directly since state update might not complete in time
+
+              // Use the redirect URL from query params if available, otherwise use the one from step
+              const finalRedirect = redirectAfterOnboarding !== '/feed'
+                ? redirectAfterOnboarding
+                : (redirectTo || '/feed');
+
+              const success = await submitOnboarding({
+                isLeaderOverride: data.isLeader,
+                redirectTo: finalRedirect,
                 selectedSpaceIds,
               });
+
+              // If successful and claiming a space, show celebration
+              if (success && selectedSpaceIds && selectedSpaceIds.length > 0) {
+                // Get space name for celebration
+                updateData({ claimedSpaceId: selectedSpaceIds[0] });
+                setStep("completion");
+                return true;
+              }
+
+              return success;
             }}
           />
         );
 
-      case "alumniWaitlist":
-        return <AlumniWaitlistStep onBack={handleBack} />;
-
-      case "facultyProfile":
+      case "completion":
         return (
-          <FacultyProfileStep
-            data={data}
-            onUpdate={updateData}
-            onNext={() => handleNext("spaces")}
-            error={error}
-            setError={setError}
+          <CompletionStep
+            key="completion"
+            spaceName={data.claimedSpaceName}
+            spaceId={data.claimedSpaceId}
+            isLeader={data.isLeader}
+            handle={data.handle}
+            onNavigate={(path) => router.push(path)}
           />
         );
+
+      // Legacy step handlers - redirect to new flow
+      case "identity":
+        handleNext("profile");
+        return null;
+
+      case "leader":
+        handleNext("spaces");
+        return null;
+
+      case "alumniWaitlist":
+      case "facultyProfile":
+        handleNext("profile");
+        return null;
 
       default:
         return null;
@@ -150,108 +185,48 @@ function OnboardingContent() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
-      {/* Left Panel - Live Preview (desktop only) */}
-      <div className="hidden lg:flex w-[35%] bg-neutral-900 border-r border-neutral-800/20 sticky top-0 h-screen">
-        <OnboardingPreview
-          userType={data.userType}
-          name={data.name}
-          handle={data.handle}
-          handleStatus={handleStatus}
-          major={data.major}
-          graduationYear={data.graduationYear}
-          interests={data.interests}
-          profilePhoto={data.profilePhoto}
-          courseCode={data.courseCode}
-          currentStep={step}
-        />
-      </div>
-
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        {/* Header */}
-        <OnboardingHeader
-          step={step}
-          stepNumber={stepNumber}
-          totalSteps={totalSteps}
-          onBack={handleBack}
-        />
-
-        {/* Main content */}
-        <main className="relative z-10 flex-1 flex items-start justify-center px-6 py-8 md:py-12 overflow-y-auto">
-          {/* Breathing gold ambient orb */}
+    <OnboardingLayout currentStep={step}>
+      {/* Offline Warning - only render after mount to prevent hydration mismatch */}
+      <AnimatePresence mode="wait">
+        {mounted && !isOnline && (
           <motion.div
-            animate={{
-              scale: [1, 1.1, 1],
-              opacity: [0.02, 0.04, 0.02],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gold-500 rounded-full blur-[120px] pointer-events-none lg:left-[67.5%]"
-          />
+            key="offline-warning"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2"
+          >
+            <WifiOff className="w-4 h-4 text-amber-400" />
+            <p className="text-sm text-amber-300">
+              You're offline. Progress saved locally.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <div className="w-full max-w-lg relative z-10">
-            {/* Title */}
-            <motion.div
-              className="text-center mb-8"
-              key={step}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={transition}
-            >
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white mb-2">
-                {currentConfig.title}
-              </h1>
-              <p className="text-sm text-neutral-400">
-                {currentConfig.subtitle}
-              </p>
-            </motion.div>
+      {/* Draft Recovery Banner - only render after mount */}
+      <AnimatePresence mode="wait">
+        {mounted && hasRestoredDraft && savedDraftTime && step === "userType" && (
+          <motion.div
+            key="draft-recovery"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+          >
+            <DraftRecoveryBanner
+              savedAt={savedDraftTime}
+              onContinue={() => {}}
+              onDiscard={discardDraft}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-            {/* Draft Recovery Banner */}
-            <AnimatePresence>
-              {hasRestoredDraft && savedDraftTime && step === "userType" && (
-                <DraftRecoveryBanner
-                  savedAt={savedDraftTime}
-                  onContinue={() => {}} // Already restored, just dismiss
-                  onDiscard={discardDraft}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Offline Warning */}
-            <AnimatePresence>
-              {!isOnline && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mb-4"
-                >
-                  <WifiOff className="w-4 h-4 text-amber-400" />
-                  <p className="text-sm text-amber-300">
-                    You're offline. Your progress is saved locally.
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Form content */}
-            <div className="w-full">
-              <motion.div
-                className="space-y-5"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
-              </motion.div>
-            </div>
-          </div>
-        </main>
-      </div>
+      {/* Main content with AnimatePresence */}
+      <AnimatePresence mode="wait">
+        {renderStep()}
+      </AnimatePresence>
 
       {/* Error Recovery Modal */}
       <ErrorRecoveryModal
@@ -262,14 +237,14 @@ function OnboardingContent() {
         onSaveLocally={saveLocallyAndContinue}
         onDismiss={dismissErrorModal}
       />
-    </div>
+    </OnboardingLayout>
   );
 }
 
 function OnboardingPageFallback() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
-      {/* Breathing ambient orb */}
+      {/* Ambient glow */}
       <motion.div
         animate={{
           scale: [1, 1.1, 1],
@@ -280,7 +255,11 @@ function OnboardingPageFallback() {
           repeat: Infinity,
           ease: "easeInOut",
         }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500 rounded-full blur-[120px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(255, 215, 0, 0.08) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+        }}
       />
       <Loader2 className="h-6 w-6 animate-spin text-neutral-500 relative z-10" />
     </div>

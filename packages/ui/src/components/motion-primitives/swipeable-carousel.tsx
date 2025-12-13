@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix motion primitive type issues
+// TODO: Fix duplicate 'type' property spread
 'use client';
 
 import * as React from 'react';

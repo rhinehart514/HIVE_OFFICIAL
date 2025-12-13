@@ -5,8 +5,17 @@
  * Do NOT import these in client-side code.
  */
 
+// Internal imports for factory functions
+import { SpaceManagementService, type SaveSpaceMemberFn } from './application/space-management.service';
+import { getServerSpaceRepository, getServerBoardRepository, getServerMessageRepository } from './infrastructure/repositories/firebase-admin';
+import { getServerInlineComponentRepository } from './infrastructure/repositories/firebase-admin/inline-component.repository';
+import { SpaceChatService } from './application/spaces/space-chat.service';
+
 // Firebase Admin SDK
 export * from './firebase-admin';
+
+// Firestore Collection Paths (centralized configuration)
+export * from './infrastructure/firestore-collections';
 
 // Server-side Repositories
 export {
@@ -26,8 +35,39 @@ export {
   // Unit of Work
   FirebaseAdminUnitOfWork,
   getServerUnitOfWork,
-  resetServerUnitOfWork
+  resetServerUnitOfWork,
+  // Chat (Boards + Messages)
+  FirebaseAdminBoardRepository,
+  FirebaseAdminMessageRepository,
+  createChatRepositories,
+  getServerBoardRepository,
+  getServerMessageRepository,
+  type IBoardRepository,
+  type IMessageRepository,
 } from './infrastructure/repositories/firebase-admin';
+
+// Inline Component Repository
+export {
+  FirebaseAdminInlineComponentRepository,
+  getServerInlineComponentRepository,
+  createInlineComponentRepository,
+  type IInlineComponentRepository,
+} from './infrastructure/repositories/firebase-admin/inline-component.repository';
+
+// Inline Component Domain Entity
+export {
+  InlineComponent,
+  type InlineComponentType,
+  type PollConfig,
+  type CountdownConfig,
+  type RsvpConfig,
+  type CustomConfig,
+  type ComponentConfig,
+  type SharedState,
+  type ParticipantRecord,
+  type AggregationDelta,
+  type ComponentDisplayState,
+} from './domain/spaces/entities/inline-component';
 
 // Re-export domain types needed for server operations
 export { PrivacyLevel, ProfilePrivacy } from './domain/profile/value-objects/profile-privacy.value';
@@ -38,7 +78,9 @@ export type { IProfileRepository, ISpaceRepository, IUnitOfWork } from './infras
 
 // Space Value Objects (for validation)
 export { SpaceSlug } from './domain/spaces/value-objects/space-slug.value';
-export { SpaceCategory, SpaceCategoryEnum, ApiCategoryEnum } from './domain/spaces/value-objects/space-category.value';
+export { SpaceCategory, SpaceCategoryEnum, CAMPUSLABS_BRANCH_MAP, CATEGORY_LABELS, CATEGORY_ICONS } from './domain/spaces/value-objects/space-category.value';
+export { SPACE_CATEGORIES, normalizeCategory, isValidCategory } from './domain/spaces/constants/space-categories';
+export type { SpaceCategoryValue } from './domain/spaces/constants/space-categories';
 export { SpaceName } from './domain/spaces/value-objects/space-name.value';
 export { SpaceDescription } from './domain/spaces/value-objects/space-description.value';
 export { SpaceId } from './domain/spaces/value-objects/space-id.value';
@@ -96,13 +138,36 @@ export {
   WidgetUpdatedEvent,
   WidgetRemovedEvent,
   WidgetAttachedToTabEvent,
-  WidgetDetachedFromTabEvent
+  WidgetDetachedFromTabEvent,
+  ToolPlacedEvent,
+  PlacedToolUpdatedEvent,
+  ToolRemovedEvent,
+  PlacedToolActivatedEvent,
+  PlacedToolDeactivatedEvent,
+  PlacedToolsReorderedEvent,
 } from './domain/spaces/events';
 
 export {
   SpaceDiscoveryService,
   createSpaceDiscoveryService,
 } from './application/spaces/space-discovery.service';
+
+export {
+  SpaceDeploymentService,
+  createSpaceDeploymentService,
+} from './application/spaces/space-deployment.service';
+
+export type {
+  PlaceToolInput,
+  PlaceToolResult,
+  UpdatePlacedToolInput,
+  RemovePlacedToolInput,
+  ReorderPlacedToolsInput,
+  AutoDeployInput,
+  AutoDeployResult,
+  SpaceDeploymentCallbacks,
+  PlacedToolData,
+} from './application/spaces/space-deployment.service';
 
 // Domain Event Infrastructure
 export {
@@ -122,6 +187,7 @@ export type {
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,
+  SpaceWithToolsDTO,
   MembershipDTO,
   SpaceActivityDTO,
   SpaceWidgetStatsDTO,
@@ -130,6 +196,7 @@ export type {
   TabDetailDTO,
   WidgetSummaryDTO,
   WidgetDetailDTO,
+  PlacedToolDTO,
 } from './application/spaces';
 
 export {
@@ -137,9 +204,52 @@ export {
   toSpaceDetailDTO,
   toSpaceMembershipDTO,
   toSpaceWithMembersDTO,
+  toSpaceWithToolsDTO,
   toSpaceBrowseDTOList,
   toSpaceMembershipDTOList,
 } from './application/spaces';
+
+// Chat Service (Boards + Messages)
+export {
+  SpaceChatService,
+  createSpaceChatService,
+} from './application/spaces/space-chat.service';
+
+export type {
+  CreateBoardInput,
+  UpdateBoardInput,
+  SendMessageInput,
+  ReactionInput,
+  BoardResult,
+  MessageResult,
+  ListMessagesOptions,
+  ListMessagesResult,
+  CheckPermissionFn,
+  GetUserProfileFn,
+  // Inline component types
+  CreateInlineComponentInput,
+  InlineComponentResult,
+  SubmitParticipationInput,
+  IInlineComponentRepository as IInlineComponentRepositoryService,
+  // Search types
+  SearchMessagesOptions,
+  SearchMessagesResult,
+} from './application/spaces/space-chat.service';
+
+// Board and ChatMessage domain events
+export {
+  BoardCreatedEvent,
+  BoardUpdatedEvent,
+  BoardArchivedEvent,
+  BoardDeletedEvent,
+  MessageSentEvent,
+  MessageEditedEvent,
+  MessageDeletedEvent,
+  MessagePinnedEvent,
+  ReactionAddedEvent,
+  ParticipationSubmittedEvent,
+  InlineComponentClosedEvent,
+} from './domain/spaces/events';
 
 // Profile Value Objects
 export { ProfileId } from './domain/profile/value-objects/profile-id.value';
@@ -179,11 +289,8 @@ export interface SpaceServiceCallbacks {
  */
 export function createServerSpaceManagementService(
   context: { userId?: string; campusId: string },
-  callbacks?: SpaceServiceCallbacks | import('./application/space-management.service').SaveSpaceMemberFn
-): import('./application/space-management.service').SpaceManagementService {
-  const { SpaceManagementService } = require('./application/space-management.service');
-  const { getServerSpaceRepository } = require('./infrastructure/repositories/firebase-admin');
-
+  callbacks?: SpaceServiceCallbacks | SaveSpaceMemberFn
+): SpaceManagementService {
   // Support both old signature (just saveSpaceMember) and new signature (callbacks object)
   const callbacksObj: SpaceServiceCallbacks = typeof callbacks === 'function'
     ? { saveSpaceMember: callbacks }
@@ -197,5 +304,55 @@ export function createServerSpaceManagementService(
     },
     getServerSpaceRepository(),
     callbacksObj
+  );
+}
+
+/**
+ * Factory function to create SpaceDeploymentService with server repository
+ */
+export function createServerSpaceDeploymentService(
+  context: { userId?: string; campusId: string },
+  callbacks: import('./application/spaces/space-deployment.service').SpaceDeploymentCallbacks
+): import('./application/spaces/space-deployment.service').SpaceDeploymentService {
+  const { SpaceDeploymentService } = require('./application/spaces/space-deployment.service');
+  return new SpaceDeploymentService(
+    {
+      userId: context.userId,
+      campusId: context.campusId,
+      timestamp: new Date()
+    },
+    getServerSpaceRepository(),
+    callbacks
+  );
+}
+
+/**
+ * Callbacks for SpaceChatService cross-collection operations
+ */
+export interface SpaceChatServiceCallbacks {
+  checkPermission: import('./application/spaces/space-chat.service').CheckPermissionFn;
+  getUserProfile: import('./application/spaces/space-chat.service').GetUserProfileFn;
+}
+
+/**
+ * Factory function to create SpaceChatService with server repositories
+ */
+export function createServerSpaceChatService(
+  context: { userId?: string; campusId: string },
+  callbacks: SpaceChatServiceCallbacks
+): SpaceChatService {
+  // Use singleton getters - imported statically at top of file
+  const boardRepo = getServerBoardRepository();
+  const messageRepo = getServerMessageRepository();
+  const inlineComponentRepo = getServerInlineComponentRepository();
+
+  return new SpaceChatService(
+    {
+      userId: context.userId,
+      campusId: context.campusId,
+      timestamp: new Date()
+    },
+    { boardRepo, messageRepo, inlineComponentRepo },
+    callbacks
   );
 } 

@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix type issues
+// TODO: Fix SendGrid MailDataRequired type
 import sgMail from '@sendgrid/mail';
 
 // Initialize SendGrid with API key
@@ -27,17 +27,17 @@ export async function sendMagicLinkEmail({
   magicLink,
   schoolName,
 }: MagicLinkEmailOptions): Promise<void> {
-  // In development, log the magic link instead of sending email
-  if (process.env.NODE_ENV === 'development') {
+  // If no SendGrid API key, skip (will be logged in calling code)
+  if (!process.env.SENDGRID_API_KEY) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SENDGRID_API_KEY is not configured');
+    }
+    // In development without SendGrid, just return (link logged elsewhere)
     return;
   }
 
-  // Initialize SendGrid only when needed (not during build)
+  // Initialize SendGrid
   initializeSendGrid();
-
-  if (!process.env.SENDGRID_API_KEY) {
-    throw new Error('SENDGRID_API_KEY is not configured');
-  }
 
   const msg = {
     to,

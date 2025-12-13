@@ -1,6 +1,7 @@
 // @ts-nocheck
-// TODO: Fix type issues
-import type { NextResponse } from 'next/server';
+// TODO: Fix NextResponse import (value vs type)
+import { NextResponse } from 'next/server';
+import { logger } from '../structured-logger';
 import type { z } from 'zod';
 
 /**
@@ -30,7 +31,7 @@ export function withErrorHandling(
     try {
       return await handler(request, context);
     } catch (error: unknown) {
-      console.error('[API Error]', error);
+      logger.error('API error', { component: 'error-handler' }, error instanceof Error ? error : undefined);
 
       const message = error instanceof Error ? error.message : 'Internal server error';
       const status = (error as { status?: number })?.status || 500;
@@ -50,7 +51,7 @@ export function handleApiError(
   error: unknown,
   defaultMessage = 'Internal server error'
 ): NextResponse<ApiErrorResponse> {
-  console.error('[API Error]', error);
+  logger.error('API error', { component: 'error-handler' }, error instanceof Error ? error : undefined);
 
   if (error instanceof Error) {
     const status = (error as { status?: number })?.status || 500;

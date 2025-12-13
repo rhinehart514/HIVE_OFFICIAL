@@ -69,7 +69,7 @@ export function adminResponse(data: unknown, status: number = 200) {
  * Admin API error response wrapper
  */
 export function adminErrorResponse(error: string, status: number = 500, details?: unknown) {
-  console.error(`Admin API Error: ${error}`, details);
+  // Error details available in response for development mode only
   return NextResponse.json({
     success: false,
     error,

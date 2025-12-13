@@ -84,8 +84,7 @@ class PrivacyUtils {
       }, 5 * 60 * 1000);
 
       return data.settings;
-    } catch (error) {
-      console.warn('Error fetching privacy settings:', error);
+    } catch (_error) {
       return null;
     }
   }
@@ -108,8 +107,7 @@ class PrivacyUtils {
       }
 
       return false;
-    } catch (error) {
-      console.warn('Error updating privacy settings:', error);
+    } catch (_error) {
       return false;
     }
   }
@@ -147,8 +145,7 @@ class PrivacyUtils {
       }, 2 * 60 * 1000);
 
       return data.visibility;
-    } catch (error) {
-      console.warn('Error checking visibility:', error);
+    } catch (_error) {
       return null;
     }
   }
@@ -179,8 +176,7 @@ class PrivacyUtils {
       });
 
       return results;
-    } catch (error) {
-      console.warn('Error performing batch visibility check:', error);
+    } catch (_error) {
       return {};
     }
   }
@@ -207,8 +203,7 @@ class PrivacyUtils {
       }
 
       return false;
-    } catch (error) {
-      console.warn('Error toggling ghost mode:', error);
+    } catch (_error) {
       return false;
     }
   }
@@ -246,8 +241,7 @@ class PrivacyUtils {
       }, 60 * 1000);
 
       return data;
-    } catch (error) {
-      console.warn('Error getting ghost mode status:', error);
+    } catch (_error) {
       return null;
     }
   }

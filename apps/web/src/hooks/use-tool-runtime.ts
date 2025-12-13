@@ -1,356 +1,575 @@
 "use client";
 
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { secureApiFetch } from '@/lib/secure-auth-utils';
+/**
+ * Tool Runtime Hook
+ *
+ * Manages HiveLab tool execution, state persistence, and real-time sync.
+ * Used for rendering deployed tools in space sidebars and chat.
+ *
+ * Features:
+ * - Fetches tool definition from API
+ * - Loads and persists deployment state
+ * - Executes tool actions with optimistic updates
+ * - Auto-saves state changes with debounce
+ * - Handles composite deployment IDs for space placements
+ */
 
-// Types for tool runtime
+import { useState, useEffect, useCallback, useRef } from "react";
+
+// ============================================================================
+// Types
+// ============================================================================
+
 export interface ToolElement {
+  /** Stable element definition id (used by ToolCanvas) */
   elementId: string;
+  /** Unique instance id for state/actions */
   instanceId: string;
+  /** Element type hint from API (optional for canvas) */
+  type?: string;
   config: Record<string, unknown>;
   position?: { x: number; y: number };
   size?: { width: number; height: number };
+  /** Back-compat field some APIs send */
+  id?: string;
 }
 
 export interface Tool {
   id: string;
   name: string;
   description?: string;
-  status: string;
-  elements?: ToolElement[];
-  currentVersion?: string;
-  ownerId?: string;
+  elements: ToolElement[];
   category?: string;
+  version?: number;
+  currentVersion?: number;
+  status?: string; // draft, preview, published
   config?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
-}
-
-export interface ToolDeployment {
-  deploymentId: string;
-  toolId: string;
-  name: string;
-  status: string;
-  configuration?: Record<string, unknown>;
-  permissions?: Record<string, unknown>;
-  usageCount?: number;
+  creatorId?: string;
+  campusId?: string;
+  isPublished?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ToolState {
-  state: Record<string, unknown>;
-  metadata?: {
-    version: string;
-    lastSaved: string | null;
-    autoSave: boolean;
-    size: number;
-  };
-  exists: boolean;
+  [key: string]: unknown;
 }
 
-export interface ExecuteActionResult {
+export interface ActionResult {
   success: boolean;
-  data?: Record<string, unknown>;
+  result?: unknown;
+  state?: ToolState;
   error?: string;
-  feedContent?: {
-    type: 'post' | 'update' | 'achievement';
-    content: string;
-  };
-  state?: Record<string, unknown>;
 }
 
-export interface UseToolRuntimeOptions {
+interface UseToolRuntimeOptions {
   toolId: string;
   spaceId?: string;
-  deploymentId?: string;
+  placementId?: string; // Placement within space (used to generate deploymentId)
+  deploymentId?: string; // Direct deployment ID (takes precedence)
   autoSave?: boolean;
   autoSaveDelay?: number;
+  enabled?: boolean;
 }
 
-export interface UseToolRuntimeReturn {
-  // Data
+interface UseToolRuntimeReturn {
   tool: Tool | null;
-  deployment: ToolDeployment | null;
-  state: Record<string, unknown>;
-
-  // Loading states
+  state: ToolState;
   isLoading: boolean;
   isExecuting: boolean;
   isSaving: boolean;
-
-  // Sync status
   isSynced: boolean;
   lastSaved: Date | null;
-
-  // Errors
-  error: string | null;
-
-  // Actions
-  executeAction: (action: string, elementId?: string, data?: Record<string, unknown>) => Promise<ExecuteActionResult>;
-  updateState: (elementId: string, data: unknown) => void;
-  saveState: () => Promise<boolean>;
-  refresh: () => Promise<void>;
+  error: Error | null;
+  executeAction: (
+    elementId: string,
+    actionName: string,
+    payload?: Record<string, unknown>
+  ) => Promise<ActionResult>;
+  updateState: (updates: Partial<ToolState>) => void;
+  setState: (newState: ToolState) => void;
+  saveState: () => Promise<void>;
+  reset: () => void;
+  reload: () => Promise<void>;
 }
 
-export function useToolRuntime(options: UseToolRuntimeOptions): UseToolRuntimeReturn {
-  const { toolId, spaceId, deploymentId: providedDeploymentId, autoSave = true, autoSaveDelay = 2000 } = options;
+// ============================================================================
+// Constants
+// ============================================================================
 
-  // Core state
+const DEFAULT_AUTO_SAVE_DELAY = 2000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Generate deployment ID from space and placement
+ * Format: "space:{spaceId}_{placementId}"
+ */
+function generateDeploymentId(spaceId: string, placementId: string): string {
+  return `space:${spaceId}_${placementId}`;
+}
+
+/**
+ * Fetch with retry logic
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = MAX_RETRIES
+): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error("Fetch failed");
+      if (i < retries - 1) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, RETRY_DELAY * (i + 1))
+        );
+      }
+    }
+  }
+
+  throw lastError || new Error("Fetch failed after retries");
+}
+
+// ============================================================================
+// Hook Implementation
+// ============================================================================
+
+/**
+ * Hook for managing tool runtime state and execution
+ */
+export function useToolRuntime(
+  options: UseToolRuntimeOptions
+): UseToolRuntimeReturn {
+  const {
+    toolId,
+    spaceId,
+    placementId,
+    deploymentId: providedDeploymentId,
+    autoSave = true,
+    autoSaveDelay = DEFAULT_AUTO_SAVE_DELAY,
+    enabled = true,
+  } = options;
+
+  // Calculate effective deployment ID
+  const effectiveDeploymentId =
+    providedDeploymentId ||
+    (spaceId && placementId ? generateDeploymentId(spaceId, placementId) : null);
+
+  // State
   const [tool, setTool] = useState<Tool | null>(null);
-  const [deployment, setDeployment] = useState<ToolDeployment | null>(null);
-  const [state, setState] = useState<Record<string, unknown>>({});
-
-  // Loading states
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState<ToolState>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Sync status
   const [isSynced, setIsSynced] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Errors
-  const [error, setError] = useState<string | null>(null);
-
-  // Refs for debouncing and tracking
+  // Refs
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingStateRef = useRef<Record<string, unknown>>({});
-  const deploymentIdRef = useRef<string | null>(null);
+  const mountedRef = useRef(true);
+  const stateRef = useRef<ToolState>(state); // Keep current state for save closure
+  const initialStateRef = useRef<ToolState>({}); // Track initial state for dirty checking
 
-  // Fetch tool definition
-  const fetchTool = useCallback(async (): Promise<Tool> => {
-    const res = await secureApiFetch(`/api/tools/${toolId}`);
-    if (!res.ok) {
-      // Preserve the status code in the error message for auth detection
-      throw new Error(`Failed to fetch tool: ${res.status}`);
-    }
-    const response = await res.json();
-    const data = response.data || response;
-    return data as Tool;
-  }, [toolId]);
+  // Update state ref when state changes
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
-  // Fetch deployment for this tool in a space
-  const fetchDeployment = useCallback(async (): Promise<ToolDeployment | null> => {
-    // If we have a provided deploymentId, use that
-    if (providedDeploymentId) {
-      deploymentIdRef.current = providedDeploymentId;
-      return {
-        deploymentId: providedDeploymentId,
-        toolId,
-        name: '',
-        status: 'active',
-      };
+  // ============================================================================
+  // Load Tool Definition
+  // ============================================================================
+
+  const loadTool = useCallback(async () => {
+    if (!toolId || !enabled) {
+      setTool(null);
+      return;
     }
 
-    // Otherwise, find deployment by querying space tools
-    if (!spaceId) {
-      return null;
-    }
-
-    try {
-      const res = await secureApiFetch(`/api/spaces/${spaceId}/tools?status=active`);
-      if (!res.ok) {
-        return null;
-      }
-      const response = await res.json();
-      const data = response.data || response;
-      const tools = data.tools || [];
-
-      // Find the deployment for this specific tool
-      const toolDeployment = tools.find((t: ToolDeployment) => t.toolId === toolId);
-      if (toolDeployment) {
-        deploymentIdRef.current = toolDeployment.deploymentId;
-        return toolDeployment;
-      }
-
-      return null;
-    } catch (e) {
-      console.error('Error fetching deployment:', e);
-      return null;
-    }
-  }, [toolId, spaceId, providedDeploymentId]);
-
-  // Fetch state for the deployment
-  const fetchState = useCallback(async (): Promise<ToolState | null> => {
-    const depId = deploymentIdRef.current;
-    if (!depId) {
-      return null;
-    }
-
-    try {
-      const res = await secureApiFetch(`/api/tools/state/${depId}`);
-      if (!res.ok) {
-        // 404 means no state yet, which is fine
-        if (res.status === 404) {
-          return { state: {}, exists: false };
-        }
-        return null;
-      }
-      const response = await res.json();
-      const data = response.data || response;
-      return data as ToolState;
-    } catch (e) {
-      console.error('Error fetching state:', e);
-      return null;
-    }
-  }, []);
-
-  // Save state to server
-  const saveState = useCallback(async (): Promise<boolean> => {
-    const depId = deploymentIdRef.current;
-    if (!depId) {
-      return false;
-    }
-
-    setIsSaving(true);
-    try {
-      const res = await secureApiFetch(`/api/tools/state/${depId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          state: pendingStateRef.current,
-          metadata: { autoSave: true },
-          merge: true,
-        }),
-      });
-
-      if (res.ok) {
-        setIsSynced(true);
-        setLastSaved(new Date());
-        return true;
-      }
-      return false;
-    } catch (e) {
-      console.error('Error saving state:', e);
-      return false;
-    } finally {
-      setIsSaving(false);
-    }
-  }, []);
-
-  // Update local state (with auto-save)
-  const updateState = useCallback((elementId: string, data: unknown) => {
-    setState(prev => {
-      const newState = { ...prev, [elementId]: data };
-      pendingStateRef.current = newState;
-      return newState;
-    });
-    setIsSynced(false);
-
-    // Debounced auto-save
-    if (autoSave) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      saveTimeoutRef.current = setTimeout(() => {
-        void saveState();
-      }, autoSaveDelay);
-    }
-  }, [autoSave, autoSaveDelay, saveState]);
-
-  // Execute a tool action
-  const executeAction = useCallback(async (
-    action: string,
-    elementId?: string,
-    data?: Record<string, unknown>
-  ): Promise<ExecuteActionResult> => {
-    const depId = deploymentIdRef.current;
-    if (!depId) {
-      return { success: false, error: 'No deployment found' };
-    }
-
-    setIsExecuting(true);
-    try {
-      const res = await secureApiFetch('/api/tools/execute', {
-        method: 'POST',
-        body: JSON.stringify({
-          deploymentId: depId,
-          action,
-          elementId,
-          data,
-          context: { spaceId },
-        }),
-      });
-
-      const response = await res.json();
-      const result = response.data || response;
-
-      if (!res.ok) {
-        return { success: false, error: result.message || 'Execution failed' };
-      }
-
-      // Update local state if server returned new state
-      if (result.state) {
-        setState(prev => ({ ...prev, ...result.state }));
-        pendingStateRef.current = { ...pendingStateRef.current, ...result.state };
-      }
-
-      return {
-        success: true,
-        data: result.data,
-        feedContent: result.feedContent,
-        state: result.state,
-      };
-    } catch (e) {
-      console.error('Error executing action:', e);
-      return { success: false, error: e instanceof Error ? e.message : 'Unknown error' };
-    } finally {
-      setIsExecuting(false);
-    }
-  }, [spaceId]);
-
-  // Load all data
-  const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch tool first (will throw on error)
-      const toolData = await fetchTool();
-      setTool(toolData);
+      const response = await fetchWithRetry(`/api/tools/${toolId}`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      // Fetch deployment
-      const deploymentData = await fetchDeployment();
-      setDeployment(deploymentData);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error("Tool not found");
+        }
+        throw new Error(`Failed to load tool: ${response.status}`);
+      }
 
-      // Fetch state if we have a deployment
-      if (deploymentIdRef.current) {
-        const stateData = await fetchState();
-        if (stateData) {
-          setState(stateData.state);
-          pendingStateRef.current = stateData.state;
+      const data = await response.json();
+
+      if (!mountedRef.current) return;
+
+      // Normalize element format (API may use different field names)
+      const normalizedElements: ToolElement[] = (data.elements || []).map(
+        (el: Record<string, unknown>) => {
+          const rawInstanceId = (el.instanceId ?? el.id ?? el.elementId) as string | number | undefined;
+          const rawElementId = (el.elementId ?? el.id) as string | number | undefined;
+          return {
+            id: el.id as string | undefined,
+            elementId: rawElementId != null ? String(rawElementId) : String(rawInstanceId ?? ''),
+            instanceId: rawInstanceId != null ? String(rawInstanceId) : String(rawElementId ?? ''),
+            type: el.type as string | undefined,
+            config: (el.config as Record<string, unknown>) || {},
+            position: el.position as { x: number; y: number } | undefined,
+            size: el.size as { width: number; height: number } | undefined,
+          };
+        }
+      );
+
+      setTool({
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        elements: normalizedElements,
+        category: data.category,
+        version: data.version,
+        currentVersion: data.currentVersion,
+        status: data.status || 'draft', // Default to draft if not specified
+        config: data.config,
+        metadata: data.metadata,
+        creatorId: data.creatorId,
+        campusId: data.campusId,
+        isPublished: data.isPublished,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      });
+    } catch (err) {
+      console.error("Failed to load tool:", err);
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err : new Error("Failed to load tool"));
+      }
+    } finally {
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
+    }
+  }, [toolId, enabled]);
+
+  // Load tool on mount and when toolId changes
+  useEffect(() => {
+    void loadTool();
+  }, [loadTool]);
+
+  // ============================================================================
+  // Load Deployment State
+  // ============================================================================
+
+  const loadState = useCallback(async () => {
+    if (!effectiveDeploymentId || !enabled) {
+      setState({});
+      setIsSynced(true);
+      return;
+    }
+
+    try {
+      const response = await fetchWithRetry(
+        `/api/tools/state/${encodeURIComponent(effectiveDeploymentId)}`,
+        {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!mountedRef.current) return;
+
+      if (!response.ok) {
+        // 404 is OK - just means no state saved yet
+        if (response.status === 404) {
+          setState({});
+          initialStateRef.current = {};
           setIsSynced(true);
-          if (stateData.metadata?.lastSaved) {
-            setLastSaved(new Date(stateData.metadata.lastSaved));
-          }
+          return;
+        }
+        throw new Error(`Failed to load state: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const loadedState = data.state || {};
+      setState(loadedState);
+      initialStateRef.current = loadedState;
+      setIsSynced(true);
+    } catch (err) {
+      console.error("Failed to load tool state:", err);
+      if (mountedRef.current) {
+        // Don't set error for state load failures - just use empty state
+        setState({});
+        initialStateRef.current = {};
+        setIsSynced(true);
+      }
+    }
+  }, [effectiveDeploymentId, enabled]);
+
+  // Load state on mount and when deploymentId changes
+  useEffect(() => {
+    void loadState();
+  }, [loadState]);
+
+  // ============================================================================
+  // Save State
+  // ============================================================================
+
+  const saveState = useCallback(async () => {
+    if (!effectiveDeploymentId) return;
+
+    // Clear any pending auto-save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetchWithRetry(
+        `/api/tools/state/${encodeURIComponent(effectiveDeploymentId)}`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            state: stateRef.current,
+            toolId,
+            spaceId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to save state: ${response.status}`);
+      }
+
+      if (mountedRef.current) {
+        setLastSaved(new Date());
+        setIsSynced(true);
+        initialStateRef.current = { ...stateRef.current };
+      }
+    } catch (err) {
+      console.error("Failed to save tool state:", err);
+      if (mountedRef.current) {
+        setIsSynced(false);
+      }
+    } finally {
+      if (mountedRef.current) {
+        setIsSaving(false);
+      }
+    }
+  }, [effectiveDeploymentId, toolId, spaceId]);
+
+  // ============================================================================
+  // Auto-Save with Debounce
+  // ============================================================================
+
+  const scheduleAutoSave = useCallback(() => {
+    if (!autoSave || !effectiveDeploymentId) return;
+
+    // Clear existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setIsSynced(false);
+    saveTimeoutRef.current = setTimeout(() => {
+      void saveState();
+    }, autoSaveDelay);
+  }, [autoSave, effectiveDeploymentId, autoSaveDelay, saveState]);
+
+  // ============================================================================
+  // Execute Action
+  // ============================================================================
+
+  const executeAction = useCallback(
+    async (
+      elementId: string,
+      actionName: string,
+      payload?: Record<string, unknown>
+    ): Promise<ActionResult> => {
+      if (!toolId) {
+        return { success: false, error: "No tool loaded" };
+      }
+
+      setIsExecuting(true);
+      setError(null);
+
+      try {
+        const response = await fetchWithRetry("/api/tools/execute", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            toolId,
+            deploymentId: effectiveDeploymentId,
+            elementId,
+            action: actionName,
+            data: payload || {},
+            spaceId,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Action failed: ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+
+        if (!mountedRef.current) {
+          return { success: true, result: result.result };
+        }
+
+        // If the action returns updated state, apply it
+        if (result.state) {
+          setState((prev) => ({ ...prev, ...result.state }));
+          stateRef.current = { ...stateRef.current, ...result.state };
+          // Auto-save the new state
+          scheduleAutoSave();
+        }
+
+        return {
+          success: true,
+          result: result.result,
+          state: result.state,
+        };
+      } catch (err) {
+        console.error("Action execution failed:", err);
+        const error = err instanceof Error ? err : new Error("Action failed");
+
+        if (mountedRef.current) {
+          setError(error);
+        }
+
+        return {
+          success: false,
+          error: error.message,
+        };
+      } finally {
+        if (mountedRef.current) {
+          setIsExecuting(false);
         }
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load tool');
-    } finally {
-      setIsLoading(false);
+    },
+    [toolId, effectiveDeploymentId, spaceId, scheduleAutoSave]
+  );
+
+  // ============================================================================
+  // State Management
+  // ============================================================================
+
+  const updateState = useCallback(
+    (updates: Partial<ToolState>) => {
+      setState((prev) => {
+        const newState = { ...prev, ...updates };
+        stateRef.current = newState;
+        return newState;
+      });
+      scheduleAutoSave();
+    },
+    [scheduleAutoSave]
+  );
+
+  const setFullState = useCallback(
+    (newState: ToolState) => {
+      setState(newState);
+      stateRef.current = newState;
+      scheduleAutoSave();
+    },
+    [scheduleAutoSave]
+  );
+
+  const reset = useCallback(() => {
+    // Clear any pending saves
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
     }
-  }, [fetchTool, fetchDeployment, fetchState]);
 
-  // Refresh function
-  const refresh = useCallback(async () => {
-    await load();
-  }, [load]);
+    // Reset to initial state
+    setState(initialStateRef.current);
+    stateRef.current = initialStateRef.current;
+    setError(null);
+    setIsSynced(true);
+  }, []);
 
-  // Initial load
+  const reload = useCallback(async () => {
+    await Promise.all([loadTool(), loadState()]);
+  }, [loadTool, loadState]);
+
+  // ============================================================================
+  // Cleanup
+  // ============================================================================
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    mountedRef.current = true;
 
-  // Cleanup on unmount
-  useEffect(() => {
     return () => {
+      mountedRef.current = false;
+
+      // Clear pending auto-save timeout
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
   }, []);
 
+  // Save on unmount if there are unsaved changes
+  useEffect(() => {
+    return () => {
+      if (!isSynced && effectiveDeploymentId) {
+        // Fire and forget - component is unmounting
+        void fetch(
+          `/api/tools/state/${encodeURIComponent(effectiveDeploymentId)}`,
+          {
+            method: "PUT",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              state: stateRef.current,
+              toolId,
+              spaceId,
+            }),
+            keepalive: true, // Keep request alive even after page unload
+          }
+        ).catch(() => {
+          // Ignore errors on unmount save
+        });
+      }
+    };
+  }, [isSynced, effectiveDeploymentId, toolId, spaceId]);
+
+  // ============================================================================
+  // Return
+  // ============================================================================
+
   return {
     tool,
-    deployment,
     state,
     isLoading,
     isExecuting,
@@ -360,7 +579,31 @@ export function useToolRuntime(options: UseToolRuntimeOptions): UseToolRuntimeRe
     error,
     executeAction,
     updateState,
+    setState: setFullState,
     saveState,
-    refresh,
+    reset,
+    reload,
   };
+}
+
+// ============================================================================
+// Convenience Hook: Tool in Space Context
+// ============================================================================
+
+/**
+ * Convenience hook for tools deployed in a space
+ * Automatically generates the deployment ID from space and placement
+ */
+export function useSpaceTool(
+  toolId: string,
+  spaceId: string,
+  placementId: string,
+  options?: Partial<Omit<UseToolRuntimeOptions, "toolId" | "spaceId" | "placementId">>
+) {
+  return useToolRuntime({
+    toolId,
+    spaceId,
+    placementId,
+    ...options,
+  });
 }

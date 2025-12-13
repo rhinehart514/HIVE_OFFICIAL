@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type issues
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
@@ -30,9 +28,9 @@ export type AuthenticatedHandler<T extends RouteParams = object> = (
   context: T
 ) => Promise<Response>;
 
-export type NextRouteHandler = (
+export type NextRouteHandler<T extends RouteParams = RouteParams> = (
   request: NextRequest,
-  context: RouteParams
+  context: T
 ) => Promise<Response>;
 
 /**
@@ -67,7 +65,7 @@ function sessionToDecodedToken(session: SessionData): DecodedIdToken {
  */
 export function withAuth<T extends RouteParams>(
   handler: AuthenticatedHandler<T>
-): NextRouteHandler {
+): NextRouteHandler<T> {
   return async (request: NextRequest, context: T): Promise<Response> => {
     try {
       // Check for session cookie (primary auth method for web app)
@@ -177,12 +175,13 @@ export function withAuth<T extends RouteParams>(
  */
 export function withAdminAuth<T extends RouteParams>(
   handler: AuthenticatedHandler<T>
-): NextRouteHandler {
+): NextRouteHandler<T> {
   return withAuth(async (request: AuthenticatedRequest, context: T) => {
     try {
       // Check if user has admin claims in Firebase token
-      const customClaims = request.user.decodedToken?.customClaims;
-      const hasAdminClaim = customClaims?.admin === true || customClaims?.role === 'admin';
+      // DecodedIdToken doesn't have customClaims, but the token itself may have custom claims
+      const decodedToken = request.user.decodedToken as DecodedIdToken & { admin?: boolean; role?: string };
+      const hasAdminClaim = decodedToken?.admin === true || decodedToken?.role === 'admin';
 
       // Also check session-based admin flag (for session cookie auth)
       const sessionCookie = request.cookies.get('hive_session');

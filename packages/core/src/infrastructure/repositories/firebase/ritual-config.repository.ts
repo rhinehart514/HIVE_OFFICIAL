@@ -115,12 +115,8 @@ export class FirebaseRitualConfigRepository
         );
         if (parsed.isSuccess) {
           results.push(parsed.getValue());
-        } else {
-          console.warn("[RITUAL_REPOSITORY] Failed to parse ritual", {
-            id: docSnap.id,
-            error: parsed.error,
-          });
         }
+        // Skip rituals that fail to parse - data may be malformed
       }
 
       return Result.ok(results);

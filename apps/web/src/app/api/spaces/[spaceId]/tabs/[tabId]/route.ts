@@ -3,14 +3,15 @@ import {
   getServerSpaceRepository,
   createServerSpaceManagementService,
 } from "@hive/core/server";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
+import { SecurityScanner } from "@/lib/secure-input-validation";
 
 /**
  * Individual Tab CRUD API - Phase 4: DDD Foundation
@@ -35,6 +36,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const { spaceId, tabId } = await params;
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId || !tabId) {
     return respond.error("Space ID and Tab ID are required", "INVALID_INPUT", { status: 400 });
@@ -51,7 +53,7 @@ export const GET = withAuthAndErrors(async (
   const space = result.getValue();
 
   // Enforce campus isolation
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
   }
 
@@ -93,6 +95,7 @@ export const PATCH = withAuthValidationAndErrors(
   ) => {
     const { spaceId, tabId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     if (!spaceId || !tabId) {
       return respond.error("Space ID and Tab ID are required", "INVALID_INPUT", { status: 400 });
@@ -103,9 +106,20 @@ export const PATCH = withAuthValidationAndErrors(
       return respond.error("No updates provided", "INVALID_INPUT", { status: 400 });
     }
 
+    // SECURITY: Scan tab name for XSS/injection attacks
+    if (updates.name) {
+      const nameScan = SecurityScanner.scanInput(updates.name);
+      if (nameScan.level === 'dangerous') {
+        logger.warn("XSS attempt blocked in tab name update", {
+          userId, spaceId, tabId, threats: nameScan.threats
+        });
+        return respond.error("Tab name contains invalid content", "INVALID_INPUT", { status: 400 });
+      }
+    }
+
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID }
+      { userId, campusId }
     );
 
     const result = await spaceService.updateTab(userId, {
@@ -159,6 +173,7 @@ export const DELETE = withAuthAndErrors(async (
 ) => {
   const { spaceId, tabId } = await params;
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId || !tabId) {
     return respond.error("Space ID and Tab ID are required", "INVALID_INPUT", { status: 400 });
@@ -166,7 +181,7 @@ export const DELETE = withAuthAndErrors(async (
 
   // Use DDD SpaceManagementService
   const spaceService = createServerSpaceManagementService(
-    { userId, campusId: CURRENT_CAMPUS_ID }
+    { userId, campusId }
   );
 
   const result = await spaceService.removeTab(userId, {

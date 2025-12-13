@@ -3,6 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository } from '@hive/core/server';
+import { isTestUserId } from "@/lib/security-service";
 
 /**
  * Get profile dashboard data
@@ -19,8 +20,8 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
   const includeRecommendations = searchParams.get('includeRecommendations') === 'true';
 
   try {
-    // Development mode mock data
-    if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+    // Development mode mock data (ONLY in development)
+    if (isTestUserId(userId)) {
       return respond.success({
         dashboard: {
           quickActions: {

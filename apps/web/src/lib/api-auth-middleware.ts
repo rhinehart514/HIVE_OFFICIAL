@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type safety for security event types
 /**
  * Production-ready API authentication middleware
  * SECURITY: No development bypasses - all auth uses cryptographic verification
@@ -7,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from './session';
-import { logSecurityEvent } from './structured-logger';
+import { logSecurityEvent, logger } from './structured-logger';
 import { authAdmin } from './firebase-admin';
 
 export interface AuthContext {
@@ -148,7 +146,7 @@ async function isAdminUser(userId: string, userEmail?: string): Promise<boolean>
     const { isAdmin } = await import('./admin-auth');
     return await isAdmin(userId, userEmail);
   } catch (error) {
-    console.error('Admin check failed:', error);
+    logger.error('Admin check failed', { component: 'api-auth-middleware', userId }, error instanceof Error ? error : undefined);
     return false;
   }
 }
@@ -169,7 +167,7 @@ export function withAuth<T extends unknown[]>(
         return error;
       }
 
-      console.error('Auth middleware error:', error);
+      logger.error('Auth middleware error', { component: 'api-auth-middleware' }, error instanceof Error ? error : undefined);
       return new Response(
         JSON.stringify({ error: 'Authentication service error' }),
         { status: 500, headers: { 'content-type': 'application/json' } }
@@ -189,7 +187,7 @@ export function withAuthAndErrors<T extends unknown[]>(
     try {
       return await handler(request, context, ...args);
     } catch (error) {
-      console.error('Handler error:', error);
+      logger.error('Handler error', { component: 'api-auth-middleware' }, error instanceof Error ? error : undefined);
 
       if (error instanceof Response) {
         return error;

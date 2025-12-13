@@ -29,7 +29,6 @@ import * as pagination from './spaces/pagination';
 import * as onUserCreate from './spaces/onUserCreate';
 import * as leaveSpace from './spaces/leaveSpace';
 import * as requestBuilder from './spaces/requestBuilderRole';
-import * as pinPost from './spaces/pinPostToSpace';
 import * as featureTool from './spaces/featureToolInSpace';
 
 // Import profile functions
@@ -46,8 +45,6 @@ import * as follow from './feed/follow';
 import * as mute from './feed/mute';
 import * as report from './feed/report';
 import * as sayHello from './feed/sayHello';
-import * as createPost from './feed/createPost';
-import * as managePost from './feed/managePost';
 
 // Export notification functions
 export * from "./notifications";
@@ -101,7 +98,6 @@ export const spaces = {
   getSpaceContent: pagination.getSpaceContent,
   leaveSpace: leaveSpace.leaveSpace,
   requestBuilderRole: requestBuilder.requestBuilderRole,
-  pinPostToSpace: pinPost.pinPostToSpace,
   featureToolInSpace: featureTool.featureToolInSpace,
 };
 
@@ -124,9 +120,6 @@ export const feed = {
     unmuteUser: mute.unmuteUser,
     reportContent: report.reportContent,
     sayHello: sayHello.sayHello,
-    createPost: createPost.createPost,
-    editPost: managePost.editPost,
-    deletePost: managePost.deletePost,
 };
 
 export * from "./auth/sendMagicLink";

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, AlertTriangle, BoxSelect } from 'lucide-react';
-import { renderElement } from './element-renderers';
+import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import type { ElementProps } from '../../lib/hivelab/element-system';
 
@@ -48,6 +48,17 @@ export interface ToolElement {
   size?: { width: number; height: number };
 }
 
+export interface ToolCanvasContext {
+  /** Space ID for space-scoped tools */
+  spaceId?: string;
+  /** Deployment ID for state persistence */
+  deploymentId?: string;
+  /** User ID for user-scoped actions */
+  userId?: string;
+  /** Whether user is a space leader */
+  isSpaceLeader?: boolean;
+}
+
 export interface ToolCanvasProps {
   /** Array of elements to render */
   elements: ToolElement[];
@@ -65,6 +76,8 @@ export interface ToolCanvasProps {
   isLoading?: boolean;
   /** Error message to display */
   error?: string | null;
+  /** Context for space/deployment-aware elements */
+  context?: ToolCanvasContext;
 }
 
 // ============================================================================
@@ -76,6 +89,7 @@ interface LayoutProps {
   state: Record<string, unknown>;
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  context?: ToolCanvasContext;
 }
 
 // Grid layout: position-based rendering with 12-column grid
@@ -236,7 +250,7 @@ function ElementWrapper({
     onAction: handleAction,
   };
 
-  return renderElement(element.elementId, props);
+  return renderElementSafe(element.elementId, props);
 }
 
 // ============================================================================
@@ -316,6 +330,7 @@ export function ToolCanvas({
   className,
   isLoading,
   error,
+  context,
 }: ToolCanvasProps) {
   if (isLoading) {
     return <CanvasSkeleton />;
@@ -334,6 +349,7 @@ export function ToolCanvas({
     state,
     onElementChange,
     onElementAction,
+    context,
   };
 
   return (

@@ -426,7 +426,7 @@ function getDefaultChannelSettings() {
 // Helper function to verify channel creation permission
 async function verifyChannelCreatePermission(userId: string, spaceId: string): Promise<boolean> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
@@ -470,7 +470,7 @@ async function checkChannelNameExists(spaceId: string, name: string): Promise<bo
 // Helper function to get space members
 async function getSpaceMembers(spaceId: string): Promise<string[]> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -523,7 +523,7 @@ async function createChannelMemberships(
 // Helper function to verify space access
 async function verifySpaceAccess(userId: string, spaceId: string): Promise<boolean> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
@@ -578,7 +578,7 @@ async function verifyChannelModifyPermission(userId: string, channel: ChatChanne
     }
 
     // Space moderators/admins can modify
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', channel.spaceId)
       .where('status', '==', 'active')
@@ -608,7 +608,7 @@ async function verifyChannelDeletePermission(userId: string, channel: ChatChanne
       return true;
     }
 
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', channel.spaceId)
       .where('status', '==', 'active');

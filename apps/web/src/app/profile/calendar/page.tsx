@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Input, Textarea } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { db } from '@hive/firebase';
+import { logger } from '@/lib/logger';
 import {
   collection,
   query,
@@ -137,7 +138,7 @@ export default function CalendarPage() {
         isPrivate: false
       });
     } catch (error) {
-      console.error('Failed to create event:', error);
+      logger.error('Failed to create event', { component: 'CalendarPage' }, error instanceof Error ? error : undefined);
     }
   };
 
@@ -148,7 +149,7 @@ export default function CalendarPage() {
     try {
       await deleteDoc(doc(db, 'users', user.uid, 'calendar', eventId));
     } catch (error) {
-      console.error('Failed to delete event:', error);
+      logger.error('Failed to delete event', { component: 'CalendarPage' }, error instanceof Error ? error : undefined);
     }
   };
 

@@ -1,16 +1,18 @@
 import { z } from "zod";
 import {
-  getServerSpaceRepository,
   createServerSpaceManagementService,
 } from "@hive/core/server";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
+import { checkSpacePermission } from "@/lib/space-permission-middleware";
+import { SecurityScanner } from "@/lib/secure-input-validation";
 
 /**
  * Widget CRUD API - Phase 4: DDD Foundation
@@ -34,6 +36,7 @@ const CreateWidgetSchema = z.object({
 
 /**
  * GET /api/spaces/[spaceId]/widgets - List all widgets for a space
+ * Requires: guest access (public spaces) or member access (private spaces)
  */
 export const GET = withAuthAndErrors(async (
   request,
@@ -41,37 +44,48 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const { spaceId } = await params;
+  const userId = getUserId(request as AuthenticatedRequest);
 
   if (!spaceId) {
     return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
   }
 
-  // Use DDD repository for space lookup
-  const spaceRepo = getServerSpaceRepository();
-  const result = await spaceRepo.findById(spaceId);
-
-  if (result.isFailure) {
-    return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
+  // Check permission - guests can view public spaces, members can view private
+  const permCheck = await checkSpacePermission(spaceId, userId, 'guest');
+  if (!permCheck.hasPermission) {
+    const status = permCheck.code === 'NOT_FOUND' ? 404 : 403;
+    return respond.error(permCheck.error ?? "Permission denied", permCheck.code ?? "FORBIDDEN", { status });
   }
 
-  const space = result.getValue();
+  const { space } = permCheck;
 
-  // Enforce campus isolation
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
-    return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
+  // For private spaces, require member access
+  if (space && !space.isPublic) {
+    const memberCheck = await checkSpacePermission(spaceId, userId, 'member');
+    if (!memberCheck.hasPermission) {
+      return respond.error(memberCheck.error ?? "Permission denied", memberCheck.code ?? "FORBIDDEN", { status: 403 });
+    }
   }
 
-  // Transform widgets to response format
-  const widgets = space.widgets.map(widget => ({
-    id: widget.id,
-    type: widget.type,
-    title: widget.title,
-    config: widget.config,
-    isVisible: widget.isVisible,
-    isEnabled: widget.isEnabled,
-    order: widget.order,
-    position: widget.position
-  }));
+  // Fetch full space data to get widgets
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceData = spaceDoc.data() || {};
+  const spaceWidgets = spaceData.widgets || [];
+
+  // Transform widgets to response format (only visible/enabled widgets for non-leaders)
+  const isLeader = permCheck.role && ['owner', 'admin', 'moderator'].includes(permCheck.role);
+  const widgets = spaceWidgets
+    .filter((widget: { isVisible?: boolean; isEnabled?: boolean }) => isLeader || (widget.isVisible && widget.isEnabled))
+    .map((widget: { id: string; type?: string; title?: string; config?: unknown; isVisible?: boolean; isEnabled?: boolean; order?: number; position?: unknown }) => ({
+      id: widget.id,
+      type: widget.type,
+      title: widget.title,
+      config: widget.config,
+      isVisible: widget.isVisible,
+      isEnabled: widget.isEnabled,
+      order: widget.order,
+      position: widget.position
+    }));
 
   logger.info(`Widgets listed for space: ${spaceId}`, { spaceId, widgetCount: widgets.length });
 
@@ -96,14 +110,22 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     if (!spaceId) {
       return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
     }
 
+    // SECURITY: Scan widget title for XSS/injection attacks
+    const titleScan = SecurityScanner.scanInput(data.title);
+    if (titleScan.level === 'dangerous') {
+      logger.warn("XSS attempt blocked in widget title", { userId, spaceId, threats: titleScan.threats });
+      return respond.error("Widget title contains invalid content", "INVALID_INPUT", { status: 400 });
+    }
+
     // Use DDD SpaceManagementService for widget creation
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID }
+      { userId, campusId }
     );
 
     const result = await spaceService.addWidget(userId, {

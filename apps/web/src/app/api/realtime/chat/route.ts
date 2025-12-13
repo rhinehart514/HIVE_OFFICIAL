@@ -476,7 +476,7 @@ export async function DELETE(request: NextRequest) {
 async function verifyChannelAccess(userId: string, channelId: string, spaceId: string): Promise<boolean> {
   try {
     // Check space membership
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
@@ -528,7 +528,7 @@ async function getChannel(channelId: string): Promise<ChatChannel | null> {
 // Helper function to get user's space context
 async function getUserSpaceContext(userId: string, spaceId: string): Promise<Record<string, unknown> | null> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')

@@ -14,6 +14,7 @@ import { CampusId } from '../../profile/value-objects/campus-id.value';
 import { ProfileId } from '../../profile/value-objects/profile-id.value';
 import { Tab } from '../entities/tab';
 import { Widget } from '../entities/widget';
+import { PlacedTool, PlacementLocation, PlacementVisibility } from '../entities/placed-tool';
 import {
   SpaceUpdatedEvent,
   TabCreatedEvent,
@@ -25,6 +26,15 @@ import {
   WidgetRemovedEvent,
   WidgetAttachedToTabEvent,
   WidgetDetachedFromTabEvent,
+  ToolPlacedEvent,
+  PlacedToolUpdatedEvent,
+  ToolRemovedEvent,
+  PlacedToolActivatedEvent,
+  PlacedToolDeactivatedEvent,
+  PlacedToolsReorderedEvent,
+  SpaceStatusChangedEvent,
+  SpaceWentLiveEvent,
+  type SpacePublishStatus,
 } from '../events';
 
 /**
@@ -85,9 +95,19 @@ interface EnhancedSpaceProps {
   leaderRequests: LeaderRequest[];
   tabs: Tab[];
   widgets: Widget[];
+  placedTools: PlacedTool[];
   settings: SpaceSettings;
   rssUrl?: string;
   visibility: 'public' | 'private';
+  /**
+   * Publishing status for stealth mode
+   * - stealth: Space is being set up, only visible to leaders
+   * - live: Space is publicly visible and active
+   * - rejected: Leader request was rejected
+   */
+  publishStatus: SpacePublishStatus;
+  /** When the space went live (stealth → live) */
+  wentLiveAt?: Date;
   isActive: boolean;
   isVerified: boolean;
   trendingScore: number;
@@ -153,6 +173,31 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.widgets;
   }
 
+  get placedTools(): PlacedTool[] {
+    return this.props.placedTools;
+  }
+
+  /**
+   * Get placed tools filtered by location
+   */
+  get sidebarTools(): PlacedTool[] {
+    return this.props.placedTools
+      .filter(t => t.placement === 'sidebar' && t.isActive)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  get inlineTools(): PlacedTool[] {
+    return this.props.placedTools
+      .filter(t => t.placement === 'inline' && t.isActive)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  get tabTools(): PlacedTool[] {
+    return this.props.placedTools
+      .filter(t => t.placement === 'tab' && t.isActive)
+      .sort((a, b) => a.order - b.order);
+  }
+
   get isVerified(): boolean {
     return this.props.isVerified;
   }
@@ -202,6 +247,37 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.isActive;
   }
 
+  /**
+   * Current publishing status
+   * - stealth: Being set up, only visible to leaders
+   * - live: Publicly visible
+   * - rejected: Leader request rejected
+   */
+  get publishStatus(): SpacePublishStatus {
+    return this.props.publishStatus;
+  }
+
+  /**
+   * Whether the space is in stealth mode (not yet publicly visible)
+   */
+  get isStealth(): boolean {
+    return this.props.publishStatus === 'stealth';
+  }
+
+  /**
+   * Whether the space is live and publicly visible
+   */
+  get isLive(): boolean {
+    return this.props.publishStatus === 'live';
+  }
+
+  /**
+   * When the space went live (if applicable)
+   */
+  get wentLiveAt(): Date | undefined {
+    return this.props.wentLiveAt;
+  }
+
   get settings(): SpaceSettings {
     return this.props.settings;
   }
@@ -236,6 +312,12 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       settings?: Partial<SpaceSettings>;
       visibility?: 'public' | 'private';
       rssUrl?: string;
+      /**
+       * Initial publish status
+       * - 'stealth' (default): Space starts hidden, leader sets up before going live
+       * - 'live': Space is immediately visible (for pre-seeded/imported spaces)
+       */
+      publishStatus?: SpacePublishStatus;
     },
     id?: string
   ): Result<EnhancedSpace> {
@@ -254,6 +336,10 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       joinedAt: new Date()
     };
 
+    // Default to 'stealth' for new spaces claimed during onboarding
+    // Pre-seeded spaces can be set to 'live' explicitly
+    const publishStatus = props.publishStatus ?? 'stealth';
+
     const spaceProps: EnhancedSpaceProps = {
       spaceId: props.spaceId,
       name: props.name,
@@ -266,9 +352,12 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       leaderRequests: [],
       tabs: [],
       widgets: [],
+      placedTools: [],
       settings: defaultSettings,
       rssUrl: props.rssUrl,
       visibility: props.visibility || 'public',
+      publishStatus,
+      wentLiveAt: publishStatus === 'live' ? new Date() : undefined,
       isActive: true,
       isVerified: false,
       trendingScore: 0,
@@ -884,6 +973,409 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   // ============================================================
+  // PlacedTool Management Methods (HiveLab Integration)
+  // ============================================================
+
+  /**
+   * Get a placed tool by its ID
+   */
+  public getPlacedToolById(placementId: string): PlacedTool | undefined {
+    return this.props.placedTools.find(t => t.id === placementId);
+  }
+
+  /**
+   * Get a placed tool by the tool ID it references
+   */
+  public getPlacedToolByToolId(toolId: string): PlacedTool | undefined {
+    return this.props.placedTools.find(t => t.toolId === toolId);
+  }
+
+  /**
+   * Get all placed tools for a specific location
+   */
+  public getPlacedToolsByLocation(location: PlacementLocation): PlacedTool[] {
+    return this.props.placedTools
+      .filter(t => t.placement === location)
+      .sort((a, b) => a.order - b.order);
+  }
+
+  /**
+   * Place a new tool in the space
+   */
+  public placeTool(props: {
+    toolId: string;
+    placement: PlacementLocation;
+    order?: number;
+    placedBy: string | null;
+    source?: 'system' | 'leader' | 'member';
+    configOverrides?: Record<string, unknown>;
+    visibility?: PlacementVisibility;
+    titleOverride?: string | null;
+    isEditable?: boolean;
+  }): Result<PlacedTool> {
+    // Check if tool is already placed (prevent duplicates)
+    const existing = this.getPlacedToolByToolId(props.toolId);
+    if (existing) {
+      return Result.fail<PlacedTool>(`Tool "${props.toolId}" is already placed in this space`);
+    }
+
+    // Calculate order if not provided
+    const locationTools = this.getPlacedToolsByLocation(props.placement);
+    const order = props.order ?? locationTools.length;
+
+    const toolResult = PlacedTool.create({
+      toolId: props.toolId,
+      spaceId: this.id,
+      placement: props.placement,
+      order,
+      placedBy: props.placedBy,
+      source: props.source ?? (props.placedBy ? 'leader' : 'system'),
+      configOverrides: props.configOverrides ?? {},
+      visibility: props.visibility ?? 'all',
+      titleOverride: props.titleOverride ?? null,
+      isEditable: props.isEditable ?? true,
+    });
+
+    if (toolResult.isFailure) {
+      return Result.fail<PlacedTool>(toolResult.error ?? 'Failed to create placed tool');
+    }
+
+    const placedTool = toolResult.getValue();
+    this.props.placedTools.push(placedTool);
+    this.addDomainEvent(new ToolPlacedEvent(
+      this.id,
+      placedTool.id,
+      placedTool.toolId,
+      placedTool.placement,
+      placedTool.placedBy,
+      placedTool.source
+    ));
+    this.updateLastActivity();
+
+    return Result.ok<PlacedTool>(placedTool);
+  }
+
+  /**
+   * Place a system tool from a template
+   */
+  public placeSystemTool(
+    toolId: string,
+    placement: PlacementLocation,
+    options?: {
+      order?: number;
+      configOverrides?: Record<string, unknown>;
+      visibility?: PlacementVisibility;
+      isEditable?: boolean;
+    }
+  ): Result<PlacedTool> {
+    return this.placeTool({
+      toolId,
+      placement,
+      order: options?.order,
+      placedBy: null,
+      source: 'system',
+      configOverrides: options?.configOverrides,
+      visibility: options?.visibility,
+      isEditable: options?.isEditable ?? true,
+    });
+  }
+
+  /**
+   * Update a placed tool's properties
+   */
+  public updatePlacedTool(
+    placementId: string,
+    updates: {
+      order?: number;
+      isActive?: boolean;
+      placement?: PlacementLocation;
+      configOverrides?: Record<string, unknown>;
+      visibility?: PlacementVisibility;
+      titleOverride?: string | null;
+    }
+  ): Result<void> {
+    const placedTool = this.getPlacedToolById(placementId);
+    if (!placedTool) {
+      return Result.fail<void>(`Placed tool with ID "${placementId}" not found`);
+    }
+
+    // Check if editable
+    if (!placedTool.canBeModified) {
+      return Result.fail<void>('This tool placement is locked and cannot be modified');
+    }
+
+    const updateResult = placedTool.update(updates);
+    if (updateResult.isFailure) {
+      return Result.fail<void>(updateResult.error ?? 'Update failed');
+    }
+
+    const { changedFields } = updateResult.getValue();
+    if (changedFields.length > 0) {
+      this.addDomainEvent(new PlacedToolUpdatedEvent(this.id, placementId, changedFields));
+      this.updateLastActivity();
+    }
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Remove a placed tool from the space
+   */
+  public removePlacedTool(placementId: string): Result<void> {
+    const toolIndex = this.props.placedTools.findIndex(t => t.id === placementId);
+    if (toolIndex === -1) {
+      return Result.fail<void>(`Placed tool with ID "${placementId}" not found`);
+    }
+
+    const placedTool = this.props.placedTools[toolIndex];
+    if (!placedTool) {
+      return Result.fail<void>('Placed tool not found');
+    }
+
+    // Check if editable (system tools can be removed if isEditable is true)
+    if (!placedTool.canBeModified) {
+      return Result.fail<void>('This tool placement is locked and cannot be removed');
+    }
+
+    this.props.placedTools.splice(toolIndex, 1);
+    this.addDomainEvent(new ToolRemovedEvent(this.id, placementId, placedTool.toolId));
+    this.updateLastActivity();
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Activate a placed tool
+   */
+  public activatePlacedTool(placementId: string): Result<void> {
+    const placedTool = this.getPlacedToolById(placementId);
+    if (!placedTool) {
+      return Result.fail<void>(`Placed tool with ID "${placementId}" not found`);
+    }
+
+    if (placedTool.isActive) {
+      return Result.ok<void>(); // Already active
+    }
+
+    placedTool.activate();
+    this.addDomainEvent(new PlacedToolActivatedEvent(this.id, placementId, placedTool.toolId));
+    this.updateLastActivity();
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Deactivate a placed tool (hide without removing)
+   */
+  public deactivatePlacedTool(placementId: string): Result<void> {
+    const placedTool = this.getPlacedToolById(placementId);
+    if (!placedTool) {
+      return Result.fail<void>(`Placed tool with ID "${placementId}" not found`);
+    }
+
+    if (!placedTool.isActive) {
+      return Result.ok<void>(); // Already inactive
+    }
+
+    placedTool.deactivate();
+    this.addDomainEvent(new PlacedToolDeactivatedEvent(this.id, placementId, placedTool.toolId));
+    this.updateLastActivity();
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Reorder placed tools within a placement location
+   */
+  public reorderPlacedTools(placement: PlacementLocation, orderedIds: string[]): Result<void> {
+    const locationTools = this.getPlacedToolsByLocation(placement);
+    const existingIds = new Set(locationTools.map(t => t.id));
+
+    // Validate all IDs exist in this location
+    for (const id of orderedIds) {
+      if (!existingIds.has(id)) {
+        return Result.fail<void>(`Placed tool "${id}" not found in ${placement} location`);
+      }
+    }
+
+    // Ensure all tools are included
+    if (orderedIds.length !== locationTools.length) {
+      return Result.fail<void>('All tool IDs in the location must be included');
+    }
+
+    // Apply new order
+    for (let i = 0; i < orderedIds.length; i++) {
+      const tool = this.getPlacedToolById(orderedIds[i] as string);
+      if (tool) {
+        tool.reorder(i);
+      }
+    }
+
+    this.addDomainEvent(new PlacedToolsReorderedEvent(this.id, placement, orderedIds));
+    this.updateLastActivity();
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Update the runtime state of a placed tool
+   */
+  public updatePlacedToolState(
+    placementId: string,
+    state: Record<string, unknown>,
+    replace: boolean = false
+  ): Result<void> {
+    const placedTool = this.getPlacedToolById(placementId);
+    if (!placedTool) {
+      return Result.fail<void>(`Placed tool with ID "${placementId}" not found`);
+    }
+
+    if (replace) {
+      placedTool.replaceState(state);
+    } else {
+      placedTool.updateState(state);
+    }
+
+    // Don't emit event for state updates (too noisy) but update activity
+    this.updateLastActivity();
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set placed tools from external data (repository layer)
+   */
+  public setPlacedTools(tools: PlacedTool[]): void {
+    (this.props as any).placedTools = tools;
+  }
+
+  // ============================================================
+  // Stealth Mode / Publishing Status Methods
+  // ============================================================
+
+  /**
+   * Transition space from stealth to live.
+   *
+   * This is typically called when a platform admin verifies the space leader.
+   * While in stealth mode, the leader can fully use the space (post, events,
+   * invite specific people) - they get instant value. Once verified, the space
+   * becomes publicly discoverable.
+   *
+   * @param verifiedBy - The admin or system that verified the leader
+   */
+  public goLive(verifiedBy: ProfileId): Result<void> {
+    // Must be in stealth mode
+    if (this.props.publishStatus !== 'stealth') {
+      return Result.fail<void>(`Cannot go live from ${this.props.publishStatus} status`);
+    }
+
+    const previousStatus = this.props.publishStatus;
+    this.props.publishStatus = 'live';
+    this.props.wentLiveAt = new Date();
+    this.props.isVerified = true; // Mark as verified when going live
+    this.updateLastActivity();
+
+    this.addDomainEvent(new SpaceStatusChangedEvent(
+      this.id,
+      previousStatus,
+      'live',
+      verifiedBy.value
+    ));
+
+    this.addDomainEvent(new SpaceWentLiveEvent(
+      this.id,
+      this.props.name.name,
+      verifiedBy.value
+    ));
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Admin verifies a leader and takes the space live in one action.
+   * This is the typical flow: admin reviews leader request → approves → space goes live.
+   */
+  public verifyLeaderAndGoLive(
+    leaderProfileId: ProfileId,
+    verifiedBy: ProfileId
+  ): Result<void> {
+    // Verify the leader exists as owner/admin
+    const leader = this.props.members.find(
+      m => m.profileId.value === leaderProfileId.value &&
+           (m.role === 'owner' || m.role === 'admin')
+    );
+
+    if (!leader) {
+      return Result.fail<void>('Leader not found in space');
+    }
+
+    // Take the space live
+    return this.goLive(verifiedBy);
+  }
+
+  /**
+   * Reject the space (stealth → rejected)
+   * Used when admin rejects a leader request
+   */
+  public reject(rejectedBy: ProfileId, reason?: string): Result<void> {
+    if (this.props.publishStatus === 'rejected') {
+      return Result.fail<void>('Space is already rejected');
+    }
+
+    const previousStatus = this.props.publishStatus;
+    this.props.publishStatus = 'rejected';
+    this.updateLastActivity();
+
+    this.addDomainEvent(new SpaceStatusChangedEvent(
+      this.id,
+      previousStatus,
+      'rejected',
+      rejectedBy.value,
+      reason
+    ));
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Reset to stealth mode (admin action)
+   */
+  public resetToStealth(resetBy: ProfileId, reason?: string): Result<void> {
+    if (this.props.publishStatus === 'stealth') {
+      return Result.fail<void>('Space is already in stealth mode');
+    }
+
+    const previousStatus = this.props.publishStatus;
+    this.props.publishStatus = 'stealth';
+    this.props.wentLiveAt = undefined;
+    this.updateLastActivity();
+
+    this.addDomainEvent(new SpaceStatusChangedEvent(
+      this.id,
+      previousStatus,
+      'stealth',
+      resetBy.value,
+      reason
+    ));
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set publish status from external data (repository layer)
+   */
+  public setPublishStatus(status: SpacePublishStatus): void {
+    (this.props as any).publishStatus = status;
+  }
+
+  /**
+   * Set wentLiveAt from external data (repository layer)
+   */
+  public setWentLiveAt(date: Date | undefined): void {
+    (this.props as any).wentLiveAt = date;
+  }
+
+  // ============================================================
   // Basic Info Update (Phase 1 - DDD Foundation)
   // ============================================================
 
@@ -1037,8 +1529,29 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       })),
       tabs: this.props.tabs,
       widgets: this.props.widgets,
+      placedTools: this.props.placedTools.map(t => ({
+        id: t.id,
+        toolId: t.toolId,
+        spaceId: t.spaceId,
+        placement: t.placement,
+        order: t.order,
+        isActive: t.isActive,
+        source: t.source,
+        placedBy: t.placedBy,
+        placedAt: t.placedAt,
+        configOverrides: t.configOverrides,
+        visibility: t.visibility,
+        titleOverride: t.titleOverride,
+        isEditable: t.isEditable,
+        state: t.state,
+        stateUpdatedAt: t.stateUpdatedAt,
+      })),
       settings: this.props.settings,
       visibility: this.props.visibility,
+      publishStatus: this.props.publishStatus,
+      wentLiveAt: this.props.wentLiveAt,
+      isStealth: this.isStealth,
+      isLive: this.isLive,
       isActive: this.props.isActive,
       memberCount: this.memberCount,
       postCount: this.props.postCount,

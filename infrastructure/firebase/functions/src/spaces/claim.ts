@@ -44,26 +44,23 @@ export const requestBuilderRole = functions.https.onCall(async (data, context) =
       .limit(1);
     const flatMembershipSnap = await transaction.get(flatMembershipQuery);
 
-    let existingRole: string | undefined;
-    if (!flatMembershipSnap.empty) {
-      existingRole = flatMembershipSnap.docs[0].data().role as string | undefined;
-    } else {
-      // Fallback to nested membership
-      const memberRef = db.collection('spaces').doc(spaceId).collection('members').doc(uid);
-      const memberDoc = await transaction.get(memberRef);
-      if (!memberDoc.exists) {
-        throw new functions.https.HttpsError("failed-precondition", "You must be a member of the space to request the builder role.");
-      }
-      existingRole = memberDoc.data()?.role as string | undefined;
+    // Use flat /spaceMembers collection only
+    if (flatMembershipSnap.empty) {
+      throw new functions.https.HttpsError("failed-precondition", "You must be a member of the space to request the builder role.");
     }
+    const existingRole = flatMembershipSnap.docs[0].data().role as string | undefined;
 
     if (existingRole === "builder" || existingRole === "admin") {
       throw new functions.https.HttpsError("already-exists",
         "User is already a builder or admin in this space.");
     }
 
-    // Check if there is an active builder
-    const builderQuery = spaceRef.collection('members').where('role', '==', 'builder').limit(1);
+    // Check if there is an active builder using flat /spaceMembers collection
+    const builderQuery = db.collection('spaceMembers')
+      .where('spaceId', '==', spaceId)
+      .where('role', '==', 'builder')
+      .where('isActive', '==', true)
+      .limit(1);
     const builderSnapshot = await transaction.get(builderQuery);
 
     if (!builderSnapshot.empty) {
@@ -72,18 +69,10 @@ export const requestBuilderRole = functions.https.onCall(async (data, context) =
     }
 
     // Update the user's role claim to pending
-    if (!flatMembershipSnap.empty) {
-      transaction.update(flatMembershipSnap.docs[0].ref, {
-        roleRequest: 'pending',
-        roleRequestTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    } else {
-      const memberRef = db.collection('spaces').doc(spaceId).collection('members').doc(uid);
-      transaction.update(memberRef, {
-        roleRequest: 'pending',
-        roleRequestTimestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
-    }
+    transaction.update(flatMembershipSnap.docs[0].ref, {
+      roleRequest: 'pending',
+      roleRequestTimestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
     return {
       status: "success",

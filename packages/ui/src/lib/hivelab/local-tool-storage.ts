@@ -71,8 +71,8 @@ export function getLocalTools(): LocalTool[] {
 
     const parsed: LocalToolsData = JSON.parse(data);
     return parsed.tools || [];
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to get tools:', error);
+  } catch (_error) {
+    // Storage read failed - return empty
     return [];
   }
 }
@@ -90,17 +90,14 @@ export function getLocalTool(id: string): LocalTool | null {
  */
 export function saveLocalTool(composition: ToolComposition): LocalTool | null {
   if (!isLocalStorageAvailable()) {
-    console.warn('[LocalToolStorage] localStorage not available');
     return null;
   }
 
   try {
     const tools = getLocalTools();
 
-    // Check limit
+    // Check limit - remove oldest if at max
     if (tools.length >= MAX_TOOLS) {
-      console.warn('[LocalToolStorage] Maximum tools limit reached');
-      // Remove oldest tool
       tools.shift();
     }
 
@@ -121,8 +118,8 @@ export function saveLocalTool(composition: ToolComposition): LocalTool | null {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return localTool;
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to save tool:', error);
+  } catch (_error) {
+    // Storage save failed
     return null;
   }
 }
@@ -140,7 +137,6 @@ export function updateLocalTool(id: string, composition: ToolComposition): boole
     const index = tools.findIndex(tool => tool.id === id);
 
     if (index === -1) {
-      console.warn(`[LocalToolStorage] Tool ${id} not found`);
       return false;
     }
 
@@ -160,8 +156,8 @@ export function updateLocalTool(id: string, composition: ToolComposition): boole
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to update tool:', error);
+  } catch (_error) {
+    // Storage update failed
     return false;
   }
 }
@@ -179,7 +175,6 @@ export function deleteLocalTool(id: string): boolean {
     const filtered = tools.filter(tool => tool.id !== id);
 
     if (filtered.length === tools.length) {
-      console.warn(`[LocalToolStorage] Tool ${id} not found`);
       return false;
     }
 
@@ -190,8 +185,8 @@ export function deleteLocalTool(id: string): boolean {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to delete tool:', error);
+  } catch (_error) {
+    // Storage delete failed
     return false;
   }
 }
@@ -207,8 +202,8 @@ export function clearLocalTools(): boolean {
   try {
     localStorage.removeItem(STORAGE_KEY);
     return true;
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to clear tools:', error);
+  } catch (_error) {
+    // Storage clear failed
     return false;
   }
 }
@@ -257,8 +252,8 @@ export function importLocalTools(json: string): boolean {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     return true;
-  } catch (error) {
-    console.error('[LocalToolStorage] Failed to import tools:', error);
+  } catch (_error) {
+    // Import failed
     return false;
   }
 }
@@ -310,8 +305,8 @@ export function saveWIPTool(data: WIPToolData): boolean {
   try {
     localStorage.setItem(WIP_STORAGE_KEY, JSON.stringify(data));
     return true;
-  } catch (error) {
-    console.error('[WIPStorage] Failed to save WIP tool:', error);
+  } catch (_error) {
+    // WIP save failed
     return false;
   }
 }
@@ -328,8 +323,8 @@ export function getWIPTool(): WIPToolData | null {
     const raw = localStorage.getItem(WIP_STORAGE_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as WIPToolData;
-  } catch (error) {
-    console.error('[WIPStorage] Failed to get WIP tool:', error);
+  } catch (_error) {
+    // WIP get failed
     return null;
   }
 }
@@ -345,8 +340,8 @@ export function clearWIPTool(): boolean {
   try {
     localStorage.removeItem(WIP_STORAGE_KEY);
     return true;
-  } catch (error) {
-    console.error('[WIPStorage] Failed to clear WIP tool:', error);
+  } catch (_error) {
+    // WIP clear failed
     return false;
   }
 }

@@ -190,9 +190,8 @@ export class AIToolGeneratorService {
               };
               return; // Done streaming
             }
-          } catch (parseError) {
-            console.error('[AIToolGenerator] Failed to parse JSON chunk:', parseError);
-            // Continue - might be partial chunk
+          } catch (_parseError) {
+            // Continue - might be partial chunk during streaming
           }
         }
 
@@ -215,7 +214,6 @@ export class AIToolGeneratorService {
         }
       }
     } catch (error) {
-      console.error('[AIToolGenerator] Streaming error:', error);
       yield {
         type: 'error',
         error: error instanceof Error ? error.message : 'Unknown error during generation'

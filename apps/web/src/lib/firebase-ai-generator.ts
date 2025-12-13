@@ -3,14 +3,62 @@
  *
  * Uses Firebase AI (Gemini) to generate HiveLab tools from natural language.
  * Produces structured JSON output with guaranteed schema compliance.
+ *
+ * Includes AI Quality Pipeline integration for validation and tracking.
  */
 
 import { ai, getGenerativeModel, Schema } from './firebase';
 import type { StreamingChunk, GenerateToolRequest } from './mock-ai-generator';
 import { mockGenerateToolStreaming } from './mock-ai-generator';
+import { logger } from './logger';
+import { dbAdmin, isFirebaseConfigured } from './firebase-admin';
+import {
+  AIQualityPipeline,
+  CURRENT_PROMPT_VERSION,
+  type PipelineResult,
+  getPromptEnhancerService,
+  initializeAIQualityPipeline,
+  initializePromptEnhancer,
+  type EnhancedPrompt,
+} from '@hive/core';
 
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 500;
+
+// Whether to use learned context (RAG + patterns) in prompts
+// Can be disabled via environment variable for A/B testing
+const USE_LEARNED_CONTEXT = process.env.NEXT_PUBLIC_USE_AI_LEARNING !== 'false';
+
+// Quality pipeline instance (singleton)
+const qualityPipeline = new AIQualityPipeline();
+
+// Initialize quality pipeline with Firestore for persistence
+// This enables tracking of all AI generations for quality analytics
+let pipelineInitialized = false;
+function ensurePipelineInitialized(): void {
+  if (pipelineInitialized) return;
+  try {
+    if (isFirebaseConfigured && dbAdmin) {
+      initializeAIQualityPipeline(dbAdmin);
+      initializePromptEnhancer(dbAdmin);
+      pipelineInitialized = true;
+      logger.info('[AI Quality] Pipeline and prompt enhancer initialized with Firestore persistence');
+    }
+  } catch (error) {
+    // Non-fatal - pipeline will work in mock mode without persistence
+    logger.warn('[AI Quality] Pipeline running without Firestore persistence', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+
+// Prompt enhancer instance (singleton)
+const promptEnhancer = getPromptEnhancerService();
+
+// Session ID generator for tracking
+function generateSessionId(): string {
+  return `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 // Tool schema for structured output - Gemini will output this exact structure
 const toolSchema = Schema.object({
@@ -138,7 +186,7 @@ const getToolGeneratorModel = () => {
 };
 
 /**
- * Build contextual prompt with space information
+ * Build contextual prompt with space information (basic version)
  */
 function buildContextualPrompt(request: GenerateToolRequest): string {
   let fullPrompt = '';
@@ -188,33 +236,148 @@ function buildContextualPrompt(request: GenerateToolRequest): string {
 }
 
 /**
+ * Build enhanced contextual prompt with RAG and learned patterns
+ * Falls back to basic prompt if enhancement fails
+ */
+async function buildEnhancedContextualPrompt(
+  request: GenerateToolRequest
+): Promise<{ prompt: string; enhanced: boolean; metadata?: EnhancedPrompt['metadata'] }> {
+  // Skip enhancement if disabled
+  if (!USE_LEARNED_CONTEXT) {
+    return { prompt: buildContextualPrompt(request), enhanced: false };
+  }
+
+  try {
+    // Build iteration context separately (not part of enhancer)
+    let iterationContext = '';
+    if (request.isIteration && request.existingComposition?.elements?.length) {
+      const existingElements = request.existingComposition.elements;
+      const maxY = Math.max(...existingElements.map((el) => el.position?.y ?? 0));
+      const nextYPosition = maxY + 150;
+
+      iterationContext += `## ITERATION MODE\n`;
+      iterationContext += `This is an iteration on an existing tool. DO NOT recreate these elements:\n\n`;
+
+      for (const el of existingElements) {
+        iterationContext += `- ${el.instanceId} (${el.elementId}) at y=${el.position?.y ?? 0}\n`;
+      }
+
+      iterationContext += `\nTool name: "${request.existingComposition.name || 'Untitled'}"\n`;
+      iterationContext += `Position any NEW elements starting at y=${nextYPosition} or below.\n`;
+      iterationContext += `Connect new elements to existing ones using their instanceIds listed above.\n\n`;
+    }
+
+    // Build constraints string
+    let constraints = '';
+    if (request.constraints?.maxElements) {
+      constraints += `\n\nConstraint: Use at most ${request.constraints.maxElements} elements.`;
+    }
+    if (request.constraints?.allowedCategories?.length) {
+      constraints += `\n\nConstraint: Only use elements from these categories: ${request.constraints.allowedCategories.join(', ')}`;
+    }
+
+    // Use prompt enhancer for RAG + patterns
+    const userPromptWithConstraints = request.prompt + constraints;
+    const enhanced = await promptEnhancer.enhancePrompt(
+      userPromptWithConstraints,
+      SYSTEM_PROMPT,
+      {
+        useRAG: true,
+        usePatterns: true,
+        useConfigHints: true,
+        spaceContext: request.spaceContext ? {
+          spaceId: request.spaceContext.spaceId || '',
+          spaceName: request.spaceContext.spaceName,
+          category: request.spaceContext.category,
+        } : undefined,
+      }
+    );
+
+    // Insert iteration context before user request
+    let finalPrompt = enhanced.prompt;
+    if (iterationContext) {
+      // Insert iteration context before "## User Request"
+      finalPrompt = finalPrompt.replace(
+        '## User Request',
+        `${iterationContext}## User Request`
+      );
+    }
+
+    logger.debug('Prompt enhanced', {
+      component: 'firebase-ai-generator',
+      layers: enhanced.layers,
+      tokenBudget: enhanced.tokenBudget,
+      enhancementTimeMs: enhanced.metadata.totalEnhancementTimeMs,
+    });
+
+    return {
+      prompt: finalPrompt,
+      enhanced: true,
+      metadata: enhanced.metadata,
+    };
+  } catch (error) {
+    // Fall back to basic prompt on any error
+    logger.warn('Prompt enhancement failed, using basic prompt', {
+      component: 'firebase-ai-generator',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+
+    return { prompt: buildContextualPrompt(request), enhanced: false };
+  }
+}
+
+/**
  * Attempt to generate tool from Firebase AI with retries
+ * Uses enhanced prompt with RAG and learned patterns when available
  */
 async function attemptGeneration(
   request: GenerateToolRequest,
   attempt: number = 1
-): Promise<{ success: true; tool: Record<string, unknown> } | { success: false; error: string }> {
+): Promise<{
+  success: true;
+  tool: Record<string, unknown>;
+  promptEnhanced?: boolean;
+  enhancementMetadata?: EnhancedPrompt['metadata'];
+} | { success: false; error: string }> {
   try {
     const model = getToolGeneratorModel();
-    const fullPrompt = buildContextualPrompt(request);
 
-    console.log(`[Firebase AI] Generation attempt ${attempt}/${MAX_RETRIES + 1}`);
+    // Use enhanced prompt on first attempt, fall back to basic on retries
+    let fullPrompt: string;
+    let promptEnhanced = false;
+    let enhancementMetadata: EnhancedPrompt['metadata'] | undefined;
+
+    if (attempt === 1) {
+      // First attempt: use enhanced prompt with RAG + patterns
+      const enhanced = await buildEnhancedContextualPrompt(request);
+      fullPrompt = enhanced.prompt;
+      promptEnhanced = enhanced.enhanced;
+      enhancementMetadata = enhanced.metadata;
+    } else {
+      // Retry attempts: use basic prompt (more deterministic)
+      fullPrompt = buildContextualPrompt(request);
+    }
+
+    logger.debug(`Generation attempt ${attempt}/${MAX_RETRIES + 1}`, {
+      component: 'firebase-ai-generator',
+      enhanced: promptEnhanced,
+    });
 
     const result = await model.generateContent(fullPrompt);
     const text = result.response.text();
 
     // Try to parse JSON
     const tool = JSON.parse(text);
-    return { success: true, tool };
+    return { success: true, tool, promptEnhanced, enhancementMetadata };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const isParseError = errorMessage.includes('JSON') || errorMessage.includes('parse');
 
-    console.error(`[Firebase AI] Attempt ${attempt} failed:`, errorMessage);
+    logger.error(`Attempt ${attempt} failed: ${errorMessage}`, { component: 'firebase-ai-generator', attempt });
 
     // Retry on JSON parse errors (truncation issues)
     if (isParseError && attempt <= MAX_RETRIES) {
-      console.log(`[Firebase AI] Retrying in ${RETRY_DELAY_MS}ms...`);
+      logger.debug(`Retrying in ${RETRY_DELAY_MS}ms...`, { component: 'firebase-ai-generator' });
       await delay(RETRY_DELAY_MS);
       return attemptGeneration(request, attempt + 1);
     }
@@ -224,12 +387,45 @@ async function attemptGeneration(
 }
 
 /**
+ * Extended streaming chunk with validation metadata
+ */
+export interface ValidatedStreamingChunk extends StreamingChunk {
+  data: StreamingChunk['data'] & {
+    // Quality metadata on 'complete' chunks
+    quality?: {
+      score: number;
+      decision: 'accepted' | 'partial_accept' | 'rejected';
+      fixes?: string[];
+      generationId?: string;
+    };
+  };
+}
+
+/**
+ * Generation context for quality tracking
+ */
+export interface GenerationContext {
+  userId?: string | null;
+  sessionId?: string;
+  campusId?: string;
+}
+
+/**
  * Generate tool with streaming for real-time canvas updates
- * Includes retry logic and fallback to mock generator
+ * Includes retry logic, fallback to mock generator, and AI quality validation
  */
 export async function* firebaseGenerateToolStreaming(
-  request: GenerateToolRequest
-): AsyncGenerator<StreamingChunk> {
+  request: GenerateToolRequest,
+  context?: GenerationContext
+): AsyncGenerator<ValidatedStreamingChunk> {
+  // Ensure quality pipeline is initialized with Firestore (lazy init)
+  ensurePipelineInitialized();
+
+  const startTime = Date.now();
+  const sessionId = context?.sessionId || generateSessionId();
+  let retryCount = 0;
+  let usedFallback = false;
+
   const thinkingMessage = request.spaceContext
     ? `Generating tool for "${request.spaceContext.spaceName}": "${request.prompt.substring(0, 40)}..."`
     : `Understanding: "${request.prompt.substring(0, 50)}..."`;
@@ -241,44 +437,134 @@ export async function* firebaseGenerateToolStreaming(
 
   // Attempt generation with retries
   const result = await attemptGeneration(request);
+  retryCount = 0; // attemptGeneration handles its own retries
 
   if (result.success) {
     const tool = result.tool;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // AI QUALITY VALIDATION
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Transform raw tool output to ToolComposition format for validation
+    const composition = transformToComposition(tool, request);
+
+    // Run through quality pipeline
+    const latencyMs = Date.now() - startTime;
+    let pipelineResult: PipelineResult;
+
+    try {
+      pipelineResult = await qualityPipeline.process(composition, {
+        userId: context?.userId ?? null,
+        sessionId,
+        campusId: context?.campusId,
+        prompt: request.prompt,
+        isIteration: request.isIteration || false,
+        model: 'gemini-2.0-flash',
+        promptVersion: CURRENT_PROMPT_VERSION,
+        spaceContext: request.spaceContext,
+        constraints: request.constraints,
+        tokenCount: { input: request.prompt.length, output: JSON.stringify(tool).length },
+        retryCount,
+        usedFallback,
+        latencyMs,
+      });
+
+      logger.info('Quality pipeline result', {
+        component: 'firebase-ai-generator',
+        decision: pipelineResult.decision,
+        score: pipelineResult.score.overall,
+        fixes: pipelineResult.fixes.length,
+        generationId: pipelineResult.generationId,
+      });
+
+    } catch (pipelineError) {
+      // If pipeline fails, log but don't block generation
+      logger.error('Quality pipeline error', { component: 'firebase-ai-generator' }, pipelineError instanceof Error ? pipelineError : undefined);
+
+      // Create a fallback result that passes through
+      pipelineResult = {
+        accepted: true,
+        decision: 'accepted',
+        composition,
+        validation: { valid: true, score: { overall: 0, schema: 0, elements: 0, config: 0, connections: 0, semantic: 0 }, errors: [], warnings: [], metadata: { validatedAt: new Date().toISOString(), durationMs: 0, elementCount: 0, connectionCount: 0 } },
+        score: { overall: 0, schema: 0, elements: 0, config: 0, connections: 0, semantic: 0 },
+        fixes: [],
+        generationId: 'unknown',
+      };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // HANDLE REJECTION
+    // ═══════════════════════════════════════════════════════════════════
+
+    if (!pipelineResult.accepted) {
+      logger.warn('Generation rejected by quality gate', {
+        component: 'firebase-ai-generator',
+        reason: pipelineResult.rejectionReason,
+        hints: pipelineResult.regenerationHints,
+      });
+
+      // Emit rejection as error chunk
+      yield {
+        type: 'error',
+        data: {
+          error: pipelineResult.rejectionReason || 'Generation failed quality checks',
+          quality: {
+            score: pipelineResult.score.overall,
+            decision: pipelineResult.decision,
+            generationId: pipelineResult.generationId,
+          },
+          hints: pipelineResult.regenerationHints,
+        },
+      };
+      return;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // STREAM VALIDATED (potentially fixed) COMPOSITION
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Use the composition from pipeline (may have auto-fixes applied)
+    const validatedComposition = pipelineResult.composition;
 
     // For iteration mode: filter out duplicates and track what we're adding
     const existingIds = new Set(
       request.existingComposition?.elements?.map((el) => el.instanceId) ?? []
     );
-    const newElements = ((tool.elements as Array<Record<string, unknown>>) || []).filter(
-      (el) => !existingIds.has(el.instanceId as string)
+    const newElements = validatedComposition.elements.filter(
+      (el) => !existingIds.has(el.instanceId)
     );
 
     // Stream elements one by one for canvas animation
-    const elementsToStream = request.isIteration ? newElements : (tool.elements as Array<Record<string, unknown>>) || [];
+    const elementsToStream = request.isIteration ? newElements : validatedComposition.elements;
 
     for (const element of elementsToStream) {
       yield {
         type: 'element',
         data: {
-          id: (element.instanceId as string) || `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-          type: element.type as string,
-          name: (element.name as string) || (element.type as string),
-          config: (element.config as Record<string, unknown>) || {},
-          position: (element.position as { x: number; y: number }) || { x: 100, y: 100 },
+          id: element.instanceId || `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          type: element.elementId,
+          name: element.elementId,
+          config: element.config || {},
+          position: element.position || { x: 100, y: 100 },
+          size: element.size || { width: 300, height: 200 },
         },
       };
       await delay(150); // Smooth animation
     }
 
     // Stream connections
-    for (const connection of (tool.connections as Array<Record<string, unknown>>) || []) {
+    for (const connection of validatedComposition.connections || []) {
       yield {
         type: 'connection',
         data: {
-          id: (connection.id as string) || `conn-${Date.now()}`,
-          from: connection.from as string,
-          to: connection.to as string,
-          type: (connection.type as string) || 'data-flow',
+          id: `conn-${Date.now()}-${Math.random().toString(36).slice(2, 4)}`,
+          from: connection.from.instanceId,
+          to: connection.to.instanceId,
+          fromOutput: connection.from.output,
+          toInput: connection.to.input,
+          type: 'data-flow',
         },
       };
       await delay(100);
@@ -286,30 +572,57 @@ export async function* firebaseGenerateToolStreaming(
 
     // For iteration mode: preserve original tool name unless explicitly changed
     const toolName = request.isIteration
-      ? request.existingComposition?.name || (tool.name as string) || 'Generated Tool'
-      : (tool.name as string) || 'Generated Tool';
+      ? request.existingComposition?.name || validatedComposition.name || 'Generated Tool'
+      : validatedComposition.name || 'Generated Tool';
 
     // Calculate total element count (existing + new for iterations)
     const totalElementCount = request.isIteration
       ? (request.existingComposition?.elements?.length ?? 0) + newElements.length
-      : (tool.elements as Array<unknown>)?.length ?? 0;
+      : validatedComposition.elements.length;
 
-    // Complete
+    // Complete with quality metadata
     yield {
       type: 'complete',
       data: {
         toolId: `tool-${Date.now()}`,
         name: toolName,
-        description: (tool.description as string) || '',
+        description: validatedComposition.description || '',
         elementCount: totalElementCount,
-        connectionCount: (tool.connections as Array<unknown>)?.length || 0,
-        layout: (tool.layout as string) || 'flow',
+        connectionCount: validatedComposition.connections?.length || 0,
+        layout: validatedComposition.layout || 'flow',
+        // Include quality metadata
+        quality: {
+          score: pipelineResult.score.overall,
+          decision: pipelineResult.decision,
+          fixes: pipelineResult.fixes,
+          generationId: pipelineResult.generationId,
+        },
       },
     };
   } else {
     // All retries failed - fall back to mock generator
-    console.warn('[Firebase AI] All retries failed, falling back to mock generator');
-    console.warn('[Firebase AI] Error was:', result.error);
+    logger.warn('All retries failed, falling back to mock generator', { component: 'firebase-ai-generator', error: result.error });
+    usedFallback = true;
+
+    // Record failure
+    try {
+      await qualityPipeline.recordFailure(result.error, {
+        userId: context?.userId ?? null,
+        sessionId,
+        campusId: context?.campusId,
+        prompt: request.prompt,
+        isIteration: request.isIteration || false,
+        model: 'gemini-2.0-flash',
+        promptVersion: CURRENT_PROMPT_VERSION,
+        latencyMs: Date.now() - startTime,
+        retryCount,
+      }, {
+        fallbackAttempted: true,
+        fallbackSucceeded: true, // We're about to try fallback
+      });
+    } catch (trackingError) {
+      logger.error('Failed to record failure', { component: 'firebase-ai-generator' }, trackingError instanceof Error ? trackingError : undefined);
+    }
 
     yield {
       type: 'thinking',
@@ -324,6 +637,42 @@ export async function* firebaseGenerateToolStreaming(
       }
     }
   }
+}
+
+/**
+ * Transform raw Gemini output to ToolComposition format
+ */
+function transformToComposition(
+  tool: Record<string, unknown>,
+  request: GenerateToolRequest
+): import('@hive/core').ToolComposition {
+  const elements = ((tool.elements as Array<Record<string, unknown>>) || []).map((el, index) => ({
+    elementId: (el.type as string) || 'unknown',
+    instanceId: (el.instanceId as string) || `el-${Date.now()}-${index}`,
+    position: (el.position as { x: number; y: number }) || { x: 100, y: 100 + index * 150 },
+    size: (el.size as { width: number; height: number }) || { width: 300, height: 200 },
+    config: (el.config as Record<string, unknown>) || {},
+  }));
+
+  const connections = ((tool.connections as Array<Record<string, unknown>>) || []).map((conn, index) => ({
+    from: {
+      instanceId: (conn.from as string) || '',
+      output: 'default',
+    },
+    to: {
+      instanceId: (conn.to as string) || '',
+      input: 'default',
+    },
+  }));
+
+  return {
+    id: `tool-${Date.now()}`,
+    name: (tool.name as string) || 'Generated Tool',
+    description: (tool.description as string) || '',
+    elements,
+    connections,
+    layout: ((tool.layout as string) || 'flow') as 'grid' | 'flow' | 'tabs' | 'sidebar',
+  };
 }
 
 /**

@@ -1,10 +1,38 @@
 import { type NextRequest, NextResponse } from 'next/server';
 // Use admin SDK methods since we're in an API route
-import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
+import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
+import { verifySession } from '@/lib/session';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+
+// Auth helper that checks both session cookies and Bearer tokens
+// Required because EventSource doesn't support custom headers, only cookies
+async function getCurrentUserFromRequest(request: NextRequest): Promise<{ uid: string; email?: string } | null> {
+  try {
+    // Check session cookie first (primary auth for web app)
+    const sessionCookie = request.cookies.get('hive_session');
+    if (sessionCookie?.value) {
+      const session = await verifySession(sessionCookie.value);
+      if (session?.userId && session?.email) {
+        return { uid: session.userId, email: session.email };
+      }
+    }
+
+    // Fall back to Bearer token (for API clients)
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      const decodedToken = await authAdmin.verifyIdToken(token);
+      return { uid: decodedToken.uid, email: decodedToken.email };
+    }
+
+    return null;
+  } catch (error) {
+    logger.error('Auth verification failed', { error: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
 
 // Real-time tool update interfaces
 interface ToolUpdateEvent {
@@ -72,7 +100,7 @@ interface _ToolConflictResolution {
 // POST - Process tool update and broadcast to subscribers
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
@@ -185,18 +213,29 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - Get tool updates and sync information
+// GET - Get tool updates and sync information (or SSE stream if Accept: text/event-stream)
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
     const { searchParams } = new URL(request.url);
-    const toolId = searchParams.get('toolId');
     const deploymentId = searchParams.get('deploymentId');
     const spaceId = searchParams.get('spaceId');
+
+    // Check if client wants SSE stream
+    const acceptHeader = request.headers.get('Accept') || '';
+    const isSSE = acceptHeader.includes('text/event-stream');
+
+    if (isSSE && deploymentId) {
+      // Return SSE stream for real-time updates
+      return createToolSSEStream(user.uid, deploymentId, spaceId || undefined);
+    }
+
+    // Regular JSON response for tool updates history
+    const toolId = searchParams.get('toolId');
     const since = searchParams.get('since'); // Get updates since timestamp
     const limit = parseInt(searchParams.get('limit') || '50');
     const includeSnapshot = searchParams.get('includeSnapshot') === 'true';
@@ -266,7 +305,7 @@ export async function GET(request: NextRequest) {
 // PUT - Sync tool state and resolve conflicts
 export async function PUT(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
@@ -374,7 +413,7 @@ export async function PUT(request: NextRequest) {
 // DELETE - Clean up old tool updates and events
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getCurrentUserFromRequest(request);
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
@@ -469,7 +508,7 @@ async function verifyToolUpdatePermission(
 
     // Check space permissions if spaceId provided
     if (spaceId) {
-      const memberQuery = dbAdmin.collection('members')
+      const memberQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', spaceId)
         .where('status', '==', 'active')
@@ -518,12 +557,12 @@ async function verifyToolAccess(
         }
         
         if (deployment?.spaceId) {
-          const memberQuery = dbAdmin.collection('members')
+          const memberQuery = dbAdmin.collection('spaceMembers')
             .where('userId', '==', userId)
             .where('spaceId', '==', deployment.spaceId)
             .where('status', '==', 'active')
             .where('campusId', '==', CURRENT_CAMPUS_ID);
-          
+
           const memberSnapshot = await memberQuery.get();
           return !memberSnapshot.empty;
         }
@@ -532,12 +571,12 @@ async function verifyToolAccess(
 
     // Check space access
     if (spaceId) {
-      const memberQuery = dbAdmin.collection('members')
+      const memberQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', spaceId)
         .where('status', '==', 'active')
         .where('campusId', '==', CURRENT_CAMPUS_ID);
-      
+
       const memberSnapshot = await memberQuery.get();
       return !memberSnapshot.empty;
     }
@@ -602,7 +641,7 @@ async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: str
 // Helper function to get space members
 async function getSpaceMembers(spaceId: string): Promise<string[]> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -915,6 +954,120 @@ function getChangedFields(oldState: unknown, newState: unknown): string[] {
   }
 
   return changes;
+}
+
+// SSE Stream for real-time tool state updates
+function createToolSSEStream(userId: string, deploymentId: string, spaceId?: string): Response {
+  const encoder = new TextEncoder();
+  let isActive = true;
+  let unsubscribe: (() => void) | null = null;
+
+  const stream = new ReadableStream({
+    start(controller) {
+      // Send initial connection message
+      const connectMessage = `data: ${JSON.stringify({ type: 'connected', deploymentId, timestamp: new Date().toISOString() })}\n\n`;
+      controller.enqueue(encoder.encode(connectMessage));
+
+      // Set up heartbeat to keep connection alive
+      const heartbeatInterval = setInterval(() => {
+        if (!isActive) {
+          clearInterval(heartbeatInterval);
+          return;
+        }
+        try {
+          const heartbeat = `data: ${JSON.stringify({ type: 'heartbeat', timestamp: new Date().toISOString() })}\n\n`;
+          controller.enqueue(encoder.encode(heartbeat));
+        } catch {
+          clearInterval(heartbeatInterval);
+        }
+      }, 30000); // Every 30 seconds
+
+      // Subscribe to toolStates collection changes
+      const stateDocId = `${deploymentId}_${userId}`;
+
+      // Also listen for shared/global state (without user suffix for shared tools)
+      const sharedStateDocId = deploymentId;
+
+      // Firestore listener for user-specific state
+      const userStateRef = dbAdmin.collection('toolStates').doc(stateDocId);
+      const sharedStateRef = dbAdmin.collection('toolStates').doc(sharedStateDocId);
+
+      // Combined listener approach - poll for changes (since admin SDK onSnapshot may not work in edge)
+      const pollInterval = setInterval(async () => {
+        if (!isActive) {
+          clearInterval(pollInterval);
+          return;
+        }
+
+        try {
+          // Check for recent updates in toolUpdateEvents
+          const recentUpdates = await dbAdmin.collection('toolUpdateEvents')
+            .where('deploymentId', '==', deploymentId)
+            .where('timestamp', '>', new Date(Date.now() - 5000).toISOString())
+            .orderBy('timestamp', 'desc')
+            .limit(5)
+            .get();
+
+          for (const doc of recentUpdates.docs) {
+            const update = doc.data();
+            // Don't send updates the user triggered themselves
+            if (update.userId === userId) continue;
+
+            const message = `data: ${JSON.stringify({
+              type: 'state_update',
+              state: update.eventData?.newState || {},
+              updateType: update.updateType,
+              timestamp: update.timestamp,
+              triggeredBy: update.userId,
+            })}\n\n`;
+            controller.enqueue(encoder.encode(message));
+          }
+
+          // Also check shared state document directly
+          const sharedDoc = await sharedStateRef.get();
+          if (sharedDoc.exists) {
+            const stateData = sharedDoc.data();
+            const lastUpdate = stateData?.updatedAt;
+            const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+
+            if (lastUpdate && lastUpdate > fiveSecondsAgo && stateData?.userId !== userId) {
+              const message = `data: ${JSON.stringify({
+                type: 'state_update',
+                state: stateData?.state || {},
+                timestamp: lastUpdate,
+              })}\n\n`;
+              controller.enqueue(encoder.encode(message));
+            }
+          }
+        } catch (err) {
+          logger.error('SSE poll error', { error: err instanceof Error ? err.message : String(err) });
+        }
+      }, 2000); // Poll every 2 seconds
+
+      // Store cleanup functions
+      unsubscribe = () => {
+        isActive = false;
+        clearInterval(heartbeatInterval);
+        clearInterval(pollInterval);
+      };
+    },
+
+    cancel() {
+      isActive = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disable nginx buffering
+    },
+  });
 }
 
 // Helper function to resolve tool state conflicts

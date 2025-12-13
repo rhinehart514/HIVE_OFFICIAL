@@ -54,8 +54,8 @@ export const WelcomeMat = React.forwardRef<HTMLDivElement, WelcomeMatProps>(
         try {
           const isValid = await currentStepData.validation();
           if (!isValid) return;
-        } catch (error) {
-          console.error("WelcomeMat: validation failure", error);
+        } catch (_error) {
+          // Validation failed - don't proceed
           return;
         }
       }
@@ -63,8 +63,8 @@ export const WelcomeMat = React.forwardRef<HTMLDivElement, WelcomeMatProps>(
       if (currentStepData.action) {
         try {
           await currentStepData.action.handler();
-        } catch (error) {
-          console.error("WelcomeMat: action failure", error);
+        } catch (_error) {
+          // Action failed - don't proceed
           return;
         }
       }

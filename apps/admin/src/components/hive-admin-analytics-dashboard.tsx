@@ -397,9 +397,9 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       // setEngagementData(data.engagementData || []);
       setDeviceData(data.deviceData);
       setGeographicData(data.geographicData || []);
-      
-    } catch (error) {
-      console.error('Failed to load analytics:', error);
+
+    } catch (_error) {
+      // Analytics load failed - UI will show empty state
     } finally {
       setLoading(false);
     }
@@ -420,8 +420,8 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
         const data = await response.json();
         setRealTimeMetrics(data.realTimeMetrics);
       }
-    } catch (error) {
-      console.error('Failed to load real-time metrics:', error);
+    } catch (_error) {
+      // Real-time metrics load failed - will retry on next interval
     }
   }, [admin, enableFeatureFlag, realTimeEnabled]);
 
@@ -628,9 +628,9 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
 
       {/* Violation Alert */}
       {violationData && (
-        <ViolationAlert 
-          violations={violationData} 
-          onViewDetails={() => console.warn('View violation details')} 
+        <ViolationAlert
+          violations={violationData}
+          onViewDetails={() => { /* TODO: Navigate to violation details */ }}
         />
       )}
 
@@ -648,7 +648,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             <SpaceCategoryCard
               key={category.category}
               category={category}
-              onViewDetails={() => console.warn('View category details:', category.category)}
+              onViewDetails={() => { /* TODO: Navigate to category details */ }}
             />
           ))}
         </div>

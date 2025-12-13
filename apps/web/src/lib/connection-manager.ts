@@ -44,7 +44,7 @@ export async function createSpaceConnections(
   try {
     // Get all other members of the space
     const membersSnapshot = await dbAdmin
-      .collection('members')
+      .collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
       .get();

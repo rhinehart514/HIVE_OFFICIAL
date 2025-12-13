@@ -9,7 +9,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { Users, GraduationCap, Building2, Sparkles, BookOpen } from 'lucide-react';
-import type { AutoSpaceConfig } from '../../lib/auto-space-creation';
+import { logger } from '@/lib/logger';
+
+// Auto space config - inlined from deleted file
+interface AutoSpaceConfig {
+  schoolId: string;
+  graduationYear: number;
+  major: string;
+  year: string;
+  userType: string;
+}
 
 interface SpacePreview {
   id: string;
@@ -78,7 +87,7 @@ export function SpaceCreationPreview({
         setSpaces(data.spaces || []);
 
       } catch (err) {
-        console.error('Error fetching space preview:', err);
+        logger.error('Error fetching space preview', { component: 'SpaceCreationPreview' }, err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Failed to load preview');
       } finally {
         setPreviewLoading(false);

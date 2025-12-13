@@ -577,8 +577,8 @@ export class FeedGenerationService extends BaseApplicationService {
 
         await this.feedRepo.saveFeed(feed);
       }
-    } catch (error) {
-      console.error('Failed to update algorithm weights:', error);
+    } catch (_error) {
+      // Algorithm weight update failed - non-critical
     }
   }
 }

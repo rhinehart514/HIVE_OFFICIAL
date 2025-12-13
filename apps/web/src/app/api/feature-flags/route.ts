@@ -3,9 +3,147 @@ import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { featureFlagService, type UserFeatureContext, HIVE_FEATURE_FLAGS } from '@/lib/feature-flags';
 import { dbAdmin } from '@/lib/firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+
+// =============================================================================
+// Inlined Feature Flags (previously from @/lib/feature-flags)
+// =============================================================================
+
+export interface UserFeatureContext {
+  userId: string;
+  userRole: string;
+  schoolId?: string;
+  spaceIds?: string[];
+  metadata?: Record<string, unknown>;
+}
+
+export const HIVE_FEATURE_FLAGS = {
+  SPACES_V2: 'spaces_v2',
+  HIVELAB: 'hivelab',
+  CHAT_BOARD: 'chat_board',
+  GHOST_MODE: 'ghost_mode',
+  REALTIME_FEED: 'realtime_feed',
+  AI_MODERATION: 'ai_moderation',
+  CALENDAR_SYNC: 'calendar_sync',
+  RITUALS: 'rituals',
+  TOOL_MARKETPLACE: 'tool_marketplace',
+  ADVANCED_ANALYTICS: 'advanced_analytics',
+} as const;
+
+// Simple feature flag service (inlined)
+const featureFlagService = {
+  async getUserFeatureFlags(
+    flagIds: string[],
+    context: UserFeatureContext
+  ): Promise<Record<string, FlagResult>> {
+    const results: Record<string, FlagResult> = {};
+
+    for (const flagId of flagIds) {
+      try {
+        const flagDoc = await dbAdmin.collection('featureFlags').doc(flagId).get();
+        if (flagDoc.exists) {
+          const data = flagDoc.data();
+          const enabled = evaluateFlag(data, context);
+          results[flagId] = {
+            enabled,
+            config: data?.config,
+            variant: data?.variant || 'default',
+          };
+        } else {
+          // Default to disabled for unknown flags
+          results[flagId] = { enabled: false };
+        }
+      } catch (error) {
+        logger.error('Error evaluating feature flag', { flagId, error });
+        results[flagId] = { enabled: false };
+      }
+    }
+
+    return results;
+  },
+
+  async getCategoryFeatureFlags(
+    category: string,
+    context: UserFeatureContext
+  ): Promise<Record<string, FlagResult>> {
+    try {
+      const flagsSnapshot = await dbAdmin
+        .collection('featureFlags')
+        .where('category', '==', category)
+        .get();
+
+      const results: Record<string, FlagResult> = {};
+      for (const doc of flagsSnapshot.docs) {
+        const data = doc.data();
+        const enabled = evaluateFlag(data, context);
+        results[doc.id] = {
+          enabled,
+          config: data?.config,
+          variant: data?.variant || 'default',
+        };
+      }
+      return results;
+    } catch (error) {
+      logger.error('Error fetching category flags', { category, error });
+      return {};
+    }
+  },
+};
+
+// Evaluate if a flag is enabled for a given context
+function evaluateFlag(
+  flagData: Record<string, unknown> | undefined,
+  context: UserFeatureContext
+): boolean {
+  if (!flagData) return false;
+
+  // Check if globally enabled
+  if (flagData.enabled === true) return true;
+  if (flagData.enabled === false) return false;
+
+  // Check rollout type
+  const rollout = flagData.rollout as Record<string, unknown> | undefined;
+  if (!rollout) return false;
+
+  switch (rollout.type) {
+    case 'all':
+      return true;
+    case 'none':
+      return false;
+    case 'percentage': {
+      const percentage = (rollout.percentage as number) || 0;
+      // Use consistent hashing for user ID
+      const hash = hashString(context.userId);
+      return (hash % 100) < percentage;
+    }
+    case 'users': {
+      const allowedUsers = (rollout.users as string[]) || [];
+      return allowedUsers.includes(context.userId);
+    }
+    case 'schools': {
+      const allowedSchools = (rollout.schools as string[]) || [];
+      return context.schoolId ? allowedSchools.includes(context.schoolId) : false;
+    }
+    case 'roles': {
+      const allowedRoles = (rollout.roles as string[]) || [];
+      return allowedRoles.includes(context.userRole);
+    }
+    default:
+      return false;
+  }
+}
+
+// Simple string hash for percentage rollouts
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+}
 
 // Type for feature flag results
 interface FlagResult {
@@ -149,7 +287,7 @@ async function buildUserContext(userId: string): Promise<UserFeatureContext> {
     const userData = userDoc.exists ? userDoc.data() : {};
 
     // Get user's spaces
-    const membershipsQuery = dbAdmin.collection('members')
+    const membershipsQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);

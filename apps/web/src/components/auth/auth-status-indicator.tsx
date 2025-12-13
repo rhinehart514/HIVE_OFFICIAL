@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Avatar, AvatarImage, AvatarFallback } from "@hive/ui";
 import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface SessionData {
   userId: string;
@@ -37,7 +38,7 @@ export function AuthStatusIndicator() {
             setSession(null);
           }
         } catch (error) {
-          console.error('Error parsing session:', error);
+          logger.error('Error parsing session', { component: 'AuthStatusIndicator' }, error instanceof Error ? error : undefined);
           window.localStorage.removeItem('hive_session');
           setSession(null);
         }
@@ -64,7 +65,7 @@ export function AuthStatusIndicator() {
       // Redirect to landing
       router.push('/landing');
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error', { component: 'AuthStatusIndicator' }, error instanceof Error ? error : undefined);
     }
   };
 

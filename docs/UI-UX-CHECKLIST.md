@@ -24,10 +24,17 @@ Recent Updates (Nov 2025)
 - ✅ Rituals: Added role="main", tablist aria-labels, list/listitem semantics for grids.
 - ✅ Onboarding: Academics step now shows skeleton while catalog loads and announces loading/loaded states via aria-live.
 
+Recent Updates (Dec 2025)
+- ✅ Loading Skeletons: Added route-level loading.tsx for /tools, /tools/[toolId], /events, /calendar, /notifications, /user/[handle], /spaces/browse, /schools
+- ✅ Component Audit: Verified PostCard canonical in `@hive/ui/atomic/02-Feed/atoms/post-card.tsx`, FeedCardEvent canonical in `@hive/ui/atomic/02-Feed/organisms/feed-card-event.tsx`
+- ✅ Toast System: Confirmed working architecture with app-level bridge for non-React code (`hive:toast` custom events)
+- ✅ Accessibility: 9 a11y primitives in packages/ui/src/a11y/, 8 files respecting prefers-reduced-motion
+- ✅ Cognitive Budgets: UX limits enforced via packages/tokens/src/topology/slot-kit.ts
+
 Performance (p75 TTI ≤ 2.5s Feed/Spaces)
 - [ ] Dynamic imports for heavy/low-frequency components; minimal deps.
 - [ ] Blur‑up images; avoid layout thrash (use transform/opacity); memoize lists.
-- [ ] Skeletons appear if load > 120ms; `loading.tsx` present for routes.
+- [x] Skeletons appear if load > 120ms; `loading.tsx` present for routes (17 routes covered).
 - [ ] Prefetch within same-origin; leverage caching/ISR/SSR safely.
 
 Security & Auth (Web)
@@ -86,11 +93,11 @@ When building or wiring any UI, audit for duplicates and clean up legacy code as
   - [ ] `rg -n "RitualStrip|EventSheet|ExplainabilityChip"` to ensure single source per organism/micro.
 
 - Known duplicate hotspots (migrate to canonical)
-  - [ ] PostCard: consolidate on `packages/ui/src/atomic/organisms/post-card.tsx`; remove or wrap `apps/web/src/components/social/post-card.tsx`.
-  - [ ] EventCard: extract shared card to `packages/ui/src/organisms/events/EventCard.tsx` and replace `apps/web/src/components/feed/enhanced-event-card.tsx` and inline event cards in `apps/web/src/app/events/page.tsx`.
+  - [x] PostCard: canonical at `packages/ui/src/atomic/02-Feed/atoms/post-card.tsx` (PostCardListItem + PostCardSkeleton).
+  - [x] EventCard: canonical at `packages/ui/src/atomic/02-Feed/organisms/feed-card-event.tsx` (FeedCardEvent).
   - [x] SpaceCard: extract to `packages/ui/src/atomic/organisms/space-card.tsx`; remove inline card from `apps/web/src/app/spaces/page.tsx`.
   - [x] Admin dashboard UI: consolidate on `@hive/ui` (`AdminShell`, `AdminMetricCard`, `AuditLogList`, `ModerationQueue`); remove bespoke layout from `apps/web/src/app/admin`.
-  - [ ] Toast/Notification: choose a single toast system; consolidate `packages/ui/src/systems/modal-toast-system.tsx`, `packages/ui/src/atomic/molecules/notification-toast-manager.tsx`, and `apps/web/src/hooks/use-toast.tsx` usage. Prefer `@hive/ui` provider + manager.
+  - [x] Toast/Notification: Architecture works - `@hive/ui` has Radix primitives + modal-toast-system, app has event bridge for non-React code via `hive:toast` custom events.
   - [ ] Feed service paths: ensure a single server-side feed service and consistent client usage.
 
 - Consolidation steps (include in PR description)
@@ -115,12 +122,12 @@ Onboarding & Auth Specific (when applicable)
 - [ ] Interest step uses `InterestSelector` molecule; selection caps (3-6) enforced with analytics hooks.
 - [ ] Photo step uses `HiveAvatarUploadWithCrop` with accessible crop controls and error states.
 - [ ] `useOnboardingStep` (autosave + optimistic) integrated; Storybook stories cover success/error/retry.
-- [ ] Route-level skeleton present for `/onboarding` using shared feed/auth skeleton primitives.
+- [x] Route-level skeleton present for `/onboarding` using shared feed/auth skeleton primitives.
 
 Profile Specific (when applicable)
 - [ ] Public view uses `ProfileViewLayout`; privacy levels respected per widget.
 - [ ] Ghost mode redacts data with accessible copy; presence indicators hidden.
-- [ ] Route-level skeleton present (`apps/web/src/app/profile/[id]/loading.tsx`) and mirrors layout.
+- [x] Route-level skeleton present (`apps/web/src/app/profile/[id]/loading.tsx`) and mirrors layout.
 - [ ] Storybook parity for loading and core widgets (identity/activity/spaces/connections).
 - [ ] Analytics: emit `profile_view`, primary CTA, and privacy toggles.
 

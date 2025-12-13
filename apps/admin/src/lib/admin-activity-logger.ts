@@ -273,8 +273,8 @@ class AdminActivityLogger {
   private async persistToDatabase(log: AdminActivityLog): Promise<void> {
     try {
       await dbAdmin.collection('adminActivityLogs').doc(log.id).set(log);
-    } catch (error) {
-      console.error('Failed to persist activity log:', error);
+    } catch (_error) {
+      // Activity log persistence is non-critical
     }
   }
 
@@ -294,9 +294,9 @@ class AdminActivityLogger {
       });
 
       await batch.commit();
-      console.warn(`Cleaned up ${oldLogs.docs.length} old activity logs`);
-    } catch (error) {
-      console.error('Failed to cleanup old logs from database:', error);
+      // Old logs cleaned up successfully
+    } catch (_error) {
+      // Log cleanup failed - will retry on next cleanup cycle
     }
   }
 }

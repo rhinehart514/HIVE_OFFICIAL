@@ -241,7 +241,7 @@ async function getUserInteractions(userId: string): Promise<UserInteractions> {
     .filter((id) => id); // Filter out undefined/null
 
   // Get joined spaces
-  const joinedSpacesQuery = await db.collection("space_members")
+  const joinedSpacesQuery = await db.collection("spaceMembers")
     .where("userId", "==", userId)
     .get();
   const joinedSpaces = joinedSpacesQuery.docs.map((doc) => doc.data().spaceId);
@@ -418,7 +418,7 @@ async function generateSpaceRecommendations(
     }
 
     // Network effect - check if user's friends are members
-    const friendsInSpaceQuery = await db.collection("space_members")
+    const friendsInSpaceQuery = await db.collection("spaceMembers")
       .where("spaceId", "==", space.id)
       .where("userId", "in", interactions.followedUsers.slice(0, 10)) // Firestore limit: 10 items in 'in' query
       .get();
@@ -515,7 +515,7 @@ async function generatePeopleRecommendations(
 
     // Common spaces - check if user shares spaces with candidate
     if (interactions.joinedSpaces.length > 0) {
-      const userSpacesQuery = await db.collection("space_members")
+      const userSpacesQuery = await db.collection("spaceMembers")
         .where("userId", "==", user.id)
         .where("spaceId", "in", interactions.joinedSpaces.slice(0, 10)) // Firestore limit
         .get();

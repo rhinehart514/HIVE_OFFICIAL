@@ -10,9 +10,19 @@ import type { ToolComposition } from '../../../domain/hivelab/tool-composition.t
 /**
  * Element type descriptions for the AI model
  */
+/**
+ * IMPORTANT: These element IDs MUST match ELEMENT_RENDERERS in element-renderers.tsx
+ * Do NOT add suffixes like "-1", "-2" to elementId values.
+ * The instanceId field is used to distinguish multiple instances of the same element type.
+ */
 export const ELEMENT_CATALOG = {
+  // ═══════════════════════════════════════════════════════════════
+  // UNIVERSAL ELEMENTS - Work anywhere, no data source required
+  // ═══════════════════════════════════════════════════════════════
+
   'search-input': {
     category: 'input',
+    tier: 'universal',
     description: 'Text search input with autocomplete suggestions. Use for finding content, filtering by keywords, or querying data.',
     config: {
       placeholder: 'string (default: "Search...")',
@@ -25,6 +35,7 @@ export const ELEMENT_CATALOG = {
 
   'filter-selector': {
     category: 'filter',
+    tier: 'universal',
     description: 'Multi-select filter buttons with badges. Use for categorizing, tagging, or filtering by multiple criteria.',
     config: {
       options: 'array of {value, label, count?} (required)',
@@ -37,6 +48,7 @@ export const ELEMENT_CATALOG = {
 
   'result-list': {
     category: 'display',
+    tier: 'universal',
     description: 'Paginated list view for displaying results. Use for showing search results, filtered items, or collections.',
     config: {
       itemsPerPage: 'number (default: 10)',
@@ -48,10 +60,11 @@ export const ELEMENT_CATALOG = {
 
   'date-picker': {
     category: 'input',
+    tier: 'universal',
     description: 'Date and time selection calendar. Use for scheduling events, setting deadlines, or picking dates.',
     config: {
       mode: '"single" | "range" (default: "single")',
-      showTime: 'boolean (default: false)',
+      includeTime: 'boolean (default: false)',
       minDate: 'string (ISO date)',
       maxDate: 'string (ISO date)'
     },
@@ -59,21 +72,9 @@ export const ELEMENT_CATALOG = {
     useCases: ['event scheduling', 'deadline picker', 'date range selection', 'availability calendar']
   },
 
-  'user-selector': {
-    category: 'input',
-    description: 'Campus user picker with search and multi-select. Use for inviting members, assigning people, or building teams.',
-    config: {
-      allowMultiple: 'boolean (default: true)',
-      maxSelections: 'number (optional)',
-      filterByRole: 'string[] (optional)',
-      placeholder: 'string (default: "Select users...")'
-    },
-    outputs: ['selectedUsers', 'userIds'],
-    useCases: ['invite attendees', 'assign tasks', 'build team', 'select members', 'RSVP list']
-  },
-
   'tag-cloud': {
     category: 'display',
+    tier: 'universal',
     description: 'Weighted tag visualization showing popular topics or categories. Use for showing trending topics or keyword frequency.',
     config: {
       maxTags: 'number (default: 20)',
@@ -86,6 +87,7 @@ export const ELEMENT_CATALOG = {
 
   'map-view': {
     category: 'display',
+    tier: 'universal',
     description: 'Geographic map visualization (campus map placeholder). Use for location-based features.',
     config: {
       center: '{lat, lng} (optional)',
@@ -98,6 +100,7 @@ export const ELEMENT_CATALOG = {
 
   'chart-display': {
     category: 'display',
+    tier: 'universal',
     description: 'Data visualization charts (bar, line, pie). Use for showing statistics, trends, or analytics.',
     config: {
       chartType: '"bar" | "line" | "pie" (required)',
@@ -110,6 +113,7 @@ export const ELEMENT_CATALOG = {
 
   'form-builder': {
     category: 'input',
+    tier: 'universal',
     description: 'Dynamic form with custom fields. Use for collecting structured data, surveys, or sign-ups.',
     config: {
       fields: 'array of {name, type, label, required?, options?} (required)',
@@ -120,8 +124,80 @@ export const ELEMENT_CATALOG = {
     useCases: ['event RSVP', 'feedback form', 'registration', 'survey', 'data collection']
   },
 
+  'countdown-timer': {
+    category: 'display',
+    tier: 'universal',
+    description: 'Countdown to a specific date/time. Use for event countdowns, deadlines, or time-limited activities.',
+    config: {
+      targetDate: 'string (ISO date, required)',
+      showDays: 'boolean (default: true)',
+      showSeconds: 'boolean (default: true)',
+      completedMessage: 'string (default: "Time\'s up!")'
+    },
+    outputs: ['timeRemaining', 'isComplete'],
+    useCases: ['event countdown', 'deadline timer', 'launch countdown', 'sale timer']
+  },
+
+  'timer': {
+    category: 'display',
+    tier: 'universal',
+    description: 'Stopwatch/timer that counts up or down. Use for timed activities, study sessions, or meetings.',
+    config: {
+      mode: '"stopwatch" | "countdown" (default: "stopwatch")',
+      initialSeconds: 'number (default: 0)',
+      autoStart: 'boolean (default: false)'
+    },
+    outputs: ['elapsedTime', 'isRunning'],
+    useCases: ['study timer', 'meeting timer', 'exercise timer', 'presentation timer']
+  },
+
+  'counter': {
+    category: 'input',
+    tier: 'universal',
+    description: 'Simple numeric counter with increment/decrement. Use for counting attendees, votes, or quantities.',
+    config: {
+      initialValue: 'number (default: 0)',
+      min: 'number (optional)',
+      max: 'number (optional)',
+      step: 'number (default: 1)',
+      label: 'string (optional)'
+    },
+    outputs: ['count', 'value'],
+    useCases: ['headcount', 'inventory tracking', 'vote counter', 'quantity selector']
+  },
+
+  'poll-element': {
+    category: 'input',
+    tier: 'universal',
+    description: 'Interactive poll/voting element. Use for gathering opinions, making group decisions, or voting.',
+    config: {
+      question: 'string (required)',
+      options: 'array of strings (required)',
+      allowMultiple: 'boolean (default: false)',
+      showResults: 'boolean (default: true)',
+      allowChangeVote: 'boolean (default: false)'
+    },
+    outputs: ['votes', 'selectedOption', 'results'],
+    useCases: ['quick polls', 'voting', 'decision making', 'feedback', 'lunch poll']
+  },
+
+  'leaderboard': {
+    category: 'display',
+    tier: 'universal',
+    description: 'Ranked list showing scores/standings. Use for competitions, gamification, or rankings.',
+    config: {
+      title: 'string (optional)',
+      maxEntries: 'number (default: 10)',
+      showRank: 'boolean (default: true)',
+      highlightTop: 'number (default: 3)'
+    },
+    inputs: ['entries'],
+    useCases: ['competition standings', 'top contributors', 'game scores', 'achievement rankings']
+  },
+
   'notification-center': {
     category: 'display',
+    tier: 'universal',
     description: 'Real-time notifications feed. Use for showing updates, alerts, or activity streams.',
     config: {
       maxItems: 'number (default: 20)',
@@ -130,6 +206,172 @@ export const ELEMENT_CATALOG = {
     },
     inputs: ['notifications'],
     useCases: ['activity feed', 'updates stream', 'announcements', 'alerts']
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // CONNECTED ELEMENTS - Require data source connection
+  // ═══════════════════════════════════════════════════════════════
+
+  'event-picker': {
+    category: 'input',
+    tier: 'connected',
+    description: 'Select from campus/space events. Use for linking tools to specific events.',
+    config: {
+      scope: '"campus" | "space" (default: "space")',
+      allowMultiple: 'boolean (default: false)',
+      showPastEvents: 'boolean (default: false)'
+    },
+    outputs: ['selectedEvent', 'eventId'],
+    useCases: ['event selection', 'RSVP target', 'event linking', 'calendar integration']
+  },
+
+  'space-picker': {
+    category: 'input',
+    tier: 'connected',
+    description: 'Select from campus spaces/organizations. Use for cross-space features or targeting.',
+    config: {
+      allowMultiple: 'boolean (default: false)',
+      filterByCategory: 'string[] (optional)',
+      showMemberCount: 'boolean (default: true)'
+    },
+    outputs: ['selectedSpace', 'spaceId'],
+    useCases: ['space selection', 'cross-posting', 'collaboration', 'space linking']
+  },
+
+  'user-selector': {
+    category: 'input',
+    tier: 'connected',
+    description: 'Campus user picker with search and multi-select. Use for inviting members, assigning people, or building teams.',
+    config: {
+      allowMultiple: 'boolean (default: true)',
+      maxSelections: 'number (optional)',
+      filterByRole: 'string[] (optional)',
+      placeholder: 'string (default: "Select users...")'
+    },
+    outputs: ['selectedUsers', 'userIds'],
+    useCases: ['invite attendees', 'assign tasks', 'build team', 'select members', 'RSVP list']
+  },
+
+  'rsvp-button': {
+    category: 'input',
+    tier: 'connected',
+    description: 'RSVP/attendance button for events. Use for event sign-ups with optional capacity limits.',
+    config: {
+      eventId: 'string (required)',
+      maxAttendees: 'number (optional)',
+      showCount: 'boolean (default: true)',
+      confirmationMessage: 'string (optional)'
+    },
+    outputs: ['isAttending', 'attendeeCount'],
+    useCases: ['event RSVP', 'meeting signup', 'workshop registration', 'attendance tracking']
+  },
+
+  'connection-list': {
+    category: 'display',
+    tier: 'connected',
+    description: 'Display user connections/friends. Use for social features or networking.',
+    config: {
+      showMutualConnections: 'boolean (default: false)',
+      maxDisplay: 'number (default: 10)',
+      allowConnect: 'boolean (default: true)'
+    },
+    inputs: ['users'],
+    useCases: ['friend list', 'mutual connections', 'networking', 'social graph']
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // SPACE ELEMENTS - Space-specific, require space context
+  // ═══════════════════════════════════════════════════════════════
+
+  'member-list': {
+    category: 'display',
+    tier: 'space',
+    description: 'Display space members with roles. Use for member directories or team views.',
+    config: {
+      showRoles: 'boolean (default: true)',
+      showJoinDate: 'boolean (default: false)',
+      maxDisplay: 'number (default: 20)',
+      groupByRole: 'boolean (default: false)'
+    },
+    inputs: ['members'],
+    useCases: ['member directory', 'team roster', 'leadership display', 'active members']
+  },
+
+  'member-selector': {
+    category: 'input',
+    tier: 'space',
+    description: 'Select members from current space. Use for space-specific assignments or mentions.',
+    config: {
+      allowMultiple: 'boolean (default: true)',
+      filterByRole: 'string[] (optional)',
+      excludeSelf: 'boolean (default: false)'
+    },
+    outputs: ['selectedMembers', 'memberIds'],
+    useCases: ['assign to member', 'mention members', 'team building', 'task assignment']
+  },
+
+  'space-events': {
+    category: 'display',
+    tier: 'space',
+    description: 'Display upcoming events for current space. Use for event calendars or schedules.',
+    config: {
+      maxEvents: 'number (default: 5)',
+      showPast: 'boolean (default: false)',
+      layout: '"list" | "calendar" | "cards" (default: "list")'
+    },
+    inputs: ['events'],
+    useCases: ['upcoming events', 'event calendar', 'schedule display', 'event list']
+  },
+
+  'space-feed': {
+    category: 'display',
+    tier: 'space',
+    description: 'Display recent posts/activity from space. Use for activity feeds or updates.',
+    config: {
+      maxPosts: 'number (default: 10)',
+      showComments: 'boolean (default: false)',
+      allowPosting: 'boolean (default: false)'
+    },
+    inputs: ['posts'],
+    useCases: ['activity feed', 'announcements', 'updates', 'discussion']
+  },
+
+  'space-stats': {
+    category: 'display',
+    tier: 'space',
+    description: 'Display space statistics and metrics. Use for dashboards or status displays.',
+    config: {
+      metrics: 'array of "members" | "events" | "posts" | "activity" (default: all)',
+      layout: '"grid" | "row" (default: "grid")'
+    },
+    inputs: ['stats'],
+    useCases: ['space dashboard', 'activity metrics', 'engagement stats', 'growth tracking']
+  },
+
+  'announcement': {
+    category: 'display',
+    tier: 'space',
+    description: 'Prominent announcement banner. Use for important messages or alerts.',
+    config: {
+      title: 'string (required)',
+      message: 'string (required)',
+      type: '"info" | "warning" | "success" | "urgent" (default: "info")',
+      dismissible: 'boolean (default: true)'
+    },
+    outputs: ['isDismissed'],
+    useCases: ['important announcements', 'alerts', 'notifications', 'updates']
+  },
+
+  'role-gate': {
+    category: 'layout',
+    tier: 'space',
+    description: 'Show/hide content based on user role. Use for leader-only or member-only features.',
+    config: {
+      allowedRoles: 'array of "leader" | "admin" | "moderator" | "member" (required)',
+      fallbackMessage: 'string (default: "You don\'t have permission to view this")'
+    },
+    outputs: ['hasAccess'],
+    useCases: ['admin controls', 'leader features', 'member-only content', 'permissions']
   }
 } as const;
 
@@ -443,6 +685,22 @@ Message 4 (final):
 5. **Provide status**: Include helpful status messages during streaming
 6. **Default configs**: Use sensible defaults, don't over-configure
 7. **Campus context**: Remember these are for student orgs, not enterprises
+
+# CRITICAL: Element ID Format
+
+**NEVER add numeric suffixes to elementId values!**
+
+- CORRECT: \`"elementId": "date-picker"\`
+- WRONG: \`"elementId": "date-picker-1"\` ← DO NOT DO THIS!
+- WRONG: \`"elementId": "user-selector-2"\` ← DO NOT DO THIS!
+
+The \`elementId\` must EXACTLY match one of the available element types listed above.
+Use \`instanceId\` (like "elem_001", "elem_002") to distinguish multiple instances of the same element type.
+
+**Valid elementId values (use EXACTLY as written):**
+- Universal: search-input, filter-selector, result-list, date-picker, tag-cloud, map-view, chart-display, form-builder, countdown-timer, timer, counter, poll-element, leaderboard, notification-center
+- Connected: event-picker, space-picker, user-selector, rsvp-button, connection-list
+- Space: member-list, member-selector, space-events, space-feed, space-stats, announcement, role-gate
 
 Now convert the user's prompt into a ToolComposition!`;
 

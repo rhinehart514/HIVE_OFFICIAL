@@ -11,13 +11,22 @@ interface HandleCheckErrorResponse {
   details: Array<{ message: string }>;
 }
 
-interface MagicLinkResponse {
+interface OTPCodeResponse {
   success: boolean;
   message: string;
 }
 
-interface MagicLinkErrorResponse {
+interface OTPCodeErrorResponse {
   error: string;
+}
+
+interface OTPVerifyResponse {
+  success: boolean;
+  needsOnboarding: boolean;
+  user?: {
+    id: string;
+    email: string;
+  };
 }
 
 interface OnboardingResponse {
@@ -106,11 +115,11 @@ describe("Auth API Integration", () => {
     });
   });
 
-  describe("POST /api/auth/send-magic-link", () => {
-    it("should send magic link successfully", async () => {
-      const mockResponse: MagicLinkResponse = {
+  describe("POST /api/auth/send-code", () => {
+    it("should send OTP code successfully", async () => {
+      const mockResponse: OTPCodeResponse = {
         success: true,
-        message: "Magic link sent successfully",
+        message: "Verification code sent",
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -118,22 +127,22 @@ describe("Auth API Integration", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const response = await fetch("/api/auth/send-magic-link", {
+      const response = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: "student@buffalo.edu",
-          schoolId: "ub",
+          schoolId: "ub-buffalo",
         }),
       });
 
-      const result = (await response.json()) as MagicLinkResponse;
+      const result = (await response.json()) as OTPCodeResponse;
 
       expect(result).toEqual(mockResponse);
     });
 
     it("should validate email domain matches school", async () => {
-      const mockResponse: MagicLinkErrorResponse = {
+      const mockResponse: OTPCodeErrorResponse = {
         error: "Email domain does not match school domain",
       };
 
@@ -143,16 +152,74 @@ describe("Auth API Integration", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const response = await fetch("/api/auth/send-magic-link", {
+      const response = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: "student@gmail.com",
-          schoolId: "ub",
+          schoolId: "ub-buffalo",
         }),
       });
 
       expect(response.ok).toBe(false);
+    });
+  });
+
+  describe("POST /api/auth/verify-code", () => {
+    it("should verify OTP code successfully", async () => {
+      const mockResponse: OTPVerifyResponse = {
+        success: true,
+        needsOnboarding: false,
+        user: {
+          id: "test-user-id",
+          email: "student@buffalo.edu",
+        },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const response = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "student@buffalo.edu",
+          code: "123456",
+          schoolId: "ub-buffalo",
+        }),
+      });
+
+      const result = (await response.json()) as OTPVerifyResponse;
+
+      expect(result.success).toBe(true);
+      expect(result.needsOnboarding).toBe(false);
+    });
+
+    it("should reject invalid OTP code", async () => {
+      const mockResponse: OTPCodeErrorResponse = {
+        error: "Invalid or expired code",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const response = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "student@buffalo.edu",
+          code: "000000",
+          schoolId: "ub-buffalo",
+        }),
+      });
+
+      expect(response.ok).toBe(false);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -181,8 +248,8 @@ describe("Auth API Integration", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer mock-token",
         },
+        credentials: "include", // Uses httpOnly cookie
         body: JSON.stringify(onboardingData),
       });
 
@@ -215,8 +282,8 @@ describe("Auth API Integration", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer mock-token",
         },
+        credentials: "include",
         body: JSON.stringify(onboardingData),
       });
 
@@ -246,8 +313,8 @@ describe("Auth API Integration", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer admin-token",
         },
+        credentials: "include", // Uses httpOnly cookie for admin auth
         body: JSON.stringify({
           query: "student@buffalo.edu",
           searchType: "email",
@@ -274,8 +341,8 @@ describe("Auth API Integration", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer user-token",
         },
+        credentials: "include",
         body: JSON.stringify({
           query: "student@buffalo.edu",
           searchType: "email",

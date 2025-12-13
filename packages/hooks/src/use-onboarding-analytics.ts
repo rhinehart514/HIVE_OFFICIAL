@@ -1,6 +1,16 @@
 import { useCallback, useRef, useEffect } from 'react'
 import { useAnalytics } from './use-analytics'
-import type { OnboardingStepName } from '@hive/core'
+
+// Onboarding step names for analytics tracking
+// Matches the types defined in @hive/core/domain/analytics/types.ts
+export type OnboardingStepName =
+  | 'welcome'
+  | 'name'
+  | 'academics'
+  | 'handle'
+  | 'photo'
+  | 'builder'
+  | 'legal';
 
 interface OnboardingStepTiming {
   stepName: OnboardingStepName

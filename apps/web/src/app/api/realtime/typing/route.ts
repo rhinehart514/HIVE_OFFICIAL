@@ -237,7 +237,7 @@ export async function GET(request: NextRequest) {
 async function verifyChannelAccess(userId: string, channelId: string, spaceId: string): Promise<boolean> {
   try {
     // Check space membership
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')

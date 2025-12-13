@@ -30,16 +30,13 @@ class AuthFlowTester {
     // Test 2: Login Page Accessibility
     await this.testLoginPage();
 
-    // Test 3: Magic Link Generation
-    await this.testMagicLinkGeneration();
+    // Test 3: OTP Code Generation
+    await this.testOTPCodeGeneration();
 
-    // Test 4: Resend Magic Link
-    await this.testResendMagicLink();
+    // Test 4: Session Endpoint
+    await this.testSessionEndpoint();
 
-    // Test 5: Expired Link Recovery
-    await this.testExpiredLinkRecovery();
-
-    // Test 6: Session Management
+    // Test 5: Session Protection
     await this.testSessionManagement();
 
     // Print Results
@@ -88,60 +85,30 @@ class AuthFlowTester {
     }
   }
 
-  private async testMagicLinkGeneration() {
+  private async testOTPCodeGeneration() {
     const startTime = Date.now();
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/send-magic-link`, {
+      const response = await fetch(`${BASE_URL}/api/auth/send-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'test@test.edu',
-          schoolId: 'test-university'
+          email: 'test@buffalo.edu',
+          schoolId: 'ub-buffalo'
         })
       });
 
       const data = await response.json();
 
+      // In development, this should work. In prod, email must be real.
       this.results.push({
-        step: 'Magic Link Generation',
-        status: response.ok || process.env.NODE_ENV === 'development' ? 'pass' : 'fail',
-        message: data.message || data.error || `Status: ${response.status}`,
-        duration: Date.now() - startTime
-      });
-    } catch (error) {
-      this.results.push({
-        step: 'Magic Link Generation',
-        status: 'fail',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        duration: Date.now() - startTime
-      });
-    }
-  }
-
-  private async testResendMagicLink() {
-    const startTime = Date.now();
-    try {
-      const response = await fetch(`${BASE_URL}/api/auth/resend-magic-link`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'test@test.edu',
-          schoolId: 'test-university',
-          attemptNumber: 1
-        })
-      });
-
-      const data = await response.json();
-
-      this.results.push({
-        step: 'Resend Magic Link API',
+        step: 'OTP Code Generation',
         status: response.ok || response.status === 429 ? 'pass' : 'fail',
         message: data.message || data.error || `Status: ${response.status}`,
         duration: Date.now() - startTime
       });
     } catch (error) {
       this.results.push({
-        step: 'Resend Magic Link API',
+        step: 'OTP Code Generation',
         status: 'fail',
         message: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime
@@ -149,20 +116,25 @@ class AuthFlowTester {
     }
   }
 
-  private async testExpiredLinkRecovery() {
+  private async testSessionEndpoint() {
     const startTime = Date.now();
     try {
-      const response = await fetch(`${BASE_URL}/auth/expired`);
+      // Test /api/auth/me without session - should return authenticated: false
+      const response = await fetch(`${BASE_URL}/api/auth/me`);
+      const data = await response.json();
+
+      // Should return 200 with authenticated: false (not 401)
+      const isCorrectBehavior = response.ok && data.authenticated === false;
 
       this.results.push({
-        step: 'Expired Link Recovery Page',
-        status: response.ok ? 'pass' : 'fail',
-        message: `Status: ${response.status}`,
+        step: 'Session Endpoint (/api/auth/me)',
+        status: isCorrectBehavior ? 'pass' : 'fail',
+        message: `Status: ${response.status}, authenticated: ${data.authenticated}`,
         duration: Date.now() - startTime
       });
     } catch (error) {
       this.results.push({
-        step: 'Expired Link Recovery Page',
+        step: 'Session Endpoint (/api/auth/me)',
         status: 'fail',
         message: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime

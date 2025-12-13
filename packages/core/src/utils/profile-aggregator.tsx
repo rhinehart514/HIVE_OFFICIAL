@@ -123,7 +123,7 @@ class ProfileAggregator {
 
       return aggregatedData;
     } catch (error) {
-      console.error('Error aggregating profile data:', error);
+      // Re-throw to let caller handle
       throw error;
     }
   }
@@ -319,8 +319,8 @@ class ProfileAggregator {
   async preloadProfileData(options: ProfileAggregatorOptions = {}): Promise<void> {
     try {
       await this.aggregateProfileData(options);
-    } catch (error) {
-      console.warn('Failed to preload profile data:', error);
+    } catch (_error) {
+      // Preload is best-effort - silently fail
     }
   }
 }

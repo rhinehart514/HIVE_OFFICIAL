@@ -9,6 +9,7 @@ import {
   type FeedCardPostData,
 } from "@hive/ui";
 import { formatDistanceToNow } from "date-fns";
+import { logger } from "@/lib/logger";
 
 // =============================================================================
 // TYPES
@@ -246,7 +247,7 @@ export default function FeedPage() {
         body: JSON.stringify({ postId }),
       });
     } catch (err) {
-      console.error("Failed to bookmark:", err);
+      logger.error("Failed to bookmark", { component: "FeedPage" }, err instanceof Error ? err : undefined);
       // Revert on error
       setPosts((prev) =>
         prev.map((post) =>

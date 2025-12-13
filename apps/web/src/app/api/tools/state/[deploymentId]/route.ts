@@ -92,10 +92,11 @@ async function canUserAccessDeploymentState(
 
   if (deployment.deployedTo === "space") {
     const membershipSnapshot = await dbAdmin
-      .collection("members")
+      .collection("spaceMembers")
       .where("userId", "==", userId)
       .where("spaceId", "==", deployment.targetId)
       .where("status", "==", "active")
+      .where("campusId", "==", CURRENT_CAMPUS_ID)
       .limit(1)
       .get();
     return !membershipSnapshot.empty;

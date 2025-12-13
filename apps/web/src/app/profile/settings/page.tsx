@@ -17,7 +17,6 @@ import {
   Breadcrumbs,
 } from '@hive/ui';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
-import { ErrorBoundary } from '@/components/error-boundary';
 import {
   User,
   Bell,
@@ -975,10 +974,8 @@ function ProfileSettingsContent() {
 
 export default function ProfileSettingsPage() {
   return (
-    <ErrorBoundary>
-      <ProfileContextProvider>
-        <ProfileSettingsContent />
-      </ProfileContextProvider>
-    </ErrorBoundary>
+    <ProfileContextProvider>
+      <ProfileSettingsContent />
+    </ProfileContextProvider>
   );
 }

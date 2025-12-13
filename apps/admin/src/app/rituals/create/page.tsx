@@ -20,13 +20,14 @@ import {
 } from '@hive/ui';
 import {
   RITUAL_TEMPLATES,
+  type BaseRitual,
   type RitualTemplate,
   type RitualTemplateId,
 } from '@hive/core';
 import { ChevronRight, ChevronLeft, Check, Sparkles } from 'lucide-react';
 
 type WizardStep = 'template' | 'basic' | 'config' | 'presentation' | 'review';
-type RitualFormData = Record<string, string | number | boolean | undefined>;
+type RitualFormData = Partial<BaseRitual>;
 
 export default function CreateRitualPage() {
   const router = useRouter();
@@ -247,7 +248,12 @@ export default function CreateRitualPage() {
                   <select
                     id="visibility"
                     value={ritualData.visibility || 'public'}
-                    onChange={(e) => setRitualData({ ...ritualData, visibility: e.target.value })}
+                    onChange={(e) =>
+                      setRitualData({
+                        ...ritualData,
+                        visibility: e.target.value as BaseRitual['visibility'],
+                      })
+                    }
                     className="mt-1 w-full rounded-md border border-white/20 bg-white/5 px-3 py-2 text-white focus:border-[var(--hive-brand-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--hive-brand-primary)]"
                   >
                     <option value="public">Public</option>
@@ -292,7 +298,7 @@ export default function CreateRitualPage() {
                     onChange={(e) =>
                       setRitualData({
                         ...ritualData,
-                        presentation: { ...ritualData.presentation, icon: e.target.value },
+                        presentation: { ...(ritualData.presentation ?? {}), icon: e.target.value },
                       })
                     }
                     placeholder="🎯"
@@ -308,7 +314,7 @@ export default function CreateRitualPage() {
                     onChange={(e) =>
                       setRitualData({
                         ...ritualData,
-                        presentation: { ...ritualData.presentation, accentColor: e.target.value },
+                        presentation: { ...(ritualData.presentation ?? {}), accentColor: e.target.value },
                       })
                     }
                     className="mt-1"
@@ -322,7 +328,7 @@ export default function CreateRitualPage() {
                     onChange={(e) =>
                       setRitualData({
                         ...ritualData,
-                        presentation: { ...ritualData.presentation, ctaLabel: e.target.value },
+                        presentation: { ...(ritualData.presentation ?? {}), ctaLabel: e.target.value },
                       })
                     }
                     placeholder="Join Now"

@@ -7,7 +7,7 @@
 
 import { logger, logSecurityEvent } from './logger';
 export { logger, logSecurityEvent };
-export type { Logger, LogContext, LogLevel } from './logger';
+export type { Logger, LogContext, LogLevel, SecurityEventType, SecurityEventDetails } from './logger';
 
 /**
  * Create a request-scoped logger

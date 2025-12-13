@@ -7,6 +7,7 @@ import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/
 import { withAuth, ApiResponse as _ApiResponse, type AuthContext } from '@/lib/api-auth-middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import type { QueryDocumentSnapshot, QuerySnapshot } from 'firebase-admin/firestore';
+import { isTestUserId } from "@/lib/security-service";
 
 // Personal event type for calendar tool
 interface PersonalEvent {
@@ -54,7 +55,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 
     // Get user's space events from spaces they're a member of
     const membershipSnapshot = await dbAdmin
-      .collection('members')
+      .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('campusId', '==', CURRENT_CAMPUS_ID)
       .get();
@@ -117,7 +118,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 
     return allEvents.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   } catch (error) {
-    console.error('Failed to fetch calendar events:', error);
+    logger.error('Failed to fetch calendar events', { component: 'calendar-api' }, error instanceof Error ? error : undefined);
     return [];
   }
 }
@@ -143,8 +144,8 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
       logger.error('Failed to fetch real calendar events, using mock data');
     }
 
-    // For development mode or fallback, return mock calendar events
-    if ((userId === 'test-user' || userId === 'dev_user_123') && process.env.NODE_ENV !== 'production') {
+    // For development mode or fallback, return mock calendar events (ONLY in development)
+    if (isTestUserId(userId)) {
       const mockEvents: CalendarEvent[] = [
         {
           id: 'event_1',
@@ -246,7 +247,7 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
 
     if (includeSpaceEvents) {
       // Fetch user's space memberships
-      const membershipsSnapshot = await dbAdmin.collection('members')
+      const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('status', '==', 'active')
         .where('campusId', '==', CURRENT_CAMPUS_ID)

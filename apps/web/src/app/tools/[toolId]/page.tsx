@@ -3,15 +3,14 @@
 // Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button, Card, Badge } from "@hive/ui";
-import { PageContainer } from "@/components/temp-stubs";
-import { 
-  Play, 
-  Settings, 
-  BarChart3, 
-  Share2, 
+import {
+  Play,
+  Settings,
+  BarChart3,
+  Share2,
   Download,
   Star,
   Users,
@@ -20,8 +19,26 @@ import {
   Zap
 } from 'lucide-react';
 import { authenticatedFetch } from "@/lib/auth-utils";
-import { useSession } from "@/hooks/use-session";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { logger } from "@/lib/logger";
+import { useAuth } from "@hive/auth-logic";
+
+// Inline PageContainer to replace deleted temp-stubs
+function PageContainer({
+  title,
+  children
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-black">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold text-white mb-6">{title}</h1>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 interface Tool {
   id: string;
@@ -42,7 +59,7 @@ interface Tool {
 export default function ToolPage() {
   const params = useParams();
   const router = useRouter();
-  const { user: _user } = useSession();
+  const { user: _user } = useAuth();
   const isAuthenticated = !!_user;
   const toolId = params.toolId as string;
   
@@ -93,7 +110,7 @@ export default function ToolPage() {
         setTool({ ...tool, isInstalled: true });
       }
     } catch (err) {
-      console.error('Failed to install tool:', err);
+      logger.error('Failed to install tool', { component: 'ToolPage' }, err instanceof Error ? err : undefined);
     } finally {
       setIsInstalling(false);
     }
@@ -130,8 +147,7 @@ export default function ToolPage() {
   }
 
   return (
-    <ErrorBoundary>
-      <PageContainer title={tool.name}>
+    <PageContainer title={tool.name}>
         <div className="space-y-6">
           {/* Tool Header */}
           <Card className="p-6">
@@ -276,7 +292,6 @@ export default function ToolPage() {
             </div>
           </Card>
         </div>
-      </PageContainer>
-    </ErrorBoundary>
+    </PageContainer>
   );
 }

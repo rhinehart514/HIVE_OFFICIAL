@@ -39,8 +39,8 @@ export function useFeatureFlags(): FeatureFlags & {
           setUserId('test-user-id');
           return;
         }
-      } catch (error) {
-        console.warn('Error checking user session for feature flags:', error);
+      } catch (_error) {
+        // Silently handle session parse errors - use default flags
       }
 
       setUserId(null);

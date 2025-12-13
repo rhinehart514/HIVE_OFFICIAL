@@ -1,16 +1,14 @@
-// @ts-nocheck
-// TODO: Fix Zod import and AuthConfig types
 /**
  * Global API middleware wrapper for consistent handling across all routes
  * Provides authentication, validation, error handling, rate limiting, and monitoring
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { z, type ZodTypeAny } from 'zod';
+import { type ZodTypeAny } from 'zod';
 import { authenticateRequest, type AuthConfig, type AuthContext } from './auth-middleware';
 import { handleApiError, validateRequest } from './api-error-handler';
 import { trackApiCall } from './error-monitoring';
-import { createRequestLogger, logApiCall, logPerformance } from './structured-logger';
+import { createRequestLogger, logApiCall, logPerformance, logger } from './structured-logger';
 import { authRateLimit, apiRateLimit, strictRateLimit } from './rate-limit-simple';
 
 /**
@@ -204,22 +202,16 @@ export function createApiHandler(
         }
 
         // Legacy monitoring (keep for now)
-        await trackApiCall(
-          request.method,
-          url.pathname,
-          responseStatus,
+        trackApiCall({
+          method: request.method,
+          endpoint: url.pathname,
+          statusCode: responseStatus,
           duration,
-          {
-            requestId,
-            userId: authContext?.userId,
-            isTestUser: authContext?.isTestUser,
-            error: errorOccurred,
-            rateLimit: config.rateLimit,
-            authenticated: !!authContext
-          }
-        );
+          success: !errorOccurred,
+          error: errorOccurred ? 'API error occurred' : undefined
+        });
       } catch (trackingError) {
-        console.error('Failed to track API call:', trackingError);
+        logger.error('Failed to track API call', { component: 'api-wrapper' }, trackingError instanceof Error ? trackingError : undefined);
       }
     }
   };

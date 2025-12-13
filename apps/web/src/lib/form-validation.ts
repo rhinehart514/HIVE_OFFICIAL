@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix type issues
+// TODO: Fix validation rule parameter types
 // Comprehensive form validation for HIVE platform
 import { useState, useCallback, useEffect } from 'react';
 

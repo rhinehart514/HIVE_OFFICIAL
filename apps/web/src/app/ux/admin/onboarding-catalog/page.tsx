@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { useCSRF } from '@/hooks/use-csrf';
+
+// Simple CSRF token stub (token fetched from /api/auth/csrf)
+function useCSRF() {
+  const [token, setToken] = useState<string | null>(null);
+  useEffect(() => {
+    fetch('/api/auth/csrf')
+      .then(res => res.json())
+      .then(data => setToken(data.token || null))
+      .catch(() => setToken(null));
+  }, []);
+  return { token };
+}
 
 type InterestCategory = { id: string; title: string; items: string[] };
 type Catalog = { majors: string[]; yearRange: { startYear: number; endYear: number }; interests: InterestCategory[] };

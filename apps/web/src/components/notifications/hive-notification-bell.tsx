@@ -32,10 +32,6 @@ export const HiveNotificationBell: React.FC<HiveNotificationBellProps> = ({
     unreadCount,
     loading,
     error,
-    markAsRead: _markAsRead,
-    markAllAsRead: _markAllAsRead,
-    deleteNotification: _deleteNotification,
-    clearAll: _clearAll,
   } = useRealtimeNotifications();
 
   // Handle navigation to notification targets

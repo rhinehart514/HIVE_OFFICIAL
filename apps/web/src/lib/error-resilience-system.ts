@@ -1,6 +1,7 @@
 // @ts-nocheck
-// TODO: Fix type issues
+// TODO: Fix logger.error() calls to use proper (message, context, error) signature
 import { z } from 'zod';
+import { logger } from './structured-logger';
 
 // Error Types and Classifications
 export enum ErrorCategory {
@@ -282,7 +283,7 @@ export class RetryManager {
 
         // Calculate delay with exponential backoff and jitter
         const delay = this.calculateDelay(attempt, retryConfig);
-        console.warn(`Retrying operation in ${delay}ms (attempt ${attempt + 1}/${retryConfig.maxRetries + 1})`);
+        logger.warn(`Retrying operation in ${delay}ms`, { component: 'error-resilience', attempt: attempt + 1, maxRetries: retryConfig.maxRetries + 1 });
         
         await this.sleep(delay);
       }
@@ -327,12 +328,13 @@ export class RetryManager {
   private static async logError(error: HiveError): Promise<void> {
     try {
       // In production, this would send to error tracking service
-      console.error('HIVE Error:', {
+      logger.error('HIVE Error', {
+        component: 'error-resilience',
         id: error.id,
         category: error.category,
         severity: error.severity,
         message: error.message,
-        timestamp: error.timestamp,
+        timestamp: error.timestamp.toISOString(),
         retryCount: error.retryCount,
         stack: error.stack
       });
@@ -345,7 +347,7 @@ export class RetryManager {
         });
       }
     } catch (logError) {
-      console.error('Failed to log error:', logError);
+      logger.error('Failed to log error', { component: 'error-resilience' }, logError instanceof Error ? logError : undefined);
     }
   }
 
@@ -401,7 +403,7 @@ export class GracefulDegradation {
         try {
           return await config.fallbackFunction();
         } catch (fallbackError) {
-          console.warn('Fallback operation failed:', fallbackError);
+          logger.warn('Fallback operation failed', { component: 'error-resilience' }, fallbackError instanceof Error ? fallbackError : undefined);
           throw classifiedError;
         }
       }

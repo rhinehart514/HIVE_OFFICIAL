@@ -10,7 +10,7 @@ export const GET = withAuthAndErrors(async (
   { params }: { params: Promise<{ toolId: string }> },
   respond,
 ) => {
-  const _userId = getUserId(request as AuthenticatedRequest);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { toolId } = await params;
 
   // Ensure tool exists and campus matches
@@ -21,6 +21,19 @@ export const GET = withAuthAndErrors(async (
   const tool = toolDoc.data();
   if (tool?.campusId && tool.campusId !== CURRENT_CAMPUS_ID) {
     return respond.error('Access denied for this campus', 'FORBIDDEN', { status: 403 });
+  }
+
+  // Permission check: only tool owner or admins can view analytics
+  const isOwner = tool?.ownerId === userId || tool?.createdBy === userId;
+  if (!isOwner) {
+    // Check if user is a campus admin
+    const userDoc = await dbAdmin.collection('profiles').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const isAdmin = userData?.isAdmin === true || userData?.role === 'admin';
+
+    if (!isAdmin) {
+      return respond.error('You do not have permission to view analytics for this tool', 'FORBIDDEN', { status: 403 });
+    }
   }
 
   // Time range

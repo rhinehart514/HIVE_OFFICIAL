@@ -11,7 +11,7 @@ import {
 import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 // SECURITY: Use centralized admin auth
-import { isAdmin, getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
+import { isAdmin } from '@/lib/admin-auth';
 import { notifyBuilderApproved, notifyBuilderRejected } from '@/lib/notification-service';
 
 const ReviewRequestSchema = z.object({

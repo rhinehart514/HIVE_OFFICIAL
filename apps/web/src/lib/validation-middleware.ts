@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type issues
 /**
  * SECURITY-FIRST validation middleware for API routes
  * Provides consistent input validation across all endpoints
@@ -9,7 +7,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { validateWithSecurity, SecurityScanner } from './secure-input-validation';
 import { enforceRateLimit, getSecureClientId } from './secure-rate-limiter';
-import { logSecurityEvent } from './structured-logger';
+import { logSecurityEvent, logger } from './structured-logger';
 import { currentEnvironment } from './env';
 
 /**
@@ -295,7 +293,7 @@ export async function validateRequest(
     };
 
   } catch (error) {
-    console.error('Validation middleware error:', error);
+    logger.error('Validation middleware error', { component: 'validation-middleware' }, error instanceof Error ? error : undefined);
     
     await logSecurityEvent('invalid_token', {
       operation: `${operation}_validation_error`,
@@ -409,7 +407,7 @@ export function withValidation(
       
       // Log but don't block for non-critical security levels
       if (validationResult.securityLevel !== 'safe') {
-        console.warn('Validation warning:', validationResult);
+        logger.warn('Validation warning', { component: 'validation-middleware', result: validationResult });
       }
     }
     

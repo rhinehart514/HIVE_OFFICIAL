@@ -202,7 +202,7 @@ async function applyPrivacyChanges(userId: string, settings: PrivacySettings) {
 // Helper function to update space visibility
 async function updateSpaceVisibility(userId: string, settings: PrivacySettings) {
   try {
-    const membershipsSnapshot = await dbAdmin.collection('members')
+    const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID)

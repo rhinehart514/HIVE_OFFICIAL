@@ -1,8 +1,16 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { z } from "zod";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { getServerSpaceRepository, type EnhancedSpace } from "@hive/core/server";
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+
+/**
+ * Zod schema for recommended query params validation
+ */
+const RecommendedQuerySchema = z.object({
+  limit: z.coerce.number().min(1).max(50).default(20),
+  includePrivate: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
+});
 
 /**
  * SPEC.md Behavioral Psychology Algorithm:
@@ -35,16 +43,29 @@ interface BehavioralSpace {
  * - Insider Access: Exclusive/invite-only spaces
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
-  const userId = getUserId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = getCampusId(req);
+  const { searchParams } = new URL(request.url);
+
+  // Validate query params
+  const parseResult = RecommendedQuerySchema.safeParse(
+    Object.fromEntries(searchParams.entries())
+  );
+
+  if (!parseResult.success) {
+    return respond.error('Invalid query parameters', 'VALIDATION_ERROR', {
+      status: 400,
+      details: parseResult.error.flatten()
+    });
+  }
+
+  const { limit } = parseResult.data;
 
   try {
-    // Get user profile for personalization
+    // Get user profile for personalization (optional - graceful fallback)
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    const userData = userDoc.data();
-
-    if (!userData) {
-      return respond.error("User profile not found", "NOT_FOUND", { status: 404 });
-    }
+    const userData = userDoc.data() ?? {}; // Empty object if no profile
 
     // Get user's connections for social proof
     const connectionsSnapshot = await dbAdmin
@@ -64,7 +85,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
     // Use DDD repository to get spaces
     const spaceRepo = getServerSpaceRepository();
-    const spacesResult = await spaceRepo.findByCampus(CURRENT_CAMPUS_ID, 100);
+    const spacesResult = await spaceRepo.findByCampus(campusId, 100);
 
     if (spacesResult.isFailure) {
       logger.error('Failed to load spaces for recommendations', { error: spacesResult.error });
@@ -72,19 +93,61 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     }
 
     const allSpaces = spacesResult.getValue();
+
+    // Get user's spaces to check if they're a leader (for stealth mode visibility)
+    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    const leaderSpaceIds = new Set<string>();
+    if (userSpacesResult.isSuccess) {
+      for (const space of userSpacesResult.getValue()) {
+        const member = space.members.find(m => m.profileId.value === userId);
+        if (member && (member.role === 'owner' || member.role === 'admin')) {
+          leaderSpaceIds.add(space.spaceId.value);
+        }
+      }
+    }
+
+    // Filter out stealth spaces (unless user is a leader of that space)
+    const visibleSpaces = allSpaces.filter(space => {
+      if (space.isLive) return true;
+      if (space.isStealth && leaderSpaceIds.has(space.spaceId.value)) return true;
+      return false;
+    });
+
     const scoredSpaces: BehavioralSpace[] = [];
 
-    // Calculate behavioral scores for each space
-    for (const space of allSpaces) {
-      // Get member data for social proof calculation
+    // PERFORMANCE FIX: Batch fetch all member data instead of N+1 queries
+    // Get all space IDs (only for visible spaces)
+    const spaceIds = visibleSpaces.map(s => s.spaceId.value);
+
+    // Batch fetch member counts per space using a single aggregation query
+    // Firestore doesn't support GROUP BY, so we use a different approach:
+    // Fetch all active members for all spaces in batches, then group client-side
+    const membersBySpace = new Map<string, string[]>();
+
+    // Firestore 'in' queries are limited to 30 items, so chunk the space IDs
+    const BATCH_SIZE = 30;
+    for (let i = 0; i < spaceIds.length; i += BATCH_SIZE) {
+      const batchIds = spaceIds.slice(i, i + BATCH_SIZE);
       const membersSnapshot = await dbAdmin
         .collection('spaceMembers')
-        .where('spaceId', '==', space.spaceId.value)
+        .where('spaceId', 'in', batchIds)
         .where('isActive', '==', true)
-        .limit(100)
+        .select('spaceId', 'userId') // Only fetch needed fields
         .get();
 
-      const memberIds = membersSnapshot.docs.map(doc => doc.data().userId);
+      for (const doc of membersSnapshot.docs) {
+        const data = doc.data();
+        const spaceId = data.spaceId;
+        if (!membersBySpace.has(spaceId)) {
+          membersBySpace.set(spaceId, []);
+        }
+        membersBySpace.get(spaceId)!.push(data.userId);
+      }
+    }
+
+    // Calculate behavioral scores for each space (no more N+1!)
+    for (const space of visibleSpaces) {
+      const memberIds = membersBySpace.get(space.spaceId.value) || [];
 
       // Calculate mutual connections
       const mutualConnections = memberIds.filter(id => connectionIds.includes(id)).length;
@@ -106,7 +169,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
         (insiderAccessScore * 0.3);
 
       // Calculate join-to-active rate
-      const joinToActiveRate = calculateJoinToActiveRate(space.memberCount, membersSnapshot.size);
+      const joinToActiveRate = calculateJoinToActiveRate(space.memberCount, memberIds.length);
 
       scoredSpaces.push({
         id: space.spaceId.value,
@@ -147,9 +210,9 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       panicRelief,
       whereYourFriendsAre,
       insiderAccess,
-      recommendations: scoredSpaces.slice(0, 20),
+      recommendations: scoredSpaces.slice(0, limit),
       meta: {
-        totalSpaces: allSpaces.length,
+        totalSpaces: visibleSpaces.length,
         userConnections: connectionIds.length,
         userFriends: friendIds.length
       }
@@ -167,18 +230,24 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 /**
  * Calculate anxiety relief score based on space characteristics
  * Higher scores for spaces that address common student anxieties
+ * Uses canonical categories: student_org, university_org, greek_life, residential
  */
 function calculateAnxietyReliefScore(space: EnhancedSpace, user: Record<string, unknown>): number {
   let score = 0;
   const category = space.category.value;
 
-  // Study stress relief - academic/study spaces
-  if (category === 'academic' || category === 'study-group') {
+  // Study stress relief - student orgs are the primary academic support
+  if (category === 'student_org') {
     score += 0.3;
   }
 
-  // Loneliness relief - active social spaces
-  if (category === 'social' || category === 'club') {
+  // University resources for official support
+  if (category === 'university_org') {
+    score += 0.25;
+  }
+
+  // Community building - residential and greek life
+  if (category === 'residential' || category === 'greek_life') {
     score += 0.2;
   }
 
@@ -188,7 +257,7 @@ function calculateAnxietyReliefScore(space: EnhancedSpace, user: Record<string, 
   }
 
   // Major-specific anxiety relief
-  if (user.major && space.category.value.toLowerCase().includes((user.major as string).toLowerCase())) {
+  if (user.major && space.name.value.toLowerCase().includes((user.major as string).toLowerCase())) {
     score += 0.3;
   }
 
@@ -231,6 +300,7 @@ function calculateSocialProofScore(
 
 /**
  * Calculate insider access score based on exclusivity
+ * Uses canonical categories: student_org, university_org, greek_life, residential
  */
 function calculateInsiderAccessScore(space: EnhancedSpace): number {
   let score = 0;
@@ -242,8 +312,13 @@ function calculateInsiderAccessScore(space: EnhancedSpace): number {
     score += 0.1;
   }
 
-  // Greek life and certain categories are inherently exclusive
-  if (space.category.value === 'social') {
+  // Greek life is inherently exclusive
+  if (space.category.value === 'greek_life') {
+    score += 0.3;
+  }
+
+  // Residential spaces have natural exclusivity (dorm residents only)
+  if (space.category.value === 'residential') {
     score += 0.2;
   }
 

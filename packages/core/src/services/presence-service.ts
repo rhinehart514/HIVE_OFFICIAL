@@ -79,9 +79,9 @@ class PresenceService {
       // Store reference for cleanup
       this.presenceRef = presenceDocRef;
 
-      console.log('✅ Presence initialized for user:', user.uid);
-    } catch (error) {
-      console.error('❌ Error initializing presence:', error);
+      // Presence initialized successfully
+    } catch (_error) {
+      // Error initializing presence - continue without presence tracking
     }
   }
 
@@ -102,9 +102,9 @@ class PresenceService {
         lastSeen: serverTimestamp()
       }, { merge: true });
 
-      console.log(`👻 Ghost mode ${enabled ? 'enabled' : 'disabled'}`);
-    } catch (error) {
-      console.error('❌ Error toggling ghost mode:', error);
+      // Ghost mode toggled successfully
+    } catch (_error) {
+      // Error toggling ghost mode - state may be inconsistent
     }
   }
 
@@ -123,9 +123,9 @@ class PresenceService {
         lastSeen: serverTimestamp()
       }, { merge: true });
 
-      console.log(`📊 Status updated to: ${effectiveStatus}`);
-    } catch (error) {
-      console.error('❌ Error updating status:', error);
+      // Status updated successfully
+    } catch (_error) {
+      // Error updating status - continue with current status
     }
   }
 
@@ -188,8 +188,7 @@ class PresenceService {
       } else {
         callback(null);
       }
-    }, (error) => {
-      console.error('❌ Error subscribing to presence:', error);
+    }, (_error) => {
       callback(null);
     });
 
@@ -218,8 +217,7 @@ class PresenceService {
       }
 
       return null;
-    } catch (error) {
-      console.error('❌ Error getting user presence:', error);
+    } catch (_error) {
       return null;
     }
   }
@@ -242,8 +240,8 @@ class PresenceService {
           status: 'offline',
           lastSeen: serverTimestamp()
         }, { merge: true });
-      } catch (error) {
-        console.error('❌ Error cleaning up presence:', error);
+      } catch (_error) {
+        // Error cleaning up presence - continue with cleanup
       }
     }
 

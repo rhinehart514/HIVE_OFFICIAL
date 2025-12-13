@@ -64,9 +64,8 @@ function setOfflineCache<T>(cacheKey: string, entry: CacheEntry<T>): void {
 
   try {
     localStorage.setItem(`hive_query_${cacheKey}`, JSON.stringify(entry));
-  } catch (error) {
+  } catch (_error) {
     // Quota exceeded or other storage error - fail silently
-    console.warn('Failed to save to offline cache:', error);
   }
 }
 
@@ -540,9 +539,8 @@ export async function prefetchQuery<T>(config: HiveQueryConfig<T>): Promise<void
     if (enableOfflineCache) {
       setOfflineCache(cacheKey, cacheEntry);
     }
-  } catch (error) {
+  } catch (_error) {
     // Prefetch errors are silent
-    console.warn('Prefetch failed:', error);
   }
 }
 

@@ -289,8 +289,8 @@ export class FirebaseFeedRepository implements IFeedRepository {
         // Add items to feed (would need to implement addItem method on EnhancedFeed)
         // For now, items are loaded separately
       });
-    } catch (error) {
-      console.error('Failed to load feed items:', error);
+    } catch (_error) {
+      // Feed item loading failed - non-critical
     }
   }
 
@@ -299,8 +299,8 @@ export class FirebaseFeedRepository implements IFeedRepository {
       // This would save individual feed items
       // Implementation depends on how items are stored in the EnhancedFeed aggregate
       // For now, items are managed separately through addFeedItem/removeFeedItem
-    } catch (error) {
-      console.error('Failed to save feed items:', error);
+    } catch (_error) {
+      // Feed item saving failed - non-critical
     }
   }
 

@@ -8,6 +8,8 @@
  * @version 2.0.0 - Production Ready
  */
 
+import { logger } from './logger';
+
 export interface SecureAuthHeaders extends Record<string, string | undefined> {
   'Content-Type': string;
   'X-Hive-Client': string;
@@ -65,8 +67,7 @@ export async function secureApiFetch(
     });
   } catch (error) {
     // SECURITY: Log auth failures for monitoring
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('[HIVE_AUTH_ERROR]', { url, error: errorMessage });
+    logger.error('Secure API fetch failed', { component: 'secure-auth-utils', url }, error instanceof Error ? error : undefined);
     throw error;
   }
 }

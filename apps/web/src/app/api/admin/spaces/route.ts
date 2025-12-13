@@ -80,11 +80,13 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
     const serviceResult = result.getValue();
     const spaces = serviceResult.data;
 
+    type SpaceWithModeration = { props?: { moderationInfo?: unknown } };
+
     // Transform to DTOs with admin metadata
     const spaceDTOs = spaces.map(space => ({
       ...toSpaceBrowseDTO(space, false), // isJoined=false for admin view
       isActive: space.isActive,
-      moderationInfo: (space as any).props?.moderationInfo,
+      moderationInfo: (space as unknown as SpaceWithModeration).props?.moderationInfo,
     }));
 
     return respond.success({

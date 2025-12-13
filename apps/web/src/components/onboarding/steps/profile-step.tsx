@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Check, ChevronsUpDown, Upload } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { Check, ChevronsUpDown, Loader2, AtSign } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -14,253 +14,320 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@hive/ui';
-import { Button } from '@hive/ui';
-import { ImageCropper } from '@/components/ui/image-cropper';
+import { Button, Input } from '@hive/ui';
 import {
-  staggerContainer,
-  staggerItem,
-  transitionSilk,
-  transitionSpring,
+  containerVariants,
+  itemVariants,
   GLOW_GOLD,
-  GLOW_GOLD_SUBTLE,
-} from '@/lib/motion-primitives';
-import { UB_MAJORS, GRAD_YEARS } from '../shared/constants';
-import type { OnboardingData } from '../shared/types';
+  goldenPulseVariants,
+} from '../shared/motion';
+import {
+  UB_MAJORS,
+  UB_GRADUATE_MAJORS,
+  GRAD_YEARS,
+  ALUMNI_GRAD_YEARS,
+  FACULTY_GRAD_YEARS,
+  LIVING_SITUATIONS,
+} from '../shared/constants';
+import type { OnboardingData, HandleStatus, UserType, LivingSituation } from '../shared/types';
 
 interface ProfileStepProps {
   data: OnboardingData;
+  handleStatus: HandleStatus;
+  handleSuggestions: string[];
   onUpdate: (updates: Partial<OnboardingData>) => void;
   onNext: () => void;
   error: string | null;
   setError: (error: string | null) => void;
+  isSubmitting?: boolean;
 }
 
+function getGradYearsForUserType(userType: UserType | null): number[] {
+  switch (userType) {
+    case 'alumni':
+      return ALUMNI_GRAD_YEARS;
+    case 'faculty':
+      return FACULTY_GRAD_YEARS;
+    case 'student':
+    default:
+      return GRAD_YEARS;
+  }
+}
+
+/**
+ * Get majors list based on user type
+ * Students: 112 undergraduate programs
+ * Alumni/Faculty: 112 undergrad + 368 graduate programs
+ */
+function getMajorsForUserType(userType: UserType | null): string[] {
+  switch (userType) {
+    case 'alumni':
+    case 'faculty':
+      // Graduate/Alumni can select from both undergrad and grad programs
+      return [...UB_MAJORS, ...UB_GRADUATE_MAJORS];
+    case 'student':
+    default:
+      return UB_MAJORS;
+  }
+}
+
+/**
+ * Step 2: Claim your @
+ * Handle is the HERO - huge, live updating
+ * Other fields compressed into metadata row
+ */
 export function ProfileStep({
   data,
+  handleStatus,
+  handleSuggestions,
   onUpdate,
   onNext,
   error,
   setError,
 }: ProfileStepProps) {
-  const { major, graduationYear, profilePhoto } = data;
+  const { name, handle, major, graduationYear, userType, livingSituation } = data;
   const [majorOpen, setMajorOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [shouldPulse, setShouldPulse] = useState(false);
+  const prevHandleStatus = useRef<HandleStatus>(handleStatus);
+  const handleInputRef = useRef<HTMLInputElement>(null);
+  const shouldReduceMotion = useReducedMotion();
+
+  const gradYears = getGradYearsForUserType(userType);
+  const availableMajors = getMajorsForUserType(userType);
+
+  // Apply reduced motion to variants
+  const safeContainerVariants = shouldReduceMotion
+    ? { initial: { opacity: 1 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : containerVariants;
+
+  const safeItemVariants = shouldReduceMotion
+    ? { initial: { opacity: 1 }, animate: { opacity: 1 } }
+    : itemVariants;
+
+  // Trigger golden pulse when handle becomes available
+  useEffect(() => {
+    if (prevHandleStatus.current !== 'available' && handleStatus === 'available') {
+      setShouldPulse(true);
+      const timer = setTimeout(() => setShouldPulse(false), 700);
+      return () => clearTimeout(timer);
+    }
+    prevHandleStatus.current = handleStatus;
+  }, [handleStatus]);
 
   const handleSubmit = () => {
+    if (!name.trim()) {
+      setError('Enter your name');
+      return;
+    }
+    if (!handle.trim()) {
+      setError('Choose a handle');
+      return;
+    }
+    if (handleStatus === 'invalid') {
+      setError('3-20 characters, letters/numbers/._- only');
+      return;
+    }
+    if (handleStatus === 'taken') {
+      setError('That one\'s taken');
+      return;
+    }
+    if (handleStatus !== 'available' && handleStatus !== 'idle') {
+      return; // Still checking
+    }
     if (!major) {
-      setError('Select your major');
+      setError('Pick a major');
       return;
     }
-
     if (!graduationYear) {
-      setError('Select your graduation year');
+      setError('Pick a year');
       return;
     }
-
     setError(null);
     onNext();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      prepareForCrop(file);
-    }
-    // Reset input so same file can be selected again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const prepareForCrop = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file');
-      return;
-    }
-
-    // Check file size (10MB limit for pre-crop)
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Image must be less than 10MB');
-      return;
-    }
-
-    setError(null);
-
-    // Read file as data URL for cropping
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageToCrop(reader.result as string);
-    };
-    reader.onerror = () => {
-      setError('Failed to read image file');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCropComplete = async (croppedBlob: Blob) => {
-    setImageToCrop(null);
-    setIsUploading(true);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      formData.append('photo', croppedBlob, 'profile.jpg');
-
-      const response = await fetch('/api/profile/upload-photo', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to upload photo');
-      }
-
-      // Store the URL, not base64
-      // API response wraps data in { success: true, data: { avatarUrl: ... } }
-      const avatarUrl = responseData.data?.avatarUrl || responseData.avatarUrl;
-      onUpdate({ profilePhoto: avatarUrl });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload photo');
-    } finally {
-      setIsUploading(false);
+  const getHandleColor = () => {
+    switch (handleStatus) {
+      case 'available':
+        return 'text-gold-500';
+      case 'taken':
+      case 'invalid':
+        return 'text-red-400';
+      case 'checking':
+        return 'text-gray-400';
+      default:
+        return handle ? 'text-white' : 'text-gray-600';
     }
   };
 
-  const handleCropCancel = () => {
-    setImageToCrop(null);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) prepareForCrop(file);
-  };
+  const canContinue =
+    name.trim().length > 0 &&
+    handle.trim().length > 0 &&
+    (handleStatus === 'available' || handleStatus === 'idle') &&
+    major &&
+    graduationYear;
 
   return (
     <motion.div
-      variants={staggerContainer}
+      variants={safeContainerVariants}
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-6"
+      className="min-h-screen flex flex-col justify-center px-6 py-12"
+      role="main"
+      aria-labelledby="profile-title"
     >
-      {/* Profile photo upload */}
-      <motion.div variants={staggerItem} transition={transitionSilk}>
-        <div className="flex flex-col items-center gap-3">
-          <motion.label
-            className="relative cursor-pointer group"
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <motion.div
-              className={`w-28 aspect-[3/4] rounded-2xl bg-neutral-900 border-2 border-dashed flex items-center justify-center overflow-hidden transition-all ${
-                isDragging
-                  ? 'border-gold-500 bg-gold-500/5'
-                  : profilePhoto
-                  ? 'border-transparent'
-                  : 'border-neutral-700 group-hover:border-neutral-500'
-              }`}
-              style={profilePhoto ? { boxShadow: GLOW_GOLD_SUBTLE } : {}}
-            >
-              <AnimatePresence mode="wait">
-                {isUploading ? (
-                  <motion.div
-                    key="uploading"
-                    className="flex flex-col items-center gap-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <div className="w-6 h-6 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
-                    <span className="text-xs text-neutral-500">Uploading...</span>
-                  </motion.div>
-                ) : profilePhoto ? (
-                  <motion.img
-                    key="photo"
-                    src={profilePhoto}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={transitionSilk}
-                  />
-                ) : (
-                  <motion.div
-                    key="placeholder"
-                    className="flex flex-col items-center gap-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <Camera className="w-7 h-7 text-neutral-500 group-hover:text-neutral-400 transition-colors" />
-                    <Upload className="w-4 h-4 text-neutral-600" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.label>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-xs text-neutral-500 hover:text-gold-500 transition-colors"
-          >
-            {profilePhoto ? 'Change photo' : 'Add photo (optional)'}
-          </button>
-        </div>
-      </motion.div>
+      <div className="w-full max-w-2xl mx-auto">
+        {/* Header - dynamic based on handle status */}
+        <motion.h1
+          id="profile-title"
+          variants={safeItemVariants}
+          className="text-[32px] md:text-[40px] font-semibold tracking-tight leading-[1.1] mb-4 text-center"
+        >
+          {handleStatus === 'available' ? "This one's yours." : 'Claim your @'}
+        </motion.h1>
 
-      {/* Major combobox */}
-      <motion.div variants={staggerItem} transition={transitionSilk}>
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-neutral-400">Your major</label>
-          <Popover open={majorOpen} onOpenChange={setMajorOpen}>
-            <PopoverTrigger asChild>
-              <motion.button
-                type="button"
-                role="combobox"
-                aria-expanded={majorOpen}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className={`w-full h-12 rounded-xl border bg-black px-4 text-base text-left flex items-center justify-between transition-all ${
-                  majorOpen
-                    ? 'border-neutral-600 ring-2 ring-gold-500/20'
-                    : major
-                    ? 'border-neutral-700'
-                    : 'border-neutral-800'
-                }`}
-                style={majorOpen ? { boxShadow: GLOW_GOLD } : {}}
+        {/* THE HANDLE - Huge, live updating, the star */}
+        <motion.div
+          variants={safeItemVariants}
+          className="mb-12"
+        >
+          <motion.div
+            variants={goldenPulseVariants}
+            initial="initial"
+            animate={shouldPulse ? 'pulse' : 'initial'}
+            className="relative"
+          >
+            {/* Giant handle display */}
+            <div
+              className="text-center cursor-text"
+              onClick={() => handleInputRef.current?.focus()}
+            >
+              <span className={`text-[48px] md:text-[72px] font-bold tracking-tight ${getHandleColor()} transition-colors`}>
+                @{handle || <span className="text-gray-500">_</span>}
+              </span>
+
+              {/* Status indicator */}
+              <div id="handle-status" className="h-6 flex items-center justify-center mt-2" role="status" aria-live="polite">
+                {handleStatus === 'checking' && (
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" aria-label="Checking availability" />
+                )}
+                {handleStatus === 'available' && (
+                  <motion.span
+                    initial={shouldReduceMotion ? {} : { opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-sm text-gold-500 flex items-center gap-1"
+                  >
+                    <Check className="w-4 h-4" aria-hidden="true" /> yours
+                  </motion.span>
+                )}
+                {handleStatus === 'taken' && (
+                  <span className="text-sm text-red-400">taken</span>
+                )}
+                {handleStatus === 'invalid' && handle.length > 0 && (
+                  <span className="text-sm text-red-400">invalid</span>
+                )}
+              </div>
+            </div>
+
+            {/* Hidden input for actual typing */}
+            <input
+              ref={handleInputRef}
+              type="text"
+              value={handle}
+              onChange={(e) => {
+                onUpdate({ handle: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') });
+                setError(null);
+              }}
+              className="absolute inset-0 opacity-0 cursor-text"
+              autoComplete="off"
+              autoFocus
+              aria-label="Enter your handle"
+              aria-describedby="handle-status"
+            />
+          </motion.div>
+
+          {/* Handle suggestions when taken */}
+          <AnimatePresence>
+            {handleStatus === 'taken' && handleSuggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-4 flex flex-wrap justify-center gap-2"
               >
-                <span className={major ? 'text-white' : 'text-neutral-500'}>
-                  {major || 'Search or select...'}
-                </span>
-                <motion.div animate={{ rotate: majorOpen ? 180 : 0 }} transition={transitionSpring}>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-neutral-500" />
-                </motion.div>
-              </motion.button>
-            </PopoverTrigger>
+                {handleSuggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => onUpdate({ handle: suggestion })}
+                    className="px-3 py-1.5 text-sm rounded-lg bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:text-white hover:border-gold-500/30 transition-colors"
+                  >
+                    @{suggestion}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Metadata section - vertical stack for clarity */}
+        <motion.div
+          variants={safeItemVariants}
+          className="space-y-4 mb-8"
+        >
+          {/* Name */}
+          <div className="space-y-1.5">
+            <label htmlFor="name-input" className="text-xs text-gray-500 font-medium">
+              Name <span className="text-gold-500" aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
+            </label>
+            <input
+              id="name-input"
+              type="text"
+              value={name}
+              onChange={(e) => {
+                onUpdate({ name: e.target.value });
+                setError(null);
+              }}
+              placeholder="Your name"
+              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-gray-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              aria-describedby="name-hint"
+              required
+            />
+            <p id="name-hint" className="text-xs text-gray-600">How people will see you</p>
+          </div>
+
+          {/* Major and Year row */}
+          <div className="grid grid-cols-2 gap-3">
+          {/* Major combobox */}
+          <div className="space-y-1.5">
+            <label id="major-label" className="text-xs text-gray-500 font-medium">
+              Major <span className="text-gold-500" aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
+            </label>
+            <Popover open={majorOpen} onOpenChange={setMajorOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  aria-labelledby="major-label"
+                  aria-expanded={majorOpen}
+                  aria-haspopup="listbox"
+                  className={`w-full h-12 rounded-xl border bg-white/[0.02] px-4 text-sm text-left flex items-center justify-between transition-all ${
+                    majorOpen
+                      ? 'border-gold-500/40 ring-2 ring-gold-500/20'
+                      : 'border-white/[0.06]'
+                  }`}
+                  style={majorOpen ? { boxShadow: GLOW_GOLD } : {}}
+                >
+                  <span className={major ? 'text-white truncate' : 'text-gray-600'}>
+                    {major || 'Select major'}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+                </button>
+              </PopoverTrigger>
             <PopoverContent
-              className="p-0 bg-neutral-900 border-neutral-800 rounded-xl shadow-2xl"
-              style={{ width: 'var(--radix-popover-trigger-width)' }}
+              className="p-0 bg-neutral-900 border-neutral-800 rounded-xl shadow-2xl w-[320px]"
               align="start"
               sideOffset={4}
             >
@@ -269,12 +336,15 @@ export function ProfileStep({
                   placeholder="Search majors..."
                   className="h-11 bg-transparent px-4 text-sm text-white placeholder:text-neutral-500"
                 />
-                <CommandList className="max-h-[240px] overflow-y-auto p-1">
-                  <CommandEmpty className="py-6 text-center text-sm text-neutral-500">
-                    No major found.
+                <div className="px-3 py-1.5 text-[10px] text-neutral-500 border-b border-neutral-800">
+                  {availableMajors.length} programs available
+                </div>
+                <CommandList className="max-h-[280px] overflow-y-auto p-1">
+                  <CommandEmpty className="py-4 text-center text-sm text-neutral-500">
+                    No matching major found
                   </CommandEmpty>
                   <CommandGroup>
-                    {UB_MAJORS.map((m) => (
+                    {availableMajors.map((m) => (
                       <CommandItem
                         key={m}
                         value={m}
@@ -283,93 +353,112 @@ export function ProfileStep({
                           setMajorOpen(false);
                           setError(null);
                         }}
-                        className="flex items-center gap-2 px-3 py-2.5 text-sm rounded-lg cursor-pointer text-white hover:bg-neutral-800 data-[selected=true]:bg-neutral-800"
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-neutral-800"
                       >
                         <Check
-                          className={`h-4 w-4 shrink-0 transition-opacity ${
+                          className={`h-4 w-4 shrink-0 ${
                             major === m ? 'opacity-100 text-gold-500' : 'opacity-0'
                           }`}
                         />
-                        <span>{m}</span>
+                        <span className="truncate">{m}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
                 </CommandList>
               </Command>
             </PopoverContent>
-          </Popover>
-        </div>
-      </motion.div>
+            </Popover>
+            <p className="text-xs text-gray-600">Helps us suggest relevant spaces</p>
+          </div>
 
-      {/* Graduation year - pill selector */}
-      <motion.div variants={staggerItem} transition={transitionSilk}>
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-neutral-400">Graduation year</label>
-          <div className="grid grid-cols-5 gap-2">
-            {GRAD_YEARS.map((year, index) => (
-              <motion.button
+          {/* Year dropdown-style pills */}
+          <div className="space-y-1.5">
+            <label id="year-label" className="text-xs text-gray-500 font-medium">
+              Year <span className="text-gold-500" aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
+            </label>
+            <div className="flex items-center gap-1" role="radiogroup" aria-labelledby="year-label">
+            {gradYears.map((year) => (
+              <button
                 key={year}
                 type="button"
+                role="radio"
+                aria-checked={graduationYear === year}
                 onClick={() => {
                   onUpdate({ graduationYear: year });
                   setError(null);
                 }}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ ...transitionSpring, delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`relative rounded-xl px-2 py-3 text-sm font-semibold transition-all duration-200 border ${
+                className={`flex-1 h-12 rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   graduationYear === year
-                    ? 'border-gold-500 text-gold-500 bg-gold-500/10'
-                    : 'border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 bg-black'
+                    ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
+                    : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
                 }`}
               >
-                {year}
-              </motion.button>
+                '{String(year).slice(-2)}
+              </button>
             ))}
+            </div>
+            <p id="year-hint" className="text-xs text-gray-600">Connect with your class</p>
           </div>
-        </div>
-      </motion.div>
+          </div>
 
-      {/* Error */}
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -4, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: 'auto' }}
-            exit={{ opacity: 0, y: -4, height: 0 }}
-            className="text-sm font-medium text-red-400"
+          {/* Residential status - optional, only show for students */}
+          {userType === 'student' && (
+            <div className="space-y-1.5">
+              <label id="living-label" className="text-xs text-gray-500 font-medium">
+                Where do you live? <span className="text-gray-600">(optional)</span>
+              </label>
+              <div className="flex items-center gap-1.5" role="radiogroup" aria-labelledby="living-label">
+                {LIVING_SITUATIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={livingSituation === option.value}
+                    onClick={() => {
+                      onUpdate({ livingSituation: option.value as LivingSituation });
+                    }}
+                    className={`flex-1 h-10 rounded-lg text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                      livingSituation === option.value
+                        ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
+                        : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-600">Helps us recommend nearby activities</p>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Error */}
+        <AnimatePresence>
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="text-sm font-medium text-red-400 text-center mb-6"
+            >
+              {error}
+            </motion.p>
+          )}
+        </AnimatePresence>
+
+        {/* Continue */}
+        <motion.div variants={safeItemVariants} className="flex justify-center">
+          <Button
+            onClick={handleSubmit}
+            disabled={!canContinue}
+            showArrow
+            size="lg"
           >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
-
-      {/* Continue button */}
-      <motion.div variants={staggerItem} transition={transitionSilk}>
-        <Button
-          onClick={handleSubmit}
-          disabled={!major || !graduationYear}
-          showArrow
-          fullWidth
-          size="lg"
-        >
-          Continue
-        </Button>
-      </motion.div>
-
-      {/* Image Cropper Modal */}
-      <AnimatePresence>
-        {imageToCrop && (
-          <ImageCropper
-            imageSrc={imageToCrop}
-            onCropComplete={handleCropComplete}
-            onCancel={handleCropCancel}
-            aspectRatio={3 / 4}
-          />
-        )}
-      </AnimatePresence>
+            Continue
+          </Button>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }

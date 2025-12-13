@@ -3,7 +3,8 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
-import { Result } from "@hive/core/domain";
+import { Result, GhostModeService, ViewerContext } from "@hive/core";
+import type { GhostModeUser } from "@hive/core";
 import {
   createServerSpaceManagementService,
   getServerSpaceRepository,
@@ -15,12 +16,10 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import {
-  CURRENT_CAMPUS_ID,
-  addSecureCampusMetadata,
-} from "@/lib/secure-firebase-queries";
+import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
 
 const GetMembersQuerySchema = z.object({
@@ -51,7 +50,7 @@ const RemoveMemberQuerySchema = z.object({
 /**
  * Validate space using DDD repository and check membership
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -61,7 +60,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
@@ -70,7 +69,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -84,13 +83,13 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
   return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
-async function findActiveMember(spaceId: string, userId: string) {
+async function findActiveMember(spaceId: string, userId: string, campusId: string) {
   const membershipSnapshot = await dbAdmin
     .collection('spaceMembers')
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -136,7 +135,7 @@ function ensureRoleChangeAllowed(
 /**
  * Create callbacks for DDD SpaceManagementService
  */
-function createSpaceCallbacks(): SpaceServiceCallbacks {
+function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
   return {
     saveSpaceMember: async (member: SpaceMemberData): Promise<Result<void>> => {
       try {
@@ -162,7 +161,7 @@ function createSpaceCallbacks(): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceIdParam)
           .where('userId', '==', userIdParam)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (snapshot.empty) {
@@ -189,7 +188,7 @@ function createSpaceCallbacks(): SpaceServiceCallbacks {
         const query = dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceIdParam)
           .where('userId', '==', userIdParam)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .limit(1);
         const snapshot = await query.get();
         if (!snapshot.empty) {
@@ -241,9 +240,10 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
-  const validation = await validateSpaceAndMembership(spaceId, userId);
+  const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
   if (!validation.ok) {
     const code =
       validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -259,7 +259,7 @@ export const GET = withAuthAndErrors(async (
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
     .where("isActive", "==", true)
-    .where("campusId", "==", CURRENT_CAMPUS_ID);
+    .where("campusId", "==", campusId);
 
   if (roleFilter) {
     memberQuery = memberQuery.where("role", "==", roleFilter);
@@ -273,24 +273,166 @@ export const GET = withAuthAndErrors(async (
   const membersSnapshot = await memberQuery.get();
   const members: Array<Record<string, unknown>> = [];
 
+  // PERFORMANCE FIX: Batch fetch all user data and activity instead of N+1 queries
+  const memberIds = membersSnapshot.docs.map(doc => doc.data().userId || doc.id);
+
+  // Batch fetch user documents (Firestore getAll supports up to 500 docs)
+  const userRefs = memberIds.map(id => dbAdmin.collection("users").doc(id));
+  const userDocs = userRefs.length > 0 ? await dbAdmin.getAll(...userRefs) : [];
+  const usersById = new Map<string, FirebaseFirestore.DocumentData>();
+  userDocs.forEach(doc => {
+    if (doc.exists) {
+      usersById.set(doc.id, doc.data()!);
+    }
+  });
+
+  // Batch fetch presence data for online status (presence collection tracks real-time status)
+  const presenceRefs = memberIds.map(id => dbAdmin.collection("presence").doc(id));
+  const presenceDocs = presenceRefs.length > 0 ? await dbAdmin.getAll(...presenceRefs) : [];
+  const presenceById = new Map<string, FirebaseFirestore.DocumentData>();
+  presenceDocs.forEach(doc => {
+    if (doc.exists) {
+      presenceById.set(doc.id, doc.data()!);
+    }
+  });
+
+  // Batch fetch privacy settings for ghost mode filtering
+  const privacyRefs = memberIds.map(id => dbAdmin.collection("privacySettings").doc(id));
+  const privacyDocs = privacyRefs.length > 0 ? await dbAdmin.getAll(...privacyRefs) : [];
+  const privacyById = new Map<string, FirebaseFirestore.DocumentData>();
+  privacyDocs.forEach(doc => {
+    if (doc.exists) {
+      privacyById.set(doc.id, doc.data()!);
+    }
+  });
+
+  // Create viewer context for ghost mode filtering
+  const viewerContext = ViewerContext.authenticated({
+    userId,
+    campusId,
+    memberOfSpaceIds: [spaceId]
+  });
+
+  // Batch fetch activity counts using chunked 'in' queries (Firestore limit: 30)
+  const postCountsByUser = new Map<string, number>();
+  const likesReceivedByUser = new Map<string, number>();
+  const eventsAttendedByUser = new Map<string, number>();
+  const BATCH_SIZE = 30;
+
+  // Parallel batch queries for better performance
+  const batchPromises: Promise<void>[] = [];
+
+  for (let i = 0; i < memberIds.length; i += BATCH_SIZE) {
+    const batchIds = memberIds.slice(i, i + BATCH_SIZE);
+
+    // Query 1: Post counts from activityEvents
+    batchPromises.push(
+      dbAdmin
+        .collection("activityEvents")
+        .where("userId", "in", batchIds)
+        .where("spaceId", "==", spaceId)
+        .where("type", "==", "post_created")
+        .select("userId")
+        .get()
+        .then((snapshot) => {
+          for (const actDoc of snapshot.docs) {
+            const actUserId = actDoc.data().userId;
+            postCountsByUser.set(actUserId, (postCountsByUser.get(actUserId) || 0) + 1);
+          }
+        })
+    );
+
+    // Query 2: Likes received (reactions on user's content in this space)
+    batchPromises.push(
+      dbAdmin
+        .collection("reactions")
+        .where("authorId", "in", batchIds) // authorId = who made the original content
+        .where("spaceId", "==", spaceId)
+        .select("authorId")
+        .get()
+        .then((snapshot) => {
+          for (const doc of snapshot.docs) {
+            const authorId = doc.data().authorId;
+            likesReceivedByUser.set(authorId, (likesReceivedByUser.get(authorId) || 0) + 1);
+          }
+        })
+        .catch(() => {
+          // Collection may not exist yet - silently continue
+        })
+    );
+
+    // Query 3: Events attended (RSVPs with status 'going')
+    batchPromises.push(
+      dbAdmin
+        .collection("rsvps")
+        .where("userId", "in", batchIds)
+        .where("status", "==", "going")
+        .select("userId", "eventId")
+        .get()
+        .then(async (snapshot) => {
+          // Filter to only events in this space
+          const eventIds = [...new Set(snapshot.docs.map(d => d.data().eventId))];
+          if (eventIds.length === 0) return;
+
+          // Check which events belong to this space (in chunks)
+          const spaceEventIds = new Set<string>();
+          for (let j = 0; j < eventIds.length; j += BATCH_SIZE) {
+            const eventBatch = eventIds.slice(j, j + BATCH_SIZE);
+            const eventsSnapshot = await dbAdmin
+              .collection("events")
+              .where("__name__", "in", eventBatch)
+              .where("spaceId", "==", spaceId)
+              .select()
+              .get();
+            eventsSnapshot.docs.forEach(d => spaceEventIds.add(d.id));
+          }
+
+          // Count RSVPs for events in this space
+          for (const doc of snapshot.docs) {
+            const data = doc.data();
+            if (spaceEventIds.has(data.eventId)) {
+              eventsAttendedByUser.set(data.userId, (eventsAttendedByUser.get(data.userId) || 0) + 1);
+            }
+          }
+        })
+        .catch(() => {
+          // Collection may not exist yet - silently continue
+        })
+    );
+  }
+
+  // Wait for all batch queries to complete
+  await Promise.all(batchPromises);
+
+  // Now build member records using the batch-fetched data
   for (const doc of membersSnapshot.docs) {
     const memberData = doc.data();
     const memberId = memberData.userId || doc.id;
 
-    const userDoc = await dbAdmin.collection("users").doc(memberId).get();
-    const userData = userDoc.exists ? userDoc.data() : null;
+    const userData = usersById.get(memberId);
     if (!userData) continue;
 
-    const activitySnapshot = await dbAdmin
-      .collection("activityEvents")
-      .where("userId", "==", memberId)
-      .where("spaceId", "==", spaceId)
-      .where("type", "in", ["post_created", "comment_created"])
-      .get();
+    // Ghost mode filtering: Check if member should be hidden from directory
+    const privacyData = privacyById.get(memberId);
+    const ghostModeUser: GhostModeUser = {
+      id: memberId,
+      ghostMode: privacyData?.ghostMode
+    };
 
-    const postCount = activitySnapshot.docs.filter(
-      (activity) => activity.data().type === "post_created",
-    ).length;
+    if (GhostModeService.shouldHideFromDirectory(ghostModeUser, viewerContext, [spaceId])) {
+      // Skip this member - they have ghost mode enabled
+      continue;
+    }
+
+    const postCount = postCountsByUser.get(memberId) || 0;
+
+    // Check presence collection for real-time online status
+    // Presence statuses: 'online', 'away', 'ghost', 'offline'
+    // Ghost mode users should appear offline to others (privacy filtering already handled above)
+    const presenceData = presenceById.get(memberId);
+    const isOnline = presenceData
+      ? (presenceData.status === 'online' || presenceData.status === 'away') && !presenceData.isGhostMode
+      : false;
 
     const memberRecord = {
       id: memberId,
@@ -299,7 +441,7 @@ export const GET = withAuthAndErrors(async (
       avatar: userData.photoURL,
       bio: userData.bio || userData.about,
       role: memberData.role || "member",
-      status: memberData.isOnline ? "online" : "offline",
+      status: isOnline ? "online" : "offline",
       joinedAt: memberData.joinedAt?.toDate
         ? memberData.joinedAt.toDate()
         : memberData.joinedAt
@@ -314,9 +456,9 @@ export const GET = withAuthAndErrors(async (
       badges: userData.badges || [],
       stats: {
         postsCount: postCount,
-        likesReceived: 0,
-        eventsAttended: 0,
-        contributionScore: postCount * 10,
+        likesReceived: likesReceivedByUser.get(memberId) || 0,
+        eventsAttended: eventsAttendedByUser.get(memberId) || 0,
+        contributionScore: postCount * 10 + (likesReceivedByUser.get(memberId) || 0) * 2 + (eventsAttendedByUser.get(memberId) || 0) * 5,
       },
       interests: userData.interests || [],
       major: userData.major,
@@ -329,7 +471,7 @@ export const GET = withAuthAndErrors(async (
         canInviteOthers: ["owner", "admin", "moderator"].includes(memberData.role),
       },
       spaceRole: memberData.role,
-      isOnline: Boolean(memberData.isOnline),
+      isOnline,
     };
 
     if (queryParams.search) {
@@ -366,7 +508,7 @@ export const GET = withAuthAndErrors(async (
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
     .where("isActive", "==", true)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .get();
 
   const onlineMembers = members.filter((member) => member.status !== "offline").length;
@@ -403,10 +545,11 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const inviterId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
       const { spaceId } = await params;
 
       // Verify inviter has permission using DDD validation
-      const validation = await validateSpaceAndMembership(spaceId, inviterId);
+      const validation = await validateSpaceAndMembership(spaceId, inviterId, campusId);
       if (!validation.ok) {
         const code =
           validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -423,8 +566,8 @@ export const POST = withAuthValidationAndErrors(
 
       // Use DDD SpaceManagementService
       const spaceService = createServerSpaceManagementService(
-        { userId: inviterId, campusId: CURRENT_CAMPUS_ID },
-        createSpaceCallbacks()
+        { userId: inviterId, campusId },
+        createSpaceCallbacks(campusId)
       );
 
       const inviteResult = await spaceService.inviteMember(inviterId, {
@@ -485,17 +628,18 @@ export const PATCH = withAuthValidationAndErrors(
     respond,
   ) => {
     const requesterId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { spaceId } = await params;
 
     // Verify requester has permission using DDD validation
-    const validation = await validateSpaceAndMembership(spaceId, requesterId);
+    const validation = await validateSpaceAndMembership(spaceId, requesterId, campusId);
     if (!validation.ok) {
       const code =
         validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const targetMembership = await findActiveMember(spaceId, body.userId);
+    const targetMembership = await findActiveMember(spaceId, body.userId, campusId);
     if (!targetMembership.ok) {
       return respond.error(targetMembership.message, targetMembership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN", {
         status: targetMembership.status,
@@ -507,8 +651,8 @@ export const PATCH = withAuthValidationAndErrors(
     // Handle role changes via DDD service
     if (body.role && body.role !== oldRole) {
       const spaceService = createServerSpaceManagementService(
-        { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
-        createSpaceCallbacks()
+        { userId: requesterId, campusId },
+        createSpaceCallbacks(campusId)
       );
 
       const roleChangeResult = await spaceService.changeMemberRole(requesterId, {
@@ -530,8 +674,8 @@ export const PATCH = withAuthValidationAndErrors(
     // Handle suspend/unsuspend actions via DDD service
     if (body.action === "suspend" || body.action === "unsuspend") {
       const spaceService = createServerSpaceManagementService(
-        { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
-        createSpaceCallbacks()
+        { userId: requesterId, campusId },
+        createSpaceCallbacks(campusId)
       );
 
       if (body.action === "suspend") {
@@ -611,6 +755,7 @@ export const DELETE = withAuthAndErrors(async (
   respond,
 ) => {
   const requesterId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   const query = RemoveMemberQuerySchema.safeParse(
@@ -623,7 +768,7 @@ export const DELETE = withAuthAndErrors(async (
   }
 
   // Verify requester has permission using DDD validation
-  const validation = await validateSpaceAndMembership(spaceId, requesterId);
+  const validation = await validateSpaceAndMembership(spaceId, requesterId, campusId);
   if (!validation.ok) {
     const code =
       validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -632,8 +777,8 @@ export const DELETE = withAuthAndErrors(async (
 
   // Use DDD SpaceManagementService
   const spaceService = createServerSpaceManagementService(
-    { userId: requesterId, campusId: CURRENT_CAMPUS_ID },
-    createSpaceCallbacks()
+    { userId: requesterId, campusId },
+    createSpaceCallbacks(campusId)
   );
 
   const removeResult = await spaceService.removeMember(requesterId, {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type issues
 /**
  * HIVE Profile Security Layer
  * Implements the security architecture for the profile vertical slice
@@ -173,20 +171,22 @@ export async function filterProfileData(
   // Apply field-level access control
   for (const control of PROFILE_FIELD_ACCESS) {
     const fieldPath = control.field.split('.');
-    let sourceValue = profile;
+    let sourceValue: unknown = profile;
     let canAccess = true;
 
     // Navigate to the field value
     for (const path of fieldPath) {
-      sourceValue = sourceValue?.[path];
-      if (sourceValue === undefined) {
+      if (sourceValue && typeof sourceValue === 'object' && path in sourceValue) {
+        sourceValue = (sourceValue as Record<string, unknown>)[path];
+      } else {
+        sourceValue = undefined;
         canAccess = false;
         break;
       }
     }
 
     // Check access permission
-    if (canAccess) {
+    if (canAccess && sourceValue !== undefined) {
       // Check connection level
       const hasConnectionLevel = connectionType >= control.requiredLevel;
 
@@ -195,12 +195,13 @@ export async function filterProfileData(
 
       if (hasConnectionLevel && !ghostBlocked) {
         // Set the value in filtered object
-        let target = filtered;
+        let target: Record<string, unknown> = filtered;
         for (let i = 0; i < fieldPath.length - 1; i++) {
-          if (!target[fieldPath[i]]) {
-            target[fieldPath[i]] = {};
+          const key = fieldPath[i];
+          if (!target[key] || typeof target[key] !== 'object') {
+            target[key] = {};
           }
-          target = target[fieldPath[i]];
+          target = target[key] as Record<string, unknown>;
         }
         target[fieldPath[fieldPath.length - 1]] = sourceValue;
       }
@@ -268,11 +269,16 @@ export async function auditLog(
   }
 }
 
+/** Context passed to profile security handlers */
+export interface ProfileSecurityContext {
+  campusId?: string;
+}
+
 /**
  * Middleware for profile route protection
  */
 export function withProfileSecurity(
-  handler: (req: NextRequest | AuthenticatedRequest, context: unknown) => Promise<Response>,
+  handler: (req: NextRequest | AuthenticatedRequest, context: ProfileSecurityContext) => Promise<Response>,
   options: {
     requireAuth?: boolean;
     checkGhostMode?: boolean;
@@ -280,11 +286,14 @@ export function withProfileSecurity(
     rateLimit?: { limit: number; window: number };
   } = {}
 ) {
-  return async (req: NextRequest | AuthenticatedRequest, context: unknown) => {
+  return async (req: NextRequest | AuthenticatedRequest, _routeContext?: unknown) => {
+    const securityContext: ProfileSecurityContext = {};
+
     try {
       // Check authentication if required
       if (options.requireAuth) {
-        const userId = getUserId(req as AuthenticatedRequest);
+        const authReq = req as AuthenticatedRequest;
+        const userId = authReq.user?.uid;
         if (!userId) {
           return NextResponse.json(
             { error: 'Authentication required' },
@@ -309,9 +318,9 @@ export function withProfileSecurity(
           }
         }
 
-        // Enforce campus isolation
+        // Enforce campus isolation - pass via context instead of headers (NextRequest headers are immutable)
         const campusId = await enforceCompusIsolation(userId);
-        req.headers.set('x-campus-id', campusId);
+        securityContext.campusId = campusId;
 
         // Audit sensitive operations
         if (options.auditOperation) {
@@ -324,8 +333,8 @@ export function withProfileSecurity(
         }
       }
 
-      // Execute the handler
-      return await handler(req, context);
+      // Execute the handler with security context
+      return await handler(req, securityContext);
     } catch (error) {
       logger.error('Profile security middleware error', { error: { error: error instanceof Error ? error.message : String(error) } });
       return NextResponse.json(
@@ -444,4 +453,3 @@ const ProfileSecurityService = {
 };
 
 export default ProfileSecurityService;
-import 'server-only';

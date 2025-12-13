@@ -50,20 +50,6 @@ export const GET = withAuth(async (request, authContext) => {
 
     const membershipsSnapshot = await membershipQuery.limit(limit).get();
 
-    if (membershipsSnapshot.empty) {
-      return NextResponse.json({
-        success: true,
-        spaces: [],
-        categorized: {
-          joined: [],
-          owned: [],
-          favorited: [],
-          recent: []
-        },
-        totalCount: 0
-      });
-    }
-
     // Extract space IDs and roles from flat collection
     const spaceIds: string[] = [];
     const membershipData: Record<string, { role: string; joinedAt: unknown; permissions: string[]; isFavorite?: boolean; isPinned?: boolean }> = {};
@@ -83,6 +69,70 @@ export const GET = withAuth(async (request, authContext) => {
         };
       }
     });
+
+    // FALLBACK: Also check for spaces where user is the creator (createdBy field)
+    // This handles cases where owner wasn't added to spaceMembers collection
+    const createdByQuery = await dbAdmin
+      .collection('spaces')
+      .where('createdBy', '==', userId)
+      .where('campusId', '==', campusId)
+      .limit(limit)
+      .get();
+
+    createdByQuery.docs.forEach((doc) => {
+      const spaceId = doc.id;
+      // Only add if not already in spaceIds (avoid duplicates)
+      if (!spaceIds.includes(spaceId)) {
+        spaceIds.push(spaceId);
+        const spaceData = doc.data();
+        membershipData[spaceId] = {
+          role: 'owner',
+          joinedAt: spaceData.createdAt,
+          permissions: ['all'],
+          isFavorite: false,
+          isPinned: false,
+        };
+        logger.debug('Found space via createdBy fallback', { userId, spaceId, spaceName: spaceData.name });
+      }
+    });
+
+    // Also check leaders array on spaces (another ownership pattern)
+    const leadersQuery = await dbAdmin
+      .collection('spaces')
+      .where('leaders', 'array-contains', userId)
+      .where('campusId', '==', campusId)
+      .limit(limit)
+      .get();
+
+    leadersQuery.docs.forEach((doc) => {
+      const spaceId = doc.id;
+      if (!spaceIds.includes(spaceId)) {
+        spaceIds.push(spaceId);
+        const spaceData = doc.data();
+        membershipData[spaceId] = {
+          role: 'leader',
+          joinedAt: spaceData.createdAt,
+          permissions: ['moderate', 'post', 'invite'],
+          isFavorite: false,
+          isPinned: false,
+        };
+        logger.debug('Found space via leaders array fallback', { userId, spaceId, spaceName: spaceData.name });
+      }
+    });
+
+    if (spaceIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        spaces: [],
+        categorized: {
+          joined: [],
+          owned: [],
+          favorited: [],
+          recent: []
+        },
+        totalCount: 0
+      });
+    }
 
     // Batch get space details from flat spaces collection
     const spacePromises = spaceIds.map(spaceId => 

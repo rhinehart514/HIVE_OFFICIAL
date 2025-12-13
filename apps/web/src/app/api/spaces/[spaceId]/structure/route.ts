@@ -2,14 +2,16 @@ import { z } from "zod";
 import {
   getServerSpaceRepository,
   createServerSpaceManagementService,
-  type EnhancedSpace
+  type EnhancedSpace,
+  type PlacedToolDTO,
 } from "@hive/core/server";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import type { PlacedTool } from "@hive/core";
 import { logger } from "@/lib/structured-logger";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest
 } from "@/lib/middleware";
 
@@ -137,6 +139,7 @@ interface StructureResponse {
     isEnabled: boolean;
     isVisible: boolean;
   }>;
+  placedTools: PlacedToolDTO[];
   settings: {
     allowRSS: boolean;
   };
@@ -144,6 +147,7 @@ interface StructureResponse {
     canEditStructure: boolean;
     canAddTabs: boolean;
     canAddWidgets: boolean;
+    canDeployTools: boolean;
   };
 }
 
@@ -152,6 +156,28 @@ interface OperationResult {
   success: boolean;
   entityId?: string;
   error?: string;
+}
+
+/**
+ * Transform PlacedTool entity to DTO
+ */
+function toPlacedToolDTO(tool: PlacedTool): PlacedToolDTO {
+  return {
+    id: tool.id,
+    toolId: tool.toolId,
+    placement: tool.placement,
+    order: tool.order,
+    isActive: tool.isActive,
+    source: tool.source,
+    placedBy: tool.placedBy,
+    placedAt: tool.placedAt.toISOString(),
+    configOverrides: tool.configOverrides,
+    visibility: tool.visibility,
+    titleOverride: tool.titleOverride,
+    isEditable: tool.isEditable,
+    state: tool.state,
+    stateUpdatedAt: tool.stateUpdatedAt?.toISOString() ?? null,
+  };
 }
 
 /**
@@ -181,13 +207,15 @@ function transformToStructure(
       isEnabled: widget.isEnabled,
       isVisible: widget.isVisible
     })),
+    placedTools: space.placedTools.map(toPlacedToolDTO),
     settings: {
       allowRSS: space.settings.allowRSS
     },
     permissions: {
       canEditStructure: isLeader,
       canAddTabs: isLeader,
-      canAddWidgets: isLeader
+      canAddWidgets: isLeader,
+      canDeployTools: isLeader
     }
   };
 }
@@ -202,13 +230,15 @@ export const GET = withAuthAndErrors(async (
 ) => {
   const { spaceId } = await params;
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId) {
     return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
   }
 
+  // Load space with PlacedTools for complete structure
   const spaceRepo = getServerSpaceRepository();
-  const result = await spaceRepo.findById(spaceId);
+  const result = await spaceRepo.findById(spaceId, { loadPlacedTools: true });
 
   if (result.isFailure) {
     return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
@@ -217,7 +247,7 @@ export const GET = withAuthAndErrors(async (
   const space = result.getValue();
 
   // Enforce campus isolation
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
   }
 
@@ -231,7 +261,8 @@ export const GET = withAuthAndErrors(async (
   logger.info(`Structure fetched for space: ${spaceId}`, {
     spaceId,
     tabCount: space.tabs.length,
-    widgetCount: space.widgets.length
+    widgetCount: space.widgets.length,
+    toolCount: space.placedTools.length
   });
 
   return respond.success(transformToStructure(space, isLeader));
@@ -271,6 +302,7 @@ export const PATCH = withAuthValidationAndErrors(
   ) => {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     if (!spaceId) {
       return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
@@ -278,7 +310,7 @@ export const PATCH = withAuthValidationAndErrors(
 
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID }
+      { userId, campusId }
     );
 
     // Track results and created entity IDs for reference resolution
@@ -452,9 +484,9 @@ export const PATCH = withAuthValidationAndErrors(
       }
     }
 
-    // Fetch final state
+    // Fetch final state with PlacedTools
     const spaceRepo = getServerSpaceRepository();
-    const finalResult = await spaceRepo.findById(spaceId);
+    const finalResult = await spaceRepo.findById(spaceId, { loadPlacedTools: true });
 
     if (finalResult.isFailure) {
       return respond.error("Failed to fetch updated space", "INTERNAL_ERROR", { status: 500 });

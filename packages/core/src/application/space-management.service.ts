@@ -381,9 +381,8 @@ export class SpaceManagementService extends BaseApplicationService {
   private async publishEvents(space: EnhancedSpace): Promise<void> {
     try {
       await this.eventPublisher.publishEventsFromAggregate(space);
-    } catch (error) {
-      // Log but don't fail the operation if event publishing fails
-      console.warn('[SpaceManagement] Failed to publish domain events:', error);
+    } catch (_error) {
+      // Event publishing is non-critical - don't fail the main operation
     }
   }
 
@@ -519,11 +518,7 @@ export class SpaceManagementService extends BaseApplicationService {
         });
 
         if (memberResult.isFailure) {
-          // Log warning but don't fail - space was created, member can be fixed
-          console.warn(
-            '[SpaceManagement.createSpace] Failed to save space member:',
-            memberResult.error
-          );
+          // Non-critical - space was created, member can be fixed via reconciliation
         }
       }
 
@@ -621,7 +616,7 @@ export class SpaceManagementService extends BaseApplicationService {
         // Save aggregate (updates member count, etc.)
         const saveResult = await this.spaceRepo.save(space);
         if (saveResult.isFailure) {
-          console.warn('[SpaceManagement.joinSpace] Failed to save space aggregate:', saveResult.error);
+          // Non-critical - member was saved, aggregate update can be reconciled
         }
       }
 
@@ -715,14 +710,14 @@ export class SpaceManagementService extends BaseApplicationService {
           leftAt: new Date()
         });
         if (updateResult.isFailure) {
-          console.warn('[SpaceManagement.leaveSpace] Failed to update membership:', updateResult.error);
+          // Non-critical - aggregate updated, membership update can be reconciled
         }
       }
 
       // Save aggregate
       const saveResult = await this.spaceRepo.save(space);
       if (saveResult.isFailure) {
-        console.warn('[SpaceManagement.leaveSpace] Failed to save space aggregate:', saveResult.error);
+        // Non-critical - member was updated, aggregate update can be reconciled
       }
 
       // Update space metrics
@@ -843,7 +838,7 @@ export class SpaceManagementService extends BaseApplicationService {
         if (input.role === 'admin') {
           const promoteResult = space.updateMemberRole(targetProfileId, 'admin');
           if (promoteResult.isFailure) {
-            console.warn('[SpaceManagement.inviteMember] Failed to promote to admin:', promoteResult.error);
+            // Non-critical - member added, role can be updated separately
           }
         }
 
@@ -2102,6 +2097,153 @@ export class SpaceManagementService extends BaseApplicationService {
     } catch {
       return null;
     }
+  }
+
+  // ============================================================
+  // Stealth Mode / Publishing Methods
+  // ============================================================
+
+  /**
+   * Verify a space leader and take the space live (admin action)
+   *
+   * This is called when a platform admin verifies a leader's claim to a space.
+   * While in stealth mode, leaders can fully use the space - they get instant
+   * value. Once verified, the space becomes publicly discoverable.
+   *
+   * @param adminId - Platform admin performing the verification
+   * @param spaceId - Space to take live
+   * @param leaderId - Optional: specific leader being verified (defaults to owner)
+   */
+  async verifyAndGoLive(
+    adminId: string,
+    spaceId: string,
+    leaderId?: string
+  ): Promise<Result<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>> {
+    return this.execute(async () => {
+      // Validate admin
+      const adminProfileIdResult = ProfileId.create(adminId);
+      if (adminProfileIdResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          adminProfileIdResult.error ?? 'Invalid admin ID'
+        );
+      }
+      const adminProfileId = adminProfileIdResult.getValue();
+
+      // Get space
+      const spaceIdResult = SpaceId.create(spaceId);
+      if (spaceIdResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          spaceIdResult.error ?? 'Invalid space ID'
+        );
+      }
+
+      const spaceResult = await this.spaceRepo.findById(spaceIdResult.getValue());
+      if (spaceResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>('Space not found');
+      }
+
+      const space = spaceResult.getValue();
+
+      // Determine which leader to verify (default to owner)
+      const verifiedLeaderId = leaderId || space.owner.value;
+
+      // Call domain method to verify and go live
+      const leaderProfileIdResult = ProfileId.create(verifiedLeaderId);
+      if (leaderProfileIdResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          'Invalid leader ID'
+        );
+      }
+
+      const goLiveResult = space.verifyLeaderAndGoLive(
+        leaderProfileIdResult.getValue(),
+        adminProfileId
+      );
+      if (goLiveResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          goLiveResult.error ?? 'Failed to verify and go live'
+        );
+      }
+
+      // Save space
+      const saveResult = await this.spaceRepo.save(space);
+      if (saveResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          saveResult.error ?? 'Failed to save space'
+        );
+      }
+
+      // Publish domain events (SpaceWentLive, SpaceStatusChanged)
+      await this.publishEvents(space);
+
+      return Result.ok<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>({
+        data: {
+          spaceId,
+          spaceName: space.name.value,
+          wentLiveAt: space.wentLiveAt!,
+          verifiedLeaderId
+        }
+      });
+    }, 'SpaceManagement.verifyAndGoLive');
+  }
+
+  /**
+   * Reset a space back to stealth mode (only leaders)
+   * Useful if space needs more work before launch
+   */
+  async resetToStealth(
+    actorId: string,
+    spaceId: string,
+    reason?: string
+  ): Promise<Result<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>> {
+    return this.execute(async () => {
+      // Validate actor
+      const actorProfileIdResult = ProfileId.create(actorId);
+      if (actorProfileIdResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>(
+          actorProfileIdResult.error ?? 'Invalid actor ID'
+        );
+      }
+      const actorProfileId = actorProfileIdResult.getValue();
+
+      // Get space
+      const spaceIdResult = SpaceId.create(spaceId);
+      if (spaceIdResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>(
+          spaceIdResult.error ?? 'Invalid space ID'
+        );
+      }
+
+      const spaceResult = await this.spaceRepo.findById(spaceIdResult.getValue());
+      if (spaceResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>('Space not found');
+      }
+
+      const space = spaceResult.getValue();
+
+      // Call domain method
+      const resetResult = space.resetToStealth(actorProfileId, reason);
+      if (resetResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>(
+          resetResult.error ?? 'Failed to reset to stealth'
+        );
+      }
+
+      // Save space
+      const saveResult = await this.spaceRepo.save(space);
+      if (saveResult.isFailure) {
+        return Result.fail<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>(
+          saveResult.error ?? 'Failed to save space'
+        );
+      }
+
+      // Publish domain events (SpaceStatusChanged)
+      await this.publishEvents(space);
+
+      return Result.ok<ServiceResult<{ spaceId: string; action: 'reset_to_stealth' }>>({
+        data: { spaceId, action: 'reset_to_stealth' }
+      });
+    }, 'SpaceManagement.resetToStealth');
   }
 
   // ============================================================

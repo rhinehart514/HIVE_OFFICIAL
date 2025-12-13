@@ -20,6 +20,7 @@ import {
   Rocket
 } from 'lucide-react';
 import { useAuth } from "@hive/auth-logic";
+import { logger } from "@/lib/logger";
 import { ToolNavigation } from '@/lib/tool-navigation';
 
 interface DeploymentTarget {
@@ -61,7 +62,7 @@ export default function ToolDeployPage() {
   
   const [deploymentConfig, setDeploymentConfig] = useState<DeploymentConfig>({
     targetType: 'profile',
-    targetId: user?.uid || 'test-user-id',
+    targetId: user?.uid || '', // Will be set properly when user loads
     permissions: {
       canInteract: true,
       canView: true,
@@ -75,33 +76,14 @@ export default function ToolDeployPage() {
     },
   });
 
-  // Mock data for available targets
-  const availableTargets: DeploymentTarget[] = [
-    {
-      id: user?.uid || 'test-user-id',
-      name: 'My Profile',
-      type: 'profile',
-      icon: <User className="h-5 w-5" />,
-      description: 'Deploy to your personal profile dashboard',
-      permissions: ['full_access'],
-    },
-    {
-      id: 'space-1',
-      name: 'Study Group',
-      type: 'space',
-      icon: <Users className="h-5 w-5" />,
-      description: 'Deploy to Study Group space',
-      permissions: ['builder', 'admin'],
-    },
-    {
-      id: 'space-2',
-      name: 'CS Club',
-      type: 'space',
-      icon: <Users className="h-5 w-5" />,
-      description: 'Deploy to CS Club community space',
-      permissions: ['admin'],
-    },
-  ];
+  // Update targetId when user loads
+  useEffect(() => {
+    if (user?.uid && !deploymentConfig.targetId) {
+      setDeploymentConfig(prev => ({ ...prev, targetId: user.uid }));
+    }
+  }, [user?.uid, deploymentConfig.targetId]);
+
+  const [availableTargets, setAvailableTargets] = useState<DeploymentTarget[]>([]);
 
   const spaceSurfaces = [
     { id: 'tools', name: 'Tools Gallery', description: 'Main tools section' },
@@ -111,23 +93,67 @@ export default function ToolDeployPage() {
   ];
 
   useEffect(() => {
-    // Load tool data
-    const loadTool = async () => {
+    // Load tool data and available targets
+    const loadData = async () => {
       try {
-        // Mock tool data
-        setToolData({
-          id: toolId,
-          name: 'Sample Tool',
-          description: 'A sample tool for deployment',
-          status: 'draft',
-        });
+        const authToken = getAuthToken ? await getAuthToken() : null;
+        const headers: HeadersInit = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+        // Fetch tool data
+        const toolRes = await fetch(`/api/tools/${toolId}`, { headers });
+        if (toolRes.ok) {
+          const data = await toolRes.json();
+          setToolData(data.tool || data);
+        } else {
+          setToolData({ id: toolId, name: 'Tool', description: '' });
+        }
+
+        // Build deployment targets
+        const targets: DeploymentTarget[] = [];
+
+        // Add profile as target
+        if (user) {
+          targets.push({
+            id: user.uid,
+            name: 'My Profile',
+            type: 'profile',
+            icon: <User className="h-5 w-5" />,
+            description: 'Deploy to your personal profile dashboard',
+            permissions: ['full_access'],
+          });
+        }
+
+        // Fetch user's spaces where they can deploy
+        const spacesRes = await fetch('/api/spaces/mine', { headers });
+        if (spacesRes.ok) {
+          const spacesData = await spacesRes.json();
+          const spaces = spacesData.data?.spaces || spacesData.spaces || [];
+
+          // Filter to spaces where user is leader/admin
+          spaces.forEach((space: { id: string; name: string; description?: string; membership?: { role?: string } }) => {
+            const role = space.membership?.role;
+            if (['owner', 'admin', 'leader', 'moderator'].includes(role || '')) {
+              targets.push({
+                id: space.id,
+                name: space.name,
+                type: 'space',
+                icon: <Users className="h-5 w-5" />,
+                description: space.description || 'Deploy to this space',
+                permissions: [role || 'admin'],
+              });
+            }
+          });
+        }
+
+        setAvailableTargets(targets);
       } catch {
-        setError('Failed to load tool data');
+        setError('Failed to load data');
       }
     };
 
-    loadTool();
-  }, [toolId]);
+    loadData();
+  }, [toolId, user, getAuthToken]);
 
   const handleTargetSelect = (target: DeploymentTarget) => {
     setDeploymentConfig(prev => ({
@@ -151,28 +177,30 @@ export default function ToolDeployPage() {
         throw new Error('Authentication not available');
       }
       const authToken = await getAuthToken();
-      const response = await fetch('/api/tools/deploy', {
+
+      // Transform to API expected format
+      const apiPayload = {
+        spaceId: deploymentConfig.targetId,
+        configuration: deploymentConfig.settings,
+        permissions: deploymentConfig.permissions,
+      };
+
+      const response = await fetch(`/api/tools/${toolId}/deploy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`,
         },
-        body: JSON.stringify({
-          toolId,
-          deployTo: deploymentConfig.targetType,
-          targetId: deploymentConfig.targetId,
-          surface: deploymentConfig.surface,
-          permissions: deploymentConfig.permissions,
-          settings: deploymentConfig.settings,
-        }),
+        body: JSON.stringify(apiPayload),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to deploy tool');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || data.message || 'Failed to deploy tool');
       }
       setStep('success');
     } catch (err) {
-      console.error('Deployment error:', err);
+      logger.error('Deployment error', { component: 'ToolDeployPage' }, err instanceof Error ? err : undefined);
       setError(err instanceof Error ? err.message : 'Failed to deploy tool');
     } finally {
       setIsLoading(false);

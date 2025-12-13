@@ -62,10 +62,11 @@ async function canUserManageDeployment(
     }
 
     const membershipSnapshot = await dbAdmin
-      .collection("members")
+      .collection("spaceMembers")
       .where("userId", "==", userId)
       .where("spaceId", "==", deployment.targetId)
       .where("status", "==", "active")
+      .where("campusId", "==", CURRENT_CAMPUS_ID)
       .limit(1)
       .get();
 

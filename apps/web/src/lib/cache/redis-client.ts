@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix Redis mock types
+// TODO: Fix logger.error() calls to use proper (message, context, error) signature
 // Advanced Redis-based caching layer for HIVE platform
 // Optimized for multi-tenant architecture and cross-campus scaling
 

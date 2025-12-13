@@ -33,3 +33,14 @@ export type {
   SpaceDocument,
   SpacePersistenceData
 } from '../firebase/space.mapper';
+
+// Chat repositories (boards + messages)
+export {
+  FirebaseAdminBoardRepository,
+  FirebaseAdminMessageRepository,
+  createChatRepositories,
+  getServerBoardRepository,
+  getServerMessageRepository
+} from './chat.repository';
+
+export type { IBoardRepository, IMessageRepository } from './chat.repository';

@@ -227,33 +227,9 @@ const DISPLAY_ELEMENTS: ElementSpec[] = [
     realtime: true,
   },
   {
-    id: 'tag-cloud',
-    name: 'Tag Cloud',
-    description: 'Weighted tag visualization showing popular topics or categories.',
-    category: 'display',
-    icon: '☁️',
-    configSchema: {
-      maxTags: { type: 'number', default: 20 },
-      minWeight: { type: 'number', default: 1 },
-      colorScheme: { type: 'string', enum: ['default', 'rainbow'], default: 'default' },
-    },
-    defaultConfig: {
-      maxTags: 20,
-      minWeight: 1,
-      colorScheme: 'default',
-    },
-    actions: ['refresh'],
-    outputs: [],
-    inputs: ['tags'],
-    useCases: ['trending topics', 'popular tags', 'keyword visualization', 'category frequency'],
-    defaultSize: { width: 280, height: 160 },
-    stateful: false,
-    realtime: true,
-  },
-  {
     id: 'chart-display',
     name: 'Chart Display',
-    description: 'Data visualization charts (bar, line, pie). Use for showing statistics, trends, or analytics.',
+    description: 'Data visualization charts (bar, line, pie). Use for showing poll results, voting statistics, or attendance data.',
     category: 'display',
     icon: '📊',
     configSchema: {
@@ -268,72 +244,9 @@ const DISPLAY_ELEMENTS: ElementSpec[] = [
     actions: ['refresh'],
     outputs: [],
     inputs: ['data'],
-    useCases: ['analytics dashboard', 'voting results', 'poll statistics', 'attendance tracking'],
+    useCases: ['voting results', 'poll statistics', 'attendance tracking', 'RSVP breakdown'],
     defaultSize: { width: 320, height: 240 },
     stateful: false,
-    realtime: true,
-  },
-  {
-    id: 'map-view',
-    name: 'Map View',
-    description: 'Geographic map visualization for location-based features.',
-    category: 'display',
-    icon: '🗺️',
-    configSchema: {
-      center: {
-        type: 'object',
-        properties: {
-          lat: { type: 'number' },
-          lng: { type: 'number' },
-        },
-      },
-      zoom: { type: 'number', default: 15 },
-      markers: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            lat: { type: 'number' },
-            lng: { type: 'number' },
-            label: { type: 'string' },
-          },
-        },
-      },
-    },
-    defaultConfig: {
-      zoom: 15,
-      markers: [],
-    },
-    actions: ['refresh', 'add_marker', 'remove_marker'],
-    outputs: ['selectedLocation'],
-    inputs: ['locations'],
-    useCases: ['campus map', 'event locations', 'building finder', 'location picker'],
-    defaultSize: { width: 400, height: 300 },
-    stateful: false,
-    realtime: true,
-  },
-  {
-    id: 'notification-center',
-    name: 'Notification Center',
-    description: 'Real-time notifications feed for updates, alerts, or activity streams.',
-    category: 'display',
-    icon: '🔔',
-    configSchema: {
-      maxItems: { type: 'number', default: 20 },
-      showUnreadOnly: { type: 'boolean', default: false },
-      enableRealtime: { type: 'boolean', default: true },
-    },
-    defaultConfig: {
-      maxItems: 20,
-      showUnreadOnly: false,
-      enableRealtime: true,
-    },
-    actions: ['mark_read', 'mark_all_read', 'dismiss'],
-    outputs: [],
-    inputs: ['notifications'],
-    useCases: ['activity feed', 'updates stream', 'announcements', 'alerts'],
-    defaultSize: { width: 300, height: 400 },
-    stateful: true,
     realtime: true,
   },
 ];
@@ -515,68 +428,9 @@ const ACTION_ELEMENTS: ElementSpec[] = [
 
 /**
  * Layout Elements - Structure and organization
+ * NOTE: Kept minimal - complex nesting adds complexity without clear value for tool-building
  */
-const LAYOUT_ELEMENTS: ElementSpec[] = [
-  {
-    id: 'tabs-container',
-    name: 'Tabs Container',
-    description: 'Tabbed interface for organizing multiple views.',
-    category: 'layout',
-    icon: '📑',
-    configSchema: {
-      tabs: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            label: { type: 'string' },
-            icon: { type: 'string' },
-          },
-        },
-      },
-      defaultTab: { type: 'string' },
-    },
-    defaultConfig: {
-      tabs: [
-        { id: 'tab1', label: 'Tab 1' },
-        { id: 'tab2', label: 'Tab 2' },
-      ],
-      defaultTab: 'tab1',
-    },
-    actions: ['switch_tab'],
-    outputs: ['activeTab'],
-    inputs: [],
-    useCases: ['multi-view tools', 'organized content', 'dashboard sections'],
-    defaultSize: { width: 400, height: 300 },
-    stateful: false,
-    realtime: false,
-  },
-  {
-    id: 'card-container',
-    name: 'Card Container',
-    description: 'Styled card wrapper for grouping related elements.',
-    category: 'layout',
-    icon: '🗂️',
-    configSchema: {
-      title: { type: 'string' },
-      subtitle: { type: 'string' },
-      collapsible: { type: 'boolean', default: false },
-      padding: { type: 'string', enum: ['none', 'sm', 'md', 'lg'], default: 'md' },
-    },
-    defaultConfig: {
-      collapsible: false,
-      padding: 'md',
-    },
-    actions: ['toggle_collapse'],
-    outputs: ['isCollapsed'],
-    inputs: [],
-    useCases: ['grouped content', 'sections', 'visual hierarchy'],
-    defaultSize: { width: 320, height: 200 },
-    stateful: false,
-    realtime: false,
-  },
-];
+const LAYOUT_ELEMENTS: ElementSpec[] = [];
 
 // ═══════════════════════════════════════════════════════════════════
 // REGISTRY FUNCTIONS

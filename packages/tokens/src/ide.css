@@ -1,0 +1,101 @@
+/**
+ * HiveLab IDE CSS Custom Properties
+ *
+ * Dark theme values for the IDE interface.
+ * Import this file in the HiveLab app's root layout.
+ */
+
+:root {
+  /* Surface tokens - elevation-based backgrounds */
+  --ide-surface-canvas: #0a0a0a;
+  --ide-surface-panel: #0f0f0f;
+  --ide-surface-toolbar: #1a1a1a;
+  --ide-surface-elevated: #252525;
+  --ide-surface-overlay: rgba(0, 0, 0, 0.8);
+
+  /* Border tokens */
+  --ide-border-default: #333333;
+  --ide-border-subtle: #222222;
+  --ide-border-focus: #ffd700;
+  --ide-border-accent: #ffd700;
+
+  /* Text tokens */
+  --ide-text-primary: #ffffff;
+  --ide-text-secondary: #888888;
+  --ide-text-muted: #666666;
+  --ide-text-accent: #ffd700;
+  --ide-text-inverse: #0a0a0a;
+
+  /* Interactive element tokens */
+  --ide-interactive-default: #252525;
+  --ide-interactive-hover: #333333;
+  --ide-interactive-active: #404040;
+  --ide-interactive-selected: rgba(255, 215, 0, 0.15);
+  --ide-interactive-disabled: #1a1a1a;
+
+  /* Status tokens */
+  --ide-status-success: #10b981;
+  --ide-status-success-bg: rgba(16, 185, 129, 0.1);
+  --ide-status-warning: #f59e0b;
+  --ide-status-warning-bg: rgba(245, 158, 11, 0.1);
+  --ide-status-error: #ef4444;
+  --ide-status-error-bg: rgba(239, 68, 68, 0.1);
+  --ide-status-info: #3b82f6;
+  --ide-status-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Accent tokens (HIVE gold) */
+  --ide-accent-primary: #ffd700;
+  --ide-accent-primary-hover: #ffe433;
+  --ide-accent-primary-bg: rgba(255, 215, 0, 0.1);
+  --ide-accent-secondary: #b8860b;
+}
+
+/* IDE-specific utility classes */
+.ide-surface-canvas { background-color: var(--ide-surface-canvas); }
+.ide-surface-panel { background-color: var(--ide-surface-panel); }
+.ide-surface-toolbar { background-color: var(--ide-surface-toolbar); }
+.ide-surface-elevated { background-color: var(--ide-surface-elevated); }
+
+.ide-border { border-color: var(--ide-border-default); }
+.ide-border-subtle { border-color: var(--ide-border-subtle); }
+.ide-border-focus { border-color: var(--ide-border-focus); }
+
+.ide-text-primary { color: var(--ide-text-primary); }
+.ide-text-secondary { color: var(--ide-text-secondary); }
+.ide-text-muted { color: var(--ide-text-muted); }
+.ide-text-accent { color: var(--ide-text-accent); }
+
+/* Focus ring for IDE components */
+.ide-focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ide-border-focus);
+}
+
+.ide-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ide-border-focus);
+}
+
+/* Interactive states */
+.ide-interactive {
+  background-color: var(--ide-interactive-default);
+  transition: background-color 150ms ease;
+}
+
+.ide-interactive:hover {
+  background-color: var(--ide-interactive-hover);
+}
+
+.ide-interactive:active {
+  background-color: var(--ide-interactive-active);
+}
+
+.ide-interactive[data-selected="true"] {
+  background-color: var(--ide-interactive-selected);
+}
+
+.ide-interactive:disabled {
+  background-color: var(--ide-interactive-disabled);
+  opacity: 0.5;
+  cursor: not-allowed;
+}

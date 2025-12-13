@@ -15,22 +15,32 @@
     "incremental": true,
     "baseUrl": ".",
     "paths": {
-      "@hive/ui": ["packages/ui/src"],
+      "@hive/ui": ["packages/ui/src/index.ts"],
       "@hive/ui/*": ["packages/ui/src/*"],
-      "@hive/core": ["packages/core/src"],
+      "@hive/core": ["packages/core/src/index.ts"],
       "@hive/core/*": ["packages/core/src/*"],
-      "@hive/hooks": ["packages/hooks/src"],
+      "@hive/hooks": ["packages/hooks/src/index.ts"],
       "@hive/hooks/*": ["packages/hooks/src/*"],
-      "@hive/firebase": ["packages/firebase/src"],
+      "@hive/firebase": ["packages/firebase/src/index.ts"],
       "@hive/firebase/*": ["packages/firebase/src/*"],
-      "@hive/tokens": ["packages/tokens/src"],
+      "@hive/tokens": ["packages/tokens/src/index.ts"],
       "@hive/tokens/*": ["packages/tokens/src/*"],
-      "@hive/validation": ["packages/validation/src"],
+      "@hive/validation": ["packages/validation/src/index.ts"],
       "@hive/validation/*": ["packages/validation/src/*"],
-      "@hive/auth-logic": ["packages/auth-logic/src"],
+      "@hive/auth-logic": ["packages/auth-logic/src/index.ts"],
       "@hive/auth-logic/*": ["packages/auth-logic/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "**/node_modules", "**/.next", "**/dist"]
+  "exclude": [
+    "node_modules",
+    "**/node_modules",
+    "**/.next",
+    "**/dist",
+    "apps/**/src/test/**/*",
+    "apps/**/src/**/__tests__/**/*",
+    "apps/**/playwright*.config.ts",
+    "apps/**/playwright*.simple.config.ts",
+    "apps/**/tailwind.config.ts"
+  ]
 }

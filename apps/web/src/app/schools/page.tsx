@@ -8,7 +8,26 @@ import React, { useState, useEffect } from 'react';
 import { Search, Users, ArrowRight, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@hive/ui';
-import { SchoolsPageHeader } from '../../components/temp-stubs';
+import { logger } from '@/lib/logger';
+
+// Inline SchoolsPageHeader to replace deleted temp-stubs
+function SchoolsPageHeader({ onComingSoonClick }: { onComingSoonClick: () => void }) {
+  return (
+    <header className="relative z-10 max-w-6xl mx-auto p-6 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <span className="text-2xl font-bold text-[var(--hive-brand-primary)]">HIVE</span>
+      </div>
+      <nav className="flex items-center gap-4">
+        <button
+          onClick={onComingSoonClick}
+          className="text-sm text-white/60 hover:text-white transition-colors"
+        >
+          Coming Soon
+        </button>
+      </nav>
+    </header>
+  );
+}
 
 
 interface School {
@@ -316,11 +335,11 @@ export default function SchoolsPage() {
           setSchools(formattedSchools);
         } else {
           // Fallback to hardcoded data only in development
-          console.warn('Failed to fetch schools from API, using fallback');
+          logger.warn('Failed to fetch schools from API, using fallback', { component: 'SchoolsPage' });
           setSchools(fallbackSchools);
         }
-      } catch (_error) {
-        console.error('Error fetching schools:', _error);
+      } catch (error) {
+        logger.error('Error fetching schools', { component: 'SchoolsPage' }, error instanceof Error ? error : undefined);
         setSchools(fallbackSchools);
       } finally {
         setLoading(false);

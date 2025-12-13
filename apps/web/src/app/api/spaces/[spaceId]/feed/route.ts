@@ -1,10 +1,13 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { z } from 'zod';
 import { HttpStatus } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getServerSpaceRepository } from "@hive/core/server";
+// Ghost Mode for privacy filtering
+import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/services/ghost-mode.service';
+import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
+import { isContentHidden } from '@/lib/content-moderation';
 
 const GetActivityFeedSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
@@ -13,18 +16,6 @@ const GetActivityFeedSchema = z.object({
   since: z.string().optional(), // ISO date string
   sortBy: z.enum(['recent', 'engagement']).optional().default('recent'),
 });
-
-/**
- * Check if content should be hidden from feed
- * Filters out moderated/hidden/removed content
- */
-function isContentHidden(data: Record<string, unknown>): boolean {
-  if (data.isHidden === true) return true;
-  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
-  if (data.isDeleted === true) return true;
-  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
-  return false;
-}
 
 // Activity types for space activity feed
 export interface ActivityItem {
@@ -52,6 +43,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   if (!spaceId) {
@@ -80,7 +72,7 @@ export const GET = withAuthAndErrors(async (
     const space = spaceResult.getValue();
 
     // Enforce campus isolation
-    if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    if (space.campusId.id !== campusId) {
       return respond.error('Space not found', 'RESOURCE_NOT_FOUND', { status: HttpStatus.NOT_FOUND });
     }
 
@@ -90,7 +82,7 @@ export const GET = withAuthAndErrors(async (
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 
@@ -98,6 +90,33 @@ export const GET = withAuthAndErrors(async (
       // Allow public spaces to be viewable without membership
       if (!space.isPublic) {
         return respond.error('You must be a member to view this space feed', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });
+      }
+    }
+
+    // GHOST MODE: Build viewer context for privacy checks
+    const viewerContext = ViewerContext.authenticated({
+      userId,
+      campusId,
+      memberOfSpaceIds: [spaceId]
+    });
+
+    /**
+     * Check if a user's activity should be hidden based on ghost mode settings
+     */
+    async function shouldHideUserActivity(targetUserId: string): Promise<boolean> {
+      try {
+        const userDoc = await dbAdmin.collection('users').doc(targetUserId).get();
+        if (!userDoc.exists) return false;
+        const userData = userDoc.data();
+        const ghostUser: GhostModeUser = {
+          id: targetUserId,
+          ghostMode: userData?.ghostMode,
+          visibility: userData?.visibility
+        };
+        // Both viewer and target user are in this space
+        return GhostModeService.shouldHideActivity(ghostUser, viewerContext, [spaceId]);
+      } catch {
+        return false; // Fail open if we can't check
       }
     }
 
@@ -118,11 +137,16 @@ export const GET = withAuthAndErrors(async (
         for (const postDoc of postsSnapshot.docs) {
           const postData = postDoc.data();
           // SECURITY: Skip posts from other campuses
-          if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+          if (postData.campusId && postData.campusId !== campusId) {
             continue;
           }
           // SECURITY: Skip hidden/moderated/removed content
           if (isContentHidden(postData)) {
+            continue;
+          }
+
+          // GHOST MODE: Check if author's activity should be hidden
+          if (await shouldHideUserActivity(postData.authorId)) {
             continue;
           }
 
@@ -184,11 +208,16 @@ export const GET = withAuthAndErrors(async (
         for (const eventDoc of eventsSnapshot.docs) {
           const eventData = eventDoc.data();
           // SECURITY: Skip events from other campuses
-          if (eventData.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+          if (eventData.campusId && eventData.campusId !== campusId) {
             continue;
           }
           // SECURITY: Skip hidden/moderated/removed content
           if (isContentHidden(eventData)) {
+            continue;
+          }
+
+          // GHOST MODE: Check if organizer's activity should be hidden
+          if (await shouldHideUserActivity(eventData.organizerId)) {
             continue;
           }
 
@@ -250,11 +279,17 @@ export const GET = withAuthAndErrors(async (
 
         for (const memberDoc of membersSnapshot.docs) {
           const memberData = memberDoc.data();
-          if (memberData.campusId && memberData.campusId !== CURRENT_CAMPUS_ID) {
+          if (memberData.campusId && memberData.campusId !== campusId) {
             continue;
           }
 
           const memberId = memberData.userId;
+
+          // GHOST MODE: Check if member's activity should be hidden
+          if (await shouldHideUserActivity(memberId)) {
+            continue;
+          }
+
           // Get member info
           let member = { id: memberId, name: 'Unknown User', avatar: undefined, handle: undefined };
           try {
@@ -302,7 +337,12 @@ export const GET = withAuthAndErrors(async (
 
         for (const deploymentDoc of deploymentsSnapshot.docs) {
           const deploymentData = deploymentDoc.data();
-          
+
+          // GHOST MODE: Check if deployer's activity should be hidden
+          if (await shouldHideUserActivity(deploymentData.userId)) {
+            continue;
+          }
+
           // Get deployer info
           let deployer = { id: deploymentData.userId, name: 'Unknown User', avatar: undefined, handle: undefined };
           try {

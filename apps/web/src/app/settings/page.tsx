@@ -3,11 +3,46 @@
 // Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 // import { NavigationPreferences } from "@hive/ui"; // TODO: Fix NavigationPreferences integration
-import { PageContainer } from "@/components/temp-stubs";
 import { Settings, User, Bell, Shield, Palette, Globe, Smartphone, LogOut, Download, Trash2, Navigation } from 'lucide-react';
-import { useSession } from '../../hooks/use-session';
+import { useAuth } from '@hive/auth-logic';
+
+// Inline PageContainer to replace deleted temp-stubs
+function PageContainer({
+  title,
+  subtitle,
+  breadcrumbs,
+  maxWidth = "6xl",
+  children
+}: {
+  title: string;
+  subtitle?: string;
+  breadcrumbs?: { label: string; icon?: React.ComponentType<{ className?: string }> }[];
+  maxWidth?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-black">
+      <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
+        {breadcrumbs && breadcrumbs.length > 0 && (
+          <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
+            {breadcrumbs.map((item, i) => (
+              <span key={i} className="flex items-center gap-1">
+                {item.icon && <item.icon className="h-4 w-4" />}
+                {item.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
+        {subtitle && <p className="text-white/60 mt-1">{subtitle}</p>}
+        <div className="mt-6">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 // Temp fix for chunk 2073 useRef errors
 const Button = ({ children, _variant = 'default', _size = 'default', className = '', ...props }: { children: React.ReactNode; _variant?: string; _size?: string; className?: string; [key: string]: unknown }) => <button className={`px-4 py-2 rounded ${className}`} {...props}>{children}</button>;
 const Card = ({ children, className = '', ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) => <div className={`border rounded-lg p-4 ${className}`} {...props}>{children}</div>;
@@ -16,7 +51,7 @@ const useShell = () => ({ isSidebarOpen: true, toggleSidebar: () => {}, isMobile
 
 
 export default function SettingsPage() {
-  const { user, logout } = useSession();
+  const { user, logout } = useAuth();
   const _shell = useShell();
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);

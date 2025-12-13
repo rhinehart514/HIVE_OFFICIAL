@@ -16,6 +16,14 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { logger } from '@/lib/structured-logger';
 import { HttpStatus } from '@/lib/api-response-types';
+import {
+  GhostModeService,
+  ViewerContext,
+  ContentModerationService
+} from '@hive/core';
+import type { GhostModeUser } from '@hive/core';
+import { getCurrentUser } from '@/lib/server-auth';
+import { searchRateLimit } from '@/lib/rate-limit-simple';
 
 interface SearchResult {
   id: string;
@@ -112,14 +120,20 @@ async function searchSpaces(
 
 /**
  * Search profiles collection
+ * @param viewerContext - Optional viewer context for ghost mode filtering
  */
 async function searchProfiles(
   query: string,
   campusId: string,
-  limit: number
+  limit: number,
+  viewerContext?: ViewerContext
 ): Promise<SearchResult[]> {
   const results: SearchResult[] = [];
   const lowercaseQuery = query.toLowerCase();
+
+  // Collect profile IDs to batch-fetch privacy settings for ghost mode
+  const profileIds: string[] = [];
+  const profileData: Map<string, { doc: FirebaseFirestore.QueryDocumentSnapshot; score: number }> = new Map();
 
   try {
     // Search by handle prefix (handles are lowercase)
@@ -128,62 +142,85 @@ async function searchProfiles(
       .where('campusId', '==', campusId)
       .where('handle', '>=', lowercaseQuery)
       .where('handle', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit)
+      .limit(limit * 2) // Fetch extra to account for filtering
       .get();
 
     for (const doc of handleSnapshot.docs) {
       const data = doc.data();
       // Respect privacy settings
       if (data.privacy?.profileVisibility === 'private') continue;
-
-      results.push({
-        id: doc.id,
-        title: data.displayName || data.handle || 'Anonymous',
-        description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
-        type: 'person',
-        category: 'people',
-        url: data.handle ? `/user/${data.handle}` : `/profile/${doc.id}`,
-        metadata: {
-          handle: data.handle,
-          photoURL: data.photoURL,
-          major: data.major,
-          year: data.graduationYear
-        },
-        relevanceScore: 100 // Exact prefix match
-      });
+      profileIds.push(doc.id);
+      profileData.set(doc.id, { doc, score: 100 });
     }
 
     // Search by displayName_lowercase if we have room
-    if (results.length < limit) {
+    if (profileIds.length < limit * 2) {
       const nameSnapshot = await dbAdmin
         .collection('profiles')
         .where('campusId', '==', campusId)
         .where('displayName_lowercase', '>=', lowercaseQuery)
         .where('displayName_lowercase', '<=', lowercaseQuery + '\uf8ff')
-        .limit(limit - results.length)
+        .limit((limit * 2) - profileIds.length)
         .get();
 
       for (const doc of nameSnapshot.docs) {
-        if (results.some(r => r.id === doc.id)) continue;
-
+        if (profileData.has(doc.id)) continue;
         const data = doc.data();
         if (data.privacy?.profileVisibility === 'private') continue;
-
-        results.push({
-          id: doc.id,
-          title: data.displayName || data.handle || 'Anonymous',
-          description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
-          type: 'person',
-          category: 'people',
-          url: data.handle ? `/user/${data.handle}` : `/profile/${doc.id}`,
-          metadata: {
-            handle: data.handle,
-            photoURL: data.photoURL,
-            major: data.major
-          },
-          relevanceScore: 90 // Name match
-        });
+        profileIds.push(doc.id);
+        profileData.set(doc.id, { doc, score: 90 });
       }
+    }
+
+    // Batch fetch privacy settings for ghost mode filtering
+    const privacyById = new Map<string, FirebaseFirestore.DocumentData>();
+    if (viewerContext && profileIds.length > 0) {
+      const privacyRefs = profileIds.map(id => dbAdmin.collection('privacySettings').doc(id));
+      const privacyDocs = await dbAdmin.getAll(...privacyRefs);
+      privacyDocs.forEach(doc => {
+        if (doc.exists) {
+          privacyById.set(doc.id, doc.data()!);
+        }
+      });
+    }
+
+    // Process profiles with ghost mode filtering
+    for (const profileId of profileIds) {
+      if (results.length >= limit) break;
+
+      const entry = profileData.get(profileId);
+      if (!entry) continue;
+
+      const data = entry.doc.data();
+
+      // Ghost mode filtering if viewer context is available
+      if (viewerContext) {
+        const privacyData = privacyById.get(profileId);
+        const ghostModeUser: GhostModeUser = {
+          id: profileId,
+          ghostMode: privacyData?.ghostMode
+        };
+
+        if (GhostModeService.shouldHideFromSearch(ghostModeUser, viewerContext)) {
+          continue; // Skip - user has ghost mode hiding from search
+        }
+      }
+
+      results.push({
+        id: profileId,
+        title: data.displayName || data.handle || 'Anonymous',
+        description: data.bio || `${data.major || ''} • ${data.graduationYear || ''}`.trim(),
+        type: 'person',
+        category: 'people',
+        url: data.handle ? `/user/${data.handle}` : `/profile/${profileId}`,
+        metadata: {
+          handle: data.handle,
+          photoURL: data.photoURL,
+          major: data.major,
+          year: entry.score === 100 ? data.graduationYear : undefined
+        },
+        relevanceScore: entry.score
+      });
     }
   } catch (error) {
     logger.error('Error searching profiles', { error: String(error), query });
@@ -194,6 +231,7 @@ async function searchProfiles(
 
 /**
  * Search posts collection
+ * Uses ContentModerationService for consistent moderation checks
  */
 async function searchPosts(
   query: string,
@@ -210,13 +248,14 @@ async function searchPosts(
       .where('campusId', '==', campusId)
       .where('title_lowercase', '>=', lowercaseQuery)
       .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit)
+      .limit(limit * 2) // Fetch extra to account for moderation filtering
       .get();
 
     for (const doc of titleSnapshot.docs) {
+      if (results.length >= limit) break;
       const data = doc.data();
-      // Skip hidden/moderated content
-      if (data.isHidden || data.status === 'hidden') continue;
+      // Use ContentModerationService for consistent moderation checks
+      if (ContentModerationService.isHidden(data)) continue;
 
       results.push({
         id: doc.id,
@@ -241,14 +280,16 @@ async function searchPosts(
         .collection('posts')
         .where('campusId', '==', campusId)
         .where('tags', 'array-contains', lowercaseQuery)
-        .limit(limit - results.length)
+        .limit((limit - results.length) * 2)
         .get();
 
       for (const doc of tagSnapshot.docs) {
+        if (results.length >= limit) break;
         if (results.some(r => r.id === doc.id)) continue;
 
         const data = doc.data();
-        if (data.isHidden || data.status === 'hidden') continue;
+        // Use ContentModerationService for consistent moderation checks
+        if (ContentModerationService.isHidden(data)) continue;
 
         results.push({
           id: doc.id,
@@ -357,6 +398,33 @@ async function searchTools(
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit check - use IP for client identification
+    const forwarded = request.headers.get('x-forwarded-for');
+    const clientIp = forwarded?.split(',')[0]?.trim() ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown';
+
+    const rateLimitResult = searchRateLimit.check(`ip:${clientIp}`);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          results: [],
+          totalCount: 0,
+          error: 'Rate limit exceeded',
+          message: 'Too many search requests. Please wait before trying again.',
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.resetTime),
+            'Retry-After': String(rateLimitResult.retryAfter || 60),
+          }
+        }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q')?.trim();
     const category = (searchParams.get('category') || 'all') as SearchCategory;
@@ -374,6 +442,16 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Get current user for viewer context (ghost mode filtering)
+    const user = await getCurrentUser(request);
+    const viewerContext = user
+      ? ViewerContext.authenticated({
+          userId: user.uid,
+          campusId,
+          isAdmin: false // Could check admin role here if needed
+        })
+      : ViewerContext.anonymous(campusId);
+
     const startTime = Date.now();
     let allResults: SearchResult[] = [];
 
@@ -384,7 +462,7 @@ export async function GET(request: NextRequest) {
       searchPromises.push(searchSpaces(query, campusId, limit));
     }
     if (category === 'all' || category === 'people') {
-      searchPromises.push(searchProfiles(query, campusId, limit));
+      searchPromises.push(searchProfiles(query, campusId, limit, viewerContext));
     }
     if (category === 'all' || category === 'posts') {
       searchPromises.push(searchPosts(query, campusId, limit));

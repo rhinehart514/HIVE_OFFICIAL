@@ -117,7 +117,6 @@ function createDefaultWelcomeMatContext(): WelcomeMatContextType {
   const openFlow = React.useCallback((flowId: string) => {
     const flow = state.flows.get(flowId)
     if (!flow) {
-      console.warn(`WelcomeMat: Flow "${flowId}" not found`)
       return
     }
 
@@ -260,9 +259,8 @@ function createDefaultWelcomeMatContext(): WelcomeMatContextType {
     })
   }, [])
 
-  const setStepTarget = React.useCallback((target: string) => {
-    // This would highlight the target element
-    console.log(`WelcomeMat: Highlighting target "${target}"`)
+  const setStepTarget = React.useCallback((_target: string) => {
+    // TODO: Implement element highlighting
   }, [])
 
   return {

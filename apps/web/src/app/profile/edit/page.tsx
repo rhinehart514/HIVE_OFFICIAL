@@ -6,13 +6,14 @@ import { motion } from 'framer-motion';
 import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback } from '@hive/ui';
 import { profileApiResponseToProfileSystem, type ProfileV2ApiResponse } from '@/components/profile/profile-adapter';
 import type { ProfileSystem } from '@hive/core';
-import { useSession } from '@/hooks/use-session';
+import { useAuth } from '@hive/auth-logic';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Check, Loader2, GripVertical } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { user: currentUser, isLoading: sessionLoading } = useSession();
+  const { user: currentUser, isLoading: sessionLoading } = useAuth();
   const { toast } = useToast();
 
   const [profileData, setProfileData] = useState<ProfileV2ApiResponse | null>(null);
@@ -58,7 +59,7 @@ export default function EditProfilePage() {
         setProfileSystem(profileApiResponseToProfileSystem(payload));
         setHasPendingChanges(false);
       } catch (err) {
-        console.error('Failed to load profile for edit page', err);
+        logger.error('Failed to load profile for edit page', { component: 'EditProfilePage' }, err instanceof Error ? err : undefined);
         toast({
           title: 'Unable to load profile',
           description: 'Please refresh and try again.',
@@ -97,7 +98,7 @@ export default function EditProfilePage() {
         type: 'success',
       });
     } catch (err) {
-      console.error('Failed to save profile layout', err);
+      logger.error('Failed to save profile layout', { component: 'EditProfilePage' }, err instanceof Error ? err : undefined);
       toast({
         title: 'Save failed',
         description: 'Please try again in a moment.',

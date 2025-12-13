@@ -13,6 +13,8 @@ import { EnhancedSpace, SpaceMemberRole } from '../../../domain/spaces/aggregate
 import { SpaceId } from '../../../domain/spaces/value-objects/space-id.value';
 import { ProfileId } from '../../../domain/profile/value-objects/profile-id.value';
 import { SpaceMapper, SpaceDocument, SpacePersistenceData } from '../firebase/space.mapper';
+import { PlacedTool, PlacementLocation, PlacementSource, PlacementVisibility } from '../../../domain/spaces/entities/placed-tool';
+import { COLLECTIONS } from '../../firestore-collections';
 
 /**
  * Member document structure in spaceMembers collection
@@ -27,6 +29,26 @@ interface SpaceMemberDocument {
 }
 
 /**
+ * PlacedTool document structure in placed_tools subcollection
+ */
+interface PlacedToolDocument {
+  toolId: string;
+  spaceId: string;
+  placement: PlacementLocation;
+  order: number;
+  isActive?: boolean;
+  source?: PlacementSource;
+  placedBy?: string | null;
+  placedAt?: { toDate: () => Date } | Date;
+  configOverrides?: Record<string, unknown>;
+  visibility?: PlacementVisibility;
+  titleOverride?: string | null;
+  isEditable?: boolean;
+  state?: Record<string, unknown>;
+  stateUpdatedAt?: { toDate: () => Date } | Date | null;
+}
+
+/**
  * Firebase Admin Space Repository Implementation
  */
 export class FirebaseAdminSpaceRepository implements ISpaceRepository {
@@ -36,8 +58,9 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
   /**
    * Find a space by ID
    * Loads the space document and populates members from spaceMembers collection
+   * Optionally loads placed tools from the placed_tools subcollection
    */
-  async findById(id: SpaceId | string, options?: { loadMembers?: boolean }): Promise<Result<EnhancedSpace>> {
+  async findById(id: SpaceId | string, options?: { loadMembers?: boolean; loadPlacedTools?: boolean }): Promise<Result<EnhancedSpace>> {
     try {
       const spaceId = typeof id === 'string' ? id : id.value;
       const docRef = dbAdmin.collection(this.collectionName).doc(spaceId);
@@ -59,6 +82,11 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       // Load members from spaceMembers collection (default: true for full hydration)
       if (options?.loadMembers !== false) {
         await this.loadMembersIntoSpace(space, spaceId);
+      }
+
+      // Load placed tools from placed_tools subcollection
+      if (options?.loadPlacedTools === true) {
+        await this.loadPlacedToolsIntoSpace(space, spaceId);
       }
 
       return Result.ok<EnhancedSpace>(space);
@@ -117,9 +145,85 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       if (members.length > 0) {
         space.setMembers(members);
       }
-    } catch (error) {
-      // Log but don't fail - members loading is enhancement, not critical
-      console.warn(`Failed to load members for space ${spaceId}:`, error);
+    } catch (_error) {
+      // Members loading failed - non-critical enhancement
+    }
+  }
+
+  /**
+   * Load placed tools from placed_tools subcollection into the space aggregate
+   * Called when loadPlacedTools option is true in findById
+   */
+  private async loadPlacedToolsIntoSpace(space: EnhancedSpace, spaceId: string): Promise<void> {
+    try {
+      const toolsSnapshot = await dbAdmin
+        .collection(this.collectionName)
+        .doc(spaceId)
+        .collection(COLLECTIONS.PLACED_TOOLS)
+        .orderBy('order', 'asc')
+        .limit(100) // Reasonable limit for tool placements
+        .get();
+
+      if (toolsSnapshot.empty) {
+        return; // No tools placed in this space
+      }
+
+      const placedTools: PlacedTool[] = [];
+
+      for (const doc of toolsSnapshot.docs) {
+        const toolData = doc.data() as PlacedToolDocument;
+
+        // Parse placedAt - handle both Firestore Timestamp and Date
+        let placedAt: Date;
+        if (toolData.placedAt && typeof (toolData.placedAt as { toDate?: () => Date }).toDate === 'function') {
+          placedAt = (toolData.placedAt as { toDate: () => Date }).toDate();
+        } else if (toolData.placedAt instanceof Date) {
+          placedAt = toolData.placedAt;
+        } else {
+          placedAt = new Date();
+        }
+
+        // Parse stateUpdatedAt
+        let stateUpdatedAt: Date | null = null;
+        if (toolData.stateUpdatedAt) {
+          if (typeof (toolData.stateUpdatedAt as { toDate?: () => Date }).toDate === 'function') {
+            stateUpdatedAt = (toolData.stateUpdatedAt as { toDate: () => Date }).toDate();
+          } else if (toolData.stateUpdatedAt instanceof Date) {
+            stateUpdatedAt = toolData.stateUpdatedAt;
+          }
+        }
+
+        // Reconstruct PlacedTool entity from persistence
+        const toolResult = PlacedTool.create(
+          {
+            toolId: toolData.toolId,
+            spaceId: toolData.spaceId,
+            placement: toolData.placement,
+            order: toolData.order ?? 0,
+            isActive: toolData.isActive ?? true,
+            source: toolData.source ?? 'leader',
+            placedBy: toolData.placedBy ?? null,
+            placedAt,
+            configOverrides: toolData.configOverrides ?? {},
+            visibility: toolData.visibility ?? 'all',
+            titleOverride: toolData.titleOverride ?? null,
+            isEditable: toolData.isEditable ?? true,
+            state: toolData.state ?? {},
+            stateUpdatedAt,
+          },
+          doc.id // Use Firestore document ID as entity ID
+        );
+
+        if (toolResult.isSuccess) {
+          placedTools.push(toolResult.getValue());
+        }
+      }
+
+      if (placedTools.length > 0) {
+        space.setPlacedTools(placedTools);
+      }
+    } catch (_error) {
+      // PlacedTools loading failed - non-critical enhancement
     }
   }
 
@@ -179,6 +283,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Find spaces by campus
+   * Filters out hidden/moderated spaces
    */
   async findByCampus(campusId: string, limitCount: number = 50): Promise<Result<EnhancedSpace[]>> {
     try {
@@ -190,7 +295,8 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .limit(limitCount)
         .get();
 
-      return this.mapSnapshotToSpaces(snapshot);
+      // Filter out hidden/moderated spaces post-query
+      return this.mapSnapshotToSpaces(snapshot, { filterHidden: true });
     } catch (error) {
       return Result.fail<EnhancedSpace[]>(`Failed to find spaces: ${error}`);
     }
@@ -198,6 +304,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Find spaces by category
+   * Filters out hidden/moderated spaces
    */
   async findByCategory(category: string, campusId: string): Promise<Result<EnhancedSpace[]>> {
     try {
@@ -210,31 +317,19 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .limit(50)
         .get();
 
-      return this.mapSnapshotToSpaces(snapshot);
+      return this.mapSnapshotToSpaces(snapshot, { filterHidden: true });
     } catch (error) {
       return Result.fail<EnhancedSpace[]>(`Failed to find spaces: ${error}`);
     }
   }
 
   /**
-   * Find spaces by type
+   * Find spaces by type (legacy - prefer findByCategory)
+   * Filters out hidden/moderated spaces
    */
   async findByType(type: string, campusId: string): Promise<Result<EnhancedSpace[]>> {
-    try {
-      const snapshot = await dbAdmin
-        .collection(this.collectionName)
-        .where('campusId', '==', campusId)
-        .where('type', '==', type)
-        .where('isActive', '==', true)
-        .orderBy('memberCount', 'desc')
-        .limit(50)
-        .get();
-
-      return this.mapSnapshotToSpaces(snapshot);
-    } catch (error) {
-      // Fallback to category if type field doesn't exist
-      return this.findByCategory(type, campusId);
-    }
+    // Prefer category field over legacy type field
+    return this.findByCategory(type, campusId);
   }
 
   /**
@@ -294,6 +389,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Find public spaces
+   * Filters out hidden/moderated spaces
    */
   async findPublicSpaces(campusId: string, limitCount: number = 100): Promise<Result<EnhancedSpace[]>> {
     try {
@@ -306,7 +402,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .limit(limitCount)
         .get();
 
-      return this.mapSnapshotToSpaces(snapshot);
+      return this.mapSnapshotToSpaces(snapshot, { filterHidden: true });
     } catch (error) {
       return Result.fail<EnhancedSpace[]>(`Failed to find public spaces: ${error}`);
     }
@@ -321,6 +417,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Find trending spaces
+   * Filters out hidden/moderated spaces and private spaces (discovery context)
    */
   async findTrending(campusId: string, limitCount: number = 20): Promise<Result<EnhancedSpace[]>> {
     try {
@@ -333,7 +430,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .limit(limitCount)
         .get();
 
-      return this.mapSnapshotToSpaces(snapshot);
+      return this.mapSnapshotToSpaces(snapshot, { filterHidden: true, filterPrivate: true });
     } catch (error) {
       // Fallback: just order by member count if trendingScore index doesn't exist
       try {
@@ -345,7 +442,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
           .limit(limitCount)
           .get();
 
-        return this.mapSnapshotToSpaces(fallbackSnapshot);
+        return this.mapSnapshotToSpaces(fallbackSnapshot, { filterHidden: true, filterPrivate: true });
       } catch (fallbackError) {
         return Result.fail<EnhancedSpace[]>(`Failed to find trending spaces: ${error}`);
       }
@@ -354,6 +451,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Find recommended spaces based on user interests and major
+   * Filters out hidden/moderated spaces and private spaces
    */
   async findRecommended(
     campusId: string,
@@ -373,7 +471,13 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .get();
 
       for (const doc of popularSnapshot.docs) {
-        const result = await SpaceMapper.toDomain(doc.id, doc.data() as SpaceDocument);
+        const data = doc.data() as SpaceDocument & { isHidden?: boolean; moderationStatus?: string };
+        // Skip hidden/moderated/private spaces
+        if (data.isHidden === true) continue;
+        if (data.moderationStatus === 'hidden' || data.moderationStatus === 'suspended') continue;
+        if (data.visibility === 'private') continue;
+
+        const result = await SpaceMapper.toDomain(doc.id, data);
         if (result.isSuccess) {
           spaces.push(result.getValue());
         }
@@ -390,7 +494,13 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
           .get();
 
         for (const doc of majorSnapshot.docs) {
-          const result = await SpaceMapper.toDomain(doc.id, doc.data() as SpaceDocument);
+          const data = doc.data() as SpaceDocument & { isHidden?: boolean; moderationStatus?: string };
+          // Skip hidden/moderated/private spaces
+          if (data.isHidden === true) continue;
+          if (data.moderationStatus === 'hidden' || data.moderationStatus === 'suspended') continue;
+          if (data.visibility === 'private') continue;
+
+          const result = await SpaceMapper.toDomain(doc.id, data);
           if (result.isSuccess && !spaces.find(s => s.spaceId.value === doc.id)) {
             spaces.push(result.getValue());
           }
@@ -405,6 +515,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Search spaces by name/description
+   * Filters out hidden/moderated spaces and private spaces
    */
   async searchSpaces(searchQuery: string, campusId: string): Promise<Result<EnhancedSpace[]>> {
     try {
@@ -422,12 +533,17 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       const searchLower = searchQuery.toLowerCase();
 
       for (const doc of snapshot.docs) {
-        const data = doc.data();
+        const data = doc.data() as SpaceDocument & { isHidden?: boolean; moderationStatus?: string };
         const nameLower = data.name?.toLowerCase() || '';
         const descriptionLower = data.description?.toLowerCase() || '';
 
+        // Skip hidden/moderated/private spaces
+        if (data.isHidden === true) continue;
+        if (data.moderationStatus === 'hidden' || data.moderationStatus === 'suspended') continue;
+        if (data.visibility === 'private') continue;
+
         if (nameLower.includes(searchLower) || descriptionLower.includes(searchLower)) {
-          const result = await SpaceMapper.toDomain(doc.id, data as SpaceDocument);
+          const result = await SpaceMapper.toDomain(doc.id, data);
           if (result.isSuccess) {
             spaces.push(result.getValue());
           }
@@ -476,9 +592,9 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
         .where('campusId', '==', campusId)
         .where('isActive', '==', true);
 
-      // Apply type filter
+      // Apply category filter (use 'category' field, not legacy 'type')
       if (type) {
-        query = query.where('type', '==', type);
+        query = query.where('category', '==', type);
       }
 
       // Apply ordering
@@ -593,14 +709,30 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Helper: Map snapshot to EnhancedSpace array
+   * Optionally filters out hidden/moderated spaces and enforces privacy
    */
   private async mapSnapshotToSpaces(
-    snapshot: FirebaseFirestore.QuerySnapshot
+    snapshot: FirebaseFirestore.QuerySnapshot,
+    options: { filterHidden?: boolean; filterPrivate?: boolean } = {}
   ): Promise<Result<EnhancedSpace[]>> {
+    const { filterHidden = false, filterPrivate = false } = options;
     const spaces: EnhancedSpace[] = [];
 
     for (const doc of snapshot.docs) {
-      const result = await SpaceMapper.toDomain(doc.id, doc.data() as SpaceDocument);
+      const data = doc.data() as SpaceDocument & { isHidden?: boolean; moderationStatus?: string };
+
+      // Skip hidden/moderated spaces if filtering enabled
+      if (filterHidden) {
+        if (data.isHidden === true) continue;
+        if (data.moderationStatus === 'hidden' || data.moderationStatus === 'suspended') continue;
+      }
+
+      // Skip private spaces if filtering enabled (for browse/discovery)
+      if (filterPrivate && data.visibility === 'private') {
+        continue;
+      }
+
+      const result = await SpaceMapper.toDomain(doc.id, data);
       if (result.isSuccess) {
         spaces.push(result.getValue());
       }
@@ -611,6 +743,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
 
   /**
    * Helper: Convert Date objects to Firestore Timestamps
+   * Also removes undefined values which Firestore doesn't support
    */
   private convertDatesToTimestamps(
     data: SpacePersistenceData
@@ -636,7 +769,48 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
       converted.rushModeEndDate = admin.firestore.Timestamp.fromDate(data.rushModeEndDate);
     }
 
-    return converted;
+    // Remove undefined values recursively - Firestore doesn't accept undefined
+    return this.removeUndefinedValues(converted);
+  }
+
+  /**
+   * Helper: Recursively remove undefined values from an object
+   * Firestore throws an error when undefined values are present
+   */
+  private removeUndefinedValues(obj: Record<string, unknown>): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (value === undefined) {
+        continue; // Skip undefined values
+      }
+
+      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        // Check if it's a Firestore Timestamp (has toDate method)
+        if ('toDate' in value || '_seconds' in value) {
+          result[key] = value; // Keep Firestore Timestamps as-is
+        } else {
+          // Recursively clean nested objects
+          const cleaned = this.removeUndefinedValues(value as Record<string, unknown>);
+          // Only include if the cleaned object has properties
+          if (Object.keys(cleaned).length > 0) {
+            result[key] = cleaned;
+          }
+        }
+      } else if (Array.isArray(value)) {
+        // Clean array items
+        result[key] = value.map(item => {
+          if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
+            return this.removeUndefinedValues(item as Record<string, unknown>);
+          }
+          return item;
+        }).filter(item => item !== undefined);
+      } else {
+        result[key] = value;
+      }
+    }
+
+    return result;
   }
 }
 

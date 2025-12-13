@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { useSession } from '@/hooks/use-session';
+import { useAuth } from '@hive/auth-logic';
 import {
   Button,
   Avatar,
@@ -22,6 +21,7 @@ import type { ProfileSystem, BentoGridLayout, PresenceData } from '@hive/core';
 import { db } from '@hive/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logger } from '@/lib/logger';
 import {
   Users,
   Sparkles,
@@ -102,7 +102,7 @@ function Stat({
 export default function ProfilePageContent() {
   const params = useParams();
   const router = useRouter();
-  const { user: currentUser } = useSession();
+  const { user: currentUser } = useAuth();
   const profileId = params.id as string;
 
   const [profileData, setProfileData] = useState<ProfileV2ApiResponse | null>(null);
@@ -152,7 +152,7 @@ export default function ProfilePageContent() {
         setIsLoading(false);
       } catch (err) {
         if (cancelled) return;
-        console.error('Failed to load profile v2', err);
+        logger.error('Failed to load profile v2', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Failed to load profile');
         setIsLoading(false);
       }
@@ -232,7 +232,7 @@ export default function ProfilePageContent() {
         body: JSON.stringify({ grid: layout }),
       });
     } catch (err) {
-      console.error('Failed to save layout:', err);
+      logger.error('Failed to save layout', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
     }
   };
 
@@ -298,8 +298,7 @@ export default function ProfilePageContent() {
 
   // ========== MAIN CONTENT (Premium Dark - Vercel/Linear style) ==========
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen pb-20 bg-neutral-950">
+    <div className="min-h-screen pb-20 bg-neutral-950">
         {/* ============ HERO HEADER ============ */}
         <motion.header
           variants={premiumContainerVariants}
@@ -462,7 +461,6 @@ export default function ProfilePageContent() {
             </button>
           </div>
         )}
-      </div>
-    </ErrorBoundary>
+    </div>
   );
 }

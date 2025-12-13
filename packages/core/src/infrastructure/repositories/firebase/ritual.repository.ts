@@ -457,25 +457,25 @@ export class FirebaseRitualRepository implements IRitualRepository {
     }
   }
 
-  subscribeToRitual(ritualId: any, callback: (ritual: EnhancedRitual) => void): () => void {
+  subscribeToRitual(_ritualId: any, _callback: (ritual: EnhancedRitual) => void): () => void {
     // Simplified subscription implementation
     // In production, this would use Firestore real-time listeners
-    console.log(`Subscribing to ritual ${ritualId}`);
+    // TODO: Implement Firestore real-time subscription
 
     // Return unsubscribe function
     return () => {
-      console.log(`Unsubscribed from ritual ${ritualId}`);
+      // Cleanup subscription
     };
   }
 
-  subscribeToActiveRituals(campusId: string, callback: (rituals: EnhancedRitual[]) => void): () => void {
+  subscribeToActiveRituals(_campusId: string, _callback: (rituals: EnhancedRitual[]) => void): () => void {
     // Simplified subscription implementation
     // In production, this would use Firestore real-time listeners
-    console.log(`Subscribing to active rituals for campus ${campusId}`);
+    // TODO: Implement Firestore real-time subscription
 
     // Return unsubscribe function
     return () => {
-      console.log(`Unsubscribed from active rituals for campus ${campusId}`);
+      // Cleanup subscription
     };
   }
 }

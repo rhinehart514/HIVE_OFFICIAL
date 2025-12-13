@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Input, Card, Badge, toast } from '@hive/ui';
 import {
   Search,
@@ -13,6 +13,7 @@ import {
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { motion, useReducedMotion } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 // Spring config for fluid motion
 const SPRING_CONFIG = {
@@ -156,47 +157,89 @@ function SpaceSearchCard({
 
 export default function SpacesBrowsePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: _user } = useAuth();
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryKey>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({});
+
+  // Auto-focus search input if coming from /spaces/search redirect
+  useEffect(() => {
+    if (searchParams.get('focus') === 'search') {
+      searchInputRef.current?.focus();
+    }
+  }, [searchParams]);
   const [results, setResults] = useState<SpaceSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const LIMIT = 20;
 
-  // Load initial spaces
+  // Load initial spaces when category changes
   useEffect(() => {
-    loadSpaces();
+    setOffset(0);
+    loadSpaces(0, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
-  const loadSpaces = async () => {
+  const loadSpaces = async (currentOffset: number = 0, replace: boolean = false) => {
     try {
-      setLoading(true);
-      const params = new URLSearchParams({ limit: '50' });
+      if (replace) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const params = new URLSearchParams({
+        limit: String(LIMIT),
+        offset: String(currentOffset),
+      });
       if (selectedCategory !== 'all') {
         params.set('category', selectedCategory);
       }
+
       const res = await secureApiFetch(`/api/spaces?${params}`, { method: 'GET' });
       const response = await res.json();
-      setResults(response?.spaces || []);
+      const newSpaces = response?.data?.spaces || response?.spaces || [];
+
+      if (replace) {
+        setResults(newSpaces);
+      } else {
+        setResults(prev => [...prev, ...newSpaces]);
+      }
+
+      // Check if there are more results
+      setHasMore(newSpaces.length === LIMIT);
     } catch (error) {
-      console.error('Failed to load spaces:', error);
+      logger.error('Failed to load spaces', { component: 'SpacesBrowsePage' }, error instanceof Error ? error : undefined);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
+  };
+
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    const newOffset = offset + LIMIT;
+    setOffset(newOffset);
+    loadSpaces(newOffset, false);
   };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      loadSpaces();
+      setOffset(0);
+      loadSpaces(0, true);
       return;
     }
 
     try {
       setLoading(true);
       setHasSearched(true);
+      setOffset(0);
 
       const res = await secureApiFetch('/api/spaces/search', {
         method: 'POST',
@@ -204,13 +247,16 @@ export default function SpacesBrowsePage() {
           q: searchQuery,
           category: selectedCategory !== 'all' ? selectedCategory : undefined,
           ...filters,
-          limit: 50
+          limit: LIMIT,
+          offset: 0,
         })
       });
       const response = await res.json();
-      setResults(response?.spaces || []);
+      const spaces = response?.data?.spaces || response?.spaces || [];
+      setResults(spaces);
+      setHasMore(spaces.length === LIMIT);
     } catch (error) {
-      console.error('Search failed:', error);
+      logger.error('Search failed', { component: 'SpacesBrowsePage' }, error instanceof Error ? error : undefined);
       toast.error('Search failed', 'Please try again.');
     } finally {
       setLoading(false);
@@ -228,7 +274,7 @@ export default function SpacesBrowsePage() {
       toast.success('Joined space', 'Welcome aboard!');
       router.push(`/spaces/${spaceId}`);
     } catch (error) {
-      console.error('Failed to join space:', error);
+      logger.error('Failed to join space', { component: 'SpacesBrowsePage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to join', 'Please try again.');
     }
   };
@@ -238,7 +284,8 @@ export default function SpacesBrowsePage() {
     setSearchQuery('');
     setSelectedCategory('all');
     setHasSearched(false);
-    loadSpaces();
+    setOffset(0);
+    loadSpaces(0, true);
   };
 
   const activeFilterCount = Object.keys(filters).filter(k => filters[k as keyof SearchFilters] !== undefined).length;
@@ -257,8 +304,9 @@ export default function SpacesBrowsePage() {
             <button
               onClick={() => router.push('/spaces')}
               className="p-2 -ml-2 rounded-lg text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-secondary)] transition-colors focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+              aria-label="Go back to spaces"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-5 w-5" aria-hidden="true" />
             </button>
             <div>
               <h1 className="text-2xl font-bold text-[var(--hive-text-primary)]">Browse Spaces</h1>
@@ -273,6 +321,7 @@ export default function SpacesBrowsePage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--hive-text-tertiary)] w-4 h-4" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search by name or description..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -292,8 +341,10 @@ export default function SpacesBrowsePage() {
               onClick={() => setShowFilters(!showFilters)}
               variant="secondary"
               className={`relative focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none ${showFilters ? 'bg-[var(--hive-background-tertiary)]' : ''}`}
+              aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+              aria-expanded={showFilters}
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
               {activeFilterCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--hive-brand-primary)] text-[var(--hive-obsidian)] text-xs rounded-full flex items-center justify-center">
                   {activeFilterCount}
@@ -328,8 +379,9 @@ export default function SpacesBrowsePage() {
                   <button
                     onClick={clearFilters}
                     className="text-sm text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)] flex items-center gap-1"
+                    aria-label="Clear all filters"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3 w-3" aria-hidden="true" />
                     Clear all
                   </button>
                 )}
@@ -395,21 +447,44 @@ export default function SpacesBrowsePage() {
             )}
           </Card>
         ) : (
-          <motion.div
-            className="space-y-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {results.map((space) => (
-              <SpaceSearchCard
-                key={space.id}
-                space={space}
-                onClick={() => router.push(`/spaces/${space.id}`)}
-                onJoin={() => handleJoinSpace(space.id)}
-              />
-            ))}
-          </motion.div>
+          <>
+            <motion.div
+              className="space-y-3"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              {results.map((space) => (
+                <SpaceSearchCard
+                  key={space.id}
+                  space={space}
+                  onClick={() => router.push(`/spaces/${space.id}`)}
+                  onJoin={() => handleJoinSpace(space.id)}
+                />
+              ))}
+            </motion.div>
+
+            {/* Load More */}
+            {hasMore && (
+              <div className="mt-6 text-center">
+                <Button
+                  variant="secondary"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="min-w-[140px]"
+                >
+                  {loadingMore ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Loading...
+                    </span>
+                  ) : (
+                    'Load More'
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

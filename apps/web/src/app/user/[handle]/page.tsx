@@ -6,14 +6,14 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { ProfileBentoGrid, Card, Button } from '@hive/ui';
-import { ErrorBoundary } from '@/components/error-boundary';
-import { useSession } from '@/hooks/use-session';
+import { useAuth } from '@hive/auth-logic';
 import type { UnifiedHiveProfile, ProfileSystem } from '@hive/core';
+import { logger } from '@/lib/logger';
 
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const { user: currentUser } = useSession();
+  const { user: currentUser } = useAuth();
   const handle = params.handle as string;
 
   const [unifiedProfile, setUnifiedProfile] = useState<UnifiedHiveProfile | null>(null);
@@ -59,7 +59,7 @@ export default function UserProfilePage() {
         setUnifiedProfile(unified);
 
       } catch (err) {
-        console.error('Error loading public profile:', err);
+        logger.error('Error loading public profile', { component: 'UserProfilePage' }, err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Failed to load profile');
       } finally {
         setIsLoading(false);
@@ -102,41 +102,39 @@ export default function UserProfilePage() {
   }
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen bg-black">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-black">
+      <div className="max-w-7xl mx-auto px-4 py-8">
 
-          {/* Profile Header with @handle */}
-          <div className="mb-8 text-center">
-            <h1 className="text-4xl font-bold text-white mb-2">
-              @{handle}
-            </h1>
-            <p className="text-[var(--hive-brand-primary)] text-lg">
-              {handle}
-            </p>
-          </div>
+        {/* Profile Header with @handle */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-white mb-2">
+            @{handle}
+          </h1>
+          <p className="text-[var(--hive-brand-primary)] text-lg">
+            {handle}
+          </p>
+        </div>
 
-          {/* Main Profile Content */}
-          <ProfileBentoGrid
-            profile={profileSystem}
-            editable={false}
-            onLayoutChange={() => {}} // No-op for public view
-          />
+        {/* Main Profile Content */}
+        <ProfileBentoGrid
+          profile={profileSystem}
+          editable={false}
+          onLayoutChange={() => {}} // No-op for public view
+        />
 
-          {/* Social Actions */}
-          <div className="mt-8 flex justify-center gap-4">
-            <Button
-              variant="default"
-              className="bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
-            >
-              Follow
-            </Button>
-            <Button variant="outline">
-              Message
-            </Button>
-          </div>
+        {/* Social Actions */}
+        <div className="mt-8 flex justify-center gap-4">
+          <Button
+            variant="default"
+            className="bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
+          >
+            Follow
+          </Button>
+          <Button variant="outline">
+            Message
+          </Button>
         </div>
       </div>
-    </ErrorBoundary>
+    </div>
   );
 }

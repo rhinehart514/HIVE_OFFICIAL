@@ -586,16 +586,38 @@ export { WelcomeMat } from "./atomic/00-Global/organisms/welcome-mat";
 export type { WelcomeMatProps } from "./atomic/00-Global/organisms/welcome-mat";
 export { useWelcomeMat } from "./hooks/use-welcome-mat";
 
+// Gesture Actions Hook (Dec 2025 - Mobile interactions)
+export {
+  useGestureActions,
+  MESSAGE_GESTURE_CONFIG,
+  CARD_GESTURE_CONFIG,
+  LIST_ITEM_GESTURE_CONFIG,
+} from "./hooks/use-gesture-actions";
+export type {
+  SwipeDirection,
+  GestureAction,
+  GestureConfig,
+  GestureCallbacks,
+  UseGestureActionsOptions,
+  GestureState,
+  UseGestureActionsReturn,
+} from "./hooks/use-gesture-actions";
+
 // HiveLab: Visual composer (desktop-first)
 export { VisualToolComposer } from "./components/hivelab/visual-tool-composer";
 export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-composer";
 
 // HiveLab: Tool Canvas (runtime rendering)
 export { ToolCanvas } from "./components/hivelab/tool-canvas";
-export type { ToolCanvasProps, ToolElement } from "./components/hivelab/tool-canvas";
+export type { ToolCanvasProps, ToolElement, ToolCanvasContext } from "./components/hivelab/tool-canvas";
 
 // HiveLab: Element Renderers
-export { renderElement } from "./components/hivelab/element-renderers";
+export {
+  renderElement,
+  renderElementSafe,
+  isElementSupported,
+  getSupportedElementTypes,
+} from "./components/hivelab/element-renderers";
 
 // HiveLab: Element Showcase (ChatGPT-style - Dec 2025)
 export {
@@ -831,6 +853,19 @@ export type {
   MilestoneBadgeProps,
 } from "./components/motion-primitives/space-celebrations";
 
+// Space Welcome Modal (Dec 2025 - First-time experience)
+export { SpaceWelcomeModal, useSpaceWelcome } from "./atomic/03-Spaces/organisms/space-welcome-modal";
+export type {
+  SpaceWelcomeModalProps,
+  SpaceWelcomeData,
+  SpaceLeaderInfo,
+  SpaceFeatureHighlight,
+} from "./atomic/03-Spaces/organisms/space-welcome-modal";
+
+// Brand Spinner (Dec 2025 - Design Elevation)
+export { GoldSpinner, GoldSpinnerInline } from "./components/motion-primitives/gold-spinner";
+export type { GoldSpinnerProps } from "./components/motion-primitives/gold-spinner";
+
 // Ritual Molecules
 export { RitualProgressBar } from "./atomic/06-Rituals/molecules/ritual-progress-bar";
 export type {
@@ -931,6 +966,12 @@ export type { AddTabModalProps, AddTabInput, TabType } from "./atomic/03-Spaces/
 export { AddWidgetModal } from "./atomic/03-Spaces/organisms/add-widget-modal";
 export type { AddWidgetModalProps, AddWidgetInput as AddWidgetInputUI, WidgetType } from "./atomic/03-Spaces/organisms/add-widget-modal";
 
+export { MemberInviteModal } from "./atomic/03-Spaces/organisms/member-invite-modal";
+export type { MemberInviteModalProps, MemberInviteInput, InviteableUser, MemberRole } from "./atomic/03-Spaces/organisms/member-invite-modal";
+
+export { EventCreateModal } from "./atomic/03-Spaces/organisms/event-create-modal";
+export type { EventCreateModalProps, EventCreateInput, EventType, BoardOption } from "./atomic/03-Spaces/organisms/event-create-modal";
+
 // Space Templates
 export { SpaceBoardTemplate } from "./atomic/03-Spaces/templates/space-board-template";
 export type {
@@ -944,6 +985,90 @@ export {
   SpaceCardSkeleton,
 } from "./atomic/03-Spaces/organisms/space-board-skeleton";
 export type { SpaceBoardSkeletonProps } from "./atomic/03-Spaces/organisms/space-board-skeleton";
+
+// Space Chat Board (Dec 2025 - Discord-style real-time chat)
+export { SpaceChatBoard } from "./atomic/03-Spaces/organisms/space-chat-board";
+export type {
+  SpaceChatBoardProps,
+  SpaceBoardData,
+  ChatMessageData,
+  TypingUser,
+} from "./atomic/03-Spaces/organisms/space-chat-board";
+
+// Board Tab Bar (Dec 2025 - Discord-style channel selector)
+export { BoardTabBar } from "./atomic/03-Spaces/molecules/board-tab-bar";
+export type {
+  BoardTabBarProps,
+  BoardData,
+} from "./atomic/03-Spaces/molecules/board-tab-bar";
+
+// Mobile Space Components (Dec 2025 - Bottom bar + drawers)
+export { MobileActionBar } from "./atomic/03-Spaces/molecules/mobile-action-bar";
+export type {
+  MobileActionBarProps,
+  MobileDrawerType,
+  QuickActionType,
+  BadgeConfig,
+} from "./atomic/03-Spaces/molecules/mobile-action-bar";
+
+export { MobileDrawer } from "./atomic/03-Spaces/molecules/mobile-drawer";
+export type { MobileDrawerProps, SnapPoint } from "./atomic/03-Spaces/molecules/mobile-drawer";
+
+// Thread Drawer (Dec 2025 - Thread/reply view)
+export { ThreadDrawer } from "./atomic/03-Spaces/molecules/thread-drawer";
+export type { ThreadDrawerProps } from "./atomic/03-Spaces/molecules/thread-drawer";
+
+// Pinned Messages Widget (Dec 2025)
+export { PinnedMessagesWidget } from "./atomic/03-Spaces/molecules/pinned-messages-widget";
+export type {
+  PinnedMessagesWidgetProps,
+  PinnedMessage,
+} from "./atomic/03-Spaces/molecules/pinned-messages-widget";
+
+// Sidebar Tool System (Dec 2025 - HiveLab-powered)
+export { SidebarToolSlot } from "./atomic/03-Spaces/molecules/sidebar-tool-slot";
+export type {
+  SidebarToolSlotProps,
+  SidebarSlotData,
+} from "./atomic/03-Spaces/molecules/sidebar-tool-slot";
+
+// Space Breadcrumb (Navigation context)
+export { SpaceBreadcrumb } from "./atomic/03-Spaces/molecules/space-breadcrumb";
+export type { SpaceBreadcrumbProps } from "./atomic/03-Spaces/molecules/space-breadcrumb";
+
+// Widget Priority Engine (Dec 2025 - Smart sidebar ordering)
+export {
+  calculateWidgetScore,
+  shouldExpandByDefault,
+  prioritizeWidgets,
+  getDefaultWidgets,
+  getWidgetPriorityState,
+} from "./atomic/03-Spaces/lib/widget-priority";
+export type {
+  WidgetType as SidebarWidgetType,
+  UserMembership,
+  WidgetData,
+  PriorityContext,
+  PrioritizedWidget,
+  WidgetPriority,
+} from "./atomic/03-Spaces/lib/widget-priority";
+
+export { SpaceSidebarConfigurable } from "./atomic/03-Spaces/organisms/space-sidebar-configurable";
+export type { SpaceSidebarConfigurableProps } from "./atomic/03-Spaces/organisms/space-sidebar-configurable";
+
+export { WidgetGallery } from "./atomic/03-Spaces/organisms/widget-gallery";
+export type {
+  WidgetGalleryProps,
+  WidgetTemplate,
+} from "./atomic/03-Spaces/organisms/widget-gallery";
+
+// Chat Toolbar (Dec 2025 - Inline tool insertion)
+export { ChatToolbar } from "./atomic/03-Chat/chat-toolbar";
+export type {
+  ChatToolbarProps,
+  ToolInsertData,
+  ToolType,
+} from "./atomic/03-Chat/chat-toolbar";
 
 // Ritual Organisms
 export { RitualStrip } from "./atomic/06-Rituals/organisms/ritual-strip";
@@ -990,6 +1115,17 @@ export type {
   DeploymentConfig as ToolDeploymentConfig,
   DeploymentTarget as ToolDeploymentTarget,
 } from "./components/hivelab/ToolDeployModal";
+
+// HiveLab: Runtime modal (for in-context tool execution in Spaces)
+export { ToolRuntimeModal } from "./components/hivelab/tool-runtime-modal";
+export type { ToolRuntimeModalProps } from "./components/hivelab/tool-runtime-modal";
+
+// HiveLab: Inline element renderer (for chat messages)
+export { InlineElementRenderer } from "./components/hivelab/inline-element-renderer";
+export type {
+  InlineElementRendererProps,
+  InlineComponentData,
+} from "./components/hivelab/inline-element-renderer";
 
 // HiveLab: Studio + panels
 export { HiveLabStudio } from "./atomic/05-HiveLab/organisms/hivelab-studio";
@@ -1070,3 +1206,35 @@ export {
   hasRecentWIPTool,
 } from "./lib/hivelab/local-tool-storage";
 export type { LocalTool, WIPToolData } from "./lib/hivelab/local-tool-storage";
+
+// HiveLab IDE (Figma/VS Code-style - Dec 2025)
+export {
+  // Main IDE Component
+  HiveLabIDE,
+  // Sub-components
+  IDEToolbar,
+  IDECanvas,
+  AICommandPalette,
+  ElementPalette,
+  LayersPanel,
+  PropertiesPanel,
+  // Hooks
+  useIDEKeyboard,
+  formatShortcut,
+  SHORTCUTS,
+  // Types
+  DEFAULT_CANVAS_STATE,
+  DEFAULT_IDE_STATE,
+} from "./components/hivelab/ide";
+export type {
+  HiveLabIDEProps,
+  HiveLabComposition,
+  CanvasElement as IDECanvasElement,
+  Connection as IDEConnection,
+  ToolMode,
+  CanvasState,
+  HistoryEntry,
+  IDEState,
+  IDEActions,
+  KeyboardShortcut,
+} from "./components/hivelab/ide";

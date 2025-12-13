@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { HiveLogo } from "@hive/ui";
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -26,7 +27,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-white">HIVE</span>
+          <HiveLogo size="default" variant="white" showIcon showText />
           <span className="hidden sm:inline text-xs text-neutral-500 border-l border-neutral-700 pl-2 ml-1">
             Campus
           </span>
@@ -57,7 +58,7 @@ export function Navbar() {
             Sign In
           </Link>
           <Link
-            href="/auth/login"
+            href="/auth/login?new=true"
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-black bg-white rounded-lg hover:bg-neutral-100 transition-colors"
           >
             Get Started

@@ -1,6 +1,8 @@
 'use client';
 
 import * as React from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { ArrowUp } from 'lucide-react';
 
 import { LiveRegion } from '../../../a11y/LiveRegion';
 import { cn } from '../../../lib/utils';
@@ -122,9 +124,15 @@ export const FeedPageLayout = React.forwardRef<HTMLDivElement, FeedPageLayoutPro
     },
     ref
   ) => {
+    const shouldReduceMotion = useReducedMotion();
+
     // Announce when new items are appended to the feed
     const [announcement, setAnnouncement] = React.useState<string | null>(null);
     const prevCountRef = React.useRef<number>(feedItems.length);
+
+    // Scroll-to-top state
+    const [showScrollTop, setShowScrollTop] = React.useState(false);
+    const mainRef = React.useRef<HTMLElement>(null);
 
     React.useEffect(() => {
       const prev = prevCountRef.current;
@@ -134,6 +142,20 @@ export const FeedPageLayout = React.forwardRef<HTMLDivElement, FeedPageLayoutPro
       }
       prevCountRef.current = feedItems.length;
     }, [feedItems.length]);
+
+    // Show scroll-to-top button when scrolled down
+    React.useEffect(() => {
+      const handleScroll = () => {
+        setShowScrollTop(window.scrollY > 400);
+      };
+
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: shouldReduceMotion ? 'auto' : 'smooth' });
+    };
 
     return (
       <div
@@ -271,6 +293,23 @@ export const FeedPageLayout = React.forwardRef<HTMLDivElement, FeedPageLayoutPro
             )}
           </div>
         </main>
+
+        {/* Scroll to Top Button */}
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.button
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.8 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+              onClick={scrollToTop}
+              className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--hive-brand-primary)] text-[var(--hive-background-primary)] shadow-lg hover:bg-[var(--hive-brand-primary)]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)] transition-colors"
+              aria-label="Scroll to top"
+            >
+              <ArrowUp className="h-5 w-5" aria-hidden="true" />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     );
   }

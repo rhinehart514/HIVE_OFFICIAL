@@ -5,9 +5,9 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerSpaceRepository } from "@hive/core/server";
@@ -21,7 +21,7 @@ const MembershipQuerySchema = z.object({
 /**
  * Validate space using DDD repository and check membership
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -31,7 +31,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
@@ -40,7 +40,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -62,11 +62,12 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const queryParams = MembershipQuerySchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
 
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code =
         validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -77,7 +78,7 @@ export const GET = withAuthAndErrors(async (
       .collection("spaceMembers")
       .where("spaceId", "==", spaceId)
       .where("isActive", "==", true)
-      .where("campusId", "==", CURRENT_CAMPUS_ID);
+      .where("campusId", "==", campusId);
 
     if (queryParams.role) {
       membersQuery = membersQuery.where("role", "==", queryParams.role);
@@ -94,7 +95,7 @@ export const GET = withAuthAndErrors(async (
       .collection("spaceMembers")
       .where("spaceId", "==", spaceId)
       .where("isActive", "==", true)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .get();
 
     const memberPromises = membersSnapshot.docs.map(async (memberDoc) => {

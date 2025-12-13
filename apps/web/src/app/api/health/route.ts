@@ -1,16 +1,229 @@
+/**
+ * Enhanced Health Check API
+ *
+ * Returns detailed health status including:
+ * - Firebase Firestore connectivity
+ * - Firebase Auth status
+ * - Environment configuration
+ * - Service uptime
+ *
+ * @author HIVE Platform Team
+ * @version 2.0.0
+ */
+
 import { NextResponse } from "next/server";
 import { currentEnvironment, isFirebaseAdminConfigured } from "@/lib/env";
-import { environmentInfo } from "@/lib/firebase-admin";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { environmentInfo, dbAdmin, authAdmin } from "@/lib/firebase-admin";
 
-export async function GET() {
-  return NextResponse.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
+interface HealthStatus {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: string;
+  uptime: number;
+  environment: string;
+  version: string;
+  nodeVersion: string;
+  checks: {
+    firestore: CheckResult;
+    auth: CheckResult;
+    config: CheckResult;
+  };
+  details?: {
+    firebaseConfigured: boolean;
+    environmentInfo: unknown;
+    platform: string;
+  };
+}
+
+interface CheckResult {
+  status: 'pass' | 'fail' | 'warn';
+  latency?: number;
+  message?: string;
+}
+
+// Track server start time for uptime calculation
+const startTime = Date.now();
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const verbose = searchParams.get('verbose') === 'true';
+
+  const timestamp = new Date().toISOString();
+  const uptime = Math.floor((Date.now() - startTime) / 1000);
+
+  // Run health checks in parallel
+  const [firestoreCheck, authCheck] = await Promise.all([
+    checkFirestore(),
+    checkAuth(),
+  ]);
+
+  const configCheck = checkConfig();
+
+  // Determine overall status
+  const checks = { firestore: firestoreCheck, auth: authCheck, config: configCheck };
+  const allPassed = Object.values(checks).every(c => c.status === 'pass');
+  const anyFailed = Object.values(checks).some(c => c.status === 'fail');
+
+  const status: HealthStatus['status'] = allPassed
+    ? 'healthy'
+    : anyFailed
+    ? 'unhealthy'
+    : 'degraded';
+
+  const response: HealthStatus = {
+    status,
+    timestamp,
+    uptime,
     environment: currentEnvironment,
-    firebaseConfigured: isFirebaseAdminConfigured,
-    environmentInfo,
-    version: process.env.npm_package_version || "1.0.0",
+    version: process.env.npm_package_version || '1.0.0',
     nodeVersion: process.version,
-    platform: process.platform });
+    checks,
+  };
+
+  // Include detailed info in verbose mode
+  if (verbose) {
+    response.details = {
+      firebaseConfigured: isFirebaseAdminConfigured,
+      environmentInfo,
+      platform: process.platform,
+    };
+  }
+
+  // Return appropriate HTTP status
+  const httpStatus = status === 'healthy' ? 200 : status === 'degraded' ? 200 : 503;
+
+  return NextResponse.json(response, { status: httpStatus });
+}
+
+/**
+ * Check Firestore connectivity by reading a test document
+ */
+async function checkFirestore(): Promise<CheckResult> {
+  if (!isFirebaseAdminConfigured) {
+    return {
+      status: 'fail',
+      message: 'Firebase Admin not configured',
+    };
+  }
+
+  const start = Date.now();
+
+  try {
+    // Try to read from featureFlags collection (always exists, lightweight)
+    // This validates both connectivity and permissions
+    const snapshot = await dbAdmin
+      .collection('featureFlags')
+      .limit(1)
+      .get();
+
+    const latency = Date.now() - start;
+
+    // Warn if latency is high (>500ms)
+    if (latency > 500) {
+      return {
+        status: 'warn',
+        latency,
+        message: `High latency: ${latency}ms`,
+      };
+    }
+
+    return {
+      status: 'pass',
+      latency,
+      message: `Connected, ${snapshot.size} doc(s) returned`,
+    };
+  } catch (error) {
+    return {
+      status: 'fail',
+      latency: Date.now() - start,
+      message: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Check Firebase Auth service status
+ */
+async function checkAuth(): Promise<CheckResult> {
+  if (!isFirebaseAdminConfigured) {
+    return {
+      status: 'fail',
+      message: 'Firebase Admin not configured',
+    };
+  }
+
+  const start = Date.now();
+
+  try {
+    // Try to list users (limit 1) to verify Auth connectivity
+    // This validates the Auth service is reachable
+    const listResult = await authAdmin.listUsers(1);
+
+    const latency = Date.now() - start;
+
+    return {
+      status: 'pass',
+      latency,
+      message: `Auth service connected (${listResult.users.length} user sampled)`,
+    };
+  } catch (error) {
+    const latency = Date.now() - start;
+
+    // Some errors are expected (e.g., permission denied) but still indicate connectivity
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    // Permission errors mean Auth is reachable but we lack permissions
+    if (errorMessage.includes('PERMISSION_DENIED')) {
+      return {
+        status: 'warn',
+        latency,
+        message: 'Auth service reachable but permission denied for user list',
+      };
+    }
+
+    return {
+      status: 'fail',
+      latency,
+      message: errorMessage,
+    };
+  }
+}
+
+/**
+ * Check configuration completeness
+ */
+function checkConfig(): CheckResult {
+  const requiredEnvVars = [
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_CLIENT_EMAIL',
+    'FIREBASE_PRIVATE_KEY',
+  ];
+
+  const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+
+  if (missingVars.length > 0) {
+    return {
+      status: 'fail',
+      message: `Missing env vars: ${missingVars.join(', ')}`,
+    };
+  }
+
+  // Check for optional but recommended vars
+  const recommendedVars = [
+    'JWT_SECRET',
+    'NEXT_PUBLIC_FIREBASE_API_KEY',
+  ];
+
+  const missingRecommended = recommendedVars.filter(v => !process.env[v]);
+
+  if (missingRecommended.length > 0) {
+    return {
+      status: 'warn',
+      message: `Missing recommended vars: ${missingRecommended.join(', ')}`,
+    };
+  }
+
+  return {
+    status: 'pass',
+    message: 'All required configuration present',
+  };
 }

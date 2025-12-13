@@ -98,6 +98,8 @@ export function AnimatedNumber({
   className,
   ...props
 }: AnimatedNumberProps) {
+  // Guard against NaN/undefined values
+  const safeValue = Number.isFinite(value) ? value : 0;
   const prefersReducedMotion = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const [isInView, setIsInView] = useState(!animateOnView);
@@ -113,7 +115,7 @@ export function AnimatedNumber({
   };
 
   // Use 0 as initial value if animating, otherwise use target value
-  const initialValue = prefersReducedMotion || hasAnimated ? value : 0;
+  const initialValue = prefersReducedMotion || hasAnimated ? safeValue : 0;
 
   const spring = useSpring(initialValue, springConfig);
 
@@ -154,12 +156,12 @@ export function AnimatedNumber({
   // Animate to value when in view
   useEffect(() => {
     if (isInView && !prefersReducedMotion) {
-      spring.set(value);
+      spring.set(safeValue);
       setHasAnimated(true);
     } else if (prefersReducedMotion) {
-      spring.jump(value);
+      spring.jump(safeValue);
     }
-  }, [isInView, value, spring, prefersReducedMotion]);
+  }, [isInView, safeValue, spring, prefersReducedMotion]);
 
   // Handle animation complete callback
   useEffect(() => {
@@ -167,13 +169,13 @@ export function AnimatedNumber({
 
     const unsubscribe = spring.on('change', (latest) => {
       // Consider animation complete when we're within 0.5 of target
-      if (Math.abs(latest - value) < 0.5) {
+      if (Math.abs(latest - safeValue) < 0.5) {
         onAnimationComplete();
       }
     });
 
     return () => unsubscribe();
-  }, [spring, value, onAnimationComplete]);
+  }, [spring, safeValue, onAnimationComplete]);
 
   return (
     <MotionSpan

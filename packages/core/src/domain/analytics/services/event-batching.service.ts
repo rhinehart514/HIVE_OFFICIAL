@@ -52,7 +52,6 @@ export class EventBatchingService {
     try {
       await this.onFlush(eventsToFlush);
     } catch (error) {
-      console.error('Failed to flush analytics events:', error);
       // Re-add events to queue for retry
       this.events.unshift(...eventsToFlush);
       throw error;

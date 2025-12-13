@@ -5,6 +5,7 @@ import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { withAuth } from '@/lib/api-auth-middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { isContentHidden } from '@/lib/content-moderation';
 
 // Interaction schema
 const InteractionSchema = z.object({
@@ -44,6 +45,20 @@ export const POST = withAuth(async (request, authContext) => {
     }
 
     const postData = postDoc.data()!;
+
+    // Security check: Prevent interactions with hidden/moderated content
+    if (isContentHidden(postData)) {
+      logger.warn('🚫 Attempted interaction on hidden content', {
+        userId,
+        postId,
+        action,
+        endpoint: '/api/social/interactions'
+      });
+      return NextResponse.json(
+        ApiResponseHelper.error("Content not available", "CONTENT_HIDDEN"),
+        { status: HttpStatus.FORBIDDEN }
+      );
+    }
     
     switch (action) {
       case 'like': {

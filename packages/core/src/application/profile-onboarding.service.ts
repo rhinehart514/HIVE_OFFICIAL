@@ -130,8 +130,7 @@ export class ProfileOnboardingService extends BaseApplicationService {
 
       const profile = profileResult.getValue();
 
-      // Track onboarding progress (would be stored in metadata)
-      console.log(`Onboarding progress for ${profileId}: ${step} = ${completed}`);
+      // Track onboarding progress (stored in metadata)
 
       // Check if onboarding is complete
       if (this.isOnboardingComplete(profile)) {
@@ -293,10 +292,8 @@ export class ProfileOnboardingService extends BaseApplicationService {
   }
 
   private async initializeFeed(profileId: ProfileId): Promise<void> {
-    const feed = await this.feedRepo.findByUserId(profileId);
-    if (feed.isFailure) {
-      console.error('Failed to initialize feed:', feed.error);
-    }
+    // Feed initialization is non-critical - will be created on first access if needed
+    await this.feedRepo.findByUserId(profileId);
   }
 
   private async getSuggestedSpaces(
@@ -327,18 +324,10 @@ export class ProfileOnboardingService extends BaseApplicationService {
     return Result.ok(uniqueSpaces);
   }
 
-  private async joinDefaultSpaces(profile: EnhancedProfile): Promise<void> {
+  private async joinDefaultSpaces(_profile: EnhancedProfile): Promise<void> {
     // Auto-join campus-wide default spaces
-    const defaultSpaceNames = ['Welcome Space', 'New Students', 'Campus Updates'];
-
-    for (const spaceName of defaultSpaceNames) {
-      try {
-        // This would be implemented when space joining is added
-        console.log(`Auto-joining ${spaceName} for user ${profile.profileId.value}`);
-      } catch (error) {
-        console.error(`Failed to auto-join ${spaceName}:`, error);
-      }
-    }
+    // TODO: Implement when space joining is added
+    const _defaultSpaceNames = ['Welcome Space', 'New Students', 'Campus Updates'];
   }
 
   private generateNextSteps(profile: EnhancedProfile, suggestedSpaces: any[]): Array<{

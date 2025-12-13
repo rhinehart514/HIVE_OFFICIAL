@@ -68,8 +68,8 @@ export class RitualEngineService {
   private async emitPhaseTransition(event: PhaseTransitionEvent): Promise<void> {
     await Promise.all(
       this.subscribers.map((subscriber) =>
-        subscriber.onPhaseTransition(event).catch((error) => {
-          console.error('Subscriber error on phase transition:', error);
+        subscriber.onPhaseTransition(event).catch((_error) => {
+          // Subscriber failed - continue with other subscribers
         })
       )
     );

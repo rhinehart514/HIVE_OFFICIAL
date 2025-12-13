@@ -1,8 +1,9 @@
 import * as admin from 'firebase-admin';
 import { unstable_cache } from 'next/cache';
 import { z } from "zod";
-import type { Space, SpaceType } from "@hive/core";
+import type { Space } from "@hive/core";
 import { Result } from "@hive/core/domain";
+import { getTemplatesSuggestedFor, type SpaceTemplate } from "@hive/core";
 import {
   createServerSpaceManagementService,
   getServerSpaceRepository,
@@ -12,16 +13,37 @@ import {
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getUserEmail, type AuthenticatedRequest } from "@/lib/middleware";
-import { addSecureCampusMetadata, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
+import { getCampusId } from "@/lib/middleware";
 // SECURITY: Use centralized admin auth
 import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
+// SECURITY: Import SecureSchemas for XSS protection
+import { SecureSchemas, SecurityScanner } from "@/lib/secure-input-validation";
 
+/**
+ * SECURITY: Enhanced space creation schema with XSS protection
+ * Uses SecureSchemas.textContent to prevent script injection in name/description
+ */
 const createSpaceSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().min(1).max(500),
+  name: z.string()
+    .min(1, 'Space name is required')
+    .max(100, 'Space name must be 100 characters or less')
+    .refine((name) => {
+      // Check for XSS patterns using SecurityScanner
+      const scan = SecurityScanner.scanInput(name, 'space_name');
+      return scan.level !== 'dangerous';
+    }, 'Space name contains invalid content'),
+  description: z.string()
+    .min(1, 'Description is required')
+    .max(500, 'Description must be 500 characters or less')
+    .refine((desc) => {
+      // Check for XSS patterns using SecurityScanner
+      const scan = SecurityScanner.scanInput(desc, 'space_description');
+      return scan.level !== 'dangerous';
+    }, 'Description contains invalid content'),
   category: z.enum(['student_org', 'residential', 'university_org', 'greek_life']),
   joinPolicy: z.enum(['open', 'approval', 'invite_only']),
-  tags: z.array(z.string()),
+  tags: z.array(z.string().max(50)).max(20),
   agreedToGuidelines: z.boolean(),
   visibility: z.enum(['public', 'members_only']).optional(),
   settings: z.object({
@@ -36,9 +58,12 @@ const createSpaceSchema = z.object({
  * Uses unstable_cache for 5-minute caching.
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
-  const userId = getUserId(request as AuthenticatedRequest);
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = getCampusId(req);
   const { searchParams } = new URL(request.url);
-  const filterType = searchParams.get("type") as SpaceType | "all" | null;
+  // Support both 'category' (new) and 'type' (legacy) params
+  const filterCategory = searchParams.get("category") || searchParams.get("type");
   const searchTerm = searchParams.get("q")?.toLowerCase() || null;
   const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
   const cursor = searchParams.get("cursor") || undefined;
@@ -46,15 +71,15 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
   try {
     // In development, ensure sample spaces exist
     if (process.env.NODE_ENV === 'development') {
-      await ensureSampleSpaces();
+      await ensureSampleSpaces(campusId);
     }
 
     // Use DDD repository for space queries
     const spaceRepo = getServerSpaceRepository();
 
     const queryResult = await spaceRepo.findWithPagination({
-      campusId: CURRENT_CAMPUS_ID,
-      type: filterType === "all" ? undefined : filterType || undefined,
+      campusId,
+      type: filterCategory === "all" ? undefined : filterCategory || undefined,
       searchTerm: searchTerm || undefined,
       limit,
       cursor,
@@ -83,7 +108,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     logger.info('Fetched spaces via DDD repository', {
       count: transformedSpaces.length,
       hasMore,
-      filterType,
+      filterCategory,
       searchTerm,
       endpoint: '/api/spaces'
     });
@@ -101,7 +126,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
   } catch (error) {
     logger.error('Error fetching spaces', {
       error: error instanceof Error ? error.message : String(error),
-      filterType: filterType || undefined,
+      filterCategory: filterCategory || undefined,
       searchTerm: searchTerm || undefined,
       limit,
       cursor
@@ -119,6 +144,7 @@ export const POST = withAuthValidationAndErrors(
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const userEmail = getUserEmail(req);
+  const campusId = getCampusId(req);
 
   // CHECK 1: Agreement to guidelines
   if (!agreedToGuidelines) {
@@ -177,10 +203,10 @@ export const POST = withAuthValidationAndErrors(
     return respond.error("Your space creation privileges have been revoked", "PERMISSION_DENIED", { status: 403 });
   }
 
-  // CHECK 8: Name uniqueness (use CURRENT_CAMPUS_ID instead of hardcoded)
+  // CHECK 8: Name uniqueness within campus
   const existingSpaceSnapshot = await dbAdmin
     .collection('spaces')
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .where('name_lowercase', '==', name.toLowerCase())
     .limit(1)
     .get();
@@ -192,7 +218,9 @@ export const POST = withAuthValidationAndErrors(
   // Create space member save callback for cross-collection write
   const saveSpaceMember = async (member: SpaceMemberData): Promise<Result<void>> => {
     try {
-      const memberRef = dbAdmin.collection('spaceMembers').doc();
+      // Use composite key for deduplication: {spaceId}_{userId}
+      const compositeId = `${member.spaceId}_${member.userId}`;
+      const memberRef = dbAdmin.collection('spaceMembers').doc(compositeId);
       await memberRef.set(addSecureCampusMetadata({
         spaceId: member.spaceId,
         userId: member.userId,
@@ -201,7 +229,7 @@ export const POST = withAuthValidationAndErrors(
         isActive: member.isActive,
         permissions: member.permissions,
         joinMethod: member.joinMethod
-      }));
+      }, campusId));
       return Result.ok<void>();
     } catch (error) {
       return Result.fail<void>(`Failed to save space member: ${error}`);
@@ -210,7 +238,7 @@ export const POST = withAuthValidationAndErrors(
 
   // Use DDD SpaceManagementService for space creation
   const spaceService = createServerSpaceManagementService(
-    { userId, campusId: CURRENT_CAMPUS_ID },
+    { userId, campusId },
     saveSpaceMember
   );
 
@@ -272,6 +300,16 @@ export const POST = withAuthValidationAndErrors(
     endpoint: '/api/spaces'
   });
 
+  // Auto-deploy template based on category
+  // This runs asynchronously and doesn't block the response
+  autoDeployTemplate(spaceId, category, userId, campusId).catch(err => {
+    logger.warn('Template auto-deploy failed (non-blocking)', {
+      spaceId,
+      category,
+      error: err instanceof Error ? err.message : String(err)
+    });
+  });
+
   // Map category to type for backward compatibility in response
   const typeMapping: Record<string, string> = {
     'student_org': 'student_organizations',
@@ -289,7 +327,7 @@ export const POST = withAuthValidationAndErrors(
       description,
       category,
       type: typeMapping[category] || 'student_organizations',
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       visibility: visibility || 'public',
       joinPolicy,
       tags: tags || [],
@@ -303,14 +341,16 @@ export const POST = withAuthValidationAndErrors(
 
 /**
  * Development helper to ensure sample spaces exist
+ * Uses canonical category values: student_org, residential, university_org, greek_life
+ * @param campusId - Campus to create sample spaces for
  */
-async function ensureSampleSpaces() {
+async function ensureSampleSpaces(campusId: string) {
   const sampleSpaces = [
     {
       id: 'ub-computer-science',
       name: 'UB Computer Science',
       description: 'Connect with CS majors, share projects, get study tips, and network with fellow programmers at UB. From algorithms to internships, we cover it all.',
-      type: 'student_organizations' as SpaceType,
+      category: 'student_org',
       isPrivate: false,
       tags: ['cs', 'programming', 'study-group']
     },
@@ -318,7 +358,7 @@ async function ensureSampleSpaces() {
       id: 'ub-engineering-hub',
       name: 'UB Engineering Hub',
       description: 'All engineering disciplines unite! Share resources, discuss projects, find lab partners, and get career advice from fellow UB engineers.',
-      type: 'student_organizations' as SpaceType,
+      category: 'student_org',
       isPrivate: false,
       tags: ['engineering', 'stem', 'projects']
     },
@@ -326,7 +366,7 @@ async function ensureSampleSpaces() {
       id: 'governors-residence-hall',
       name: 'Governors Residence Hall',
       description: 'For residents of Governors! Plan floor events, coordinate study sessions, share dining hall reviews, and stay connected with your neighbors.',
-      type: 'residential_spaces' as SpaceType,
+      category: 'residential',
       isPrivate: false,
       tags: ['dorms', 'governors', 'residence-life']
     },
@@ -334,7 +374,7 @@ async function ensureSampleSpaces() {
       id: 'ub-pre-med-society',
       name: 'UB Pre-Med Society',
       description: 'Future doctors assemble! Study together for the MCAT, share volunteer opportunities, discuss med school applications, and support each other.',
-      type: 'student_organizations' as SpaceType,
+      category: 'student_org',
       isPrivate: false,
       tags: ['pre-med', 'mcat', 'healthcare']
     },
@@ -342,7 +382,7 @@ async function ensureSampleSpaces() {
       id: 'ub-business-network',
       name: 'UB Business Network',
       description: 'Business majors and entrepreneurs unite! Share internship opportunities, discuss case studies, network for future careers, and collaborate on ventures.',
-      type: 'student_organizations' as SpaceType,
+      category: 'student_org',
       isPrivate: false,
       tags: ['business', 'networking', 'internships']
     },
@@ -350,7 +390,7 @@ async function ensureSampleSpaces() {
       id: 'ub-gaming-community',
       name: 'UB Gaming Community',
       description: 'Gamers of UB unite! Organize tournaments, find teammates, discuss new releases, and plan LAN parties. All games and skill levels welcome.',
-      type: 'student_organizations' as SpaceType,
+      category: 'student_org',
       isPrivate: false,
       tags: ['gaming', 'esports', 'tournaments']
     }
@@ -368,22 +408,26 @@ async function ensureSampleSpaces() {
         name: space.name,
         name_lowercase: space.name.toLowerCase(),
         description: space.description,
-        type: space.type,
+        category: space.category,
+        // Keep type for backwards compatibility
+        type: space.category === 'residential' ? 'residential' : 'student_organization',
         subType: null,
         status: 'active',
         isActive: true,
+        visibility: space.isPrivate ? 'private' : 'public',
         isPrivate: space.isPrivate,
+        claimStatus: 'unclaimed',
         tags: space.tags.map(tag => ({ sub_type: tag })),
         createdBy: 'system',
         metrics: {
-          memberCount: Math.floor(Math.random() * 150) + 10, // 10-160 members
-          postCount: Math.floor(Math.random() * 25) + 2, // 2-27 posts
-          eventCount: Math.floor(Math.random() * 8) + 1, // 1-9 events
-          toolCount: Math.floor(Math.random() * 3) + 1, // 1-4 tools
-          activeMembers: Math.floor(Math.random() * 40) + 5 // 5-45 active
+          memberCount: Math.floor(Math.random() * 150) + 10,
+          postCount: Math.floor(Math.random() * 25) + 2,
+          eventCount: Math.floor(Math.random() * 8) + 1,
+          toolCount: Math.floor(Math.random() * 3) + 1,
+          activeMembers: Math.floor(Math.random() * 40) + 5
         },
         bannerUrl: null
-      });
+      }, campusId);
 
       batch.set(spaceRef, spaceData);
       spacesCreated++;
@@ -394,4 +438,152 @@ async function ensureSampleSpaces() {
     await batch.commit();
     logger.info(`✅ Created ${spacesCreated} sample spaces for development`);
   }
+}
+
+/**
+ * Auto-deploy a template to a newly created space based on its category
+ *
+ * This creates default tabs and widgets so new spaces aren't empty.
+ * Runs asynchronously and doesn't block space creation.
+ *
+ * @param spaceId - The newly created space ID
+ * @param category - The space category (student_org, residential, etc.)
+ * @param userId - The user who created the space
+ * @param campusId - The campus ID
+ */
+async function autoDeployTemplate(
+  spaceId: string,
+  category: string,
+  userId: string,
+  campusId: string
+): Promise<void> {
+  // Map API categories to template suggestedFor values
+  const categoryToTemplateSuggestion: Record<string, string> = {
+    'student_org': 'student_org',
+    'residential': 'residential',
+    'university_org': 'university_org',
+    'greek_life': 'greek_life',
+  };
+
+  const templateSuggestion = categoryToTemplateSuggestion[category];
+  if (!templateSuggestion) {
+    logger.info('No template mapping for category', { category, spaceId });
+    return;
+  }
+
+  // Get templates suggested for this category
+  const suggestedTemplates = getTemplatesSuggestedFor(templateSuggestion);
+
+  if (suggestedTemplates.length === 0) {
+    logger.info('No templates found for category', { category, spaceId });
+    return;
+  }
+
+  // Pick the first suggested template (usually the most appropriate)
+  // Prefer 'starter' difficulty templates for auto-deployment
+  const template = suggestedTemplates.find(t => t.metadata.difficulty === 'starter')
+    || suggestedTemplates[0];
+
+  const batch = dbAdmin.batch();
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const createdTabs: string[] = [];
+  const createdWidgets: string[] = [];
+
+  // Create tabs from template
+  const tabIdMap = new Map<string, string>();
+
+  for (const tabConfig of template.tabs) {
+    const tabRef = dbAdmin.collection('spaces').doc(spaceId).collection('tabs').doc();
+    const tabId = tabRef.id;
+    tabIdMap.set(tabConfig.name, tabId);
+
+    batch.set(tabRef, {
+      name: tabConfig.name,
+      type: tabConfig.type,
+      isDefault: tabConfig.isDefault,
+      order: tabConfig.order,
+      widgets: [],
+      isVisible: true,
+      title: tabConfig.name,
+      messageCount: 0,
+      createdAt: now,
+      isArchived: false,
+      icon: tabConfig.icon,
+      description: tabConfig.description,
+      campusId,
+    });
+
+    createdTabs.push(tabId);
+  }
+
+  // Create widgets from template
+  for (const widgetConfig of template.widgets) {
+    const widgetRef = dbAdmin.collection('spaces').doc(spaceId).collection('widgets').doc();
+    const widgetId = widgetRef.id;
+
+    let targetTabId: string | null = null;
+    if (widgetConfig.tabName && tabIdMap.has(widgetConfig.tabName)) {
+      targetTabId = tabIdMap.get(widgetConfig.tabName) || null;
+    }
+
+    batch.set(widgetRef, {
+      type: widgetConfig.type,
+      title: widgetConfig.title,
+      config: widgetConfig.config,
+      isVisible: true,
+      order: widgetConfig.order,
+      position: { x: 0, y: 0, width: 300, height: 200 },
+      isEnabled: true,
+      tabId: targetTabId,
+      createdAt: now,
+      campusId,
+    });
+
+    createdWidgets.push(widgetId);
+
+    // Add widget to tab's widgets array
+    if (targetTabId) {
+      const tabRef = dbAdmin.collection('spaces').doc(spaceId).collection('tabs').doc(targetTabId);
+      batch.update(tabRef, {
+        widgets: admin.firestore.FieldValue.arrayUnion(widgetId),
+      });
+    }
+  }
+
+  // Update space with template metadata
+  const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
+  batch.update(spaceRef, {
+    templateId: template.metadata.id,
+    templateAppliedAt: now,
+    templateAppliedBy: 'system',
+    autoTemplateApplied: true,
+    updatedAt: now,
+  });
+
+  // Log activity
+  const activityRef = dbAdmin.collection('spaces').doc(spaceId).collection('activity').doc();
+  batch.set(activityRef, {
+    type: 'template_auto_applied',
+    performedBy: 'system',
+    details: {
+      templateId: template.metadata.id,
+      templateName: template.metadata.name,
+      tabsCreated: createdTabs.length,
+      widgetsCreated: createdWidgets.length,
+      category,
+    },
+    timestamp: now,
+  });
+
+  await batch.commit();
+
+  logger.info('✅ Auto-deployed template to new space', {
+    spaceId,
+    category,
+    templateId: template.metadata.id,
+    templateName: template.metadata.name,
+    tabsCreated: createdTabs.length,
+    widgetsCreated: createdWidgets.length,
+    endpoint: '/api/spaces'
+  });
 }

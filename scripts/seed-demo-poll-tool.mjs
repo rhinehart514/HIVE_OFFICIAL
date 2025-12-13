@@ -141,7 +141,7 @@ async function seedDemoPollTool() {
 
   const toolData = {
     name: 'Lunch Poll',
-    description: 'Vote on what to get for lunch today!',
+    description: 'Vote on what to get for lunch today! Results update in real-time.',
     status: 'published',
     type: 'visual',
     category: 'polls',
@@ -149,45 +149,61 @@ async function seedDemoPollTool() {
     campusId: CAMPUS_ID,
     currentVersion: '1.0.0',
 
-    // Elements - these use the element IDs from element-system.ts
+    // Elements - use poll-element and leaderboard for cascade demo
     elements: [
       {
-        elementId: 'form-builder',
-        instanceId: 'poll-question',
+        elementId: 'announcement-card',
+        instanceId: 'poll-header',
         config: {
-          fields: [
-            { name: 'question', type: 'text', required: true, label: 'Poll Question' }
-          ]
+          title: "Today's Lunch Poll",
+          message: 'Vote for what we should get for lunch! Results are live.',
+          type: 'info',
+          dismissible: false
         },
         position: { x: 0, y: 0 },
-        size: { width: 12, height: 2 }
+        size: { width: 12, height: 1 }
       },
       {
-        elementId: 'filter-selector',
-        instanceId: 'poll-options',
+        elementId: 'poll-element',
+        instanceId: 'lunch-poll',
         config: {
+          question: 'What should we get for lunch today?',
           options: [
-            { value: 'pizza', label: 'Pizza' },
-            { value: 'sushi', label: 'Sushi' },
-            { value: 'tacos', label: 'Tacos' },
-            { value: 'salad', label: 'Salad' }
+            { id: 'pizza', label: '🍕 Pizza', color: '#F59E0B' },
+            { id: 'sushi', label: '🍣 Sushi', color: '#10B981' },
+            { id: 'tacos', label: '🌮 Tacos', color: '#EF4444' },
+            { id: 'salad', label: '🥗 Salad', color: '#22C55E' },
+            { id: 'burgers', label: '🍔 Burgers', color: '#F97316' }
           ],
           allowMultiple: false,
-          showCounts: true
+          showResults: true,
+          showVoteCount: true,
+          anonymous: false,
+          endTime: null
         },
-        position: { x: 0, y: 2 },
-        size: { width: 12, height: 3 }
+        position: { x: 0, y: 1 },
+        size: { width: 12, height: 4 }
       },
       {
-        elementId: 'chart-display',
-        instanceId: 'poll-results',
+        elementId: 'leaderboard',
+        instanceId: 'vote-leaderboard',
         config: {
-          chartType: 'bar',
-          showLegend: true,
+          title: 'Live Results',
+          maxItems: 5,
+          showRank: true,
           animate: true
         },
         position: { x: 0, y: 5 },
-        size: { width: 12, height: 4 }
+        size: { width: 12, height: 3 }
+      }
+    ],
+
+    // Connections - poll results cascade to leaderboard
+    connections: [
+      {
+        from: { instanceId: 'lunch-poll', output: 'results' },
+        to: { instanceId: 'vote-leaderboard', input: 'entries' },
+        transform: 'toSorted'
       }
     ],
 
@@ -203,7 +219,7 @@ async function seedDemoPollTool() {
       rating: 4.5,
       useCount: 0,
       viewCount: 0,
-      tags: ['polls', 'voting', 'lunch', 'engagement']
+      tags: ['polls', 'voting', 'lunch', 'engagement', 'real-time']
     },
 
     createdAt: now,
@@ -271,14 +287,18 @@ async function seedDemoPollTool() {
   // Summary
   console.log('\n=== Done! ===\n');
   console.log('To test the runtime:');
-  console.log(`1. Start the dev server: pnpm dev`);
+  console.log(`1. Start the dev server: pnpm --filter @hive/web dev`);
   console.log(`2. Go to the space: /spaces/${spaceId}`);
   console.log(`3. Click on "Lunch Poll" in the Tools widget`);
-  console.log(`4. Or go directly to: /tools/${TOOL_ID}/run?spaceId=${spaceId}`);
+  console.log(`4. Or go directly to: /tools/${TOOL_ID}/run?spaceId=${spaceId}&deploymentId=${deploymentId}`);
   console.log('\nThe tool should render with:');
-  console.log('- A form builder element');
-  console.log('- A filter selector for voting');
-  console.log('- A chart display for results');
+  console.log('- An announcement header');
+  console.log('- A poll element with 5 lunch options (Pizza, Sushi, Tacos, Salad, Burgers)');
+  console.log('- A leaderboard that auto-updates when votes come in (cascade connection)');
+  console.log('\nReal-time features to test:');
+  console.log('- Open the tool in two browser windows');
+  console.log('- Vote in one window');
+  console.log('- See the results update in both windows via SSE');
 }
 
 seedDemoPollTool().catch(console.error);

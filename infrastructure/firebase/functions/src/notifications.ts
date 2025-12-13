@@ -206,7 +206,7 @@ export const onNewEvent = functions.firestore.onDocumentCreated(
     let entityId = clubId;
 
     if (spaceId && !clubId) {
-      memberCollection = "space_members";
+      memberCollection = "spaceMembers";
       entityId = spaceId;
     }
 

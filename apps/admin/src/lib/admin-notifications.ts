@@ -76,8 +76,7 @@ class AdminNotificationSystem {
     // Send to appropriate channels
     await this.sendToChannels(newNotification);
 
-    // Log the notification
-    console.warn(`[ADMIN_NOTIFICATION] ${notification.type}: ${notification.title}`);
+    // Notification created and sent to channels
 
     return newNotification;
   }
@@ -174,8 +173,8 @@ class AdminNotificationSystem {
     for (const channel of relevantChannels) {
       try {
         await this.sendToChannel(channel, notification);
-      } catch (error) {
-        console.error(`Failed to send notification to channel ${channel.name}:`, error);
+      } catch (_error) {
+        // Channel send failed - continue with other channels
       }
     }
   }
@@ -204,9 +203,9 @@ class AdminNotificationSystem {
   /**
    * Send security alert
    */
-  private async sendSecurityAlert(notification: AdminNotification): Promise<void> {
+  private async sendSecurityAlert(_notification: AdminNotification): Promise<void> {
     // TODO: Implement security alert system (email, Slack, etc.)
-    console.warn(`[SECURITY_ALERT] ${notification.title}: ${notification.message}`);
+    // Security alerts would be sent via email, Slack, etc.
   }
 
   /**
@@ -222,8 +221,8 @@ class AdminNotificationSystem {
           notification,
         }),
       });
-    } catch (error) {
-      console.error('Failed to send webhook:', error);
+    } catch (_error) {
+      // Webhook send failed - non-critical
     }
   }
 

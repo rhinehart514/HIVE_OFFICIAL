@@ -1,9 +1,8 @@
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { logger } from '@/lib/structured-logger';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -14,7 +13,7 @@ const FeatureToolSchema = z.object({
 /**
  * Validate space using DDD repository and check membership
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -24,7 +23,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
 
@@ -33,7 +32,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -58,16 +57,18 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     const { spaceId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Validate space membership and permissions using DDD repository
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(validation.message, code, { status: validation.status });
     }
 
     const role = validation.membership.role as string;
-    const canFeature = ['owner', 'admin', 'builder'].includes(role);
+    // Valid roles: owner, admin, moderator, member, guest
+    const canFeature = ['owner', 'admin', 'moderator'].includes(role);
     if (!canFeature) {
       return respond.error('Insufficient permissions to feature tools', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });
     }
@@ -79,7 +80,7 @@ export const POST = withAuthValidationAndErrors(
       return respond.error('Tool not found', 'RESOURCE_NOT_FOUND', { status: HttpStatus.NOT_FOUND });
     }
     const toolData = toolSnap.data() || {};
-    if (toolData.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+    if (toolData.campusId && toolData.campusId !== campusId) {
       return respond.error('Access denied for this campus', 'FORBIDDEN', { status: HttpStatus.FORBIDDEN });
     }
 
@@ -106,7 +107,7 @@ export const POST = withAuthValidationAndErrors(
         deployedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUsed: null,
         isFeatured: true,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       };
       const ref = await dbAdmin.collection('deployments').add(deployment);
       deploymentId = ref.id;

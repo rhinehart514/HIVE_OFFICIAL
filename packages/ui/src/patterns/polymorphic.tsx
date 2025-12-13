@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix advanced polymorphic type issues
+// TODO: Fix polymorphic component type inference
 import * as React from 'react'
 
 /**

@@ -6,8 +6,9 @@ export { useAnalytics } from './use-analytics';
 // TEMP DISABLED for HiveLab-only launch - pulls in server-side code
 // export { useCreationAnalytics } from './use-creation-analytics';
 
-// Onboarding analytics  - TEMP DISABLED for HiveLab-only launch
-// export { useOnboardingAnalytics } from './use-onboarding-analytics';
+// Onboarding analytics
+export { useOnboardingAnalytics } from './use-onboarding-analytics';
+export type { OnboardingStepName } from './use-onboarding-analytics';
 
 // Data fetching hooks
 export { useSpaces } from './use-spaces';
@@ -49,6 +50,15 @@ export type {
   GenerationOptions,
   UseStreamingGenerationReturn
 } from './use-streaming-generation';
+
+// Tool Execution hooks
+export { useToolExecution, createElementActionHandler } from './use-tool-execution';
+export type {
+  UseToolExecutionOptions,
+  UseToolExecutionReturn,
+  ExecutionResult,
+  ElementState
+} from './use-tool-execution';
 
 // Feature flags hooks - TEMP DISABLED for HiveLab-only launch - pulls in server-side code from @hive/core
 // export { useFeatureFlags, useToolBuilderVariant, useNavigationVariant } from './use-feature-flags';

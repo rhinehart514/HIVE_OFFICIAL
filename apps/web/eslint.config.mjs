@@ -23,6 +23,8 @@ const eslintConfig = [
       "node_modules/**",
       "out/**",
       "public/**",
+      "**/* 2.ts",
+      "**/* 2.tsx",
       "*.config.js",
       "*.config.mjs",
       ".turbo/**",
@@ -93,6 +95,7 @@ const eslintConfig = [
   {
     files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/test/**/*", "**/__tests__/**/*"],
     rules: {
+      "no-console": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
     },

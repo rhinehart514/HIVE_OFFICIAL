@@ -30,6 +30,15 @@ export interface SpaceDocument {
   creatorId?: string;  // Legacy field name
   createdBy?: string;  // Current field name in DB
   visibility: 'public' | 'private';
+  /**
+   * Publishing status for stealth mode
+   * - stealth: Space is being set up, only visible to leaders
+   * - live: Space is publicly visible (default for existing spaces)
+   * - rejected: Leader request was rejected
+   */
+  publishStatus?: 'stealth' | 'live' | 'rejected';
+  /** When the space went live (stealth → live) */
+  wentLiveAt?: { toDate: () => Date } | null;
   isVerified?: boolean;
   memberCount?: number;
   postCount?: number;
@@ -86,6 +95,10 @@ export interface SpacePersistenceData {
   campusId: string;
   creatorId: string;
   visibility: 'public' | 'private';
+  /** Publishing status for stealth mode */
+  publishStatus: 'stealth' | 'live' | 'rejected';
+  /** When the space went live */
+  wentLiveAt: Date | null;
   isVerified: boolean;
   memberCount: number;
   postCount: number;
@@ -101,8 +114,8 @@ export interface SpacePersistenceData {
     originPostId: string | null;
     messageCount: number;
     createdAt: Date;
-    lastActivityAt: Date | undefined;
-    expiresAt: Date | undefined;
+    lastActivityAt: Date | null;
+    expiresAt: Date | null;
     isArchived: boolean;
     isDefault: boolean;
     order: number;
@@ -119,7 +132,7 @@ export interface SpacePersistenceData {
   }>;
   tags: string[];
   rushModeEnabled: boolean;
-  rushModeEndDate: Date | undefined;
+  rushModeEndDate: Date | null;
   // Admin moderation fields
   moderationInfo?: {
     disabledAt?: Date;
@@ -211,6 +224,10 @@ export class SpaceMapper {
       if (data.createdAt) space.setCreatedAt(data.createdAt.toDate());
       if (data.updatedAt) space.setUpdatedAt(data.updatedAt.toDate());
 
+      // Set publishing status (default to 'live' for existing spaces without this field)
+      space.setPublishStatus(data.publishStatus || 'live');
+      if (data.wentLiveAt) space.setWentLiveAt(data.wentLiveAt.toDate());
+
       // Load tabs
       if (data.tabs && Array.isArray(data.tabs)) {
         const tabs = data.tabs.map((tabData: TabDocument) => {
@@ -271,6 +288,8 @@ export class SpaceMapper {
       campusId: space.campusId.id,
       creatorId: space.owner.value,
       visibility: space.isPublic ? 'public' : 'private',
+      publishStatus: space.publishStatus,
+      wentLiveAt: space.wentLiveAt || null,
       isVerified: space.isVerified,
       memberCount: space.memberCount,
       postCount: space.postCount,
@@ -278,7 +297,8 @@ export class SpaceMapper {
       lastActivityAt: space.lastActivityAt || null,
       isActive: space.isActive,
       memberIds: space.members.map(m => m.profileId.value),
-      moderationInfo: (space as any).props?.moderationInfo,
+      // Only include moderationInfo if it exists (Firestore doesn't allow undefined)
+      ...((space as any).props?.moderationInfo ? { moderationInfo: (space as any).props.moderationInfo } : {}),
       tabs: space.tabs.map(tab => ({
         id: tab.id,
         title: tab.title,
@@ -287,8 +307,8 @@ export class SpaceMapper {
         originPostId: tab.originPostId || null,
         messageCount: tab.messageCount,
         createdAt: tab.createdAt,
-        lastActivityAt: tab.lastActivityAt,
-        expiresAt: tab.expiresAt,
+        lastActivityAt: tab.lastActivityAt || null,
+        expiresAt: tab.expiresAt || null,
         isArchived: tab.isArchived,
         isDefault: tab.isDefault,
         order: tab.order,
@@ -305,7 +325,7 @@ export class SpaceMapper {
       })),
       tags: [],
       rushModeEnabled: space.rushMode?.isActive || false,
-      rushModeEndDate: space.rushMode?.endDate
+      rushModeEndDate: space.rushMode?.endDate || null
     };
   }
 }

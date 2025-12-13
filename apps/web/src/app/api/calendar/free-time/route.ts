@@ -111,7 +111,7 @@ async function getEventsForDate(userId: string, dateStr: string): Promise<Array<
   });
 
   // Get space events
-  const membershipsSnapshot = await dbAdmin.collection('members')
+  const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
     .where('userId', '==', userId)
     .where('status', '==', 'active')
     .where('campusId', '==', CURRENT_CAMPUS_ID)

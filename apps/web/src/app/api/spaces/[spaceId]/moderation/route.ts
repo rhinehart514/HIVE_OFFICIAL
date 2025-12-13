@@ -8,10 +8,11 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
+import { SecurityScanner } from "@/lib/secure-input-validation";
 import {
   isContentHidden,
   isContentFlagged,
@@ -47,7 +48,7 @@ const BulkModerationSchema = z.object({
 /**
  * Validate space and check moderator permissions
  */
-async function validateSpaceAndModeratorPermission(spaceId: string, userId: string) {
+async function validateSpaceAndModeratorPermission(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -57,7 +58,7 @@ async function validateSpaceAndModeratorPermission(spaceId: string, userId: stri
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied" };
   }
 
@@ -66,7 +67,7 @@ async function validateSpaceAndModeratorPermission(spaceId: string, userId: stri
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -87,16 +88,20 @@ async function validateSpaceAndModeratorPermission(spaceId: string, userId: stri
 
 /**
  * Get content document reference based on type
+ * Uses flat collections for posts and events (for cross-space queries)
  */
 function getContentRef(spaceId: string, contentType: ModerableContentType, contentId: string, parentId?: string) {
   switch (contentType) {
     case 'post':
-      return dbAdmin.collection('spaces').doc(spaceId).collection('posts').doc(contentId);
+      // Use flat /posts collection
+      return dbAdmin.collection('posts').doc(contentId);
     case 'comment':
       if (!parentId) throw new Error('Parent post ID required for comments');
-      return dbAdmin.collection('spaces').doc(spaceId).collection('posts').doc(parentId).collection('comments').doc(contentId);
+      // Comments are nested under posts
+      return dbAdmin.collection('posts').doc(parentId).collection('comments').doc(contentId);
     case 'event':
-      return dbAdmin.collection('spaces').doc(spaceId).collection('events').doc(contentId);
+      // Use flat /events collection
+      return dbAdmin.collection('events').doc(contentId);
     default:
       throw new Error(`Unsupported content type: ${contentType}`);
   }
@@ -113,9 +118,10 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
-  const validation = await validateSpaceAndModeratorPermission(spaceId, userId);
+  const validation = await validateSpaceAndModeratorPermission(spaceId, userId, campusId);
   if (!validation.ok) {
     const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     return respond.error(validation.message, code, { status: validation.status });
@@ -155,12 +161,12 @@ export const GET = withAuthAndErrors(async (
     return null;
   };
 
-  // Fetch posts
+  // Fetch posts - use flat /posts collection filtered by spaceId
   if (queryParams.contentType === 'all' || queryParams.contentType === 'post') {
     const postsSnapshot = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
       .collection('posts')
+      .where('spaceId', '==', spaceId)
+      .where('campusId', '==', campusId)
       .get();
 
     for (const doc of postsSnapshot.docs) {
@@ -190,12 +196,12 @@ export const GET = withAuthAndErrors(async (
     }
   }
 
-  // Fetch events
+  // Fetch events - use flat /events collection filtered by spaceId
   if (queryParams.contentType === 'all' || queryParams.contentType === 'event') {
     const eventsSnapshot = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
       .collection('events')
+      .where('spaceId', '==', spaceId)
+      .where('campusId', '==', campusId)
       .get();
 
     for (const doc of eventsSnapshot.docs) {
@@ -273,12 +279,23 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { spaceId } = await params;
 
-    const validation = await validateSpaceAndModeratorPermission(spaceId, userId);
+    const validation = await validateSpaceAndModeratorPermission(spaceId, userId, campusId);
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(validation.message, code, { status: validation.status });
+    }
+
+    // SECURITY: Scan moderation reason for XSS if provided
+    // SecurityScanner.scanInput returns { level, threats, sanitized } - check level for dangerous content
+    if (body.reason) {
+      const scan = SecurityScanner.scanInput(body.reason);
+      if (scan.level === 'dangerous') {
+        logger.warn("XSS attempt blocked in moderation reason", { userId, spaceId, threats: scan.threats });
+        return respond.error("Moderation reason contains invalid content", "INVALID_INPUT", { status: HttpStatus.BAD_REQUEST });
+      }
     }
 
     // For comments, we need the parent post ID
@@ -331,7 +348,7 @@ export const POST = withAuthValidationAndErrors(
         moderatorId: userId,
         reason: body.reason,
         timestamp: new Date(),
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       });
 
     logger.info('Moderation action performed', {
@@ -368,12 +385,23 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { spaceId } = await params;
 
-    const validation = await validateSpaceAndModeratorPermission(spaceId, userId);
+    const validation = await validateSpaceAndModeratorPermission(spaceId, userId, campusId);
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(validation.message, code, { status: validation.status });
+    }
+
+    // SECURITY: Scan bulk moderation reason for XSS if provided
+    // SecurityScanner.scanInput returns { level, threats, sanitized } - check level for dangerous content
+    if (body.reason) {
+      const scan = SecurityScanner.scanInput(body.reason);
+      if (scan.level === 'dangerous') {
+        logger.warn("XSS attempt blocked in bulk moderation reason", { userId, spaceId, threats: scan.threats });
+        return respond.error("Moderation reason contains invalid content", "INVALID_INPUT", { status: HttpStatus.BAD_REQUEST });
+      }
     }
 
     const results: Array<{
@@ -429,7 +457,7 @@ export const PUT = withAuthValidationAndErrors(
             moderatorId: userId,
             reason: body.reason,
             timestamp: new Date(),
-            campusId: CURRENT_CAMPUS_ID,
+            campusId: campusId,
             isBulkAction: true,
           });
 

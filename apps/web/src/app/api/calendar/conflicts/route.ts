@@ -54,7 +54,7 @@ function detectConflict(
 
 async function listUserSpaceIds(userId: string) {
   const membershipsSnapshot = await dbAdmin
-    .collection("members")
+    .collection("spaceMembers")
     .where("userId", "==", userId)
     .where("status", "==", "active")
     .get();

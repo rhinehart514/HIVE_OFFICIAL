@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import {
   Search,
   Filter,
@@ -20,7 +21,9 @@ import {
   Crown,
   Medal,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { springPresets, durationSeconds, easingArrays } from '@hive/tokens';
 
 import {
   Input,
@@ -36,7 +39,110 @@ import {
   Progress,
 } from '../../atomic';
 
+import { AnimatedNumber, numberSpringPresets } from '../motion-primitives/animated-number';
+
 import type { ElementProps } from '../../lib/hivelab/element-system';
+
+// ============================================================================
+// ERROR BOUNDARY - Prevents individual element crashes from breaking entire tool
+// ============================================================================
+
+interface ElementErrorBoundaryProps {
+  elementType: string;
+  children: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}
+
+interface ElementErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+/**
+ * Error boundary for HiveLab elements.
+ * Catches render errors in individual elements without crashing the entire tool.
+ */
+class ElementErrorBoundary extends Component<ElementErrorBoundaryProps, ElementErrorBoundaryState> {
+  constructor(props: ElementErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ElementErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // Log error for debugging
+    console.error(`[HiveLab] Element "${this.props.elementType}" crashed:`, error, errorInfo);
+
+    // Call optional error handler
+    this.props.onError?.(error, errorInfo);
+  }
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <ElementErrorFallback
+          elementType={this.props.elementType}
+          error={this.state.error}
+          onRetry={() => this.setState({ hasError: false, error: null })}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+/**
+ * Fallback UI shown when an element crashes.
+ * Provides user-friendly error message and retry option.
+ */
+function ElementErrorFallback({
+  elementType,
+  error,
+  onRetry
+}: {
+  elementType: string;
+  error: Error | null;
+  onRetry: () => void;
+}) {
+  const isDevMode = process.env.NODE_ENV === 'development';
+
+  return (
+    <Card className="border-destructive/50 bg-destructive/5">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div className="rounded-full bg-destructive/10 p-2">
+            <Bell className="h-4 w-4 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-destructive">
+              Element failed to load
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              The {elementType.replace(/-/g, ' ')} element encountered an error.
+            </p>
+            {isDevMode && error && (
+              <pre className="mt-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded overflow-x-auto">
+                {error.message}
+              </pre>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRetry}
+              className="mt-2 h-7 text-xs"
+            >
+              Try again
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // Search Input Element
 export function SearchInputElement({ config, onChange }: ElementProps) {
@@ -265,66 +371,147 @@ export function DatePickerElement({ config, onChange }: ElementProps) {
   );
 }
 
-// User Selector Element
-export function UserSelectorElement({ config, onChange }: ElementProps) {
-  const fakeUsers = [
-    { id: '1', name: 'Amelia Chen', handle: '@amelia' },
-    { id: '2', name: 'Jordan Smith', handle: '@jordan' },
-    { id: '3', name: 'Liam Patel', handle: '@liam' },
-    { id: '4', name: 'Sophia Martinez', handle: '@sophia' }
-  ];
-
+// User Selector Element - Fetches real users from API
+export function UserSelectorElement({ config, onChange, data }: ElementProps) {
   const [selectedUser, setSelectedUser] = useState<string | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<Array<{ id: string; name: string; handle: string; photoURL?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch users from API when search query changes
+  useEffect(() => {
+    const fetchUsers = async () => {
+      // Use provided data if available (for space context)
+      if (data?.users && Array.isArray(data.users)) {
+        setUsers(data.users.map((u: Record<string, unknown>) => ({
+          id: u.id as string,
+          name: u.fullName as string || u.name as string || 'Unknown',
+          handle: u.handle as string || `@${(u.id as string).slice(0, 8)}`,
+          photoURL: u.photoURL as string | undefined
+        })));
+        return;
+      }
+
+      // Only search if we have a query or spaceId context
+      const spaceId = config.spaceId || data?.spaceId;
+      if (!searchQuery && !spaceId) {
+        setUsers([]);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch('/api/users/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery || 'a', // Default search if in space context
+            limit: config.maxResults || 20,
+            spaceId: spaceId,
+            sortBy: 'relevance'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+
+        const result = await response.json();
+        setUsers((result.users || []).map((u: Record<string, unknown>) => ({
+          id: u.id as string,
+          name: u.fullName as string || 'Unknown',
+          handle: u.handle as string || `@${(u.id as string).slice(0, 8)}`,
+          photoURL: u.photoURL as string | undefined
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load users');
+        // Fallback to empty state - no fake data
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Debounce the search
+    const timer = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, config.spaceId, config.maxResults, data?.spaceId, data?.users]);
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Users className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Select user</span>
+        <span className="text-sm font-medium">{config.label || 'Select user'}</span>
       </div>
+
+      {/* Search input for filtering */}
+      <Input
+        value={searchQuery}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+        placeholder="Search members..."
+        className="mb-2"
+      />
 
       <Select
         value={selectedUser}
         onValueChange={(value) => {
           setSelectedUser(value);
+          const user = users.find(u => u.id === value);
           if (onChange) {
-            onChange({ selectedUser: value });
+            onChange({ selectedUser: value, selectedUserData: user });
           }
         }}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Choose a member" />
+          <SelectValue placeholder={isLoading ? "Loading..." : "Choose a member"} />
         </SelectTrigger>
         <SelectContent>
-          {fakeUsers.map((user) => (
-            <SelectItem key={user.id} value={user.id}>
-              <div className="flex flex-col">
-                <span>{user.name}</span>
-                <span className="text-xs text-muted-foreground">{user.handle}</span>
-              </div>
-            </SelectItem>
-          ))}
+          {isLoading ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">Loading users...</div>
+          ) : error ? (
+            <div className="px-3 py-2 text-sm text-red-500">{error}</div>
+          ) : users.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              {searchQuery ? 'No users found' : 'Type to search for members'}
+            </div>
+          ) : (
+            users.map((user) => (
+              <SelectItem key={user.id} value={user.id}>
+                <div className="flex items-center gap-2">
+                  {user.photoURL && (
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      className="h-5 w-5 rounded-full object-cover"
+                    />
+                  )}
+                  <div className="flex flex-col">
+                    <span>{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.handle}</span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
 
       {config.allowMultiple && (
         <div className="text-xs text-muted-foreground">
-          Multi-select will support drag-assignment once live data is wired.
+          Hold Ctrl/Cmd to select multiple members
         </div>
       )}
     </div>
   );
 }
 
-// Tag Cloud Element
+// Tag Cloud Element - Uses real data when available
 export function TagCloudElement({ config, data }: ElementProps) {
-  const tags = data?.tags || [
-    { label: 'Rush Week', weight: 18 },
-    { label: 'Study Groups', weight: 12 },
-    { label: 'Gaming', weight: 9 },
-    { label: 'Student Gov', weight: 7 },
-    { label: 'Dorm Deals', weight: 5 },
-  ];
+  // Use provided data, or show empty state (no mock data)
+  const tags = data?.tags || [];
 
   const sortedTags = [...tags].sort((a, b) => b.weight - a.weight).slice(0, config.maxTags || 30);
 
@@ -336,23 +523,30 @@ export function TagCloudElement({ config, data }: ElementProps) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {sortedTags.map((tag, index) => (
-          <Badge
-            key={index}
-            variant="outline"
-            className="text-sm font-medium px-3 py-1"
-            style={{
-              fontSize: `${Math.max(12, Math.min(22, tag.weight + 12))}px`,
-            }}
-          >
-            {tag.label}
-            {config.showCounts && (
-              <span className="text-xs text-muted-foreground ml-2">
-                {tag.weight}
-              </span>
-            )}
-          </Badge>
-        ))}
+        {sortedTags.length > 0 ? (
+          sortedTags.map((tag, index) => (
+            <Badge
+              key={index}
+              variant="outline"
+              className="text-sm font-medium px-3 py-1"
+              style={{
+                fontSize: `${Math.max(12, Math.min(22, tag.weight + 12))}px`,
+              }}
+            >
+              {tag.label}
+              {config.showCounts && (
+                <span className="text-xs text-muted-foreground ml-2">
+                  {tag.weight}
+                </span>
+              )}
+            </Badge>
+          ))
+        ) : (
+          <div className="w-full py-4 text-center text-sm text-muted-foreground">
+            <Tag className="h-6 w-6 mx-auto mb-2 opacity-40" />
+            <p>No tags yet. Tags will appear when data is connected.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -406,7 +600,7 @@ export function ChartDisplayElement({ config }: ElementProps) {
 }
 
 // Form Builder Element
-export function FormBuilderElement({ config }: ElementProps) {
+export function FormBuilderElement({ config, data, onChange, onAction }: ElementProps) {
   const fields = config.fields || [
     { name: 'Title', type: 'text', required: true },
     { name: 'Description', type: 'textarea', required: false },
@@ -414,46 +608,149 @@ export function FormBuilderElement({ config }: ElementProps) {
     { name: 'Date', type: 'date', required: true },
   ];
 
+  // Hydrate from server state
+  const serverSubmissions = (data?.submissions as Array<Record<string, unknown>>) || [];
+  const serverSubmissionCount = (data?.submissionCount as number) || serverSubmissions.length;
+
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [submissionCount, setSubmissionCount] = useState(serverSubmissionCount);
+
+  // Sync with server state
+  useEffect(() => {
+    setSubmissionCount(serverSubmissionCount);
+  }, [serverSubmissionCount]);
+
+  const handleFieldChange = (fieldName: string, value: string) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }));
+    onChange?.({ formData: { ...formData, [fieldName]: value } });
+  };
+
+  const handleSubmit = async () => {
+    // Validate required fields
+    const missingRequired = fields
+      .filter((f: any) => f.required && !formData[f.name])
+      .map((f: any) => f.name);
+
+    if (missingRequired.length > 0) {
+      return; // Could add error UI here
+    }
+
+    setIsSubmitting(true);
+
+    // Optimistic update
+    setSubmitted(true);
+    setSubmissionCount(prev => prev + 1);
+
+    // Call server action
+    onAction?.('submit', { formData, timestamp: new Date().toISOString() });
+
+    setIsSubmitting(false);
+  };
+
+  const handleReset = () => {
+    setFormData({});
+    setSubmitted(false);
+  };
+
+  if (submitted && !config.allowMultipleSubmissions) {
+    return (
+      <Card className="border-green-500/50 bg-green-500/5">
+        <CardContent className="p-6 text-center">
+          <Check className="h-8 w-8 text-green-500 mx-auto mb-2" />
+          <p className="font-medium">Response submitted!</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {submissionCount} total submission{submissionCount !== 1 ? 's' : ''}
+          </p>
+          {config.allowMultipleSubmissions && (
+            <Button variant="outline" size="sm" className="mt-3" onClick={handleReset}>
+              Submit another
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Form Fields</span>
-      </div>
+    <Card>
+      <CardContent className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium">{config.title || 'Form'}</span>
+        </div>
 
-      <div className="space-y-3">
-        {fields.map((field: any, index: number) => (
-          <div
-            key={index}
-            className="border border-dashed border-border rounded-lg px-4 py-3"
-          >
-            <div className="flex justify-between items-center">
-              <span className="font-medium">{field.name}</span>
-              <Badge variant={field.required ? 'default' : 'outline'}>
-                {field.type}
-              </Badge>
+        <div className="space-y-3">
+          {fields.map((field: any, index: number) => (
+            <div key={index} className="space-y-1">
+              <label className="text-sm font-medium flex items-center gap-1">
+                {field.name}
+                {field.required && <span className="text-red-500">*</span>}
+              </label>
+              {field.type === 'textarea' ? (
+                <textarea
+                  value={formData[field.name] || ''}
+                  onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                  placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
+                  className="w-full h-20 p-2 text-sm bg-background border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              ) : field.type === 'select' ? (
+                <Select
+                  value={formData[field.name] || ''}
+                  onValueChange={(value) => handleFieldChange(field.name, value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(field.options || []).map((opt: string, optIndex: number) => (
+                      <SelectItem key={optIndex} value={opt}>{opt}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  type={field.type || 'text'}
+                  value={formData[field.name] || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange(field.name, e.target.value)}
+                  placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
+                />
+              )}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {field.required ? 'Required field' : 'Optional field'}
-            </p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <Button variant="outline" size="sm">
-        + Add field
-      </Button>
-    </div>
+        <Button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="w-full"
+        >
+          {isSubmitting ? 'Submitting...' : config.submitLabel || 'Submit'}
+        </Button>
+
+        {submissionCount > 0 && (
+          <p className="text-xs text-muted-foreground text-center">
+            {submissionCount} response{submissionCount !== 1 ? 's' : ''} collected
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
-// Notification Center Element
-export function NotificationCenterElement({ config }: ElementProps) {
-  const notifications = [
-    { title: 'New RSVP', description: '14 students joined Powerlifting Rush Week', timeAgo: '2m' },
-    { title: 'Tool Deployment', description: 'Dorm Dash Delivery went live in Founders Commons', timeAgo: '12m' },
-    { title: 'Feedback', description: '3 students rated your form 5 stars', timeAgo: '1h' },
-  ];
+// Notification Center Element - Uses real data when available
+export function NotificationCenterElement({ config, data }: ElementProps) {
+  // Use provided notifications data, or empty array (no mock data)
+  const notifications = (data?.notifications as Array<{
+    title: string;
+    description: string;
+    timeAgo: string;
+    type?: 'info' | 'success' | 'warning' | 'error';
+  }>) || [];
+
+  const maxNotifications = config.maxNotifications || 10;
+  const displayedNotifications = notifications.slice(0, maxNotifications);
 
   return (
     <Card>
@@ -461,32 +758,112 @@ export function NotificationCenterElement({ config }: ElementProps) {
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Live Notifications</span>
+            <span className="text-sm font-medium">{config.title || 'Live Notifications'}</span>
           </div>
-          <Badge variant="outline">{config.maxNotifications || 10} max</Badge>
+          <Badge variant="outline">{notifications.length} / {maxNotifications}</Badge>
         </div>
 
         <div className="divide-y divide-border">
-          {notifications.map((notification, index) => (
-            <div key={index} className="px-6 py-4 hover:bg-muted/40 transition-colors">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{notification.title}</span>
-                <span className="text-xs text-muted-foreground">{notification.timeAgo}</span>
+          {displayedNotifications.length > 0 ? (
+            displayedNotifications.map((notification, index) => (
+              <div key={index} className="px-6 py-4 hover:bg-muted/40 transition-colors">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{notification.title}</span>
+                  <span className="text-xs text-muted-foreground">{notification.timeAgo}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {notification.description}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {notification.description}
+            ))
+          ) : (
+            <div className="px-6 py-8 text-center">
+              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
+              <p className="text-sm text-muted-foreground">
+                No notifications yet. They will appear here in real-time.
               </p>
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
+// Animated Flip Digit Component
+function FlipDigit({ value, urgencyLevel }: { value: string; urgencyLevel: 'calm' | 'warning' | 'urgent' | 'critical' }) {
+  const prefersReducedMotion = useReducedMotion();
+
+  const colorClasses = {
+    calm: 'text-foreground',
+    warning: 'text-amber-500',
+    urgent: 'text-orange-500',
+    critical: 'text-red-500',
+  };
+
+  return (
+    <div className="relative h-[56px] w-[40px] overflow-hidden">
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={value}
+          initial={prefersReducedMotion ? false : { y: -56, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={prefersReducedMotion ? undefined : { y: 56, opacity: 0 }}
+          transition={{
+            type: 'spring',
+            stiffness: 300,
+            damping: 30,
+          }}
+          className={`absolute inset-0 flex items-center justify-center text-4xl font-bold tabular-nums ${colorClasses[urgencyLevel]}`}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Time Unit Display with flip animation
+function TimeUnit({
+  value,
+  label,
+  urgencyLevel,
+  pulse = false,
+}: {
+  value: number;
+  label: string;
+  urgencyLevel: 'calm' | 'warning' | 'urgent' | 'critical';
+  pulse?: boolean;
+}) {
+  const paddedValue = value.toString().padStart(2, '0');
+  const digits = paddedValue.split('');
+
+  return (
+    <motion.div
+      className="text-center"
+      animate={pulse ? { scale: [1, 1.02, 1] } : {}}
+      transition={pulse ? { duration: 1, repeat: Infinity, repeatType: 'loop' } : {}}
+    >
+      <div className="flex items-center justify-center">
+        {digits.map((digit, i) => (
+          <FlipDigit key={`${label}-${i}`} value={digit} urgencyLevel={urgencyLevel} />
+        ))}
+      </div>
+      <div className="text-xs text-muted-foreground uppercase mt-1">{label}</div>
+    </motion.div>
+  );
+}
+
 // Countdown Timer Element
-export function CountdownTimerElement({ config, onChange }: ElementProps) {
+export function CountdownTimerElement({ config, data, onChange, onAction }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  // Hydrate from server state
+  const serverTimeLeft = (data?.timeLeft as number) || null;
+  const serverFinished = (data?.finished as boolean) || false;
+
   const [timeLeft, setTimeLeft] = useState<number>(() => {
+    if (serverTimeLeft !== null) return serverTimeLeft;
     if (config.targetDate) {
       const target = new Date(config.targetDate).getTime();
       const now = Date.now();
@@ -494,18 +871,38 @@ export function CountdownTimerElement({ config, onChange }: ElementProps) {
     }
     return config.seconds || 3600; // Default 1 hour
   });
+  const [finished, setFinished] = useState(serverFinished);
+  const [justFinished, setJustFinished] = useState(false);
+
+  // Sync with server state
+  useEffect(() => {
+    if (serverTimeLeft !== null) setTimeLeft(serverTimeLeft);
+    if (serverFinished) setFinished(true);
+  }, [serverTimeLeft, serverFinished]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (timeLeft <= 0 && !finished) {
+      setFinished(true);
+      setJustFinished(true);
       onChange?.({ finished: true, timeLeft: 0 });
+      onAction?.('finished', { completedAt: new Date().toISOString() });
+
+      // Clear celebration after 2 seconds
+      setTimeout(() => setJustFinished(false), 2000);
       return;
     }
+
+    if (finished) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         const next = prev - 1;
         if (next <= 0) {
+          setFinished(true);
+          setJustFinished(true);
           onChange?.({ finished: true, timeLeft: 0 });
+          onAction?.('finished', { completedAt: new Date().toISOString() });
+          setTimeout(() => setJustFinished(false), 2000);
           return 0;
         }
         return next;
@@ -513,7 +910,7 @@ export function CountdownTimerElement({ config, onChange }: ElementProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, onChange]);
+  }, [timeLeft, finished, onChange, onAction]);
 
   const formatTime = (seconds: number) => {
     const days = Math.floor(seconds / 86400);
@@ -522,57 +919,142 @@ export function CountdownTimerElement({ config, onChange }: ElementProps) {
     const secs = seconds % 60;
 
     if (days > 0) {
-      return { days, hours, mins, secs, format: 'days' };
+      return { days, hours, mins, secs, format: 'days' as const };
     }
-    return { hours, mins, secs, format: 'hours' };
+    return { days: 0, hours, mins, secs, format: 'hours' as const };
+  };
+
+  // Determine urgency level for color cascade
+  const getUrgencyLevel = (seconds: number): 'calm' | 'warning' | 'urgent' | 'critical' => {
+    if (seconds <= 60) return 'critical'; // Under 1 minute
+    if (seconds <= 300) return 'urgent'; // Under 5 minutes
+    if (seconds <= 3600) return 'warning'; // Under 1 hour
+    return 'calm';
   };
 
   const time = formatTime(timeLeft);
+  const urgencyLevel = getUrgencyLevel(timeLeft);
+  const shouldPulse = timeLeft <= 60 && timeLeft > 0;
+
+  // Background gradient based on urgency
+  const gradientClasses = {
+    calm: 'from-blue-500/10 to-indigo-500/10 border-blue-500/20',
+    warning: 'from-amber-500/10 to-orange-500/10 border-amber-500/20',
+    urgent: 'from-orange-500/15 to-red-500/10 border-orange-500/30',
+    critical: 'from-red-500/20 to-rose-500/15 border-red-500/40',
+  };
+
+  const iconColorClasses = {
+    calm: 'text-blue-500',
+    warning: 'text-amber-500',
+    urgent: 'text-orange-500',
+    critical: 'text-red-500',
+  };
 
   return (
-    <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20">
-      <CardContent className="p-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Timer className="h-5 w-5 text-amber-500" />
-          <span className="text-sm font-medium text-muted-foreground">
-            {config.label || 'Time Remaining'}
-          </span>
-        </div>
+    <motion.div
+      initial={false}
+      animate={justFinished ? { scale: [1, 1.05, 1] } : {}}
+      transition={springPresets.bouncy}
+    >
+      <Card className={`bg-gradient-to-br transition-colors duration-500 ${gradientClasses[urgencyLevel]}`}>
+        <CardContent className="p-6 text-center">
+          <motion.div
+            className="flex items-center justify-center gap-2 mb-4"
+            animate={shouldPulse && !prefersReducedMotion ? { opacity: [1, 0.7, 1] } : {}}
+            transition={shouldPulse ? { duration: 1, repeat: Infinity } : {}}
+          >
+            <motion.div
+              animate={shouldPulse && !prefersReducedMotion ? { rotate: [0, -10, 10, 0] } : {}}
+              transition={shouldPulse ? { duration: 0.5, repeat: Infinity } : {}}
+            >
+              <Timer className={`h-5 w-5 transition-colors duration-300 ${iconColorClasses[urgencyLevel]}`} />
+            </motion.div>
+            <span className="text-sm font-medium text-muted-foreground">
+              {config.label || 'Time Remaining'}
+            </span>
+          </motion.div>
 
-        <div className="flex items-center justify-center gap-3">
-          {time.format === 'days' && (
-            <div className="text-center">
-              <div className="text-4xl font-bold tabular-nums">{time.days}</div>
-              <div className="text-xs text-muted-foreground uppercase">Days</div>
-            </div>
-          )}
-          <div className="text-center">
-            <div className="text-4xl font-bold tabular-nums">{time.hours.toString().padStart(2, '0')}</div>
-            <div className="text-xs text-muted-foreground uppercase">Hours</div>
+          <div className="flex items-center justify-center gap-2">
+            {time.format === 'days' && (
+              <>
+                <TimeUnit value={time.days} label="Days" urgencyLevel={urgencyLevel} />
+                <div className="text-2xl font-bold text-muted-foreground self-start mt-2">:</div>
+              </>
+            )}
+            <TimeUnit value={time.hours} label="Hours" urgencyLevel={urgencyLevel} />
+            <motion.div
+              className="text-2xl font-bold text-muted-foreground self-start mt-2"
+              animate={!finished ? { opacity: [1, 0.3, 1] } : {}}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              :
+            </motion.div>
+            <TimeUnit value={time.mins} label="Mins" urgencyLevel={urgencyLevel} pulse={shouldPulse} />
+            <motion.div
+              className="text-2xl font-bold text-muted-foreground self-start mt-2"
+              animate={!finished ? { opacity: [1, 0.3, 1] } : {}}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              :
+            </motion.div>
+            <TimeUnit value={time.secs} label="Secs" urgencyLevel={urgencyLevel} pulse={shouldPulse} />
           </div>
-          <div className="text-2xl font-bold text-muted-foreground">:</div>
-          <div className="text-center">
-            <div className="text-4xl font-bold tabular-nums">{time.mins.toString().padStart(2, '0')}</div>
-            <div className="text-xs text-muted-foreground uppercase">Mins</div>
-          </div>
-          <div className="text-2xl font-bold text-muted-foreground">:</div>
-          <div className="text-center">
-            <div className="text-4xl font-bold tabular-nums">{time.secs.toString().padStart(2, '0')}</div>
-            <div className="text-xs text-muted-foreground uppercase">Secs</div>
-          </div>
-        </div>
 
-        {timeLeft <= 0 && (
-          <div className="mt-4 text-amber-500 font-medium">Time's up!</div>
-        )}
-      </CardContent>
-    </Card>
+          <AnimatePresence>
+            {finished && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={springPresets.bouncy}
+                className="mt-4"
+              >
+                <motion.div
+                  className="text-lg font-medium"
+                  animate={justFinished ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.5, repeat: justFinished ? 3 : 0 }}
+                >
+                  {justFinished ? '🎉' : ''} Time's up! {justFinished ? '🎉' : ''}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
 // Poll Element
+// Helper to normalize poll options - handles both string and object formats
+interface PollOption {
+  id: string;
+  label: string;
+  color?: string;
+}
+
+function normalizePollOptions(options: unknown[]): PollOption[] {
+  return options.map((opt, index) => {
+    if (typeof opt === 'string') {
+      return { id: opt, label: opt };
+    }
+    if (typeof opt === 'object' && opt !== null) {
+      const o = opt as Record<string, unknown>;
+      return {
+        id: (o.id as string) || (o.value as string) || `option-${index}`,
+        label: (o.label as string) || (o.name as string) || `Option ${index + 1}`,
+        color: o.color as string | undefined,
+      };
+    }
+    return { id: `option-${index}`, label: `Option ${index + 1}` };
+  });
+}
+
 export function PollElement({ config, data, onChange, onAction }: ElementProps) {
-  const options = config.options || ['Option A', 'Option B', 'Option C'];
+  const rawOptions = config.options || ['Option A', 'Option B', 'Option C'];
+  const options = normalizePollOptions(rawOptions);
+  const prefersReducedMotion = useReducedMotion();
 
   // Hydrate from server state (data prop) or initialize empty
   const serverResponses = (data?.responses as Record<string, { choice: string }>) || {};
@@ -582,7 +1064,7 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
   // Calculate vote counts from server responses
   const calculateVoteCounts = (): Record<string, number> => {
     const counts: Record<string, number> = {};
-    options.forEach((opt: string) => { counts[opt] = 0; });
+    options.forEach((opt) => { counts[opt.id] = 0; });
     Object.values(serverResponses).forEach((response) => {
       if (response?.choice && counts[response.choice] !== undefined) {
         counts[response.choice]++;
@@ -595,6 +1077,7 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
   const [userVote, setUserVote] = useState<string | null>(serverUserVote);
   const [hasVoted, setHasVoted] = useState(!!serverUserVote);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [justVoted, setJustVoted] = useState<string | null>(null);
 
   // Sync with server state when data changes
   useEffect(() => {
@@ -608,84 +1091,175 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0) || serverTotalVotes;
   const showResults = config.showResultsBeforeVoting || hasVoted;
 
-  const handleVote = async (option: string) => {
+  const handleVote = async (optionId: string) => {
     if ((hasVoted && !config.allowChangeVote) || isSubmitting) return;
 
     setIsSubmitting(true);
+    setJustVoted(optionId);
 
     // Optimistic update
     setVotes((prev) => ({
       ...prev,
-      [option]: (prev[option] || 0) + 1,
+      [optionId]: (prev[optionId] || 0) + 1,
       ...(userVote ? { [userVote]: Math.max(0, (prev[userVote] || 0) - 1) } : {}),
     }));
-    setUserVote(option);
+    setUserVote(optionId);
     setHasVoted(true);
 
     // Call server action
-    onChange?.({ selectedOption: option, votes });
-    onAction?.('vote', { choice: option });
+    onChange?.({ selectedOption: optionId, votes });
+    onAction?.('vote', { choice: optionId });
 
     setIsSubmitting(false);
+
+    // Clear justVoted after animation
+    setTimeout(() => setJustVoted(null), 600);
   };
 
+  // Find winning option for visual emphasis
+  const maxVotes = Math.max(...Object.values(votes), 0);
+
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <Vote className="h-5 w-5 text-primary" />
+          <motion.div
+            initial={false}
+            animate={hasVoted ? { rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] } : {}}
+            transition={{ duration: 0.4, ease: easingArrays.default }}
+          >
+            <Vote className="h-5 w-5 text-primary" />
+          </motion.div>
           <span className="font-semibold">{config.question || 'Cast your vote'}</span>
         </div>
 
         <div className="space-y-3">
-          {options.map((option: string) => {
-            const voteCount = votes[option] || 0;
+          {options.map((option, index) => {
+            const voteCount = votes[option.id] || 0;
             const percentage = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
-            const isSelected = userVote === option;
+            const isSelected = userVote === option.id;
+            const isWinning = showResults && voteCount === maxVotes && voteCount > 0;
+            const wasJustVoted = justVoted === option.id;
 
             return (
-              <button
-                key={option}
-                onClick={() => handleVote(option)}
+              <motion.button
+                key={option.id}
+                onClick={() => handleVote(option.id)}
                 disabled={(hasVoted && !config.allowChangeVote) || isSubmitting}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                initial={false}
+                animate={wasJustVoted ? { scale: [1, 0.98, 1.02, 1] } : { scale: 1 }}
+                whileHover={!hasVoted || config.allowChangeVote ? { scale: 1.01 } : {}}
+                whileTap={!hasVoted || config.allowChangeVote ? { scale: 0.99 } : {}}
+                transition={springPresets.snappy}
+                className={`w-full text-left p-3 rounded-lg border transition-colors relative overflow-hidden ${
                   isSelected
                     ? 'border-primary bg-primary/10'
                     : 'border-border hover:border-primary/50 hover:bg-muted/50'
-                } ${(hasVoted && !config.allowChangeVote) || isSubmitting ? 'cursor-default opacity-70' : 'cursor-pointer'}`}
+                } ${(hasVoted && !config.allowChangeVote) || isSubmitting ? 'cursor-default' : 'cursor-pointer'}`}
               >
-                <div className="flex items-center justify-between">
+                {/* Animated result bar background */}
+                {showResults && (
+                  <motion.div
+                    className={`absolute inset-y-0 left-0 ${
+                      isSelected
+                        ? 'bg-primary/20'
+                        : isWinning
+                          ? 'bg-amber-500/15'
+                          : 'bg-muted/50'
+                    }`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${percentage}%` }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : {
+                            type: 'spring',
+                            stiffness: 100,
+                            damping: 20,
+                            delay: index * 0.05, // Stagger effect
+                          }
+                    }
+                    style={{ borderRadius: 'inherit' }}
+                  />
+                )}
+
+                <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {isSelected && <Check className="h-4 w-4 text-primary" />}
-                    <span className={isSelected ? 'font-medium' : ''}>{option}</span>
+                    <AnimatePresence mode="wait">
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0, opacity: 0 }}
+                          transition={springPresets.bouncy}
+                        >
+                          <Check className="h-4 w-4 text-primary" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <span className={`${isSelected ? 'font-medium' : ''} ${isWinning ? 'text-amber-600 dark:text-amber-400' : ''}`}>
+                      {option.label}
+                    </span>
+                    {isWinning && showResults && (
+                      <motion.span
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ ...springPresets.bouncy, delay: 0.2 }}
+                        className="text-amber-500"
+                      >
+                        👑
+                      </motion.span>
+                    )}
                   </div>
                   {showResults && (
-                    <span className="text-sm text-muted-foreground">{percentage}%</span>
+                    <motion.span
+                      className="text-sm font-mono text-muted-foreground tabular-nums"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.1 }}
+                    >
+                      <AnimatedNumber
+                        value={percentage}
+                        springOptions={numberSpringPresets.snappy}
+                      />%
+                    </motion.span>
                   )}
                 </div>
-                {showResults && (
-                  <div className="mt-2">
-                    <Progress value={percentage} className="h-2" />
-                  </div>
-                )}
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+        <motion.div
+          className="flex items-center justify-between text-sm text-muted-foreground"
+          initial={{ opacity: 0.7 }}
+          animate={{ opacity: 1 }}
+        >
+          <span>
+            <AnimatedNumber
+              value={totalVotes}
+              springOptions={numberSpringPresets.quick}
+            /> vote{totalVotes !== 1 ? 's' : ''}
+          </span>
           {config.deadline && <span>Ends {config.deadline}</span>}
-        </div>
+        </motion.div>
       </CardContent>
     </Card>
   );
 }
 
 // Leaderboard Element
-export function LeaderboardElement({ config, data }: ElementProps) {
+export function LeaderboardElement({ config, data, onAction }: ElementProps) {
   // Hydrate from server state - convert entries object to sorted array
   const serverEntries = data?.entries as Record<string, { score: number; name?: string; updatedAt?: string }> | undefined;
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Allow manual refresh action (useful for connection cascade)
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    onAction?.('refresh', {});
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const entries = useMemo(() => {
     if (serverEntries && Object.keys(serverEntries).length > 0) {
@@ -779,8 +1353,612 @@ export function LeaderboardElement({ config, data }: ElementProps) {
   );
 }
 
+// Event Picker Element - Browse campus events
+export function EventPickerElement({ config, data, onChange }: ElementProps) {
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [events, setEvents] = useState<Array<{ id: string; title: string; date: string; location?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Use provided data or fetch from API
+    if (data?.events && Array.isArray(data.events)) {
+      setEvents(data.events);
+      return;
+    }
+
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/calendar', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (response.ok) {
+          const result = await response.json();
+          setEvents(result.events || []);
+        }
+      } catch {
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [data?.events]);
+
+  const filteredEvents = events
+    .filter(e => config.showPastEvents || new Date(e.date) >= new Date())
+    .slice(0, config.maxEvents || 20);
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Select Event</span>
+        </div>
+
+        {isLoading ? (
+          <div className="py-4 text-center text-sm text-muted-foreground">Loading events...</div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="py-4 text-center text-sm text-muted-foreground">No upcoming events</div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {filteredEvents.map((event) => (
+              <button
+                key={event.id}
+                onClick={() => {
+                  setSelectedEvent(event.id);
+                  onChange?.({ selectedEvent: event });
+                }}
+                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                  selectedEvent === event.id
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="font-medium text-sm">{event.title}</div>
+                <div className="text-xs text-muted-foreground mt-1">{event.date}</div>
+                {event.location && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                    <MapPin className="h-3 w-3" />
+                    {event.location}
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Space Picker Element - Browse campus spaces
+export function SpacePickerElement({ config, data, onChange }: ElementProps) {
+  const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
+  const [spaces, setSpaces] = useState<Array<{ id: string; name: string; memberCount?: number; category?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (data?.spaces && Array.isArray(data.spaces)) {
+      setSpaces(data.spaces);
+      return;
+    }
+
+    const fetchSpaces = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/spaces/browse-v2');
+        if (response.ok) {
+          const result = await response.json();
+          setSpaces(result.spaces || []);
+        }
+      } catch {
+        setSpaces([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSpaces();
+  }, [data?.spaces]);
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Select Space</span>
+        </div>
+
+        {isLoading ? (
+          <div className="py-4 text-center text-sm text-muted-foreground">Loading spaces...</div>
+        ) : spaces.length === 0 ? (
+          <div className="py-4 text-center text-sm text-muted-foreground">No spaces found</div>
+        ) : (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {spaces.slice(0, 20).map((space) => (
+              <button
+                key={space.id}
+                onClick={() => {
+                  setSelectedSpace(space.id);
+                  onChange?.({ selectedSpace: space });
+                }}
+                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                  selectedSpace === space.id
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{space.name}</span>
+                  {config.showMemberCount && space.memberCount && (
+                    <Badge variant="outline" className="text-xs">
+                      {space.memberCount} members
+                    </Badge>
+                  )}
+                </div>
+                {space.category && (
+                  <div className="text-xs text-muted-foreground mt-1">{space.category}</div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Connection List Element - Display user connections
+export function ConnectionListElement({ config, data }: ElementProps) {
+  const connections = data?.connections || [];
+  const maxConnections = config.maxConnections || 10;
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">My Connections</span>
+          <Badge variant="outline" className="ml-auto text-xs">{connections.length}</Badge>
+        </div>
+
+        {connections.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p>No connections yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {connections.slice(0, maxConnections).map((conn: any, index: number) => (
+              <div key={conn.id || index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                {conn.photoURL ? (
+                  <img src={conn.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-medium">{conn.name?.[0] || '?'}</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{conn.name || 'Unknown'}</div>
+                  {config.showMutual && conn.mutualConnections && (
+                    <div className="text-xs text-muted-foreground">
+                      {conn.mutualConnections} mutual
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Member List Element - Display space members (space-tier)
+export function MemberListElement({ config, data, context }: ElementProps) {
+  const members = data?.members || [];
+  const maxMembers = config.maxMembers || 20;
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Member List requires space context</p>
+          <p className="text-xs mt-1">Only available for space leaders</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium text-sm">Space Members</span>
+          </div>
+          <Badge variant="outline">{members.length}</Badge>
+        </div>
+
+        {members.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            No members yet
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {members.slice(0, maxMembers).map((member: any, index: number) => (
+              <div key={member.id || index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                {member.photoURL ? (
+                  <img src={member.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xs font-medium">{member.name?.[0] || '?'}</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{member.name || 'Unknown'}</div>
+                  {config.showRole && member.role && (
+                    <Badge variant="outline" className="text-xs mt-0.5">{member.role}</Badge>
+                  )}
+                </div>
+                {config.showJoinDate && member.joinedAt && (
+                  <span className="text-xs text-muted-foreground">
+                    Joined {new Date(member.joinedAt).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Member Selector Element - Select space members (space-tier)
+export function MemberSelectorElement({ config, data, onChange, context }: ElementProps) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const members = data?.members || [];
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Member Selector requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const handleToggle = (memberId: string) => {
+    const newSelected = selected.includes(memberId)
+      ? selected.filter(id => id !== memberId)
+      : config.allowMultiple
+        ? [...selected, memberId]
+        : [memberId];
+    setSelected(newSelected);
+    onChange?.({ selectedMembers: newSelected });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Select Members</span>
+          {selected.length > 0 && (
+            <Badge variant="default" className="ml-auto">{selected.length} selected</Badge>
+          )}
+        </div>
+
+        <div className="space-y-2 max-h-64 overflow-y-auto">
+          {members.map((member: any) => {
+            const isSelected = selected.includes(member.id);
+            return (
+              <button
+                key={member.id}
+                onClick={() => handleToggle(member.id)}
+                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-all ${
+                  isSelected ? 'bg-primary/10 border border-primary' : 'hover:bg-muted/50 border border-transparent'
+                }`}
+              >
+                {config.showAvatars && member.photoURL ? (
+                  <img src={member.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                    <span className="text-xs">{member.name?.[0]}</span>
+                  </div>
+                )}
+                <span className="text-sm flex-1 text-left">{member.name}</span>
+                {isSelected && <Check className="h-4 w-4 text-primary" />}
+              </button>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Space Events Element - Display space events (space-tier)
+export function SpaceEventsElement({ config, data, context }: ElementProps) {
+  const events = data?.events || [];
+  const maxEvents = config.maxEvents || 5;
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Space Events requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Upcoming Events</span>
+        </div>
+
+        {events.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p>No upcoming events</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {events.slice(0, maxEvents).map((event: any, index: number) => (
+              <div key={event.id || index} className="p-3 border rounded-lg">
+                <div className="font-medium text-sm">{event.title}</div>
+                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                  <Clock className="h-3 w-3" />
+                  {event.date}
+                </div>
+                {config.showRsvpCount && event.rsvpCount !== undefined && (
+                  <Badge variant="outline" className="mt-2 text-xs">
+                    {event.rsvpCount} attending
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Space Feed Element - Display space posts (space-tier)
+export function SpaceFeedElement({ config, data, context }: ElementProps) {
+  const posts = data?.posts || [];
+  const maxPosts = config.maxPosts || 5;
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Space Feed requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Recent Posts</span>
+        </div>
+
+        {posts.length === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p>No posts yet</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {posts.slice(0, maxPosts).map((post: any, index: number) => (
+              <div key={post.id || index} className="p-3 border rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  {post.authorPhoto && (
+                    <img src={post.authorPhoto} alt="" className="h-6 w-6 rounded-full" />
+                  )}
+                  <span className="text-xs font-medium">{post.authorName || 'Unknown'}</span>
+                  <span className="text-xs text-muted-foreground">{post.timeAgo}</span>
+                </div>
+                <p className="text-sm line-clamp-2">{post.content}</p>
+                {config.showEngagement && (
+                  <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                    <span>{post.likes || 0} likes</span>
+                    <span>{post.comments || 0} comments</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Space Stats Element - Display space metrics (space-tier)
+export function SpaceStatsElement({ config, data, context }: ElementProps) {
+  const stats = data?.stats || {};
+  const metrics = config.metrics || ['members', 'posts', 'events'];
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Space Stats requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const metricLabels: Record<string, string> = {
+    members: 'Members',
+    posts: 'Posts',
+    events: 'Events',
+    engagement: 'Engagement',
+  };
+
+  return (
+    <Card className="bg-gradient-to-br from-primary/5 to-transparent">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">Space Analytics</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {metrics.map((metric: string) => (
+            <div key={metric} className="p-3 bg-background rounded-lg border">
+              <div className="text-2xl font-bold">{stats[metric] ?? 0}</div>
+              <div className="text-xs text-muted-foreground">{metricLabels[metric] || metric}</div>
+              {config.showTrends && stats[`${metric}Trend`] !== undefined && (
+                <div className={`text-xs mt-1 ${stats[`${metric}Trend`] >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {stats[`${metric}Trend`] >= 0 ? '+' : ''}{stats[`${metric}Trend`]}%
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Announcement Element - Create announcements (space-tier)
+export function AnnouncementElement({ config, data, onChange, onAction, context }: ElementProps) {
+  const [message, setMessage] = useState(data?.message || '');
+  const [isSending, setIsSending] = useState(false);
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Bell className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Announcement requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setIsSending(true);
+
+    onChange?.({ message, pinned: config.pinned });
+    onAction?.('send_announcement', {
+      message,
+      pinned: config.pinned,
+      sendNotification: config.sendNotification,
+      expiresAt: config.expiresAt,
+    });
+
+    setMessage('');
+    setIsSending(false);
+  };
+
+  return (
+    <Card className="border-amber-500/30 bg-amber-500/5">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-amber-500" />
+          <span className="font-medium text-sm">Announcement</span>
+          {config.pinned && <Badge variant="outline" className="text-xs">Pinned</Badge>}
+        </div>
+
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Write your announcement..."
+          className="w-full h-24 p-3 text-sm bg-background border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+        />
+
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">
+            {config.sendNotification && 'Will notify all members'}
+          </div>
+          <Button onClick={handleSend} disabled={!message.trim() || isSending} size="sm">
+            {isSending ? 'Sending...' : 'Send'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Role Gate Element - Conditional content (space-tier)
+export function RoleGateElement({ config, context, children }: ElementProps & { children?: React.ReactNode }) {
+  // Derive role from isSpaceLeader flag
+  const userRole = context?.isSpaceLeader ? 'leader' : 'member';
+  const allowedRoles: string[] = config.allowedRoles || ['leader', 'admin', 'moderator'];
+  // Leaders always have access if 'leader', 'admin', or 'moderator' is in allowedRoles
+  const hasAccess = context?.isSpaceLeader
+    ? allowedRoles.some(r => ['leader', 'admin', 'moderator'].includes(r))
+    : allowedRoles.includes('member') || allowedRoles.includes('all');
+
+  if (!context?.spaceId) {
+    return (
+      <Card className="border-dashed">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Crown className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Role Gate requires space context</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <Card className="border-dashed bg-muted/30">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
+          <Crown className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>{config.fallbackMessage || 'This content is restricted.'}</p>
+          <p className="text-xs mt-2">Required: {allowedRoles.join(' or ')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <Badge variant="outline" className="absolute -top-2 -right-2 text-xs bg-background z-10">
+        {userRole}
+      </Badge>
+      {children || (
+        <Card>
+          <CardContent className="p-4 text-sm text-muted-foreground">
+            Role-gated content goes here
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 // RSVP Button Element
 export function RsvpButtonElement({ config, data, onChange, onAction }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   // Hydrate from server state
   const serverAttendees = (data?.attendees as Record<string, unknown>) || {};
   const serverCount = (data?.count as number) || 0;
@@ -790,6 +1968,7 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
   const [isRsvped, setIsRsvped] = useState(serverUserRsvp === 'yes');
   const [rsvpCount, setRsvpCount] = useState(serverCount || Object.keys(serverAttendees).length);
   const [isLoading, setIsLoading] = useState(false);
+  const [justRsvped, setJustRsvped] = useState(false);
 
   // Sync with server state when data changes
   useEffect(() => {
@@ -800,6 +1979,9 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
 
   const maxAttendees = config.maxAttendees || null;
   const isFull = maxAttendees && rsvpCount >= maxAttendees;
+  const capacityPercentage = maxAttendees ? Math.min(100, (rsvpCount / maxAttendees) * 100) : 0;
+  const isNearlyFull = capacityPercentage >= 80;
+  const spotsLeft = maxAttendees ? maxAttendees - rsvpCount : null;
 
   const handleRsvp = async () => {
     if ((isFull && !isRsvped) || isLoading) return;
@@ -812,6 +1994,11 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
     setIsRsvped(newState);
     setRsvpCount((prev: number) => (newState ? prev + 1 : Math.max(0, prev - 1)));
 
+    if (newState) {
+      setJustRsvped(true);
+      setTimeout(() => setJustRsvped(false), 1500);
+    }
+
     // Call server action
     onChange?.({ isRsvped: newState, rsvpCount: rsvpCount + (newState ? 1 : -1) });
     onAction?.(newState ? 'rsvp' : 'cancel_rsvp', {
@@ -822,56 +2009,309 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
     setIsLoading(false);
   };
 
+  // Capacity bar color based on fill level
+  const getCapacityColor = () => {
+    if (isFull) return 'bg-red-500';
+    if (capacityPercentage >= 90) return 'bg-orange-500';
+    if (capacityPercentage >= 80) return 'bg-amber-500';
+    return 'bg-green-500';
+  };
+
   return (
-    <Card className={isRsvped ? 'border-green-500/50 bg-green-500/5' : ''}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="font-semibold">{config.eventName || 'Event'}</div>
-            {config.eventDate && (
-              <div className="text-sm text-muted-foreground">{config.eventDate}</div>
-            )}
+    <motion.div
+      initial={false}
+      animate={justRsvped ? { scale: [1, 1.02, 1] } : {}}
+      transition={springPresets.bouncy}
+    >
+      <Card
+        className={`overflow-hidden transition-all duration-300 ${
+          isRsvped
+            ? 'border-green-500/50 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.15)]'
+            : ''
+        }`}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold">{config.eventName || 'Event'}</div>
+              {config.eventDate && (
+                <div className="text-sm text-muted-foreground">{config.eventDate}</div>
+              )}
+            </div>
+
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={springPresets.snappy}
+            >
+              <Button
+                onClick={handleRsvp}
+                disabled={isLoading || (isFull && !isRsvped)}
+                variant={isRsvped ? 'outline' : 'default'}
+                className={`relative overflow-hidden ${
+                  isRsvped
+                    ? 'border-green-500 text-green-600 hover:bg-green-500/10'
+                    : ''
+                }`}
+              >
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.span
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center"
+                    >
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"
+                      />
+                      ...
+                    </motion.span>
+                  ) : isRsvped ? (
+                    <motion.span
+                      key="going"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="flex items-center"
+                    >
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={springPresets.bouncy}
+                      >
+                        <Check className="h-4 w-4 mr-2" />
+                      </motion.div>
+                      Going
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="rsvp"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      className="flex items-center"
+                    >
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      RSVP
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+
+                {/* Celebration particles */}
+                {justRsvped && !prefersReducedMotion && (
+                  <>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.span
+                        key={i}
+                        initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                        animate={{
+                          opacity: 0,
+                          scale: 1,
+                          x: (Math.random() - 0.5) * 60,
+                          y: (Math.random() - 0.5) * 40 - 20,
+                        }}
+                        transition={{ duration: 0.6, delay: i * 0.05 }}
+                        className="absolute text-xs"
+                        style={{ left: '50%', top: '50%' }}
+                      >
+                        {['✨', '🎉', '🎊', '⭐', '💫', '🌟'][i]}
+                      </motion.span>
+                    ))}
+                  </>
+                )}
+              </Button>
+            </motion.div>
           </div>
 
-          <Button
-            onClick={handleRsvp}
-            disabled={isLoading || (isFull && !isRsvped)}
-            variant={isRsvped ? 'outline' : 'default'}
-            className={isRsvped ? 'border-green-500 text-green-600 hover:bg-green-500/10' : ''}
-          >
-            {isLoading ? (
-              <span className="animate-pulse">...</span>
-            ) : isRsvped ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Going
-              </>
-            ) : (
-              <>
-                <UserPlus className="h-4 w-4 mr-2" />
-                RSVP
-              </>
+          {/* Capacity bar */}
+          {maxAttendees && config.showCount !== false && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Capacity</span>
+                <motion.span
+                  className={`font-medium ${isFull ? 'text-red-500' : isNearlyFull ? 'text-amber-500' : 'text-muted-foreground'}`}
+                  animate={isNearlyFull && !prefersReducedMotion ? { opacity: [1, 0.7, 1] } : {}}
+                  transition={isNearlyFull ? { duration: 1.5, repeat: Infinity } : {}}
+                >
+                  <AnimatedNumber value={rsvpCount} springOptions={numberSpringPresets.quick} />/{maxAttendees}
+                </motion.span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden relative">
+                <motion.div
+                  className={`h-full rounded-full ${getCapacityColor()} ${
+                    isNearlyFull ? 'shadow-[0_0_8px_currentColor]' : ''
+                  }`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${capacityPercentage}%` }}
+                  transition={prefersReducedMotion ? { duration: 0 } : springPresets.default}
+                />
+                {/* Glow effect at high capacity */}
+                {isNearlyFull && !prefersReducedMotion && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, transparent 0%, transparent ${capacityPercentage - 10}%, rgba(251,191,36,0.4) ${capacityPercentage}%, transparent ${capacityPercentage}%)`,
+                    }}
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {config.showCount !== false && (
+            <motion.div
+              className="mt-3 flex items-center justify-between text-sm"
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 1 }}
+            >
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                <AnimatedNumber value={rsvpCount} springOptions={numberSpringPresets.quick} />
+                {' '}{rsvpCount === 1 ? 'person' : 'people'} going
+              </span>
+              {maxAttendees && spotsLeft !== null && (
+                <motion.span
+                  className={`font-medium ${isFull ? 'text-red-500' : spotsLeft <= 3 ? 'text-amber-500' : 'text-muted-foreground'}`}
+                  animate={spotsLeft <= 3 && spotsLeft > 0 && !prefersReducedMotion ? { scale: [1, 1.05, 1] } : {}}
+                  transition={spotsLeft <= 3 ? { duration: 0.8, repeat: Infinity } : {}}
+                >
+                  {isFull ? '🔒 Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
+                </motion.span>
+              )}
+            </motion.div>
+          )}
+
+          <AnimatePresence>
+            {isFull && !isRsvped && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={springPresets.gentle}
+                className="overflow-hidden"
+              >
+                <motion.div
+                  className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm rounded-lg text-center border border-amber-500/20"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <span className="cursor-pointer">📋 Join the waitlist</span>
+                </motion.div>
+              </motion.div>
             )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+// Timer Element (stopwatch-style: start/stop/reset)
+export function TimerElement({ config, data, onAction }: ElementProps) {
+  // Hydrate from server state
+  const serverElapsed = (data?.elapsed as number) || 0;
+  const serverIsRunning = (data?.isRunning as boolean) || false;
+  const serverStartedAt = (data?.startedAt as string) || null;
+
+  const [elapsed, setElapsed] = useState(serverElapsed);
+  const [isRunning, setIsRunning] = useState(serverIsRunning);
+  const [startTime, setStartTime] = useState<number | null>(
+    serverStartedAt ? new Date(serverStartedAt).getTime() : null
+  );
+
+  // Sync with server state
+  useEffect(() => {
+    setElapsed(serverElapsed);
+    setIsRunning(serverIsRunning);
+    if (serverStartedAt) {
+      setStartTime(new Date(serverStartedAt).getTime());
+    }
+  }, [serverElapsed, serverIsRunning, serverStartedAt]);
+
+  // Timer tick
+  useEffect(() => {
+    if (!isRunning || !startTime) return;
+
+    const interval = setInterval(() => {
+      setElapsed(serverElapsed + Math.floor((Date.now() - startTime) / 1000));
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [isRunning, startTime, serverElapsed]);
+
+  const handleStart = () => {
+    setIsRunning(true);
+    setStartTime(Date.now());
+    onAction?.('start', { startedAt: new Date().toISOString() });
+  };
+
+  const handleStop = () => {
+    setIsRunning(false);
+    setStartTime(null);
+    onAction?.('stop', { elapsed, stoppedAt: new Date().toISOString() });
+  };
+
+  const handleReset = () => {
+    setIsRunning(false);
+    setElapsed(0);
+    setStartTime(null);
+    onAction?.('reset', {});
+  };
+
+  const formatElapsed = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hrs > 0) {
+      return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <Card className={`${isRunning ? 'border-green-500/50 bg-green-500/5' : ''}`}>
+      <CardContent className="p-6 text-center">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Timer className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium text-muted-foreground">
+            {config.label || 'Timer'}
+          </span>
+        </div>
+
+        <div className="text-5xl font-bold tabular-nums mb-6">
+          {formatElapsed(elapsed)}
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
+          {!isRunning ? (
+            <Button onClick={handleStart} variant="default" size="sm">
+              Start
+            </Button>
+          ) : (
+            <Button onClick={handleStop} variant="outline" size="sm">
+              Stop
+            </Button>
+          )}
+          <Button
+            onClick={handleReset}
+            variant="ghost"
+            size="sm"
+            disabled={elapsed === 0 && !isRunning}
+          >
+            Reset
           </Button>
         </div>
 
-        {config.showCount !== false && (
-          <div className="mt-4 flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              <Users className="h-4 w-4 inline mr-1" />
-              {rsvpCount} {rsvpCount === 1 ? 'person' : 'people'} going
-            </span>
-            {maxAttendees && (
-              <span className={isFull ? 'text-red-500' : 'text-muted-foreground'}>
-                {isFull ? 'Full' : `${maxAttendees - rsvpCount} spots left`}
-              </span>
-            )}
-          </div>
-        )}
-
-        {isFull && !isRsvped && (
-          <div className="mt-3 p-2 bg-amber-500/10 text-amber-600 text-sm rounded-lg text-center">
-            This event is full. Join the waitlist?
+        {config.showLapTimes && (
+          <div className="mt-4 text-xs text-muted-foreground">
+            Lap times can be tracked here
           </div>
         )}
       </CardContent>
@@ -879,28 +2319,158 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
   );
 }
 
-// Element renderer map
+// Counter Element (increment/decrement)
+export function CounterElement({ config, data, onAction }: ElementProps) {
+  const serverCount = (data?.count as number) || config.initialValue || 0;
+  const [count, setCount] = useState(serverCount);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Sync with server state
+  useEffect(() => {
+    setCount(serverCount);
+  }, [serverCount]);
+
+  const handleIncrement = async () => {
+    setIsUpdating(true);
+    const step = config.step || 1;
+    const newCount = count + step;
+
+    // Respect max if set
+    if (config.max !== undefined && newCount > config.max) {
+      setIsUpdating(false);
+      return;
+    }
+
+    setCount(newCount);
+    onAction?.('increment', { count: newCount, step });
+    setIsUpdating(false);
+  };
+
+  const handleDecrement = async () => {
+    setIsUpdating(true);
+    const step = config.step || 1;
+    const newCount = count - step;
+
+    // Respect min if set
+    if (config.min !== undefined && newCount < config.min) {
+      setIsUpdating(false);
+      return;
+    }
+
+    setCount(newCount);
+    onAction?.('decrement', { count: newCount, step });
+    setIsUpdating(false);
+  };
+
+  const handleReset = async () => {
+    const initialValue = config.initialValue || 0;
+    setCount(initialValue);
+    onAction?.('reset', { count: initialValue });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-6 text-center">
+        <div className="text-sm font-medium text-muted-foreground mb-4">
+          {config.label || 'Counter'}
+        </div>
+
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            onClick={handleDecrement}
+            variant="outline"
+            size="sm"
+            disabled={isUpdating || (config.min !== undefined && count <= config.min)}
+          >
+            −
+          </Button>
+
+          <div className="text-4xl font-bold tabular-nums min-w-[80px]">
+            {count}
+          </div>
+
+          <Button
+            onClick={handleIncrement}
+            variant="outline"
+            size="sm"
+            disabled={isUpdating || (config.max !== undefined && count >= config.max)}
+          >
+            +
+          </Button>
+        </div>
+
+        {config.showReset && (
+          <Button
+            onClick={handleReset}
+            variant="ghost"
+            size="sm"
+            className="mt-4"
+            disabled={count === (config.initialValue || 0)}
+          >
+            Reset
+          </Button>
+        )}
+
+        {(config.min !== undefined || config.max !== undefined) && (
+          <div className="mt-3 text-xs text-muted-foreground">
+            {config.min !== undefined && `Min: ${config.min}`}
+            {config.min !== undefined && config.max !== undefined && ' • '}
+            {config.max !== undefined && `Max: ${config.max}`}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Element renderer map - focused element set for tool building
 const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => React.JSX.Element> = {
+  // Input Elements - Collect user input
   'search-input': SearchInputElement,
-  'filter-selector': FilterSelectorElement,
-  'result-list': ResultListElement,
   'date-picker': DatePickerElement,
   'user-selector': UserSelectorElement,
-  'tag-cloud': TagCloudElement,
-  'map-view': MapViewElement,
-  'chart-display': ChartDisplayElement,
   'form-builder': FormBuilderElement,
-  'notification-center': NotificationCenterElement,
-  // New elements
-  'countdown-timer': CountdownTimerElement,
+
+  // Filter Elements
+  'filter-selector': FilterSelectorElement,
+
+  // Display Elements - Show data
+  'result-list': ResultListElement,
+  'chart-display': ChartDisplayElement,
+
+  // Action Elements - Interactive engagement (core of HiveLab)
   'poll-element': PollElement,
-  'leaderboard': LeaderboardElement,
   'rsvp-button': RsvpButtonElement,
+  'countdown-timer': CountdownTimerElement,
+  'leaderboard': LeaderboardElement,
+  'counter': CounterElement,
+  'timer': TimerElement,
+
+  // Connected tier - Data-bound elements
+  'event-picker': EventPickerElement,
+  'space-picker': SpacePickerElement,
+  'connection-list': ConnectionListElement,
+
+  // Space tier (leaders only)
+  'member-list': MemberListElement,
+  'member-selector': MemberSelectorElement,
+  'space-events': SpaceEventsElement,
+  'space-feed': SpaceFeedElement,
+  'space-stats': SpaceStatsElement,
+  'announcement': AnnouncementElement,
+  'role-gate': RoleGateElement,
 };
 
+/**
+ * Raw element renderer - use renderElementSafe for production
+ */
 export function renderElement(elementId: string, props: ElementProps) {
-  const renderer = ELEMENT_RENDERERS[elementId];
+  // Normalize: strip numeric suffixes like "-1", "-2" that AI generation might add
+  const normalizedId = elementId.replace(/-\d+$/, '');
+
+  const renderer = ELEMENT_RENDERERS[normalizedId];
   if (!renderer) {
+    // Unknown element type - render placeholder
     return (
       <div className="border border-dashed border-border rounded-lg p-4 text-sm text-muted-foreground">
         Unimplemented element: {elementId}
@@ -909,4 +2479,52 @@ export function renderElement(elementId: string, props: ElementProps) {
   }
 
   return renderer(props);
+}
+
+/**
+ * Safe element renderer with error boundary.
+ * Use this in production to prevent individual element crashes from breaking the tool.
+ *
+ * @param elementId - The element type ID (e.g., 'poll-element', 'counter')
+ * @param props - Element props including config and callbacks
+ * @param onError - Optional error handler for logging/analytics
+ */
+export function renderElementSafe(
+  elementId: string,
+  props: ElementProps,
+  onError?: (error: Error, errorInfo: ErrorInfo) => void
+) {
+  // Normalize: strip numeric suffixes like "-1", "-2" that AI generation might add
+  const normalizedId = elementId.replace(/-\d+$/, '');
+
+  const renderer = ELEMENT_RENDERERS[normalizedId];
+  if (!renderer) {
+    // Unknown element type - render placeholder (no boundary needed)
+    return (
+      <div className="border border-dashed border-border rounded-lg p-4 text-sm text-muted-foreground">
+        Unimplemented element: {elementId}
+      </div>
+    );
+  }
+
+  return (
+    <ElementErrorBoundary elementType={normalizedId} onError={onError}>
+      {renderer(props)}
+    </ElementErrorBoundary>
+  );
+}
+
+/**
+ * Check if an element type is supported
+ */
+export function isElementSupported(elementId: string): boolean {
+  const normalizedId = elementId.replace(/-\d+$/, '');
+  return normalizedId in ELEMENT_RENDERERS;
+}
+
+/**
+ * Get list of all supported element types
+ */
+export function getSupportedElementTypes(): string[] {
+  return Object.keys(ELEMENT_RENDERERS);
 }

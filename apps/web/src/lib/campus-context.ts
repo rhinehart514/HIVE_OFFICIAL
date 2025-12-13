@@ -9,6 +9,7 @@ import 'server-only';
 import { validateApiAuth, type AuthContext } from './api-auth-middleware';
 import { type SessionData } from './session';
 import { NextRequest } from 'next/server';
+import { logger } from './logger';
 
 /**
  * Campus domain mapping
@@ -100,7 +101,7 @@ export function getCampusIdFromAuth(auth: AuthContext): string {
     try {
       return getCampusFromEmail(auth.email);
     } catch {
-      console.warn(`Could not determine campus from email: ${auth.email}, using default`);
+      logger.warn('Could not determine campus from email, using default', { component: 'campus-context', email: auth.email });
       return DEFAULT_CAMPUS_ID;
     }
   }
@@ -125,7 +126,7 @@ export function getCampusIdFromSession(session: SessionData | null): string {
     try {
       return getCampusFromEmail(session.email);
     } catch {
-      console.warn(`Could not determine campus from email: ${session.email}, using default`);
+      logger.warn('Could not determine campus from email, using default', { component: 'campus-context', email: session.email });
       return DEFAULT_CAMPUS_ID;
     }
   }

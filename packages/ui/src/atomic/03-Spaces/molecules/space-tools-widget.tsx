@@ -104,6 +104,7 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
               )}
               whileHover={shouldReduceMotion ? undefined : { x: 4 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
+              aria-label={`Open ${tool.name} tool${tool.responseCount ? `, ${tool.responseCount} responses` : ''}`}
             >
               {/* Tool Icon */}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-500/10 text-lg">

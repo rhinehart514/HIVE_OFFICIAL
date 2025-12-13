@@ -6,9 +6,10 @@ import {
   withAuthValidationAndErrors,
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
+import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -34,7 +35,9 @@ const requestToLeadSchema = z.object({
 
 type RequestToLeadPayload = z.infer<typeof requestToLeadSchema>;
 
-const BUILDER_ROLES = new Set(['owner', 'admin', 'builder']);
+// Valid roles: owner, admin, moderator, member, guest
+// Leader roles are those who can manage the space
+const LEADER_ROLES = new Set(['owner', 'admin', 'moderator']);
 
 export const POST = withAuthValidationAndErrors(
   requestToLeadSchema,
@@ -45,6 +48,7 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const {
       spaceId,
       motivation,
@@ -66,7 +70,7 @@ export const POST = withAuthValidationAndErrors(
 
       const space = spaceResult.getValue();
 
-      if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+      if (space.campusId.id !== campusId) {
         return respond.error('Access denied for this campus', 'FORBIDDEN', {
           status: HttpStatus.FORBIDDEN,
         });
@@ -78,13 +82,13 @@ export const POST = withAuthValidationAndErrors(
         .where('spaceId', '==', spaceId)
         .where('userId', '==', userId)
         .where('isActive', '==', true)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
       if (!activeMembership.empty) {
         const currentRole = activeMembership.docs[0].data().role as string | undefined;
-        if (currentRole && BUILDER_ROLES.has(currentRole)) {
+        if (currentRole && LEADER_ROLES.has(currentRole)) {
           return respond.error(
             'You already have elevated permissions in this space',
             'CONFLICT',
@@ -98,7 +102,7 @@ export const POST = withAuthValidationAndErrors(
         .where('spaceId', '==', spaceId)
         .where('userId', '==', userId)
         .where('status', '==', 'pending')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -181,12 +185,13 @@ export const POST = withAuthValidationAndErrors(
 
 export const GET = withAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   try {
     const requestsSnapshot = await dbAdmin
       .collection('builderRequests')
       .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('submittedAt', 'desc')
       .limit(20)
       .get();

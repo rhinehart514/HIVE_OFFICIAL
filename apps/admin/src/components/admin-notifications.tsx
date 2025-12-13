@@ -64,8 +64,8 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
       if (response.ok) {
         await fetchNotifications();
       }
-    } catch (err) {
-      console.error('Failed to mark notification as read:', err);
+    } catch (_err) {
+      // Mark as read failed - UI state unchanged
     }
   };
 
@@ -87,8 +87,8 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
       if (response.ok) {
         await fetchNotifications();
       }
-    } catch (err) {
-      console.error('Failed to mark all notifications as read:', err);
+    } catch (_err) {
+      // Mark all as read failed - UI state unchanged
     }
   };
 

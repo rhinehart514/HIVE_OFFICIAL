@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { logger } from '@/lib/logger';
 
 // Schema for tool installation requests
 const ToolActionSchema = z.object({
@@ -50,7 +51,7 @@ async function fetchPersonalTools(userId: string): Promise<PersonalTool[]> {
 
     return tools;
   } catch (error) {
-    console.error('Failed to fetch personal tools:', error);
+    logger.error('Failed to fetch personal tools', { component: 'tools-personal' }, error instanceof Error ? error : undefined);
     return [];
   }
 }
@@ -123,7 +124,7 @@ export const POST = withAuthValidationAndErrors(
         await batch.commit();
       }
     } catch (error) {
-      console.error('Failed to process tool installation:', error);
+      logger.error('Failed to process tool installation', { component: 'tools-personal' }, error instanceof Error ? error : undefined);
       return respond.error(
         'Database operation failed',
         "INTERNAL_ERROR",

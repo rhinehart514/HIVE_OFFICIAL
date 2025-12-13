@@ -425,7 +425,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         messageCount={0}
         notifications={notificationsPayload}
         notificationsLoading={notificationsLoading}
-        notificationsError={notificationsError}
+        notificationsError={notificationsError?.message ?? null}
         mySpaces={mySpaces}
         onNotificationNavigate={(url: string) => router.push(url)}
         userAvatarUrl={auth.user?.avatarUrl ?? undefined}
@@ -450,7 +450,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
       messageCount={0}
       notifications={notificationsPayload}
       notificationsLoading={notificationsLoading}
-      notificationsError={notificationsError}
+      notificationsError={notificationsError?.message ?? null}
       mySpaces={mySpaces}
       showContextRail={false}
       showBreadcrumbs={false}

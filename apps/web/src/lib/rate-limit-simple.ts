@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix type issues
 /**
  * SECURE in-memory rate limiting with no bypass vulnerabilities
  * NO SILENT FAILURES - PRODUCTION SAFE FALLBACK
@@ -266,11 +264,44 @@ export const apiRateLimit = rateLimit({
   blockOnError: true 
 });
 
-export const strictRateLimit = rateLimit({ 
-  maxRequests: 10, 
-  windowMs: 60000, 
+export const strictRateLimit = rateLimit({
+  maxRequests: 10,
+  windowMs: 60000,
   identifier: 'strict_simple',
-  blockOnError: true 
+  blockOnError: true
+});
+
+/**
+ * AI generation rate limiter - very strict (5 requests per minute)
+ * AI operations are expensive, so limit aggressively
+ */
+export const aiGenerationRateLimit = rateLimit({
+  maxRequests: 5,
+  windowMs: 60000,
+  identifier: 'ai_generation',
+  blockOnError: true
+});
+
+/**
+ * Search rate limiter - moderate (30 requests per minute)
+ * Search is moderately expensive, allow reasonable usage
+ */
+export const searchRateLimit = rateLimit({
+  maxRequests: 30,
+  windowMs: 60000,
+  identifier: 'search',
+  blockOnError: true
+});
+
+/**
+ * Chat message rate limiter - moderate (20 messages per minute)
+ * Prevents spam while allowing active conversation
+ */
+export const chatRateLimit = rateLimit({
+  maxRequests: 20,
+  windowMs: 60000,
+  identifier: 'chat_message',
+  blockOnError: true
 });
 
 /**
@@ -284,8 +315,8 @@ export function getRateLimiterHealth(): {
     healthy: boolean;
   }>;
 } {
-  const limiters = [authRateLimit, apiRateLimit, strictRateLimit];
-  
+  const limiters = [authRateLimit, apiRateLimit, strictRateLimit, aiGenerationRateLimit, searchRateLimit, chatRateLimit];
+
   return {
     totalClients: clients.size,
     rateLimiters: limiters.map(limiter => limiter.getHealthStatus())

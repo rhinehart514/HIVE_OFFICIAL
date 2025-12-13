@@ -1,83 +1,85 @@
 import { describe, it, expect } from 'vitest';
-import { SpaceCategory, SpaceCategoryEnum, ApiCategoryEnum } from '../../../../domain/spaces/value-objects/space-category.value';
+import { SpaceCategory, SpaceCategoryEnum, CAMPUSLABS_BRANCH_MAP, CATEGORY_LABELS } from '../../../../domain/spaces/value-objects/space-category.value';
 
 describe('SpaceCategory Value Object', () => {
-  describe('SpaceCategoryEnum (Domain Categories)', () => {
-    it('should have exactly 9 domain categories', () => {
+  describe('SpaceCategoryEnum', () => {
+    it('should have exactly 4 categories', () => {
       const categories = Object.values(SpaceCategoryEnum);
-      expect(categories).toHaveLength(9);
-      expect(categories).toContain('general');
-      expect(categories).toContain('study-group');
-      expect(categories).toContain('social');
-      expect(categories).toContain('event');
-      expect(categories).toContain('resource');
-      expect(categories).toContain('dorm');
-      expect(categories).toContain('club');
-      expect(categories).toContain('sports');
-      expect(categories).toContain('academic');
-    });
-  });
-
-  describe('ApiCategoryEnum (API Categories)', () => {
-    it('should have exactly 4 API categories', () => {
-      const categories = Object.values(ApiCategoryEnum);
       expect(categories).toHaveLength(4);
       expect(categories).toContain('student_org');
-      expect(categories).toContain('residential');
       expect(categories).toContain('university_org');
       expect(categories).toContain('greek_life');
+      expect(categories).toContain('residential');
     });
   });
 
-  describe('create() with domain categories', () => {
-    it('should create valid SpaceCategory for domain category "club"', () => {
-      const result = SpaceCategory.create('club');
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.CLUB);
-    });
-
-    it('should create valid SpaceCategory for domain category "dorm"', () => {
-      const result = SpaceCategory.create('dorm');
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.DORM);
-    });
-
-    it('should create valid SpaceCategory for domain category "academic"', () => {
-      const result = SpaceCategory.create('academic');
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.ACADEMIC);
-    });
-
-    it('should create valid SpaceCategory for domain category "social"', () => {
-      const result = SpaceCategory.create('social');
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.SOCIAL);
+  describe('CAMPUSLABS_BRANCH_MAP', () => {
+    it('should map branch IDs to categories', () => {
+      expect(CAMPUSLABS_BRANCH_MAP[1419]).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(CAMPUSLABS_BRANCH_MAP[360210]).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
+      expect(CAMPUSLABS_BRANCH_MAP[360211]).toBe(SpaceCategoryEnum.GREEK_LIFE);
+      expect(CAMPUSLABS_BRANCH_MAP[360212]).toBe(SpaceCategoryEnum.RESIDENTIAL);
     });
   });
 
-  describe('create() with API categories (bidirectional)', () => {
-    it('should create SpaceCategory from API category "student_org" -> maps to CLUB', () => {
+  describe('CATEGORY_LABELS', () => {
+    it('should have labels for all categories', () => {
+      expect(CATEGORY_LABELS[SpaceCategoryEnum.STUDENT_ORG]).toBe('Student Organization');
+      expect(CATEGORY_LABELS[SpaceCategoryEnum.UNIVERSITY_ORG]).toBe('University Organization');
+      expect(CATEGORY_LABELS[SpaceCategoryEnum.GREEK_LIFE]).toBe('Greek Life');
+      expect(CATEGORY_LABELS[SpaceCategoryEnum.RESIDENTIAL]).toBe('Residential');
+    });
+  });
+
+  describe('create() with canonical categories', () => {
+    it('should create valid SpaceCategory for "student_org"', () => {
       const result = SpaceCategory.create('student_org');
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.CLUB);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
     });
 
-    it('should create SpaceCategory from API category "residential" -> maps to DORM', () => {
-      const result = SpaceCategory.create('residential');
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.DORM);
-    });
-
-    it('should create SpaceCategory from API category "university_org" -> maps to ACADEMIC', () => {
+    it('should create valid SpaceCategory for "university_org"', () => {
       const result = SpaceCategory.create('university_org');
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.ACADEMIC);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
     });
 
-    it('should create SpaceCategory from API category "greek_life" -> maps to SOCIAL', () => {
+    it('should create valid SpaceCategory for "greek_life"', () => {
       const result = SpaceCategory.create('greek_life');
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.SOCIAL);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.GREEK_LIFE);
+    });
+
+    it('should create valid SpaceCategory for "residential"', () => {
+      const result = SpaceCategory.create('residential');
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
+    });
+  });
+
+  describe('create() with legacy categories (backwards compatibility)', () => {
+    it('should map legacy admin UI names', () => {
+      expect(SpaceCategory.create('university_spaces').getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
+      expect(SpaceCategory.create('residential_spaces').getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
+      expect(SpaceCategory.create('greek_life_spaces').getValue().value).toBe(SpaceCategoryEnum.GREEK_LIFE);
+      expect(SpaceCategory.create('student_spaces').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+    });
+
+    it('should map legacy seed route names', () => {
+      expect(SpaceCategory.create('student_organizations').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(SpaceCategory.create('university_organizations').getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
+      expect(SpaceCategory.create('campus_living').getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
+      expect(SpaceCategory.create('fraternity_and_sorority').getValue().value).toBe(SpaceCategoryEnum.GREEK_LIFE);
+    });
+
+    it('should map old domain categories', () => {
+      expect(SpaceCategory.create('club').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(SpaceCategory.create('dorm').getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
+      expect(SpaceCategory.create('academic').getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
+      expect(SpaceCategory.create('social').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(SpaceCategory.create('general').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(SpaceCategory.create('study-group').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
+      expect(SpaceCategory.create('sports').getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
     });
 
     it('should fail for completely invalid category', () => {
@@ -87,166 +89,127 @@ describe('SpaceCategory Value Object', () => {
     });
   });
 
-  describe('createFromApi()', () => {
-    it('should create from student_org', () => {
-      const result = SpaceCategory.createFromApi('student_org');
+  describe('createFromBranchId()', () => {
+    it('should create from CampusLabs branch ID 1419 (student orgs)', () => {
+      const result = SpaceCategory.createFromBranchId(1419);
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.CLUB);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
     });
 
-    it('should create from residential', () => {
-      const result = SpaceCategory.createFromApi('residential');
+    it('should create from CampusLabs branch ID 360210 (university services)', () => {
+      const result = SpaceCategory.createFromBranchId(360210);
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.DORM);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
     });
 
-    it('should fail for domain category passed to createFromApi', () => {
-      const result = SpaceCategory.createFromApi('club');
-      expect(result.isFailure).toBe(true);
-      expect(result.error).toContain('Invalid API category');
+    it('should create from CampusLabs branch ID 360211 (greek life)', () => {
+      const result = SpaceCategory.createFromBranchId(360211);
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.GREEK_LIFE);
+    });
+
+    it('should create from CampusLabs branch ID 360212 (residential)', () => {
+      const result = SpaceCategory.createFromBranchId(360212);
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
+    });
+
+    it('should default to student_org for unknown branch ID', () => {
+      const result = SpaceCategory.createFromBranchId(999999);
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
     });
   });
 
   describe('factory methods', () => {
-    it('should create CLUB via createStudentOrg()', () => {
+    it('should create student_org via createStudentOrg()', () => {
       const result = SpaceCategory.createStudentOrg();
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.CLUB);
-      expect(result.getValue().apiValue).toBe(ApiCategoryEnum.STUDENT_ORG);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.STUDENT_ORG);
     });
 
-    it('should create DORM via createResidential()', () => {
+    it('should create residential via createResidential()', () => {
       const result = SpaceCategory.createResidential();
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.DORM);
-      expect(result.getValue().apiValue).toBe(ApiCategoryEnum.RESIDENTIAL);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.RESIDENTIAL);
     });
 
-    it('should create ACADEMIC via createUniversityOrg()', () => {
+    it('should create university_org via createUniversityOrg()', () => {
       const result = SpaceCategory.createUniversityOrg();
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.ACADEMIC);
-      expect(result.getValue().apiValue).toBe(ApiCategoryEnum.UNIVERSITY_ORG);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.UNIVERSITY_ORG);
     });
 
-    it('should create SOCIAL via createGreekLife()', () => {
+    it('should create greek_life via createGreekLife()', () => {
       const result = SpaceCategory.createGreekLife();
       expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.SOCIAL);
-      expect(result.getValue().apiValue).toBe(ApiCategoryEnum.GREEK_LIFE);
-    });
-
-    it('should create GENERAL via createGeneral()', () => {
-      const result = SpaceCategory.createGeneral();
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.GENERAL);
-    });
-
-    it('should create STUDY_GROUP via createStudyGroup()', () => {
-      const result = SpaceCategory.createStudyGroup();
-      expect(result.isSuccess).toBe(true);
-      expect(result.getValue().value).toBe(SpaceCategoryEnum.STUDY_GROUP);
+      expect(result.getValue().value).toBe(SpaceCategoryEnum.GREEK_LIFE);
     });
   });
 
-  describe('apiValue getter (domain -> API mapping)', () => {
-    it('CLUB should map to STUDENT_ORG', () => {
-      const category = SpaceCategory.create('club').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.STUDENT_ORG);
+  describe('helper methods', () => {
+    it('isStudentManaged() should return true for student_org and greek_life', () => {
+      const studentOrg = SpaceCategory.create('student_org').getValue();
+      const greekLife = SpaceCategory.create('greek_life').getValue();
+      const universityOrg = SpaceCategory.create('university_org').getValue();
+      const residential = SpaceCategory.create('residential').getValue();
+
+      expect(studentOrg.isStudentManaged()).toBe(true);
+      expect(greekLife.isStudentManaged()).toBe(true);
+      expect(universityOrg.isStudentManaged()).toBe(false);
+      expect(residential.isStudentManaged()).toBe(false);
     });
 
-    it('DORM should map to RESIDENTIAL', () => {
-      const category = SpaceCategory.create('dorm').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.RESIDENTIAL);
+    it('isUniversityManaged() should return true only for university_org', () => {
+      const studentOrg = SpaceCategory.create('student_org').getValue();
+      const universityOrg = SpaceCategory.create('university_org').getValue();
+
+      expect(universityOrg.isUniversityManaged()).toBe(true);
+      expect(studentOrg.isUniversityManaged()).toBe(false);
     });
 
-    it('ACADEMIC should map to UNIVERSITY_ORG', () => {
-      const category = SpaceCategory.create('academic').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.UNIVERSITY_ORG);
+    it('isResidential() should return true only for residential', () => {
+      const residential = SpaceCategory.create('residential').getValue();
+      const studentOrg = SpaceCategory.create('student_org').getValue();
+
+      expect(residential.isResidential()).toBe(true);
+      expect(studentOrg.isResidential()).toBe(false);
     });
 
-    it('SOCIAL should map to GREEK_LIFE', () => {
-      const category = SpaceCategory.create('social').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.GREEK_LIFE);
-    });
+    it('isGreekLife() should return true only for greek_life', () => {
+      const greekLife = SpaceCategory.create('greek_life').getValue();
+      const studentOrg = SpaceCategory.create('student_org').getValue();
 
-    it('GENERAL should map to STUDENT_ORG', () => {
-      const category = SpaceCategory.create('general').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.STUDENT_ORG);
-    });
-
-    it('RESOURCE should map to UNIVERSITY_ORG', () => {
-      const category = SpaceCategory.create('resource').getValue();
-      expect(category.apiValue).toBe(ApiCategoryEnum.UNIVERSITY_ORG);
-    });
-  });
-
-  describe('category grouping methods', () => {
-    it('should identify university-managed categories', () => {
-      const academic = SpaceCategory.create('academic').getValue();
-      const resource = SpaceCategory.create('resource').getValue();
-
-      expect(academic.isUniversityManaged()).toBe(true);
-      expect(resource.isUniversityManaged()).toBe(true);
-    });
-
-    it('should identify student-managed categories', () => {
-      const club = SpaceCategory.create('club').getValue();
-      const general = SpaceCategory.create('general').getValue();
-      const studyGroup = SpaceCategory.create('study-group').getValue();
-
-      expect(club.isStudentManaged()).toBe(true);
-      expect(general.isStudentManaged()).toBe(true);
-      expect(studyGroup.isStudentManaged()).toBe(true);
-    });
-
-    it('residential (DORM) should be university-managed', () => {
-      const dorm = SpaceCategory.create('dorm').getValue();
-      expect(dorm.isUniversityManaged()).toBe(false); // RESIDENTIAL is not UNIVERSITY_ORG
-      expect(dorm.apiValue).toBe(ApiCategoryEnum.RESIDENTIAL);
-    });
-
-    it('isAcademic() should identify academic categories', () => {
-      const studyGroup = SpaceCategory.create('study-group').getValue();
-      const academic = SpaceCategory.create('academic').getValue();
-      const resource = SpaceCategory.create('resource').getValue();
-      const club = SpaceCategory.create('club').getValue();
-
-      expect(studyGroup.isAcademic()).toBe(true);
-      expect(academic.isAcademic()).toBe(true);
-      expect(resource.isAcademic()).toBe(true);
-      expect(club.isAcademic()).toBe(false);
-    });
-
-    it('isSocial() should identify social categories', () => {
-      const social = SpaceCategory.create('social').getValue();
-      const dorm = SpaceCategory.create('dorm').getValue();
-      const club = SpaceCategory.create('club').getValue();
-      const sports = SpaceCategory.create('sports').getValue();
-      const academic = SpaceCategory.create('academic').getValue();
-
-      expect(social.isSocial()).toBe(true);
-      expect(dorm.isSocial()).toBe(true);
-      expect(club.isSocial()).toBe(true);
-      expect(sports.isSocial()).toBe(true);
-      expect(academic.isSocial()).toBe(false);
+      expect(greekLife.isGreekLife()).toBe(true);
+      expect(studentOrg.isGreekLife()).toBe(false);
     });
   });
 
-  describe('toString() and toApiString()', () => {
-    it('toString() should return the domain category value', () => {
-      const category = SpaceCategory.create('club').getValue();
-      expect(category.toString()).toBe('club');
-    });
-
-    it('toApiString() should return the API category value', () => {
-      const category = SpaceCategory.create('club').getValue();
-      expect(category.toApiString()).toBe('student_org');
-    });
-
-    it('create from API, toApiString returns same API value', () => {
+  describe('toString() and getters', () => {
+    it('toString() should return the category value', () => {
       const category = SpaceCategory.create('student_org').getValue();
-      expect(category.toApiString()).toBe('student_org');
+      expect(category.toString()).toBe('student_org');
+    });
+
+    it('label getter should return human-readable label', () => {
+      const category = SpaceCategory.create('student_org').getValue();
+      expect(category.label).toBe('Student Organization');
+    });
+
+    it('icon getter should return emoji icon', () => {
+      const category = SpaceCategory.create('student_org').getValue();
+      expect(category.icon).toBe('👥');
+    });
+  });
+
+  describe('getAllCategories()', () => {
+    it('should return all 4 categories', () => {
+      const categories = SpaceCategory.getAllCategories();
+      expect(categories).toHaveLength(4);
+      expect(categories).toContain(SpaceCategoryEnum.STUDENT_ORG);
+      expect(categories).toContain(SpaceCategoryEnum.UNIVERSITY_ORG);
+      expect(categories).toContain(SpaceCategoryEnum.GREEK_LIFE);
+      expect(categories).toContain(SpaceCategoryEnum.RESIDENTIAL);
     });
   });
 });

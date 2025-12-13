@@ -207,12 +207,12 @@ async function determineRelationship(viewerId: string, targetId: string): Promis
 async function getSharedSpaces(viewerId: string, targetId: string): Promise<string[]> {
   try {
     const [viewerMemberships, targetMemberships] = await Promise.all([
-      dbAdmin.collection('members')
+      dbAdmin.collection('spaceMembers')
         .where('userId', '==', viewerId)
         .where('status', '==', 'active')
         .where('campusId', '==', CURRENT_CAMPUS_ID)
         .get(),
-      dbAdmin.collection('members')
+      dbAdmin.collection('spaceMembers')
         .where('userId', '==', targetId)
         .where('status', '==', 'active')
         .where('campusId', '==', CURRENT_CAMPUS_ID)

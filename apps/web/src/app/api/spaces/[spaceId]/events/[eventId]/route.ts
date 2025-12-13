@@ -6,23 +6,13 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
+import { SecurityScanner } from '@/lib/secure-input-validation';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { isContentHidden } from '@/lib/content-moderation';
 import { getServerSpaceRepository } from '@hive/core/server';
-
-/**
- * Check if content should be hidden from results
- * Filters out moderated/hidden/removed content
- */
-function isContentHidden(data: Record<string, unknown>): boolean {
-  if (data.isHidden === true) return true;
-  if (data.status === 'hidden' || data.status === 'removed' || data.status === 'flagged') return true;
-  if (data.isDeleted === true) return true;
-  if (data.moderationStatus === 'removed' || data.moderationStatus === 'hidden') return true;
-  return false;
-}
 
 const UpdateEventSchema = z.object({
   title: z.string().min(1).max(200).optional(),
@@ -49,7 +39,7 @@ const UpdateEventSchema = z.object({
 /**
  * Validate space and membership using DDD repository
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -59,7 +49,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
 
@@ -68,7 +58,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -82,7 +72,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
   return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
-async function loadEvent(spaceId: string, eventId: string) {
+async function loadEvent(spaceId: string, eventId: string, campusId: string) {
   const eventDoc = await dbAdmin
     .collection('spaces')
     .doc(spaceId)
@@ -99,12 +89,12 @@ async function loadEvent(spaceId: string, eventId: string) {
     return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event data missing' };
   }
 
-  if (eventData.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+  if (eventData.campusId && eventData.campusId !== campusId) {
     logger.error('SECURITY: Cross-campus event access blocked', {
       eventId,
       spaceId,
       eventCampusId: eventData.campusId,
-      currentCampusId: CURRENT_CAMPUS_ID,
+      currentCampusId: campusId,
     });
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
@@ -160,14 +150,15 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId, eventId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const event = await loadEvent(spaceId, eventId);
+    const event = await loadEvent(spaceId, eventId, campusId);
     if (!event.ok) {
       const code = event.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(event.message, code, { status: event.status });
@@ -198,14 +189,15 @@ export const PATCH = withAuthValidationAndErrors(
     try {
       const { spaceId, eventId } = await params;
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
-      const validation = await validateSpaceAndMembership(spaceId, userId);
+      const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
       if (!validation.ok) {
         const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
         return respond.error(validation.message, code, { status: validation.status });
       }
 
-      const load = await loadEvent(spaceId, eventId);
+      const load = await loadEvent(spaceId, eventId, campusId);
       if (!load.ok) {
         const code = load.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
         return respond.error(load.message, code, { status: load.status });
@@ -220,6 +212,28 @@ export const PATCH = withAuthValidationAndErrors(
         return respond.error('Insufficient permissions to edit this event', 'FORBIDDEN', {
           status: HttpStatus.FORBIDDEN,
         });
+      }
+
+      // SECURITY: Scan event fields for XSS/injection attacks
+      const fieldsToScan: Array<{ name: string; value: string }> = [];
+      if (body.title) fieldsToScan.push({ name: 'title', value: body.title });
+      if (body.description) fieldsToScan.push({ name: 'description', value: body.description });
+      if (body.location) fieldsToScan.push({ name: 'location', value: body.location });
+
+      for (const field of fieldsToScan) {
+        const scan = SecurityScanner.scanInput(field.value);
+        if (scan.level === 'dangerous') {
+          logger.warn('XSS attempt blocked in event update', {
+            userId,
+            spaceId,
+            eventId,
+            field: field.name,
+            threats: scan.threats,
+          });
+          return respond.error(`Event ${field.name} contains invalid content`, 'INVALID_INPUT', {
+            status: HttpStatus.BAD_REQUEST,
+          });
+        }
       }
 
       if (body.startDate && body.endDate) {
@@ -287,14 +301,15 @@ export const DELETE = withAuthAndErrors(async (
   try {
     const { spaceId, eventId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code = validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const load = await loadEvent(spaceId, eventId);
+    const load = await loadEvent(spaceId, eventId, campusId);
     if (!load.ok) {
       const code = load.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(load.message, code, { status: load.status });

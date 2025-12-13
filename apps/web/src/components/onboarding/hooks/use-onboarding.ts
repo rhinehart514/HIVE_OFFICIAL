@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { HANDLE_REGEX } from "../shared/constants";
+import { logger } from "@/lib/logger";
+import { useOnboardingAnalytics } from "@hive/hooks";
 import type {
   OnboardingStep,
   UserType,
@@ -20,6 +22,29 @@ function debounce<T extends (...args: string[]) => void | Promise<void>>(
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), delay);
   };
+}
+
+// Migrate legacy steps to new 4-step flow
+function migrateLegacyStep(step: OnboardingStep): OnboardingStep {
+  switch (step) {
+    case 'userType':
+      return 'userType';
+    case 'identity':
+    case 'profile':
+      return 'profile'; // Both merge into profile
+    case 'interests':
+      return 'interests'; // Interests is now its own step
+    case 'leader':
+    case 'spaces':
+      return 'spaces'; // Leader merged into spaces
+    case 'completion':
+      return 'completion';
+    case 'alumniWaitlist':
+    case 'facultyProfile':
+      return 'profile'; // Legacy paths → profile
+    default:
+      return 'userType';
+  }
 }
 
 // Draft persistence constants
@@ -76,6 +101,7 @@ const INITIAL_DATA: OnboardingData = {
   name: "",
   major: "",
   graduationYear: null,
+  livingSituation: null,
   interests: [],
   profilePhoto: null,
   isLeader: false,
@@ -84,8 +110,22 @@ const INITIAL_DATA: OnboardingData = {
   termsAccepted: false,
 };
 
+// Map OnboardingStep to analytics step names
+function mapStepToAnalyticsName(step: OnboardingStep): 'welcome' | 'name' | 'academics' | 'handle' | 'photo' | 'builder' | 'legal' {
+  switch (step) {
+    case 'userType': return 'welcome';
+    case 'profile': return 'handle'; // Profile step is primarily about handle
+    case 'spaces': return 'builder';
+    case 'completion': return 'legal';
+    default: return 'welcome';
+  }
+}
+
 export function useOnboarding() {
   const router = useRouter();
+  const analytics = useOnboardingAnalytics();
+  const hasTrackedStart = useRef(false);
+  const previousStep = useRef<OnboardingStep | null>(null);
 
   // Core state
   const [step, setStep] = useState<OnboardingStep>("userType");
@@ -125,6 +165,26 @@ export function useOnboarding() {
     };
   }, []);
 
+  // Track onboarding started on mount
+  useEffect(() => {
+    if (!hasTrackedStart.current) {
+      hasTrackedStart.current = true;
+      analytics.trackOnboardingStarted();
+      analytics.trackStepStarted(mapStepToAnalyticsName('userType'));
+    }
+  }, [analytics]);
+
+  // Track step changes
+  useEffect(() => {
+    if (previousStep.current !== null && previousStep.current !== step) {
+      // Track completion of previous step
+      analytics.trackStepCompleted(mapStepToAnalyticsName(previousStep.current));
+      // Track start of new step
+      analytics.trackStepStarted(mapStepToAnalyticsName(step));
+    }
+    previousStep.current = step;
+  }, [step, analytics]);
+
   // Restore draft on mount
   useEffect(() => {
     if (hasAttemptedRestore.current) return;
@@ -152,12 +212,14 @@ export function useOnboarding() {
         setData(prev => ({ ...prev, ...draft.data }));
       }
       if (draft.step) {
-        setStep(draft.step);
+        // Migrate legacy steps to new flow
+        const migratedStep = migrateLegacyStep(draft.step);
+        setStep(migratedStep);
       }
       setSavedDraftTime(draft.savedAt);
       setHasRestoredDraft(true);
     } catch (e) {
-      console.warn('Failed to restore onboarding draft:', e);
+      logger.warn('Failed to restore onboarding draft', { component: 'useOnboarding' });
       localStorage.removeItem(ONBOARDING_DRAFT_KEY);
     }
   }, []);
@@ -176,7 +238,7 @@ export function useOnboarding() {
       };
       localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
     } catch (e) {
-      console.warn('Failed to save onboarding draft:', e);
+      logger.warn('Failed to save onboarding draft', { component: 'useOnboarding' });
     }
   }, [data, step]);
 
@@ -259,58 +321,41 @@ export function useOnboarding() {
     checkHandle(data.handle);
   }, [data.handle, checkHandle]);
 
-  // Step calculations
+  // Step calculations - new 4-step flow
   const getStepNumber = (): number => {
-    if (data.userType === "student") {
-      const studentSteps: OnboardingStep[] = [
-        "userType",
-        "identity",
-        "profile",
-        "interests",
-        "leader",
-        "spaces",
-      ];
-      return studentSteps.indexOf(step) + 1;
-    } else if (data.userType === "faculty") {
-      const facultySteps: OnboardingStep[] = [
-        "userType",
-        "facultyProfile",
-        "spaces",
-      ];
-      return facultySteps.indexOf(step) + 1;
-    }
-    return 1;
+    // New flow: userType → profile → interests → spaces → completion
+    const steps: OnboardingStep[] = ["userType", "profile", "interests", "spaces"];
+    const index = steps.indexOf(step);
+    // For completion or legacy steps, return 4
+    return index === -1 ? 4 : index + 1;
   };
 
   const getTotalSteps = (): number => {
-    if (data.userType === "student") return data.isLeader ? 6 : 5;
-    if (data.userType === "faculty") return 3;
-    return 1;
+    // Always 4 steps in new flow
+    return 4;
   };
 
-  // Navigation handlers
-  const handleUserTypeSelect = (type: UserType) => {
-    updateData({ userType: type });
+  // Navigation handlers - new 4-step flow
+  const handleUserTypeSelect = (type: UserType, isLeader: boolean) => {
+    // isLeader is now explicit from the button clicked:
+    // - "I run a club" passes true
+    // - "Looking around" passes false
+    updateData({ userType: type, isLeader });
     setError(null);
-    if (type === "student") {
-      setStep("identity");
-    } else if (type === "alumni") {
-      setStep("alumniWaitlist");
-    } else if (type === "faculty") {
-      setStep("facultyProfile");
-    }
+    // All paths go to profile step
+    setStep("profile");
   };
 
   const handleBack = () => {
     setError(null);
-    if (step === "identity") setStep("userType");
-    else if (step === "profile") setStep("identity");
+    // New 4-step navigation
+    if (step === "profile") setStep("userType");
     else if (step === "interests") setStep("profile");
+    else if (step === "spaces") setStep("interests");
+    else if (step === "completion") setStep("spaces");
+    // Legacy step migration - redirect to new flow
+    else if (step === "identity") setStep("userType");
     else if (step === "leader") setStep("interests");
-    else if (step === "spaces")
-      setStep(data.userType === "faculty" ? "facultyProfile" : "leader");
-    else if (step === "facultyProfile") setStep("userType");
-    else if (step === "alumniWaitlist") setStep("userType");
   };
 
   const handleNext = (nextStep: OnboardingStep) => {
@@ -376,6 +421,7 @@ export function useOnboarding() {
             fullName: data.name.trim(),
             major: data.major,
             graduationYear: data.graduationYear,
+            livingSituation: data.livingSituation,
             interests: data.interests,
             userType: resolvedUserType,
             consentGiven: true,
@@ -407,6 +453,12 @@ export function useOnboarding() {
 
       setHasSubmitted(true);
 
+      // Track successful completion
+      analytics.trackOnboardingCompleted(
+        Date.now(), // Duration calculated by analytics hook
+        ['welcome', 'handle', 'builder'] // Completed steps in new 3-step flow
+      );
+
       try {
         const existingSession = window.localStorage.getItem('hive_session');
         if (existingSession) {
@@ -415,7 +467,7 @@ export function useOnboarding() {
           window.localStorage.setItem('hive_session', JSON.stringify(sessionData));
         }
       } catch {
-        console.warn('Failed to update session storage after onboarding');
+        logger.warn('Failed to update session storage after onboarding', { component: 'useOnboarding' });
       }
 
       clearDraft();
@@ -434,8 +486,13 @@ export function useOnboarding() {
         setHandleStatus("taken");
         setError("That handle is already taken. Please choose another.");
         setShowErrorModal(true);
+        // Track handle conflict error
+        analytics.trackValidationError(mapStepToAnalyticsName(step), 'handle', 'handle_taken');
         return false;
       }
+
+      // Track submission error
+      analytics.trackValidationError(mapStepToAnalyticsName(step), 'submission', errorMessage);
 
       setError(errorMessage);
       setShowErrorModal(true);
@@ -443,17 +500,17 @@ export function useOnboarding() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [clearDraft, data, hasSubmitted, isOnline, router]);
+  }, [analytics, clearDraft, data, hasSubmitted, isOnline, router, step]);
 
   const handleLeaderChoice = async (isLeader: boolean) => {
     updateData({ isLeader });
+    // Go directly to spaces step (leader step removed in new flow)
+    setStep("spaces");
+  };
 
-    if (isLeader) {
-      setStep("spaces");
-      return;
-    }
-
-    await submitOnboarding({ isLeaderOverride: false, redirectTo: "/feed" });
+  // Set leader status directly (for new flow)
+  const setIsLeader = (isLeader: boolean) => {
+    updateData({ isLeader });
   };
 
   // Retry submission (called from error modal)
@@ -484,6 +541,8 @@ export function useOnboarding() {
     setError,
     setIsSubmitting,
     updateData,
+    setStep,
+    setIsLeader,
 
     // Computed
     stepNumber: getStepNumber(),

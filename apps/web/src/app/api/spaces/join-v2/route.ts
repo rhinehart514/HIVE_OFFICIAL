@@ -8,8 +8,8 @@ import {
 } from "@hive/core/server";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
-import { withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
-import { validateSpaceJoinability, addSecureCampusMetadata, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { validateSpaceJoinability, addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
 import { notifySpaceJoin } from "@/lib/notification-service";
 
@@ -32,6 +32,7 @@ export const POST = withAuthValidationAndErrors(
     const { spaceId, inviteCode, metadata } = body;
     const joinMethod = body.joinMethod ?? 'manual';
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // SECURITY: Validate ability to join with campus isolation
     const joinValidation = await validateSpaceJoinability(userId, spaceId);
@@ -47,7 +48,12 @@ export const POST = withAuthValidationAndErrors(
     const callbacks: SpaceServiceCallbacks = {
       saveSpaceMember: async (member: SpaceMemberData): Promise<Result<void>> => {
         try {
-          const memberRef = dbAdmin.collection('spaceMembers').doc();
+          // P0 SECURITY FIX: Use composite key to prevent duplicate memberships
+          // Format: {spaceId}_{userId} ensures one document per user per space
+          const compositeId = `${member.spaceId}_${member.userId}`;
+          const memberRef = dbAdmin.collection('spaceMembers').doc(compositeId);
+
+          // Use set with merge to handle both create and reactivation atomically
           await memberRef.set(addSecureCampusMetadata({
             spaceId: member.spaceId,
             userId: member.userId,
@@ -57,25 +63,70 @@ export const POST = withAuthValidationAndErrors(
             permissions: member.permissions,
             joinMethod: member.joinMethod,
             joinMetadata: { inviteCode: inviteCode || null, ...(metadata || {}) }
-          }));
+          }), { merge: true });
+
+          logger.info('[join-v2] Member saved successfully', {
+            spaceId: member.spaceId,
+            userId: member.userId,
+            compositeId
+          });
           return Result.ok<void>();
-        } catch (error) {
-          return Result.fail<void>(`Failed to save space member: ${error}`);
+        } catch (error: unknown) {
+          // Extract detailed error information
+          const errorCode = (error as { code?: string })?.code;
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          logger.error('[join-v2] saveSpaceMember failed', {
+            code: errorCode,
+            message: errorMessage,
+            spaceId: member.spaceId,
+            userId: member.userId,
+            campusId: campusId
+          });
+
+          // Return specific error for permission issues
+          if (errorCode === 'permission-denied') {
+            return Result.fail<void>('PERMISSION_DENIED: Check Firestore rules for spaceMembers collection');
+          }
+          return Result.fail<void>(`Failed to save space member: ${errorMessage}`);
         }
       },
       findSpaceMember: async (spaceIdParam: string, userIdParam: string): Promise<Result<SpaceMemberData | null>> => {
         try {
-          const query = dbAdmin.collection('spaceMembers')
-            .where('spaceId', '==', spaceIdParam)
-            .where('userId', '==', userIdParam)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
-            .limit(1);
-          const snapshot = await query.get();
-          if (snapshot.empty) {
+          // P0 SECURITY FIX: Use direct document lookup with composite key (faster, atomic)
+          const compositeId = `${spaceIdParam}_${userIdParam}`;
+          const doc = await dbAdmin.collection('spaceMembers').doc(compositeId).get();
+
+          if (!doc.exists) {
+            // Fallback: Check for legacy documents with query (for migration period)
+            const legacyQuery = dbAdmin.collection('spaceMembers')
+              .where('spaceId', '==', spaceIdParam)
+              .where('userId', '==', userIdParam)
+              .where('campusId', '==', campusId)
+              .limit(1);
+            const legacySnapshot = await legacyQuery.get();
+            if (legacySnapshot.empty) {
+              return Result.ok(null);
+            }
+            const legacyData = legacySnapshot.docs[0].data();
+            return Result.ok({
+              spaceId: legacyData.spaceId,
+              userId: legacyData.userId,
+              campusId: legacyData.campusId,
+              role: legacyData.role,
+              joinedAt: legacyData.joinedAt?.toDate?.() || new Date(),
+              isActive: legacyData.isActive,
+              permissions: legacyData.permissions || ['post'],
+              joinMethod: legacyData.joinMethod || 'manual'
+            });
+          }
+
+          const data = doc.data()!;
+          // Verify campus isolation
+          if (data.campusId !== campusId) {
             return Result.ok(null);
           }
-          const doc = snapshot.docs[0];
-          const data = doc.data();
+
           return Result.ok({
             spaceId: data.spaceId,
             userId: data.userId,
@@ -92,17 +143,30 @@ export const POST = withAuthValidationAndErrors(
       },
       updateSpaceMember: async (spaceIdParam: string, userIdParam: string, updates): Promise<Result<void>> => {
         try {
-          const query = dbAdmin.collection('spaceMembers')
-            .where('spaceId', '==', spaceIdParam)
-            .where('userId', '==', userIdParam)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
-            .limit(1);
-          const snapshot = await query.get();
-          if (!snapshot.empty) {
+          // P0 SECURITY FIX: Use composite key for direct document update
+          const compositeId = `${spaceIdParam}_${userIdParam}`;
+          const memberRef = dbAdmin.collection('spaceMembers').doc(compositeId);
+          const doc = await memberRef.get();
+
+          if (doc.exists && doc.data()?.campusId === campusId) {
             const updateData: Record<string, unknown> = { ...updates };
             if (updates.joinedAt) updateData.joinedAt = admin.firestore.FieldValue.serverTimestamp();
             updateData.joinMetadata = { inviteCode: inviteCode || null, ...(metadata || {}) };
-            await snapshot.docs[0].ref.update(updateData);
+            await memberRef.update(updateData);
+          } else {
+            // Fallback: Try legacy query for migration period
+            const legacyQuery = dbAdmin.collection('spaceMembers')
+              .where('spaceId', '==', spaceIdParam)
+              .where('userId', '==', userIdParam)
+              .where('campusId', '==', campusId)
+              .limit(1);
+            const snapshot = await legacyQuery.get();
+            if (!snapshot.empty) {
+              const updateData: Record<string, unknown> = { ...updates };
+              if (updates.joinedAt) updateData.joinedAt = admin.firestore.FieldValue.serverTimestamp();
+              updateData.joinMetadata = { inviteCode: inviteCode || null, ...(metadata || {}) };
+              await snapshot.docs[0].ref.update(updateData);
+            }
           }
           return Result.ok<void>();
         } catch (error) {
@@ -129,7 +193,7 @@ export const POST = withAuthValidationAndErrors(
 
     // Use DDD SpaceManagementService
     const spaceService = createServerSpaceManagementService(
-      { userId, campusId: CURRENT_CAMPUS_ID },
+      { userId, campusId: campusId },
       callbacks
     );
 
@@ -142,10 +206,25 @@ export const POST = withAuthValidationAndErrors(
 
     if (joinResult.isFailure) {
       const errorMessage = joinResult.error || 'Failed to join space';
+
+      // Return appropriate HTTP status based on error type
       if (errorMessage.includes('Already a member')) {
         return respond.error(errorMessage, "CONFLICT", { status: HttpStatus.CONFLICT });
       }
-      logger.error('Failed to join space via DDD service', { error: errorMessage, userId, spaceId });
+      if (errorMessage.includes('PERMISSION_DENIED')) {
+        logger.error('[join-v2] Permission denied - Firestore rules issue', { userId, spaceId });
+        return respond.error('Permission denied. Please contact support.', "FORBIDDEN", { status: HttpStatus.FORBIDDEN });
+      }
+      if (errorMessage.includes('not found') || errorMessage.includes('NOT_FOUND')) {
+        return respond.error(errorMessage, "RESOURCE_NOT_FOUND", { status: HttpStatus.NOT_FOUND });
+      }
+
+      logger.error('[join-v2] Failed to join space via DDD service', {
+        error: errorMessage,
+        userId,
+        spaceId,
+        campusId: campusId
+      });
       return respond.error(errorMessage, "INTERNAL_ERROR", { status: HttpStatus.INTERNAL_SERVER_ERROR });
     }
 
@@ -169,7 +248,7 @@ export const POST = withAuthValidationAndErrors(
         // Find space leaders/admins to notify
         const leadersSnapshot = await dbAdmin.collection('spaceMembers')
           .where('spaceId', '==', spaceId)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .where('role', 'in', ['owner', 'admin', 'leader'])
           .where('isActive', '==', true)
           .get();

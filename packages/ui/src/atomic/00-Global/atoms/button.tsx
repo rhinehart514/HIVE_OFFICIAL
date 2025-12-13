@@ -24,7 +24,7 @@ export type ButtonState = 'idle' | 'loading' | 'success'
  * Colors: Only #000000, #FFFFFF, #FFD700
  */
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/20 disabled:pointer-events-none disabled:opacity-50",
+  "relative inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-black disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {

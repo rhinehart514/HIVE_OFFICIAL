@@ -61,6 +61,10 @@ export interface SpaceSidebarData {
 export interface SpaceSidebarCallbacks extends SpaceAboutWidgetCallbacks, SpaceToolsWidgetCallbacks {
   onEventClick?: (eventId: string) => void;
   onQuickActionClick?: (actionId: string) => void;
+  /** Leader action: open invite member modal */
+  onInviteMember?: () => void;
+  /** Leader action: open create event modal */
+  onCreateEvent?: () => void;
 }
 
 export interface SpaceSidebarProps {
@@ -91,6 +95,18 @@ export interface SpaceSidebarProps {
    * Top offset for sticky positioning (e.g., '80px' for header height)
    */
   stickyTop?: string;
+  /**
+   * Enable smart defaults: context-aware collapsed states
+   * - About: collapsed for members, expanded for visitors
+   * - Events: expanded if event within 24h, collapsed otherwise
+   * - Tools: expanded if active tools, collapsed if none
+   * - Leaders: always collapsed by default
+   */
+  smartDefaults?: boolean;
+  /**
+   * User's membership status for smart defaults
+   */
+  userMembership?: 'visitor' | 'member' | 'leader' | 'owner';
   /** Additional className */
   className?: string;
 }
@@ -138,6 +154,8 @@ export function SpaceSidebar({
   unified = true, // Default to new unified mode
   sticky = true,
   stickyTop = '88px', // Header height + padding
+  smartDefaults = true, // Enable context-aware defaults
+  userMembership = 'member',
   className,
 }: SpaceSidebarProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -149,7 +167,38 @@ export function SpaceSidebar({
     onViewAll,
     onEventClick,
     onQuickActionClick,
+    onInviteMember,
+    onCreateEvent,
   } = callbacks;
+
+  // Smart defaults: calculate collapsed state per widget based on context
+  const getSmartCollapsedState = React.useMemo(() => {
+    if (!smartDefaults) {
+      return {
+        about: defaultCollapsed,
+        events: defaultCollapsed,
+        tools: defaultCollapsed,
+        leaders: defaultCollapsed,
+      };
+    }
+
+    // Check if any event is within 24 hours
+    const hasUrgentEvent = data.upcomingEvents?.some(event => event.isUrgent) ?? false;
+
+    // Check if there are active tools
+    const hasActiveTools = data.tools && data.tools.tools.length > 0;
+
+    return {
+      // About: collapsed for members (they know the space), expanded for visitors
+      about: userMembership !== 'visitor',
+      // Events: expanded if there's an urgent event within 24h
+      events: !hasUrgentEvent,
+      // Tools: expanded if there are active tools
+      tools: !hasActiveTools,
+      // Leaders: always collapsed (secondary info)
+      leaders: true,
+    };
+  }, [smartDefaults, defaultCollapsed, data.upcomingEvents, data.tools, userMembership]);
 
   // Count how many sections we have for rendering dividers
   const sections: React.ReactNode[] = [];
@@ -160,8 +209,8 @@ export function SpaceSidebar({
       <SpaceAboutWidget
         key="about"
         data={data.about}
-        collapsible={false} // In unified mode, use built-in expand/collapse
-        defaultCollapsed={defaultCollapsed}
+        collapsible={collapsible}
+        defaultCollapsed={getSmartCollapsedState.about}
         onJoin={onJoin}
         onLeave={onLeave}
         onLeaderClick={onLeaderClick}
@@ -179,8 +228,8 @@ export function SpaceSidebar({
           tools: data.tools.tools,
           hasMore: data.tools.hasMore,
         }}
-        collapsible={false} // In unified mode, use built-in expand/collapse
-        defaultCollapsed={defaultCollapsed}
+        collapsible={collapsible}
+        defaultCollapsed={getSmartCollapsedState.tools}
         onToolClick={onToolClick}
         onViewAll={onViewAll}
       />
@@ -210,6 +259,7 @@ export function SpaceSidebar({
           className
         )}
         style={sticky ? { top: stickyTop } : undefined}
+        aria-label="Space sidebar"
         {...containerProps}
       >
         <motion.div
@@ -248,6 +298,42 @@ export function SpaceSidebar({
                       onCta={() => onEventClick?.(event.id)}
                     />
                   ))}
+                </div>
+              </UnifiedSection>
+            </>
+          )}
+
+          {/* Leader Actions - invite members, create events */}
+          {(onInviteMember || onCreateEvent) && (
+            <>
+              <SidebarDivider />
+              <UnifiedSection animate={animate} shouldReduceMotion={shouldReduceMotion ?? false}>
+                <div className="flex flex-col gap-2 px-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1">
+                    Leader Actions
+                  </h3>
+                  {onInviteMember && (
+                    <button
+                      onClick={onInviteMember}
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm text-neutral-200"
+                    >
+                      <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                      Invite Member
+                    </button>
+                  )}
+                  {onCreateEvent && (
+                    <button
+                      onClick={onCreateEvent}
+                      className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm text-neutral-200"
+                    >
+                      <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Create Event
+                    </button>
+                  )}
                 </div>
               </UnifiedSection>
             </>

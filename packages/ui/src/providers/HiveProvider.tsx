@@ -101,8 +101,8 @@ export const HiveProvider: React.FC<{
           const session = JSON.parse(sessionData);
           setUser(session.user);
         }
-      } catch (error) {
-        console.error('Failed to initialize session:', error);
+      } catch (_error) {
+        // Session initialization failed - continue without session
       } finally {
         setIsLoading(false);
       }
@@ -359,8 +359,9 @@ export class ErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('ErrorBoundary caught:', error, errorInfo);
+  componentDidCatch(_error: Error, _errorInfo: any) {
+    // Error boundary caught an error - error is stored in state for display
+    // In production, this would send to error reporting service
   }
 
   render() {

@@ -13,9 +13,13 @@ import { mockGenerateToolStreaming, type StreamingChunk } from '@/lib/mock-ai-ge
 import {
   firebaseGenerateToolStreaming,
   isFirebaseAIAvailable,
+  type GenerationContext,
+  type ValidatedStreamingChunk,
 } from '@/lib/firebase-ai-generator';
 import { canGenerate, recordGeneration, USAGE_LIMITS } from '@/lib/ai-usage-tracker';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
+import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
+import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 /**
@@ -55,6 +59,12 @@ export async function POST(request: NextRequest) {
   let userId: string | null = null;
 
   try {
+    // Rate limit check - use IP for unauthenticated, user ID for authenticated
+    const forwarded = request.headers.get('x-forwarded-for');
+    const clientIp = forwarded?.split(',')[0]?.trim() ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown';
+
     // Try to get authenticated user (optional)
     try {
       const auth = await validateApiAuth(request, { operation: 'tool-generate' });
@@ -62,6 +72,29 @@ export async function POST(request: NextRequest) {
     } catch {
       // Unauthenticated - allow for demo but with stricter limits
       userId = null;
+    }
+
+    // Apply rate limiting (stricter for unauthenticated)
+    const rateLimitKey = userId ? `user:${userId}` : `ip:${clientIp}`;
+    const rateLimitResult = aiGenerationRateLimit.check(rateLimitKey);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: 'Too many generation requests. Please wait before trying again.',
+          retryAfter: rateLimitResult.retryAfter,
+        },
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.resetTime),
+            'Retry-After': String(rateLimitResult.retryAfter || 60),
+          }
+        }
+      );
     }
 
     // Check usage limits for authenticated users
@@ -88,6 +121,13 @@ export async function POST(request: NextRequest) {
     // Check if Firebase AI is available
     const useFirebaseAI = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
 
+    // Create generation context for quality tracking
+    const generationContext: GenerationContext = {
+      userId,
+      sessionId: `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      campusId: undefined, // Could be extracted from user session if available
+    };
+
     // Create streaming response
     const encoder = new TextEncoder();
     let generationSuccessful = false;
@@ -96,12 +136,13 @@ export async function POST(request: NextRequest) {
       async start(controller) {
         try {
           // Use Firebase AI (Gemini) if available, otherwise fall back to mock
+          // Pass generation context for quality tracking
           const generator = useFirebaseAI
-            ? firebaseGenerateToolStreaming(validated)
+            ? firebaseGenerateToolStreaming(validated, generationContext)
             : mockGenerateToolStreaming(validated);
 
           const mode = validated.isIteration ? 'iteration' : 'new';
-          console.log(`[API] Tool generation (${mode}) using: ${useFirebaseAI ? 'Firebase AI (Gemini)' : 'Mock generator'}${userId ? ` for user ${userId}` : ' (anonymous)'}`);
+          logger.info(`Tool generation (${mode})`, { component: 'tools-generate', provider: useFirebaseAI ? 'Firebase AI (Gemini)' : 'Mock generator', userId: userId || 'anonymous' });
 
           // Start streaming generation
           for await (const chunk of generator) {
@@ -117,9 +158,9 @@ export async function POST(request: NextRequest) {
               if (userId) {
                 try {
                   await recordGeneration(userId, 500); // Estimate ~500 tokens
-                  console.log(`[API] Recorded generation for user ${userId}`);
+                  logger.debug('Recorded generation', { component: 'tools-generate', userId });
                 } catch (err) {
-                  console.error('[API] Failed to record usage:', err);
+                  logger.error('Failed to record usage', { component: 'tools-generate' }, err instanceof Error ? err : undefined);
                 }
               }
 
@@ -137,7 +178,7 @@ export async function POST(request: NextRequest) {
           // Close stream if loop exits without completion
           controller.close();
         } catch (error) {
-          console.error('[API] Generation error:', error);
+          logger.error('Generation error', { component: 'tools-generate' }, error instanceof Error ? error : undefined);
 
           // Send error chunk
           const errorChunk: StreamingChunk = {
@@ -164,7 +205,7 @@ export async function POST(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('[API] Error in /api/tools/generate:', error);
+    logger.error('Error in /api/tools/generate', { component: 'tools-generate' }, error instanceof Error ? error : undefined);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(

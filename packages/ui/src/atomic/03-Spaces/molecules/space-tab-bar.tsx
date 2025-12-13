@@ -304,7 +304,7 @@ export function SpaceTabBar({
             onClick={onAddTab}
             className={cn(
               "flex items-center justify-center",
-              "w-8 h-8 ml-1 rounded-full",
+              "w-11 h-11 ml-1 rounded-full",
               "text-neutral-500 hover:text-neutral-300",
               "bg-white/5 hover:bg-white/10",
               "border border-white/[0.06] hover:border-white/[0.1]",
@@ -339,7 +339,7 @@ export function SpaceTabBar({
           onClick={onSettingsClick}
           className={cn(
             "flex items-center justify-center",
-            "w-8 h-8 ml-2 rounded-full flex-shrink-0",
+            "w-11 h-11 ml-2 rounded-full flex-shrink-0",
             "text-neutral-500 hover:text-neutral-300",
             "hover:bg-white/5",
             "transition-colors duration-200",

@@ -5,16 +5,17 @@ import { logger } from "@/lib/structured-logger";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 const SearchSpacesSchema = z.object({
   query: z.string().min(1).max(100),
   limit: z.coerce.number().min(1).max(50).default(20),
   offset: z.coerce.number().min(0).default(0),
-  type: z
-    .enum(["academic", "social", "recreational", "cultural", "general", "club", "dorm", "sports"])
+  // Use canonical categories: student_org, university_org, greek_life, residential
+  category: z
+    .enum(["student_org", "university_org", "greek_life", "residential"])
     .optional(),
   verified: z.coerce.boolean().optional(),
   minMembers: z.coerce.number().min(0).optional(),
@@ -105,11 +106,12 @@ export const POST = withAuthValidationAndErrors(
   SearchSpacesSchema,
   async (request, _context, searchParams, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const {
       query,
       limit = 20,
       offset = 0,
-      type,
+      category,
       verified,
       minMembers,
       maxMembers,
@@ -120,7 +122,7 @@ export const POST = withAuthValidationAndErrors(
       query,
       limit,
       offset,
-      type,
+      category,
       sortBy,
       userId,
       endpoint: '/api/spaces/search'
@@ -130,7 +132,7 @@ export const POST = withAuthValidationAndErrors(
     const queryLower = query.toLowerCase();
 
     // Use repository search as base
-    const searchResult = await spaceRepo.searchSpaces(query, CURRENT_CAMPUS_ID);
+    const searchResult = await spaceRepo.searchSpaces(query, campusId);
 
     if (searchResult.isFailure) {
       logger.error('Search failed', { error: searchResult.error });
@@ -139,9 +141,28 @@ export const POST = withAuthValidationAndErrors(
 
     let spaces = searchResult.getValue();
 
+    // Get user's spaces to check if they're a leader (for stealth mode visibility)
+    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    const leaderSpaceIds = new Set<string>();
+    if (userSpacesResult.isSuccess) {
+      for (const space of userSpacesResult.getValue()) {
+        const member = space.members.find(m => m.profileId.value === userId);
+        if (member && (member.role === 'owner' || member.role === 'admin')) {
+          leaderSpaceIds.add(space.spaceId.value);
+        }
+      }
+    }
+
+    // Filter out stealth spaces (unless user is a leader of that space)
+    spaces = spaces.filter(space => {
+      if (space.isLive) return true;
+      if (space.isStealth && leaderSpaceIds.has(space.spaceId.value)) return true;
+      return false;
+    });
+
     // Apply additional filters
-    if (type) {
-      spaces = spaces.filter(s => s.category.value === type);
+    if (category) {
+      spaces = spaces.filter(s => s.category.value === category);
     }
 
     if (verified !== undefined) {
@@ -177,8 +198,7 @@ export const POST = withAuthValidationAndErrors(
       }
     });
 
-    // Get user's memberships to mark joined spaces
-    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    // Get user's memberships to mark joined spaces (reusing the earlier query)
     const userSpaceIds = new Set(
       userSpacesResult.isSuccess
         ? userSpacesResult.getValue().map(s => s.spaceId.value)

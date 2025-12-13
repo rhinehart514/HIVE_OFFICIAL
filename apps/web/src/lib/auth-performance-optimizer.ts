@@ -138,8 +138,8 @@ export class AuthPerformanceOptimizer {
           results.set(userId, userData);
           this.setCachedUserData(userId, userData);
         }
-      } catch (error) {
-        console.error('Batch user fetch failed:', error);
+      } catch (_error) {
+        // Batch fetch failed - continue with partial results
       }
     }
 
@@ -159,8 +159,8 @@ export class AuthPerformanceOptimizer {
         try {
           localStorage.setItem(key, value);
           channel.port1.postMessage('done');
-        } catch (error) {
-          console.error('Async storage set failed:', error);
+        } catch (_error) {
+          // Storage set failed - non-critical
           channel.port1.postMessage('error');
         }
       }, 0);
@@ -176,8 +176,8 @@ export class AuthPerformanceOptimizer {
         try {
           const value = localStorage.getItem(key);
           resolve(value);
-        } catch (error) {
-          console.error('Async storage get failed:', error);
+        } catch (_error) {
+          // Storage get failed - return null
           resolve(null);
         }
       }, 0);

@@ -1,11 +1,11 @@
 // @ts-nocheck
-// TODO: Fix type issues
-// Event type is defined locally in this file
-
+// TODO: Fix logger.error() calls to use proper (message, context, error) signature
 /**
  * Calendar API integration utilities
  * These functions will handle real calendar data when backend is ready
  */
+
+import { logger } from './structured-logger';
 
 export interface CalendarApiEvent {
   id: string;
@@ -202,4 +202,3 @@ export const syncCalendarService = async (connectionId: string): Promise<{ succe
     return { success: false, lastSync: new Date() };
   }
 };
-import { logger } from './structured-logger';

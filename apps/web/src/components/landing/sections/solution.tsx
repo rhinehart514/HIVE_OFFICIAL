@@ -1,7 +1,5 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
 import { Users, Compass, Wrench, Zap } from "lucide-react";
 
 const features = [
@@ -45,10 +43,7 @@ interface FeatureCardProps {
   index: number;
 }
 
-function FeatureCard({ title, description, icon: Icon, size, badge, index }: FeatureCardProps) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(cardRef, { once: true, margin: "-50px" });
-
+function FeatureCard({ title, description, icon: Icon, size, badge }: FeatureCardProps) {
   const sizeClasses = {
     large: "md:row-span-2",
     standard: "",
@@ -56,21 +51,13 @@ function FeatureCard({ title, description, icon: Icon, size, badge, index }: Fea
   };
 
   return (
-    <motion.div
-      ref={cardRef}
-      initial={{ opacity: 0, y: 30 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{
-        duration: 0.5,
-        delay: index * 0.1,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      whileHover={{ y: -4 }}
+    <div
       className={`
         group relative p-6 md:p-8 rounded-2xl
         bg-neutral-950 border border-neutral-800
         transition-all duration-300
         hover:border-gold-500/30 hover:shadow-[0_0_30px_rgba(255,215,0,0.05)]
+        hover:-translate-y-1
         cursor-pointer
         ${sizeClasses[size]}
       `}
@@ -99,33 +86,23 @@ function FeatureCard({ title, description, icon: Icon, size, badge, index }: Fea
       <div className="mt-4 text-sm text-neutral-600 group-hover:text-neutral-400 transition-colors duration-300">
         Learn more →
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 export function SolutionSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(headerRef, { once: true, margin: "-100px" });
-
   return (
-    <section ref={sectionRef} className="relative py-24 md:py-32 px-6 bg-black">
+    <section className="relative py-24 md:py-32 px-6 bg-black">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <motion.div
-          ref={headerRef}
-          initial={{ opacity: 0, y: 30 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-16"
-        >
+        <div className="text-center mb-16">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white">
             Everything your campus needs
           </h2>
           <p className="mt-4 text-lg text-neutral-400 max-w-2xl mx-auto">
             One platform to coordinate, connect, and build community.
           </p>
-        </motion.div>
+        </div>
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">

@@ -5,6 +5,7 @@
  * - MessageBubble: User/AI message display
  * - ConversationThread: Scrollable message container
  * - ChatInput: Bottom-anchored input with send/stop
+ * - ChatToolbar: Tool insertion toolbar (polls, events, countdowns)
  * - TypingIndicator: AI thinking animation
  * - ToolPreviewCard: Split-view preview panel
  */
@@ -17,6 +18,12 @@ export {
   type EmptyChatStateProps
 } from './conversation-thread';
 export { ChatInput, type ChatInputProps, type ChatInputHandle } from './chat-input';
+export {
+  ChatToolbar,
+  type ChatToolbarProps,
+  type ToolInsertData,
+  type ToolType
+} from './chat-toolbar';
 export { TypingIndicator, type TypingIndicatorProps } from './typing-indicator';
 export {
   ToolPreviewCard,

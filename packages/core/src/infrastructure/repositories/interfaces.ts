@@ -42,6 +42,8 @@ export interface IConnectionRepository extends IRepository<Connection> {
 
 // Space repository
 export interface ISpaceRepository extends IRepository<EnhancedSpace> {
+  // Override to support options for eager loading PlacedTools
+  findById(id: any, options?: { loadMembers?: boolean; loadPlacedTools?: boolean }): Promise<Result<EnhancedSpace>>;
   findByName(name: string, campusId: string): Promise<Result<EnhancedSpace>>;
   findBySlug(slug: string, campusId: string): Promise<Result<EnhancedSpace>>;
   findByCampus(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;

@@ -6,6 +6,7 @@ import * as admin from 'firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerProfileRepository } from '@hive/core/server';
+import { isTestUserId } from "@/lib/security-service";
 
 // Validation schemas
 const createEventSchema = z.object({
@@ -46,7 +47,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
   try {
     // Development mode mock data
-    if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+    if (isTestUserId(userId)) {
       const now = new Date();
       return respond.success({
         events: [
@@ -157,7 +158,7 @@ export const POST = withAuthValidationAndErrors(
 
     try {
       // Development mode
-      if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+      if (isTestUserId(userId)) {
         const mockEvent = {
           id: `event-${Date.now()}`,
           ...eventData,
@@ -230,7 +231,7 @@ export const PUT = withAuthValidationAndErrors(
 
     try {
       // Development mode
-      if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+      if (isTestUserId(userId)) {
         logger.info('Development mode event updated', { id, updateFields: Object.keys(updates) });
         return respond.success({ message: 'Event updated successfully' });
       }
@@ -309,7 +310,7 @@ export const DELETE = withAuthAndErrors(async (request, context, respond) => {
 
   try {
     // Development mode
-    if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+    if (isTestUserId(userId)) {
       logger.info('Development mode event deleted', { eventId });
       return respond.success({ message: 'Event deleted successfully' });
     }

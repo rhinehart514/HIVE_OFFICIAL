@@ -18,7 +18,6 @@ import {
 import { ToolDeployModal } from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
-import { ErrorBoundary } from '@/components/error-boundary';
 import { useIsSpaceLeader } from '@/hooks/use-is-space-leader';
 import { logger as _logger } from '@/lib/logger';
 import {
@@ -88,9 +87,8 @@ export default function ToolsPage() {
   const [deployTool, setDeployTool] = useState<{ id: string; name: string } | null>(null);
   const [targets, setTargets] = useState<ToolDeploymentTarget[]>([]);
 
-  // Everyone can create tools - space leaders get extra deploy options
-  // No longer gating creation behind space leadership
-  const hasBuilderAccess = true; // Universal creation access
+  // Only space leaders can access HiveLab/Tools
+  const hasBuilderAccess = isSpaceLeader;
 
   // Fetch personal tools (user's own creations)
   const { data: personalTools, isLoading: personalLoading } = useQuery({
@@ -161,8 +159,44 @@ export default function ToolsPage() {
     return null;
   }
 
-  // Access gate removed - everyone can create tools
-  // Space leaders get additional deploy targets (their spaces)
+  // Access gate: Only space leaders can access HiveLab
+  if (!authLoading && !leaderLoading && !hasBuilderAccess) {
+    return (
+      <div className="min-h-screen bg-hive-background flex items-center justify-center p-6">
+        <Card className="max-w-md w-full">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-[var(--hive-brand-primary)]/20 to-transparent rounded-2xl flex items-center justify-center">
+              <Users className="w-8 h-8 text-[var(--hive-brand-primary)]" />
+            </div>
+            <CardTitle className="text-xl">HiveLab Access</CardTitle>
+            <CardDescription className="mt-2">
+              HiveLab is available to space leaders. Lead a space to unlock the ability to create and deploy custom tools.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-hive-text-secondary space-y-2">
+              <p>As a space leader, you can:</p>
+              <ul className="list-disc list-inside space-y-1 ml-2">
+                <li>Create custom tools with AI assistance</li>
+                <li>Deploy tools to your space sidebar</li>
+                <li>Add interactive polls, forms, and more</li>
+                <li>Track engagement with analytics</li>
+              </ul>
+            </div>
+            <Button
+              onClick={() => router.push('/spaces/browse')}
+              className="w-full bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
+            >
+              Browse Spaces
+            </Button>
+            <p className="text-xs text-center text-hive-text-tertiary">
+              Find a space that needs a leader, or create your own
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleCreateTool = () => {
     router.push('/tools/create');
@@ -246,7 +280,7 @@ export default function ToolsPage() {
   const marketplace = marketplaceTools || [];
 
   return (
-    <ErrorBoundary>
+    <>
       <div className="min-h-screen bg-hive-background">
         {/* Header */}
         <div className="sticky top-0 z-40 bg-hive-background-overlay backdrop-blur border-b border-hive-border-default">
@@ -437,6 +471,6 @@ export default function ToolsPage() {
           onDeploy={handleDeploy}
         />
       )}
-    </ErrorBoundary>
+    </>
   );
 }

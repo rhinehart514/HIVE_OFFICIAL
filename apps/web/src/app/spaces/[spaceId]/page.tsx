@@ -1,46 +1,263 @@
 "use client";
 
 /**
- * Space Detail Page - Complete Rebuild
+ * Space Detail Page - Chat-First Experience
  *
- * Premium space detail experience with:
+ * Discord-style real-time chat experience with:
  * - SpaceContext for unified state management
- * - T1 Premium SpaceDetailHeader with Ken Burns, parallax
- * - Tab-based navigation with SpaceDynamicContent
- * - 60/40 split layout with sticky sidebar
- * - Join celebration animations
+ * - SpaceChatBoard as primary content (replaces feed)
+ * - BoardTabBar for channel/board switching
+ * - 60/40 split layout: Chat (60%) + Sidebar (40%)
+ * - HiveLab-powered sidebar widgets
+ * - T1 Premium SpaceDetailHeader (compact)
+ *
+ * Vision: "Discord meets ChatGPT" - Real-time messaging + inline AI-powered tools
  *
  * @author HIVE Frontend Team
- * @version 2.0.0
+ * @version 3.2.0 - Refactored with extracted components
  */
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { formatDistanceToNow } from "date-fns";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   SpaceDetailHeader,
-  SpaceDynamicContent,
   SpaceSidebar,
-  SpacePostComposer,
-  FeedCardPost,
-  MobileAboutSection,
-  PostDetailModal,
+  SpaceChatBoard,
+  BoardTabBar,
+  MobileActionBar,
+  MobileDrawer,
+  ThreadDrawer,
+  PinnedMessagesWidget,
   AddTabModal,
   AddWidgetModal,
-  PostsEmptyState,
-  type SpaceTabItem,
-  type FeedCardPostData,
-  type PostDetailData,
-  type PostDetailComment,
+  MemberInviteModal,
+  EventCreateModal,
+  ToolRuntimeModal,
   type AddTabInput,
   type AddWidgetInputUI,
+  type BoardData,
+  type MobileDrawerType,
+  type MemberInviteInput,
+  type InviteableUser,
+  type EventCreateInput,
 } from "@hive/ui";
 import { SpaceBoardSkeleton } from "@hive/ui";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
-import { useFeed, type Post } from "@/hooks/use-feed";
+import { useChatMessages } from "@/hooks/use-chat-messages";
+import { useToolRuntime } from "@/hooks/use-tool-runtime";
+import { usePinnedMessages } from "@/hooks/use-pinned-messages";
+import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
-import { springPresets } from "@hive/tokens";
+
+// ============================================================
+// Types
+// ============================================================
+
+// Local event type (matches SpaceContext events)
+interface SpaceEventData {
+  id: string;
+  title: string;
+  type: string;
+  startDate: string;
+  location?: string;
+  virtualLink?: string;
+  currentAttendees: number;
+}
+
+// Local board type (matches useChatMessages boards)
+interface ChatBoardData {
+  id: string;
+  name: string;
+  type: 'general' | 'topic' | 'event';
+  description?: string;
+  messageCount?: number;
+  isDefault?: boolean;
+  isLocked?: boolean;
+}
+
+interface ToolData {
+  id: string;
+  toolId: string;
+  placementId: string; // The placement ID within the space
+  name: string;
+  type: string;
+  isActive: boolean;
+  responseCount: number;
+}
+
+interface LeaderData {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  role: string;
+}
+
+interface SelectedTool {
+  id: string;
+  toolId: string;
+  placementId: string; // The placement ID - hook will generate deployment ID
+  name: string;
+  type: string;
+}
+
+// ============================================================
+// Extracted Components
+// ============================================================
+
+/**
+ * Mobile Navigation - Bottom bar and drawer panels
+ */
+function SpaceMobileNavigation({
+  activeDrawer,
+  setActiveDrawer,
+  space,
+  events,
+  tools,
+  leaders,
+}: {
+  activeDrawer: MobileDrawerType | null;
+  setActiveDrawer: (drawer: MobileDrawerType | null) => void;
+  space: { name: string; description?: string; memberCount: number; onlineCount: number; category?: string };
+  events: Array<{ id: string; title: string; startDate: string; currentAttendees: number }>;
+  tools: ToolData[];
+  leaders: LeaderData[];
+}) {
+  return (
+    <>
+      <div className="lg:hidden">
+        <MobileActionBar
+          activeDrawer={activeDrawer}
+          onAction={(type) => setActiveDrawer(type)}
+        />
+      </div>
+      <MobileDrawer
+        type="info"
+        open={activeDrawer === "info"}
+        onOpenChange={(open) => setActiveDrawer(open ? "info" : null)}
+        spaceData={{
+          name: space.name,
+          description: space.description,
+          memberCount: space.memberCount,
+          onlineCount: space.onlineCount,
+          category: space.category,
+        }}
+      />
+      <MobileDrawer
+        type="events"
+        open={activeDrawer === "events"}
+        onOpenChange={(open) => setActiveDrawer(open ? "events" : null)}
+        events={events.map((e) => ({
+          id: e.id,
+          title: e.title,
+          date: new Date(e.startDate).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+          attendees: e.currentAttendees,
+        }))}
+      />
+      <MobileDrawer
+        type="tools"
+        open={activeDrawer === "tools"}
+        onOpenChange={(open) => setActiveDrawer(open ? "tools" : null)}
+        tools={tools.map((t) => ({
+          id: t.id,
+          name: t.name,
+          description: t.type,
+        }))}
+      />
+      <MobileDrawer
+        type="members"
+        open={activeDrawer === "members"}
+        onOpenChange={(open) => setActiveDrawer(open ? "members" : null)}
+        members={leaders.map((l) => ({
+          id: l.id,
+          name: l.name,
+          avatarUrl: l.avatarUrl,
+          role: l.role,
+          isOnline: false,
+        }))}
+      />
+    </>
+  );
+}
+
+/**
+ * Leader Modals - Add tab, widget, invite member, create event
+ */
+function SpaceLeaderModals({
+  tabs,
+  boards,
+  activeBoardId,
+  addTabModalOpen,
+  setAddTabModalOpen,
+  addWidgetModalOpen,
+  setAddWidgetModalOpen,
+  inviteMemberModalOpen,
+  setInviteMemberModalOpen,
+  createEventModalOpen,
+  setCreateEventModalOpen,
+  onAddTab,
+  onAddWidget,
+  onInviteMember,
+  onSearchUsers,
+  onCreateEvent,
+  existingMemberIds,
+}: {
+  tabs: Array<{ name: string }>;
+  boards: Array<{ id: string; name: string }>;
+  activeBoardId?: string;
+  addTabModalOpen: boolean;
+  setAddTabModalOpen: (open: boolean) => void;
+  addWidgetModalOpen: boolean;
+  setAddWidgetModalOpen: (open: boolean) => void;
+  inviteMemberModalOpen: boolean;
+  setInviteMemberModalOpen: (open: boolean) => void;
+  createEventModalOpen: boolean;
+  setCreateEventModalOpen: (open: boolean) => void;
+  onAddTab: (input: AddTabInput) => Promise<void>;
+  onAddWidget: (input: AddWidgetInputUI) => Promise<void>;
+  onInviteMember: (input: MemberInviteInput) => Promise<void>;
+  onSearchUsers: (query: string) => Promise<InviteableUser[]>;
+  onCreateEvent: (input: EventCreateInput) => Promise<void>;
+  existingMemberIds: string[];
+}) {
+  return (
+    <>
+      <AddTabModal
+        open={addTabModalOpen}
+        onOpenChange={setAddTabModalOpen}
+        onSubmit={onAddTab}
+        existingTabNames={tabs.map((t) => t.name)}
+      />
+      <AddWidgetModal
+        open={addWidgetModalOpen}
+        onOpenChange={setAddWidgetModalOpen}
+        onSubmit={onAddWidget}
+      />
+      <MemberInviteModal
+        open={inviteMemberModalOpen}
+        onOpenChange={setInviteMemberModalOpen}
+        onSubmit={onInviteMember}
+        onSearchUsers={onSearchUsers}
+        existingMemberIds={existingMemberIds}
+      />
+      <EventCreateModal
+        open={createEventModalOpen}
+        onOpenChange={setCreateEventModalOpen}
+        onSubmit={onCreateEvent}
+        boards={boards.map((b) => ({
+          id: b.id,
+          name: b.name,
+        }))}
+        defaultBoardId={activeBoardId}
+      />
+    </>
+  );
+}
 
 // ============================================================
 // Inner Content Component (uses SpaceContext)
@@ -48,10 +265,12 @@ import { springPresets } from "@hive/tokens";
 
 function SpaceDetailContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const {
     space,
     spaceId,
     membership,
+    events,
     tabs,
     widgets,
     visibleTabs,
@@ -70,55 +289,83 @@ function SpaceDetailContent() {
     getWidgetsForTab,
   } = useSpaceContext();
 
-  // Feed hook for feed tabs
+  // Compute membership booleans from role
+  const isMember = Boolean(membership?.role);
+  const isLeader = ['owner', 'admin', 'leader', 'moderator'].includes(membership?.role || '');
+  const isOwner = membership?.role === 'owner';
+
+  // Chat hook for real-time messaging (PRIMARY CONTENT)
   const {
-    posts,
-    isLoading: feedLoading,
-    isLoadingMore,
-    hasMore,
-    error: feedError,
-    loadMore,
-    refresh: refreshFeed,
-    likePost,
-    bookmarkPost,
-    sharePost,
-    createPost,
-  } = useFeed({ spaceId: spaceId ?? "", limit: 20, sortBy: "recent" });
+    messages,
+    boards,
+    activeBoardId,
+    typingUsers,
+    isLoading: chatLoading,
+    isLoadingMore: chatLoadingMore,
+    hasMore: chatHasMore,
+    error: _chatError,
+    thread,
+    sendMessage,
+    addReaction,
+    pinMessage,
+    deleteMessage,
+    editMessage,
+    changeBoard,
+    loadMore: loadMoreMessages,
+    openThread,
+    closeThread,
+    sendThreadReply,
+    loadMoreReplies,
+  } = useChatMessages({
+    spaceId: spaceId ?? "",
+    enableRealtime: true,
+    pollingIntervalMs: 1000, // Fast polling for real-time feel
+  });
 
   // Local state
-  const [composerOpen, setComposerOpen] = React.useState(false);
-  const [isWidgetEditMode, setIsWidgetEditMode] = React.useState(false);
-  const [tools, setTools] = React.useState<Array<{
-    id: string;
-    toolId: string;
-    deploymentId: string;
-    name: string;
-    type: string;
-    isActive: boolean;
-    responseCount: number;
-  }>>([]);
+  const [tools, setTools] = React.useState<ToolData[]>([]);
   const [toolsHasMore, setToolsHasMore] = React.useState(false);
-  const [leaders, setLeaders] = React.useState<Array<{
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    role: string;
-  }>>([]);
-
-  // Post detail modal state
-  const [selectedPost, setSelectedPost] = React.useState<Post | null>(null);
-  const [postDetailOpen, setPostDetailOpen] = React.useState(false);
-  const [postComments, setPostComments] = React.useState<PostDetailComment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = React.useState(false);
+  const [leaders, setLeaders] = React.useState<LeaderData[]>([]);
 
   // Leader modals state
   const [addTabModalOpen, setAddTabModalOpen] = React.useState(false);
   const [addWidgetModalOpen, setAddWidgetModalOpen] = React.useState(false);
+  const [inviteMemberModalOpen, setInviteMemberModalOpen] = React.useState(false);
+  const [createEventModalOpen, setCreateEventModalOpen] = React.useState(false);
+
+  // Tool runtime modal state
+  const [selectedTool, setSelectedTool] = React.useState<SelectedTool | null>(null);
+  const [toolModalOpen, setToolModalOpen] = React.useState(false);
+
+  // Mobile drawer state
+  const [activeDrawer, setActiveDrawer] = React.useState<MobileDrawerType | null>(null);
+
+  // Scroll to message state (for pinned message clicks)
+  const [scrollToMessageId, setScrollToMessageId] = React.useState<string | null>(null);
+
+  // Tool runtime hook - only active when a tool is selected
+  const toolRuntime = useToolRuntime({
+    toolId: selectedTool?.toolId || '',
+    spaceId: spaceId ?? undefined,
+    // Use placementId - the hook will generate the proper deployment ID format
+    placementId: selectedTool?.placementId,
+    autoSave: true,
+    autoSaveDelay: 1500,
+  });
+
+  // Pinned messages for sidebar
+  const {
+    messages: pinnedMessages,
+    isLoading: pinnedLoading,
+  } = usePinnedMessages({
+    spaceId: spaceId ?? '',
+    enabled: !!spaceId,
+  });
 
   // Load tools for sidebar (members only)
   React.useEffect(() => {
     const loadTools = async () => {
-      if (!spaceId || !membership.isMember) return;
+      if (!spaceId || !isMember) return;
       try {
         const res = await secureApiFetch(`/api/spaces/${spaceId}/tools`);
         if (!res.ok) return;
@@ -126,12 +373,16 @@ function SpaceDetailContent() {
         const toolList = Array.isArray(data.tools) ? data.tools : [];
         setTools(
           toolList.map((t: Record<string, unknown>) => ({
-            id: (t.toolId as string) || (t.deploymentId as string),
+            // Use placementId as the unique identifier within this space
+            id: (t.placementId as string) || (t.toolId as string),
             toolId: t.toolId as string,
-            deploymentId: t.deploymentId as string,
-            name: t.name as string,
+            // Store placementId separately - the useToolRuntime hook will generate
+            // the proper deployment ID format: "space:{spaceId}_{placementId}"
+            placementId: t.placementId as string,
+            name: (t.titleOverride as string) || (t.name as string),
             type: (t.category as string) || "tool",
-            isActive: t.status === "active",
+            // API returns isActive as boolean, not status string
+            isActive: t.isActive === true,
             responseCount: (t.usageCount as number) || 0,
           }))
         );
@@ -141,12 +392,15 @@ function SpaceDetailContent() {
       }
     };
     void loadTools();
-  }, [spaceId, membership.isMember]);
+  }, [spaceId, isMember]);
 
   // Load leaders (owners/admins)
+  // NOTE: The members API only queries spaceMembers collection, but owners
+  // are often detected via createdBy field, not in spaceMembers. So we also
+  // check if the current user is detected as owner/leader via membership context.
   React.useEffect(() => {
     const loadLeaders = async () => {
-      if (!spaceId || !membership.isMember) return;
+      if (!spaceId || !isMember) return;
       try {
         const ownersRes = await secureApiFetch(
           `/api/spaces/${spaceId}/members?role=owner&limit=5`
@@ -164,118 +418,40 @@ function SpaceDetailContent() {
           avatarUrl: m.avatar as string | undefined,
           role: m.role as string,
         }));
+
+        // FALLBACK: If current user is detected as owner/leader but not in API response,
+        // add them to the leaders list. This handles the case where owner is detected
+        // via createdBy field rather than spaceMembers collection.
+        if (user && membership?.role === 'owner') {
+          const userAlreadyInList = list.some(l => l.id === user.uid);
+          if (!userAlreadyInList) {
+            list.unshift({
+              id: user.uid,
+              name: user.displayName || 'You',
+              avatarUrl: user.photoURL || undefined,
+              role: 'owner',
+            });
+          }
+        } else if (user && membership && ['leader', 'admin', 'moderator'].includes(membership.role || '')) {
+          // Also handle leaders array fallback
+          const userAlreadyInList = list.some(l => l.id === user.uid);
+          if (!userAlreadyInList) {
+            list.unshift({
+              id: user.uid,
+              name: user.displayName || 'You',
+              avatarUrl: user.photoURL || undefined,
+              role: 'leader',
+            });
+          }
+        }
+
         setLeaders(list);
       } catch {
         // Silently ignore fetch errors
       }
     };
     void loadLeaders();
-  }, [spaceId, membership.isMember]);
-
-  // Open post detail and load comments
-  const handleOpenPost = React.useCallback(async (postId: string) => {
-    const post = posts.find((p) => p.id === postId);
-    if (!post) return;
-
-    setSelectedPost(post);
-    setPostDetailOpen(true);
-    setIsLoadingComments(true);
-    setPostComments([]);
-
-    try {
-      const res = await secureApiFetch(`/api/spaces/${spaceId}/posts/${postId}/comments`);
-      if (res.ok) {
-        const data = await res.json();
-        const comments = Array.isArray(data.comments) ? data.comments : [];
-        setPostComments(
-          comments.map((c: Record<string, unknown>) => ({
-            id: c.id as string,
-            author: {
-              id: (c.authorId as string) || "",
-              name: (c.authorName as string) || "Anonymous",
-              avatarUrl: c.authorAvatar as string | undefined,
-              role: c.authorRole as string | undefined,
-            },
-            content: c.content as string,
-            createdAt: c.createdAt as string,
-            likes: (c.likes as number) || 0,
-            hasLiked: Boolean(c.hasLiked),
-          }))
-        );
-      }
-    } catch {
-      // Silently ignore
-    } finally {
-      setIsLoadingComments(false);
-    }
-  }, [posts, spaceId]);
-
-  // Submit comment
-  const handleSubmitComment = React.useCallback(async (postId: string, content: string) => {
-    try {
-      const res = await secureApiFetch(`/api/spaces/${spaceId}/posts/${postId}/comments`, {
-        method: "POST",
-        body: JSON.stringify({ content }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const newComment: PostDetailComment = {
-          id: data.commentId || data.id,
-          author: {
-            id: data.authorId || "",
-            name: data.authorName || "You",
-            avatarUrl: data.authorAvatar,
-          },
-          content,
-          createdAt: new Date().toISOString(),
-          likes: 0,
-          hasLiked: false,
-        };
-        setPostComments((prev) => [...prev, newComment]);
-      }
-    } catch {
-      // Silently ignore
-    }
-  }, [spaceId]);
-
-  // Convert Post to PostDetailData
-  const toPostDetailData = React.useCallback((post: Post): PostDetailData => {
-    return {
-      id: post.id,
-      author: {
-        id: post.author?.id || post.authorId || "",
-        name: post.author?.name || "Anonymous",
-        avatarUrl: post.author?.avatarUrl,
-        role: post.author?.badges?.[0],
-        verified: post.author?.isVerified,
-      },
-      space: {
-        id: spaceId ?? "",
-        name: space?.name || "",
-        color: "var(--hive-brand-primary)",
-      },
-      content: {
-        headline: post.type === "link" ? (post.content || "").split("\n")[0] : undefined,
-        body: post.content,
-        media: post.attachments?.map((a) => ({
-          id: a.id,
-          type: a.type as "image" | "video",
-          url: a.url,
-          thumbnailUrl: a.thumbnailUrl,
-        })),
-        tags: post.tags,
-      },
-      stats: {
-        upvotes: post.engagement?.likes || 0,
-        comments: post.engagement?.comments || 0,
-        isUpvoted: Boolean(post.engagement?.hasLiked),
-        isBookmarked: Boolean(post.engagement?.hasBookmarked),
-      },
-      createdAt: post.createdAt,
-      isEdited: Boolean((post as Post & { isEdited?: boolean }).isEdited),
-      isPinned: Boolean((post as Post & { isPinned?: boolean }).isPinned),
-    };
-  }, [spaceId, space?.name]);
+  }, [spaceId, membership?.role, user]);
 
   // Handle add tab
   const handleAddTab = React.useCallback(async (input: AddTabInput) => {
@@ -298,6 +474,132 @@ function SpaceDetailContent() {
     if (!result) throw new Error("Failed to create widget");
   }, [leaderActions]);
 
+  // Handle invite member
+  const handleInviteMember = React.useCallback(async (input: MemberInviteInput) => {
+    if (!spaceId) throw new Error("Space not found");
+    const response = await secureApiFetch(`/api/spaces/${spaceId}/members`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: input.userId,
+        role: input.role,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to invite member');
+    }
+    // Refresh leaders list after invite
+    refresh();
+  }, [spaceId, refresh]);
+
+  // Handle search users for invite modal
+  const handleSearchUsers = React.useCallback(async (query: string): Promise<InviteableUser[]> => {
+    if (!query || query.length < 2) return [];
+    try {
+      const response = await secureApiFetch(`/api/search?q=${encodeURIComponent(query)}&type=users&limit=10`);
+      if (!response.ok) return [];
+      const data = await response.json();
+      // Map API response to InviteableUser format
+      return (data.users || []).map((u: Record<string, unknown>) => ({
+        id: u.id as string,
+        name: (u.displayName as string) || (u.name as string) || 'Unknown',
+        handle: (u.handle as string) || (u.id as string),
+        email: u.email as string | undefined,
+        avatarUrl: (u.photoURL as string) || (u.avatarUrl as string) || undefined,
+      }));
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // Handle create event
+  const handleCreateEvent = React.useCallback(async (input: EventCreateInput) => {
+    if (!spaceId) throw new Error("Space not found");
+    const response = await secureApiFetch(`/api/spaces/${spaceId}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: input.title,
+        description: input.description,
+        type: input.type,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        location: input.location,
+        virtualLink: input.virtualLink,
+        maxAttendees: input.maxAttendees,
+        requiresRSVP: input.requiredRSVP,
+        announceToSpace: input.announceToSpace,
+        linkedBoardId: input.linkedBoardId,
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to create event');
+    }
+    // Refresh to show new event
+    refresh();
+  }, [spaceId, refresh]);
+
+  // Handler for sending messages (must be before early return)
+  const handleSendMessage = React.useCallback(async (content: string, replyToId?: string) => {
+    await sendMessage(content, replyToId);
+  }, [sendMessage]);
+
+  // Handler for creating a new board (must be before early return)
+  const handleCreateBoard = React.useCallback(() => {
+    setAddTabModalOpen(true);
+  }, []);
+
+  // Handler for inserting tools (polls, countdowns, RSVPs) into chat
+  const handleInsertTool = React.useCallback(async (toolData: { type: 'poll' | 'event' | 'countdown' | 'custom'; config: Record<string, unknown> }) => {
+    if (!spaceId || !activeBoardId) return;
+
+    try {
+      // Map UI tool types to API types
+      const apiType = toolData.type === 'event' ? 'rsvp' : toolData.type;
+
+      // Build config based on type
+      const config: Record<string, unknown> = {};
+
+      if (apiType === 'poll') {
+        config.question = toolData.config.question as string;
+        config.options = toolData.config.options as string[];
+        config.allowMultiple = toolData.config.allowMultiple ?? false;
+        config.showResults = toolData.config.showResults ?? 'after_vote';
+      } else if (apiType === 'countdown') {
+        config.title = toolData.config.title as string;
+        config.targetDate = toolData.config.targetDate as string;
+      } else if (apiType === 'rsvp') {
+        config.eventTitle = toolData.config.eventTitle as string || toolData.config.title as string;
+        config.eventDate = toolData.config.eventDate as string || toolData.config.targetDate as string;
+        config.allowMaybe = toolData.config.allowMaybe ?? true;
+      }
+
+      const response = await secureApiFetch(`/api/spaces/${spaceId}/components`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardId: activeBoardId,
+          type: apiType,
+          content: '',
+          config,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create component');
+      }
+
+      // Component created - the message will appear via real-time sync
+      // No need to manually refresh
+    } catch (err) {
+      console.error('[Space] Failed to insert tool:', err);
+      // Could show a toast here
+    }
+  }, [spaceId, activeBoardId]);
+
   // Loading state
   if (isLoading || !space) {
     return (
@@ -313,18 +615,9 @@ function SpaceDetailContent() {
   const membershipState = (() => {
     if (membership.role === "owner") return "owner" as const;
     if (membership.role === "admin") return "admin" as const;
-    if (membership.isMember) return "joined" as const;
+    if (isMember) return "joined" as const;
     return "not_joined" as const;
   })();
-
-  // Convert tabs to SpaceTabItem format
-  const tabItems: SpaceTabItem[] = visibleTabs.map((t) => ({
-    id: t.id,
-    name: t.name,
-    type: t.type,
-    isDefault: t.isDefault,
-    hasActivity: false, // TODO: implement activity detection
-  }));
 
   // Sidebar data - only include tools if there are any (don't show empty widget)
   const sidebarData = {
@@ -335,7 +628,7 @@ function SpaceDetailContent() {
       memberCount: space.memberCount,
       leaders,
       isPublic: space.visibility === "public",
-      isMember: membership.isMember,
+      isMember: isMember,
     },
     // Only show tools widget when there are actual tools
     ...(tools.length > 0 && {
@@ -345,143 +638,39 @@ function SpaceDetailContent() {
         hasMore: toolsHasMore,
       },
     }),
+    // Include upcoming events if we have any
+    ...(events.length > 0 && {
+      upcomingEvents: (events as SpaceEventData[]).slice(0, 3).map((e: SpaceEventData) => ({
+        id: e.id,
+        title: e.title,
+        subtitle: e.type,
+        when: new Date(e.startDate).toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        }),
+        where: e.location || (e.virtualLink ? 'Online' : undefined),
+        isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000, // Within 24h
+      })),
+    }),
   };
 
-  // Transform posts for FeedCardPost
-  const toCardData = (post: Post): FeedCardPostData => {
-    return {
-      id: post.id,
-      author: {
-        id: post.author?.id || post.authorId || "",
-        name: post.author?.name || "Anonymous",
-        avatarUrl: post.author?.avatarUrl,
-        role: post.author?.badges?.[0],
-        verified: post.author?.isVerified,
-      },
-      space: {
-        id: spaceId ?? "",
-        name: space.name,
-        color: "var(--hive-brand-primary)",
-      },
-      content: {
-        headline: post.type === "link" ? (post.content || "").split("\n")[0] : undefined,
-        body: post.content,
-        media: post.attachments?.map((a) => ({
-          id: a.id,
-          type: a.type as "image" | "video",
-          url: a.url,
-          thumbnailUrl: a.thumbnailUrl,
-        })),
-        tags: post.tags,
-      },
-      stats: {
-        upvotes: post.engagement?.likes || 0,
-        comments: post.engagement?.comments || 0,
-        isUpvoted: Boolean(post.engagement?.hasLiked),
-        isBookmarked: Boolean(post.engagement?.hasBookmarked),
-      },
-      meta: {
-        timeAgo: formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }),
-        isPinned: Boolean((post as Post & { isPinned?: boolean }).isPinned),
-        isEdited: Boolean((post as Post & { isEdited?: boolean }).isEdited),
-      },
-    };
-  };
-
-  // Feed content renderer
-  const feedContent = (
-    <div className="space-y-4">
-      {/* Composer trigger (members only) - prominent with gold accent */}
-      {membership.isMember && (
-        <motion.button
-          whileHover={{ scale: 1.005, borderColor: "rgba(255, 215, 0, 0.3)" }}
-          whileTap={{ scale: 0.995 }}
-          onClick={() => setComposerOpen(true)}
-          className="w-full rounded-xl border border-neutral-800/50 bg-neutral-900/80 backdrop-blur-sm px-4 py-3.5 text-left text-neutral-400 hover:text-neutral-200 hover:border-[#FFD700]/20 hover:bg-neutral-900 transition-all duration-200 group"
-        >
-          <span className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center group-hover:bg-[#FFD700]/10 transition-colors">
-              <svg className="w-4 h-4 text-neutral-500 group-hover:text-[#FFD700] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </span>
-            <span>Share something with the space...</span>
-          </span>
-        </motion.button>
-      )}
-
-      {/* Post list */}
-      <AnimatePresence mode="popLayout">
-        {posts.map((post, index) => (
-          <motion.div
-            key={post.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ ...springPresets.snappy, delay: index * 0.03 }}
-          >
-            <FeedCardPost
-              post={toCardData(post)}
-              onOpen={() => handleOpenPost(post.id)}
-              onSpaceClick={() => router.push(`/spaces/${spaceId}`)}
-              onUpvote={(id) => likePost(id)}
-              onComment={() => handleOpenPost(post.id)}
-              onBookmark={(id) => bookmarkPost(id)}
-              onShare={(id) => sharePost(id)}
-            />
-          </motion.div>
-        ))}
-      </AnimatePresence>
-
-      {/* Load more */}
-      {hasMore && (
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          disabled={isLoadingMore}
-          onClick={loadMore}
-          className="w-full rounded-lg border border-neutral-800 bg-neutral-900/50 px-4 py-3 text-sm text-neutral-400 hover:text-neutral-200 disabled:opacity-50 transition-colors"
-        >
-          {isLoadingMore ? "Loading..." : "Load more posts"}
-        </motion.button>
-      )}
-
-      {/* Feed error */}
-      {feedError && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
-          {feedError}
-          <button onClick={refreshFeed} className="ml-3 underline">
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Empty state - enhanced with gold CTA */}
-      {!feedLoading && posts.length === 0 && (
-        <PostsEmptyState
-          primary={membership.isMember}
-          action={membership.isMember ? {
-            label: "Create Post",
-            onClick: () => setComposerOpen(true),
-          } : undefined}
-        />
-      )}
-    </div>
-  );
-
-  // Mobile inline sections for sidebar content
-  const mobileInlineSections = (
-    <MobileAboutSection
-      description={space.description || "Leaders have not added a description yet."}
-      memberCount={space.memberCount}
-      isPublic={space.visibility === "public"}
-      className="mb-4"
-    />
-  );
+  // Convert boards data for BoardTabBar
+  const boardsForTabBar: BoardData[] = (boards as ChatBoardData[]).map((b: ChatBoardData) => ({
+    id: b.id,
+    name: b.name,
+    type: b.type,
+    description: b.description,
+    messageCount: b.messageCount,
+    isDefault: b.isDefault,
+    isLocked: b.isLocked,
+  }));
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Premium Header with integrated tabs - NO breadcrumb needed, tabs provide context */}
+    <div className="min-h-screen h-screen bg-black flex flex-col overflow-hidden">
+      {/* Compact Header - Chat-first (NO feed tabs) */}
       <SpaceDetailHeader
         space={{
           id: spaceId ?? "",
@@ -495,150 +684,245 @@ function SpaceDetailContent() {
           onlineCount: space.onlineCount,
         }}
         membershipState={membershipState}
-        isLeader={membership.isLeader}
-        tabs={tabItems}
-        activeTabId={activeTabId ?? tabItems[0]?.id}
-        onTabChange={setActiveTabId}
+        isLeader={isLeader}
+        showTabs={false}
+        breadcrumb={{
+          campusName: "Spaces",
+          boardName: boards.find(b => b.id === activeBoardId)?.name,
+          boardId: activeBoardId,
+          onNavigate: (target) => {
+            if (target === 'campus') {
+              router.push('/spaces/browse');
+            }
+            // 'space' and 'board' clicks stay on current page
+          }
+        }}
         onJoin={async () => { await joinSpace(); }}
         onLeave={async () => { await leaveSpace(); }}
         onShare={() => {
-          // TODO: implement share modal
           navigator.clipboard.writeText(window.location.href);
         }}
         onSettings={
-          membership.isLeader
+          isLeader
             ? () => router.push(`/spaces/${spaceId}/settings`)
             : undefined
         }
-        onAddTab={
-          leaderActions
-            ? () => setAddTabModalOpen(true)
-            : undefined
-        }
-        showTabs={tabItems.length > 0}
       />
 
-      {/* Dynamic content based on active tab - tight spacing under header */}
-      <div className="py-4">
-        <SpaceDynamicContent
-          tabType={activeTab?.type ?? "feed"}
-          tabId={activeTab?.id ?? "feed"}
-          tabName={activeTab?.name}
-          widgets={activeTabWidgets}
-          isLeader={membership.isLeader}
-          isEditMode={isWidgetEditMode}
-          onToggleEditMode={() => setIsWidgetEditMode((prev) => !prev)}
-          onWidgetReorder={
-            leaderActions
-              ? async (orderedIds) => {
-                  // TODO: implement widget reorder via leaderActions
+      {/* Board Tab Bar - Discord-style channel selector */}
+      <BoardTabBar
+        boards={boardsForTabBar}
+        activeBoardId={activeBoardId ?? boards[0]?.id ?? "general"}
+        isLeader={isLeader}
+        onBoardChange={changeBoard}
+        onCreateBoard={isLeader ? handleCreateBoard : undefined}
+      />
+
+      {/* Main 60/40 Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chat Area - 60% on desktop, full on mobile */}
+        <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-black">
+          <SpaceChatBoard
+            spaceId={spaceId ?? ""}
+            spaceName={space.name}
+            boards={boards}
+            activeBoardId={activeBoardId ?? boards[0]?.id ?? "general"}
+            messages={messages}
+            typingUsers={typingUsers}
+            onlineCount={space.onlineCount}
+            isLoading={chatLoading}
+            isLoadingMore={chatLoadingMore}
+            hasMoreMessages={chatHasMore}
+            currentUserId={user?.uid ?? "anonymous"}
+            currentUserName={user?.displayName || "You"}
+            currentUserAvatar={user?.photoURL || undefined}
+            currentUserRole={
+              membership.role === "owner"
+                ? "owner"
+                : membership.role === "admin"
+                ? "admin"
+                : "member"
+            }
+            canPost={isMember}
+            isLeader={isLeader}
+            scrollToMessageId={scrollToMessageId ?? undefined}
+            onScrollToMessageComplete={() => setScrollToMessageId(null)}
+            onBoardChange={changeBoard}
+            onSendMessage={handleSendMessage}
+            onLoadMore={loadMoreMessages}
+            onReact={addReaction}
+            onPinMessage={isLeader ? pinMessage : undefined}
+            onDeleteMessage={deleteMessage}
+            onEditMessage={editMessage}
+            onViewThread={openThread}
+            onCreateBoard={isLeader ? handleCreateBoard : undefined}
+            onInsertTool={isMember ? handleInsertTool : undefined}
+            showToolbar={isMember}
+          />
+        </main>
+
+        {/* Sidebar - 40% on desktop, hidden on mobile */}
+        <aside className="hidden lg:flex lg:flex-col lg:flex-[2] max-w-[400px] border-l border-neutral-800 bg-neutral-950/50 overflow-y-auto">
+          {/* Pinned Messages Widget - shows when there are pinned messages */}
+          {(pinnedMessages.length > 0 || pinnedLoading) && (
+            <div className="p-4 border-b border-neutral-800">
+              <PinnedMessagesWidget
+                messages={pinnedMessages}
+                isLoading={pinnedLoading}
+                onMessageClick={(messageId, boardId) => {
+                  // Switch to the board if needed
+                  if (boardId !== activeBoardId) {
+                    changeBoard(boardId);
+                  }
+                  // Trigger scroll-to-message
+                  setScrollToMessageId(messageId);
+                }}
+                collapsible
+                defaultCollapsed={false}
+              />
+            </div>
+          )}
+
+          {/* Main sidebar content */}
+          <SpaceSidebar
+            data={sidebarData}
+            callbacks={{
+              onJoin: () => joinSpace(),
+              onLeave: () => leaveSpace(),
+              onToolClick: (toolId) => {
+                const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
+                if (tool) {
+                  setSelectedTool({
+                    id: tool.id,
+                    toolId: tool.toolId,
+                    placementId: tool.placementId,
+                    name: tool.name,
+                    type: tool.type,
+                  });
+                  setToolModalOpen(true);
                 }
-              : undefined
-          }
-          onAddWidget={
-            leaderActions
-              ? () => setAddWidgetModalOpen(true)
-              : undefined
-          }
-          onEditWidget={
-            leaderActions
-              ? (widgetId) => {
-                  // TODO: implement edit widget modal
-                }
-              : undefined
-          }
-          onRemoveWidget={
-            leaderActions
-              ? async (widgetId) => {
-                  await leaderActions.removeWidget(widgetId);
-                }
-              : undefined
-          }
-          sidebar={
-            <SpaceSidebar
-              data={sidebarData}
-              callbacks={{
-                onJoin: () => joinSpace(),
-                onLeave: () => leaveSpace(),
-                onToolClick: (toolId) => {
-                  // Find the tool to get the deploymentId for efficient loading
-                  const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
-                  const actualToolId = tool?.toolId || toolId;
-                  const deploymentId = tool?.deploymentId;
-                  const url = deploymentId
-                    ? `/tools/${actualToolId}/run?spaceId=${spaceId}&deploymentId=${deploymentId}`
-                    : `/tools/${actualToolId}/run?spaceId=${spaceId}`;
-                  router.push(url);
-                },
-                onViewAll: () => router.push(`/spaces/${spaceId}/tools`),
-                onLeaderClick: (leaderId) => router.push(`/profile/${leaderId}`),
-              }}
-            />
-          }
-          mobileInlineSections={mobileInlineSections}
-          feedContent={feedContent}
-          isLoading={isStructureLoading || feedLoading}
-        />
+              },
+              onViewAll: () => router.push(`/spaces/${spaceId}/tools`),
+              onLeaderClick: (leaderId) => router.push(`/profile/${leaderId}`),
+              // Leader actions
+              onInviteMember: isLeader ? () => setInviteMemberModalOpen(true) : undefined,
+              onCreateEvent: isLeader ? () => setCreateEventModalOpen(true) : undefined,
+            }}
+          />
+        </aside>
       </div>
 
-      {/* Composer Modal */}
-      {membership.isMember && spaceId && (
-        <SpacePostComposer
-          spaceId={spaceId}
-          spaceName={space.name}
-          spaceIcon={space.iconUrl}
-          open={composerOpen}
-          onOpenChange={setComposerOpen}
-          onSubmit={async ({ content, media }) => {
-            try {
-              await createPost({
-                content,
-                type: "text",
-                visibility: "space",
-                spaceId,
-                attachments: media,
-              });
-              setComposerOpen(false);
-            } catch {
-              // Handle error silently
-            }
-          }}
-        />
-      )}
-
-      {/* Post Detail Modal */}
-      <PostDetailModal
-        open={postDetailOpen}
-        onOpenChange={setPostDetailOpen}
-        post={selectedPost ? toPostDetailData(selectedPost) : null}
-        comments={postComments}
-        isLoadingComments={isLoadingComments}
-        onUpvote={(id) => likePost(id)}
-        onBookmark={(id) => bookmarkPost(id)}
-        onShare={(id) => sharePost(id)}
-        onComment={handleSubmitComment}
-        onSpaceClick={() => router.push(`/spaces/${spaceId}`)}
-        onAuthorClick={(authorId) => router.push(`/profile/${authorId}`)}
+      {/* Mobile Navigation - Bottom bar and drawer panels */}
+      <SpaceMobileNavigation
+        activeDrawer={activeDrawer}
+        setActiveDrawer={setActiveDrawer}
+        space={{
+          name: space.name,
+          description: space.description,
+          memberCount: space.memberCount,
+          onlineCount: space.onlineCount ?? 0,
+          category: space.category,
+        }}
+        events={events}
+        tools={tools}
+        leaders={leaders}
       />
 
-      {/* Add Tab Modal */}
+      {/* Leader Modals - Add tab, widget, invite member, create event */}
       {leaderActions && (
-        <AddTabModal
-          open={addTabModalOpen}
-          onOpenChange={setAddTabModalOpen}
-          onSubmit={handleAddTab}
-          existingTabNames={tabs.map((t) => t.name)}
+        <SpaceLeaderModals
+          tabs={tabs}
+          boards={boards}
+          activeBoardId={activeBoardId ?? undefined}
+          addTabModalOpen={addTabModalOpen}
+          setAddTabModalOpen={setAddTabModalOpen}
+          addWidgetModalOpen={addWidgetModalOpen}
+          setAddWidgetModalOpen={setAddWidgetModalOpen}
+          inviteMemberModalOpen={inviteMemberModalOpen}
+          setInviteMemberModalOpen={setInviteMemberModalOpen}
+          createEventModalOpen={createEventModalOpen}
+          setCreateEventModalOpen={setCreateEventModalOpen}
+          onAddTab={handleAddTab}
+          onAddWidget={handleAddWidget}
+          onInviteMember={handleInviteMember}
+          onSearchUsers={handleSearchUsers}
+          onCreateEvent={handleCreateEvent}
+          existingMemberIds={leaders.map((l) => l.id)}
         />
       )}
 
-      {/* Add Widget Modal */}
-      {leaderActions && (
-        <AddWidgetModal
-          open={addWidgetModalOpen}
-          onOpenChange={setAddWidgetModalOpen}
-          onSubmit={handleAddWidget}
+      {/* Tool Runtime Modal - In-context tool execution */}
+      {selectedTool && (
+        <ToolRuntimeModal
+          open={toolModalOpen}
+          onOpenChange={(open) => {
+            setToolModalOpen(open);
+            if (!open) {
+              // Clear selection when modal closes
+              setSelectedTool(null);
+            }
+          }}
+          toolId={selectedTool.toolId}
+          spaceId={spaceId ?? ''}
+          placementId={selectedTool.placementId}
+          toolName={selectedTool.name}
+          onExpandToFullPage={() => {
+            // Navigate to full page if user wants more space
+            // Generate the deployment ID format for the URL
+            const deploymentId = selectedTool.placementId && spaceId
+              ? `space:${spaceId}_${selectedTool.placementId}`
+              : undefined;
+            const url = deploymentId
+              ? `/tools/${selectedTool.toolId}/run?spaceId=${spaceId}&deploymentId=${encodeURIComponent(deploymentId)}`
+              : `/tools/${selectedTool.toolId}/run?spaceId=${spaceId}`;
+            router.push(url);
+            setToolModalOpen(false);
+            setSelectedTool(null);
+          }}
+          runtime={selectedTool.toolId && toolRuntime.tool ? {
+            tool: {
+              ...toolRuntime.tool,
+              status: toolRuntime.tool.status || 'draft',
+            },
+            state: toolRuntime.state,
+            isLoading: toolRuntime.isLoading,
+            isExecuting: toolRuntime.isExecuting,
+            isSaving: toolRuntime.isSaving,
+            isSynced: toolRuntime.isSynced,
+            lastSaved: toolRuntime.lastSaved,
+            error: toolRuntime.error instanceof Error ? toolRuntime.error.message : toolRuntime.error,
+            // Adapter: modal expects (action, elementId?, data?) but hook has (elementId, action, data?)
+            executeAction: async (action: string, elementId?: string, data?: Record<string, unknown>) => {
+              const result = await toolRuntime.executeAction(elementId || '', action, data);
+              return {
+                success: result.success,
+                data: result.state,
+                error: result.error,
+              };
+            },
+            // Adapter: modal expects (elementId, data) but hook has (updates)
+            updateState: (elementId: string, data: unknown) => {
+              toolRuntime.updateState({ [elementId]: data });
+            },
+          } : undefined}
         />
       )}
+
+      {/* Thread Drawer - View and reply to threads */}
+      <ThreadDrawer
+        open={thread.isOpen}
+        onOpenChange={(open) => {
+          if (!open) closeThread();
+        }}
+        parentMessage={thread.parentMessage}
+        replies={thread.replies}
+        isLoading={thread.isLoading}
+        isLoadingMore={thread.isLoadingMore}
+        hasMoreReplies={thread.hasMore}
+        currentUserId={user?.uid ?? "anonymous"}
+        onLoadMore={loadMoreReplies}
+        onSendReply={async (content: string) => { await sendThreadReply(content); }}
+      />
 
       {/* Error state */}
       {error && (

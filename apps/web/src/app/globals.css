@@ -235,6 +235,13 @@
   }
 }
 
+/* Landing page content visibility - ensure content is visible by default */
+/* This prevents black screen issues when animations haven't fired yet */
+.landing-visible {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 /* Utility classes */
 @layer utilities {
   /* Text gradient */

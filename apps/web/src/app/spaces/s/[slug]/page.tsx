@@ -8,6 +8,7 @@ import { useParams, useRouter, notFound } from 'next/navigation';
 import { UnifiedSpaceInterface } from '@/components/spaces/unified-space-interface';
 import type { Space, User } from '@hive/core';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
+import { logger } from '@/lib/logger';
 
 /**
  * ★ Insight ─────────────────────────────────────
@@ -49,7 +50,7 @@ export default function SpacePage() {
         setSpaceId(data.spaceId);
 
       } catch (err) {
-        console.error('Error resolving space slug:', err);
+        logger.error('Error resolving space slug', { component: 'SpacePage' }, err instanceof Error ? err : undefined);
         setError(err instanceof Error ? err.message : 'Failed to load space');
       } finally {
         setIsLoading(false);

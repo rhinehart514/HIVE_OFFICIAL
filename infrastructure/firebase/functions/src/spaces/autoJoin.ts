@@ -1,6 +1,5 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {SpaceMember} from "../../../packages/core/src/domain/member";
 import {Space} from "../../../packages/core/src/domain/space";
 
 const db = admin.firestore();
@@ -55,17 +54,7 @@ export const autoJoinOnCreate = functions.auth.user().onCreate(async (user) => {
       const space = doc.data() as Space & { campusId?: string };
       functions.logger.info(`Adding user ${uid} to space ${doc.id} (${space.name})`);
 
-      // Legacy nested membership (maintained for compatibility)
-      const nestedMemberRef = db.collection("spaces").doc(doc.id).collection("members").doc(uid);
-      const newMember: SpaceMember = {
-        userId: uid,
-        spaceId: doc.id,
-        role: "member",
-        joinedAt: new Date(),
-      };
-      batch.set(nestedMemberRef, newMember);
-
-      // Flat membership document with campus metadata if available
+      // Use flat /spaceMembers collection only
       const flatMemberRef = db.collection('spaceMembers').doc();
       batch.set(flatMemberRef, {
         userId: uid,
@@ -130,7 +119,7 @@ export const autoJoinOnUpdate = functions.firestore
 
       const batch = db.batch();
 
-      // Logic to leave old spaces
+      // Logic to leave old spaces - use flat /spaceMembers only
       if (majorBefore && majorBefore !== majorAfter) {
         const tagToFind = { type: 'academic', sub_type: majorBefore };
         const oldMajorSpaceQuery = await db.collection('spaces')
@@ -139,9 +128,7 @@ export const autoJoinOnUpdate = functions.firestore
             .limit(1).get();
         if (!oldMajorSpaceQuery.empty) {
           const spaceId = oldMajorSpaceQuery.docs[0].id;
-          // Remove nested
-          batch.delete(db.doc(`spaces/${spaceId}/members/${userId}`));
-          // Deactivate flat
+          // Deactivate flat membership
           const existingFlat = await db.collection('spaceMembers')
             .where('spaceId', '==', spaceId)
             .where('userId', '==', userId)
@@ -157,7 +144,7 @@ export const autoJoinOnUpdate = functions.firestore
         }
       }
 
-      // Logic to join new spaces
+      // Logic to join new spaces - use flat /spaceMembers only
       if (majorAfter && majorBefore !== majorAfter) {
         const tagToFind = { type: 'academic', sub_type: majorAfter };
         const newMajorSpaceQuery = await db.collection('spaces')
@@ -166,9 +153,7 @@ export const autoJoinOnUpdate = functions.firestore
             .limit(1).get();
         if (!newMajorSpaceQuery.empty) {
           const spaceId = newMajorSpaceQuery.docs[0].id;
-          // Add nested
-          batch.set(db.doc(`spaces/${spaceId}/members/${userId}`), { userId, spaceId, role: 'member', joinedAt: new Date() });
-          // Add flat
+          // Add flat membership
           batch.set(db.collection('spaceMembers').doc(), {
             userId, spaceId, role: 'member', isActive: true,
             joinedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -182,7 +167,7 @@ export const autoJoinOnUpdate = functions.firestore
         }
       }
 
-      // Logic to leave old residency
+      // Logic to leave old residency - use flat /spaceMembers only
       if (residencyBefore && residencyBefore !== residencyAfter) {
         const tagToFind = { type: 'residential', sub_type: residencyBefore };
         const oldResidencySpaceQuery = await db.collection('spaces')
@@ -191,7 +176,6 @@ export const autoJoinOnUpdate = functions.firestore
             .limit(1).get();
         if (!oldResidencySpaceQuery.empty) {
           const spaceId = oldResidencySpaceQuery.docs[0].id;
-          batch.delete(db.doc(`spaces/${spaceId}/members/${userId}`));
           const existingFlat = await db.collection('spaceMembers')
             .where('spaceId', '==', spaceId)
             .where('userId', '==', userId)
@@ -207,7 +191,7 @@ export const autoJoinOnUpdate = functions.firestore
         }
       }
 
-      // Logic to join new residency
+      // Logic to join new residency - use flat /spaceMembers only
       if (residencyAfter && residencyBefore !== residencyAfter) {
         const tagToFind = { type: 'residential', sub_type: residencyAfter };
         const newResidencySpaceQuery = await db.collection('spaces')
@@ -216,7 +200,6 @@ export const autoJoinOnUpdate = functions.firestore
             .limit(1).get();
         if (!newResidencySpaceQuery.empty) {
           const spaceId = newResidencySpaceQuery.docs[0].id;
-          batch.set(db.doc(`spaces/${spaceId}/members/${userId}`), { userId, spaceId, role: 'member', joinedAt: new Date() });
           batch.set(db.collection('spaceMembers').doc(), {
             userId, spaceId, role: 'member', isActive: true,
             joinedAt: admin.firestore.FieldValue.serverTimestamp(),

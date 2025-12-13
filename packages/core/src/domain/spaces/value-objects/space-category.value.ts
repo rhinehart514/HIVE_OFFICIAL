@@ -2,62 +2,55 @@
  * SpaceCategory Value Object
  * Represents the category/type of a space
  *
- * Supports both domain categories (internal) and API categories (external).
- * The domain uses detailed categories while the API uses simplified categories.
+ * HIVE uses exactly 4 categories that map 1:1 with CampusLabs branches:
+ * - student_org (Branch 1419): Student clubs & organizations
+ * - university_org (Branch 360210): University services & departments
+ * - greek_life (Branch 360211): Fraternities & sororities
+ * - residential (Branch 360212): Residence halls & quads
  */
 
 import { Result } from '../../shared/base/Result';
 import { ValueObject } from '../../shared/base/ValueObject.base';
 
 /**
- * Domain-level categories (internal, detailed)
+ * The 4 official HIVE space categories
+ * These map directly to CampusLabs branch IDs for imports
  */
 export enum SpaceCategoryEnum {
-  GENERAL = 'general',
-  STUDY_GROUP = 'study-group',
-  SOCIAL = 'social',
-  EVENT = 'event',
-  RESOURCE = 'resource',
-  DORM = 'dorm',
-  CLUB = 'club',
-  SPORTS = 'sports',
-  ACADEMIC = 'academic'
-}
-
-/**
- * API-level categories (external, simplified)
- * These match what the spaces API route expects
- */
-export enum ApiCategoryEnum {
   STUDENT_ORG = 'student_org',
-  RESIDENTIAL = 'residential',
   UNIVERSITY_ORG = 'university_org',
-  GREEK_LIFE = 'greek_life'
+  GREEK_LIFE = 'greek_life',
+  RESIDENTIAL = 'residential'
 }
 
 /**
- * Mapping from API categories to domain categories
+ * CampusLabs branch ID to HIVE category mapping
  */
-const API_TO_DOMAIN_MAP: Record<ApiCategoryEnum, SpaceCategoryEnum> = {
-  [ApiCategoryEnum.STUDENT_ORG]: SpaceCategoryEnum.CLUB,
-  [ApiCategoryEnum.RESIDENTIAL]: SpaceCategoryEnum.DORM,
-  [ApiCategoryEnum.UNIVERSITY_ORG]: SpaceCategoryEnum.ACADEMIC,
-  [ApiCategoryEnum.GREEK_LIFE]: SpaceCategoryEnum.SOCIAL
+export const CAMPUSLABS_BRANCH_MAP: Record<number, SpaceCategoryEnum> = {
+  1419: SpaceCategoryEnum.STUDENT_ORG,
+  360210: SpaceCategoryEnum.UNIVERSITY_ORG,
+  360211: SpaceCategoryEnum.GREEK_LIFE,
+  360212: SpaceCategoryEnum.RESIDENTIAL,
 };
 
 /**
- * Mapping from domain categories to API categories
+ * Human-readable labels for each category
  */
-const DOMAIN_TO_API_MAP: Record<SpaceCategoryEnum, ApiCategoryEnum> = {
-  [SpaceCategoryEnum.GENERAL]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.STUDY_GROUP]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.SOCIAL]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.EVENT]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.RESOURCE]: ApiCategoryEnum.UNIVERSITY_ORG,
-  [SpaceCategoryEnum.DORM]: ApiCategoryEnum.RESIDENTIAL,
-  [SpaceCategoryEnum.CLUB]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.SPORTS]: ApiCategoryEnum.STUDENT_ORG,
-  [SpaceCategoryEnum.ACADEMIC]: ApiCategoryEnum.UNIVERSITY_ORG
+export const CATEGORY_LABELS: Record<SpaceCategoryEnum, string> = {
+  [SpaceCategoryEnum.STUDENT_ORG]: 'Student Organization',
+  [SpaceCategoryEnum.UNIVERSITY_ORG]: 'University Organization',
+  [SpaceCategoryEnum.GREEK_LIFE]: 'Greek Life',
+  [SpaceCategoryEnum.RESIDENTIAL]: 'Residential',
+};
+
+/**
+ * Icons for each category (emoji shorthand)
+ */
+export const CATEGORY_ICONS: Record<SpaceCategoryEnum, string> = {
+  [SpaceCategoryEnum.STUDENT_ORG]: '👥',
+  [SpaceCategoryEnum.UNIVERSITY_ORG]: '🎓',
+  [SpaceCategoryEnum.GREEK_LIFE]: '🏛️',
+  [SpaceCategoryEnum.RESIDENTIAL]: '🏠',
 };
 
 interface SpaceCategoryProps {
@@ -69,11 +62,12 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
     return this.props.value;
   }
 
-  /**
-   * Get the API-compatible category value
-   */
-  get apiValue(): ApiCategoryEnum {
-    return DOMAIN_TO_API_MAP[this.props.value];
+  get label(): string {
+    return CATEGORY_LABELS[this.props.value];
+  }
+
+  get icon(): string {
+    return CATEGORY_ICONS[this.props.value];
   }
 
   private constructor(props: SpaceCategoryProps) {
@@ -81,100 +75,114 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
   }
 
   /**
-   * Create from domain category string
+   * Create from category string
    */
   public static create(category: string): Result<SpaceCategory> {
-    // First try as domain category
+    // Direct match
     if (Object.values(SpaceCategoryEnum).includes(category as SpaceCategoryEnum)) {
       return Result.ok<SpaceCategory>(
         new SpaceCategory({ value: category as SpaceCategoryEnum })
       );
     }
 
-    // Then try as API category
-    if (Object.values(ApiCategoryEnum).includes(category as ApiCategoryEnum)) {
-      const domainCategory = API_TO_DOMAIN_MAP[category as ApiCategoryEnum];
+    // Legacy mapping for backwards compatibility
+    const legacyMap: Record<string, SpaceCategoryEnum> = {
+      // Old admin component names
+      'university_spaces': SpaceCategoryEnum.UNIVERSITY_ORG,
+      'residential_spaces': SpaceCategoryEnum.RESIDENTIAL,
+      'greek_life_spaces': SpaceCategoryEnum.GREEK_LIFE,
+      'student_spaces': SpaceCategoryEnum.STUDENT_ORG,
+      // Old seed route names
+      'student_organizations': SpaceCategoryEnum.STUDENT_ORG,
+      'university_organizations': SpaceCategoryEnum.UNIVERSITY_ORG,
+      'campus_living': SpaceCategoryEnum.RESIDENTIAL,
+      'fraternity_and_sorority': SpaceCategoryEnum.GREEK_LIFE,
+      // Old domain categories
+      'club': SpaceCategoryEnum.STUDENT_ORG,
+      'dorm': SpaceCategoryEnum.RESIDENTIAL,
+      'academic': SpaceCategoryEnum.UNIVERSITY_ORG,
+      'social': SpaceCategoryEnum.STUDENT_ORG,
+      'general': SpaceCategoryEnum.STUDENT_ORG,
+      'study-group': SpaceCategoryEnum.STUDENT_ORG,
+      'event': SpaceCategoryEnum.STUDENT_ORG,
+      'resource': SpaceCategoryEnum.UNIVERSITY_ORG,
+      'sports': SpaceCategoryEnum.STUDENT_ORG,
+    };
+
+    if (category in legacyMap) {
       return Result.ok<SpaceCategory>(
-        new SpaceCategory({ value: domainCategory })
+        new SpaceCategory({ value: legacyMap[category]! })
       );
     }
 
-    return Result.fail<SpaceCategory>(`Invalid space category: ${category}`);
+    return Result.fail<SpaceCategory>(`Invalid space category: ${category}. Valid categories: ${Object.values(SpaceCategoryEnum).join(', ')}`);
   }
 
   /**
-   * Create from API category
+   * Create from CampusLabs branch ID
    */
-  public static createFromApi(apiCategory: string): Result<SpaceCategory> {
-    if (!Object.values(ApiCategoryEnum).includes(apiCategory as ApiCategoryEnum)) {
-      return Result.fail<SpaceCategory>(`Invalid API category: ${apiCategory}`);
+  public static createFromBranchId(branchId: number): Result<SpaceCategory> {
+    const category = CAMPUSLABS_BRANCH_MAP[branchId];
+    if (!category) {
+      // Default to student_org for unknown branches
+      return Result.ok<SpaceCategory>(
+        new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORG })
+      );
     }
-
-    const domainCategory = API_TO_DOMAIN_MAP[apiCategory as ApiCategoryEnum];
-    return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: domainCategory })
-    );
-  }
-
-  public static createGeneral(): Result<SpaceCategory> {
-    return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.GENERAL })
-    );
-  }
-
-  public static createStudyGroup(): Result<SpaceCategory> {
-    return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.STUDY_GROUP })
-    );
+    return Result.ok<SpaceCategory>(new SpaceCategory({ value: category }));
   }
 
   public static createStudentOrg(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.CLUB })
+      new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORG })
     );
   }
 
   public static createResidential(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.DORM })
+      new SpaceCategory({ value: SpaceCategoryEnum.RESIDENTIAL })
     );
   }
 
   public static createUniversityOrg(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.ACADEMIC })
+      new SpaceCategory({ value: SpaceCategoryEnum.UNIVERSITY_ORG })
     );
   }
 
   public static createGreekLife(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.SOCIAL })
+      new SpaceCategory({ value: SpaceCategoryEnum.GREEK_LIFE })
     );
   }
 
-  public isAcademic(): boolean {
-    return [
-      SpaceCategoryEnum.STUDY_GROUP,
-      SpaceCategoryEnum.ACADEMIC,
-      SpaceCategoryEnum.RESOURCE
-    ].includes(this.props.value);
-  }
-
-  public isSocial(): boolean {
-    return [
-      SpaceCategoryEnum.SOCIAL,
-      SpaceCategoryEnum.DORM,
-      SpaceCategoryEnum.CLUB,
-      SpaceCategoryEnum.SPORTS
-    ].includes(this.props.value);
-  }
-
-  public isUniversityManaged(): boolean {
-    return this.apiValue === ApiCategoryEnum.UNIVERSITY_ORG;
-  }
-
+  /**
+   * Check if this is a student-managed space
+   */
   public isStudentManaged(): boolean {
-    return this.apiValue === ApiCategoryEnum.STUDENT_ORG;
+    return this.props.value === SpaceCategoryEnum.STUDENT_ORG ||
+           this.props.value === SpaceCategoryEnum.GREEK_LIFE;
+  }
+
+  /**
+   * Check if this is a university-managed space
+   */
+  public isUniversityManaged(): boolean {
+    return this.props.value === SpaceCategoryEnum.UNIVERSITY_ORG;
+  }
+
+  /**
+   * Check if this is a residential space
+   */
+  public isResidential(): boolean {
+    return this.props.value === SpaceCategoryEnum.RESIDENTIAL;
+  }
+
+  /**
+   * Check if this is a Greek life space
+   */
+  public isGreekLife(): boolean {
+    return this.props.value === SpaceCategoryEnum.GREEK_LIFE;
   }
 
   public toString(): string {
@@ -182,9 +190,9 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
   }
 
   /**
-   * Convert to API-compatible string for persistence
+   * Get all valid category values
    */
-  public toApiString(): string {
-    return this.apiValue;
+  public static getAllCategories(): SpaceCategoryEnum[] {
+    return Object.values(SpaceCategoryEnum);
   }
 }

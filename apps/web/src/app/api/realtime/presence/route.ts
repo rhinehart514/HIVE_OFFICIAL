@@ -524,7 +524,7 @@ async function getSpacePresence(spaceId: string, requestingUserId: string, inclu
 // Helper function to get user spaces
 async function getUserSpaces(userId: string): Promise<string[]> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -543,7 +543,7 @@ async function getUserSpaces(userId: string): Promise<string[]> {
 // Helper function to get space members
 async function getSpaceMembers(spaceId: string): Promise<string[]> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
       .where('campusId', '==', CURRENT_CAMPUS_ID);
@@ -562,7 +562,7 @@ async function getSpaceMembers(spaceId: string): Promise<string[]> {
 // Helper function to verify space access
 async function verifySpaceAccess(userId: string, spaceId: string): Promise<boolean> {
   try {
-    const memberQuery = dbAdmin.collection('members')
+    const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')

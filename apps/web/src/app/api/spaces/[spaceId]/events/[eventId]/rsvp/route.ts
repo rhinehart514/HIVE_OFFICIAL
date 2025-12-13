@@ -5,10 +5,10 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { notifyEventRsvp } from '@/lib/notification-service';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -19,7 +19,7 @@ const RSVPSchema = z.object({
 /**
  * Validate space using DDD repository and check membership
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -29,7 +29,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
 
@@ -38,7 +38,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -52,7 +52,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
   return { ok: true as const, space, membership: membershipSnapshot.docs[0].data() };
 }
 
-async function loadEvent(spaceId: string, eventId: string) {
+async function loadEvent(spaceId: string, eventId: string, campusId: string) {
   const eventDoc = await dbAdmin
     .collection('spaces')
     .doc(spaceId)
@@ -69,12 +69,12 @@ async function loadEvent(spaceId: string, eventId: string) {
     return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event data missing' };
   }
 
-  if (eventData.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+  if (eventData.campusId && eventData.campusId !== campusId) {
     logger.error('SECURITY: Cross-campus event RSVP attempt blocked', {
       eventId,
       spaceId,
       eventCampusId: eventData.campusId,
-      currentCampusId: CURRENT_CAMPUS_ID,
+      currentCampusId: campusId,
     });
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
@@ -93,15 +93,16 @@ export const POST = withAuthValidationAndErrors(
     try {
       const { spaceId, eventId } = await params;
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
-      const validation = await validateSpaceAndMembership(spaceId, userId);
+      const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
       if (!validation.ok) {
         const code =
           validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
         return respond.error(validation.message, code, { status: validation.status });
       }
 
-      const load = await loadEvent(spaceId, eventId);
+      const load = await loadEvent(spaceId, eventId, campusId);
       if (!load.ok) {
         const code = load.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
         return respond.error(load.message, code, { status: load.status });
@@ -151,7 +152,7 @@ export const POST = withAuthValidationAndErrors(
         eventId,
         spaceId,
         status: body.status,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         updatedAt: timestamp,
         ...(existing.exists ? {} : { createdAt: timestamp }),
       };
@@ -224,15 +225,16 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId, eventId } = await params;
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code =
         validation.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(validation.message, code, { status: validation.status });
     }
 
-    const load = await loadEvent(spaceId, eventId);
+    const load = await loadEvent(spaceId, eventId, campusId);
     if (!load.ok) {
       const code = load.status === HttpStatus.NOT_FOUND ? 'RESOURCE_NOT_FOUND' : 'FORBIDDEN';
       return respond.error(load.message, code, { status: load.status });

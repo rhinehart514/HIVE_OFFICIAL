@@ -21,8 +21,7 @@ export function HiveNavigationExample() {
   }
 
   const handleSignOut = () => {
-    console.log('Sign out clicked')
-    // Implement sign out logic
+    // TODO: Implement sign out logic
   }
 
   return (

@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { verifySession, type SessionData } from "@/lib/session";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
+import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 
 /**
  * Unified Session Endpoint
@@ -18,6 +19,15 @@ import { logger } from "@/lib/structured-logger";
 const SESSION_COOKIE_NAME = 'hive_session';
 
 export async function GET(request: NextRequest) {
+  // Rate limit: 100 requests per minute for session checks
+  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { authenticated: false, user: null, error: rateLimitResult.error },
+      { status: rateLimitResult.status, headers: rateLimitResult.headers }
+    );
+  }
+
   try {
     // Read session cookie
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
@@ -93,7 +103,12 @@ async function fetchUserProfile(session: SessionData) {
         campusId: data?.campusId || session.campusId,
         isBuilder: data?.builderOptIn || false,
         builderOptIn: data?.builderOptIn || false,
-        onboardingCompleted: !!(data?.handle && data?.fullName),
+        onboardingCompleted: !!(
+          data?.onboardingCompleted ||
+          data?.onboardingComplete ||
+          data?.onboardingCompletedAt ||
+          (data?.handle && data?.fullName)
+        ),
         isAdmin: session.isAdmin || false,
         createdAt: data?.createdAt || null,
       };
@@ -120,7 +135,7 @@ async function fetchUserProfile(session: SessionData) {
     campusId: session.campusId,
     isBuilder: false,
     builderOptIn: false,
-    onboardingCompleted: false,
+    onboardingCompleted: session.onboardingCompleted || false, // Use session value as fallback
     isAdmin: session.isAdmin || false,
     createdAt: null,
   };
@@ -131,6 +146,15 @@ async function fetchUserProfile(session: SessionData) {
  * Called periodically by client to keep session alive
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 100 requests per minute for session checks
+  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { authenticated: false, user: null, error: rateLimitResult.error },
+      { status: rateLimitResult.status, headers: rateLimitResult.headers }
+    );
+  }
+
   // For now, just validate - could add token refresh logic here
   return GET(request);
 }

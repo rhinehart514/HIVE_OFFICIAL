@@ -1,12 +1,24 @@
 // Onboarding Types
 
+/**
+ * 4-step onboarding flow:
+ * 1. userType (The Fork) - Choose leader vs explorer
+ * 2. profile (Combined) - Name, handle, major, year, residential (optional)
+ * 3. interests - Pick interests from curated list + custom tags (optional, 0-10)
+ * 4. spaces (Claim) - Find and claim a space
+ * + completion (Celebration) - Success screen
+ *
+ * Legacy steps kept for backwards compatibility with saved drafts
+ */
 export type OnboardingStep =
-  | "userType"
+  | "userType"    // Step 1: The Fork
+  | "profile"     // Step 2: Combined profile
+  | "interests"   // Step 3: Pick interests (new)
+  | "spaces"      // Step 4: Claim space
+  | "completion"  // Celebration screen
+  // Legacy steps (for draft migration)
   | "identity"
-  | "profile"
-  | "interests"
   | "leader"
-  | "spaces"
   | "alumniWaitlist"
   | "facultyProfile";
 
@@ -14,19 +26,25 @@ export type UserType = "student" | "alumni" | "faculty" | null;
 
 export type HandleStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
+export type LivingSituation = "on-campus" | "off-campus" | "commuter" | "not-sure" | null;
+
 export interface OnboardingData {
   userType: UserType;
   handle: string;
   name: string;
   major: string;
   graduationYear: number | null;
-  interests: string[];
+  livingSituation: LivingSituation; // Optional residential status
+  interests: string[]; // Max 10 items, each max 50 chars
   profilePhoto: string | null;
   isLeader: boolean;
   courseCode: string;
   alumniEmail: string;
   termsAccepted: boolean;
-  // Spaces selected during onboarding
+  // Space selected during onboarding
+  claimedSpaceId?: string;
+  claimedSpaceName?: string;
+  // Spaces to join (for explorers)
   initialSpaceIds?: string[];
   // Spaces user wants to lead (builder requests)
   builderRequestSpaces?: string[];
@@ -43,30 +61,39 @@ export interface StepProps {
   setIsSubmitting: (isSubmitting: boolean) => void;
 }
 
+/**
+ * Step config for 4-step flow
+ * Note: Titles/subtitles not shown in new design (big headlines in components instead)
+ */
 export const STEP_CONFIG: Record<OnboardingStep, { title: string; subtitle: string }> = {
   userType: {
-    title: "Welcome to HIVE",
-    subtitle: "How will you be using the platform?",
+    title: "What brings you to HIVE?",
+    subtitle: "",
   },
+  profile: {
+    title: "Tell us about yourself",
+    subtitle: "",
+  },
+  interests: {
+    title: "What are you into?",
+    subtitle: "Pick interests to personalize your experience",
+  },
+  spaces: {
+    title: "Find your club",
+    subtitle: "",
+  },
+  completion: {
+    title: "",
+    subtitle: "",
+  },
+  // Legacy - kept for migration
   identity: {
     title: "Choose your handle",
     subtitle: "This is how others will find you",
   },
-  profile: {
-    title: "Your details",
-    subtitle: "Help us personalize your experience",
-  },
-  interests: {
-    title: "Your interests",
-    subtitle: "We'll curate content based on these",
-  },
   leader: {
     title: "One more thing",
     subtitle: "Do you lead a club or organization?",
-  },
-  spaces: {
-    title: "Claim your space",
-    subtitle: "Set up your club or organization on HIVE",
   },
   alumniWaitlist: {
     title: "Alumni access",

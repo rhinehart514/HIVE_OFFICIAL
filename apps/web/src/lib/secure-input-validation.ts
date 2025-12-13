@@ -1,12 +1,10 @@
-// @ts-nocheck
-// TODO: Fix type issues
 /**
  * COMPREHENSIVE INPUT VALIDATION with security-first design
  * Prevents injection attacks, validates all user inputs, and sanitizes data
  */
 
 import { z } from 'zod';
-import { logSecurityEvent } from './structured-logger';
+import { logSecurityEvent, logger } from './structured-logger';
 import { currentEnvironment } from './env';
 
 /**
@@ -433,8 +431,8 @@ export async function validateWithSecurity<T>(
       };
     }
   } catch (error) {
-    console.error('Validation error:', error);
-    
+    logger.error('Validation error', { component: 'secure-input-validation' }, error instanceof Error ? error : undefined);
+
     return {
       success: false,
       errors: [{
@@ -458,7 +456,7 @@ export function createValidationMiddleware<T>(
     requireAuth?: boolean;
   } = {}
 ) {
-  return async (request: Request, context: Record<string, unknown> = {}) => {
+  return async (request: Request, context: { userId?: string } = {}) => {
     const { validateBody = true, validateQuery = false } = options;
     const results: ValidationResult<unknown>[] = [];
 
@@ -468,10 +466,10 @@ export function createValidationMiddleware<T>(
         const result = await validateWithSecurity(body, schema, {
           operation: 'request_body',
           userId: context.userId,
-          ip: request.headers.get('x-forwarded-for') || undefined
+          ip: request.headers.get('x-forwarded-for') ?? undefined
         });
         results.push(result);
-        
+
         if (!result.success || result.securityLevel === 'dangerous') {
           throw new Error('Request validation failed');
         }
@@ -483,14 +481,14 @@ export function createValidationMiddleware<T>(
     if (validateQuery) {
       const url = new URL(request.url);
       const queryParams = Object.fromEntries(url.searchParams.entries());
-      
+
       const result = await validateWithSecurity(queryParams, schema, {
         operation: 'query_params',
         userId: context.userId,
-        ip: request.headers.get('x-forwarded-for') || undefined
+        ip: request.headers.get('x-forwarded-for') ?? undefined
       });
       results.push(result);
-      
+
       if (!result.success || result.securityLevel === 'dangerous') {
         throw new Error('Query parameter validation failed');
       }

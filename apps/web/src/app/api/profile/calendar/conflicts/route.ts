@@ -4,6 +4,7 @@ import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { z } from 'zod';
 import { getServerProfileRepository } from '@hive/core/server';
+import { isTestUserId } from "@/lib/security-service";
 
 // Validation schema for conflict resolution
 const resolveConflictSchema = z.object({
@@ -53,7 +54,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
   try {
     // Development mode mock data
-    if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+    if (isTestUserId(userId)) {
       const mockConflicts: CalendarConflict[] = [
         {
           id: 'conflict-1',
@@ -284,7 +285,7 @@ export const POST = withAuthValidationAndErrors(
 
     try {
       // Development mode
-      if (userId === 'dev-user-1' || userId === 'test-user' || userId === 'dev_user_123' || userId === 'debug-user') {
+      if (isTestUserId(userId)) {
         logger.info('Development mode conflict resolved', {
           conflictId,
           resolution,

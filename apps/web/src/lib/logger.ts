@@ -130,18 +130,42 @@ function createLogger(): Logger {
 export const logger = createLogger();
 
 /**
+ * Security event types for authentication and access control
+ */
+export type SecurityEventType =
+  | 'rate_limit'
+  | 'validation_failure'
+  | 'suspicious_activity'
+  | 'blocked_request'
+  | 'admin_access'
+  | 'invalid_token'
+  | 'unauthorized_access'
+  | 'bypass_attempt';
+
+/**
+ * Security event details interface
+ */
+export interface SecurityEventDetails {
+  ip?: string;
+  userId?: string;
+  endpoint?: string;
+  reason?: string;
+  path?: string;
+  operation?: string;
+  userAgent?: string;
+  requestId?: string;
+  tags?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  extra?: Record<string, unknown>;
+}
+
+/**
  * Log security-related events
- * Used by rate limiting, input validation, and security monitoring
+ * Used by rate limiting, input validation, auth, and security monitoring
  */
 export function logSecurityEvent(
-  eventType: 'rate_limit' | 'validation_failure' | 'suspicious_activity' | 'blocked_request',
-  details: {
-    ip?: string;
-    userId?: string;
-    endpoint?: string;
-    reason?: string;
-    metadata?: Record<string, unknown>;
-  }
+  eventType: SecurityEventType,
+  details: SecurityEventDetails
 ): void {
   const context: LogContext = {
     action: 'security_event',
@@ -149,12 +173,13 @@ export function logSecurityEvent(
     ...details,
     metadata: {
       eventType,
+      ...details.tags,
       ...details.metadata,
     },
   };
 
   // Always log security events (even in production)
-  if (eventType === 'blocked_request' || eventType === 'suspicious_activity') {
+  if (eventType === 'blocked_request' || eventType === 'suspicious_activity' || eventType === 'admin_access') {
     logger.warn(`Security event: ${eventType}`, context);
   } else {
     logger.info(`Security event: ${eventType}`, context);

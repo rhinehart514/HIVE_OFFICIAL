@@ -1,9 +1,8 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { sseRealtimeService } from '@/lib/sse-realtime-service';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { getServerSpaceRepository } from '@hive/core/server';
 
 /**
@@ -39,7 +38,7 @@ const RSS_FEEDS = {
 /**
  * Validate space using DDD repository and check membership
  */
-async function validateSpaceAndMembership(spaceId: string, userId: string) {
+async function validateSpaceAndMembership(spaceId: string, userId: string, campusId: string) {
   const spaceRepo = getServerSpaceRepository();
   const spaceResult = await spaceRepo.findById(spaceId);
 
@@ -49,7 +48,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
 
   const space = spaceResult.getValue();
 
-  if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+  if (space.campusId.id !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: 'Access denied' };
   }
 
@@ -58,7 +57,7 @@ async function validateSpaceAndMembership(spaceId: string, userId: string) {
     .where('spaceId', '==', spaceId)
     .where('userId', '==', userId)
     .where('isActive', '==', true)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -78,10 +77,11 @@ export const POST = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {
-    const validation = await validateSpaceAndMembership(spaceId, userId);
+    const validation = await validateSpaceAndMembership(spaceId, userId, campusId);
     if (!validation.ok) {
       const code =
         validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -90,7 +90,8 @@ export const POST = withAuthAndErrors(async (
 
     const space = validation.space;
     const membershipRole = validation.membership.role as string | undefined;
-    if (!['owner', 'admin', 'moderator', 'builder', 'leader'].includes(membershipRole || '')) {
+    // Valid roles: owner, admin, moderator, member, guest
+    if (!['owner', 'admin', 'moderator'].includes(membershipRole || '')) {
       return respond.error("Only space leaders can seed RSS content", "FORBIDDEN", {
         status: HttpStatus.FORBIDDEN,
       });
@@ -131,7 +132,7 @@ export const POST = withAuthAndErrors(async (
             isDeleted: false,
             isRSSSeeded: true, // Mark as RSS content
             rssSource: feedUrl,
-            campusId: CURRENT_CAMPUS_ID,
+            campusId: campusId,
           };
 
           const postRef = await dbAdmin

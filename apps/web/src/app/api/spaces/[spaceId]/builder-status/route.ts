@@ -1,7 +1,6 @@
-import { withAuthAndErrors, type AuthenticatedRequest, getUserId } from "@/lib/middleware";
+import { withAuthAndErrors, type AuthenticatedRequest, getUserId, getCampusId } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerSpaceRepository } from "@hive/core/server";
 
@@ -17,6 +16,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   const { spaceId } = await params;
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   if (!spaceId) {
     return respond.error('Space ID is required', 'INVALID_INPUT', { status: HttpStatus.BAD_REQUEST });
@@ -34,7 +34,7 @@ export const GET = withAuthAndErrors(async (
     const space = spaceResult.getValue();
 
     // Enforce campus isolation
-    if (space.campusId.id !== CURRENT_CAMPUS_ID) {
+    if (space.campusId.id !== campusId) {
       return respond.error('Space not found', 'RESOURCE_NOT_FOUND', { status: HttpStatus.NOT_FOUND });
     }
 
@@ -44,7 +44,7 @@ export const GET = withAuthAndErrors(async (
       .where('spaceId', '==', spaceId)
       .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 
@@ -54,8 +54,9 @@ export const GET = withAuthAndErrors(async (
     }
 
     const isMember = !!role;
-    const canFeatureTools = ['owner', 'admin', 'builder'].includes(role || '');
-    const canPinPosts = ['owner', 'admin', 'builder'].includes(role || '');
+    // Valid roles: owner, admin, moderator, member, guest
+    const canFeatureTools = ['owner', 'admin', 'moderator'].includes(role || '');
+    const canPinPosts = ['owner', 'admin', 'moderator'].includes(role || '');
 
     return respond.success({
       isMember,

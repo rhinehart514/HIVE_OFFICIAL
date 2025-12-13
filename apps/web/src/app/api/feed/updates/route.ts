@@ -3,9 +3,141 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as _admin from 'firebase-admin';
 import { getAuth } from 'firebase-admin/auth';
-import { getFeedUpdates, markFeedAsViewed, refreshFeedCache } from '@/lib/real-time-feed';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { dbAdmin } from '@/lib/firebase-admin';
+import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+
+// =============================================================================
+// Inlined Feed Functions (previously from @/lib/real-time-feed)
+// =============================================================================
+
+interface FeedUpdate {
+  hasNewPosts: boolean;
+  newPostCount: number;
+  lastPostAt: string | null;
+  lastCheckedAt: string;
+}
+
+/**
+ * Get feed updates for a user
+ */
+async function getFeedUpdates(userId: string): Promise<FeedUpdate | null> {
+  try {
+    // Get user's spaces
+    const membershipsSnapshot = await dbAdmin
+      .collection('spaceMembers')
+      .where('userId', '==', userId)
+      .where('status', '==', 'active')
+      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .get();
+
+    if (membershipsSnapshot.empty) {
+      return null;
+    }
+
+    const spaceIds = membershipsSnapshot.docs.map(doc => doc.data().spaceId);
+
+    // Get user's last viewed timestamp
+    const userFeedStateDoc = await dbAdmin
+      .collection('userFeedState')
+      .doc(userId)
+      .get();
+
+    const lastViewedAt = userFeedStateDoc.exists
+      ? (userFeedStateDoc.data()?.lastViewedAt || new Date(0).toISOString())
+      : new Date(0).toISOString();
+
+    // Count new posts since last viewed
+    let newPostCount = 0;
+    let lastPostAt: string | null = null;
+
+    // Query posts in batches (Firestore 'in' query limit is 10)
+    const batches: string[][] = [];
+    for (let i = 0; i < spaceIds.length; i += 10) {
+      batches.push(spaceIds.slice(i, i + 10));
+    }
+
+    for (const batch of batches) {
+      const postsSnapshot = await dbAdmin
+        .collection('posts')
+        .where('spaceId', 'in', batch)
+        .where('createdAt', '>', lastViewedAt)
+        .where('status', '==', 'published')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
+
+      newPostCount += postsSnapshot.size;
+
+      if (postsSnapshot.docs.length > 0 && !lastPostAt) {
+        lastPostAt = postsSnapshot.docs[0].data().createdAt;
+      }
+    }
+
+    return {
+      hasNewPosts: newPostCount > 0,
+      newPostCount,
+      lastPostAt,
+      lastCheckedAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    logger.error('Error getting feed updates', { userId, error });
+    return null;
+  }
+}
+
+/**
+ * Mark feed items as viewed
+ */
+async function markFeedAsViewed(userId: string, itemIds: string[]): Promise<void> {
+  try {
+    const batch = dbAdmin.batch();
+
+    // Update user's last viewed timestamp
+    const userFeedStateRef = dbAdmin.collection('userFeedState').doc(userId);
+    batch.set(
+      userFeedStateRef,
+      {
+        lastViewedAt: new Date().toISOString(),
+        lastViewedItemIds: itemIds.slice(0, 20), // Keep last 20
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+
+    // Mark individual items as viewed
+    for (const itemId of itemIds.slice(0, 50)) {
+      const viewedRef = dbAdmin
+        .collection('userFeedViews')
+        .doc(`${userId}_${itemId}`);
+      batch.set(viewedRef, {
+        userId,
+        itemId,
+        viewedAt: new Date().toISOString(),
+      });
+    }
+
+    await batch.commit();
+  } catch (error) {
+    logger.error('Error marking feed as viewed', { userId, itemIds, error });
+    throw error;
+  }
+}
+
+/**
+ * Force refresh feed cache for a user
+ */
+async function refreshFeedCache(userId: string): Promise<FeedUpdate | null> {
+  try {
+    // Clear any cached state and re-fetch
+    await dbAdmin.collection('userFeedState').doc(userId).delete();
+    return await getFeedUpdates(userId);
+  } catch (error) {
+    logger.error('Error refreshing feed cache', { userId, error });
+    return null;
+  }
+}
 
 // Real-time feed update schema
 const FeedUpdateQuerySchema = z.object({

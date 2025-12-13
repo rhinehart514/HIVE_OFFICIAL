@@ -1,0 +1,196 @@
+{/* Introduction.mdx */}
+
+import { Meta } from '@storybook/blocks';
+
+<Meta title="HiveLab/Introduction" />
+
+# HiveLab Design System
+
+**"The Workshop vs. The Campus"**
+
+HiveLab is where tools are built. While HIVE is the warm, social campus where things are *used*, HiveLab is the precise, technical workshop where things are *created*.
+
+---
+
+## Visual Identity
+
+### Color Temperature
+
+| Context | Background | Accent | Feel |
+|---------|------------|--------|------|
+| **HIVE (Campus)** | Warm black `#000000` | Gold `#FFD700` | Social, organic |
+| **HiveLab (Workshop)** | Cool navy `#0A0A12` | Gold + Cyan | Technical, precise |
+
+### The Difference
+
+```
+HIVE          HiveLab
+────────────  ────────────
+Warm black    Cool navy-black
+Soft corners  Sharp corners
+Generous      Efficient
+Organic       Mechanical
+Celebrate     Activate
+```
+
+---
+
+## Typography
+
+### Dual-Typeface System
+
+- **Geist Sans**: UI labels, navigation, descriptions
+- **JetBrains Mono**: Element IDs, property values, technical labels
+
+```
+[Geist Sans] Element Palette
+[Geist Sans] Input Elements
+  [JetBrains Mono] search-input
+  [JetBrains Mono] text-field
+```
+
+---
+
+## Form Language
+
+### Border Radius
+
+| Element | HIVE | HiveLab |
+|---------|------|---------|
+| Cards | 14-22px | 6-8px |
+| Buttons | 10px | 6px |
+| Canvas elements | — | 4px |
+| Modals | 22px | 8px |
+
+**Sharp corners signal technical precision.**
+
+---
+
+## Spatial Density
+
+### HIVE (Breathing Room)
+- Card gaps: 16-24px
+- Section spacing: 32px
+- Generous padding
+
+### HiveLab (Efficient, Focused)
+- Element gaps: 8-12px
+- Panel padding: 12px
+- Tighter grid: 20px
+
+---
+
+## The Golden Three Elements
+
+These elements should be **legendary** - so good people screenshot and share.
+
+### 1. Poll Element
+**Target**: Instagram Stories poll quality
+- Vote bubbles animate and rise
+- Live participant avatars
+- Spring physics on results
+- Confetti on poll close
+
+### 2. RSVP Element
+**Target**: Luma.co smoothness
+- One-tap to RSVP
+- Liquid fill capacity indicator
+- Waitlist with position
+- Calendar integration
+
+### 3. Countdown Element
+**Target**: Apple Watch precision
+- Flip-clock aesthetic
+- Color shifts: calm → amber → red
+- Subtle pulse under 60s
+- Celebration at zero
+
+---
+
+## Control Model
+
+### AI Controls (Invisible)
+- Element selection
+- Initial layout
+- Connection wiring
+- Config defaults
+
+### User Controls (Explicit)
+- Tool name
+- Deploy target
+- Permissions
+- Delete/archive
+
+### Shared Control (AI Suggests, User Adjusts)
+- Element configuration
+- Position & size
+- Content text
+- Visual options
+
+---
+
+## Storybook Usage
+
+### Running HiveLab Storybook
+
+```bash
+pnpm --filter @hive/hivelab storybook
+```
+
+Opens on port **6007** (separate from main HIVE storybook)
+
+### Structure
+
+```
+HiveLab/
+├── Introduction (this page)
+├── Elements/
+│   ├── Poll (the viral element)
+│   ├── RSVP (the commitment loop)
+│   ├── Countdown (the urgency driver)
+│   └── ... (other elements)
+├── IDE/
+│   ├── Canvas
+│   ├── Toolbar
+│   ├── Panels
+│   └── Command Palette
+└── Patterns/
+    ├── Creation Flow
+    ├── Deployment
+    └── Interactions
+```
+
+---
+
+## Design Principles
+
+1. **Same DNA, different personality**
+   - Shared foundation (monochrome + gold, dark mode)
+   - Different expression (technical vs. social)
+
+2. **Visual cues signal function**
+   - Sharp corners = tool
+   - Monospace = technical
+   - Cool tones = analytical
+
+3. **Subtle but clear**
+   - Recognizable as HIVE family
+   - Distinct enough to feel like builder mode
+
+4. **Form follows function**
+   - Every visual choice supports building
+   - Technical elements look technical
+   - Precision in every pixel
+
+---
+
+## The Workshop Mindset
+
+> "This is where things are built, not where they're consumed."
+
+When you open HiveLab, you should feel:
+- Focused, not distracted
+- Empowered, not overwhelmed
+- Precise, not approximate
+
+The aesthetic whispers *"Create something great."*

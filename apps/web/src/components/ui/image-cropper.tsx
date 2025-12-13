@@ -7,6 +7,7 @@ import type { Area, Point } from 'react-easy-crop';
 import { motion } from 'framer-motion';
 import { X, Check, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { transitionSpring } from '@/lib/motion-primitives';
+import { logger } from '@/lib/logger';
 
 interface ImageCropperProps {
   imageSrc: string;
@@ -66,7 +67,7 @@ export function ImageCropper({
       );
       onCropComplete(croppedImage);
     } catch (error) {
-      console.error('Error cropping image:', error);
+      logger.error('Error cropping image', { component: 'ImageCropper' }, error instanceof Error ? error : undefined);
     } finally {
       setIsProcessing(false);
     }

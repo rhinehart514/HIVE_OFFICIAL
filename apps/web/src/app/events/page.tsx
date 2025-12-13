@@ -5,10 +5,11 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useMemo } from "react";
 import { Button, Card, Badge } from "@hive/ui";
-import { PageContainer } from "@/components/temp-stubs";
-import { 
-  Calendar, 
-  Plus, 
+import { logger } from "@/lib/logger";
+import { useAuth } from "@hive/auth-logic";
+import {
+  Calendar,
+  Plus,
   Search,
   MapPin,
   Users,
@@ -19,11 +20,38 @@ import {
   MessageCircle,
   Share2
 } from "lucide-react";
-import { useSession } from "../../hooks/use-session";
-import { ErrorBoundary } from "../../components/error-boundary";
 import { EventsLoadingSkeleton } from "../../components/events/events-loading-skeleton";
 import { CreateEventModal, type CreateEventData } from "../../components/events/create-event-modal";
 import { EventDetailsModal } from "../../components/events/event-details-modal";
+
+// Inline PageContainer to replace deleted temp-stubs
+function PageContainer({
+  title,
+  subtitle,
+  children,
+  actions,
+  maxWidth = "6xl"
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+  actions?: React.ReactNode;
+  breadcrumbs?: { label: string; icon?: React.ComponentType }[];
+  maxWidth?: string;
+}) {
+  return (
+    <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
+          {subtitle && <p className="text-zinc-400 mt-1">{subtitle}</p>}
+        </div>
+        {actions}
+      </div>
+      {children}
+    </div>
+  );
+}
 
 // Event interfaces
 interface RawEventData {
@@ -55,6 +83,7 @@ interface RawEventData {
   location?: {
     name?: unknown;
   };
+  space?: unknown;
   maxCapacity?: unknown;
   currentCapacity?: unknown;
   waitlistCount?: unknown;
@@ -146,96 +175,79 @@ export default function EventsPage() {
   }, []);
 
   // Always call the hook, but use mounted to determine behavior
-  const sessionResult = useSession();
-  const { user } = mounted ? sessionResult : { user: null };
+  const authResult = useAuth();
+  const { user } = mounted ? authResult : { user: null };
 
-  // Fetch real event data
+  // Fetch real event data from campus-wide events API
   useEffect(() => {
     if (!mounted) return; // Don't fetch during SSR
 
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        // Fetch events from multiple space endpoints
-        const spacesResponse = await fetch('/api/spaces/my');
-        if (!spacesResponse.ok) throw new Error('Failed to fetch user spaces');
+        // Use the new campus-wide events API
+        const response = await fetch('/api/events?limit=100&upcoming=true');
+        if (!response.ok) throw new Error('Failed to fetch events');
 
-        const spacesData = await spacesResponse.json() as { spaces?: unknown[] };
-        const userSpaces = spacesData.spaces || [];
+        const data = await response.json() as { events?: unknown[] };
+        const rawEvents = data.events || [];
 
-        // Fetch events from all user spaces
-        const eventPromises = userSpaces.map(async (space: unknown) => {
-          const spaceData = space as Record<string, unknown>;
-          try {
-            const eventsResponse = await fetch(`/api/spaces/${String(spaceData.id)}/events`);
-            if (eventsResponse.ok) {
-              const eventsData = await eventsResponse.json() as { events?: unknown[] };
-              return eventsData.events?.map((event: unknown): EventData => {
-                const eventData = event as Record<string, unknown>;
-                
-                // Map raw event data to EventData format
-                return {
-                  id: String((eventData as RawEventData).id || `event-${Date.now()}-${Math.random()}`),
-                  title: String((eventData as RawEventData).title || 'Untitled Event'),
-                  description: String((eventData as RawEventData).description || ''),
-                  type: ((eventData as RawEventData).type as EventData['type']) || 'social',
-                  organizer: {
-                    id: String((eventData as RawEventData).organizer?.id || (eventData as RawEventData).organizerId || 'unknown'),
-                    name: String((eventData as RawEventData).organizer?.name || (eventData as RawEventData).organizerName || 'Event Organizer'),
-                    handle: String((eventData as RawEventData).organizer?.handle || (eventData as RawEventData).organizerHandle || 'organizer'),
-                    verified: Boolean((eventData as RawEventData).organizer?.verified)
-                  },
-                  space: { 
-                    id: String(spaceData.id), 
-                    name: String(spaceData.name), 
-                    type: String(spaceData.type || 'general') 
-                  },
-                  datetime: {
-                    start: String((eventData as RawEventData).startTime || (eventData as RawEventData).datetime?.start || new Date().toISOString()),
-                    end: String((eventData as RawEventData).endTime || (eventData as RawEventData).datetime?.end || new Date(Date.now() + 3600000).toISOString()),
-                    timezone: String((eventData as RawEventData).timezone || (eventData as RawEventData).datetime?.timezone || 'America/New_York')
-                  },
-                  location: {
-                    type: ((eventData as RawEventData).locationType as 'physical' | 'virtual' | 'hybrid') || 'physical',
-                    name: String((eventData as RawEventData).locationName || (eventData as RawEventData).location?.name || 'TBD'),
-                    address: (eventData as RawEventData).locationAddress ? String((eventData as RawEventData).locationAddress) : undefined,
-                    virtualLink: (eventData as RawEventData).virtualLink ? String((eventData as RawEventData).virtualLink) : undefined
-                  },
-                  capacity: {
-                    max: Number((eventData as RawEventData).maxCapacity || (eventData as RawEventData).capacity?.max || 50),
-                    current: Number((eventData as RawEventData).currentCapacity || (eventData as RawEventData).capacity?.current || 0),
-                    waitlist: Number((eventData as RawEventData).waitlistCount || (eventData as RawEventData).capacity?.waitlist || 0)
-                  },
-                  tools: Array.isArray((eventData as RawEventData).tools) ? (eventData as RawEventData).tools!.map(String) : [],
-                  tags: Array.isArray((eventData as RawEventData).tags) ? (eventData as RawEventData).tags!.map(String) : [],
-                  visibility: ((eventData as RawEventData).visibility as EventData['visibility']) || 'public',
-                  rsvpStatus: ((eventData as RawEventData).rsvpStatus as EventData['rsvpStatus']) || null,
-                  isBookmarked: Boolean((eventData as RawEventData).isBookmarked),
-                  engagement: {
-                    going: Number((eventData as RawEventData).goingCount || (eventData as RawEventData).engagement?.going || 0),
-                    interested: Number((eventData as RawEventData).interestedCount || (eventData as RawEventData).engagement?.interested || 0),
-                    comments: Number((eventData as RawEventData).commentsCount || (eventData as RawEventData).engagement?.comments || 0),
-                    shares: Number((eventData as RawEventData).sharesCount || (eventData as RawEventData).engagement?.shares || 0)
-                  },
-                  requirements: Array.isArray(eventData.requirements) ? eventData.requirements.map(String) : [],
-                  createdAt: String((eventData as RawEventData).createdAt || new Date().toISOString()),
-                  updatedAt: String((eventData as RawEventData).updatedAt || new Date().toISOString())
-                };
-              }) || [];
-            }
-          } catch (error) {
-            console.error(`Failed to fetch events for space ${String(spaceData.id)}:`, error);
-          }
-          return [];
+        // Map raw event data to EventData format
+        const mappedEvents: EventData[] = rawEvents.map((event: unknown): EventData => {
+          const eventData = event as RawEventData;
+
+          return {
+            id: String(eventData.id || `event-${Date.now()}-${Math.random()}`),
+            title: String(eventData.title || 'Untitled Event'),
+            description: String(eventData.description || ''),
+            type: (eventData.type as EventData['type']) || 'social',
+            organizer: {
+              id: String(eventData.organizer?.id || eventData.organizerId || 'unknown'),
+              name: String(eventData.organizer?.name || eventData.organizerName || 'Event Organizer'),
+              handle: String(eventData.organizer?.handle || eventData.organizerHandle || 'organizer'),
+              verified: Boolean(eventData.organizer?.verified)
+            },
+            space: eventData.space ? {
+              id: String((eventData.space as Record<string, unknown>).id),
+              name: String((eventData.space as Record<string, unknown>).name),
+              type: String((eventData.space as Record<string, unknown>).type || 'general')
+            } : undefined,
+            datetime: {
+              start: String(eventData.startTime || eventData.datetime?.start || new Date().toISOString()),
+              end: String(eventData.endTime || eventData.datetime?.end || new Date(Date.now() + 3600000).toISOString()),
+              timezone: String(eventData.timezone || eventData.datetime?.timezone || 'America/New_York')
+            },
+            location: {
+              type: (eventData.locationType as 'physical' | 'virtual' | 'hybrid') || 'physical',
+              name: String(eventData.locationName || eventData.location?.name || 'TBD'),
+              address: eventData.locationAddress ? String(eventData.locationAddress) : undefined,
+              virtualLink: eventData.virtualLink ? String(eventData.virtualLink) : undefined
+            },
+            capacity: {
+              max: Number(eventData.maxCapacity || eventData.capacity?.max || 50),
+              current: Number(eventData.currentCapacity || eventData.capacity?.current || 0),
+              waitlist: Number(eventData.waitlistCount || eventData.capacity?.waitlist || 0)
+            },
+            tools: Array.isArray(eventData.tools) ? eventData.tools.map(String) : [],
+            tags: Array.isArray(eventData.tags) ? eventData.tags.map(String) : [],
+            visibility: (eventData.visibility as EventData['visibility']) || 'public',
+            rsvpStatus: (eventData.rsvpStatus as EventData['rsvpStatus']) || null,
+            isBookmarked: Boolean(eventData.isBookmarked),
+            engagement: {
+              going: Number(eventData.goingCount || eventData.engagement?.going || 0),
+              interested: Number(eventData.interestedCount || eventData.engagement?.interested || 0),
+              comments: Number(eventData.commentsCount || eventData.engagement?.comments || 0),
+              shares: Number(eventData.sharesCount || eventData.engagement?.shares || 0)
+            },
+            requirements: [],
+            createdAt: String(eventData.createdAt || new Date().toISOString()),
+            updatedAt: String(eventData.updatedAt || new Date().toISOString())
+          };
         });
-        
-        const allEventArrays = await Promise.all(eventPromises);
-        const allEvents = allEventArrays.flat();
-        
-        // If no real events, show empty state instead of mock data
-        setEvents(allEvents);
+
+        setEvents(mappedEvents);
       } catch (error) {
-        console.error('Error fetching events:', error);
+        logger.error('Error fetching events', { component: 'EventsPage' }, error instanceof Error ? error : undefined);
         setEvents([]);
       } finally {
         setIsLoading(false);
@@ -393,7 +405,6 @@ export default function EventsPage() {
   }
 
   return (
-    <ErrorBoundary>
       <PageContainer
         title="Campus Events"
         subtitle="Discover, coordinate, and participate in campus activities"
@@ -706,6 +717,5 @@ export default function EventsPage() {
           onBookmark={handleBookmark}
         />
       </PageContainer>
-    </ErrorBoundary>
   );
 }

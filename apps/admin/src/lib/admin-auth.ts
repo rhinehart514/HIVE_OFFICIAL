@@ -86,8 +86,8 @@ export async function isAdmin(userId: string): Promise<boolean> {
     }
 
     return false;
-  } catch (error) {
-    console.error('Error checking admin status:', error);
+  } catch (_error) {
+    // Admin status check failed - deny access
     return false;
   }
 }
@@ -121,8 +121,8 @@ export async function getAdminUser(userId: string): Promise<AdminUser | null> {
       lastLogin: new Date(),
       campusId: adminData?.campusId
     };
-  } catch (error) {
-    console.error('Error getting admin user:', error);
+  } catch (_error) {
+    // Failed to get admin user - return null
     return null;
   }
 }
@@ -147,8 +147,8 @@ export async function verifyAdminToken(request: NextRequest): Promise<AdminUser 
     const userId = decodedToken.uid;
 
     return await getAdminUser(userId);
-  } catch (error) {
-    console.error('Admin token verification error:', error);
+  } catch (_error) {
+    // Token verification failed - deny access
     return null;
   }
 }
@@ -220,7 +220,7 @@ export async function logAdminActivity(
       ipAddress,
       timestamp: new Date()
     });
-  } catch (error) {
-    console.error('Failed to log admin activity:', error);
+  } catch (_error) {
+    // Activity logging is non-critical - fail silently
   }
 }

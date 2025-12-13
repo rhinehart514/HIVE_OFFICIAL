@@ -61,6 +61,19 @@ export interface SpaceBaseDTO {
   memberCount: number;
   isVerified: boolean;
   visibility: 'public' | 'private';
+  /**
+   * Publishing status for stealth mode
+   * - stealth: Space is being set up, only visible to leaders
+   * - live: Space is publicly visible
+   * - rejected: Leader request was rejected
+   */
+  publishStatus: 'stealth' | 'live' | 'rejected';
+  /** Convenience flag: publishStatus === 'stealth' */
+  isStealth: boolean;
+  /** Convenience flag: publishStatus === 'live' */
+  isLive: boolean;
+  /** When the space went live (if applicable) */
+  wentLiveAt?: Date;
   createdAt: Date;
 }
 
@@ -149,4 +162,33 @@ export interface SpaceMemberDTO {
  */
 export interface SpaceWithMembersDTO extends SpaceDetailDTO {
   members: SpaceMemberDTO[];
+}
+
+/**
+ * PlacedTool DTO for API responses
+ * Represents a HiveLab tool deployed into a space
+ */
+export interface PlacedToolDTO {
+  id: string;
+  toolId: string;
+  placement: 'sidebar' | 'inline' | 'modal' | 'tab';
+  order: number;
+  isActive: boolean;
+  source: 'system' | 'leader' | 'member';
+  placedBy: string | null;
+  placedAt: string;
+  configOverrides: Record<string, unknown>;
+  visibility: 'all' | 'members' | 'leaders';
+  titleOverride: string | null;
+  isEditable: boolean;
+  state: Record<string, unknown>;
+  stateUpdatedAt: string | null;
+}
+
+/**
+ * Space DTO with PlacedTools loaded
+ * Used by /api/spaces/[spaceId] and /api/spaces/[spaceId]/structure
+ */
+export interface SpaceWithToolsDTO extends SpaceDetailDTO {
+  placedTools: PlacedToolDTO[];
 }
