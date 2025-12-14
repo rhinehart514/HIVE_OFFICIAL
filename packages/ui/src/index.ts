@@ -1131,6 +1131,9 @@ export type {
 export { AutomationsPanel, AutomationsBadge } from "./components/hivelab/automations-panel";
 export type { AutomationItem } from "./components/hivelab/automations-panel";
 
+// Automation Templates Browser (Phase 3.5)
+export { AutomationTemplates, AutomationTemplatesCompact } from "./components/hivelab/automation-templates";
+
 // HiveLab: Studio + panels
 export { HiveLabStudio } from "./atomic/05-HiveLab/organisms/hivelab-studio";
 export type { HiveLabStudioProps } from "./atomic/05-HiveLab/organisms/hivelab-studio";

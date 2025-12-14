@@ -35,6 +35,12 @@ import {
   ToolRuntimeModal,
   IntentConfirmationInline,
   AutomationsPanel,
+  AutomationTemplatesCompact,
+  AutomationTemplates,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -364,6 +370,9 @@ function SpaceDetailContent() {
   const [selectedTool, setSelectedTool] = React.useState<SelectedTool | null>(null);
   const [toolModalOpen, setToolModalOpen] = React.useState(false);
 
+  // Automation templates modal state (Phase 3.5)
+  const [showTemplates, setShowTemplates] = React.useState(false);
+
   // Mobile drawer state
   const [activeDrawer, setActiveDrawer] = React.useState<MobileDrawerType | null>(null);
 
@@ -396,6 +405,7 @@ function SpaceDetailContent() {
     isLeader: canManageAutomations,
     toggle: toggleAutomation,
     remove: removeAutomation,
+    refetch: refetchAutomations,
   } = useAutomations(spaceId);
 
   // Chat intent detection (HiveLab AI-powered component creation)
@@ -1172,7 +1182,7 @@ function SpaceDetailContent() {
 
           {/* Automations Panel - shows for leaders (HiveLab Phase 3) */}
           {canManageAutomations && (
-            <div className="p-4 border-b border-neutral-800">
+            <div className="p-4 border-b border-neutral-800 space-y-3">
               <AutomationsPanel
                 automations={automations}
                 isLeader={canManageAutomations}
@@ -1180,6 +1190,13 @@ function SpaceDetailContent() {
                 onToggle={toggleAutomation}
                 onDelete={removeAutomation}
               />
+              {/* Quick Templates Button (Phase 3.5) */}
+              {automations.length < 5 && (
+                <AutomationTemplatesCompact
+                  onOpenFull={() => setShowTemplates(true)}
+                  templateCount={6}
+                />
+              )}
             </div>
           )}
 
@@ -1325,6 +1342,41 @@ function SpaceDetailContent() {
         onLoadMore={loadMoreReplies}
         onSendReply={async (content: string) => { await sendThreadReply(content); }}
       />
+
+      {/* Automation Templates Sheet (Phase 3.5) */}
+      <Sheet open={showTemplates} onOpenChange={setShowTemplates}>
+        <SheetContent side="right" className="w-full sm:max-w-lg bg-[#0a0a0a] border-l border-white/[0.08]">
+          <SheetHeader className="border-b border-white/[0.08] pb-4">
+            <SheetTitle className="text-white">Automation Templates</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <AutomationTemplates
+              spaceId={spaceId ?? ''}
+              fetchTemplates={async () => {
+                const res = await secureApiFetch('/api/automations/templates');
+                if (!res.ok) throw new Error('Failed to fetch templates');
+                return res.json();
+              }}
+              onApplyTemplate={async (templateId, customValues, name) => {
+                const res = await secureApiFetch(`/api/spaces/${spaceId}/automations/from-template`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ templateId, customValues, name }),
+                });
+                if (!res.ok) {
+                  const data = await res.json();
+                  throw new Error(data.error || 'Failed to apply template');
+                }
+                toast.success('Automation enabled', 'It will start working automatically.');
+              }}
+              onAutomationCreated={() => {
+                // Refresh the automations list
+                refetchAutomations();
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Error state */}
       {error && (

@@ -239,6 +239,17 @@ export {
   type NotifyAction,
 } from "./domain/hivelab/entities";
 
+// HiveLab Automation Templates (Phase 3.5)
+export {
+  AUTOMATION_TEMPLATES,
+  getAllTemplates,
+  getTemplatesByCategory,
+  getTemplateById,
+  createFromTemplate,
+  getTemplateCategories,
+  type AutomationTemplate,
+} from "./domain/hivelab/automation-templates";
+
 // HiveLab Element Registry
 export {
   registerElement,
