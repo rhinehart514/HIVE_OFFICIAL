@@ -9,12 +9,15 @@
  * - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
  * - Character counter (optional)
  * - Tool insertion toolbar (polls, events, countdowns)
+ * - Slash command autocomplete (/poll, /rsvp, /countdown, /announce)
  * - Minimal, clean design
  * - Mobile-optimized
+ *
+ * Part of HiveLab Winter 2025 Strategy: Chat-First Foundation
  */
 
-import { Send, Square } from 'lucide-react';
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Send, Square, Zap, BarChart3, Calendar, Timer, Megaphone, HelpCircle } from 'lucide-react';
+import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
 import { Button } from '../00-Global/atoms/button';
@@ -23,6 +26,50 @@ import '../../styles/scrollbar.css';
 
 // Re-export types from chat-toolbar for convenience
 export type { ToolInsertData, ToolType } from './chat-toolbar';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Slash Command Types & Data
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface SlashCommandSuggestion {
+  command: string;
+  description: string;
+  syntax: string;
+  icon: React.ReactNode;
+}
+
+const SLASH_COMMANDS: SlashCommandSuggestion[] = [
+  {
+    command: '/poll',
+    description: 'Create a poll',
+    syntax: '/poll "Question?" Option1 Option2',
+    icon: <BarChart3 className="h-4 w-4" />,
+  },
+  {
+    command: '/rsvp',
+    description: 'Create an RSVP',
+    syntax: '/rsvp "Event Name" --date=tomorrow',
+    icon: <Calendar className="h-4 w-4" />,
+  },
+  {
+    command: '/countdown',
+    description: 'Create a countdown',
+    syntax: '/countdown "Event" 2024-12-20',
+    icon: <Timer className="h-4 w-4" />,
+  },
+  {
+    command: '/announce',
+    description: 'Post announcement',
+    syntax: '/announce Your message here',
+    icon: <Megaphone className="h-4 w-4" />,
+  },
+  {
+    command: '/help',
+    description: 'Show available commands',
+    syntax: '/help [command]',
+    icon: <HelpCircle className="h-4 w-4" />,
+  },
+];
 
 /** Imperative handle for ChatInput */
 export interface ChatInputHandle {
@@ -58,6 +105,9 @@ export interface ChatInputProps {
   /** Whether user can insert tools */
   canInsertTools?: boolean;
 
+  /** Enable slash command autocomplete */
+  enableSlashCommands?: boolean;
+
   /** Placeholder text */
   placeholder?: string;
 
@@ -81,6 +131,7 @@ export interface ChatInputProps {
  * - Expandable textarea (grows with content)
  * - Send button → Stop button toggle during generation
  * - Enter to send, Shift+Enter for newline
+ * - Slash command autocomplete with keyboard navigation
  * - Clean, minimal styling
  */
 export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
@@ -91,6 +142,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   isGenerating = false,
   showToolbar = false,
   canInsertTools = true,
+  enableSlashCommands = true,
   placeholder = 'Message HIVE AI...',
   maxLength = 2000,
   showCounter = false,
@@ -98,8 +150,39 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   className
 }, ref) {
   const [message, setMessage] = useState('');
+  const [showAutocomplete, setShowAutocomplete] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const autocompleteRef = useRef<HTMLDivElement>(null);
+
+  // Filter slash commands based on input
+  const filteredCommands = useMemo(() => {
+    if (!enableSlashCommands || !message.startsWith('/')) {
+      return [];
+    }
+
+    const partial = message.slice(1).toLowerCase().split(' ')[0];
+
+    // If command is complete (has space after), don't show autocomplete
+    if (message.includes(' ') && message.indexOf(' ') > 1) {
+      return [];
+    }
+
+    if (!partial) {
+      return SLASH_COMMANDS;
+    }
+
+    return SLASH_COMMANDS.filter(cmd =>
+      cmd.command.slice(1).startsWith(partial)
+    );
+  }, [message, enableSlashCommands]);
+
+  // Show/hide autocomplete based on filtered commands
+  useEffect(() => {
+    setShowAutocomplete(filteredCommands.length > 0);
+    setSelectedIndex(0);
+  }, [filteredCommands.length]);
 
   // Expose imperative methods via ref
   useImperativeHandle(ref, () => ({
@@ -163,8 +246,48 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
     }
   };
 
+  // Select a slash command from autocomplete
+  const selectCommand = useCallback((command: SlashCommandSuggestion) => {
+    setMessage(command.command + ' ');
+    setShowAutocomplete(false);
+    textareaRef.current?.focus();
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Enter to send (without Shift)
+    // Handle autocomplete navigation
+    if (showAutocomplete && filteredCommands.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex(prev =>
+            prev < filteredCommands.length - 1 ? prev + 1 : 0
+          );
+          return;
+
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex(prev =>
+            prev > 0 ? prev - 1 : filteredCommands.length - 1
+          );
+          return;
+
+        case 'Tab':
+        case 'Enter':
+          if (!e.shiftKey) {
+            e.preventDefault();
+            selectCommand(filteredCommands[selectedIndex]);
+            return;
+          }
+          break;
+
+        case 'Escape':
+          e.preventDefault();
+          setShowAutocomplete(false);
+          return;
+      }
+    }
+
+    // Enter to send (without Shift, and not in autocomplete)
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -188,6 +311,79 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             ? 'border-white/[0.06] opacity-50'
             : 'border-white/[0.12] hover:border-white/[0.18] focus-within:border-white/25'
         )}>
+          {/* Slash command autocomplete dropdown */}
+          {showAutocomplete && filteredCommands.length > 0 && (
+            <div
+              ref={autocompleteRef}
+              className={cn(
+                'absolute left-2 right-2 bottom-full mb-2',
+                'bg-[#1a1a1a] border border-white/[0.12] rounded-lg',
+                'shadow-lg shadow-black/40 overflow-hidden',
+                'z-50'
+              )}
+              role="listbox"
+              aria-label="Slash command suggestions"
+            >
+              <div className="px-3 py-2 border-b border-white/[0.08]">
+                <div className="flex items-center gap-2 text-xs text-white/50">
+                  <Zap className="h-3 w-3 text-[var(--hive-gold-cta)]" />
+                  <span>Quick Actions</span>
+                </div>
+              </div>
+              <div className="py-1 max-h-[240px] overflow-y-auto custom-scrollbar">
+                {filteredCommands.map((cmd, index) => (
+                  <button
+                    key={cmd.command}
+                    type="button"
+                    role="option"
+                    aria-selected={index === selectedIndex}
+                    onClick={() => selectCommand(cmd)}
+                    className={cn(
+                      'w-full px-3 py-2.5 flex items-start gap-3 text-left transition-colors',
+                      index === selectedIndex
+                        ? 'bg-white/[0.08]'
+                        : 'hover:bg-white/[0.04]'
+                    )}
+                  >
+                    <div className={cn(
+                      'flex-shrink-0 p-1.5 rounded-md mt-0.5',
+                      index === selectedIndex
+                        ? 'bg-[var(--hive-gold-cta)]/20 text-[var(--hive-gold-cta)]'
+                        : 'bg-white/[0.06] text-white/60'
+                    )}>
+                      {cmd.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-medium text-white text-sm">
+                          {cmd.command}
+                        </span>
+                        <span className="text-white/50 text-xs">
+                          {cmd.description}
+                        </span>
+                      </div>
+                      <div className="text-white/30 text-xs mt-0.5 font-mono truncate">
+                        {cmd.syntax}
+                      </div>
+                    </div>
+                    {index === selectedIndex && (
+                      <div className="flex-shrink-0 text-[10px] text-white/40 mt-1">
+                        ↵ select
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <div className="px-3 py-1.5 border-t border-white/[0.08] bg-white/[0.02]">
+                <div className="flex items-center gap-3 text-[10px] text-white/40">
+                  <span><kbd className="px-1 py-0.5 bg-white/[0.06] rounded text-white/60">↑↓</kbd> navigate</span>
+                  <span><kbd className="px-1 py-0.5 bg-white/[0.06] rounded text-white/60">Tab</kbd> select</span>
+                  <span><kbd className="px-1 py-0.5 bg-white/[0.06] rounded text-white/60">Esc</kbd> dismiss</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Tool insertion toolbar */}
           {showToolbar && onInsertTool && (
             <ChatToolbar
@@ -273,7 +469,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
 
         {/* Helper text */}
         <p className="mt-3 px-2 text-xs text-white/35 text-center tracking-wide">
-          Press Enter to send, Shift+Enter for new line
+          {enableSlashCommands
+            ? 'Type / for quick actions • Enter to send • Shift+Enter for new line'
+            : 'Press Enter to send, Shift+Enter for new line'
+          }
         </p>
       </div>
     </div>

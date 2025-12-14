@@ -33,6 +33,7 @@ import {
   MemberInviteModal,
   EventCreateModal,
   ToolRuntimeModal,
+  IntentConfirmationInline,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -41,10 +42,12 @@ import {
   type InviteableUser,
   type EventCreateInput,
   type SlashCommandData,
+  type DetectedIntent,
 } from "@hive/ui";
 import { SpaceBoardSkeleton } from "@hive/ui";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
 import { useChatMessages } from "@/hooks/use-chat-messages";
+import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
 import { useAuth } from "@hive/auth-logic";
@@ -384,6 +387,22 @@ function SpaceDetailContent() {
     enabled: !!spaceId,
   });
 
+  // Chat intent detection (HiveLab AI-powered component creation)
+  const {
+    checkIntent,
+    createComponent: createIntentComponent,
+    isLoading: intentLoading,
+    error: intentError,
+    clearError: clearIntentError,
+  } = useChatIntent(spaceId ?? '');
+
+  // Pending intent state for confirmation UI
+  const [pendingIntent, setPendingIntent] = React.useState<{
+    intent: DetectedIntent;
+    message: string;
+    boardId: string;
+  } | null>(null);
+
   // Load tools for sidebar (members only)
   React.useEffect(() => {
     const loadTools = async () => {
@@ -563,10 +582,71 @@ function SpaceDetailContent() {
     refresh();
   }, [spaceId, refresh]);
 
-  // Handler for sending messages (must be before early return)
+  // Handler for sending messages with intent detection (must be before early return)
   const handleSendMessage = React.useCallback(async (content: string, replyToId?: string) => {
+    // Skip intent detection for thread replies
+    if (replyToId) {
+      await sendMessage(content, replyToId);
+      return;
+    }
+
+    // Quick check - if message might have an intent, check with API
+    if (isLeader && activeBoardId && mightHaveIntent(content)) {
+      try {
+        const intentResult = await checkIntent(content, activeBoardId);
+
+        // If we detected a valid intent that can be created, show confirmation
+        if (intentResult.hasIntent && intentResult.intentType !== 'none' && intentResult.intentType !== 'help') {
+          setPendingIntent({
+            intent: intentResult,
+            message: content,
+            boardId: activeBoardId,
+          });
+          return; // Don't send yet - wait for confirmation
+        }
+      } catch (err) {
+        // Intent check failed, continue with normal send
+        console.warn('[Space] Intent check failed:', err);
+      }
+    }
+
+    // No intent detected or not a leader - send as normal message
     await sendMessage(content, replyToId);
-  }, [sendMessage]);
+  }, [sendMessage, checkIntent, isLeader, activeBoardId]);
+
+  // Handler for confirming intent creation
+  const handleConfirmIntent = React.useCallback(async () => {
+    if (!pendingIntent) return;
+
+    try {
+      const result = await createIntentComponent(
+        pendingIntent.message,
+        pendingIntent.boardId
+      );
+
+      if (result.success && result.created) {
+        // Component created - clear pending state
+        // The component will appear in chat via real-time sync
+        setPendingIntent(null);
+      } else {
+        // Creation failed but not an error - maybe needs more info
+        // Keep the pending state and let user modify
+        console.warn('[Space] Intent component not created:', result.error);
+      }
+    } catch (err) {
+      console.error('[Space] Failed to create intent component:', err);
+      // Keep pending state so user can retry or dismiss
+    }
+  }, [pendingIntent, createIntentComponent]);
+
+  // Handler for dismissing intent (send as regular message instead)
+  const handleDismissIntent = React.useCallback(async () => {
+    if (!pendingIntent) return;
+
+    // Send as regular message
+    await sendMessage(pendingIntent.message);
+    setPendingIntent(null);
+  }, [pendingIntent, sendMessage]);
 
   // Handler for creating a new board (must be before early return)
   const handleCreateBoard = React.useCallback(() => {
@@ -823,7 +903,19 @@ function SpaceDetailContent() {
       {/* Main 60/40 Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Chat Area - 60% on desktop, full on mobile */}
-        <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-black">
+        <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-black relative">
+          {/* Intent Confirmation - shows above chat input when AI detects component intent */}
+          {pendingIntent && (
+            <div className="absolute bottom-24 left-4 right-4 z-50 max-w-3xl mx-auto">
+              <IntentConfirmationInline
+                intent={pendingIntent.intent}
+                onConfirm={handleConfirmIntent}
+                onDismiss={handleDismissIntent}
+                isCreating={intentLoading}
+              />
+            </div>
+          )}
+
           <SpaceChatBoard
             spaceId={spaceId ?? ""}
             spaceName={space.name}
