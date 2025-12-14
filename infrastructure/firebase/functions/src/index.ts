@@ -21,6 +21,9 @@ import * as roleClaims from './verification/role-claims';
 // Import event state management functions
 import * as eventStateTransitions from './event_state_transitions';
 
+// Import event reminder functions
+import * as eventReminders from './events/reminders';
+
 // Import new space denormalization functions
 import * as spaceDenormalization from './spaces/denormalization';
 import * as pagination from './spaces/pagination';
@@ -82,13 +85,12 @@ export const verification = {
   processEmailVerification: emailVerification.processEmailVerification,
   submitVerificationCode: emailVerification.submitVerificationCode,
   cleanupExpiredVerifications: emailVerification.cleanupExpiredVerifications,
-  
+
   // Role claims functions
   updateUserRoleClaims: roleClaims.updateUserRoleClaims,
   processVerificationStatusChange: roleClaims.processVerificationStatusChange,
   requestVerifiedPlusClaim: roleClaims.requestVerifiedPlusClaim,
   approveVerifiedPlusClaim: roleClaims.approveVerifiedPlusClaim,
-  handleEventStateTransitions: eventStateTransitions.handleEventStateTransitions
 };
 
 export const spaces = {
@@ -120,6 +122,16 @@ export const feed = {
     unmuteUser: mute.unmuteUser,
     reportContent: report.reportContent,
     sayHello: sayHello.sayHello,
+};
+
+export const events = {
+    // Event lifecycle state transitions (every 15 minutes)
+    updateEventStates: eventStateTransitions.updateEventStates,
+    validateEventCreation: eventStateTransitions.validateEventCreation,
+    transitionEventState: eventStateTransitions.transitionEventState,
+    // Event reminder automations (every 5 minutes)
+    eventReminders: eventReminders.eventReminders,
+    cleanupSentReminders: eventReminders.cleanupSentReminders,
 };
 
 export * from "./auth/sendMagicLink";

@@ -45,6 +45,9 @@ export const COLLECTIONS = {
   ACTIVITY_EVENTS: 'activityEvents',
   BUILDER_REQUESTS: 'builderRequests',
   CONTENT_REPORTS: 'contentReports',
+  // HiveLab automation tracking
+  SENT_REMINDERS: 'sentReminders',
+  AUTOMATIONS: 'automations',
 
   // Legacy flat collections (to be migrated)
   /** @deprecated Use getPostsCollection(spaceId) for nested access */

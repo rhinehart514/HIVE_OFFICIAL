@@ -34,6 +34,13 @@ import {
   EventCreateModal,
   ToolRuntimeModal,
   IntentConfirmationInline,
+  AutomationsPanel,
+  AutomationTemplatesCompact,
+  AutomationTemplates,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -44,12 +51,13 @@ import {
   type SlashCommandData,
   type DetectedIntent,
 } from "@hive/ui";
-import { SpaceBoardSkeleton } from "@hive/ui";
+import { SpaceBoardSkeleton, toast } from "@hive/ui";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
+import { useAutomations } from "@/hooks/use-automations";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 
@@ -362,6 +370,9 @@ function SpaceDetailContent() {
   const [selectedTool, setSelectedTool] = React.useState<SelectedTool | null>(null);
   const [toolModalOpen, setToolModalOpen] = React.useState(false);
 
+  // Automation templates modal state (Phase 3.5)
+  const [showTemplates, setShowTemplates] = React.useState(false);
+
   // Mobile drawer state
   const [activeDrawer, setActiveDrawer] = React.useState<MobileDrawerType | null>(null);
 
@@ -386,6 +397,16 @@ function SpaceDetailContent() {
     spaceId: spaceId ?? '',
     enabled: !!spaceId,
   });
+
+  // Automations for this space (HiveLab Phase 3)
+  const {
+    automations,
+    isLoading: automationsLoading,
+    isLeader: canManageAutomations,
+    toggle: toggleAutomation,
+    remove: removeAutomation,
+    refetch: refetchAutomations,
+  } = useAutomations(spaceId);
 
   // Chat intent detection (HiveLab AI-powered component creation)
   const {
@@ -628,13 +649,25 @@ function SpaceDetailContent() {
         // Component created - clear pending state
         // The component will appear in chat via real-time sync
         setPendingIntent(null);
+
+        // Show success toast with component type
+        const typeLabels: Record<string, string> = {
+          poll: 'Poll',
+          rsvp: 'RSVP',
+          countdown: 'Countdown',
+          announcement: 'Announcement',
+        };
+        const label = typeLabels[pendingIntent.intent.intentType] || 'Component';
+        toast.success(`${label} created`, 'Your interactive component is now live in the chat.');
       } else {
         // Creation failed but not an error - maybe needs more info
         // Keep the pending state and let user modify
         console.warn('[Space] Intent component not created:', result.error);
+        toast.error('Could not create component', result.error || 'Please try again or send as a regular message.');
       }
     } catch (err) {
       console.error('[Space] Failed to create intent component:', err);
+      toast.error('Failed to create component', 'An unexpected error occurred. Please try again.');
       // Keep pending state so user can retry or dismiss
     }
   }, [pendingIntent, createIntentComponent]);
@@ -695,16 +728,28 @@ function SpaceDetailContent() {
       }
 
       // Component created - the message will appear via real-time sync
-      // No need to manually refresh
+      const typeLabels: Record<string, string> = {
+        poll: 'Poll',
+        rsvp: 'RSVP',
+        countdown: 'Countdown',
+        custom: 'Component',
+      };
+      toast.success(`${typeLabels[apiType] || 'Tool'} added`, 'Your interactive component is now live in the chat.');
     } catch (err) {
       console.error('[Space] Failed to insert tool:', err);
-      // Could show a toast here
+      toast.error('Failed to add tool', err instanceof Error ? err.message : 'Please try again.');
     }
   }, [spaceId, activeBoardId]);
 
   // Handler for slash commands (e.g., /poll "Question?" Option1, Option2)
   const handleSlashCommand = React.useCallback(async (command: SlashCommandData) => {
     if (!spaceId || !activeBoardId) return;
+
+    // Check if this is an automation command
+    const automationCommands = ['welcome', 'remind', 'automate'];
+    if (automationCommands.includes(command.command)) {
+      return handleAutomationCommand(command);
+    }
 
     try {
       // Map slash command to component API format
@@ -772,8 +817,164 @@ function SpaceDetailContent() {
       }
 
       // Component created - will appear via real-time sync
+      // Show success toast
+      const typeLabels: Record<string, string> = {
+        poll: 'Poll',
+        rsvp: 'RSVP',
+        countdown: 'Countdown',
+        custom: 'Component',
+      };
+      toast.success(`${typeLabels[apiType] || 'Component'} created`, 'Your interactive component is now live.');
     } catch (err) {
       console.error('[Space] Failed to execute slash command:', err);
+      toast.error('Command failed', err instanceof Error ? err.message : 'Failed to create component');
+    }
+  }, [spaceId, activeBoardId]);
+
+  // Handler for automation slash commands (/welcome, /remind, /automate)
+  const handleAutomationCommand = React.useCallback(async (command: SlashCommandData) => {
+    if (!spaceId) return;
+
+    try {
+      let automationPayload: {
+        name: string;
+        description?: string;
+        trigger: { type: string; config: Record<string, unknown> };
+        action: { type: string; config: Record<string, unknown> };
+        creationSource: string;
+        creationPrompt: string;
+      };
+
+      switch (command.command) {
+        case 'welcome': {
+          // /welcome "Message" [--delay=<seconds>] [--board=<boardId>]
+          const message = command.primaryArg || 'Welcome to our space! 👋';
+          const delay = command.flags.delay ? Number(command.flags.delay) * 1000 : 0;
+          const boardId = (command.flags.board as string) || activeBoardId || 'general';
+
+          automationPayload = {
+            name: 'Welcome Message',
+            description: `Auto-greet new members: "${message.slice(0, 50)}${message.length > 50 ? '...' : ''}"`,
+            trigger: {
+              type: 'member_join',
+              config: { delayMs: delay },
+            },
+            action: {
+              type: 'send_message',
+              config: {
+                boardId,
+                content: message,
+              },
+            },
+            creationSource: 'slash_command',
+            creationPrompt: command.raw,
+          };
+          break;
+        }
+
+        case 'remind': {
+          // /remind <minutes> ["Message"] [--board=<boardId>]
+          const beforeMinutes = parseInt(command.primaryArg || '30', 10);
+          const message = command.listArgs[0] || `📅 Reminder: {event.title} starts in ${beforeMinutes} minutes!`;
+          const boardId = (command.flags.board as string) || activeBoardId || 'general';
+
+          automationPayload = {
+            name: `Event Reminder (${beforeMinutes} min)`,
+            description: `Remind members ${beforeMinutes} minutes before events`,
+            trigger: {
+              type: 'event_reminder',
+              config: { beforeMinutes },
+            },
+            action: {
+              type: 'send_message',
+              config: {
+                boardId,
+                content: message,
+              },
+            },
+            creationSource: 'slash_command',
+            creationPrompt: command.raw,
+          };
+          break;
+        }
+
+        case 'automate': {
+          // /automate <type> "Name" [config]
+          const automationType = command.primaryArg?.toLowerCase() || 'welcome';
+          const name = command.listArgs[0] || `Custom ${automationType} automation`;
+
+          // Build trigger/action based on automation type
+          if (automationType === 'welcome') {
+            automationPayload = {
+              name,
+              trigger: { type: 'member_join', config: {} },
+              action: {
+                type: 'send_message',
+                config: {
+                  boardId: activeBoardId || 'general',
+                  content: 'Welcome to our space!',
+                },
+              },
+              creationSource: 'slash_command',
+              creationPrompt: command.raw,
+            };
+          } else if (automationType === 'reminder') {
+            const beforeMinutes = Number(command.flags.before) || 30;
+            automationPayload = {
+              name,
+              trigger: { type: 'event_reminder', config: { beforeMinutes } },
+              action: {
+                type: 'send_message',
+                config: {
+                  boardId: activeBoardId || 'general',
+                  content: `📅 {event.title} starts in ${beforeMinutes} minutes!`,
+                },
+              },
+              creationSource: 'slash_command',
+              creationPrompt: command.raw,
+            };
+          } else {
+            toast.error('Unknown automation type', `Type "${automationType}" is not supported yet.`);
+            return;
+          }
+          break;
+        }
+
+        default:
+          return;
+      }
+
+      const response = await secureApiFetch(`/api/spaces/${spaceId}/automations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(automationPayload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create automation');
+      }
+
+      const result = await response.json();
+
+      // Show success toast with automation-specific messaging
+      const triggerLabels: Record<string, string> = {
+        member_join: 'when new members join',
+        event_reminder: 'before events start',
+        schedule: 'on schedule',
+        keyword: 'when keywords are detected',
+      };
+      const triggerDesc = triggerLabels[automationPayload.trigger.type] || '';
+
+      toast.success(
+        `${automationPayload.name} active!`,
+        `Will automatically run ${triggerDesc}.`
+      );
+
+      console.log('[Space] Automation created:', result);
+    } catch (err) {
+      console.error('[Space] Failed to create automation:', err);
+      toast.error('Automation failed', err instanceof Error ? err.message : 'Failed to create automation');
     }
   }, [spaceId, activeBoardId]);
 
@@ -979,6 +1180,26 @@ function SpaceDetailContent() {
             </div>
           )}
 
+          {/* Automations Panel - shows for leaders (HiveLab Phase 3) */}
+          {canManageAutomations && (
+            <div className="p-4 border-b border-neutral-800 space-y-3">
+              <AutomationsPanel
+                automations={automations}
+                isLeader={canManageAutomations}
+                isLoading={automationsLoading}
+                onToggle={toggleAutomation}
+                onDelete={removeAutomation}
+              />
+              {/* Quick Templates Button (Phase 3.5) */}
+              {automations.length < 5 && (
+                <AutomationTemplatesCompact
+                  onOpenFull={() => setShowTemplates(true)}
+                  templateCount={6}
+                />
+              )}
+            </div>
+          )}
+
           {/* Main sidebar content */}
           <SpaceSidebar
             data={sidebarData}
@@ -1121,6 +1342,41 @@ function SpaceDetailContent() {
         onLoadMore={loadMoreReplies}
         onSendReply={async (content: string) => { await sendThreadReply(content); }}
       />
+
+      {/* Automation Templates Sheet (Phase 3.5) */}
+      <Sheet open={showTemplates} onOpenChange={setShowTemplates}>
+        <SheetContent side="right" className="w-full sm:max-w-lg bg-[#0a0a0a] border-l border-white/[0.08]">
+          <SheetHeader className="border-b border-white/[0.08] pb-4">
+            <SheetTitle className="text-white">Automation Templates</SheetTitle>
+          </SheetHeader>
+          <div className="py-6 overflow-y-auto max-h-[calc(100vh-8rem)]">
+            <AutomationTemplates
+              spaceId={spaceId ?? ''}
+              fetchTemplates={async () => {
+                const res = await secureApiFetch('/api/automations/templates');
+                if (!res.ok) throw new Error('Failed to fetch templates');
+                return res.json();
+              }}
+              onApplyTemplate={async (templateId, customValues, name) => {
+                const res = await secureApiFetch(`/api/spaces/${spaceId}/automations/from-template`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ templateId, customValues, name }),
+                });
+                if (!res.ok) {
+                  const data = await res.json();
+                  throw new Error(data.error || 'Failed to apply template');
+                }
+                toast.success('Automation enabled', 'It will start working automatically.');
+              }}
+              onAutomationCreated={() => {
+                // Refresh the automations list
+                refetchAutomations();
+              }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Error state */}
       {error && (

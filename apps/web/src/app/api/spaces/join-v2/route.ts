@@ -274,6 +274,77 @@ export const POST = withAuthValidationAndErrors(
           userId,
         });
       }
+
+      // Trigger member_join automations (welcome messages, etc.)
+      try {
+        const userDoc = await dbAdmin.collection('users').doc(userId).get();
+        const memberName = userDoc.data()?.fullName || userDoc.data()?.displayName || 'Member';
+
+        // Find and execute member_join automations
+        const automationsSnapshot = await dbAdmin
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('automations')
+          .where('trigger.type', '==', 'member_join')
+          .where('enabled', '==', true)
+          .get();
+
+        if (!automationsSnapshot.empty) {
+          logger.info('[join-v2] Triggering member_join automations', {
+            spaceId,
+            userId,
+            automationCount: automationsSnapshot.size,
+          });
+
+          // Execute each automation inline (fire-and-forget for speed)
+          automationsSnapshot.docs.forEach(async (doc) => {
+            const automation = doc.data();
+            try {
+              await executeWelcomeAutomation(
+                automation,
+                doc.id,
+                spaceId,
+                campusId,
+                userId,
+                memberName
+              );
+
+              // Record success
+              await doc.ref.update({
+                'stats.timesTriggered': admin.firestore.FieldValue.increment(1),
+                'stats.successCount': admin.firestore.FieldValue.increment(1),
+                'stats.lastTriggered': admin.firestore.FieldValue.serverTimestamp(),
+              });
+
+              logger.info('[join-v2] Welcome automation executed', {
+                automationId: doc.id,
+                automationName: automation.name,
+                spaceId,
+                newMemberId: userId,
+              });
+            } catch (autoError) {
+              // Record failure
+              await doc.ref.update({
+                'stats.timesTriggered': admin.firestore.FieldValue.increment(1),
+                'stats.failureCount': admin.firestore.FieldValue.increment(1),
+                'stats.lastTriggered': admin.firestore.FieldValue.serverTimestamp(),
+              });
+
+              logger.error('[join-v2] Welcome automation failed', {
+                automationId: doc.id,
+                error: autoError instanceof Error ? autoError.message : String(autoError),
+              });
+            }
+          });
+        }
+      } catch (automationError) {
+        // Don't fail the join if automation fails
+        logger.warn('[join-v2] Failed to trigger automations', {
+          error: automationError instanceof Error ? automationError.message : String(automationError),
+          spaceId,
+          userId,
+        });
+      }
     }
 
     return respond.success({
@@ -282,3 +353,99 @@ export const POST = withAuthValidationAndErrors(
     }, { message: 'Successfully joined the space' });
   }
 );
+
+/**
+ * Execute a welcome message automation
+ * Sends the configured welcome message to the appropriate board
+ */
+async function executeWelcomeAutomation(
+  automation: admin.firestore.DocumentData,
+  automationId: string,
+  spaceId: string,
+  campusId: string,
+  newMemberId: string,
+  memberName: string
+): Promise<void> {
+  const action = automation.action;
+
+  // Only handle send_message actions for now
+  if (action?.type !== 'send_message') {
+    logger.warn('[join-v2] Unsupported automation action type', {
+      automationId,
+      actionType: action?.type,
+    });
+    return;
+  }
+
+  const config = action.config || {};
+  let boardId = config.boardId || 'general';
+  let content = config.content || 'Welcome to our space!';
+
+  // Interpolate member variables
+  content = content
+    .replace(/\{member\}/g, memberName)
+    .replace(/\{member\.name\}/g, memberName)
+    .replace(/\{member\.id\}/g, newMemberId);
+
+  // Find the target board
+  const boardsRef = dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('boards');
+
+  if (boardId === 'general') {
+    // Find the general board by name
+    const generalBoard = await boardsRef
+      .where('name', '==', 'General')
+      .limit(1)
+      .get();
+
+    if (!generalBoard.empty) {
+      boardId = generalBoard.docs[0].id;
+    } else {
+      // Try finding any board
+      const anyBoard = await boardsRef.limit(1).get();
+      if (!anyBoard.empty) {
+        boardId = anyBoard.docs[0].id;
+      } else {
+        logger.error('[join-v2] No board found for welcome message', {
+          automationId,
+          spaceId,
+        });
+        return;
+      }
+    }
+  }
+
+  // Create the welcome message
+  const messageRef = boardsRef.doc(boardId).collection('messages').doc();
+  const now = new Date();
+
+  await messageRef.set({
+    id: messageRef.id,
+    spaceId,
+    boardId,
+    content,
+    authorId: 'system', // System-generated message
+    authorName: '🤖 HIVE Bot',
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    type: 'system',
+    metadata: {
+      isAutomation: true,
+      automationId,
+      automationName: automation.name,
+      triggerType: 'member_join',
+      triggeredBy: newMemberId,
+    },
+    campusId,
+  });
+
+  logger.info('[join-v2] Welcome message sent', {
+    messageId: messageRef.id,
+    automationId,
+    spaceId,
+    boardId,
+    newMemberId,
+  });
+}

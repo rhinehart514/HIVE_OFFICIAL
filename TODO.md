@@ -1,7 +1,7 @@
 # HIVE TODO.md - Strategic Roadmap & Technical Audit
 
-**Last Updated:** December 14, 2024 (Session 14 - HiveLab Phase 2 Complete)
-**Platform Health:** 90% Production Ready (SSE verified working, DDD integrated, ownership detection fixed)
+**Last Updated:** December 14, 2024 (Session 16 - HiveLab Phase 3.5 Enhancements)
+**Platform Health:** 95% Production Ready (Automations + Scheduler + Templates)
 **Launch Verdict:** SHIP IT - Stop re-auditing, code is more complete than documented
 
 ---
@@ -452,6 +452,66 @@ apps/web/src/test/integration/
 ---
 
 ## 📅 Session Log
+
+### December 14, 2024 (Session 16 - HiveLab Phase 3.5 Enhancements)
+- ✅ **Event Reminder Scheduler** - Cloud Function for automated event reminders
+  - `infrastructure/firebase/functions/src/events/reminders.ts`
+  - Runs every 5 minutes, checks for events starting in next hour
+  - Triggers event_reminder automations automatically
+  - Sends messages to space chat boards
+  - Tracks sent reminders to prevent duplicates
+  - Weekly cleanup of old reminder records
+- ✅ **Automation Templates** - Pre-built automation configurations
+  - `packages/core/src/domain/hivelab/automation-templates.ts`
+  - 6 templates: Welcome (2 variants), Event Reminders (30min, 1hr, 1day), Keyword Alert, Reaction Milestone
+  - API endpoints: `/api/automations/templates`, `/api/spaces/[spaceId]/automations/from-template`
+  - Helper functions: createFromTemplate(), getTemplatesByCategory()
+- ✅ **Templates Browser UI** - Visual template selection for leaders
+  - `packages/ui/src/components/hivelab/automation-templates.tsx`
+  - AutomationTemplates - Full browsing experience with category filters
+  - AutomationTemplatesCompact - Quick-access button for sidebar
+  - Category styles: engagement (green), events (blue), notifications (amber)
+- ✅ **Space UI Integration** - Templates accessible from space sidebar
+  - Added AutomationTemplatesCompact button after AutomationsPanel
+  - Sheet/drawer for full templates browser
+  - Auto-refreshes automation list on template apply
+- **End-to-end flow now works:**
+  ```
+  Leader clicks "Quick Automations" → Browses templates
+  → Clicks "Enable" on "30-Min Event Reminder"
+  → Automation created instantly
+  → 30 mins before next event → Reminder posted automatically
+  ```
+- Phase 3.5 COMPLETE: Event reminders and templates fully operational
+
+### December 14, 2024 (Session 15 - HiveLab Phase 3 Automations MVP COMPLETE)
+- ✅ **Toast Feedback** - Success/error toasts for component creation
+- ✅ **Automation Entity** - `packages/core/src/domain/hivelab/entities/automation.ts`
+  - Triggers: member_join, event_reminder, schedule, keyword, reaction_threshold
+  - Actions: send_message, create_component, assign_role, notify
+- ✅ **Automation API Endpoints** - Full CRUD at `/api/spaces/[spaceId]/automations`
+  - Plus `/trigger` endpoint for executing automations
+- ✅ **Automation Slash Commands** - Wire directly to automation API
+  - `/welcome "Hey {member}!"` → Creates member_join automation
+  - `/remind 30` → Creates event_reminder automation
+  - `/automate <type> "Name"` → Custom automations
+- ✅ **Automation Executor** - `packages/core/src/application/hivelab/automation-executor.service.ts`
+  - Processes triggers, executes actions, interpolates variables
+- ✅ **Member Join Hook** - `apps/web/src/app/api/spaces/join-v2/route.ts`
+  - Automatically triggers member_join automations when new member joins
+  - Sends welcome messages to General board
+- ✅ **Automations UI** - Visibility layer for leaders
+  - `useAutomations` hook - CRUD operations
+  - `AutomationsPanel` - Sidebar component
+  - `AutomationsBadge` - Compact indicator
+- **End-to-end flow now works:**
+  ```
+  Leader: /welcome "Hey {member}! Welcome! 👋"
+  → Automation created
+  → New member joins
+  → Welcome message posted automatically
+  ```
+- Phase 3 MVP COMPLETE: Full automation system operational
 
 ### December 14, 2024 (Session 14 - HiveLab Phase 2 Complete)
 - ✅ **Slash Command Autocomplete** - Added to `packages/ui/src/atomic/03-Chat/chat-input.tsx`

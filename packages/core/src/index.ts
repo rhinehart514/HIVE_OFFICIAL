@@ -216,6 +216,40 @@ export type {
   ElementCategory
 } from "./domain/hivelab/tool-composition.types";
 
+// HiveLab Automation Entity (Phase 3)
+export {
+  Automation,
+  type AutomationProps,
+  type AutomationDTO,
+  type AutomationTrigger,
+  type AutomationAction,
+  type AutomationStats,
+  type AutomationContext,
+  type AutomationResult,
+  // Trigger types
+  type MemberJoinTrigger,
+  type EventReminderTrigger,
+  type ScheduleTrigger,
+  type KeywordTrigger,
+  type ReactionThresholdTrigger,
+  // Action types
+  type SendMessageAction,
+  type CreateComponentAction,
+  type AssignRoleAction,
+  type NotifyAction,
+} from "./domain/hivelab/entities";
+
+// HiveLab Automation Templates (Phase 3.5)
+export {
+  AUTOMATION_TEMPLATES,
+  getAllTemplates,
+  getTemplatesByCategory,
+  getTemplateById,
+  createFromTemplate,
+  getTemplateCategories,
+  type AutomationTemplate,
+} from "./domain/hivelab/automation-templates";
+
 // HiveLab Element Registry
 export {
   registerElement,
