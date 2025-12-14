@@ -247,7 +247,7 @@ async function createSessionResponse(
   email: string,
   campusId: string,
   isDevMode: boolean,
-  respond: typeof ResponseFormatter
+  _respond: typeof ResponseFormatter
 ): Promise<NextResponse> {
   // Get or create user
   let userId: string;

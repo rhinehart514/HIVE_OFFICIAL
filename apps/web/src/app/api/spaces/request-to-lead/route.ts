@@ -11,7 +11,14 @@ import {
 } from '@/lib/middleware';
 import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
-import { getServerSpaceRepository } from '@hive/core/server';
+import {
+  getServerSpaceRepository,
+  getCategoryRules,
+  canRequestLeadership,
+  hasReachedLeaderLimit,
+  normalizeCategory,
+  type SpaceCategoryValue,
+} from '@hive/core/server';
 
 const requestToLeadSchema = z.object({
   spaceId: z.string().min(1, 'Space ID is required'),
@@ -74,6 +81,52 @@ export const POST = withAuthValidationAndErrors(
         return respond.error('Access denied for this campus', 'FORBIDDEN', {
           status: HttpStatus.FORBIDDEN,
         });
+      }
+
+      // Category-based leadership validation
+      const category = normalizeCategory(space.category.value || 'student_org') as SpaceCategoryValue;
+      const categoryRules = getCategoryRules(category);
+
+      // Check if this category allows leader requests at all
+      if (!canRequestLeadership(category)) {
+        return respond.error(
+          categoryRules.leadershipDescription || 'Leader requests are not available for this space type',
+          'FORBIDDEN',
+          {
+            status: HttpStatus.FORBIDDEN,
+            details: {
+              category,
+              reason: 'category_locked',
+            },
+          },
+        );
+      }
+
+      // Count current leaders to check against max limit
+      const currentLeadersSnapshot = await dbAdmin
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('isActive', '==', true)
+        .where('role', 'in', ['owner', 'admin', 'moderator'])
+        .get();
+
+      const currentLeaderCount = currentLeadersSnapshot.size;
+
+      // Check if space has reached its leader limit
+      if (hasReachedLeaderLimit(category, currentLeaderCount)) {
+        return respond.error(
+          `This space has reached its maximum of ${categoryRules.maxLeaders} leaders`,
+          'CONFLICT',
+          {
+            status: HttpStatus.CONFLICT,
+            details: {
+              category,
+              maxLeaders: categoryRules.maxLeaders,
+              currentLeaders: currentLeaderCount,
+              reason: 'leader_limit_reached',
+            },
+          },
+        );
       }
 
       // Prevent duplicate or unnecessary requests

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { VoidShell } from "@hive/ui";
+import { AuthShellStatic } from "@/components/auth/auth-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -32,18 +32,18 @@ export default function VerifyPage() {
   }, [router]);
 
   return (
-    <VoidShell maxWidth="sm">
+    <AuthShellStatic>
       <div className="text-center space-y-6">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-500 mx-auto" />
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-500 mx-auto" />
         <div className="space-y-2">
           <h1 className="text-xl font-semibold text-white">
             Redirecting...
           </h1>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zinc-500">
             We&apos;ve updated our sign-in process. Taking you to the new login page.
           </p>
         </div>
       </div>
-    </VoidShell>
+    </AuthShellStatic>
   );
 }

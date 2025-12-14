@@ -216,13 +216,13 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
               <motion.h1
                 id="spaces-title"
                 variants={safeItemVariants}
-                className="text-[40px] md:text-[56px] font-semibold tracking-tight leading-[1] mb-8 text-center"
+                className="text-4xl md:text-5xl font-semibold tracking-tight leading-none mb-8 text-center"
               >
                 {isExplorer ? 'Where do you belong?' : 'Where do you lead?'}
               </motion.h1>
               <motion.p
                 variants={safeItemVariants}
-                className="text-gray-400 text-center mb-12 text-lg"
+                className="text-zinc-400 text-center mb-12 text-lg"
               >
                 {isExplorer
                   ? 'Pick the communities that feel like home'
@@ -314,8 +314,8 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
                   aria-label={`University Orgs - ${isExplorer ? `${categoryCounts.university_org.total} communities` : categoryCounts.university_org.unclaimed > 0 ? `${categoryCounts.university_org.unclaimed} unclaimed` : 'All claimed'}`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Uni Orgs</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-zinc-400">Uni Orgs</span>
+                    <span className="text-xs text-zinc-500">
                       {isExplorer
                         ? `${categoryCounts.university_org.total} communities`
                         : categoryCounts.university_org.unclaimed > 0
@@ -330,7 +330,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
               <motion.div variants={safeItemVariants} className="mt-8 text-center">
                 <button
                   onClick={() => setSelectedCategory('student_org')}
-                  className="text-sm text-gray-600 hover:text-gray-400 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
+                  className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
                 >
                   Search all →
                 </button>
@@ -341,7 +341,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
                 <motion.div variants={safeItemVariants} className="mt-12 text-center">
                   <button
                     onClick={handleSkip}
-                    className="text-sm text-gray-600 hover:text-gray-400 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
+                    className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
                   >
                     Skip
                   </button>
@@ -373,7 +373,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
             className="p-2 rounded-lg hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
             aria-label="Go back to categories"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-400" aria-hidden="true" />
+            <ArrowLeft className="w-5 h-5 text-zinc-400" aria-hidden="true" />
           </button>
           <h1 id="category-title" className="text-2xl font-semibold text-white">
             {CATEGORIES.find((c) => c.id === selectedCategory)?.label}
@@ -383,14 +383,14 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
         {/* Search */}
         <motion.div variants={safeItemVariants} className="mb-6">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" aria-hidden="true" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" aria-hidden="true" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search..."
               aria-label="Search spaces"
-              className="w-full h-12 pl-11 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-gray-600 focus:outline-none focus:border-gold-500/30 focus:ring-2 focus:ring-gold-500/10 transition-all"
+              className="w-full h-12 pl-11 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 focus:outline-none focus:border-gold-500/30 focus:ring-2 focus:ring-gold-500/10 transition-all"
             />
           </div>
         </motion.div>
@@ -417,10 +417,10 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
                     }`}
                   >
                     <div className="flex-1 min-w-0">
-                      <span className={`font-medium ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                      <span className={`font-medium ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
                         {space.name}
                       </span>
-                      <span className="text-xs text-gray-500 ml-2">
+                      <span className="text-xs text-zinc-500 ml-2">
                         {space.memberCount} members
                       </span>
                     </div>
@@ -431,7 +431,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
                       className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                         isSelected
                           ? 'bg-gold-500 text-black'
-                          : 'bg-white/5 text-gray-500'
+                          : 'bg-white/5 text-zinc-500'
                       }`}
                     >
                       {isSelected ? (
@@ -449,17 +449,17 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
             <AnimatePresence>
               {selectedSpaceIds.size > 0 && (
                 <motion.div
-                  initial={{ opacity: 0, y: 100 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 100 }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 100 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 100 }}
+                  transition={shouldReduceMotion ? { duration: 0.15 } : { type: 'spring', damping: 25, stiffness: 300 }}
                   className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/95 to-transparent"
                 >
                   <div className="max-w-2xl mx-auto flex items-center justify-between gap-4">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-zinc-400">
                       <motion.span
                         key={selectedSpaceIds.size}
-                        initial={{ opacity: 0, y: -10 }}
+                        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="inline-block text-gold-500 font-medium"
                       >
@@ -504,7 +504,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-lg font-semibold text-white">{unclaimedSpaces[0].name}</h3>
-                          <p className="text-sm text-gray-500 mt-1">
+                          <p className="text-sm text-zinc-500 mt-1">
                             {unclaimedSpaces[0].memberCount} waiting
                           </p>
                         </div>
@@ -542,12 +542,12 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
             {/* Claimed spaces - compact */}
             {claimedSpaces.length > 0 && (
               <motion.div variants={itemVariants}>
-                <p className="text-xs text-gray-600 mb-3">Already claimed</p>
+                <p className="text-xs text-zinc-600 mb-3">Already claimed</p>
                 <div className="flex flex-wrap gap-2">
                   {claimedSpaces.slice(0, 12).map((space) => (
-                    <span key={space.id} className="text-sm text-gray-500">
+                    <span key={space.id} className="text-sm text-zinc-500">
                       {space.name}
-                      {space.leaderHandle && <span className="text-gray-600"> @{space.leaderHandle}</span>}
+                      {space.leaderHandle && <span className="text-zinc-600"> @{space.leaderHandle}</span>}
                       {claimedSpaces.indexOf(space) < claimedSpaces.length - 1 && ' · '}
                     </span>
                   ))}
@@ -560,7 +560,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
         {/* No results */}
         {filteredSpaces.length === 0 && !isLoading && (
           <motion.div variants={itemVariants} className="text-center py-12">
-            <p className="text-gray-500">
+            <p className="text-zinc-500">
               {searchQuery ? `No matches for "${searchQuery}"` : 'No spaces in this category'}
             </p>
           </motion.div>
@@ -585,7 +585,7 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
           <motion.div variants={itemVariants} className="mt-12 text-center">
             <button
               onClick={handleSkip}
-              className="text-sm text-gray-600 hover:text-gray-400 transition-colors"
+              className="text-sm text-zinc-600 hover:text-zinc-400 transition-colors"
             >
               Skip
             </button>

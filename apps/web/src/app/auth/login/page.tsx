@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Loader2, ArrowRight, ArrowLeft, Check, Mail } from 'lucide-react';
-import { HiveLogo } from '@hive/ui';
+import { AuthShell, AuthShellStatic } from '@/components/auth/auth-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,40 +56,21 @@ const successVariants = {
 
 function LoginPageFallback() {
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden" suppressHydrationWarning>
-      {/* Ambient glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none opacity-[0.03]"
-        style={{
-          background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-        }}
-      />
-
-      {/* Container - centered, max-width for readability */}
-      <div className="w-full max-w-sm relative z-10">
-
-        {/* HIVE Logo - prominent, centered */}
-        <div className="flex justify-center mb-12">
-          <HiveLogo size="lg" variant="default" showText />
+    <AuthShellStatic>
+      <div className="space-y-8">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-semibold text-white">
+            Sign in
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Loading...
+          </p>
         </div>
-
-        {/* Loading State */}
-        <div className="space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-semibold text-white">
-              Sign in
-            </h1>
-            <p className="text-sm text-neutral-500">
-              Loading...
-            </p>
-          </div>
-          <div className="flex justify-center">
-            <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
-          </div>
+        <div className="flex justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
         </div>
       </div>
-    </div>
+    </AuthShellStatic>
   );
 }
 
@@ -271,41 +252,8 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden" suppressHydrationWarning>
-      {/* Ambient glow - breathing effect */}
-      <motion.div
-        initial={{ opacity: 0.03 }}
-        animate={shouldReduceMotion ? {} : {
-          opacity: [0.03, 0.06, 0.03],
-          scale: [1, 1.05, 1],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[600px] h-[400px] md:h-[600px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle, rgba(255, 215, 0, 0.12) 0%, transparent 70%)',
-          filter: 'blur(80px)',
-        }}
-        aria-hidden="true"
-      />
-
-      {/* Container - centered, max-width for readability */}
-      <div className="w-full max-w-sm relative z-10">
-
-        {/* HIVE Logo - prominent, centered */}
-        <motion.div
-          initial={shouldReduceMotion ? {} : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: EASE_PREMIUM }}
-          className="flex justify-center mb-12"
-        >
-          <HiveLogo size="lg" variant="default" showText />
-        </motion.div>
-
-        <AnimatePresence mode="wait">
+    <AuthShell>
+      <AnimatePresence mode="wait">
           {/* Success State */}
           {loginState === 'success' && (
             <motion.div
@@ -357,7 +305,7 @@ function LoginContent() {
                 <h1 className="text-3xl font-bold text-white tracking-tight">
                   You&apos;re in.
                 </h1>
-                <p className="text-neutral-500 text-sm">
+                <p className="text-zinc-500 text-sm">
                   {isNewUser ? 'Let\'s get you set up' : 'Welcome back'}
                 </p>
               </motion.div>
@@ -404,14 +352,15 @@ function LoginContent() {
                 <h1 className="text-2xl font-semibold text-white">
                   Check your email
                 </h1>
-                <p className="text-sm text-neutral-500">
-                  We sent a code to <span className="text-neutral-400">{fullEmail}</span>
+                <p className="text-sm text-zinc-500">
+                  We sent a code to <span className="text-zinc-400">{fullEmail}</span>
                 </p>
               </motion.div>
 
               {/* OTP Input */}
               <motion.div variants={itemVariants} className="space-y-4">
-                <div className="flex items-center justify-center gap-2">
+                {/* Responsive: smaller gap and inputs on small screens */}
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                   {[0, 1, 2, 3, 4, 5].map((index) => (
                     <motion.input
                       key={index}
@@ -430,13 +379,14 @@ function LoginContent() {
                       autoFocus={index === 0}
                       aria-label={`Digit ${index + 1} of 6`}
                       className={`
-                        w-12 h-14 text-center text-xl font-semibold
-                        bg-neutral-900/50 border rounded-xl
+                        w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold
+                        bg-zinc-900/50 border rounded-xl
                         text-white
                         outline-none transition-all duration-200
                         disabled:opacity-50 disabled:cursor-not-allowed
-                        ${code[index] ? 'border-gold-500 bg-gold-500/5' : 'border-neutral-800'}
+                        ${code[index] ? 'border-gold-500 bg-gold-500/5' : 'border-zinc-800'}
                         focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20
+                        focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black
                         ${codeError ? 'border-red-500 shake' : ''}
                       `}
                     />
@@ -471,7 +421,7 @@ function LoginContent() {
               {/* Resend + Back */}
               <motion.div variants={itemVariants} className="flex flex-col items-center gap-3">
                 {resendCooldown > 0 ? (
-                  <p className="text-sm text-neutral-600">
+                  <p className="text-sm text-zinc-600">
                     Resend in {formatCooldown(resendCooldown)}
                   </p>
                 ) : (
@@ -486,7 +436,7 @@ function LoginContent() {
                 <button
                   onClick={handleBackToInput}
                   disabled={loginState === 'verifying'}
-                  className="text-sm text-neutral-500 hover:text-white transition-colors inline-flex items-center gap-1"
+                  className="text-sm text-zinc-500 hover:text-white transition-colors inline-flex items-center gap-1"
                   aria-label="Go back to email input"
                 >
                   <ArrowLeft className="w-3 h-3" aria-hidden="true" />
@@ -511,11 +461,11 @@ function LoginContent() {
                 <h1 className="text-3xl font-semibold text-white tracking-tight">
                   {isNewUser ? 'Join HIVE' : 'Sign in to HIVE'}
                 </h1>
-                <p className="text-sm text-neutral-500">
+                <p className="text-sm text-zinc-500">
                   {isNewUser ? (
-                    <>Your <span className="text-neutral-400">{CAMPUS_CONFIG.name}</span> email is your key</>
+                    <>Your <span className="text-zinc-400">{CAMPUS_CONFIG.name}</span> email is your key</>
                   ) : (
-                    <>Use your <span className="text-neutral-400">{CAMPUS_CONFIG.name}</span> email</>
+                    <>Use your <span className="text-zinc-400">{CAMPUS_CONFIG.name}</span> email</>
                   )}
                 </p>
               </motion.div>
@@ -525,9 +475,9 @@ function LoginContent() {
                 {/* Email Input */}
                 <div className="space-y-2">
                   <div className={`
-                    flex items-center bg-neutral-900/50 border rounded-xl
+                    flex items-center bg-zinc-900/50 border rounded-xl
                     transition-all duration-200
-                    ${error ? 'border-red-500' : 'border-neutral-800'}
+                    ${error ? 'border-red-500' : 'border-zinc-800'}
                     focus-within:border-gold-500 focus-within:ring-2 focus-within:ring-gold-500/20
                   `}>
                     <input
@@ -551,11 +501,11 @@ function LoginContent() {
                       aria-describedby="email-domain"
                       className="
                         flex-1 bg-transparent px-4 py-3.5 text-white text-base
-                        placeholder:text-neutral-600
+                        placeholder:text-zinc-600
                         outline-none disabled:opacity-50
                       "
                     />
-                    <span id="email-domain" className="pr-4 text-neutral-500 text-sm">
+                    <span id="email-domain" className="pr-4 text-zinc-500 text-sm">
                       @{CAMPUS_CONFIG.domain}
                     </span>
                   </div>
@@ -585,8 +535,8 @@ function LoginContent() {
                     transition-all duration-200
                     disabled:cursor-not-allowed
                     ${email.trim()
-                      ? 'bg-white text-black hover:bg-neutral-100'
-                      : 'bg-neutral-800 text-neutral-500'
+                      ? 'bg-white text-black hover:bg-zinc-100'
+                      : 'bg-zinc-800 text-zinc-500'
                     }
                   `}
                 >
@@ -606,25 +556,25 @@ function LoginContent() {
 
               {/* Footer */}
               <motion.div variants={itemVariants} className="text-center space-y-3">
-                <p className="text-xs text-neutral-600 leading-relaxed">
+                <p className="text-xs text-zinc-600 leading-relaxed">
                   By continuing, you agree to our{' '}
-                  <a href="/legal/terms" className="text-neutral-500 hover:text-white transition-colors underline-offset-2 hover:underline">
+                  <a href="/legal/terms" className="text-zinc-500 hover:text-white transition-colors underline-offset-2 hover:underline">
                     Terms
                   </a>{' '}
                   and{' '}
-                  <a href="/legal/privacy" className="text-neutral-500 hover:text-white transition-colors underline-offset-2 hover:underline">
+                  <a href="/legal/privacy" className="text-zinc-500 hover:text-white transition-colors underline-offset-2 hover:underline">
                     Privacy Policy
                   </a>
                 </p>
                 {isNewUser ? (
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-xs text-zinc-600">
                     Already have an account?{' '}
                     <a href="/auth/login" className="text-gold-500 hover:text-gold-400 transition-colors">
                       Sign in
                     </a>
                   </p>
                 ) : (
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-xs text-zinc-600">
                     New to HIVE?{' '}
                     <a href="/auth/login?new=true" className="text-gold-500 hover:text-gold-400 transition-colors">
                       Get started
@@ -634,9 +584,8 @@ function LoginContent() {
               </motion.div>
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
-    </div>
+      </AnimatePresence>
+    </AuthShell>
   );
 }
 

@@ -40,6 +40,7 @@ import {
   type MemberInviteInput,
   type InviteableUser,
   type EventCreateInput,
+  type SlashCommandData,
 } from "@hive/ui";
 import { SpaceBoardSkeleton } from "@hive/ui";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
@@ -48,6 +49,27 @@ import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
+
+// ============================================================
+// Utilities
+// ============================================================
+
+/** Parse duration strings like "25m", "1h", "30s" into milliseconds */
+function parseDuration(durationStr: string): number {
+  const match = durationStr.match(/^(\d+)\s*(s|m|h|d)?$/i);
+  if (!match) return 5 * 60 * 1000; // Default 5 minutes
+
+  const value = parseInt(match[1], 10);
+  const unit = (match[2] || 'm').toLowerCase();
+
+  switch (unit) {
+    case 's': return value * 1000;
+    case 'm': return value * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    default: return value * 60 * 1000;
+  }
+}
 
 // ============================================================
 // Types
@@ -600,6 +622,81 @@ function SpaceDetailContent() {
     }
   }, [spaceId, activeBoardId]);
 
+  // Handler for slash commands (e.g., /poll "Question?" Option1, Option2)
+  const handleSlashCommand = React.useCallback(async (command: SlashCommandData) => {
+    if (!spaceId || !activeBoardId) return;
+
+    try {
+      // Map slash command to component API format
+      let apiType: 'poll' | 'countdown' | 'rsvp' | 'custom';
+      const config: Record<string, unknown> = {};
+
+      switch (command.command) {
+        case 'poll':
+          apiType = 'poll';
+          config.question = command.primaryArg || 'Quick Poll';
+          config.options = command.listArgs.length > 0 ? command.listArgs : ['Yes', 'No'];
+          config.allowMultiple = command.flags.multi === true || command.flags.multiple === true;
+          config.showResults = command.flags.results || 'after_vote';
+          break;
+
+        case 'timer':
+        case 'countdown':
+          apiType = 'countdown';
+          config.title = command.primaryArg || 'Timer';
+          // Parse duration from listArgs or flags (e.g., "25m", "1h", "30s")
+          const durationStr = command.listArgs[0] || command.flags.duration as string || '5m';
+          const duration = parseDuration(durationStr);
+          config.targetDate = new Date(Date.now() + duration).toISOString();
+          break;
+
+        case 'rsvp':
+        case 'event':
+          apiType = 'rsvp';
+          config.eventTitle = command.primaryArg || 'Event';
+          // Parse date from flags or default to tomorrow
+          const dateStr = command.flags.date as string || command.flags.when as string;
+          config.eventDate = dateStr ? new Date(dateStr).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+          config.allowMaybe = command.flags.maybe !== false;
+          break;
+
+        case 'announce':
+        case 'announcement':
+          apiType = 'custom';
+          config.elementType = 'announcement';
+          config.settings = {
+            message: command.primaryArg || command.raw.replace(/^\/\w+\s*/, ''),
+            style: command.flags.style || 'info',
+          };
+          break;
+
+        default:
+          console.warn(`[Space] Unknown slash command: ${command.command}`);
+          return;
+      }
+
+      const response = await secureApiFetch(`/api/spaces/${spaceId}/components`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardId: activeBoardId,
+          type: apiType,
+          content: '',
+          config,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create component');
+      }
+
+      // Component created - will appear via real-time sync
+    } catch (err) {
+      console.error('[Space] Failed to execute slash command:', err);
+    }
+  }, [spaceId, activeBoardId]);
+
   // Loading state
   if (isLoading || !space) {
     return (
@@ -707,6 +804,11 @@ function SpaceDetailContent() {
             ? () => router.push(`/spaces/${spaceId}/settings`)
             : undefined
         }
+        onAnalytics={
+          isLeader
+            ? () => router.push(`/spaces/${spaceId}/analytics`)
+            : undefined
+        }
       />
 
       {/* Board Tab Bar - Discord-style channel selector */}
@@ -757,7 +859,9 @@ function SpaceDetailContent() {
             onViewThread={openThread}
             onCreateBoard={isLeader ? handleCreateBoard : undefined}
             onInsertTool={isMember ? handleInsertTool : undefined}
+            onSlashCommand={isMember ? handleSlashCommand : undefined}
             showToolbar={isMember}
+            enableSlashCommands={isMember}
           />
         </main>
 
@@ -804,6 +908,8 @@ function SpaceDetailContent() {
               },
               onViewAll: () => router.push(`/spaces/${spaceId}/tools`),
               onLeaderClick: (leaderId) => router.push(`/profile/${leaderId}`),
+              // Events - navigate to space calendar with event focused
+              onEventClick: (eventId) => router.push(`/spaces/${spaceId}/calendar?event=${eventId}`),
               // Leader actions
               onInviteMember: isLeader ? () => setInviteMemberModalOpen(true) : undefined,
               onCreateEvent: isLeader ? () => setCreateEventModalOpen(true) : undefined,

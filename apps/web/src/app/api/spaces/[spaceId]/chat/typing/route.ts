@@ -8,7 +8,6 @@ import {
   type AuthenticatedRequest
 } from "@/lib/middleware";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
-import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * Typing Indicator API - Track who is typing in a board

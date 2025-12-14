@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { X, Plus, ArrowRight, ChevronDown, Search } from 'lucide-react';
+import { X, Plus, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@hive/ui';
 import {
   containerVariants,
@@ -148,16 +148,16 @@ export function InterestsStep({
         <motion.h1
           id="interests-title"
           variants={safeItemVariants}
-          className="text-[28px] md:text-[40px] font-semibold tracking-tight leading-[1.1] mb-2 text-center"
+          className="text-2xl md:text-4xl font-semibold tracking-tight leading-tight mb-2 text-center"
         >
           What are you into?
         </motion.h1>
         <motion.p
           variants={safeItemVariants}
-          className="text-gray-500 text-center mb-4 text-sm md:text-base"
+          className="text-zinc-500 text-center mb-4 text-sm md:text-base"
         >
           Pick up to {MAX_INTERESTS} to personalize your experience{' '}
-          <span className="text-gray-600">(optional)</span>
+          <span className="text-zinc-600">(optional)</span>
         </motion.p>
 
         {/* Selected interests - sticky at top */}
@@ -177,15 +177,15 @@ export function InterestsStep({
                     animate={{ scale: 1, opacity: 1 }}
                     exit={{ scale: 0.8, opacity: 0 }}
                     onClick={() => removeInterest(interest)}
-                    className="group flex items-center gap-1 px-2.5 py-1 rounded-full bg-gold-500/10 border border-gold-500 text-gold-500 text-xs font-medium transition-colors hover:bg-gold-500/20"
+                    className="group flex items-center gap-1.5 px-3 py-2 min-h-[44px] rounded-full bg-gold-500/10 border border-gold-500 text-gold-500 text-sm font-medium transition-colors hover:bg-gold-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                     aria-label={`Remove ${interest}`}
                   >
                     {interest}
-                    <X className="w-3 h-3 opacity-60 group-hover:opacity-100" />
+                    <X className="w-4 h-4 opacity-60 group-hover:opacity-100" />
                   </motion.button>
                 ))}
               </div>
-              <p className="text-[10px] text-gray-500 text-center mt-2">
+              <p className="text-xs text-zinc-500 text-center mt-2">
                 {interests.length} of {MAX_INTERESTS} selected
               </p>
             </motion.div>
@@ -195,7 +195,7 @@ export function InterestsStep({
         {/* Search bar */}
         <motion.div variants={safeItemVariants} className="mb-4">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input
               ref={searchRef}
               type="text"
@@ -205,7 +205,7 @@ export function InterestsStep({
                 setActiveCategory(null); // Clear category filter when searching
               }}
               placeholder={`Search ${totalItems} interests...`}
-              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-gray-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
               aria-label="Search interests"
             />
           </div>
@@ -213,14 +213,15 @@ export function InterestsStep({
 
         {/* Category tabs - horizontal scroll */}
         <motion.div variants={safeItemVariants} className="mb-4">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-hide">
+          {/* Category tabs - 44px min height for touch targets */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
             <button
               type="button"
               onClick={() => setActiveCategory(null)}
-              className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`shrink-0 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                 activeCategory === null && !searchQuery
                   ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                  : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                  : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
               }`}
             >
               All
@@ -233,10 +234,10 @@ export function InterestsStep({
                   setActiveCategory(cat.id);
                   setSearchQuery('');
                 }}
-                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                className={`shrink-0 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   activeCategory === cat.id
                     ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                    : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                    : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
                 }`}
               >
                 {cat.icon && <span>{cat.icon}</span>}
@@ -252,17 +253,17 @@ export function InterestsStep({
             // Search results - show all matching
             <div className="space-y-4">
               {filteredCategories.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">
+                <p className="text-center text-zinc-500 py-8">
                   No interests found for "{searchQuery}"
                 </p>
               ) : (
                 filteredCategories.map((cat) => (
                   <div key={cat.id} className="space-y-2">
-                    <h3 className="text-xs text-gray-500 font-medium flex items-center gap-1.5">
+                    <h3 className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
                       {cat.icon && <span>{cat.icon}</span>}
                       {cat.title}
                     </h3>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {cat.items.map((item) => {
                         const isSelected = interests.includes(item);
                         const isDisabled = !isSelected && interests.length >= MAX_INTERESTS;
@@ -272,12 +273,12 @@ export function InterestsStep({
                             type="button"
                             onClick={() => toggleInterest(item)}
                             disabled={isDisabled}
-                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
+                            className={`px-3 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                               isSelected
                                 ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                                 : isDisabled
-                                ? 'bg-white/[0.02] border border-white/[0.04] text-gray-600 cursor-not-allowed'
-                                : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                                ? 'bg-white/[0.02] border border-white/[0.04] text-zinc-600 cursor-not-allowed'
+                                : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
                             }`}
                             aria-pressed={isSelected}
                           >
@@ -292,12 +293,12 @@ export function InterestsStep({
             </div>
           ) : activeCategory && displayedCategory ? (
             // Single category view
-            <div className="space-y-2">
-              <h3 className="text-sm text-gray-400 font-medium flex items-center gap-2">
+            <div className="space-y-3">
+              <h3 className="text-sm text-zinc-400 font-medium flex items-center gap-2">
                 {displayedCategory.icon && <span className="text-lg">{displayedCategory.icon}</span>}
                 {displayedCategory.title}
               </h3>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {displayedCategory.items.map((item) => {
                   const isSelected = interests.includes(item);
                   const isDisabled = !isSelected && interests.length >= MAX_INTERESTS;
@@ -307,12 +308,12 @@ export function InterestsStep({
                       type="button"
                       onClick={() => toggleInterest(item)}
                       disabled={isDisabled}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 ${
+                      className={`px-3 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                         isSelected
                           ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                           : isDisabled
-                          ? 'bg-white/[0.02] border border-white/[0.04] text-gray-600 cursor-not-allowed'
-                          : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                          ? 'bg-white/[0.02] border border-white/[0.04] text-zinc-600 cursor-not-allowed'
+                          : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
                       }`}
                       aria-pressed={isSelected}
                     >
@@ -324,23 +325,23 @@ export function InterestsStep({
             </div>
           ) : (
             // All categories - compact view showing first few items each
-            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-transparent">
+            <div className="space-y-5 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
               {UB_INTEREST_CATEGORIES.map((cat) => (
-                <div key={cat.id} className="space-y-1.5">
+                <div key={cat.id} className="space-y-2">
                   <button
                     type="button"
                     onClick={() => setActiveCategory(cat.id)}
-                    className="text-xs text-gray-500 font-medium flex items-center gap-1.5 hover:text-white transition-colors group"
+                    className="text-sm text-zinc-500 font-medium flex items-center gap-1.5 hover:text-white transition-colors group min-h-[44px] py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
                   >
                     {cat.icon && <span>{cat.icon}</span>}
                     <span>{cat.title}</span>
-                    <span className="text-gray-600 group-hover:text-gray-400">
+                    <span className="text-zinc-600 group-hover:text-zinc-400">
                       ({cat.items.length})
                     </span>
-                    <ChevronDown className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                    <ChevronDown className="w-4 h-4 opacity-50 group-hover:opacity-100" />
                   </button>
-                  <div className="flex flex-wrap gap-1">
-                    {cat.items.slice(0, 6).map((item) => {
+                  <div className="flex flex-wrap gap-2">
+                    {cat.items.slice(0, 5).map((item) => {
                       const isSelected = interests.includes(item);
                       const isDisabled = !isSelected && interests.length >= MAX_INTERESTS;
                       return (
@@ -349,12 +350,12 @@ export function InterestsStep({
                           type="button"
                           onClick={() => toggleInterest(item)}
                           disabled={isDisabled}
-                          className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-all focus:outline-none focus-visible:ring-1 focus-visible:ring-gold-500 ${
+                          className={`px-3 py-2 min-h-[44px] rounded-full text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                             isSelected
                               ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                               : isDisabled
-                              ? 'bg-white/[0.01] border border-white/[0.03] text-gray-600 cursor-not-allowed'
-                              : 'bg-white/[0.02] border border-white/[0.06] text-gray-500 hover:text-white hover:border-white/[0.12]'
+                              ? 'bg-white/[0.01] border border-white/[0.03] text-zinc-600 cursor-not-allowed'
+                              : 'bg-white/[0.02] border border-white/[0.06] text-zinc-500 hover:text-white hover:border-white/[0.12]'
                           }`}
                           aria-pressed={isSelected}
                         >
@@ -362,13 +363,13 @@ export function InterestsStep({
                         </button>
                       );
                     })}
-                    {cat.items.length > 6 && (
+                    {cat.items.length > 5 && (
                       <button
                         type="button"
                         onClick={() => setActiveCategory(cat.id)}
-                        className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white/[0.02] border border-white/[0.06] text-gray-500 hover:text-gold-500 hover:border-gold-500/30 transition-all"
+                        className="px-3 py-2 min-h-[44px] rounded-full text-sm font-medium bg-white/[0.02] border border-white/[0.06] text-zinc-500 hover:text-gold-500 hover:border-gold-500/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                       >
-                        +{cat.items.length - 6} more
+                        +{cat.items.length - 5} more
                       </button>
                     )}
                   </div>
@@ -394,7 +395,7 @@ export function InterestsStep({
                 placeholder="Add your own..."
                 maxLength={MAX_INTEREST_LENGTH}
                 disabled={interests.length >= MAX_INTERESTS}
-                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-gray-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Add custom interest"
               />
             </div>
@@ -402,7 +403,7 @@ export function InterestsStep({
               type="button"
               onClick={addCustomInterest}
               disabled={!customInput.trim() || interests.length >= MAX_INTERESTS}
-              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
               aria-label="Add interest"
             >
               <Plus className="w-4 h-4" />
@@ -430,26 +431,23 @@ export function InterestsStep({
           variants={safeItemVariants}
           className="flex flex-col items-center gap-4"
         >
-          {interests.length > 0 ? (
-            <Button onClick={handleContinue} showArrow size="lg">
-              Continue
-            </Button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-sm"
-            >
-              Skip for now
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          )}
+          <Button onClick={handleContinue} showArrow size="lg">
+            {interests.length > 0 ? 'Continue' : 'Next'}
+          </Button>
+
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="text-sm text-zinc-500 hover:text-white transition-colors underline underline-offset-2"
+          >
+            Skip for now
+          </button>
 
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="text-sm text-gray-600 hover:text-white transition-colors"
+              className="text-sm text-zinc-600 hover:text-white transition-colors"
             >
               Back
             </button>

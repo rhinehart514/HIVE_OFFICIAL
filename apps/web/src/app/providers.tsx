@@ -1,11 +1,13 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, lazy, Suspense } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/hooks/use-toast";
 import { UniversalShellProvider } from "./universal-shell-provider";
 import { PWAManager } from "@/components/pwa";
+
+// Lazy load Toaster to prevent circular dependency issues on initial load
+const Toaster = lazy(() => import("@/hooks/use-toast").then(m => ({ default: m.Toaster })));
 
 interface ProvidersProps {
   children: ReactNode;
@@ -37,7 +39,9 @@ export function Providers({ children }: ProvidersProps) {
           {children}
           <PWAManager />
         </UniversalShellProvider>
-        <Toaster />
+        <Suspense fallback={null}>
+          <Toaster />
+        </Suspense>
       </ThemeProvider>
     </QueryClientProvider>
   );

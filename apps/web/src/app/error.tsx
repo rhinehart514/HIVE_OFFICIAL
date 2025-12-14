@@ -1,9 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Button } from '@hive/ui';
-import { AlertTriangle } from 'lucide-react';
-import { logger } from '@/lib/logger';
 
 export default function Error({
   error,
@@ -13,47 +10,39 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    logger.error('Application error boundary triggered', {
-      digest: error.digest,
-      component: 'RootErrorBoundary',
-    }, error);
+    console.error('Application error boundary triggered', error);
   }, [error]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
-        <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-destructive/10 p-4">
-            <AlertTriangle className="h-10 w-10 text-destructive" />
-          </div>
-        </div>
-
-        <h2 className="mb-2 text-2xl font-bold text-foreground">
+        <h2 className="mb-2 text-2xl font-bold">
           Something went wrong
         </h2>
 
-        <p className="mb-6 text-muted-foreground">
-          We encountered an unexpected error. Our team has been notified and
-          is working to fix it.
+        <p className="mb-6 text-gray-500">
+          We encountered an unexpected error.
         </p>
 
         {error.digest && (
-          <p className="mb-6 text-sm text-muted-foreground">
+          <p className="mb-6 text-sm text-gray-400">
             Error ID: {error.digest}
           </p>
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button onClick={() => reset()} size="lg">
+          <button
+            onClick={() => reset()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
             Try again
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
+          </button>
+          <button
             onClick={() => (window.location.href = '/')}
+            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
           >
             Go home
-          </Button>
+          </button>
         </div>
       </div>
     </div>

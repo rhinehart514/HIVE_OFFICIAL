@@ -1,71 +1,29 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Avatar, AvatarImage, AvatarFallback } from "@hive/ui";
-import { User, LogOut, Settings, ChevronDown } from "lucide-react";
-import { logger } from "@/lib/logger";
+import { User, LogOut, Settings, ChevronDown, Loader2 } from "lucide-react";
+import { useAuth } from "@hive/auth-logic";
 
-interface SessionData {
-  userId: string;
-  email: string;
-  schoolId?: string;
-  verifiedAt: string;
-  onboardingCompleted?: boolean;
-}
-
+/**
+ * Auth Status Indicator
+ *
+ * Shows user authentication state with dropdown menu.
+ * Uses useAuth hook for secure, cookie-based authentication.
+ */
 export function AuthStatusIndicator() {
   const router = useRouter();
-  const [session, setSession] = useState<SessionData | null>(null);
+  const { user, isLoading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    // Check for session in localStorage
-    const checkSession = () => {
-      const sessionJson = window.localStorage.getItem('hive_session');
-      if (sessionJson) {
-        try {
-          const sessionData = JSON.parse(sessionJson);
-          // Verify session is not expired (24 hours)
-          const sessionAge = Date.now() - new Date(sessionData.verifiedAt).getTime();
-          const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-
-          if (sessionAge <= maxAge) {
-            setSession(sessionData);
-          } else {
-            // Session expired
-            window.localStorage.removeItem('hive_session');
-            setSession(null);
-          }
-        } catch (error) {
-          logger.error('Error parsing session', { component: 'AuthStatusIndicator' }, error instanceof Error ? error : undefined);
-          window.localStorage.removeItem('hive_session');
-          setSession(null);
-        }
-      } else {
-        setSession(null);
-      }
-    };
-
-    checkSession();
-    // Check session on focus
-    window.addEventListener('focus', checkSession);
-    return () => window.removeEventListener('focus', checkSession);
-  }, []);
 
   const handleSignOut = async () => {
     try {
-      // Clear local session
-      window.localStorage.removeItem('hive_session');
-      window.localStorage.removeItem('emailForSignIn');
-
-      // Call logout API
-      await fetch('/api/auth/logout', { method: 'POST' });
-
-      // Redirect to landing
+      await logout();
       router.push('/landing');
-    } catch (error) {
-      logger.error('Sign out error', { component: 'AuthStatusIndicator' }, error instanceof Error ? error : undefined);
+    } catch {
+      // Logout handles its own errors, redirect anyway
+      router.push('/landing');
     }
   };
 
@@ -79,13 +37,22 @@ export function AuthStatusIndicator() {
     setIsDropdownOpen(false);
   };
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center w-8 h-8">
+        <Loader2 className="w-4 h-4 animate-spin text-neutral-500" />
+      </div>
+    );
+  }
+
   // Not logged in - show Sign In button
-  if (!session) {
+  if (!user) {
     return (
       <Button
         variant="secondary"
         size="sm"
-        onClick={() => router.push('/schools')}
+        onClick={() => router.push('/auth/login')}
         className="flex items-center gap-2"
       >
         <User className="w-4 h-4" />
@@ -95,23 +62,29 @@ export function AuthStatusIndicator() {
   }
 
   // Logged in - show user menu
+  const displayName = user.handle || user.email?.split('@')[0] || 'User';
+  const initials = (user.fullName?.[0] || user.email?.[0] || 'U').toUpperCase();
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[var(--hive-background-secondary)] transition-colors duration-200"
+        aria-expanded={isDropdownOpen}
+        aria-haspopup="menu"
       >
         <Avatar size="sm">
-          <AvatarImage src="" alt={session.email} />
-          <AvatarFallback>{session.email[0]?.toUpperCase()}</AvatarFallback>
+          <AvatarImage src={user.avatarUrl || undefined} alt={displayName} />
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <span className="text-sm font-medium text-[var(--hive-text-primary)] hidden sm:block">
-          {session.email.split('@')[0]}
+          {user.handle ? `@${user.handle}` : displayName}
         </span>
         <ChevronDown
           className={`w-4 h-4 text-[var(--hive-text-secondary)] transition-transform duration-200 ${
             isDropdownOpen ? 'rotate-180' : ''
           }`}
+          aria-hidden="true"
         />
       </button>
 
@@ -122,16 +95,26 @@ export function AuthStatusIndicator() {
           <div
             className="fixed inset-0 z-40"
             onClick={() => setIsDropdownOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Menu */}
-          <div className="absolute right-0 mt-2 w-56 z-50 bg-[var(--hive-background-primary)] rounded-xl shadow-[var(--hive-shadow-level3)] border border-[var(--hive-border-default)] overflow-hidden">
+          <div
+            className="absolute right-0 mt-2 w-56 z-50 bg-[var(--hive-background-primary)] rounded-xl shadow-[var(--hive-shadow-level3)] border border-[var(--hive-border-default)] overflow-hidden"
+            role="menu"
+            aria-orientation="vertical"
+          >
             <div className="p-3 border-b border-[var(--hive-border-default)]">
               <p className="text-sm font-medium text-[var(--hive-text-primary)]">
-                {session.email}
+                {user.fullName || user.email}
               </p>
+              {user.handle && (
+                <p className="text-xs text-gold-500 mt-0.5">
+                  @{user.handle}
+                </p>
+              )}
               <p className="text-xs text-[var(--hive-text-secondary)] mt-1">
-                {session.schoolId === 'test-university' ? 'Test University' : 'University at Buffalo'}
+                {user.major || 'No major set'}
               </p>
             </div>
 
@@ -139,8 +122,9 @@ export function AuthStatusIndicator() {
               <button
                 onClick={handleNavigateToProfile}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--hive-background-secondary)] transition-colors duration-200 text-left"
+                role="menuitem"
               >
-                <User className="w-4 h-4 text-[var(--hive-text-secondary)]" />
+                <User className="w-4 h-4 text-[var(--hive-text-secondary)]" aria-hidden="true" />
                 <span className="text-sm text-[var(--hive-text-primary)]">
                   Profile
                 </span>
@@ -149,20 +133,22 @@ export function AuthStatusIndicator() {
               <button
                 onClick={handleNavigateToSettings}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--hive-background-secondary)] transition-colors duration-200 text-left"
+                role="menuitem"
               >
-                <Settings className="w-4 h-4 text-[var(--hive-text-secondary)]" />
+                <Settings className="w-4 h-4 text-[var(--hive-text-secondary)]" aria-hidden="true" />
                 <span className="text-sm text-[var(--hive-text-primary)]">
                   Settings
                 </span>
               </button>
 
-              <div className="border-t border-[var(--hive-border-default)] my-1" />
+              <div className="border-t border-[var(--hive-border-default)] my-1" role="separator" />
 
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--hive-status-error)]/10 transition-colors duration-200 text-left group"
+                role="menuitem"
               >
-                <LogOut className="w-4 h-4 text-[var(--hive-text-secondary)] group-hover:text-[var(--hive-status-error)]" />
+                <LogOut className="w-4 h-4 text-[var(--hive-text-secondary)] group-hover:text-[var(--hive-status-error)]" aria-hidden="true" />
                 <span className="text-sm text-[var(--hive-text-primary)] group-hover:text-[var(--hive-status-error)]">
                   Sign Out
                 </span>

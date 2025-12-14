@@ -132,9 +132,11 @@ export interface UseChatMessagesReturn {
 
 const DEFAULT_LIMIT = 50;
 const TYPING_DEBOUNCE_MS = 3000;
-const TYPING_BASE_INTERVAL_MS = 2000;
-const TYPING_MAX_INTERVAL_MS = 10000;
-const TYPING_BACKOFF_MULTIPLIER = 1.5;
+// Typing indicator polling: start at 5s, back off to 30s when no activity
+// This significantly reduces server load while maintaining UX
+const TYPING_BASE_INTERVAL_MS = 5000;
+const TYPING_MAX_INTERVAL_MS = 30000;
+const TYPING_BACKOFF_MULTIPLIER = 2;
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 30000;
 const DEFAULT_BOARD_ID = "general";

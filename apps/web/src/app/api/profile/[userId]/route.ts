@@ -1,6 +1,5 @@
-import { withErrors, withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { logger } from "@/lib/logger";
-import { getDefaultCampusId } from "@/lib/campus-context";
 import {
   getServerProfileRepository,
   PrivacyLevel
@@ -120,7 +119,9 @@ export const GET = withOptionalAuth(
  * Build profile response with field-level privacy gating
  */
 function buildProfileResponse(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profile: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   privacy: any,
   isOwnProfile: boolean,
   viewerType: 'public' | 'campus' | 'connection'
@@ -175,6 +176,7 @@ function buildProfileResponse(
   }
 
   // Build response for other viewers based on privacy settings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response: Record<string, any> = {
     id: profile.profileId.value,
     handle: profile.handle.value,

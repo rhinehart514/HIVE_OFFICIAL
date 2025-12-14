@@ -957,7 +957,7 @@ function getChangedFields(oldState: unknown, newState: unknown): string[] {
 }
 
 // SSE Stream for real-time tool state updates
-function createToolSSEStream(userId: string, deploymentId: string, spaceId?: string): Response {
+function createToolSSEStream(userId: string, deploymentId: string, _spaceId?: string): Response {
   const encoder = new TextEncoder();
   let isActive = true;
   let unsubscribe: (() => void) | null = null;
@@ -989,7 +989,7 @@ function createToolSSEStream(userId: string, deploymentId: string, spaceId?: str
       const sharedStateDocId = deploymentId;
 
       // Firestore listener for user-specific state
-      const userStateRef = dbAdmin.collection('toolStates').doc(stateDocId);
+      const _userStateRef = dbAdmin.collection('toolStates').doc(stateDocId);
       const sharedStateRef = dbAdmin.collection('toolStates').doc(sharedStateDocId);
 
       // Combined listener approach - poll for changes (since admin SDK onSnapshot may not work in edge)

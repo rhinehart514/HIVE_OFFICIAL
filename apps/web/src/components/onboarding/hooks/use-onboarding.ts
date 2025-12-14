@@ -454,21 +454,14 @@ export function useOnboarding() {
       setHasSubmitted(true);
 
       // Track successful completion
+      // Using valid OnboardingStepName values: welcome, name, academics, handle, photo, builder, legal
       analytics.trackOnboardingCompleted(
         Date.now(), // Duration calculated by analytics hook
-        ['welcome', 'handle', 'builder'] // Completed steps in new 3-step flow
+        ['welcome', 'handle', 'builder', 'legal'] // Map to analytics step names
       );
 
-      try {
-        const existingSession = window.localStorage.getItem('hive_session');
-        if (existingSession) {
-          const sessionData = JSON.parse(existingSession);
-          sessionData.onboardingCompleted = true;
-          window.localStorage.setItem('hive_session', JSON.stringify(sessionData));
-        }
-      } catch {
-        logger.warn('Failed to update session storage after onboarding', { component: 'useOnboarding' });
-      }
+      // Note: Server-side session cookie is updated by complete-onboarding API
+      // No need to update localStorage - using secure httpOnly cookies
 
       clearDraft();
 

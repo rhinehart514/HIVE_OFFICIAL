@@ -154,9 +154,9 @@ export function ProfileStep({
       case 'invalid':
         return 'text-red-400';
       case 'checking':
-        return 'text-gray-400';
+        return 'text-zinc-400';
       default:
-        return handle ? 'text-white' : 'text-gray-600';
+        return handle ? 'text-white' : 'text-zinc-600';
     }
   };
 
@@ -182,7 +182,7 @@ export function ProfileStep({
         <motion.h1
           id="profile-title"
           variants={safeItemVariants}
-          className="text-[32px] md:text-[40px] font-semibold tracking-tight leading-[1.1] mb-4 text-center"
+          className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight mb-4 text-center"
         >
           {handleStatus === 'available' ? "This one's yours." : 'Claim your @'}
         </motion.h1>
@@ -203,14 +203,14 @@ export function ProfileStep({
               className="text-center cursor-text"
               onClick={() => handleInputRef.current?.focus()}
             >
-              <span className={`text-[48px] md:text-[72px] font-bold tracking-tight ${getHandleColor()} transition-colors`}>
-                @{handle || <span className="text-gray-500">_</span>}
+              <span className={`text-5xl md:text-7xl font-bold tracking-tight ${getHandleColor()} transition-colors`}>
+                @{handle || <span className="text-zinc-500">_</span>}
               </span>
 
               {/* Status indicator */}
               <div id="handle-status" className="h-6 flex items-center justify-center mt-2" role="status" aria-live="polite">
                 {handleStatus === 'checking' && (
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-500" aria-label="Checking availability" />
+                  <Loader2 className="w-4 h-4 animate-spin text-zinc-500" aria-label="Checking availability" />
                 )}
                 {handleStatus === 'available' && (
                   <motion.span
@@ -261,7 +261,7 @@ export function ProfileStep({
                     key={suggestion}
                     type="button"
                     onClick={() => onUpdate({ handle: suggestion })}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-white/[0.03] border border-white/[0.06] text-gray-400 hover:text-white hover:border-gold-500/30 transition-colors"
+                    className="px-3 py-1.5 text-sm rounded-lg bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-gold-500/30 transition-colors"
                   >
                     @{suggestion}
                   </button>
@@ -278,7 +278,7 @@ export function ProfileStep({
         >
           {/* Name */}
           <div className="space-y-1.5">
-            <label htmlFor="name-input" className="text-xs text-gray-500 font-medium">
+            <label htmlFor="name-input" className="text-xs text-zinc-500 font-medium">
               Name <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -291,18 +291,18 @@ export function ProfileStep({
                 setError(null);
               }}
               placeholder="Your name"
-              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-gray-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
               aria-describedby="name-hint"
               required
             />
-            <p id="name-hint" className="text-xs text-gray-600">How people will see you</p>
+            <p id="name-hint" className="text-xs text-zinc-600">How people will see you</p>
           </div>
 
           {/* Major and Year row */}
           <div className="grid grid-cols-2 gap-3">
           {/* Major combobox */}
           <div className="space-y-1.5">
-            <label id="major-label" className="text-xs text-gray-500 font-medium">
+            <label id="major-label" className="text-xs text-zinc-500 font-medium">
               Major <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -320,27 +320,27 @@ export function ProfileStep({
                   }`}
                   style={majorOpen ? { boxShadow: GLOW_GOLD } : {}}
                 >
-                  <span className={major ? 'text-white truncate' : 'text-gray-600'}>
+                  <span className={major ? 'text-white truncate' : 'text-zinc-600'}>
                     {major || 'Select major'}
                   </span>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-500" aria-hidden="true" />
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true" />
                 </button>
               </PopoverTrigger>
             <PopoverContent
-              className="p-0 bg-neutral-900 border-neutral-800 rounded-xl shadow-2xl w-[320px]"
+              className="p-0 bg-zinc-900 border-zinc-800 rounded-xl shadow-2xl w-[calc(100vw-3rem)] sm:w-[320px] max-w-[320px]"
               align="start"
               sideOffset={4}
             >
               <Command className="bg-transparent">
                 <CommandInput
                   placeholder="Search majors..."
-                  className="h-11 bg-transparent px-4 text-sm text-white placeholder:text-neutral-500"
+                  className="h-11 bg-transparent px-4 text-sm text-white placeholder:text-zinc-500"
                 />
-                <div className="px-3 py-1.5 text-[10px] text-neutral-500 border-b border-neutral-800">
+                <div className="px-3 py-1.5 text-xs text-zinc-500 border-b border-zinc-800">
                   {availableMajors.length} programs available
                 </div>
                 <CommandList className="max-h-[280px] overflow-y-auto p-1">
-                  <CommandEmpty className="py-4 text-center text-sm text-neutral-500">
+                  <CommandEmpty className="py-4 text-center text-sm text-zinc-500">
                     No matching major found
                   </CommandEmpty>
                   <CommandGroup>
@@ -353,7 +353,7 @@ export function ProfileStep({
                           setMajorOpen(false);
                           setError(null);
                         }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-neutral-800"
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-zinc-800"
                       >
                         <Check
                           className={`h-4 w-4 shrink-0 ${
@@ -368,12 +368,12 @@ export function ProfileStep({
               </Command>
             </PopoverContent>
             </Popover>
-            <p className="text-xs text-gray-600">Helps us suggest relevant spaces</p>
+            <p className="text-xs text-zinc-600">Helps us suggest relevant spaces</p>
           </div>
 
           {/* Year dropdown-style pills */}
           <div className="space-y-1.5">
-            <label id="year-label" className="text-xs text-gray-500 font-medium">
+            <label id="year-label" className="text-xs text-zinc-500 font-medium">
               Year <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -391,24 +391,25 @@ export function ProfileStep({
                 className={`flex-1 h-12 rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   graduationYear === year
                     ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                    : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                    : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
                 }`}
               >
                 '{String(year).slice(-2)}
               </button>
             ))}
             </div>
-            <p id="year-hint" className="text-xs text-gray-600">Connect with your class</p>
+            <p id="year-hint" className="text-xs text-zinc-600">Connect with your class</p>
           </div>
           </div>
 
           {/* Residential status - optional, only show for students */}
           {userType === 'student' && (
-            <div className="space-y-1.5">
-              <label id="living-label" className="text-xs text-gray-500 font-medium">
-                Where do you live? <span className="text-gray-600">(optional)</span>
+            <div className="space-y-2">
+              <label id="living-label" className="text-xs text-zinc-500 font-medium">
+                Where do you live? <span className="text-zinc-600">(optional)</span>
               </label>
-              <div className="flex items-center gap-1.5" role="radiogroup" aria-labelledby="living-label">
+              {/* 2x2 grid on mobile, row on larger screens */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-labelledby="living-label">
                 {LIVING_SITUATIONS.map((option) => (
                   <button
                     key={option.value}
@@ -418,17 +419,17 @@ export function ProfileStep({
                     onClick={() => {
                       onUpdate({ livingSituation: option.value as LivingSituation });
                     }}
-                    className={`flex-1 h-10 rounded-lg text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                    className={`min-h-[44px] px-3 py-2 rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                       livingSituation === option.value
                         ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                        : 'bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white hover:border-white/[0.12]'
+                        : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
                     }`}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-600">Helps us recommend nearby activities</p>
+              <p className="text-xs text-zinc-600">Helps us recommend nearby activities</p>
             </div>
           )}
         </motion.div>

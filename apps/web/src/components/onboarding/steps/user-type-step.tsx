@@ -48,7 +48,7 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
         <motion.h1
           id="onboarding-title"
           variants={safeItemVariants}
-          className="text-[40px] sm:text-[48px] md:text-[64px] font-semibold tracking-tight leading-[1.05] mb-12 md:mb-16 text-center"
+          className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight mb-12 md:mb-16 text-center"
         >
           What brings you here?
         </motion.h1>
@@ -78,7 +78,7 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
                   I lead something
                 </h2>
               </div>
-              <p id="leader-description" className="text-sm text-gray-400 mt-1">
+              <p id="leader-description" className="text-sm text-zinc-400 mt-1">
                 Claim a club or org. Build it your way.
               </p>
               <motion.div
@@ -103,12 +103,12 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
           >
             <div className="flex flex-col h-full min-h-[140px]">
               <div className="flex items-center gap-3 mb-2">
-                <Users className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" aria-hidden="true" />
+                <Users className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" aria-hidden="true" />
                 <h2 className="text-2xl md:text-3xl font-semibold text-white">
                   I&apos;m finding my people
                 </h2>
               </div>
-              <p id="explorer-description" className="text-sm text-gray-500 mt-1 group-hover:text-gray-400 transition-colors">
+              <p id="explorer-description" className="text-sm text-zinc-500 mt-1 group-hover:text-zinc-400 transition-colors">
                 Join communities. Discover events.
               </p>
               <motion.div
@@ -116,31 +116,30 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
                 className="mt-auto pt-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors"
                 aria-hidden="true"
               >
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                <ArrowRight className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
               </motion.div>
             </div>
           </motion.button>
         </motion.div>
 
-        {/* Faculty/Alumni - with label for clarity */}
+        {/* Faculty/Alumni - with proper touch targets */}
         <motion.div
           variants={safeItemVariants}
-          className="mt-12 md:mt-16 flex flex-col items-center gap-3"
+          className="mt-12 md:mt-16 flex flex-col items-center gap-4"
         >
-          <span className="text-xs text-gray-600 uppercase tracking-wide">
+          <span className="text-xs text-zinc-600 uppercase tracking-wide">
             Not a student?
           </span>
-          <div className="flex items-center gap-6" role="group" aria-label="Other user types">
+          <div className="flex items-center gap-3" role="group" aria-label="Other user types">
             <button
               onClick={() => onSelect('faculty', false)}
-              className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
+              className="min-h-[44px] px-5 py-2.5 text-sm text-zinc-400 hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               Faculty
             </button>
-            <span className="text-gray-700" aria-hidden="true">|</span>
             <button
               onClick={() => onSelect('alumni', false)}
-              className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus:outline-none focus-visible:text-white focus-visible:underline"
+              className="min-h-[44px] px-5 py-2.5 text-sm text-zinc-400 hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               Alumni
             </button>

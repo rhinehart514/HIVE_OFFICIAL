@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search, Check, Plus } from "lucide-react";
+import { Loader2, Search, Check, Plus, Lock } from "lucide-react";
 import Image from "next/image";
 import { Button, Input } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,6 +15,19 @@ interface Space {
   category: string;
   memberCount: number;
   isClaimed: boolean;
+}
+
+// Category-based leadership rules (synced with @hive/core space-categories.ts)
+const LOCKED_CATEGORIES = new Set(['residential']);
+const CATEGORY_LABELS: Record<string, string> = {
+  student_org: 'Student Organization',
+  university_org: 'University Organization',
+  greek_life: 'Greek Life',
+  residential: 'Residential',
+};
+
+function isLockedCategory(category: string): boolean {
+  return LOCKED_CATEGORIES.has(category);
 }
 
 // Animation variants
@@ -192,11 +205,44 @@ function ClaimContent() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-[var(--hive-text-primary)] mb-2">
-                  Request submitted
+                  Request submitted!
                 </h1>
-                <p className="text-[var(--hive-text-secondary)]">
-                  We'll review your request to lead {selectedSpace?.name} and get back to you soon.
+                <p className="text-[var(--hive-text-secondary)] mb-4">
+                  Your request to lead <span className="font-semibold text-[var(--hive-text-primary)]">{selectedSpace?.name}</span> has been sent for review.
                 </p>
+                <div className="bg-[var(--hive-background-secondary)] rounded-xl p-4 text-left space-y-3 border border-[var(--hive-border-default)]">
+                  <h3 className="text-sm font-semibold text-[var(--hive-text-primary)]">What happens next?</h3>
+                  <ul className="text-sm text-[var(--hive-text-secondary)] space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-[var(--hive-brand-primary)]">1.</span>
+                      <span>Our team reviews your application (usually within 24-48 hours)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[var(--hive-brand-primary)]">2.</span>
+                      <span>You'll receive a notification when a decision is made</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-[var(--hive-brand-primary)]">3.</span>
+                      <span>If approved, you'll gain builder access to customize the space</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 pt-2">
+                <Button
+                  type="button"
+                  onClick={() => router.push("/feed")}
+                  className="w-full bg-white text-black hover:bg-neutral-100 font-semibold"
+                >
+                  Go to Feed
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/spaces/${selectedSpace?.id}`)}
+                  className="w-full text-sm text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)]"
+                >
+                  View space while you wait
+                </button>
               </div>
             </motion.div>
           </div>
@@ -276,30 +322,45 @@ function ClaimContent() {
 
                   {!isSearching && spaces.length > 0 && (
                     <div className="space-y-2">
-                      {spaces.map((space) => (
-                        <button
-                          key={space.id}
-                          type="button"
-                          onClick={() => setSelectedSpace(space)}
-                          className="w-full rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] px-4 py-3 text-left transition-colors hover:border-text-tertiary"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-[var(--hive-text-primary)]">
-                                {space.name}
+                      {spaces.map((space) => {
+                        const locked = isLockedCategory(space.category);
+                        const displayCategory = CATEGORY_LABELS[space.category] || space.category;
+
+                        return (
+                          <button
+                            key={space.id}
+                            type="button"
+                            onClick={() => !locked && setSelectedSpace(space)}
+                            disabled={locked}
+                            className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
+                              locked
+                                ? 'border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] opacity-60 cursor-not-allowed'
+                                : 'border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] hover:border-text-tertiary'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-[var(--hive-text-primary)]">
+                                  {space.name}
+                                </div>
+                                <div className="text-xs text-[var(--hive-text-tertiary)]">
+                                  {displayCategory} · {space.memberCount} members
+                                </div>
                               </div>
-                              <div className="text-xs text-[var(--hive-text-tertiary)]">
-                                {space.category} · {space.memberCount} members
-                              </div>
+                              {locked ? (
+                                <span className="flex items-center gap-1 text-xs text-[var(--hive-text-tertiary)]">
+                                  <Lock className="h-3 w-3" />
+                                  Coming soon
+                                </span>
+                              ) : space.isClaimed ? (
+                                <span className="text-xs text-[var(--hive-text-tertiary)]">
+                                  Claimed
+                                </span>
+                              ) : null}
                             </div>
-                            {space.isClaimed && (
-                              <span className="text-xs text-[var(--hive-text-tertiary)]">
-                                Claimed
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
 

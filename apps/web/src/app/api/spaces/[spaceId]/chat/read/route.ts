@@ -46,7 +46,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   const { spaceId } = await params;
   const userId = getUserId(request as AuthenticatedRequest);
-  const campusId = getCampusId(request as AuthenticatedRequest);
+  const _campusId = getCampusId(request as AuthenticatedRequest);
   const url = new URL(request.url);
   const boardId = url.searchParams.get('boardId');
 

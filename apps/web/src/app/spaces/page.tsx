@@ -55,12 +55,13 @@ import { SpacesErrorBoundary } from "@/components/error-boundaries";
 // CATEGORY CONFIGURATION
 // =============================================================================
 
+// Note: 'residential' category exists but is hidden from user-facing UI filters
+// Residential spaces have locked leadership (RA-only) and aren't ready for self-service
 const CATEGORIES: CategoryFilterItem[] = [
   { id: "all", label: "All" },
   { id: "club", label: "Clubs", icon: <Users className="w-3.5 h-3.5" /> },
   { id: "student_org", label: "Student Orgs", icon: <Users className="w-3.5 h-3.5" /> },
   { id: "academic", label: "Academic" },
-  { id: "residential", label: "Residential" },
   { id: "university_org", label: "University" },
   { id: "greek_life", label: "Greek Life" },
   { id: "sports", label: "Sports" },

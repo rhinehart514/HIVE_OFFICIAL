@@ -277,7 +277,9 @@ export const GET = withAuthAndErrors(async (
 
     const actionTypes: Record<string, number> = {};
     const uniqueUsers = new Set<string>();
-    const dailyActiveUsers: Array<{ date: Date; value: Set<string> }> = [];
+    const userActivityCounts: Record<string, number> = {};
+    const hourlyActivity: Record<number, number> = {};
+    const dailyActivity: Record<number, number> = {};
 
     for (const doc of activitySnapshot.docs) {
       const data = doc.data();
@@ -286,8 +288,26 @@ export const GET = withAuthAndErrors(async (
 
       if (data.userId) {
         uniqueUsers.add(data.userId);
+        userActivityCounts[data.userId] = (userActivityCounts[data.userId] || 0) + 1;
+      }
+
+      // Track peak activity times
+      if (data.timestamp) {
+        const timestamp = new Date(data.timestamp);
+        const hour = timestamp.getHours();
+        const day = timestamp.getDay();
+        hourlyActivity[hour] = (hourlyActivity[hour] || 0) + 1;
+        dailyActivity[day] = (dailyActivity[day] || 0) + 1;
       }
     }
+
+    // Calculate peak times
+    const peakHour = Object.entries(hourlyActivity)
+      .sort(([, a], [, b]) => b - a)[0];
+    const peakDay = Object.entries(dailyActivity)
+      .sort(([, a], [, b]) => b - a)[0];
+
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     analytics.engagement = {
       totalActions: activitySnapshot.size,
@@ -296,7 +316,114 @@ export const GET = withAuthAndErrors(async (
       engagementRate: analytics.members
         ? Math.round((uniqueUsers.size / (analytics.members as { total: number }).total) * 100)
         : 0,
+      peakActivityTimes: {
+        hour: peakHour ? { hour: parseInt(peakHour[0]), count: peakHour[1] } : null,
+        day: peakDay ? { day: dayNames[parseInt(peakDay[0])], dayIndex: parseInt(peakDay[0]), count: peakDay[1] } : null,
+        hourlyBreakdown: hourlyActivity,
+        dailyBreakdown: dailyActivity,
+      },
     };
+
+    // Top contributors - get user details for top 10
+    const sortedContributors = Object.entries(userActivityCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10);
+
+    if (sortedContributors.length > 0) {
+      const userIds = sortedContributors.map(([userId]) => userId);
+      const usersSnapshot = await dbAdmin
+        .collection('users')
+        .where('__name__', 'in', userIds)
+        .get();
+
+      const userMap = new Map<string, { fullName: string; handle?: string; photoURL?: string }>();
+      for (const doc of usersSnapshot.docs) {
+        const data = doc.data();
+        userMap.set(doc.id, {
+          fullName: data.fullName || data.displayName || 'Unknown',
+          handle: data.handle,
+          photoURL: data.photoURL,
+        });
+      }
+
+      analytics.topContributors = sortedContributors.map(([userId, count]) => ({
+        userId,
+        activityCount: count,
+        ...(userMap.get(userId) || { fullName: 'Unknown' }),
+      }));
+    }
+  }
+
+  // Top engaged content (most liked/commented posts)
+  if (requestedMetrics.includes('posts') || requestedMetrics.includes('engagement')) {
+    const allPostsSnapshot = await dbAdmin
+      .collection('spaces')
+      .doc(spaceId)
+      .collection('posts')
+      .where('createdAt', '>=', startDate)
+      .where('createdAt', '<=', endDate)
+      .get();
+
+    const postsWithEngagement: Array<{
+      id: string;
+      content: string;
+      authorId: string;
+      authorName?: string;
+      likes: number;
+      comments: number;
+      engagement: number;
+      createdAt: string;
+      type: string;
+    }> = [];
+
+    for (const doc of allPostsSnapshot.docs) {
+      const data = doc.data();
+      // Skip hidden/deleted posts
+      if (data.isHidden || data.isDeleted || data.status === 'removed') continue;
+
+      const likes = Object.values(data.reactions || {}).reduce((sum: number, count) => sum + (count as number), 0);
+      const comments = data.commentCount || 0;
+      const engagement = likes + comments;
+
+      if (engagement > 0) {
+        postsWithEngagement.push({
+          id: doc.id,
+          content: (data.content as string || '').slice(0, 100) + ((data.content as string || '').length > 100 ? '...' : ''),
+          authorId: data.authorId as string,
+          likes,
+          comments,
+          engagement,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date(data.createdAt).toISOString(),
+          type: data.type || 'text',
+        });
+      }
+    }
+
+    // Sort by engagement and take top 5
+    const topContent = postsWithEngagement
+      .sort((a, b) => b.engagement - a.engagement)
+      .slice(0, 5);
+
+    // Fetch author details for top content
+    if (topContent.length > 0) {
+      const authorIds = [...new Set(topContent.map(p => p.authorId))];
+      const authorsSnapshot = await dbAdmin
+        .collection('users')
+        .where('__name__', 'in', authorIds)
+        .get();
+
+      const authorMap = new Map<string, string>();
+      for (const doc of authorsSnapshot.docs) {
+        const data = doc.data();
+        authorMap.set(doc.id, data.fullName || data.displayName || 'Unknown');
+      }
+
+      for (const post of topContent) {
+        post.authorName = authorMap.get(post.authorId) || 'Unknown';
+      }
+    }
+
+    analytics.topContent = topContent;
   }
 
   // Summary metrics

@@ -145,21 +145,11 @@ export default function CalendarPage() {
     const fetchCalendarEvents = async () => {
       setIsLoading(true);
       try {
+        // Use credentials: 'include' to send httpOnly session cookie
         const response = await fetch('/api/calendar', {
+          credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${(() => {
-              try {
-                const session = localStorage.getItem('hive_session');
-                if (!session) return 'anonymous';
-                const parsed = JSON.parse(session) as { userId?: string };
-                return parsed.userId || 'anonymous';
-              } catch (error) {
-                logger.error('Failed to parse session for calendar auth', {
-                  error: error instanceof Error ? error.message : 'Unknown error'
-                });
-                return 'anonymous';
-              }
-            })()}`,
+            'Content-Type': 'application/json',
           },
         });
         

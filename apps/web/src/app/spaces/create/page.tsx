@@ -21,9 +21,10 @@ const transition = {
   ease: [0.22, 1, 0.36, 1],
 };
 
+// Note: 'residential' category exists but is hidden from user-facing UI
+// Residential spaces have locked leadership (RA-only) and aren't ready for self-service creation
 const CATEGORY_OPTIONS = [
   { value: 'student_org', label: 'Student Organization', description: 'Clubs, teams, academic groups' },
-  { value: 'residential', label: 'Residential', description: 'Dorms, halls, living communities' },
   { value: 'greek_life', label: 'Greek Life', description: 'Fraternities, sororities, chapters' },
 ];
 

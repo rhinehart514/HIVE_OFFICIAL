@@ -46,12 +46,13 @@ const itemVariants = {
 // TYPES & CONSTANTS
 // =============================================================================
 
-type CategoryKey = 'all' | 'student_org' | 'residential' | 'university_org' | 'greek_life';
+// Note: 'residential' category exists but is hidden from browse UI
+// Residential spaces have locked leadership (RA-only) and aren't ready for self-service
+type CategoryKey = 'all' | 'student_org' | 'university_org' | 'greek_life';
 
 const CATEGORIES: Record<CategoryKey, string> = {
   all: 'All',
   student_org: 'Student Orgs',
-  residential: 'Residential',
   university_org: 'University',
   greek_life: 'Greek Life',
 };

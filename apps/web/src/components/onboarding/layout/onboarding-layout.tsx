@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { HiveLogo } from '@hive/ui';
 
-type OnboardingStep = 'userType' | 'profile' | 'spaces' | 'completion' | string;
+type OnboardingStep = 'userType' | 'profile' | 'interests' | 'spaces' | 'completion' | string;
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -14,7 +14,8 @@ interface OnboardingLayoutProps {
   currentStep?: OnboardingStep;
 }
 
-const MAIN_STEPS = ['userType', 'profile', 'spaces'] as const;
+// 4-step flow: userType → profile → interests → spaces
+const MAIN_STEPS = ['userType', 'profile', 'interests', 'spaces'] as const;
 
 function getStepIndex(step: OnboardingStep | undefined): number {
   if (!step) return 0;
