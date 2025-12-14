@@ -17,7 +17,7 @@
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type SlashCommandType = 'poll' | 'rsvp' | 'countdown' | 'announce' | 'help' | 'unknown';
+export type SlashCommandType = 'poll' | 'rsvp' | 'countdown' | 'announce' | 'automate' | 'welcome' | 'remind' | 'help' | 'unknown';
 
 export interface SlashCommand {
   command: SlashCommandType;
@@ -78,11 +78,42 @@ export interface HelpCommand extends SlashCommand {
   };
 }
 
+export interface AutomateCommand extends SlashCommand {
+  command: 'automate';
+  parsed: {
+    automationType: 'welcome' | 'reminder' | 'keyword' | 'schedule';
+    name: string;
+    triggerConfig?: Record<string, unknown>;
+    actionConfig?: Record<string, unknown>;
+  };
+}
+
+export interface WelcomeCommand extends SlashCommand {
+  command: 'welcome';
+  parsed: {
+    message: string;
+    delay?: number; // seconds before sending
+    boardId?: string;
+  };
+}
+
+export interface RemindCommand extends SlashCommand {
+  command: 'remind';
+  parsed: {
+    beforeMinutes: number;
+    message?: string;
+    boardId?: string;
+  };
+}
+
 export type ParsedSlashCommand =
   | PollCommand
   | RsvpCommand
   | CountdownCommand
   | AnnounceCommand
+  | AutomateCommand
+  | WelcomeCommand
+  | RemindCommand
   | HelpCommand
   | SlashCommand;
 
@@ -90,7 +121,7 @@ export type ParsedSlashCommand =
 // Command Registry
 // ─────────────────────────────────────────────────────────────────────────────
 
-const COMMANDS: readonly SlashCommandType[] = ['poll', 'rsvp', 'countdown', 'announce', 'help'];
+const COMMANDS: readonly SlashCommandType[] = ['poll', 'rsvp', 'countdown', 'announce', 'automate', 'welcome', 'remind', 'help'];
 
 export const COMMAND_HELP: Record<SlashCommandType, { syntax: string; description: string; examples: string[] }> = {
   poll: {
@@ -129,10 +160,36 @@ export const COMMAND_HELP: Record<SlashCommandType, { syntax: string; descriptio
       '/announce Elections starting now! --urgent',
     ],
   },
+  automate: {
+    syntax: '/automate <type> "Name" [config]',
+    description: 'Create a custom automation',
+    examples: [
+      '/automate welcome "New Member Greeting"',
+      '/automate reminder "Event Reminder" --before=30',
+      '/automate keyword "FAQ Bot" --keywords="hours,schedule"',
+    ],
+  },
+  welcome: {
+    syntax: '/welcome "Message" [--delay=<seconds>] [--board=<boardId>]',
+    description: 'Set up automatic welcome messages for new members',
+    examples: [
+      '/welcome "Welcome to our club! Check out #events for upcoming activities"',
+      '/welcome "Hey {member}! Introduce yourself in #general" --delay=30',
+    ],
+  },
+  remind: {
+    syntax: '/remind <minutes> ["Message"] [--board=<boardId>]',
+    description: 'Set up event reminders for all events',
+    examples: [
+      '/remind 30',
+      '/remind 60 "Don\'t forget about {event}!"',
+      '/remind 15 --board=events',
+    ],
+  },
   help: {
     syntax: '/help [command]',
     description: 'Show help for slash commands',
-    examples: ['/help', '/help poll', '/help rsvp'],
+    examples: ['/help', '/help poll', '/help automate'],
   },
   unknown: {
     syntax: '',
@@ -187,6 +244,12 @@ export function parseSlashCommand(input: string): ParsedSlashCommand {
       return parseCountdownCommand(argsStr, input);
     case 'announce':
       return parseAnnounceCommand(argsStr, input);
+    case 'automate':
+      return parseAutomateCommand(argsStr, input);
+    case 'welcome':
+      return parseWelcomeCommand(argsStr, input);
+    case 'remind':
+      return parseRemindCommand(argsStr, input);
     case 'help':
       return parseHelpCommand(argsStr, input);
     default:
@@ -461,6 +524,156 @@ function parseAnnounceCommand(argsStr: string, raw: string): AnnounceCommand {
 }
 
 /**
+ * Parse automate command
+ * /automate <type> "Name" [config]
+ */
+function parseAutomateCommand(argsStr: string, raw: string): AutomateCommand {
+  const { quoted, positional, flags } = parseArgsAndFlags(argsStr);
+
+  // Type is first positional arg
+  const typeArg = positional[0]?.toLowerCase();
+  const validTypes = ['welcome', 'reminder', 'keyword', 'schedule'];
+
+  if (!typeArg || !validTypes.includes(typeArg)) {
+    return {
+      command: 'automate',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: `Invalid automation type. Use: /automate <${validTypes.join('|')}> "Name"`,
+      parsed: {
+        automationType: 'welcome',
+        name: '',
+      },
+    };
+  }
+
+  // Name is the first quoted string
+  const name = quoted[0];
+  if (!name) {
+    return {
+      command: 'automate',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: 'Automation name required. Use: /automate welcome "Name"',
+      parsed: {
+        automationType: typeArg as 'welcome' | 'reminder' | 'keyword' | 'schedule',
+        name: '',
+      },
+    };
+  }
+
+  return {
+    command: 'automate',
+    args: positional,
+    flags,
+    raw,
+    isValid: true,
+    parsed: {
+      automationType: typeArg as 'welcome' | 'reminder' | 'keyword' | 'schedule',
+      name,
+      triggerConfig: flags,
+      actionConfig: {},
+    },
+  };
+}
+
+/**
+ * Parse welcome command
+ * /welcome "Message" [--delay=<seconds>] [--board=<boardId>]
+ */
+function parseWelcomeCommand(argsStr: string, raw: string): WelcomeCommand {
+  const { quoted, flags } = parseArgsAndFlags(argsStr);
+
+  const message = quoted[0];
+  if (!message) {
+    return {
+      command: 'welcome',
+      args: [],
+      flags,
+      raw,
+      isValid: false,
+      error: 'Welcome message required. Use: /welcome "Your message here"',
+      parsed: {
+        message: '',
+      },
+    };
+  }
+
+  // Parse delay (convert to seconds)
+  let delay: number | undefined;
+  if (typeof flags.delay === 'number') {
+    delay = flags.delay;
+  } else if (typeof flags.delay === 'string') {
+    delay = parseInt(flags.delay, 10) || undefined;
+  }
+
+  // Parse board
+  const boardId = typeof flags.board === 'string' ? flags.board : undefined;
+
+  return {
+    command: 'welcome',
+    args: [],
+    flags,
+    raw,
+    isValid: true,
+    parsed: {
+      message,
+      delay,
+      boardId,
+    },
+  };
+}
+
+/**
+ * Parse remind command
+ * /remind <minutes> ["Message"] [--board=<boardId>]
+ */
+function parseRemindCommand(argsStr: string, raw: string): RemindCommand {
+  const { quoted, positional, flags } = parseArgsAndFlags(argsStr);
+
+  // Minutes is first positional arg
+  const minutesArg = positional[0];
+  const beforeMinutes = parseInt(minutesArg, 10);
+
+  if (!minutesArg || isNaN(beforeMinutes) || beforeMinutes < 1 || beforeMinutes > 10080) {
+    return {
+      command: 'remind',
+      args: positional,
+      flags,
+      raw,
+      isValid: false,
+      error: 'Reminder minutes required (1-10080). Use: /remind 30',
+      parsed: {
+        beforeMinutes: 30,
+      },
+    };
+  }
+
+  // Message is optional quoted string
+  const message = quoted[0];
+
+  // Parse board
+  const boardId = typeof flags.board === 'string' ? flags.board : undefined;
+
+  return {
+    command: 'remind',
+    args: positional,
+    flags,
+    raw,
+    isValid: true,
+    parsed: {
+      beforeMinutes,
+      message,
+      boardId,
+    },
+  };
+}
+
+/**
  * Parse help command
  * /help [command]
  */
@@ -663,6 +876,12 @@ export function getAutocompleteSuggestions(input: string): string[] {
       return ['--no-days', '--no-hours', '--no-minutes', '--no-seconds'];
     case 'announce':
       return ['--pin', '--urgent'];
+    case 'automate':
+      return ['welcome', 'reminder', 'keyword', 'schedule', '--before=', '--keywords='];
+    case 'welcome':
+      return ['--delay=', '--board='];
+    case 'remind':
+      return ['--board='];
     default:
       return [];
   }

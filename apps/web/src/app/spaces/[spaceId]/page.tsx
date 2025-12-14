@@ -44,7 +44,7 @@ import {
   type SlashCommandData,
   type DetectedIntent,
 } from "@hive/ui";
-import { SpaceBoardSkeleton } from "@hive/ui";
+import { SpaceBoardSkeleton, toast } from "@hive/ui";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
@@ -628,13 +628,25 @@ function SpaceDetailContent() {
         // Component created - clear pending state
         // The component will appear in chat via real-time sync
         setPendingIntent(null);
+
+        // Show success toast with component type
+        const typeLabels: Record<string, string> = {
+          poll: 'Poll',
+          rsvp: 'RSVP',
+          countdown: 'Countdown',
+          announcement: 'Announcement',
+        };
+        const label = typeLabels[pendingIntent.intent.intentType] || 'Component';
+        toast.success(`${label} created`, 'Your interactive component is now live in the chat.');
       } else {
         // Creation failed but not an error - maybe needs more info
         // Keep the pending state and let user modify
         console.warn('[Space] Intent component not created:', result.error);
+        toast.error('Could not create component', result.error || 'Please try again or send as a regular message.');
       }
     } catch (err) {
       console.error('[Space] Failed to create intent component:', err);
+      toast.error('Failed to create component', 'An unexpected error occurred. Please try again.');
       // Keep pending state so user can retry or dismiss
     }
   }, [pendingIntent, createIntentComponent]);
@@ -695,10 +707,16 @@ function SpaceDetailContent() {
       }
 
       // Component created - the message will appear via real-time sync
-      // No need to manually refresh
+      const typeLabels: Record<string, string> = {
+        poll: 'Poll',
+        rsvp: 'RSVP',
+        countdown: 'Countdown',
+        custom: 'Component',
+      };
+      toast.success(`${typeLabels[apiType] || 'Tool'} added`, 'Your interactive component is now live in the chat.');
     } catch (err) {
       console.error('[Space] Failed to insert tool:', err);
-      // Could show a toast here
+      toast.error('Failed to add tool', err instanceof Error ? err.message : 'Please try again.');
     }
   }, [spaceId, activeBoardId]);
 
@@ -772,8 +790,17 @@ function SpaceDetailContent() {
       }
 
       // Component created - will appear via real-time sync
+      // Show success toast
+      const typeLabels: Record<string, string> = {
+        poll: 'Poll',
+        rsvp: 'RSVP',
+        countdown: 'Countdown',
+        custom: 'Component',
+      };
+      toast.success(`${typeLabels[apiType] || 'Component'} created`, 'Your interactive component is now live.');
     } catch (err) {
       console.error('[Space] Failed to execute slash command:', err);
+      toast.error('Command failed', err instanceof Error ? err.message : 'Failed to create component');
     }
   }, [spaceId, activeBoardId]);
 
