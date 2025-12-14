@@ -1127,6 +1127,10 @@ export type {
   InlineComponentData,
 } from "./components/hivelab/inline-element-renderer";
 
+// HiveLab: Automations panel (Phase 3)
+export { AutomationsPanel, AutomationsBadge } from "./components/hivelab/automations-panel";
+export type { AutomationItem } from "./components/hivelab/automations-panel";
+
 // HiveLab: Studio + panels
 export { HiveLabStudio } from "./atomic/05-HiveLab/organisms/hivelab-studio";
 export type { HiveLabStudioProps } from "./atomic/05-HiveLab/organisms/hivelab-studio";
