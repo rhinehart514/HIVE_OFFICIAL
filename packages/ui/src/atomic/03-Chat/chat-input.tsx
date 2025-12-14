@@ -9,14 +9,14 @@
  * - Keyboard shortcuts (Enter to send, Shift+Enter for newline)
  * - Character counter (optional)
  * - Tool insertion toolbar (polls, events, countdowns)
- * - Slash command autocomplete (/poll, /rsvp, /countdown, /announce)
+ * - Slash command autocomplete (/poll, /rsvp, /countdown, /announce, /welcome, /remind, /automate)
  * - Minimal, clean design
  * - Mobile-optimized
  *
  * Part of HiveLab Winter 2025 Strategy: Chat-First Foundation
  */
 
-import { Send, Square, Zap, BarChart3, Calendar, Timer, Megaphone, HelpCircle } from 'lucide-react';
+import { Send, Square, Zap, BarChart3, Calendar, Timer, Megaphone, HelpCircle, Sparkles, Bell, UserPlus } from 'lucide-react';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
@@ -39,6 +39,7 @@ export interface SlashCommandSuggestion {
 }
 
 const SLASH_COMMANDS: SlashCommandSuggestion[] = [
+  // Component creation commands
   {
     command: '/poll',
     description: 'Create a poll',
@@ -62,6 +63,25 @@ const SLASH_COMMANDS: SlashCommandSuggestion[] = [
     description: 'Post announcement',
     syntax: '/announce Your message here',
     icon: <Megaphone className="h-4 w-4" />,
+  },
+  // Automation commands (HiveLab Phase 3)
+  {
+    command: '/welcome',
+    description: 'Auto-greet new members',
+    syntax: '/welcome "Hey {member}! Welcome!"',
+    icon: <UserPlus className="h-4 w-4 text-amber-500" />,
+  },
+  {
+    command: '/remind',
+    description: 'Event reminder automation',
+    syntax: '/remind 30 "Don\'t miss {event}!"',
+    icon: <Bell className="h-4 w-4 text-amber-500" />,
+  },
+  {
+    command: '/automate',
+    description: 'Create custom automation',
+    syntax: '/automate welcome "Greeting Bot"',
+    icon: <Sparkles className="h-4 w-4 text-amber-500" />,
   },
   {
     command: '/help',

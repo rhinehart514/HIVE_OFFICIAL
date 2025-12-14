@@ -34,6 +34,7 @@ import {
   EventCreateModal,
   ToolRuntimeModal,
   IntentConfirmationInline,
+  AutomationsPanel,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -50,6 +51,7 @@ import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
+import { useAutomations } from "@/hooks/use-automations";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 
@@ -386,6 +388,15 @@ function SpaceDetailContent() {
     spaceId: spaceId ?? '',
     enabled: !!spaceId,
   });
+
+  // Automations for this space (HiveLab Phase 3)
+  const {
+    automations,
+    isLoading: automationsLoading,
+    isLeader: canManageAutomations,
+    toggle: toggleAutomation,
+    remove: removeAutomation,
+  } = useAutomations(spaceId);
 
   // Chat intent detection (HiveLab AI-powered component creation)
   const {
@@ -1155,6 +1166,19 @@ function SpaceDetailContent() {
                 }}
                 collapsible
                 defaultCollapsed={false}
+              />
+            </div>
+          )}
+
+          {/* Automations Panel - shows for leaders (HiveLab Phase 3) */}
+          {canManageAutomations && (
+            <div className="p-4 border-b border-neutral-800">
+              <AutomationsPanel
+                automations={automations}
+                isLeader={canManageAutomations}
+                isLoading={automationsLoading}
+                onToggle={toggleAutomation}
+                onDelete={removeAutomation}
               />
             </div>
           )}
