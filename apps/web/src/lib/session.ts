@@ -9,15 +9,12 @@ import type { NextRequest, NextResponse } from 'next/server';
 import { logger } from './logger';
 
 // Session configuration
-const rawSecret = process.env.SESSION_SECRET;
+const SESSION_COOKIE_NAME = 'hive_session';
+const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds (PRD requirement)
+const ADMIN_SESSION_MAX_AGE = 4 * 60 * 60; // 4 hours for admin sessions
 
-// Validate SESSION_SECRET in production
-if (!rawSecret && process.env.NODE_ENV === 'production') {
-  throw new Error('SESSION_SECRET is required in production');
-}
-if (rawSecret && rawSecret.length < 32 && process.env.NODE_ENV === 'production') {
-  throw new Error('SESSION_SECRET must be at least 32 characters in production');
-}
+// Lazy initialization of secret to avoid build-time errors
+let _cachedSecret: Uint8Array | null = null;
 
 // Generate a cryptographically secure random secret for development
 // This ensures dev sessions are secure and can't be predicted
@@ -39,13 +36,28 @@ function generateDevSecret(): string {
   }
 }
 
-const SESSION_SECRET = rawSecret || generateDevSecret();
-const SESSION_COOKIE_NAME = 'hive_session';
-const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds (PRD requirement)
-const ADMIN_SESSION_MAX_AGE = 4 * 60 * 60; // 4 hours for admin sessions
+/**
+ * Get the session secret - validates on first use to avoid build-time errors
+ */
+function getSecret(): Uint8Array {
+  if (_cachedSecret) {
+    return _cachedSecret;
+  }
 
-// Convert secret to key
-const secret = new TextEncoder().encode(SESSION_SECRET);
+  const rawSecret = process.env.SESSION_SECRET;
+
+  // Validate SESSION_SECRET in production (lazy validation)
+  if (!rawSecret && process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET is required in production');
+  }
+  if (rawSecret && rawSecret.length < 32 && process.env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET must be at least 32 characters in production');
+  }
+
+  const SESSION_SECRET = rawSecret || generateDevSecret();
+  _cachedSecret = new TextEncoder().encode(SESSION_SECRET);
+  return _cachedSecret;
+}
 
 /** Session data stored in JWT */
 export interface SessionData {
@@ -88,7 +100,7 @@ export async function createSession(data: CreateSessionInput): Promise<string> {
     .setSubject(data.userId)
     .setIssuedAt()
     .setExpirationTime(data.isAdmin ? ADMIN_SESSION_MAX_AGE + 's' : SESSION_MAX_AGE + 's')
-    .sign(secret);
+    .sign(getSecret());
 
   return token;
 }
@@ -98,7 +110,7 @@ export async function createSession(data: CreateSessionInput): Promise<string> {
  */
 export async function verifySession(token: string): Promise<SessionData | null> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     // Validate required fields exist
     if (
       typeof payload.userId === 'string' &&

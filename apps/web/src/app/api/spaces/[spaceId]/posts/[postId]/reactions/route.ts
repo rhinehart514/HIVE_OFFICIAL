@@ -63,7 +63,7 @@ async function ensurePostExists(spaceId: string, postId: string) {
 export const POST = withAuthValidationAndErrors(
   ReactionSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
@@ -164,7 +164,8 @@ export const POST = withAuthValidationAndErrors(
       const status = (error as any)?.status || 500;
       logger.error(
         "Error updating reaction at /api/spaces/[spaceId]/posts/[postId]/reactions",
-        error instanceof Error ? error : new Error(String(error)),
+      {},
+      error instanceof Error ? error : new Error(String(error)),
       );
       const code =
         status === 404 ? "RESOURCE_NOT_FOUND" : status === 403 ? "FORBIDDEN" : "INTERNAL_ERROR";

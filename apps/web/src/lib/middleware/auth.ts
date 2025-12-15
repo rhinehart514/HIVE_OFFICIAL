@@ -217,30 +217,36 @@ export function withAdminAuth<T extends RouteParams>(
 
 /**
  * Utility function to get user ID from authenticated request
+ * Accepts generic request type for flexibility in route handlers
  */
-export function getUserId(request: AuthenticatedRequest): string {
-  return request.user.uid;
+export function getUserId(request: Request | AuthenticatedRequest): string {
+  const authRequest = request as AuthenticatedRequest;
+  return authRequest.user.uid;
 }
 
 /**
  * Utility function to get user email from authenticated request
+ * Accepts generic request type for flexibility in route handlers
  */
-export function getUserEmail(request: AuthenticatedRequest): string {
-  return request.user.email;
+export function getUserEmail(request: Request | AuthenticatedRequest): string {
+  const authRequest = request as AuthenticatedRequest;
+  return authRequest.user.email;
 }
 
 /**
  * Utility function to get campus ID from authenticated request
  * Falls back to deriving from email or default campus
+ * Accepts generic request type for flexibility in route handlers
  */
-export function getCampusId(request: AuthenticatedRequest): string {
+export function getCampusId(request: Request | AuthenticatedRequest): string {
+  const authRequest = request as AuthenticatedRequest;
   // Return from session if available
-  if (request.user.campusId) {
-    return request.user.campusId;
+  if (authRequest.user.campusId) {
+    return authRequest.user.campusId;
   }
 
   // Fallback: derive from email domain
-  const email = request.user.email;
+  const email = authRequest.user.email;
   if (email) {
     const domain = email.split('@')[1]?.toLowerCase();
     if (domain === 'buffalo.edu' || domain === 'ub.edu') {

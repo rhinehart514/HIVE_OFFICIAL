@@ -79,6 +79,12 @@ export interface SendMessageInput {
   content: string;
   replyToId?: string;
   componentData?: InlineComponentData;
+  /** Optional metadata for automation/system messages */
+  metadata?: {
+    isAutomation?: boolean;
+    automationType?: string;
+    [key: string]: unknown;
+  };
 }
 
 /**
