@@ -43,14 +43,27 @@ export const GET = withAuthAndErrors(async (
   const since = new Date();
   since.setDate(since.getDate() - days);
 
-  // Fetch events for this tool in range
-  const eventsSnapshot = await dbAdmin
-    .collection('analytics_events')
-    .where('toolId', '==', toolId)
-    .where('timestamp', '>=', since)
-    .get();
+  // Previous period for trend comparison
+  const previousPeriodStart = new Date(since);
+  previousPeriodStart.setDate(previousPeriodStart.getDate() - days);
+
+  // Fetch events for this tool in range (current + previous period for trends)
+  const [eventsSnapshot, previousEventsSnapshot] = await Promise.all([
+    dbAdmin
+      .collection('analytics_events')
+      .where('toolId', '==', toolId)
+      .where('timestamp', '>=', since)
+      .get(),
+    dbAdmin
+      .collection('analytics_events')
+      .where('toolId', '==', toolId)
+      .where('timestamp', '>=', previousPeriodStart)
+      .where('timestamp', '<', since)
+      .get(),
+  ]);
 
   const events = eventsSnapshot.docs.map((d) => d.data() as Record<string, unknown>);
+  const previousEvents = previousEventsSnapshot.docs.map((d) => d.data() as Record<string, unknown>);
 
   // Build daily usage map
   const dailyMap = new Map<string, { usage: number; users: Set<string> }>();
@@ -63,6 +76,9 @@ export const GET = withAuthAndErrors(async (
 
   let totalUsage = 0;
   const activeUsersSet = new Set<string>();
+  const userUsageCount = new Map<string, number>(); // Track per-user usage for returning users
+  const elementTypeMap = new Map<string, number>(); // Track element type usage
+
   for (const ev of events) {
     const ts = ev.timestamp && (typeof ev.timestamp === 'string' || typeof ev.timestamp === 'number' || ev.timestamp instanceof Date) ? new Date(ev.timestamp) : new Date();
     const key = ts.toISOString().slice(0, 10);
@@ -72,9 +88,34 @@ export const GET = withAuthAndErrors(async (
     if (ev.userId && typeof ev.userId === 'string') {
       bucket.users.add(ev.userId);
       activeUsersSet.add(ev.userId);
+      userUsageCount.set(ev.userId, (userUsageCount.get(ev.userId) || 0) + 1);
     }
     totalUsage += 1;
+
+    // Track element types
+    const elementType = (ev.metadata as Record<string, unknown>)?.elementType || ev.elementType;
+    if (elementType && typeof elementType === 'string') {
+      elementTypeMap.set(elementType, (elementTypeMap.get(elementType) || 0) + 1);
+    }
   }
+
+  // Calculate previous period totals for trends
+  const previousTotalUsage = previousEvents.length;
+  const previousActiveUsersSet = new Set(previousEvents.map(ev => ev.userId as string).filter(Boolean));
+
+  // Calculate trend percentages
+  const usageTrend = previousTotalUsage > 0
+    ? Math.round(((totalUsage - previousTotalUsage) / previousTotalUsage) * 100)
+    : totalUsage > 0 ? 100 : 0;
+  const userTrend = previousActiveUsersSet.size > 0
+    ? Math.round(((activeUsersSet.size - previousActiveUsersSet.size) / previousActiveUsersSet.size) * 100)
+    : activeUsersSet.size > 0 ? 100 : 0;
+
+  // Calculate returning users (users with more than 1 interaction)
+  const returningUsers = Array.from(userUsageCount.values()).filter(count => count > 1).length;
+  const retentionRate = activeUsersSet.size > 0
+    ? Math.round((returningUsers / activeUsersSet.size) * 100)
+    : 0;
 
   const daily = Array.from(dailyMap.entries()).map(([date, v]) => ({ date, usage: v.usage, users: v.users.size }));
 
@@ -97,11 +138,12 @@ export const GET = withAuthAndErrors(async (
   }
   spaces.sort((a, b) => b.usage - a.usage);
 
-  // Feature usage (best-effort from event metadata)
+  // Feature/action usage (from action field in analytics events)
   const featureMap = new Map<string, number>();
   for (const ev of events) {
+    // Try multiple sources for feature name
     const metadata = ev.metadata as Record<string, unknown> | undefined;
-    const feature = metadata?.feature || ev.feature;
+    const feature = metadata?.feature || ev.feature || ev.action;
     if (!feature || typeof feature !== 'string') continue;
     featureMap.set(feature, (featureMap.get(feature) || 0) + 1);
   }
@@ -112,6 +154,12 @@ export const GET = withAuthAndErrors(async (
 
   const featuresTotal = features.reduce((s, f) => s + f.usage, 0) || 1;
   for (const f of features) f.percentage = Math.round((f.usage / featuresTotal) * 100);
+
+  // Element type breakdown
+  const elementTypes = Array.from(elementTypeMap.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([type, count]) => ({ type, usage: count }));
 
   // Reviews for ratings + comments
   const reviewsSnapshot = await dbAdmin
@@ -148,18 +196,24 @@ export const GET = withAuthAndErrors(async (
       activeUsers: activeUsersSet.size,
       avgRating,
       downloads: (tool?.installCount || 0),
+      // Trend data (% change from previous period)
+      usageTrend,
+      userTrend,
+      returningUsers,
+      retentionRate,
     },
     usage: {
       daily,
       spaces,
       features,
+      elementTypes,
     },
     feedback: {
       ratings: [1, 2, 3, 4, 5].reverse().map((r) => ({ rating: r, count: ratingsDist[r] || 0 })),
       comments: recentComments,
+      totalReviews,
     },
   };
 
   return respond.success(payload);
 });
-

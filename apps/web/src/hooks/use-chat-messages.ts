@@ -10,12 +10,13 @@
  * - Real-time message sync via SSE
  * - Optimistic updates for sends
  * - Board/channel switching
- * - Typing indicators
+ * - Typing indicators (real-time via Firebase RTDB)
  * - Reconnection with exponential backoff
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { nanoid } from "nanoid";
+import { realtimeService, type TypingIndicator } from "@/lib/firebase-realtime";
 
 // ============================================================
 // Types (matching SpaceChatBoard component expectations)
@@ -131,12 +132,8 @@ export interface UseChatMessagesReturn {
 // ============================================================
 
 const DEFAULT_LIMIT = 50;
-const TYPING_DEBOUNCE_MS = 3000;
-// Typing indicator polling: start at 5s, back off to 30s when no activity
-// This significantly reduces server load while maintaining UX
-const TYPING_BASE_INTERVAL_MS = 5000;
-const TYPING_MAX_INTERVAL_MS = 30000;
-const TYPING_BACKOFF_MULTIPLIER = 2;
+const TYPING_DEBOUNCE_MS = 2000; // Debounce typing indicator updates
+const TYPING_TTL_MS = 5000; // Auto-clear typing after 5s of no updates
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 30000;
 const DEFAULT_BOARD_ID = "general";
@@ -184,10 +181,9 @@ export function useChatMessages(
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptRef = useRef(0);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const typingPollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const typingIntervalRef = useRef(TYPING_BASE_INTERVAL_MS);
+  const typingClearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingSentRef = useRef(0);
+  const typingUnsubscribeRef = useRef<(() => void) | null>(null);
   const mountedRef = useRef(true);
 
   // Scroll position cache for board switching
@@ -428,34 +424,11 @@ export function useChatMessages(
   }, []);
 
   // ============================================================
-  // Typing Indicators
+  // Typing Indicators (Real-time via Firebase RTDB)
   // ============================================================
 
-  const fetchTypingUsers = useCallback(
-    async (boardId: string) => {
-      if (!spaceId || !enableTypingIndicators) return;
-
-      try {
-        const response = await fetch(
-          `/api/spaces/${spaceId}/chat/typing?boardId=${boardId}`,
-          { credentials: "include" }
-        );
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-        if (mountedRef.current) {
-          setTypingUsers(data.users || []);
-        }
-      } catch (err) {
-        // Silently fail - typing indicators are non-critical
-      }
-    },
-    [spaceId, enableTypingIndicators]
-  );
-
   const setTyping = useCallback(() => {
-    if (!spaceId || !enableTypingIndicators) return;
+    if (!spaceId || !activeBoardId || !enableTypingIndicators) return;
 
     const now = Date.now();
     if (now - lastTypingSentRef.current < TYPING_DEBOUNCE_MS) {
@@ -464,14 +437,36 @@ export function useChatMessages(
 
     lastTypingSentRef.current = now;
 
-    fetch(`/api/spaces/${spaceId}/chat/typing`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ boardId: activeBoardId }),
-    }).catch(() => {
-      // Silently fail
-    });
+    // Get current user ID from session storage or auth
+    const currentUserId = typeof window !== 'undefined'
+      ? sessionStorage.getItem('currentUserId') || localStorage.getItem('currentUserId')
+      : null;
+
+    if (!currentUserId) {
+      // Fallback to API-based typing if no user ID available
+      fetch(`/api/spaces/${spaceId}/chat/typing`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boardId: activeBoardId }),
+      }).catch(() => {});
+      return;
+    }
+
+    // Use Firebase RTDB for real-time typing (no polling!)
+    realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, true)
+      .catch(() => {
+        // Silently fail - typing indicators are non-critical
+      });
+
+    // Auto-clear typing after TTL
+    if (typingClearTimeoutRef.current) {
+      clearTimeout(typingClearTimeoutRef.current);
+    }
+    typingClearTimeoutRef.current = setTimeout(() => {
+      realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
+        .catch(() => {});
+    }, TYPING_TTL_MS);
   }, [spaceId, activeBoardId, enableTypingIndicators]);
 
   // ============================================================
@@ -711,8 +706,11 @@ export function useChatMessages(
     return () => {
       mountedRef.current = false;
       disconnectSSE();
-      if (typingPollTimeoutRef.current) {
-        clearTimeout(typingPollTimeoutRef.current);
+      if (typingClearTimeoutRef.current) {
+        clearTimeout(typingClearTimeoutRef.current);
+      }
+      if (typingUnsubscribeRef.current) {
+        typingUnsubscribeRef.current();
       }
     };
   }, [disconnectSSE]);
@@ -748,71 +746,57 @@ export function useChatMessages(
     disconnectSSE,
   ]);
 
-  // Poll for typing indicators with exponential backoff
-  // Starts at 2s, backs off to 10s when no activity, resets on activity
+  // Real-time typing indicators via Firebase RTDB (no polling!)
   useEffect(() => {
     if (!spaceId || !activeBoardId || !enableTypingIndicators) return;
 
-    // Reset interval on board change
-    typingIntervalRef.current = TYPING_BASE_INTERVAL_MS;
+    // Get current user ID to filter out self
+    const currentUserId = typeof window !== 'undefined'
+      ? sessionStorage.getItem('currentUserId') || localStorage.getItem('currentUserId')
+      : null;
 
-    const scheduleNextPoll = () => {
-      if (!mountedRef.current) return;
-
-      typingPollTimeoutRef.current = setTimeout(async () => {
+    // Subscribe to real-time typing updates
+    const unsubscribe = realtimeService.listenToBoardTyping(
+      spaceId,
+      activeBoardId,
+      (typingData: Record<string, TypingIndicator>) => {
         if (!mountedRef.current) return;
 
-        try {
-          const response = await fetch(
-            `/api/spaces/${spaceId}/chat/typing?boardId=${activeBoardId}`,
-            { credentials: "include" }
-          );
+        // Convert RTDB typing data to TypingUser array
+        const now = Date.now();
+        const users: TypingUser[] = Object.entries(typingData)
+          .filter(([userId, data]) => {
+            // Filter out current user and expired indicators
+            if (userId === currentUserId) return false;
+            if (!data.isTyping) return false;
+            // Check TTL - only show if updated within last 5s
+            const timestamp = typeof data.timestamp === 'number' ? data.timestamp : 0;
+            return now - timestamp < TYPING_TTL_MS;
+          })
+          .map(([userId, data]) => ({
+            id: userId,
+            name: data.userId || 'Someone', // Will be enriched by UI if needed
+            avatarUrl: undefined,
+          }));
 
-          if (!response.ok) {
-            scheduleNextPoll();
-            return;
-          }
+        setTypingUsers(users);
+      }
+    );
 
-          const data = await response.json();
-          const users = data.users || [];
-
-          if (mountedRef.current) {
-            setTypingUsers(users);
-
-            // Adjust polling interval based on activity
-            if (users.length > 0) {
-              // Activity detected - reset to base interval
-              typingIntervalRef.current = TYPING_BASE_INTERVAL_MS;
-            } else {
-              // No activity - back off
-              typingIntervalRef.current = Math.min(
-                typingIntervalRef.current * TYPING_BACKOFF_MULTIPLIER,
-                TYPING_MAX_INTERVAL_MS
-              );
-            }
-
-            scheduleNextPoll();
-          }
-        } catch {
-          // Silently fail - typing indicators are non-critical
-          if (mountedRef.current) {
-            scheduleNextPoll();
-          }
-        }
-      }, typingIntervalRef.current);
-    };
-
-    // Initial fetch then start polling
-    fetchTypingUsers(activeBoardId);
-    scheduleNextPoll();
+    typingUnsubscribeRef.current = unsubscribe;
 
     return () => {
-      if (typingPollTimeoutRef.current) {
-        clearTimeout(typingPollTimeoutRef.current);
-        typingPollTimeoutRef.current = null;
+      if (typingUnsubscribeRef.current) {
+        typingUnsubscribeRef.current();
+        typingUnsubscribeRef.current = null;
+      }
+      // Clear typing indicator when leaving
+      if (currentUserId) {
+        realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
+          .catch(() => {});
       }
     };
-  }, [spaceId, activeBoardId, enableTypingIndicators, fetchTypingUsers]);
+  }, [spaceId, activeBoardId, enableTypingIndicators]);
 
   // ============================================================
   // Thread Actions

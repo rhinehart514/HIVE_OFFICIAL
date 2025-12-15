@@ -21,7 +21,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, PanInfo, useReducedMotion } from 'framer-motion';
-import { Info, Calendar, Wrench, Users, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Info, Calendar, Wrench, Users, X, ChevronUp, ChevronDown, Zap } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { tinderSprings } from '@hive/tokens';
 
@@ -89,6 +89,17 @@ export interface MobileDrawerProps {
     role?: string;
     isOnline?: boolean;
   }>;
+  /** Automations to display in automations drawer */
+  automations?: Array<{
+    id: string;
+    name: string;
+    trigger: string;
+    enabled: boolean;
+    runCount?: number;
+    onToggle?: (id: string) => void;
+  }>;
+  /** Callback to open templates from automations drawer */
+  onOpenTemplates?: () => void;
   /** Callback when snap point changes (for haptic feedback) */
   onSnapChange?: (snap: SnapPoint) => void;
   /** Additional className for the drawer content */
@@ -128,6 +139,11 @@ const DRAWER_CONFIG: Record<
     icon: Users,
     title: 'Members',
     description: 'People in this space',
+  },
+  automations: {
+    icon: Zap,
+    title: 'Automations',
+    description: 'Automated workflows for this space',
   },
 };
 
@@ -416,6 +432,104 @@ function MemberRow({
 }
 
 // ============================================================
+// Automations Content
+// ============================================================
+
+const TRIGGER_LABELS: Record<string, string> = {
+  member_join: 'When member joins',
+  event_reminder: 'Before events',
+  schedule: 'On schedule',
+  keyword: 'Keyword trigger',
+  reaction_threshold: 'Reaction milestone',
+};
+
+function AutomationsContent({
+  automations = [],
+  onOpenTemplates,
+}: {
+  automations?: MobileDrawerProps['automations'];
+  onOpenTemplates?: () => void;
+}) {
+  if (automations.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <Zap className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
+        <p className="text-neutral-400 text-sm">No automations yet</p>
+        <p className="text-neutral-500 text-xs mt-1 mb-4">
+          Set up automated workflows for your space
+        </p>
+        {onOpenTemplates && (
+          <button
+            onClick={onOpenTemplates}
+            className="px-4 py-2 bg-[#FFD700]/10 text-[#FFD700] text-sm font-medium rounded-lg hover:bg-[#FFD700]/20 transition-colors"
+          >
+            Browse Templates
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {automations.map((automation) => (
+        <div
+          key={automation.id}
+          className="bg-neutral-800/50 rounded-lg p-3 flex items-center gap-3"
+        >
+          <div className={cn(
+            'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+            automation.enabled ? 'bg-[#FFD700]/10' : 'bg-neutral-700/50'
+          )}>
+            <Zap className={cn('w-5 h-5', automation.enabled ? 'text-[#FFD700]' : 'text-neutral-500')} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-white truncate">
+              {automation.name}
+            </div>
+            <div className="text-xs text-neutral-400">
+              {TRIGGER_LABELS[automation.trigger] || automation.trigger}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {automation.runCount !== undefined && (
+              <span className="text-xs text-neutral-500">
+                {automation.runCount} runs
+              </span>
+            )}
+            <button
+              onClick={() => automation.onToggle?.(automation.id)}
+              className={cn(
+                'w-10 h-6 rounded-full transition-colors relative',
+                automation.enabled ? 'bg-[#FFD700]' : 'bg-neutral-700'
+              )}
+              aria-label={automation.enabled ? 'Disable automation' : 'Enable automation'}
+            >
+              <span
+                className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  automation.enabled ? 'left-5' : 'left-1'
+                )}
+              />
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {/* Browse templates button */}
+      {onOpenTemplates && (
+        <button
+          onClick={onOpenTemplates}
+          className="w-full py-2 text-sm text-[#FFD700] hover:text-[#FFD700]/80 transition-colors"
+        >
+          + Add from templates
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Snap Indicator
 // ============================================================
 
@@ -500,6 +614,8 @@ export function MobileDrawer({
   events,
   tools,
   members,
+  automations,
+  onOpenTemplates,
   onSnapChange,
   className,
   children,
@@ -561,6 +677,8 @@ export function MobileDrawer({
         return <ToolsContent tools={tools} />;
       case 'members':
         return <MembersContent members={members} />;
+      case 'automations':
+        return <AutomationsContent automations={automations} onOpenTemplates={onOpenTemplates} />;
       default:
         return null;
     }

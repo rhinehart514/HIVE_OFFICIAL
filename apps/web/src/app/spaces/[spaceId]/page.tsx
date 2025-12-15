@@ -147,6 +147,9 @@ function SpaceMobileNavigation({
   events,
   tools,
   leaders,
+  automations,
+  isLeader,
+  onOpenTemplates,
 }: {
   activeDrawer: MobileDrawerType | null;
   setActiveDrawer: (drawer: MobileDrawerType | null) => void;
@@ -154,6 +157,9 @@ function SpaceMobileNavigation({
   events: Array<{ id: string; title: string; startDate: string; currentAttendees: number }>;
   tools: ToolData[];
   leaders: LeaderData[];
+  automations?: Array<{ id: string; name: string; trigger: string; enabled: boolean; runCount?: number }>;
+  isLeader?: boolean;
+  onOpenTemplates?: () => void;
 }) {
   return (
     <>
@@ -161,6 +167,7 @@ function SpaceMobileNavigation({
         <MobileActionBar
           activeDrawer={activeDrawer}
           onAction={(type) => setActiveDrawer(type)}
+          isLeader={isLeader}
         />
       </div>
       <MobileDrawer
@@ -214,6 +221,22 @@ function SpaceMobileNavigation({
           isOnline: false,
         }))}
       />
+      {/* Automations drawer - only for leaders */}
+      {isLeader && (
+        <MobileDrawer
+          type="automations"
+          open={activeDrawer === "automations"}
+          onOpenChange={(open) => setActiveDrawer(open ? "automations" : null)}
+          automations={automations?.map((a) => ({
+            id: a.id,
+            name: a.name,
+            trigger: a.trigger,
+            enabled: a.enabled,
+            runCount: a.runCount,
+          }))}
+          onOpenTemplates={onOpenTemplates}
+        />
+      )}
     </>
   );
 }
@@ -1158,8 +1181,8 @@ function SpaceDetailContent() {
           />
         </main>
 
-        {/* Sidebar - 40% on desktop, hidden on mobile */}
-        <aside className="hidden lg:flex lg:flex-col lg:flex-[2] max-w-[400px] border-l border-neutral-800 bg-neutral-950/50 overflow-y-auto">
+        {/* Sidebar - 40% on desktop, hidden on mobile, sticky for scroll */}
+        <aside className="hidden lg:flex lg:flex-col lg:flex-[2] max-w-[400px] border-l border-neutral-800 bg-neutral-950/50 overflow-y-auto lg:sticky lg:top-0 lg:h-screen">
           {/* Pinned Messages Widget - shows when there are pinned messages */}
           {(pinnedMessages.length > 0 || pinnedLoading) && (
             <div className="p-4 border-b border-neutral-800">
@@ -1190,13 +1213,11 @@ function SpaceDetailContent() {
                 onToggle={toggleAutomation}
                 onDelete={removeAutomation}
               />
-              {/* Quick Templates Button (Phase 3.5) */}
-              {automations.length < 5 && (
-                <AutomationTemplatesCompact
-                  onOpenFull={() => setShowTemplates(true)}
-                  templateCount={6}
-                />
-              )}
+              {/* Quick Templates Button (Phase 3.5) - always visible for discoverability */}
+              <AutomationTemplatesCompact
+                onOpenFull={() => setShowTemplates(true)}
+                templateCount={6}
+              />
             </div>
           )}
 
@@ -1245,6 +1266,15 @@ function SpaceDetailContent() {
         events={events}
         tools={tools}
         leaders={leaders}
+        automations={automations.map(a => ({
+          id: a.id,
+          name: a.name,
+          trigger: a.trigger,
+          enabled: a.enabled,
+          runCount: a.runCount,
+        }))}
+        isLeader={isLeader}
+        onOpenTemplates={() => setShowTemplates(true)}
       />
 
       {/* Leader Modals - Add tab, widget, invite member, create event */}
