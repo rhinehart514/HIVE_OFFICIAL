@@ -89,6 +89,9 @@ export interface UseChatMessagesOptions {
   pollingIntervalMs?: number; // For polling fallback (not used with SSE)
 }
 
+/** @deprecated Use UseChatMessagesOptions instead */
+export type ChatOptions = UseChatMessagesOptions;
+
 export interface UseChatMessagesReturn {
   // Data
   messages: ChatMessageData[];

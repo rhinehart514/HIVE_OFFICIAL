@@ -185,6 +185,11 @@ export interface SpaceChatBoardProps {
   /** Whether to show the tool insertion toolbar */
   showToolbar?: boolean;
 
+  /** Callback when a slash command is executed */
+  onSlashCommand?: (command: { command: string; primaryArg?: string; listArgs: string[]; flags: Record<string, string | boolean>; raw: string }) => Promise<void>;
+  /** Whether to enable slash command autocomplete */
+  enableSlashCommands?: boolean;
+
   // Inline component rendering
   renderInlineComponent?: (componentData: ChatMessageData['componentData']) => React.ReactNode;
 

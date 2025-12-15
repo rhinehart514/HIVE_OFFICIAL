@@ -31,6 +31,20 @@ export type { ToolInsertData, ToolType } from './chat-toolbar';
 // Slash Command Types & Data
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Parsed slash command data from user input */
+export interface SlashCommandData {
+  /** Command name (without the leading /) */
+  command: string;
+  /** Primary argument (quoted text or first argument) */
+  primaryArg?: string;
+  /** List arguments (comma-separated items) */
+  listArgs: string[];
+  /** Named flags (--flag=value or --flag) */
+  flags: Record<string, string | boolean>;
+  /** Raw input string */
+  raw: string;
+}
+
 export interface SlashCommandSuggestion {
   command: string;
   description: string;

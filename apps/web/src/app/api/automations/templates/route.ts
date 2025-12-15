@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import {
-  getAllTemplates,
-  getTemplatesByCategory,
-  getTemplateById,
-  getTemplateCategories,
-} from "@hive/core/domain/hivelab/automation-templates";
+  getAllAutomationTemplates as getAllTemplates,
+  getAutomationTemplatesByCategory as getTemplatesByCategory,
+  getAutomationTemplateById as getTemplateById,
+  getAutomationTemplateCategories as getTemplateCategories,
+} from "@hive/core";
 
 /**
  * GET /api/automations/templates

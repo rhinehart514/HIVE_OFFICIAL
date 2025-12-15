@@ -336,15 +336,16 @@ export function useSpaceWithTools(options: UseSpaceWithToolsOptions): UseSpaceWi
       return false;
     }
 
-    return chat.sendMessage({
-      content: `[${tool.name}]`,
-      componentData: {
-        elementType: tool.elementType,
-        deploymentId: tool.deploymentId,
-        toolId: tool.toolId,
-        isActive: tool.isActive,
-      },
-    });
+    // TODO: Implement proper component insertion via API when sendMessage supports componentData
+    // For now, send a simple message with tool name
+    try {
+      await chat.sendMessage(`[Tool: ${tool.name}]`);
+      logger.info('Tool reference inserted in chat', { component: 'useSpaceWithTools', toolId: tool.toolId });
+      return true;
+    } catch (error) {
+      logger.error('Failed to insert tool in chat', { component: 'useSpaceWithTools' }, error instanceof Error ? error : undefined);
+      return false;
+    }
   }, [chat]);
 
   // ============================================================

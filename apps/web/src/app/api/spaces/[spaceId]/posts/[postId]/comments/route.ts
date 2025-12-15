@@ -64,7 +64,7 @@ async function ensurePostExists(spaceId: string, postId: string) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
@@ -151,6 +151,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching comments at /api/spaces/[spaceId]/posts/[postId]/comments",
+      { endpoint: '/api/spaces/[spaceId]/posts/[postId]/comments' },
       error instanceof Error ? error : new Error(String(error)),
     );
     return respond.error("Failed to fetch comments", "INTERNAL_ERROR", {
@@ -162,7 +163,7 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreateCommentSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
@@ -257,7 +258,8 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating comment at /api/spaces/[spaceId]/posts/[postId]/comments",
-        error instanceof Error ? error : new Error(String(error)),
+      {},
+      error instanceof Error ? error : new Error(String(error)),
       );
       return respond.error("Failed to create comment", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

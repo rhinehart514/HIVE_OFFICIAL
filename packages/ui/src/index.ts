@@ -1179,6 +1179,10 @@ export {
   ToolPreviewCard,
   MobilePreviewSheet,
 } from "./atomic/03-Chat";
+export {
+  IntentConfirmation,
+  IntentConfirmationInline,
+} from "./atomic/03-Chat";
 export type {
   MessageBubbleProps,
   ConversationThreadProps,
@@ -1187,6 +1191,12 @@ export type {
   TypingIndicatorProps,
   ToolPreviewCardProps,
   MobilePreviewSheetProps,
+  SlashCommandData,
+  SlashCommandSuggestion,
+  IntentConfirmationProps,
+  IntentConfirmationInlineProps,
+  DetectedIntent,
+  IntentType,
 } from "./atomic/03-Chat";
 
 // Chat-based Landing Page

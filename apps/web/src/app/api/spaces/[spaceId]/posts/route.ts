@@ -61,15 +61,16 @@ async function ensureSpaceAndMembership(spaceId: string, userId: string) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond,
 ) => {
   try {
     const { spaceId } = await params;
     const userId = getUserId(request);
+    const url = new URL(request.url);
     const queryParams = GetPostsSchema.parse(
-      Object.fromEntries(request.nextUrl.searchParams.entries()),
+      Object.fromEntries(url.searchParams.entries()),
     );
 
     const membership = await ensureSpaceAndMembership(spaceId, userId);
@@ -168,6 +169,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching posts at /api/spaces/[spaceId]/posts",
+      {},
       error instanceof Error ? error : new Error(String(error)),
     );
     return respond.error("Failed to fetch posts", "INTERNAL_ERROR", {
@@ -179,7 +181,7 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreatePostSchema,
   async (
-    request: AuthenticatedRequest,
+    request,
     { params }: { params: Promise<{ spaceId: string }> },
     body,
     respond,
@@ -274,8 +276,8 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating post at /api/spaces/[spaceId]/posts",
-        error instanceof Error ? error : new Error(String(error)),
         { spaceId, userId },
+        error instanceof Error ? error : new Error(String(error)),
       );
       return respond.error("Failed to create post", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

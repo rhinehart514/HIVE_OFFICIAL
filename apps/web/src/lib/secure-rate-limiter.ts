@@ -5,7 +5,7 @@
  * that existing code expects.
  */
 
-import type { NextRequest } from 'next/server';
+// Using Request type for broader compatibility with both Next.js API routes and Edge functions
 import {
   authRateLimit,
   apiRateLimit,
@@ -39,7 +39,7 @@ interface RateLimitResponse {
 /**
  * Extract secure client ID from request
  */
-export function getSecureClientId(request: NextRequest): string {
+export function getSecureClientId(request: Request): string {
   // Try various header sources for the real IP
   const forwardedFor = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
@@ -72,7 +72,7 @@ export function getSecureClientId(request: NextRequest): string {
  */
 export async function enforceRateLimit(
   preset: RateLimitPreset | string,
-  request: NextRequest
+  request: Request
 ): Promise<RateLimitResponse> {
   const clientId = getSecureClientId(request);
   const limiter = RATE_LIMIT_PRESETS[preset as RateLimitPreset] || apiRateLimit;

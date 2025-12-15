@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { secureApiFetch } from '@/lib/secure-api-fetch';
+import { secureApiFetch } from '@/lib/secure-auth-utils';
 
 export interface AutomationDTO {
   id: string;

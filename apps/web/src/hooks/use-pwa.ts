@@ -9,7 +9,7 @@
  * - App installation state
  */
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -21,6 +21,42 @@ interface PWAState {
   isInstalled: boolean;
   isUpdating: boolean;
   registration: ServiceWorkerRegistration | null;
+}
+
+/**
+ * Track online/offline status
+ * Uses useSyncExternalStore for SSR-safe subscription to navigator.onLine
+ */
+function getOnlineSnapshot(): boolean {
+  return typeof navigator !== 'undefined' ? navigator.onLine : true;
+}
+
+function getServerSnapshot(): boolean {
+  return true; // Assume online during SSR
+}
+
+function subscribeToOnlineStatus(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+}
+
+/**
+ * Hook to track online/offline status
+ * @returns {boolean} True if online, false if offline
+ */
+export function useOnlineStatus(): boolean {
+  return useSyncExternalStore(
+    subscribeToOnlineStatus,
+    getOnlineSnapshot,
+    getServerSnapshot
+  );
 }
 
 export function usePWA() {
