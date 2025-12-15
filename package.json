@@ -27,6 +27,8 @@
     "seed:events": "node scripts/seed-demo-events.mjs",
     "seed:events:sync": "node scripts/sync-campuslabs-events.mjs",
     "seed:tools": "node scripts/seed-tool-templates.mjs",
+    "launch:verify": "node scripts/verify-ub-launch.mjs",
+    "launch:ub": "node scripts/seed-production.mjs && node scripts/verify-ub-launch.mjs",
     "benchmark": "npx ts-node scripts/benchmark-ai.ts",
     "benchmark:quick": "npx ts-node scripts/benchmark-ai.ts --category basic --format table",
     "benchmark:full": "npx ts-node scripts/benchmark-ai.ts --parallel --format table",
