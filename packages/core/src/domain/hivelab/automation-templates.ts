@@ -50,6 +50,7 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
     icon: 'UserPlus',
     trigger: {
       type: 'member_join',
+      config: {},
     },
     action: {
       type: 'send_message',
@@ -76,6 +77,7 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
     icon: 'Smile',
     trigger: {
       type: 'member_join',
+      config: {},
     },
     action: {
       type: 'send_message',
@@ -205,7 +207,7 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
       type: 'keyword',
       config: {
         keywords: ['meeting', 'urgent', 'important'],
-        matchWholeWord: false,
+        matchType: 'contains',
       },
     },
     action: {
@@ -236,7 +238,6 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
       type: 'reaction_threshold',
       config: {
         threshold: 10,
-        reactionType: 'any',
       },
     },
     action: {

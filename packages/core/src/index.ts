@@ -242,11 +242,11 @@ export {
 // HiveLab Automation Templates (Phase 3.5)
 export {
   AUTOMATION_TEMPLATES,
-  getAllTemplates,
-  getTemplatesByCategory,
-  getTemplateById,
+  getAllTemplates as getAllAutomationTemplates,
+  getTemplatesByCategory as getAutomationTemplatesByCategory,
+  getTemplateById as getAutomationTemplateById,
   createFromTemplate,
-  getTemplateCategories,
+  getTemplateCategories as getAutomationTemplateCategories,
   type AutomationTemplate,
 } from "./domain/hivelab/automation-templates";
 

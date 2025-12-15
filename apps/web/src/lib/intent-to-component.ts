@@ -13,7 +13,10 @@
  * Part of HiveLab Winter 2025 Strategy: Chat-First Foundation
  */
 
-import { InlineComponent } from '@hive/core';
+import type { InlineComponentData } from '@hive/core';
+
+// Create type alias for backwards compatibility
+type InlineComponent = InlineComponentData;
 import type { ParsedIntent, IntentParams } from './ai-intent-parser';
 import type {
   ParsedSlashCommand,

@@ -34,14 +34,26 @@ export const GET = withAuthAndErrors(async (
     id: string;
     campusId?: string;
     ownerId?: string;
+    createdBy?: string;
     viewCount?: number;
+    status?: string;
+    isPublic?: boolean;
+    visibility?: string;
   };
   if (toolData.campusId !== CURRENT_CAMPUS_ID) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // For HiveLab-only launch: Allow viewing all tools on campus
-  // TODO: Add proper authorization when needed
+  // Authorization check: Owner can see any tool, others can only see public/published tools
+  const isOwner = toolData.ownerId === userId || toolData.createdBy === userId;
+  const isPublicOrPublished = toolData.isPublic === true ||
+                               toolData.status === 'published' ||
+                               toolData.visibility === 'public';
+
+  if (!isOwner && !isPublicOrPublished) {
+    // Private/draft tools are only visible to their owners
+    return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
+  }
 
   // Increment view count if not the owner
   if (toolData.ownerId !== userId) {
@@ -50,9 +62,9 @@ export const GET = withAuthAndErrors(async (
       lastUsedAt: new Date() });
   }
 
-  // Get versions if user is owner
+  // Get versions if user is owner (check both ownerId and createdBy)
   let versions: Array<Record<string, unknown>> = [];
-  if (toolData.ownerId === userId) {
+  if (isOwner) {
     const versionsSnapshot = await toolDoc.ref
       .collection("versions")
       .orderBy("createdAt", "desc")
@@ -111,8 +123,9 @@ export const PUT = withAuthAndErrors(async (
       return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
-    // Check if user is owner
-    if (currentTool.ownerId !== userId) {
+    // Check if user is owner (check both ownerId and createdBy for backwards compat)
+    const isToolOwner = currentTool.ownerId === userId || (currentTool as Record<string, unknown>).createdBy === userId;
+    if (!isToolOwner) {
       return respond.error("Access denied", "FORBIDDEN", { status: 403 });
     }
 
@@ -206,8 +219,9 @@ export const DELETE = withAuthAndErrors(async (
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
-  // Only owner can delete
-  if (tool.ownerId !== userId) {
+  // Only owner can delete (check both ownerId and createdBy for backwards compat)
+  const isToolOwner = tool.ownerId === userId || (tool as Record<string, unknown>).createdBy === userId;
+  if (!isToolOwner) {
     return respond.error("Access denied", "FORBIDDEN", { status: 403 });
   }
 

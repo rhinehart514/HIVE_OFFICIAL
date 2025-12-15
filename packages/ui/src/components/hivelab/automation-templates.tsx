@@ -26,7 +26,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { Button } from '../00-Global/atoms/button';
+import { Button } from '../../atomic/00-Global/atoms/button';
 import type { AutomationTemplate } from '@hive/core';
 
 // ============================================================================
