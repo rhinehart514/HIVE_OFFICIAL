@@ -30,6 +30,7 @@ import {
   Vote,
   Megaphone,
   X,
+  Zap,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { tinderSprings } from '@hive/tokens';
@@ -38,7 +39,7 @@ import { tinderSprings } from '@hive/tokens';
 // Types
 // ============================================================
 
-export type MobileDrawerType = 'info' | 'events' | 'tools' | 'members';
+export type MobileDrawerType = 'info' | 'events' | 'tools' | 'members' | 'automations';
 
 export type QuickActionType = 'poll' | 'event' | 'announcement';
 
@@ -78,11 +79,13 @@ const ACTIONS: Array<{
   icon: typeof Info;
   label: string;
   ariaLabel: string;
+  leaderOnly?: boolean;
 }> = [
   { type: 'info', icon: Info, label: 'Info', ariaLabel: 'View space info' },
   { type: 'events', icon: Calendar, label: 'Events', ariaLabel: 'View upcoming events' },
   { type: 'tools', icon: Wrench, label: 'Tools', ariaLabel: 'View space tools' },
   { type: 'members', icon: Users, label: 'Members', ariaLabel: 'View space members' },
+  { type: 'automations', icon: Zap, label: 'Auto', ariaLabel: 'Manage automations', leaderOnly: true },
 ];
 
 const QUICK_ACTIONS: Array<{
@@ -397,7 +400,7 @@ export function MobileActionBar({
         aria-label="Space quick actions"
       >
         <div className="flex items-center justify-around px-2 py-1">
-          {ACTIONS.map(({ type, icon: Icon, label, ariaLabel }) => {
+          {ACTIONS.filter(action => !action.leaderOnly || isLeader).map(({ type, icon: Icon, label, ariaLabel }) => {
             const isActive = activeDrawer === type;
             const badgeConfig = badges[type];
 
