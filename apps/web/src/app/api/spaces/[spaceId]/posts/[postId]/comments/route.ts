@@ -64,13 +64,13 @@ async function ensurePostExists(spaceId: string, postId: string) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request: Request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const membership = await ensureSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -151,6 +151,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching comments at /api/spaces/[spaceId]/posts/[postId]/comments",
+      {},
       error instanceof Error ? error : new Error(String(error)),
     );
     return respond.error("Failed to fetch comments", "INTERNAL_ERROR", {
@@ -162,14 +163,14 @@ export const GET = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   CreateCommentSchema,
   async (
-    request: AuthenticatedRequest,
+    request: Request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await ensureSpaceMembership(spaceId, userId);
       if (!membership.ok) {
@@ -257,6 +258,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating comment at /api/spaces/[spaceId]/posts/[postId]/comments",
+        {},
         error instanceof Error ? error : new Error(String(error)),
       );
       return respond.error("Failed to create comment", "INTERNAL_ERROR", {

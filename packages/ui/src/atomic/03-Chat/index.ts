@@ -23,6 +23,7 @@ export {
   type ChatInputProps,
   type ChatInputHandle,
   type SlashCommandSuggestion,
+  type SlashCommandData,
 } from './chat-input';
 export {
   ChatToolbar,

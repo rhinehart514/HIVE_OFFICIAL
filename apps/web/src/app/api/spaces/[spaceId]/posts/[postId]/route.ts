@@ -68,13 +68,13 @@ async function loadPost(spaceId: string, postId: string) {
 }
 
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request: Request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -108,6 +108,7 @@ export const GET = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error fetching post at /api/spaces/[spaceId]/posts/[postId]",
+      {},
       error instanceof Error ? error : new Error(String(error)),
     );
     return respond.error("Failed to fetch post", "INTERNAL_ERROR", {
@@ -119,14 +120,14 @@ export const GET = withAuthAndErrors(async (
 export const PATCH = withAuthValidationAndErrors(
   EditPostSchema,
   async (
-    request: AuthenticatedRequest,
+    request: Request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await loadSpaceMembership(spaceId, userId);
       if (!membership.ok) {
@@ -190,6 +191,7 @@ export const PATCH = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error editing post at /api/spaces/[spaceId]/posts/[postId]",
+        {},
         error instanceof Error ? error : new Error(String(error)),
       );
       return respond.error("Failed to edit post", "INTERNAL_ERROR", {
@@ -200,13 +202,13 @@ export const PATCH = withAuthValidationAndErrors(
 );
 
 export const DELETE = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request: Request,
   { params }: { params: Promise<{ spaceId: string; postId: string }> },
   respond,
 ) => {
   try {
     const { spaceId, postId } = await params;
-    const userId = getUserId(request);
+    const userId = getUserId(request as AuthenticatedRequest);
 
     const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -240,6 +242,7 @@ export const DELETE = withAuthAndErrors(async (
   } catch (error) {
     logger.error(
       "Error deleting post at /api/spaces/[spaceId]/posts/[postId]",
+      {},
       error instanceof Error ? error : new Error(String(error)),
     );
     return respond.error("Failed to delete post", "INTERNAL_ERROR", {
@@ -251,14 +254,14 @@ export const DELETE = withAuthAndErrors(async (
 export const POST = withAuthValidationAndErrors(
   ReactionSchema,
   async (
-    request: AuthenticatedRequest,
+    request: Request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await loadSpaceMembership(spaceId, userId);
     if (!membership.ok) {
@@ -308,6 +311,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error updating reaction at /api/spaces/[spaceId]/posts/[postId]",
+        {},
         error instanceof Error ? error : new Error(String(error)),
       );
       return respond.error("Failed to update reaction", "INTERNAL_ERROR", {

@@ -35,6 +35,11 @@
       "types": "./src/domain/shared/value-objects/viewer-context.value.ts",
       "import": "./src/domain/shared/value-objects/viewer-context.value.ts",
       "default": "./src/domain/shared/value-objects/viewer-context.value.ts"
+    },
+    "./domain/hivelab/automation-templates": {
+      "types": "./src/domain/hivelab/automation-templates.ts",
+      "import": "./src/domain/hivelab/automation-templates.ts",
+      "default": "./src/domain/hivelab/automation-templates.ts"
     }
   },
   "scripts": {

@@ -13,10 +13,7 @@
  * Part of HiveLab Winter 2025 Strategy: Chat-First Foundation
  */
 
-import type { InlineComponentData } from '@hive/core';
-
-// Create type alias for backwards compatibility
-type InlineComponent = InlineComponentData;
+import { InlineComponent } from '@hive/core/server';
 import type { ParsedIntent, IntentParams } from './ai-intent-parser';
 import type {
   ParsedSlashCommand,
@@ -498,17 +495,20 @@ export function describeCreation(
   } else {
     // ParsedSlashCommand
     switch (intent.command) {
-      case 'poll':
+      case 'poll': {
         const poll = intent as PollCommand;
         return `Creating poll: "${poll.parsed.question}" with ${poll.parsed.options.length} options`;
+      }
 
-      case 'rsvp':
+      case 'rsvp': {
         const rsvp = intent as RsvpCommand;
         return `Creating RSVP for: "${rsvp.parsed.eventTitle}"`;
+      }
 
-      case 'countdown':
+      case 'countdown': {
         const countdown = intent as CountdownCommand;
         return `Creating countdown to: "${countdown.parsed.title}"`;
+      }
 
       default:
         return 'Creating component';

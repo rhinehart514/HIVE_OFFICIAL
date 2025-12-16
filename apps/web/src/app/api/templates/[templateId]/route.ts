@@ -55,6 +55,10 @@ export const GET = withErrors(
 
     const template = result.getValue();
 
+    if (!template) {
+      return respond.error('Template not found', 'NOT_FOUND', { status: 404 });
+    }
+
     // Check visibility
     if (!template.canView(userId || '', userCampusId)) {
       return respond.error('Template not found', 'NOT_FOUND', { status: 404 });
@@ -104,13 +108,17 @@ export const PATCH = withAuthAndErrors(
 
     const template = result.getValue();
 
+    if (!template) {
+      return respond.error('Template not found', 'NOT_FOUND', { status: 404 });
+    }
+
     // Check ownership
     if (!template.canEdit(userId)) {
       return respond.error('Only the template creator can update it', 'FORBIDDEN', { status: 403 });
     }
 
-    // Code-defined templates cannot be modified
-    if (template.source === 'code') {
+    // Official templates cannot be modified
+    if (template.source === 'official') {
       return respond.error('Built-in templates cannot be modified', 'FORBIDDEN', { status: 403 });
     }
 
@@ -154,13 +162,17 @@ export const DELETE = withAuthAndErrors(
 
     const template = result.getValue();
 
+    if (!template) {
+      return respond.error('Template not found', 'NOT_FOUND', { status: 404 });
+    }
+
     // Check ownership
     if (!template.canEdit(userId)) {
       return respond.error('Only the template creator can delete it', 'FORBIDDEN', { status: 403 });
     }
 
-    // Code-defined templates cannot be deleted
-    if (template.source === 'code') {
+    // Official templates cannot be deleted
+    if (template.source === 'official') {
       return respond.error('Built-in templates cannot be deleted', 'FORBIDDEN', { status: 403 });
     }
 

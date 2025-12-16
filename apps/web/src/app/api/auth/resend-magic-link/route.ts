@@ -147,7 +147,7 @@ export const POST = withValidation(
       });
 
       // SECURITY: Standard rate limiting check
-      const rateLimitResult = await enforceRateLimit('magicLink', request);
+      const rateLimitResult = await enforceRateLimit('magicLink', request as unknown as NextRequest);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status

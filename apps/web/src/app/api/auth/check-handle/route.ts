@@ -55,7 +55,7 @@ const handler = createCrudHandler({
 }, {
   // Configuration
   public: true, // No authentication required for handle checking
-  rateLimit: 'authStrict', // Strict rate limiting to prevent handle enumeration (10/min)
+  rateLimit: 'strict', // Strict rate limiting to prevent handle enumeration (10/min)
   validation: {
     body: checkHandleBodySchema,
     query: checkHandleQuerySchema
