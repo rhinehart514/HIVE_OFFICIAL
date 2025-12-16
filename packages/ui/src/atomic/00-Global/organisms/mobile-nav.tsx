@@ -41,32 +41,32 @@ const defaultNavItems: NavItem[] = [
     href: '/feed',
     icon: HomeIcon,
     label: 'Feed',
-    activeColor: 'text-gold-500', // HIVE gold (canonical)
+    activeColor: 'text-[#FFD700]', // HIVE gold (canonical)
   },
   {
     href: '/spaces',
     icon: GridIcon,
     label: 'Spaces',
-    activeColor: 'text-gold-500',
+    activeColor: 'text-[#FFD700]',
   },
   {
     href: '/create',
     icon: PlusCircleIcon,
     label: 'Create',
     highlight: true, // Always gold accent
-    activeColor: 'text-gold-500', // Same gold for consistency
+    activeColor: 'text-[#FFD700]', // Same gold for consistency
   },
   {
     href: '/rituals',
     icon: TrophyIcon,
     label: 'Rituals',
-    activeColor: 'text-gold-500',
+    activeColor: 'text-[#FFD700]',
   },
   {
     href: '/profile',
     icon: UserIcon,
     label: 'You',
-    activeColor: 'text-gold-500',
+    activeColor: 'text-[#FFD700]',
   },
 ]
 
@@ -113,7 +113,7 @@ export function MobileNav({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-neutral-900/98 backdrop-blur-xl border-t border-white/[0.08] rounded-t-2xl"
+            className="bg-[#141414]/98 backdrop-blur-xl border-t border-white/[0.08] rounded-t-2xl"
           >
             <div className="px-4 py-3">
               <div className="flex items-center justify-between mb-3">
@@ -140,15 +140,15 @@ export function MobileNav({
                         <img
                           src={space.iconUrl}
                           alt={space.name}
-                          className="w-10 h-10 rounded-xl object-cover border border-white/[0.08] group-hover:border-gold-500/40 transition-colors"
+                          className="w-10 h-10 rounded-xl object-cover border border-white/[0.08] group-hover:border-[#FFD700]/40 transition-colors"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-xl bg-neutral-800 border border-white/[0.08] flex items-center justify-center group-hover:border-gold-500/40 transition-colors">
+                        <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] border border-white/[0.08] flex items-center justify-center group-hover:border-[#FFD700]/40 transition-colors">
                           <Users className="w-5 h-5 text-white/60" />
                         </div>
                       )}
                       {space.unreadCount && space.unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-gold-500 rounded-full text-[10px] font-bold text-black flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FFD700] rounded-full text-[10px] font-bold text-black flex items-center justify-center">
                           {space.unreadCount > 9 ? '9+' : space.unreadCount}
                         </span>
                       )}
@@ -170,7 +170,7 @@ export function MobileNav({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => setMySpacesOpen(true)}
-          className="absolute -top-10 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-neutral-800/90 backdrop-blur-sm rounded-full border border-white/[0.08] flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
+          className="absolute -top-10 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-[#1A1A1A]/90 backdrop-blur-sm rounded-full border border-white/[0.08] flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
           aria-label="Open My Spaces drawer"
           aria-expanded={mySpacesOpen}
         >
@@ -205,7 +205,7 @@ export function MobileNav({
                     isActive
                       ? item.activeColor
                       : item.highlight
-                        ? 'text-gold-500/70' // Gold tint for highlight
+                        ? 'text-[#FFD700]/70' // Gold tint for highlight
                         : 'text-white/60'
                   )}
                 />
@@ -214,7 +214,7 @@ export function MobileNav({
                 {isActive && (
                   <motion.div
                     layoutId="activeMobileNav"
-                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold-500"
+                    className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FFD700]"
                     transition={{
                       type: 'spring',
                       damping: 20,

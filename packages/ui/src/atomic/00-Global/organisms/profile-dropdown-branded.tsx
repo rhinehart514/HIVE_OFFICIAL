@@ -64,7 +64,7 @@ export function ProfileDropdown({
       {/* Avatar trigger - Gold for brand */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-8 h-8 rounded-full bg-gold-500 overflow-hidden ring-2 ring-transparent hover:ring-gold-500/20 transition-all"
+        className="w-8 h-8 rounded-full bg-[#FFD700] overflow-hidden ring-2 ring-transparent hover:ring-[#FFD700]/20 transition-all"
         aria-label={`Profile menu for ${user.displayName}`}
         aria-expanded={isOpen}
         aria-haspopup="menu"
@@ -111,7 +111,7 @@ export function ProfileDropdown({
                 )}
                 {user.campus && (
                   <div className="flex items-center gap-1.5 mt-2">
-                    <div className="w-2 h-2 rounded-full bg-gold-500" />
+                    <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
                     <span className="text-xs text-white/60">
                       {user.campus}
                     </span>

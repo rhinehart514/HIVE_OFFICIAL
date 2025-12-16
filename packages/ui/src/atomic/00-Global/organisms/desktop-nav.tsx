@@ -31,7 +31,7 @@ function NavLink({ href, active, children }: NavLinkProps) {
       {active && (
         <motion.div
           layoutId="activeDesktopNav"
-          className="absolute -bottom-4 left-0 right-0 h-0.5 bg-gold-500"
+          className="absolute -bottom-4 left-0 right-0 h-0.5 bg-[#FFD700]"
           transition={{
             type: 'spring',
             damping: 20,
@@ -102,9 +102,9 @@ export function DesktopNav({
         <div className="flex items-center gap-4">
           {/* Campus indicator - HIVE gold */}
           {showCampusIndicator && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold-500/10 border border-gold-500/20">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20">
               <motion.div
-                className="w-2 h-2 rounded-full bg-gold-500"
+                className="w-2 h-2 rounded-full bg-[#FFD700]"
                 animate={{
                   scale: [1, 1.2, 1],
                   opacity: [0.7, 1, 0.7],

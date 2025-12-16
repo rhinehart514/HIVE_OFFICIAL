@@ -25,7 +25,7 @@ function NotificationItem({ text, time, unread }: NotificationItemProps) {
       tabIndex={0}
     >
       {unread && (
-        <div className="w-2 h-2 rounded-full bg-gold-500 mt-1 flex-shrink-0" aria-hidden="true" />
+        <div className="w-2 h-2 rounded-full bg-[#FFD700] mt-1 flex-shrink-0" aria-hidden="true" />
       )}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-white">{text}</p>
@@ -90,7 +90,7 @@ export function NotificationDropdown({
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold-500 text-black text-xs font-bold flex items-center justify-center"
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#FFD700] text-black text-xs font-bold flex items-center justify-center"
           >
             {unreadCount}
           </motion.div>
