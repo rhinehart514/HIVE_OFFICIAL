@@ -14,7 +14,7 @@ export default async function SpaceLayout({
 }) {
   const { spaceId } = await params;
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#0A0A0A]">
       <SpaceSubnav spaceId={spaceId} />
       {children}
     </div>

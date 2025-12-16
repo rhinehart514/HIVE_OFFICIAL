@@ -13,8 +13,14 @@
  *
  * Vision: "Discord meets ChatGPT" - Real-time messaging + inline AI-powered tools
  *
+ * Dark-first design tokens:
+ * - Base: #0A0A0A, Surface: #141414, Elevated: #1A1A1A
+ * - Text: #FAFAFA (primary), #A1A1A6 (secondary), #818187 (subtle)
+ * - Border: #2A2A2A, #3A3A3A (strong)
+ * - Gold: #FFD700 (CTAs, presence, achievements)
+ *
  * @author HIVE Frontend Team
- * @version 3.2.0 - Refactored with extracted components
+ * @version 3.3.0 - Dark-first design update
  */
 
 import * as React from "react";
@@ -1006,7 +1012,7 @@ function SpaceDetailContent() {
   // Loading state
   if (isLoading || !space) {
     return (
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-[#0A0A0A]">
         <div className="mx-auto max-w-7xl px-4 py-6">
           <SpaceBoardSkeleton />
         </div>
@@ -1072,7 +1078,7 @@ function SpaceDetailContent() {
   }));
 
   return (
-    <div className="min-h-screen h-screen bg-black flex flex-col overflow-hidden">
+    <div className="min-h-screen h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
       {/* Compact Header - Chat-first (NO feed tabs) */}
       <SpaceDetailHeader
         space={{
@@ -1129,7 +1135,7 @@ function SpaceDetailContent() {
       {/* Main 60/40 Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Chat Area - 60% on desktop, full on mobile */}
-        <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-black relative">
+        <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-[#0A0A0A] relative">
           {/* Intent Confirmation - shows above chat input when AI detects component intent */}
           {pendingIntent && (
             <div className="absolute bottom-24 left-4 right-4 z-50 max-w-3xl mx-auto">
@@ -1184,10 +1190,10 @@ function SpaceDetailContent() {
         </main>
 
         {/* Sidebar - 40% on desktop, hidden on mobile, sticky for scroll */}
-        <aside className="hidden lg:flex lg:flex-col lg:flex-[2] max-w-[400px] border-l border-neutral-800 bg-neutral-950/50 overflow-y-auto lg:sticky lg:top-0 lg:h-screen">
+        <aside className="hidden lg:flex lg:flex-col lg:flex-[2] max-w-[400px] border-l border-[#2A2A2A] bg-[#0A0A0A]/50 overflow-y-auto lg:sticky lg:top-0 lg:h-screen">
           {/* Pinned Messages Widget - shows when there are pinned messages */}
           {(pinnedMessages.length > 0 || pinnedLoading) && (
-            <div className="p-4 border-b border-neutral-800">
+            <div className="p-4 border-b border-[#2A2A2A]">
               <PinnedMessagesWidget
                 messages={pinnedMessages}
                 isLoading={pinnedLoading}
@@ -1207,7 +1213,7 @@ function SpaceDetailContent() {
 
           {/* Automations Panel - shows for leaders (HiveLab Phase 3) */}
           {canManageAutomations && (
-            <div className="p-4 border-b border-neutral-800 space-y-3">
+            <div className="p-4 border-b border-[#2A2A2A] space-y-3">
               <AutomationsPanel
                 automations={automations}
                 isLeader={canManageAutomations}
@@ -1435,8 +1441,8 @@ export default function SpaceBoardPage() {
 
   if (!spaceId) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-neutral-400">Space not found</div>
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+        <div className="text-[#A1A1A6]">Space not found</div>
       </div>
     );
   }
