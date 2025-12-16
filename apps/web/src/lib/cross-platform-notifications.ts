@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Fix logger calls to use proper signature
+// TODO: Implement proper error logging when notification delivery fails
 /**
  * HIVE Cross-Platform Notification System
  *
@@ -272,9 +271,9 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, NotificationTempla
   
   system_announcement: {
     type: 'system_announcement',
-    title: (data) => data.title,
-    message: (data) => data.message,
-    actionUrl: (data) => data.actionUrl || '/announcements',
+    title: (data) => String(data.title || ''),
+    message: (data) => String(data.message || ''),
+    actionUrl: (data) => String(data.actionUrl || '/announcements'),
     category: 'system',
     defaultPriority: 'medium',
     defaultChannels: ['in_app', 'push']
@@ -316,7 +315,7 @@ export class CrossPlatformNotificationManager {
       title: template.title(data),
       message: template.message(data),
       sourceSlice: (options.sourceSlice || this.getSourceSliceFromType(type)) as 'feed' | 'spaces' | 'tools' | 'profile' | 'system',
-      sourceId: options.sourceId || data.id || 'unknown',
+      sourceId: options.sourceId || String(data.id || 'unknown'),
       targetUserId,
       actionUrl: template.actionUrl(data),
       metadata: {
@@ -384,7 +383,7 @@ export class CrossPlatformNotificationManager {
           }
         };
         
-        store.addNotification(platformNotification);
+        store.addNotification(platformNotification as unknown as Parameters<typeof store.addNotification>[0]);
 
         // Log delivery
         await this.logNotificationDelivery(config, deliveryResults);
