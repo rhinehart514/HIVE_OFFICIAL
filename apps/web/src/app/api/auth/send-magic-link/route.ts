@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix NextRequest/Request type compatibility
 /**
  * @deprecated This endpoint is deprecated.
  * Use POST /api/auth/send-code for OTP-based authentication instead.
@@ -12,14 +10,11 @@ import { z } from "zod";
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
 import { getDefaultActionCodeSettings, validateEmailDomain } from "@hive/core";
 import { getAuth } from "firebase-admin/auth";
-// Email sending handled by Firebase Auth - no SendGrid needed
-import { ValidationError as _ValidationError } from "@/lib/api-error-handler";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
 import { validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
-
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 
@@ -36,9 +31,9 @@ const DEPRECATION_HEADERS = {
 };
 
 /**
- * Add deprecation headers to a NextResponse
+ * Add deprecation headers to a Response
  */
-function addDeprecationHeaders(response: NextResponse): NextResponse {
+function addDeprecationHeaders<T extends Response>(response: T): T {
   Object.entries(DEPRECATION_HEADERS).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
@@ -180,7 +175,7 @@ export const POST = withValidation(
 
     try {
       // SECURITY: Rate limiting with strict enforcement
-      const rateLimitResult = await enforceRateLimit('magicLink', request);
+      const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status

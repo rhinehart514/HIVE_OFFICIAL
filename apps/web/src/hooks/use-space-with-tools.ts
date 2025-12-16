@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix ChatOptions and sendMessage types
+// TODO: Fix ChatOptions import and sendMessage API to support componentData
 'use client';
 
 /**

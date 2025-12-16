@@ -1,4 +1,3 @@
-// @ts-nocheck
 // TODO: Fix hasReachedLeaderLimit function signature
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
@@ -90,7 +89,7 @@ export const POST = withAuthValidationAndErrors(
       const categoryRules = getCategoryRules(category);
 
       // Check if this category allows leader requests at all
-      if (!canRequestLeadership(category)) {
+      if (!canRequestLeadership(userId, spaceId, category)) {
         return respond.error(
           categoryRules.leadershipDescription || 'Leader requests are not available for this space type',
           'FORBIDDEN',
@@ -115,7 +114,7 @@ export const POST = withAuthValidationAndErrors(
       const currentLeaderCount = currentLeadersSnapshot.size;
 
       // Check if space has reached its leader limit
-      if (hasReachedLeaderLimit(category, currentLeaderCount)) {
+      if (hasReachedLeaderLimit(currentLeaderCount, category)) {
         return respond.error(
           `This space has reached its maximum of ${categoryRules.maxLeaders} leaders`,
           'CONFLICT',

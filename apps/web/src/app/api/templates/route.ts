@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Implement full template repository with Result pattern
+// TODO: Implement full template repository with Result pattern - requires DDD Template entity
 /**
  * Templates API - List and Create Templates
  *

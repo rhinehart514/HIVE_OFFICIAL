@@ -1,10 +1,7 @@
-// @ts-nocheck
-// TODO: Fix session type null vs undefined
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getAuth } from "firebase-admin/auth";
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { clearAllSessionCookies, getSession } from '@/lib/session';
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { auditAuthEvent } from "@/lib/production-auth";
@@ -42,7 +39,7 @@ export async function POST(request: NextRequest) {
       logger.info('JWT session revoked', {
         component: 'auth-logout',
         sessionId: session.sessionId.substring(0, 8) + '...',
-        userId,
+        userId: userId ?? undefined,
       });
     }
 
