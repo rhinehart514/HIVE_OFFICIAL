@@ -241,8 +241,8 @@ export function ElementShowcaseSidebar({
             className={cn(
               'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
               activeTab === 'elements'
-                ? 'bg-neutral-800 text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-neutral-800/50'
+                ? 'bg-[#1A1A1A] text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A]/50'
             )}
           >
             Elements
@@ -252,8 +252,8 @@ export function ElementShowcaseSidebar({
             className={cn(
               'flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
               activeTab === 'templates'
-                ? 'bg-neutral-800 text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-neutral-800/50'
+                ? 'bg-[#1A1A1A] text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-[#1A1A1A]/50'
             )}
           >
             Templates

@@ -1128,6 +1128,10 @@ export type {
 export { ToolRuntimeModal } from "./components/hivelab/tool-runtime-modal";
 export type { ToolRuntimeModalProps } from "./components/hivelab/tool-runtime-modal";
 
+// HiveLab: Sidebar Tool Renderer (for rendering deployed tools in space sidebar)
+export { SidebarToolRenderer, SidebarToolRendererStandalone } from "./components/hivelab/sidebar-tool-renderer";
+export type { SidebarToolRendererProps, SidebarToolRendererStandaloneProps, ToolRuntimeState } from "./components/hivelab/sidebar-tool-renderer";
+
 // HiveLab: Inline element renderer (for chat messages)
 export { InlineElementRenderer } from "./components/hivelab/inline-element-renderer";
 export type {

@@ -92,7 +92,7 @@ const glass = {
   modal: 'bg-gray-950/95 backdrop-blur-xl border border-white/[0.08]',
 };
 
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50';
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20';
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -229,7 +229,7 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-gold-500 animate-spin mx-auto mb-3" />
+                  <Loader2 className="h-8 w-8 text-[#FFD700] animate-spin mx-auto mb-3" />
                   <p className="text-sm text-gray-400">Loading tool...</p>
                 </div>
               </motion.div>
@@ -265,8 +265,8 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
-                  <div className="w-12 h-12 rounded-xl bg-gold-500/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="h-6 w-6 text-gold-500" />
+                  <div className="w-12 h-12 rounded-xl bg-[#FFD700]/10 flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="h-6 w-6 text-[#FFD700]" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">No elements</h3>
                   <p className="text-sm text-gray-400">

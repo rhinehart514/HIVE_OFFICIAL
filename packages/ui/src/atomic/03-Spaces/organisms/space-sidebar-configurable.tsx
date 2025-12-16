@@ -56,6 +56,8 @@ export interface SidebarToolData {
 export interface SpaceSidebarConfigurableProps {
   /** Sidebar slots/widgets */
   slots: SidebarSlotData[];
+  /** Space ID for tool runtime context */
+  spaceId: string;
   /** Whether user is a space leader */
   isLeader?: boolean;
   /** Whether edit mode is currently active */
@@ -74,6 +76,8 @@ export interface SpaceSidebarConfigurableProps {
   onToggleCollapse?: (slotId: string) => void;
   /** Callback when widgets are reordered */
   onReorder?: (newOrder: SidebarSlotData[]) => void;
+  /** Custom tool renderer for HiveLab tools (non-system) */
+  renderCustomTool?: (slot: SidebarSlotData, spaceId: string) => React.ReactNode;
   /** Space metadata for rendering */
   spaceData?: {
     name?: string;
@@ -312,6 +316,7 @@ function ToolsToolContent({
 
 export function SpaceSidebarConfigurable({
   slots,
+  spaceId,
   isLeader = false,
   isEditMode = false,
   onEditModeChange,
@@ -321,6 +326,7 @@ export function SpaceSidebarConfigurable({
   onConfigureWidget,
   onToggleCollapse,
   onReorder,
+  renderCustomTool,
   spaceData,
   events = [],
   members = [],
@@ -359,14 +365,17 @@ export function SpaceSidebarConfigurable({
       }
     }
 
-    // Custom HiveLab tools render via element-renderers
-    // The slot contains a deploymentId that references a placed_tools document
-    // Parent component should handle tool loading and pass rendered content
+    // Custom HiveLab tools - use the renderCustomTool prop if provided
+    if (slot.toolId && renderCustomTool) {
+      return renderCustomTool(slot, spaceId);
+    }
+
+    // Fallback for when no custom renderer is provided
     return (
-      <div className="text-sm text-neutral-400">
+      <div className="text-sm text-[#A1A1A6]">
         <div className="flex items-center gap-2 py-2">
-          <Wrench className="w-4 h-4 text-neutral-500" />
-          <span>Custom tool: {slot.type}</span>
+          <Wrench className="w-4 h-4 text-[#818187]" />
+          <span>{slot.name || 'Custom tool'}</span>
         </div>
       </div>
     );

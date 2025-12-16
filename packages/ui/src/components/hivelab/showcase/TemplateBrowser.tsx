@@ -141,7 +141,7 @@ interface TemplateCardProps {
 
 function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
   const Icon = TEMPLATE_ICONS[template.id] || Zap;
-  const colorClass = TEMPLATE_COLORS[template.id] || 'from-neutral-500/20 to-neutral-600/10 border-neutral-500/30';
+  const colorClass = TEMPLATE_COLORS[template.id] || 'from-[#666]/20 to-[#555]/10 border-[#333]';
 
   return (
     <motion.button
@@ -162,7 +162,7 @@ function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
       <div className="flex items-start gap-3">
         <div className={cn(
           'flex items-center justify-center rounded-lg',
-          'bg-neutral-900/50 text-neutral-300',
+          'bg-[#0A0A0A]/50 text-[#CCC]',
           compact ? 'h-8 w-8' : 'h-10 w-10'
         )}>
           <Icon className={compact ? 'h-4 w-4' : 'h-5 w-5'} />
