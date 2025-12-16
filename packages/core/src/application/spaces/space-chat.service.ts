@@ -1040,6 +1040,7 @@ export class SpaceChatService extends BaseApplicationService {
 
   /**
    * Remove a reaction from a message
+   * SECURITY: Users can only remove their own reactions
    */
   async removeReaction(
     userId: string,
@@ -1053,6 +1054,12 @@ export class SpaceChatService extends BaseApplicationService {
       }
 
       const message = messageResult.getValue()!;
+
+      // SECURITY: Verify user has this reaction before allowing removal
+      // This is defense-in-depth - the API layer should also verify this
+      if (!message.hasUserReacted(input.emoji, userId)) {
+        return Result.fail<ServiceResult<void>>('User has not reacted with this emoji');
+      }
 
       // Remove reaction
       message.removeReaction(input.emoji, userId);
@@ -1114,8 +1121,8 @@ export class SpaceChatService extends BaseApplicationService {
         }
       }
 
-      // Create a placeholder message ID first
-      const messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+      const messageId = `msg_${crypto.randomUUID()}`;
 
       // Create the inline component based on type
       let componentResult: Result<InlineComponent>;

@@ -185,9 +185,16 @@ export function useChatMessages(
   const lastTypingSentRef = useRef(0);
   const typingUnsubscribeRef = useRef<(() => void) | null>(null);
   const mountedRef = useRef(true);
+  // SECURITY FIX: Track current boardId to avoid stale closure in reconnect
+  const currentBoardIdRef = useRef(activeBoardId);
 
   // Scroll position cache for board switching
   const scrollPositionCache = useRef<Map<string, number>>(new Map());
+
+  // Keep boardId ref in sync
+  useEffect(() => {
+    currentBoardIdRef.current = activeBoardId;
+  }, [activeBoardId]);
 
   // ============================================================
   // API Fetchers
@@ -397,9 +404,12 @@ export function useChatMessages(
 
           reconnectAttemptRef.current++;
 
+          // SECURITY FIX: Use ref to get current boardId, avoiding stale closure
+          // This ensures we reconnect to the board the user is currently viewing,
+          // not the board they were on when the original connection was made
           reconnectTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current) {
-              connectSSE(boardId);
+              connectSSE(currentBoardIdRef.current);
             }
           }, delay);
         };

@@ -115,7 +115,8 @@ export class Board extends Entity<BoardProps> {
   }
 
   private constructor(props: BoardProps, id?: string) {
-    super(props, id || `board_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    super(props, id || `board_${crypto.randomUUID()}`);
   }
 
   /**

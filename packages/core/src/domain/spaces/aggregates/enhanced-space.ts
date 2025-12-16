@@ -297,7 +297,8 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
 
   private constructor(props: EnhancedSpaceProps, id?: string) {
-    super(props, id || `space_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    super(props, id || `space_${crypto.randomUUID()}`);
   }
 
   public static create(

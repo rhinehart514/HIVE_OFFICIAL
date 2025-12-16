@@ -305,6 +305,17 @@ export const chatRateLimit = rateLimit({
 });
 
 /**
+ * SSE connection rate limiter - strict (10 connections per minute)
+ * SSE connections are expensive (long-lived), limit aggressively to prevent DoS
+ */
+export const sseConnectionRateLimit = rateLimit({
+  maxRequests: 10,
+  windowMs: 60000,
+  identifier: 'sse_connection',
+  blockOnError: true
+});
+
+/**
  * Get overall rate limiter health
  */
 export function getRateLimiterHealth(): {
@@ -315,7 +326,7 @@ export function getRateLimiterHealth(): {
     healthy: boolean;
   }>;
 } {
-  const limiters = [authRateLimit, apiRateLimit, strictRateLimit, aiGenerationRateLimit, searchRateLimit, chatRateLimit];
+  const limiters = [authRateLimit, apiRateLimit, strictRateLimit, aiGenerationRateLimit, searchRateLimit, chatRateLimit, sseConnectionRateLimit];
 
   return {
     totalClients: clients.size,

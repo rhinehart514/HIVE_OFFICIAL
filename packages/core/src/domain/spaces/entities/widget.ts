@@ -46,7 +46,8 @@ export class Widget extends Entity<WidgetProps> {
   }
 
   private constructor(props: WidgetProps, id?: string) {
-    super(props, id || `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    super(props, id || `widget_${crypto.randomUUID()}`);
   }
 
   public static create(props: Partial<WidgetProps> & { type: WidgetProps['type']; title: string }, id?: string): Result<Widget> {

@@ -154,7 +154,9 @@ export class ChatMessage extends Entity<ChatMessageProps> {
   }
 
   private constructor(props: ChatMessageProps, id?: string) {
-    super(props, id || `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    // Math.random() is predictable and can lead to ID collision attacks
+    super(props, id || `msg_${crypto.randomUUID()}`);
   }
 
   /**
