@@ -13,6 +13,7 @@ import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { nanoid } from 'nanoid';
 import type { NextRequest, NextResponse } from 'next/server';
 import { logger } from './logger';
+import { isSessionInvalid } from './session-revocation';
 
 // Environment detection
 const isProduction = process.env.NODE_ENV === 'production';
@@ -129,6 +130,7 @@ export async function createSession(data: CreateSessionInput): Promise<string> {
 
 /**
  * Verify and decode a JWT session token
+ * Also checks if the session has been revoked
  */
 export async function verifySession(token: string): Promise<SessionData | null> {
   try {
@@ -141,6 +143,16 @@ export async function verifySession(token: string): Promise<SessionData | null> 
       typeof payload.sessionId === 'string' &&
       typeof payload.verifiedAt === 'string'
     ) {
+      // Check if session has been revoked
+      if (isSessionInvalid(payload.sessionId, payload.userId, payload.verifiedAt)) {
+        logger.info('Session rejected - revoked', {
+          component: 'session',
+          sessionId: payload.sessionId.substring(0, 8) + '...',
+          userId: payload.userId,
+        });
+        return null;
+      }
+
       // Explicitly construct SessionData for type safety
       return {
         userId: payload.userId,
