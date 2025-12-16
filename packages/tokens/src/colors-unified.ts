@@ -1,15 +1,17 @@
 /**
  * HIVE Unified Color System
- * Single source of truth - Vercel/Linear/top YC company approach
+ * Dark-first, Apple/Vercel craft with HIVE warmth (gold)
  *
  * Architecture:
- * - Foundation: Raw color values (black/white/gray scales)
- * - Semantic: Purpose-based tokens (background.primary, text.secondary)
- * - Component: Component-specific tokens (button.default.bg, card.elevated.border)
+ * - Foundation: Raw color values (black/white/neutral gray scale)
+ * - Semantic: Purpose-based tokens (background.base, text.secondary)
+ * - Component: Component-specific tokens (button.primary.bg, card.default.border)
  *
  * Philosophy:
+ * - Neutral grays (no cool/warm tint) - let gold bring warmth
  * - Black/white/gray for 95% of UI
  * - Gold reserved for key dopamine moments (CTAs, achievements, presence)
+ * - Gold focus rings (HIVE brand differentiation)
  * - High contrast, accessible, minimal
  */
 
@@ -22,42 +24,49 @@ export const foundation = {
   black: '#000000',
   white: '#FFFFFF',
 
-  // Gray scale (Vercel-inspired)
+  // Neutral gray scale (Apple-inspired, no tint)
   gray: {
-    1000: '#0A0A0A',      // Near black
-    900: '#171717',       // Elevated surfaces
-    800: '#262626',       // Interactive elements
-    700: '#404040',       // Strong borders
-    600: '#525252',       // Disabled text
-    500: '#737373',       // Placeholder text
-    400: '#A3A3A3',       // Secondary text
-    300: '#D4D4D4',       // Tertiary text
-    200: '#E5E5E5',       // Subtle borders
-    100: '#F5F5F5',       // Light backgrounds
-    50: '#FAFAFA',        // Off-white
+    1000: '#0A0A0A',      // Page background (bgBase)
+    900: '#141414',       // Surface (bgSurface) - cards, inputs
+    800: '#1A1A1A',       // Elevated (bgElevated) - hover states
+    750: '#242424',       // Active (bgActive) - pressed states
+    700: '#2A2A2A',       // Border default
+    600: '#3A3A3A',       // Border hover
+    500: '#4A4A4A',       // Border strong
+    400: '#52525B',       // Text disabled
+    350: '#71717A',       // Text placeholder
+    300: '#818187',       // Text subtle (was "muted")
+    200: '#A1A1A6',       // Text secondary
+    100: '#D4D4D8',       // Light text
+    50: '#FAFAFA',        // Text primary / Off-white
   },
 
-  // Brand accent (Single gold only)
+  // Brand accent - Gold (Single canonical value)
   gold: {
-    500: '#FFD700',       // Primary - ONLY gold value used
+    500: '#FFD700',       // Primary - canonical HIVE gold
+    hover: '#E6C200',     // Hover state
+    dim: '#CC9900',       // Dimmed/inactive
+    glow: 'rgba(255, 215, 0, 0.15)',    // Glow effect
+    border: 'rgba(255, 215, 0, 0.3)',   // Gold borders
+    subtle: 'rgba(255, 215, 0, 0.1)',   // Subtle gold backgrounds
   },
 
-  // Functional colors (Minimal)
+  // Functional/Status colors
   green: {
     500: '#00D46A',       // Success
-    400: '#22DD77',       // Success hover
+    dim: 'rgba(0, 212, 106, 0.15)',  // Success background
   },
   yellow: {
     500: '#FFB800',       // Warning
-    400: '#FFC533',       // Warning hover
+    dim: 'rgba(255, 184, 0, 0.15)',  // Warning background
   },
   red: {
     500: '#FF3737',       // Error
-    400: '#FF5555',       // Error hover
+    dim: 'rgba(255, 55, 55, 0.15)',  // Error background
   },
   blue: {
-    600: '#0070F3',       // Info/accent
-    500: '#2D7FF9',       // Info hover
+    500: '#0070F3',       // Info
+    dim: 'rgba(0, 112, 243, 0.15)',  // Info background
   },
 } as const;
 
@@ -66,68 +75,83 @@ export const foundation = {
 // ============================================================================
 
 export const semantic = {
-  // Background hierarchy
+  // Background hierarchy (dark-first)
   background: {
-    primary: foundation.black,              // #000000 - Main app background
-    secondary: foundation.gray[900],        // #171717 - Cards, panels
-    tertiary: foundation.gray[800],         // #262626 - Elevated surfaces
-    interactive: foundation.gray[700],      // #404040 - Interactive elements
-    overlay: 'rgba(0, 0, 0, 0.6)',         // Modal overlays
-    muted: foundation.gray[1000],           // #0A0A0A - Subtle backgrounds
+    base: foundation.gray[1000],        // #0A0A0A - Page background
+    surface: foundation.gray[900],      // #141414 - Cards, inputs, elevated
+    elevated: foundation.gray[800],     // #1A1A1A - Hover states
+    active: foundation.gray[750],       // #242424 - Active/pressed states
+    overlay: 'rgba(0, 0, 0, 0.6)',      // Modal overlays
+    // Legacy aliases
+    primary: foundation.gray[1000],     // @deprecated use base
+    secondary: foundation.gray[900],    // @deprecated use surface
+    tertiary: foundation.gray[800],     // @deprecated use elevated
   },
 
   // Text hierarchy
   text: {
-    primary: foundation.white,              // #FFFFFF - Primary content
-    secondary: foundation.gray[300],        // #D4D4D4 - Supporting content
-    tertiary: foundation.gray[400],         // #A3A3A3 - Metadata
-    muted: foundation.gray[500],            // #737373 - Placeholder, subtle
-    disabled: foundation.gray[600],         // #525252 - Disabled state
-    inverse: foundation.black,              // #000000 - Text on light/gold
+    primary: foundation.gray[50],       // #FAFAFA - Main content
+    secondary: foundation.gray[200],    // #A1A1A6 - Supporting content
+    subtle: foundation.gray[300],       // #818187 - Timestamps, metadata
+    placeholder: foundation.gray[350],  // #71717A - Placeholder text
+    disabled: foundation.gray[400],     // #52525B - Disabled states
+    inverse: foundation.black,          // #000000 - Text on gold/light
+    // Legacy alias
+    muted: foundation.gray[300],        // @deprecated use subtle
+    tertiary: foundation.gray[300],     // @deprecated use subtle
   },
 
   // Brand system
   brand: {
-    primary: foundation.gold[500],          // #FFD700 - HIVE gold
-    hover: foundation.gold[500],            // Same gold for consistency
-    onGold: foundation.black,               // #000000 - Text on gold backgrounds
+    primary: foundation.gold[500],      // #FFD700 - HIVE gold
+    hover: foundation.gold.hover,       // #E6C200 - Gold hover
+    dim: foundation.gold.dim,           // #CC9900 - Dimmed gold
+    glow: foundation.gold.glow,         // Gold glow effect
+    onGold: foundation.black,           // #000000 - Text on gold backgrounds
   },
 
-  // Interactive states (Grayscale default - ChatGPT/Vercel aesthetic)
+  // Interactive states
   interactive: {
-    hover: 'rgba(255, 255, 255, 0.04)',    // Subtle white hover
-    focus: 'rgba(255, 255, 255, 0.20)',    // White focus rings (NOT gold)
-    active: 'rgba(255, 255, 255, 0.08)',   // Active state
-    disabled: foundation.gray[700],         // #404040 - Disabled
+    hover: 'rgba(255, 255, 255, 0.04)',     // Subtle white hover
+    active: 'rgba(255, 255, 255, 0.08)',    // Active state
+    focus: foundation.gold[500],            // Gold focus rings (HIVE brand)
+    focusRing: foundation.gold.glow,        // Focus ring glow
+    disabled: foundation.gray[400],         // #52525B - Disabled
   },
 
-  // Gold reserved for key moments
+  // Gold tokens (reserved for key moments)
   gold: {
-    cta: foundation.gold[500],              // Primary CTAs only
+    primary: foundation.gold[500],          // Primary CTAs
     achievement: foundation.gold[500],      // Ritual completion
     presence: foundation.gold[500],         // Online indicators
     featured: foundation.gold[500],         // Featured badges
+    subtle: foundation.gold.subtle,         // Subtle gold backgrounds
+    border: foundation.gold.border,         // Gold borders
+    glow: foundation.gold.glow,             // Gold glow
   },
 
   // Status colors
   status: {
     success: foundation.green[500],         // #00D46A
-    successHover: foundation.green[400],    // #22DD77
+    successDim: foundation.green.dim,
     warning: foundation.yellow[500],        // #FFB800
-    warningHover: foundation.yellow[400],   // #FFC533
+    warningDim: foundation.yellow.dim,
     error: foundation.red[500],             // #FF3737
-    errorHover: foundation.red[400],        // #FF5555
-    info: foundation.blue[600],             // #0070F3
-    infoHover: foundation.blue[500],        // #2D7FF9
+    errorDim: foundation.red.dim,
+    info: foundation.blue[500],             // #0070F3
+    infoDim: foundation.blue.dim,
   },
 
   // Border system
   border: {
-    default: 'rgba(255, 255, 255, 0.08)',  // Subtle dividers
-    muted: 'rgba(255, 255, 255, 0.04)',    // Very subtle borders
-    hover: 'rgba(255, 255, 255, 0.16)',    // Hover borders
-    focus: 'rgba(255, 255, 255, 0.40)',    // Focus borders (white, not gold)
-    strong: foundation.gray[700],           // #404040 - Strong borders
+    default: foundation.gray[700],          // #2A2A2A - Standard borders
+    hover: foundation.gray[600],            // #3A3A3A - Hover borders
+    strong: foundation.gray[500],           // #4A4A4A - Strong borders
+    focus: foundation.gold[500],            // Gold focus borders
+    // Transparent variants
+    subtle: 'rgba(255, 255, 255, 0.04)',    // Very subtle borders
+    medium: 'rgba(255, 255, 255, 0.08)',    // Medium borders
+    visible: 'rgba(255, 255, 255, 0.16)',   // Visible borders
   },
 } as const;
 
@@ -138,44 +162,59 @@ export const semantic = {
 export const components = {
   // Button variants
   button: {
+    // Default: White button, black text (Vercel-style)
     default: {
-      bg: semantic.text.primary,            // White background
-      text: semantic.background.primary,    // Black text
+      bg: foundation.white,
+      text: foundation.black,
       border: 'transparent',
       hover: {
-        bg: foundation.gray[200],           // Light gray hover
+        bg: 'rgba(255, 255, 255, 0.9)',
       },
       active: {
-        bg: foundation.gray[300],
+        bg: 'rgba(255, 255, 255, 0.8)',
       },
       disabled: {
-        bg: semantic.interactive.disabled,
-        text: semantic.text.disabled,
+        bg: foundation.gray[700],
+        text: foundation.gray[400],
       },
     },
+    // Primary: Gold CTA (use sparingly - 1% rule)
     primary: {
-      bg: semantic.gold.cta,                // Gold background
-      text: semantic.brand.onGold,          // Black text on gold
+      bg: semantic.gold.primary,
+      text: semantic.brand.onGold,
       border: 'transparent',
       hover: {
-        bg: 'rgba(255, 215, 0, 0.9)',      // Slightly transparent gold
+        bg: semantic.brand.hover,
       },
       active: {
         bg: 'rgba(255, 215, 0, 0.8)',
       },
+      shadow: semantic.gold.glow,
     },
+    // Secondary: Subtle background with border
     secondary: {
-      bg: 'transparent',
-      text: semantic.text.primary,          // White text
-      border: semantic.border.default,
+      bg: 'rgba(255, 255, 255, 0.06)',
+      text: foundation.white,
+      border: semantic.border.medium,
       hover: {
-        bg: semantic.interactive.hover,
-        border: semantic.border.hover,
+        bg: 'rgba(255, 255, 255, 0.10)',
+        border: semantic.border.visible,
       },
       active: {
-        bg: semantic.interactive.active,
+        bg: 'rgba(255, 255, 255, 0.14)',
       },
     },
+    // Outline: Border only, transparent bg
+    outline: {
+      bg: 'transparent',
+      text: foundation.white,
+      border: semantic.border.medium,
+      hover: {
+        bg: semantic.interactive.hover,
+        border: semantic.border.visible,
+      },
+    },
+    // Ghost: Completely transparent
     ghost: {
       bg: 'transparent',
       text: semantic.text.secondary,
@@ -185,12 +224,13 @@ export const components = {
         text: semantic.text.primary,
       },
     },
+    // Destructive: Red for dangerous actions
     destructive: {
       bg: semantic.status.error,
       text: foundation.white,
       border: 'transparent',
       hover: {
-        bg: semantic.status.errorHover,
+        bg: '#FF5555',
       },
     },
   },
@@ -198,21 +238,21 @@ export const components = {
   // Card variants
   card: {
     default: {
-      bg: semantic.background.secondary,    // #171717
+      bg: semantic.background.surface,
       border: semantic.border.default,
       text: semantic.text.primary,
-      shadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+      shadow: '0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2)',
     },
     elevated: {
-      bg: semantic.background.tertiary,     // #262626
+      bg: semantic.background.elevated,
       border: semantic.border.default,
-      shadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+      shadow: '0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
     },
     interactive: {
-      bg: semantic.background.secondary,
+      bg: semantic.background.surface,
       border: semantic.border.default,
       hover: {
-        bg: semantic.background.tertiary,
+        bg: semantic.background.elevated,
         border: semantic.border.hover,
         shadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
       },
@@ -222,6 +262,7 @@ export const components = {
       border: semantic.border.default,
       hover: {
         bg: semantic.interactive.hover,
+        border: semantic.border.hover,
       },
     },
   },
@@ -229,31 +270,34 @@ export const components = {
   // Input variants
   input: {
     default: {
-      bg: semantic.background.secondary,
+      bg: semantic.background.surface,
       border: semantic.border.default,
       text: semantic.text.primary,
-      placeholder: semantic.text.muted,
+      placeholder: semantic.text.placeholder,
+      hover: {
+        border: semantic.border.hover,
+      },
       focus: {
         border: semantic.border.focus,
-        ring: semantic.interactive.focus,
+        ring: semantic.interactive.focusRing,
       },
     },
     error: {
-      bg: semantic.background.secondary,
+      bg: semantic.background.surface,
       border: semantic.status.error,
       text: semantic.text.primary,
       focus: {
         border: semantic.status.error,
-        ring: 'rgba(255, 55, 55, 0.2)',
+        ring: semantic.status.errorDim,
       },
     },
     success: {
-      bg: semantic.background.secondary,
+      bg: semantic.background.surface,
       border: semantic.status.success,
       text: semantic.text.primary,
       focus: {
         border: semantic.status.success,
-        ring: 'rgba(0, 212, 106, 0.2)',
+        ring: semantic.status.successDim,
       },
     },
   },
@@ -261,28 +305,28 @@ export const components = {
   // Badge variants
   badge: {
     default: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       text: semantic.text.secondary,
       border: semantic.border.default,
     },
     gold: {
-      bg: semantic.gold.featured,
-      text: semantic.brand.onGold,
-      border: 'transparent',
+      bg: semantic.gold.subtle,
+      text: semantic.gold.primary,
+      border: semantic.gold.border,
     },
     success: {
-      bg: semantic.status.success,
-      text: foundation.black,
+      bg: semantic.status.successDim,
+      text: semantic.status.success,
       border: 'transparent',
     },
     warning: {
-      bg: semantic.status.warning,
-      text: foundation.black,
+      bg: semantic.status.warningDim,
+      text: semantic.status.warning,
       border: 'transparent',
     },
     error: {
-      bg: semantic.status.error,
-      text: foundation.white,
+      bg: semantic.status.errorDim,
+      text: semantic.status.error,
       border: 'transparent',
     },
     outline: {
@@ -292,27 +336,36 @@ export const components = {
     },
   },
 
+  // Avatar
+  avatar: {
+    border: semantic.gold.primary,
+    fallback: {
+      bg: semantic.background.elevated,
+      text: semantic.text.secondary,
+    },
+  },
+
   // Toast/notification variants
   toast: {
     default: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       border: semantic.border.default,
       text: semantic.text.primary,
     },
     success: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       border: semantic.status.success,
       text: semantic.text.primary,
       icon: semantic.status.success,
     },
     warning: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       border: semantic.status.warning,
       text: semantic.text.primary,
       icon: semantic.status.warning,
     },
     error: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       border: semantic.status.error,
       text: semantic.text.primary,
       icon: semantic.status.error,
@@ -323,23 +376,36 @@ export const components = {
   overlay: {
     modal: {
       backdrop: semantic.background.overlay,
-      bg: semantic.background.primary,
+      bg: semantic.background.base,
       border: semantic.border.default,
     },
     popover: {
-      bg: semantic.background.tertiary,
+      bg: semantic.background.elevated,
       border: semantic.border.default,
-      shadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+      shadow: '0 10px 20px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.2)',
     },
     dropdown: {
-      bg: semantic.background.secondary,
+      bg: semantic.background.surface,
       border: semantic.border.default,
-      shadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+      shadow: '0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2)',
       item: {
         hover: semantic.interactive.hover,
         active: semantic.interactive.active,
       },
     },
+    commandPalette: {
+      bg: semantic.background.surface,
+      border: semantic.border.default,
+      shadow: '0 16px 48px rgba(0, 0, 0, 0.6)',
+    },
+  },
+
+  // Presence indicators
+  presence: {
+    online: semantic.status.success,
+    away: semantic.status.warning,
+    busy: semantic.status.error,
+    offline: semantic.text.disabled,
   },
 } as const;
 
@@ -375,6 +441,10 @@ export const legacy = {
   ruby: semantic.status.error,
   sapphire: semantic.status.info,
   citrine: semantic.status.warning,
+
+  // Legacy "muted" → "subtle"
+  textMuted: semantic.text.subtle,
+  backgroundMuted: semantic.background.surface,
 } as const;
 
 // ============================================================================
@@ -383,50 +453,51 @@ export const legacy = {
 
 export const guidelines = {
   philosophy: {
-    minimal: "Black/white/gray for 95% of UI - clean, professional",
-    gold: "ONLY for dopamine moments: CTAs, achievements, presence",
+    minimal: "Neutral grays (no tint) for 95% of UI - let gold bring warmth",
+    gold: "ONLY for dopamine moments: CTAs, achievements, presence, focus",
     contrast: "High contrast, WCAG 2.1 AA compliant minimum",
     discipline: "Every gold usage must be intentional and meaningful",
   },
 
   backgrounds: {
-    hierarchy: "primary (#000) → secondary (#171717) → tertiary (#262626)",
-    cards: "Use secondary for cards, tertiary for elevated cards",
-    interactive: "Use tertiary for hover states on secondary backgrounds",
+    hierarchy: "base (#0A0A0A) → surface (#141414) → elevated (#1A1A1A) → active (#242424)",
+    cards: "Use surface for cards, elevated for hover states",
+    interactive: "Use elevated for hover, active for pressed",
   },
 
   text: {
-    hierarchy: "primary (white) → secondary (#D4D4D4) → tertiary (#A3A3A3)",
+    hierarchy: "primary (#FAFAFA) → secondary (#A1A1A6) → subtle (#818187)",
     readability: "Always test contrast ratios",
-    inverse: "Use text.inverse on gold/light backgrounds",
+    inverse: "Use text.inverse on gold/white backgrounds",
+    naming: "Use 'subtle' not 'muted' for consistency",
   },
 
   interactive: {
-    default: "Use grayscale hovers (white overlays), NOT gold",
-    focus: "White focus rings for accessibility",
-    gold: "Reserve gold for primary CTAs only",
+    default: "Use grayscale hovers (white overlays)",
+    focus: "Gold focus rings (HIVE brand differentiation)",
+    gold: "Reserve gold for primary CTAs and key moments",
   },
 
   components: {
-    buttons: "default (white), primary (gold), secondary (outline), ghost, destructive",
+    buttons: "default (white), primary (gold - sparingly), secondary, ghost, destructive",
     cards: "default, elevated, interactive, outline",
-    inputs: "Always use component tokens for consistent styling",
+    inputs: "Gold focus border with subtle glow",
     badges: "Minimal use - default, gold (featured only), status colors",
   },
 
   goldUsage: {
     allowed: [
-      "Primary CTA buttons (Join Space, Create Tool)",
+      "Primary CTA buttons (Join Space, Create Tool) - sparingly",
       "Achievement moments (Ritual complete, level up)",
       "Online presence (147 students online)",
       "Featured content badges (Hot Space, Featured Tool)",
+      "Focus rings (gold differentiates HIVE)",
     ],
     forbidden: [
-      "Focus rings (use white)",
-      "Hover states (use grayscale)",
-      "Borders (use white/gray)",
-      "Decorative elements",
       "Secondary buttons",
+      "Decorative elements",
+      "Background colors (except subtle tints)",
+      "Navigation items",
     ],
   },
 } as const;

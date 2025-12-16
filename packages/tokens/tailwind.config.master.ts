@@ -1,6 +1,7 @@
 // HIVE MASTER TAILWIND CONFIGURATION
 // This is the SINGLE SOURCE OF TRUTH for all Tailwind configuration across HIVE platform
 // All other Tailwind configs should extend this one
+// Dark-first design - no light mode toggle needed
 
 import type { Config } from 'tailwindcss';
 import { prdTailwindColors } from './src/colors-prd-aligned';
@@ -8,6 +9,7 @@ import { prdTailwindRadius } from './src/radius-prd-aligned';
 import { hiveTailwindColors } from './src/tailwind-config';
 
 const masterConfig: Config = {
+  // Dark-only mode - dark is always active
   darkMode: 'class',
 
   // COMPREHENSIVE CONTENT PATHS - covers all packages
@@ -78,18 +80,18 @@ const masterConfig: Config = {
           foreground: 'hsl(var(--card-foreground))',
         },
 
-        // HIVE Branded Colors
+        // HIVE Branded Colors - Dark-first, neutral grays
         'hive-brand-primary': '#FFD700',
-        'hive-brand-secondary': '#1a1a1a',
-        'hive-background': '#000000',
-        'hive-background-overlay': '#111111',
-        'hive-surface': '#1a1a1a',
-        'hive-text-primary': '#ffffff',
-        'hive-text-secondary': '#cccccc',
-        'hive-text-mutedLight': '#888888',
-        'hive-border-default': '#333333',
+        'hive-brand-secondary': '#141414',
+        'hive-background': '#0A0A0A',
+        'hive-background-overlay': '#141414',
+        'hive-surface': '#141414',
+        'hive-text-primary': '#FAFAFA',
+        'hive-text-secondary': '#A1A1A6',
+        'hive-text-subtle': '#818187',
+        'hive-border-default': '#2A2A2A',
         'hive-gold': '#FFD700',
-        'hive-obsidian': '#0c0c0c',
+        'hive-obsidian': '#0A0A0A',
       },
 
       // RADIUS SYSTEM
@@ -102,9 +104,9 @@ const masterConfig: Config = {
 
       // TYPOGRAPHY SYSTEM
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--hive-font-sans)', 'Geist Sans', 'system-ui', 'sans-serif'],
+        display: ['var(--hive-font-display)', 'Space Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['var(--hive-font-mono)', 'JetBrains Mono', 'Geist Mono', 'monospace'],
       },
 
       // SPACING SYSTEM - Mobile optimized

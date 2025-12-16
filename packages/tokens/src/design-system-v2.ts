@@ -1,226 +1,296 @@
 /**
  * HIVE Design System V2
- * Enhanced with modern patterns from Radix UI, Tailwind CSS, and shadcn/ui
+ * Apple/Vercel aesthetic with HIVE gold warmth
  *
- * Improvements over V1:
- * - 12-step color scale (Radix pattern)
- * - OKLCH color format for perceptual uniformity
- * - Sidebar-specific tokens (shadcn pattern)
- * - Chart colors for data visualization
- * - Improved semantic mapping
+ * Design Direction:
+ * - Neutral backgrounds (no cool/warm tint) - let gold bring the warmth
+ * - High contrast text hierarchy
+ * - Gold reserved for life/activity/CTAs
+ * - Dark-first (no light mode)
  */
 
 // ============================================================================
-// FOUNDATION: 12-STEP GRAYSCALE (Radix Pattern)
+// FOUNDATION: NEUTRAL GRAYSCALE (Apple approach)
+// ============================================================================
+
+/**
+ * Raw color values - use semantic tokens in components
+ */
+export const colors = {
+  // Backgrounds - Neutral, no tint
+  black: '#000000',
+  bgBase: '#0A0A0A',        // Page background
+  bgSurface: '#141414',     // Cards, inputs, elevated
+  bgElevated: '#1A1A1A',    // Hover states
+  bgActive: '#242424',      // Active/pressed states
+
+  // Text hierarchy
+  textPrimary: '#FAFAFA',   // Main content
+  textSecondary: '#A1A1A6', // Supporting content
+  textSubtle: '#818187',    // Timestamps, metadata (bumped for accessibility)
+  textDisabled: '#52525B',  // Disabled states
+
+  // Borders
+  borderDefault: '#2A2A2A', // Standard borders
+  borderHover: '#3A3A3A',   // Hover state borders
+  borderFocus: '#FFD700',   // Focus rings (gold)
+
+  // Brand - Gold
+  gold: '#FFD700',          // Primary gold (canonical)
+  goldDim: '#CC9900',       // Muted gold
+  goldGlow: 'rgba(255, 215, 0, 0.15)', // Glow effect
+
+  // Status
+  success: '#00D46A',       // Green
+  error: '#FF3737',         // Red
+  warning: '#FFB800',       // Amber
+
+  // Pure
+  white: '#FFFFFF',
+} as const;
+
+// ============================================================================
+// 12-STEP SCALES (for granular control)
 // ============================================================================
 
 export const scale = {
-  // Gray scale - 12 steps for precise control
+  // Gray scale - 12 steps, neutral
   gray: {
-    1: 'oklch(0.145 0 0)',      // App background
-    2: 'oklch(0.185 0 0)',      // Subtle background
-    3: 'oklch(0.225 0 0)',      // UI element background
-    4: 'oklch(0.265 0 0)',      // Hovered element
-    5: 'oklch(0.305 0 0)',      // Active element
-    6: 'oklch(0.375 0 0)',      // Subtle border
-    7: 'oklch(0.445 0 0)',      // Element border
-    8: 'oklch(0.555 0 0)',      // Hovered border
-    9: 'oklch(0.665 0 0)',      // Solid background
-    10: 'oklch(0.735 0 0)',     // Hovered solid
-    11: 'oklch(0.855 0 0)',     // Low contrast text
-    12: 'oklch(0.985 0 0)',     // High contrast text
+    1: '#0A0A0A',   // App background
+    2: '#141414',   // Subtle background / surface
+    3: '#1A1A1A',   // UI element background
+    4: '#242424',   // Hovered element
+    5: '#2E2E2E',   // Active element
+    6: '#2A2A2A',   // Subtle border
+    7: '#3A3A3A',   // Element border
+    8: '#4A4A4A',   // Hovered border
+    9: '#6A6A6A',   // Solid background
+    10: '#818187',  // Subtle text
+    11: '#A1A1A6',  // Secondary text
+    12: '#FAFAFA',  // Primary text
   },
 
-  // Gold scale - brand accent (#FFD700 canonical)
+  // Gold scale - brand accent
   gold: {
-    1: 'oklch(0.25 0.04 97)',    // Subtle background
-    2: 'oklch(0.30 0.06 97)',    // UI background
-    3: 'oklch(0.35 0.08 97)',    // Hovered
-    4: 'oklch(0.40 0.10 97)',    // Active
-    5: 'oklch(0.50 0.12 97)',    // Subtle border
-    6: 'oklch(0.60 0.14 97)',    // Border
-    7: 'oklch(0.70 0.16 97)',    // Hovered border
-    8: 'oklch(0.80 0.18 97)',    // Solid background
-    9: 'oklch(0.884 0.199 97)',  // Primary gold = #FFD700 (canonical)
-    10: 'oklch(0.90 0.18 97)',   // Hovered solid
-    11: 'oklch(0.75 0.16 97)',   // Low contrast text
-    12: 'oklch(0.95 0.10 97)',   // High contrast text
+    1: '#1A1500',   // Subtle background
+    2: '#2A2200',   // UI background
+    3: '#3D3300',   // Hovered
+    4: '#524400',   // Active
+    5: '#665500',   // Subtle border
+    6: '#806B00',   // Border
+    7: '#998000',   // Hovered border
+    8: '#B39500',   // Solid background
+    9: '#FFD700',   // Primary gold (canonical)
+    10: '#FFE033',  // Hovered solid
+    11: '#FFEB66',  // Low contrast text
+    12: '#FFF5B3',  // High contrast text
   },
 
-  // Status colors - Ultra-Minimal (only success + error)
+  // Status colors
   green: {
-    9: 'oklch(0.75 0.20 155)',       // Success #00D46A
-    10: 'oklch(0.80 0.18 155)',      // Success hover
+    9: '#00D46A',   // Success
+    10: '#22DD77',  // Success hover
   },
   red: {
-    9: 'oklch(0.60 0.25 25)',        // Error #FF3737
-    10: 'oklch(0.65 0.23 25)',       // Error hover
+    9: '#FF3737',   // Error
+    10: '#FF5555',  // Error hover
   },
-  // Warning = gold (unified with brand for YC/SF aesthetic)
-  // Info = white (removed blue entirely)
+  amber: {
+    9: '#FFB800',   // Warning
+    10: '#FFC933',  // Warning hover
+  },
 } as const;
 
 // ============================================================================
-// SEMANTIC TOKENS (CSS Variable Pattern from shadcn)
+// SEMANTIC TOKENS (CSS Variables)
 // ============================================================================
 
 export const cssVariables = {
-  // Root (dark mode default for HIVE)
   root: {
-    // Core
-    '--radius': '0.625rem',
-    '--background': scale.gray[1],
-    '--foreground': scale.gray[12],
+    // Radius base
+    '--radius': '0.75rem', // 12px base
 
-    // Card
-    '--card': scale.gray[2],
-    '--card-foreground': scale.gray[12],
+    // Backgrounds
+    '--background': colors.bgBase,
+    '--foreground': colors.textPrimary,
+    '--card': colors.bgSurface,
+    '--card-foreground': colors.textPrimary,
+    '--popover': colors.bgSurface,
+    '--popover-foreground': colors.textPrimary,
 
-    // Popover
-    '--popover': scale.gray[3],
-    '--popover-foreground': scale.gray[12],
-
-    // Primary (Gold for HIVE brand)
-    '--primary': scale.gold[9],
-    '--primary-foreground': 'oklch(0.145 0 0)',
+    // Primary (Gold)
+    '--primary': colors.gold,
+    '--primary-foreground': colors.bgBase,
 
     // Secondary
-    '--secondary': scale.gray[4],
-    '--secondary-foreground': scale.gray[12],
+    '--secondary': colors.bgElevated,
+    '--secondary-foreground': colors.textPrimary,
 
-    // Muted
-    '--muted': scale.gray[3],
-    '--muted-foreground': scale.gray[11],
+    // Subtle (renamed from muted)
+    '--muted': colors.bgElevated,
+    '--muted-foreground': colors.textSubtle,
 
     // Accent
-    '--accent': scale.gray[4],
-    '--accent-foreground': scale.gray[12],
+    '--accent': colors.bgActive,
+    '--accent-foreground': colors.textPrimary,
 
     // Destructive
-    '--destructive': scale.red[9],
-    '--destructive-foreground': scale.gray[12],
+    '--destructive': colors.error,
+    '--destructive-foreground': colors.textPrimary,
 
     // Border & Input
-    '--border': 'oklch(1 0 0 / 10%)',
-    '--input': 'oklch(1 0 0 / 15%)',
-    '--ring': scale.gray[8],
+    '--border': colors.borderDefault,
+    '--input': colors.bgSurface,
+    '--ring': colors.gold,
 
-    // Chart colors (ultra-minimal - gold + grayscale)
-    '--chart-1': scale.gold[9],
-    '--chart-2': scale.gray[11],
-    '--chart-3': scale.green[9],
+    // Chart colors
+    '--chart-1': colors.gold,
+    '--chart-2': colors.textSecondary,
+    '--chart-3': colors.success,
     '--chart-4': scale.gold[8],
-    '--chart-5': scale.red[9],
+    '--chart-5': colors.error,
 
-    // Sidebar specific (shadcn pattern)
-    '--sidebar': scale.gray[2],
-    '--sidebar-foreground': scale.gray[12],
-    '--sidebar-primary': scale.gold[9],
-    '--sidebar-primary-foreground': 'oklch(0.145 0 0)',
-    '--sidebar-accent': scale.gray[4],
-    '--sidebar-accent-foreground': scale.gray[12],
-    '--sidebar-border': 'oklch(1 0 0 / 10%)',
-    '--sidebar-ring': scale.gray[8],
+    // HIVE-specific semantic tokens
+    '--hive-bg-base': colors.bgBase,
+    '--hive-bg-surface': colors.bgSurface,
+    '--hive-bg-elevated': colors.bgElevated,
+    '--hive-bg-active': colors.bgActive,
+
+    '--hive-text-primary': colors.textPrimary,
+    '--hive-text-secondary': colors.textSecondary,
+    '--hive-text-subtle': colors.textSubtle,
+    '--hive-text-disabled': colors.textDisabled,
+
+    '--hive-border-default': colors.borderDefault,
+    '--hive-border-hover': colors.borderHover,
+    '--hive-border-focus': colors.borderFocus,
+
+    '--hive-gold': colors.gold,
+    '--hive-gold-dim': colors.goldDim,
+    '--hive-gold-glow': colors.goldGlow,
+
+    '--hive-success': colors.success,
+    '--hive-error': colors.error,
+    '--hive-warning': colors.warning,
   },
 } as const;
 
 // ============================================================================
-// COMPONENT TOKENS (Enhanced)
+// COMPONENT TOKENS
 // ============================================================================
 
 export const componentTokens = {
-  // Button variants
   button: {
     default: {
-      bg: 'var(--foreground)',
-      text: 'var(--background)',
+      bg: colors.textPrimary,
+      text: colors.bgBase,
       hover: scale.gray[11],
     },
     primary: {
-      bg: 'var(--primary)',
-      text: 'var(--primary-foreground)',
+      bg: colors.gold,
+      text: colors.bgBase,
       hover: scale.gold[10],
+      glow: colors.goldGlow,
     },
     secondary: {
-      bg: 'var(--secondary)',
-      text: 'var(--secondary-foreground)',
-      hover: scale.gray[5],
+      bg: colors.bgElevated,
+      text: colors.textPrimary,
+      border: colors.borderDefault,
+      hover: colors.bgActive,
     },
     outline: {
       bg: 'transparent',
-      text: 'var(--foreground)',
-      border: 'var(--border)',
-      hover: 'var(--accent)',
+      text: colors.textPrimary,
+      border: colors.borderDefault,
+      hover: colors.bgElevated,
     },
     ghost: {
       bg: 'transparent',
-      text: 'var(--foreground)',
-      hover: 'var(--accent)',
+      text: colors.textSecondary,
+      hover: colors.bgElevated,
+      hoverText: colors.textPrimary,
     },
     destructive: {
-      bg: 'var(--destructive)',
-      text: 'var(--destructive-foreground)',
+      bg: colors.error,
+      text: colors.textPrimary,
       hover: scale.red[10],
     },
   },
 
-  // Card variants
   card: {
     default: {
-      bg: 'var(--card)',
-      border: 'var(--border)',
-      text: 'var(--card-foreground)',
+      bg: colors.bgSurface,
+      border: colors.borderDefault,
+      text: colors.textPrimary,
     },
     interactive: {
-      bg: 'var(--card)',
-      border: 'var(--border)',
-      hoverBg: 'var(--accent)',
-      hoverBorder: scale.gray[7],
+      bg: colors.bgSurface,
+      border: colors.borderDefault,
+      hoverBg: colors.bgElevated,
+      hoverBorder: colors.borderHover,
     },
   },
 
-  // Input variants
   input: {
     default: {
-      bg: 'var(--background)',
-      border: 'var(--input)',
-      text: 'var(--foreground)',
-      placeholder: 'var(--muted-foreground)',
-      focusRing: 'var(--ring)',
+      bg: colors.bgSurface,
+      border: colors.borderDefault,
+      text: colors.textPrimary,
+      placeholder: colors.textSubtle,
+      focusBorder: colors.gold,
+      focusGlow: colors.goldGlow,
+    },
+    hero: {
+      bg: colors.bgSurface,
+      border: colors.borderDefault,
+      text: colors.textPrimary,
+      placeholder: colors.textSubtle,
+      focusBorder: colors.gold,
+      focusGlow: '0 0 0 3px rgba(255, 215, 0, 0.2)',
+      minHeight: '56px',
     },
   },
 
-  // Avatar
   avatar: {
-    bg: scale.gray[3],
-    text: scale.gray[11],
-    ring: 'var(--ring)',
+    bg: colors.bgElevated,
+    text: colors.textSecondary,
+    border: colors.bgBase,
+    onlineRing: colors.gold,
   },
 
-  // Badge variants
   badge: {
     default: {
-      bg: 'var(--secondary)',
-      text: 'var(--secondary-foreground)',
+      bg: colors.bgElevated,
+      text: colors.textSecondary,
     },
     primary: {
-      bg: 'var(--primary)',
-      text: 'var(--primary-foreground)',
+      bg: colors.gold,
+      text: colors.bgBase,
     },
     outline: {
       bg: 'transparent',
-      text: 'var(--foreground)',
-      border: 'var(--border)',
+      text: colors.textPrimary,
+      border: colors.borderDefault,
     },
-    destructive: {
-      bg: 'var(--destructive)',
-      text: 'var(--destructive-foreground)',
+    success: {
+      bg: colors.success,
+      text: colors.bgBase,
     },
+    error: {
+      bg: colors.error,
+      text: colors.textPrimary,
+    },
+  },
+
+  presence: {
+    online: colors.gold,
+    offline: colors.textDisabled,
+    away: colors.goldDim,
   },
 } as const;
 
 // ============================================================================
-// SPACING SCALE (4px base, consistent with V1)
+// SPACING (4px base - unchanged)
 // ============================================================================
 
 export const spacing = {
@@ -242,7 +312,7 @@ export const spacing = {
   10: '2.5rem',     // 40px
   11: '2.75rem',    // 44px (touch target)
   12: '3rem',       // 48px
-  14: '3.5rem',     // 56px
+  14: '3.5rem',     // 56px (hero input)
   16: '4rem',       // 64px
   20: '5rem',       // 80px
   24: '6rem',       // 96px
@@ -262,30 +332,38 @@ export const spacing = {
 } as const;
 
 // ============================================================================
-// RADIUS SCALE
+// RADIUS
 // ============================================================================
 
 export const radius = {
   none: '0',
-  sm: 'calc(var(--radius) - 4px)',   // 6px
-  md: 'calc(var(--radius) - 2px)',   // 8px
-  lg: 'var(--radius)',               // 10px
-  xl: 'calc(var(--radius) + 4px)',   // 14px
-  '2xl': 'calc(var(--radius) + 8px)', // 18px
-  '3xl': 'calc(var(--radius) + 14px)', // 24px
-  full: '9999px',
+  sm: '4px',        // Subtle rounding
+  md: '8px',        // Standard cards
+  lg: '12px',       // Buttons, inputs (--radius base)
+  xl: '16px',       // Modals, large cards
+  '2xl': '20px',    // Extra large
+  '3xl': '24px',    // Maximum
+  full: '9999px',   // Pills, avatars
 } as const;
 
 // ============================================================================
-// TYPOGRAPHY SCALE
+// TYPOGRAPHY
 // ============================================================================
 
 export const typography = {
   fontFamily: {
     sans: ['Geist Sans', 'system-ui', 'sans-serif'],
+    display: ['Space Grotesk', 'system-ui', 'sans-serif'],
     mono: ['JetBrains Mono', 'monospace'],
   },
   fontSize: {
+    // Display scale (Space Grotesk)
+    'display-hero': ['3rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.03em' }],     // 48px
+    'display-xl': ['2.25rem', { lineHeight: '1.15', fontWeight: '700', letterSpacing: '-0.02em' }],   // 36px
+    'display-lg': ['1.75rem', { lineHeight: '1.2', fontWeight: '600', letterSpacing: '-0.02em' }],    // 28px
+    'display-md': ['1.5rem', { lineHeight: '1.25', fontWeight: '600', letterSpacing: '-0.01em' }],    // 24px
+
+    // Body scale (Geist Sans)
     xs: ['0.75rem', { lineHeight: '1rem' }],        // 12px
     sm: ['0.875rem', { lineHeight: '1.25rem' }],    // 14px
     base: ['1rem', { lineHeight: '1.5rem' }],       // 16px
@@ -296,6 +374,10 @@ export const typography = {
     '4xl': ['2.25rem', { lineHeight: '2.5rem' }],   // 36px
     '5xl': ['3rem', { lineHeight: '1.2' }],         // 48px
     '6xl': ['3.75rem', { lineHeight: '1.1' }],      // 60px
+
+    // Mono scale (JetBrains Mono)
+    'mono-sm': ['0.75rem', { lineHeight: '1.4' }],  // 12px
+    'mono-md': ['0.875rem', { lineHeight: '1.5' }], // 14px
   },
   fontWeight: {
     normal: '400',
@@ -303,41 +385,63 @@ export const typography = {
     semibold: '600',
     bold: '700',
   },
+  letterSpacing: {
+    tighter: '-0.03em',
+    tight: '-0.02em',
+    normal: '0',
+    wide: '0.02em',
+    wider: '0.05em',
+    widest: '0.1em',
+  },
 } as const;
 
 // ============================================================================
-// ANIMATION TOKENS
+// ANIMATION
 // ============================================================================
 
 export const animation = {
   duration: {
-    instant: '50ms',
-    fast: '150ms',
-    normal: '200ms',
-    slow: '300ms',
-    slower: '500ms',
+    instant: '75ms',    // Micro-feedback
+    fast: '150ms',      // Hovers, toggles
+    normal: '200ms',    // Standard
+    smooth: '250ms',    // Layout changes
+    slow: '300ms',      // Complex transitions
+    dramatic: '400ms',  // Page transitions, modals
   },
   easing: {
-    default: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    in: 'cubic-bezier(0.4, 0, 1, 1)',
-    out: 'cubic-bezier(0, 0, 0.2, 1)',
-    inOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+    default: 'cubic-bezier(0.25, 0.1, 0.25, 1)',    // Smooth
+    snappy: 'cubic-bezier(0.4, 0, 0.2, 1)',          // Quick settle
+    spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',    // Overshoot
+    in: 'cubic-bezier(0.4, 0, 1, 1)',               // Ease in
+    out: 'cubic-bezier(0, 0, 0.2, 1)',              // Ease out
   },
 } as const;
 
 // ============================================================================
-// SHADOWS
+// SHADOWS (optimized for dark mode)
 // ============================================================================
 
 export const shadows = {
-  sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-  inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+  sm: '0 1px 2px rgba(0, 0, 0, 0.3)',
+  md: '0 4px 12px rgba(0, 0, 0, 0.25)',
+  lg: '0 8px 24px rgba(0, 0, 0, 0.3)',
+  xl: '0 12px 32px rgba(0, 0, 0, 0.4)',
+  '2xl': '0 24px 48px rgba(0, 0, 0, 0.5)',
+  glow: '0 0 20px rgba(255, 215, 0, 0.15)',
+  'glow-strong': '0 0 30px rgba(255, 215, 0, 0.25)',
+  inner: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
   none: 'none',
+} as const;
+
+// ============================================================================
+// BLUR
+// ============================================================================
+
+export const blur = {
+  sm: '8px',    // Tooltips
+  md: '12px',   // Sheets
+  lg: '16px',   // Modals, command palette
+  xl: '24px',   // Heavy blur
 } as const;
 
 // ============================================================================
@@ -353,7 +457,7 @@ export const breakpoints = {
 } as const;
 
 // ============================================================================
-// Z-INDEX SCALE
+// Z-INDEX
 // ============================================================================
 
 export const zIndex = {
@@ -363,14 +467,14 @@ export const zIndex = {
   30: '30',
   40: '40',
   50: '50',         // Sticky elements
-  100: '100',       // Sidebar
-  200: '200',       // Dropdown
-  300: '300',       // Modal backdrop
-  400: '400',       // Modal
-  500: '500',       // Popover
-  600: '600',       // Toast
-  700: '700',       // Tooltip
-  9999: '9999',     // Max
+  dock: '100',      // Bottom dock
+  dropdown: '200',  // Dropdowns
+  modalBackdrop: '300',
+  modal: '400',
+  commandPalette: '500',
+  toast: '600',
+  tooltip: '700',
+  max: '9999',
 } as const;
 
 // ============================================================================
@@ -395,28 +499,32 @@ export const cognitiveBudgets = {
   hivelab: {
     toolFields: 12,
     maxTools: 100,
+    maxElementsInBelt: 8,
+  },
+  dock: {
+    maxPinnedSpaces: 6,
   },
 } as const;
 
 // ============================================================================
-// USAGE GUIDELINES (HIVE specific - Gold 5% Rule)
+// GUIDELINES
 // ============================================================================
 
 export const guidelines = {
   goldUsage: {
     allowed: [
       'Primary CTA buttons',
-      'Achievement/milestone celebrations',
       'Online presence indicators',
-      'Featured content badges',
-      'Chart primary accent',
+      'Active/selected states',
+      'Unread indicators',
+      'Achievement moments',
+      'Focus rings',
     ],
     forbidden: [
-      'Focus rings (use --ring)',
-      'Hover states',
-      'Borders',
+      'Hover backgrounds',
+      'All borders (except focus)',
       'Decorative elements',
-      'Secondary buttons',
+      'Body text',
     ],
   },
   accessibility: {
@@ -425,7 +533,7 @@ export const guidelines = {
     minTouchTarget: '44px',
   },
   performance: {
-    maxAnimationDuration: '500ms',
+    maxAnimationDuration: '400ms',
     preferReducedMotion: true,
   },
 } as const;
@@ -435,13 +543,13 @@ export const guidelines = {
 // ============================================================================
 
 export function generateCSSVariables(): string {
-  const lines: string[] = ['@layer base {', '  :root {'];
+  const lines: string[] = [':root {'];
 
   for (const [key, value] of Object.entries(cssVariables.root)) {
-    lines.push(`    ${key}: ${value};`);
+    lines.push(`  ${key}: ${value};`);
   }
 
-  lines.push('  }', '}');
+  lines.push('}');
 
   return lines.join('\n');
 }
@@ -450,6 +558,7 @@ export function generateCSSVariables(): string {
 // TYPE EXPORTS
 // ============================================================================
 
+export type Colors = typeof colors;
 export type ColorScale = typeof scale;
 export type CSSVariables = typeof cssVariables;
 export type ComponentTokens = typeof componentTokens;
@@ -458,6 +567,7 @@ export type Radius = typeof radius;
 export type Typography = typeof typography;
 export type Animation = typeof animation;
 export type Shadows = typeof shadows;
+export type Blur = typeof blur;
 export type Breakpoints = typeof breakpoints;
 export type ZIndex = typeof zIndex;
 export type CognitiveBudgets = typeof cognitiveBudgets;
