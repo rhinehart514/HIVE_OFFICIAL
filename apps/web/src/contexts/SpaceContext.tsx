@@ -264,23 +264,35 @@ export function SpaceContextProvider({
 
       // Extract membership info
       const membershipInfo = data.membership || {};
-      const role = (membershipInfo.role || data.membershipRole || "").toLowerCase();
-      const status = (membershipInfo.status || data.membershipStatus || "").toLowerCase();
+      const rawRole = (membershipInfo.role || data.membershipRole || "").toLowerCase();
+      const rawStatus = (membershipInfo.status || data.membershipStatus || "").toLowerCase();
+
+      // P1 FIX: Validate role before casting - prevent invalid roles from API
+      const validRoles: MemberRole[] = ["owner", "admin", "moderator", "member"];
+      const validStatuses: NonNullable<SpaceMembership["status"]>[] = ["active", "pending", "invited", "banned"];
+
+      const role: MemberRole | undefined = validRoles.includes(rawRole as MemberRole)
+        ? (rawRole as MemberRole)
+        : undefined;
+      const status: SpaceMembership["status"] | undefined = validStatuses.includes(rawStatus as NonNullable<SpaceMembership["status"]>)
+        ? (rawStatus as SpaceMembership["status"])
+        : undefined;
+
       const isMember = Boolean(
         data.isMember ||
         membershipInfo.isActive ||
-        ["active", "joined"].includes(status)
+        ["active", "joined"].includes(rawStatus)
       );
       const isLeader = Boolean(
-        ["owner", "leader", "admin", "moderator"].includes(role) ||
+        ["owner", "leader", "admin", "moderator"].includes(rawRole) ||
         membershipInfo.isLeader
       );
 
       setMembership({
         isMember,
         isLeader,
-        role: role as MemberRole || undefined,
-        status: status as SpaceMembership["status"] || undefined,
+        role,
+        status,
         joinedAt: membershipInfo.joinedAt,
       });
     } catch (e) {
@@ -455,9 +467,22 @@ export function SpaceContextProvider({
 
   /**
    * Refresh all data
+   * P2 FIX: Use Promise.allSettled so one failure doesn't block others
    */
   const refresh = useCallback(async () => {
-    await Promise.all([fetchSpace(), reloadStructure(), fetchEvents()]);
+    const results = await Promise.allSettled([
+      fetchSpace(),
+      reloadStructure(),
+      fetchEvents(),
+    ]);
+
+    // Log any failures but don't throw - individual functions handle their own errors
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        const operations = ["fetchSpace", "reloadStructure", "fetchEvents"];
+        console.warn(`SpaceContext refresh: ${operations[index]} failed:`, result.reason);
+      }
+    });
   }, [fetchSpace, reloadStructure, fetchEvents]);
 
   // Active tab derived state
@@ -489,6 +514,8 @@ export function SpaceContextProvider({
   }, [fetchEvents]);
 
   // Leader actions (only if user is leader)
+  // P1 FIX: Only depend on boolean conditions - action functions are already stable
+  // This prevents unnecessary re-renders when any action function reference changes
   const leaderActions: LeaderActions | null = useMemo(() => {
     if (!membership.isLeader || !canEdit) return null;
 
@@ -504,20 +531,8 @@ export function SpaceContextProvider({
       detachWidgetFromTab,
       updateSpaceSettings,
     };
-  }, [
-    membership.isLeader,
-    canEdit,
-    addTab,
-    updateTab,
-    removeTab,
-    reorderTabs,
-    addWidget,
-    updateWidget,
-    removeWidget,
-    attachWidgetToTab,
-    detachWidgetFromTab,
-    updateSpaceSettings,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membership.isLeader, canEdit]);
 
   // Combined error
   const combinedError = error || structureError;

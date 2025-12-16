@@ -192,6 +192,8 @@ export function useChatMessages(
   // FIX: Track in-flight messages to prevent SSE duplicates
   // Maps temp IDs to real IDs when message is being sent
   const inFlightMessagesRef = useRef<Map<string, string | null>>(new Map());
+  // P2 FIX: Track intentional disconnects to prevent onerror reconnection
+  const intentionalDisconnectRef = useRef(false);
 
   // Scroll position cache for board switching
   const scrollPositionCache = useRef<Map<string, number>>(new Map());
@@ -334,6 +336,9 @@ export function useChatMessages(
     (boardId: string) => {
       if (!spaceId || !enableRealtime) return;
 
+      // P2 FIX: Reset intentional disconnect flag when connecting
+      intentionalDisconnectRef.current = false;
+
       // Close existing connection
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
@@ -419,6 +424,15 @@ export function useChatMessages(
         eventSource.onerror = () => {
           if (!mountedRef.current) return;
 
+          // P2 FIX: Don't reconnect if this was an intentional disconnect
+          // (e.g., user switched boards or component unmounted)
+          if (intentionalDisconnectRef.current) {
+            setIsConnected(false);
+            eventSource.close();
+            eventSourceRef.current = null;
+            return;
+          }
+
           setIsConnected(false);
           eventSource.close();
           eventSourceRef.current = null;
@@ -450,6 +464,9 @@ export function useChatMessages(
   );
 
   const disconnectSSE = useCallback(() => {
+    // P2 FIX: Mark as intentional disconnect to prevent onerror reconnection
+    intentionalDisconnectRef.current = true;
+
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
       eventSourceRef.current = null;

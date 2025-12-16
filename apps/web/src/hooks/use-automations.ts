@@ -5,7 +5,7 @@
  * Part of HiveLab Phase 3 - makes automations visible to leaders.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { secureApiFetch } from '@/lib/secure-api-fetch';
 
 export interface AutomationDTO {
@@ -37,6 +37,8 @@ interface UseAutomationsState {
   automations: AutomationDTO[];
   isLoading: boolean;
   error: string | null;
+  // P2 FIX: Added action-specific error for user feedback
+  actionError: string | null;
   isLeader: boolean;
 }
 
@@ -44,6 +46,7 @@ interface UseAutomationsActions {
   refetch: () => Promise<void>;
   toggle: (automationId: string) => Promise<boolean>;
   remove: (automationId: string) => Promise<boolean>;
+  clearActionError: () => void;
 }
 
 export function useAutomations(spaceId: string | null): UseAutomationsState & UseAutomationsActions {
@@ -51,8 +54,13 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
     automations: [],
     isLoading: false,
     error: null,
+    actionError: null,
     isLeader: false,
   });
+
+  // P2 FIX: Track in-flight operations to prevent double-click race conditions
+  const togglingRef = useRef<Set<string>>(new Set());
+  const removingRef = useRef<Set<string>>(new Set());
 
   const fetchAutomations = useCallback(async () => {
     if (!spaceId) return;
@@ -85,7 +93,19 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
   }, [spaceId]);
 
   const toggle = useCallback(async (automationId: string): Promise<boolean> => {
-    if (!spaceId) return false;
+    // P2 FIX: Prevent double-click race condition
+    if (!spaceId || togglingRef.current.has(automationId)) return false;
+
+    togglingRef.current.add(automationId);
+    setState(prev => ({ ...prev, actionError: null }));
+
+    // P2 FIX: Optimistic update - toggle current state
+    setState(prev => ({
+      ...prev,
+      automations: prev.automations.map(a =>
+        a.id === automationId ? { ...a, enabled: !a.enabled } : a
+      ),
+    }));
 
     try {
       const response = await secureApiFetch(
@@ -94,13 +114,14 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
       );
 
       if (!response.ok) {
-        return false;
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to toggle automation');
       }
 
       const data = await response.json();
       const newEnabled = data.data?.enabled;
 
-      // Update local state
+      // Confirm with server state
       setState(prev => ({
         ...prev,
         automations: prev.automations.map(a =>
@@ -109,13 +130,36 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
       }));
 
       return true;
-    } catch {
+    } catch (err) {
+      // P2 FIX: Rollback optimistic update on error
+      setState(prev => ({
+        ...prev,
+        automations: prev.automations.map(a =>
+          a.id === automationId ? { ...a, enabled: !a.enabled } : a
+        ),
+        actionError: err instanceof Error ? err.message : 'Failed to toggle automation',
+      }));
       return false;
+    } finally {
+      togglingRef.current.delete(automationId);
     }
   }, [spaceId]);
 
   const remove = useCallback(async (automationId: string): Promise<boolean> => {
-    if (!spaceId) return false;
+    // P2 FIX: Prevent double-click race condition
+    if (!spaceId || removingRef.current.has(automationId)) return false;
+
+    removingRef.current.add(automationId);
+    setState(prev => ({ ...prev, actionError: null }));
+
+    // Store for potential rollback
+    const removedAutomation = state.automations.find(a => a.id === automationId);
+
+    // P2 FIX: Optimistic update
+    setState(prev => ({
+      ...prev,
+      automations: prev.automations.filter(a => a.id !== automationId),
+    }));
 
     try {
       const response = await secureApiFetch(
@@ -124,20 +168,30 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
       );
 
       if (!response.ok) {
-        return false;
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to remove automation');
       }
 
-      // Update local state
-      setState(prev => ({
-        ...prev,
-        automations: prev.automations.filter(a => a.id !== automationId),
-      }));
-
       return true;
-    } catch {
+    } catch (err) {
+      // P2 FIX: Rollback optimistic update on error
+      if (removedAutomation) {
+        setState(prev => ({
+          ...prev,
+          automations: [...prev.automations, removedAutomation],
+          actionError: err instanceof Error ? err.message : 'Failed to remove automation',
+        }));
+      }
       return false;
+    } finally {
+      removingRef.current.delete(automationId);
     }
-  }, [spaceId]);
+  }, [spaceId, state.automations]);
+
+  // P2 FIX: Clear action error
+  const clearActionError = useCallback(() => {
+    setState(prev => ({ ...prev, actionError: null }));
+  }, []);
 
   useEffect(() => {
     fetchAutomations();
@@ -148,6 +202,7 @@ export function useAutomations(spaceId: string | null): UseAutomationsState & Us
     refetch: fetchAutomations,
     toggle,
     remove,
+    clearActionError,
   };
 }
 
