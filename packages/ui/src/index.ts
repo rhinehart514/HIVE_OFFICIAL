@@ -106,6 +106,10 @@ export type { MobileNavProps, NavItem, MySpaceItem } from "./atomic/00-Global/or
 export type { NotificationDropdownProps } from "./atomic/00-Global/organisms/notification-dropdown-branded";
 export type { ProfileDropdownProps } from "./atomic/00-Global/organisms/profile-dropdown-branded";
 
+// Coming Soon / Feature Gates (Dec 2025)
+export { ComingSoon } from "./atomic/00-Global/templates/coming-soon";
+export type { ComingSoonProps } from "./atomic/00-Global/templates/coming-soon";
+
 // Toast System (Sonner-based - Nov 2025)
 export { Toaster, toast, useToast, legacyToast } from "./atomic/00-Global/atoms/sonner-toast";
 export type { LegacyToastOptions } from "./atomic/00-Global/atoms/sonner-toast";
