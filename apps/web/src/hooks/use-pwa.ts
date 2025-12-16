@@ -7,9 +7,38 @@
  * - Install prompt detection and triggering
  * - Service worker registration and updates
  * - App installation state
+ * - Online/offline status detection
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+
+/**
+ * Hook to track online/offline status
+ * Used by offline storage and sync systems
+ */
+export function useOnlineStatus(): boolean {
+  const [isOnline, setIsOnline] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return navigator.onLine;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;

@@ -96,6 +96,14 @@ export function getSlashCommandName(message: string): string | null {
   return match ? match[1].toLowerCase() : null;
 }
 
+// P3 OPTIMIZATION: Use Set for O(1) keyword lookup
+const INTENT_KEYWORDS = new Set([
+  'poll', 'vote', "let's vote", 'voting',
+  'rsvp', 'sign up', 'registration', 'attend',
+  'countdown', 'timer', 'days until',
+  'announce',
+]);
+
 /**
  * Quick detection of potential intent triggers (client-side heuristic)
  * Returns true if the message might contain a component intent
@@ -103,41 +111,15 @@ export function getSlashCommandName(message: string): string | null {
 export function mightHaveIntent(message: string): boolean {
   const lower = message.toLowerCase().trim();
 
-  // Slash commands
+  // Slash commands - fastest check
   if (lower.startsWith('/')) return true;
 
-  // Common poll triggers
-  if (
-    lower.includes('poll') ||
-    lower.includes('vote') ||
-    lower.includes("let's vote") ||
-    lower.includes('voting')
-  ) {
-    return true;
-  }
+  // Emoji check (announcement)
+  if (message.includes('📢')) return true;
 
-  // RSVP triggers
-  if (
-    lower.includes('rsvp') ||
-    lower.includes('sign up') ||
-    lower.includes('registration') ||
-    lower.includes('attend')
-  ) {
-    return true;
-  }
-
-  // Countdown triggers
-  if (
-    lower.includes('countdown') ||
-    lower.includes('timer') ||
-    lower.includes('days until')
-  ) {
-    return true;
-  }
-
-  // Announcement triggers
-  if (lower.includes('announce') || message.includes('📢')) {
-    return true;
+  // P3 OPTIMIZATION: Check keywords using Set for faster lookup
+  for (const keyword of INTENT_KEYWORDS) {
+    if (lower.includes(keyword)) return true;
   }
 
   return false;
