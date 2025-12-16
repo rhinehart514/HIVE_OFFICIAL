@@ -9,16 +9,16 @@ import { dropdownVariants, menuItemVariants, duration, easing } from "../../../l
 import { cn } from "../../../lib/utils"
 
 const selectVariants = cva(
-  // Semantic radius: input = lg (16px)
-  "group relative inline-flex w-full items-center justify-between gap-3 rounded-lg border bg-background-secondary px-3 py-2 text-sm font-medium text-text-primary transition-all duration-100 placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+  // Dark-first design: Surface bg, subtle border, white focus
+  "group relative inline-flex w-full items-center justify-between gap-3 rounded-lg border bg-[#141414] px-3 py-2 text-sm font-medium text-[#FAFAFA] transition-all duration-100 placeholder:text-[#71717A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40",
   {
     variants: {
       variant: {
-        default: "border-border-default hover:border-border-strong hover:bg-background-interactive focus-visible:border-border-strong focus-visible:ring-1 focus-visible:ring-border-strong",
-        subtle: "border-transparent bg-background-primary hover:bg-background-secondary",
-        ghost: "border-transparent bg-transparent hover:bg-background-secondary",
-        destructive: "border-status-error/30 bg-background-secondary hover:bg-status-error/10",
-        success: "border-status-success/30 bg-background-secondary hover:bg-status-success/10",
+        default: "border-[#2A2A2A] hover:border-[#3A3A3A] hover:bg-white/[0.04] focus-visible:border-white/50 focus-visible:ring-2 focus-visible:ring-white/10",
+        subtle: "border-transparent bg-[#0A0A0A] hover:bg-[#141414]",
+        ghost: "border-transparent bg-transparent hover:bg-[#141414]",
+        destructive: "border-[#FF3737]/30 bg-[#141414] hover:bg-[#FF3737]/10",
+        success: "border-[#00D46A]/30 bg-[#141414] hover:bg-[#00D46A]/10",
       },
       size: {
         sm: "h-8 px-2.5 text-sm",
@@ -34,8 +34,8 @@ const selectVariants = cva(
 )
 
 const selectContentVariants = cva(
-  // Semantic radius: popover = xl (24px)
-  "relative z-50 min-w-[12rem] max-h-96 overflow-auto rounded-xl border border-border-default bg-background-secondary p-1 shadow-lg",
+  // Dark-first design: Surface bg, subtle border, dropdown shadow
+  "relative z-50 min-w-[12rem] max-h-96 overflow-auto rounded-xl border border-[#2A2A2A] bg-[#141414] p-1 shadow-[0_8px_24px_rgba(0,0,0,0.5)]",
   {
     variants: {
       position: {
@@ -43,8 +43,8 @@ const selectContentVariants = cva(
         popper: "mt-1",
       },
       appearance: {
-        default: "text-text-primary",
-        glass: "bg-background-secondary/95 backdrop-blur-sm",
+        default: "text-[#FAFAFA]",
+        glass: "bg-[#141414]/95 backdrop-blur-sm",
       },
     },
     defaultVariants: {
@@ -59,12 +59,12 @@ const selectItemVariants = cva(
   {
     variants: {
       variant: {
-        default: "hover:bg-background-interactive text-text-secondary hover:text-text-primary data-[selected]:text-brand-primary data-[selected]:bg-brand-primary/10",
-        destructive: "text-status-error hover:bg-status-error/10 hover:text-status-error",
+        default: "hover:bg-white/[0.06] text-[#A1A1A6] hover:text-[#FAFAFA] data-[selected]:text-[#FAFAFA] data-[selected]:bg-white/[0.06]",
+        destructive: "text-[#FF3737] hover:bg-[#FF3737]/10 hover:text-[#FF3737]",
       },
       appearance: {
         default: "",
-        subtle: "hover:bg-background-interactive",
+        subtle: "hover:bg-white/[0.04]",
       }
     },
     defaultVariants: {
@@ -184,7 +184,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         >
           <ChevronDown
             aria-hidden
-            className="h-4 w-4 text-text-tertiary"
+            className="h-4 w-4 text-[#818187]"
           />
         </motion.div>
       </MotionButton>
@@ -286,7 +286,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
         data-disabled={disabled}
         className={cn(
           selectItemVariants({ variant, appearance }),
-          isSelected && "text-text-primary bg-background-interactive",
+          isSelected && "text-[#FAFAFA] bg-white/[0.06]",
           className
         )}
         onClick={disabled ? undefined : () => context.onValueChange(value)}
@@ -333,7 +333,7 @@ const SelectLabel = React.forwardRef<HTMLDivElement, SelectLabelProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("py-1.5 pl-8 pr-2 text-xs font-medium text-text-tertiary", className)}
+      className={cn("py-1.5 pl-8 pr-2 text-xs font-medium text-[#818187]", className)}
       {...props}
     />
   )
@@ -346,7 +346,7 @@ const SelectSeparator = React.forwardRef<HTMLDivElement, SelectSeparatorProps>(
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("-mx-1 my-1 h-px bg-border-default", className)}
+      className={cn("-mx-1 my-1 h-px bg-[#2A2A2A]", className)}
       {...props}
     />
   )

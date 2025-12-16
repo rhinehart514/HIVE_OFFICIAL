@@ -27,7 +27,7 @@ import * as React from "react";
 
 import { cn } from "../../../lib/utils";
 
-export interface CommandItem {
+export interface CommandPaletteItem {
   id: string;
   label: string;
   description?: string;
@@ -44,11 +44,11 @@ export interface CommandPaletteProps {
   /** Called when palette should close */
   onOpenChange: (open: boolean) => void;
   /** Items to display */
-  items: CommandItem[];
+  items: CommandPaletteItem[];
   /** Placeholder text */
   placeholder?: string;
   /** Called when an item is selected */
-  onSelect?: (item: CommandItem) => void;
+  onSelect?: (item: CommandPaletteItem) => void;
   /** Called when search query changes */
   onSearch?: (query: string) => void;
   /** Loading state */
@@ -99,7 +99,7 @@ const CommandPalette = React.forwardRef<HTMLDivElement, CommandPaletteProps>(
 
     // Group items by category
     const groupedItems = React.useMemo(() => {
-      const groups: Record<string, CommandItem[]> = {};
+      const groups: Record<string, CommandPaletteItem[]> = {};
       filteredItems.forEach((item) => {
         const category = item.category || "General";
         if (!groups[category]) groups[category] = [];
@@ -136,7 +136,7 @@ const CommandPalette = React.forwardRef<HTMLDivElement, CommandPaletteProps>(
       }
     };
 
-    const handleSelect = (item: CommandItem) => {
+    const handleSelect = (item: CommandPaletteItem) => {
       item.onSelect?.();
       onSelect?.(item);
       onOpenChange(false);

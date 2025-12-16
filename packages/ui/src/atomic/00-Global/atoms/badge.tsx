@@ -4,25 +4,25 @@ import * as React from "react"
 import { cn } from "../../../lib/utils"
 
 const badgeVariants = cva(
-  // Semantic radius: badge = full (pill shape)
-  "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium transition-colors duration-100 focus:outline-none focus:ring-1 focus:ring-border-strong",
+  // Dark-first design: Subtle styling, white focus ring
+  "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-white/20",
   {
     variants: {
       variant: {
         default:
-          "bg-background-interactive text-text-secondary border-border-default",
+          "bg-white/[0.06] text-[#A1A1A6] border-[#2A2A2A]",
         secondary:
-          "bg-background-secondary text-text-tertiary border-border-default",
+          "bg-[#141414] text-[#818187] border-[#2A2A2A]",
         destructive:
-          "bg-status-error/10 text-status-error border-status-error/20",
+          "bg-[#FF3737]/10 text-[#FF3737] border-[#FF3737]/20",
         success:
-          "bg-status-success/10 text-status-success border-status-success/20",
+          "bg-[#00D46A]/10 text-[#00D46A] border-[#00D46A]/20",
         warning:
-          "bg-status-warning/10 text-status-warning border-status-warning/20",
+          "bg-[#FFB800]/10 text-[#FFB800] border-[#FFB800]/20",
         outline:
-          "bg-transparent text-text-secondary border-border-strong",
+          "bg-transparent text-[#A1A1A6] border-[#3A3A3A]",
         pill:
-          "bg-background-secondary text-text-tertiary border-border-default",
+          "bg-[#141414] text-[#818187] border-[#2A2A2A]",
         // University class year variants (dark theme)
         freshman:
           "bg-green-500/10 text-green-400 border-green-500/20",
@@ -39,7 +39,7 @@ const badgeVariants = cva(
           "bg-orange-500/10 text-orange-400 border-orange-500/20",
         // Additional variants
         primary:
-          "bg-brand-primary text-black border-transparent",
+          "bg-[#FFD700] text-[#0A0A0A] border-transparent",
         "prof-favorite":
           "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
         "major-tag":
@@ -52,16 +52,16 @@ const badgeVariants = cva(
           "bg-amber-500/10 text-amber-400 border-amber-500/20",
       },
       size: {
-        xs: "px-1.5 py-0.5 text-body-xs",   // 10px
-        sm: "px-2 py-0.5 text-body-sm",     // 12px
-        md: "px-2.5 py-1 text-body-sm",     // 12px
+        xs: "px-1.5 py-0.5 text-[10px]",
+        sm: "px-2 py-0.5 text-xs",
+        md: "px-2.5 py-1 text-xs",
       },
       tone: {
         default: "",
         muted:
-          "bg-background-secondary text-text-muted border-border-default",
+          "bg-[#141414] text-[#71717A] border-[#2A2A2A]",
         contrast:
-          "bg-text-primary text-background-primary border-transparent",
+          "bg-[#FAFAFA] text-[#0A0A0A] border-transparent",
       },
     },
     defaultVariants: {

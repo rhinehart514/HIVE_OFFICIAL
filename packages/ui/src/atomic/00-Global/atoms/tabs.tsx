@@ -7,13 +7,14 @@ import * as React from "react"
 import { cn } from "../../../lib/utils"
 
 const tabsListVariants = cva(
-  "inline-flex h-9 items-center justify-center rounded-lg bg-background-secondary p-1 text-text-tertiary",
+  // Dark-first design: Elevated bg, subtle text
+  "inline-flex h-9 items-center justify-center rounded-lg bg-[#1A1A1A] p-1 text-[#818187]",
   {
     variants: {
       variant: {
-        default: "bg-background-secondary",
-        underline: "bg-transparent border-b border-border-default",
-        pills: "bg-background-interactive gap-1",
+        default: "bg-[#1A1A1A]",
+        underline: "bg-transparent border-b border-[#2A2A2A]",
+        pills: "bg-white/[0.04] gap-1",
       },
     },
     defaultVariants: {
@@ -23,13 +24,15 @@ const tabsListVariants = cva(
 )
 
 const tabsTriggerVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary/50 disabled:pointer-events-none disabled:opacity-50",
+  // Dark-first design: White focus ring (not gold)
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "text-text-tertiary hover:text-text-primary data-[state=active]:bg-background-interactive data-[state=active]:text-brand-primary",
-        underline: "text-text-tertiary hover:text-text-primary border-b-2 border-transparent data-[state=active]:border-brand-primary data-[state=active]:text-brand-primary rounded-none",
-        pills: "text-text-tertiary hover:text-text-primary hover:bg-background-interactive/50 data-[state=active]:bg-brand-primary/15 data-[state=active]:text-brand-primary",
+        // Active state: white text + subtle bg (no gold text)
+        default: "text-[#818187] hover:text-[#FAFAFA] data-[state=active]:bg-white/[0.08] data-[state=active]:text-[#FAFAFA]",
+        underline: "text-[#818187] hover:text-[#FAFAFA] border-b-2 border-transparent data-[state=active]:border-[#FAFAFA] data-[state=active]:text-[#FAFAFA] rounded-none",
+        pills: "text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04] data-[state=active]:bg-white/[0.08] data-[state=active]:text-[#FAFAFA]",
       },
     },
     defaultVariants: {
@@ -39,12 +42,12 @@ const tabsTriggerVariants = cva(
 )
 
 const tabsContentVariants = cva(
-  "mt-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong",
+  "mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
   {
     variants: {
       variant: {
         default: "",
-        card: "rounded-lg border border-border-default bg-background-secondary p-4",
+        card: "rounded-lg border border-[#2A2A2A] bg-[#141414] p-4",
       },
     },
     defaultVariants: {
@@ -164,7 +167,7 @@ const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
         {actualVariant === "underline" && indicator && (
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-brand-primary"
+            className="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-[#FAFAFA]"
             initial={false}
             animate={{ x: indicator.left, width: indicator.width }}
             transition={{ type: "spring", stiffness: 500, damping: 30, mass: 0.5 }}
