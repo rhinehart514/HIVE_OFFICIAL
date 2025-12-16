@@ -338,10 +338,29 @@ export function useAuth(): UseAuthReturn {
 
   /**
    * Setup token refresh when user is authenticated
+   * Also handles visibility changes to refresh when tab becomes visible
    */
   useEffect(() => {
     if (user) {
       setupTokenRefresh();
+    }
+
+    // Handle visibility change - refresh when tab becomes visible after being hidden
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user && !isRefreshingRef.current) {
+        // Tab became visible - check if we should refresh
+        const lastRefresh = sessionCache?.timestamp || 0;
+        const timeSinceRefresh = Date.now() - lastRefresh;
+
+        // If more than 5 minutes since last activity, refresh proactively
+        if (timeSinceRefresh > 5 * 60 * 1000) {
+          await refreshToken();
+        }
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
     }
 
     return () => {
@@ -349,8 +368,11 @@ export function useAuth(): UseAuthReturn {
         clearInterval(refreshTimerRef.current);
         refreshTimerRef.current = null;
       }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
     };
-  }, [user, setupTokenRefresh]);
+  }, [user, setupTokenRefresh, refreshToken]);
 
   return {
     user,

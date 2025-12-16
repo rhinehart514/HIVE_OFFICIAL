@@ -8,6 +8,7 @@ import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { SESSION_CONFIG } from "@/lib/session";
+import { validateOrigin } from "@/lib/security-middleware";
 
 // Security constants
 const MAX_ATTEMPTS_PER_CODE = 5;
@@ -100,6 +101,15 @@ export const POST = withValidation(
     const normalizedCode = code.replace(/\s/g, ''); // Remove any spaces
 
     try {
+      // Origin validation (CSRF protection for pre-auth endpoints)
+      if (!validateOrigin(request as NextRequest)) {
+        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
+          operation: 'verify_code',
+          error: 'invalid_origin'
+        });
+        return respond.error("Invalid request origin", "FORBIDDEN", { status: 403 });
+      }
+
       // Rate limiting
       const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
       if (!rateLimitResult.allowed) {

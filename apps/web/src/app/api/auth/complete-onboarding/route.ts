@@ -8,6 +8,7 @@ import { createSession, setSessionCookie, getSession, SESSION_CONFIG } from '@/l
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
+import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 
 // Development mode guard - ONLY allow dev bypass when ALL conditions are met:
 // 1. NODE_ENV is explicitly 'development'
@@ -84,6 +85,20 @@ function inferAcademicLevel(major: string, graduationYear: number): 'undergradua
 }
 
 export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
+  // Rate limit: 5 onboarding attempts per hour per IP
+  const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
+  if (!rateLimitResult.allowed) {
+    logger.warn('Complete-onboarding rate limit exceeded', {
+      component: 'complete-onboarding',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+    });
+    return respond.error(
+      rateLimitResult.error || 'Too many attempts. Please try again later.',
+      'RATE_LIMITED',
+      { status: rateLimitResult.status }
+    );
+  }
+
   const userId = getUserId(request as unknown as AuthenticatedRequest);
 
   // Get session for campus isolation

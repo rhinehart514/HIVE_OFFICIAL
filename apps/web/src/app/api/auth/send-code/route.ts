@@ -13,6 +13,7 @@ import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { SESSION_CONFIG } from "@/lib/session";
 import { isEmailServiceAvailable, getEmailServiceStatus } from "@/lib/config-validation";
+import { validateOrigin } from "@/lib/security-middleware";
 
 // Firebase Client SDK for school validation fallback
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -424,6 +425,15 @@ export const POST = withValidation(
     const { email, schoolId } = body;
 
     try {
+      // Origin validation (CSRF protection for pre-auth endpoints)
+      if (!validateOrigin(request as NextRequest)) {
+        await auditAuthEvent('suspicious', request as unknown as NextRequest, {
+          operation: 'send_code',
+          error: 'invalid_origin'
+        });
+        return respond.error("Invalid request origin", "FORBIDDEN", { status: 403 });
+      }
+
       // Rate limiting
       const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
       if (!rateLimitResult.allowed) {
