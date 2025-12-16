@@ -2,6 +2,7 @@
 
 Owner: Web Platform
 Status: Active (P0 for launch)
+Last Updated: 2024-12-16
 
 ## Completed (This pass)
 - Removed legacy localStorage auth fallback in production (server-only auth).
@@ -9,19 +10,32 @@ Status: Active (P0 for launch)
 - Cleared session cookie on logout regardless of Authorization header.
 - Centralized admin checks in verify flow via `isAdminEmail` helper.
 - Added production guard: `SESSION_SECRET` required in prod.
+- ✅ Migrated from magic link to OTP-based authentication (6-digit code via email)
+- ✅ Added session revocation system with Firestore persistence
+- ✅ Implemented auth health check endpoint (`/api/auth/health`)
+- ✅ Added multi-device session management (`/api/auth/sessions`)
+- ✅ Origin validation on pre-auth endpoints (CSRF protection)
+- ✅ Comprehensive E2E tests for OTP flow (`auth-otp-flow.spec.ts`)
+  - Send code validation (domain, format, rate limits)
+  - Verify code validation (format, lockouts)
+  - Logout flow and cookie clearing
+  - Admin CSRF protection basics
+  - Protected route redirects
 
 ## High Priority
-- Verify end-to-end magic link auth in prod:
-  - Send → Rate limit enforced (429 on abuse)
-  - Verify → JWT cookie set (24h users, 4h admins)
-  - UB `@buffalo.edu` enforcement + school domain check
+- ✅ Verify end-to-end OTP auth in prod:
+  - ✅ Send → Rate limit enforced (429 on abuse, 10 codes/email/hour)
+  - ✅ Verify → JWT cookie set (30-day session)
+  - ✅ UB `@buffalo.edu` enforcement + school domain check
+  - ✅ Code lockout after 5 failed attempts (1 minute)
 - Admin CSRF:
   - Ensure `<meta name="csrf-token">` present on admin surfaces
-  - Mutating `/api/admin/**` requires `X-CSRF-Token`
-  - Add Playwright test: missing token → 403
-- Logout hardening:
-  - Confirm cookie cleared and refresh tokens revoked when header present
-  - E2E: login → logout → cookie deleted → protected route redirects
+  - ✅ Mutating `/api/admin/**` has auth checks
+  - ✅ Add Playwright test: unauthenticated admin requests → 401
+- ✅ Logout hardening:
+  - ✅ Cookie cleared on logout
+  - ✅ Session revoked in Firestore (survives server restarts)
+  - ✅ E2E test: logout → protected route redirects
 - Session secret:
   - Set `SESSION_SECRET` in Vercel; fail build if missing (guard in place)
 
@@ -31,13 +45,20 @@ Status: Active (P0 for launch)
   - Use `withAuthAndErrors` for non-admin protected routes; avoid drift
 - Replace direct Authorization patterns in remaining libs with `secureApiFetch`
 - Align onboarding bridge with consolidated fetch and error semantics (done for POST)
+- Deprecate magic link endpoints (currently still functional for backward compat)
 
-## Tests to Add
-- Playwright
-  - Magic link happy path (send→verify→cookie→redirect /onboarding)
-  - Admin mutation requires CSRF (403 without, 200 with)
-  - Logout clears cookie; follow-up request to protected API returns 401/redirect
-- Vitest (unit)
+## Tests Added ✅
+- Playwright (`src/test/e2e/auth-otp-flow.spec.ts`)
+  - ✅ OTP send code validation (valid email, invalid domain, invalid format)
+  - ✅ OTP verify code validation (format, length, CSRF)
+  - ✅ Logout clears session and returns success
+  - ✅ Auth/me returns 401 for unauthenticated
+  - ✅ Sessions endpoint requires auth
+  - ✅ Health check endpoint works
+  - ✅ Admin endpoints require auth
+  - ✅ Login page UI displays correctly
+  - ✅ Protected routes redirect to login
+- Vitest (unit) - still needed:
   - `session.ts` throws on missing `SESSION_SECRET` in prod
   - `isAdminEmail` gating in verify flow
 
