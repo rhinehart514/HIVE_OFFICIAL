@@ -355,4 +355,240 @@ export function createServerSpaceChatService(
     { boardRepo, messageRepo, inlineComponentRepo },
     callbacks
   );
+}
+
+// ============================================================================
+// Category Rules & Leadership Functions
+// ============================================================================
+
+export interface CategoryRules {
+  category: string;
+  maxLeaders: number;
+  allowSelfRequest: boolean;
+  requireApproval: boolean;
+  allowPublicJoin: boolean;
+  leadershipDescription?: string;
+}
+
+const DEFAULT_CATEGORY_RULES: Record<string, CategoryRules> = {
+  student_org: {
+    category: 'student_org',
+    maxLeaders: 10,
+    allowSelfRequest: true,
+    requireApproval: true,
+    allowPublicJoin: true,
+  },
+  greek_life: {
+    category: 'greek_life',
+    maxLeaders: 5,
+    allowSelfRequest: false,
+    requireApproval: true,
+    allowPublicJoin: false,
+  },
+  academic: {
+    category: 'academic',
+    maxLeaders: 5,
+    allowSelfRequest: true,
+    requireApproval: false,
+    allowPublicJoin: true,
+  },
+  residential: {
+    category: 'residential',
+    maxLeaders: 3,
+    allowSelfRequest: false,
+    requireApproval: true,
+    allowPublicJoin: false,
+  },
+  university_org: {
+    category: 'university_org',
+    maxLeaders: 10,
+    allowSelfRequest: false,
+    requireApproval: true,
+    allowPublicJoin: true,
+  },
+};
+
+/**
+ * Get rules for a space category
+ */
+export function getCategoryRules(category: string): CategoryRules {
+  return DEFAULT_CATEGORY_RULES[category] || DEFAULT_CATEGORY_RULES.student_org;
+}
+
+/**
+ * Check if a user can request leadership of a space
+ */
+export function canRequestLeadership(
+  _userId: string,
+  _spaceId: string,
+  category: string
+): boolean {
+  const rules = getCategoryRules(category);
+  return rules.allowSelfRequest;
+}
+
+/**
+ * Check if a space has reached its leader limit
+ */
+export function hasReachedLeaderLimit(
+  leaderCount: number,
+  category: string
+): boolean {
+  const rules = getCategoryRules(category);
+  return leaderCount >= rules.maxLeaders;
+}
+
+/**
+ * Check if leaders can be removed from a space (based on category rules)
+ */
+export function canRemoveLeaders(category: string): boolean {
+  // All categories allow removing leaders, but some require minimum leaders
+  const rules = getCategoryRules(category);
+  return rules.maxLeaders > 1;
+}
+
+// ============================================================================
+// Template Repository & DTOs (Stubs for API compatibility)
+// ============================================================================
+
+export enum TemplateCategory {
+  UNIVERSAL = 'universal',
+  ACADEMIC = 'academic',
+  SOCIAL = 'social',
+  PROFESSIONAL = 'professional',
+  INTEREST = 'interest',
+}
+
+export enum TemplateVisibility {
+  PUBLIC = 'public',
+  CAMPUS = 'campus',
+  PRIVATE = 'private',
+}
+
+export interface TemplateComposition {
+  elements: Array<{
+    id: string;
+    type: string;
+    config: Record<string, unknown>;
+    position: { x: number; y: number };
+  }>;
+  connections: Array<{
+    sourceId: string;
+    targetId: string;
+    type: string;
+  }>;
+}
+
+export interface Template {
+  id: string;
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  visibility: TemplateVisibility;
+  composition: TemplateComposition;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
+  usageCount: number;
+  rating: number;
+}
+
+export interface TemplateListItemDTO {
+  id: string;
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  usageCount: number;
+  rating: number;
+}
+
+export interface TemplateDetailDTO extends Template {
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+/**
+ * Convert Template to TemplateListItemDTO
+ */
+export function toTemplateListItemDTO(template: Template): TemplateListItemDTO {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    category: template.category,
+    usageCount: template.usageCount,
+    rating: template.rating,
+  };
+}
+
+/**
+ * Convert Template to TemplateDetailDTO
+ */
+export function toTemplateDetailDTO(
+  template: Template,
+  userId: string
+): TemplateDetailDTO {
+  return {
+    ...template,
+    canEdit: template.createdBy === userId,
+    canDelete: template.createdBy === userId,
+  };
+}
+
+/**
+ * Template Repository Interface
+ */
+export interface ITemplateRepository {
+  findById(id: string): Promise<Template | null>;
+  findAll(options?: {
+    category?: TemplateCategory;
+    visibility?: TemplateVisibility;
+    limit?: number;
+  }): Promise<Template[]>;
+  save(template: Template): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+
+// Singleton template repository instance
+let templateRepository: ITemplateRepository | null = null;
+
+/**
+ * Get the server template repository singleton
+ * Note: This is a stub implementation - templates are currently in-memory
+ */
+export function getServerTemplateRepository(): ITemplateRepository {
+  if (!templateRepository) {
+    // Stub implementation - in-memory storage
+    const templates = new Map<string, Template>();
+
+    templateRepository = {
+      async findById(id: string): Promise<Template | null> {
+        return templates.get(id) || null;
+      },
+      async findAll(options?: {
+        category?: TemplateCategory;
+        visibility?: TemplateVisibility;
+        limit?: number;
+      }): Promise<Template[]> {
+        let results = Array.from(templates.values());
+        if (options?.category) {
+          results = results.filter(t => t.category === options.category);
+        }
+        if (options?.visibility) {
+          results = results.filter(t => t.visibility === options.visibility);
+        }
+        if (options?.limit) {
+          results = results.slice(0, options.limit);
+        }
+        return results;
+      },
+      async save(template: Template): Promise<void> {
+        templates.set(template.id, template);
+      },
+      async delete(id: string): Promise<void> {
+        templates.delete(id);
+      },
+    };
+  }
+  return templateRepository;
 } 

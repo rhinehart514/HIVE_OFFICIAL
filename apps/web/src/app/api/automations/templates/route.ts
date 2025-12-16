@@ -4,6 +4,7 @@ import {
   getTemplatesByCategory,
   getAutomationTemplateById as getTemplateById,
   getTemplateCategories,
+  type AutomationTemplate,
 } from "@hive/core";
 
 /**
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
 
     // Get templates by category or all
     const templates = category
-      ? getTemplatesByCategory(category as 'engagement' | 'events' | 'moderation' | 'notifications')
+      ? getTemplatesByCategory(category as AutomationTemplate['category'])
       : getAllTemplates();
 
     const categories = getTemplateCategories();
