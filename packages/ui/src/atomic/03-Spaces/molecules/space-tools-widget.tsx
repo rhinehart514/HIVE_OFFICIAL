@@ -99,37 +99,37 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
               className={cn(
                 'group flex items-start gap-3 rounded-xl border border-transparent p-3 text-left',
                 'transition-colors duration-150',
-                'hover:border-neutral-800/50 hover:bg-neutral-900/50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50'
+                'hover:border-[#2A2A2A]/50 hover:bg-[#141414]/50',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
               )}
               whileHover={shouldReduceMotion ? undefined : { x: 4 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               aria-label={`Open ${tool.name} tool${tool.responseCount ? `, ${tool.responseCount} responses` : ''}`}
             >
               {/* Tool Icon */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-500/10 text-lg">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FFD700]/10 text-lg">
                 {tool.icon ? (
                   <span>{tool.icon}</span>
                 ) : (
-                  <Zap className="h-5 w-5 text-gold-400" />
+                  <Zap className="h-5 w-5 text-[#FFD700]" />
                 )}
               </div>
 
               {/* Tool Info */}
               <div className="flex flex-1 flex-col gap-2 min-w-0">
                 <div className="space-y-1">
-                  <h4 className="text-sm font-semibold text-neutral-100 truncate group-hover:text-gold-400 transition-colors">
+                  <h4 className="text-sm font-semibold text-[#FAFAFA] truncate group-hover:text-[#FFD700] transition-colors">
                     {tool.name}
                   </h4>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
                       variant="outline"
-                      className="text-[10px] text-neutral-500 border-neutral-700"
+                      className="text-[10px] text-[#818187] border-[#2A2A2A]"
                     >
                       {tool.type}
                     </Badge>
                     {tool.responseCount !== undefined && tool.responseCount > 0 && (
-                      <span className="text-[10px] text-neutral-500">
+                      <span className="text-[10px] text-[#818187]">
                         {tool.responseCount} responses
                       </span>
                     )}
@@ -138,15 +138,15 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
 
                 {/* Close Time Countdown */}
                 {tool.closeTime && (
-                  <div className="flex items-center gap-1.5 text-xs text-neutral-400">
-                    <Clock className="h-3.5 w-3.5 text-gold-400" />
+                  <div className="flex items-center gap-1.5 text-xs text-[#A1A1A6]">
+                    <Clock className="h-3.5 w-3.5 text-[#FFD700]" />
                     <span>{tool.closeTime}</span>
                   </div>
                 )}
               </div>
 
               {/* Chevron */}
-              <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-400" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#52525B] transition-colors group-hover:text-[#A1A1A6]" />
             </motion.button>
           ))}
         </motion.div>
@@ -157,7 +157,7 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
             variant="ghost"
             size="sm"
             onClick={() => onViewAll?.(data.spaceId)}
-            className="mt-3 w-full text-neutral-400 hover:text-neutral-200"
+            className="mt-3 w-full text-[#A1A1A6] hover:text-[#FAFAFA]"
           >
             View all tools
             {hiddenCount > 0 && ` (+${hiddenCount} more)`}
@@ -175,11 +175,11 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
           {/* Section header for inline mode */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-neutral-400" />
-              <span className="font-medium text-sm text-neutral-100">Active Tools</span>
+              <Wrench className="h-4 w-4 text-[#A1A1A6]" />
+              <span className="font-medium text-sm text-[#FAFAFA]">Active Tools</span>
             </div>
             {data.tools.length > 0 && (
-              <span className="text-xs text-neutral-500 bg-neutral-800/50 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs text-[#818187] bg-[#1A1A1A]/50 px-1.5 py-0.5 rounded-full">
                 {data.tools.length}
               </span>
             )}

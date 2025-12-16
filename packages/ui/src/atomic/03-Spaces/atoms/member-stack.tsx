@@ -78,8 +78,8 @@ export function MemberStack({
           <div
             key={index}
             className={cn(
-              'rounded-full border-2 border-neutral-900 flex items-center justify-center overflow-hidden',
-              'bg-gradient-to-br from-neutral-700 to-neutral-800',
+              'rounded-full border-2 border-[#0A0A0A] flex items-center justify-center overflow-hidden',
+              'bg-gradient-to-br from-[#1A1A1A] to-[#141414]',
               avatarSizes[size]
             )}
             style={{ zIndex: displayMembers.length - index }}
@@ -91,7 +91,7 @@ export function MemberStack({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="font-medium text-neutral-400">
+              <span className="font-medium text-[#A1A1A6]">
                 {member.name?.charAt(0)?.toUpperCase() || '?'}
               </span>
             )}
@@ -102,7 +102,7 @@ export function MemberStack({
       {remaining > 0 && (
         <span
           className={cn(
-            'ml-2 font-medium text-neutral-500 tabular-nums',
+            'ml-2 font-medium text-[#818187] tabular-nums',
             size === 'sm' && 'text-[10px]',
             size === 'md' && 'text-xs',
             size === 'lg' && 'text-sm'

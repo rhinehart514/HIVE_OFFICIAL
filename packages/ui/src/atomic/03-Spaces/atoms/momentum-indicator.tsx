@@ -23,9 +23,9 @@ const momentumVariants = cva(
   {
     variants: {
       level: {
-        high: 'bg-gold-500', // Gold - trending
-        live: 'bg-status-success animate-pulse shadow-[0_0_8px_rgba(0,212,106,0.8)]', // Green with pulse + glow
-        quiet: 'bg-neutral-600', // Gray - quiet
+        high: 'bg-[#FFD700]', // Gold - trending
+        live: 'bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]', // Green with pulse + glow
+        quiet: 'bg-[#52525B]', // Gray - quiet
       },
       size: {
         sm: 'h-8',

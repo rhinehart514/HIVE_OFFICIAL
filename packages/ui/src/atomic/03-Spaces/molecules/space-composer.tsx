@@ -96,7 +96,7 @@ export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(fu
 
   return (
     <MotionDiv
-      className="bg-black/20 border border-white/8 rounded-xl p-4"
+      className="bg-[#0A0A0A]/20 border border-[#2A2A2A] rounded-xl p-4"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: durationSeconds.smooth, ease: easingArrays.default }}
@@ -106,7 +106,7 @@ export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(fu
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder={placeholder}
-        className="min-h-[80px] bg-transparent border-none text-white placeholder:text-white/40 focus-visible:ring-0 resize-none"
+        className="min-h-[80px] bg-transparent border-none text-[#FAFAFA] placeholder:text-[#818187] focus-visible:ring-0 resize-none"
       />
 
       {/* Attachments preview (if any) */}
@@ -126,23 +126,23 @@ export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(fu
       )}
 
       {/* Actions row */}
-      <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/8">
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2A2A2A]">
         {/* Left: [+ Add] dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="text-white/60 hover:text-white hover:bg-white/5 gap-2"
+              className="text-[#A1A1A6] hover:text-[#FAFAFA] hover:bg-white/5 gap-2"
             >
               <Plus className="w-4 h-4" />
               Add
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="bg-black/95 border-white/10">
+          <DropdownMenuContent align="start" className="bg-[#0A0A0A]/95 border-[#2A2A2A]">
             <DropdownMenuItem
               onClick={() => handleAddAttachment('image')}
-              className="text-white/80 hover:text-white cursor-pointer"
+              className="text-[#A1A1A6] hover:text-[#FAFAFA] cursor-pointer"
             >
               <Image className="w-4 h-4 mr-2" />
               Photo
@@ -151,7 +151,7 @@ export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(fu
             {canCreateEvents && (
               <DropdownMenuItem
                 onClick={() => handleAddAttachment('event')}
-                className="text-white/80 hover:text-white cursor-pointer"
+                className="text-[#A1A1A6] hover:text-[#FAFAFA] cursor-pointer"
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Event
@@ -161,7 +161,7 @@ export const SpaceComposer = forwardRef<SpaceComposerRef, SpaceComposerProps>(fu
             {canUseTools && (
               <DropdownMenuItem
                 onClick={() => handleAddAttachment('tool')}
-                className="text-white/80 hover:text-white cursor-pointer"
+                className="text-[#A1A1A6] hover:text-[#FAFAFA] cursor-pointer"
               >
                 <Wrench className="w-4 h-4 mr-2" />
                 Tool

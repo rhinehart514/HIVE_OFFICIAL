@@ -121,8 +121,8 @@ export function SpacesHeroSection({
 
         {/* Placeholder if only 1 or 2 spaces */}
         {secondarySpaces.length < 2 && (
-          <div className="hidden md:flex flex-1 rounded-2xl border border-dashed border-neutral-800 items-center justify-center">
-            <span className="text-sm text-neutral-400">More spaces coming...</span>
+          <div className="hidden md:flex flex-1 rounded-2xl border border-dashed border-[#2A2A2A] items-center justify-center">
+            <span className="text-sm text-[#A1A1A6]">More spaces coming...</span>
           </div>
         )}
       </div>

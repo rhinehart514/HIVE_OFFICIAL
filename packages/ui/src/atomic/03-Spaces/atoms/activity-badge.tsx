@@ -21,9 +21,9 @@ const badgeVariants = cva(
   {
     variants: {
       level: {
-        high: 'text-gold-500', // Gold
-        live: 'text-status-success', // Emerald
-        quiet: 'text-neutral-500', // Gray
+        high: 'text-[#FFD700]', // Gold
+        live: 'text-emerald-400', // Emerald
+        quiet: 'text-[#818187]', // Gray
       },
       showDot: {
         true: '',
@@ -40,9 +40,9 @@ const badgeVariants = cva(
 const dotVariants = cva('w-1.5 h-1.5 rounded-full', {
   variants: {
     level: {
-      high: 'bg-gold-500',
-      live: 'bg-status-success animate-pulse shadow-[0_0_6px_rgba(0,212,106,0.8)]',
-      quiet: 'bg-neutral-600',
+      high: 'bg-[#FFD700]',
+      live: 'bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]',
+      quiet: 'bg-[#52525B]',
     },
   },
   defaultVariants: {

@@ -127,7 +127,7 @@ export function CollapsibleWidget({
 
   // Wrapper component - glass or plain div
   const Wrapper = glass ? GlassWidget : 'div';
-  const wrapperProps = glass ? {} : { className: 'bg-neutral-900/50 rounded-2xl border border-neutral-800/50' };
+  const wrapperProps = glass ? {} : { className: 'bg-[#141414]/50 rounded-2xl border border-[#2A2A2A]/50' };
 
   return (
     <motion.div
@@ -147,23 +147,23 @@ export function CollapsibleWidget({
             'px-4 py-3',
             'text-left',
             'hover:bg-white/[0.02] transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-inset',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-inset',
             'rounded-t-2xl',
-            !isCollapsed && 'border-b border-white/[0.04]'
+            !isCollapsed && 'border-b border-[#2A2A2A]/30'
           )}
           aria-expanded={!isCollapsed}
         >
           <div className="flex items-center gap-2">
             {icon && (
-              <span className="text-neutral-400 flex-shrink-0">
+              <span className="text-[#A1A1A6] flex-shrink-0">
                 {icon}
               </span>
             )}
-            <span className="font-medium text-sm text-neutral-100">
+            <span className="font-medium text-sm text-[#FAFAFA]">
               {title}
             </span>
             {badge && (
-              <span className="text-xs text-neutral-500 bg-neutral-800/50 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs text-[#818187] bg-[#1A1A1A]/50 px-1.5 py-0.5 rounded-full">
                 {badge}
               </span>
             )}
@@ -174,7 +174,7 @@ export function CollapsibleWidget({
             <motion.span
               variants={chevronRotateVariants}
               animate={isCollapsed ? 'collapsed' : 'expanded'}
-              className="text-neutral-500"
+              className="text-[#818187]"
             >
               <ChevronDown className="h-4 w-4" />
             </motion.span>
@@ -192,7 +192,7 @@ export function CollapsibleWidget({
               className="overflow-hidden"
             >
               <div
-                className="px-4 pb-3 text-xs text-neutral-400 cursor-pointer"
+                className="px-4 pb-3 text-xs text-[#A1A1A6] cursor-pointer"
                 onClick={handleToggle}
                 role="button"
                 tabIndex={0}

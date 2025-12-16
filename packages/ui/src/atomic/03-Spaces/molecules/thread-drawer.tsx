@@ -86,14 +86,14 @@ function ThreadMessage({ message, isParent, currentUserId }: ThreadMessageProps)
     <div
       className={cn(
         'flex gap-3 px-4 py-3',
-        isParent && 'bg-neutral-900/50 border-b border-neutral-800'
+        isParent && 'bg-[#141414]/50 border-b border-[#2A2A2A]'
       )}
     >
       <Avatar className="h-8 w-8 flex-shrink-0">
         {message.authorAvatarUrl ? (
           <AvatarImage src={message.authorAvatarUrl} alt={message.authorName} />
         ) : (
-          <AvatarFallback className="bg-neutral-800 text-neutral-400 text-sm">
+          <AvatarFallback className="bg-[#1A1A1A] text-[#A1A1A6] text-sm">
             {message.authorName.charAt(0).toUpperCase()}
           </AvatarFallback>
         )}
@@ -107,23 +107,23 @@ function ThreadMessage({ message, isParent, currentUserId }: ThreadMessageProps)
               message.authorRole === 'owner' && 'text-[#FFD700]',
               message.authorRole === 'admin' && 'text-blue-400',
               message.authorRole === 'moderator' && 'text-green-400',
-              !message.authorRole && 'text-neutral-200'
+              !message.authorRole && 'text-[#FAFAFA]'
             )}
           >
             {message.authorName}
           </span>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-[#818187]">
             {format(timestamp, 'h:mm a')}
           </span>
           {message.editedAt && (
-            <span className="text-xs text-neutral-600">(edited)</span>
+            <span className="text-xs text-[#52525B]">(edited)</span>
           )}
         </div>
 
         <p
           className={cn(
-            'text-sm leading-relaxed text-neutral-300 break-words whitespace-pre-wrap',
-            message.isDeleted && 'text-neutral-500 italic'
+            'text-sm leading-relaxed text-[#A1A1A6] break-words whitespace-pre-wrap',
+            message.isDeleted && 'text-[#818187] italic'
           )}
         >
           {message.isDeleted ? 'This message was deleted' : message.content}
@@ -137,7 +137,7 @@ function ThreadMessage({ message, isParent, currentUserId }: ThreadMessageProps)
                 key={reaction.emoji}
                 className={cn(
                   'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs',
-                  'bg-neutral-900 border border-neutral-800 text-neutral-400'
+                  'bg-[#141414] border border-[#2A2A2A] text-[#A1A1A6]'
                 )}
               >
                 <span>{reaction.emoji}</span>
@@ -214,28 +214,28 @@ export function ThreadDrawer({
         side="right"
         className={cn(
           'flex flex-col p-0 w-full max-w-[420px]',
-          'bg-black border-l border-neutral-800',
+          'bg-[#0A0A0A] border-l border-[#2A2A2A]',
           className
         )}
         showClose={false}
       >
         {/* Header */}
-        <SheetHeader className="flex-shrink-0 px-4 py-3 border-b border-neutral-800">
+        <SheetHeader className="flex-shrink-0 px-4 py-3 border-b border-[#2A2A2A]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-neutral-400" />
-              <SheetTitle className="text-base font-semibold text-neutral-200">
+              <MessageSquare className="w-5 h-5 text-[#A1A1A6]" />
+              <SheetTitle className="text-base font-semibold text-[#FAFAFA]">
                 Thread
               </SheetTitle>
               {replies.length > 0 && (
-                <span className="text-sm text-neutral-500">
+                <span className="text-sm text-[#818187]">
                   ({replies.length} {replies.length === 1 ? 'reply' : 'replies'})
                 </span>
               )}
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-lg hover:bg-white/5 text-neutral-400 hover:text-neutral-200 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] transition-colors"
               aria-label="Close thread"
             >
               <X className="w-5 h-5" />
@@ -247,7 +247,7 @@ export function ThreadDrawer({
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-[#818187]" />
             </div>
           ) : parentMessage ? (
             <>
@@ -271,7 +271,7 @@ export function ThreadDrawer({
                       size="sm"
                       onClick={onLoadMore}
                       disabled={isLoadingMore}
-                      className="text-neutral-500 hover:text-neutral-300"
+                      className="text-[#818187] hover:text-[#A1A1A6]"
                     >
                       {isLoadingMore ? (
                         <Loader2 className="w-4 h-4 animate-spin mr-1" />
@@ -285,25 +285,25 @@ export function ThreadDrawer({
 
                 {/* Reply indicator */}
                 {replies.length > 0 && (
-                  <div className="flex items-center gap-2 px-4 py-2 text-xs text-neutral-500">
+                  <div className="flex items-center gap-2 px-4 py-2 text-xs text-[#818187]">
                     <Reply className="w-3 h-3" />
                     <span>
                       {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
                     </span>
-                    <div className="flex-1 h-px bg-neutral-800" />
+                    <div className="flex-1 h-px bg-[#2A2A2A]" />
                   </div>
                 )}
 
                 {/* Replies list */}
                 {replies.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                    <Reply className="w-8 h-8 text-neutral-600 mb-3" />
-                    <p className="text-sm text-neutral-500">
+                    <Reply className="w-8 h-8 text-[#52525B] mb-3" />
+                    <p className="text-sm text-[#818187]">
                       No replies yet. Be the first to respond!
                     </p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-neutral-800/50">
+                  <div className="divide-y divide-[#2A2A2A]/50">
                     {replies.map((reply) => (
                       <ThreadMessage
                         key={reply.id}
@@ -317,14 +317,14 @@ export function ThreadDrawer({
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-neutral-500">No message selected</p>
+              <p className="text-[#818187]">No message selected</p>
             </div>
           )}
         </div>
 
         {/* Reply input */}
         {parentMessage && onSendReply && (
-          <div className="flex-shrink-0 border-t border-neutral-800 p-4">
+          <div className="flex-shrink-0 border-t border-[#2A2A2A] p-4">
             <div className="flex gap-2">
               <textarea
                 ref={inputRef}
@@ -335,9 +335,9 @@ export function ThreadDrawer({
                 placeholder="Reply to thread..."
                 className={cn(
                   'flex-1 px-3 py-2 text-sm',
-                  'bg-neutral-900 border border-neutral-800 rounded-lg',
-                  'text-neutral-200 placeholder-neutral-500',
-                  'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40 focus:border-transparent',
+                  'bg-[#141414] border border-[#2A2A2A] rounded-lg',
+                  'text-[#FAFAFA] placeholder-[#818187]',
+                  'focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent',
                   'resize-none min-h-[40px] max-h-[120px]',
                   isSending && 'opacity-50 cursor-not-allowed'
                 )}
@@ -356,8 +356,8 @@ export function ThreadDrawer({
                 )}
               </Button>
             </div>
-            <p className="text-xs text-neutral-600 mt-2">
-              Press <kbd className="px-1 py-0.5 bg-neutral-800 rounded text-neutral-400">Enter</kbd> to send
+            <p className="text-xs text-[#52525B] mt-2">
+              Press <kbd className="px-1 py-0.5 bg-[#1A1A1A] rounded text-[#A1A1A6]">Enter</kbd> to send
             </p>
           </div>
         )}

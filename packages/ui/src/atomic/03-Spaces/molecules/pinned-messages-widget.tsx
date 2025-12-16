@@ -91,7 +91,7 @@ function PinnedMessageItem({ message, onClick }: PinnedMessageItemProps) {
           {message.authorAvatarUrl ? (
             <AvatarImage src={message.authorAvatarUrl} alt={message.authorName} />
           ) : (
-            <AvatarFallback className="bg-neutral-800 text-neutral-400 text-xs">
+            <AvatarFallback className="bg-[#1A1A1A] text-[#A1A1A6] text-xs">
               {message.authorName.charAt(0).toUpperCase()}
             </AvatarFallback>
           )}
@@ -99,19 +99,19 @@ function PinnedMessageItem({ message, onClick }: PinnedMessageItemProps) {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className="text-sm font-medium text-neutral-200 truncate">
+            <span className="text-sm font-medium text-[#FAFAFA] truncate">
               {message.authorName}
             </span>
-            <span className="text-xs text-neutral-500 flex-shrink-0">
+            <span className="text-xs text-[#818187] flex-shrink-0">
               {timeAgo}
             </span>
           </div>
-          <p className="text-sm text-neutral-400 line-clamp-2">
+          <p className="text-sm text-[#A1A1A6] line-clamp-2">
             {truncatedContent}
           </p>
         </div>
 
-        <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-neutral-400 flex-shrink-0 mt-1" />
+        <ChevronRight className="w-4 h-4 text-[#52525B] group-hover:text-[#A1A1A6] flex-shrink-0 mt-1" />
       </div>
     </button>
   );
@@ -125,13 +125,13 @@ function PinnedMessageSkeleton() {
   return (
     <div className="p-3 animate-pulse">
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-neutral-800" />
+        <div className="w-8 h-8 rounded-full bg-[#1A1A1A]" />
         <div className="flex-1 space-y-2">
           <div className="flex justify-between">
-            <div className="h-4 w-24 bg-neutral-800 rounded" />
-            <div className="h-3 w-16 bg-neutral-800 rounded" />
+            <div className="h-4 w-24 bg-[#1A1A1A] rounded" />
+            <div className="h-3 w-16 bg-[#1A1A1A] rounded" />
           </div>
-          <div className="h-4 w-full bg-neutral-800 rounded" />
+          <div className="h-4 w-full bg-[#1A1A1A] rounded" />
         </div>
       </div>
     </div>
@@ -173,7 +173,7 @@ export function PinnedMessagesWidget({
           <PinnedMessageSkeleton />
         </>
       ) : (
-        <div className="divide-y divide-neutral-800/50">
+        <div className="divide-y divide-[#2A2A2A]/50">
           {messages.map((message) => (
             <PinnedMessageItem
               key={message.id}

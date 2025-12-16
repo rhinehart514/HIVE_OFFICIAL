@@ -68,17 +68,17 @@ export interface SpacesDiscoveryGridProps {
 // Skeleton card for loading state
 function SpaceCardSkeleton() {
   return (
-    <div className="bg-neutral-900/50 border border-neutral-800/50 rounded-xl p-4 animate-pulse">
+    <div className="bg-[#141414]/50 border border-[#2A2A2A]/50 rounded-xl p-4 animate-pulse">
       <div className="flex items-start gap-3.5">
-        <div className="w-12 h-12 rounded-xl bg-neutral-800" />
+        <div className="w-12 h-12 rounded-xl bg-[#1A1A1A]" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 w-32 bg-neutral-800 rounded" />
-          <div className="h-3 w-24 bg-neutral-800/60 rounded" />
+          <div className="h-4 w-32 bg-[#1A1A1A] rounded" />
+          <div className="h-3 w-24 bg-[#1A1A1A]/60 rounded" />
         </div>
-        <div className="h-8 w-16 bg-neutral-800 rounded-lg" />
+        <div className="h-8 w-16 bg-[#1A1A1A] rounded-lg" />
       </div>
-      <div className="mt-3 pt-3 border-t border-neutral-800/50">
-        <div className="h-4 w-20 bg-neutral-800/40 rounded" />
+      <div className="mt-3 pt-3 border-t border-[#2A2A2A]/50">
+        <div className="h-4 w-20 bg-[#1A1A1A]/40 rounded" />
       </div>
     </div>
   );
@@ -119,7 +119,7 @@ export function SpacesDiscoveryGrid({
   if (spaces.length === 0) {
     return (
       <div className={cn('text-center py-12', className)}>
-        <p className="text-neutral-400">No spaces found</p>
+        <p className="text-[#A1A1A6]">No spaces found</p>
       </div>
     );
   }

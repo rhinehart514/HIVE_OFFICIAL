@@ -214,7 +214,7 @@ export function SpaceEmptyState({
             <div
               className={cn(
                 'absolute inset-0 rounded-full blur-xl opacity-20',
-                isPrimary ? 'bg-[#FFD700]' : 'bg-neutral-500'
+                isPrimary ? 'bg-[#FFD700]' : 'bg-[#818187]'
               )}
               style={{ transform: 'scale(2)' }}
             />
@@ -228,7 +228,7 @@ export function SpaceEmptyState({
               size === 'lg' && 'w-20 h-20',
               isPrimary
                 ? 'bg-[#FFD700]/10 text-[#FFD700]/70'
-                : 'bg-neutral-800/50 text-neutral-500'
+                : 'bg-[#1A1A1A]/50 text-[#818187]'
             )}
           >
             <div className={sizeClasses.icon}>
@@ -240,14 +240,14 @@ export function SpaceEmptyState({
 
       {/* Title */}
       {(title || content.title) && (
-        <h3 className={cn('font-semibold text-neutral-200 mb-1.5', sizeClasses.title)}>
+        <h3 className={cn('font-semibold text-[#FAFAFA] mb-1.5', sizeClasses.title)}>
           {title || content.title}
         </h3>
       )}
 
       {/* Description */}
       {(description || content.description) && (
-        <p className={cn('text-neutral-500 max-w-xs leading-relaxed', sizeClasses.desc)}>
+        <p className={cn('text-[#818187] max-w-xs leading-relaxed', sizeClasses.desc)}>
           {description || content.description}
         </p>
       )}
@@ -295,7 +295,7 @@ export function SpaceEmptyState({
               variant="ghost"
               size={size === 'sm' ? 'sm' : 'default'}
               onClick={secondaryAction.onClick}
-              className="text-neutral-400 hover:text-neutral-200"
+              className="text-[#A1A1A6] hover:text-[#FAFAFA]"
             >
               {secondaryAction.icon}
               {secondaryAction.label}

@@ -115,7 +115,7 @@ export function SpaceHeroCard({
       <div
         className={cn(
           'absolute inset-0 rounded-2xl overflow-hidden',
-          !bannerImage && 'bg-gradient-to-br from-neutral-800/80 via-neutral-900 to-black'
+          !bannerImage && 'bg-gradient-to-br from-[#1A1A1A]/80 via-[#141414] to-[#0A0A0A]'
         )}
       >
         {bannerImage && (
@@ -147,9 +147,9 @@ export function SpaceHeroCard({
       >
         {/* Verified badge */}
         {isVerified && (
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gold-500/20 backdrop-blur-sm border border-gold-500/30">
-            <Sparkles className="w-3 h-3 text-gold-500" />
-            <span className="text-[10px] font-semibold text-gold-500 uppercase tracking-wider">
+          <div className="absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFD700]/20 backdrop-blur-sm border border-[#FFD700]/30">
+            <Sparkles className="w-3 h-3 text-[#FFD700]" />
+            <span className="text-[10px] font-semibold text-[#FFD700] uppercase tracking-wider">
               Verified
             </span>
           </div>
@@ -165,7 +165,7 @@ export function SpaceHeroCard({
         {/* Title */}
         <h3
           className={cn(
-            'font-bold text-white mb-2 group-hover:text-gold-500 transition-colors duration-300',
+            'font-bold text-[#FAFAFA] mb-2 group-hover:text-[#FFD700] transition-colors duration-300',
             isLarge ? 'text-2xl' : 'text-lg'
           )}
         >
@@ -174,7 +174,7 @@ export function SpaceHeroCard({
 
         {/* Description (only on large) */}
         {isLarge && description && (
-          <p className="text-sm text-neutral-400 mb-4 line-clamp-2">{description}</p>
+          <p className="text-sm text-[#A1A1A6] mb-4 line-clamp-2">{description}</p>
         )}
 
         {/* Footer */}
@@ -199,7 +199,7 @@ export function SpaceHeroCard({
               size="sm"
               onClick={handleJoinClick}
               disabled={isJoining}
-              className="bg-white text-black hover:bg-gold-500 hover:text-black font-semibold transition-colors"
+              className="bg-[#FAFAFA] text-[#0A0A0A] hover:bg-[#FFD700] hover:text-[#0A0A0A] font-semibold transition-colors"
             >
               {isJoining ? 'Joining...' : 'Join'}
             </Button>

@@ -208,30 +208,30 @@ function InfoContent({
   return (
     <div className="space-y-4">
       {spaceData?.description && (
-        <p className="text-neutral-300 text-sm leading-relaxed">
+        <p className="text-[#A1A1A6] text-sm leading-relaxed">
           {spaceData.description}
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-neutral-800/50 rounded-lg p-3">
-          <div className="text-2xl font-bold text-white">
+        <div className="bg-[#1A1A1A]/50 rounded-lg p-3">
+          <div className="text-2xl font-bold text-[#FAFAFA]">
             {spaceData?.memberCount ?? 0}
           </div>
-          <div className="text-xs text-neutral-400">Members</div>
+          <div className="text-xs text-[#A1A1A6]">Members</div>
         </div>
-        <div className="bg-neutral-800/50 rounded-lg p-3">
+        <div className="bg-[#1A1A1A]/50 rounded-lg p-3">
           <div className="text-2xl font-bold text-[#FFD700]">
             {spaceData?.onlineCount ?? 0}
           </div>
-          <div className="text-xs text-neutral-400">Online now</div>
+          <div className="text-xs text-[#A1A1A6]">Online now</div>
         </div>
       </div>
 
       {spaceData?.category && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500">Category:</span>
-          <span className="text-xs px-2 py-0.5 bg-neutral-800 rounded-full text-neutral-300 capitalize">
+          <span className="text-xs text-[#818187]">Category:</span>
+          <span className="text-xs px-2 py-0.5 bg-[#1A1A1A] rounded-full text-[#A1A1A6] capitalize">
             {spaceData.category}
           </span>
         </div>
@@ -248,9 +248,9 @@ function EventsContent({
   if (events.length === 0) {
     return (
       <div className="py-8 text-center">
-        <Calendar className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
-        <p className="text-neutral-400 text-sm">No upcoming events</p>
-        <p className="text-neutral-500 text-xs mt-1">
+        <Calendar className="w-10 h-10 mx-auto text-[#52525B] mb-3" />
+        <p className="text-[#A1A1A6] text-sm">No upcoming events</p>
+        <p className="text-[#818187] text-xs mt-1">
           Check back later for new events
         </p>
       </div>
@@ -262,19 +262,19 @@ function EventsContent({
       {events.map((event) => (
         <div
           key={event.id}
-          className="bg-neutral-800/50 rounded-lg p-3 flex items-center gap-3"
+          className="bg-[#1A1A1A]/50 rounded-lg p-3 flex items-center gap-3"
         >
           <div className="w-10 h-10 bg-[#FFD700]/10 rounded-lg flex items-center justify-center flex-shrink-0">
             <Calendar className="w-5 h-5 text-[#FFD700]" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">
+            <div className="text-sm font-medium text-[#FAFAFA] truncate">
               {event.title}
             </div>
-            <div className="text-xs text-neutral-400">{event.date}</div>
+            <div className="text-xs text-[#A1A1A6]">{event.date}</div>
           </div>
           {event.attendees !== undefined && (
-            <div className="text-xs text-neutral-500">
+            <div className="text-xs text-[#818187]">
               {event.attendees} going
             </div>
           )}
@@ -288,9 +288,9 @@ function ToolsContent({ tools = [] }: { tools?: MobileDrawerProps['tools'] }) {
   if (tools.length === 0) {
     return (
       <div className="py-8 text-center">
-        <Wrench className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
-        <p className="text-neutral-400 text-sm">No tools deployed</p>
-        <p className="text-neutral-500 text-xs mt-1">
+        <Wrench className="w-10 h-10 mx-auto text-[#52525B] mb-3" />
+        <p className="text-[#A1A1A6] text-sm">No tools deployed</p>
+        <p className="text-[#818187] text-xs mt-1">
           Leaders can add tools from HiveLab
         </p>
       </div>
@@ -304,8 +304,8 @@ function ToolsContent({ tools = [] }: { tools?: MobileDrawerProps['tools'] }) {
           key={tool.id}
           onClick={tool.onClick}
           className={cn(
-            'w-full bg-neutral-800/50 rounded-lg p-3 flex items-center gap-3',
-            'text-left transition-colors hover:bg-neutral-800 active:bg-neutral-700'
+            'w-full bg-[#1A1A1A]/50 rounded-lg p-3 flex items-center gap-3',
+            'text-left transition-colors hover:bg-[#1A1A1A] active:bg-[#242424]'
           )}
           aria-label={`Open ${tool.name} tool`}
         >
@@ -313,11 +313,11 @@ function ToolsContent({ tools = [] }: { tools?: MobileDrawerProps['tools'] }) {
             <Wrench className="w-5 h-5 text-[#FFD700]" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">
+            <div className="text-sm font-medium text-[#FAFAFA] truncate">
               {tool.name}
             </div>
             {tool.description && (
-              <div className="text-xs text-neutral-400 truncate">
+              <div className="text-xs text-[#A1A1A6] truncate">
                 {tool.description}
               </div>
             )}
@@ -343,9 +343,9 @@ function MembersContent({
   if (sortedMembers.length === 0) {
     return (
       <div className="py-8 text-center">
-        <Users className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
-        <p className="text-neutral-400 text-sm">No members yet</p>
-        <p className="text-neutral-500 text-xs mt-1">
+        <Users className="w-10 h-10 mx-auto text-[#52525B] mb-3" />
+        <p className="text-[#A1A1A6] text-sm">No members yet</p>
+        <p className="text-[#818187] text-xs mt-1">
           Be the first to join this space
         </p>
       </div>
@@ -375,7 +375,7 @@ function MembersContent({
       {/* Offline section */}
       {offlineMembers.length > 0 && (
         <div>
-          <div className="text-xs text-neutral-500 font-medium mb-2">
+          <div className="text-xs text-[#818187] font-medium mb-2">
             Offline — {offlineMembers.length}
           </div>
           <div className="space-y-1">
@@ -383,7 +383,7 @@ function MembersContent({
               <MemberRow key={member.id} member={member} />
             ))}
             {offlineMembers.length > 20 && (
-              <div className="text-xs text-neutral-500 text-center py-2">
+              <div className="text-xs text-[#818187] text-center py-2">
                 +{offlineMembers.length - 20} more members
               </div>
             )}
@@ -410,21 +410,21 @@ function MemberRow({
             className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-xs font-medium text-neutral-300">
+          <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center text-xs font-medium text-[#A1A1A6]">
             {member.name.charAt(0).toUpperCase()}
           </div>
         )}
         {/* Online indicator */}
         {member.isOnline && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#FFD700] border-2 border-neutral-900 rounded-full" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#FFD700] border-2 border-[#141414] rounded-full" />
         )}
       </div>
 
       {/* Name & role */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm text-white truncate">{member.name}</div>
+        <div className="text-sm text-[#FAFAFA] truncate">{member.name}</div>
         {member.role && (
-          <div className="text-xs text-neutral-500 capitalize">{member.role}</div>
+          <div className="text-xs text-[#818187] capitalize">{member.role}</div>
         )}
       </div>
     </div>
@@ -453,9 +453,9 @@ function AutomationsContent({
   if (automations.length === 0) {
     return (
       <div className="py-8 text-center">
-        <Zap className="w-10 h-10 mx-auto text-neutral-600 mb-3" />
-        <p className="text-neutral-400 text-sm">No automations yet</p>
-        <p className="text-neutral-500 text-xs mt-1 mb-4">
+        <Zap className="w-10 h-10 mx-auto text-[#52525B] mb-3" />
+        <p className="text-[#A1A1A6] text-sm">No automations yet</p>
+        <p className="text-[#818187] text-xs mt-1 mb-4">
           Set up automated workflows for your space
         </p>
         {onOpenTemplates && (
@@ -475,25 +475,25 @@ function AutomationsContent({
       {automations.map((automation) => (
         <div
           key={automation.id}
-          className="bg-neutral-800/50 rounded-lg p-3 flex items-center gap-3"
+          className="bg-[#1A1A1A]/50 rounded-lg p-3 flex items-center gap-3"
         >
           <div className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-            automation.enabled ? 'bg-[#FFD700]/10' : 'bg-neutral-700/50'
+            automation.enabled ? 'bg-[#FFD700]/10' : 'bg-[#1A1A1A]/50'
           )}>
-            <Zap className={cn('w-5 h-5', automation.enabled ? 'text-[#FFD700]' : 'text-neutral-500')} />
+            <Zap className={cn('w-5 h-5', automation.enabled ? 'text-[#FFD700]' : 'text-[#818187]')} />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white truncate">
+            <div className="text-sm font-medium text-[#FAFAFA] truncate">
               {automation.name}
             </div>
-            <div className="text-xs text-neutral-400">
+            <div className="text-xs text-[#A1A1A6]">
               {TRIGGER_LABELS[automation.trigger] || automation.trigger}
             </div>
           </div>
           <div className="flex items-center gap-2">
             {automation.runCount !== undefined && (
-              <span className="text-xs text-neutral-500">
+              <span className="text-xs text-[#818187]">
                 {automation.runCount} runs
               </span>
             )}
@@ -501,7 +501,7 @@ function AutomationsContent({
               onClick={() => automation.onToggle?.(automation.id)}
               className={cn(
                 'w-10 h-6 rounded-full transition-colors relative',
-                automation.enabled ? 'bg-[#FFD700]' : 'bg-neutral-700'
+                automation.enabled ? 'bg-[#FFD700]' : 'bg-[#2A2A2A]'
               )}
               aria-label={automation.enabled ? 'Disable automation' : 'Enable automation'}
             >
@@ -554,8 +554,8 @@ function SnapIndicator({ currentSnap, onSnapTo }: SnapIndicatorProps) {
         className={cn(
           'p-1 rounded transition-colors',
           currentSnap === 'full'
-            ? 'text-neutral-700'
-            : 'text-neutral-500 hover:text-white active:scale-95'
+            ? 'text-[#2A2A2A]'
+            : 'text-[#818187] hover:text-[#FAFAFA] active:scale-95'
         )}
         aria-label="Expand drawer"
       >
@@ -572,7 +572,7 @@ function SnapIndicator({ currentSnap, onSnapTo }: SnapIndicatorProps) {
               'w-1.5 h-1.5 rounded-full transition-all',
               currentSnap === snap
                 ? 'bg-[#FFD700] scale-125'
-                : 'bg-neutral-600 hover:bg-neutral-500'
+                : 'bg-[#52525B] hover:bg-[#818187]'
             )}
             aria-label={`Snap to ${snap}`}
           />
@@ -590,8 +590,8 @@ function SnapIndicator({ currentSnap, onSnapTo }: SnapIndicatorProps) {
         className={cn(
           'p-1 rounded transition-colors',
           currentSnap === 'peek'
-            ? 'text-neutral-700'
-            : 'text-neutral-500 hover:text-white active:scale-95'
+            ? 'text-[#2A2A2A]'
+            : 'text-[#818187] hover:text-[#FAFAFA] active:scale-95'
         )}
         aria-label="Collapse drawer"
       >
@@ -729,7 +729,7 @@ export function MobileDrawer({
             onDragEnd={handleDragEnd}
             className={cn(
               'fixed left-0 right-0 bottom-0 z-50',
-              'bg-neutral-900 border-t border-white/10',
+              'bg-[#141414] border-t border-[#2A2A2A]',
               'rounded-t-2xl shadow-2xl shadow-black/50',
               'overflow-hidden',
               'touch-none',
@@ -747,22 +747,22 @@ export function MobileDrawer({
               <div
                 className={cn(
                   'w-12 h-1.5 rounded-full transition-colors',
-                  isDragging ? 'bg-[#FFD700]' : 'bg-neutral-700'
+                  isDragging ? 'bg-[#FFD700]' : 'bg-[#2A2A2A]'
                 )}
               />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-4 pb-3 border-b border-white/5">
+            <div className="flex items-center justify-between px-4 pb-3 border-b border-[#2A2A2A]/50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
                   <Icon className="w-5 h-5 text-[#FFD700]" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-[#FAFAFA]">
                     {config.title}
                   </h2>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-[#818187]">
                     {config.description}
                   </p>
                 </div>
@@ -780,8 +780,8 @@ export function MobileDrawer({
                   onClick={() => onOpenChange(false)}
                   className={cn(
                     'w-11 h-11 rounded-lg flex items-center justify-center',
-                    'text-neutral-400 hover:text-white hover:bg-neutral-800',
-                    'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                    'text-[#A1A1A6] hover:text-[#FAFAFA] hover:bg-[#1A1A1A]',
+                    'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
                   )}
                   aria-label="Close drawer"
                 >

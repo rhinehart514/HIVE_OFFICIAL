@@ -120,9 +120,9 @@ export function SpaceDiscoveryCard({
             <div
               className={cn(
                 'w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden',
-                'bg-gradient-to-br from-neutral-700 to-neutral-800',
-                'border border-neutral-700/50',
-                'group-hover:border-neutral-600/50 transition-colors'
+                'bg-gradient-to-br from-[#1A1A1A] to-[#141414]',
+                'border border-[#2A2A2A]/50',
+                'group-hover:border-[#3A3A3A]/50 transition-colors'
               )}
             >
               {bannerImage ? (
@@ -135,8 +135,8 @@ export function SpaceDiscoveryCard({
                   transition={{ duration: durationSeconds.smooth, ease: easingArrays.default }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gold-500/20 to-gold-500/5">
-                  <span className="text-lg font-bold text-gold-500">{monogram}</span>
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#FFD700]/20 to-[#FFD700]/5">
+                  <span className="text-lg font-bold text-[#FFD700]">{monogram}</span>
                 </div>
               )}
             </div>
@@ -144,15 +144,15 @@ export function SpaceDiscoveryCard({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-semibold text-white truncate group-hover:text-gold-500 transition-colors">
+                <h3 className="font-semibold text-[#FAFAFA] truncate group-hover:text-[#FFD700] transition-colors">
                   {name}
                 </h3>
                 {isVerified && (
-                  <Sparkles className="w-3.5 h-3.5 text-gold-500 flex-shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#FFD700] flex-shrink-0" />
                 )}
               </div>
 
-              <p className="text-sm text-neutral-500 mb-2">
+              <p className="text-sm text-[#818187] mb-2">
                 {memberCount.toLocaleString()} members
               </p>
 
@@ -182,9 +182,9 @@ export function SpaceDiscoveryCard({
                 onClick={handleJoinClick}
                 disabled={isJoining}
                 className={cn(
-                  'bg-neutral-800 hover:bg-white hover:text-black',
-                  'border border-neutral-700 hover:border-white',
-                  'text-white font-medium',
+                  'bg-[#1A1A1A] hover:bg-[#FFD700] hover:text-[#0A0A0A]',
+                  'border border-[#2A2A2A] hover:border-[#FFD700]',
+                  'text-[#FAFAFA] font-medium',
                   'transition-all duration-200'
                 )}
               >
@@ -194,8 +194,8 @@ export function SpaceDiscoveryCard({
           </div>
 
           {/* Category tag */}
-          <div className="mt-3 pt-3 border-t border-neutral-800/50">
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-neutral-800/50 text-[10px] font-medium text-neutral-400 uppercase tracking-wider">
+          <div className="mt-3 pt-3 border-t border-[#2A2A2A]/50">
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-[#1A1A1A]/50 text-[10px] font-medium text-[#A1A1A6] uppercase tracking-wider">
               {category.replace('_', ' ')}
             </span>
           </div>
