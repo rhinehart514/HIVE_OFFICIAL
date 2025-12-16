@@ -15,8 +15,14 @@
  * This replaces the feed-based approach with live chat.
  * Think: Discord channels within a HIVE space.
  *
+ * Dark-first design tokens:
+ * - Base: #0A0A0A, Surface: #141414, Elevated: #1A1A1A
+ * - Text: #FAFAFA (primary), #A1A1A6 (secondary), #818187 (subtle)
+ * - Border: #2A2A2A, #3A3A3A (strong)
+ * - Gold: #FFD700 (owner, reactions, highlights)
+ *
  * @author HIVE Frontend Team
- * @version 1.0.0
+ * @version 2.0.0 - Dark-first design update
  */
 
 import * as React from 'react';
@@ -244,10 +250,10 @@ function BoardSelector({
             className={cn(
               'flex items-center gap-2 px-3 py-1.5 rounded-lg',
               'text-sm font-medium whitespace-nowrap transition-colors',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
               isActive
                 ? 'bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/20'
-                : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
+                : 'text-[#A1A1A6] hover:text-[#FAFAFA] hover:bg-white/[0.04]'
             )}
           >
             <Icon className="w-4 h-4" aria-hidden="true" />
@@ -267,7 +273,7 @@ function BoardSelector({
           variant="ghost"
           size="sm"
           onClick={onCreateBoard}
-          className="text-neutral-500 hover:text-neutral-300"
+          className="text-[#818187] hover:text-[#A1A1A6]"
           aria-label="Create new board"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
@@ -378,7 +384,7 @@ function MessageItem({
         animate={{ opacity: 1, y: 0 }}
         className="flex justify-center py-2"
       >
-        <span className="text-xs text-neutral-500 bg-neutral-900/50 px-3 py-1 rounded-full">
+        <span className="text-xs text-[#818187] bg-[#141414]/50 px-3 py-1 rounded-full">
           {message.content}
         </span>
       </motion.div>
@@ -388,11 +394,11 @@ function MessageItem({
   // Date separator
   const dateSeparator = showDate && (
     <div className="flex items-center gap-4 py-4">
-      <div className="flex-1 h-px bg-neutral-800" />
-      <span className="text-xs text-neutral-500 font-medium">
+      <div className="flex-1 h-px bg-[#1A1A1A]" />
+      <span className="text-xs text-[#818187] font-medium">
         {format(timestamp, 'MMMM d, yyyy')}
       </span>
-      <div className="flex-1 h-px bg-neutral-800" />
+      <div className="flex-1 h-px bg-[#1A1A1A]" />
     </div>
   );
 
@@ -427,7 +433,7 @@ function MessageItem({
                 {message.authorAvatarUrl ? (
                   <AvatarImage src={message.authorAvatarUrl} alt={message.authorName} />
                 ) : (
-                  <AvatarFallback className="bg-neutral-800 text-neutral-400">
+                  <AvatarFallback className="bg-[#1A1A1A] text-[#A1A1A6]">
                     {message.authorName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
@@ -445,27 +451,27 @@ function MessageItem({
                   message.authorRole === 'owner' && 'text-[#FFD700]',
                   message.authorRole === 'admin' && 'text-blue-400',
                   message.authorRole === 'moderator' && 'text-green-400',
-                  !message.authorRole && 'text-neutral-200'
+                  !message.authorRole && 'text-[#FAFAFA]'
                 )}>
                   {message.authorName}
                 </span>
                 {message.authorRole && message.authorRole !== 'member' && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-neutral-500 uppercase tracking-wider">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-[#818187] uppercase tracking-wider">
                     {message.authorRole}
                   </span>
                 )}
-                <span className="text-xs text-neutral-500">
+                <span className="text-xs text-[#818187]">
                   {format(timestamp, 'h:mm a')}
                 </span>
                 {message.editedAt && (
-                  <span className="text-xs text-neutral-600">(edited)</span>
+                  <span className="text-xs text-[#52525B]">(edited)</span>
                 )}
               </div>
             )}
 
             {/* Reply preview */}
             {message.replyToPreview && (
-              <div className="flex items-center gap-2 mb-1 text-xs text-neutral-500">
+              <div className="flex items-center gap-2 mb-1 text-xs text-[#818187]">
                 <Reply className="w-3 h-3" />
                 <span className="truncate max-w-[200px]">{message.replyToPreview}</span>
               </div>
@@ -483,8 +489,8 @@ function MessageItem({
                     disabled={isSaving}
                     className={cn(
                       'w-full px-3 py-2 text-[15px] leading-relaxed',
-                      'bg-neutral-900 border border-neutral-700 rounded-lg',
-                      'text-neutral-200 placeholder-neutral-500',
+                      'bg-[#141414] border border-[#3A3A3A] rounded-lg',
+                      'text-[#FAFAFA] placeholder-neutral-500',
                       'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40 focus:border-transparent',
                       'resize-none min-h-[60px]',
                       isSaving && 'opacity-50 cursor-not-allowed'
@@ -492,15 +498,15 @@ function MessageItem({
                     placeholder="Edit your message..."
                   />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-neutral-500">
-                      Press <kbd className="px-1 py-0.5 bg-neutral-800 rounded text-neutral-400">Enter</kbd> to save,{' '}
-                      <kbd className="px-1 py-0.5 bg-neutral-800 rounded text-neutral-400">Esc</kbd> to cancel
+                    <span className="text-xs text-[#818187]">
+                      Press <kbd className="px-1 py-0.5 bg-[#1A1A1A] rounded text-[#A1A1A6]">Enter</kbd> to save,{' '}
+                      <kbd className="px-1 py-0.5 bg-[#1A1A1A] rounded text-[#A1A1A6]">Esc</kbd> to cancel
                     </span>
                     <div className="flex-1" />
                     <button
                       onClick={onCancelEdit}
                       disabled={isSaving}
-                      className="p-1.5 rounded hover:bg-white/5 text-neutral-400 hover:text-neutral-200 disabled:opacity-50"
+                      className="p-1.5 rounded hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] disabled:opacity-50"
                       aria-label="Cancel edit"
                     >
                       <X className="w-4 h-4" />
@@ -508,7 +514,7 @@ function MessageItem({
                     <button
                       onClick={handleSaveEdit}
                       disabled={isSaving || !editContent.trim() || editContent.trim() === message.content}
-                      className="p-1.5 rounded hover:bg-[#FFD700]/10 text-[#FFD700] disabled:opacity-50 disabled:text-neutral-500"
+                      className="p-1.5 rounded hover:bg-[#FFD700]/10 text-[#FFD700] disabled:opacity-50 disabled:text-[#818187]"
                       aria-label="Save edit"
                     >
                       {isSaving ? (
@@ -521,8 +527,8 @@ function MessageItem({
                 </div>
               ) : (
                 <p className={cn(
-                  'text-[15px] leading-relaxed text-neutral-200 break-words whitespace-pre-wrap',
-                  message.isDeleted && 'text-neutral-500 italic'
+                  'text-[15px] leading-relaxed text-[#FAFAFA] break-words whitespace-pre-wrap',
+                  message.isDeleted && 'text-[#818187] italic'
                 )}>
                   {message.isDeleted ? 'This message was deleted' : message.content}
                 </p>
@@ -531,7 +537,7 @@ function MessageItem({
 
             {/* Inline HiveLab component */}
             {message.type === 'inline_component' && message.componentData && (
-              <div className="mt-2 rounded-lg border border-neutral-800 bg-neutral-900/50 overflow-hidden">
+              <div className="mt-2 rounded-lg border border-[#2A2A2A] bg-[#141414]/50 overflow-hidden">
                 {renderInlineComponent ? (
                   renderInlineComponent(message.componentData)
                 ) : message.componentData.componentId ? (
@@ -579,7 +585,7 @@ function MessageItem({
                       'border transition-colors',
                       reaction.hasReacted
                         ? 'bg-[#FFD700]/10 border-[#FFD700]/30 text-[#FFD700]'
-                        : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:border-neutral-700'
+                        : 'bg-[#141414] border-[#2A2A2A] text-[#A1A1A6] hover:border-[#3A3A3A]'
                     )}
                   >
                     <span>{reaction.emoji}</span>
@@ -611,18 +617,18 @@ function MessageItem({
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute right-4 top-0 -mt-3 flex items-center gap-0.5 bg-neutral-900 border border-neutral-800 rounded-lg shadow-lg p-1"
+                className="absolute right-4 top-0 -mt-3 flex items-center gap-0.5 bg-[#141414] border border-[#2A2A2A] rounded-lg shadow-lg p-1"
               >
                 <button
                   onClick={() => onReact?.('thumbsUp')}
-                  className="p-1.5 rounded hover:bg-white/5 text-neutral-400 hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                  className="p-1.5 rounded hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                   aria-label="Add reaction"
                 >
                   <Smile className="w-4 h-4" aria-hidden="true" />
                 </button>
                 <button
                   onClick={onReply}
-                  className="p-1.5 rounded hover:bg-white/5 text-neutral-400 hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                  className="p-1.5 rounded hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                   aria-label="Reply to message"
                 >
                   <Reply className="w-4 h-4" aria-hidden="true" />
@@ -631,7 +637,7 @@ function MessageItem({
                 {isOwn && message.type === 'text' && onStartEdit && (
                   <button
                     onClick={onStartEdit}
-                    className="p-1.5 rounded hover:bg-white/5 text-neutral-400 hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                    className="p-1.5 rounded hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                     aria-label="Edit message"
                   >
                     <Pencil className="w-4 h-4" aria-hidden="true" />
@@ -640,7 +646,7 @@ function MessageItem({
                 {onPin && (
                   <button
                     onClick={onPin}
-                    className="p-1.5 rounded hover:bg-white/5 text-neutral-400 hover:text-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40"
+                    className="p-1.5 rounded hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                     aria-label={message.isPinned ? 'Unpin message' : 'Pin message'}
                   >
                     <Pin className="w-4 h-4" aria-hidden="true" />
@@ -649,7 +655,7 @@ function MessageItem({
                 {(isOwn || onDelete) && (
                   <button
                     onClick={onDelete}
-                    className="p-1.5 rounded hover:bg-red-500/10 text-neutral-400 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
+                    className="p-1.5 rounded hover:bg-red-500/10 text-[#A1A1A6] hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40"
                     aria-label="Delete message"
                   >
                     <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
@@ -687,7 +693,7 @@ function TypingUsersDisplay({ users }: { users: TypingUser[] }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
-      className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-500"
+      className="flex items-center gap-2 px-4 py-2 text-sm text-[#818187]"
     >
       <div className="flex gap-0.5">
         {[0, 1, 2].map((i) => (
@@ -910,21 +916,21 @@ export function SpaceChatBoard({
 
   return (
     <div
-      className={cn('flex flex-col h-full bg-black', className)}
+      className={cn('flex flex-col h-full bg-[#0A0A0A]', className)}
       role="region"
       aria-label={`${spaceName || 'Space'} chat - ${activeBoard?.name || 'General'} channel`}
     >
       {/* Board header */}
-      <header className="flex-shrink-0 border-b border-neutral-800 px-4 py-3">
+      <header className="flex-shrink-0 border-b border-[#2A2A2A] px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Hash className="w-5 h-5 text-neutral-500" aria-hidden="true" />
+            <Hash className="w-5 h-5 text-[#818187]" aria-hidden="true" />
             <div>
-              <h2 className="font-semibold text-neutral-200">
+              <h2 className="font-semibold text-[#FAFAFA]">
                 {activeBoard?.name || 'General'}
               </h2>
               {activeBoard?.description && (
-                <p className="text-xs text-neutral-500 truncate max-w-[300px]">
+                <p className="text-xs text-[#818187] truncate max-w-[300px]">
                   {activeBoard.description}
                 </p>
               )}
@@ -933,7 +939,7 @@ export function SpaceChatBoard({
 
           {/* Online count */}
           {onlineCount !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-neutral-500" aria-label={`${onlineCount} members online`}>
+            <div className="flex items-center gap-1.5 text-sm text-[#818187]" aria-label={`${onlineCount} members online`}>
               <Users className="w-4 h-4" aria-hidden="true" />
               <span>{onlineCount} online</span>
             </div>
@@ -966,7 +972,7 @@ export function SpaceChatBoard({
         {/* Load more indicator */}
         {isLoadingMore && (
           <div className="flex justify-center py-4">
-            <Loader2 className="w-5 h-5 animate-spin text-neutral-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-[#818187]" />
           </div>
         )}
 
@@ -977,7 +983,7 @@ export function SpaceChatBoard({
               variant="ghost"
               size="sm"
               onClick={onLoadMore}
-              className="text-neutral-500 hover:text-neutral-300"
+              className="text-[#818187] hover:text-[#A1A1A6]"
             >
               <ChevronDown className="w-4 h-4 mr-1 rotate-180" />
               Load older messages
@@ -988,18 +994,18 @@ export function SpaceChatBoard({
         {/* Loading state */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <Loader2 className="w-8 h-8 animate-spin text-neutral-500 mb-4" />
-            <p className="text-neutral-500">Loading messages...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-[#818187] mb-4" />
+            <p className="text-[#818187]">Loading messages...</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-16">
-            <div className="w-16 h-16 rounded-2xl bg-neutral-800/50 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-neutral-500" />
+            <div className="w-16 h-16 rounded-2xl bg-[#1A1A1A]/50 flex items-center justify-center mb-4">
+              <MessageSquare className="w-8 h-8 text-[#818187]" />
             </div>
-            <h3 className="text-lg font-medium text-neutral-200 mb-2">
+            <h3 className="text-lg font-medium text-[#FAFAFA] mb-2">
               No messages yet
             </h3>
-            <p className="text-sm text-neutral-500 text-center max-w-sm">
+            <p className="text-sm text-[#818187] text-center max-w-sm">
               Be the first to start a conversation in {activeBoard?.name || 'this channel'}!
             </p>
           </div>
@@ -1083,14 +1089,14 @@ export function SpaceChatBoard({
 
       {/* Reply preview */}
       {replyingTo && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-neutral-900/50 border-t border-neutral-800">
-          <Reply className="w-4 h-4 text-neutral-500" />
-          <span className="text-sm text-neutral-400 flex-1 truncate">
+        <div className="flex items-center gap-2 px-4 py-2 bg-[#141414]/50 border-t border-[#2A2A2A]">
+          <Reply className="w-4 h-4 text-[#818187]" />
+          <span className="text-sm text-[#A1A1A6] flex-1 truncate">
             Replying to message
           </span>
           <button
             onClick={() => setReplyingTo(null)}
-            className="text-neutral-500 hover:text-neutral-300"
+            className="text-[#818187] hover:text-[#A1A1A6]"
           >
             Cancel
           </button>
@@ -1099,7 +1105,7 @@ export function SpaceChatBoard({
 
       {/* Input area */}
       {canPost ? (
-        <div className="flex-shrink-0 border-t border-neutral-800">
+        <div className="flex-shrink-0 border-t border-[#2A2A2A]">
           <ChatInput
             ref={chatInputRef}
             onSubmit={handleSendMessage}
@@ -1112,8 +1118,8 @@ export function SpaceChatBoard({
           />
         </div>
       ) : (
-        <div className="flex-shrink-0 border-t border-neutral-800 px-4 py-4 text-center">
-          <p className="text-sm text-neutral-500">
+        <div className="flex-shrink-0 border-t border-[#2A2A2A] px-4 py-4 text-center">
+          <p className="text-sm text-[#818187]">
             You don't have permission to send messages in this channel.
           </p>
         </div>
