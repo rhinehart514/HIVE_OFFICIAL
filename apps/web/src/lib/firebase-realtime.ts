@@ -1,4 +1,4 @@
-import { type Database, getDatabase, ref, push, set, onValue, serverTimestamp, type DataSnapshot, type Unsubscribe } from 'firebase/database';
+import { type Database, getDatabase, ref, push, set, onValue, serverTimestamp, runTransaction, type DataSnapshot, type Unsubscribe } from 'firebase/database';
 import { app } from '@hive/core';
 import { logger } from './structured-logger';
 
@@ -643,20 +643,25 @@ export class FirebaseRealtimeService {
 
   /**
    * Mark messages as read
+   * Uses Firebase transactions to prevent lost updates from concurrent reads
    */
   async markMessagesAsRead(channel: string, userId: string, messageIds: string[]): Promise<void> {
     try {
-      for (const messageId of messageIds) {
-        const readRef = ref(this.database, `channels/${channel}/messages/${messageId}/delivery/read`);
-        // Add userId to read array if not already present
-        // This is a simplified implementation - in production you'd use transactions
-        onValue(readRef, (snapshot) => {
-          const currentRead = snapshot.val() || [];
-          if (!currentRead.includes(userId)) {
-            set(readRef, [...currentRead, userId]);
-          }
-        }, { onlyOnce: true });
-      }
+      // Use Promise.all to mark all messages concurrently with atomic transactions
+      await Promise.all(
+        messageIds.map(async (messageId) => {
+          const readRef = ref(this.database, `channels/${channel}/messages/${messageId}/delivery/read`);
+          // Use transaction for atomic read-modify-write
+          await runTransaction(readRef, (currentRead) => {
+            const readArray = currentRead || [];
+            if (!readArray.includes(userId)) {
+              return [...readArray, userId];
+            }
+            // Return undefined to abort transaction (no change needed)
+            return undefined;
+          });
+        })
+      );
     } catch (error) {
       logger.error('Error marking messages as read', { error: { error: error instanceof Error ? error.message : String(error) }, channel, userId });
       throw error;

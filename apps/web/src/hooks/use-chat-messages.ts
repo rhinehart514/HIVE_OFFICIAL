@@ -187,6 +187,11 @@ export function useChatMessages(
   const mountedRef = useRef(true);
   // SECURITY FIX: Track current boardId to avoid stale closure in reconnect
   const currentBoardIdRef = useRef(activeBoardId);
+  // PERFORMANCE FIX: Cache userId to avoid localStorage reads on every keystroke
+  const currentUserIdRef = useRef<string | null>(null);
+  // FIX: Track in-flight messages to prevent SSE duplicates
+  // Maps temp IDs to real IDs when message is being sent
+  const inFlightMessagesRef = useRef<Map<string, string | null>>(new Map());
 
   // Scroll position cache for board switching
   const scrollPositionCache = useRef<Map<string, number>>(new Map());
@@ -195,6 +200,16 @@ export function useChatMessages(
   useEffect(() => {
     currentBoardIdRef.current = activeBoardId;
   }, [activeBoardId]);
+
+  // Initialize cached userId once (avoids localStorage reads on every keystroke)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      currentUserIdRef.current =
+        sessionStorage.getItem('currentUserId') ||
+        localStorage.getItem('currentUserId') ||
+        null;
+    }
+  }, []);
 
   // ============================================================
   // API Fetchers
@@ -350,10 +365,23 @@ export function useChatMessages(
                 break;
 
               case "message":
-                // Add new message (avoid duplicates)
+                // Add new message (avoid duplicates from optimistic updates)
                 setMessages((prev) => {
                   const exists = prev.some((m) => m.id === data.data.id);
                   if (exists) return prev;
+
+                  // FIX: Check if this message is in-flight (we sent it optimistically)
+                  // If so, the temp message is already in the array - find and replace it
+                  for (const [tempId, realId] of inFlightMessagesRef.current.entries()) {
+                    if (realId === data.data.id) {
+                      // Found it! Replace temp with real and clean up tracking
+                      inFlightMessagesRef.current.delete(tempId);
+                      return prev.map((m) =>
+                        m.id === tempId ? { ...data.data } : m
+                      );
+                    }
+                  }
+
                   return [...prev, data.data];
                 });
                 break;
@@ -447,10 +475,8 @@ export function useChatMessages(
 
     lastTypingSentRef.current = now;
 
-    // Get current user ID from session storage or auth
-    const currentUserId = typeof window !== 'undefined'
-      ? sessionStorage.getItem('currentUserId') || localStorage.getItem('currentUserId')
-      : null;
+    // PERFORMANCE FIX: Use cached userId from ref (avoids localStorage reads on every keystroke)
+    const currentUserId = currentUserIdRef.current;
 
     if (!currentUserId) {
       // Fallback to API-based typing if no user ID available
@@ -501,6 +527,8 @@ export function useChatMessages(
         replyToId,
       };
 
+      // FIX: Track this message as in-flight (null = waiting for real ID)
+      inFlightMessagesRef.current.set(tempId, null);
       setMessages((prev) => [...prev, optimisticMessage]);
 
       try {
@@ -522,17 +550,35 @@ export function useChatMessages(
 
         const data = await response.json();
 
+        // FIX: Update tracking with real ID so SSE handler can find it
+        inFlightMessagesRef.current.set(tempId, data.messageId);
+
         // Update temporary message with real ID
-        // SSE will also send the message, but this ensures immediate update
-        setMessages((prev) =>
-          prev.map((m) =>
+        // SSE might have already replaced this, so check first
+        setMessages((prev) => {
+          // Check if SSE already replaced it
+          const hasRealId = prev.some((m) => m.id === data.messageId);
+          if (hasRealId) {
+            // SSE beat us - remove the temp message and clean up
+            inFlightMessagesRef.current.delete(tempId);
+            return prev.filter((m) => m.id !== tempId);
+          }
+          // We beat SSE - update temp to real
+          return prev.map((m) =>
             m.id === tempId
               ? { ...m, id: data.messageId, timestamp: data.timestamp }
               : m
-          )
-        );
+          );
+        });
+
+        // Clean up tracking after a delay (in case SSE is slow)
+        setTimeout(() => {
+          inFlightMessagesRef.current.delete(tempId);
+        }, 5000);
       } catch (err) {
         console.error("Error sending message:", err);
+        // FIX: Clean up in-flight tracking on error
+        inFlightMessagesRef.current.delete(tempId);
         // Remove optimistic message on failure
         setMessages((prev) => prev.filter((m) => m.id !== tempId));
         throw err;
@@ -621,37 +667,122 @@ export function useChatMessages(
     async (messageId: string, emoji: string) => {
       if (!spaceId || !messageId || !emoji) return;
 
+      // Find original message for potential rollback
+      const originalMessage = messages.find((m) => m.id === messageId);
+      if (!originalMessage) return;
+
+      // P1 FIX: Optimistic update for instant feedback
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          const reactions = m.reactions || [];
+          const existingReaction = reactions.find((r) => r.emoji === emoji);
+
+          if (existingReaction) {
+            // Toggle: if user already reacted, remove; otherwise add
+            if (existingReaction.hasReacted) {
+              // Remove user's reaction
+              return {
+                ...m,
+                reactions: reactions.map((r) =>
+                  r.emoji === emoji
+                    ? { ...r, count: Math.max(0, r.count - 1), hasReacted: false }
+                    : r
+                ).filter((r) => r.count > 0), // Remove if count is 0
+              };
+            } else {
+              // Add user's reaction
+              return {
+                ...m,
+                reactions: reactions.map((r) =>
+                  r.emoji === emoji
+                    ? { ...r, count: r.count + 1, hasReacted: true }
+                    : r
+                ),
+              };
+            }
+          }
+          // New reaction
+          return {
+            ...m,
+            reactions: [...reactions, { emoji, count: 1, hasReacted: true }],
+          };
+        })
+      );
+
       try {
-        await fetch(`/api/spaces/${spaceId}/chat/${messageId}/react`, {
+        const response = await fetch(`/api/spaces/${spaceId}/chat/${messageId}/react`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ emoji }),
+          body: JSON.stringify({ emoji, boardId: activeBoardId }),
         });
-        // SSE will update the message with new reaction counts
+
+        if (!response.ok) {
+          throw new Error(`Failed to update reaction: ${response.status}`);
+        }
+        // SSE will sync the actual counts from server
       } catch (err) {
         console.error("Error adding reaction:", err);
+        // Rollback on error
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...originalMessage } : m
+          )
+        );
       }
     },
-    [spaceId]
+    [spaceId, activeBoardId, messages]
   );
 
   const pinMessage = useCallback(
     async (messageId: string) => {
       if (!spaceId || !messageId) return;
 
+      // Find original message for potential rollback
+      const originalMessage = messages.find((m) => m.id === messageId);
+      if (!originalMessage) return;
+
+      // P1 FIX: Optimistic update for instant feedback
+      const newPinnedState = !originalMessage.isPinned;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId ? { ...m, isPinned: newPinnedState } : m
+        )
+      );
+
+      // Optimistically update pinned messages list
+      if (newPinnedState) {
+        setPinnedMessages((prev) => [...prev, { ...originalMessage, isPinned: true }]);
+      } else {
+        setPinnedMessages((prev) => prev.filter((m) => m.id !== messageId));
+      }
+
       try {
-        await fetch(`/api/spaces/${spaceId}/chat/${messageId}/pin`, {
+        const response = await fetch(`/api/spaces/${spaceId}/chat/${messageId}/pin`, {
           method: "POST",
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ boardId: activeBoardId }),
         });
-        // SSE will update the message, then refresh pinned
-        await fetchPinnedMessages(activeBoardId);
+
+        if (!response.ok) {
+          throw new Error(`Failed to pin/unpin: ${response.status}`);
+        }
+        // SSE will sync the actual state from server
       } catch (err) {
         console.error("Error pinning message:", err);
+        // Rollback on error
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...originalMessage } : m
+          )
+        );
+        // Rollback pinned list
+        await fetchPinnedMessages(activeBoardId);
       }
     },
-    [spaceId, activeBoardId, fetchPinnedMessages]
+    [spaceId, activeBoardId, messages, fetchPinnedMessages]
   );
 
   // ============================================================
@@ -733,6 +864,8 @@ export function useChatMessages(
   }, [spaceId, fetchBoards]);
 
   // Fetch messages and connect SSE when board changes
+  // NOTE: Only primitive values in deps to prevent infinite loops
+  // Functions are stable due to useCallback and are called directly
   useEffect(() => {
     if (spaceId && activeBoardId) {
       fetchMessages(activeBoardId);
@@ -746,24 +879,15 @@ export function useChatMessages(
     return () => {
       disconnectSSE();
     };
-  }, [
-    spaceId,
-    activeBoardId,
-    fetchMessages,
-    fetchPinnedMessages,
-    enableRealtime,
-    connectSSE,
-    disconnectSSE,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spaceId, activeBoardId, enableRealtime]);
 
   // Real-time typing indicators via Firebase RTDB (no polling!)
   useEffect(() => {
     if (!spaceId || !activeBoardId || !enableTypingIndicators) return;
 
-    // Get current user ID to filter out self
-    const currentUserId = typeof window !== 'undefined'
-      ? sessionStorage.getItem('currentUserId') || localStorage.getItem('currentUserId')
-      : null;
+    // PERFORMANCE FIX: Use cached userId from ref (avoids localStorage reads)
+    const currentUserId = currentUserIdRef.current;
 
     // Subscribe to real-time typing updates
     const unsubscribe = realtimeService.listenToBoardTyping(

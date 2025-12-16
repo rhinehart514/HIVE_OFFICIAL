@@ -192,6 +192,9 @@ export function SpaceContextProvider({
   const [events, setEvents] = useState<SpaceEvent[]>([]);
   const [isEventsLoading, setIsEventsLoading] = useState(false);
 
+  // P1 FIX: Prevent double-click race condition on join/leave
+  const [isJoiningOrLeaving, setIsJoiningOrLeaving] = useState(false);
+
   // Active tab state
   const [activeTabId, setActiveTabId] = useState<string | null>(initialTab ?? null);
 
@@ -338,9 +341,13 @@ export function SpaceContextProvider({
 
   /**
    * Join space with optimistic update
+   * P1 FIX: Added guard to prevent double-click race condition
    */
   const joinSpace = useCallback(async (): Promise<boolean> => {
-    if (!space) return false;
+    if (!space || isJoiningOrLeaving) return false;
+
+    // P1 FIX: Prevent double-click
+    setIsJoiningOrLeaving(true);
 
     // Optimistic update
     const previousMemberCount = space.memberCount;
@@ -368,20 +375,26 @@ export function SpaceContextProvider({
       setMembership((prev) => ({ ...prev, isMember: false, role: undefined }));
       setSpace((prev) => prev ? { ...prev, memberCount: previousMemberCount } : prev);
       return false;
+    } finally {
+      setIsJoiningOrLeaving(false);
     }
-  }, [space, spaceId, fetchSpace]);
+  }, [space, spaceId, fetchSpace, isJoiningOrLeaving]);
 
   /**
    * Leave space with optimistic update
+   * P1 FIX: Added guard to prevent double-click race condition
    */
   const leaveSpace = useCallback(async (): Promise<boolean> => {
-    if (!space) return false;
+    if (!space || isJoiningOrLeaving) return false;
 
     // Owners can't leave without transfer
     if (membership.role === "owner") {
       setError("Owners must transfer ownership before leaving");
       return false;
     }
+
+    // P1 FIX: Prevent double-click
+    setIsJoiningOrLeaving(true);
 
     // Optimistic update
     const previousMemberCount = space.memberCount;
@@ -410,8 +423,10 @@ export function SpaceContextProvider({
       setMembership(previousMembership);
       setSpace((prev) => prev ? { ...prev, memberCount: previousMemberCount } : prev);
       return false;
+    } finally {
+      setIsJoiningOrLeaving(false);
     }
-  }, [space, spaceId, membership]);
+  }, [space, spaceId, membership, isJoiningOrLeaving]);
 
   /**
    * Update space settings (leader only)
