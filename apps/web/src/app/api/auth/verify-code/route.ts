@@ -7,10 +7,20 @@ import { auditAuthEvent } from "@/lib/production-auth";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
+import { SESSION_CONFIG } from "@/lib/session";
 
 // Security constants
 const MAX_ATTEMPTS_PER_CODE = 5;
 const LOCKOUT_DURATION_SECONDS = 60; // 1 minute lockout after max attempts
+
+// Development mode guard - ONLY allow dev bypass when ALL conditions are met:
+// 1. NODE_ENV is explicitly 'development'
+// 2. Firebase is not configured
+// 3. DEV_AUTH_BYPASS env var is set to 'true' (explicit opt-in)
+const ALLOW_DEV_BYPASS =
+  SESSION_CONFIG.isDevelopment &&
+  !isFirebaseConfigured &&
+  process.env.DEV_AUTH_BYPASS === 'true';
 
 const verifyCodeSchema = z.object({
   email: z.string().email().max(254),
@@ -114,13 +124,29 @@ export const POST = withValidation(
 
       // Find the most recent pending code for this email
       if (!isFirebaseConfigured) {
-        // Development fallback - accept any 6-digit code
-        logger.warn('Firebase not configured, using development mode verification');
-        if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
-          // Create session in dev mode
-          return await createSessionResponse(normalizedEmail, schoolId, true, respond);
+        // Development fallback - ONLY if explicitly enabled
+        if (ALLOW_DEV_BYPASS) {
+          logger.warn('DEV MODE: Firebase not configured, using development mode verification', {
+            component: 'verify-code',
+            email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
+          });
+          if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
+            // Create session in dev mode
+            return await createSessionResponse(normalizedEmail, schoolId, true, respond);
+          }
+          return respond.error("Invalid code format", "INVALID_CODE", { status: 400 });
         }
-        return respond.error("Invalid code", "INVALID_CODE", { status: 400 });
+
+        // Firebase not configured but dev bypass not enabled - fail securely
+        logger.error('Firebase not configured and DEV_AUTH_BYPASS not enabled', {
+          component: 'verify-code',
+          nodeEnv: process.env.NODE_ENV,
+        });
+        return respond.error(
+          "Authentication service unavailable. Please try again later.",
+          "SERVICE_UNAVAILABLE",
+          { status: 503 }
+        );
       }
 
       const pendingCodes = await dbAdmin

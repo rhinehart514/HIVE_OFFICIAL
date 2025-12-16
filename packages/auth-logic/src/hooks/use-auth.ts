@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
  * Unified Auth Hook
@@ -8,13 +8,23 @@ import { useState, useEffect, useCallback } from "react";
  * Single source of truth for authentication state.
  * Fetches from /api/auth/me which reads the httpOnly JWT cookie.
  *
+ * Security Features:
+ * - Short-lived access tokens (15 min) with automatic refresh
+ * - Refresh tokens (7 days) stored in httpOnly cookies
+ * - Cross-tab synchronization via localStorage events
+ * - Automatic token refresh before expiration
+ *
  * Benefits:
  * - Works identically in dev and production
- * - No localStorage (secure)
+ * - No localStorage for tokens (secure against XSS)
  * - No Firebase client SDK dependency for auth state
  * - Stateless and scalable
  * - SSR compatible (cookie sent automatically)
  */
+
+// Token refresh configuration
+const TOKEN_REFRESH_INTERVAL = 10 * 60 * 1000; // Check every 10 minutes
+const TOKEN_REFRESH_BUFFER = 2 * 60 * 1000; // Refresh 2 minutes before expiry
 
 export interface AuthUser {
   uid: string;
@@ -49,12 +59,15 @@ export interface UseAuthReturn {
   error: AuthError | null;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  refreshToken: () => Promise<boolean>;
   logout: () => Promise<void>;
   // Compatibility methods for legacy code
   getAuthToken?: () => Promise<string>;
   canAccessFeature: (feature: string) => boolean;
   hasValidSession: () => boolean;
   session: { issuedAt: string } | null;
+  // Token status
+  isRefreshing: boolean;
 }
 
 // Cache for session data to avoid unnecessary fetches
@@ -65,6 +78,11 @@ export function useAuth(): UseAuthReturn {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Track refresh timer
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -150,6 +168,77 @@ export function useAuth(): UseAuthReturn {
   }, [fetchSession]);
 
   /**
+   * Refresh the access token using the refresh token
+   * Returns true if successful, false otherwise
+   */
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    // Prevent concurrent refresh attempts
+    if (isRefreshingRef.current) {
+      return false;
+    }
+
+    isRefreshingRef.current = true;
+    setIsRefreshing(true);
+
+    try {
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        // Refresh failed - user needs to re-authenticate
+        if (response.status === 401) {
+          setUser(null);
+          sessionCache = null;
+          // Broadcast logout to other tabs
+          if (typeof window !== "undefined") {
+            localStorage.setItem("hive_auth_event", `session_expired_${Date.now()}`);
+          }
+        }
+        return false;
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        // Refresh the user data after token refresh
+        await fetchSession(true);
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      // Network error or other issue
+      return false;
+    } finally {
+      isRefreshingRef.current = false;
+      setIsRefreshing(false);
+    }
+  }, [fetchSession]);
+
+  /**
+   * Setup automatic token refresh
+   */
+  const setupTokenRefresh = useCallback(() => {
+    // Clear existing timer
+    if (refreshTimerRef.current) {
+      clearInterval(refreshTimerRef.current);
+    }
+
+    // Set up periodic refresh check
+    refreshTimerRef.current = setInterval(async () => {
+      // Only refresh if user is authenticated
+      if (user && !isRefreshingRef.current) {
+        await refreshToken();
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+  }, [user, refreshToken]);
+
+  /**
    * Logout - calls logout endpoint and clears state
    */
   const logout = useCallback(async (): Promise<void> => {
@@ -189,6 +278,17 @@ export function useAuth(): UseAuthReturn {
           setError(null);
         }
       } catch (err) {
+        // Check if it's a 401 error - try to refresh the token
+        if (err instanceof Error && err.message.includes('401')) {
+          const refreshed = await refreshToken();
+          if (refreshed && mounted) {
+            const userData = await fetchSession(true);
+            setUser(userData);
+            setError(null);
+            return;
+          }
+        }
+
         if (mounted) {
           const message = err instanceof Error ? err.message : String(err);
           setError({ code: "INIT_ERROR", message });
@@ -206,7 +306,16 @@ export function useAuth(): UseAuthReturn {
     // Listen for auth changes from other tabs
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "hive_auth_event") {
-        // Another tab logged in/out - refresh
+        const value = e.newValue || '';
+        // Handle session expiration from other tabs
+        if (value.startsWith('session_expired_') || value.startsWith('logout_')) {
+          if (mounted) {
+            setUser(null);
+            sessionCache = null;
+          }
+          return;
+        }
+        // Another tab logged in - refresh
         fetchSession(true).then(userData => {
           if (mounted) setUser(userData);
         }).catch(() => {
@@ -225,7 +334,23 @@ export function useAuth(): UseAuthReturn {
         window.removeEventListener("storage", handleStorageChange);
       }
     };
-  }, [fetchSession]);
+  }, [fetchSession, refreshToken]);
+
+  /**
+   * Setup token refresh when user is authenticated
+   */
+  useEffect(() => {
+    if (user) {
+      setupTokenRefresh();
+    }
+
+    return () => {
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+  }, [user, setupTokenRefresh]);
 
   return {
     user,
@@ -234,11 +359,14 @@ export function useAuth(): UseAuthReturn {
     error,
     clearError,
     refreshUser,
+    refreshToken,
     logout,
     // Compatibility methods for legacy code
     getAuthToken: user?.getIdToken,
     canAccessFeature: (_feature: string) => !!user, // User must be authenticated
     hasValidSession: () => !!user && !isLoading,
     session: user ? { issuedAt: new Date().toISOString() } : null,
+    // Token status
+    isRefreshing,
   };
 }

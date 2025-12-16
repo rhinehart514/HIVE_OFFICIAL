@@ -1,3 +1,10 @@
+/**
+ * @deprecated This endpoint is deprecated.
+ * Use POST /api/auth/verify-code for OTP-based authentication instead.
+ *
+ * Magic link verification is maintained for backward compatibility
+ * but will be removed in a future version.
+ */
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -12,11 +19,15 @@ import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { createSession, setSessionCookie } from "@/lib/session";
-import { isAdminEmail } from '@/lib/admin/roles';
+import { isAdminEmail, shouldGrantAdmin, getPermissionsForRole, logAdminOperation } from '@/lib/admin/roles';
+
+// DEPRECATION: Log warning when this endpoint is used
+const DEPRECATION_WARNING = 'Magic link auth is deprecated. Please migrate to OTP-based auth (/api/auth/verify-code).';
 
 /**
  * PRODUCTION-SAFE magic link verification
  * No test bypasses - all authentication goes through Firebase
+ * @deprecated Use /api/auth/verify-code instead
  */
 
 const verifyMagicLinkSchema = z.object({
@@ -248,28 +259,25 @@ export async function POST(request: NextRequest) {
       });
 
       // Check if user should be granted admin permissions
-      if (isAdminEmail(email)) {
+      // SECURITY: Uses shouldGrantAdmin() which checks if auto-grant is enabled
+      const adminCheck = shouldGrantAdmin(email);
+      if (adminCheck.shouldGrant && adminCheck.role) {
         try {
           // Check if they already have admin claims
           const currentClaims = userRecord.customClaims || {};
           if (!currentClaims.isAdmin) {
-            logger.info('🔐 Auto-granting admin permissions', {
-              userId: userRecord.uid,
-              metadata: { email: email, endpoint: '/api/auth/verify-magic-link' }
+            // Log admin grant attempt for audit
+            logAdminOperation('admin_grant_attempt', userRecord.uid, email, {
+              role: adminCheck.role,
+              reason: adminCheck.reason,
             });
 
-            // Determine role - use env var for super admin
-            const superAdminEmail = (process.env.HIVE_SUPER_ADMIN_EMAIL || '').trim().toLowerCase();
-            const role = (email && email.toLowerCase() === superAdminEmail) ? 'super_admin' : 'admin';
-            const permissions = role === 'super_admin' ? ['all'] : [
-              'read', 'write', 'delete', 'moderate',
-              'manage_users', 'manage_spaces', 'feature_flags'
-            ];
+            const permissions = getPermissionsForRole(adminCheck.role);
 
             // Set admin claims
             await auth.setCustomUserClaims(userRecord.uid, {
               ...currentClaims,
-              role,
+              role: adminCheck.role,
               permissions,
               isAdmin: true,
               adminSince: new Date().toISOString()
@@ -278,25 +286,32 @@ export async function POST(request: NextRequest) {
             // Update user document
             await userDoc.ref.set({
               isAdmin: true,
-              adminRole: role,
+              adminRole: adminCheck.role,
               adminPermissions: permissions,
               adminGrantedAt: new Date().toISOString(),
               adminGrantedBy: 'auto-grant-login'
             }, { merge: true });
 
-            logger.info('✅ Admin permissions granted on login', {
-              userId: userRecord.uid,
-              metadata: { email: email, role: role }
+            // Log successful admin grant
+            logAdminOperation('admin_grant_success', userRecord.uid, email, {
+              role: adminCheck.role,
+              permissions,
             });
           }
         } catch (adminError) {
-          logger.error('Failed to grant admin permissions', {
-            error: { error: adminError instanceof Error ? adminError.message : String(adminError) },
-            userId: userRecord.uid,
-            email: email
+          // Log failed admin grant attempt
+          logAdminOperation('admin_grant_failed', userRecord.uid, email, {
+            error: adminError instanceof Error ? adminError.message : String(adminError),
           });
           // Don't fail the login if admin grant fails
         }
+      } else if (isAdminEmail(email)) {
+        // Email is in admin list but auto-grant is disabled
+        logger.warn('Admin auto-grant blocked', {
+          userId: userRecord.uid,
+          reason: adminCheck.reason,
+          email: email.replace(/(.{3}).*@/, '$1***@'),
+        });
       }
 
       // Create signed JWT session

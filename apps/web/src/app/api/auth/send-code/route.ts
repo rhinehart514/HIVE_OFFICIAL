@@ -11,6 +11,8 @@ import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { SESSION_CONFIG } from "@/lib/session";
+import { isEmailServiceAvailable, getEmailServiceStatus } from "@/lib/config-validation";
 
 // Firebase Client SDK for school validation fallback
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -19,6 +21,12 @@ import { getFirestore as getClientFirestore, doc, getDoc } from 'firebase/firest
 // Security constants
 const CODE_TTL_SECONDS = 600; // 10 minutes
 const MAX_CODES_PER_EMAIL_PER_HOUR = 10; // Temporarily increased for testing
+
+// Development mode guard - ONLY allow dev bypass when ALL conditions are met
+const ALLOW_DEV_BYPASS =
+  SESSION_CONFIG.isDevelopment &&
+  !isFirebaseConfigured &&
+  process.env.DEV_AUTH_BYPASS === 'true';
 
 // Firebase config for Client SDK fallback
 const firebaseConfig = {
@@ -200,19 +208,33 @@ async function sendVerificationCodeEmail(
   code: string,
   schoolName: string
 ): Promise<boolean> {
+  // Check email service availability using centralized config validation
+  if (!isEmailServiceAvailable()) {
+    const status = getEmailServiceStatus();
+    logger.error('Email service not available', {
+      component: 'send-code',
+      status: status.mode,
+      provider: status.provider,
+    });
+    return false;
+  }
+
   // Check if SendGrid is configured
   const sendGridApiKey = process.env.SENDGRID_API_KEY;
   const sendGridFromEmail = process.env.SENDGRID_FROM_EMAIL || 'hello@hive.college';
 
   if (!sendGridApiKey) {
-    // In development, just log the code
-    if (currentEnvironment === 'development') {
+    // In development with explicit bypass, just log the code
+    if (ALLOW_DEV_BYPASS) {
       logger.info('===========================================');
-      logger.info(`VERIFICATION CODE for ${email}: ${code}`);
+      logger.info(`DEV MODE: VERIFICATION CODE for ${email}: ${code}`);
       logger.info('===========================================');
       return true;
     }
-    logger.error('SendGrid not configured for production');
+    logger.error('SendGrid not configured and DEV_AUTH_BYPASS not enabled', {
+      component: 'send-code',
+      environment: currentEnvironment,
+    });
     return false;
   }
 

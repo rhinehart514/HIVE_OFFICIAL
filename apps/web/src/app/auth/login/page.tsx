@@ -17,6 +17,61 @@ const CAMPUS_CONFIG = {
   schoolId: process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub-buffalo',
 };
 
+/**
+ * Parse API error responses for better user feedback
+ */
+function parseApiError(error: string, status?: number): string {
+  const lowerError = error.toLowerCase();
+
+  // Rate limiting
+  if (status === 429 || lowerError.includes('rate limit') || lowerError.includes('too many')) {
+    return 'Too many attempts. Please wait a minute before trying again.';
+  }
+
+  // Domain mismatch
+  if (lowerError.includes('domain') || lowerError.includes('buffalo.edu')) {
+    return `Please use your ${CAMPUS_CONFIG.domain} email`;
+  }
+
+  // School not found
+  if (lowerError.includes('school') && (lowerError.includes('not found') || lowerError.includes('inactive'))) {
+    return 'This school is not currently supported';
+  }
+
+  // Service unavailable
+  if (status === 503 || lowerError.includes('service') || lowerError.includes('unavailable')) {
+    return 'Service temporarily unavailable. Please try again in a few minutes.';
+  }
+
+  // Network errors
+  if (lowerError.includes('network') || lowerError.includes('fetch')) {
+    return 'Connection error. Please check your internet and try again.';
+  }
+
+  // Invalid code
+  if (lowerError.includes('invalid') && lowerError.includes('code')) {
+    // Extract remaining attempts if present
+    const attemptsMatch = error.match(/(\d+)\s*attempt/i);
+    if (attemptsMatch) {
+      return `Invalid code. ${attemptsMatch[1]} attempt${attemptsMatch[1] === '1' ? '' : 's'} remaining.`;
+    }
+    return 'Invalid code. Please try again.';
+  }
+
+  // Expired code
+  if (lowerError.includes('expired')) {
+    return 'Code expired. Please request a new one.';
+  }
+
+  // Max attempts
+  if (lowerError.includes('max') || lowerError.includes('locked')) {
+    return 'Too many failed attempts. Please request a new code.';
+  }
+
+  // Default
+  return error || 'Something went wrong. Please try again.';
+}
+
 type LoginState = 'input' | 'sending' | 'code' | 'verifying' | 'success';
 
 // Progressive resend cooldowns
@@ -142,7 +197,8 @@ function LoginContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send code');
+        const errorMessage = parseApiError(data.error || 'Failed to send code', response.status);
+        throw new Error(errorMessage);
       }
 
       // Store email for reference
@@ -156,7 +212,8 @@ function LoginContent() {
       setLoginState('code');
     } catch (err) {
       console.error('Send code error:', err);
-      setError(err instanceof Error ? err.message : 'Unable to send code. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Unable to send code';
+      setError(parseApiError(errorMessage));
       setLoginState('input');
     }
   };
@@ -182,7 +239,7 @@ function LoginContent() {
 
       if (!response.ok) {
         setCode(['', '', '', '', '', '']);
-        setCodeError(data.error || 'Invalid code');
+        setCodeError(parseApiError(data.error || 'Invalid code', response.status));
         setLoginState('code');
         return;
       }
@@ -203,7 +260,8 @@ function LoginContent() {
     } catch (err) {
       console.error('Verify error:', err);
       setCode(['', '', '', '', '', '']);
-      setCodeError('Verification failed. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Verification failed';
+      setCodeError(parseApiError(errorMessage));
       setLoginState('code');
     }
   };
