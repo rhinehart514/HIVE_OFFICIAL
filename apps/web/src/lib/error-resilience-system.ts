@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix logger.error() calls to use proper (message, context, error) signature
+// TODO: Fix ErrorClassifier.classify() - needs type guards for error?.response, error?.code patterns
 import { z } from 'zod';
 import { logger } from './structured-logger';
 
