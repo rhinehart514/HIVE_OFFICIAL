@@ -1,4 +1,3 @@
-// @ts-nocheck
 // TODO: Fix logger.error() calls to use proper (message, context, error) signature
 /**
  * Calendar API integration utilities
@@ -31,7 +30,7 @@ export const fetchCalendarEvents = async (): Promise<CalendarApiEvent[]> => {
     const data = await response.json();
     return data.events || [];
   } catch (error) {
-    logger.error('Failed to fetch calendar events', error as Error, { component: 'calendar-api', action: 'fetch_events' });
+    logger.error('Failed to fetch calendar events', { component: 'calendar-api', action: 'fetch_events' }, error instanceof Error ? error : undefined);
     return [];
   }
 };
@@ -55,7 +54,7 @@ export const createCalendarEvent = async (event: Omit<CalendarApiEvent, 'id'>): 
     
     return response.json();
   } catch (error) {
-    logger.error('Failed to create calendar event', error as Error, { component: 'calendar-api', action: 'create_event' });
+    logger.error('Failed to create calendar event', { component: 'calendar-api', action: 'create_event' }, error instanceof Error ? error : undefined);
     throw error;
   }
 };
@@ -79,7 +78,7 @@ export const updateCalendarEvent = async (id: string, event: Partial<CalendarApi
     
     return response.json();
   } catch (error) {
-    logger.error('Failed to update calendar event', error as Error, { component: 'calendar-api', action: 'update_event', id });
+    logger.error('Failed to update calendar event', { component: 'calendar-api', action: 'update_event', id }, error instanceof Error ? error : undefined);
     throw error;
   }
 };
@@ -99,7 +98,7 @@ export const deleteCalendarEvent = async (id: string): Promise<void> => {
       throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
-    logger.error('Failed to delete calendar event', error as Error, { component: 'calendar-api', action: 'delete_event', id });
+    logger.error('Failed to delete calendar event', { component: 'calendar-api', action: 'delete_event', id }, error instanceof Error ? error : undefined);
     throw error;
   }
 };
@@ -132,7 +131,7 @@ export const transformApiEvent = (apiEvent: CalendarApiEvent): Event => {
     location: apiEvent.location,
     attendees: apiEvent.attendees || [],
     isAllDay: isAllDayEvent(startDate, endDate),
-    hasReminder: apiEvent.metadata?.hasReminder || false,
+    hasReminder: Boolean(apiEvent.metadata?.hasReminder),
     metadata: apiEvent.metadata
   };
 };
@@ -172,7 +171,7 @@ export const connectCalendarService = async (type: 'google' | 'outlook'): Promis
     const data = await response.json();
     return data;
   } catch (error) {
-    logger.error(`Failed to connect ${type} calendar`, error as Error, { component: 'calendar-api', action: 'connect_calendar', type });
+    logger.error(`Failed to connect ${type} calendar`, { component: 'calendar-api', action: 'connect_calendar', calendarType: type }, error instanceof Error ? error : undefined);
     // Return not implemented for now - can be implemented when OAuth flow is ready
     return { success: false, redirectUrl: '' };
   }
@@ -197,7 +196,7 @@ export const syncCalendarService = async (connectionId: string): Promise<{ succe
       lastSync: new Date(data.lastSync || Date.now())
     };
   } catch (error) {
-    logger.error('Failed to sync calendar', error as Error, { component: 'calendar-api', action: 'sync_calendar', connectionId });
+    logger.error('Failed to sync calendar', { component: 'calendar-api', action: 'sync_calendar', connectionId }, error instanceof Error ? error : undefined);
     // Return not implemented for now - can be implemented when sync API is ready
     return { success: false, lastSync: new Date() };
   }

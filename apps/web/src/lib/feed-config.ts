@@ -1,4 +1,3 @@
-// @ts-nocheck
 // TODO: Fix environment type mismatch
 /**
  * Feed Configuration Service
@@ -132,7 +131,7 @@ export const DEFAULT_FEED_CONFIG: FeedConfiguration = {
     lastUpdated: new Date().toISOString(),
     updatedBy: 'system',
     version: 1,
-    environment: (process.env.NODE_ENV as 'development' | 'production' | 'test') || 'development',
+    environment: (process.env.NODE_ENV === 'production' ? 'production' : 'development') as 'development' | 'staging' | 'production',
   },
 };
 

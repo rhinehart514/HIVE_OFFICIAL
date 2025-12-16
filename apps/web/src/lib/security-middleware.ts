@@ -1,4 +1,3 @@
-// @ts-nocheck
 // TODO: Fix generic type constraint
 /**
  * Security Middleware
@@ -165,7 +164,7 @@ export function sanitizeInput<T extends Record<string, unknown>>(
 
         sanitized[field as keyof T] = cleaned as T[keyof T];
       } else {
-        sanitized[field as keyof T] = value;
+        sanitized[field as keyof T] = value as T[keyof T];
       }
     }
   }

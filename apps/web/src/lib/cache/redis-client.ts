@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix logger.error() calls to use proper (message, context, error) signature
+// TODO: Fix MockRedis/Redis type union - client typed as unknown due to conditional initialization
 // Advanced Redis-based caching layer for HIVE platform
 // Optimized for multi-tenant architecture and cross-campus scaling
 
@@ -210,7 +210,7 @@ class HiveRedisCache {
 
       this.client.on('error', (error: unknown) => {
         this.stats.errors++;
-        logger.error('Redis client error:', error);
+        logger.error('Redis client error', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       });
 
       this.client.on('ready', () => {
@@ -258,7 +258,7 @@ class HiveRedisCache {
         }
       } catch (error: unknown) {
         this.stats.errors++;
-        logger.error('Redis health check failed:', error);
+        logger.error('Redis health check failed', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       }
     }, 30000); // Every 30 seconds
   }
@@ -316,7 +316,7 @@ class HiveRedisCache {
 
             return entry.data;
           } catch (error) {
-            logger.error('Failed to parse cache entry:', error);
+            logger.error('Failed to parse cache entry', { component: 'redis-client' }, error instanceof Error ? error : undefined);
             return null;
           }
         }
@@ -372,7 +372,7 @@ class HiveRedisCache {
       return deleted;
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to delete pattern:', error);
+      logger.error('Failed to delete pattern', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return 0;
     }
   }
@@ -396,7 +396,7 @@ class HiveRedisCache {
       return await (this.client as MockRedis).incrby(cacheKey, amount);
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to increment key:', error);
+      logger.error('Failed to increment key', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return 0;
     }
   }
@@ -419,7 +419,7 @@ class HiveRedisCache {
       return false;
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to set with expiry:', error);
+      logger.error('Failed to set with expiry', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -454,7 +454,7 @@ class HiveRedisCache {
       return deleted;
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to invalidate campus cache:', error);
+      logger.error('Failed to invalidate campus cache', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return 0;
     }
   }
@@ -487,7 +487,7 @@ class HiveRedisCache {
             this.stats.hits++;
             return entry.data;
           } catch (error) {
-            logger.error('Failed to parse cache entry in mget:', error);
+            logger.error('Failed to parse cache entry in mget', { component: 'redis-client' }, error instanceof Error ? error : undefined);
             this.stats.misses++;
             return null;
           }
@@ -497,7 +497,7 @@ class HiveRedisCache {
       });
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to execute mget:', error);
+      logger.error('Failed to execute mget', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return new Array(keys.length).fill(null);
     }
   }
@@ -529,7 +529,7 @@ class HiveRedisCache {
       return success;
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to execute mset:', error);
+      logger.error('Failed to execute mset', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -562,7 +562,7 @@ class HiveRedisCache {
 
       return memoryInfo;
     } catch (error) {
-      logger.error('Failed to get memory info:', error);
+      logger.error('Failed to get memory info', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return {};
     }
   }
@@ -574,7 +574,7 @@ class HiveRedisCache {
       return true;
     } catch (error) {
       this.stats.errors++;
-      logger.error('Failed to flush cache:', error);
+      logger.error('Failed to flush cache', { component: 'redis-client' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -588,7 +588,7 @@ class HiveRedisCache {
       await (this.client as MockRedis).quit();
       logger.info('Redis client connection closed');
     } catch (error) {
-      logger.error('Error closing Redis connection:', error);
+      logger.error('Error closing Redis connection', { component: 'redis-client' }, error instanceof Error ? error : undefined);
     }
   }
 

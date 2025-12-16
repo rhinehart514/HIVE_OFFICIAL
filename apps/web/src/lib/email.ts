@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix SendGrid MailDataRequired type
+// TODO: Fix SendGrid MailDataRequired type - needs proper email data structure
 import sgMail from '@sendgrid/mail';
 
 // Initialize SendGrid with API key

@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix NextResponse import (value vs type)
 import { NextResponse } from 'next/server';
 import { logger } from '../structured-logger';
 import type { z } from 'zod';
