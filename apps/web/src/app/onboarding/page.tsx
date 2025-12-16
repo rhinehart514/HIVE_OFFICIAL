@@ -110,7 +110,7 @@ function OnboardingContent() {
             isSubmitting={isSubmitting}
             mustSelectSpace={data.isLeader}
             isExplorer={!data.isLeader}
-            onComplete={async (redirectTo, selectedSpaceIds) => {
+            onComplete={async (redirectTo, selectedSpaceIds, selectedSpaceNames) => {
               // Update data with selected spaces before submitting
               // For BOTH leaders AND explorers, track the first selected space
               // This ensures explorers land on a space with content, not an empty feed
@@ -119,11 +119,13 @@ function OnboardingContent() {
                   updateData({
                     builderRequestSpaces: selectedSpaceIds,
                     claimedSpaceId: selectedSpaceIds[0],
+                    claimedSpaceName: selectedSpaceNames?.[0],
                   });
                 } else {
-                  // Explorers: also set claimedSpaceId so completion redirects to their first space
+                  // Explorers: store IDs, names, and first space for redirect
                   updateData({
                     initialSpaceIds: selectedSpaceIds,
+                    initialSpaceNames: selectedSpaceNames,
                     claimedSpaceId: selectedSpaceIds[0],
                   });
                 }
@@ -142,8 +144,12 @@ function OnboardingContent() {
 
               // If successful and claiming a space, show celebration
               if (success && selectedSpaceIds && selectedSpaceIds.length > 0) {
-                // Get space name for celebration
-                updateData({ claimedSpaceId: selectedSpaceIds[0] });
+                // Store space info for celebration
+                updateData({
+                  claimedSpaceId: selectedSpaceIds[0],
+                  claimedSpaceName: selectedSpaceNames?.[0],
+                  initialSpaceNames: selectedSpaceNames,
+                });
                 setStep("completion");
                 return true;
               }
@@ -161,6 +167,7 @@ function OnboardingContent() {
             spaceId={data.claimedSpaceId}
             isLeader={data.isLeader}
             handle={data.handle}
+            joinedSpaces={data.initialSpaceNames}
             onNavigate={(path) => router.push(path)}
           />
         );

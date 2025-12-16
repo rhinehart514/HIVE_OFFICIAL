@@ -1,3 +1,10 @@
+/**
+ * @deprecated This endpoint is deprecated.
+ * Use POST /api/auth/send-code for OTP-based authentication instead.
+ *
+ * Magic link resend is maintained for backward compatibility
+ * but will be removed in a future version.
+ */
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
@@ -12,8 +19,29 @@ import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from '@/lib/api-response-types';
 import { getDefaultActionCodeSettings } from "@hive/core";
 
+// DEPRECATION: Log warning when this endpoint is used
+const DEPRECATION_WARNING = 'Magic link auth is deprecated. Please migrate to OTP-based auth (/api/auth/send-code).';
+
+// Deprecation headers to include in all responses
+const DEPRECATION_HEADERS = {
+  'Deprecation': 'true',
+  'Sunset': 'Sat, 01 Mar 2025 00:00:00 GMT',
+  'Link': '</api/auth/send-code>; rel="successor-version"',
+  'X-Deprecation-Notice': DEPRECATION_WARNING,
+};
+
 /**
- * Resend magic link with enhanced rate limiting and recovery tracking
+ * Add deprecation headers to a NextResponse
+ */
+function addDeprecationHeaders(response: NextResponse): NextResponse {
+  Object.entries(DEPRECATION_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
+/**
+ * @deprecated Resend magic link with enhanced rate limiting and recovery tracking
  */
 
 const resendMagicLinkSchema = z.object({
@@ -47,6 +75,12 @@ export const POST = withValidation(
   async (request, _context: Record<string, string | string[]>, body: z.infer<typeof resendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
     const { email, schoolId, attemptNumber: _attemptNumber = 1 } = body;
     const _requestId = request.headers.get('x-request-id') || `resend_${Date.now()}`;
+
+    // Log deprecation warning on every request
+    logger.warn(DEPRECATION_WARNING, {
+      endpoint: '/api/auth/resend-magic-link',
+      email: email.replace(/(.{3}).*@/, '$1***@'),
+    });
 
     try {
       // Clean up old attempts periodically
@@ -186,7 +220,7 @@ export const POST = withValidation(
 
         const magicLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/auth/verify?token=${devToken}&mode=dev&email=${encodeURIComponent(email)}&schoolId=${schoolId}&resend=true`;
 
-        return NextResponse.json({
+        return addDeprecationHeaders(NextResponse.json({
           success: true,
           message: "Magic link resent (development mode)",
           devMode: true,
@@ -194,8 +228,10 @@ export const POST = withValidation(
           email,
           attemptNumber: attempts.count + 1,
           userStatus,
-          nextRetryDelay: delays[Math.min(attempts.count + 1, delays.length - 1)] / 1000
-        });
+          nextRetryDelay: delays[Math.min(attempts.count + 1, delays.length - 1)] / 1000,
+          _deprecated: true,
+          _migrateTo: '/api/auth/send-code',
+        }));
       }
 
       // Production: Generate and send new magic link
@@ -231,12 +267,15 @@ export const POST = withValidation(
           operation: 'resend_magic_link'
         });
 
-        return respond.success({
+        const response = respond.success({
           message: "Magic link has been resent to your email",
           attemptNumber: attempts.count + 1,
           userStatus,
-          nextRetryDelay: delays[Math.min(attempts.count + 1, delays.length - 1)] / 1000
+          nextRetryDelay: delays[Math.min(attempts.count + 1, delays.length - 1)] / 1000,
+          _deprecated: true,
+          _migrateTo: '/api/auth/send-code',
         });
+        return addDeprecationHeaders(response);
 
       } catch (firebaseError: unknown) {
         logger.error(

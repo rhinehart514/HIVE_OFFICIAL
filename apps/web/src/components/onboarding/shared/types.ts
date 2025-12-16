@@ -46,6 +46,7 @@ export interface OnboardingData {
   claimedSpaceName?: string;
   // Spaces to join (for explorers)
   initialSpaceIds?: string[];
+  initialSpaceNames?: string[]; // Names for display on completion
   // Spaces user wants to lead (builder requests)
   builderRequestSpaces?: string[];
 }

@@ -3,14 +3,14 @@ import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import {
-  withAuthAndErrors,
+  withAdminAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
-// SECURITY: Use centralized admin auth
+// SECURITY: Use centralized admin auth for POST (extra check needed for mutations)
 import { isAdmin } from '@/lib/admin-auth';
 import { notifyBuilderApproved, notifyBuilderRejected } from '@/lib/notification-service';
 
@@ -20,16 +20,12 @@ const ReviewRequestSchema = z.object({
   notes: z.string().optional(),
 });
 
-// GET: List all pending builder requests
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+/**
+ * GET: List all pending builder requests
+ * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting
+ */
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
-
-  // Check admin permission
-  if (!(await isAdmin(userId))) {
-    return respond.error('Admin access required', 'FORBIDDEN', {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || 'pending';

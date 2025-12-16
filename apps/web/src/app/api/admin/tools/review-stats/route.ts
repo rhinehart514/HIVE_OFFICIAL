@@ -10,27 +10,17 @@
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import {
-  withAuthAndErrors,
+  withAdminAuthAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { HttpStatus } from "@/lib/api-response-types";
-
-// Admin role check
-async function isAdmin(userId: string): Promise<boolean> {
-  const userDoc = await dbAdmin.collection("users").doc(userId).get();
-  if (!userDoc.exists) return false;
-
-  const userData = userDoc.data();
-  const role = userData?.role || userData?.adminRole;
-  return ["admin", "super_admin", "moderator"].includes(role);
-}
 
 /**
  * GET /api/admin/tools/review-stats
  *
  * Returns comprehensive statistics about tool publishing and reviews.
+ * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting.
  *
  * Response includes:
  * - Request counts by status (pending, approved, rejected, changes_requested)
@@ -39,16 +29,8 @@ async function isAdmin(userId: string): Promise<boolean> {
  * - Top reviewers
  * - Most active tool creators
  */
-export const GET = withAuthAndErrors(async (request, context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
-
-  // Verify admin access
-  const hasAccess = await isAdmin(userId);
-  if (!hasAccess) {
-    return respond.error("Admin access required", "FORBIDDEN", {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
 
   const { searchParams } = new URL(request.url);
   const days = parseInt(searchParams.get("days") || "30", 10);

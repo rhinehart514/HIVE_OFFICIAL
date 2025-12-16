@@ -10,7 +10,7 @@
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
 import {
-  withAuthAndErrors,
+  withAdminAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
   type AuthenticatedRequest,
@@ -32,22 +32,16 @@ const AdminActionSchema = z.object({
 /**
  * GET /api/admin/spaces/[spaceId]
  * Get full space details with admin metadata
+ *
+ * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting
  */
-export const GET = withAuthAndErrors(async (
+export const GET = withAdminAuthAndErrors(async (
   request,
   context: RouteContext,
   respond
 ) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await context.params;
-
-  // Check admin permission (viewer level is sufficient for read)
-  const adminRecord = await getAdminRecord(adminId);
-  if (!adminRecord) {
-    return respond.error('Admin access required', 'FORBIDDEN', {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
 
   try {
     // Create service with admin context
@@ -186,8 +180,11 @@ export const PATCH = withAuthValidationAndErrors(
 /**
  * DELETE /api/admin/spaces/[spaceId]
  * Permanently delete a space (super_admin only, irreversible)
+ *
+ * Uses withAdminAuthAndErrors for built-in admin auth + CSRF + rate limiting
+ * Additional super_admin check inside handler for higher permission level
  */
-export const DELETE = withAuthAndErrors(async (
+export const DELETE = withAdminAuthAndErrors(async (
   request,
   context: RouteContext,
   respond
@@ -196,6 +193,7 @@ export const DELETE = withAuthAndErrors(async (
   const { spaceId: _spaceId } = await context.params;
 
   // Check super_admin permission (permanent deletion requires highest level)
+  // withAdminAuthAndErrors already verified admin status, but we need super_admin
   const adminRecord = await getAdminRecord(adminId);
   if (!adminRecord || !hasAdminRole(adminRecord.role, 'super_admin')) {
     return respond.error('Super admin access required for permanent deletion', 'FORBIDDEN', {
