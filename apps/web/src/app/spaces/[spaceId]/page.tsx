@@ -789,7 +789,7 @@ function SpaceDetailContent() {
           break;
 
         case 'timer':
-        case 'countdown':
+        case 'countdown': {
           apiType = 'countdown';
           config.title = command.primaryArg || 'Timer';
           // Parse duration from listArgs or flags (e.g., "25m", "1h", "30s")
@@ -797,9 +797,10 @@ function SpaceDetailContent() {
           const duration = parseDuration(durationStr);
           config.targetDate = new Date(Date.now() + duration).toISOString();
           break;
+        }
 
         case 'rsvp':
-        case 'event':
+        case 'event': {
           apiType = 'rsvp';
           config.eventTitle = command.primaryArg || 'Event';
           // Parse date from flags or default to tomorrow
@@ -807,6 +808,7 @@ function SpaceDetailContent() {
           config.eventDate = dateStr ? new Date(dateStr).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
           config.allowMaybe = command.flags.maybe !== false;
           break;
+        }
 
         case 'announce':
         case 'announcement':
@@ -1108,11 +1110,6 @@ function SpaceDetailContent() {
             ? () => router.push(`/spaces/${spaceId}/settings`)
             : undefined
         }
-        onAnalytics={
-          isLeader
-            ? () => router.push(`/spaces/${spaceId}/analytics`)
-            : undefined
-        }
       />
 
       {/* Board Tab Bar - Discord-style channel selector */}
@@ -1175,7 +1172,6 @@ function SpaceDetailContent() {
             onViewThread={openThread}
             onCreateBoard={isLeader ? handleCreateBoard : undefined}
             onInsertTool={isMember ? handleInsertTool : undefined}
-            onSlashCommand={isMember ? handleSlashCommand : undefined}
             showToolbar={isMember}
             enableSlashCommands={isMember}
           />
@@ -1269,9 +1265,9 @@ function SpaceDetailContent() {
         automations={automations.map(a => ({
           id: a.id,
           name: a.name,
-          trigger: a.trigger,
+          trigger: a.trigger.type,
           enabled: a.enabled,
-          runCount: a.runCount,
+          runCount: (a as { runCount?: number }).runCount,
         }))}
         isLeader={isLeader}
         onOpenTemplates={() => setShowTemplates(true)}

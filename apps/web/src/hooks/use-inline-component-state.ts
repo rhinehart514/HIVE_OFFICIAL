@@ -296,7 +296,7 @@ export function useInlineComponentState(
 
     // Apply optimistic update
     let optimisticAggregations = state.aggregations;
-    let optimisticParticipation: ParticipantRecord = {
+    const optimisticParticipation: ParticipantRecord = {
       userId: 'current-user', // Will be replaced by server
       participatedAt: new Date().toISOString(),
     };

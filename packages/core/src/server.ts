@@ -79,7 +79,17 @@ export type { IProfileRepository, ISpaceRepository, IUnitOfWork } from './infras
 // Space Value Objects (for validation)
 export { SpaceSlug } from './domain/spaces/value-objects/space-slug.value';
 export { SpaceCategory, SpaceCategoryEnum, CAMPUSLABS_BRANCH_MAP, CATEGORY_LABELS, CATEGORY_ICONS } from './domain/spaces/value-objects/space-category.value';
-export { SPACE_CATEGORIES, normalizeCategory, isValidCategory } from './domain/spaces/constants/space-categories';
+export {
+  SPACE_CATEGORIES,
+  normalizeCategory,
+  isValidCategory,
+  getCategoryRules,
+  canRequestLeadership,
+  canRemoveLeaders,
+  hasReachedLeaderLimit,
+  CATEGORY_RULES,
+  type CategoryRules,
+} from './domain/spaces/constants/space-categories';
 export type { SpaceCategoryValue } from './domain/spaces/constants/space-categories';
 export { SpaceName } from './domain/spaces/value-objects/space-name.value';
 export { SpaceDescription } from './domain/spaces/value-objects/space-description.value';
@@ -273,6 +283,29 @@ export {
   CAMPUS_EMAIL_CONFIGS,
   type CampusEmailConfig
 } from './domain/profile/value-objects/campus-email.value';
+
+// Template Entity and Repository
+export {
+  Template,
+  toTemplateListItemDTO,
+  toTemplateDetailDTO,
+  type TemplateCategory,
+  type TemplateVisibility,
+  type TemplateSource,
+  type TemplateComposition,
+  type TemplateProps,
+  type TemplateListItemDTO,
+  type TemplateDetailDTO,
+} from './domain/hivelab/template.entity';
+
+export {
+  FirebaseAdminTemplateRepository,
+  getServerTemplateRepository,
+  resetServerTemplateRepository,
+  type ITemplateRepository,
+  type TemplateFindManyOptions,
+  type TemplateFindManyResult,
+} from './infrastructure/repositories/firebase-admin/template.repository';
 
 /**
  * Callbacks for cross-collection operations in SpaceManagementService

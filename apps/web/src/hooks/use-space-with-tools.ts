@@ -336,15 +336,14 @@ export function useSpaceWithTools(options: UseSpaceWithToolsOptions): UseSpaceWi
       return false;
     }
 
-    return chat.sendMessage({
-      content: `[${tool.name}]`,
-      componentData: {
-        elementType: tool.elementType,
-        deploymentId: tool.deploymentId,
-        toolId: tool.toolId,
-        isActive: tool.isActive,
-      },
-    });
+    try {
+      // Send a message referencing the tool
+      // The actual component rendering is handled by the chat UI based on message content
+      await chat.sendMessage(`[Tool: ${tool.name}] (${tool.elementType})`);
+      return true;
+    } catch {
+      return false;
+    }
   }, [chat]);
 
   // ============================================================

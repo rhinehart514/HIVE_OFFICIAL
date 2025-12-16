@@ -55,6 +55,10 @@ export const POST = withAuthAndErrors(
 
     const template = templateResult.getValue();
 
+    if (!template) {
+      return respond.error('Template not found', 'NOT_FOUND', { status: 404 });
+    }
+
     // Check visibility permissions
     if (!template.canView(userId, campusId)) {
       return respond.error('You do not have permission to use this template', 'FORBIDDEN', { status: 403 });

@@ -31,11 +31,21 @@ export type { ToolInsertData, ToolType } from './chat-toolbar';
 // Slash Command Types & Data
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** UI suggestion for slash command autocomplete */
 export interface SlashCommandSuggestion {
   command: string;
   description: string;
   syntax: string;
   icon: React.ReactNode;
+}
+
+/** Parsed slash command data (used for execution) */
+export interface SlashCommandData {
+  command: string;
+  primaryArg?: string;
+  listArgs: string[];
+  flags: Record<string, string | boolean | number>;
+  raw: string;
 }
 
 const SLASH_COMMANDS: SlashCommandSuggestion[] = [

@@ -133,3 +133,86 @@ export function getAllCategories(): SpaceCategoryValue[] {
 export function isValidCategory(value: string): value is SpaceCategoryValue {
   return Object.values(SPACE_CATEGORIES).includes(value as SpaceCategoryValue);
 }
+
+// ============================================================================
+// CATEGORY RULES
+// ============================================================================
+
+/**
+ * Category-specific rules for leadership and space management
+ */
+export interface CategoryRules {
+  /** Maximum number of leaders allowed */
+  maxLeaders: number;
+  /** Whether users can request to become leaders */
+  allowLeaderRequests: boolean;
+  /** Whether leaders can be removed by other leaders */
+  allowLeaderRemoval: boolean;
+  /** Human-readable description of leadership structure */
+  leadershipDescription: string;
+  /** Whether the category is locked (no external changes allowed) */
+  isLocked: boolean;
+}
+
+/**
+ * Default rules for each category
+ */
+export const CATEGORY_RULES: Record<SpaceCategoryValue, CategoryRules> = {
+  [SPACE_CATEGORIES.STUDENT_ORG]: {
+    maxLeaders: 10,
+    allowLeaderRequests: true,
+    allowLeaderRemoval: true,
+    leadershipDescription: 'Student organization',
+    isLocked: false,
+  },
+  [SPACE_CATEGORIES.UNIVERSITY_ORG]: {
+    maxLeaders: 5,
+    allowLeaderRequests: false,
+    allowLeaderRemoval: false,
+    leadershipDescription: 'University organization',
+    isLocked: true,
+  },
+  [SPACE_CATEGORIES.GREEK_LIFE]: {
+    maxLeaders: 8,
+    allowLeaderRequests: true,
+    allowLeaderRemoval: true,
+    leadershipDescription: 'Greek life organization',
+    isLocked: false,
+  },
+  [SPACE_CATEGORIES.RESIDENTIAL]: {
+    maxLeaders: 4,
+    allowLeaderRequests: false,
+    allowLeaderRemoval: false,
+    leadershipDescription: 'Residential',
+    isLocked: true,
+  },
+};
+
+/**
+ * Get rules for a category
+ */
+export function getCategoryRules(category: SpaceCategoryValue): CategoryRules {
+  return CATEGORY_RULES[category] || CATEGORY_RULES[SPACE_CATEGORIES.STUDENT_ORG];
+}
+
+/**
+ * Check if leader requests are allowed for a category
+ */
+export function canRequestLeadership(category: SpaceCategoryValue): boolean {
+  return getCategoryRules(category).allowLeaderRequests;
+}
+
+/**
+ * Check if leaders can be removed for a category
+ */
+export function canRemoveLeaders(category: SpaceCategoryValue): boolean {
+  return getCategoryRules(category).allowLeaderRemoval;
+}
+
+/**
+ * Check if a space has reached its leader limit
+ */
+export function hasReachedLeaderLimit(category: SpaceCategoryValue, currentLeaderCount: number): boolean {
+  const rules = getCategoryRules(category);
+  return currentLeaderCount >= rules.maxLeaders;
+}
