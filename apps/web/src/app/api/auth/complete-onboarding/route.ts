@@ -3,15 +3,21 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
-import { dbAdmin } from '@/lib/firebase-admin';
-import { currentEnvironment } from '@/lib/env';
-import { createSession, setSessionCookie, getSession } from '@/lib/session';
+import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
+import { createSession, setSessionCookie, getSession, SESSION_CONFIG } from '@/lib/session';
 import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, validateHandleFormat } from '@/lib/handle-service';
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
+import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 
-// Check if we're in development mode without Firebase
-const isDevelopmentMode = currentEnvironment === 'development' || process.env.NODE_ENV === 'development';
+// Development mode guard - ONLY allow dev bypass when ALL conditions are met:
+// 1. NODE_ENV is explicitly 'development'
+// 2. Firebase is not configured
+// 3. DEV_AUTH_BYPASS env var is set to 'true' (explicit opt-in)
+const ALLOW_DEV_BYPASS =
+  SESSION_CONFIG.isDevelopment &&
+  !isFirebaseConfigured &&
+  process.env.DEV_AUTH_BYPASS === 'true';
 
 // Use SecureSchemas for security validation on user inputs
 const schema = z.object({
@@ -79,6 +85,20 @@ function inferAcademicLevel(major: string, graduationYear: number): 'undergradua
 }
 
 export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
+  // Rate limit: 5 onboarding attempts per hour per IP
+  const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
+  if (!rateLimitResult.allowed) {
+    logger.warn('Complete-onboarding rate limit exceeded', {
+      component: 'complete-onboarding',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+    });
+    return respond.error(
+      rateLimitResult.error || 'Too many attempts. Please try again later.',
+      'RATE_LIMITED',
+      { status: rateLimitResult.status }
+    );
+  }
+
   const userId = getUserId(request as unknown as AuthenticatedRequest);
 
   // Get session for campus isolation
@@ -95,9 +115,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
   const normalizedHandle = body.handle.toLowerCase().trim();
 
   // Development mode bypass: Skip Firestore transaction to allow local testing
-  // In dev mode, we just validate the handle format and create the session
-  if (isDevelopmentMode) {
-    logger.info('Development mode: Skipping Firestore transaction for onboarding', {
+  // ONLY allowed when explicitly enabled via DEV_AUTH_BYPASS
+  if (ALLOW_DEV_BYPASS) {
+    logger.warn('DEV MODE: Skipping Firestore transaction for onboarding', {
       userId,
       handle: normalizedHandle,
       campusId,
@@ -134,6 +154,19 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
     setSessionCookie(response, newToken, { isAdmin });
     return response;
+  }
+
+  // Ensure Firebase is configured for production
+  if (!isFirebaseConfigured) {
+    logger.error('Firebase not configured and DEV_AUTH_BYPASS not enabled', {
+      component: 'complete-onboarding',
+      nodeEnv: process.env.NODE_ENV,
+    });
+    return respond.error(
+      "Service unavailable. Please try again later.",
+      "SERVICE_UNAVAILABLE",
+      { status: 503 }
+    );
   }
 
   // ALWAYS use transaction to prevent handle race condition (prod)

@@ -1,3 +1,10 @@
+/**
+ * @deprecated This endpoint is deprecated.
+ * Use POST /api/auth/send-code for OTP-based authentication instead.
+ *
+ * Magic link authentication is maintained for backward compatibility
+ * but will be removed in a future version.
+ */
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from "zod";
 import { dbAdmin, isFirebaseConfigured } from "@/lib/firebase-admin";
@@ -13,6 +20,9 @@ import { logger } from "@/lib/logger";
 
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+
+// DEPRECATION: Log warning when this endpoint is used
+const DEPRECATION_WARNING = 'Magic link auth is deprecated. Please migrate to OTP-based auth (/api/auth/send-code).';
 
 // Firebase Client SDK fallback for development when Admin SDK is not configured
 import { initializeApp, getApps, getApp } from 'firebase/app';

@@ -3,24 +3,24 @@ import { getAuth } from 'firebase-admin/auth';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { withAuthAndErrors, getUserId, type AuthenticatedRequest, type ResponseFormatter } from '@/lib/middleware/index';
+import {
+  shouldGrantAdmin,
+  getPermissionsForRole,
+  logAdminOperation,
+  type AdminRole,
+} from '@/lib/admin/roles';
 
 /**
  * Check and grant pending admin permissions
- * This endpoint is called after successful authentication to grant admin rights
- * to pre-approved users who are signing in for the first time
+ *
+ * SECURITY:
+ * - Uses centralized admin role helpers for consistent security checks
+ * - Admin auto-grant is DISABLED by default in production
+ * - Requires ALLOW_ADMIN_AUTO_GRANT=true env var to enable in production
+ * - All grants are audited with operation logging
  *
  * POST /api/auth/check-admin-grant
  */
-
-// Admin emails from environment variables (comma-separated)
-// Set HIVE_ADMIN_EMAILS in .env.local: "email1@domain.com,email2@domain.com"
-const APPROVED_ADMIN_EMAILS = (process.env.HIVE_ADMIN_EMAILS || '')
-  .split(',')
-  .map(email => email.trim().toLowerCase())
-  .filter(email => email.length > 0);
-
-// Super admin email (founder) - separate env var for highest privileges
-const SUPER_ADMIN_EMAIL = (process.env.HIVE_SUPER_ADMIN_EMAIL || '').trim().toLowerCase();
 
 export const POST = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
   try {
@@ -38,14 +38,20 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
       });
     }
 
-    // Check if user is in approved admin list (case-insensitive)
     const normalizedEmail = userEmail.toLowerCase();
-    const isInAdminList = APPROVED_ADMIN_EMAILS.includes(normalizedEmail) || normalizedEmail === SUPER_ADMIN_EMAIL;
 
-    if (!isInAdminList) {
+    // Use centralized admin grant check (includes production guard)
+    const grantCheck = shouldGrantAdmin(normalizedEmail);
+
+    if (!grantCheck.shouldGrant) {
+      // Log the rejection for audit
+      logAdminOperation('admin_grant_rejected', userId, normalizedEmail, {
+        reason: grantCheck.reason,
+      });
+
       return respond.success({
         granted: false,
-        reason: 'Not in admin list'
+        reason: grantCheck.reason
       });
     }
 
@@ -53,7 +59,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     if (userRecord.customClaims?.isAdmin === true) {
       logger.info('User already has admin claims', {
         userId,
-        email: userEmail,
+        email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
         endpoint: '/api/auth/check-admin-grant'
       });
 
@@ -64,29 +70,23 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
       });
     }
 
-    // Grant admin permissions
-    logger.info('🔐 Granting admin permissions', {
-      userId,
-      email: userEmail,
-      endpoint: '/api/auth/check-admin-grant'
-    });
+    // Get role and permissions from centralized config
+    const role = grantCheck.role as AdminRole;
+    const permissions = getPermissionsForRole(role);
 
-    // Determine role based on email
-    const role = normalizedEmail === SUPER_ADMIN_EMAIL ? 'super_admin' : 'admin';
-    const permissions = role === 'super_admin' ? ['all'] : [
-      'read',
-      'write',
-      'delete',
-      'moderate',
-      'manage_users',
-      'manage_spaces',
-      'feature_flags'
-    ];
+    // Log the grant operation BEFORE executing
+    logAdminOperation('admin_grant_initiated', userId, normalizedEmail, {
+      role,
+      permissions: permissions.slice(),
+      grantedBy: 'auto-grant',
+      userAgent: request.headers.get('user-agent')?.substring(0, 100),
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
+    });
 
     // Set Firebase custom claims
     const customClaims = {
       role,
-      permissions,
+      permissions: permissions.slice(),
       isAdmin: true,
       adminSince: new Date().toISOString()
     };
@@ -97,43 +97,46 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     const userUpdateData = {
       isAdmin: true,
       adminRole: role,
-      adminPermissions: permissions,
+      adminPermissions: permissions.slice(),
       adminGrantedAt: new Date().toISOString(),
       adminGrantedBy: 'auto-grant',
-      email: userEmail
+      email: normalizedEmail
     };
 
     await dbAdmin.collection('users').doc(userId).set(userUpdateData, { merge: true });
 
-    // Add to admins collection
+    // Add to admins collection with full audit info
     await dbAdmin.collection('admins').doc(userId).set({
       uid: userId,
-      email: userEmail,
-      name: userRecord.displayName || userEmail.split('@')[0],
+      email: normalizedEmail,
+      name: userRecord.displayName || normalizedEmail.split('@')[0],
       role,
-      permissions,
+      permissions: permissions.slice(),
       active: true,
       createdAt: new Date().toISOString(),
-      grantedBy: 'auto-grant'
+      grantedBy: 'auto-grant',
+      grantedVia: 'check-admin-grant-endpoint',
+      userAgent: request.headers.get('user-agent')?.substring(0, 200),
+      grantedFromIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });
 
     // Remove from pending grants if exists
     try {
-      await dbAdmin.collection('pendingAdminGrants').doc(userEmail).delete();
+      await dbAdmin.collection('pendingAdminGrants').doc(normalizedEmail).delete();
     } catch {
       // Ignore if doesn't exist
     }
 
-    logger.info('✅ Admin permissions granted successfully', {
-      userId,
-      email: userEmail,
-      endpoint: '/api/auth/check-admin-grant'
+    // Log successful grant
+    logAdminOperation('admin_grant_success', userId, normalizedEmail, {
+      role,
+      permissions: permissions.slice(),
     });
 
     return respond.success({
       granted: true,
       role,
-      permissions,
+      permissions: permissions.slice(),
       message: 'Admin permissions granted successfully. Please refresh to access admin features.'
     });
 
