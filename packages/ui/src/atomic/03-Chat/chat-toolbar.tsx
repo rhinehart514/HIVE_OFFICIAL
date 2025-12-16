@@ -83,7 +83,7 @@ function ToolbarButton({
         disabled && 'opacity-50 cursor-not-allowed',
         isActive
           ? 'bg-[#FFD700]/10 text-[#FFD700]'
-          : 'text-neutral-400 hover:text-white hover:bg-white/5'
+          : 'text-[#A1A1A6] hover:text-white hover:bg-white/5'
       )}
     >
       <Icon className="w-4 h-4" />
@@ -140,7 +140,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
         <h3 className="text-sm font-medium text-white">Create Poll</h3>
         <button
           onClick={onClose}
-          className="p-1 text-neutral-500 hover:text-white transition-colors"
+          className="p-1 text-[#818187] hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -154,8 +154,8 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
           placeholder="Ask a question..."
           className={cn(
             'w-full px-3 py-2 rounded-lg text-sm',
-            'bg-neutral-800 border border-neutral-700',
-            'text-white placeholder:text-neutral-500',
+            'bg-[#1A1A1A] border border-[#2A2A2A]',
+            'text-white placeholder:text-[#818187]',
             'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
           )}
           autoFocus
@@ -171,8 +171,8 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
                 placeholder={`Option ${index + 1}`}
                 className={cn(
                   'flex-1 px-3 py-1.5 rounded-lg text-sm',
-                  'bg-neutral-800/50 border border-neutral-700/50',
-                  'text-white placeholder:text-neutral-500',
+                  'bg-[#1A1A1A]/50 border border-[#2A2A2A]/50',
+                  'text-white placeholder:text-[#818187]',
                   'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
                 )}
               />
@@ -191,7 +191,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
         {options.length < 6 && (
           <button
             onClick={addOption}
-            className="text-xs text-neutral-400 hover:text-[#FFD700] transition-colors"
+            className="text-xs text-[#A1A1A6] hover:text-[#FFD700] transition-colors"
           >
             + Add option
           </button>
@@ -207,7 +207,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
           'w-full py-2 rounded-lg text-sm font-medium transition-colors',
           canSubmit
             ? 'bg-[#FFD700] text-black hover:brightness-110'
-            : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+            : 'bg-[#1A1A1A] text-[#818187] cursor-not-allowed'
         )}
       >
         Create Poll
@@ -247,7 +247,7 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
         <h3 className="text-sm font-medium text-white">Add Countdown</h3>
         <button
           onClick={onClose}
-          className="p-1 text-neutral-500 hover:text-white transition-colors"
+          className="p-1 text-[#818187] hover:text-white transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -261,8 +261,8 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
           placeholder="What are you counting down to?"
           className={cn(
             'w-full px-3 py-2 rounded-lg text-sm',
-            'bg-neutral-800 border border-neutral-700',
-            'text-white placeholder:text-neutral-500',
+            'bg-[#1A1A1A] border border-[#2A2A2A]',
+            'text-white placeholder:text-[#818187]',
             'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
           )}
           autoFocus
@@ -303,7 +303,7 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
           'w-full py-2 rounded-lg text-sm font-medium transition-colors',
           canSubmit
             ? 'bg-[#FFD700] text-black hover:brightness-110'
-            : 'bg-neutral-800 text-neutral-500 cursor-not-allowed'
+            : 'bg-[#1A1A1A] text-[#818187] cursor-not-allowed'
         )}
       >
         Add Countdown
@@ -364,7 +364,7 @@ export function ChatToolbar({
       transition={shouldReduceMotion ? { duration: 0 } : undefined}
       className={cn(
         'flex items-center gap-1 px-3 py-2',
-        'border-b border-neutral-800/50',
+        'border-b border-[#2A2A2A]/50',
         className
       )}
     >
@@ -384,7 +384,7 @@ export function ChatToolbar({
         <PopoverContent
           side="top"
           align="start"
-          className="w-auto p-0 bg-neutral-900 border-neutral-800"
+          className="w-auto p-0 bg-[#141414] border-[#2A2A2A]"
         >
           <PollCreator
             onSubmit={handlePollSubmit}
@@ -410,7 +410,7 @@ export function ChatToolbar({
         <PopoverContent
           side="top"
           align="start"
-          className="w-auto p-0 bg-neutral-900 border-neutral-800"
+          className="w-auto p-0 bg-[#141414] border-[#2A2A2A]"
         >
           <CountdownCreator
             onSubmit={handleCountdownSubmit}

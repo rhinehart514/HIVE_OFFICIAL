@@ -132,10 +132,10 @@ export function EmptyChatState({
 
       {/* Hero text - Clean typography */}
       <div className="max-w-lg text-center space-y-3 mb-10">
-        <h2 className="text-2xl font-semibold text-neutral-100 tracking-tight">
+        <h2 className="text-2xl font-semibold text-[#FAFAFA] tracking-tight">
           {title}
         </h2>
-        <p className="text-neutral-400 text-sm leading-relaxed">
+        <p className="text-[#A1A1A6] text-sm leading-relaxed">
           {description}
         </p>
       </div>
@@ -143,7 +143,7 @@ export function EmptyChatState({
       {/* Example prompts - Refined buttons */}
       {examplePrompts.length > 0 && (
         <div className="w-full max-w-xl space-y-4">
-          <p className="text-xs text-neutral-500 font-medium text-center">
+          <p className="text-xs text-[#818187] font-medium text-center">
             Try an example
           </p>
           <div className="grid grid-cols-2 gap-2">
@@ -153,18 +153,18 @@ export function EmptyChatState({
                 onClick={() => example.onClick(example.prompt)}
                 className={cn(
                   'group relative px-4 py-3 text-left rounded-lg',
-                  'border border-neutral-800',
-                  'bg-neutral-900 hover:bg-neutral-800',
+                  'border border-[#2A2A2A]',
+                  'bg-[#141414] hover:bg-[#1A1A1A]',
                   'transition-all duration-150',
-                  'hover:border-neutral-700',
+                  'hover:border-[#2A2A2A]',
                   'focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30'
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm text-neutral-300 group-hover:text-neutral-100 transition-colors font-medium">
+                  <span className="text-sm text-[#A1A1A6] group-hover:text-[#FAFAFA] transition-colors font-medium">
                     {example.label}
                   </span>
-                  <svg className="w-3.5 h-3.5 text-neutral-600 group-hover:text-[#D4AF37] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-3.5 h-3.5 text-[#818187] group-hover:text-[#FFD700] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
