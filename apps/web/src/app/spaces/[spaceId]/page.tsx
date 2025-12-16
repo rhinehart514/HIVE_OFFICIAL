@@ -1173,7 +1173,6 @@ function SpaceDetailContent() {
             onCreateBoard={isLeader ? handleCreateBoard : undefined}
             onInsertTool={isMember ? handleInsertTool : undefined}
             showToolbar={isMember}
-            enableSlashCommands={isMember}
           />
         </main>
 

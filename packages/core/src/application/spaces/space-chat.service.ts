@@ -79,6 +79,7 @@ export interface SendMessageInput {
   content: string;
   replyToId?: string;
   componentData?: InlineComponentData;
+  metadata?: Record<string, unknown>;
 }
 
 /**

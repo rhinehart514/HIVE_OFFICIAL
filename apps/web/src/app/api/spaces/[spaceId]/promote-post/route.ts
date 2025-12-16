@@ -17,11 +17,11 @@ import { HttpStatus } from '@/lib/api-response-types';
 
 // POST /api/spaces/[spaceId]/promote-post - Promote a space post to campus feed
 export const POST = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request: Request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {
@@ -314,11 +314,11 @@ function calculateViralityScore(postData: any): number {
  * GET /api/spaces/[spaceId]/promote-post - Check promotion eligibility
  */
 export const GET = withAuthAndErrors(async (
-  request: AuthenticatedRequest,
+  request: Request,
   { params }: { params: Promise<{ spaceId: string }> },
   respond
 ) => {
-  const userId = getUserId(request);
+  const userId = getUserId(request as AuthenticatedRequest);
   const { spaceId } = await params;
 
   try {

@@ -27,12 +27,12 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let userId: string | null = null;
+  let userId: string | undefined = undefined;
 
   try {
     // Try to get session info for logging and revocation
     const session = await getSession(request);
-    userId = session?.userId || null;
+    userId = session?.userId || undefined;
 
     // Revoke the JWT session so it can't be reused even if cookie isn't cleared
     if (session?.sessionId) {

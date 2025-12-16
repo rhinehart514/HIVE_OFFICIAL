@@ -63,14 +63,14 @@ async function ensurePostExists(spaceId: string, postId: string) {
 export const POST = withAuthValidationAndErrors(
   ReactionSchema,
   async (
-    request: AuthenticatedRequest,
+    request: Request,
     { params }: { params: Promise<{ spaceId: string; postId: string }> },
     body,
     respond,
   ) => {
     try {
       const { spaceId, postId } = await params;
-      const userId = getUserId(request);
+      const userId = getUserId(request as AuthenticatedRequest);
 
       const membership = await ensureMembership(spaceId, userId);
       if (!membership.ok) {
@@ -161,9 +161,10 @@ export const POST = withAuthValidationAndErrors(
         userReacted: result.reacted,
       });
     } catch (error) {
-      const status = (error as any)?.status || 500;
+      const status = (error as { status?: number })?.status || 500;
       logger.error(
         "Error updating reaction at /api/spaces/[spaceId]/posts/[postId]/reactions",
+        {},
         error instanceof Error ? error : new Error(String(error)),
       );
       const code =
