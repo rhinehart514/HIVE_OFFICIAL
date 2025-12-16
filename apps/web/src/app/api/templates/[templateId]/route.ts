@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Implement full template repository with Result pattern
+// TODO: Fix DDD Result pattern - repo.findById returns Template not Result<Template>
 /**
  * Template Detail API
  *

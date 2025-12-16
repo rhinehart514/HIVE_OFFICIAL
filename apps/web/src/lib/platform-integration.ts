@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix type assignments in integration layer - unknown to typed arrays
+// TODO: Fix unknown→typed array conversions and method access on integration types
 /**
  * HIVE Platform Integration Layer
  *

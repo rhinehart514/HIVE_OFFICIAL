@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Implement full template repository with Result pattern - requires DDD Template entity
+// TODO: Fix DDD Result pattern - Template.create and repo.findMany/save don't match actual implementation
 /**
  * Templates API - List and Create Templates
  *

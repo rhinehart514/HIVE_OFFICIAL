@@ -1,13 +1,11 @@
 // @ts-nocheck
-// TODO: Fix MockRedis/Redis type union - client typed as unknown due to conditional initialization
+// TODO: Fix MockRedis type - constructor arguments and on() handler signature
 // Advanced Redis-based caching layer for HIVE platform
 // Optimized for multi-tenant architecture and cross-campus scaling
 
 // TEMP: ioredis disabled for HiveLab-only launch - using in-memory mock
 // import Redis, { Redis as RedisClient } from 'ioredis';
 import { logger } from '@/lib/logger';
-
-type RedisClient = unknown; // Placeholder type when ioredis is disabled
 
 interface CacheConfig {
   host: string;
@@ -163,7 +161,7 @@ interface CacheStats {
 }
 
 class HiveRedisCache {
-  private client: RedisClient | MockRedis;
+  private client: MockRedis;
   private readonly config: CacheConfig;
   private stats: CacheStats;
   private healthCheckInterval?: NodeJS.Timeout;
@@ -303,7 +301,7 @@ class HiveRedisCache {
     const cacheKey = this.generateKey(namespace, key, campusId);
 
     return this.trackOperation(
-      (this.client as MockRedis).get(cacheKey).then((result: string | null) => {
+      this.client.get(cacheKey).then((result: string | null) => {
         if (result) {
           try {
             const entry: CacheEntry<T> = JSON.parse(result);
@@ -346,7 +344,7 @@ class HiveRedisCache {
     };
 
     return this.trackOperation(
-      (this.client as MockRedis).setex(cacheKey, ttlSeconds, JSON.stringify(entry)).then((result: string) => result === 'OK'),
+      this.client.setex(cacheKey, ttlSeconds, JSON.stringify(entry)).then((result: string) => result === 'OK'),
       'set'
     );
   }
@@ -355,7 +353,7 @@ class HiveRedisCache {
     const cacheKey = this.generateKey(namespace, key, campusId);
 
     return this.trackOperation(
-      (this.client as MockRedis).del(cacheKey).then((result: number) => result > 0),
+      this.client.del(cacheKey).then((result: number) => result > 0),
       'del'
     );
   }
@@ -364,10 +362,10 @@ class HiveRedisCache {
     const searchPattern = this.generateKey(namespace, pattern, campusId);
 
     try {
-      const keys = await (this.client as MockRedis).keys(searchPattern);
+      const keys = await this.client.keys(searchPattern);
       if (keys.length === 0) return 0;
 
-      const deleted = await (this.client as MockRedis).del(...keys);
+      const deleted = await this.client.del(...keys);
       this.stats.deletes += deleted;
       return deleted;
     } catch (error) {
@@ -381,7 +379,7 @@ class HiveRedisCache {
     const cacheKey = this.generateKey(namespace, key, campusId);
 
     try {
-      const result = await (this.client as MockRedis).exists(cacheKey);
+      const result = await this.client.exists(cacheKey);
       return result === 1;
     } catch {
       this.stats.errors++;
@@ -393,7 +391,7 @@ class HiveRedisCache {
     const cacheKey = this.generateKey(namespace, key, campusId);
 
     try {
-      return await (this.client as MockRedis).incrby(cacheKey, amount);
+      return await this.client.incrby(cacheKey, amount);
     } catch (error) {
       this.stats.errors++;
       logger.error('Failed to increment key', { component: 'redis-client' }, error instanceof Error ? error : undefined);
@@ -411,7 +409,7 @@ class HiveRedisCache {
     const cacheKey = this.generateKey(namespace, key, campusId);
 
     try {
-      const result = await (this.client as MockRedis).set(cacheKey, JSON.stringify(data), 'PX', expiryMs);
+      const result = await this.client.set(cacheKey, JSON.stringify(data), 'PX', expiryMs);
       if (result === 'OK') {
         this.stats.sets++;
         return true;
@@ -443,11 +441,11 @@ class HiveRedisCache {
   async invalidateCampusCache(campusId: string): Promise<number> {
     try {
       const pattern = `*:${campusId}:*`;
-      const keys = await (this.client as MockRedis).keys(pattern);
+      const keys = await this.client.keys(pattern);
 
       if (keys.length === 0) return 0;
 
-      const deleted = await (this.client as MockRedis).del(...keys);
+      const deleted = await this.client.del(...keys);
       this.stats.deletes += deleted;
 
       logger.info(`Invalidated ${deleted} cache entries for campus: ${campusId}`);
@@ -461,7 +459,7 @@ class HiveRedisCache {
 
   // Performance optimization methods
   async pipeline(): Promise<ReturnType<MockRedis['pipeline']>> {
-    return (this.client as MockRedis).pipeline();
+    return this.client.pipeline();
   }
 
   // Check if using mock Redis
@@ -473,7 +471,7 @@ class HiveRedisCache {
     const cacheKeys = keys.map(key => this.generateKey(namespace, key, campusId));
 
     try {
-      const results = await (this.client as MockRedis).mget(...cacheKeys);
+      const results = await this.client.mget(...cacheKeys);
       return results.map((result: string | null) => {
         if (result) {
           try {
@@ -504,7 +502,7 @@ class HiveRedisCache {
 
   async mset(entries: Array<{ namespace: string; key: string; data: unknown; ttl?: number; campusId?: string }>): Promise<boolean> {
     try {
-      const pipeline = (this.client as MockRedis).pipeline();
+      const pipeline = this.client.pipeline();
 
       entries.forEach(({ namespace, key, data, ttl = 3600, campusId }) => {
         const cacheKey = this.generateKey(namespace, key, campusId);
@@ -549,7 +547,7 @@ class HiveRedisCache {
 
   async getMemoryInfo(): Promise<Record<string, string | number>> {
     try {
-      const info = await (this.client as MockRedis).info('memory');
+      const info = await this.client.info('memory');
       const lines = info.split('\r\n');
       const memoryInfo: Record<string, string | number> = {};
 
@@ -569,7 +567,7 @@ class HiveRedisCache {
 
   async flushAll(): Promise<boolean> {
     try {
-      await (this.client as MockRedis).flushall();
+      await this.client.flushall();
       logger.warn('Redis cache completely flushed');
       return true;
     } catch (error) {
@@ -585,7 +583,7 @@ class HiveRedisCache {
     }
 
     try {
-      await (this.client as MockRedis).quit();
+      await this.client.quit();
       logger.info('Redis client connection closed');
     } catch (error) {
       logger.error('Error closing Redis connection', { component: 'redis-client' }, error instanceof Error ? error : undefined);
@@ -595,7 +593,7 @@ class HiveRedisCache {
   // Health check method
   async isHealthy(): Promise<boolean> {
     try {
-      const result = await (this.client as MockRedis).ping();
+      const result = await this.client.ping();
       return result === 'PONG';
     } catch {
       return false;

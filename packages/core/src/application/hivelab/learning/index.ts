@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix initialize function exports
 /**
  * HiveLab AI Learning System
  *
@@ -10,6 +8,14 @@
  * - Prompt enhancement (combining all context)
  * - Graduation (patterns → templates → elements)
  */
+
+import type { Firestore } from 'firebase-admin/firestore';
+
+// Internal imports for initializeLearningServices
+import { initializePatternExtractor } from './pattern-extractor.service';
+import { initializeConfigLearner } from './config-learner.service';
+import { initializeContextRetriever } from './context-retriever.service';
+import { initializePromptEnhancer } from './prompt-enhancer.service';
 
 // Types
 export * from './types';
@@ -61,7 +67,7 @@ export {
  * Initialize all learning services with Firestore
  */
 export function initializeLearningServices(
-  db: FirebaseFirestore.Firestore,
+  db: Firestore,
   ai?: unknown
 ): void {
   initializePatternExtractor(db);

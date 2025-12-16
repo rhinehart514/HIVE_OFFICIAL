@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix polymorphic component type inference
+// TODO: Fix LibraryManagedAttributes inference for polymorphic component examples
 import * as React from 'react'
 
 /**

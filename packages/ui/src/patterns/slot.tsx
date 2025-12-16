@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix unknown type and ref assignments
+// TODO: Fix ForwardedRef inference in createSlotComponent
 import * as React from 'react'
 
 /**
@@ -33,11 +33,12 @@ export interface SlotProps {
 export const Slot = React.forwardRef<HTMLElement, SlotProps & React.HTMLAttributes<HTMLElement>>(
   ({ children, ...props }, ref) => {
     if (React.isValidElement(children)) {
+      const childProps = children.props as Record<string, unknown>;
       return React.cloneElement(children, {
-        ...mergeProps(props, children.props),
+        ...mergeProps(props, childProps),
         ref: ref
-          ? composeRefs(ref, (children as any).ref)
-          : (children as any).ref,
+          ? composeRefs(ref, (children as React.ReactElement & { ref?: React.Ref<unknown> }).ref)
+          : (children as React.ReactElement & { ref?: React.Ref<unknown> }).ref,
       } as React.HTMLAttributes<HTMLElement>)
     }
 
