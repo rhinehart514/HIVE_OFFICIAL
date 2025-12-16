@@ -35,7 +35,7 @@
   --hive-border-default: #2A2A2A; /* Standard borders */
   --hive-border-hover: #3A3A3A;   /* Hover state borders */
   --hive-border-strong: #4A4A4A;  /* Emphasized borders */
-  --hive-border-focus: #FFD700;   /* Focus rings */
+  --hive-border-focus: rgba(255, 255, 255, 0.5); /* Focus rings - white */
 
   /* ===================================
    * BRAND - GOLD
@@ -72,7 +72,7 @@
   /* Interactive States */
   --hive-interactive-hover: rgba(255, 255, 255, 0.04);
   --hive-interactive-active: rgba(255, 255, 255, 0.08);
-  --hive-interactive-focus: var(--hive-gold);
+  --hive-interactive-focus: rgba(255, 255, 255, 0.5);
 
   /* ===================================
    * TYPOGRAPHY
@@ -196,7 +196,7 @@
   --hive-input-bg: var(--hive-bg-surface);
   --hive-input-border: var(--hive-border-default);
   --hive-input-border-hover: var(--hive-border-hover);
-  --hive-input-border-focus: var(--hive-gold);
+  --hive-input-border-focus: var(--hive-border-focus);
   --hive-input-placeholder: var(--hive-text-placeholder);
 
   /* Card */
@@ -267,9 +267,9 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Focus styles - Gold ring */
+  /* Focus styles - White ring */
   :focus-visible {
-    outline: 2px solid var(--hive-gold);
+    outline: 2px solid var(--hive-border-focus);
     outline-offset: 2px;
   }
 
@@ -365,7 +365,7 @@
 
   .input:focus {
     border-color: var(--hive-input-border-focus);
-    box-shadow: 0 0 0 1px var(--hive-gold-glow);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 
   .input::placeholder {

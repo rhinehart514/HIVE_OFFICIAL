@@ -114,8 +114,8 @@ export const semantic = {
   interactive: {
     hover: 'rgba(255, 255, 255, 0.04)',     // Subtle white hover
     active: 'rgba(255, 255, 255, 0.08)',    // Active state
-    focus: foundation.gold[500],            // Gold focus rings (HIVE brand)
-    focusRing: foundation.gold.glow,        // Focus ring glow
+    focus: 'rgba(255, 255, 255, 0.5)',      // White focus rings
+    focusRing: 'rgba(255, 255, 255, 0.1)',  // Focus ring glow
     disabled: foundation.gray[400],         // #52525B - Disabled
   },
 
@@ -147,7 +147,7 @@ export const semantic = {
     default: foundation.gray[700],          // #2A2A2A - Standard borders
     hover: foundation.gray[600],            // #3A3A3A - Hover borders
     strong: foundation.gray[500],           // #4A4A4A - Strong borders
-    focus: foundation.gold[500],            // Gold focus borders
+    focus: 'rgba(255, 255, 255, 0.5)',      // White focus borders
     // Transparent variants
     subtle: 'rgba(255, 255, 255, 0.04)',    // Very subtle borders
     medium: 'rgba(255, 255, 255, 0.08)',    // Medium borders
@@ -454,7 +454,7 @@ export const legacy = {
 export const guidelines = {
   philosophy: {
     minimal: "Neutral grays (no tint) for 95% of UI - let gold bring warmth",
-    gold: "ONLY for dopamine moments: CTAs, achievements, presence, focus",
+    gold: "ONLY for dopamine moments: CTAs, achievements, presence",
     contrast: "High contrast, WCAG 2.1 AA compliant minimum",
     discipline: "Every gold usage must be intentional and meaningful",
   },
@@ -474,14 +474,14 @@ export const guidelines = {
 
   interactive: {
     default: "Use grayscale hovers (white overlays)",
-    focus: "Gold focus rings (HIVE brand differentiation)",
+    focus: "White focus rings for accessibility",
     gold: "Reserve gold for primary CTAs and key moments",
   },
 
   components: {
     buttons: "default (white), primary (gold - sparingly), secondary, ghost, destructive",
     cards: "default, elevated, interactive, outline",
-    inputs: "Gold focus border with subtle glow",
+    inputs: "White focus border with subtle glow",
     badges: "Minimal use - default, gold (featured only), status colors",
   },
 
@@ -491,9 +491,10 @@ export const guidelines = {
       "Achievement moments (Ritual complete, level up)",
       "Online presence (147 students online)",
       "Featured content badges (Hot Space, Featured Tool)",
-      "Focus rings (gold differentiates HIVE)",
+      "Text selection highlight",
     ],
     forbidden: [
+      "Focus rings (use white)",
       "Secondary buttons",
       "Decorative elements",
       "Background colors (except subtle tints)",
