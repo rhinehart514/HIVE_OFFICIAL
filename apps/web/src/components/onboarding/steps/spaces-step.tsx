@@ -3,8 +3,60 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Search, ArrowRight, ArrowLeft, Loader2, Check, Plus } from 'lucide-react';
-import { Button, GoldSpinner } from '@hive/ui';
+import { Button } from '@hive/ui';
 import { logger } from '@/lib/logger';
+
+// Skeleton components for loading state
+function CategorySkeleton() {
+  return (
+    <div className="animate-pulse">
+      <div className="col-span-2 p-8 rounded-2xl border border-white/[0.04] bg-white/[0.01]">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="h-7 w-32 bg-white/[0.06] rounded-lg mb-2" />
+            <div className="h-4 w-20 bg-white/[0.04] rounded" />
+          </div>
+          <div className="w-10 h-10 rounded-full bg-white/[0.04]" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 mt-4">
+        <div className="p-6 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+          <div className="h-5 w-16 bg-white/[0.06] rounded mb-2" />
+          <div className="h-4 w-20 bg-white/[0.04] rounded" />
+        </div>
+        <div className="p-6 rounded-xl border border-white/[0.04] bg-white/[0.01]">
+          <div className="h-5 w-20 bg-white/[0.06] rounded mb-2" />
+          <div className="h-4 w-16 bg-white/[0.04] rounded" />
+        </div>
+      </div>
+      <div className="col-span-2 p-4 rounded-lg border border-white/[0.03] bg-white/[0.005] mt-4">
+        <div className="flex items-center justify-between">
+          <div className="h-4 w-16 bg-white/[0.04] rounded" />
+          <div className="h-3 w-20 bg-white/[0.03] rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpaceListSkeleton({ count = 5 }: { count?: number }) {
+  return (
+    <div className="space-y-2 animate-pulse">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="w-full px-4 py-3 rounded-lg border border-white/[0.04] bg-white/[0.01] flex items-center justify-between"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="h-5 w-32 bg-white/[0.06] rounded mb-1" style={{ width: `${60 + Math.random() * 40}%` }} />
+            <div className="h-3 w-20 bg-white/[0.04] rounded" />
+          </div>
+          <div className="w-6 h-6 rounded-full bg-white/[0.04]" />
+        </div>
+      ))}
+    </div>
+  );
+}
 import {
   containerVariants,
   itemVariants,
@@ -52,7 +104,7 @@ interface SpacesStepProps {
   isSubmitting: boolean;
   mustSelectSpace: boolean;
   isExplorer?: boolean; // True if "Looking around" was selected
-  onComplete: (redirectTo: string, selectedSpaceIds?: string[]) => Promise<boolean>;
+  onComplete: (redirectTo: string, selectedSpaceIds?: string[], selectedSpaceNames?: string[]) => Promise<boolean>;
 }
 
 /**
@@ -146,7 +198,8 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
   // Leader: Claim space to lead
   const handleClaimSpace = async (spaceId: string) => {
     setError(null);
-    await onComplete(`/spaces/${spaceId}`, [spaceId]);
+    const spaceName = spaces.find(s => s.id === spaceId)?.name;
+    await onComplete(`/spaces/${spaceId}`, [spaceId], spaceName ? [spaceName] : []);
   };
 
   // Explorer: Join selected spaces
@@ -157,8 +210,12 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
     }
     setError(null);
     const spaceIds = Array.from(selectedSpaceIds);
+    // Get the names of selected spaces for display on completion
+    const spaceNames = spaceIds
+      .map(id => spaces.find(s => s.id === id)?.name)
+      .filter((name): name is string => Boolean(name));
     // Redirect to first selected space
-    await onComplete(`/spaces/${spaceIds[0]}`, spaceIds);
+    await onComplete(`/spaces/${spaceIds[0]}`, spaceIds, spaceNames);
   };
 
   const handleSkip = async () => {
@@ -207,8 +264,14 @@ export function SpacesStep({ userType, isSubmitting, mustSelectSpace, isExplorer
       >
         <div className="w-full max-w-2xl mx-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-24">
-              <GoldSpinner size="lg" />
+            <div className="py-8">
+              {/* Header skeleton */}
+              <div className="animate-pulse mb-8 md:mb-12">
+                <div className="h-10 w-64 bg-white/[0.04] rounded-lg mx-auto mb-4" />
+                <div className="h-5 w-48 bg-white/[0.03] rounded mx-auto" />
+              </div>
+              {/* Category grid skeleton */}
+              <CategorySkeleton />
             </div>
           ) : (
             <>
