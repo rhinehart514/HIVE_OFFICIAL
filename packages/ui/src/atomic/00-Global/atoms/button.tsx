@@ -13,51 +13,53 @@ import { cn } from "../../../lib/utils"
 export type ButtonState = 'idle' | 'loading' | 'success'
 
 /**
- * Button Variants - Ultra-Minimal YC/SF Aesthetic
+ * Button Variants - Dark-First Design System
  *
- * Design Philosophy (Vercel/OpenAI/Linear style):
+ * Design Philosophy (Apple/Vercel craft with HIVE warmth):
  * - Default: White button, black text (most common)
  * - Primary: Gold CTA (use sparingly - 1% rule)
+ * - Secondary: Subtle background with border
  * - Ghost/Outline: Transparent with white text
  * - Destructive: Red for dangerous actions
  *
- * Colors: Only #000000, #FFFFFF, #FFD700
+ * Focus: White rings (not gold)
+ * Colors: Neutral grays + #FFD700 gold accent
  */
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-black disabled:pointer-events-none disabled:opacity-50",
+  "relative inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0A] disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         // Default: White button, black text (Vercel-style)
         default:
-          "bg-white text-black hover:bg-white/90",
+          "bg-[#FAFAFA] text-[#0A0A0A] hover:bg-[#FAFAFA]/90",
         // Primary: Gold CTA - use ONLY for primary actions (1% rule)
         primary:
-          "bg-gold-500 text-black hover:bg-gold-500/90",
-        // Secondary: Subtle background
+          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200]",
+        // Secondary: Subtle background with border
         secondary:
-          "bg-white/[0.06] text-white border border-white/[0.08] hover:bg-white/[0.10]",
+          "bg-white/[0.06] text-[#FAFAFA] border border-[#2A2A2A] hover:bg-white/[0.10] hover:border-[#3A3A3A]",
         // Outline: Border only, transparent bg
         outline:
-          "border border-white/[0.08] bg-transparent text-white hover:bg-white/[0.04]",
+          "border border-[#2A2A2A] bg-transparent text-[#FAFAFA] hover:bg-white/[0.04] hover:border-[#3A3A3A]",
         // Ghost: Completely transparent
         ghost:
-          "bg-transparent text-white/70 hover:bg-white/[0.04] hover:text-white",
+          "bg-transparent text-[#A1A1A6] hover:bg-white/[0.04] hover:text-[#FAFAFA]",
         // Destructive: Red for dangerous actions
         destructive:
-          "bg-status-error text-white hover:bg-status-error/90",
+          "bg-[#FF3737] text-white hover:bg-[#FF3737]/90",
         // Link: Text-only style
         link:
-          "bg-transparent px-0 text-white/60 underline-offset-4 hover:text-white hover:underline",
+          "bg-transparent px-0 text-[#A1A1A6] underline-offset-4 hover:text-[#FAFAFA] hover:underline",
         // Brand: Same as primary (gold) - for backwards compat
         brand:
-          "bg-gold-500 text-black hover:bg-gold-500/90",
+          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200]",
         // Success: Green
         success:
-          "bg-status-success text-black hover:bg-status-success/90",
+          "bg-[#00D46A] text-[#0A0A0A] hover:bg-[#00D46A]/90",
         // Warning: Gold (consistent with brand)
         warning:
-          "bg-gold-500 text-black hover:bg-gold-500/90",
+          "bg-[#FFB800] text-[#0A0A0A] hover:bg-[#FFB800]/90",
       },
       size: {
         sm: "h-9 min-h-[36px] px-3 text-sm", // 36px minimum for compact areas
@@ -193,15 +195,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const isIconOnly = !children && (mergedLeadingIcon || mergedTrailingIcon)
     const computedSize =
       (isIconOnly ? "icon" : (resolvedSize as keyof typeof iconSizeMap)) ?? "md"
-    // Spinner/icon color based on button variant (YC/SF minimal)
+    // Spinner/icon color based on button variant
     const iconColor =
       resolvedVariant === "primary" ||
       resolvedVariant === "default" ||
       resolvedVariant === "brand" ||
       resolvedVariant === "success" ||
       resolvedVariant === "warning"
-        ? "#000000"  // Black on white/gold/green buttons
-        : "#FFFFFF"  // White on dark/ghost/outline buttons
+        ? "#0A0A0A"  // Dark on white/gold/green buttons
+        : "#FAFAFA"  // Light on dark/ghost/outline buttons
 
     // Motion props (only apply if not asChild)
     const motionProps = !asChild ? {

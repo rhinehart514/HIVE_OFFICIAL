@@ -166,12 +166,12 @@ export const labelVariants: Variants = {
   default: {
     y: 0,
     fontSize: '0.875rem',
-    color: 'var(--hive-text-secondary)',
+    color: '#A1A1A6', // text-secondary
   },
   floating: {
     y: -24,
     fontSize: '0.75rem',
-    color: 'var(--hive-text-tertiary)',
+    color: '#818187', // text-subtle
     transition: {
       duration: duration.quick,
       ease: easing.smooth,
@@ -180,7 +180,7 @@ export const labelVariants: Variants = {
   focus: {
     y: -24,
     fontSize: '0.75rem',
-    color: 'var(--hive-brand-primary)',
+    color: '#FAFAFA', // text-primary (white focus, not gold)
     transition: {
       duration: duration.quick,
       ease: easing.smooth,
@@ -555,6 +555,106 @@ export const premiumCardHover = {
   hover: {
     borderColor: 'rgba(255, 255, 255, 0.12)',
     transition: { duration: duration.quick },
+  },
+};
+
+// ===== COMMAND PALETTE / MODAL ANIMATIONS =====
+
+export const commandPaletteOverlay: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.15, ease: easing.smooth },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1, ease: easing.snap },
+  },
+};
+
+export const commandPaletteContent: Variants = {
+  initial: {
+    opacity: 0,
+    scale: 0.95,
+    y: -20,
+  },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.15,
+      ease: [0.23, 1, 0.32, 1], // smooth out
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.95,
+    y: -10,
+    transition: { duration: 0.1, ease: easing.snap },
+  },
+};
+
+// ===== CONTEXT PANEL / SHEET ANIMATIONS =====
+
+export const contextPanelVariants: Variants = {
+  initial: {
+    x: '100%',
+    opacity: 0,
+  },
+  animate: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
+      mass: 0.8,
+    },
+  },
+  exit: {
+    x: '100%',
+    opacity: 0,
+    transition: {
+      duration: 0.2,
+      ease: easing.silk,
+    },
+  },
+};
+
+// ===== DOCK / NAVIGATION ANIMATIONS =====
+
+export const dockItemVariants: Variants = {
+  initial: { scale: 1, y: 0 },
+  hover: {
+    scale: 1.15,
+    y: -4,
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 15,
+    },
+  },
+  tap: {
+    scale: 0.95,
+    y: 0,
+    transition: { duration: 0.1 },
+  },
+};
+
+export const dockTooltipVariants: Variants = {
+  initial: { opacity: 0, y: 10, scale: 0.9 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.15, ease: easing.smooth },
+  },
+  exit: {
+    opacity: 0,
+    y: 5,
+    scale: 0.95,
+    transition: { duration: 0.1 },
   },
 };
 

@@ -1,3 +1,11 @@
+/**
+ * Avatar Component - Dark-First Design System
+ *
+ * Design Philosophy (Apple/Vercel craft):
+ * - Elevated background (#1A1A1A) for fallback
+ * - Subtle text (#A1A1A6) for initials
+ * - Gold border option for special emphasis
+ */
 'use client';
 
 import { cva, type VariantProps } from "class-variance-authority";
@@ -6,7 +14,7 @@ import * as React from "react";
 import { cn } from "../../../lib/utils";
 
 const avatarVariants = cva(
-  "relative flex shrink-0 overflow-hidden text-text-tertiary",
+  "relative flex shrink-0 overflow-hidden text-[#A1A1A6]",
   {
     variants: {
       size: {
@@ -17,14 +25,14 @@ const avatarVariants = cva(
         "2xl": "h-24 aspect-square",
       },
       variant: {
-        default: "bg-background-interactive",
-        brand: "bg-brand-primary",
-        outline: "border border-border-default bg-background-elevated",
+        default: "bg-[#1A1A1A]",
+        brand: "bg-[#FFD700]",
+        outline: "border border-[#2A2A2A] bg-[#1A1A1A]",
       },
       shape: {
         circle: "rounded-full",
-        rounded: "rounded-md",
-        portrait: "rounded-md aspect-[3/4]",
+        rounded: "rounded-lg",
+        portrait: "rounded-lg aspect-[3/4]",
       },
     },
     compoundVariants: [
@@ -125,7 +133,7 @@ const AvatarFallback = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-inherit bg-background-interactive text-text-tertiary",
+      "flex h-full w-full items-center justify-center rounded-inherit bg-[#1A1A1A] text-[#A1A1A6]",
       className
     )}
     {...props}
