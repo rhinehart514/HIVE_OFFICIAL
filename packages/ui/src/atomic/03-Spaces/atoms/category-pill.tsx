@@ -30,15 +30,16 @@ const pillVariants = cva(
     'relative flex items-center gap-2 px-4 py-2.5 rounded-xl',
     'text-sm font-medium whitespace-nowrap',
     'transition-colors duration-200',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50',
+    // White focus ring (not gold)
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
     'cursor-pointer select-none',
   ],
   {
     variants: {
       isActive: {
         // Active: white text, subtle bg, gold underline handled separately
-        true: 'text-white bg-neutral-800/50',
-        false: 'text-neutral-400 hover:text-white bg-neutral-900/50 hover:bg-neutral-800/50 border border-neutral-800/50 hover:border-neutral-700/50',
+        true: 'text-white bg-[#242424]/50',
+        false: 'text-[#A1A1A6] hover:text-white bg-[#141414]/50 hover:bg-[#242424]/50 border border-[#2A2A2A]/50 hover:border-[#3A3A3A]/50',
       },
       size: {
         sm: 'px-3 py-2 text-xs',
@@ -124,7 +125,7 @@ export function CategoryPill({
         <span
           className={cn(
             'ml-1 text-xs tabular-nums',
-            isActive ? 'text-[#FFD700]/70' : 'text-neutral-500'
+            isActive ? 'text-[#FFD700]/70' : 'text-[#818187]'
           )}
         >
           {count}

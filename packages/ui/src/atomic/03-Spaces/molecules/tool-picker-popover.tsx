@@ -137,19 +137,20 @@ function ToolItem({ icon: Icon, name, description, onClick, reducedMotion }: Too
       className={cn(
         'w-full flex items-center gap-3 px-3 py-3 rounded-lg min-h-[44px]',
         'text-left transition-colors',
-        'hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+        // White focus ring (not gold)
+        'hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
       )}
     >
-      <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0" aria-hidden="true">
-        <Icon className="w-4 h-4 text-neutral-400" />
+      <div className="w-10 h-10 rounded-lg bg-[#1A1A1A] flex items-center justify-center flex-shrink-0" aria-hidden="true">
+        <Icon className="w-4 h-4 text-[#A1A1A6]" />
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium text-white truncate">{name}</div>
         {description && (
-          <div className="text-xs text-neutral-500 truncate">{description}</div>
+          <div className="text-xs text-[#818187] truncate">{description}</div>
         )}
       </div>
-      <ChevronRight className="w-4 h-4 text-neutral-600 flex-shrink-0" aria-hidden="true" />
+      <ChevronRight className="w-4 h-4 text-[#52525B] flex-shrink-0" aria-hidden="true" />
     </motion.button>
   );
 }
@@ -217,16 +218,16 @@ export function ToolPickerPopover({
         align="end"
         sideOffset={8}
         className={cn(
-          'w-72 p-0 bg-neutral-900 border-neutral-800 shadow-xl',
+          'w-72 p-0 bg-[#141414] border-[#2A2A2A] shadow-xl',
           className
         )}
         aria-label="Tool picker"
       >
         <div className="max-h-[400px] overflow-hidden flex flex-col" role="dialog" aria-label="Select a tool to insert">
           {/* Header with search */}
-          <div className="p-3 border-b border-neutral-800/50">
+          <div className="p-3 border-b border-[#2A2A2A]/50">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" aria-hidden="true" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#818187]" aria-hidden="true" />
               <input
                 type="search"
                 value={searchQuery}
@@ -235,9 +236,10 @@ export function ToolPickerPopover({
                 aria-label="Search tools"
                 className={cn(
                   'w-full pl-9 pr-3 py-2 rounded-lg text-sm',
-                  'bg-neutral-800/50 border border-neutral-700/50',
-                  'text-white placeholder:text-neutral-500',
-                  'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+                  'bg-[#1A1A1A]/50 border border-[#3A3A3A]/50',
+                  'text-white placeholder:text-[#818187]',
+                  // White focus ring (not gold)
+                  'focus:outline-none focus:ring-2 focus:ring-white/20'
                 )}
                 autoFocus
               />
@@ -255,7 +257,7 @@ export function ToolPickerPopover({
                 {/* Quick access section */}
                 {!searchQuery && (
                   <div className="mb-2">
-                    <div className="px-3 py-1.5 text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
+                    <div className="px-3 py-1.5 text-[10px] font-medium text-[#818187] uppercase tracking-wider">
                       Quick Access
                     </div>
                     {QUICK_TOOLS.map((tool) => (
@@ -274,7 +276,7 @@ export function ToolPickerPopover({
                 {/* Deployed tools section */}
                 {filteredDeployedTools.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-3 py-1.5 text-[10px] font-medium text-neutral-500 uppercase tracking-wider">
+                    <div className="px-3 py-1.5 text-[10px] font-medium text-[#818187] uppercase tracking-wider">
                       {searchQuery ? 'Results' : 'Space Tools'}
                     </div>
                     {filteredDeployedTools.map((tool) => (
@@ -293,8 +295,8 @@ export function ToolPickerPopover({
                 {/* Empty state */}
                 {searchQuery && filteredDeployedTools.length === 0 && (
                   <div className="py-8 text-center">
-                    <Search className="w-8 h-8 text-neutral-600 mx-auto mb-2" />
-                    <p className="text-sm text-neutral-500">No tools found</p>
+                    <Search className="w-8 h-8 text-[#52525B] mx-auto mb-2" />
+                    <p className="text-sm text-[#818187]">No tools found</p>
                   </div>
                 )}
               </>
@@ -303,7 +305,7 @@ export function ToolPickerPopover({
 
           {/* Footer - Create in HiveLab */}
           {onOpenHiveLab && (
-            <div className="p-2 border-t border-neutral-800/50">
+            <div className="p-2 border-t border-[#2A2A2A]/50">
               <motion.button
                 whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.99 }}
@@ -316,7 +318,8 @@ export function ToolPickerPopover({
                   'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
                   'bg-[#FFD700]/10 text-[#FFD700] text-sm font-medium',
                   'hover:bg-[#FFD700]/20 transition-colors',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                  // White focus ring (not gold)
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
                 )}
               >
                 <Sparkles className="w-4 h-4" aria-hidden="true" />

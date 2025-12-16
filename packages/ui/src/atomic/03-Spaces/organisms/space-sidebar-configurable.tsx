@@ -116,17 +116,17 @@ function AboutToolContent({
   return (
     <div className="space-y-3">
       {spaceData?.description && (
-        <p className="text-sm text-neutral-300 leading-relaxed">
+        <p className="text-sm text-[#A1A1A6] leading-relaxed">
           {spaceData.description}
         </p>
       )}
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-1.5">
-          <Users className="w-4 h-4 text-neutral-500" />
+          <Users className="w-4 h-4 text-[#818187]" />
           <span className="text-white font-medium">
             {spaceData?.memberCount ?? 0}
           </span>
-          <span className="text-neutral-500">members</span>
+          <span className="text-[#818187]">members</span>
         </div>
         {(spaceData?.onlineCount ?? 0) > 0 && (
           <div className="flex items-center gap-1.5">
@@ -134,7 +134,7 @@ function AboutToolContent({
             <span className="text-[#FFD700] font-medium">
               {spaceData?.onlineCount}
             </span>
-            <span className="text-neutral-500">online</span>
+            <span className="text-[#818187]">online</span>
           </div>
         )}
       </div>
@@ -151,9 +151,9 @@ function EventsToolContent({
 }) {
   if (events.length === 0) {
     return (
-      <div className="text-sm text-neutral-400">
+      <div className="text-sm text-[#A1A1A6]">
         <div className="flex items-center gap-2 py-2">
-          <Calendar className="w-4 h-4 text-neutral-500" />
+          <Calendar className="w-4 h-4 text-[#818187]" />
           <span>No upcoming events</span>
         </div>
       </div>
@@ -183,12 +183,12 @@ function EventsToolContent({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-white truncate">{event.title}</p>
-            <p className="text-xs text-neutral-500">{formatRelativeDate(event.date)}</p>
+            <p className="text-xs text-[#818187]">{formatRelativeDate(event.date)}</p>
           </div>
         </button>
       ))}
       {events.length > 3 && (
-        <p className="text-xs text-neutral-500 text-center pt-1">
+        <p className="text-xs text-[#818187] text-center pt-1">
           +{events.length - 3} more
         </p>
       )}
@@ -205,9 +205,9 @@ function MembersToolContent({
 }) {
   if (members.length === 0) {
     return (
-      <div className="text-sm text-neutral-400">
+      <div className="text-sm text-[#A1A1A6]">
         <div className="flex items-center gap-2 py-2">
-          <Users className="w-4 h-4 text-neutral-500" />
+          <Users className="w-4 h-4 text-[#818187]" />
           <span>No members yet</span>
         </div>
       </div>
@@ -228,7 +228,7 @@ function MembersToolContent({
             className="relative group"
             title={member.name}
           >
-            <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center overflow-hidden ring-2 ring-neutral-900 group-hover:ring-[#FFD700]/30 transition-all">
+            <div className="w-8 h-8 rounded-full bg-[#3A3A3A] flex items-center justify-center overflow-hidden ring-2 ring-[#141414] group-hover:ring-[#FFD700]/30 transition-all">
               {member.avatarUrl ? (
                 <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
               ) : (
@@ -238,13 +238,13 @@ function MembersToolContent({
               )}
             </div>
             {member.isOnline && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-neutral-900" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-[#141414]" />
             )}
           </button>
         ))}
         {remainingCount > 0 && (
-          <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center ring-2 ring-neutral-900">
-            <span className="text-xs text-neutral-400">+{remainingCount}</span>
+          <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center ring-2 ring-[#141414]">
+            <span className="text-xs text-[#A1A1A6]">+{remainingCount}</span>
           </div>
         )}
       </div>
@@ -267,9 +267,9 @@ function ToolsToolContent({
 }) {
   if (tools.length === 0) {
     return (
-      <div className="text-sm text-neutral-400">
+      <div className="text-sm text-[#A1A1A6]">
         <div className="flex items-center gap-2 py-2">
-          <Wrench className="w-4 h-4 text-neutral-500" />
+          <Wrench className="w-4 h-4 text-[#818187]" />
           <span>No tools deployed</span>
         </div>
       </div>
@@ -296,13 +296,13 @@ function ToolsToolContent({
               {tool.name}
             </p>
             {tool.description && (
-              <p className="text-xs text-neutral-500 truncate">{tool.description}</p>
+              <p className="text-xs text-[#818187] truncate">{tool.description}</p>
             )}
           </div>
         </button>
       ))}
       {tools.length > 5 && (
-        <p className="text-xs text-neutral-500 text-center pt-1">
+        <p className="text-xs text-[#818187] text-center pt-1">
           +{tools.length - 5} more tools
         </p>
       )}
@@ -387,12 +387,12 @@ export function SpaceSidebarConfigurable({
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="rounded-xl bg-neutral-900/50 border border-neutral-800/50 animate-pulse"
+            className="rounded-xl bg-[#141414]/50 border border-[#2A2A2A]/50 animate-pulse"
           >
-            <div className="h-10 border-b border-neutral-800/50" />
+            <div className="h-10 border-b border-[#2A2A2A]/50" />
             <div className="p-3 space-y-2">
-              <div className="h-4 bg-neutral-800 rounded w-3/4" />
-              <div className="h-4 bg-neutral-800 rounded w-1/2" />
+              <div className="h-4 bg-[#1A1A1A] rounded w-3/4" />
+              <div className="h-4 bg-[#1A1A1A] rounded w-1/2" />
             </div>
           </div>
         ))}
@@ -403,8 +403,8 @@ export function SpaceSidebarConfigurable({
   return (
     <div className={cn('h-full flex flex-col', className)}>
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-neutral-800/50">
-        <h2 className="text-sm font-medium text-neutral-300">Widgets</h2>
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[#2A2A2A]/50">
+        <h2 className="text-sm font-medium text-[#A1A1A6]">Widgets</h2>
 
         {/* Edit mode toggle (leaders only) */}
         {isLeader && (
@@ -414,10 +414,11 @@ export function SpaceSidebarConfigurable({
             onClick={() => setEditMode(!editMode)}
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+              // White focus ring (not gold)
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
               editMode
                 ? 'bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30'
-                : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                : 'text-[#A1A1A6] hover:text-white hover:bg-white/5'
             )}
           >
             {editMode ? (
@@ -439,10 +440,10 @@ export function SpaceSidebarConfigurable({
       <div className="flex-1 overflow-y-auto p-4">
         {slots.length === 0 ? (
           <div className="text-center py-8">
-            <Info className="w-8 h-8 mx-auto text-neutral-600 mb-3" />
-            <p className="text-sm text-neutral-400">No widgets added yet</p>
+            <Info className="w-8 h-8 mx-auto text-[#52525B] mb-3" />
+            <p className="text-sm text-[#A1A1A6]">No widgets added yet</p>
             {isLeader && (
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-[#818187] mt-1">
                 Click "Edit" to customize this sidebar
               </p>
             )}
@@ -505,7 +506,8 @@ export function SpaceSidebarConfigurable({
               'border-2 border-dashed border-[#FFD700]/30',
               'text-sm font-medium text-[#FFD700]',
               'hover:bg-[#FFD700]/5 transition-all duration-200',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+              // White focus ring (not gold)
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
             )}
           >
             <Plus className="w-4 h-4" />

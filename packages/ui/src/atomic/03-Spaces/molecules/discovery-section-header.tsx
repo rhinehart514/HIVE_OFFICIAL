@@ -49,7 +49,7 @@ export function DiscoverySectionHeader({
 
   const ViewAllContent = () => (
     <motion.span
-      className="flex items-center gap-1.5 text-sm text-neutral-400 hover:text-gold-500 transition-colors group/link"
+      className="flex items-center gap-1.5 text-sm text-[#A1A1A6] hover:text-[#FFD700] transition-colors group/link"
       whileHover={shouldReduceMotion ? {} : { x: 2 }}
       transition={springPresets.snappy}
     >
@@ -62,13 +62,13 @@ export function DiscoverySectionHeader({
     <div className={cn('flex items-center justify-between mb-5', className)}>
       <div className="flex items-center gap-3">
         {icon && (
-          <div className="w-10 h-10 rounded-xl bg-gold-500/10 border border-gold-500/20 flex items-center justify-center">
-            <span className="text-gold-500">{icon}</span>
+          <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 border border-[#FFD700]/20 flex items-center justify-center">
+            <span className="text-[#FFD700]">{icon}</span>
           </div>
         )}
         <div>
           <h2 className="text-lg font-semibold text-white">{title}</h2>
-          {subtitle && <p className="text-sm text-neutral-500">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-[#818187]">{subtitle}</p>}
         </div>
       </div>
 
@@ -77,14 +77,14 @@ export function DiscoverySectionHeader({
           {viewAllHref ? (
             <a
               href={viewAllHref}
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 rounded"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded"
             >
               <ViewAllContent />
             </a>
           ) : (
             <button
               onClick={onViewAll}
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 rounded"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded"
             >
               <ViewAllContent />
             </button>

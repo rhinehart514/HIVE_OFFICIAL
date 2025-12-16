@@ -137,17 +137,18 @@ function TabPill({ tab, isActive, onClick, isLeader }: TabPillProps) {
       className={cn(
         "relative px-4 py-2 text-sm font-medium whitespace-nowrap",
         "rounded-full transition-colors duration-200",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50",
+        // White focus ring (not gold)
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
         isActive
           ? "text-white"
-          : "text-neutral-400 hover:text-neutral-200"
+          : "text-[#A1A1A6] hover:text-[#FAFAFA]"
       )}
       aria-current={isActive ? "page" : undefined}
     >
       {/* Leader drag handle */}
       {isLeader && (
         <span className="absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 cursor-grab">
-          <GripVertical className="w-3 h-3 text-neutral-500" />
+          <GripVertical className="w-3 h-3 text-[#818187]" />
         </span>
       )}
 
@@ -305,11 +306,12 @@ export function SpaceTabBar({
             className={cn(
               "flex items-center justify-center",
               "w-11 h-11 ml-1 rounded-full",
-              "text-neutral-500 hover:text-neutral-300",
+              "text-[#818187] hover:text-[#A1A1A6]",
               "bg-white/5 hover:bg-white/10",
               "border border-white/[0.06] hover:border-white/[0.1]",
               "transition-colors duration-200",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+              // White focus ring (not gold)
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
             )}
             aria-label="Add new tab"
           >
@@ -340,10 +342,11 @@ export function SpaceTabBar({
           className={cn(
             "flex items-center justify-center",
             "w-11 h-11 ml-2 rounded-full flex-shrink-0",
-            "text-neutral-500 hover:text-neutral-300",
+            "text-[#818187] hover:text-[#A1A1A6]",
             "hover:bg-white/5",
             "transition-colors duration-200",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+            // White focus ring (not gold)
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
           )}
           aria-label="Space settings"
         >

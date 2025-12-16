@@ -280,7 +280,8 @@ export function SpaceEmptyState({
                   size === 'sm' ? 'text-xs' : 'text-sm',
                   'font-medium',
                   'transition-colors duration-150',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50'
+                  // White focus ring (not gold)
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
                 )}
               >
                 {action.icon || <Plus className="h-4 w-4" />}

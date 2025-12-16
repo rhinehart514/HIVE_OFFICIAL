@@ -53,16 +53,16 @@ export interface MobileInlineSectionProps {
 
 const PRIORITY_STYLES: Record<number, { header: string; icon: string }> = {
   1: {
-    header: 'text-neutral-50',
-    icon: 'text-gold-400',
+    header: 'text-[#FAFAFA]',
+    icon: 'text-[#FFD700]',
   },
   2: {
-    header: 'text-neutral-100',
-    icon: 'text-neutral-400',
+    header: 'text-[#FAFAFA]',
+    icon: 'text-[#A1A1A6]',
   },
   3: {
-    header: 'text-neutral-200',
-    icon: 'text-neutral-500',
+    header: 'text-[#A1A1A6]',
+    icon: 'text-[#818187]',
   },
 };
 
@@ -107,7 +107,8 @@ export function MobileInlineSection({
             'px-4 py-3',
             'text-left',
             'hover:bg-white/[0.02] transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-inset'
+            // White focus ring (not gold)
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-inset'
           )}
           aria-expanded={isExpanded}
         >
@@ -122,7 +123,7 @@ export function MobileInlineSection({
                 {title}
               </div>
               {subtitle && (
-                <div className="text-xs text-neutral-500 truncate">
+                <div className="text-xs text-[#818187] truncate">
                   {subtitle}
                 </div>
               )}
@@ -131,14 +132,14 @@ export function MobileInlineSection({
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {badge && (
-              <span className="text-xs text-neutral-400 bg-neutral-800/60 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-[#A1A1A6] bg-[#1A1A1A]/60 px-2 py-0.5 rounded-full">
                 {badge}
               </span>
             )}
             <motion.span
               variants={chevronRotateVariants}
               animate={isExpanded ? 'expanded' : 'collapsed'}
-              className="text-neutral-500"
+              className="text-[#818187]"
             >
               <ChevronDown className="h-4 w-4" />
             </motion.span>
@@ -186,11 +187,11 @@ export function MobileAboutSection({
       {...props}
     >
       {description ? (
-        <p className="text-sm text-neutral-300 leading-relaxed">
+        <p className="text-sm text-[#A1A1A6] leading-relaxed">
           {description}
         </p>
       ) : (
-        <p className="text-sm text-neutral-500 italic">
+        <p className="text-sm text-[#818187] italic">
           No description yet
         </p>
       )}
@@ -223,19 +224,19 @@ export function MobileToolsSection({
               className={cn(
                 'inline-flex items-center gap-1.5',
                 'px-3 py-1.5 rounded-lg',
-                'bg-neutral-800/50 hover:bg-neutral-700/50',
-                'text-xs text-neutral-200',
+                'bg-[#1A1A1A]/50 hover:bg-[#242424]/50',
+                'text-xs text-[#FAFAFA]',
                 'transition-colors duration-150'
               )}
             >
-              {tool.icon && <span className="text-neutral-400">{tool.icon}</span>}
+              {tool.icon && <span className="text-[#A1A1A6]">{tool.icon}</span>}
               {tool.name}
-              <ChevronRight className="h-3 w-3 text-neutral-500" />
+              <ChevronRight className="h-3 w-3 text-[#818187]" />
             </button>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-neutral-500 italic">
+        <p className="text-sm text-[#818187] italic">
           No tools available
         </p>
       )}

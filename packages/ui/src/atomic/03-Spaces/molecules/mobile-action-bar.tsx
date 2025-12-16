@@ -265,7 +265,7 @@ function QuickActionPopover({
               </span>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[#A1A1A6] hover:text-white hover:bg-white/5 transition-colors"
                 aria-label="Close menu"
               >
                 <X className="w-4 h-4" />
@@ -288,7 +288,8 @@ function QuickActionPopover({
                     'w-full flex items-center gap-3 px-3 py-3 rounded-xl',
                     'text-left transition-colors',
                     'hover:bg-white/5 active:bg-white/10',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                    // White focus ring (not gold)
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
                   )}
                   role="menuitem"
                 >
@@ -304,7 +305,7 @@ function QuickActionPopover({
                     <div className="text-sm font-medium text-white">
                       {action.label}
                     </div>
-                    <div className="text-xs text-neutral-500">
+                    <div className="text-xs text-[#818187]">
                       {action.description}
                     </div>
                   </div>
@@ -314,7 +315,7 @@ function QuickActionPopover({
 
             {/* Leader hint */}
             {!isLeader && (
-              <div className="px-4 py-2 bg-neutral-800/50 text-xs text-neutral-500 text-center">
+              <div className="px-4 py-2 bg-[#1A1A1A]/50 text-xs text-[#818187] text-center">
                 Leaders can create events and announcements
               </div>
             )}
@@ -391,8 +392,8 @@ export function MobileActionBar({
       <nav
         className={cn(
           'fixed bottom-0 left-0 right-0 z-40',
-          'bg-neutral-900/95 backdrop-blur-md',
-          'border-t border-neutral-800',
+          'bg-[#141414]/95 backdrop-blur-md',
+          'border-t border-[#2A2A2A]',
           'pb-safe', // Safe area for notched devices
           className
         )}
@@ -417,11 +418,12 @@ export function MobileActionBar({
                   'relative flex flex-col items-center justify-center',
                   'min-w-[56px] min-h-[44px] py-2 px-2',
                   'rounded-lg transition-colors duration-200',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+                  // White focus ring (not gold)
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
                   // Active/inactive states
                   isActive
                     ? 'text-[#FFD700]'
-                    : 'text-neutral-400 active:text-neutral-200 active:bg-white/5'
+                    : 'text-[#A1A1A6] active:text-[#FAFAFA] active:bg-white/5'
                 )}
                 aria-label={ariaLabel}
                 aria-pressed={isActive}
@@ -473,10 +475,11 @@ export function MobileActionBar({
                 'relative flex flex-col items-center justify-center',
                 'min-w-[56px] min-h-[44px] py-2 px-2',
                 'rounded-lg transition-all duration-200',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+                // White focus ring (not gold)
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
                 quickActionsOpen
                   ? 'text-[#FFD700] bg-[#FFD700]/10'
-                  : 'text-neutral-400 active:text-neutral-200 active:bg-white/5',
+                  : 'text-[#A1A1A6] active:text-[#FAFAFA] active:bg-white/5',
                 isLongPressing && 'scale-110'
               )}
               aria-label="Quick actions"

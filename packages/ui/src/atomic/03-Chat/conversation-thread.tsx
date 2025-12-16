@@ -157,7 +157,7 @@ export function EmptyChatState({
                   'bg-[#141414] hover:bg-[#1A1A1A]',
                   'transition-all duration-150',
                   'hover:border-[#2A2A2A]',
-                  'focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30'
+                  'focus:outline-none focus:ring-2 focus:ring-white/20'
                 )}
               >
                 <div className="flex items-center justify-between gap-2">

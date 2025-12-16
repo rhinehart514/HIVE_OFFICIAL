@@ -98,11 +98,11 @@ export function SidebarToolSlot({
       transition={springTransition}
       className={cn(
         'rounded-xl overflow-hidden transition-all duration-200',
-        'bg-neutral-900/80 border',
+        'bg-[#141414]/80 border',
         isEditMode
           ? 'border-[#FFD700]/30 shadow-[0_0_12px_rgba(255,215,0,0.1)]'
-          : 'border-neutral-800/50',
-        isHovered && !isEditMode && 'border-neutral-700/50',
+          : 'border-[#2A2A2A]/50',
+        isHovered && !isEditMode && 'border-[#3A3A3A]/50',
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -112,8 +112,8 @@ export function SidebarToolSlot({
       <div
         className={cn(
           'flex items-center gap-2 px-3 py-2.5',
-          'border-b border-neutral-800/50',
-          !slot.collapsed && 'bg-neutral-900/50'
+          'border-b border-[#2A2A2A]/50',
+          !slot.collapsed && 'bg-[#141414]/50'
         )}
       >
         {/* Drag handle (edit mode only) */}
@@ -122,8 +122,9 @@ export function SidebarToolSlot({
             {...dragHandleProps}
             className={cn(
               'flex-shrink-0 p-1 -ml-1 rounded cursor-grab active:cursor-grabbing',
-              'text-neutral-500 hover:text-neutral-300 hover:bg-white/5',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+              'text-[#818187] hover:text-[#A1A1A6] hover:bg-white/5',
+              // White focus ring (not gold)
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
             )}
             aria-label="Drag to reorder"
           >
@@ -136,7 +137,8 @@ export function SidebarToolSlot({
           onClick={onToggleCollapse}
           className={cn(
             'flex-1 flex items-center gap-2 min-w-0 text-left',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40 rounded'
+            // White focus ring (not gold)
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded'
           )}
           aria-expanded={!slot.collapsed}
         >
@@ -144,9 +146,9 @@ export function SidebarToolSlot({
             {slot.name}
           </span>
           {slot.collapsed ? (
-            <ChevronDown className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+            <ChevronDown className="w-4 h-4 text-[#818187] flex-shrink-0" />
           ) : (
-            <ChevronUp className="w-4 h-4 text-neutral-500 flex-shrink-0" />
+            <ChevronUp className="w-4 h-4 text-[#818187] flex-shrink-0" />
           )}
         </button>
 
@@ -163,8 +165,9 @@ export function SidebarToolSlot({
               }}
               className={cn(
                 'p-1.5 rounded-lg',
-                'text-neutral-500 hover:text-[#FFD700] hover:bg-[#FFD700]/10',
-                'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                'text-[#818187] hover:text-[#FFD700] hover:bg-[#FFD700]/10',
+                // White focus ring (not gold)
+                'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
               )}
               aria-label={`Configure ${slot.name}`}
             >
@@ -183,7 +186,8 @@ export function SidebarToolSlot({
               }}
               className={cn(
                 'p-1.5 rounded-lg',
-                'text-neutral-500 hover:text-red-400 hover:bg-red-400/10',
+                'text-[#818187] hover:text-red-400 hover:bg-red-400/10',
+                // Red focus ring for danger action is acceptable
                 'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/40'
               )}
               aria-label={`Remove ${slot.name}`}
@@ -209,7 +213,7 @@ export function SidebarToolSlot({
               onClick={onClick}
             >
               {children || (
-                <div className="text-sm text-neutral-500 italic">
+                <div className="text-sm text-[#818187] italic">
                   Loading tool content...
                 </div>
               )}
