@@ -104,6 +104,21 @@ export type {
   ChatMessageReaction,
   InlineComponentData
 } from "./domain/spaces/entities/chat-message";
+
+// Inline Components (for chat-first component creation)
+export { InlineComponent } from "./domain/spaces/entities/inline-component";
+export type {
+  InlineComponentType,
+  PollConfig,
+  CountdownConfig,
+  RsvpConfig,
+  CustomConfig,
+  ComponentConfig,
+  SharedState,
+  ParticipantRecord,
+  AggregationDelta,
+  ComponentDisplayState,
+} from "./domain/spaces/entities/inline-component";
 export { RitualId } from "./domain/rituals/value-objects/ritual-id.value";
 export { EnhancedRitual } from "./domain/rituals/aggregates/enhanced-ritual";
 export { FeedItem } from "./domain/feed/feed-item";

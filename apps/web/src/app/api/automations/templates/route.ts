@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   getAllAutomationTemplates as getAllTemplates,
-  getTemplatesByCategory,
+  getAutomationTemplatesByCategory as getTemplatesByCategory,
   getAutomationTemplateById as getTemplateById,
-  getTemplateCategories,
+  getAutomationTemplateCategories as getTemplateCategories,
   type AutomationTemplate,
 } from "@hive/core";
 

@@ -23,7 +23,8 @@ interface Logger {
   debug: (message: string, context?: LogContext) => void;
   info: (message: string, context?: LogContext) => void;
   warn: (message: string, context?: LogContext) => void;
-  error: (message: string, context?: LogContext, error?: Error) => void;
+  /** Error logger - accepts context and/or error object. If second arg is Error, it's treated as the error. */
+  error: (message: string, contextOrError?: LogContext | Error, error?: Error) => void;
 }
 
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -112,16 +113,27 @@ function createLogger(): Logger {
       console.warn(formatLog('warn', message, sanitizeContext(context)));
     },
 
-    error(message: string, context?: LogContext, error?: Error) {
+    error(message: string, contextOrError?: LogContext | Error, error?: Error) {
+      // Handle case where second arg is an Error object
+      let context: LogContext | undefined;
+      let errorObj: Error | undefined = error;
+
+      if (contextOrError instanceof Error) {
+        errorObj = contextOrError;
+        context = undefined;
+      } else {
+        context = contextOrError;
+      }
+
       const sanitizedContext = sanitizeContext(context);
       console.error(formatLog('error', message, sanitizedContext));
 
-      if (error) {
-        console.error('Stack trace:', error.stack);
+      if (errorObj) {
+        console.error('Stack trace:', errorObj.stack);
       }
 
       // Send to server for monitoring
-      sendToServer('error', message, sanitizedContext, error);
+      sendToServer('error', message, sanitizedContext, errorObj);
     },
   };
 }
@@ -140,7 +152,10 @@ export type SecurityEventType =
   | 'admin_access'
   | 'invalid_token'
   | 'unauthorized_access'
-  | 'bypass_attempt';
+  | 'bypass_attempt'
+  | 'auth'
+  | 'session_expired'
+  | 'csrf_failure';
 
 /**
  * Security event details interface

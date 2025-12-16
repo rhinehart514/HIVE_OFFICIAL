@@ -190,11 +190,11 @@ export async function comprehensiveSecurityMiddleware(
       }
 
       sessionContext = sessionResult.context;
-      
+
       // Elevate security level based on session context
-      if (sessionContext.securityLevel === 'elevated') {
+      if (sessionContext?.securityLevel === 'elevated') {
         securityLevel = 'elevated';
-      } else if (sessionContext.securityLevel === 'restricted') {
+      } else if (sessionContext?.securityLevel === 'restricted') {
         securityLevel = 'restricted';
       }
     }

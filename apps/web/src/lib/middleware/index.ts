@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix ApiHandler type compatibility
 /**
  * HIVE Platform Middleware
  *
@@ -66,7 +64,7 @@ export {
 // Admin middleware removed for HiveLab-only launch
 
 // Combined middleware wrappers
-import { withAuth, withAdminAuth, type AuthenticatedHandler } from './auth';
+import { withAuth, withAdminAuth, type AuthenticatedHandler, type AuthenticatedRequest } from './auth';
 import { withErrorHandling, type ApiHandler } from './error-handler';
 import { withResponse, type ResponseFormatter } from './response';
 import { type z } from 'zod';
@@ -256,10 +254,12 @@ function withRateLimit(
  * Replaces 15+ lines of boilerplate in most protected routes
  * Rate limiting is automatic (100 requests/min per user)
  * CSRF protection is automatic for state-changing methods (POST/PUT/PATCH/DELETE)
+ *
+ * Handlers receive AuthenticatedRequest which has user info attached after auth middleware runs.
  */
 export function withAuthAndErrors<T = RouteParams>(
   handler: (
-    request: Request,
+    request: AuthenticatedRequest,
     context: T,
     respond: typeof ResponseFormatter
   ) => Promise<Response>,
@@ -267,8 +267,8 @@ export function withAuthAndErrors<T = RouteParams>(
 ): ApiHandler {
   let baseHandler = withErrorHandling(
     withAuth(
-      withResponse(handler as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
-    )
+      withResponse(handler as unknown as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
+    ) as unknown as ApiHandler
   );
 
   // Apply CSRF protection unless explicitly disabled
@@ -288,10 +288,12 @@ export function withAuthAndErrors<T = RouteParams>(
  * Admin routes pattern: Admin Auth + CSRF + Strict Rate Limiting + Error Handling + Response Formatting
  * Uses stricter rate limits (50 requests/min) for admin operations
  * CSRF protection is always enabled for admin routes
+ *
+ * Handlers receive AuthenticatedRequest which has user info attached after auth middleware runs.
  */
 export function withAdminAuthAndErrors<T = RouteParams>(
   handler: (
-    request: Request,
+    request: AuthenticatedRequest,
     context: T,
     respond: typeof ResponseFormatter
   ) => Promise<Response>,
@@ -299,8 +301,8 @@ export function withAdminAuthAndErrors<T = RouteParams>(
 ): ApiHandler {
   let baseHandler = withErrorHandling(
     withAdminAuth(
-      withResponse(handler as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
-    )
+      withResponse(handler as unknown as (req: Request, ctx: unknown, respond: typeof ResponseFormatter) => Promise<Response>)
+    ) as unknown as ApiHandler
   );
 
   // Always apply CSRF protection for admin routes (no skip option)
@@ -327,7 +329,7 @@ export function withErrors<T>(
   options?: MiddlewareOptions
 ): ApiHandler {
   const baseHandler = withErrorHandling(
-    withResponse(handler)
+    withResponse(handler) as ApiHandler
   );
 
   // Apply rate limiting for public routes too
@@ -400,9 +402,9 @@ export function withValidation<TSchema, TContext>(
 ): ApiHandler {
   const baseHandler = withErrorHandling(async (request, context) => {
     const { validateRequestBody } = await import('./error-handler');
-    const body = await validateRequestBody(request, schema);
-    return withResponse(
-      async (req, ctx, respond) => handler(req, ctx as TContext, body, respond)
+    const body = await validateRequestBody(request as Request, schema);
+    return await withResponse(
+      async (req: Request, ctx: unknown, respond) => handler(req, ctx as TContext, body, respond)
     )(request, context);
   });
 
@@ -417,11 +419,13 @@ export function withValidation<TSchema, TContext>(
  * Full stack middleware: Auth + Validation + Rate Limiting + Error Handling + Response
  * For protected routes that need request validation
  * Rate limiting is inherited from withAuthAndErrors (100 requests/min)
+ *
+ * Handlers receive AuthenticatedRequest which has user info attached after auth middleware runs.
  */
 export function withAuthValidationAndErrors<TSchema, TContext>(
   schema: z.ZodSchema<TSchema>,
   handler: (
-    request: Request,
+    request: AuthenticatedRequest,
     context: TContext,
     body: TSchema,
     respond: typeof ResponseFormatter
@@ -431,7 +435,7 @@ export function withAuthValidationAndErrors<TSchema, TContext>(
   // Delegates to withAuthAndErrors which already includes rate limiting
   return withAuthAndErrors(async (request, context, respond) => {
     const { validateRequestBody } = await import('./error-handler');
-    const body = await validateRequestBody(request, schema);
+    const body = await validateRequestBody(request as Request, schema);
     return handler(request, context as TContext, body, respond);
   }, options);
 }

@@ -1269,9 +1269,9 @@ function SpaceDetailContent() {
         automations={automations.map(a => ({
           id: a.id,
           name: a.name,
-          trigger: a.trigger,
+          trigger: a.trigger.type,
           enabled: a.enabled,
-          runCount: a.runCount,
+          runCount: a.stats?.timesTriggered,
         }))}
         isLeader={isLeader}
         onOpenTemplates={() => setShowTemplates(true)}

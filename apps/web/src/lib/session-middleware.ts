@@ -68,6 +68,16 @@ export interface SessionContext {
   isAdmin: boolean;
   claims: SessionClaims;
   sessionId?: string;
+  /** Whether the session is authenticated */
+  isAuthenticated: boolean;
+  /** Security level of the session */
+  securityLevel?: 'safe' | 'elevated' | 'restricted';
+  /** Whether the session was rotated in this request */
+  rotated?: boolean;
+  /** Nested session info for backwards compatibility */
+  session?: {
+    sessionId?: string;
+  };
 }
 
 /**
@@ -84,6 +94,8 @@ export interface SessionMiddlewareOptions {
   allowGracePeriod?: boolean;
   /** Grace period in seconds (default: 300 = 5 minutes) */
   gracePeriodSeconds?: number;
+  /** Require elevated security level (e.g. for sensitive operations) */
+  requireElevated?: boolean;
 }
 
 /**
@@ -158,6 +170,10 @@ export async function sessionMiddleware(
                 campusId: verifyResult.claims!.campusId || 'ub-buffalo',
                 isAdmin: verifyResult.claims!.isAdmin || false,
                 claims: verifyResult.claims!,
+                sessionId: verifyResult.claims!.sessionId,
+                isAuthenticated: true,
+                securityLevel: 'safe',
+                session: { sessionId: verifyResult.claims!.sessionId },
               },
             };
           }
@@ -208,6 +224,9 @@ export async function sessionMiddleware(
       isAdmin: claims.isAdmin || false,
       claims,
       sessionId: claims.sessionId,
+      isAuthenticated: true,
+      securityLevel: 'safe',
+      session: { sessionId: claims.sessionId },
     };
 
     return {
