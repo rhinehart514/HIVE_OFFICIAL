@@ -114,3 +114,11 @@ export {
   SpaceBreadcrumb,
   type SpaceBreadcrumbProps,
 } from './space-breadcrumb';
+
+// Featured Tool Slot (Dec 2025 - HiveLab tool in conversation)
+export {
+  FeaturedToolSlot,
+  FeaturedToolEmpty,
+  type FeaturedToolSlotProps,
+  type FeaturedToolEmptyProps,
+} from './featured-tool-slot';

@@ -3,23 +3,21 @@
 /**
  * BoardTabBar - Discord-style channel/board selector for Spaces
  *
- * A horizontal tab bar for switching between boards (channels) within a space.
- * Follows the design system with gold underline for active state,
- * unread badges, and [+] button for leaders.
- *
- * ## Visual Language
- * - Gold underline for active board
- * - Unread count badges
+ * Design Direction:
+ * - White underline for active board (not gold)
+ * - Gold unread count badges
  * - Horizontal scroll on mobile
  * - Icons per board type (#general, event, topic)
+ * - Height: 44px
  *
  * @author HIVE Frontend Team
- * @version 1.0.0
+ * @version 2.0.0 - Dark-first design update
  */
 
-import * as React from 'react';
 import { motion } from 'framer-motion';
 import { Hash, Calendar, MessageSquare, Plus } from 'lucide-react';
+import * as React from 'react';
+
 import { cn } from '../../../lib/utils';
 
 // ============================================================
@@ -99,7 +97,8 @@ export function BoardTabBar({
   return (
     <div
       className={cn(
-        'relative border-b border-neutral-800',
+        // Dark-first design: Subtle border
+        'relative border-b border-[#2A2A2A]',
         className
       )}
     >
@@ -123,10 +122,13 @@ export function BoardTabBar({
               className={cn(
                 'relative flex items-center gap-2 px-3 py-2 rounded-lg',
                 'text-sm font-medium whitespace-nowrap transition-all duration-200',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+                // White focus ring (not gold)
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
                 isActive
-                  ? 'text-[#FFD700]'
-                  : 'text-neutral-400 hover:text-neutral-200 hover:bg-white/5'
+                  // Active: white text (not gold)
+                  ? 'text-[#FAFAFA]'
+                  // Inactive: subtle text, hover to primary
+                  : 'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]'
               )}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`${board.type} board: ${board.name}${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
@@ -134,12 +136,12 @@ export function BoardTabBar({
               <Icon className="w-4 h-4 flex-shrink-0" />
               <span>{board.name}</span>
 
-              {/* Unread badge */}
+              {/* Unread badge - gold for visibility */}
               {unreadCount > 0 && !isActive && (
                 <span
                   className={cn(
                     'ml-1 px-1.5 py-0.5 text-xs rounded-full',
-                    'bg-[#FFD700] text-black font-semibold',
+                    'bg-[#FFD700] text-[#0A0A0A] font-semibold',
                     'min-w-[18px] text-center'
                   )}
                 >
@@ -147,11 +149,11 @@ export function BoardTabBar({
                 </span>
               )}
 
-              {/* Active indicator line */}
+              {/* Active indicator line - white (not gold) */}
               {isActive && (
                 <motion.div
                   layoutId="board-tab-indicator"
-                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FFD700] rounded-full"
+                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FAFAFA] rounded-full"
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
               )}
@@ -167,8 +169,8 @@ export function BoardTabBar({
             onClick={onCreateBoard}
             className={cn(
               'flex items-center justify-center p-2 rounded-lg',
-              'text-neutral-500 hover:text-neutral-300 hover:bg-white/5',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+              'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
             )}
             aria-label="Create new board"
           >
@@ -178,8 +180,8 @@ export function BoardTabBar({
       </div>
 
       {/* Fade edges for scroll indication */}
-      <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black to-transparent pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-black to-transparent pointer-events-none" />
+      <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#0A0A0A] to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none" />
     </div>
   );
 }
