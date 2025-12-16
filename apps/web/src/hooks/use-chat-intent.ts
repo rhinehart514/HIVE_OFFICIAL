@@ -17,7 +17,7 @@
  * ```
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -154,6 +154,18 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // P2 FIX: Track abort controllers to cancel previous requests on new ones
+  const checkIntentControllerRef = useRef<AbortController | null>(null);
+  const createComponentControllerRef = useRef<AbortController | null>(null);
+
+  // P2 FIX: Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      checkIntentControllerRef.current?.abort();
+      createComponentControllerRef.current?.abort();
+    };
+  }, []);
+
   /**
    * Check if a message contains a component intent
    */
@@ -168,6 +180,11 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
         return { hasIntent: false, intentType: 'none' };
       }
 
+      // P2 FIX: Cancel previous request to avoid race condition
+      checkIntentControllerRef.current?.abort();
+      const controller = new AbortController();
+      checkIntentControllerRef.current = controller;
+
       setIsLoading(true);
       setError(null);
 
@@ -176,6 +193,7 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          signal: controller.signal,
           body: JSON.stringify({
             message,
             boardId,
@@ -191,11 +209,19 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
         const data = await response.json();
         return data as IntentCheckResult;
       } catch (err) {
+        // P2 FIX: Handle abort gracefully - not an error, just superseded
+        if (err instanceof Error && err.name === 'AbortError') {
+          return { hasIntent: false, intentType: 'none' };
+        }
         const errorMessage = err instanceof Error ? err.message : 'Intent check failed';
         setError(errorMessage);
         return { hasIntent: false, intentType: 'none', error: errorMessage };
       } finally {
-        setIsLoading(false);
+        // P2 FIX: Only update loading if this is still the current request
+        if (checkIntentControllerRef.current === controller) {
+          setIsLoading(false);
+          checkIntentControllerRef.current = null;
+        }
       }
     },
     [spaceId]
@@ -214,6 +240,11 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
         return { success: false, error: 'Missing required parameters' };
       }
 
+      // P2 FIX: Cancel previous request to avoid race condition
+      createComponentControllerRef.current?.abort();
+      const controller = new AbortController();
+      createComponentControllerRef.current = controller;
+
       setIsLoading(true);
       setError(null);
 
@@ -222,6 +253,7 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
+          signal: controller.signal,
           body: JSON.stringify({
             message,
             boardId,
@@ -252,11 +284,19 @@ export function useChatIntent(spaceId: string): UseChatIntentReturn {
           error: data.confirmationMessage || data.error || 'Component not created',
         };
       } catch (err) {
+        // P2 FIX: Handle abort gracefully
+        if (err instanceof Error && err.name === 'AbortError') {
+          return { success: false, error: 'Request cancelled' };
+        }
         const errorMessage = err instanceof Error ? err.message : 'Component creation failed';
         setError(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
-        setIsLoading(false);
+        // P2 FIX: Only update loading if this is still the current request
+        if (createComponentControllerRef.current === controller) {
+          setIsLoading(false);
+          createComponentControllerRef.current = null;
+        }
       }
     },
     [spaceId]

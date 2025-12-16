@@ -1,6 +1,4 @@
-// @ts-nocheck
-// TODO: Fix timestamp arithmetic types
-import { type Database, getDatabase, ref, push, set, onValue, off, serverTimestamp, type DataSnapshot } from 'firebase/database';
+import { type Database, getDatabase, ref, push, set, onValue, serverTimestamp, runTransaction, type DataSnapshot, type Unsubscribe } from 'firebase/database';
 import { app } from '@hive/core';
 import { logger } from './structured-logger';
 
@@ -75,7 +73,7 @@ export interface TypingIndicator {
 
 export class FirebaseRealtimeService {
   private database: Database;
-  private listeners: Map<string, (() => void)[]> = new Map();
+  private listeners: Map<string, Unsubscribe[]> = new Map();
 
   constructor() {
     this.database = getDatabase(app);
@@ -329,30 +327,35 @@ export class FirebaseRealtimeService {
    */
   listenToChannel(channel: string, callback: (messages: RealtimeMessage[]) => void): () => void {
     const channelRef = ref(this.database, `channels/${channel}/messages`);
-    
-    const listener = onValue(channelRef, (snapshot: DataSnapshot) => {
+
+    // onValue returns an unsubscribe function
+    const unsubscribe = onValue(channelRef, (snapshot: DataSnapshot) => {
       const messages: RealtimeMessage[] = [];
-      snapshot.forEach((childSnapshot) => {
-        messages.push(childSnapshot.val());
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        messages.push(childSnapshot.val() as RealtimeMessage);
       });
-      
-      // Sort by timestamp
-      messages.sort((a, b) => (a.metadata.timestamp || 0) - (b.metadata.timestamp || 0));
+
+      // Sort by timestamp (handle number | object for ServerTimestamp)
+      messages.sort((a, b) => {
+        const aTime = typeof a.metadata.timestamp === 'number' ? a.metadata.timestamp : 0;
+        const bTime = typeof b.metadata.timestamp === 'number' ? b.metadata.timestamp : 0;
+        return aTime - bTime;
+      });
       callback(messages);
     });
 
-    // Store listener for cleanup
+    // Store unsubscribe function for cleanup
     if (!this.listeners.has(channel)) {
       this.listeners.set(channel, []);
     }
-    this.listeners.get(channel)!.push(listener);
+    this.listeners.get(channel)!.push(unsubscribe);
 
     // Return cleanup function
     return () => {
-      off(channelRef, 'value', listener);
+      unsubscribe();
       const channelListeners = this.listeners.get(channel);
       if (channelListeners) {
-        const index = channelListeners.indexOf(listener);
+        const index = channelListeners.indexOf(unsubscribe);
         if (index > -1) {
           channelListeners.splice(index, 1);
         }
@@ -366,29 +369,33 @@ export class FirebaseRealtimeService {
   listenToChat(spaceId: string, callback: (messages: ChatMessage[]) => void): () => void {
     const chatRef = ref(this.database, `chats/${spaceId}/messages`);
 
-    const listener = onValue(chatRef, (snapshot: DataSnapshot) => {
+    const unsubscribe = onValue(chatRef, (snapshot: DataSnapshot) => {
       const messages: ChatMessage[] = [];
-      snapshot.forEach((childSnapshot) => {
-        messages.push(childSnapshot.val());
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        messages.push(childSnapshot.val() as ChatMessage);
       });
 
-      // Sort by timestamp
-      messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      // Sort by timestamp (handle number | object for ServerTimestamp)
+      messages.sort((a, b) => {
+        const aTime = typeof a.timestamp === 'number' ? a.timestamp : 0;
+        const bTime = typeof b.timestamp === 'number' ? b.timestamp : 0;
+        return aTime - bTime;
+      });
       callback(messages);
     });
 
-    // Store listener for cleanup
+    // Store unsubscribe for cleanup
     const listenerKey = `chat:${spaceId}`;
     if (!this.listeners.has(listenerKey)) {
       this.listeners.set(listenerKey, []);
     }
-    this.listeners.get(listenerKey)!.push(listener);
+    this.listeners.get(listenerKey)!.push(unsubscribe);
 
     return () => {
-      off(chatRef, 'value', listener);
+      unsubscribe();
       const chatListeners = this.listeners.get(listenerKey);
       if (chatListeners) {
-        const index = chatListeners.indexOf(listener);
+        const index = chatListeners.indexOf(unsubscribe);
         if (index > -1) {
           chatListeners.splice(index, 1);
         }
@@ -408,23 +415,27 @@ export class FirebaseRealtimeService {
   ): () => void {
     const boardChatRef = ref(this.database, `chats/${spaceId}/boards/${boardId}/messages`);
 
-    const listener = onValue(
+    const unsubscribe = onValue(
       boardChatRef,
       (snapshot: DataSnapshot) => {
         const messages: ChatMessage[] = [];
-        snapshot.forEach((childSnapshot) => {
-          const msg = childSnapshot.val();
+        snapshot.forEach((childSnapshot: DataSnapshot) => {
+          const msg = childSnapshot.val() as ChatMessage;
           messages.push({
             ...msg,
-            id: msg.id || childSnapshot.key,
+            id: msg.id || childSnapshot.key || '',
           });
         });
 
-        // Sort by timestamp (oldest first for chat)
-        messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        // Sort by timestamp (oldest first for chat, handle number | object)
+        messages.sort((a, b) => {
+          const aTime = typeof a.timestamp === 'number' ? a.timestamp : 0;
+          const bTime = typeof b.timestamp === 'number' ? b.timestamp : 0;
+          return aTime - bTime;
+        });
         callback(messages);
       },
-      (error) => {
+      (error: Error) => {
         logger.error('RTDB chat board listener error', {
           spaceId,
           boardId,
@@ -434,20 +445,20 @@ export class FirebaseRealtimeService {
       }
     );
 
-    // Store listener for cleanup
+    // Store unsubscribe for cleanup
     const listenerKey = `chat:${spaceId}:${boardId}`;
     if (!this.listeners.has(listenerKey)) {
       this.listeners.set(listenerKey, []);
     }
-    this.listeners.get(listenerKey)!.push(listener);
+    this.listeners.get(listenerKey)!.push(unsubscribe);
 
     logger.info('RTDB chat board listener started', { spaceId, boardId });
 
     return () => {
-      off(boardChatRef, 'value', listener);
+      unsubscribe();
       const chatListeners = this.listeners.get(listenerKey);
       if (chatListeners) {
-        const index = chatListeners.indexOf(listener);
+        const index = chatListeners.indexOf(unsubscribe);
         if (index > -1) {
           chatListeners.splice(index, 1);
         }
@@ -466,10 +477,12 @@ export class FirebaseRealtimeService {
   ): () => void {
     const typingRef = ref(this.database, `typing/${spaceId}/${boardId}`);
 
-    const listener = onValue(typingRef, (snapshot: DataSnapshot) => {
+    const unsubscribe = onValue(typingRef, (snapshot: DataSnapshot) => {
       const typing: Record<string, TypingIndicator> = {};
-      snapshot.forEach((childSnapshot) => {
-        typing[childSnapshot.key!] = childSnapshot.val();
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (childSnapshot.key) {
+          typing[childSnapshot.key] = childSnapshot.val() as TypingIndicator;
+        }
       });
 
       callback(typing);
@@ -479,13 +492,13 @@ export class FirebaseRealtimeService {
     if (!this.listeners.has(listenerKey)) {
       this.listeners.set(listenerKey, []);
     }
-    this.listeners.get(listenerKey)!.push(listener);
+    this.listeners.get(listenerKey)!.push(unsubscribe);
 
     return () => {
-      off(typingRef, 'value', listener);
+      unsubscribe();
       const typingListeners = this.listeners.get(listenerKey);
       if (typingListeners) {
-        const index = typingListeners.indexOf(listener);
+        const index = typingListeners.indexOf(unsubscribe);
         if (index > -1) {
           typingListeners.splice(index, 1);
         }
@@ -531,16 +544,16 @@ export class FirebaseRealtimeService {
    */
   listenToPresence(spaceId: string, callback: (presence: Record<string, PresenceData>) => void): () => void {
     const presenceRef = ref(this.database, 'presence');
-    
-    const listener = onValue(presenceRef, (snapshot: DataSnapshot) => {
+
+    const unsubscribe = onValue(presenceRef, (snapshot: DataSnapshot) => {
       const allPresence: Record<string, PresenceData> = {};
-      snapshot.forEach((childSnapshot) => {
-        const presenceData = childSnapshot.val();
-        if (presenceData.currentSpace === spaceId) {
-          allPresence[childSnapshot.key!] = presenceData;
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        const presenceData = childSnapshot.val() as PresenceData;
+        if (presenceData.currentSpace === spaceId && childSnapshot.key) {
+          allPresence[childSnapshot.key] = presenceData;
         }
       });
-      
+
       callback(allPresence);
     });
 
@@ -548,13 +561,13 @@ export class FirebaseRealtimeService {
     if (!this.listeners.has(listenerKey)) {
       this.listeners.set(listenerKey, []);
     }
-    this.listeners.get(listenerKey)!.push(listener);
+    this.listeners.get(listenerKey)!.push(unsubscribe);
 
     return () => {
-      off(presenceRef, 'value', listener);
+      unsubscribe();
       const presenceListeners = this.listeners.get(listenerKey);
       if (presenceListeners) {
-        const index = presenceListeners.indexOf(listener);
+        const index = presenceListeners.indexOf(unsubscribe);
         if (index > -1) {
           presenceListeners.splice(index, 1);
         }
@@ -567,13 +580,15 @@ export class FirebaseRealtimeService {
    */
   listenToTyping(spaceId: string, callback: (typing: Record<string, TypingIndicator>) => void): () => void {
     const typingRef = ref(this.database, `typing/${spaceId}`);
-    
-    const listener = onValue(typingRef, (snapshot: DataSnapshot) => {
+
+    const unsubscribe = onValue(typingRef, (snapshot: DataSnapshot) => {
       const typing: Record<string, TypingIndicator> = {};
-      snapshot.forEach((childSnapshot) => {
-        typing[childSnapshot.key!] = childSnapshot.val();
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        if (childSnapshot.key) {
+          typing[childSnapshot.key] = childSnapshot.val() as TypingIndicator;
+        }
       });
-      
+
       callback(typing);
     });
 
@@ -581,13 +596,13 @@ export class FirebaseRealtimeService {
     if (!this.listeners.has(listenerKey)) {
       this.listeners.set(listenerKey, []);
     }
-    this.listeners.get(listenerKey)!.push(listener);
+    this.listeners.get(listenerKey)!.push(unsubscribe);
 
     return () => {
-      off(typingRef, 'value', listener);
+      unsubscribe();
       const typingListeners = this.listeners.get(listenerKey);
       if (typingListeners) {
-        const index = typingListeners.indexOf(listener);
+        const index = typingListeners.indexOf(unsubscribe);
         if (index > -1) {
           typingListeners.splice(index, 1);
         }
@@ -603,16 +618,20 @@ export class FirebaseRealtimeService {
       const messagesRef = ref(this.database, `channels/${channel}/messages`);
       // In a production app, you'd use Firebase's query methods to limit and paginate
       // For now, we'll get all messages and limit client-side
-      
+
       return new Promise((resolve, reject) => {
         onValue(messagesRef, (snapshot: DataSnapshot) => {
           const messages: RealtimeMessage[] = [];
-          snapshot.forEach((childSnapshot) => {
-            messages.push(childSnapshot.val());
+          snapshot.forEach((childSnapshot: DataSnapshot) => {
+            messages.push(childSnapshot.val() as RealtimeMessage);
           });
-          
-          // Sort by timestamp and limit
-          messages.sort((a, b) => (b.metadata.timestamp || 0) - (a.metadata.timestamp || 0));
+
+          // Sort by timestamp and limit (handle number | object)
+          messages.sort((a, b) => {
+            const aTime = typeof a.metadata.timestamp === 'number' ? a.metadata.timestamp : 0;
+            const bTime = typeof b.metadata.timestamp === 'number' ? b.metadata.timestamp : 0;
+            return bTime - aTime;
+          });
           resolve(messages.slice(0, limit));
         }, reject, { onlyOnce: true });
       });
@@ -624,20 +643,25 @@ export class FirebaseRealtimeService {
 
   /**
    * Mark messages as read
+   * Uses Firebase transactions to prevent lost updates from concurrent reads
    */
   async markMessagesAsRead(channel: string, userId: string, messageIds: string[]): Promise<void> {
     try {
-      for (const messageId of messageIds) {
-        const readRef = ref(this.database, `channels/${channel}/messages/${messageId}/delivery/read`);
-        // Add userId to read array if not already present
-        // This is a simplified implementation - in production you'd use transactions
-        onValue(readRef, (snapshot) => {
-          const currentRead = snapshot.val() || [];
-          if (!currentRead.includes(userId)) {
-            set(readRef, [...currentRead, userId]);
-          }
-        }, { onlyOnce: true });
-      }
+      // Use Promise.all to mark all messages concurrently with atomic transactions
+      await Promise.all(
+        messageIds.map(async (messageId) => {
+          const readRef = ref(this.database, `channels/${channel}/messages/${messageId}/delivery/read`);
+          // Use transaction for atomic read-modify-write
+          await runTransaction(readRef, (currentRead) => {
+            const readArray = currentRead || [];
+            if (!readArray.includes(userId)) {
+              return [...readArray, userId];
+            }
+            // Return undefined to abort transaction (no change needed)
+            return undefined;
+          });
+        })
+      );
     } catch (error) {
       logger.error('Error marking messages as read', { error: { error: error instanceof Error ? error.message : String(error) }, channel, userId });
       throw error;
@@ -648,13 +672,20 @@ export class FirebaseRealtimeService {
    * Clean up all listeners
    */
   cleanup(): void {
-    this.listeners.forEach((listeners, _channel) => {
-      listeners.forEach(_listener => {
-        // The actual cleanup would depend on the channel type
-        // This is a simplified cleanup
+    this.listeners.forEach((unsubscribeFns, channel) => {
+      unsubscribeFns.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          logger.error('Error cleaning up listener', {
+            channel,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
       });
     });
     this.listeners.clear();
+    logger.info('All Firebase realtime listeners cleaned up');
   }
 }
 

@@ -1,8 +1,9 @@
 import { type NextRequest } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { checkSpacePermission } from '@/lib/space-permission-middleware';
-import { logger } from '@/lib/structured-logger';
+import { logger, logSecurityEvent } from '@/lib/structured-logger';
 import { verifySession, type SessionData } from '@/lib/session';
+import { sseConnectionRateLimit } from '@/lib/rate-limit-simple';
 
 /**
  * SSE endpoint for real-time chat message streaming
@@ -52,10 +53,47 @@ export async function GET(
     campusId: session.campusId,
   };
 
+  // Rate limit SSE connections to prevent DoS
+  const rateLimitResult = sseConnectionRateLimit.check(user.uid);
+  if (!rateLimitResult.success) {
+    logSecurityEvent('rate_limit', {
+      operation: 'sse_connection_blocked',
+      tags: {
+        userId: user.uid,
+        spaceId,
+        boardId: boardId || 'unknown',
+        retryAfter: rateLimitResult.retryAfter?.toString() || '60',
+      },
+    });
+    return new Response('Too Many Requests', {
+      status: 429,
+      headers: {
+        'Retry-After': rateLimitResult.retryAfter?.toString() || '60',
+        'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': rateLimitResult.resetTime.toString(),
+      },
+    });
+  }
+
   // Verify space access
   const permCheck = await checkSpacePermission(spaceId, user.uid, 'guest');
   if (!permCheck.hasPermission) {
     return new Response('Forbidden', { status: 403 });
+  }
+
+  // SECURITY: Enforce campus isolation - user can only access spaces in their campus
+  if (permCheck.space?.campusId && user.campusId && permCheck.space.campusId !== user.campusId) {
+    logSecurityEvent('auth', {
+      operation: 'cross_campus_access_blocked',
+      tags: {
+        userId: user.uid,
+        userCampusId: user.campusId,
+        spaceCampusId: permCheck.space.campusId,
+        spaceId,
+      },
+    });
+    return new Response('Forbidden - campus mismatch', { status: 403 });
   }
 
   logger.info('Chat SSE stream requested', {

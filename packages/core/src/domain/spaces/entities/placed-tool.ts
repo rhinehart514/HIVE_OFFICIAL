@@ -145,7 +145,8 @@ export class PlacedTool extends Entity<PlacedToolProps> {
   }
 
   private constructor(props: PlacedToolProps, id?: string) {
-    super(props, id || `placement_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    super(props, id || `placement_${crypto.randomUUID()}`);
   }
 
   /**

@@ -182,9 +182,10 @@ export class InlineComponent extends Entity<InlineComponentProps> {
   }
 
   private constructor(props: InlineComponentProps, id?: string) {
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
     super(
       props,
-      id || `comp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      id || `comp_${crypto.randomUUID()}`
     );
   }
 

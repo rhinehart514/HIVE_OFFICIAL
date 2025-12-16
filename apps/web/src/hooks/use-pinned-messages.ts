@@ -36,6 +36,9 @@ export function usePinnedMessages(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
+  // P2 FIX: Track in-flight pin/unpin operations to prevent double-click
+  const pinningRef = useRef<Set<string>>(new Set());
+  const unpinningRef = useRef<Set<string>>(new Set());
 
   // Fetch pinned messages
   const fetchPinnedMessages = useCallback(async () => {
@@ -95,7 +98,10 @@ export function usePinnedMessages(
 
   const pinMessage = useCallback(
     async (messageId: string) => {
-      if (!spaceId || !messageId) return;
+      // P2 FIX: Prevent double-click race condition
+      if (!spaceId || !messageId || pinningRef.current.has(messageId)) return;
+
+      pinningRef.current.add(messageId);
 
       try {
         const response = await fetch(
@@ -115,6 +121,8 @@ export function usePinnedMessages(
       } catch (err) {
         console.error("Error pinning message:", err);
         throw err;
+      } finally {
+        pinningRef.current.delete(messageId);
       }
     },
     [spaceId, fetchPinnedMessages]
@@ -122,7 +130,10 @@ export function usePinnedMessages(
 
   const unpinMessage = useCallback(
     async (messageId: string) => {
-      if (!spaceId || !messageId) return;
+      // P2 FIX: Prevent double-click race condition
+      if (!spaceId || !messageId || unpinningRef.current.has(messageId)) return;
+
+      unpinningRef.current.add(messageId);
 
       // Optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
@@ -144,6 +155,8 @@ export function usePinnedMessages(
         // Refresh to get correct state
         await fetchPinnedMessages();
         throw err;
+      } finally {
+        unpinningRef.current.delete(messageId);
       }
     },
     [spaceId, fetchPinnedMessages]

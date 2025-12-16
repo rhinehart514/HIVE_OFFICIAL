@@ -76,7 +76,8 @@ export class Tab extends Entity<TabProps> {
   }
 
   private constructor(props: TabProps, id?: string) {
-    super(props, id || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
+    super(props, id || `tab_${crypto.randomUUID()}`);
   }
 
   public static create(props: Partial<TabProps> & { name: string; type: TabProps['type'] }, id?: string): Result<Tab> {
