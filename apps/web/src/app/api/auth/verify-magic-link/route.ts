@@ -24,6 +24,24 @@ import { isAdminEmail, shouldGrantAdmin, getPermissionsForRole, logAdminOperatio
 // DEPRECATION: Log warning when this endpoint is used
 const DEPRECATION_WARNING = 'Magic link auth is deprecated. Please migrate to OTP-based auth (/api/auth/verify-code).';
 
+// Deprecation headers to include in all responses
+const DEPRECATION_HEADERS = {
+  'Deprecation': 'true',
+  'Sunset': 'Sat, 01 Mar 2025 00:00:00 GMT',
+  'Link': '</api/auth/verify-code>; rel="successor-version"',
+  'X-Deprecation-Notice': DEPRECATION_WARNING,
+};
+
+/**
+ * Add deprecation headers to a NextResponse
+ */
+function addDeprecationHeaders(response: NextResponse): NextResponse {
+  Object.entries(DEPRECATION_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
 /**
  * PRODUCTION-SAFE magic link verification
  * No test bypasses - all authentication goes through Firebase
@@ -70,7 +88,12 @@ async function validateSchoolDomain(email: string, schoolId: string): Promise<bo
  */
 export async function POST(request: NextRequest) {
   const _requestId = request.headers.get('x-request-id') || `req_${Date.now()}`;
-  
+
+  // Log deprecation warning on every request
+  logger.warn(DEPRECATION_WARNING, {
+    endpoint: '/api/auth/verify-magic-link',
+  });
+
   try {
     // SECURITY: Rate limiting with strict enforcement
     const rateLimitResult = await enforceRateLimit('authentication', request);
@@ -244,13 +267,15 @@ export async function POST(request: NextRequest) {
       const response = NextResponse.json({
         success: true,
         needsOnboarding: true,
-        userId: userRecord.uid
+        userId: userRecord.uid,
+        _deprecated: true,
+        _migrateTo: '/api/auth/verify-code',
       });
 
-      // Set signed session cookie
-      return setSessionCookie(response, sessionToken, {
+      // Set signed session cookie and add deprecation headers
+      return addDeprecationHeaders(setSessionCookie(response, sessionToken, {
         isAdmin: isAdminEmail(email)
-      });
+      }));
     } else {
       // Existing user - they can proceed to app
       await auditAuthEvent('success', request, {
@@ -327,13 +352,15 @@ export async function POST(request: NextRequest) {
         success: true,
         needsOnboarding: false,
         userId: userRecord.uid,
-        isAdmin // Include admin flag in response
+        isAdmin, // Include admin flag in response
+        _deprecated: true,
+        _migrateTo: '/api/auth/verify-code',
       });
 
-      // Set signed session cookie
-      return setSessionCookie(response, sessionToken, { isAdmin });
+      // Set signed session cookie and add deprecation headers
+      return addDeprecationHeaders(setSessionCookie(response, sessionToken, { isAdmin }));
     }
-    
+
   } catch (error) {
     await auditAuthEvent('failure', request, {
       operation: 'verify_magic_link',

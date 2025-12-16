@@ -24,6 +24,25 @@ import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 // DEPRECATION: Log warning when this endpoint is used
 const DEPRECATION_WARNING = 'Magic link auth is deprecated. Please migrate to OTP-based auth (/api/auth/send-code).';
 
+// Deprecation headers to include in all responses
+// RFC 8594: The Sunset HTTP Response Header Field
+const DEPRECATION_HEADERS = {
+  'Deprecation': 'true',
+  'Sunset': 'Sat, 01 Mar 2025 00:00:00 GMT',
+  'Link': '</api/auth/send-code>; rel="successor-version"',
+  'X-Deprecation-Notice': DEPRECATION_WARNING,
+};
+
+/**
+ * Add deprecation headers to a NextResponse
+ */
+function addDeprecationHeaders(response: NextResponse): NextResponse {
+  Object.entries(DEPRECATION_HEADERS).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
+}
+
 // Firebase Client SDK fallback for development when Admin SDK is not configured
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore as getClientFirestore, doc, getDoc } from 'firebase/firestore';
@@ -150,6 +169,12 @@ export const POST = withValidation(
   async (request, _context: Record<string, string | string[]>, body: z.infer<typeof sendMagicLinkSchema>, respond: typeof ResponseFormatter) => {
     const { email, schoolId } = body;
     const _requestId = request.headers.get('x-request-id') || `req_${Date.now()}`;
+
+    // Log deprecation warning on every request
+    logger.warn(DEPRECATION_WARNING, {
+      endpoint: '/api/auth/send-magic-link',
+      email: email.replace(/(.{3}).*@/, '$1***@'),
+    });
 
     try {
       // SECURITY: Rate limiting with strict enforcement
@@ -302,9 +327,12 @@ export const POST = withValidation(
 
     // Never expose magic link URLs in responses
     // In development, check the server console for the logged URL
-    return respond.success({
-      message: "Magic link sent to your email address"
+    const response = respond.success({
+      message: "Magic link sent to your email address",
+      _deprecated: true,
+      _migrateTo: '/api/auth/send-code',
     });
+    return addDeprecationHeaders(response);
 
     } catch (error) {
       await auditAuthEvent('failure', request as unknown as NextRequest, {
