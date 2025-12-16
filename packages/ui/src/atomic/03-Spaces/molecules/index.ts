@@ -114,3 +114,25 @@ export {
   SpaceBreadcrumb,
   type SpaceBreadcrumbProps,
 } from './space-breadcrumb';
+
+// Featured Tool Slot (Dec 2025 - HiveLab tool in conversation)
+export {
+  FeaturedToolSlot,
+  FeaturedToolEmpty,
+  type FeaturedToolSlotProps,
+  type FeaturedToolEmptyProps,
+} from './featured-tool-slot';
+
+// Hero Input (Dec 2025 - Dark-first chat input)
+export {
+  HeroInput,
+  type HeroInputProps,
+  type HeroInputHandle,
+} from './hero-input';
+
+// Space Chat Message (Dec 2025 - Dark-first message component)
+export {
+  SpaceChatMessage,
+  type SpaceChatMessageProps,
+  type MessageRole,
+} from './space-chat-message';

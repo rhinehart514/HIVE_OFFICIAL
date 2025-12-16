@@ -17,7 +17,8 @@ const TooltipContent = React.forwardRef<
     ref={ref}
     sideOffset={sideOffset}
     className={cn(
-      'z-50 max-w-xs rounded-md border border-border-default bg-background-elevated px-3 py-1.5 text-xs font-medium text-text-primary shadow-xl shadow-black/20',
+      // Dark-first design: Elevated bg, subtle border
+      'z-50 max-w-xs rounded-md border border-[#2A2A2A] bg-[#1A1A1A] px-3 py-1.5 text-xs font-medium text-[#FAFAFA] shadow-xl shadow-black/30',
       'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
       'data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2',
       'duration-200 ease-out motion-reduce:animate-none',
@@ -34,7 +35,7 @@ const TooltipArrow = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <TooltipPrimitive.Arrow
     ref={ref}
-    className={cn('fill-background-elevated', className)}
+    className={cn('fill-[#1A1A1A]', className)}
     {...props}
   />
 ));

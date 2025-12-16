@@ -12,35 +12,35 @@ import { cn } from "../../../lib/utils"
 export type InputStatus = 'idle' | 'loading' | 'success' | 'error'
 
 /**
- * Input Variants - Ultra-Minimal YC/SF Aesthetic (Linear-style)
+ * Input Variants - Dark-First Design System
  *
- * Design Philosophy:
- * - Transparent background, subtle white/8 border
- * - Focus: white/20 border (no gold focus rings)
- * - Placeholder: white/40 text
+ * Design Philosophy (Apple/Vercel craft):
+ * - Surface background (#141414), subtle border (#2A2A2A)
+ * - Focus: White border/ring (not gold)
+ * - Placeholder: Subtle text (#71717A)
  *
- * Colors: Only #000000, #FFFFFF, #FFD700 (gold only for errors/warnings)
+ * Colors: Neutral grays + status colors
  */
 const inputVariants = cva(
-  "flex w-full rounded-lg border border-white/[0.08] bg-transparent px-3 text-sm text-white transition-colors duration-100 placeholder:text-white/40 focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/40 focus:ring-offset-1 focus:ring-offset-black disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full rounded-lg border border-[#2A2A2A] bg-[#141414] px-3 text-sm text-[#FAFAFA] transition-colors duration-100 placeholder:text-[#71717A] focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/10 focus:ring-offset-1 focus:ring-offset-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        // Default: Transparent with subtle border
-        default: "hover:border-white/[0.16]",
+        // Default: Surface bg with subtle border
+        default: "hover:border-[#3A3A3A]",
         // Subtle: Same as default (for backwards compat)
-        subtle: "hover:border-white/[0.16]",
+        subtle: "hover:border-[#3A3A3A]",
         // Destructive/Error: Red border
-        destructive: "border-status-error/50 focus:border-status-error focus:ring-status-error/30",
-        error: "border-status-error/50 focus:border-status-error focus:ring-status-error/30",
+        destructive: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/20",
+        error: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/20",
         // Success: Green border
-        success: "border-status-success/50 focus:border-status-success focus:ring-status-success/30",
+        success: "border-[#00D46A]/50 focus:border-[#00D46A] focus:ring-[#00D46A]/20",
         // Brand: Gold border (use sparingly)
-        brand: "border-gold-500/30 focus:border-gold-500 focus:ring-gold-500/30",
+        brand: "border-[#FFD700]/30 focus:border-[#FFD700] focus:ring-[#FFD700]/20",
         // Ghost: No border until focus
-        ghost: "border-transparent bg-transparent focus:border-white/[0.08] focus:ring-white/10",
-        // Warning: Gold border
-        warning: "border-gold-500/30 focus:border-gold-500 focus:ring-gold-500/30",
+        ghost: "border-transparent bg-transparent focus:border-[#2A2A2A] focus:ring-white/10",
+        // Warning: Warning border
+        warning: "border-[#FFB800]/30 focus:border-[#FFB800] focus:ring-[#FFB800]/20",
       },
       size: {
         sm: "h-9 min-h-[36px] text-sm px-3", // 36px for compact areas
@@ -160,7 +160,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       mergedLeftIcon && "pl-11",
       hasRightContent && "pr-11",
       disabled
-        ? "bg-white/[0.02] text-white/30"
+        ? "bg-[#141414]/50 text-[#52525B]"
         : "",
       className
     )
@@ -233,12 +233,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {mergedLeftIcon ? (
             <motion.span
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/50"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#818187]"
               aria-hidden
               animate={{
                 color: isFocused
-                  ? "rgba(255, 255, 255, 1)"
-                  : "rgba(255, 255, 255, 0.5)",
+                  ? "#FAFAFA"
+                  : "#818187",
               }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
             >
@@ -247,7 +247,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ) : null}
           {inputNode}
           {hasRightContent ? (
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-white/50">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 text-[#818187]">
               {/* Status indicators */}
               <AnimatePresence mode="wait">
                 {effectiveStatus === 'loading' && (
@@ -258,7 +258,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: duration.quick, ease: easing.smooth }}
                   >
-                    <Loader2 className="h-4 w-4 animate-spin text-white/50" />
+                    <Loader2 className="h-4 w-4 animate-spin text-[#818187]" />
                   </motion.div>
                 )}
                 {effectiveStatus === 'success' && !suffix && (
@@ -269,7 +269,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: duration.quick, ease: easing.smooth }}
                   >
-                    <Check className="h-4 w-4 text-status-success" />
+                    <Check className="h-4 w-4 text-[#00D46A]" />
                   </motion.div>
                 )}
                 {effectiveStatus === 'error' && !suffix && (
@@ -280,7 +280,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     exit={{ opacity: 0, scale: 0.8 }}
                     transition={{ duration: duration.quick, ease: easing.smooth }}
                   >
-                    <X className="h-4 w-4 text-status-error" />
+                    <X className="h-4 w-4 text-[#FF3737]" />
                   </motion.div>
                 )}
                 {showClearButton && hasValue && !disabled && onClear ? (
@@ -288,7 +288,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                     key="clear-button"
                     type="button"
                     onClick={onClear}
-                    className="rounded-full p-1 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                    className="rounded-full p-1 transition-colors hover:text-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
                     aria-label="Clear input"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -307,7 +307,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-white/50 hover:text-white transition-colors"
+                  className="text-[#818187] hover:text-[#FAFAFA] transition-colors"
                   tabIndex={-1}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
@@ -321,7 +321,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               {/* Suffix */}
               {suffix && (
-                <span className="text-sm text-white/50 select-none">
+                <span className="text-sm text-[#818187] select-none">
                   {suffix}
                 </span>
               )}
@@ -332,8 +332,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   aria-hidden
                   animate={{
                     color: isFocused
-                      ? "rgba(255, 255, 255, 1)"
-                      : "rgba(255, 255, 255, 0.5)",
+                      ? "#FAFAFA"
+                      : "#818187",
                   }}
                   transition={{ duration: duration.quick, ease: easing.smooth }}
                 >
@@ -356,13 +356,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <motion.label
             htmlFor={inputId}
             className={cn(
-              "text-sm font-medium text-white",
+              "text-sm font-medium text-[#FAFAFA]",
               disabled && "opacity-70"
             )}
             animate={{
               color: isFocused && !error
-                ? "rgba(255, 255, 255, 1)"
-                : "rgba(255, 255, 255, 0.70)",
+                ? "#FAFAFA"
+                : "#A1A1A6",
             }}
             transition={{ duration: duration.quick, ease: easing.smooth }}
           >
@@ -371,7 +371,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         ) : null}
 
         {description ? (
-          <p className="text-xs text-white/50">
+          <p className="text-xs text-[#818187]">
             {description}
           </p>
         ) : null}
@@ -386,10 +386,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               className={cn(
                 "text-xs",
                 error
-                  ? "text-status-error"
+                  ? "text-[#FF3737]"
                   : success
-                  ? "text-status-success"
-                  : "text-white/50"
+                  ? "text-[#00D46A]"
+                  : "text-[#818187]"
               )}
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}

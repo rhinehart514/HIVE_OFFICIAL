@@ -340,6 +340,14 @@ export {
   PopoverContent,
 } from "./atomic/00-Global/atoms/popover";
 
+// ChatGPT-style Input Components (Dec 2025 - Design Elevation)
+export { HeroInput, heroInputVariants } from "./atomic/00-Global/molecules/hero-input";
+export type { HeroInputProps } from "./atomic/00-Global/molecules/hero-input";
+
+// Command Palette (Dec 2025 - ⌘K Navigation)
+export { CommandPalette } from "./atomic/00-Global/organisms/command-palette";
+export type { CommandPaletteProps, CommandPaletteItem } from "./atomic/00-Global/organisms/command-palette";
+
 // Signature Expression Components (Nov 2025 - Autonomous Rebellion)
 export { AnimatedCounter } from "./atomic/00-Global/atoms/animated-counter";
 export type { AnimatedCounterProps } from "./atomic/00-Global/atoms/animated-counter";

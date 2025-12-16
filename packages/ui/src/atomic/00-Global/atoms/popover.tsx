@@ -19,7 +19,8 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 w-auto min-w-[220px] max-w-[360px] rounded-lg border border-border-default bg-background-secondary p-4 text-text-primary shadow-lg outline-none',
+        // Dark-first design: Surface bg, subtle border, prominent shadow
+        'z-50 w-auto min-w-[220px] max-w-[360px] rounded-lg border border-[#2A2A2A] bg-[#141414] p-4 text-[#FAFAFA] shadow-[0_8px_24px_rgba(0,0,0,0.5)] outline-none',
         'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 motion-reduce:animate-none',
         className
       )}
@@ -35,7 +36,7 @@ const PopoverArrow = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <PopoverPrimitive.Arrow
     ref={ref}
-    className={cn('fill-[var(--hive-background-elevated)] drop-shadow-[0_4px_10px_rgba(0,0,0,0.25)]', className)}
+    className={cn('fill-[#1A1A1A] drop-shadow-[0_4px_10px_rgba(0,0,0,0.35)]', className)}
     {...props}
   />
 ));

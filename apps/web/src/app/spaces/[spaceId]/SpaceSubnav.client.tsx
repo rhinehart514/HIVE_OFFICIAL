@@ -21,7 +21,7 @@ export function SpaceSubnav({ spaceId }: { spaceId: string }) {
   };
 
   return (
-    <div className="sticky top-16 z-30 bg-black/90 backdrop-blur border-b border-white/10">
+    <div className="sticky top-16 z-30 bg-[#0A0A0A]/90 backdrop-blur border-b border-[#2A2A2A]">
       <nav className="max-w-7xl mx-auto px-4" role="navigation" aria-label="Space sections">
         <ul className="flex gap-2 overflow-x-auto no-scrollbar">
           {items.map((item) => (
@@ -31,8 +31,8 @@ export function SpaceSubnav({ spaceId }: { spaceId: string }) {
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={`inline-flex items-center px-3 py-2 rounded-md text-sm transition-colors whitespace-nowrap
                   ${isActive(item.href)
-                    ? "text-white border-b-2 border-[var(--hive-brand-primary)]"
-                    : "text-white/70 hover:text-white"}
+                    ? "text-[#FAFAFA] border-b-2 border-[#FFD700]"
+                    : "text-[#818187] hover:text-[#FAFAFA]"}
                 `}
               >
                 {item.label}

@@ -47,15 +47,15 @@ export function HiveModal({
       {/* Backdrop */}
       <button
         type="button"
-        className="fixed inset-0 bg-background-overlay/80 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={handleOverlayClick}
         aria-label="Close dialog"
       />
 
       {/* Modal */}
       <div className={cn(
-        // Semantic radius: modal = 2xl (32px)
-        'relative w-full mx-4 bg-background-secondary border border-border-default rounded-2xl shadow-lg',
+        // Dark-first design: Surface bg, subtle border, prominent shadow
+        'relative w-full mx-4 bg-[#141414] border border-[#2A2A2A] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.6)]',
         sizeClasses[size],
         className
       )}>
@@ -78,13 +78,13 @@ export function HiveModalHeader({
   onClose?: () => void;
 }) {
   return (
-    <div className={cn('px-4 pt-4 pb-3 border-b border-border-subtle', className)}>
+    <div className={cn('px-4 pt-4 pb-3 border-b border-[#2A2A2A]', className)}>
       <div className="flex items-start justify-between">
         <div className="flex-1">{children}</div>
         {showCloseButton && onClose && (
           <button
             onClick={onClose}
-            className="ml-4 text-text-muted hover:text-text-primary transition-colors duration-100"
+            className="ml-4 text-[#818187] hover:text-[#FAFAFA] transition-colors duration-100"
           >
             <X className="w-4 h-4" />
           </button>
@@ -102,7 +102,7 @@ export function HiveModalTitle({
   className?: string;
 }) {
   return (
-    <h2 className={cn('text-sm font-medium text-text-primary', className)}>
+    <h2 className={cn('text-sm font-medium text-[#FAFAFA]', className)}>
       {children}
     </h2>
   );
@@ -116,7 +116,7 @@ export function HiveModalDescription({
   className?: string;
 }) {
   return (
-    <p className={cn('mt-1 text-xs text-text-secondary', className)}>
+    <p className={cn('mt-1 text-xs text-[#A1A1A6]', className)}>
       {children}
     </p>
   );
@@ -144,7 +144,7 @@ export function HiveModalFooter({
   className?: string;
 }) {
   return (
-    <div className={cn('px-4 pb-4 pt-3 border-t border-border-subtle', className)}>
+    <div className={cn('px-4 pb-4 pt-3 border-t border-[#2A2A2A]', className)}>
       {children}
     </div>
   );

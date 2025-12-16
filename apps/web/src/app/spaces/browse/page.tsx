@@ -333,7 +333,7 @@ export default function SpacesBrowsePage() {
 
             <Button
               onClick={handleSearch}
-              className="bg-white text-black hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+              className="bg-[#FFD700] text-[#0A0A0A] hover:bg-[#FFD700]/90 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none font-medium"
             >
               Search
             </Button>
