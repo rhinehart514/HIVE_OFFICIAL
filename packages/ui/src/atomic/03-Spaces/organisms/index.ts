@@ -103,3 +103,7 @@ export type {
   EventType,
   BoardOption,
 } from './event-create-modal';
+
+// Space Entry Animation (Dec 2025 - Signature arrival moment)
+export { SpaceEntryAnimation } from './space-entry-animation';
+export type { SpaceEntryAnimationProps } from './space-entry-animation';

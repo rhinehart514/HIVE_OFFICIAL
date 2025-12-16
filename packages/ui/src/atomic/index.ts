@@ -119,13 +119,17 @@ export * from './03-Spaces/molecules/space-tools-widget';
 export * from './03-Spaces/molecules/today-drawer';
 export * from './03-Spaces/molecules/board-tab-bar';
 export * from './03-Spaces/molecules/featured-tool-slot';
+export * from './03-Spaces/molecules/hero-input';
+export * from './03-Spaces/molecules/space-chat-message';
 
 // Organisms
 export type { SpaceBoardLayoutProps } from './03-Spaces/organisms/space-board-layout';
 export * from './03-Spaces/organisms/space-post-composer';
+export * from './03-Spaces/organisms/space-entry-animation';
 
 // Templates
 export type { SpaceBoardTemplateProps } from './03-Spaces/templates/space-board-template';
+export * from './03-Spaces/templates/space-chat-layout';
 
 // === 04-PROFILE (Campus Identity) ===
 // Molecules
