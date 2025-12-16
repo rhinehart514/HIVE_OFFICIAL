@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix string | undefined parameter types
 /**
  * Pattern Extractor Service
  *
@@ -12,6 +10,7 @@
  * patterns in user behavior and successful tool compositions.
  */
 
+import type { Firestore } from 'firebase-admin/firestore';
 import type {
   ElementAffinity,
   MissingPattern,
@@ -55,11 +54,11 @@ export type PatternExtractionConfig = typeof DEFAULT_CONFIG;
 // ═══════════════════════════════════════════════════════════════════
 
 export class PatternExtractorService {
-  private db: FirebaseFirestore.Firestore | null = null;
+  private db: Firestore | null = null;
   private config: PatternExtractionConfig;
 
   constructor(
-    db?: FirebaseFirestore.Firestore,
+    db?: Firestore,
     config: Partial<PatternExtractionConfig> = {}
   ) {
     this.db = db || null;
@@ -69,7 +68,7 @@ export class PatternExtractorService {
   /**
    * Set Firestore instance (for lazy initialization)
    */
-  setFirestore(db: FirebaseFirestore.Firestore): void {
+  setFirestore(db: Firestore): void {
     this.db = db;
   }
 
@@ -240,11 +239,11 @@ export class PatternExtractorService {
 
     for (const edit of edits) {
       // Get elements that were generated
-      const generatedElements = new Set(
+      const generatedElements = new Set<string>(
         edit.edits
           .filter(e => e.type !== 'add')
           .map(e => e.elementType)
-          .filter(Boolean)
+          .filter((el): el is string => typeof el === 'string')
       );
 
       // Get elements that were added
@@ -282,7 +281,7 @@ export class PatternExtractorService {
       const generated = edit.edits
         .filter(e => e.type !== 'add')
         .map(e => e.elementType)
-        .filter(Boolean);
+        .filter((el): el is string => typeof el === 'string');
       for (const el of generated) {
         generatedCounts.set(el, (generatedCounts.get(el) || 0) + 1);
       }
@@ -543,6 +542,6 @@ export function getPatternExtractorService(): PatternExtractorService {
 /**
  * Initialize pattern extractor with Firestore
  */
-export function initializePatternExtractor(db: FirebaseFirestore.Firestore): void {
+export function initializePatternExtractor(db: Firestore): void {
   getPatternExtractorService().setFirestore(db);
 }

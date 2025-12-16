@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix SendGrid MailDataRequired type
+// TODO: Fix SendGrid MailDataRequired type - from property type mismatch
 import sgMail from '@sendgrid/mail';
 
 // Initialize SendGrid with API key
@@ -51,7 +51,7 @@ export async function sendMagicLinkEmail({
   };
 
   try {
-    await sgMail.send(msg as Record<string, unknown>);
+    await sgMail.send(msg);
   } catch {
     throw new Error('Failed to send magic link email');
   }

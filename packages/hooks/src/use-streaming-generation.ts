@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix CanvasElement type shape
 /**
  * useStreamingGeneration Hook
  *
@@ -198,12 +196,11 @@ export function useStreamingGeneration(callbacks?: {
 
               case 'element':
                 if (chunk.data.id && chunk.data.type) {
+                  const elementName = chunk.data.name || chunk.data.type;
                   const element: CanvasElement = {
-                    elementId: chunk.data.id,
+                    elementId: chunk.data.type,
                     instanceId: chunk.data.id,
-                    type: chunk.data.type,
-                    name: chunk.data.name || chunk.data.type,
-                    config: chunk.data.config || {},
+                    config: { ...chunk.data.config, _name: elementName },
                     position: chunk.data.position || { x: 100, y: 100 },
                     size: { width: 280, height: 120 } // Default size for canvas rendering
                   };
@@ -218,12 +215,12 @@ export function useStreamingGeneration(callbacks?: {
                   setState(prev => ({
                     ...prev,
                     elements: [...addedElements],
-                    currentStatus: `Adding ${element.name}...`,
+                    currentStatus: `Adding ${elementName}...`,
                     progress
                   }));
 
-                  callbacks?.onElementAdded?.(element, `Adding ${element.name}`);
-                  callbacks?.onStatusUpdate?.(`Adding ${element.name}`);
+                  callbacks?.onElementAdded?.(element, `Adding ${elementName}`);
+                  callbacks?.onStatusUpdate?.(`Adding ${elementName}`);
                 }
                 break;
 
@@ -237,15 +234,17 @@ export function useStreamingGeneration(callbacks?: {
 
               case 'complete':
                 // Build composition from collected elements
+                const validLayouts = ['grid', 'flow', 'tabs', 'sidebar'] as const;
+                const layout = validLayouts.includes(chunk.data.layout as typeof validLayouts[number])
+                  ? (chunk.data.layout as 'grid' | 'flow' | 'tabs' | 'sidebar')
+                  : 'flow';
                 const composition: ToolComposition = {
                   id: chunk.data.toolId || `tool-${Date.now()}`,
                   name: chunk.data.name || 'Generated Tool',
                   description: chunk.data.description || '',
                   elements: addedElements,
                   connections: [],
-                  layout: (chunk.data.layout as 'flow' | 'grid' | 'freeform') || 'flow',
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
+                  layout,
                 };
 
                 setState(prev => ({

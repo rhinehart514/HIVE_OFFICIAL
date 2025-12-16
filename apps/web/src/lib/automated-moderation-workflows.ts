@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Fix object spread issues with duplicate keys
+// TODO: Consider refactoring to use typed ContentReport interface consistently
 'use server';
 /**
  * Automated Moderation Workflows
@@ -637,7 +636,7 @@ export class AutomatedModerationWorkflows {
       if (doc.exists) {
         const d = doc.data();
         if (d?.campusId && d.campusId !== CURRENT_CAMPUS_ID) continue;
-        reports.push({ id: doc.id, ...doc.data() as ContentReport });
+        reports.push({ ...doc.data() as Omit<ContentReport, 'id'>, id: doc.id });
       }
     }
     return reports;
@@ -650,7 +649,7 @@ export class AutomatedModerationWorkflows {
       .where('isActive', '==', true)
       .get();
 
-    return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() as UserDocument }));
+    return snapshot.docs.map(doc => ({ ...doc.data() as Omit<UserDocument, 'uid'>, uid: doc.id }));
   }
 
   private async checkDelayedActionConditions(action: DelayedActionDocument): Promise<boolean> {

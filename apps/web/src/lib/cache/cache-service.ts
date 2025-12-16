@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Fix logger.error() calls to use proper (message, context, error) signature
+// TODO: Remove types from @hive/core once they are properly exported
 // High-level caching service for HIVE platform
 // Provides domain-specific caching methods with optimized TTL and invalidation strategies
 
@@ -55,7 +54,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<User>(CACHE_NAMESPACES.USERS, userId, campusId);
     } catch (error) {
-      logger.error('Failed to get cached user:', error);
+      logger.error('Failed to get cached user', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -71,7 +70,7 @@ class HiveCacheService {
         { type: 'user_profile', lastUpdated: Date.now() }
       );
     } catch (error) {
-      logger.error('Failed to cache user:', error);
+      logger.error('Failed to cache user', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -90,7 +89,7 @@ class HiveCacheService {
       logger.info(`Invalidated cache for user: ${userId}`);
       return true;
     } catch (error) {
-      logger.error('Failed to invalidate user cache:', error);
+      logger.error('Failed to invalidate user cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -100,7 +99,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<Space>(CACHE_NAMESPACES.SPACES, spaceId, campusId);
     } catch (error) {
-      logger.error('Failed to get cached space:', error);
+      logger.error('Failed to get cached space', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -116,7 +115,7 @@ class HiveCacheService {
         { type: 'space_data', memberCount: space.memberCount || 0 }
       );
     } catch (error) {
-      logger.error('Failed to cache space:', error);
+      logger.error('Failed to cache space', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -125,7 +124,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<string[]>(CACHE_NAMESPACES.SPACES, `${spaceId}:members`, campusId);
     } catch (error) {
-      logger.error('Failed to get cached space members:', error);
+      logger.error('Failed to get cached space members', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -141,7 +140,7 @@ class HiveCacheService {
         { type: 'space_members', count: memberIds.length }
       );
     } catch (error) {
-      logger.error('Failed to cache space members:', error);
+      logger.error('Failed to cache space members', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -160,7 +159,7 @@ class HiveCacheService {
       logger.info(`Invalidated cache for space: ${spaceId}`);
       return true;
     } catch (error) {
-      logger.error('Failed to invalidate space cache:', error);
+      logger.error('Failed to invalidate space cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -174,7 +173,7 @@ class HiveCacheService {
         campusId
       );
     } catch (error) {
-      logger.error('Failed to get cached user feed:', error);
+      logger.error('Failed to get cached user feed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -190,7 +189,7 @@ class HiveCacheService {
         { type: 'user_feed', postCount: posts.length }
       );
     } catch (error) {
-      logger.error('Failed to cache user feed:', error);
+      logger.error('Failed to cache user feed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -203,7 +202,7 @@ class HiveCacheService {
         campusId
       );
     } catch (error) {
-      logger.error('Failed to get cached space feed:', error);
+      logger.error('Failed to get cached space feed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -219,7 +218,7 @@ class HiveCacheService {
         { type: 'space_feed', postCount: posts.length }
       );
     } catch (error) {
-      logger.error('Failed to cache space feed:', error);
+      logger.error('Failed to cache space feed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -230,7 +229,7 @@ class HiveCacheService {
       logger.info(`Invalidated feed cache for user: ${userId}`);
       return true;
     } catch (error) {
-      logger.error('Failed to invalidate user feed:', error);
+      logger.error('Failed to invalidate user feed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -241,7 +240,7 @@ class HiveCacheService {
       const queryKey = this.generateSearchKey(query, filters);
       return await redisCache.get<unknown[]>(CACHE_NAMESPACES.SEARCH, queryKey, campusId);
     } catch (error) {
-      logger.error('Failed to get cached search results:', error);
+      logger.error('Failed to get cached search results', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -258,7 +257,7 @@ class HiveCacheService {
         { type: 'search_results', resultCount: results.length, query }
       );
     } catch (error) {
-      logger.error('Failed to cache search results:', error);
+      logger.error('Failed to cache search results', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -278,7 +277,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<unknown>(CACHE_NAMESPACES.ANALYTICS, key, campusId);
     } catch (error) {
-      logger.error('Failed to get cached analytics:', error);
+      logger.error('Failed to get cached analytics', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -294,7 +293,7 @@ class HiveCacheService {
         { type: 'analytics_data', generatedAt: Date.now() }
       );
     } catch (error) {
-      logger.error('Failed to cache analytics:', error);
+      logger.error('Failed to cache analytics', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -304,7 +303,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<Ritual>(CACHE_NAMESPACES.RITUALS, ritualId, campusId);
     } catch (error) {
-      logger.error('Failed to get cached ritual:', error);
+      logger.error('Failed to get cached ritual', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -317,10 +316,10 @@ class HiveCacheService {
         ritual,
         TTL.LONG,
         campusId,
-        { type: 'ritual_data', status: (ritual as Record<string, unknown>).status }
+        { type: 'ritual_data', status: (ritual as unknown as Record<string, unknown>).status }
       );
     } catch (error) {
-      logger.error('Failed to cache ritual:', error);
+      logger.error('Failed to cache ritual', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -329,7 +328,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<Ritual[]>(CACHE_NAMESPACES.RITUALS, 'active_list', campusId);
     } catch (error) {
-      logger.error('Failed to get cached active rituals:', error);
+      logger.error('Failed to get cached active rituals', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -345,7 +344,7 @@ class HiveCacheService {
         { type: 'active_rituals', count: rituals.length }
       );
     } catch (error) {
-      logger.error('Failed to cache active rituals:', error);
+      logger.error('Failed to cache active rituals', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -356,7 +355,7 @@ class HiveCacheService {
       await redisCache.deletePattern(CACHE_NAMESPACES.FEED, `*ritual:${ritualId}*`, campusId);
       return true;
     } catch (error) {
-      logger.error('Failed to invalidate ritual cache:', error);
+      logger.error('Failed to invalidate ritual cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -366,7 +365,7 @@ class HiveCacheService {
       await redisCache.delete(CACHE_NAMESPACES.RITUALS, 'active_list', campusId);
       return true;
     } catch (error) {
-      logger.error('Failed to invalidate active rituals cache:', error);
+      logger.error('Failed to invalidate active rituals cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -376,7 +375,7 @@ class HiveCacheService {
     try {
       return await redisCache.get<Record<string, unknown>>(CACHE_NAMESPACES.SESSIONS, sessionId, campusId);
     } catch (error) {
-      logger.error('Failed to get cached session:', error);
+      logger.error('Failed to get cached session', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return null;
     }
   }
@@ -392,7 +391,7 @@ class HiveCacheService {
         { type: 'user_session', userId: sessionData.userId }
       );
     } catch (error) {
-      logger.error('Failed to cache session:', error);
+      logger.error('Failed to cache session', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -401,7 +400,7 @@ class HiveCacheService {
     try {
       return await redisCache.delete(CACHE_NAMESPACES.SESSIONS, sessionId, campusId);
     } catch (error) {
-      logger.error('Failed to invalidate session:', error);
+      logger.error('Failed to invalidate session', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -429,7 +428,7 @@ class HiveCacheService {
         resetTime: Date.now() + (windowSeconds * 1000)
       };
     } catch (error) {
-      logger.error('Rate limit check failed:', error);
+      logger.error('Rate limit check failed', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       // Allow request on error to avoid blocking users
       return {
         allowed: true,
@@ -452,7 +451,7 @@ class HiveCacheService {
 
       return await redisCache.mset(entries);
     } catch (error) {
-      logger.error('Failed to cache multiple users:', error);
+      logger.error('Failed to cache multiple users', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }
@@ -461,7 +460,7 @@ class HiveCacheService {
     try {
       return await redisCache.mget<User>(CACHE_NAMESPACES.USERS, userIds, campusId);
     } catch (error) {
-      logger.error('Failed to get multiple cached users:', error);
+      logger.error('Failed to get multiple cached users', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return new Array(userIds.length).fill(null);
     }
   }
@@ -475,7 +474,7 @@ class HiveCacheService {
       // Pre-warm frequently accessed data
       logger.info(`Cache warmed for user: ${userId}`);
     } catch (error) {
-      logger.error('Failed to warm user cache:', error);
+      logger.error('Failed to warm user cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
     }
   }
 
@@ -486,7 +485,7 @@ class HiveCacheService {
 
       logger.info(`Cache warmed for space: ${spaceId}`);
     } catch (error) {
-      logger.error('Failed to warm space cache:', error);
+      logger.error('Failed to warm space cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
     }
   }
 
@@ -503,7 +502,7 @@ class HiveCacheService {
 
       return { healthy, stats, memory };
     } catch (error) {
-      logger.error('Failed to get cache health:', error);
+      logger.error('Failed to get cache health', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return { healthy: false, stats: this.getCacheStats() };
     }
   }
@@ -513,7 +512,7 @@ class HiveCacheService {
     try {
       return await redisCache.invalidateCampusCache(campusId);
     } catch (error) {
-      logger.error('Failed to invalidate campus cache:', error);
+      logger.error('Failed to invalidate campus cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return 0;
     }
   }
@@ -527,7 +526,7 @@ class HiveCacheService {
       }
       return success;
     } catch (error) {
-      logger.error('Failed to flush all cache:', error);
+      logger.error('Failed to flush all cache', { component: 'cache-service' }, error instanceof Error ? error : undefined);
       return false;
     }
   }

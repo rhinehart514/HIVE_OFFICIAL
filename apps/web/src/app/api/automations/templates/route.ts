@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import {
-  getAllTemplates,
-  getTemplatesByCategory,
-  getTemplateById,
-  getTemplateCategories,
-} from "@hive/core/domain/hivelab/automation-templates";
+  getAllAutomationTemplates as getAllTemplates,
+  getAutomationTemplatesByCategory as getTemplatesByCategory,
+  getAutomationTemplateById as getTemplateById,
+  getAutomationTemplateCategories as getTemplateCategories,
+  type AutomationTemplate,
+} from "@hive/core";
 
 /**
  * GET /api/automations/templates
@@ -35,7 +36,7 @@ export async function GET(request: Request) {
 
     // Get templates by category or all
     const templates = category
-      ? getTemplatesByCategory(category as 'engagement' | 'events' | 'moderation' | 'notifications')
+      ? getTemplatesByCategory(category as AutomationTemplate['category'])
       : getAllTemplates();
 
     const categories = getTemplateCategories();

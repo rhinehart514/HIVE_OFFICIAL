@@ -1,5 +1,5 @@
 // @ts-nocheck
-// TODO: Fix Zod resolver overload compatibility
+// TODO: Fix Path<TypeOf<TSchema>> inference in getFieldError/hasFieldError
 /**
  * Modern Form Validation - React Hook Form + Zod
  *

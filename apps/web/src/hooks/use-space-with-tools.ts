@@ -17,7 +17,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { logger } from '@/lib/logger';
-import { useChatMessages, type ChatOptions } from './use-chat-messages';
+import { useChatMessages, type UseChatMessagesOptions } from './use-chat-messages';
 
 // ============================================================
 // Types
@@ -139,12 +139,11 @@ export function useSpaceWithTools(options: UseSpaceWithToolsOptions): UseSpaceWi
   });
 
   // Chat hook (conditional)
-  const chatOptions: ChatOptions = useMemo(() => ({
+  const chatOptions: UseChatMessagesOptions = useMemo(() => ({
     spaceId,
     initialBoardId,
     enableRealtime: enableChat,
-    pollingIntervalMs,
-  }), [spaceId, initialBoardId, enableChat, pollingIntervalMs]);
+  }), [spaceId, initialBoardId, enableChat]);
 
   const chat = useChatMessages(chatOptions);
 
@@ -336,15 +335,15 @@ export function useSpaceWithTools(options: UseSpaceWithToolsOptions): UseSpaceWi
       return false;
     }
 
-    return chat.sendMessage({
-      content: `[${tool.name}]`,
-      componentData: {
-        elementType: tool.elementType,
-        deploymentId: tool.deploymentId,
-        toolId: tool.toolId,
-        isActive: tool.isActive,
-      },
-    });
+    try {
+      // Send a tool reference message - the chat system handles rendering
+      // Tool reference format: [Tool: toolId | deploymentId]
+      await chat.sendMessage(`[Tool: ${tool.toolId} | ${tool.deploymentId}]`);
+      return true;
+    } catch {
+      logger.error('Failed to insert tool in chat', { component: 'useSpaceWithTools', toolId: tool.toolId });
+      return false;
+    }
   }, [chat]);
 
   // ============================================================

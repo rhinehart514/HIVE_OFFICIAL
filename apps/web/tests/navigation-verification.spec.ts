@@ -1,5 +1,5 @@
-// @ts-nocheck
-// TODO: Add @playwright/test as dev dependency
+/// <reference types="@playwright/test" />
+// Note: Run with `pnpm exec playwright test` after installing @playwright/test
 import { test, expect } from '@playwright/test';
 
 test.describe('HIVE Navigation System Verification', () => {

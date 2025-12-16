@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix duplicate 'type' property spread
 'use client';
 
 import * as React from 'react';
@@ -92,10 +90,7 @@ export function SwipeableCarousel({
 
     // Animate to target position
     const targetX = -targetIndex * cardWidthWithGap;
-    animate(x, targetX, {
-      type: 'spring',
-      ...tinderSprings.snapBack,
-    });
+    animate(x, targetX, tinderSprings.snapBack);
 
     if (targetIndex !== activeIndex) {
       setActiveIndex(targetIndex);
@@ -146,10 +141,7 @@ export function SwipeableCarousel({
               type="button"
               onClick={() => {
                 const targetX = -index * (containerWidth + gap);
-                animate(x, targetX, {
-                  type: 'spring',
-                  ...tinderSprings.snapBack,
-                });
+                animate(x, targetX, tinderSprings.snapBack);
                 setActiveIndex(index);
                 onCardChange?.(index);
               }}

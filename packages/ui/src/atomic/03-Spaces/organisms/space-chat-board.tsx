@@ -184,6 +184,10 @@ export interface SpaceChatBoardProps {
   onOpenToolGallery?: () => void;
   /** Whether to show the tool insertion toolbar */
   showToolbar?: boolean;
+  /** Whether slash commands are enabled */
+  enableSlashCommands?: boolean;
+  /** Callback when a slash command is entered */
+  onSlashCommand?: (command: { command: string; primaryArg?: string; listArgs: string[]; flags: Record<string, string | boolean | number>; raw: string; isValid: boolean; error?: string }) => Promise<void>;
 
   // Inline component rendering
   renderInlineComponent?: (componentData: ChatMessageData['componentData']) => React.ReactNode;

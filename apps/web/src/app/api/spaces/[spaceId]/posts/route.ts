@@ -1,3 +1,4 @@
+// TODO: Fix Error extension type
 "use server";
 
 import { z } from "zod";
@@ -274,8 +275,7 @@ export const POST = withAuthValidationAndErrors(
     } catch (error) {
       logger.error(
         "Error creating post at /api/spaces/[spaceId]/posts",
-        error instanceof Error ? error : new Error(String(error)),
-        { spaceId, userId },
+        { spaceId, userId, error: error instanceof Error ? error.message : String(error) },
       );
       return respond.error("Failed to create post", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,

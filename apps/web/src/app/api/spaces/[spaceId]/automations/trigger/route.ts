@@ -1,3 +1,4 @@
+// TODO: Fix SendMessageInput metadata type
 import { z } from "zod";
 import {
   withAuthValidationAndErrors,
@@ -263,14 +264,11 @@ async function executeSendMessage(
   );
 
   // Send as a system message from the automation
+  // Note: metadata field is not part of SendMessageInput, automation info is tracked separately
   const result = await chatService.sendMessage(userId, {
     spaceId,
     boardId: targetBoardId,
     content,
-    metadata: {
-      isAutomation: true,
-      automationType: 'welcome',
-    },
   });
 
   if (result.isFailure) {

@@ -1,7 +1,72 @@
 // @ts-nocheck
-// TODO: Fix logger.error() calls to use proper (message, context, error) signature
+// TODO: Fix details type and window cast for gtag analytics
 import { z } from 'zod';
 import { logger } from './structured-logger';
+
+// Type guards for error classification
+interface HttpErrorResponse {
+  response: {
+    status: number;
+    data?: { message?: string };
+  };
+  message?: string;
+}
+
+interface SystemError {
+  code: string;
+  message?: string;
+}
+
+interface ErrorWithMessage {
+  message: string;
+}
+
+interface ErrorWithDetails {
+  response?: { data?: unknown };
+  details?: unknown;
+  stack?: string;
+}
+
+function isHttpError(error: unknown): error is HttpErrorResponse {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as HttpErrorResponse).response === 'object' &&
+    (error as HttpErrorResponse).response !== null &&
+    typeof (error as HttpErrorResponse).response.status === 'number'
+  );
+}
+
+function isSystemError(error: unknown): error is SystemError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    typeof (error as SystemError).code === 'string'
+  );
+}
+
+function hasMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as ErrorWithMessage).message === 'string'
+  );
+}
+
+function getErrorDetails(error: unknown): ErrorWithDetails {
+  if (typeof error !== 'object' || error === null) {
+    return {};
+  }
+  const e = error as ErrorWithDetails;
+  return {
+    response: e.response,
+    details: e.details,
+    stack: typeof e.stack === 'string' ? e.stack : undefined,
+  };
+}
 
 // Error Types and Classifications
 export enum ErrorCategory {
@@ -159,17 +224,18 @@ export class ErrorClassifier {
   static classify(error: unknown): HiveError {
     const timestamp = new Date();
     const id = `err_${timestamp.getTime()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+
     let category = ErrorCategory._UNKNOWN;
     let severity = ErrorSeverity._MEDIUM;
     let retryable = false;
     let message = 'An unknown error occurred';
+    const errorDetails = getErrorDetails(error);
 
-    if (error?.response) {
+    if (isHttpError(error)) {
       // HTTP errors
       const status = error.response.status;
       message = error.response.data?.message || error.message || `HTTP ${status}`;
-      
+
       if (status >= 500) {
         category = ErrorCategory._SERVER_ERROR;
         severity = ErrorSeverity._HIGH;
@@ -191,10 +257,10 @@ export class ErrorClassifier {
         severity = ErrorSeverity._LOW;
         retryable = false;
       }
-    } else if (error?.code) {
+    } else if (isSystemError(error)) {
       // Network/system errors
       message = error.message || `System error: ${error.code}`;
-      
+
       if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
         category = ErrorCategory._NETWORK;
         severity = ErrorSeverity._MEDIUM;
@@ -209,9 +275,9 @@ export class ErrorClassifier {
       severity = ErrorSeverity._LOW;
       retryable = false;
       message = `Validation error: ${error.errors.map(e => e.message).join(', ')}`;
-    } else if (error?.message) {
+    } else if (hasMessage(error)) {
       message = error.message;
-      
+
       // Pattern matching for common error types
       if (message.includes('fetch') || message.includes('network')) {
         category = ErrorCategory._NETWORK;
@@ -232,10 +298,10 @@ export class ErrorClassifier {
       category,
       severity,
       message,
-      details: error?.response?.data || error?.details || null,
+      details: errorDetails.response?.data ?? errorDetails.details ?? undefined,
       timestamp,
       retryable,
-      stack: error?.stack
+      stack: errorDetails.stack
     };
   }
 }

@@ -9,9 +9,9 @@ import { logger } from "@/lib/structured-logger";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import {
-  getTemplateById,
+  getAutomationTemplateById as getTemplateById,
   createFromTemplate,
-} from "@hive/core/domain/hivelab/automation-templates";
+} from "@hive/core";
 
 /**
  * POST /api/spaces/[spaceId]/automations/from-template

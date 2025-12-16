@@ -12,11 +12,10 @@ import { getAuth } from "firebase-admin/auth";
 import { sendFirebaseMagicLinkEmail, isFirebaseEmailAuthEnabled } from "@/lib/firebase-auth-email";
 import { auditAuthEvent } from "@/lib/production-auth";
 import { currentEnvironment } from "@/lib/env";
-import { validateWithSecurity as _validateWithSecurity, ApiSchemas } from "@/lib/secure-input-validation";
+import { ApiSchemas } from "@/lib/secure-input-validation";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
-import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from '@/lib/api-response-types';
 import { getDefaultActionCodeSettings } from "@hive/core";
 
 // DEPRECATION: Log warning when this endpoint is used
@@ -31,9 +30,9 @@ const DEPRECATION_HEADERS = {
 };
 
 /**
- * Add deprecation headers to a NextResponse
+ * Add deprecation headers to a Response
  */
-function addDeprecationHeaders(response: NextResponse): NextResponse {
+function addDeprecationHeaders<T extends Response>(response: T): T {
   Object.entries(DEPRECATION_HEADERS).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
@@ -147,7 +146,7 @@ export const POST = withValidation(
       });
 
       // SECURITY: Standard rate limiting check
-      const rateLimitResult = await enforceRateLimit('magicLink', request);
+      const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status

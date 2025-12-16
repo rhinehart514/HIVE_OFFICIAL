@@ -1178,6 +1178,9 @@ export {
   TypingIndicator,
   ToolPreviewCard,
   MobilePreviewSheet,
+  // Intent detection UI (HiveLab Winter 2025)
+  IntentConfirmation,
+  IntentConfirmationInline,
 } from "./atomic/03-Chat";
 export type {
   MessageBubbleProps,
@@ -1187,7 +1190,24 @@ export type {
   TypingIndicatorProps,
   ToolPreviewCardProps,
   MobilePreviewSheetProps,
+  // Intent detection types (HiveLab Winter 2025)
+  IntentConfirmationProps,
+  IntentConfirmationInlineProps,
+  DetectedIntent,
+  IntentType,
+  SlashCommandSuggestion,
 } from "./atomic/03-Chat";
+
+// Parsed slash command data (for slash command handling)
+export interface SlashCommandData {
+  command: string;
+  primaryArg?: string;
+  listArgs: string[];
+  flags: Record<string, string | boolean | number>;
+  raw: string;
+  isValid: boolean;
+  error?: string;
+}
 
 // Chat-based Landing Page
 export { AILandingPageChat } from "./pages/hivelab/AILandingPageChat";

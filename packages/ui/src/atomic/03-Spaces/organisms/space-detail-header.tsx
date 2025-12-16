@@ -74,6 +74,7 @@ export interface SpaceDetailHeaderProps {
   onLeave?: () => Promise<void> | void;
   onShare?: () => void;
   onSettings?: () => void;
+  onAnalytics?: () => void;
   onAddTab?: () => void;
   showTabs?: boolean;
   /** Breadcrumb navigation - shows user's location in space hierarchy */

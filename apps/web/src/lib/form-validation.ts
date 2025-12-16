@@ -1,5 +1,4 @@
-// @ts-nocheck
-// TODO: Fix validation rule parameter types
+// TODO: Consider migrating to form-validation-modern.ts which uses react-hook-form + Zod
 // Comprehensive form validation for HIVE platform
 import { useState, useCallback, useEffect } from 'react';
 
@@ -172,7 +171,8 @@ export const profileValidation = new FormValidator({
     minLength: 3,
     maxLength: 20,
     pattern: /^[a-zA-Z0-9_-]+$/,
-    custom: (value: string) => {
+    custom: (value: unknown) => {
+      if (typeof value !== 'string') return null;
       if (value.startsWith('_') || value.startsWith('-')) {
         return 'Handle cannot start with underscore or dash';
       }
@@ -185,8 +185,9 @@ export const profileValidation = new FormValidator({
   email: {
     required: true,
     email: true,
-    custom: (value: string) => {
+    custom: (value: unknown) => {
       // Check if email ends with .edu for campus verification
+      if (typeof value !== 'string') return null;
       if (!value.endsWith('.edu')) {
         return 'Please use your .edu email address for campus verification';
       }
@@ -234,8 +235,9 @@ export const toolValidation = new FormValidator({
   code: {
     required: true,
     minLength: 10,
-    custom: (value: string) => {
+    custom: (value: unknown) => {
       // Basic code validation - ensure it's not malicious
+      if (typeof value !== 'string') return null;
       const dangerousPatterns = [
         /eval\(/,
         /Function\(/,
@@ -247,7 +249,7 @@ export const toolValidation = new FormValidator({
         /\.innerHTML/,
         /\.outerHTML/
       ];
-      
+
       for (const pattern of dangerousPatterns) {
         if (pattern.test(value)) {
           return 'Code contains potentially unsafe patterns';
