@@ -9,12 +9,11 @@
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
 import {
-  withAuthAndErrors,
+  withAdminAuthAndErrors,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { SpaceManagementService, toSpaceBrowseDTO } from '@hive/core';
 import { getServerSpaceRepository } from '@hive/core/server';
@@ -31,17 +30,14 @@ const ListQuerySchema = z.object({
 /**
  * GET /api/admin/spaces
  * List all spaces with admin-level filters
+ *
+ * Uses withAdminAuthAndErrors for:
+ * - Admin authentication (via withAdminAuth)
+ * - CSRF protection (always enabled for admin routes)
+ * - Strict rate limiting (50 req/min)
  */
-export const GET = withAuthAndErrors(async (request, _context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
-
-  // Check admin permission
-  const adminRecord = await getAdminRecord(adminId);
-  if (!adminRecord || !hasAdminRole(adminRecord.role, 'moderator')) {
-    return respond.error('Admin access required', 'FORBIDDEN', {
-      status: HttpStatus.FORBIDDEN,
-    });
-  }
 
   const { searchParams } = new URL(request.url);
   const queryResult = ListQuerySchema.safeParse(Object.fromEntries(searchParams));

@@ -21,6 +21,14 @@ Last Updated: 2024-12-16
   - Logout flow and cookie clearing
   - Admin CSRF protection basics
   - Protected route redirects
+- ✅ Consolidated admin routes to use `withAdminAuthAndErrors`
+  - Migrated `/api/admin/spaces` routes
+  - Migrated `/api/admin/builder-requests` route
+  - Migrated `/api/admin/tools/review-stats` route
+  - Built-in CSRF, rate limiting (50 req/min), and admin auth
+- ✅ Added Vitest unit tests for admin roles and session security
+  - `admin-roles.test.ts` - isAdminEmail, shouldGrantAdmin, role permissions
+  - `session-security.test.ts` - Static security checks on session.ts
 
 ## High Priority
 - ✅ Verify end-to-end OTP auth in prod:
@@ -28,10 +36,11 @@ Last Updated: 2024-12-16
   - ✅ Verify → JWT cookie set (30-day session)
   - ✅ UB `@buffalo.edu` enforcement + school domain check
   - ✅ Code lockout after 5 failed attempts (1 minute)
-- Admin CSRF:
-  - Ensure `<meta name="csrf-token">` present on admin surfaces
+- ✅ Admin CSRF:
+  - ✅ CSRF enforced via `withAdminAuthAndErrors` wrapper (always enabled)
   - ✅ Mutating `/api/admin/**` has auth checks
   - ✅ Add Playwright test: unauthenticated admin requests → 401
+  - ✅ CSRF via API fallback (`/api/auth/csrf`) for admin UIs
 - ✅ Logout hardening:
   - ✅ Cookie cleared on logout
   - ✅ Session revoked in Firestore (survives server restarts)
@@ -40,8 +49,8 @@ Last Updated: 2024-12-16
   - Set `SESSION_SECRET` in Vercel; fail build if missing (guard in place)
 
 ## Medium Priority
-- Consolidate route wrappers:
-  - Prefer `withSecureAuth` for admin/protected APIs (rate-limit + CSRF + campus)
+- ✅ Consolidate route wrappers:
+  - ✅ Admin routes now use `withAdminAuthAndErrors` (rate-limit + CSRF + admin auth)
   - Use `withAuthAndErrors` for non-admin protected routes; avoid drift
 - Replace direct Authorization patterns in remaining libs with `secureApiFetch`
 - Align onboarding bridge with consolidated fetch and error semantics (done for POST)
@@ -58,9 +67,9 @@ Last Updated: 2024-12-16
   - ✅ Admin endpoints require auth
   - ✅ Login page UI displays correctly
   - ✅ Protected routes redirect to login
-- Vitest (unit) - still needed:
-  - `session.ts` throws on missing `SESSION_SECRET` in prod
-  - `isAdminEmail` gating in verify flow
+- Vitest (unit)
+  - ✅ `admin-roles.test.ts` - isAdminEmail, shouldGrantAdmin, permissions
+  - ✅ `session-security.test.ts` - Static analysis of session.ts security patterns
 
 ## Observability
 - Audit logs on send/verify failures (threat codes from validator)
