@@ -154,10 +154,11 @@ export function InterestsStep({
         </motion.h1>
         <motion.p
           variants={safeItemVariants}
-          className="text-zinc-500 text-center mb-4 text-sm md:text-base"
+          className="text-center mb-4 text-sm md:text-base"
+          style={{ color: 'var(--hive-text-subtle)' }}
         >
           Pick up to {MAX_INTERESTS} to personalize your experience{' '}
-          <span className="text-zinc-600">(optional)</span>
+          <span style={{ color: 'var(--hive-text-disabled)' }}>(optional)</span>
         </motion.p>
 
         {/* Selected interests - sticky at top */}
@@ -185,7 +186,10 @@ export function InterestsStep({
                   </motion.button>
                 ))}
               </div>
-              <p className="text-xs text-zinc-500 text-center mt-2">
+              <p
+                className="text-xs text-center mt-2"
+                style={{ color: 'var(--hive-text-subtle)' }}
+              >
                 {interests.length} of {MAX_INTERESTS} selected
               </p>
             </motion.div>
@@ -195,7 +199,7 @@ export function InterestsStep({
         {/* Search bar */}
         <motion.div variants={safeItemVariants} className="mb-4">
           <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--hive-text-subtle)' }} />
             <input
               ref={searchRef}
               type="text"
@@ -205,7 +209,8 @@ export function InterestsStep({
                 setActiveCategory(null); // Clear category filter when searching
               }}
               placeholder={`Search ${totalItems} interests...`}
-              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              style={{ '--tw-placeholder-opacity': 1 } as React.CSSProperties}
               aria-label="Search interests"
             />
           </div>
@@ -221,8 +226,9 @@ export function InterestsStep({
               className={`shrink-0 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                 activeCategory === null && !searchQuery
                   ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                  : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                  : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
               }`}
+              style={activeCategory === null && !searchQuery ? {} : { color: 'var(--hive-text-secondary)' }}
             >
               All
             </button>
@@ -237,8 +243,9 @@ export function InterestsStep({
                 className={`shrink-0 px-4 py-2.5 min-h-[44px] rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   activeCategory === cat.id
                     ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                    : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                    : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                 }`}
+                style={activeCategory === cat.id ? {} : { color: 'var(--hive-text-secondary)' }}
               >
                 {cat.icon && <span>{cat.icon}</span>}
                 <span className="whitespace-nowrap">{cat.title.split('(')[0].trim()}</span>
@@ -253,13 +260,13 @@ export function InterestsStep({
             // Search results - show all matching
             <div className="space-y-4">
               {filteredCategories.length === 0 ? (
-                <p className="text-center text-zinc-500 py-8">
+                <p className="text-center py-8" style={{ color: 'var(--hive-text-subtle)' }}>
                   No interests found for "{searchQuery}"
                 </p>
               ) : (
                 filteredCategories.map((cat) => (
                   <div key={cat.id} className="space-y-2">
-                    <h3 className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
+                    <h3 className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--hive-text-subtle)' }}>
                       {cat.icon && <span>{cat.icon}</span>}
                       {cat.title}
                     </h3>
@@ -277,9 +284,10 @@ export function InterestsStep({
                               isSelected
                                 ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                                 : isDisabled
-                                ? 'bg-white/[0.02] border border-white/[0.04] text-zinc-600 cursor-not-allowed'
-                                : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                                ? 'bg-white/[0.02] border border-white/[0.04] cursor-not-allowed'
+                                : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                             }`}
+                            style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-secondary)' }}
                             aria-pressed={isSelected}
                           >
                             {item}
@@ -294,7 +302,7 @@ export function InterestsStep({
           ) : activeCategory && displayedCategory ? (
             // Single category view
             <div className="space-y-3">
-              <h3 className="text-sm text-zinc-400 font-medium flex items-center gap-2">
+              <h3 className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--hive-text-secondary)' }}>
                 {displayedCategory.icon && <span className="text-lg">{displayedCategory.icon}</span>}
                 {displayedCategory.title}
               </h3>
@@ -312,9 +320,10 @@ export function InterestsStep({
                         isSelected
                           ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                           : isDisabled
-                          ? 'bg-white/[0.02] border border-white/[0.04] text-zinc-600 cursor-not-allowed'
-                          : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                          ? 'bg-white/[0.02] border border-white/[0.04] cursor-not-allowed'
+                          : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                       }`}
+                      style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-secondary)' }}
                       aria-pressed={isSelected}
                     >
                       {item}
@@ -325,17 +334,18 @@ export function InterestsStep({
             </div>
           ) : (
             // All categories - compact view showing first few items each
-            <div className="space-y-5 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+            <div className="space-y-5 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin scrollbar-track-transparent" style={{ scrollbarColor: 'var(--hive-text-disabled) transparent' }}>
               {UB_INTEREST_CATEGORIES.map((cat) => (
                 <div key={cat.id} className="space-y-2">
                   <button
                     type="button"
                     onClick={() => setActiveCategory(cat.id)}
-                    className="text-sm text-zinc-500 font-medium flex items-center gap-1.5 hover:text-white transition-colors group min-h-[44px] py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                    className="text-sm font-medium flex items-center gap-1.5 hover:text-white transition-colors group min-h-[44px] py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-lg"
+                    style={{ color: 'var(--hive-text-subtle)' }}
                   >
                     {cat.icon && <span>{cat.icon}</span>}
                     <span>{cat.title}</span>
-                    <span className="text-zinc-600 group-hover:text-zinc-400">
+                    <span className="group-hover:opacity-80" style={{ color: 'var(--hive-text-disabled)' }}>
                       ({cat.items.length})
                     </span>
                     <ChevronDown className="w-4 h-4 opacity-50 group-hover:opacity-100" />
@@ -354,9 +364,10 @@ export function InterestsStep({
                             isSelected
                               ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                               : isDisabled
-                              ? 'bg-white/[0.01] border border-white/[0.03] text-zinc-600 cursor-not-allowed'
-                              : 'bg-white/[0.02] border border-white/[0.06] text-zinc-500 hover:text-white hover:border-white/[0.12]'
+                              ? 'bg-white/[0.01] border border-white/[0.03] cursor-not-allowed'
+                              : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                           }`}
+                          style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-subtle)' }}
                           aria-pressed={isSelected}
                         >
                           {item}
@@ -367,7 +378,8 @@ export function InterestsStep({
                       <button
                         type="button"
                         onClick={() => setActiveCategory(cat.id)}
-                        className="px-3 py-2 min-h-[44px] rounded-full text-sm font-medium bg-white/[0.02] border border-white/[0.06] text-zinc-500 hover:text-gold-500 hover:border-gold-500/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                        className="px-3 py-2 min-h-[44px] rounded-full text-sm font-medium bg-white/[0.02] border border-white/[0.06] hover:text-gold-500 hover:border-gold-500/30 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                        style={{ color: 'var(--hive-text-subtle)' }}
                       >
                         +{cat.items.length - 5} more
                       </button>
@@ -395,7 +407,8 @@ export function InterestsStep({
                 placeholder="Add your own..."
                 maxLength={MAX_INTEREST_LENGTH}
                 disabled={interests.length >= MAX_INTERESTS}
-                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ '--tw-placeholder-opacity': 1 } as React.CSSProperties}
                 aria-label="Add custom interest"
               />
             </div>
@@ -403,7 +416,8 @@ export function InterestsStep({
               type="button"
               onClick={addCustomInterest}
               disabled={!customInput.trim() || interests.length >= MAX_INTERESTS}
-              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+              className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+              style={{ color: 'var(--hive-text-secondary)' }}
               aria-label="Add interest"
             >
               <Plus className="w-4 h-4" />
@@ -438,7 +452,8 @@ export function InterestsStep({
           <button
             type="button"
             onClick={handleSkip}
-            className="text-sm text-zinc-500 hover:text-white transition-colors underline underline-offset-2"
+            className="text-sm hover:text-white transition-colors underline underline-offset-2"
+            style={{ color: 'var(--hive-text-subtle)' }}
           >
             Skip for now
           </button>
@@ -447,7 +462,8 @@ export function InterestsStep({
             <button
               type="button"
               onClick={onBack}
-              className="text-sm text-zinc-600 hover:text-white transition-colors"
+              className="text-sm hover:text-white transition-colors"
+              style={{ color: 'var(--hive-text-disabled)' }}
             >
               Back
             </button>

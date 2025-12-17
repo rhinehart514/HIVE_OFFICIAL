@@ -47,7 +47,8 @@ export function LivePreview({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="absolute -top-8 left-0 text-xs uppercase tracking-wider text-gray-600"
+          className="absolute -top-8 left-0 text-xs uppercase tracking-wider"
+          style={{ color: 'var(--hive-text-disabled)' }}
         >
           Preview
         </motion.div>
@@ -87,7 +88,7 @@ export function LivePreview({
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <User className="w-8 h-8 text-gray-600" />
+                    <User className="w-8 h-8" style={{ color: 'var(--hive-text-disabled)' }} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -111,7 +112,8 @@ export function LivePreview({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.3 }}
                   exit={{ opacity: 0 }}
-                  className="text-lg font-semibold text-gray-500"
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--hive-text-subtle)' }}
                 >
                   Your name
                 </motion.h3>
@@ -127,8 +129,9 @@ export function LivePreview({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
                   className={`flex items-center gap-1 mt-1 ${
-                    isHandleValid ? 'text-gold-500' : handleStatus === 'checking' ? 'text-gray-400' : 'text-red-400'
+                    isHandleValid ? 'text-gold-500' : handleStatus === 'checking' ? '' : 'text-red-400'
                   }`}
+                  style={handleStatus === 'checking' ? { color: 'var(--hive-text-secondary)' } : {}}
                 >
                   <AtSign className="w-3.5 h-3.5" />
                   <span className="text-sm font-medium">{handle}</span>
@@ -148,7 +151,8 @@ export function LivePreview({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.3 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-center gap-1 mt-1 text-gray-600"
+                  className="flex items-center gap-1 mt-1"
+                  style={{ color: 'var(--hive-text-disabled)' }}
                 >
                   <AtSign className="w-3.5 h-3.5" />
                   <span className="text-sm">yourhandle</span>
@@ -166,9 +170,9 @@ export function LivePreview({
               transition={{ duration: 0.2 }}
             >
               <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
-                <GraduationCap className="w-4 h-4 text-gray-500" />
+                <GraduationCap className="w-4 h-4" style={{ color: 'var(--hive-text-subtle)' }} />
               </div>
-              <span className={`text-sm ${major ? 'text-white' : 'text-gray-600'}`}>
+              <span className={`text-sm ${major ? 'text-white' : ''}`} style={major ? {} : { color: 'var(--hive-text-disabled)' }}>
                 {major || 'Your major'}
               </span>
             </motion.div>
@@ -180,9 +184,9 @@ export function LivePreview({
               transition={{ duration: 0.2 }}
             >
               <div className="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-gray-500" />
+                <Calendar className="w-4 h-4" style={{ color: 'var(--hive-text-subtle)' }} />
               </div>
-              <span className={`text-sm ${graduationYear ? 'text-white' : 'text-gray-600'}`}>
+              <span className={`text-sm ${graduationYear ? 'text-white' : ''}`} style={graduationYear ? {} : { color: 'var(--hive-text-disabled)' }}>
                 {graduationYear ? `Class of ${graduationYear}` : 'Graduation year'}
               </span>
             </motion.div>
@@ -196,7 +200,7 @@ export function LivePreview({
           transition={{ delay: 0.4 }}
           className="mt-4 text-center"
         >
-          <span className="text-xs text-gray-600">
+          <span className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>
             hive.so/{handle || 'your-handle'}
           </span>
         </motion.div>

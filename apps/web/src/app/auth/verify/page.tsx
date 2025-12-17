@@ -34,12 +34,12 @@ export default function VerifyPage() {
   return (
     <AuthShellStatic>
       <div className="text-center space-y-6">
-        <Loader2 className="h-8 w-8 animate-spin text-zinc-500 mx-auto" />
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" style={{ color: 'var(--hive-text-subtle)' }} />
         <div className="space-y-2">
           <h1 className="text-xl font-semibold text-white">
             Redirecting...
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
             We&apos;ve updated our sign-in process. Taking you to the new login page.
           </p>
         </div>

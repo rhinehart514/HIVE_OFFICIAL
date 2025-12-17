@@ -46,10 +46,10 @@ const typeIcons = {
 };
 
 const typeColors = {
-  academic: 'text-blue-600 bg-blue-50',
-  social: 'text-green-600 bg-green-50',
-  career: 'text-purple-600 bg-purple-50',
-  general: 'text-gray-600 bg-gray-50'
+  academic: 'text-blue-400 bg-blue-500/10',
+  social: 'text-green-400 bg-green-500/10',
+  career: 'text-purple-400 bg-purple-500/10',
+  general: 'text-white/60 bg-white/[0.05]'
 };
 
 export function SpaceCreationPreview({ 
@@ -104,12 +104,12 @@ export function SpaceCreationPreview({
 
   if (previewLoading) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-sm border">
+      <div className="max-w-2xl mx-auto p-6 rounded-xl border border-white/[0.06]" style={{ backgroundColor: 'var(--hive-bg-surface)' }}>
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div className="h-6 bg-white/[0.06] rounded w-3/4 mb-4"></div>
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-16 bg-gray-100 rounded"></div>
+              <div key={i} className="h-16 bg-white/[0.04] rounded"></div>
             ))}
           </div>
         </div>
@@ -119,12 +119,13 @@ export function SpaceCreationPreview({
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-sm border">
-        <div className="text-center text-red-600">
+      <div className="max-w-2xl mx-auto p-6 rounded-xl border border-white/[0.06]" style={{ backgroundColor: 'var(--hive-bg-surface)' }}>
+        <div className="text-center text-red-400">
           <p>Error loading space preview: {error}</p>
-          <button 
+          <button
             onClick={onSkip}
-            className="mt-4 px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+            className="mt-4 px-4 py-2 text-sm bg-white/[0.04] hover:bg-white/[0.08] rounded-md transition-colors"
+            style={{ color: 'var(--hive-text-secondary)' }}
           >
             Continue without spaces
           </button>
@@ -134,7 +135,7 @@ export function SpaceCreationPreview({
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-sm border">
+    <div className="max-w-2xl mx-auto p-6 rounded-xl border border-white/[0.06]" style={{ backgroundColor: 'var(--hive-bg-surface)' }}>
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-12 h-12 bg-[var(--hive-brand-primary)] rounded-full mb-4">
           <Sparkles className="w-6 h-6 text-white" />
@@ -204,7 +205,7 @@ export function SpaceCreationPreview({
               const colorClass = typeColors[space.type];
               
               return (
-                <div key={space.id} className="flex items-start p-4 border border-dashed border-gray-300 rounded-lg">
+                <div key={space.id} className="flex items-start p-4 border border-dashed border-white/[0.12] rounded-lg">
                   <div className={`p-2 rounded-lg ${colorClass} mr-3 mt-1`}>
                     <IconComponent className="w-4 h-4" />
                   </div>
@@ -230,8 +231,8 @@ export function SpaceCreationPreview({
               );
             })}
           </div>
-          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
+          <div className="mt-3 p-3 bg-blue-500/10 rounded-lg">
+            <p className="text-sm text-blue-400">
               💡 You can join these spaces later from your dashboard or discovery page
             </p>
           </div>
@@ -240,8 +241,8 @@ export function SpaceCreationPreview({
 
       {spaces.length === 0 && (
         <div className="text-center py-8">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Building2 className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-white/[0.04] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Building2 className="w-8 h-8" style={{ color: 'var(--hive-text-secondary)' }} />
           </div>
           <h3 className="text-lg font-medium text-[var(--hive-text-primary)] mb-2">
             No automatic spaces found

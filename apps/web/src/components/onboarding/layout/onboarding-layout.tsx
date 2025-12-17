@@ -99,8 +99,9 @@ export function OnboardingLayout({ children, showLogo = true, currentStep }: Onb
                     w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-medium transition-colors
                     ${isComplete ? 'bg-gold-500/20 text-gold-500' : ''}
                     ${isCurrent ? 'bg-white/10 text-white border border-white/20' : ''}
-                    ${!isComplete && !isCurrent ? 'bg-white/[0.03] text-gray-600 opacity-30' : ''}
+                    ${!isComplete && !isCurrent ? 'bg-white/[0.03] opacity-30' : ''}
                   `}
+                  style={!isComplete && !isCurrent ? { color: 'var(--hive-text-disabled)' } : {}}
                   aria-current={isCurrent ? 'step' : undefined}
                   aria-label={`Step ${i + 1}${isComplete ? ' (completed)' : isCurrent ? ' (current)' : ''}`}
                 >
