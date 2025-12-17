@@ -25,7 +25,7 @@ function getStepIndex(step: OnboardingStep | undefined): number {
 
 /**
  * Premium onboarding layout wrapper
- * Full-screen black background with subtle ambient glow
+ * Full-screen dark background (#0A0A0A) with subtle ambient glow
  * YC/SF/OpenAI aesthetic
  */
 export function OnboardingLayout({ children, showLogo = true, currentStep }: OnboardingLayoutProps) {
@@ -34,7 +34,13 @@ export function OnboardingLayout({ children, showLogo = true, currentStep }: Onb
   const isCompletion = currentStep === 'completion';
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-black text-white relative overflow-hidden">
+    <div
+      className="min-h-screen min-h-[100dvh] relative overflow-hidden"
+      style={{
+        backgroundColor: 'var(--hive-bg-base)',
+        color: 'var(--hive-text-primary)',
+      }}
+    >
       {/* Ambient gold orb - breathing effect (elevated opacity for premium feel) */}
       {!shouldReduceMotion && (
         <motion.div
@@ -93,8 +99,9 @@ export function OnboardingLayout({ children, showLogo = true, currentStep }: Onb
                     w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-medium transition-colors
                     ${isComplete ? 'bg-gold-500/20 text-gold-500' : ''}
                     ${isCurrent ? 'bg-white/10 text-white border border-white/20' : ''}
-                    ${!isComplete && !isCurrent ? 'bg-white/[0.03] text-gray-600 opacity-30' : ''}
+                    ${!isComplete && !isCurrent ? 'bg-white/[0.03] opacity-30' : ''}
                   `}
+                  style={!isComplete && !isCurrent ? { color: 'var(--hive-text-disabled)' } : {}}
                   aria-current={isCurrent ? 'step' : undefined}
                   aria-label={`Step ${i + 1}${isComplete ? ' (completed)' : isCurrent ? ' (current)' : ''}`}
                 >

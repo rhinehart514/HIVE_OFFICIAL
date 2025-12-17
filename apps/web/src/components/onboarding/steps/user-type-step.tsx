@@ -78,7 +78,11 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
                   I lead something
                 </h2>
               </div>
-              <p id="leader-description" className="text-sm text-zinc-400 mt-1">
+              <p
+                id="leader-description"
+                className="text-sm mt-1"
+                style={{ color: 'var(--hive-text-secondary)' }}
+              >
                 Claim a club or org. Build it your way.
               </p>
               <motion.div
@@ -103,12 +107,20 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
           >
             <div className="flex flex-col h-full min-h-[140px]">
               <div className="flex items-center gap-3 mb-2">
-                <Users className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" aria-hidden="true" />
+                <Users
+                  className="w-5 h-5 group-hover:text-white transition-colors"
+                  style={{ color: 'var(--hive-text-secondary)' }}
+                  aria-hidden="true"
+                />
                 <h2 className="text-2xl md:text-3xl font-semibold text-white">
                   I&apos;m finding my people
                 </h2>
               </div>
-              <p id="explorer-description" className="text-sm text-zinc-500 mt-1 group-hover:text-zinc-400 transition-colors">
+              <p
+                id="explorer-description"
+                className="text-sm mt-1 group-hover:opacity-90 transition-colors"
+                style={{ color: 'var(--hive-text-subtle)' }}
+              >
                 Join communities. Discover events.
               </p>
               <motion.div
@@ -116,7 +128,10 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
                 className="mt-auto pt-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors"
                 aria-hidden="true"
               >
-                <ArrowRight className="w-5 h-5 text-zinc-400 group-hover:text-white transition-colors" />
+                <ArrowRight
+                  className="w-5 h-5 group-hover:text-white transition-colors"
+                  style={{ color: 'var(--hive-text-secondary)' }}
+                />
               </motion.div>
             </div>
           </motion.button>
@@ -127,19 +142,24 @@ export function UserTypeStep({ onSelect }: UserTypeStepProps) {
           variants={safeItemVariants}
           className="mt-12 md:mt-16 flex flex-col items-center gap-4"
         >
-          <span className="text-xs text-zinc-600 uppercase tracking-wide">
+          <span
+            className="text-xs uppercase tracking-wide"
+            style={{ color: 'var(--hive-text-disabled)' }}
+          >
             Not a student?
           </span>
           <div className="flex items-center gap-3" role="group" aria-label="Other user types">
             <button
               onClick={() => onSelect('faculty', false)}
-              className="min-h-[44px] px-5 py-2.5 text-sm text-zinc-400 hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="min-h-[44px] px-5 py-2.5 text-sm hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              style={{ color: 'var(--hive-text-secondary)' }}
             >
               Faculty
             </button>
             <button
               onClick={() => onSelect('alumni', false)}
-              className="min-h-[44px] px-5 py-2.5 text-sm text-zinc-400 hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              className="min-h-[44px] px-5 py-2.5 text-sm hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              style={{ color: 'var(--hive-text-secondary)' }}
             >
               Alumni
             </button>

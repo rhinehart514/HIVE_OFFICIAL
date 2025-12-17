@@ -154,9 +154,9 @@ export function ProfileStep({
       case 'invalid':
         return 'text-red-400';
       case 'checking':
-        return 'text-zinc-400';
+        return 'checking';
       default:
-        return handle ? 'text-white' : 'text-zinc-600';
+        return handle ? 'text-white' : 'placeholder';
     }
   };
 
@@ -203,8 +203,11 @@ export function ProfileStep({
               className="text-center cursor-text"
               onClick={() => handleInputRef.current?.focus()}
             >
-              <span className={`text-5xl md:text-7xl font-bold tracking-tight ${getHandleColor()} transition-colors`}>
-                @{handle || <span className="text-zinc-500">_</span>}
+              <span
+                className={`text-5xl md:text-7xl font-bold tracking-tight transition-colors ${getHandleColor() === 'text-gold-500' ? 'text-gold-500' : getHandleColor() === 'text-red-400' ? 'text-red-400' : getHandleColor() === 'text-white' ? 'text-white' : ''}`}
+                style={getHandleColor() === 'checking' ? { color: 'var(--hive-text-secondary)' } : getHandleColor() === 'placeholder' ? { color: 'var(--hive-text-disabled)' } : {}}
+              >
+                @{handle || <span style={{ color: 'var(--hive-text-subtle)' }}>_</span>}
               </span>
 
               {/* Status indicator */}
@@ -261,7 +264,8 @@ export function ProfileStep({
                     key={suggestion}
                     type="button"
                     onClick={() => onUpdate({ handle: suggestion })}
-                    className="px-3 py-1.5 text-sm rounded-lg bg-white/[0.03] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-gold-500/30 transition-colors"
+                    className="px-3 py-1.5 text-sm rounded-lg bg-white/[0.03] border border-white/[0.06] hover:text-white hover:border-gold-500/30 transition-colors"
+                    style={{ color: 'var(--hive-text-secondary)' }}
                   >
                     @{suggestion}
                   </button>
@@ -278,7 +282,7 @@ export function ProfileStep({
         >
           {/* Name */}
           <div className="space-y-1.5">
-            <label htmlFor="name-input" className="text-xs text-zinc-500 font-medium">
+            <label htmlFor="name-input" className="text-xs font-medium" style={{ color: 'var(--hive-text-subtle)' }}>
               Name <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -291,18 +295,18 @@ export function ProfileStep({
                 setError(null);
               }}
               placeholder="Your name"
-              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white placeholder:text-zinc-600 text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
               aria-describedby="name-hint"
               required
             />
-            <p id="name-hint" className="text-xs text-zinc-600">How people will see you</p>
+            <p id="name-hint" className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>How people will see you</p>
           </div>
 
           {/* Major and Year row */}
           <div className="grid grid-cols-2 gap-3">
           {/* Major combobox */}
           <div className="space-y-1.5">
-            <label id="major-label" className="text-xs text-zinc-500 font-medium">
+            <label id="major-label" className="text-xs font-medium" style={{ color: 'var(--hive-text-subtle)' }}>
               Major <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -320,27 +324,28 @@ export function ProfileStep({
                   }`}
                   style={majorOpen ? { boxShadow: GLOW_GOLD } : {}}
                 >
-                  <span className={major ? 'text-white truncate' : 'text-zinc-600'}>
+                  <span className={major ? 'text-white truncate' : ''} style={major ? {} : { color: 'var(--hive-text-disabled)' }}>
                     {major || 'Select major'}
                   </span>
-                  <ChevronsUpDown className="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true" />
+                  <ChevronsUpDown className="h-4 w-4 shrink-0" style={{ color: 'var(--hive-text-subtle)' }} aria-hidden="true" />
                 </button>
               </PopoverTrigger>
             <PopoverContent
-              className="p-0 bg-zinc-900 border-zinc-800 rounded-xl shadow-2xl w-[calc(100vw-3rem)] sm:w-[320px] max-w-[320px]"
+              className="p-0 rounded-xl shadow-2xl w-[calc(100vw-3rem)] sm:w-[320px] max-w-[320px]"
+              style={{ backgroundColor: 'var(--hive-bg-surface)', borderColor: 'var(--hive-border-default)' }}
               align="start"
               sideOffset={4}
             >
               <Command className="bg-transparent">
                 <CommandInput
                   placeholder="Search majors..."
-                  className="h-11 bg-transparent px-4 text-sm text-white placeholder:text-zinc-500"
+                  className="h-11 bg-transparent px-4 text-sm text-white"
                 />
-                <div className="px-3 py-1.5 text-xs text-zinc-500 border-b border-zinc-800">
+                <div className="px-3 py-1.5 text-xs" style={{ color: 'var(--hive-text-subtle)', borderBottomColor: 'var(--hive-border-default)', borderBottomWidth: '1px' }}>
                   {availableMajors.length} programs available
                 </div>
                 <CommandList className="max-h-[280px] overflow-y-auto p-1">
-                  <CommandEmpty className="py-4 text-center text-sm text-zinc-500">
+                  <CommandEmpty className="py-4 text-center text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
                     No matching major found
                   </CommandEmpty>
                   <CommandGroup>
@@ -353,7 +358,7 @@ export function ProfileStep({
                           setMajorOpen(false);
                           setError(null);
                         }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-zinc-800"
+                        className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-white/[0.06]"
                       >
                         <Check
                           className={`h-4 w-4 shrink-0 ${
@@ -368,12 +373,12 @@ export function ProfileStep({
               </Command>
             </PopoverContent>
             </Popover>
-            <p className="text-xs text-zinc-600">Helps us suggest relevant spaces</p>
+            <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>Helps us suggest relevant spaces</p>
           </div>
 
           {/* Year dropdown-style pills */}
           <div className="space-y-1.5">
-            <label id="year-label" className="text-xs text-zinc-500 font-medium">
+            <label id="year-label" className="text-xs font-medium" style={{ color: 'var(--hive-text-subtle)' }}>
               Year <span className="text-gold-500" aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -391,22 +396,23 @@ export function ProfileStep({
                 className={`flex-1 h-12 rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                   graduationYear === year
                     ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                    : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                    : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                 }`}
+                style={graduationYear === year ? {} : { color: 'var(--hive-text-secondary)' }}
               >
                 '{String(year).slice(-2)}
               </button>
             ))}
             </div>
-            <p id="year-hint" className="text-xs text-zinc-600">Connect with your class</p>
+            <p id="year-hint" className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>Connect with your class</p>
           </div>
           </div>
 
           {/* Residential status - optional, only show for students */}
           {userType === 'student' && (
             <div className="space-y-2">
-              <label id="living-label" className="text-xs text-zinc-500 font-medium">
-                Where do you live? <span className="text-zinc-600">(optional)</span>
+              <label id="living-label" className="text-xs font-medium" style={{ color: 'var(--hive-text-subtle)' }}>
+                Where do you live? <span style={{ color: 'var(--hive-text-disabled)' }}>(optional)</span>
               </label>
               {/* 2x2 grid on mobile, row on larger screens */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-labelledby="living-label">
@@ -422,14 +428,15 @@ export function ProfileStep({
                     className={`min-h-[44px] px-3 py-2 rounded-xl text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                       livingSituation === option.value
                         ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
-                        : 'bg-white/[0.02] border border-white/[0.06] text-zinc-400 hover:text-white hover:border-white/[0.12]'
+                        : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                     }`}
+                    style={livingSituation === option.value ? {} : { color: 'var(--hive-text-secondary)' }}
                   >
                     {option.label}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-zinc-600">Helps us recommend nearby activities</p>
+              <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>Helps us recommend nearby activities</p>
             </div>
           )}
         </motion.div>
