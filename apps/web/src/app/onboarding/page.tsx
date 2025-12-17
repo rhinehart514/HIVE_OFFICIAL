@@ -250,7 +250,10 @@ function OnboardingContent() {
 
 function OnboardingPageFallback() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ backgroundColor: 'var(--hive-bg-base)' }}
+    >
       {/* Ambient glow */}
       <motion.div
         animate={{

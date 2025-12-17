@@ -25,7 +25,7 @@ function getStepIndex(step: OnboardingStep | undefined): number {
 
 /**
  * Premium onboarding layout wrapper
- * Full-screen black background with subtle ambient glow
+ * Full-screen dark background (#0A0A0A) with subtle ambient glow
  * YC/SF/OpenAI aesthetic
  */
 export function OnboardingLayout({ children, showLogo = true, currentStep }: OnboardingLayoutProps) {
@@ -34,7 +34,13 @@ export function OnboardingLayout({ children, showLogo = true, currentStep }: Onb
   const isCompletion = currentStep === 'completion';
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-black text-white relative overflow-hidden">
+    <div
+      className="min-h-screen min-h-[100dvh] relative overflow-hidden"
+      style={{
+        backgroundColor: 'var(--hive-bg-base)',
+        color: 'var(--hive-text-primary)',
+      }}
+    >
       {/* Ambient gold orb - breathing effect (elevated opacity for premium feel) */}
       {!shouldReduceMotion && (
         <motion.div

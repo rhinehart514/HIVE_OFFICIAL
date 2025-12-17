@@ -3,7 +3,8 @@
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Loader2, ArrowRight, ArrowLeft, Check, Mail } from 'lucide-react';
+import { Loader2, ArrowLeft, Check, Mail } from 'lucide-react';
+import { Button } from '@hive/ui';
 import { AuthShell, AuthShellStatic } from '@/components/auth/auth-shell';
 
 export const dynamic = 'force-dynamic';
@@ -114,15 +115,24 @@ function LoginPageFallback() {
     <AuthShellStatic>
       <div className="space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-semibold text-white">
+          <h1
+            className="text-2xl font-semibold"
+            style={{ color: 'var(--hive-text-primary)' }}
+          >
             Sign in
           </h1>
-          <p className="text-sm text-zinc-500">
+          <p
+            className="text-sm"
+            style={{ color: 'var(--hive-text-subtle)' }}
+          >
             Loading...
           </p>
         </div>
         <div className="flex justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-zinc-500" />
+          <Loader2
+            className="w-6 h-6 animate-spin"
+            style={{ color: 'var(--hive-text-subtle)' }}
+          />
         </div>
       </div>
     </AuthShellStatic>
@@ -360,10 +370,16 @@ function LoginContent() {
                 transition={{ delay: 0.4, duration: 0.4 }}
                 className="space-y-2"
               >
-                <h1 className="text-3xl font-bold text-white tracking-tight">
+                <h1
+                  className="text-3xl font-bold tracking-tight"
+                  style={{ color: 'var(--hive-text-primary)' }}
+                >
                   You&apos;re in.
                 </h1>
-                <p className="text-zinc-500 text-sm">
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--hive-text-subtle)' }}
+                >
                   {isNewUser ? 'Let\'s get you set up' : 'Welcome back'}
                 </p>
               </motion.div>
@@ -403,15 +419,22 @@ function LoginContent() {
             >
               <motion.div variants={itemVariants} className="text-center space-y-3">
                 <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center">
-                    <Mail className="w-6 h-6 text-gold-500" />
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--hive-gold-subtle)' }}
+                  >
+                    <Mail className="w-6 h-6" style={{ color: 'var(--hive-gold)' }} />
                   </div>
                 </div>
-                <h1 className="text-2xl font-semibold text-white">
+                <h1
+                  className="text-2xl font-semibold"
+                  style={{ color: 'var(--hive-text-primary)' }}
+                >
                   Check your email
                 </h1>
-                <p className="text-sm text-zinc-500">
-                  We sent a code to <span className="text-zinc-400">{fullEmail}</span>
+                <p className="text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
+                  We sent a code to{' '}
+                  <span style={{ color: 'var(--hive-text-secondary)' }}>{fullEmail}</span>
                 </p>
               </motion.div>
 
@@ -436,17 +459,18 @@ function LoginContent() {
                       disabled={loginState === 'verifying'}
                       autoFocus={index === 0}
                       aria-label={`Digit ${index + 1} of 6`}
-                      className={`
-                        w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold
-                        bg-zinc-900/50 border rounded-xl
-                        text-white
-                        outline-none transition-all duration-200
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        ${code[index] ? 'border-gold-500 bg-gold-500/5' : 'border-zinc-800'}
-                        focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20
-                        focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black
-                        ${codeError ? 'border-red-500 shake' : ''}
-                      `}
+                      className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold rounded-xl outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        backgroundColor: code[index] ? 'var(--hive-gold-subtle)' : 'var(--hive-bg-surface)',
+                        borderWidth: '1px',
+                        borderStyle: 'solid',
+                        borderColor: codeError
+                          ? 'var(--hive-status-error)'
+                          : code[index]
+                            ? 'var(--hive-gold)'
+                            : 'var(--hive-border-default)',
+                        color: 'var(--hive-text-primary)',
+                      }}
                     />
                   ))}
                 </div>
@@ -457,7 +481,8 @@ function LoginContent() {
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      className="text-sm text-red-400 text-center"
+                      className="text-sm text-center"
+                      style={{ color: 'var(--hive-status-error)' }}
                     >
                       {codeError}
                     </motion.p>
@@ -468,7 +493,8 @@ function LoginContent() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center justify-center gap-2 text-gold-500"
+                    className="flex items-center justify-center gap-2"
+                    style={{ color: 'var(--hive-gold)' }}
                   >
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm">Verifying</span>
@@ -479,14 +505,15 @@ function LoginContent() {
               {/* Resend + Back */}
               <motion.div variants={itemVariants} className="flex flex-col items-center gap-3">
                 {resendCooldown > 0 ? (
-                  <p className="text-sm text-zinc-600">
+                  <p className="text-sm" style={{ color: 'var(--hive-text-disabled)' }}>
                     Resend in {formatCooldown(resendCooldown)}
                   </p>
                 ) : (
                   <button
                     onClick={handleSendCode}
                     disabled={loginState === 'verifying'}
-                    className="text-sm text-gold-500 hover:text-gold-400 transition-colors"
+                    className="text-sm transition-colors hover:opacity-80"
+                    style={{ color: 'var(--hive-gold)' }}
                   >
                     Resend code
                   </button>
@@ -494,7 +521,8 @@ function LoginContent() {
                 <button
                   onClick={handleBackToInput}
                   disabled={loginState === 'verifying'}
-                  className="text-sm text-zinc-500 hover:text-white transition-colors inline-flex items-center gap-1"
+                  className="text-sm transition-colors inline-flex items-center gap-1 hover:opacity-100"
+                  style={{ color: 'var(--hive-text-subtle)' }}
                   aria-label="Go back to email input"
                 >
                   <ArrowLeft className="w-3 h-3" aria-hidden="true" />
@@ -516,14 +544,17 @@ function LoginContent() {
             >
               {/* Header */}
               <motion.div variants={itemVariants} className="text-center space-y-2">
-                <h1 className="text-3xl font-semibold text-white tracking-tight">
+                <h1
+                  className="text-3xl font-semibold tracking-tight"
+                  style={{ color: 'var(--hive-text-primary)' }}
+                >
                   {isNewUser ? 'Join HIVE' : 'Sign in to HIVE'}
                 </h1>
-                <p className="text-sm text-zinc-500">
+                <p className="text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
                   {isNewUser ? (
-                    <>Your <span className="text-zinc-400">{CAMPUS_CONFIG.name}</span> email is your key</>
+                    <>Your <span style={{ color: 'var(--hive-text-secondary)' }}>{CAMPUS_CONFIG.name}</span> email is your key</>
                   ) : (
-                    <>Use your <span className="text-zinc-400">{CAMPUS_CONFIG.name}</span> email</>
+                    <>Use your <span style={{ color: 'var(--hive-text-secondary)' }}>{CAMPUS_CONFIG.name}</span> email</>
                   )}
                 </p>
               </motion.div>
@@ -532,12 +563,15 @@ function LoginContent() {
               <motion.div variants={itemVariants} className="space-y-4">
                 {/* Email Input */}
                 <div className="space-y-2">
-                  <div className={`
-                    flex items-center bg-zinc-900/50 border rounded-xl
-                    transition-all duration-200
-                    ${error ? 'border-red-500' : 'border-zinc-800'}
-                    focus-within:border-gold-500 focus-within:ring-2 focus-within:ring-gold-500/20
-                  `}>
+                  <div
+                    className="flex items-center rounded-xl transition-all duration-200"
+                    style={{
+                      backgroundColor: 'var(--hive-bg-surface)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid',
+                      borderColor: error ? 'var(--hive-status-error)' : 'var(--hive-border-default)',
+                    }}
+                  >
                     <input
                       ref={emailInputRef}
                       type="text"
@@ -557,13 +591,16 @@ function LoginContent() {
                       disabled={loginState === 'sending'}
                       aria-label="Email username"
                       aria-describedby="email-domain"
-                      className="
-                        flex-1 bg-transparent px-4 py-3.5 text-white text-base
-                        placeholder:text-zinc-600
-                        outline-none disabled:opacity-50
-                      "
+                      className="flex-1 bg-transparent px-4 py-3.5 text-base outline-none disabled:opacity-50"
+                      style={{
+                        color: 'var(--hive-text-primary)',
+                      }}
                     />
-                    <span id="email-domain" className="pr-4 text-zinc-500 text-sm">
+                    <span
+                      id="email-domain"
+                      className="pr-4 text-sm"
+                      style={{ color: 'var(--hive-text-subtle)' }}
+                    >
                       @{CAMPUS_CONFIG.domain}
                     </span>
                   </div>
@@ -573,7 +610,8 @@ function LoginContent() {
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-sm text-red-400 px-1"
+                        className="text-sm px-1"
+                        style={{ color: 'var(--hive-status-error)' }}
                       >
                         {error}
                       </motion.p>
@@ -581,60 +619,59 @@ function LoginContent() {
                   </AnimatePresence>
                 </div>
 
-                {/* Submit Button */}
-                <motion.button
+                {/* Submit Button - Using @hive/ui Button */}
+                <Button
                   onClick={handleSendCode}
                   disabled={loginState === 'sending' || !email.trim()}
-                  whileHover={shouldReduceMotion ? {} : { y: -2 }}
-                  whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
-                  className={`
-                    w-full flex items-center justify-center gap-2
-                    font-medium py-3.5 rounded-xl
-                    transition-all duration-200
-                    disabled:cursor-not-allowed
-                    ${email.trim()
-                      ? 'bg-white text-black hover:bg-zinc-100'
-                      : 'bg-zinc-800 text-zinc-500'
-                    }
-                  `}
+                  state={loginState === 'sending' ? 'loading' : 'idle'}
+                  showArrow={loginState !== 'sending'}
+                  fullWidth
+                  size="lg"
+                  variant={email.trim() ? 'default' : 'secondary'}
                 >
-                  {loginState === 'sending' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Sending code...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Continue</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </motion.button>
+                  {loginState === 'sending' ? 'Sending code...' : 'Continue'}
+                </Button>
               </motion.div>
 
               {/* Footer */}
               <motion.div variants={itemVariants} className="text-center space-y-3">
-                <p className="text-xs text-zinc-600 leading-relaxed">
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--hive-text-disabled)' }}>
                   By continuing, you agree to our{' '}
-                  <a href="/legal/terms" className="text-zinc-500 hover:text-white transition-colors underline-offset-2 hover:underline">
+                  <a
+                    href="/legal/terms"
+                    className="transition-colors underline-offset-2 hover:underline"
+                    style={{ color: 'var(--hive-text-subtle)' }}
+                  >
                     Terms
                   </a>{' '}
                   and{' '}
-                  <a href="/legal/privacy" className="text-zinc-500 hover:text-white transition-colors underline-offset-2 hover:underline">
+                  <a
+                    href="/legal/privacy"
+                    className="transition-colors underline-offset-2 hover:underline"
+                    style={{ color: 'var(--hive-text-subtle)' }}
+                  >
                     Privacy Policy
                   </a>
                 </p>
                 {isNewUser ? (
-                  <p className="text-xs text-zinc-600">
+                  <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>
                     Already have an account?{' '}
-                    <a href="/auth/login" className="text-gold-500 hover:text-gold-400 transition-colors">
+                    <a
+                      href="/auth/login"
+                      className="transition-colors hover:opacity-80"
+                      style={{ color: 'var(--hive-gold)' }}
+                    >
                       Sign in
                     </a>
                   </p>
                 ) : (
-                  <p className="text-xs text-zinc-600">
+                  <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>
                     New to HIVE?{' '}
-                    <a href="/auth/login?new=true" className="text-gold-500 hover:text-gold-400 transition-colors">
+                    <a
+                      href="/auth/login?new=true"
+                      className="transition-colors hover:opacity-80"
+                      style={{ color: 'var(--hive-gold)' }}
+                    >
                       Get started
                     </a>
                   </p>

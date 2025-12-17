@@ -14,7 +14,7 @@ interface AuthShellProps {
 /**
  * Shared layout shell for auth pages (login, verify, expired)
  *
- * Black background with subtle breathing gold orb.
+ * Dark background (#0A0A0A) with subtle breathing gold orb.
  * YC/SF aesthetic: minimal, restrained, intentional.
  */
 export function AuthShell({ children, showLogo = true, logoPosition = 'center' }: AuthShellProps) {
@@ -22,7 +22,8 @@ export function AuthShell({ children, showLogo = true, logoPosition = 'center' }
 
   return (
     <div
-      className="min-h-screen min-h-[100dvh] bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      style={{ backgroundColor: 'var(--hive-bg-base)' }}
       suppressHydrationWarning
     >
       {/* Ambient gold orb - breathing effect */}
@@ -97,7 +98,8 @@ export function AuthShell({ children, showLogo = true, logoPosition = 'center' }
 export function AuthShellStatic({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="min-h-screen min-h-[100dvh] bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
+      style={{ backgroundColor: 'var(--hive-bg-base)' }}
       suppressHydrationWarning
     >
       {/* Static ambient glow */}
