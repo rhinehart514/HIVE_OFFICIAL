@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Wrench, Plus, Home } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Wrench, Home } from 'lucide-react';
 import { Button, Card } from "@hive/ui";
 
 // Inline ErrorBoundary to replace deleted component

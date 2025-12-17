@@ -16,7 +16,6 @@ import {
   setDoc,
   deleteDoc,
   serverTimestamp,
-  getDoc
 } from 'firebase/firestore';
 
 interface Connection {

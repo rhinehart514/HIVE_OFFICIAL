@@ -47,7 +47,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
         flaggedContent: contentData.flaggedContent?.filter((c: { status: string }) => c.status === 'pending').length || 0,
         userReports: 0, // TODO: Implement user reports
       });
-    } catch (_error) {
+    } catch {
       // Pending counts fetch failed - will retry on next interval
     }
   }, [admin]);

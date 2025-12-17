@@ -517,7 +517,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       setCampaigns(data.campaigns || []);
       setTemplates(data.templates || []);
       setAnalytics(data.analytics);
-    } catch (_error) {
+    } catch {
       // Load notifications failed - UI will show empty state
     } finally {
       setLoading(false);

@@ -1,7 +1,6 @@
-import type { Element } from '@hive/core';
-import { 
-  Type, 
-  KeyRound as InputIcon, 
+import {
+  Type,
+  KeyRound as InputIcon,
   Container,
   BarChart3
 } from 'lucide-react';

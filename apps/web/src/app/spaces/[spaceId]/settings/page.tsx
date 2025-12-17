@@ -37,7 +37,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Button, Input, Card, Switch, toast, cn, AddTabModal, AddWidgetModal } from "@hive/ui";
+import { Button, Input, Card, toast, cn, AddTabModal, AddWidgetModal } from "@hive/ui";
 import type { AddTabInput, AddWidgetInputUI } from "@hive/ui";
 import { springPresets, easingArrays } from "@hive/tokens";
 import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
@@ -130,7 +130,7 @@ function SpaceSettingsContent() {
     membership,
     tabs,
     widgets,
-    visibleTabs,
+    visibleTabs: _visibleTabs,
     isLoading,
     error,
     leaderActions,
@@ -199,7 +199,7 @@ function SpaceSettingsContent() {
       if (!res.ok) throw new Error("Failed to save");
 
       toast.success("Settings saved", "Your changes have been applied.");
-    } catch (e) {
+    } catch {
       toast.error("Failed to save", "Please try again.");
     } finally {
       setSaving(false);
@@ -257,7 +257,7 @@ function SpaceSettingsContent() {
 
       toast.success("Space deleted", "The space has been permanently deleted.");
       router.push("/spaces");
-    } catch (e) {
+    } catch {
       toast.error("Failed to delete", "Please try again.");
     }
   };

@@ -49,7 +49,7 @@ export async function getCurrentAdmin(): Promise<AdminUser | null> {
       permissions: (claims.permissions as string[]) || ['read'],
       lastLogin: new Date(),
     };
-  } catch (_error) {
+  } catch {
     return null;
   }
 }

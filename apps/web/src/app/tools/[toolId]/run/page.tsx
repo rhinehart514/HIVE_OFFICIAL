@@ -32,10 +32,11 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.05 } },
 };
 
-const scaleOnHover = {
-  rest: { scale: 1 },
-  hover: { scale: 1.02, transition: { duration: 0.2 } },
-};
+// Animation variant available for hover effects if needed
+// const scaleOnHover = {
+//   rest: { scale: 1 },
+//   hover: { scale: 1.02, transition: { duration: 0.2 } },
+// };
 
 // ============================================================================
 // COMPONENTS

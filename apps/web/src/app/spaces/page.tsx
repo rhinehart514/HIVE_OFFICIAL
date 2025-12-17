@@ -25,7 +25,6 @@ import {
   Sparkles,
   Users,
   Check,
-  Loader2,
 } from "lucide-react";
 
 // HIVE UI Components
@@ -228,7 +227,7 @@ function JoinCelebration({ spaceName, visible }: JoinCelebrationProps) {
 
 export default function SpacesDiscoveryPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   // Local state for celebration
@@ -246,7 +245,7 @@ export default function SpacesDiscoveryPage() {
     isLoading,
     error,
     joinSpace,
-    isJoining,
+    isJoining: _isJoining,
     joiningIds,
     refresh,
   } = useSpaceDiscovery({

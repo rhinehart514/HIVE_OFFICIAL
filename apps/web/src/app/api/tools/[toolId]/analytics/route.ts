@@ -1,8 +1,6 @@
-import type { NextRequest } from 'next/server';
 import { withAuthAndErrors, type AuthenticatedRequest, getUserId } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { ApiResponseHelper } from '@/lib/api-response-types';
 
 // GET /api/tools/[toolId]/analytics
 export const GET = withAuthAndErrors(async (

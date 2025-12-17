@@ -142,7 +142,7 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
-    const campusId = getCampusId(request as AuthenticatedRequest);
+    const _campusId = getCampusId(request as AuthenticatedRequest);
     const { spaceId } = await params;
 
     if (!spaceId) {

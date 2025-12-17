@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw, ArrowLeft, Calendar } from 'lucide-react';
+import { RefreshCw, ArrowLeft, Calendar } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 export default function SpaceEventsError({

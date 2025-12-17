@@ -398,7 +398,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       setDeviceData(data.deviceData);
       setGeographicData(data.geographicData || []);
 
-    } catch (_error) {
+    } catch {
       // Analytics load failed - UI will show empty state
     } finally {
       setLoading(false);
@@ -420,7 +420,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
         const data = await response.json();
         setRealTimeMetrics(data.realTimeMetrics);
       }
-    } catch (_error) {
+    } catch {
       // Real-time metrics load failed - will retry on next interval
     }
   }, [admin, enableFeatureFlag, realTimeEnabled]);

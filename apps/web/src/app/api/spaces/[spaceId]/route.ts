@@ -70,7 +70,6 @@ export const GET = withAuthAndErrors(async (
   } | null = null;
 
   // DEBUG: Log userId before the check
-  console.log('[SPACE-ROUTE-DEBUG] userId check:', { userId, spaceId, hasUserId: !!userId });
   logger.info('[SPACE-ROUTE] Pre-membership check', { userId, spaceId, hasUserId: !!userId });
 
   if (userId) {
@@ -79,7 +78,6 @@ export const GET = withAuthAndErrors(async (
     const permResult = await checkSpacePermission(spaceId, userId, 'member');
 
     // DEBUG: Log the full permission result to diagnose membership detection (v2)
-    console.log('[SPACE-ROUTE-DEBUG] Permission result:', JSON.stringify(permResult, null, 2));
     logger.info(`Permission check result for space ${spaceId}`, {
       userId,
       spaceId,
@@ -117,7 +115,6 @@ export const GET = withAuthAndErrors(async (
     // This handles cases where Firestore data might be inconsistent with DDD model
     if (!membership) {
       const ownerId = space.owner.value;
-      console.log('[SPACE-ROUTE-DEBUG] Fallback check:', { ownerId, userId, isOwner: ownerId === userId });
       logger.info(`Fallback ownership check for space ${spaceId}`, {
         userId,
         ownerId,

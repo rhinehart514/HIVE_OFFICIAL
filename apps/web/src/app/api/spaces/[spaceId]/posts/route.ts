@@ -117,8 +117,8 @@ export const GET = withAuthAndErrors(async (
       .where("isPinned", "==", true)
       .get();
 
-    const posts: any[] = [];
-    const pinnedPosts: any[] = [];
+    const posts: Record<string, unknown>[] = [];
+    const pinnedPosts: Record<string, unknown>[] = [];
 
     const attachAuthor = async (authorId: string) => {
       const authorDoc = await dbAdmin.collection("users").doc(authorId).get();

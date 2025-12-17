@@ -12,7 +12,6 @@ import {
   isSlashCommand,
   parseSlashCommand,
   getCommandHelp,
-  type ParsedSlashCommand,
 } from '@/lib/slash-command-parser';
 import {
   createComponentFromIntent,

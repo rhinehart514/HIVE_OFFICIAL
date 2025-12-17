@@ -318,7 +318,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
       setViolatingSpaces(data.violations || []);
       
       await onAuditAllSpaces();
-    } catch (_error) {
+    } catch {
       // Space audit failed - UI will show empty results
     } finally {
       setLoading(false);

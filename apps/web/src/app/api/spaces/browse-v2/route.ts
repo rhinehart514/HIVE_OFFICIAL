@@ -10,7 +10,7 @@ import {
   toSpaceBrowseDTOList,
 } from '@hive/core/server';
 import { logger } from '@/lib/structured-logger';
-import { withOptionalAuth, type ResponseFormatter } from '@/lib/middleware';
+import { withOptionalAuth } from '@/lib/middleware';
 import { currentEnvironment } from '@/lib/env';
 
 // Check if we're in development mode
@@ -40,9 +40,9 @@ const BrowseQuerySchema = z.object({
  * Note: This endpoint uses optional auth to support both authenticated
  * users and unauthenticated browsing (e.g., during onboarding).
  */
-export const GET = withOptionalAuth(async (request, context, respond) => {
+export const GET = withOptionalAuth(async (request, _context, respond) => {
   // Extract auth info if available (attached by withOptionalAuth)
-  const user = (request as any).user;
+  const user = (request as { user?: { uid?: string; campusId?: string } }).user;
   const userId = user?.uid || null;
   const campusId = user?.campusId || 'ub-buffalo'; // Default to UB for unauthenticated
   const { searchParams } = new URL(request.url);
@@ -66,7 +66,7 @@ export const GET = withOptionalAuth(async (request, context, respond) => {
     sort,
     limit,
     cursor,
-    userId,
+    userId: userId ?? undefined,
     endpoint: '/api/spaces/browse-v2'
   });
 
@@ -120,9 +120,9 @@ export const GET = withOptionalAuth(async (request, context, respond) => {
     if (userId) {
       const profileResult = await profileRepo.findById(userId);
       if (profileResult.isSuccess) {
-        const profile = profileResult.getValue();
         // Extract interests and major from profile
         // Note: Profile value objects may need accessors
+        // TODO: Implement when profile interest accessors are available
       }
     }
 

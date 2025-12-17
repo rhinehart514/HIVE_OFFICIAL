@@ -14,9 +14,8 @@ import {
   firebaseGenerateToolStreaming,
   isFirebaseAIAvailable,
   type GenerationContext,
-  type ValidatedStreamingChunk,
 } from '@/lib/firebase-ai-generator';
-import { canGenerate, recordGeneration, USAGE_LIMITS } from '@/lib/ai-usage-tracker';
+import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
 import { logger } from '@/lib/logger';

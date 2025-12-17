@@ -126,7 +126,6 @@ export default function SpaceMembersPage() {
     };
 
     loadMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast is stable
   }, [spaceId, user, roleFilter, search]);
 
   const canManageMembers = userRole === 'owner' || userRole === 'admin';
