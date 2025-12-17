@@ -64,7 +64,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
       if (response.ok) {
         await fetchNotifications();
       }
-    } catch (_err) {
+    } catch {
       // Mark as read failed - UI state unchanged
     }
   };
@@ -87,7 +87,7 @@ export function AdminNotifications({ onNotificationClick, maxHeight = "400px" }:
       if (response.ok) {
         await fetchNotifications();
       }
-    } catch (_err) {
+    } catch {
       // Mark all as read failed - UI state unchanged
     }
   };

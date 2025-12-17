@@ -8,6 +8,20 @@ import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security
 import { HttpStatus } from '@/lib/api-response-types';
 
 /**
+ * Type for post data used in scoring calculations
+ */
+interface PostData {
+  createdAt?: { _seconds: number };
+  lastActivity?: { _seconds: number };
+  reactions?: { heart?: number };
+  commentCount?: number;
+  shareCount?: number;
+  viewCount?: number;
+  authorEngagementTotal?: number;
+  content?: string;
+}
+
+/**
  * Space-to-Feed Promotion System
  * Per SPEC.md:
  * - Manual promotion by space leaders
@@ -32,7 +46,7 @@ export const POST = withAuthAndErrors(async (
       return respond.error("Post ID is required", "INVALID_INPUT", { status: HttpStatus.BAD_REQUEST });
     }
 
-    let spaceData: Record<string, any> | undefined;
+    let spaceData: Record<string, unknown> | undefined;
     if (promotionType === 'manual') {
       const membership = await requireSpaceMembership(spaceId, userId);
       if (!membership.ok) {
@@ -217,7 +231,7 @@ export const POST = withAuthAndErrors(async (
  * Calculate feed score based on SPEC.md algorithm:
  * Score = (R × 0.3) + (E × 0.2) + (A × 0.2) + (S × 0.2) + (P × 0.1) + (V × random(0, 0.2))
  */
-function calculateFeedScore(postData: any): number {
+function calculateFeedScore(postData: PostData): number {
   const now = Date.now();
   const postAge = now - (postData.createdAt?._seconds || 0) * 1000;
 
@@ -255,7 +269,7 @@ function calculateFeedScore(postData: any): number {
   return Math.round(score * 100) / 100; // Round to 2 decimals
 }
 
-function calculatePersistenceScore(postData: any): number {
+function calculatePersistenceScore(postData: PostData): number {
   // Measure ongoing engagement over time
   const lastActivityAge = Date.now() - (postData.lastActivity?._seconds || 0) * 1000;
   const postAge = Date.now() - (postData.createdAt?._seconds || 0) * 1000;
@@ -267,7 +281,7 @@ function calculatePersistenceScore(postData: any): number {
   return Math.min(1, persistenceRatio);
 }
 
-function calculatePanicReliefScore(postData: any): number {
+function calculatePanicReliefScore(postData: PostData): number {
   // Posts that provide quick solutions score higher
   const hasSolution = postData.content?.toLowerCase().includes('solved') ||
                      postData.content?.toLowerCase().includes('fixed') ||
@@ -279,7 +293,7 @@ function calculatePanicReliefScore(postData: any): number {
   return (hasSolution ? 0.6 : 0) + (hasHelp ? 0.4 : 0);
 }
 
-function calculateSocialProofScore(postData: any): number {
+function calculateSocialProofScore(postData: PostData): number {
   // High engagement = high social proof
   const engagementCount = (postData.reactions?.heart || 0) +
                          (postData.commentCount || 0) +
@@ -288,7 +302,7 @@ function calculateSocialProofScore(postData: any): number {
   return Math.min(1, engagementCount / 50);
 }
 
-function calculateInsiderScore(postData: any): number {
+function calculateInsiderScore(postData: PostData): number {
   // Posts with exclusive info or early announcements
   const hasExclusive = postData.content?.toLowerCase().includes('just found out') ||
                       postData.content?.toLowerCase().includes('insider') ||
@@ -302,7 +316,7 @@ function calculateInsiderScore(postData: any): number {
   return (hasExclusive ? 0.7 : 0) + (hasLocation ? 0.3 : 0);
 }
 
-function calculateViralityScore(postData: any): number {
+function calculateViralityScore(postData: PostData): number {
   // Measure share velocity
   const shareRate = (postData.shareCount || 0) / Math.max(1, postData.viewCount || 1);
   const commentRate = (postData.commentCount || 0) / Math.max(1, postData.viewCount || 1);
@@ -410,7 +424,7 @@ export const GET = withAuthAndErrors(async (
   }
 });
 
-function calculateVelocity(postData: any): number {
+function calculateVelocity(postData: PostData): number {
   const postAge = (Date.now() - (postData.createdAt?._seconds || 0) * 1000) / (60 * 60 * 1000); // Hours
   if (postAge === 0) return 0;
 

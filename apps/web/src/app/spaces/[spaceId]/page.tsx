@@ -67,6 +67,7 @@ import { usePinnedMessages } from "@/hooks/use-pinned-messages";
 import { useAutomations } from "@/hooks/use-automations";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
+import { logger } from "@/lib/logger";
 
 // ============================================================
 // Utilities
@@ -335,27 +336,20 @@ function SpaceDetailContent() {
     membership,
     events,
     tabs,
-    widgets,
-    visibleTabs,
-    activeTabId,
-    setActiveTabId,
-    activeTab,
-    activeTabWidgets,
+    // widgets, visibleTabs, activeTabId, setActiveTabId, activeTab, activeTabWidgets - available for future tab UI
     isLoading,
-    isStructureLoading,
-    isMutating,
+    // isStructureLoading, isMutating - available for loading states
     error,
     joinSpace,
     leaveSpace,
     refresh,
     leaderActions,
-    getWidgetsForTab,
+    // getWidgetsForTab - available for widget rendering
   } = useSpaceContext();
 
   // Compute membership booleans from role
   const isMember = Boolean(membership?.role);
   const isLeader = ['owner', 'admin', 'leader', 'moderator'].includes(membership?.role || '');
-  const isOwner = membership?.role === 'owner';
 
   // Chat hook for real-time messaging (PRIMARY CONTENT)
   const {
@@ -443,8 +437,7 @@ function SpaceDetailContent() {
     checkIntent,
     createComponent: createIntentComponent,
     isLoading: intentLoading,
-    error: intentError,
-    clearError: clearIntentError,
+    // error: intentError, clearError: clearIntentError - available for error UI
   } = useChatIntent(spaceId ?? '');
 
   // Pending intent state for confirmation UI
@@ -543,7 +536,7 @@ function SpaceDetailContent() {
       }
     };
     void loadLeaders();
-  }, [spaceId, membership?.role, user]);
+  }, [spaceId, isMember, membership, user]);
 
   // Handle add tab
   const handleAddTab = React.useCallback(async (input: AddTabInput) => {
@@ -828,7 +821,7 @@ function SpaceDetailContent() {
           break;
 
         default:
-          console.warn(`[Space] Unknown slash command: ${command.command}`);
+          logger.warn(`[Space] Unknown slash command: ${command.command}`);
           return;
       }
 
@@ -858,9 +851,11 @@ function SpaceDetailContent() {
       };
       toast.success(`${typeLabels[apiType] || 'Component'} created`, 'Your interactive component is now live.');
     } catch (err) {
-      console.error('[Space] Failed to execute slash command:', err);
+      logger.error('[Space] Failed to execute slash command', err as Error);
       toast.error('Command failed', err instanceof Error ? err.message : 'Failed to create component');
     }
+    // Note: handleAutomationCommand defined below, but safe to reference here due to closure
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId, activeBoardId]);
 
   // Handler for automation slash commands (/welcome, /remind, /automate)
@@ -1003,9 +998,9 @@ function SpaceDetailContent() {
         `Will automatically run ${triggerDesc}.`
       );
 
-      console.log('[Space] Automation created:', result);
+      logger.info('[Space] Automation created', { result });
     } catch (err) {
-      console.error('[Space] Failed to create automation:', err);
+      logger.error('[Space] Failed to create automation', err as Error);
       toast.error('Automation failed', err instanceof Error ? err.message : 'Failed to create automation');
     }
   }, [spaceId, activeBoardId]);

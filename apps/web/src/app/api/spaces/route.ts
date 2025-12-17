@@ -1,9 +1,7 @@
 import * as admin from 'firebase-admin';
-import { unstable_cache } from 'next/cache';
 import { z } from "zod";
-import type { Space } from "@hive/core";
 import { Result } from "@hive/core/domain";
-import { getTemplatesSuggestedFor, type SpaceTemplate } from "@hive/core";
+import { getTemplatesSuggestedFor } from "@hive/core";
 import {
   createServerSpaceManagementService,
   getServerSpaceRepository,
@@ -17,8 +15,8 @@ import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { getCampusId } from "@/lib/middleware";
 // SECURITY: Use centralized admin auth
 import { isAdmin as checkIsAdmin } from "@/lib/admin-auth";
-// SECURITY: Import SecureSchemas for XSS protection
-import { SecureSchemas, SecurityScanner } from "@/lib/secure-input-validation";
+// SECURITY: Import SecurityScanner for XSS protection
+import { SecurityScanner } from "@/lib/secure-input-validation";
 
 /**
  * SECURITY: Enhanced space creation schema with XSS protection
@@ -140,7 +138,7 @@ type CreateSpaceData = z.infer<typeof createSpaceSchema>;
 export const POST = withAuthValidationAndErrors(
   createSpaceSchema,
   async (request, context, body: CreateSpaceData, respond) => {
-  const { name, description, category, joinPolicy, tags, agreedToGuidelines, visibility, settings } = body;
+  const { name, description, category, joinPolicy, tags, agreedToGuidelines, visibility, settings: _settings } = body;
   const req = request as AuthenticatedRequest;
   const userId = getUserId(req);
   const userEmail = getUserEmail(req);

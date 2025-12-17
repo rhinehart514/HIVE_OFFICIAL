@@ -38,7 +38,6 @@ import {
   Lightbulb,
   Download,
   RefreshCw,
-  Loader2,
   AlertTriangle,
   Heart,
   MessageCircle,

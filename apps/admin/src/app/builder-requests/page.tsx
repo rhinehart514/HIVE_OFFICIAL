@@ -56,7 +56,7 @@ export default function BuilderRequestsPage() {
       const data = await res.json();
       setRequests(data.requests || []);
       setPendingCount(data.summary?.pending || 0);
-    } catch (_error) {
+    } catch {
       // Load requests failed - UI will show empty state
     } finally {
       setLoading(false);

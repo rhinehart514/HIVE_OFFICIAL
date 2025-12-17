@@ -4,10 +4,7 @@ import * as admin from "firebase-admin";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { z } from "zod";
 import { logger } from "@/lib/structured-logger";
-import {
-  createPlacementDocument,
-  buildPlacementCompositeId,
-} from "@/lib/tool-placement";
+import { createPlacementDocument } from "@/lib/tool-placement";
 import {
   CURRENT_CAMPUS_ID,
   validateSecureSpaceAccess,

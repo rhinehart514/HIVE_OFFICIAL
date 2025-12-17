@@ -531,7 +531,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
 
       const data = await response.json();
       setUsers(data.users || []);
-    } catch (_error) {
+    } catch {
       // Load users failed - UI will show empty state
     } finally {
       setLoading(false);

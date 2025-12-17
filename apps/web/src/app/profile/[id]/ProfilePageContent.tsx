@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { useAuth } from '@hive/auth-logic';
 import {
@@ -8,7 +8,6 @@ import {
   Avatar,
   AvatarImage,
   AvatarFallback,
-  Badge,
   ProfileBentoGrid,
   premiumContainerVariants,
   premiumItemVariants,
@@ -20,7 +19,7 @@ import { profileApiResponseToProfileSystem, type ProfileV2ApiResponse } from '@/
 import type { ProfileSystem, BentoGridLayout, PresenceData } from '@hive/core';
 import { db } from '@hive/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { logger } from '@/lib/logger';
 import {
   Users,
@@ -32,7 +31,6 @@ import {
   UserPlus,
   MapPin,
   GraduationCap,
-  ChevronRight,
 } from 'lucide-react';
 
 // ============================================================================
@@ -189,30 +187,30 @@ export default function ProfilePageContent() {
   }, [profileId, isOwnProfile, profileData]);
 
   // Computed values
-  const stats = profileData?.stats ?? {};
-  const statItems = useMemo(() => [
+  const statItems = useMemo(() => {
+    const stats = profileData?.stats ?? {};
+    return [
     { label: 'Spaces', value: stats.spacesJoined ?? profileData?.spaces.length ?? 0, icon: Users },
     { label: 'Friends', value: stats.friends ?? profileData?.connections.filter((c) => c.isFriend).length ?? 0, icon: Sparkles },
     { label: 'Streak', value: stats.currentStreak ?? 0, icon: Flame },
     { label: 'Reputation', value: stats.reputation ?? 0, icon: Star },
-  ], [stats, profileData?.spaces, profileData?.connections]);
+  ];
+  }, [profileData?.stats, profileData?.spaces, profileData?.connections]);
 
   const initials = useMemo(() => {
     if (!profileData?.profile.fullName) return '';
     return getInitials(profileData.profile.fullName);
   }, [profileData?.profile.fullName]);
 
-  // Sample activities (in real app, from API)
-  const activities = useMemo(() => {
-    if (!profileData) return [];
-    return [
-      ...(profileData.spaces.slice(0, 2).map((s) => ({
-        type: 'space' as const,
-        text: `Joined ${s.name}`,
-        timestamp: s.lastActivityAt ?? new Date().toISOString(),
-      }))),
-    ];
-  }, [profileData]);
+  // Sample activities (in real app, from API) - reserved for future use
+  // const activities = useMemo(() => {
+  //   if (!profileData) return [];
+  //   return profileData.spaces.slice(0, 2).map((s) => ({
+  //     type: 'space' as const,
+  //     text: `Joined ${s.name}`,
+  //     timestamp: s.lastActivityAt ?? new Date().toISOString(),
+  //   }));
+  // }, [profileData]);
 
   const handleEditProfile = () => router.push('/profile/edit');
 

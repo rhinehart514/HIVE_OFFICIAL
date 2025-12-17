@@ -287,8 +287,8 @@ async function executeSendMessage(
 async function executeCreateComponent(
   config: Record<string, unknown>,
   spaceId: string,
-  campusId: string,
-  userId: string
+  _campusId: string,
+  _userId: string
 ): Promise<Record<string, unknown>> {
   // For now, just log - full implementation would create the component
   logger.info('Create component action triggered', {

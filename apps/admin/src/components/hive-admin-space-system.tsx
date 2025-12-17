@@ -465,7 +465,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
 
       const data = await response.json();
       setSpaces(data.spaces || []);
-    } catch (_error) {
+    } catch {
       // Load spaces failed - UI will show empty state
     } finally {
       setLoading(false);

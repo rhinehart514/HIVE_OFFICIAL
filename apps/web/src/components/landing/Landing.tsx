@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Heading,
-  Text,
   Card,
   CardContent,
   HiveLogo,

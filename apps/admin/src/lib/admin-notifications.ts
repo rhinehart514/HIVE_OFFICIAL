@@ -173,7 +173,7 @@ class AdminNotificationSystem {
     for (const channel of relevantChannels) {
       try {
         await this.sendToChannel(channel, notification);
-      } catch (_error) {
+      } catch {
         // Channel send failed - continue with other channels
       }
     }
@@ -221,7 +221,7 @@ class AdminNotificationSystem {
           notification,
         }),
       });
-    } catch (_error) {
+    } catch {
       // Webhook send failed - non-critical
     }
   }

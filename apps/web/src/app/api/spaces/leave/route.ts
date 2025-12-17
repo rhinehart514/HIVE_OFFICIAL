@@ -35,7 +35,8 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const space = membershipValidation.space!;
-    const memberData = membershipValidation.membership!;
+    // memberData available if needed for additional leave logic
+    void membershipValidation.membership;
 
     // Create callbacks for DDD service
     const callbacks: SpaceServiceCallbacks = {

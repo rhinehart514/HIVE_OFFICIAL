@@ -9,7 +9,6 @@ import { checkSpacePermission } from "@/lib/space-permission-middleware";
 import { logger } from "@/lib/structured-logger";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * Individual Automation API - Phase 3 HiveLab

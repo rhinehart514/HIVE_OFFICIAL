@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter, notFound } from 'next/navigation';
 import { UnifiedSpaceInterface } from '@/components/spaces/unified-space-interface';
-import type { Space, User } from '@hive/core';
+// Space and User types available from @hive/core if needed
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { logger } from '@/lib/logger';
 

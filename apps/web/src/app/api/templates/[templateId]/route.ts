@@ -13,7 +13,6 @@ import {
   withAuthAndErrors,
   withErrors,
   getUserId,
-  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import {

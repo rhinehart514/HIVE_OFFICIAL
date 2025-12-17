@@ -22,7 +22,8 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { buildPlacementCompositeId, createPlacementDocument } from "@/lib/tool-placement";
+// Tool placement utilities available if needed
+// import { buildPlacementCompositeId, createPlacementDocument } from "@/lib/tool-placement";
 import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { Result, type PlacementLocation, type PlacementVisibility } from "@hive/core";

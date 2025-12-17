@@ -419,7 +419,6 @@ async function executeWelcomeAutomation(
 
   // Create the welcome message
   const messageRef = boardsRef.doc(boardId).collection('messages').doc();
-  const now = new Date();
 
   await messageRef.set({
     id: messageRef.id,

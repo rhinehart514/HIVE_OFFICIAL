@@ -93,7 +93,9 @@ export const GET = withAuthAndErrors(async (
       .orderBy("createdAt", "asc")
       .get();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const commentMap = new Map<string, any>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rootComments: any[] = [];
 
     for (const doc of commentsSnapshot.docs) {

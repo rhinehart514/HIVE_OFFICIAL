@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useFrame } from "@react-three/fiber";
+// useFrame available from @react-three/fiber if needed for animations
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { animated, useSpring } from "@react-spring/three";

@@ -88,14 +88,14 @@ export const POST = withAuthValidationAndErrors(
 
       const result = await dbAdmin.runTransaction(async (tx) => {
         const snapshot = await tx.get(post.postRef);
-        const data = snapshot.data() as Record<string, any> | undefined;
+        const data = snapshot.data() as Record<string, unknown> | undefined;
         if (!data) {
           throw Object.assign(new Error("Post data missing"), { status: 404 });
         }
 
-        const reactions: Record<string, number> = data.reactions || { heart: 0 };
+        const reactions: Record<string, number> = (data.reactions as Record<string, number>) || { heart: 0 };
         const reactedUsers: Record<string, string[]> =
-          data.reactedUsers || { heart: [] as string[] };
+          (data.reactedUsers as Record<string, string[]>) || { heart: [] as string[] };
 
         const users = new Set<string>((reactedUsers[reactionKey] || []) as string[]);
         const alreadyReacted = users.has(userId);
@@ -161,7 +161,7 @@ export const POST = withAuthValidationAndErrors(
         userReacted: result.reacted,
       });
     } catch (error) {
-      const status = (error as any)?.status || 500;
+      const status = (error as { status?: number })?.status || 500;
       logger.error(
         "Error updating reaction at /api/spaces/[spaceId]/posts/[postId]/reactions",
         error instanceof Error ? error : new Error(String(error)),

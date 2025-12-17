@@ -301,7 +301,6 @@ export const POST = withAuthValidationAndErrors(
     // For comments, we need the parent post ID
     // The contentId format for comments should be: postId:commentId
     let contentRef;
-    let parentPostId: string | undefined;
 
     if (body.contentType === 'comment') {
       const [postId, commentId] = body.contentId.split(':');
@@ -312,7 +311,6 @@ export const POST = withAuthValidationAndErrors(
           { status: HttpStatus.BAD_REQUEST }
         );
       }
-      parentPostId = postId;
       contentRef = getContentRef(spaceId, 'comment', commentId, postId);
     } else {
       contentRef = getContentRef(spaceId, body.contentType as ModerableContentType, body.contentId);

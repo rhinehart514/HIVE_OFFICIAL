@@ -107,30 +107,7 @@ async function findActiveMember(spaceId: string, userId: string, campusId: strin
   };
 }
 
-function ensureRoleChangeAllowed(
-  requesterRole: string | undefined,
-  targetRole: string | undefined,
-  newRole?: string,
-) {
-  const canManageMembers = requesterRole === "owner" || requesterRole === "admin";
-  if (!canManageMembers) {
-    return { ok: false as const, message: "Insufficient permissions to manage members" };
-  }
-
-  if (targetRole === "owner" || newRole === "owner") {
-    return { ok: false as const, message: "Cannot modify owner role" };
-  }
-
-  if ((targetRole === "admin" || newRole === "admin") && requesterRole !== "owner") {
-    return { ok: false as const, message: "Only owners can manage admin roles" };
-  }
-
-  if (targetRole === "moderator" && requesterRole !== "owner") {
-    return { ok: false as const, message: "Only owners can manage moderator roles" };
-  }
-
-  return { ok: true as const };
-}
+// Note: Role change validation is now handled by DDD SpaceManagementService
 
 /**
  * Create callbacks for DDD SpaceManagementService
