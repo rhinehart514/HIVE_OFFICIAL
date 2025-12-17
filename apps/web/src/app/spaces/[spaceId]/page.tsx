@@ -29,6 +29,7 @@ import {
   SpaceDetailHeader,
   SpaceSidebar,
   SpaceChatBoard,
+  SpaceEntryAnimation,
   BoardTabBar,
   MobileActionBar,
   MobileDrawer,
@@ -1435,6 +1436,64 @@ function SpaceDetailContent() {
 // Page Component with Provider
 // ============================================================
 
+/**
+ * SpacePageWithAnimation - Wraps content with entry animation
+ * Uses session storage to only show animation once per session per space
+ */
+function SpacePageWithAnimation({ spaceId }: { spaceId: string }) {
+  const [showEntryAnimation, setShowEntryAnimation] = React.useState(false);
+  const [spaceData, setSpaceData] = React.useState<{ name: string; category?: string; onlineCount?: number } | null>(null);
+
+  // Check if we should show the entry animation
+  React.useEffect(() => {
+    const sessionKey = `hive-space-entered-${spaceId}`;
+    const hasEntered = sessionStorage.getItem(sessionKey);
+
+    // Check user's reduced motion preference
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!hasEntered && !prefersReducedMotion) {
+      // Fetch minimal space data for animation
+      fetch(`/api/spaces/${spaceId}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.space) {
+            setSpaceData({
+              name: data.space.name,
+              category: data.space.category,
+              onlineCount: data.space.onlineCount,
+            });
+            setShowEntryAnimation(true);
+          }
+        })
+        .catch(() => {
+          // If fetch fails, skip animation
+        });
+    }
+  }, [spaceId]);
+
+  // Mark as entered after animation completes
+  const handleAnimationComplete = React.useCallback(() => {
+    sessionStorage.setItem(`hive-space-entered-${spaceId}`, 'true');
+    setShowEntryAnimation(false);
+  }, [spaceId]);
+
+  return (
+    <SpaceEntryAnimation
+      spaceName={spaceData?.name || ''}
+      spaceCategory={spaceData?.category}
+      onlineCount={spaceData?.onlineCount}
+      isActive={showEntryAnimation && !!spaceData}
+      onComplete={handleAnimationComplete}
+      skipAnimation={!showEntryAnimation || !spaceData}
+    >
+      <SpaceContextProvider spaceId={spaceId}>
+        <SpaceDetailContent />
+      </SpaceContextProvider>
+    </SpaceEntryAnimation>
+  );
+}
+
 export default function SpaceBoardPage() {
   const params = useParams<{ spaceId: string }>();
   const spaceId = params?.spaceId;
@@ -1447,9 +1506,5 @@ export default function SpaceBoardPage() {
     );
   }
 
-  return (
-    <SpaceContextProvider spaceId={spaceId}>
-      <SpaceDetailContent />
-    </SpaceContextProvider>
-  );
+  return <SpacePageWithAnimation spaceId={spaceId} />;
 }

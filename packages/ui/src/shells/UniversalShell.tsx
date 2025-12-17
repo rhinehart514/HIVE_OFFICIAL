@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { CommandPalette, type CommandPaletteItem } from '../atomic/00-Global/organisms/command-palette';
 
 // Silk easing - smooth, confident
 const SILK_EASE = [0.22, 1, 0.36, 1];
@@ -284,6 +285,11 @@ export interface UniversalShellProps {
   userAvatarUrl?: string;
   userName?: string;
   userHandle?: string;
+  // Command palette props
+  commandPaletteItems?: CommandPaletteItem[];
+  onCommandPaletteSearch?: (query: string) => void;
+  commandPaletteLoading?: boolean;
+  onCommandPaletteSelect?: (item: CommandPaletteItem) => void;
 }
 
 export const DEFAULT_SIDEBAR_NAV_ITEMS: ShellNavItem[] = [
@@ -328,6 +334,20 @@ const Tooltip = ({ children, label, show }: { children: React.ReactNode; label: 
   );
 };
 
+// Default command palette items for navigation
+const DEFAULT_COMMAND_PALETTE_ITEMS: CommandPaletteItem[] = [
+  { id: 'nav-feed', label: 'Go to Feed', description: 'View your personalized feed', category: 'Navigation', shortcut: ['G', 'F'] },
+  { id: 'nav-spaces', label: 'Browse Spaces', description: 'Discover and join communities', category: 'Navigation', shortcut: ['G', 'S'] },
+  { id: 'nav-calendar', label: 'Open Calendar', description: 'View upcoming events', category: 'Navigation', shortcut: ['G', 'C'] },
+  { id: 'nav-hivelab', label: 'HiveLab', description: 'Build and deploy tools', category: 'Navigation', shortcut: ['G', 'H'] },
+  { id: 'nav-profile', label: 'My Profile', description: 'View and edit your profile', category: 'Navigation', shortcut: ['G', 'P'] },
+  { id: 'nav-notifications', label: 'Notifications', description: 'View your notifications', category: 'Navigation', shortcut: ['G', 'N'] },
+  { id: 'nav-settings', label: 'Settings', description: 'Manage your preferences', category: 'Settings', shortcut: ['G', ','] },
+  { id: 'action-create-space', label: 'Create Space', description: 'Start a new community', category: 'Actions', featured: true },
+  { id: 'action-create-event', label: 'Create Event', description: 'Schedule a new event', category: 'Actions' },
+  { id: 'action-create-tool', label: 'Create Tool', description: 'Build a new HiveLab tool', category: 'Actions' },
+];
+
 export const UniversalShell: React.FC<UniversalShellProps> = ({
   children,
   variant = 'full',
@@ -339,11 +359,66 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
   userAvatarUrl,
   userName,
   userHandle,
+  commandPaletteItems,
+  onCommandPaletteSearch,
+  commandPaletteLoading = false,
+  onCommandPaletteSelect,
 }) => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+
+  // Build command palette items from spaces and default navigation
+  const allCommandPaletteItems = React.useMemo(() => {
+    const items: CommandPaletteItem[] = [...(commandPaletteItems || DEFAULT_COMMAND_PALETTE_ITEMS)];
+
+    // Add user's spaces to command palette
+    const allSpaces = mySpaces.flatMap(section => section.spaces);
+    allSpaces.slice(0, 10).forEach(space => {
+      items.push({
+        id: `space-${space.id}`,
+        label: space.label,
+        description: space.meta || 'Go to space',
+        category: 'Your Spaces',
+        onSelect: () => {
+          if (typeof window !== 'undefined') {
+            window.location.href = space.href;
+          }
+        },
+      });
+    });
+
+    return items;
+  }, [commandPaletteItems, mySpaces]);
+
+  // Handle command palette selection with navigation
+  const handleCommandPaletteSelect = useCallback((item: CommandPaletteItem) => {
+    if (onCommandPaletteSelect) {
+      onCommandPaletteSelect(item);
+      return;
+    }
+
+    // Default navigation handling
+    const navigationMap: Record<string, string> = {
+      'nav-feed': '/feed',
+      'nav-spaces': '/spaces',
+      'nav-calendar': '/calendar',
+      'nav-hivelab': '/tools',
+      'nav-profile': '/profile',
+      'nav-notifications': '/notifications',
+      'nav-settings': '/profile/settings',
+      'action-create-space': '/spaces/create',
+      'action-create-event': '/events/create',
+      'action-create-tool': '/tools/create',
+    };
+
+    const path = navigationMap[item.id];
+    if (path && typeof window !== 'undefined') {
+      window.location.href = path;
+    }
+  }, [onCommandPaletteSelect]);
 
   // Toggle a space section's expanded state
   const toggleSection = (sectionId: string) => {
@@ -407,6 +482,64 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
       // Ignore localStorage errors
     }
   };
+
+  // Global keyboard shortcuts (G + key for navigation)
+  useEffect(() => {
+    let gPressed = false;
+    let gTimeout: NodeJS.Timeout;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger in input fields
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Handle G prefix for navigation shortcuts
+      if (e.key === 'g' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        gPressed = true;
+        gTimeout = setTimeout(() => {
+          gPressed = false;
+        }, 1000); // Reset after 1 second
+        return;
+      }
+
+      if (gPressed && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const keyLower = e.key.toLowerCase();
+        const shortcuts: Record<string, string> = {
+          'f': '/feed',
+          's': '/spaces',
+          'c': '/calendar',
+          'h': '/tools',
+          'p': '/profile',
+          'n': '/notifications',
+          ',': '/profile/settings',
+        };
+
+        const path = shortcuts[keyLower];
+        if (path && typeof window !== 'undefined') {
+          e.preventDefault();
+          window.location.href = path;
+          gPressed = false;
+          clearTimeout(gTimeout);
+        }
+      }
+
+      // Escape key to close command palette (backup)
+      if (e.key === 'Escape' && isCommandPaletteOpen) {
+        setIsCommandPaletteOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(gTimeout);
+    };
+  }, [isCommandPaletteOpen]);
 
   if (variant === 'minimal') {
     return <>{children}</>;
@@ -478,25 +611,71 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
             </AnimatePresence>
           </motion.button>
 
-          {/* Collapse toggle - subtle, hidden when collapsed */}
-          <AnimatePresence mode="wait">
-            {!isCollapsed && (
-              <motion.button
-                onClick={toggleCollapse}
-                className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-                whileHover={shouldReduceMotion ? {} : { scale: 1.1, rotate: 180 }}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
-                initial={{ opacity: 0, rotate: shouldReduceMotion ? 0 : -90 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                exit={{ opacity: 0, rotate: shouldReduceMotion ? 0 : 90 }}
-                transition={springTransition}
-                aria-label="Collapse sidebar"
-              >
-                <SidebarIcon />
-              </motion.button>
-            )}
-          </AnimatePresence>
+          {/* Search/Command Palette trigger + Collapse toggle */}
+          <div className="flex items-center gap-1">
+            <AnimatePresence mode="wait">
+              {!isCollapsed && (
+                <motion.button
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+                  whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={contentTransition}
+                  aria-label="Open command palette (⌘K)"
+                  title="Search (⌘K)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {!isCollapsed && (
+                <motion.button
+                  onClick={toggleCollapse}
+                  className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+                  whileHover={shouldReduceMotion ? {} : { scale: 1.1, rotate: 180 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
+                  initial={{ opacity: 0, rotate: shouldReduceMotion ? 0 : -90 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  exit={{ opacity: 0, rotate: shouldReduceMotion ? 0 : 90 }}
+                  transition={springTransition}
+                  aria-label="Collapse sidebar"
+                >
+                  <SidebarIcon />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
+
+        {/* Quick Search Bar (expanded sidebar) */}
+        <AnimatePresence mode="wait">
+          {!isCollapsed && (
+            <motion.div
+              className="px-3 pb-3"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={contentTransition}
+            >
+              <button
+                onClick={() => setIsCommandPaletteOpen(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-900/50 border border-neutral-800/50 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50 hover:border-neutral-700/50 transition-all text-[13px]"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="flex-1 text-left">Search...</span>
+                <kbd className="text-[10px] text-neutral-600 bg-neutral-800 px-1.5 py-0.5 rounded">⌘K</kbd>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Primary Navigation - generous spacing */}
         <nav className="flex-1 px-3 py-3 overflow-y-auto">
@@ -956,17 +1135,17 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
         {children}
       </motion.main>
 
-      {/* Mobile Bottom Nav - OpenAI style */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-neutral-950 border-t border-neutral-800/50 z-50 safe-area-pb">
-        <div className="flex justify-around items-center h-14">
-          {mobileNavItems.slice(0, 5).map((item) => {
+      {/* Mobile Bottom Nav - Enhanced with search */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-neutral-950/95 backdrop-blur-xl border-t border-neutral-800/50 z-50 pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="flex justify-around items-center h-16 px-2">
+          {mobileNavItems.slice(0, 4).map((item) => {
             const Icon = NAV_ICONS[item.id];
             const active = isActive(item.path);
             const isComingSoon = item.comingSoon;
 
             const baseClassName = `
               relative flex flex-col items-center justify-center gap-1
-              px-4 py-2 min-w-[48px]
+              flex-1 py-2 min-w-0
               transition-colors duration-100
               ${isComingSoon
                 ? 'text-neutral-700 cursor-not-allowed'
@@ -976,16 +1155,22 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
 
             const content = (
               <>
-                {Icon && <Icon />}
-                <span className="text-[10px]">{item.label}</span>
+                <div className="relative">
+                  {Icon && <Icon />}
+                  {/* Active indicator - gold dot */}
+                  {active && !isComingSoon && (
+                    <motion.span
+                      layoutId="mobile-nav-indicator"
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold-500"
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                </div>
+                <span className="text-[10px] font-medium">{item.label}</span>
 
-                {/* Coming soon indicator dot */}
-                {isComingSoon && (
-                  <span className="absolute top-1 right-2 w-1.5 h-1.5 bg-neutral-600 rounded-full" />
-                )}
-
+                {/* Badge indicator */}
                 {!isComingSoon && item.badge && item.badge > 0 && (
-                  <span className="absolute top-1 right-2 w-1.5 h-1.5 bg-white rounded-full" />
+                  <span className="absolute top-1 right-1/4 w-2 h-2 bg-gold-500 rounded-full border-2 border-neutral-950" />
                 )}
               </>
             );
@@ -999,11 +1184,23 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
             }
 
             return (
-              <a key={item.id} href={item.path} className={baseClassName}>
+              <a key={item.id} href={item.path} className={baseClassName} aria-current={active ? 'page' : undefined}>
                 {content}
               </a>
             );
           })}
+
+          {/* Search button for mobile - opens command palette */}
+          <button
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="relative flex flex-col items-center justify-center gap-1 flex-1 py-2 min-w-0 text-neutral-500 hover:text-white transition-colors"
+            aria-label="Search (opens command palette)"
+          >
+            <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.25} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span className="text-[10px] font-medium">Search</span>
+          </button>
         </div>
       </nav>
 
@@ -1013,6 +1210,18 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
           {notificationCount} unread notifications
         </div>
       )}
+
+      {/* Global Command Palette - ⌘K */}
+      <CommandPalette
+        open={isCommandPaletteOpen}
+        onOpenChange={setIsCommandPaletteOpen}
+        items={allCommandPaletteItems}
+        onSelect={handleCommandPaletteSelect}
+        onSearch={onCommandPaletteSearch}
+        loading={commandPaletteLoading}
+        placeholder="Search spaces, tools, or type a command..."
+        emptyMessage="No results found. Try a different search."
+      />
     </div>
   );
 };

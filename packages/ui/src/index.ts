@@ -1070,6 +1070,10 @@ export type {
   WidgetTemplate,
 } from "./atomic/03-Spaces/organisms/widget-gallery";
 
+// Space Entry Animation (Dec 2025 - Signature arrival moment)
+export { SpaceEntryAnimation } from "./atomic/03-Spaces/organisms/space-entry-animation";
+export type { SpaceEntryAnimationProps } from "./atomic/03-Spaces/organisms/space-entry-animation";
+
 // Chat Toolbar (Dec 2025 - Inline tool insertion)
 export { ChatToolbar } from "./atomic/03-Chat/chat-toolbar";
 export type {
