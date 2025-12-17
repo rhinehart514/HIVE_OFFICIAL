@@ -1,9 +1,9 @@
 /**
  * API Client for HiveLab
  *
- * Calls the web app's API endpoints.
+ * Provides authenticated API calls to the web app's endpoints.
  * In development, uses Next.js rewrites to proxy to localhost:3000.
- * In production, uses the configured API URL.
+ * In production, uses the configured NEXT_PUBLIC_API_URL.
  */
 
 import { getAuth } from 'firebase/auth';
