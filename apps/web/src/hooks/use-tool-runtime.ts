@@ -61,6 +61,8 @@ export interface ActionResult {
   result?: unknown;
   state?: ToolState;
   error?: string;
+  /** Element IDs that were affected by cascade (for visual feedback) */
+  cascadedElements?: string[];
 }
 
 interface UseToolRuntimeOptions {
@@ -71,6 +73,8 @@ interface UseToolRuntimeOptions {
   autoSave?: boolean;
   autoSaveDelay?: number;
   enabled?: boolean;
+  /** Callback when elements are affected by cascade - use for visual feedback */
+  onCascade?: (cascadedElementIds: string[]) => void;
 }
 
 interface UseToolRuntimeReturn {
@@ -159,6 +163,7 @@ export function useToolRuntime(
     autoSave = true,
     autoSaveDelay = DEFAULT_AUTO_SAVE_DELAY,
     enabled = true,
+    onCascade,
   } = options;
 
   // Calculate effective deployment ID
@@ -188,12 +193,14 @@ export function useToolRuntime(
   }, [state]);
 
   // ============================================================================
-  // Load Tool Definition
+  // Load Tool and State (Combined - reduces N+1 queries)
   // ============================================================================
 
-  const loadTool = useCallback(async () => {
+  const loadToolAndState = useCallback(async () => {
     if (!toolId || !enabled) {
       setTool(null);
+      setState({});
+      setIsSynced(true);
       return;
     }
 
@@ -201,7 +208,13 @@ export function useToolRuntime(
     setError(null);
 
     try {
-      const response = await fetchWithRetry(`/api/tools/${toolId}`, {
+      // Use combined endpoint when we have a deployment ID
+      // This reduces 2 requests to 1
+      const url = effectiveDeploymentId
+        ? `/api/tools/${toolId}/with-state?deploymentId=${encodeURIComponent(effectiveDeploymentId)}`
+        : `/api/tools/${toolId}`;
+
+      const response = await fetchWithRetry(url, {
         method: "GET",
         credentials: "include",
         headers: {
@@ -220,8 +233,11 @@ export function useToolRuntime(
 
       if (!mountedRef.current) return;
 
+      // Handle combined response (tool data may be nested in 'tool' or at root)
+      const toolData = data.tool || data;
+
       // Normalize element format (API may use different field names)
-      const normalizedElements: ToolElement[] = (data.elements || []).map(
+      const normalizedElements: ToolElement[] = (toolData.elements || []).map(
         (el: Record<string, unknown>) => {
           const rawInstanceId = (el.instanceId ?? el.id ?? el.elementId) as string | number | undefined;
           const rawElementId = (el.elementId ?? el.id) as string | number | undefined;
@@ -238,24 +254,39 @@ export function useToolRuntime(
       );
 
       setTool({
-        id: data.id,
-        name: data.name,
-        description: data.description,
+        id: toolData.id,
+        name: toolData.name,
+        description: toolData.description,
         elements: normalizedElements,
-        category: data.category,
-        version: data.version,
-        currentVersion: data.currentVersion,
-        status: data.status || 'draft', // Default to draft if not specified
-        config: data.config,
-        metadata: data.metadata,
-        creatorId: data.creatorId,
-        campusId: data.campusId,
-        isPublished: data.isPublished,
-        createdAt: data.createdAt,
-        updatedAt: data.updatedAt,
+        category: toolData.category,
+        version: toolData.version,
+        currentVersion: toolData.currentVersion,
+        status: toolData.status || 'draft',
+        config: toolData.config,
+        metadata: toolData.metadata,
+        creatorId: toolData.creatorId,
+        campusId: toolData.campusId,
+        isPublished: toolData.isPublished,
+        createdAt: toolData.createdAt,
+        updatedAt: toolData.updatedAt,
       });
+
+      // If combined response includes state, apply it
+      if (data.state !== undefined) {
+        const loadedState = data.state || {};
+        setState(loadedState);
+        initialStateRef.current = loadedState;
+        setIsSynced(true);
+      } else if (effectiveDeploymentId) {
+        // If using old endpoint without state, initialize empty
+        setState({});
+        initialStateRef.current = {};
+        setIsSynced(true);
+      }
     } catch (err) {
-      console.error("Failed to load tool:", err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to load tool:", err);
+      }
       if (mountedRef.current) {
         setError(err instanceof Error ? err : new Error("Failed to load tool"));
       }
@@ -264,69 +295,12 @@ export function useToolRuntime(
         setIsLoading(false);
       }
     }
-  }, [toolId, enabled]);
+  }, [toolId, effectiveDeploymentId, enabled]);
 
-  // Load tool on mount and when toolId changes
+  // Load tool and state on mount and when IDs change
   useEffect(() => {
-    void loadTool();
-  }, [loadTool]);
-
-  // ============================================================================
-  // Load Deployment State
-  // ============================================================================
-
-  const loadState = useCallback(async () => {
-    if (!effectiveDeploymentId || !enabled) {
-      setState({});
-      setIsSynced(true);
-      return;
-    }
-
-    try {
-      const response = await fetchWithRetry(
-        `/api/tools/state/${encodeURIComponent(effectiveDeploymentId)}`,
-        {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!mountedRef.current) return;
-
-      if (!response.ok) {
-        // 404 is OK - just means no state saved yet
-        if (response.status === 404) {
-          setState({});
-          initialStateRef.current = {};
-          setIsSynced(true);
-          return;
-        }
-        throw new Error(`Failed to load state: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const loadedState = data.state || {};
-      setState(loadedState);
-      initialStateRef.current = loadedState;
-      setIsSynced(true);
-    } catch (err) {
-      console.error("Failed to load tool state:", err);
-      if (mountedRef.current) {
-        // Don't set error for state load failures - just use empty state
-        setState({});
-        initialStateRef.current = {};
-        setIsSynced(true);
-      }
-    }
-  }, [effectiveDeploymentId, enabled]);
-
-  // Load state on mount and when deploymentId changes
-  useEffect(() => {
-    void loadState();
-  }, [loadState]);
+    void loadToolAndState();
+  }, [loadToolAndState]);
 
   // ============================================================================
   // Save State
@@ -453,10 +427,19 @@ export function useToolRuntime(
           scheduleAutoSave();
         }
 
+        // Extract cascaded elements for visual feedback
+        const cascadedElements = result.result?.data?.cascadedElements as string[] | undefined;
+
+        // Trigger cascade callback for visual feedback (if elements were affected)
+        if (cascadedElements && cascadedElements.length > 0 && onCascade) {
+          onCascade(cascadedElements);
+        }
+
         return {
           success: true,
           result: result.result,
           state: result.state,
+          cascadedElements,
         };
       } catch (err) {
         console.error("Action execution failed:", err);
@@ -476,7 +459,7 @@ export function useToolRuntime(
         }
       }
     },
-    [toolId, effectiveDeploymentId, spaceId, scheduleAutoSave]
+    [toolId, effectiveDeploymentId, spaceId, scheduleAutoSave, onCascade]
   );
 
   // ============================================================================
@@ -519,8 +502,8 @@ export function useToolRuntime(
   }, []);
 
   const reload = useCallback(async () => {
-    await Promise.all([loadTool(), loadState()]);
-  }, [loadTool, loadState]);
+    await loadToolAndState();
+  }, [loadToolAndState]);
 
   // ============================================================================
   // Cleanup
