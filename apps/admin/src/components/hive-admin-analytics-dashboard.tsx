@@ -790,17 +790,20 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
               <div className="space-y-2 text-sm text-gray-300">
                 <div className="flex justify-between">
                   <span>Auto-Corrections:</span>
-                  <span className="text-blue-400">247</span>
+                  <span className="text-blue-400">{violationData?.resolvedViolations || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Manual Reviews:</span>
-                  <span className="text-blue-400">12</span>
+                  <span className="text-blue-400">{violationData?.pendingViolations || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>User Warnings:</span>
-                  <span className="text-blue-400">34</span>
+                  <span className="text-blue-400">{violationData?.totalViolations || 0}</span>
                 </div>
               </div>
+              {(!violationData || violationData.totalViolations === 0) && (
+                <p className="text-xs text-gray-500 mt-2">No enforcement actions required</p>
+              )}
             </div>
           </div>
         </CardContent>
