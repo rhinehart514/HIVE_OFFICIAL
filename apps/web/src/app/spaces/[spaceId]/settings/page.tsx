@@ -40,7 +40,12 @@ import {
 import { Button, Input, Card, toast, cn, AddTabModal, AddWidgetModal } from "@hive/ui";
 import type { AddTabInput, AddWidgetInputUI } from "@hive/ui";
 import { springPresets, easingArrays } from "@hive/tokens";
-import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
+import {
+  SpaceContextProvider,
+  useSpaceMetadata,
+  useSpaceStructureContext,
+  useSpaceLeader,
+} from "@/contexts/space";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 
 // =============================================================================
@@ -124,17 +129,21 @@ function SpaceSettingsContent() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
 
+  // Use focused context hooks for better performance
   const {
     space,
     spaceId,
     membership,
-    tabs,
-    widgets,
-    visibleTabs: _visibleTabs,
     isLoading,
     error,
-    leaderActions,
-  } = useSpaceContext();
+  } = useSpaceMetadata();
+
+  const {
+    tabs,
+    widgets,
+  } = useSpaceStructureContext();
+
+  const { leaderActions } = useSpaceLeader();
 
   // Local state
   const [activeTab, setActiveTab] = React.useState<SettingsTab>("general");

@@ -24,7 +24,7 @@
  */
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   SpaceDetailHeader,
   SpaceSidebar,
@@ -48,6 +48,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  // Premium components (ChatGPT/Apple fusion)
+  PremiumHeader,
+  PremiumChatBoard,
+  PremiumSidebar,
+  AboutSection,
+  EventsSection,
+  MembersSection,
+  ToolsSection,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -57,9 +65,17 @@ import {
   type EventCreateInput,
   type SlashCommandData,
   type DetectedIntent,
+  type BoardTab,
+  type MessageData,
 } from "@hive/ui";
 import { SpaceBoardSkeleton, toast } from "@hive/ui";
-import { SpaceContextProvider, useSpaceContext } from "@/contexts/SpaceContext";
+import {
+  SpaceContextProvider,
+  useSpaceMetadata,
+  useSpaceEvents,
+  useSpaceStructureContext,
+  useSpaceLeader,
+} from "@/contexts/space";
 import { useChatMessages } from "@/hooks/use-chat-messages";
 import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
@@ -329,23 +345,27 @@ function SpaceLeaderModals({
 
 function SpaceDetailContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
+
+  // Premium UI toggle - add ?premium=true to URL to enable
+  const usePremiumUI = searchParams.get('premium') === 'true';
+
+  // Use focused context hooks for better performance (only re-render when specific data changes)
   const {
     space,
     spaceId,
     membership,
-    events,
-    tabs,
-    // widgets, visibleTabs, activeTabId, setActiveTabId, activeTab, activeTabWidgets - available for future tab UI
     isLoading,
-    // isStructureLoading, isMutating - available for loading states
     error,
     joinSpace,
     leaveSpace,
     refresh,
-    leaderActions,
-    // getWidgetsForTab - available for widget rendering
-  } = useSpaceContext();
+  } = useSpaceMetadata();
+
+  const { events } = useSpaceEvents();
+  const { tabs } = useSpaceStructureContext();
+  const { leaderActions } = useSpaceLeader();
 
   // Compute membership booleans from role
   const isMember = Boolean(membership?.role);
@@ -1062,17 +1082,304 @@ function SpaceDetailContent() {
     }),
   };
 
-  // Convert boards data for BoardTabBar
-  const boardsForTabBar: BoardData[] = (boards as ChatBoardData[]).map((b: ChatBoardData) => ({
-    id: b.id,
-    name: b.name,
-    type: b.type,
-    description: b.description,
-    messageCount: b.messageCount,
-    isDefault: b.isDefault,
-    isLocked: b.isLocked,
-  }));
+  // PERFORMANCE FIX: Memoize board transformations to prevent re-renders
+  // These transformations only need to recalculate when boards actually change
+  const boardsForTabBar = React.useMemo<BoardData[]>(
+    () => (boards as ChatBoardData[]).map((b: ChatBoardData) => ({
+      id: b.id,
+      name: b.name,
+      type: b.type,
+      description: b.description,
+      messageCount: b.messageCount,
+      isDefault: b.isDefault,
+      isLocked: b.isLocked,
+    })),
+    [boards]
+  );
 
+  // PERFORMANCE FIX: Memoize premium board tabs
+  const premiumBoards = React.useMemo<BoardTab[]>(
+    () => (boards as ChatBoardData[]).map((b: ChatBoardData) => ({
+      id: b.id,
+      name: b.name,
+      type: b.type === 'general' ? 'general' : b.type === 'event' ? 'events' : 'discussion',
+      isDefault: b.isDefault,
+    })),
+    [boards]
+  );
+
+  // PERFORMANCE FIX: Memoize message transformations
+  // Critical for performance with large message lists (1000+ messages)
+  const premiumMessages = React.useMemo<MessageData[]>(
+    () => messages.map((m) => ({
+      id: m.id,
+      content: m.content,
+      author: {
+        id: m.authorId,
+        name: m.authorName,
+        avatarUrl: m.authorAvatarUrl,
+        role: m.authorRole,
+      },
+      timestamp: new Date(m.timestamp),
+      isEdited: Boolean(m.editedAt),
+      isDeleted: m.isDeleted,
+      isPinned: m.isPinned,
+      reactions: m.reactions,
+      threadCount: m.threadCount,
+    })),
+    [messages]
+  );
+
+  // ============================================================
+  // PREMIUM UI (ChatGPT/Apple Fusion)
+  // Enable with ?premium=true in URL
+  // ============================================================
+  if (usePremiumUI) {
+    return (
+      <div className="min-h-screen h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+        {/* Premium Header */}
+        <PremiumHeader
+          space={{
+            id: spaceId ?? "",
+            name: space.name,
+            description: space.description,
+            iconUrl: space.iconUrl,
+            category: space.category,
+            isVerified: space.isVerified,
+            memberCount: space.memberCount,
+            onlineCount: space.onlineCount,
+          }}
+          membershipState={membershipState === 'owner' ? 'owner' : membershipState === 'admin' ? 'admin' : membershipState === 'joined' ? 'joined' : 'not_joined'}
+          isLeader={isLeader}
+          currentBoardName={boards.find(b => b.id === activeBoardId)?.name}
+          onJoin={async () => { await joinSpace(); }}
+          onLeave={async () => { await leaveSpace(); }}
+          onShare={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success('Link copied', 'Space URL copied to clipboard');
+          }}
+          onSettings={isLeader ? () => router.push(`/spaces/${spaceId}/settings`) : undefined}
+        />
+
+        {/* Main 60/40 Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Premium Chat Board - 60% */}
+          <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-[#0A0A0A]">
+            <PremiumChatBoard
+              spaceId={spaceId ?? ""}
+              boards={premiumBoards}
+              activeBoardId={activeBoardId ?? boards[0]?.id ?? "general"}
+              messages={premiumMessages}
+              currentUserId={user?.uid ?? "anonymous"}
+              currentUserName={user?.displayName || "You"}
+              currentUserAvatar={user?.photoURL || undefined}
+              typingUsers={typingUsers}
+              isLoading={chatLoading}
+              isLoadingMore={chatLoadingMore}
+              hasMoreMessages={chatHasMore}
+              canPost={isMember}
+              isLeader={isLeader}
+              canEditOwn={true}
+              canDeleteOwn={true}
+              canPin={isLeader}
+              scrollToMessageId={scrollToMessageId ?? undefined}
+              onScrollToMessageComplete={() => setScrollToMessageId(null)}
+              onBoardChange={changeBoard}
+              onSendMessage={handleSendMessage}
+              onLoadMore={loadMoreMessages}
+              onReact={addReaction}
+              onEdit={(messageId) => {
+                // For now, just log - full edit would need modal
+                logger.info('[Premium] Edit message', { messageId });
+              }}
+              onDelete={deleteMessage}
+              onPin={isLeader ? pinMessage : undefined}
+              onViewThread={openThread}
+              onAddBoard={isLeader ? handleCreateBoard : undefined}
+              composerPlaceholder={`Message ${boards.find(b => b.id === activeBoardId)?.name || 'this space'}...`}
+            />
+          </main>
+
+          {/* Premium Sidebar - 40% */}
+          <aside className="hidden lg:flex lg:flex-col lg:w-[380px] max-w-[400px] border-l border-white/[0.06] bg-[#0A0A0A]/50 overflow-y-auto">
+            <div className="p-5 space-y-4">
+              {/* About Section */}
+              <AboutSection
+                data={{
+                  description: space.description || "No description yet.",
+                  memberCount: space.memberCount,
+                  onlineCount: space.onlineCount,
+                  category: space.category,
+                }}
+              />
+
+              {/* Events Section */}
+              {events.length > 0 && (
+                <EventsSection
+                  events={(events as SpaceEventData[]).slice(0, 5).map((e) => ({
+                    id: e.id,
+                    title: e.title,
+                    date: new Date(e.startDate),
+                    attendees: e.currentAttendees,
+                    isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000,
+                  }))}
+                  onEventClick={(id) => router.push(`/spaces/${spaceId}/calendar?event=${id}`)}
+                  onViewAll={() => router.push(`/spaces/${spaceId}/calendar`)}
+                />
+              )}
+
+              {/* Members Section */}
+              <MembersSection
+                members={leaders.map((l) => ({
+                  id: l.id,
+                  name: l.name,
+                  avatarUrl: l.avatarUrl,
+                  role: l.role === 'owner' ? 'owner' : l.role === 'admin' ? 'admin' : 'member',
+                }))}
+                totalCount={space.memberCount}
+                onMemberClick={(id) => router.push(`/profile/${id}`)}
+                onViewAll={() => {}}
+              />
+
+              {/* Tools Section */}
+              {tools.length > 0 && (
+                <ToolsSection
+                  tools={tools.map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    isActive: t.isActive,
+                  }))}
+                  onToolClick={(toolId) => {
+                    const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
+                    if (tool) {
+                      setSelectedTool({
+                        id: tool.id,
+                        toolId: tool.toolId,
+                        placementId: tool.placementId,
+                        name: tool.name,
+                        type: tool.type,
+                      });
+                      setToolModalOpen(true);
+                    }
+                  }}
+                  onViewAll={() => router.push(`/spaces/${spaceId}/tools`)}
+                />
+              )}
+            </div>
+          </aside>
+        </div>
+
+        {/* Mobile Navigation (reuse existing) */}
+        <SpaceMobileNavigation
+          activeDrawer={activeDrawer}
+          setActiveDrawer={setActiveDrawer}
+          space={{
+            name: space.name,
+            description: space.description,
+            memberCount: space.memberCount,
+            onlineCount: space.onlineCount ?? 0,
+            category: space.category,
+          }}
+          events={events}
+          tools={tools}
+          leaders={leaders}
+          automations={automations.map(a => ({
+            id: a.id,
+            name: a.name,
+            trigger: a.trigger.type,
+            enabled: a.enabled,
+            runCount: a.stats?.timesTriggered,
+          }))}
+          isLeader={isLeader}
+          onOpenTemplates={() => setShowTemplates(true)}
+        />
+
+        {/* Modals (reuse existing) */}
+        {leaderActions && (
+          <SpaceLeaderModals
+            tabs={tabs}
+            boards={boards}
+            activeBoardId={activeBoardId ?? undefined}
+            addTabModalOpen={addTabModalOpen}
+            setAddTabModalOpen={setAddTabModalOpen}
+            addWidgetModalOpen={addWidgetModalOpen}
+            setAddWidgetModalOpen={setAddWidgetModalOpen}
+            inviteMemberModalOpen={inviteMemberModalOpen}
+            setInviteMemberModalOpen={setInviteMemberModalOpen}
+            createEventModalOpen={createEventModalOpen}
+            setCreateEventModalOpen={setCreateEventModalOpen}
+            onAddTab={handleAddTab}
+            onAddWidget={handleAddWidget}
+            onInviteMember={handleInviteMember}
+            onSearchUsers={handleSearchUsers}
+            onCreateEvent={handleCreateEvent}
+            existingMemberIds={leaders.map((l) => l.id)}
+          />
+        )}
+
+        {/* Tool Runtime Modal */}
+        {selectedTool && (
+          <ToolRuntimeModal
+            open={toolModalOpen}
+            onOpenChange={(open) => {
+              setToolModalOpen(open);
+              if (!open) setSelectedTool(null);
+            }}
+            toolId={selectedTool.toolId}
+            spaceId={spaceId ?? ''}
+            placementId={selectedTool.placementId}
+            toolName={selectedTool.name}
+            onExpandToFullPage={() => {
+              const deploymentId = selectedTool.placementId && spaceId
+                ? `space:${spaceId}_${selectedTool.placementId}`
+                : undefined;
+              const url = deploymentId
+                ? `/tools/${selectedTool.toolId}/run?spaceId=${spaceId}&deploymentId=${encodeURIComponent(deploymentId)}`
+                : `/tools/${selectedTool.toolId}/run?spaceId=${spaceId}`;
+              router.push(url);
+              setToolModalOpen(false);
+              setSelectedTool(null);
+            }}
+            runtime={selectedTool.toolId && toolRuntime.tool ? {
+              tool: { ...toolRuntime.tool, status: toolRuntime.tool.status || 'draft' },
+              state: toolRuntime.state,
+              isLoading: toolRuntime.isLoading,
+              isExecuting: toolRuntime.isExecuting,
+              isSaving: toolRuntime.isSaving,
+              isSynced: toolRuntime.isSynced,
+              lastSaved: toolRuntime.lastSaved,
+              error: toolRuntime.error instanceof Error ? toolRuntime.error.message : toolRuntime.error,
+              executeAction: async (action: string, elementId?: string, data?: Record<string, unknown>) => {
+                const result = await toolRuntime.executeAction(elementId || '', action, data);
+                return { success: result.success, data: result.state, error: result.error };
+              },
+              updateState: (elementId: string, data: unknown) => {
+                toolRuntime.updateState({ [elementId]: data });
+              },
+            } : undefined}
+          />
+        )}
+
+        {/* Thread Drawer */}
+        <ThreadDrawer
+          open={thread.isOpen}
+          onOpenChange={(open) => { if (!open) closeThread(); }}
+          parentMessage={thread.parentMessage}
+          replies={thread.replies}
+          isLoading={thread.isLoading}
+          isLoadingMore={thread.isLoadingMore}
+          hasMoreReplies={thread.hasMore}
+          currentUserId={user?.uid ?? "anonymous"}
+          onLoadMore={loadMoreReplies}
+          onSendReply={async (content: string) => { await sendThreadReply(content); }}
+        />
+      </div>
+    );
+  }
+
+  // ============================================================
+  // CLASSIC UI (Original)
+  // ============================================================
   return (
     <div className="min-h-screen h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
       {/* Compact Header - Chat-first (NO feed tabs) */}
