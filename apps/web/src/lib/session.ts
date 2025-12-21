@@ -65,6 +65,14 @@ const ADMIN_SESSION_MAX_AGE = 4 * 60 * 60; // 4 hours for admin sessions
 // Convert secret to key
 const secret = new TextEncoder().encode(SESSION_SECRET);
 
+/**
+ * Get the encoded session secret for JWT signing
+ * This ensures all auth routes use the same validated secret
+ */
+export function getEncodedSessionSecret(): Uint8Array {
+  return secret;
+}
+
 /** Session data stored in JWT */
 export interface SessionData {
   userId: string;

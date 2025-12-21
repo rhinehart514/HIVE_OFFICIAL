@@ -14,6 +14,15 @@ import {
   processActionConnections,
   type ToolComposition,
 } from '@/lib/tool-connection-engine';
+import { rateLimit } from '@/lib/rate-limit-simple';
+
+// Rate limiter for tool executions: 60 requests per minute per user
+const toolExecuteRateLimiter = rateLimit({
+  maxRequests: 60,
+  windowMs: 60000,
+  identifier: 'tool-execute',
+  blockOnError: true,
+});
 
 // =============================================================================
 // Inlined Action Handlers (previously from @/lib/tool-action-handlers)
@@ -70,6 +79,7 @@ export interface ActionResult {
     metadata?: Record<string, unknown>;
   };
   state?: Record<string, unknown>;
+  outputs?: Record<string, unknown>; // Output values for cascade connections
   notifications?: Array<{
     type: 'info' | 'success' | 'warning' | 'error';
     message: string;
@@ -179,6 +189,538 @@ const actionHandlers: Record<string, ActionHandler> = {
           ...eventState,
           rsvps: { ...eventState.rsvps, [userId]: status },
           lastUpdatedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Timer & Countdown Actions
+  // =============================================================================
+
+  async start(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'timer';
+    const timerState = (state[key] || { elapsed: 0, isRunning: false }) as { elapsed: number; isRunning: boolean; startedAt?: string };
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...timerState,
+          isRunning: true,
+          startedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async stop(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'timer';
+    const timerState = (state[key] || { elapsed: 0, isRunning: false }) as { elapsed: number; isRunning: boolean; startedAt?: string };
+
+    // Calculate elapsed time if timer was running
+    let elapsed = timerState.elapsed || 0;
+    if (timerState.isRunning && timerState.startedAt) {
+      elapsed += Date.now() - new Date(timerState.startedAt).getTime();
+    }
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...timerState,
+          isRunning: false,
+          elapsed,
+          stoppedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async reset(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'timer';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          elapsed: 0,
+          isRunning: false,
+          resetAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async lap(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'timer';
+    const timerState = (state[key] || { elapsed: 0, laps: [] }) as { elapsed: number; laps: number[]; startedAt?: string };
+
+    let currentElapsed = timerState.elapsed || 0;
+    if (timerState.startedAt) {
+      currentElapsed += Date.now() - new Date(timerState.startedAt).getTime();
+    }
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...timerState,
+          laps: [...(timerState.laps || []), currentElapsed],
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Search & Filter Actions
+  // =============================================================================
+
+  async search(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'search';
+    const query = (data.query as string) || '';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          query,
+          searchedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async apply_filters(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'filters';
+    const filters = (data.filters as Record<string, unknown>) || {};
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          activeFilters: filters,
+          appliedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async clear_filters(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'filters';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          activeFilters: {},
+          clearedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Selection Actions (pickers, lists)
+  // =============================================================================
+
+  async select_date(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'datePicker';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedDate: data.date,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_user(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'userSelector';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedUserId: data.userId,
+          selectedUser: data.user || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_event(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'eventPicker';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedEventId: data.eventId,
+          selectedEvent: data.event || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_space(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'spacePicker';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedSpaceId: data.spaceId,
+          selectedSpace: data.space || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_item(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'resultList';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedItemId: data.itemId,
+          selectedItem: data.item || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_tag(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'tagCloud';
+    const tagState = (state[key] || { selectedTags: [] }) as { selectedTags: string[] };
+    const tag = data.tag as string;
+    const isSelected = tagState.selectedTags.includes(tag);
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedTags: isSelected
+            ? tagState.selectedTags.filter(t => t !== tag)
+            : [...tagState.selectedTags, tag],
+          lastUpdatedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_member(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'memberList';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedMemberId: data.memberId,
+          selectedMember: data.member || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  async select_members(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'memberSelector';
+    const memberIds = (data.memberIds as string[]) || [];
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedMemberIds: memberIds,
+          selectedCount: memberIds.length,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Chart & Data Visualization Actions
+  // =============================================================================
+
+  async select_point(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'chart';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedPoint: data.point,
+          selectedIndex: data.index,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Leaderboard Actions
+  // =============================================================================
+
+  async update_score(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data, userId } = context;
+    const key = elementId || 'leaderboard';
+    const leaderboardState = (state[key] || { scores: {} }) as { scores: Record<string, number> };
+    const targetUserId = (data.userId as string) || userId;
+    const delta = (data.delta as number) || 0;
+    const newScore = (data.score as number) ?? (leaderboardState.scores[targetUserId] || 0) + delta;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...leaderboardState,
+          scores: {
+            ...leaderboardState.scores,
+            [targetUserId]: Math.max(0, newScore),
+          },
+          lastUpdatedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Map / Location Actions
+  // =============================================================================
+
+  async select_location(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'map';
+    const marker = data.marker as { id: string; name: string; x?: number; y?: number; type?: string } | undefined;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          selectedMarker: marker || null,
+          selectedMarkerId: data.markerId as string || marker?.id || null,
+          selectedLocation: marker?.name || data.name || null,
+          selectedAt: new Date().toISOString(),
+        },
+      },
+      outputs: marker ? { location: marker.name, markerId: marker.id } : undefined,
+    };
+  },
+
+  // =============================================================================
+  // Notification Actions
+  // =============================================================================
+
+  async dismiss_notification(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'notifications';
+    const notifState = (state[key] || { dismissed: [] }) as { dismissed: string[] };
+    const notificationId = data.notificationId as string;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...notifState,
+          dismissed: [...notifState.dismissed, notificationId],
+        },
+      },
+    };
+  },
+
+  async mark_read(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'notifications';
+    const notifState = (state[key] || { read: [] }) as { read: string[] };
+    const notificationId = data.notificationId as string;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...notifState,
+          read: [...notifState.read, notificationId],
+        },
+      },
+    };
+  },
+
+  async mark_all_read(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId } = context;
+    const key = elementId || 'notifications';
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          read: 'all',
+          markedAt: new Date().toISOString(),
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Form Actions
+  // =============================================================================
+
+  async submit_form(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data, userId } = context;
+    const key = elementId || 'form';
+    const formData = (data.formData as Record<string, unknown>) || data;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          submitted: true,
+          formData,
+          submittedBy: userId,
+          submittedAt: new Date().toISOString(),
+        },
+      },
+      data: {
+        formSubmission: formData,
+      },
+    };
+  },
+
+  async update_field(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data } = context;
+    const key = elementId || 'form';
+    const formState = (state[key] || { fields: {} }) as { fields: Record<string, unknown> };
+    const fieldName = data.fieldName as string;
+    const fieldValue = data.value;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...formState,
+          fields: {
+            ...formState.fields,
+            [fieldName]: fieldValue,
+          },
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Announcement Actions
+  // =============================================================================
+
+  async send_announcement(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data, userId } = context;
+    const key = elementId || 'announcement';
+    const content = data.content as string;
+    const recipients = (data.recipients as string[]) || [];
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          sent: true,
+          content,
+          recipients,
+          sentBy: userId,
+          sentAt: new Date().toISOString(),
+        },
+      },
+      notifications: recipients.length > 0 ? [{
+        type: 'info',
+        message: content,
+        recipients,
+      }] : undefined,
+    };
+  },
+
+  async dismiss_announcement(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, userId } = context;
+    const key = elementId || 'announcement';
+    const announcementState = (state[key] || { dismissedBy: [] }) as { dismissedBy: string[] };
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          ...announcementState,
+          dismissedBy: [...announcementState.dismissedBy, userId],
+        },
+      },
+    };
+  },
+
+  // =============================================================================
+  // Connection Actions
+  // =============================================================================
+
+  async request_connection(context: ActionContext): Promise<ActionResult> {
+    const { state, elementId, data, userId } = context;
+    const key = elementId || 'connections';
+    const targetUserId = data.targetUserId as string;
+
+    return {
+      success: true,
+      state: {
+        ...state,
+        [key]: {
+          lastRequest: {
+            from: userId,
+            to: targetUserId,
+            requestedAt: new Date().toISOString(),
+          },
         },
       },
     };
@@ -317,12 +859,69 @@ interface ToolExecutionResult {
   }>;
 }
 
+// Input sanitization: Limit string lengths and validate patterns
+const MAX_ID_LENGTH = 128;
+const MAX_ACTION_LENGTH = 64;
+const MAX_DATA_KEYS = 50;
+const MAX_STRING_VALUE_LENGTH = 10000;
+
+// Allowed characters for IDs and actions (alphanumeric, underscore, hyphen, colon)
+const SAFE_ID_PATTERN = /^[a-zA-Z0-9_:-]+$/;
+const SAFE_ACTION_PATTERN = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
+
+/**
+ * Sanitize string values in data objects to prevent XSS
+ * Truncates long strings and escapes HTML entities
+ */
+function sanitizeDataValue(value: unknown, maxLength = MAX_STRING_VALUE_LENGTH): unknown {
+  if (value === null || value === undefined) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    // Truncate long strings
+    let sanitized = value.length > maxLength ? value.slice(0, maxLength) : value;
+    // Escape HTML entities to prevent XSS if rendered
+    sanitized = sanitized
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+    return sanitized;
+  }
+  if (Array.isArray(value)) {
+    return value.slice(0, 100).map(v => sanitizeDataValue(v, maxLength));
+  }
+  if (typeof value === 'object') {
+    const sanitized: Record<string, unknown> = {};
+    const keys = Object.keys(value as Record<string, unknown>).slice(0, MAX_DATA_KEYS);
+    for (const key of keys) {
+      sanitized[key] = sanitizeDataValue((value as Record<string, unknown>)[key], maxLength);
+    }
+    return sanitized;
+  }
+  return value;
+}
+
 const ToolExecutionSchema = z.object({
-  deploymentId: z.string(),
-  action: z.string(),
-  elementId: z.string().optional(),
-  data: z.record(z.unknown()).optional(),
-  context: z.record(z.unknown()).optional(),
+  deploymentId: z.string()
+    .min(1, "Deployment ID is required")
+    .max(MAX_ID_LENGTH, `Deployment ID too long (max ${MAX_ID_LENGTH})`)
+    .refine(val => SAFE_ID_PATTERN.test(val), "Invalid deployment ID format"),
+  action: z.string()
+    .min(1, "Action is required")
+    .max(MAX_ACTION_LENGTH, `Action name too long (max ${MAX_ACTION_LENGTH})`)
+    .refine(val => SAFE_ACTION_PATTERN.test(val), "Invalid action name format"),
+  elementId: z.string()
+    .max(MAX_ID_LENGTH, `Element ID too long (max ${MAX_ID_LENGTH})`)
+    .refine(val => !val || SAFE_ID_PATTERN.test(val), "Invalid element ID format")
+    .optional(),
+  data: z.record(z.unknown())
+    .refine(val => !val || Object.keys(val).length <= MAX_DATA_KEYS, `Too many data keys (max ${MAX_DATA_KEYS})`)
+    .optional(),
+  context: z.record(z.unknown())
+    .refine(val => !val || Object.keys(val).length <= MAX_DATA_KEYS, `Too many context keys (max ${MAX_DATA_KEYS})`)
+    .optional(),
 });
 
 /**
@@ -391,7 +990,27 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+
+      // SECURITY: Rate limit tool executions per user
+      const rateLimitResult = toolExecuteRateLimiter.check(userId);
+      if (!rateLimitResult.success) {
+        logger.warn('Tool execution rate limited', {
+          userId,
+          remaining: rateLimitResult.remaining,
+          retryAfter: rateLimitResult.retryAfter
+        });
+        return respond.error(
+          'Too many requests. Please slow down.',
+          'RATE_LIMITED',
+          { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
+        );
+      }
+
       const { deploymentId, action, elementId, data, context } = body;
+
+      // SECURITY: Sanitize user-provided data to prevent XSS and limit payload sizes
+      const sanitizedData = data ? sanitizeDataValue(data) as Record<string, unknown> : undefined;
+      const sanitizedContext = context ? sanitizeDataValue(context) as Record<string, unknown> : undefined;
 
     // Get deployment details from either placed_tools or deployedTools
     const resolved = await resolveDeployment(deploymentId);
@@ -451,16 +1070,16 @@ export const POST = withAuthValidationAndErrors(
         return respond.error("Tool data not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
-    // Execute tool action
+    // Execute tool action with sanitized inputs
     const executionResult = await executeToolAction({
       deployment,
       tool,
-        user: { uid: userId },
+      user: { uid: userId },
       action,
       elementId,
-      data: data || {},
-        context: context || {},
-        placementContext
+      data: sanitizedData || {},
+      context: sanitizedContext || {},
+      placementContext
     });
 
     // Update deployment usage stats
@@ -507,27 +1126,45 @@ export const POST = withAuthValidationAndErrors(
     if (deployment.deployedTo === 'space' && deployment.targetId) {
       activityEvent.spaceId = deployment.targetId;
     }
-    if (context?.duration) {
-      activityEvent.duration = context.duration;
+    if (sanitizedContext?.duration) {
+      activityEvent.duration = sanitizedContext.duration;
     }
     await dbAdmin.collection('activityEvents').add(activityEvent);
 
     // Record analytics event for tool usage tracking
     // This powers the analytics dashboard at /tools/[toolId]/analytics
     if (executionResult.success) {
+      // Look up element type from tool composition if not provided in data
+      let elementType: string | null = sanitizedData?.elementType as string || null;
+      if (!elementType && elementId && tool.elements) {
+        const element = tool.elements.find(
+          (el: { id?: string; instanceId?: string; elementId?: string; type?: string }) =>
+            el.id === elementId || el.instanceId === elementId
+        );
+        if (element) {
+          const resolvedType = element.elementId || element.type;
+          elementType = typeof resolvedType === 'string' ? resolvedType : null;
+        }
+      }
+
       const analyticsEvent = {
         toolId: deployment.toolId || tool.id,
         deploymentId,
         userId,
         action,
         elementId: elementId || null,
+        elementType, // Resolved from tool composition or request data
         feature: action, // Track action as feature for feature usage breakdown
         timestamp: new Date(),
         campusId: CURRENT_CAMPUS_ID,
         spaceId: deployment.deployedTo === 'space' ? deployment.targetId : null,
         metadata: {
-          elementType: data?.elementType || null,
+          elementType,
           feature: action,
+          // Track additional context for richer analytics
+          elementInstanceId: elementId || null,
+          deploymentType: deployment.deployedTo || 'unknown',
+          surface: deployment.surface || null,
         },
       };
       // Fire and forget - don't block on analytics write

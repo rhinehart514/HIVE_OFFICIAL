@@ -5,6 +5,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
+import { getEncodedSessionSecret } from "@/lib/session";
 
 /**
  * Session validation endpoint - verifies token and returns user session info
@@ -228,10 +229,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session cookie using jose (like the existing session system)
+    // Create session cookie using centralized secure secret
     const { SignJWT } = await import('jose');
-    const sessionSecret = process.env.SESSION_SECRET || 'dev-session-secret-for-local-testing-only-b3c4d0375e506cb6cb30f1d922b4062f';
-    const secret = new TextEncoder().encode(sessionSecret);
+    const secret = getEncodedSessionSecret();
 
     const sessionToken = await new SignJWT({
       userId,

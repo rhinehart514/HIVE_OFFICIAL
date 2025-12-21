@@ -23,10 +23,9 @@ import { getFirestore as getClientFirestore, doc, getDoc } from 'firebase/firest
 const CODE_TTL_SECONDS = 600; // 10 minutes
 const MAX_CODES_PER_EMAIL_PER_HOUR = 10; // Temporarily increased for testing
 
-// Development mode guard - ONLY allow dev bypass when ALL conditions are met
+// Development mode guard - allow dev bypass for email sending in development
 const ALLOW_DEV_BYPASS =
   SESSION_CONFIG.isDevelopment &&
-  !isFirebaseConfigured &&
   process.env.DEV_AUTH_BYPASS === 'true';
 
 // Firebase config for Client SDK fallback

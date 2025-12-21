@@ -7,7 +7,7 @@ import { auditAuthEvent } from "@/lib/production-auth";
 import { enforceRateLimit } from "@/lib/secure-rate-limiter";
 import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
-import { SESSION_CONFIG } from "@/lib/session";
+import { SESSION_CONFIG, getEncodedSessionSecret } from "@/lib/session";
 import { validateOrigin } from "@/lib/security-middleware";
 
 // Security constants
@@ -341,9 +341,8 @@ async function createSessionResponse(
     userId = `dev-${email.replace(/[^a-zA-Z0-9]/g, '-')}`;
   }
 
-  // Create session token
-  const sessionSecret = process.env.SESSION_SECRET || 'dev-session-secret-for-local-testing-only-b3c4d0375e506cb6cb30f1d922b4062f';
-  const secret = new TextEncoder().encode(sessionSecret);
+  // Create session token using centralized secure secret
+  const secret = getEncodedSessionSecret();
 
   const sessionToken = await new SignJWT({
     userId,

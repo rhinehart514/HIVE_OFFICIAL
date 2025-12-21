@@ -5,6 +5,9 @@
  * Queues failed requests and triggers sync when back online.
  */
 
+// Development-only logging
+const isDev = process.env.NODE_ENV === 'development';
+
 export interface QueuedRequest {
   url: string;
   method: string;
@@ -117,7 +120,7 @@ export async function registerBackgroundSync(tag: string = 'hive-background-sync
     const registration = await navigator.serviceWorker.ready;
     // @ts-expect-error - sync is not in the types yet
     await registration.sync.register(tag);
-    console.log('[BackgroundSync] Registered for:', tag);
+    if (isDev) console.log('[BackgroundSync] Registered for:', tag);
     return true;
   } catch (error) {
     console.error('[BackgroundSync] Failed to register:', error);
@@ -163,7 +166,7 @@ export async function registerPeriodicSync(
       minInterval,
     });
 
-    console.log('[BackgroundSync] Registered periodic sync:', tag);
+    if (isDev) console.log('[BackgroundSync] Registered periodic sync:', tag);
     return true;
   } catch (error) {
     console.error('[BackgroundSync] Failed to register periodic sync:', error);
@@ -197,7 +200,7 @@ export function createOfflineFetch(baseUrl: string = '') {
     } catch (error) {
       // If offline and this is a mutation, queue for later
       if (!navigator.onLine && shouldQueue) {
-        console.log('[BackgroundSync] Offline - queuing request:', fullUrl);
+        if (isDev) console.log('[BackgroundSync] Offline - queuing request:', fullUrl);
 
         const headers: Record<string, string> = {};
         if (options.headers) {

@@ -279,9 +279,12 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
     [maxRetries]
   );
 
+  // Development-only logging helper
+  const isDev = process.env.NODE_ENV === 'development';
+
   const sync = useCallback(async () => {
     if (!isOnline) {
-      console.log('[OfflineSync] Skipping sync - offline');
+      if (isDev) console.log('[OfflineSync] Skipping sync - offline');
       return;
     }
 
@@ -299,7 +302,7 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
         return;
       }
 
-      console.log(`[OfflineSync] Syncing ${mutations.length} pending mutations...`);
+      if (isDev) console.log(`[OfflineSync] Syncing ${mutations.length} pending mutations...`);
 
       let success = 0;
       let failed = 0;
@@ -328,9 +331,9 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
       }));
 
       onSyncComplete?.({ success, failed });
-      console.log(`[OfflineSync] Sync complete: ${success} succeeded, ${failed} failed`);
+      if (isDev) console.log(`[OfflineSync] Sync complete: ${success} succeeded, ${failed} failed`);
     } catch (error) {
-      console.error('[OfflineSync] Sync error:', error);
+      if (isDev) console.error('[OfflineSync] Sync error:', error);
       setState((prev) => ({
         ...prev,
         isSyncing: false,
@@ -386,7 +389,9 @@ export function useOfflineData<T>(options: UseOfflineDataOptions<T>): UseOffline
 
   const fetchData = useCallback(async () => {
     if (!isOnline) {
-      console.log(`[useOfflineData:${cacheKey}] Offline - using cache only`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[useOfflineData:${cacheKey}] Offline - using cache only`);
+      }
       return;
     }
 

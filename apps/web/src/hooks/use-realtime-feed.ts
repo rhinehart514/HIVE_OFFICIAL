@@ -74,6 +74,11 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
   const userSpaceIdsRef = useRef<string[]>([]);
   const enableRealtime = options.enableRealtime !== false; // Default to true
 
+  // MEMORY LEAK FIX: Track initialization to prevent duplicate loads
+  const isInitializedRef = useRef(false);
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Get user's space memberships for real-time listeners
   const fetchUserSpaces = useCallback(async (): Promise<string[]> => {
     if (!user || !getAuthToken) return [];
@@ -97,10 +102,21 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
   }, [user, getAuthToken]);
 
   // Load initial feed data (traditional API call)
+  // MEMORY LEAK FIX: Use ref for current posts length to avoid dependency issues
+  const postsLengthRef = useRef(0);
+  postsLengthRef.current = feedState.posts.length;
+
   const loadInitialFeed = useCallback(async (reset = false) => {
     if (!user) return;
 
-    const isInitialLoad = reset || feedState.posts.length === 0;
+    // MEMORY LEAK FIX: Cancel any pending requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    const isInitialLoad = reset || postsLengthRef.current === 0;
     setFeedState(prev => ({
       ...prev,
       isLoading: isInitialLoad,
@@ -116,16 +132,20 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
         ...(options.userId && { userId: options.userId }),
         ...(options.sortBy && { sortBy: options.sortBy }),
         ...(options.types && { types: options.types.join(',') }),
-        ...(!reset && { offset: String(feedState.posts.length) }),
+        ...(!reset && { offset: String(postsLengthRef.current) }),
       });
 
       const authToken = getAuthToken ? await getAuthToken() : '';
       const response = await fetch(`/api/feed?${params}`, {
+        signal, // MEMORY LEAK FIX: Pass abort signal
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
       });
+
+      // MEMORY LEAK FIX: Check if component is still mounted
+      if (!isMountedRef.current) return;
 
       if (!response.ok) {
         throw new Error(`Feed load failed: ${response.status}`);
@@ -168,6 +188,9 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
         location: post.content?.location
       }));
 
+      // MEMORY LEAK FIX: Check if component is still mounted before updating state
+      if (!isMountedRef.current) return;
+
       setFeedState(prev => ({
         ...prev,
         posts: reset ? transformedPosts : [...prev.posts, ...transformedPosts],
@@ -178,12 +201,14 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
         connectionStatus: 'connected'
       }));
 
-      // Start real-time listeners after initial load
-      if (enableRealtime && !feedManagerRef.current) {
-        await startRealtimeListeners();
-      }
+      // Return true to indicate success (realtime listeners started separately)
+      return true;
 
     } catch (error) {
+      // MEMORY LEAK FIX: Ignore abort errors and check mount status
+      if (error instanceof Error && error.name === 'AbortError') return false;
+      if (!isMountedRef.current) return false;
+
       setFeedState(prev => ({
         ...prev,
         isLoading: false,
@@ -191,23 +216,31 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
         error: error instanceof Error ? error.message : 'Failed to load feed',
         connectionStatus: 'disconnected'
       }));
+      return false;
     }
-  }, [user, getAuthToken, options, feedState.posts.length, enableRealtime]);
+  }, [user, getAuthToken, options.limit, options.spaceId, options.userId, options.sortBy, options.types]);
 
   // Start real-time listeners
   const startRealtimeListeners = useCallback(async () => {
-    if (!user || !enableRealtime) return;
+    if (!user || !enableRealtime || !isMountedRef.current) return;
 
     try {
       // Get user's spaces for targeted listening
       const spaceIds = await fetchUserSpaces();
+
+      // MEMORY LEAK FIX: Check mount status after async operation
+      if (!isMountedRef.current) return;
+
       userSpaceIdsRef.current = spaceIds;
 
       // Initialize real-time manager
       feedManagerRef.current = getRealtimeFeedManager(user.id);
 
       // Real-time callback to handle new items
+      // MEMORY LEAK FIX: Check mount status in callback
       const handleRealtimeUpdate = (items: RealtimeFeedItem[], updateType: 'added' | 'modified' | 'removed') => {
+        if (!isMountedRef.current) return;
+
         if (updateType === 'added' && items.length > 0) {
           setFeedState(prev => ({
             ...prev,
@@ -216,8 +249,6 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
             connectionStatus: 'connected',
             lastUpdated: new Date()
           }));
-
-          // Show a subtle notification for new content
         }
       };
 
@@ -292,34 +323,59 @@ export function useRealtimeFeed(options: FeedOptions = {}) {
     });
   }, []);
 
-  // Initialize feed on mount
-  useEffect(() => {
-    if (user) {
-      loadInitialFeed(true);
-    } else {
-      setFeedState({
-        posts: [],
-        realtimeItems: [],
-        isLoading: false,
-        isLoadingMore: false,
-        error: null,
-        hasMore: true,
-        lastUpdated: null,
-        connectionStatus: 'disconnected',
-        liveUpdatesCount: 0
-      });
-    }
-  }, [user, loadInitialFeed]);
+  // MEMORY LEAK FIX: Track user ID for cleanup
+  const userIdRef = useRef<string | null>(null);
 
-  // Cleanup on unmount
+  // Initialize feed on mount - MEMORY LEAK FIX: Stable initialization
   useEffect(() => {
+    isMountedRef.current = true;
+
+    const initializeFeed = async () => {
+      if (user && !isInitializedRef.current) {
+        isInitializedRef.current = true;
+        userIdRef.current = user.id;
+        const success = await loadInitialFeed(true);
+
+        // Start realtime listeners after successful initial load
+        if (success && enableRealtime && !feedManagerRef.current && isMountedRef.current) {
+          await startRealtimeListeners();
+        }
+      } else if (!user) {
+        isInitializedRef.current = false;
+        setFeedState({
+          posts: [],
+          realtimeItems: [],
+          isLoading: false,
+          isLoadingMore: false,
+          error: null,
+          hasMore: true,
+          lastUpdated: null,
+          connectionStatus: 'disconnected',
+          liveUpdatesCount: 0
+        });
+      }
+    };
+
+    initializeFeed();
+
+    // MEMORY LEAK FIX: Comprehensive cleanup on unmount or user change
     return () => {
-      if (feedManagerRef.current && user) {
-        cleanupRealtimeFeedManager(user.id);
+      isMountedRef.current = false;
+      isInitializedRef.current = false;
+
+      // Cancel pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+
+      // Cleanup realtime manager
+      if (feedManagerRef.current && userIdRef.current) {
+        cleanupRealtimeFeedManager(userIdRef.current);
         feedManagerRef.current = null;
       }
     };
-  }, [user]);
+  }, [user?.id, loadInitialFeed, enableRealtime, startRealtimeListeners]);
 
   // Load more posts (traditional pagination)
   const loadMore = useCallback(() => {
