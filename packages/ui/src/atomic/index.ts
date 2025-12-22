@@ -182,10 +182,10 @@ export * from './06-Rituals/organisms/ritual-unlock-challenge';
 export * from './06-Rituals/templates/rituals-page-layout';
 
 // === 07-ADMIN (Admin Dashboard) ===
-// Organisms
-export * from './07-Admin/organisms/admin-dashboard-primitives';
+// Organisms (moved to apps/admin)
+// export * from './07-Admin/organisms/admin-dashboard-primitives';
 // export * from './07-Admin/organisms/admin-ritual-composer';
-export * from './07-Admin/organisms/admin-shell';
+// export * from './07-Admin/organisms/admin-shell';
 
 // === RE-EXPORTS (for backward compatibility) ===
 // This section can be removed once all imports are updated
