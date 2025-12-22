@@ -1,12 +1,16 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
+import { LegalContentModal } from "../legal-content-modal";
+
+type LegalModalType = "privacy" | "terms" | null;
 
 export function CtaFooterSection() {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [openModal, setOpenModal] = useState<LegalModalType>(null);
 
   return (
     <section ref={ref} className="relative" style={{ background: "#050505" }}>
@@ -116,18 +120,18 @@ export function CtaFooterSection() {
 
             {/* Links */}
             <div className="flex items-center gap-8 text-sm text-neutral-500">
-              <Link
-                href="/legal/privacy"
+              <button
+                onClick={() => setOpenModal("privacy")}
                 className="hover:text-white transition-colors duration-200"
               >
                 Privacy
-              </Link>
-              <Link
-                href="/legal/terms"
+              </button>
+              <button
+                onClick={() => setOpenModal("terms")}
                 className="hover:text-white transition-colors duration-200"
               >
                 Terms
-              </Link>
+              </button>
               <a
                 href="mailto:team@hivecampus.com"
                 className="hover:text-white transition-colors duration-200"
@@ -150,6 +154,9 @@ export function CtaFooterSection() {
           </div>
         </div>
       </footer>
+
+      {/* Legal Content Modal */}
+      <LegalContentModal type={openModal} onClose={() => setOpenModal(null)} />
     </section>
   );
 }
