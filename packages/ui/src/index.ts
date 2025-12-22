@@ -950,33 +950,28 @@ export {
 } from "./atomic/00-Global/atoms/sheet";
 export type { SheetContentProps } from "./atomic/00-Global/atoms/sheet";
 
-// Admin dashboard primitives
-export {
-  AdminShell,
-  AdminTopBar,
-  AdminNavRail,
-  AdminMetricCard,
-  StatusPill,
-  AuditLogList,
-  ModerationQueue,
-} from "./atomic/07-Admin/organisms";
-export type {
-  AdminShellProps,
-  AdminNavItem,
-  AdminTopBarProps,
-  AdminNavRailProps,
-  AdminMetricCardProps,
-  StatusPillProps,
-  AuditLogEvent,
-  AuditLogListProps,
-  ModerationQueueItem,
-  ModerationQueueProps,
-} from "./atomic/07-Admin/organisms";
-
-export {
-  // AdminRitualComposer,
-  // type AdminRitualComposerProps,
-} from "./atomic/07-Admin/organisms";
+// Admin dashboard primitives (moved to apps/admin)
+// export {
+//   AdminShell,
+//   AdminTopBar,
+//   AdminNavRail,
+//   AdminMetricCard,
+//   StatusPill,
+//   AuditLogList,
+//   ModerationQueue,
+// } from "./atomic/07-Admin/organisms";
+// export type {
+//   AdminShellProps,
+//   AdminNavItem,
+//   AdminTopBarProps,
+//   AdminNavRailProps,
+//   AdminMetricCardProps,
+//   StatusPillProps,
+//   AuditLogEvent,
+//   AuditLogListProps,
+//   ModerationQueueItem,
+//   ModerationQueueProps,
+// } from "./atomic/07-Admin/organisms";
 
 // export {
 //   RitualFeedBannerCard,
