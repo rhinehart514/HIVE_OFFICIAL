@@ -24,9 +24,10 @@ export { InstallBanner, UpdateNotification, PushNotificationPrompt };
 export function PWAManager() {
   return (
     <>
-      <InstallBanner />
+      {/* Disabled - too intrusive during development */}
+      {/* <InstallBanner /> */}
       <UpdateNotification />
-      <PushNotificationPrompt />
+      {/* <PushNotificationPrompt /> */}
     </>
   );
 }

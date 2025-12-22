@@ -1,209 +1,214 @@
-import React, { type ReactElement } from 'react';
-import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { ReactElement, ReactNode } from 'react';
+import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { vi } from 'vitest';
-import { type User } from 'firebase/auth';
+import type { ChatMessageData, SpaceBoardData, TypingUser } from '@/hooks/use-chat-messages';
 
-// Create a test query client
-export const createTestQueryClient = () =>
-  new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        staleTime: 0,
-        gcTime: 0,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
+// ============================================================
+// Test Wrapper Provider
+// ============================================================
 
-// Mock auth context provider
-interface MockAuthProviderProps {
-  children: React.ReactNode;
-  user?: Partial<User> | null;
-  isLoading?: boolean;
+interface WrapperProps {
+  children: ReactNode;
 }
 
-export const MockAuthProvider: React.FC<MockAuthProviderProps> = ({
-  children,
-  user = null,
-  isLoading = false,
-}) => {
-  const authValue = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    signIn: vi.fn(),
-    signOut: vi.fn(),
-    sendMagicLink: vi.fn(),
-  };
-
-  return (
-    <div data-testid="mock-auth-provider" data-auth={JSON.stringify(authValue)}>
-      {children}
-    </div>
-  );
-};
-
-// All providers wrapper
-interface AllTheProvidersProps {
-  children: React.ReactNode;
-  user?: Partial<User> | null;
-  isLoading?: boolean;
+function TestWrapper({ children }: WrapperProps): ReactElement {
+  return <>{children}</>;
 }
 
-const AllTheProviders: React.FC<AllTheProvidersProps> = ({
-  children,
-  user = null,
-  isLoading = false,
-}) => {
-  const queryClient = createTestQueryClient();
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <MockAuthProvider user={user} isLoading={isLoading}>
-        {children}
-      </MockAuthProvider>
-    </QueryClientProvider>
-  );
-};
-
-// Custom render function
-export const customRender = (
+function customRender(
   ui: ReactElement,
-  {
-    user = null,
-    isLoading = false,
-    ...options
-  }: Omit<RenderOptions, 'wrapper'> & {
-    user?: Partial<User> | null;
-    isLoading?: boolean;
-  } = {}
-): RenderResult => {
-  return render(ui, {
-    wrapper: ({ children }) => (
-      <AllTheProviders user={user} isLoading={isLoading}>
-        {children}
-      </AllTheProviders>
-    ),
-    ...options,
-  });
-};
+  options?: Omit<RenderOptions, 'wrapper'>
+): RenderResult {
+  return render(ui, { wrapper: TestWrapper, ...options });
+}
 
-// Re-export everything from testing library
+// ============================================================
+// Async Helpers
+// ============================================================
+
+export async function waitFor(
+  condition: () => boolean,
+  { timeout = 1000, interval = 50 } = {}
+): Promise<void> {
+  const startTime = Date.now();
+  while (!condition()) {
+    if (Date.now() - startTime > timeout) {
+      throw new Error('waitFor timeout');
+    }
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
+export function nextTick(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+export async function flushPromises(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+// ============================================================
+// Mock Data Factories
+// ============================================================
+
+let messageIdCounter = 1;
+let boardIdCounter = 1;
+let userIdCounter = 1;
+
+export function resetIdCounters(): void {
+  messageIdCounter = 1;
+  boardIdCounter = 1;
+  userIdCounter = 1;
+}
+
+export function createMockMessage(
+  overrides: Partial<ChatMessageData> = {}
+): ChatMessageData {
+  const id = `msg_${messageIdCounter++}`;
+  return {
+    id,
+    boardId: 'general',
+    type: 'text',
+    authorId: 'user_1',
+    authorName: 'Test User',
+    authorAvatarUrl: 'https://example.com/avatar.jpg',
+    authorRole: 'member',
+    content: `Test message ${id}`,
+    timestamp: Date.now(),
+    reactions: [],
+    ...overrides,
+  };
+}
+
+export function createMockMessages(
+  count: number,
+  overrides: Partial<ChatMessageData> = {}
+): ChatMessageData[] {
+  return Array.from({ length: count }, () => createMockMessage(overrides));
+}
+
+export function createMockBoard(
+  overrides: Partial<SpaceBoardData> = {}
+): SpaceBoardData {
+  const id = boardIdCounter === 1 ? 'general' : `board_${boardIdCounter}`;
+  boardIdCounter++;
+  return {
+    id,
+    name: id === 'general' ? 'General' : `Board ${id}`,
+    type: 'general',
+    messageCount: 0,
+    isDefault: id === 'general',
+    ...overrides,
+  };
+}
+
+export function createMockBoards(count: number): SpaceBoardData[] {
+  return Array.from({ length: count }, () => createMockBoard());
+}
+
+export function createMockTypingUser(
+  overrides: Partial<TypingUser> = {}
+): TypingUser {
+  const id = `user_${userIdCounter++}`;
+  return {
+    id,
+    name: `User ${id}`,
+    avatarUrl: `https://example.com/${id}.jpg`,
+    ...overrides,
+  };
+}
+
+// ============================================================
+// Fetch Mock Helpers
+// ============================================================
+
+interface MockFetchResponse {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+}
+
+export function mockFetchSuccess(data: unknown): MockFetchResponse {
+  return {
+    ok: true,
+    status: 200,
+    json: async () => data,
+  };
+}
+
+export function mockFetchError(
+  status: number,
+  error: string
+): MockFetchResponse {
+  return {
+    ok: false,
+    status,
+    json: async () => ({ error }),
+  };
+}
+
+export function setupFetchMock(
+  handlers: Record<string, () => MockFetchResponse | Promise<MockFetchResponse>>
+): void {
+  (global.fetch as ReturnType<typeof vi.fn>).mockImplementation(
+    async (url: string): Promise<MockFetchResponse> => {
+      for (const [pattern, handler] of Object.entries(handlers)) {
+        if (url.includes(pattern)) {
+          return handler();
+        }
+      }
+      return mockFetchError(404, 'Not found');
+    }
+  );
+}
+
+export function resetFetchMock(): void {
+  (global.fetch as ReturnType<typeof vi.fn>).mockReset();
+}
+
+// ============================================================
+// Test Constants
+// ============================================================
+
+export const TEST_SPACE_ID = 'test-space-123';
+export const TEST_BOARD_ID = 'general';
+export const TEST_USER_ID = 'user-123';
+export const TEST_USER_NAME = 'Test User';
+
+export function createMockSpaceData(overrides = {}) {
+  return {
+    id: TEST_SPACE_ID,
+    name: 'Test Space',
+    description: 'A test space for unit tests',
+    category: 'student_org',
+    campusId: 'ub-buffalo',
+    memberCount: 10,
+    isPublic: true,
+    createdAt: Date.now(),
+    ...overrides,
+  };
+}
+
+export function createMockChatResponse(
+  messages: ChatMessageData[] = [],
+  hasMore = false
+) {
+  return {
+    messages,
+    hasMore,
+    boardId: TEST_BOARD_ID,
+  };
+}
+
+export function createMockBoardsResponse(
+  boards: SpaceBoardData[] = [createMockBoard()]
+) {
+  return {
+    boards,
+    spaceId: TEST_SPACE_ID,
+  };
+}
+
+// Re-export testing-library
 export * from '@testing-library/react';
 export { customRender as render };
-
-// Mock data factories
-export const createMockUser = (overrides: Partial<User> = {}): Partial<User> => ({
-  uid: 'test-uid-123',
-  email: 'test@buffalo.edu',
-  displayName: 'Test User',
-  photoURL: null,
-  emailVerified: true,
-  ...overrides,
-});
-
-export const createMockSpace = (overrides = {}) => ({
-  id: 'test-space-123',
-  name: 'Test Space',
-  description: 'A test space for unit tests',
-  type: 'social',
-  visibility: 'public',
-  memberCount: 42,
-  createdAt: new Date('2024-01-01'),
-  createdBy: 'test-uid-123',
-  campusId: 'ub-buffalo',
-  isActive: true,
-  ...overrides,
-});
-
-export const createMockPost = (overrides = {}) => ({
-  id: 'test-post-123',
-  content: 'Test post content',
-  authorId: 'test-uid-123',
-  authorName: 'Test User',
-  spaceId: 'test-space-123',
-  createdAt: new Date('2024-01-01'),
-  likes: 5,
-  comments: 2,
-  campusId: 'ub-buffalo',
-  ...overrides,
-});
-
-export const createMockProfile = (overrides = {}) => ({
-  id: 'test-uid-123',
-  handle: 'testuser',
-  displayName: 'Test User',
-  email: 'test@buffalo.edu',
-  bio: 'Just a test user',
-  major: 'Computer Science',
-  year: 'Junior',
-  dorm: 'Ellicott',
-  interests: ['coding', 'testing'],
-  campusId: 'ub-buffalo',
-  createdAt: new Date('2024-01-01'),
-  isOnboarded: true,
-  ...overrides,
-});
-
-// API response mocks
-export function mockApiResponse<T>(data: T, delay = 0): Promise<T> {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(data), delay);
-  });
-}
-
-export function mockApiError(message: string, status = 500, delay = 0): Promise<never> {
-  return new Promise((_, reject) => {
-    setTimeout(() => {
-      const error = new Error(message) as Error & { status: number };
-      error.status = status;
-      reject(error);
-    }, delay);
-  });
-}
-
-// Firebase mock helpers
-export const mockFirestoreDoc = (data: Record<string, unknown>, exists = true) => ({
-  exists: () => exists,
-  data: () => data,
-  id: data?.id || 'test-doc-id',
-  ref: {
-    id: data?.id || 'test-doc-id',
-  },
-});
-
-export const mockFirestoreCollection = (docs: Array<Record<string, unknown>>) => ({
-  docs: docs.map(doc => mockFirestoreDoc(doc)),
-  empty: docs.length === 0,
-  size: docs.length,
-});
-
-// Wait utilities
-export const waitForAsync = (ms: number = 0): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
-
-// Error boundary test helper
-export class TestErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return <div data-testid="error-boundary">Error occurred</div>;
-    }
-    return this.props.children;
-  }
-}

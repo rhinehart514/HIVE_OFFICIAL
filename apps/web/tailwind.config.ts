@@ -14,6 +14,7 @@ const config: Config = {
         sans: ['var(--hive-font-sans)', 'Geist Sans', 'system-ui', 'sans-serif'],
         display: ['var(--hive-font-display)', 'Space Grotesk', 'system-ui', 'sans-serif'],
         mono: ['var(--hive-font-mono)', 'JetBrains Mono', 'monospace'],
+        manifesto: ['var(--hive-font-manifesto)', 'Clash Display', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Gold - primary brand accent

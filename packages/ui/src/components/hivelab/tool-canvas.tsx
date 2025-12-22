@@ -93,7 +93,7 @@ interface LayoutProps {
 }
 
 // Grid layout: position-based rendering with 12-column grid
-function GridLayout({ elements, state, onElementChange, onElementAction }: LayoutProps) {
+function GridLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   // Sort by position (top to bottom, left to right)
@@ -144,6 +144,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction }: Layou
                     state={state}
                     onElementChange={onElementChange}
                     onElementAction={onElementAction}
+                    context={context}
                   />
                 </motion.div>
               );
@@ -155,7 +156,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction }: Layou
 }
 
 // Flow layout: flex wrap for responsive horizontal flow
-function FlowLayout({ elements, state, onElementChange, onElementAction }: LayoutProps) {
+function FlowLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -176,6 +177,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction }: Layou
             state={state}
             onElementChange={onElementChange}
             onElementAction={onElementAction}
+            context={context}
           />
         </motion.div>
       ))}
@@ -184,7 +186,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction }: Layou
 }
 
 // Stack layout: vertical stack (default, mobile-friendly)
-function StackLayout({ elements, state, onElementChange, onElementAction }: LayoutProps) {
+function StackLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -204,6 +206,7 @@ function StackLayout({ elements, state, onElementChange, onElementAction }: Layo
             state={state}
             onElementChange={onElementChange}
             onElementAction={onElementAction}
+            context={context}
           />
         </motion.div>
       ))}
@@ -220,11 +223,13 @@ function ElementWrapper({
   state,
   onElementChange,
   onElementAction,
+  context,
 }: {
   element: ToolElement;
   state: Record<string, unknown>;
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
+  context?: ToolCanvasContext;
 }) {
   const elementState = state[element.instanceId];
 
@@ -242,12 +247,21 @@ function ElementWrapper({
     [element.instanceId, onElementAction]
   );
 
+  // Convert ToolCanvasContext to ElementProps context format
+  const elementContext = context ? {
+    userId: context.userId,
+    spaceId: context.spaceId,
+    isSpaceLeader: context.isSpaceLeader,
+    campusId: 'ub-buffalo', // Current campus - will be configurable
+  } : undefined;
+
   const props: ElementProps = {
     id: element.instanceId,
     config: element.config as Record<string, unknown>,
     data: elementState,
     onChange: handleChange,
     onAction: handleAction,
+    context: elementContext,
   };
 
   return renderElementSafe(element.elementId, props);

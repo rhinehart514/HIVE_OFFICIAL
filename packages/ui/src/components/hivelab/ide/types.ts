@@ -75,6 +75,11 @@ export interface IDEActions {
   deleteElements: (ids: string[]) => void;
   duplicateElements: (ids: string[]) => void;
 
+  // Clipboard operations
+  copyElements: () => void;
+  pasteElements: () => void;
+  cutElements: () => void;
+
   // Selection
   selectElements: (ids: string[], append?: boolean) => void;
   selectAll: () => void;

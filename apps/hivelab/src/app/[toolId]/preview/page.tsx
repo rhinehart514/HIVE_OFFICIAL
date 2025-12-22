@@ -1,8 +1,16 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ToolPreviewPage, renderElement, Skeleton, type ToolComposition } from '@hive/ui';
+import {
+  ToolPreviewPage,
+  renderElement,
+  Skeleton,
+  useConnectionCascade,
+  type ToolComposition,
+  type IDECanvasElement as CanvasElement,
+  type IDEConnection as Connection,
+} from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
 
 /**
@@ -24,9 +32,63 @@ export default function ToolPreviewPageRoute({ params }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Element states for cascade (keyed by instanceId)
+  const [elementStates, setElementStates] = useState<Record<string, Record<string, unknown>>>({});
+
+  // Track which elements were recently updated for visual feedback
+  const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Handler to update element state
+  const handleStateUpdate = useCallback((instanceId: string, newState: Record<string, unknown>) => {
+    setElementStates((prev) => ({
+      ...prev,
+      [instanceId]: { ...prev[instanceId], ...newState },
+    }));
+  }, []);
+
+  // Handler when cascade completes
+  const handleCascadeComplete = useCallback((updatedElements: string[]) => {
+    // Flash visual feedback on updated elements
+    setRecentlyUpdated(new Set(updatedElements));
+    setTimeout(() => setRecentlyUpdated(new Set()), 600);
+  }, []);
+
+  // Prepare cascade context
+  const cascadeElements: CanvasElement[] = composition?.elements?.map((el, idx) => ({
+    id: el.instanceId || `element_${idx}`,
+    elementId: el.elementId,
+    instanceId: el.instanceId || `${el.elementId}_${idx}`,
+    position: el.position || { x: 0, y: 0 },
+    size: el.size || { width: 240, height: 120 },
+    config: el.config || {},
+    zIndex: idx + 1,
+    locked: false,
+    visible: true,
+  })) || [];
+
+  const cascadeConnections: Connection[] = (composition?.connections || []).map((conn, idx) => {
+    // Normalize connection format
+    const from = conn.from as { instanceId: string; port?: string; output?: string };
+    const to = conn.to as { instanceId: string; port?: string; input?: string };
+    return {
+      id: `conn_${idx}`,
+      from: { instanceId: from.instanceId, port: from.port || from.output || 'output' },
+      to: { instanceId: to.instanceId, port: to.port || to.input || 'input' },
+    };
+  });
+
+  // Initialize cascade hook
+  const { handleElementAction } = useConnectionCascade({
+    elements: cascadeElements,
+    connections: cascadeConnections,
+    elementStates,
+    onStateUpdate: handleStateUpdate,
+    onCascadeComplete: handleCascadeComplete,
+  });
 
   // Fetch tool data
   useEffect(() => {
@@ -100,20 +162,43 @@ export default function ToolPreviewPageRoute({ params }: Props) {
   const renderRuntime = (comp: ToolComposition, _mode: 'preview' | 'live') => {
     return (
       <div className="space-y-4">
-        {comp.elements.map((element, index) => (
-          <div key={element.instanceId || index}>
-            {renderElement(element.elementId, {
-              id: element.instanceId,
-              config: element.config,
-              onChange: (_data) => {
-                // Data change handled by runtime - no logging needed in preview
-              },
-              onAction: (_action, _payload) => {
-                // Action handled by runtime - no logging needed in preview
-              },
-            })}
-          </div>
-        ))}
+        {comp.elements.map((element, index) => {
+          const instanceId = element.instanceId || `${element.elementId}_${index}`;
+          const currentState = elementStates[instanceId] || {};
+          const isUpdated = recentlyUpdated.has(instanceId);
+
+          return (
+            <div
+              key={instanceId}
+              className={`transition-all duration-300 ${
+                isUpdated ? 'ring-2 ring-[var(--hive-brand-primary)] ring-opacity-50' : ''
+              }`}
+            >
+              {renderElement(element.elementId, {
+                id: instanceId,
+                config: element.config,
+                data: currentState,
+                onChange: (data) => {
+                  // Update local state
+                  handleStateUpdate(instanceId, data);
+                },
+                onAction: (action, payload) => {
+                  // Update state with action result
+                  const newState = {
+                    ...currentState,
+                    ...payload,
+                    _lastAction: action,
+                    _lastActionAt: new Date().toISOString(),
+                  };
+                  handleStateUpdate(instanceId, newState);
+
+                  // Trigger cascade to connected elements
+                  handleElementAction(instanceId, element.elementId, action, newState);
+                },
+              })}
+            </div>
+          );
+        })}
       </div>
     );
   };

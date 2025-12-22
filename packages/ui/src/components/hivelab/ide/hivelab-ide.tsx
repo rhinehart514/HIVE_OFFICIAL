@@ -20,6 +20,7 @@ import type {
   HistoryEntry,
   CanvasState,
 } from './types';
+import type { ElementConnection } from '@hive/core';
 import { DEFAULT_CANVAS_STATE } from './types';
 import { IDEToolbar } from './ide-toolbar';
 import { IDECanvas } from './ide-canvas';
@@ -30,13 +31,61 @@ import { PropertiesPanel } from './properties-panel';
 import { OnboardingOverlay } from './onboarding-overlay';
 import { useIDEKeyboard } from './use-ide-keyboard';
 
+// Maximum history entries to prevent unbounded memory growth
+const MAX_HISTORY = 50;
+
+/**
+ * Normalize connections to IDE format (Connection with { port } keys)
+ *
+ * Accepts either:
+ * - ElementConnection[] (saved format with { output, input } keys)
+ * - Connection[] (IDE format with { port } keys)
+ *
+ * Returns unified Connection[] for internal use
+ */
+function normalizeConnections(saved?: ElementConnection[] | Connection[]): Connection[] {
+  if (!saved || saved.length === 0) return [];
+  return saved.map((conn, idx) => {
+    // Check if it's already in IDE format (has 'port' key)
+    const fromConn = conn.from as { instanceId: string; port?: string; output?: string };
+    const toConn = conn.to as { instanceId: string; port?: string; input?: string };
+
+    const isIDEFormat = 'port' in fromConn || 'port' in toConn;
+
+    return {
+      id: (conn as Connection).id || `conn_${idx}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      from: {
+        instanceId: fromConn.instanceId,
+        port: isIDEFormat ? (fromConn.port || 'output') : (fromConn.output || 'output'),
+      },
+      to: {
+        instanceId: toConn.instanceId,
+        port: isIDEFormat ? (toConn.port || 'input') : (toConn.input || 'input'),
+      },
+    };
+  });
+}
+
+export interface UserContext {
+  userId?: string;
+  campusId?: string;
+  isSpaceLeader?: boolean;
+  leadingSpaceIds?: string[];
+}
+
 export interface HiveLabIDEProps {
   initialComposition?: {
     id?: string;
     name?: string;
     description?: string;
     elements?: CanvasElement[];
-    connections?: Connection[];
+    /**
+     * Connections - accepts either format:
+     * - ElementConnection[] (saved/API format with { output, input } keys)
+     * - Connection[] (IDE format with { port } keys)
+     * Both will be normalized to internal IDE format
+     */
+    connections?: ElementConnection[] | Connection[];
   };
   /** Show onboarding overlay for new/empty canvases */
   showOnboarding?: boolean;
@@ -44,6 +93,20 @@ export interface HiveLabIDEProps {
   onPreview: (composition: HiveLabComposition) => void;
   onCancel: () => void;
   userId: string;
+  /** User context for element tier filtering */
+  userContext?: UserContext;
+  /**
+   * Callback to receive connection flow control functions
+   * Used by tool runtime to trigger visual feedback when data flows
+   */
+  onConnectionFlowReady?: (controls: ConnectionFlowControls) => void;
+}
+
+export interface ConnectionFlowControls {
+  /** Trigger visual flow animation on specified connections */
+  triggerFlow: (connectionIds: string[], duration?: number) => void;
+  /** Get connection IDs from an element's outputs */
+  getConnectionsFrom: (instanceId: string) => string[];
 }
 
 export interface HiveLabComposition {
@@ -64,6 +127,8 @@ export function HiveLabIDE({
   onPreview,
   onCancel,
   userId,
+  userContext,
+  onConnectionFlowReady,
 }: HiveLabIDEProps) {
   // Tool metadata
   const [toolId] = useState(initialComposition?.id || `tool_${Date.now()}`);
@@ -83,8 +148,8 @@ export function HiveLabIDE({
   const [elements, setElements] = useState<CanvasElement[]>(
     initialComposition?.elements || []
   );
-  const [connections, setConnections] = useState<Connection[]>(
-    initialComposition?.connections || []
+  const [connections, setConnections] = useState<Connection[]>(() =>
+    normalizeConnections(initialComposition?.connections)
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [zoom, setZoom] = useState(1);
@@ -105,13 +170,16 @@ export function HiveLabIDE({
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
+  // Connection flow feedback - tracks connections currently flowing data
+  const [flowingConnections, setFlowingConnections] = useState<Set<string>>(new Set());
+
   // Refs
   const draggingElementId = useRef<string | null>(null);
 
   // Get selected element
   const selectedElement = elements.find((el) => selectedIds[0] === el.id) || null;
 
-  // Push to history
+  // Push to history with MAX_HISTORY limit
   const pushHistory = useCallback(
     (description: string) => {
       const entry: HistoryEntry = {
@@ -120,8 +188,16 @@ export function HiveLabIDE({
         timestamp: Date.now(),
         description,
       };
-      setHistory((prev) => [...prev.slice(0, historyIndex + 1), entry]);
-      setHistoryIndex((prev) => prev + 1);
+      setHistory((prev) => {
+        // Truncate future history (everything after current index)
+        const newHistory = [...prev.slice(0, historyIndex + 1), entry];
+        // Limit to MAX_HISTORY entries (remove oldest)
+        if (newHistory.length > MAX_HISTORY) {
+          return newHistory.slice(newHistory.length - MAX_HISTORY);
+        }
+        return newHistory;
+      });
+      setHistoryIndex((prev) => Math.min(prev + 1, MAX_HISTORY - 1));
     },
     [elements, connections, historyIndex]
   );
@@ -148,9 +224,26 @@ export function HiveLabIDE({
     }
   }, [history, historyIndex]);
 
+  // Space-tier element IDs (require isSpaceLeader)
+  const SPACE_TIER_ELEMENTS = [
+    'member-list',
+    'member-selector',
+    'space-events',
+    'space-feed',
+    'space-stats',
+    'announcement',
+    'role-gate',
+  ];
+
   // Element operations
   const addElement = useCallback(
     (elementId: string, position: { x: number; y: number }) => {
+      // Validate element access - space-tier requires isSpaceLeader
+      if (SPACE_TIER_ELEMENTS.includes(elementId) && !userContext?.isSpaceLeader) {
+        console.warn(`Cannot add ${elementId}: requires space leader access`);
+        return; // Silently reject - element shouldn't be in palette anyway
+      }
+
       const newElement: CanvasElement = {
         id: `element_${Date.now()}`,
         elementId,
@@ -166,7 +259,7 @@ export function HiveLabIDE({
       setSelectedIds([newElement.id]);
       pushHistory(`Add ${elementId}`);
     },
-    [elements.length, pushHistory]
+    [elements.length, pushHistory, userContext?.isSpaceLeader]
   );
 
   const updateElement = useCallback(
@@ -222,6 +315,42 @@ export function HiveLabIDE({
     [selectedIds, elements, pushHistory]
   );
 
+  // Clipboard state for copy/paste
+  const clipboardRef = useRef<CanvasElement[]>([]);
+
+  // Copy selected elements to clipboard
+  const copyElements = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const toCopy = elements.filter((el) => selectedIds.includes(el.id));
+    clipboardRef.current = JSON.parse(JSON.stringify(toCopy)); // Deep clone
+  }, [selectedIds, elements]);
+
+  // Paste elements from clipboard
+  const pasteElements = useCallback(() => {
+    if (clipboardRef.current.length === 0) return;
+
+    const now = Date.now();
+    const newElements = clipboardRef.current.map((el, i) => ({
+      ...el,
+      id: `element_${now}_${i}_${Math.random().toString(36).slice(2)}`,
+      instanceId: `${el.elementId}_${now}_${i}`,
+      position: { x: el.position.x + 40, y: el.position.y + 40 },
+      zIndex: elements.length + i + 1,
+    }));
+
+    setElements((prev) => [...prev, ...newElements]);
+    setSelectedIds(newElements.map((el) => el.id));
+    pushHistory(`Paste ${newElements.length} element(s)`);
+  }, [elements.length, pushHistory]);
+
+  // Cut selected elements (copy + delete)
+  const cutElements = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    copyElements();
+    deleteElements([]);
+    pushHistory(`Cut ${selectedIds.length} element(s)`);
+  }, [selectedIds.length, copyElements, deleteElements, pushHistory]);
+
   // Selection
   const selectElements = useCallback((ids: string[], append = false) => {
     setSelectedIds((prev) => (append ? [...new Set([...prev, ...ids])] : ids));
@@ -235,18 +364,62 @@ export function HiveLabIDE({
     setSelectedIds([]);
   }, []);
 
+  /**
+   * Trigger visual flow feedback on connections
+   * Shows animated data flow for specified duration (default 600ms)
+   */
+  const triggerConnectionFlow = useCallback(
+    (connectionIds: string[], duration = 600) => {
+      if (connectionIds.length === 0) return;
+
+      // Add connections to flowing set
+      setFlowingConnections((prev) => {
+        const next = new Set(prev);
+        connectionIds.forEach((id) => next.add(id));
+        return next;
+      });
+
+      // Remove after duration
+      setTimeout(() => {
+        setFlowingConnections((prev) => {
+          const next = new Set(prev);
+          connectionIds.forEach((id) => next.delete(id));
+          return next;
+        });
+      }, duration);
+    },
+    []
+  );
+
+  /**
+   * Find connections affected by an element's output change
+   * Used to trigger visual feedback when data cascades
+   */
+  const getConnectionsFromElement = useCallback(
+    (instanceId: string): string[] => {
+      return connections
+        .filter((conn) => conn.from.instanceId === instanceId)
+        .map((conn) => conn.id);
+    },
+    [connections]
+  );
+
   // Connections
   const addConnection = useCallback(
     (from: Connection['from'], to: Connection['to']) => {
+      const connectionId = `conn_${Date.now()}`;
       const newConnection: Connection = {
-        id: `conn_${Date.now()}`,
+        id: connectionId,
         from,
         to,
       };
       setConnections((prev) => [...prev, newConnection]);
       pushHistory('Add connection');
+
+      // Trigger visual flow feedback when connection is created
+      setTimeout(() => triggerConnectionFlow([connectionId], 800), 50);
     },
-    [pushHistory]
+    [pushHistory, triggerConnectionFlow]
   );
 
   const deleteConnection = useCallback(
@@ -256,6 +429,16 @@ export function HiveLabIDE({
     },
     [pushHistory]
   );
+
+  // Expose flow controls to parent component
+  useEffect(() => {
+    if (onConnectionFlowReady) {
+      onConnectionFlowReady({
+        triggerFlow: triggerConnectionFlow,
+        getConnectionsFrom: getConnectionsFromElement,
+      });
+    }
+  }, [onConnectionFlowReady, triggerConnectionFlow, getConnectionsFromElement]);
 
   // Canvas controls
   const fitToScreen = useCallback(() => {
@@ -419,6 +602,9 @@ export function HiveLabIDE({
     actions: {
       deleteElements,
       duplicateElements,
+      copyElements,
+      pasteElements,
+      cutElements,
       selectAll,
       clearSelection,
       undo,
@@ -509,6 +695,7 @@ export function HiveLabIDE({
                     onDragEnd={() => {
                       draggingElementId.current = null;
                     }}
+                    userContext={userContext}
                   />
                 ) : (
                   <LayersPanel
@@ -558,6 +745,7 @@ export function HiveLabIDE({
           gridSize={gridSize}
           snapToGrid={snapToGrid}
           mode={mode}
+          flowingConnections={flowingConnections}
           onSelect={selectElements}
           onUpdateElement={updateElement}
           onDeleteElements={deleteElements}

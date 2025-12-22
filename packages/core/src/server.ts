@@ -448,147 +448,33 @@ export function canRemoveLeaders(category: string): boolean {
 }
 
 // ============================================================================
-// Template Repository & DTOs (Stubs for API compatibility)
+// Template Repository & DTOs (Real DDD implementation)
 // ============================================================================
 
-export enum TemplateCategory {
-  UNIVERSAL = 'universal',
-  ACADEMIC = 'academic',
-  SOCIAL = 'social',
-  PROFESSIONAL = 'professional',
-  INTEREST = 'interest',
-}
+export {
+  // Entity
+  Template,
+  // Types
+  type TemplateProps,
+  type TemplateCategory,
+  type TemplateVisibility,
+  type TemplateSource,
+  type TemplateElement,
+  type TemplateConnection,
+  type TemplateComposition,
+  // DTOs
+  type TemplateListItemDTO,
+  type TemplateDetailDTO,
+  toTemplateListItemDTO,
+  toTemplateDetailDTO,
+} from './domain/hivelab/templates/template.entity';
 
-export enum TemplateVisibility {
-  PUBLIC = 'public',
-  CAMPUS = 'campus',
-  PRIVATE = 'private',
-}
-
-export interface TemplateComposition {
-  elements: Array<{
-    id: string;
-    type: string;
-    config: Record<string, unknown>;
-    position: { x: number; y: number };
-  }>;
-  connections: Array<{
-    sourceId: string;
-    targetId: string;
-    type: string;
-  }>;
-}
-
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  category: TemplateCategory;
-  visibility: TemplateVisibility;
-  composition: TemplateComposition;
-  createdBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-  usageCount: number;
-  rating: number;
-}
-
-export interface TemplateListItemDTO {
-  id: string;
-  name: string;
-  description: string;
-  category: TemplateCategory;
-  usageCount: number;
-  rating: number;
-}
-
-export interface TemplateDetailDTO extends Template {
-  canEdit: boolean;
-  canDelete: boolean;
-}
-
-/**
- * Convert Template to TemplateListItemDTO
- */
-export function toTemplateListItemDTO(template: Template): TemplateListItemDTO {
-  return {
-    id: template.id,
-    name: template.name,
-    description: template.description,
-    category: template.category,
-    usageCount: template.usageCount,
-    rating: template.rating,
-  };
-}
-
-/**
- * Convert Template to TemplateDetailDTO
- */
-export function toTemplateDetailDTO(
-  template: Template,
-  userId: string
-): TemplateDetailDTO {
-  return {
-    ...template,
-    canEdit: template.createdBy === userId,
-    canDelete: template.createdBy === userId,
-  };
-}
-
-/**
- * Template Repository Interface
- */
-export interface ITemplateRepository {
-  findById(id: string): Promise<Template | null>;
-  findAll(options?: {
-    category?: TemplateCategory;
-    visibility?: TemplateVisibility;
-    limit?: number;
-  }): Promise<Template[]>;
-  save(template: Template): Promise<void>;
-  delete(id: string): Promise<void>;
-}
-
-// Singleton template repository instance
-let templateRepository: ITemplateRepository | null = null;
-
-/**
- * Get the server template repository singleton
- * Note: This is a stub implementation - templates are currently in-memory
- */
-export function getServerTemplateRepository(): ITemplateRepository {
-  if (!templateRepository) {
-    // Stub implementation - in-memory storage
-    const templates = new Map<string, Template>();
-
-    templateRepository = {
-      async findById(id: string): Promise<Template | null> {
-        return templates.get(id) || null;
-      },
-      async findAll(options?: {
-        category?: TemplateCategory;
-        visibility?: TemplateVisibility;
-        limit?: number;
-      }): Promise<Template[]> {
-        let results = Array.from(templates.values());
-        if (options?.category) {
-          results = results.filter(t => t.category === options.category);
-        }
-        if (options?.visibility) {
-          results = results.filter(t => t.visibility === options.visibility);
-        }
-        if (options?.limit) {
-          results = results.slice(0, options.limit);
-        }
-        return results;
-      },
-      async save(template: Template): Promise<void> {
-        templates.set(template.id, template);
-      },
-      async delete(id: string): Promise<void> {
-        templates.delete(id);
-      },
-    };
-  }
-  return templateRepository;
-} 
+export {
+  // Repository
+  type ITemplateRepository,
+  type TemplateQueryOptions,
+  type PaginatedResult,
+  FirebaseAdminTemplateRepository,
+  getServerTemplateRepository,
+  resetServerTemplateRepository,
+} from './domain/hivelab/templates/template.repository'; 

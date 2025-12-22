@@ -700,6 +700,12 @@ export type {
   UseToolStateReturn,
 } from "./hooks/hivelab/use-tool-state";
 
+export { useConnectionCascade } from "./hooks/hivelab/use-connection-cascade";
+export type {
+  CascadeContext,
+  CascadeResult,
+} from "./hooks/hivelab/use-connection-cascade";
+
 // Space Molecules
 export { SpaceAboutWidget } from "./atomic/03-Spaces/molecules/space-about-widget";
 export type {
@@ -833,6 +839,46 @@ export type {
   SpaceMembershipState as SpaceDetailMembershipState,
 } from "./atomic/03-Spaces/organisms/space-detail-header";
 
+// === Premium Space Components (Dec 2025 - ChatGPT/Apple Fusion) ===
+// Design System
+export {
+  premium,
+  premiumTypography,
+  premiumColors,
+  premiumSpacing,
+  premiumGlass,
+  premiumMotion,
+  premiumPresets,
+  glassClasses,
+  hoverClasses,
+  focusClasses,
+} from "./lib/premium-design";
+
+// Premium UI Components
+export { PremiumHeader } from "./atomic/03-Spaces/premium/premium-header";
+export type { PremiumHeaderProps, MembershipState } from "./atomic/03-Spaces/premium/premium-header";
+
+export { PremiumBoardTabs } from "./atomic/03-Spaces/premium/premium-board-tabs";
+export type { PremiumBoardTabsProps, BoardTab, BoardType } from "./atomic/03-Spaces/premium/premium-board-tabs";
+
+export { PremiumMessage } from "./atomic/03-Spaces/premium/premium-message";
+export type { PremiumMessageProps, MessageRole } from "./atomic/03-Spaces/premium/premium-message";
+
+export { PremiumMessageList } from "./atomic/03-Spaces/premium/premium-message-list";
+export type { PremiumMessageListProps, MessageData } from "./atomic/03-Spaces/premium/premium-message-list";
+
+export { PremiumChatBoard } from "./atomic/03-Spaces/premium/premium-chat-board";
+export type { PremiumChatBoardProps } from "./atomic/03-Spaces/premium/premium-chat-board";
+
+export { PremiumComposer } from "./atomic/03-Spaces/premium/premium-composer";
+export type { PremiumComposerProps } from "./atomic/03-Spaces/premium/premium-composer";
+
+export { PremiumSidebar, AboutSection, EventsSection, MembersSection, ToolsSection } from "./atomic/03-Spaces/premium/premium-sidebar";
+export type {
+  PremiumSidebarProps,
+  SidebarSection,
+} from "./atomic/03-Spaces/premium/premium-sidebar";
+
 export { SpaceDynamicContent } from "./atomic/03-Spaces/organisms/space-dynamic-content";
 export type {
   SpaceDynamicContentProps,
@@ -938,8 +984,16 @@ export {
 // } from "./atomic/06-Rituals/organisms/ritual-feed-banner";
 
 // Profile Molecules
-export { ProfileBentoGrid } from "./atomic/04-Profile/molecules/profile-bento-grid";
-export type { ProfileBentoGridProps } from "./atomic/04-Profile/molecules/profile-bento-grid";
+// Temporary stub to prevent import errors while ProfileBentoGrid is disabled
+export interface ProfileBentoGridProps {
+  profile: unknown;
+  editable?: boolean;
+  onLayoutChange?: (layout: unknown) => void;
+  className?: string;
+}
+export function ProfileBentoGrid({ className }: ProfileBentoGridProps) {
+  return null; // Stub - real component disabled due to ESM/CJS issue
+}
 
 // Feed Templates
 export { FeedPageLayout } from "./atomic/02-Feed/templates/feed-page-layout";

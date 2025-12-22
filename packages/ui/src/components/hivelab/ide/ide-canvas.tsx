@@ -24,6 +24,8 @@ interface IDECanvasProps {
   gridSize: number;
   snapToGrid: boolean;
   mode: ToolMode;
+  /** Set of connection IDs that are currently flowing data (for visual feedback) */
+  flowingConnections?: Set<string>;
   onSelect: (ids: string[], append?: boolean) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElements: (ids: string[]) => void;
@@ -441,15 +443,21 @@ function ConnectionLine({
   elements,
   onDelete,
   isNew = false,
+  isFlowing = false,
 }: {
   connection: Connection;
   elements: CanvasElement[];
   onDelete: () => void;
   isNew?: boolean;
+  /** When true, shows animated data flow along the connection */
+  isFlowing?: boolean;
 }) {
   const fromElement = elements.find((e) => e.instanceId === connection.from.instanceId);
   const toElement = elements.find((e) => e.instanceId === connection.to.instanceId);
   const [isHovered, setIsHovered] = useState(false);
+
+  // Show flow animation when hovered OR when actively flowing data
+  const showFlowAnimation = isHovered || isFlowing;
 
   if (!fromElement || !toElement) return null;
 
@@ -478,32 +486,32 @@ function ConnectionLine({
         onClick={onDelete}
       />
 
-      {/* Glow effect on hover */}
+      {/* Glow effect on hover/flow */}
       <motion.path
         d={path}
         fill="none"
-        stroke="#FFD700"
-        strokeWidth="8"
+        stroke={isFlowing ? "#00FF88" : "#FFD700"}
+        strokeWidth={isFlowing ? 12 : 8}
         strokeOpacity="0"
         strokeLinecap="round"
         initial={{ strokeOpacity: 0 }}
-        animate={{ strokeOpacity: isHovered ? 0.15 : 0 }}
+        animate={{ strokeOpacity: showFlowAnimation ? (isFlowing ? 0.25 : 0.15) : 0 }}
         transition={{ duration: 0.2 }}
         className="pointer-events-none"
-        style={{ filter: 'blur(4px)' }}
+        style={{ filter: isFlowing ? 'blur(6px)' : 'blur(4px)' }}
       />
 
       {/* Visible path with draw animation */}
       <motion.path
         d={path}
         fill="none"
-        stroke="#FFD700"
-        strokeWidth="2"
+        stroke={isFlowing ? "#00FF88" : "#FFD700"}
+        strokeWidth={isFlowing ? 3 : 2}
         strokeLinecap="round"
         initial={{ pathLength: 0, strokeOpacity: 0.3 }}
         animate={{
           pathLength: 1,
-          strokeOpacity: isHovered ? 1 : 0.6,
+          strokeOpacity: showFlowAnimation ? 1 : 0.6,
         }}
         transition={{
           pathLength: { duration: 0.4, ease: 'easeOut' },
@@ -514,17 +522,17 @@ function ConnectionLine({
 
       {/* Animated flow particles along the path */}
       <motion.circle
-        r="3"
-        fill="#FFD700"
+        r={isFlowing ? 5 : 3}
+        fill={isFlowing ? "#00FF88" : "#FFD700"}
         className="pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{
-          opacity: isHovered ? [0, 0.8, 0] : 0,
+          opacity: showFlowAnimation ? [0, 1, 0] : 0,
           offsetDistance: ['0%', '100%'],
         }}
         transition={{
-          duration: 1.5,
-          repeat: isHovered ? Infinity : 0,
+          duration: isFlowing ? 0.8 : 1.5,
+          repeat: showFlowAnimation ? Infinity : 0,
           ease: 'linear',
         }}
         style={{
@@ -532,33 +540,55 @@ function ConnectionLine({
         }}
       />
 
+      {/* Second flow particle for flowing state (faster animation) */}
+      {isFlowing && (
+        <motion.circle
+          r={4}
+          fill="#00FF88"
+          className="pointer-events-none"
+          animate={{
+            opacity: [0, 0.8, 0],
+            offsetDistance: ['0%', '100%'],
+          }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            ease: 'linear',
+            delay: 0.4,
+          }}
+          style={{
+            offsetPath: `path("${path}")`,
+          }}
+        />
+      )}
+
       {/* Arrow/endpoint at destination */}
       <motion.circle
         cx={toX}
         cy={toY}
-        fill="#FFD700"
+        fill={isFlowing ? "#00FF88" : "#FFD700"}
         initial={{ r: 0, opacity: 0 }}
         animate={{
-          r: isHovered ? 6 : 4,
+          r: showFlowAnimation ? (isFlowing ? 8 : 6) : 4,
           opacity: 1,
         }}
         transition={springPresets.snappy}
         className="pointer-events-none"
       />
 
-      {/* Pulse ring on endpoint when hovered */}
+      {/* Pulse ring on endpoint when hovered or flowing */}
       <AnimatePresence>
-        {isHovered && (
+        {showFlowAnimation && (
           <motion.circle
             cx={toX}
             cy={toY}
             fill="none"
-            stroke="#FFD700"
+            stroke={isFlowing ? "#00FF88" : "#FFD700"}
             strokeWidth="2"
             initial={{ r: 4, opacity: 0.8 }}
-            animate={{ r: 12, opacity: 0 }}
+            animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.6, repeat: Infinity }}
+            transition={{ duration: isFlowing ? 0.4 : 0.6, repeat: Infinity }}
             className="pointer-events-none"
           />
         )}
@@ -609,6 +639,7 @@ export function IDECanvas({
   gridSize,
   snapToGrid,
   mode,
+  flowingConnections,
   onSelect,
   onUpdateElement,
   onDeleteElements,
@@ -775,6 +806,7 @@ export function IDECanvas({
               connection={conn}
               elements={elements}
               onDelete={() => onDeleteConnection(conn.id)}
+              isFlowing={flowingConnections?.has(conn.id)}
             />
           ))}
         </svg>

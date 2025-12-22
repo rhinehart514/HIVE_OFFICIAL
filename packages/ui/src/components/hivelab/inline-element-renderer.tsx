@@ -176,6 +176,8 @@ interface BaseRendererProps {
   userId?: string;
   /** Whether user is a space leader */
   isSpaceLeader?: boolean;
+  /** Campus ID for filtering (defaults to ub-buffalo) */
+  campusId?: string;
   /** Callback when state changes (for optimistic updates) */
   onStateChange?: (newState: Record<string, unknown>) => void;
   /** Callback when action is executed */
@@ -228,6 +230,7 @@ function InlineChatRenderer({
   spaceId,
   userId,
   isSpaceLeader = false,
+  campusId,
   onStateChange,
   onAction,
   compact = true,
@@ -412,7 +415,7 @@ function InlineChatRenderer({
         data: {},
         onChange: handleChange,
         onAction: handleAction,
-        context: { spaceId, userId, isSpaceLeader },
+        context: { spaceId, userId, isSpaceLeader, campusId: campusId || 'ub-buffalo' },
       };
     }
 
@@ -441,9 +444,9 @@ function InlineChatRenderer({
       data,
       onChange: handleChange,
       onAction: handleAction,
-      context: { spaceId, userId, isSpaceLeader },
+      context: { spaceId, userId, isSpaceLeader, campusId: campusId || 'ub-buffalo' },
     };
-  }, [state, componentId, spaceId, userId, isSpaceLeader, handleChange, handleAction]);
+  }, [state, componentId, spaceId, userId, isSpaceLeader, campusId, handleChange, handleAction]);
 
   // Loading state
   if (isLoading) {
@@ -537,6 +540,7 @@ function DeploymentRenderer({
   spaceId,
   userId,
   isSpaceLeader = false,
+  campusId,
   onStateChange,
   onAction,
   compact = true,
@@ -655,6 +659,7 @@ function DeploymentRenderer({
       spaceId,
       userId,
       isSpaceLeader,
+      campusId: campusId || 'ub-buffalo',
     },
   };
 

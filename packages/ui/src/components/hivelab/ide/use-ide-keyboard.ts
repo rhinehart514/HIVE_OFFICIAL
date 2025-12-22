@@ -110,6 +110,27 @@ export function useIDEKeyboard({
         return;
       }
 
+      // Copy (Cmd+C)
+      if (isMeta && e.key === 'c') {
+        e.preventDefault();
+        actions.copyElements?.();
+        return;
+      }
+
+      // Paste (Cmd+V)
+      if (isMeta && e.key === 'v') {
+        e.preventDefault();
+        actions.pasteElements?.();
+        return;
+      }
+
+      // Cut (Cmd+X)
+      if (isMeta && e.key === 'x') {
+        e.preventDefault();
+        actions.cutElements?.();
+        return;
+      }
+
       // Select all (Cmd+A)
       if (isMeta && e.key === 'a') {
         e.preventDefault();
@@ -224,6 +245,9 @@ export const SHORTCUTS = [
   { key: 'C', description: 'Connect tool' },
   { key: 'Space', description: 'Hold to pan' },
   { key: 'Delete', description: 'Delete selected' },
+  { key: '⌘C', description: 'Copy' },
+  { key: '⌘V', description: 'Paste' },
+  { key: '⌘X', description: 'Cut' },
   { key: '⌘D', description: 'Duplicate' },
   { key: '⌘A', description: 'Select all' },
   { key: '⌘Z', description: 'Undo' },

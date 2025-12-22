@@ -145,26 +145,58 @@ function ElementErrorFallback({
 }
 
 // Search Input Element
-export function SearchInputElement({ config, onChange }: ElementProps) {
+export function SearchInputElement({ config, onChange, onAction, context }: ElementProps) {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
   const debounceMs = config.debounceMs || 300;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onChange && query !== '') {
-        onChange({ query, searchTerm: query });
+    const timer = setTimeout(async () => {
+      if (query !== '') {
+        onChange?.({ query, searchTerm: query });
+        onAction?.('search', { query, searchTerm: query });
       }
-      
-      // Mock suggestions for demo
+
+      // Fetch real suggestions when in deployed context (has campusId)
       if (config.showSuggestions && query.length > 2) {
-        setSuggestions([
-          `${query} in spaces`,
-          `${query} in users`,
-          `${query} in posts`
-        ]);
+        if (context?.campusId) {
+          // Real API call for deployed tools
+          setIsLoadingSuggestions(true);
+          try {
+            const searchTypes = config.searchTypes || ['spaces', 'people', 'tools'];
+            const response = await fetch(
+              `/api/search?q=${encodeURIComponent(query)}&limit=5&types=${searchTypes.join(',')}`
+            );
+            if (response.ok) {
+              const data = await response.json();
+              const results = data.results || [];
+              // Extract titles from search results for suggestions
+              const suggestionTitles = results.slice(0, 5).map(
+                (r: { title?: string; name?: string; type: string }) =>
+                  r.title || r.name || `${query} (${r.type})`
+              );
+              setSuggestions(suggestionTitles.length > 0 ? suggestionTitles : [`No results for "${query}"`]);
+            } else {
+              // Fallback to mock on API error
+              setSuggestions([`${query} in spaces`, `${query} in users`]);
+            }
+          } catch {
+            // Fallback to mock on network error
+            setSuggestions([`${query} in spaces`, `${query} in users`]);
+          } finally {
+            setIsLoadingSuggestions(false);
+          }
+        } else {
+          // Mock suggestions for preview/demo mode (no campusId)
+          setSuggestions([
+            `${query} in spaces`,
+            `${query} in users`,
+            `${query} in posts`
+          ]);
+        }
         setShowSuggestions(true);
       } else {
         setShowSuggestions(false);
@@ -172,7 +204,7 @@ export function SearchInputElement({ config, onChange }: ElementProps) {
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [query, debounceMs, onChange, config.showSuggestions]);
+  }, [query, debounceMs, onChange, onAction, config.showSuggestions, config.searchTypes, context?.campusId]);
 
   return (
     <div className="relative">
@@ -186,20 +218,33 @@ export function SearchInputElement({ config, onChange }: ElementProps) {
         />
       </div>
       
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && (
         <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-accent rounded-lg"
-              onClick={() => {
-                setQuery(suggestion);
-                setShowSuggestions(false);
-              }}
-            >
-              {suggestion}
-            </button>
-          ))}
+          {isLoadingSuggestions ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground animate-pulse">
+              Searching...
+            </div>
+          ) : suggestions.length > 0 ? (
+            suggestions.map((suggestion, index) => (
+              <button
+                key={index}
+                className="w-full px-3 py-2 text-left text-sm hover:bg-accent first:rounded-t-lg last:rounded-b-lg"
+                onClick={() => {
+                  setQuery(suggestion);
+                  setShowSuggestions(false);
+                  // Trigger action with selected suggestion
+                  onChange?.({ query: suggestion, searchTerm: suggestion, selectedSuggestion: suggestion });
+                  onAction?.('select_suggestion', { query: suggestion, suggestion });
+                }}
+              >
+                {suggestion}
+              </button>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              No results found
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -207,14 +252,14 @@ export function SearchInputElement({ config, onChange }: ElementProps) {
 }
 
 // Filter Selector Element
-export function FilterSelectorElement({ config, onChange }: ElementProps) {
+export function FilterSelectorElement({ config, onChange, onAction }: ElementProps) {
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const options = config.options || [];
   const allowMultiple = config.allowMultiple !== false;
 
   const handleFilterToggle = (value: string) => {
     let newFilters: string[];
-    
+
     if (allowMultiple) {
       newFilters = selectedFilters.includes(value)
         ? selectedFilters.filter(f => f !== value)
@@ -222,11 +267,10 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
     } else {
       newFilters = selectedFilters.includes(value) ? [] : [value];
     }
-    
+
     setSelectedFilters(newFilters);
-    if (onChange) {
-      onChange({ selectedFilters: newFilters, filters: newFilters });
-    }
+    onChange?.({ selectedFilters: newFilters, filters: newFilters });
+    onAction?.('filter', { selectedFilters: newFilters, filters: newFilters, toggled: value });
   };
 
   return (
@@ -272,16 +316,23 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
 }
 
 // Result List Element
-export function ResultListElement({ config, data }: ElementProps) {
+export function ResultListElement({ config, data, onChange, onAction }: ElementProps) {
   const items = data?.items || [];
   const itemsPerPage = config.itemsPerPage || 10;
   const showPagination = config.showPagination !== false;
+  const [selectedItem, setSelectedItem] = useState<unknown>(null);
 
   // Always call useMemo, even if items is empty (Rules of Hooks)
   const paginatedItems = useMemo(() => {
     if (!items || items.length === 0) return [];
     return items.slice(0, itemsPerPage);
   }, [items, itemsPerPage]);
+
+  const handleItemSelect = (item: unknown, index: number) => {
+    setSelectedItem(item);
+    onChange?.({ selectedItem: item, selectedIndex: index });
+    onAction?.('select', { selectedItem: item, selectedIndex: index, items });
+  };
 
   return (
     <Card>
@@ -291,7 +342,8 @@ export function ResultListElement({ config, data }: ElementProps) {
             paginatedItems.map((item: any, index: number) => (
               <div
                 key={index}
-                className="px-6 py-4 border-b last:border-b-0 border-border hover:bg-muted/40 transition-colors"
+                className="px-6 py-4 border-b last:border-b-0 border-border hover:bg-muted/40 transition-colors cursor-pointer"
+                onClick={() => handleItemSelect(item, index)}
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -342,8 +394,14 @@ export function ResultListElement({ config, data }: ElementProps) {
 }
 
 // Date Picker Element
-export function DatePickerElement({ config, onChange }: ElementProps) {
+export function DatePickerElement({ config, onChange, onAction }: ElementProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
+
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value);
+    onChange?.({ selectedDate: value, date: value });
+    onAction?.('select', { selectedDate: value, date: value });
+  };
 
   return (
     <div className="space-y-2">
@@ -355,13 +413,7 @@ export function DatePickerElement({ config, onChange }: ElementProps) {
       <Input
         type={config.includeTime ? 'datetime-local' : 'date'}
         value={selectedDate}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          const value = e.target.value;
-          setSelectedDate(value);
-          if (onChange) {
-            onChange({ selectedDate: value });
-          }
-        }}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDateChange(e.target.value)}
       />
 
       {config.helperText && (
@@ -372,12 +424,15 @@ export function DatePickerElement({ config, onChange }: ElementProps) {
 }
 
 // User Selector Element - Fetches real users from API
-export function UserSelectorElement({ config, onChange, data }: ElementProps) {
+export function UserSelectorElement({ config, onChange, data, context, onAction }: ElementProps) {
   const [selectedUser, setSelectedUser] = useState<string | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<Array<{ id: string; name: string; handle: string; photoURL?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Prioritize: context > config > data for spaceId
+  const effectiveSpaceId = context?.spaceId || config.spaceId || data?.spaceId;
 
   // Fetch users from API when search query changes
   useEffect(() => {
@@ -394,8 +449,7 @@ export function UserSelectorElement({ config, onChange, data }: ElementProps) {
       }
 
       // Only search if we have a query or spaceId context
-      const spaceId = config.spaceId || data?.spaceId;
-      if (!searchQuery && !spaceId) {
+      if (!searchQuery && !effectiveSpaceId) {
         setUsers([]);
         return;
       }
@@ -410,7 +464,8 @@ export function UserSelectorElement({ config, onChange, data }: ElementProps) {
           body: JSON.stringify({
             query: searchQuery || 'a', // Default search if in space context
             limit: config.maxResults || 20,
-            spaceId: spaceId,
+            spaceId: effectiveSpaceId,
+            campusId: context?.campusId, // Include campus for filtering
             sortBy: 'relevance'
           })
         });
@@ -438,7 +493,7 @@ export function UserSelectorElement({ config, onChange, data }: ElementProps) {
     // Debounce the search
     const timer = setTimeout(fetchUsers, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, config.spaceId, config.maxResults, data?.spaceId, data?.users]);
+  }, [searchQuery, effectiveSpaceId, config.maxResults, data?.users, context?.campusId]);
 
   return (
     <div className="space-y-2">
@@ -460,9 +515,8 @@ export function UserSelectorElement({ config, onChange, data }: ElementProps) {
         onValueChange={(value) => {
           setSelectedUser(value);
           const user = users.find(u => u.id === value);
-          if (onChange) {
-            onChange({ selectedUser: value, selectedUserData: user });
-          }
+          onChange?.({ selectedUser: value, userId: value, selectedUserData: user });
+          onAction?.('select', { selectedUser: value, userId: value, selectedUserData: user });
         }}
       >
         <SelectTrigger>
@@ -509,11 +563,21 @@ export function UserSelectorElement({ config, onChange, data }: ElementProps) {
 }
 
 // Tag Cloud Element - Uses real data when available
-export function TagCloudElement({ config, data }: ElementProps) {
+export function TagCloudElement({ config, data, onChange, onAction }: ElementProps) {
   // Use provided data, or show empty state (no mock data)
   const tags = data?.tags || [];
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const sortedTags = [...tags].sort((a, b) => b.weight - a.weight).slice(0, config.maxTags || 30);
+
+  const handleTagClick = (tag: { label: string; weight: number }) => {
+    const newSelected = selectedTags.includes(tag.label)
+      ? selectedTags.filter(t => t !== tag.label)
+      : [...selectedTags, tag.label];
+    setSelectedTags(newSelected);
+    onChange?.({ selectedTags: newSelected, tags: newSelected });
+    onAction?.('select', { selectedTags: newSelected, tags: newSelected, clickedTag: tag.label });
+  };
 
   return (
     <div className="space-y-4">
@@ -527,11 +591,12 @@ export function TagCloudElement({ config, data }: ElementProps) {
           sortedTags.map((tag, index) => (
             <Badge
               key={index}
-              variant="outline"
-              className="text-sm font-medium px-3 py-1"
+              variant={selectedTags.includes(tag.label) ? "default" : "outline"}
+              className="text-sm font-medium px-3 py-1 cursor-pointer hover:bg-accent transition-colors"
               style={{
                 fontSize: `${Math.max(12, Math.min(22, tag.weight + 12))}px`,
               }}
+              onClick={() => handleTagClick(tag)}
             >
               {tag.label}
               {config.showCounts && (
@@ -552,27 +617,166 @@ export function TagCloudElement({ config, data }: ElementProps) {
   );
 }
 
-// Map View Element
-export function MapViewElement() {
+// Map View Element - Interactive campus map with configurable markers
+interface MapMarker {
+  id: string;
+  name: string;
+  x: number; // Percentage position
+  y: number;
+  type?: 'building' | 'event' | 'meetup' | 'custom';
+  color?: string;
+}
+
+export function MapViewElement({ config, data, onChange, onAction }: ElementProps) {
+  const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
+
+  // Default campus markers if none provided
+  const defaultMarkers: MapMarker[] = [
+    { id: '1', name: 'Student Union', x: 45, y: 35, type: 'building' },
+    { id: '2', name: 'Library', x: 60, y: 45, type: 'building' },
+    { id: '3', name: 'Commons', x: 35, y: 55, type: 'meetup' },
+    { id: '4', name: 'Study Hall', x: 70, y: 30, type: 'building' },
+  ];
+
+  const markers: MapMarker[] = data?.markers || config?.markers || defaultMarkers;
+  const mapTitle = config?.title || 'Campus Map';
+  const showGrid = config?.showGrid !== false;
+
+  const getMarkerColor = (marker: MapMarker) => {
+    if (marker.color) return marker.color;
+    switch (marker.type) {
+      case 'event': return '#f59e0b'; // Amber
+      case 'meetup': return '#10b981'; // Emerald
+      case 'custom': return '#8b5cf6'; // Purple
+      default: return '#3b82f6'; // Blue for buildings
+    }
+  };
+
+  const handleMarkerClick = (marker: MapMarker) => {
+    setSelectedMarker(marker.id);
+    onChange?.({ selectedMarker: marker });
+    onAction?.('select_location', { marker, markerId: marker.id, name: marker.name });
+  };
+
   return (
-    <div className="border border-dashed border-border rounded-lg h-60 flex items-center justify-center bg-muted/10 text-sm text-muted-foreground">
-      <div className="space-y-2 text-center">
-        <MapPin className="h-6 w-6 mx-auto text-muted-foreground" />
-        <p>Interactive map preview renders here once data is connected.</p>
-      </div>
-    </div>
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
+        <div className="relative bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-emerald-950/30 dark:to-sky-950/30">
+          {/* Map Header */}
+          <div className="absolute top-3 left-3 z-10 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+            <p className="text-sm font-medium">{mapTitle}</p>
+          </div>
+
+          {/* SVG Map */}
+          <svg viewBox="0 0 100 70" className="w-full h-56" preserveAspectRatio="xMidYMid slice">
+            {/* Grid lines for visual reference */}
+            {showGrid && (
+              <g className="opacity-10">
+                {[20, 40, 60, 80].map((x) => (
+                  <line key={`v${x}`} x1={x} y1="0" x2={x} y2="70" stroke="currentColor" strokeWidth="0.2" />
+                ))}
+                {[15, 30, 45, 60].map((y) => (
+                  <line key={`h${y}`} x1="0" y1={y} x2="100" y2={y} stroke="currentColor" strokeWidth="0.2" />
+                ))}
+              </g>
+            )}
+
+            {/* Stylized paths (roads) */}
+            <g className="text-muted-foreground/30">
+              <path d="M10,35 Q50,20 90,40" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M25,10 Q40,40 55,65" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M70,15 L75,55" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            </g>
+
+            {/* Building shapes */}
+            <g className="text-muted-foreground/20">
+              <rect x="42" y="32" width="8" height="6" rx="1" fill="currentColor" />
+              <rect x="57" y="42" width="7" height="8" rx="1" fill="currentColor" />
+              <rect x="32" y="52" width="6" height="5" rx="1" fill="currentColor" />
+              <rect x="67" y="27" width="6" height="5" rx="1" fill="currentColor" />
+            </g>
+
+            {/* Markers */}
+            {markers.map((marker) => (
+              <g
+                key={marker.id}
+                className="cursor-pointer transition-transform hover:scale-110"
+                onClick={() => handleMarkerClick(marker)}
+                style={{ transformOrigin: `${marker.x}px ${marker.y}px` }}
+              >
+                {/* Marker pin */}
+                <circle
+                  cx={marker.x}
+                  cy={marker.y}
+                  r={selectedMarker === marker.id ? 3 : 2.5}
+                  fill={getMarkerColor(marker)}
+                  className="transition-all"
+                />
+                {/* Pulse animation for selected */}
+                {selectedMarker === marker.id && (
+                  <circle
+                    cx={marker.x}
+                    cy={marker.y}
+                    r="4"
+                    fill="none"
+                    stroke={getMarkerColor(marker)}
+                    strokeWidth="0.5"
+                    className="animate-ping"
+                  />
+                )}
+              </g>
+            ))}
+          </svg>
+
+          {/* Legend */}
+          <div className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-muted-foreground">Building</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-muted-foreground">Meetup</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Selected marker info */}
+        {selectedMarker && (
+          <div className="p-3 border-t bg-muted/30">
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {markers.find(m => m.id === selectedMarker)?.name || 'Selected Location'}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
 // Chart Display Element
-export function ChartDisplayElement({ config }: ElementProps) {
+export function ChartDisplayElement({ config, data, onChange, onAction }: ElementProps) {
+  const chartData = data?.chartData || [60, 40, 80, 55];
+  const [selectedPoint, setSelectedPoint] = useState<number | null>(null);
+
+  const handlePointClick = (value: number, index: number) => {
+    setSelectedPoint(index);
+    onChange?.({ selectedPoint: { value, index }, chartData });
+    onAction?.('select', { selectedPoint: { value, index }, chartData });
+  };
+
   return (
     <Card className="bg-gradient-to-br from-muted/50 to-muted">
       <CardContent className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Chart Preview</p>
-            <p className="text-2xl font-semibold">Registration Flow</p>
+            <p className="text-2xl font-semibold">{config.title || 'Registration Flow'}</p>
           </div>
           <Badge variant="outline" className="uppercase text-body-xs tracking-wide">
             {config.chartType || 'bar'} chart
@@ -580,19 +784,23 @@ export function ChartDisplayElement({ config }: ElementProps) {
         </div>
 
         <div className="space-y-4">
-          {[60, 40, 80, 55].map((value, index) => (
-            <div key={index}>
+          {chartData.map((value: number, index: number) => (
+            <div
+              key={index}
+              className={`cursor-pointer transition-opacity ${selectedPoint === index ? 'opacity-100' : 'opacity-80 hover:opacity-100'}`}
+              onClick={() => handlePointClick(value, index)}
+            >
               <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Week {index + 1}</span>
                 <span>{value}%</span>
               </div>
-              <Progress value={value} />
+              <Progress value={value} className={selectedPoint === index ? 'ring-2 ring-primary' : ''} />
             </div>
           ))}
         </div>
 
         <div className="text-xs text-muted-foreground">
-          Sample data shown. Connect analytics data to see real student behavior.
+          {data?.chartData ? 'Click a data point to select it.' : 'Sample data shown. Connect analytics data to see real student behavior.'}
         </div>
       </CardContent>
     </Card>
@@ -1354,10 +1562,13 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
 }
 
 // Event Picker Element - Browse campus events
-export function EventPickerElement({ config, data, onChange }: ElementProps) {
+export function EventPickerElement({ config, data, onChange, context, onAction }: ElementProps) {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [events, setEvents] = useState<Array<{ id: string; title: string; date: string; location?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get effective spaceId from context, config, or data
+  const effectiveSpaceId = context?.spaceId || config.spaceId || data?.spaceId;
 
   useEffect(() => {
     // Use provided data or fetch from API
@@ -1369,13 +1580,30 @@ export function EventPickerElement({ config, data, onChange }: ElementProps) {
     const fetchEvents = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/calendar', {
+        // Build query params for filtering
+        const params = new URLSearchParams();
+        if (effectiveSpaceId) {
+          params.append('spaceId', effectiveSpaceId);
+        }
+        if (context?.campusId) {
+          params.append('campusId', context.campusId);
+        }
+
+        const url = `/api/calendar${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(url, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
         if (response.ok) {
           const result = await response.json();
-          setEvents(result.events || []);
+          // Map API fields to expected format (API may use startDate, element expects date)
+          const mappedEvents = (result.events || []).map((e: Record<string, unknown>) => ({
+            id: e.id as string,
+            title: e.title as string,
+            date: (e.startDate || e.date) as string, // Normalize to 'date' field
+            location: e.location as string | undefined,
+          }));
+          setEvents(mappedEvents);
         }
       } catch {
         setEvents([]);
@@ -1385,7 +1613,7 @@ export function EventPickerElement({ config, data, onChange }: ElementProps) {
     };
 
     fetchEvents();
-  }, [data?.events]);
+  }, [data?.events, effectiveSpaceId, context?.campusId]);
 
   const filteredEvents = events
     .filter(e => config.showPastEvents || new Date(e.date) >= new Date())
@@ -1410,7 +1638,8 @@ export function EventPickerElement({ config, data, onChange }: ElementProps) {
                 key={event.id}
                 onClick={() => {
                   setSelectedEvent(event.id);
-                  onChange?.({ selectedEvent: event });
+                  onChange?.({ selectedEvent: event, eventId: event.id });
+                  onAction?.('select', { selectedEvent: event, eventId: event.id });
                 }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${
                   selectedEvent === event.id
@@ -1436,7 +1665,7 @@ export function EventPickerElement({ config, data, onChange }: ElementProps) {
 }
 
 // Space Picker Element - Browse campus spaces
-export function SpacePickerElement({ config, data, onChange }: ElementProps) {
+export function SpacePickerElement({ config, data, onChange, context, onAction }: ElementProps) {
   const [selectedSpace, setSelectedSpace] = useState<string | null>(null);
   const [spaces, setSpaces] = useState<Array<{ id: string; name: string; memberCount?: number; category?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -1450,7 +1679,17 @@ export function SpacePickerElement({ config, data, onChange }: ElementProps) {
     const fetchSpaces = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/spaces/browse-v2');
+        // Build query params for filtering
+        const params = new URLSearchParams();
+        if (context?.campusId) {
+          params.append('campusId', context.campusId);
+        }
+        if (config.category) {
+          params.append('category', config.category);
+        }
+
+        const url = `/api/spaces/browse-v2${params.toString() ? `?${params.toString()}` : ''}`;
+        const response = await fetch(url);
         if (response.ok) {
           const result = await response.json();
           setSpaces(result.spaces || []);
@@ -1463,7 +1702,7 @@ export function SpacePickerElement({ config, data, onChange }: ElementProps) {
     };
 
     fetchSpaces();
-  }, [data?.spaces]);
+  }, [data?.spaces, context?.campusId, config.category]);
 
   return (
     <Card>
@@ -1484,7 +1723,8 @@ export function SpacePickerElement({ config, data, onChange }: ElementProps) {
                 key={space.id}
                 onClick={() => {
                   setSelectedSpace(space.id);
-                  onChange?.({ selectedSpace: space });
+                  onChange?.({ selectedSpace: space, spaceId: space.id });
+                  onAction?.('select', { selectedSpace: space, spaceId: space.id });
                 }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${
                   selectedSpace === space.id
@@ -1560,9 +1800,51 @@ export function ConnectionListElement({ config, data }: ElementProps) {
 }
 
 // Member List Element - Display space members (space-tier)
-export function MemberListElement({ config, data, context }: ElementProps) {
-  const members = data?.members || [];
+// Fetches real member data from /api/spaces/[spaceId]/members
+export function MemberListElement({ config, data, context, onChange, onAction }: ElementProps) {
+  const [members, setMembers] = useState<Array<{
+    id: string;
+    name: string;
+    photoURL?: string;
+    role?: string;
+    joinedAt?: string;
+  }>>(data?.members || []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const maxMembers = config.maxMembers || 20;
+
+  // Fetch members from backend when spaceId is available
+  useEffect(() => {
+    if (!context?.spaceId) return;
+
+    const fetchMembers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/spaces/${context.spaceId}/members`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const memberData = (result.members || []).map((m: Record<string, unknown>) => ({
+            id: m.userId || m.id,
+            name: m.displayName || m.name || 'Unknown',
+            photoURL: m.avatarUrl || m.photoURL,
+            role: m.role,
+            joinedAt: m.joinedAt,
+          }));
+          setMembers(memberData);
+          // Sync to parent state
+          onChange?.({ members: memberData });
+        }
+      } catch (err) {
+        console.error('Failed to fetch members:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMembers();
+  }, [context?.spaceId]);
 
   if (!context?.spaceId) {
     return (
@@ -1570,11 +1852,17 @@ export function MemberListElement({ config, data, context }: ElementProps) {
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
           <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p>Member List requires space context</p>
-          <p className="text-xs mt-1">Only available for space leaders</p>
+          <p className="text-xs mt-1">Deploy to a space to see members</p>
         </CardContent>
       </Card>
     );
   }
+
+  const handleMemberClick = (member: Record<string, unknown>) => {
+    setSelectedMember(member.id as string);
+    onChange?.({ selectedMember: member, members });
+    onAction?.('select', { selectedMember: member, members });
+  };
 
   return (
     <Card>
@@ -1584,17 +1872,34 @@ export function MemberListElement({ config, data, context }: ElementProps) {
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium text-sm">Space Members</span>
           </div>
-          <Badge variant="outline">{members.length}</Badge>
+          <Badge variant="outline">{isLoading ? '...' : members.length}</Badge>
         </div>
 
-        {members.length === 0 ? (
+        {isLoading ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <div className="animate-pulse space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-2">
+                  <div className="h-8 w-8 rounded-full bg-muted" />
+                  <div className="flex-1 h-4 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : members.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             No members yet
           </div>
         ) : (
           <div className="space-y-2">
-            {members.slice(0, maxMembers).map((member: any, index: number) => (
-              <div key={member.id || index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+            {members.slice(0, maxMembers).map((member, index) => (
+              <div
+                key={member.id || index}
+                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all ${
+                  selectedMember === member.id ? 'bg-primary/10 ring-1 ring-primary' : 'hover:bg-muted/50'
+                }`}
+                onClick={() => handleMemberClick(member)}
+              >
                 {member.photoURL ? (
                   <img src={member.photoURL} alt="" className="h-8 w-8 rounded-full object-cover" />
                 ) : (
@@ -1623,7 +1928,7 @@ export function MemberListElement({ config, data, context }: ElementProps) {
 }
 
 // Member Selector Element - Select space members (space-tier)
-export function MemberSelectorElement({ config, data, onChange, context }: ElementProps) {
+export function MemberSelectorElement({ config, data, onChange, context, onAction }: ElementProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const members = data?.members || [];
 
@@ -1645,7 +1950,9 @@ export function MemberSelectorElement({ config, data, onChange, context }: Eleme
         ? [...selected, memberId]
         : [memberId];
     setSelected(newSelected);
-    onChange?.({ selectedMembers: newSelected });
+    const selectedMemberData = members.filter((m: any) => newSelected.includes(m.id));
+    onChange?.({ selectedMembers: newSelected, members: selectedMemberData });
+    onAction?.('select', { selectedMembers: newSelected, members: selectedMemberData, toggledId: memberId });
   };
 
   return (
@@ -1689,9 +1996,50 @@ export function MemberSelectorElement({ config, data, onChange, context }: Eleme
 }
 
 // Space Events Element - Display space events (space-tier)
-export function SpaceEventsElement({ config, data, context }: ElementProps) {
-  const events = data?.events || [];
+// Fetches real events from /api/spaces/[spaceId]/events
+export function SpaceEventsElement({ config, data, context, onChange, onAction }: ElementProps) {
+  const [events, setEvents] = useState<Array<{
+    id: string;
+    title: string;
+    date: string;
+    rsvpCount?: number;
+    location?: string;
+  }>>(data?.events || []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const maxEvents = config.maxEvents || 5;
+
+  // Fetch events from backend when spaceId is available
+  useEffect(() => {
+    if (!context?.spaceId) return;
+
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/spaces/${context.spaceId}/events`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const eventData = (result.events || []).map((e: Record<string, unknown>) => ({
+            id: e.id,
+            title: e.title || e.name || 'Untitled Event',
+            date: e.startDate || e.date || new Date().toISOString(),
+            rsvpCount: e.rsvpCount || e.attendeeCount || 0,
+            location: e.location,
+          }));
+          setEvents(eventData);
+          onChange?.({ events: eventData, upcomingEvents: eventData });
+        }
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [context?.spaceId]);
 
   if (!context?.spaceId) {
     return (
@@ -1699,10 +2047,26 @@ export function SpaceEventsElement({ config, data, context }: ElementProps) {
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
           <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p>Space Events requires space context</p>
+          <p className="text-xs mt-1">Deploy to a space to see events</p>
         </CardContent>
       </Card>
     );
   }
+
+  const handleEventClick = (event: Record<string, unknown>) => {
+    setSelectedEvent(event.id as string);
+    onChange?.({ selectedEvent: event, events, upcomingEvents: events });
+    onAction?.('select', { selectedEvent: event, events, upcomingEvents: events });
+  };
+
+  const formatDate = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    } catch {
+      return dateStr;
+    }
+  };
 
   return (
     <Card>
@@ -1712,19 +2076,34 @@ export function SpaceEventsElement({ config, data, context }: ElementProps) {
           <span className="font-medium text-sm">Upcoming Events</span>
         </div>
 
-        {events.length === 0 ? (
+        {isLoading ? (
+          <div className="py-4 animate-pulse space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="p-3 border rounded-lg">
+                <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                <div className="h-3 bg-muted rounded w-1/3" />
+              </div>
+            ))}
+          </div>
+        ) : events.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p>No upcoming events</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {events.slice(0, maxEvents).map((event: any, index: number) => (
-              <div key={event.id || index} className="p-3 border rounded-lg">
+            {events.slice(0, maxEvents).map((event, index) => (
+              <div
+                key={event.id || index}
+                className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                  selectedEvent === event.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                }`}
+                onClick={() => handleEventClick(event)}
+              >
                 <div className="font-medium text-sm">{event.title}</div>
                 <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                   <Clock className="h-3 w-3" />
-                  {event.date}
+                  {formatDate(event.date)}
                 </div>
                 {config.showRsvpCount && event.rsvpCount !== undefined && (
                   <Badge variant="outline" className="mt-2 text-xs">
@@ -1741,9 +2120,70 @@ export function SpaceEventsElement({ config, data, context }: ElementProps) {
 }
 
 // Space Feed Element - Display space posts (space-tier)
-export function SpaceFeedElement({ config, data, context }: ElementProps) {
-  const posts = data?.posts || [];
+// Fetches real posts from /api/spaces/[spaceId]/posts
+export function SpaceFeedElement({ config, data, context, onChange, onAction }: ElementProps) {
+  const [posts, setPosts] = useState<Array<{
+    id: string;
+    content: string;
+    authorName: string;
+    authorPhoto?: string;
+    timeAgo: string;
+    likes?: number;
+    comments?: number;
+  }>>(data?.posts || []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<string | null>(null);
   const maxPosts = config.maxPosts || 5;
+
+  // Fetch posts from backend when spaceId is available
+  useEffect(() => {
+    if (!context?.spaceId) return;
+
+    const fetchPosts = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/spaces/${context.spaceId}/posts?limit=${maxPosts}`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const postData = (result.posts || []).map((p: Record<string, unknown>) => {
+            const createdAt = p.createdAt ? new Date(p.createdAt as string) : new Date();
+            const now = new Date();
+            const diffMs = now.getTime() - createdAt.getTime();
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHrs = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHrs / 24);
+            let timeAgo = 'just now';
+            if (diffDays > 0) timeAgo = `${diffDays}d ago`;
+            else if (diffHrs > 0) timeAgo = `${diffHrs}h ago`;
+            else if (diffMins > 0) timeAgo = `${diffMins}m ago`;
+
+            const author = p.author as Record<string, unknown> | undefined;
+            const reactions = p.reactions as Record<string, number> | undefined;
+
+            return {
+              id: p.id as string,
+              content: (p.content || p.text || '') as string,
+              authorName: (p.authorName || author?.name || 'Unknown') as string,
+              authorPhoto: (p.authorPhoto || author?.avatarUrl) as string | undefined,
+              timeAgo,
+              likes: (reactions?.likes || p.likeCount || 0) as number,
+              comments: (reactions?.comments || p.commentCount || 0) as number,
+            };
+          });
+          setPosts(postData);
+          onChange?.({ posts: postData, feed: postData });
+        }
+      } catch (err) {
+        console.error('Failed to fetch posts:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, [context?.spaceId, maxPosts]);
 
   if (!context?.spaceId) {
     return (
@@ -1751,10 +2191,17 @@ export function SpaceFeedElement({ config, data, context }: ElementProps) {
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
           <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p>Space Feed requires space context</p>
+          <p className="text-xs mt-1">Deploy to a space to see posts</p>
         </CardContent>
       </Card>
     );
   }
+
+  const handlePostClick = (post: Record<string, unknown>) => {
+    setSelectedPost(post.id as string);
+    onChange?.({ selectedPost: post, posts, feed: posts });
+    onAction?.('select', { selectedPost: post, posts, feed: posts });
+  };
 
   return (
     <Card>
@@ -1764,15 +2211,34 @@ export function SpaceFeedElement({ config, data, context }: ElementProps) {
           <span className="font-medium text-sm">Recent Posts</span>
         </div>
 
-        {posts.length === 0 ? (
+        {isLoading ? (
+          <div className="py-4 animate-pulse space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="p-3 border rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-6 w-6 rounded-full bg-muted" />
+                  <div className="h-3 w-20 bg-muted rounded" />
+                </div>
+                <div className="h-4 bg-muted rounded w-full mb-1" />
+                <div className="h-4 bg-muted rounded w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
           <div className="py-6 text-center text-sm text-muted-foreground">
             <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
             <p>No posts yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {posts.slice(0, maxPosts).map((post: any, index: number) => (
-              <div key={post.id || index} className="p-3 border rounded-lg">
+            {posts.slice(0, maxPosts).map((post, index) => (
+              <div
+                key={post.id || index}
+                className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                  selectedPost === post.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                }`}
+                onClick={() => handlePostClick(post)}
+              >
                 <div className="flex items-center gap-2 mb-2">
                   {post.authorPhoto && (
                     <img src={post.authorPhoto} alt="" className="h-6 w-6 rounded-full" />
@@ -1797,9 +2263,45 @@ export function SpaceFeedElement({ config, data, context }: ElementProps) {
 }
 
 // Space Stats Element - Display space metrics (space-tier)
-export function SpaceStatsElement({ config, data, context }: ElementProps) {
-  const stats = data?.stats || {};
+// Fetches real metrics from /api/spaces/[spaceId]
+export function SpaceStatsElement({ config, data, context, onChange, onAction }: ElementProps) {
+  const [stats, setStats] = useState<Record<string, number>>(data?.stats || {});
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const metrics = config.metrics || ['members', 'posts', 'events'];
+
+  // Fetch space stats when spaceId is available
+  useEffect(() => {
+    if (!context?.spaceId) return;
+
+    const fetchStats = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/spaces/${context.spaceId}`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const space = result.space || result;
+          const spaceMetrics = space.metrics || {};
+          const statsData: Record<string, number> = {
+            members: spaceMetrics.memberCount || space.memberCount || 0,
+            posts: spaceMetrics.postCount || space.postCount || 0,
+            events: spaceMetrics.eventCount || space.eventCount || 0,
+            engagement: spaceMetrics.weeklyEngagement || 0,
+          };
+          setStats(statsData);
+          onChange?.({ stats: statsData, metrics });
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [context?.spaceId]);
 
   if (!context?.spaceId) {
     return (
@@ -1807,6 +2309,7 @@ export function SpaceStatsElement({ config, data, context }: ElementProps) {
         <CardContent className="p-6 text-center text-sm text-muted-foreground">
           <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p>Space Stats requires space context</p>
+          <p className="text-xs mt-1">Deploy to a space to see metrics</p>
         </CardContent>
       </Card>
     );
@@ -1819,6 +2322,12 @@ export function SpaceStatsElement({ config, data, context }: ElementProps) {
     engagement: 'Engagement',
   };
 
+  const handleMetricClick = (metric: string) => {
+    setSelectedMetric(metric);
+    onChange?.({ selectedMetric: metric, stats, metrics });
+    onAction?.('select', { selectedMetric: metric, value: stats[metric], stats, metrics });
+  };
+
   return (
     <Card className="bg-gradient-to-br from-primary/5 to-transparent">
       <CardContent className="p-4 space-y-3">
@@ -1827,19 +2336,36 @@ export function SpaceStatsElement({ config, data, context }: ElementProps) {
           <span className="font-medium text-sm">Space Analytics</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {metrics.map((metric: string) => (
-            <div key={metric} className="p-3 bg-background rounded-lg border">
-              <div className="text-2xl font-bold">{stats[metric] ?? 0}</div>
-              <div className="text-xs text-muted-foreground">{metricLabels[metric] || metric}</div>
-              {config.showTrends && stats[`${metric}Trend`] !== undefined && (
-                <div className={`text-xs mt-1 ${stats[`${metric}Trend`] >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {stats[`${metric}Trend`] >= 0 ? '+' : ''}{stats[`${metric}Trend`]}%
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 bg-background rounded-lg border">
+                <div className="h-6 bg-muted rounded w-12 mb-1" />
+                <div className="h-3 bg-muted rounded w-16" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {metrics.map((metric: string) => (
+              <div
+                key={metric}
+                className={`p-3 bg-background rounded-lg border cursor-pointer transition-all ${
+                  selectedMetric === metric ? 'border-primary ring-1 ring-primary' : 'hover:border-primary/50'
+                }`}
+                onClick={() => handleMetricClick(metric)}
+              >
+                <div className="text-2xl font-bold">{stats[metric] ?? 0}</div>
+                <div className="text-xs text-muted-foreground">{metricLabels[metric] || metric}</div>
+                {config.showTrends && stats[`${metric}Trend`] !== undefined && (
+                  <div className={`text-xs mt-1 ${stats[`${metric}Trend`] >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {stats[`${metric}Trend`] >= 0 ? '+' : ''}{stats[`${metric}Trend`]}%
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

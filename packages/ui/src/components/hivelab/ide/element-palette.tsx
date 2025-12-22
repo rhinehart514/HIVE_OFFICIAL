@@ -32,9 +32,18 @@ import { springPresets, staggerPresets } from '@hive/tokens';
 import { ShineBorder } from '../../motion-primitives/shine-border';
 import { GlowEffect } from '../../motion-primitives/glow-effect';
 
+interface UserContext {
+  userId?: string;
+  campusId?: string;
+  isSpaceLeader?: boolean;
+  leadingSpaceIds?: string[];
+}
+
 interface ElementPaletteProps {
   onDragStart: (elementId: string) => void;
   onDragEnd: () => void;
+  /** User context for filtering elements by tier */
+  userContext?: UserContext;
 }
 
 interface ElementDefinition {
@@ -429,7 +438,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
   );
 }
 
-export function ElementPalette({ onDragStart, onDragEnd }: ElementPaletteProps) {
+export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementPaletteProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<string[]>(
     CATEGORIES.map((c) => c.id)
@@ -443,13 +452,21 @@ export function ElementPalette({ onDragStart, onDragEnd }: ElementPaletteProps) 
     );
   };
 
+  // Filter elements by user context - space-tier requires isSpaceLeader
+  const availableElements = ELEMENTS.filter((el) => {
+    if (el.tier === 'universal') return true;
+    if (el.tier === 'connected') return true;
+    if (el.tier === 'space') return userContext?.isSpaceLeader === true;
+    return false;
+  });
+
   const filteredElements = searchQuery
-    ? ELEMENTS.filter(
+    ? availableElements.filter(
         (el) =>
           el.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           el.description.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : ELEMENTS;
+    : availableElements;
 
   const groupedElements = CATEGORIES.map((category) => ({
     ...category,

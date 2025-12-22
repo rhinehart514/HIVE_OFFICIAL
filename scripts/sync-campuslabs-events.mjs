@@ -46,23 +46,37 @@ function initFirebase() {
     const envContent = readFileSync(envPath, 'utf-8');
     const envVars = {};
     envContent.split('\n').forEach(line => {
-      const [key, ...valueParts] = line.split('=');
-      if (key && valueParts.length) {
-        envVars[key.trim()] = valueParts.join('=').trim();
+      const match = line.match(/^([^=]+)=(.*)$/);
+      if (match) {
+        envVars[match[1].trim()] = match[2].trim();
       }
     });
 
-    const serviceAccount = envVars.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccount) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY not found');
+    const projectId = envVars.FIREBASE_PROJECT_ID || envVars.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const clientEmail = envVars.FIREBASE_CLIENT_EMAIL;
+    let privateKey = envVars.FIREBASE_PRIVATE_KEY;
+    const privateKeyBase64 = envVars.FIREBASE_PRIVATE_KEY_BASE64;
+
+    // Handle private key (could be base64 encoded or raw with escaped newlines)
+    if (privateKeyBase64) {
+      privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf-8');
+    } else if (privateKey) {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+      if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+        privateKey = privateKey.slice(1, -1);
+      }
     }
 
-    const credentials = JSON.parse(Buffer.from(serviceAccount, 'base64').toString('utf-8'));
+    if (!projectId || !clientEmail || !privateKey) {
+      throw new Error('Missing Firebase credentials (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY)');
+    }
+
     initializeApp({
-      credential: cert(credentials),
-      projectId: 'hive-9265c'
+      credential: cert({ projectId, clientEmail, privateKey }),
+      projectId
     });
 
+    console.log(`Connected to Firebase project: ${projectId}`);
     return getFirestore();
   } catch (error) {
     console.error('Failed to initialize Firebase:', error.message);
@@ -126,6 +140,9 @@ function parseEvent(item) {
     // Event image
     imageUrl: item.enclosure?.['$']?.url || null,
 
+    // Campus isolation (required for security rules)
+    campusId: 'ub-buffalo',
+
     // Metadata
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -172,7 +189,12 @@ async function buildSpaceIndex(db, campusId) {
 }
 
 function findMatchingSpace(hostName, spaceIndex) {
-  const key = hostName.toLowerCase().trim();
+  // Handle case where hostName might be an object or non-string
+  const hostStr = typeof hostName === 'string' ? hostName :
+                  (hostName?._ || hostName?.name || String(hostName || ''));
+  if (!hostStr) return null;
+
+  const key = hostStr.toLowerCase().trim();
 
   // Exact match
   if (spaceIndex.has(key)) {
@@ -231,7 +253,19 @@ async function syncEvents(db, events, spaceIndex, dryRun = false) {
     }
 
     // Create event document ID from source GUID
-    const eventId = `campuslabs-${Buffer.from(event.source.guid).toString('base64').replace(/[/+=]/g, '_').substring(0, 40)}`;
+    // Extract event number from URL like https://buffalo.campuslabs.com/engage/event/11902571
+    const guidStr = typeof event.source.guid === 'string' ? event.source.guid :
+                    (event.source.guid?._ || event.source.url || `event-${Date.now()}-${Math.random()}`);
+
+    // Extract the unique event ID from the URL
+    const eventNum = guidStr.match(/event\/(\d+)/)?.[1] ||
+                     Buffer.from(guidStr).toString('base64').replace(/[/+=]/g, '_').substring(0, 20);
+    const eventId = `campuslabs-${eventNum}`;
+
+    // Debug first few
+    if (stats.created + stats.updated + stats.noMatch < 5) {
+      console.log(`  ID: ${eventId} | GUID: ${guidStr.substring(0, 60)}`);
+    }
 
     // Add space reference
     event.spaceId = space.id;
@@ -242,17 +276,17 @@ async function syncEvents(db, events, spaceIndex, dryRun = false) {
     const existing = await eventRef.get();
 
     if (!dryRun) {
-      if (existing.exists) {
-        // Update existing event
-        await eventRef.update({
-          ...event,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        stats.updated++;
-      } else {
-        // Create new event
-        await eventRef.set(event);
-        stats.created++;
+      try {
+        // Use set with merge to handle both create and update
+        await eventRef.set(event, { merge: true });
+        if (existing.exists) {
+          stats.updated++;
+        } else {
+          stats.created++;
+        }
+      } catch (error) {
+        console.error(`  Error syncing event ${eventId}:`, error.message);
+        stats.errors++;
       }
     } else {
       if (existing.exists) {
