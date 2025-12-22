@@ -37,6 +37,48 @@ import {
 import type { ElementProps } from '../../../lib/hivelab/element-system';
 
 // ============================================================================
+// TYPE DEFINITIONS
+// ============================================================================
+
+/** Filter option can be a string or an object with value/label/count */
+interface FilterOption {
+  value: string;
+  label: string;
+  count?: number;
+}
+
+/** Result item for list rendering */
+interface ResultItem {
+  id?: string;
+  title?: string;
+  description?: string;
+  badge?: string;
+  meta?: string[];
+}
+
+/** Form field configuration */
+interface FormField {
+  name: string;
+  type: 'text' | 'email' | 'number' | 'textarea' | 'select';
+  label?: string;
+  required?: boolean;
+  placeholder?: string;
+  options?: Array<{ value: string; label: string }>;
+}
+
+/** Normalizes filter option to consistent interface */
+function normalizeFilterOption(option: string | FilterOption): FilterOption {
+  if (typeof option === 'string') {
+    return { value: option, label: option };
+  }
+  return {
+    value: option.value || String(option),
+    label: option.label || option.value || String(option),
+    count: option.count
+  };
+}
+
+// ============================================================================
 // SEARCH INPUT ELEMENT
 // ============================================================================
 
@@ -135,10 +177,9 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {options.map((option: any, index: number) => {
-          const value = option.value || option;
-          const label = option.label || option;
-          const count = option.count;
+        {(options as Array<string | FilterOption>).map((rawOption, index: number) => {
+          const option = normalizeFilterOption(rawOption);
+          const { value, label, count } = option;
           const isSelected = selectedFilters.includes(value);
 
           return (
@@ -188,7 +229,7 @@ export function ResultListElement({ config, data }: ElementProps) {
       <CardContent className="p-0">
         <div className="space-y-0">
           {paginatedItems.length > 0 ? (
-            paginatedItems.map((item: any, index: number) => (
+            (paginatedItems as ResultItem[]).map((item, index: number) => (
               <div
                 key={index}
                 className="px-6 py-4 border-b last:border-b-0 border-border hover:bg-muted/40 transition-colors"
@@ -320,19 +361,11 @@ export function TagCloudElement({ config, data }: ElementProps) {
 }
 
 // ============================================================================
-// MAP VIEW ELEMENT
+// MAP VIEW ELEMENT - Re-exports from element-renderers
+// The full implementation is in element-renderers.tsx with interactive markers
 // ============================================================================
 
-export function MapViewElement() {
-  return (
-    <div className="border border-dashed border-border rounded-lg h-60 flex items-center justify-center bg-muted/10 text-sm text-muted-foreground">
-      <div className="space-y-2 text-center">
-        <MapPin className="h-6 w-6 mx-auto text-muted-foreground" />
-        <p>Interactive map preview renders here once data is connected.</p>
-      </div>
-    </div>
-  );
-}
+export { MapViewElement } from '../element-renderers';
 
 // ============================================================================
 // CHART DISPLAY ELEMENT
@@ -402,9 +435,10 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
   };
 
   const handleSubmit = async () => {
-    const missingRequired = fields
-      .filter((f: any) => f.required && !formData[f.name])
-      .map((f: any) => f.name);
+    const typedFields = fields as FormField[];
+    const missingRequired = typedFields
+      .filter((f) => f.required && !formData[f.name])
+      .map((f) => f.name);
 
     if (missingRequired.length > 0) {
       return;
@@ -450,10 +484,10 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
         </div>
 
         <div className="space-y-3">
-          {fields.map((field: any, index: number) => (
+          {(fields as FormField[]).map((field, index: number) => (
             <div key={index} className="space-y-1">
               <label className="text-sm font-medium flex items-center gap-1">
-                {field.name}
+                {field.label || field.name}
                 {field.required && <span className="text-red-500">*</span>}
               </label>
               {field.type === 'textarea' ? (
