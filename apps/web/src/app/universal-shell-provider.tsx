@@ -37,6 +37,8 @@ const NO_SHELL_ROUTES = [
   '/schools',
   '/debug-auth',
   '/legal',
+  '/privacy',
+  '/terms',
 ];
 
 // Routes that should have a minimal shell
