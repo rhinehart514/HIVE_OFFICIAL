@@ -1,7 +1,5 @@
 "use client";
 
-import { Calendar } from "lucide-react";
-
 /**
  * Shared Terms of Service content component.
  * Used by both the standalone page and the landing page modal.
@@ -236,12 +234,9 @@ export function TermsContent() {
 
       <div className="mt-12 border-t border-gray-800 pt-8">
         <h3 className="text-lg font-semibold text-[var(--hive-brand-primary)]">Version History</h3>
-        <div className="mt-4 space-y-2 text-sm text-gray-400">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>Version 2025-01-15 (Current) - Initial Terms of Service</span>
-          </div>
-        </div>
+        <p className="mt-4 text-sm text-gray-400">
+          Version 2025-01-15 (Current) — Initial Terms of Service
+        </p>
       </div>
     </div>
   );
