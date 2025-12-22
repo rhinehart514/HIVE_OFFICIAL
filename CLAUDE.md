@@ -47,15 +47,6 @@ Student autonomy means control over your own development:
 | **Connection** | Real social graph of campus life |
 | **Intelligence** | AI that expands thinking, not replaces it |
 
-### AI Philosophy
-
-AI isn't the goal. AI expands what students can think.
-
-- AI lets you explore ideas you couldn't explore alone
-- AI connects you to knowledge you didn't know existed
-- AI helps you build things beyond your current skill level
-- AI is a thinking partner, not a replacement for thinking
-
 ### Winter 2025-26 Priority
 
 **Win UB. Prove the model at density.**
@@ -145,7 +136,7 @@ HIVE WAY: Leader wants a poll → drags poll element → configures → deploys
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Element Tiers:**
+**Element Tiers (27 total):**
 
 | Tier | Count | Examples | Who Can Use |
 |------|-------|----------|-------------|
@@ -153,137 +144,103 @@ HIVE WAY: Leader wants a poll → drags poll element → configures → deploys
 | Connected | 5 | event-picker, user-selector, rsvp-button | Need data source |
 | Space | 7 | member-list, announcements, role-gate | Space leaders |
 
-**Current Element Inventory (27 total):**
-- Universal: search-input, filter-selector, result-list, date-picker, tag-cloud, map-view, chart-display, form-builder, countdown-timer, timer, counter, poll-element, leaderboard, notification-center
-- Connected: event-picker, space-picker, user-selector, rsvp-button, connection-list
-- Space: member-list, member-selector, space-events, space-feed, space-stats, announcement, role-gate
-
 **Deployment Targets:**
 - Space sidebar (persistent tools)
 - Inline in chat (interactive messages)
 - Profile widgets
 - Standalone pages
 
-**"Everything is HiveLab" Philosophy:**
-There are NO built-in UI code paths. Everything renders through HiveLab:
-- Default space views = auto-deployed templates
-- Widgets = simple tools
-- Templates = pre-built tool compositions
-- Leaders configure, they don't build from scratch
-
 ---
 
 ## Platform Architecture
 
-### Multi-Campus Model
+### Workspace Structure
 
-HIVE is built as single-tenant-per-campus with shared infrastructure.
+```
+apps/
+  web/              # Main Next.js 15 app (React 19) - port 3000
+  admin/            # Admin panel - port 3001
+  hivelab/          # HiveLab IDE - STANDALONE (port 3002)
 
-**Campus Isolation:**
-Every database query includes `campusId` filtering:
+packages/
+  ui/               # Component library (Radix UI + CVA + Storybook)
+  core/             # Domain models, DDD bounded contexts, business logic
+  firebase/         # Firebase SDK initialization
+  auth-logic/       # Authentication state management
+  hooks/            # Shared React hooks
+  tokens/           # Design tokens (CSS variables + JS)
+  validation/       # Zod schemas for runtime validation
+  moderation/       # Content moderation (ML-based)
+
+infrastructure/     # Firebase rules, deployment configs
+scripts/           # Seed scripts, migrations
+docs/              # Strategic documentation
+```
+
+### Package Details
+
+| Package | Purpose | Key Exports |
+|---------|---------|-------------|
+| `@hive/core` | Domain layer + DDD | Entities, services, repositories, DTOs |
+| `@hive/ui` | Component library | 300+ components, atomic design, Storybook |
+| `@hive/firebase` | Firebase wrapper | SDK initialization, collection refs |
+| `@hive/auth-logic` | Auth state | Session management, JWT handling |
+| `@hive/hooks` | Shared hooks | useAnalytics, useSpaces, useProfile |
+| `@hive/tokens` | Design tokens | CSS variables, JS tokens, Tailwind integration |
+| `@hive/validation` | Zod schemas | Runtime validation for all external data |
+| `@hive/moderation` | Content safety | Text/image moderation via Vertex AI |
+
+### Path Aliases (tsconfig.json)
+
 ```typescript
-.where("campusId", "==", campusId)  // Enforced in 50+ API routes
+@hive/ui           // packages/ui/src
+@hive/core         // packages/core/src
+@hive/hooks        // packages/hooks/src
+@hive/firebase     // packages/firebase/src
+@hive/tokens       // packages/tokens/src
+@hive/validation   // packages/validation/src
+@hive/auth-logic   // packages/auth-logic/src
+@hive/moderation   // packages/moderation/src
 ```
 
-This prevents cross-campus data leakage at the query level.
+### Tech Stack
 
-**Current Campus:** `ub-buffalo` (University at Buffalo)
-**Architecture:** Ready for additional campuses (just add domain config)
+- **Runtime**: Node.js 18+, pnpm 9.1.1 (required)
+- **Framework**: Next.js 15.5.6, React 19
+- **Language**: TypeScript 5.9.3 (strict mode)
+- **State**: Zustand for global state
+- **Backend**: Firebase (Firestore, Auth, Storage, Realtime DB)
+- **Validation**: Zod for runtime schemas
+- **UI**: Radix UI primitives + Tailwind CSS + Framer Motion
+- **Build**: Turbo for monorepo orchestration, tsup for library packages
+- **DnD**: dnd-kit for drag-and-drop
 
-### Pre-Seeded Spaces (The Cold-Start Solution)
+### Domain-Driven Design (@hive/core)
 
-**The chicken-egg problem:**
-- Students won't join without active communities
-- Leaders won't move without student adoption
-- Empty platforms die
+The core package uses DDD with 9 bounded contexts:
+- `domain/spaces/` - Space management, chat, boards, tools
+- `domain/profile/` - User profiles, connections
+- `domain/feed/` - Feed algorithm, ranking
+- `domain/hivelab/` - Tool composition
+- `domain/identity/` - Authentication
+- `domain/rituals/` - Ritual system
+- `domain/analytics/` - Event tracking
+- `domain/creation/` - Content creation
+- `domain/shared/` - Cross-cutting concerns
 
-**HIVE's solution:** Import 400+ organizations from CampusLabs Engage API
+**DDD Integration Pattern:**
+```typescript
+// API routes use DDD services and repositories from @hive/core/server
+import { getServerSpaceRepository } from '@hive/core/server';
+import { createServerSpaceChatService } from '@hive/core/server';
+import { toSpaceDetailDTO, toSpaceWithToolsDTO } from '@hive/core/server';
 
-```javascript
-// scripts/import-campuslabs.mjs
-const CONFIG = {
-  CAMPUSLABS_API: 'https://buffalo.campuslabs.com/engage/api/discovery/search/organizations',
-  BRANCH_MAP: {
-    1419: 'student_org',
-    360210: 'university_org',
-    360211: 'greek_life',
-    360212: 'residential',
-  }
-};
+// Example from /api/spaces/[spaceId]/route.ts:
+const spaceRepo = getServerSpaceRepository();
+const result = await spaceRepo.findById(spaceId, { loadPlacedTools: true });
+const space = result.getValue();
+return respond.success(toSpaceWithToolsDTO(space));
 ```
-
-**How it works:**
-1. Spaces are pre-created with names, categories, descriptions
-2. They exist in "stealth" mode until a leader claims them
-3. Students can browse/discover immediately
-4. Leaders claim → go "live" → full customization unlocked
-
-**Space Categories:**
-- `student_org` - Clubs, teams, academic groups
-- `greek_life` - Fraternities, sororities
-- `academic` - Course-related
-- `university_org` - Official university organizations
-- `sports`, `arts`, `social`, `professional`
-- `residential` - Dorms (hidden, RA-only)
-
-### Data Layer (The Moat)
-
-HIVE owns the structured data about campus life:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    STRUCTURED DATA                           │
-├─────────────────┬─────────────────┬─────────────────────────┤
-│     SPACES      │     EVENTS      │       MEMBERS           │
-│  - 400+ orgs    │  - All campus   │  - Profiles             │
-│  - Categories   │  - RSVPs        │  - Connections          │
-│  - Activity     │  - Attendance   │  - Interests            │
-├─────────────────┴─────────────────┴─────────────────────────┤
-│                    ENGAGEMENT                                │
-│  - Messages, reactions, tool usage, event attendance        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-This data layer is what AI assistants and future tools will query:
-- "What events match my interests?"
-- "Which clubs are most active this week?"
-- "Who should I connect with in my major?"
-
-### The "Campus OS" Future
-
-```
-2025-26 (Now):     HIVE = Best place to discover and engage
-2026+ (Future):    HIVE = Data layer that AI assistants plug into
-```
-
-Students won't just use HIVE's UI—their AI assistants will query HIVE's APIs.
-
----
-
-## Current Platform State (December 2025)
-
-**Honest Assessment:**
-
-| Slice | Actual State | What's Working | What's Broken |
-|-------|--------------|----------------|---------------|
-| **Spaces + Chat** | 85% DONE | Full DDD stack, SSE streaming, ownership detection, chat with threading | Typing indicator spam (2s polling), some UI polish |
-| **HiveLab/Tools** | 80% DONE | Full IDE, element system, deployment, runtime | Analytics mock data |
-| **Auth/Onboarding** | 85% DONE | OTP auth, JWT sessions, 4-step onboarding, dev auth bypass | Edge cases in onboarding |
-| **Feed** | 75% DONE | Privacy enforced, moderation | Ghost mode gaps |
-| **Profiles** | 70% DONE | Basic flow works | Ghost mode incomplete |
-
-**What's Actually Working:**
-- `useChatMessages` - 953 lines, FULLY IMPLEMENTED (SSE, optimistic updates, threading, board switching)
-- `useToolRuntime` - 596 lines, FULLY IMPLEMENTED (state persistence, auto-save, retry logic)
-- `usePinnedMessages` - 161 lines, FULLY IMPLEMENTED
-- `SpaceChatService` - 1,478 lines, complete DDD service with auto-General board creation
-- SSE endpoint works with Firestore onSnapshot
-- Space ownership detection confirmed working (createdBy + leaders array + spaceMembers)
-
-**Real Issues (P1/P2):**
-- P1: Typing indicator polling every 2s creates spam
-- P2: Ghost mode incomplete
-- P2: Analytics uses mock data
 
 ---
 
@@ -322,7 +279,6 @@ pnpm seed:emulator                    # Seed test data
 pnpm clean                            # Clean all build outputs + node_modules
 
 # Dev Auth (local testing with production Firebase)
-# Login page has dev buttons, or use curl:
 curl -X POST http://localhost:3000/api/dev-auth \
   -H "Content-Type: application/json" \
   -d '{"email":"jwrhineh@buffalo.edu"}' \
@@ -331,89 +287,348 @@ curl -X POST http://localhost:3000/api/dev-auth \
 
 ---
 
-## Technical Architecture
+## Current Platform State (December 2025)
 
-### Workspace Structure
+| Slice | Status | What's Working | Known Issues |
+|-------|--------|----------------|--------------|
+| **Spaces + Chat** | 90% | Full DDD stack, SSE streaming, threading, boards | Typing indicator polling (2s) |
+| **HiveLab/Tools** | 85% | Full IDE, 27 elements, deployment, runtime | Analytics uses mock data |
+| **Auth/Onboarding** | 90% | OTP auth, JWT sessions, 4-step onboarding | Edge cases in onboarding |
+| **Feed** | 75% | Privacy enforced, moderation | Ghost mode gaps |
+| **Profiles** | 70% | Basic flow works | Ghost mode incomplete |
 
-```
-apps/
-  web/              # Main Next.js 15 app (React 19) - port 3000
-  admin/            # Admin panel - port 3001
-  hivelab/          # HiveLab IDE - STANDALONE (port 3002)
+**Key Implementation Stats:**
+| Component | Location | Lines |
+|-----------|----------|-------|
+| `useChatMessages` | `apps/web/src/hooks/use-chat-messages.ts` | 1,185 |
+| `SpaceChatService` | `packages/core/src/application/spaces/space-chat.service.ts` | 1,484 |
+| `SpaceChatBoard` | `packages/ui/src/atomic/03-Spaces/organisms/space-chat-board.tsx` | 1,131 |
+| `useToolRuntime` | `apps/web/src/hooks/use-tool-runtime.ts` | 592 |
+| `usePinnedMessages` | `apps/web/src/hooks/use-pinned-messages.ts` | 173 |
+| `Board Entity` | `packages/core/src/domain/spaces/entities/board.ts` | 362 |
 
-packages/
-  ui/               # Component library (Radix UI + CVA + Storybook)
-  core/             # Domain models, DDD bounded contexts, business logic
-  firebase/         # Firebase SDK initialization
-  auth-logic/       # Authentication state management
-  hooks/            # Shared React hooks
-  tokens/           # Design tokens (CSS variables + JS)
-  validation/       # Zod schemas for runtime validation
-  config/
-    eslint/         # Shared ESLint config
-    typescript/     # TypeScript config presets (base, nextjs, react-library)
+---
 
-infrastructure/     # Firebase rules, deployment configs
-tooling/           # Build scripts
-scripts/           # Seed scripts, migrations
-docs/              # Architecture docs, audits
-```
+## API Reference (193 Routes)
 
-### Path Aliases (tsconfig.json)
+### Auth (17 routes)
 
-```typescript
-@hive/ui           // packages/ui/src
-@hive/core         // packages/core/src
-@hive/hooks        // packages/hooks/src
-@hive/firebase     // packages/firebase/src
-@hive/tokens       // packages/tokens/src
-@hive/validation   // packages/validation/src
-@hive/auth-logic   // packages/auth-logic/src
-```
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/auth/send-code` | POST | Send OTP code to email |
+| `/api/auth/verify-code` | POST | Verify OTP and create session |
+| `/api/auth/send-magic-link` | POST | Send magic link email |
+| `/api/auth/verify-magic-link` | POST | Verify magic link token |
+| `/api/auth/resend-magic-link` | POST | Resend magic link |
+| `/api/auth/session` | GET | Get current session |
+| `/api/auth/refresh` | POST | Refresh session token |
+| `/api/auth/logout` | POST | End session |
+| `/api/auth/me` | GET | Get current user |
+| `/api/auth/csrf` | GET | Get CSRF token |
+| `/api/auth/check-handle` | POST | Check handle availability |
+| `/api/auth/complete-onboarding` | POST | Complete onboarding |
+| `/api/auth/health` | GET | Auth health check |
+| `/api/auth/dev-session` | POST | Dev session (dev only) |
+| `/api/auth/check-admin-grant` | GET | Check admin access |
+| `/api/auth/sessions` | GET | List active sessions |
+| `/api/auth/sessions/[sessionId]` | DELETE | Revoke session |
 
-### Tech Stack
+### Spaces - Core (20 routes)
 
-- **Runtime**: Node.js 18+, pnpm 9.1.1 (required)
-- **Framework**: Next.js 15.5.6, React 19
-- **Language**: TypeScript 5.9.3 (strict mode)
-- **State**: Zustand for global state
-- **Backend**: Firebase (Firestore, Auth, Storage, Realtime DB)
-- **Validation**: Zod for runtime schemas
-- **UI**: Radix UI primitives + Tailwind CSS + Framer Motion
-- **Build**: Turbo for monorepo orchestration, tsup for library packages
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces` | GET | List spaces |
+| `/api/spaces` | POST | Create space |
+| `/api/spaces/[spaceId]` | GET | Get space details |
+| `/api/spaces/[spaceId]` | PATCH | Update space |
+| `/api/spaces/[spaceId]` | DELETE | Delete space |
+| `/api/spaces/browse-v2` | GET | Browse spaces (v2) |
+| `/api/spaces/mine` | GET | Spaces I own |
+| `/api/spaces/my` | GET | Spaces I'm a member of |
+| `/api/spaces/search` | GET | Search spaces |
+| `/api/spaces/recommended` | GET | Recommended spaces |
+| `/api/spaces/templates` | GET | Space templates |
+| `/api/spaces/join-v2` | POST | Join space |
+| `/api/spaces/leave` | POST | Leave space |
+| `/api/spaces/transfer` | POST | Transfer ownership |
+| `/api/spaces/request-to-lead` | POST | Request leadership |
+| `/api/spaces/check-create-permission` | GET | Check create permission |
+| `/api/spaces/resolve-slug/[slug]` | GET | Resolve slug to ID |
+| `/api/spaces/seed` | POST | Seed spaces (admin) |
+| `/api/spaces/[spaceId]/go-live` | POST | Activate space |
+| `/api/spaces/[spaceId]/structure` | GET | Get space structure |
 
-### Domain-Driven Design (@hive/core)
+### Spaces - Chat (14 routes)
 
-The core package uses DDD with bounded contexts:
-- `domain/profile/` - User profiles
-- `domain/spaces/` - Space management (tabs, widgets)
-- `domain/rituals/` - Ritual system
-- `domain/feed/` - Feed domain
-- `domain/hivelab/` - Tool composition
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/chat` | GET | Get messages |
+| `/api/spaces/[spaceId]/chat` | POST | Send message |
+| `/api/spaces/[spaceId]/chat/stream` | GET | SSE real-time stream |
+| `/api/spaces/[spaceId]/chat/[messageId]` | GET | Get message |
+| `/api/spaces/[spaceId]/chat/[messageId]` | PATCH | Edit message |
+| `/api/spaces/[spaceId]/chat/[messageId]` | DELETE | Delete message |
+| `/api/spaces/[spaceId]/chat/[messageId]/react` | POST | Add reaction |
+| `/api/spaces/[spaceId]/chat/[messageId]/pin` | POST | Pin message |
+| `/api/spaces/[spaceId]/chat/[messageId]/replies` | GET | Get replies |
+| `/api/spaces/[spaceId]/chat/pinned` | GET | Get pinned messages |
+| `/api/spaces/[spaceId]/chat/search` | GET | Search messages |
+| `/api/spaces/[spaceId]/chat/typing` | POST | Typing indicator |
+| `/api/spaces/[spaceId]/chat/read` | POST | Mark as read |
+| `/api/spaces/[spaceId]/chat/intent` | POST | AI intent detection |
 
-Each context has aggregates, value objects, and entities.
+### Spaces - Boards (3 routes)
 
-**DDD Integration Pattern:**
-```typescript
-// API routes use DDD services and repositories from @hive/core/server
-import { getServerSpaceRepository } from '@hive/core/server';
-import { createServerSpaceChatService } from '@hive/core/server';
-import { toSpaceDetailDTO, toSpaceWithToolsDTO } from '@hive/core/server';
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/boards` | GET | List boards |
+| `/api/spaces/[spaceId]/boards` | POST | Create board |
+| `/api/spaces/[spaceId]/boards/[boardId]` | GET/PATCH/DELETE | Board CRUD |
 
-// Example from /api/spaces/[spaceId]/route.ts:
-const spaceRepo = getServerSpaceRepository();
-const result = await spaceRepo.findById(spaceId, { loadPlacedTools: true });
-const space = result.getValue();
-return respond.success(toSpaceWithToolsDTO(space));
-```
+### Spaces - Members (5 routes)
 
-### Component Architecture (@hive/ui)
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/members` | GET | List members |
+| `/api/spaces/[spaceId]/members` | POST | Add member |
+| `/api/spaces/[spaceId]/members/[memberId]` | GET/PATCH/DELETE | Member CRUD |
+| `/api/spaces/[spaceId]/members/batch` | POST | Batch operations |
+| `/api/spaces/[spaceId]/membership` | GET/POST | Check/update membership |
 
-Follows atomic design with Radix UI as foundation:
-- `atomic/` - atoms, molecules, organisms
-- `patterns/` - compound components, slot pattern, polymorphic
-- `motion/` - Framer Motion presets
-- Uses CVA (Class Variance Authority) for type-safe variants
+### Spaces - Events (4 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/events` | GET | List space events |
+| `/api/spaces/[spaceId]/events` | POST | Create event |
+| `/api/spaces/[spaceId]/events/[eventId]` | GET/PATCH/DELETE | Event CRUD |
+| `/api/spaces/[spaceId]/events/[eventId]/rsvp` | POST | RSVP to event |
+
+### Spaces - Tools & Widgets (6 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/tools` | GET | Get deployed tools |
+| `/api/spaces/[spaceId]/tools/feature` | POST | Feature a tool |
+| `/api/spaces/[spaceId]/tabs` | GET/POST | Tab management |
+| `/api/spaces/[spaceId]/tabs/[tabId]` | GET/PATCH/DELETE | Tab CRUD |
+| `/api/spaces/[spaceId]/widgets` | GET/POST | Widget management |
+| `/api/spaces/[spaceId]/widgets/[widgetId]` | GET/PATCH/DELETE | Widget CRUD |
+
+### Spaces - Automations (6 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/automations` | GET | List automations |
+| `/api/spaces/[spaceId]/automations` | POST | Create automation |
+| `/api/spaces/[spaceId]/automations/[automationId]` | GET/PATCH/DELETE | Automation CRUD |
+| `/api/spaces/[spaceId]/automations/[automationId]/toggle` | POST | Toggle automation |
+| `/api/spaces/[spaceId]/automations/trigger` | POST | Trigger automation |
+| `/api/spaces/[spaceId]/automations/from-template` | POST | Create from template |
+
+### Spaces - Inline Components (4 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/components` | GET | List components |
+| `/api/spaces/[spaceId]/components` | POST | Create component |
+| `/api/spaces/[spaceId]/components/[componentId]` | GET/PATCH/DELETE | Component CRUD |
+| `/api/spaces/[spaceId]/components/[componentId]/participate` | POST | Participate in component |
+
+### Spaces - Posts (5 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/posts` | GET | List posts |
+| `/api/spaces/[spaceId]/posts` | POST | Create post |
+| `/api/spaces/[spaceId]/posts/[postId]` | GET/PATCH/DELETE | Post CRUD |
+| `/api/spaces/[spaceId]/posts/[postId]/comments` | GET/POST | Post comments |
+| `/api/spaces/[spaceId]/posts/[postId]/reactions` | POST | Post reactions |
+
+### Spaces - Other (9 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/spaces/[spaceId]/sidebar` | GET | Sidebar config |
+| `/api/spaces/[spaceId]/analytics` | GET | Space analytics |
+| `/api/spaces/[spaceId]/activity` | GET | Activity feed |
+| `/api/spaces/[spaceId]/moderation` | GET/POST | Moderation |
+| `/api/spaces/[spaceId]/data` | GET | Export data |
+| `/api/spaces/[spaceId]/feed` | GET | Space feed |
+| `/api/spaces/[spaceId]/builder-status` | GET | Builder status |
+| `/api/spaces/[spaceId]/apply-template` | POST | Apply template |
+| `/api/spaces/[spaceId]/upload-banner` | POST | Upload banner |
+| `/api/spaces/[spaceId]/seed-rss` | POST | Seed from RSS |
+| `/api/spaces/[spaceId]/promote-post` | POST | Promote to feed |
+
+### Tools/HiveLab (28 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/tools` | GET | List user's tools |
+| `/api/tools` | POST | Create tool |
+| `/api/tools/[toolId]` | GET | Get tool |
+| `/api/tools/[toolId]` | PATCH | Update tool |
+| `/api/tools/[toolId]` | DELETE | Delete tool |
+| `/api/tools/[toolId]/state` | GET/POST | Tool state |
+| `/api/tools/[toolId]/deploy` | POST | Deploy tool |
+| `/api/tools/[toolId]/analytics` | GET | Tool analytics |
+| `/api/tools/[toolId]/reviews` | GET/POST | Tool reviews |
+| `/api/tools/[toolId]/share` | POST | Share tool |
+| `/api/tools/[toolId]/publish-template` | POST | Publish as template |
+| `/api/tools/[toolId]/upload-asset` | POST | Upload asset |
+| `/api/tools/[toolId]/with-state` | GET | Tool with state |
+| `/api/tools/generate` | POST | AI generation |
+| `/api/tools/execute` | POST | Execute action |
+| `/api/tools/browse` | GET | Browse marketplace |
+| `/api/tools/search` | GET | Search tools |
+| `/api/tools/recommendations` | GET | Recommendations |
+| `/api/tools/personal` | GET | Personal tools |
+| `/api/tools/publish` | POST | Publish tool |
+| `/api/tools/review` | POST | Review tool |
+| `/api/tools/install` | POST | Install tool |
+| `/api/tools/migrate` | POST | Migrate tools |
+| `/api/tools/usage-stats` | GET | Usage stats |
+| `/api/tools/event-system` | POST | Tool events |
+| `/api/tools/feed-integration` | POST | Feed integration |
+| `/api/tools/deploy` | POST | Deploy endpoint |
+| `/api/tools/deploy/[deploymentId]` | GET/DELETE | Deployment CRUD |
+| `/api/tools/state/[deploymentId]` | GET/POST | Deployment state |
+
+### Templates (3 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/templates` | GET | List templates |
+| `/api/templates/[templateId]` | GET | Get template |
+| `/api/templates/[templateId]/use` | POST | Use template |
+
+### Profile (17 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/profile` | GET | Current user profile |
+| `/api/profile` | PATCH | Update profile |
+| `/api/profile/[userId]` | GET | User profile by ID |
+| `/api/profile/handle/[handle]` | GET | Profile by handle |
+| `/api/profile/v2` | GET | Profile v2 |
+| `/api/profile-v2/[userId]` | GET | Profile v2 by ID |
+| `/api/profile/completion` | GET | Profile completion |
+| `/api/profile/stats` | GET | Profile stats |
+| `/api/profile/dashboard` | GET | Dashboard data |
+| `/api/profile/privacy` | GET/POST | Privacy settings |
+| `/api/profile/spaces` | GET | User's spaces |
+| `/api/profile/spaces/recommendations` | GET | Space recommendations |
+| `/api/profile/spaces/actions` | POST | Space actions |
+| `/api/profile/my-spaces` | GET | My spaces |
+| `/api/profile/upload-photo` | POST | Upload photo |
+| `/api/profile/fcm-token` | POST | Register FCM token |
+| `/api/profile/notifications/preferences` | GET/POST | Notification prefs |
+| `/api/profile/calendar/events` | GET | Calendar events |
+| `/api/profile/calendar/conflicts` | GET | Calendar conflicts |
+
+### Feed (8 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/feed` | GET | Main feed |
+| `/api/feed/updates` | GET | Feed updates |
+| `/api/feed/search` | GET | Search feed |
+| `/api/feed/aggregation` | GET | Aggregated feed |
+| `/api/feed/algorithm` | GET | Algorithm config |
+| `/api/feed/space-filtering` | GET | Filter by space |
+| `/api/feed/cache` | GET/POST | Cache operations |
+| `/api/feed/content-validation` | POST | Validate content |
+
+### Calendar & Events (5 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/calendar` | GET | User calendar |
+| `/api/calendar/[eventId]` | GET | Event details |
+| `/api/calendar/conflicts` | GET | Conflict check |
+| `/api/calendar/free-time` | GET | Free time slots |
+| `/api/events` | GET | Campus events |
+
+### Realtime (10 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/realtime/sse` | GET | SSE connection |
+| `/api/realtime/websocket` | GET | WebSocket upgrade |
+| `/api/realtime/send` | POST | Send message |
+| `/api/realtime/chat` | GET/POST | Chat realtime |
+| `/api/realtime/typing` | POST | Typing indicator |
+| `/api/realtime/presence` | GET/POST | Presence |
+| `/api/realtime/notifications` | GET | Notification stream |
+| `/api/realtime/channels` | GET | Channel list |
+| `/api/realtime/metrics` | GET | Realtime metrics |
+| `/api/realtime/tool-updates` | GET | Tool update stream |
+
+### Admin (13 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/admin/spaces` | GET | List all spaces |
+| `/api/admin/spaces/[spaceId]` | GET/PATCH | Space admin |
+| `/api/admin/analytics/comprehensive` | GET | Full analytics |
+| `/api/admin/analytics/realtime` | GET | Realtime stats |
+| `/api/admin/builder-requests` | GET/POST | Builder requests |
+| `/api/admin/moderation/feedback` | GET | Moderation feedback |
+| `/api/admin/seed-school` | POST | Seed school data |
+| `/api/admin/tools/review-stats` | GET | Tool review stats |
+| `/api/admin/ai-quality/metrics` | GET | AI quality metrics |
+| `/api/admin/ai-quality/generations` | GET | AI generations log |
+| `/api/admin/ai-quality/failures` | GET | AI failures log |
+| `/api/admin/ai-quality/edits` | GET | AI edits log |
+
+### Privacy (3 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/privacy` | GET/POST | Privacy settings |
+| `/api/privacy/visibility` | GET/POST | Visibility settings |
+| `/api/privacy/ghost-mode` | POST | Toggle ghost mode |
+
+### Social & Connections (5 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/social/posts` | GET/POST | Social posts |
+| `/api/social/interactions` | POST | Interactions |
+| `/api/connections` | GET/POST | User connections |
+| `/api/users/search` | GET | User search |
+| `/api/posts/[postId]/comments` | GET | Post comments |
+| `/api/comments/[commentId]/like` | POST | Like comment |
+
+### Content & Moderation (3 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/content/check` | POST | Text moderation |
+| `/api/content/check-image` | POST | Image moderation |
+| `/api/content/reports` | GET/POST | Content reports |
+
+### Utility (15 routes)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/health` | GET | Health check |
+| `/api/dev-auth` | POST | Dev auth (dev only) |
+| `/api/campus/detect` | GET | Detect campus |
+| `/api/schools` | GET | List schools |
+| `/api/search` | GET | Global search |
+| `/api/search/v2` | GET | Search v2 |
+| `/api/notifications` | GET | Notifications |
+| `/api/onboarding/catalog` | GET | Onboarding catalog |
+| `/api/feedback` | POST | Submit feedback |
+| `/api/errors/report` | POST | Error reporting |
+| `/api/analytics/metrics` | GET/POST | Analytics |
+| `/api/feature-flags` | GET | Feature flags |
+| `/api/automations/templates` | GET | Automation templates |
+| `/api/activity` | GET | Activity log |
+| `/api/waitlist/join` | POST | Join waitlist |
+| `/api/debug-calendar` | GET | Debug calendar |
 
 ---
 
@@ -462,159 +677,35 @@ UI:         localhost:4000
 
 ---
 
-## Deployment
+## Multi-Campus Model
 
-Vercel handles deployment. Key config in `vercel.json`:
-- Build: `pnpm --filter=@hive/web build`
-- Output: `apps/web/.next`
-- Security headers configured for CSP, HSTS
+HIVE is built as single-tenant-per-campus with shared infrastructure.
+
+**Campus Isolation:**
+Every database query includes `campusId` filtering:
+```typescript
+.where("campusId", "==", campusId)  // Enforced in 50+ API routes
+```
+
+**Current Campus:** `ub-buffalo` (University at Buffalo)
+**Architecture:** Ready for additional campuses (just add domain config)
 
 ---
 
-## Vertical Slice: Space Chat Board
+## Key File Locations
 
-### Status: FULLY BUILT
-
-| Component | Location | Lines | Status |
-|-----------|----------|-------|--------|
-| `SpaceChatBoard` | `@hive/ui/atomic/03-Spaces/organisms/space-chat-board.tsx` | 1,120 | DONE |
-| `useChatMessages` | `apps/web/src/hooks/use-chat-messages.ts` | 953 | DONE |
-| `usePinnedMessages` | `apps/web/src/hooks/use-pinned-messages.ts` | 161 | DONE |
-| `SpaceChatService` | `packages/core/src/application/spaces/space-chat.service.ts` | 1,478 | DONE |
-| Chat API | `apps/web/src/app/api/spaces/[spaceId]/chat/` | 266+ | DONE |
-| SSE Stream | `apps/web/src/app/api/spaces/[spaceId]/chat/stream/route.ts` | 229 | DONE |
-| Board Entity | `packages/core/src/domain/spaces/entities/board.ts` | ~200 | DONE |
-
-**What's Implemented:**
-- SSE real-time with Firestore onSnapshot
-- Optimistic updates with rollback
-- Threading support
-- Board (channel) switching
-- Auto-creation of "General" board
-- Rate limiting (20 msg/min)
-- XSS protection
-- Message editing/deletion
-- Reactions
-- Typing indicators (but polling too frequently)
-
-**Architecture:**
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Space Page (apps/web/src/app/spaces/[spaceId]/page.tsx)     │
-├───────────────────────────────────┬─────────────────────────┤
-│                                   │                         │
-│  CHAT BOARD (60%)                 │  SIDEBAR (40%)          │
-│  useChatMessages hook             │  Tools, Events, Members │
-│  SSE → /chat/stream endpoint      │  useToolRuntime hook    │
-│                                   │                         │
-├───────────────────────────────────┴─────────────────────────┤
-│ Board tabs: auto-creates "General" via SpaceChatService     │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Vertical Slice: HiveLab Canvas
-
-### Status: MOSTLY BUILT
-
-**Code in packages (ready for standalone):**
-
-```
-packages/ui/src/
-├── components/hivelab/
-│   ├── studio/                    # DnD canvas components
-│   │   ├── DndStudioProvider.tsx  # DnD context
-│   │   ├── CanvasDropZone.tsx     # Drop target
-│   │   ├── DraggablePaletteItem.tsx
-│   │   └── SortableCanvasElement.tsx
-│   ├── AIPromptInput.tsx          # AI prompt input
-│   ├── StreamingCanvasView.tsx    # Streaming generation view
-│   ├── ToolDeployModal.tsx        # Deploy modal
-│   ├── element-renderers.tsx      # Element renderers
-│   ├── visual-tool-composer.tsx   # Visual composer
-│   └── showcase/                  # Template browser, element cards
-├── lib/hivelab/
-│   ├── element-system.ts          # 20+ elements, 3 tiers
-│   ├── tool-state-manager.ts      # State management
-│   └── local-tool-storage.ts      # Local storage
-├── hooks/hivelab/
-│   └── use-tool-state.ts          # Tool state hook
-└── pages/hivelab/
-    ├── HiveLabToolsPage.tsx       # Tools list page
-    ├── ToolEditPage.tsx           # Edit page component
-    ├── ToolPreviewPage.tsx        # Preview component
-    └── ToolAnalyticsPage.tsx      # Analytics component
-
-packages/core/src/
-├── domain/hivelab/
-│   ├── element-registry.ts        # Element registry
-│   └── tool-composition.types.ts  # Composition types
-└── application/hivelab/
-    ├── ai-tool-generator.service.ts  # AI generation
-    └── prompts/tool-generation.prompt.ts
-
-apps/web/src/app/
-├── hivelab/page.tsx               # Currently redirects to /tools
-├── tools/                         # Full CRUD routes exist
-│   ├── page.tsx                   # List tools
-│   ├── create/page.tsx            # Create new
-│   └── [toolId]/                  # View, edit, preview, deploy, run, analytics
-└── api/tools/                     # 15+ API routes (generate, execute, deploy, etc.)
-```
-
-**Runtime System (Working):**
-- `useToolRuntime` hook - SSE real-time sync, state persistence, action execution
-- Element renderers with `onAction` callbacks
-- Connection cascade engine - data flows between elements
-- Auto-save with 2s debounce
-
-**Key Files:**
-```
-apps/hivelab/                          # Standalone HiveLab app (port 3002)
-├── src/app/[toolId]/                  # Tool editing routes
-│   ├── deploy/page.tsx                # Deployment flow
-│   └── analytics/page.tsx             # Usage analytics
-
-packages/ui/src/components/hivelab/    # Shared components
-├── element-renderers.tsx              # 27 element renderers
-├── StreamingCanvasView.tsx            # AI generation view
-├── studio/                            # DnD canvas components
-└── showcase/                          # Template browser
-
-apps/web/src/app/api/tools/            # Backend APIs (shared)
-├── execute/route.ts                   # Tool execution runtime
-├── generate/route.ts                  # AI generation
-└── [toolId]/state/route.ts            # State persistence
-```
-
----
-
-## API Endpoints Reference
-
-### Spaces
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/spaces` | GET | List spaces |
-| `/api/spaces` | POST | Create space |
-| `/api/spaces/[spaceId]` | GET | Get space |
-| `/api/spaces/[spaceId]/chat` | GET/POST | Chat messages |
-| `/api/spaces/[spaceId]/chat/stream` | GET | SSE real-time |
-| `/api/spaces/[spaceId]/boards` | GET/POST | Board management |
-| `/api/spaces/[spaceId]/members` | GET/POST | Member management |
-
-### HiveLab/Tools
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/api/tools` | GET | List user's tools |
-| `/api/tools` | POST | Create new tool |
-| `/api/tools/[toolId]` | GET | Get tool definition |
-| `/api/tools/[toolId]` | PATCH | Update tool |
-| `/api/tools/[toolId]/deploy` | POST | Deploy to target |
-| `/api/tools/[toolId]/publish` | POST | Publish version |
-| `/api/tools/generate` | POST | AI generation |
-| `/api/templates` | GET | Browse templates |
-| `/api/templates/[templateId]/use` | POST | Create from template |
+| Component | Path |
+|-----------|------|
+| Space page | `apps/web/src/app/spaces/[spaceId]/page.tsx` |
+| Chat hook | `apps/web/src/hooks/use-chat-messages.ts` |
+| Chat service | `packages/core/src/application/spaces/space-chat.service.ts` |
+| Chat component | `packages/ui/src/atomic/03-Spaces/organisms/space-chat-board.tsx` |
+| HiveLab IDE | `packages/ui/src/components/hivelab/ide/hivelab-ide.tsx` |
+| Element system | `packages/ui/src/lib/hivelab/element-system.ts` |
+| Element renderers | `packages/ui/src/components/hivelab/element-renderers.tsx` |
+| Tool runtime hook | `apps/web/src/hooks/use-tool-runtime.ts` |
+| Space entities | `packages/core/src/domain/spaces/entities/` |
+| Space repository | `packages/core/src/infrastructure/repositories/firebase-admin/space.repository.ts` |
 
 ---
 
@@ -622,33 +713,17 @@ apps/web/src/app/api/tools/            # Backend APIs (shared)
 
 | Doc | Purpose |
 |-----|---------|
-| `docs/VISION.md` | **START HERE** — Full vision, student autonomy, AI philosophy, goals |
-| `docs/VERTICAL_SLICES.md` | Spaces + HiveLab specs, feature flags, architecture, success criteria |
-| `docs/VALUE.md` | Value proposition, what's built, competitive positioning |
-| `docs/DATABASE_SCHEMA.md` | Firestore collections |
+| `docs/VISION.md` | **START HERE** — Full vision, student autonomy, AI philosophy |
+| `docs/VERTICAL_SLICES.md` | Detailed Spaces + HiveLab specs, feature flags, success criteria |
+| `docs/VALUE.md` | Value proposition, competitive positioning |
+| `docs/DATABASE_SCHEMA.md` | Firestore collections reference |
 | `docs/FIREBASE_SETUP.md` | Firebase configuration and setup |
 
 ---
 
-## Workflow Rules
+## Deployment
 
-### After User Says "Done"
-
-**ALWAYS update TODO.md** when the user indicates a task is complete:
-1. Mark completed items with checkmark
-2. Update the "Last Updated" date
-3. Revise completion percentages if applicable
-4. Add any new issues discovered during the work
-5. Move items between priority levels if needed
-
-### AI Integration Notes
-
-When working on any slice, consider AI opportunities:
-
-| Slice | Near-term AI | Long-term AI |
-|-------|--------------|--------------|
-| Feed | Rule-based ranking | Intent prediction |
-| Search | Query expansion | Semantic search |
-| Moderation | Toxicity detection | Proactive detection |
-| Tools | Template suggestion | NL generation |
-| Notifications | Importance scoring | Predictive alerts |
+Vercel handles deployment. Key config in `vercel.json`:
+- Build: `pnpm --filter=@hive/web build`
+- Output: `apps/web/.next`
+- Security headers configured for CSP, HSTS
