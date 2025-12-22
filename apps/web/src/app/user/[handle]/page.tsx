@@ -1,140 +1,153 @@
-"use client";
+'use client';
 
-// Force dynamic rendering to avoid SSG issues
-export const dynamic = 'force-dynamic';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { ProfileOverviewPage, ProfileViewLoadingSkeleton } from '@hive/ui';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter, notFound } from 'next/navigation';
-import { ProfileBentoGrid, Card, Button } from '@hive/ui';
-import { useAuth } from '@hive/auth-logic';
-import type { UnifiedHiveProfile, ProfileSystem } from '@hive/core';
-import { logger } from '@/lib/logger';
+interface ProfileData {
+  id: string;
+  handle: string;
+  displayName: string;
+  avatarUrl?: string;
+  bio?: string;
+  pronouns?: string;
+  major?: string;
+  graduationYear?: number;
+  campusId: string;
+  isVerified: boolean;
+  badges: string[];
+  interests: string[];
+  stats: {
+    spacesCount: number;
+    connectionsCount: number;
+    toolsCreated: number;
+  };
+  createdAt?: string;
+  isPrivate?: boolean;
+}
+
+interface ProfileResponse {
+  profile: ProfileData;
+  isOwnProfile: boolean;
+  viewerType: string;
+}
 
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const { user: currentUser } = useAuth();
   const handle = params.handle as string;
 
-  const [unifiedProfile, setUnifiedProfile] = useState<UnifiedHiveProfile | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Transform UnifiedProfile to ProfileSystem for ProfileBentoGrid
-  const profileSystem: ProfileSystem | null = unifiedProfile
-    ? (unifiedProfile as ProfileSystem)
-    : null;
-
   useEffect(() => {
-    const loadPublicProfile = async () => {
+    async function fetchProfile() {
       if (!handle) return;
 
+      setIsLoading(true);
+      setError(null);
+
       try {
-        setIsLoading(true);
-        setError(null);
-
-        // Check if viewing own profile - redirect to settings for editing
-        const isOwnProfile = currentUser?.handle === handle;
-        if (isOwnProfile) {
-          // Own profile - show with edit capabilities
-          router.push('/settings');
-          return;
-        }
-
-        // Load public profile
-        const response = await fetch(`/api/profile/public/${handle}`);
-
-        if (response.status === 404) {
-          notFound();
-          return;
-        }
+        const response = await fetch(`/api/profile/handle/${encodeURIComponent(handle)}`, {
+          credentials: 'include',
+        });
 
         if (!response.ok) {
-          throw new Error('Failed to load profile');
+          if (response.status === 404) {
+            setError('Profile not found');
+          } else {
+            setError('Failed to load profile');
+          }
+          return;
         }
 
-        const data = await response.json();
-        // Convert API response to UnifiedHiveProfile
-        const unified = (data.profile || data) as UnifiedHiveProfile;
-        setUnifiedProfile(unified);
+        const data: ProfileResponse = await response.json();
+        setProfile(data.profile);
+        setIsOwnProfile(data.isOwnProfile);
 
+        // Redirect to own profile page if viewing own profile
+        if (data.isOwnProfile) {
+          router.replace('/profile');
+          return;
+        }
       } catch (err) {
-        logger.error('Error loading public profile', { component: 'UserProfilePage' }, err instanceof Error ? err : undefined);
-        setError(err instanceof Error ? err.message : 'Failed to load profile');
+        console.error('Error fetching profile:', err);
+        setError('Failed to load profile');
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
-    loadPublicProfile();
-  }, [handle, currentUser, router]);
+    fetchProfile();
+  }, [handle, router]);
 
   if (isLoading) {
+    return <ProfileViewLoadingSkeleton />;
+  }
+
+  if (error || !profile) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--hive-brand-primary)] mx-auto mb-4" />
-          <p className="text-white/70">Loading @{handle}...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <Card className="p-8 max-w-md mx-auto text-center bg-gray-900 border-gray-800">
-          <h2 className="text-xl font-bold text-white mb-4">Profile Not Found</h2>
-          <p className="text-gray-400 mb-6">
-            The profile @{handle} could not be found or is not available.
-          </p>
-          <Button onClick={() => router.push('/')} variant="default">
-            Back to Home
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!profileSystem) {
-    notFound();
-    return null;
-  }
-
-  return (
-    <div className="min-h-screen bg-black">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-
-        {/* Profile Header with @handle */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            @{handle}
+      <div className="min-h-screen bg-[var(--hive-background-page)] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold text-[var(--hive-text-primary)]">
+            {error === 'Profile not found' ? 'Profile Not Found' : 'Error'}
           </h1>
-          <p className="text-[var(--hive-brand-primary)] text-lg">
-            {handle}
+          <p className="text-[var(--hive-text-secondary)]">
+            {error === 'Profile not found'
+              ? `We couldn't find a user with the handle @${handle}`
+              : 'Something went wrong loading this profile'}
           </p>
-        </div>
-
-        {/* Main Profile Content */}
-        <ProfileBentoGrid
-          profile={profileSystem}
-          editable={false}
-          onLayoutChange={() => {}} // No-op for public view
-        />
-
-        {/* Social Actions */}
-        <div className="mt-8 flex justify-center gap-4">
-          <Button
-            variant="default"
-            className="bg-[var(--hive-brand-primary)] text-black hover:bg-yellow-400"
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 bg-[var(--hive-accent-primary)] text-white rounded-lg hover:opacity-90 transition"
           >
-            Follow
-          </Button>
-          <Button variant="outline">
-            Message
-          </Button>
+            Go Back
+          </button>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  // Handle private profiles
+  if (profile.isPrivate) {
+    return (
+      <div className="min-h-screen bg-[var(--hive-background-page)] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-24 h-24 mx-auto bg-[var(--hive-background-secondary)] rounded-full flex items-center justify-center">
+            <span className="text-4xl">🔒</span>
+          </div>
+          <h1 className="text-2xl font-bold text-[var(--hive-text-primary)]">
+            @{profile.handle}
+          </h1>
+          <p className="text-[var(--hive-text-secondary)]">
+            This profile is private
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Map profile data to ProfileOverviewPage props
+  return (
+    <ProfileOverviewPage
+      campusName="UB"
+      userName={profile.displayName}
+      handle={profile.handle}
+      avatarUrl={profile.avatarUrl}
+      avatarFallback={profile.displayName?.slice(0, 2).toUpperCase() || '??'}
+      pronouns={profile.pronouns}
+      program={profile.major || 'Student'}
+      badges={profile.badges || []}
+      stats={[
+        { label: 'Spaces', value: String(profile.stats.spacesCount || 0) },
+        { label: 'Connections', value: String(profile.stats.connectionsCount || 0) },
+        { label: 'Tools', value: String(profile.stats.toolsCreated || 0) },
+      ]}
+      highlights={[]}
+      experiences={[]}
+      spaces={[]}
+    />
   );
 }

@@ -677,6 +677,66 @@ function LoginContent() {
                   </p>
                 )}
               </motion.div>
+
+              {/* Dev Login - Only in development */}
+              {process.env.NODE_ENV === 'development' && (
+                <motion.div
+                  variants={itemVariants}
+                  className="mt-8 pt-6 border-t"
+                  style={{ borderColor: 'var(--hive-border-default)' }}
+                >
+                  <p className="text-xs text-center mb-3" style={{ color: 'var(--hive-text-disabled)' }}>
+                    🔧 Development Quick Login
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {[
+                      { email: 'jwrhineh@buffalo.edu', label: 'Founder (Completed)' },
+                      { email: 'newuser@buffalo.edu', label: 'New User' },
+                    ].map(({ email: devEmail, label }) => (
+                      <button
+                        key={devEmail}
+                        onClick={async () => {
+                          setLoginState('sending');
+                          try {
+                            const res = await fetch('/api/dev-auth', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              credentials: 'include',
+                              body: JSON.stringify({ email: devEmail }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              setLoginState('success');
+                              setTimeout(() => {
+                                if (data.needsOnboarding) {
+                                  router.push(`/onboarding?redirect=${encodeURIComponent(redirectTo)}`);
+                                } else {
+                                  router.push(redirectTo);
+                                }
+                              }, 500);
+                            } else {
+                              setError(data.error || 'Dev login failed');
+                              setLoginState('input');
+                            }
+                          } catch (err) {
+                            setError('Dev login failed');
+                            setLoginState('input');
+                          }
+                        }}
+                        disabled={loginState === 'sending'}
+                        className="px-3 py-1.5 text-xs rounded-lg transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{
+                          backgroundColor: 'var(--hive-bg-surface)',
+                          color: 'var(--hive-text-secondary)',
+                          border: '1px solid var(--hive-border-default)',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
           )}
       </AnimatePresence>

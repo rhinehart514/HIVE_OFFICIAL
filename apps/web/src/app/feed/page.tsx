@@ -5,8 +5,11 @@ import {
   FeedPageLayout,
   FeedCardPost,
   FeedCardEvent,
+  PostDetailModal,
   type FeedItem,
   type FeedCardPostData,
+  type PostDetailData,
+  type PostDetailComment,
 } from "@hive/ui";
 import { formatDistanceToNow } from "date-fns";
 import { logger } from "@/lib/logger";
@@ -120,11 +123,50 @@ export default function FeedPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [_showComposer, setShowComposer] = useState(false);
 
+  // Post detail modal state
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [comments, setComments] = useState<PostDetailComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
   // Transform posts to FeedItems for virtualized list
   const feedItems = useMemo<FeedItem[]>(
     () => posts.map(transformToFeedItem),
     [posts]
   );
+
+  // Get selected post for modal
+  const selectedPost = useMemo<PostDetailData | null>(() => {
+    if (!selectedPostId) return null;
+    const post = posts.find((p) => p.id === selectedPostId);
+    if (!post) return null;
+
+    return {
+      id: post.id,
+      author: {
+        id: post.authorId,
+        name: post.authorName || "Unknown",
+        avatarUrl: post.authorAvatar,
+      },
+      space: {
+        id: post.spaceId || "",
+        name: post.spaceName || "General",
+        color: post.spaceColor,
+      },
+      content: {
+        body: post.content,
+        tags: post.tags,
+      },
+      stats: {
+        upvotes: post.reactions?.heart || 0,
+        comments: post.reactions?.comments || 0,
+        isUpvoted: post.isLiked || false,
+        isBookmarked: post.isBookmarked || false,
+      },
+      createdAt: post.createdAt,
+      isEdited: false,
+      isPinned: post.isPinned,
+    };
+  }, [selectedPostId, posts]);
 
   // =============================================================================
   // DATA FETCHING
@@ -181,6 +223,90 @@ export default function FeedPage() {
   }, [filter]);
 
   // =============================================================================
+  // COMMENTS
+  // =============================================================================
+
+  const fetchComments = useCallback(async (postId: string) => {
+    setIsLoadingComments(true);
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`);
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data.comments || []);
+      } else {
+        setComments([]);
+      }
+    } catch {
+      setComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  }, []);
+
+  const handleSubmitComment = useCallback(async (postId: string, content: string) => {
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      if (response.ok) {
+        const newComment = await response.json();
+        setComments((prev) => [...prev, newComment]);
+        // Update comment count in posts
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? {
+                  ...post,
+                  reactions: {
+                    ...post.reactions,
+                    comments: (post.reactions?.comments || 0) + 1,
+                  },
+                }
+              : post
+          )
+        );
+      }
+    } catch (err) {
+      logger.error("Failed to submit comment", { component: "FeedPage" }, err instanceof Error ? err : undefined);
+    }
+  }, []);
+
+  const handleCommentLike = useCallback(async (commentId: string) => {
+    // Optimistic update
+    setComments((prev) =>
+      prev.map((comment) =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              hasLiked: !comment.hasLiked,
+              likes: comment.likes + (comment.hasLiked ? -1 : 1),
+            }
+          : comment
+      )
+    );
+
+    try {
+      await fetch(`/api/comments/${commentId}/like`, { method: "POST" });
+    } catch {
+      // Revert on error
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                hasLiked: !comment.hasLiked,
+                likes: comment.likes + (comment.hasLiked ? 1 : -1),
+              }
+            : comment
+        )
+      );
+    }
+  }, []);
+
+  // =============================================================================
   // ACTION HANDLERS
   // =============================================================================
 
@@ -227,8 +353,9 @@ export default function FeedPage() {
   }, []);
 
   const handleComment = useCallback((postId: string) => {
-    window.location.href = `/posts/${postId}#comments`;
-  }, []);
+    setSelectedPostId(postId);
+    fetchComments(postId);
+  }, [fetchComments]);
 
   const handleBookmark = useCallback(async (postId: string) => {
     // Optimistic update
@@ -269,8 +396,9 @@ export default function FeedPage() {
   }, []);
 
   const handleOpenPost = useCallback((postId: string) => {
-    window.location.href = `/posts/${postId}`;
-  }, []);
+    setSelectedPostId(postId);
+    fetchComments(postId);
+  }, [fetchComments]);
 
   const handleSpaceClick = useCallback((spaceId: string) => {
     window.location.href = `/spaces/${spaceId}`;
@@ -336,20 +464,45 @@ export default function FeedPage() {
   // =============================================================================
 
   return (
-    <FeedPageLayout
-      title="Your Feed"
-      showComposer={true}
-      onCompose={() => setShowComposer(true)}
-      activeFilter={filter}
-      onFilterChange={setFilter}
-      feedItems={feedItems}
-      renderFeedItem={renderFeedItem}
-      onLoadMore={() => fetchFeed(false)}
-      hasMore={hasMore}
-      isLoading={isLoading}
-      isInitialLoad={isInitialLoad}
-      error={error}
-      onRetry={() => fetchFeed(true)}
-    />
+    <>
+      <FeedPageLayout
+        title="Your Feed"
+        showComposer={true}
+        onCompose={() => setShowComposer(true)}
+        activeFilter={filter}
+        onFilterChange={setFilter}
+        feedItems={feedItems}
+        renderFeedItem={renderFeedItem}
+        onLoadMore={() => fetchFeed(false)}
+        hasMore={hasMore}
+        isLoading={isLoading}
+        isInitialLoad={isInitialLoad}
+        error={error}
+        onRetry={() => fetchFeed(true)}
+      />
+
+      {/* Post Detail Modal */}
+      <PostDetailModal
+        open={!!selectedPostId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedPostId(null);
+            setComments([]);
+          }
+        }}
+        post={selectedPost}
+        comments={comments}
+        isLoadingComments={isLoadingComments}
+        onUpvote={handleUpvote}
+        onBookmark={handleBookmark}
+        onShare={handleShare}
+        onComment={handleSubmitComment}
+        onCommentLike={handleCommentLike}
+        onSpaceClick={handleSpaceClick}
+        onAuthorClick={(authorId) => {
+          window.location.href = `/profile/${authorId}`;
+        }}
+      />
+    </>
   );
 }

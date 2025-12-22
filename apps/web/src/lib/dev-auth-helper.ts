@@ -1,9 +1,14 @@
 /**
  * Development Auth Helper
- * Creates mock sessions for local development without Firebase
+ * Creates real sessions for local development with Firebase
  */
 
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import { SignJWT } from 'jose';
+import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
+import { getEncodedSessionSecret } from '@/lib/session';
 
 export interface DevUser {
   userId: string;
@@ -29,103 +34,19 @@ const DEV_USERS: Record<string, DevUser> = {
     userId: 'dev-user-001',
     email: 'testuser@buffalo.edu',
     handle: 'testuser',
-    schoolId: 'ub',
+    schoolId: 'ub-buffalo',
     role: 'student',
     displayName: 'Test User',
   },
-  'student@test.edu': {
-    userId: 'dev-student-001',
-    email: 'student@test.edu',
-    handle: 'teststudent',
-    schoolId: 'test-campus',
+  'newuser@buffalo.edu': {
+    userId: '', // Will be created
+    email: 'newuser@buffalo.edu',
+    handle: '',
+    schoolId: 'ub-buffalo',
     role: 'student',
-    displayName: 'Test Student',
-  },
-  'faculty@test.edu': {
-    userId: 'dev-faculty-001',
-    email: 'faculty@test.edu',
-    handle: 'testfaculty',
-    schoolId: 'test-campus',
-    role: 'faculty',
-    displayName: 'Test Faculty',
-  },
-  'admin@test.edu': {
-    userId: 'dev-admin-001',
-    email: 'admin@test.edu',
-    handle: 'testadmin',
-    schoolId: 'test-campus',
-    role: 'admin',
-    displayName: 'Test Admin',
-  },
-  'admin@buffalo.edu': {
-    userId: 'dev-ubadmin-001',
-    email: 'admin@buffalo.edu',
-    handle: 'ubadmin',
-    schoolId: 'ub',
-    role: 'admin',
-    displayName: 'UB Admin',
-  },
-  'sarah.chen@buffalo.edu': {
-    userId: 'dev-sarah-001',
-    email: 'sarah.chen@buffalo.edu',
-    handle: 'sarahchen',
-    schoolId: 'ub',
-    role: 'student',
-    displayName: 'Sarah Chen',
+    displayName: 'New User',
   },
 };
-
-/**
- * Create a development session for testing
- */
-export async function createDevSession(
-  email: string,
-  _request: NextRequest
-): Promise<{
-  success: boolean;
-  user?: DevUser;
-  tokens?: { accessToken: string };
-  error?: string;
-}> {
-  // Normalize email
-  const normalizedEmail = email.toLowerCase().trim();
-
-  // Check if user exists in mock database
-  let user = DEV_USERS[normalizedEmail];
-
-  // If not found, create a new mock user based on email
-  if (!user) {
-    // Extract handle from email
-    const handle = normalizedEmail.split('@')[0].replace(/[^a-z0-9]/g, '');
-    const domain = normalizedEmail.split('@')[1];
-
-    // Determine school from domain
-    let schoolId = 'unknown';
-    if (domain?.includes('buffalo.edu')) {
-      schoolId = 'ub';
-    } else if (domain?.includes('test.edu')) {
-      schoolId = 'test-campus';
-    }
-
-    user = {
-      userId: `dev-${handle}-${Date.now()}`,
-      email: normalizedEmail,
-      handle,
-      schoolId,
-      role: 'student',
-      displayName: handle.charAt(0).toUpperCase() + handle.slice(1),
-    };
-  }
-
-  // Generate a mock access token
-  const accessToken = `dev-token-${user.userId}-${Date.now()}`;
-
-  return {
-    success: true,
-    user,
-    tokens: { accessToken },
-  };
-}
 
 /**
  * Get available dev users
@@ -135,11 +56,104 @@ export function getDevUsers(): DevUser[] {
 }
 
 /**
- * Handle dev auth request and return a Response
+ * Create a development session with proper cookies
+ */
+export async function createDevSession(
+  email: string,
+  _request: NextRequest
+): Promise<{
+  success: boolean;
+  user?: DevUser;
+  needsOnboarding?: boolean;
+  error?: string;
+}> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  let userId: string;
+  let needsOnboarding = true;
+  let isAdmin = false;
+  let campusId = 'ub-buffalo';
+
+  // Check if it's a known dev user
+  const devUser = DEV_USERS[normalizedEmail];
+
+  if (isFirebaseConfigured) {
+    // Look up real user in Firestore
+    const existingUsers = await dbAdmin
+      .collection('users')
+      .where('email', '==', normalizedEmail)
+      .limit(1)
+      .get();
+
+    if (!existingUsers.empty) {
+      // User exists in Firestore
+      const userDoc = existingUsers.docs[0];
+      userId = userDoc.id;
+      const userData = userDoc.data();
+
+      campusId = userData?.campusId || userData?.schoolId || 'ub-buffalo';
+      isAdmin = userData?.isAdmin || false;
+
+      // Check onboarding status
+      needsOnboarding = !(
+        userData?.onboardingCompleted ||
+        userData?.onboardingComplete ||
+        userData?.onboardingCompletedAt ||
+        (userData?.handle && userData?.fullName)
+      );
+
+      logger.info('Dev auth: Found existing user', {
+        userId,
+        email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
+        needsOnboarding,
+      });
+    } else {
+      // Create new user for testing
+      const userRef = dbAdmin.collection('users').doc();
+      userId = userRef.id;
+
+      await userRef.set({
+        id: userId,
+        email: normalizedEmail,
+        campusId,
+        schoolId: campusId,
+        emailVerified: true,
+        verifiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+
+      needsOnboarding = true;
+
+      logger.info('Dev auth: Created new user', {
+        userId,
+        email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
+      });
+    }
+  } else {
+    // Firebase not configured - use mock data
+    userId = devUser?.userId || `dev-${normalizedEmail.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    needsOnboarding = !devUser?.handle; // Need onboarding if no handle
+  }
+
+  return {
+    success: true,
+    user: {
+      userId,
+      email: normalizedEmail,
+      handle: devUser?.handle || '',
+      schoolId: campusId,
+      role: devUser?.role || 'student',
+      displayName: devUser?.displayName || normalizedEmail.split('@')[0],
+    },
+    needsOnboarding,
+  };
+}
+
+/**
+ * Handle dev auth request and return a Response with session cookie
  */
 export async function handleDevAuth(request: NextRequest): Promise<Response> {
-  const { NextResponse } = await import('next/server');
-
   try {
     const body = await request.json();
     const { email } = body;
@@ -151,21 +165,80 @@ export async function handleDevAuth(request: NextRequest): Promise<Response> {
       );
     }
 
-    const result = await createDevSession(email, request);
-
-    if (!result.success) {
+    // Validate email domain
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail.includes('@')) {
       return NextResponse.json(
-        { success: false, error: result.error },
+        { success: false, error: 'Invalid email format' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({
+    const result = await createDevSession(normalizedEmail, request);
+
+    if (!result.success || !result.user) {
+      return NextResponse.json(
+        { success: false, error: result.error || 'Failed to create session' },
+        { status: 400 }
+      );
+    }
+
+    // Create session token using centralized secure secret
+    const secret = getEncodedSessionSecret();
+
+    const campusId = result.user.schoolId || 'ub-buffalo';
+    const isAdmin = result.user.role === 'admin' || result.user.role === 'founder';
+
+    const sessionToken = await new SignJWT({
+      userId: result.user.userId,
+      email: normalizedEmail,
+      campusId,
+      isAdmin,
+      onboardingCompleted: !result.needsOnboarding,
+      verifiedAt: new Date().toISOString(),
+      sessionId: `dev-session-${Date.now()}`,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setSubject(result.user.userId)
+      .setIssuedAt()
+      .setExpirationTime('30d')
+      .sign(secret);
+
+    // Create response with user data
+    const response = NextResponse.json({
       success: true,
-      user: result.user,
-      tokens: result.tokens,
+      needsOnboarding: result.needsOnboarding,
+      user: {
+        id: result.user.userId,
+        email: normalizedEmail,
+        campusId,
+        handle: result.user.handle,
+        displayName: result.user.displayName,
+        onboardingCompleted: !result.needsOnboarding,
+      },
+      devMode: true,
     });
+
+    // Set session cookie (same as verify-code route)
+    response.cookies.set('hive_session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    logger.info('Dev auth: Session created', {
+      userId: result.user.userId,
+      email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
+      needsOnboarding: result.needsOnboarding,
+    });
+
+    return response;
   } catch (error) {
+    logger.error('Dev auth error', {
+      error: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

@@ -106,7 +106,15 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
   const [mySpaces, setMySpaces] = React.useState<ShellSpaceSection[]>(emptySections);
   const [isSpaceLeader, setIsSpaceLeader] = React.useState(false);
 
+  // Check early if this is a no-shell route to skip API calls
+  const isNoShellRoute = NO_SHELL_ROUTES.some(route =>
+    pathname?.startsWith(route) || pathname === '/'
+  );
+
   React.useEffect(() => {
+    // Skip API calls for public/no-shell routes
+    if (isNoShellRoute) return;
+
     let cancelled = false;
 
     const resolveJoinedAt = (value: unknown): Date | undefined => {
@@ -359,7 +367,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
     return () => {
       cancelled = true;
     };
-  }, [emptySections]);
+  }, [emptySections, isNoShellRoute]);
 
   // HiveLAB access is granted to space leaders (owners/admins of any space)
   const canAccessHiveLab = isSpaceLeader || auth.user?.isBuilder || auth.user?.builderOptIn;
@@ -388,7 +396,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
     return items;
   }, [canAccessHiveLab]);
 
-  // Check if current route should have no shell
+  // Check if current route should have no shell - MUST be before any data fetching
   const shouldHaveNoShell = NO_SHELL_ROUTES.some(route =>
     pathname?.startsWith(route) || pathname === '/'
   );

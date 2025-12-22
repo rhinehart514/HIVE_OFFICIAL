@@ -114,6 +114,27 @@ function resolveSettings(
   };
 }
 
+// Space-tier element IDs that require isSpaceLeader
+const SPACE_TIER_ELEMENTS = [
+  'member-list',
+  'member-selector',
+  'space-events',
+  'space-feed',
+  'space-stats',
+  'announcement',
+  'role-gate',
+];
+
+/**
+ * Check if tool composition contains space-tier elements
+ */
+function compositionHasSpaceElements(toolData: FirebaseFirestore.DocumentData): boolean {
+  const elements = toolData.composition?.elements || toolData.elements || [];
+  return elements.some((el: { elementId?: string }) =>
+    SPACE_TIER_ELEMENTS.includes(el.elementId || '')
+  );
+}
+
 async function ensureToolIsDeployable(toolId: string, userId: string) {
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
   if (!toolDoc.exists) {
@@ -307,6 +328,19 @@ export const POST = withAuthValidationAndErrors(
       return respond.error(toolResult.message, "FORBIDDEN", {
         status: toolResult.status,
       });
+    }
+
+    // Validate composition - space-tier elements require space deployment
+    const hasSpaceElements = compositionHasSpaceElements(toolResult.toolData);
+    if (hasSpaceElements) {
+      if (payload.deployTo === "profile") {
+        return respond.error(
+          "This tool contains space-tier elements and can only be deployed to spaces",
+          "FORBIDDEN",
+          { status: 403 },
+        );
+      }
+      // For space deployment, we'll verify user is leader/admin in ensureSpaceDeploymentAllowed
     }
 
     if (payload.deployTo === "profile" && payload.targetId !== userId) {

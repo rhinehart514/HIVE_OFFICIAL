@@ -186,36 +186,173 @@ function extractOutputValue(
     return elementState[outputName];
   }
 
-  // Special output mappings based on element types
+  // Complete output mappings for all 27 element types
   const outputMappings: Record<string, Record<string, string>> = {
+    // ═══════════════════════════════════════════════════════════════════
+    // UNIVERSAL ELEMENTS (15)
+    // ═══════════════════════════════════════════════════════════════════
     'poll-element': {
       results: 'responses',
       votes: 'totalVotes',
       winner: 'topChoice',
+      data: 'responses',
     },
     'form-builder': {
       submissions: 'submissions',
       data: 'lastSubmission',
       count: 'submissionCount',
+      formData: 'lastSubmission',
     },
     'leaderboard': {
       entries: 'entries',
       data: 'entries',
       top: 'topEntries',
+      rankings: 'entries',
     },
     'counter': {
       value: 'value',
       count: 'value',
+      data: 'value',
     },
     'timer': {
       elapsed: 'elapsed',
       running: 'isRunning',
       time: 'elapsed',
+      data: 'elapsed',
+    },
+    'countdown-timer': {
+      finished: 'finished',
+      complete: 'finished',
+      timeLeft: 'timeLeft',
+      data: 'timeLeft',
+    },
+    'search-input': {
+      query: 'query',
+      searchTerm: 'query',
+      text: 'query',
+      data: 'query',
+    },
+    'filter-selector': {
+      filters: 'selectedFilters',
+      selectedFilters: 'selectedFilters',
+      value: 'selectedFilters',
+      data: 'selectedFilters',
+    },
+    'result-list': {
+      items: 'items',
+      selection: 'selectedItem',
+      selectedItem: 'selectedItem',
+      data: 'items',
+    },
+    'date-picker': {
+      date: 'selectedDate',
+      selectedDate: 'selectedDate',
+      value: 'selectedDate',
+      data: 'selectedDate',
+    },
+    'tag-cloud': {
+      tags: 'tags',
+      selected: 'selectedTags',
+      selectedTags: 'selectedTags',
+      data: 'selectedTags',
+    },
+    'map-view': {
+      location: 'selectedLocation',
+      markers: 'markers',
+      selectedLocation: 'selectedLocation',
+      data: 'markers',
+    },
+    'chart-display': {
+      chartData: 'chartData',
+      selection: 'selectedPoint',
+      selectedPoint: 'selectedPoint',
+      data: 'chartData',
+    },
+    'notification-display': {
+      notifications: 'notifications',
+      count: 'notificationCount',
+      data: 'notifications',
+    },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CONNECTED ELEMENTS (5)
+    // ═══════════════════════════════════════════════════════════════════
+    'event-picker': {
+      event: 'selectedEvent',
+      eventId: 'selectedEventId',
+      selectedEvent: 'selectedEvent',
+      events: 'events',
+      data: 'selectedEvent',
+    },
+    'space-picker': {
+      space: 'selectedSpace',
+      spaceId: 'selectedSpaceId',
+      selectedSpace: 'selectedSpace',
+      spaces: 'spaces',
+      data: 'selectedSpace',
+    },
+    'user-selector': {
+      user: 'selectedUser',
+      userId: 'selectedUserId',
+      selectedUser: 'selectedUser',
+      users: 'users',
+      data: 'selectedUser',
     },
     'rsvp-button': {
       attendees: 'attendees',
       count: 'count',
       waitlist: 'waitlist',
+      data: 'attendees',
+    },
+    'connection-list': {
+      connections: 'connections',
+      selected: 'selectedConnection',
+      selectedConnection: 'selectedConnection',
+      data: 'connections',
+    },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SPACE ELEMENTS (7)
+    // ═══════════════════════════════════════════════════════════════════
+    'member-list': {
+      members: 'members',
+      selected: 'selectedMember',
+      selectedMember: 'selectedMember',
+      data: 'members',
+    },
+    'member-selector': {
+      member: 'selectedMember',
+      members: 'selectedMembers',
+      userId: 'selectedMember',
+      selectedMember: 'selectedMember',
+      data: 'selectedMember',
+    },
+    'space-events': {
+      events: 'events',
+      upcoming: 'upcomingEvents',
+      upcomingEvents: 'upcomingEvents',
+      data: 'events',
+    },
+    'space-feed': {
+      posts: 'posts',
+      feed: 'posts',
+      data: 'posts',
+    },
+    'space-stats': {
+      stats: 'stats',
+      metrics: 'stats',
+      data: 'stats',
+    },
+    'announcement': {
+      sent: 'announcementSent',
+      recipients: 'recipients',
+      data: 'announcementSent',
+    },
+    'role-gate': {
+      allowed: 'isAllowed',
+      role: 'currentRole',
+      isAllowed: 'isAllowed',
+      data: 'isAllowed',
     },
   };
 
@@ -441,34 +578,140 @@ export async function cascadeConnections(ctx: CascadeContext): Promise<CascadeRe
  * Determine which outputs an action affects
  */
 export function getAffectedOutputs(action: string, elementId: string): string[] {
+  // Complete action→output mappings for all 27 element types
   const outputMappings: Record<string, Record<string, string[]>> = {
+    // ═══════════════════════════════════════════════════════════════════
+    // UNIVERSAL ELEMENTS (15)
+    // ═══════════════════════════════════════════════════════════════════
     'poll-element': {
-      vote: ['results', 'votes'],
-      submit: ['results', 'votes'],
+      vote: ['results', 'votes', 'data'],
+      submit: ['results', 'votes', 'data'],
+      reset: ['results', 'votes', 'data'],
     },
     'form-builder': {
       submit: ['submissions', 'data', 'count'],
+      reset: ['submissions', 'data', 'count'],
+      validate: ['data'],
     },
     'leaderboard': {
-      update_score: ['entries', 'data'],
-      increment: ['entries', 'data'],
+      update_score: ['entries', 'data', 'rankings'],
+      increment: ['entries', 'data', 'rankings'],
+      refresh: ['entries', 'data', 'rankings'],
     },
     'counter': {
-      increment: ['value', 'count'],
-      decrement: ['value', 'count'],
-      update: ['value', 'count'],
+      increment: ['value', 'count', 'data'],
+      decrement: ['value', 'count', 'data'],
+      update: ['value', 'count', 'data'],
+      reset: ['value', 'count', 'data'],
     },
     'timer': {
-      start: ['running'],
-      stop: ['elapsed', 'time'],
-      reset: ['elapsed', 'time', 'running'],
-    },
-    'rsvp-button': {
-      rsvp: ['attendees', 'count'],
-      cancel_rsvp: ['attendees', 'count'],
+      start: ['running', 'data'],
+      stop: ['elapsed', 'time', 'data'],
+      reset: ['elapsed', 'time', 'running', 'data'],
+      tick: ['elapsed', 'time', 'data'],
     },
     'countdown-timer': {
-      finished: ['finished', 'complete'],
+      start: ['timeLeft', 'data'],
+      finished: ['finished', 'complete', 'data'],
+      reset: ['timeLeft', 'finished', 'data'],
+    },
+    'search-input': {
+      search: ['query', 'searchTerm', 'data'],
+      change: ['query', 'data'],
+      clear: ['query', 'data'],
+    },
+    'filter-selector': {
+      select: ['selectedFilters', 'filters', 'data'],
+      change: ['selectedFilters', 'filters', 'data'],
+      clear: ['selectedFilters', 'data'],
+    },
+    'result-list': {
+      select: ['selectedItem', 'selection', 'data'],
+      refresh: ['items', 'data'],
+    },
+    'date-picker': {
+      select: ['selectedDate', 'date', 'data'],
+      change: ['selectedDate', 'date', 'data'],
+      clear: ['selectedDate', 'data'],
+    },
+    'tag-cloud': {
+      select: ['selectedTags', 'tags', 'data'],
+      toggle: ['selectedTags', 'tags', 'data'],
+      clear: ['selectedTags', 'data'],
+    },
+    'map-view': {
+      select: ['selectedLocation', 'location', 'data'],
+      add_marker: ['markers', 'data'],
+      remove_marker: ['markers', 'data'],
+    },
+    'chart-display': {
+      select: ['selectedPoint', 'selection', 'data'],
+      refresh: ['chartData', 'data'],
+    },
+    'notification-display': {
+      add: ['notifications', 'count', 'data'],
+      dismiss: ['notifications', 'count', 'data'],
+      clear: ['notifications', 'count', 'data'],
+    },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CONNECTED ELEMENTS (5)
+    // ═══════════════════════════════════════════════════════════════════
+    'event-picker': {
+      select: ['selectedEvent', 'eventId', 'data'],
+      change: ['selectedEvent', 'eventId', 'data'],
+      refresh: ['events', 'data'],
+    },
+    'space-picker': {
+      select: ['selectedSpace', 'spaceId', 'data'],
+      change: ['selectedSpace', 'spaceId', 'data'],
+      refresh: ['spaces', 'data'],
+    },
+    'user-selector': {
+      select: ['selectedUser', 'userId', 'data'],
+      change: ['selectedUser', 'userId', 'data'],
+      search: ['users', 'data'],
+    },
+    'rsvp-button': {
+      rsvp: ['attendees', 'count', 'data'],
+      cancel_rsvp: ['attendees', 'count', 'data'],
+      join_waitlist: ['waitlist', 'data'],
+    },
+    'connection-list': {
+      select: ['selectedConnection', 'selected', 'data'],
+      refresh: ['connections', 'data'],
+    },
+
+    // ═══════════════════════════════════════════════════════════════════
+    // SPACE ELEMENTS (7)
+    // ═══════════════════════════════════════════════════════════════════
+    'member-list': {
+      select: ['selectedMember', 'selected', 'data'],
+      refresh: ['members', 'data'],
+    },
+    'member-selector': {
+      select: ['selectedMember', 'member', 'data'],
+      change: ['selectedMember', 'member', 'data'],
+      multi_select: ['selectedMembers', 'members', 'data'],
+    },
+    'space-events': {
+      select: ['selectedEvent', 'data'],
+      refresh: ['events', 'upcomingEvents', 'data'],
+    },
+    'space-feed': {
+      post: ['posts', 'feed', 'data'],
+      refresh: ['posts', 'feed', 'data'],
+    },
+    'space-stats': {
+      refresh: ['stats', 'metrics', 'data'],
+    },
+    'announcement': {
+      send: ['sent', 'recipients', 'data'],
+      post: ['sent', 'recipients', 'data'],
+    },
+    'role-gate': {
+      check: ['isAllowed', 'role', 'data'],
+      refresh: ['isAllowed', 'role', 'data'],
     },
   };
 
@@ -563,11 +806,30 @@ const genericRefreshHandler = async (context: ActionContext): Promise<ActionResu
   };
 };
 
-// Register refresh handlers for elements that may be cascade targets
+// Register refresh handlers for all elements that may be cascade targets
+// This ensures any element can receive data from connected elements
+
+// Universal elements
 registerElementActionHandler('leaderboard', 'refresh', genericRefreshHandler);
 registerElementActionHandler('result-list', 'refresh', genericRefreshHandler);
 registerElementActionHandler('chart-display', 'refresh', genericRefreshHandler);
-registerElementActionHandler('notification-center', 'refresh', genericRefreshHandler);
+registerElementActionHandler('notification-display', 'refresh', genericRefreshHandler);
+registerElementActionHandler('tag-cloud', 'refresh', genericRefreshHandler);
+registerElementActionHandler('map-view', 'refresh', genericRefreshHandler);
+registerElementActionHandler('filter-selector', 'refresh', genericRefreshHandler);
+
+// Connected elements
+registerElementActionHandler('event-picker', 'refresh', genericRefreshHandler);
+registerElementActionHandler('space-picker', 'refresh', genericRefreshHandler);
+registerElementActionHandler('user-selector', 'refresh', genericRefreshHandler);
+registerElementActionHandler('connection-list', 'refresh', genericRefreshHandler);
+registerElementActionHandler('rsvp-button', 'refresh', genericRefreshHandler);
+
+// Space elements
 registerElementActionHandler('member-list', 'refresh', genericRefreshHandler);
+registerElementActionHandler('member-selector', 'refresh', genericRefreshHandler);
+registerElementActionHandler('space-events', 'refresh', genericRefreshHandler);
 registerElementActionHandler('space-feed', 'refresh', genericRefreshHandler);
 registerElementActionHandler('space-stats', 'refresh', genericRefreshHandler);
+registerElementActionHandler('announcement', 'refresh', genericRefreshHandler);
+registerElementActionHandler('role-gate', 'refresh', genericRefreshHandler);

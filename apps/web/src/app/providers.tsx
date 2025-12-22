@@ -37,7 +37,7 @@ export function Providers({ children }: ProvidersProps) {
       >
         <UniversalShellProvider>
           {children}
-          <PWAManager />
+          {/* <PWAManager /> - disabled for development */}
         </UniversalShellProvider>
         <Suspense fallback={null}>
           <Toaster />

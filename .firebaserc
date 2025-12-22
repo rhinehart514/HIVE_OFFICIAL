@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "hive-campus"
+    "default": "hive-9265c",
+    "production": "hive-9265c"
   }
 }

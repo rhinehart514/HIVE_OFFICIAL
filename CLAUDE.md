@@ -4,69 +4,76 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## Working Relationship
+
+**You are a co-founder, not a contractor.**
+
+We're building a startup. Be proactive. Push back when something doesn't make sense. Ask hard questions. Care about the outcome, not just the task.
+
+When working on any feature, always filter through:
+1. Does this give students more control over their own development?
+2. Does it expand what they can think, create, or do?
+3. Does it help them figure out their own path?
+
+If yes, build it. If no, question it.
+
+Full vision: **`docs/VISION.md`** — read this first if you haven't.
+
+---
+
 ## What is HIVE?
 
-**HIVE is the operating system for campus communities.**
+**HIVE is student autonomy infrastructure for a world where the old paths are dying.**
 
-We pre-seed 400+ student organizations from CampusLabs, so students discover active communities from day one. Leaders claim and customize their spaces. The platform owns the structured data layer—events, members, engagement—that powers everything.
+Most of what students are being taught is for a world that won't exist when they graduate. The career center is clueless. The curriculum is outdated. The credential system is crumbling. Students sense this—they're anxious and don't know why.
 
-### The Problem We Solve
+HIVE is where they figure it out. With communities of people exploring alongside them. With tools to build things that matter. With AI that expands what they can think and create.
 
-**For Students:**
-- Information is fragmented across Instagram, GroupMe, Discord, email, flyers
-- New students can't discover 300+ organizations easily
-- Events are missed because there's no unified calendar
-- No way to browse communities before committing
+### The Core Value: Student Autonomy
 
-**For Club Leaders:**
-- Managing 5+ platforms manually (Instagram, GroupMe, Discord, email lists)
-- Recruitment is hard—how do you reach students who don't know you exist?
-- No tools to engage members beyond basic chat
-- Burnout from repetitive admin work
+Student autonomy means control over your own development:
+- **Community Autonomy** — Create spaces without permission. Own your communities.
+- **Data Autonomy** — Your profile, connections, and activity belong to you.
+- **Tool Autonomy** — Build what you need through HiveLab. Don't wait for us.
+- **Attention Autonomy** — No dark patterns. No manipulation. You choose your experience.
+- **Developmental Autonomy** — Explore, build, connect. Create your own path.
 
-**For Universities:**
-- No visibility into student engagement across organizations
-- Static tools (Campus Labs) that students don't actually use
-- Can't measure community health or identify struggling orgs
+### The Four Layers
 
-### The HIVE Solution
+| Layer | What It Is |
+|-------|------------|
+| **Community** | Student-owned spaces for exploration and creation |
+| **Creation** | HiveLab — students building things that matter |
+| **Connection** | Real social graph of campus life |
+| **Intelligence** | AI that expands thinking, not replaces it |
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    STUDENTS                                  │
-│  "I can discover every org, see upcoming events, and join   │
-│   communities that match my interests—all in one place."    │
-├─────────────────────────────────────────────────────────────┤
-│                      HIVE                                    │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
-│  │   Spaces    │  │   HiveLab   │  │    Data     │          │
-│  │ (Community) │  │  (Tools)    │  │   Layer     │          │
-│  └─────────────┘  └─────────────┘  └─────────────┘          │
-├─────────────────────────────────────────────────────────────┤
-│                    LEADERS                                   │
-│  "I manage my community from one hub. I can build custom    │
-│   tools without code. Members actually engage."             │
-└─────────────────────────────────────────────────────────────┘
-```
+### AI Philosophy
 
-### Winter 2024-25 Priority
+AI isn't the goal. AI expands what students can think.
 
-**Focus: Spaces + HiveLab only.**
+- AI lets you explore ideas you couldn't explore alone
+- AI connects you to knowledge you didn't know existed
+- AI helps you build things beyond your current skill level
+- AI is a thinking partner, not a replacement for thinking
+
+### Winter 2025-26 Priority
+
+**Win UB. Prove the model at density.**
 
 | Build | Defer |
 |-------|-------|
-| Spaces (real-time chat, boards, sidebar) | Feed enhancements |
-| HiveLab (canvas, elements, deployment) | Rituals (platform campaigns) |
-| Pre-seeded space claiming | Marketplace |
-| Leader customization | Advanced analytics |
+| Spaces (community, chat, real-time) | Feed enhancements |
+| HiveLab (creation, tools, deployment) | Rituals |
+| Social graph features | Marketplace |
+| AI integration (catch-up, exploration) | University contracts |
 
 ### Launch Strategy
 
-**University at Buffalo first, multi-campus architecture ready.**
+**University at Buffalo first. 32,000 students, 300+ orgs.**
 
-- First deployment: UB (32,000 students, 300+ student organizations)
-- Architecture supports multi-tenant from day one (campusId isolation)
-- Nail density at one campus before expanding
+- 400+ spaces pre-seeded from CampusLabs
+- Density at one campus before expanding
+- Multi-campus architecture ready (campusId isolation)
 
 ---
 
@@ -245,7 +252,7 @@ This data layer is what AI assistants and future tools will query:
 ### The "Campus OS" Future
 
 ```
-2024-25 (Now):     HIVE = Best place to discover and engage
+2025-26 (Now):     HIVE = Best place to discover and engage
 2026+ (Future):    HIVE = Data layer that AI assistants plug into
 ```
 
@@ -253,7 +260,7 @@ Students won't just use HIVE's UI—their AI assistants will query HIVE's APIs.
 
 ---
 
-## Current Platform State (December 2024)
+## Current Platform State (December 2025)
 
 **Honest Assessment:**
 
@@ -261,7 +268,7 @@ Students won't just use HIVE's UI—their AI assistants will query HIVE's APIs.
 |-------|--------------|----------------|---------------|
 | **Spaces + Chat** | 85% DONE | Full DDD stack, SSE streaming, ownership detection, chat with threading | Typing indicator spam (2s polling), some UI polish |
 | **HiveLab/Tools** | 80% DONE | Full IDE, element system, deployment, runtime | Analytics mock data |
-| **Auth/Onboarding** | 70% DONE | Magic link, session management | Edge cases |
+| **Auth/Onboarding** | 85% DONE | OTP auth, JWT sessions, 4-step onboarding, dev auth bypass | Edge cases in onboarding |
 | **Feed** | 75% DONE | Privacy enforced, moderation | Ghost mode gaps |
 | **Profiles** | 70% DONE | Basic flow works | Ghost mode incomplete |
 
@@ -275,7 +282,6 @@ Students won't just use HIVE's UI—their AI assistants will query HIVE's APIs.
 
 **Real Issues (P1/P2):**
 - P1: Typing indicator polling every 2s creates spam
-- P1: Some deleted files referenced in imports may cause build errors
 - P2: Ghost mode incomplete
 - P2: Analytics uses mock data
 
@@ -314,6 +320,13 @@ pnpm seed:emulator                    # Seed test data
 
 # Cleanup
 pnpm clean                            # Clean all build outputs + node_modules
+
+# Dev Auth (local testing with production Firebase)
+# Login page has dev buttons, or use curl:
+curl -X POST http://localhost:3000/api/dev-auth \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jwrhineh@buffalo.edu"}' \
+  -c /tmp/hive_cookies.txt
 ```
 
 ---
@@ -609,14 +622,11 @@ apps/web/src/app/api/tools/            # Backend APIs (shared)
 
 | Doc | Purpose |
 |-----|---------|
-| `docs/STRATEGY.md` | Market context, stakeholder psychology, business exploration |
-| `docs/PRODUCT_VISION.md` | Long-term vision, three horizons, product principles |
-| `docs/HIVELAB_HOLISTIC_VISION.md` | HiveLab architecture: three faces, elements, slash commands, templates |
-| `docs/architecture/VERTICAL_SLICE_AUDIT.md` | Complete slice analysis + technical status |
-| `docs/architecture/IMPLEMENTATION_ROADMAP.md` | Ordered implementation with AI analysis |
-| `docs/ARCHITECTURE.md` | Codebase structure overview |
-| `docs/development/DATABASE_SCHEMA.md` | Firestore collections |
-| `docs/features/FEATURES.md` | Feature specifications |
+| `docs/VISION.md` | **START HERE** — Full vision, student autonomy, AI philosophy, goals |
+| `docs/VERTICAL_SLICES.md` | Spaces + HiveLab specs, feature flags, architecture, success criteria |
+| `docs/VALUE.md` | Value proposition, what's built, competitive positioning |
+| `docs/DATABASE_SCHEMA.md` | Firestore collections |
+| `docs/FIREBASE_SETUP.md` | Firebase configuration and setup |
 
 ---
 

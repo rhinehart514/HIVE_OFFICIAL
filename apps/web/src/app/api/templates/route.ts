@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix DDD Result pattern - Template.create and repo.findMany/save don't match actual implementation
 /**
  * Templates API - List and Create Templates
  *

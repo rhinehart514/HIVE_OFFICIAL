@@ -151,7 +151,43 @@ service cloud.firestore {
         isAdmin()
       );
     }
-    
+
+    // Deployed tools (tools placed in spaces)
+    match /deployedTools/{deploymentId} {
+      allow read: if isAuthenticated() && sameCampus();
+      allow create: if isAuthenticated() && sameCampusWrite() && (
+        isOwner(request.resource.data.deployedBy) ||
+        isAdmin()
+      );
+      allow update: if isAuthenticated() && sameCampusWrite() && (
+        isOwner(resource.data.deployedBy) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.deployedBy) ||
+        isAdmin()
+      );
+    }
+
+    // Events (campus events from CampusLabs and user-created)
+    match /events/{eventId} {
+      allow read: if isAuthenticated() && sameCampus();
+      allow create: if isAuthenticated() && sameCampusWrite();
+      allow update: if isAuthenticated() && sameCampusWrite() && (
+        isOwner(resource.data.createdBy) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    // Profiles (user profiles - separate from auth users collection)
+    match /profiles/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
     // Rituals V2.0 - Configuration-driven behavioral campaigns
     match /rituals/{ritualId} {
       // All authenticated campus users can read active rituals
@@ -185,9 +221,10 @@ service cloud.firestore {
     // Ritual events (phase transitions, milestones)
     match /ritual_events/{eventId} {
       // Campus-isolated reads for event logs
-      allow read: if isAuthenticated() && sameCampus() && (resource.data.ritualId == ritualId || isAdmin());
+      allow read: if isAuthenticated() && sameCampus();
       // Only system/admin can create events
       allow create: if isAuthenticated() && isAdmin();
+      allow update, delete: if false;
     }
 
     // Ritual templates (admin composer library)

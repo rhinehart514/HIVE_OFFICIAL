@@ -132,8 +132,8 @@ export interface UseChatMessagesReturn {
 // ============================================================
 
 const DEFAULT_LIMIT = 50;
-const TYPING_DEBOUNCE_MS = 2000; // Debounce typing indicator updates
-const TYPING_TTL_MS = 5000; // Auto-clear typing after 5s of no updates
+const TYPING_INDICATOR_INTERVAL_MS = 3000; // Only send typing indicator every 3s while typing
+const TYPING_TTL_MS = 5000; // Auto-clear typing after 5s of no activity
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 30000;
 const DEFAULT_BOARD_ID = "general";
@@ -414,10 +414,13 @@ export function useChatMessages(
                 break;
 
               default:
-                console.log("Unknown SSE event type:", data.type);
+                // Unknown SSE event types are silently ignored in production
+                if (process.env.NODE_ENV === 'development') {
+                  console.warn("Unknown SSE event type:", data.type);
+                }
             }
-          } catch (err) {
-            console.error("Error parsing SSE message:", err);
+          } catch {
+            // Silently ignore parse errors - malformed messages are dropped
           }
         };
 
@@ -486,40 +489,53 @@ export function useChatMessages(
     if (!spaceId || !activeBoardId || !enableTypingIndicators) return;
 
     const now = Date.now();
-    if (now - lastTypingSentRef.current < TYPING_DEBOUNCE_MS) {
-      return; // Debounce
-    }
-
-    lastTypingSentRef.current = now;
-
-    // PERFORMANCE FIX: Use cached userId from ref (avoids localStorage reads on every keystroke)
+    const timeSinceLastSent = now - lastTypingSentRef.current;
     const currentUserId = currentUserIdRef.current;
 
-    if (!currentUserId) {
-      // Fallback to API-based typing if no user ID available
-      fetch(`/api/spaces/${spaceId}/chat/typing`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ boardId: activeBoardId }),
-      }).catch(() => {});
-      return;
+    // PERFORMANCE FIX: Track last keystroke time to batch timeout resets
+    // Instead of clearing/creating timeout on every keystroke, we only reset
+    // the timeout if enough time has passed or if one doesn't exist
+    const shouldResetTimeout = !typingClearTimeoutRef.current;
+
+    // Only send typing indicator to Firebase if interval has passed
+    // This limits Firebase writes to once per 3 seconds while typing
+    if (timeSinceLastSent >= TYPING_INDICATOR_INTERVAL_MS) {
+      lastTypingSentRef.current = now;
+
+      if (!currentUserId) {
+        // Fallback to API-based typing if no user ID available
+        fetch(`/api/spaces/${spaceId}/chat/typing`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ boardId: activeBoardId }),
+        }).catch(() => {});
+        return;
+      }
+
+      // Use Firebase RTDB for real-time typing (no polling!)
+      realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, true)
+        .catch(() => {
+          // Silently fail - typing indicators are non-critical
+        });
     }
 
-    // Use Firebase RTDB for real-time typing (no polling!)
-    realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, true)
-      .catch(() => {
-        // Silently fail - typing indicators are non-critical
-      });
+    // Only reset the clear timeout if we don't have one or enough time has passed
+    // This reduces setTimeout overhead from every keystroke to roughly once per second
+    if (shouldResetTimeout || timeSinceLastSent >= 1000) {
+      if (typingClearTimeoutRef.current) {
+        clearTimeout(typingClearTimeoutRef.current);
+      }
 
-    // Auto-clear typing after TTL
-    if (typingClearTimeoutRef.current) {
-      clearTimeout(typingClearTimeoutRef.current);
+      if (currentUserId) {
+        typingClearTimeoutRef.current = setTimeout(() => {
+          realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
+            .catch(() => {});
+          lastTypingSentRef.current = 0; // Reset so next keystroke sends indicator
+          typingClearTimeoutRef.current = null;
+        }, TYPING_TTL_MS);
+      }
     }
-    typingClearTimeoutRef.current = setTimeout(() => {
-      realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
-        .catch(() => {});
-    }, TYPING_TTL_MS);
   }, [spaceId, activeBoardId, enableTypingIndicators]);
 
   // ============================================================
