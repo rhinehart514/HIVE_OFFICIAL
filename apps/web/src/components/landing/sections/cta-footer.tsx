@@ -117,13 +117,13 @@ export function CtaFooterSection() {
             {/* Links */}
             <div className="flex items-center gap-8 text-sm text-neutral-500">
               <Link
-                href="/privacy"
+                href="/legal/privacy"
                 className="hover:text-white transition-colors duration-200"
               >
                 Privacy
               </Link>
               <Link
-                href="/terms"
+                href="/legal/terms"
                 className="hover:text-white transition-colors duration-200"
               >
                 Terms

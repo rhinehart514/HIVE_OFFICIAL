@@ -25,7 +25,7 @@ const UniversalShell = dynamic(
   }
 );
 
-// Routes that should NOT have the shell (auth pages, landing, etc.)
+// Routes that should NOT have the shell (auth pages, landing, legal, etc.)
 const NO_SHELL_ROUTES = [
   '/auth/login',
   '/auth/verify',
@@ -36,6 +36,7 @@ const NO_SHELL_ROUTES = [
   '/waitlist',
   '/schools',
   '/debug-auth',
+  '/legal',
 ];
 
 // Routes that should have a minimal shell
