@@ -8,13 +8,14 @@
 ## Table of Contents
 
 1. [Strategic Direction](#strategic-direction)
-2. [Product Taxonomy](#product-taxonomy)
-3. [Feature Topology](#feature-topology)
-4. [Critical Gap Analysis](#critical-gap-analysis)
-5. [Winter Feature Specs](#winter-feature-specs)
-6. [Winter vs Spring Scope](#winter-vs-spring-scope)
-7. [Prioritized Backlog](#prioritized-backlog)
-8. [Implementation Schedule](#implementation-schedule)
+2. [Platform Strategy](#platform-strategy)
+3. [Product Taxonomy](#product-taxonomy)
+4. [Feature Topology](#feature-topology)
+5. [Critical Gap Analysis](#critical-gap-analysis)
+6. [Winter Feature Specs](#winter-feature-specs)
+7. [Winter vs Spring Scope](#winter-vs-spring-scope)
+8. [Prioritized Backlog](#prioritized-backlog)
+9. [Implementation Schedule](#implementation-schedule)
 
 ---
 
@@ -52,6 +53,97 @@ Profile exists
 ```
 
 **You can't skip layers.** A leader won't touch HiveLab until their Space feels alive.
+
+---
+
+## Platform Strategy
+
+### The Platform Evolution
+
+```
+WINTER 2025-26                       SPRING 2026
+─────────────────────────────────────────────────────────────────
+
+WEB ONLY                             WEB + NATIVE MOBILE APP
+├── Desktop web: Full experience     ├── Desktop web: Full experience
+├── Mobile web: Functional bridge    ├── Mobile web: Redirect to app
+└── Goal: Don't lose mobile users    ├── iOS app: Primary mobile
+                                     ├── Android app: Primary mobile
+                                     └── Goal: Native is the product
+```
+
+### What Native App Unlocks
+
+| Feature | Web (Hard) | Native (Easy) |
+|---------|------------|---------------|
+| Push notifications | Service worker hell | Native, just works |
+| Background sync | Limited | Full support |
+| Offline mode | IndexedDB hacks | Native storage |
+| Camera/photos | Janky APIs | Native picker |
+| Haptics | None | Full support |
+| Deep linking | Complex | Native |
+
+### Features That Wait for Native
+
+| Feature | Why Wait |
+|---------|----------|
+| Push notifications | Native is 10x easier |
+| Typing indicators | Native presence better |
+| Voice messages | Native audio APIs |
+| Offline mode | Native storage |
+
+### Features That Stay Web-First
+
+| Feature | Why Web |
+|---------|---------|
+| HiveLab IDE | Complex canvas, desktop |
+| Analytics dashboard | Leader tool, desktop |
+| Admin panel | Desktop-only |
+
+### Winter Mobile Web Strategy
+
+Mobile web is a **bridge**, not the destination:
+
+```
+BEFORE (Thought mobile web was the product)
+├── Heavy investment in mobile polish
+├── PWA push notifications
+└── Full mobile feature parity
+
+AFTER (Mobile web is a bridge)
+├── Fix blocking issues only
+├── Don't break mobile users
+├── Skip PWA push entirely
+└── "App coming Spring 2026"
+```
+
+### Spring Two-Track Development
+
+```
+TRACK A: NATIVE APP                  TRACK B: WEB PLATFORM
+────────────────────────────────────────────────────────────────
+
+FEBRUARY                             FEBRUARY
+├── React Native setup               ├── Unread polish
+├── Auth flow                        ├── Analytics v2
+├── Space list                       └── Web stability
+├── Chat (read-only)
+│
+MARCH                                MARCH
+├── Chat (full)                      ├── Moderation queue
+├── Push notifications               ├── Leader dashboard
+├── Boards                           └── Export tools
+│
+APRIL                                APRIL
+├── Events + Sidebar                 ├── HiveLab undo/redo
+├── Profile                          ├── Template marketplace
+└── TestFlight beta                  └── Tool analytics
+│
+MAY                                  MAY
+├── Polish + bugs                    ├── AI catch-up
+├── App Store submission             ├── Recommendations
+└── Public launch                    └── Desktop notifications
+```
 
 ---
 
@@ -345,30 +437,25 @@ interface SpaceAnalytics {
 
 ---
 
-### Spring 2026
+### Spring 2026 (Two Tracks: Native App + Web)
 
-**February - Re-engagement:**
-- Push notifications (FCM)
-- Typing indicators (RTDB rewrite)
-- Event reminders
+**TRACK A: Native Mobile App**
 
-**March - Leader Tools:**
-- Moderation queue
-- Ban/mute user
-- Scheduled messages
-- Announcement system
+| Month | Milestone | Features |
+|-------|-----------|----------|
+| February | Foundation | React Native setup, Auth, Space list, Chat (read) |
+| March | Core Chat | Chat (write), Push notifications, Boards |
+| April | Full App | Events, Sidebar tools, Profile, TestFlight |
+| May | Launch | Polish, App Store submission, Public release |
 
-**April - HiveLab v2:**
-- Undo/redo
-- Copy/paste
-- Template marketplace
-- Real tool analytics
+**TRACK B: Web Platform**
 
-**May - Intelligence:**
-- AI catch-up summary
-- Connection suggestions
-- Trending spaces
-- Email digests
+| Month | Focus | Features |
+|-------|-------|----------|
+| February | Stability | Unread polish, Analytics v2, Bug fixes |
+| March | Leaders | Moderation queue, Leader dashboard, Exports |
+| April | HiveLab | Undo/redo, Template marketplace, Tool analytics |
+| May | Intelligence | AI catch-up, Recommendations, Desktop notifications |
 
 ---
 
@@ -394,42 +481,55 @@ interface SpaceAnalytics {
 | W-009 | Error message cleanup | 0.5 day | Not started |
 | W-010 | Loading skeletons | 1 day | Not started |
 
-### Priority 2: Spring - Re-engagement (February)
+### Priority 2: Spring - Native Mobile App
+
+| ID | Feature | Effort | Month |
+|----|---------|--------|-------|
+| M-001 | React Native setup | 3 days | Feb |
+| M-002 | Auth flow (native) | 3 days | Feb |
+| M-003 | Space list | 2 days | Feb |
+| M-004 | Chat (read-only) | 3 days | Feb |
+| M-005 | Chat (write) | 2 days | Mar |
+| M-006 | Push notifications | 3 days | Mar |
+| M-007 | Boards navigation | 2 days | Mar |
+| M-008 | Member list | 2 days | Mar |
+| M-009 | Events | 3 days | Apr |
+| M-010 | Sidebar tools | 3 days | Apr |
+| M-011 | Profile | 2 days | Apr |
+| M-012 | TestFlight beta | 2 days | Apr |
+| M-013 | Polish + bugs | 5 days | May |
+| M-014 | App Store submission | 2 days | May |
+
+**Total mobile effort: ~37 days**
+
+### Priority 3: Spring - Web Platform (February-March)
 
 | ID | Feature | Effort |
 |----|---------|--------|
-| S-001 | Push notifications | 5 days |
-| S-002 | Typing indicators (RTDB) | 2 days |
-| S-003 | Event reminders | 2 days |
-
-### Priority 3: Spring - Leader Tools (March)
-
-| ID | Feature | Effort |
-|----|---------|--------|
-| S-004 | Moderation queue | 3 days |
-| S-005 | Ban/mute user | 2 days |
-| S-006 | Scheduled messages | 3 days |
-| S-007 | Announcement system | 2 days |
-| S-008 | Member export | 1 day |
+| S-001 | Typing indicators (RTDB) | 2 days |
+| S-002 | Moderation queue | 3 days |
+| S-003 | Ban/mute user | 2 days |
+| S-004 | Leader dashboard v2 | 3 days |
+| S-005 | Member export | 1 day |
 
 ### Priority 4: Spring - HiveLab v2 (April)
 
 | ID | Feature | Effort |
 |----|---------|--------|
-| S-009 | Undo/redo | 3 days |
-| S-010 | Copy/paste elements | 2 days |
-| S-011 | Template marketplace | 5 days |
-| S-012 | Tool analytics (real) | 3 days |
-| S-013 | Form export | 2 days |
+| S-006 | Undo/redo | 3 days |
+| S-007 | Copy/paste elements | 2 days |
+| S-008 | Template marketplace | 5 days |
+| S-009 | Tool analytics (real) | 3 days |
+| S-010 | Form export | 2 days |
 
 ### Priority 5: Spring - Intelligence (May)
 
 | ID | Feature | Effort |
 |----|---------|--------|
-| S-014 | AI catch-up summary | 5 days |
-| S-015 | Connection suggestions | 3 days |
-| S-016 | Trending spaces | 2 days |
-| S-017 | Email digests | 3 days |
+| S-011 | AI catch-up summary | 5 days |
+| S-012 | Connection suggestions | 3 days |
+| S-013 | Trending spaces | 2 days |
+| S-014 | Email digests | 3 days |
 
 ---
 
