@@ -21,6 +21,28 @@ Full vision: **`docs/VISION.md`** — read this first if you haven't.
 
 ---
 
+## Current Focus (December 2025)
+
+**We're in soft launch prep.** The platform is 85%+ complete. Priority is getting the core experience bulletproof for the first 10-20 org leaders.
+
+**This Week's Priorities:**
+1. Landing page polish and waitlist flow
+2. Spaces chat reliability (typing indicator fix, real analytics)
+3. HiveLab template expansion (10+ quality templates)
+4. Onboarding edge case fixes
+5. Mobile responsiveness pass
+
+**Do Not Touch Right Now:**
+- Feed algorithm refinements
+- Ghost mode / advanced privacy
+- Push notifications
+- Voice messages
+- Marketplace
+
+See `docs/LAUNCH_PLAN.md` for detailed timeline and success criteria.
+
+---
+
 ## What is HIVE?
 
 **HIVE is student autonomy infrastructure for a world where the old paths are dying.**
@@ -47,22 +69,34 @@ Student autonomy means control over your own development:
 | **Connection** | Real social graph of campus life |
 | **Intelligence** | AI that expands thinking, not replaces it |
 
-### Winter 2025-26 Priority
+### Launch Timeline: Winter 2025-26
 
 **Win UB. Prove the model at density.**
 
-| Build | Defer |
-|-------|-------|
-| Spaces (community, chat, real-time) | Feed enhancements |
-| HiveLab (creation, tools, deployment) | Rituals |
-| Social graph features | Marketplace |
-| AI integration (catch-up, exploration) | University contracts |
+| Phase | Timing | Goal |
+|-------|--------|------|
+| **Soft Launch** | Dec 2025 - Jan 2026 | 10-20 org leaders testing, core flows validated |
+| **Beta Launch** | Feb 2026 | 50+ spaces active, onboarding refined |
+| **Full Launch** | Spring 2026 | Campus-wide rollout, density flywheel kicks in |
+
+**Build Now vs. Defer:**
+
+| Build Now | Defer to Spring+ |
+|-----------|------------------|
+| Spaces: chat, boards, real-time, moderation | Push notifications |
+| HiveLab: AI gen, 24 elements, deployment | Collaboration features |
+| Auth: OTP, onboarding, session management | Email digests |
+| Basic analytics (real data, not mocks) | Advanced analytics |
+| Mobile-responsive (usable, not perfect) | Voice messages |
+| Social graph: profiles, connections | Marketplace |
+| Landing page + waitlist | University contracts |
 
 ### Launch Strategy
 
 **University at Buffalo first. 32,000 students, 300+ orgs.**
 
-- 400+ spaces pre-seeded from CampusLabs
+- 400+ spaces pre-seeded from CampusLabs data
+- Leader-first GTM: 50 leaders → 10,000+ students
 - Density at one campus before expanding
 - Multi-campus architecture ready (campusId isolation)
 
@@ -289,13 +323,21 @@ curl -X POST http://localhost:3000/api/dev-auth \
 
 ## Current Platform State (December 2025)
 
-| Slice | Status | What's Working | Known Issues |
-|-------|--------|----------------|--------------|
-| **Spaces + Chat** | 90% | Full DDD stack, SSE streaming, threading, boards | Typing indicator polling (2s) |
-| **HiveLab/Tools** | 85% | Full IDE, 27 elements, deployment, runtime | Analytics uses mock data |
-| **Auth/Onboarding** | 90% | OTP auth, JWT sessions, 4-step onboarding | Edge cases in onboarding |
-| **Feed** | 75% | Privacy enforced, moderation | Ghost mode gaps |
-| **Profiles** | 70% | Basic flow works | Ghost mode incomplete |
+| Slice | Status | What's Working | Pre-Launch Blockers |
+|-------|--------|----------------|---------------------|
+| **Spaces + Chat** | 90% | Full DDD stack, SSE streaming, threading, boards | Typing indicator spam, real analytics |
+| **HiveLab/Tools** | 85% | Full IDE, 27 elements, deployment, runtime | Undo/redo, more templates |
+| **Auth/Onboarding** | 90% | OTP auth, JWT sessions, 4-step onboarding | Edge case polish |
+| **Landing Page** | 95% | Hero, features, waitlist, legal modals | Final copy review |
+| **Feed** | 75% | Privacy enforced, moderation | Deferred for soft launch |
+| **Profiles** | 70% | Basic flow works | Ghost mode deferred |
+
+**Soft Launch Critical Path:**
+1. Spaces chat must feel instant and reliable
+2. HiveLab deployment flow must work first-try
+3. Onboarding must convert 80%+ of signups
+4. Leader analytics must show real (not mock) data
+5. Mobile must be usable (not perfect, but functional)
 
 **Key Implementation Stats:**
 | Component | Location | Lines |
