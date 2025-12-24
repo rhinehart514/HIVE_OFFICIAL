@@ -15,6 +15,7 @@ import { ProfileId } from '../../profile/value-objects/profile-id.value';
 import { Tab } from '../entities/tab';
 import { Widget } from '../entities/widget';
 import { PlacedTool, PlacementLocation, PlacementVisibility } from '../entities/placed-tool';
+import { getSystemToolsForType } from '../system-tool-registry';
 import {
   SpaceUpdatedEvent,
   TabCreatedEvent,
@@ -553,6 +554,12 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
     // Create default tabs
     space.createDefaultTabs();
+
+    // Auto-deploy system tools for pre-seeded (ublinked) spaces
+    // These spaces should be useful from day one, before a leader claims them
+    if (source === 'ublinked') {
+      space.autoDeploySystemTools();
+    }
 
     return Result.ok<EnhancedSpace>(space);
   }
@@ -1259,6 +1266,43 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       visibility: options?.visibility,
       isEditable: options?.isEditable ?? true,
     });
+  }
+
+  /**
+   * Auto-deploy default system tools based on space type.
+   * Called automatically for pre-seeded spaces or when a space goes live.
+   *
+   * @returns Array of successfully placed tools
+   */
+  public autoDeploySystemTools(): PlacedTool[] {
+    const systemTools = getSystemToolsForType(this.spaceType);
+    const placedTools: PlacedTool[] = [];
+
+    for (const toolDef of systemTools) {
+      // Skip if tool already placed
+      if (this.hasToolPlaced(toolDef.toolId)) {
+        continue;
+      }
+
+      const result = this.placeSystemTool(toolDef.toolId, toolDef.placement, {
+        order: toolDef.order,
+        visibility: toolDef.visibility,
+        isEditable: toolDef.isEditable,
+      });
+
+      if (result.isSuccess) {
+        placedTools.push(result.getValue());
+      }
+    }
+
+    return placedTools;
+  }
+
+  /**
+   * Check if a tool is already placed in this space
+   */
+  public hasToolPlaced(toolId: string): boolean {
+    return this.props.placedTools.some(pt => pt.toolId === toolId);
   }
 
   /**

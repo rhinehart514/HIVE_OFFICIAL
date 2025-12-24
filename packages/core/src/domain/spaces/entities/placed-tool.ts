@@ -71,6 +71,18 @@ interface PlacedToolProps {
 
   /** Last time the tool state was updated */
   stateUpdatedAt: Date | null;
+
+  /**
+   * Version of the tool definition when this placement was created.
+   * Used to detect when the source tool has been updated.
+   */
+  toolVersion: string | null;
+
+  /**
+   * Whether the source tool has been updated since placement.
+   * UI can show "update available" indicator.
+   */
+  isOutdated: boolean;
 }
 
 export class PlacedTool extends Entity<PlacedToolProps> {
@@ -131,6 +143,20 @@ export class PlacedTool extends Entity<PlacedToolProps> {
   }
 
   /**
+   * Version of the tool when this placement was created
+   */
+  get toolVersion(): string | null {
+    return this.props.toolVersion;
+  }
+
+  /**
+   * Whether the source tool has been updated since placement
+   */
+  get isOutdated(): boolean {
+    return this.props.isOutdated;
+  }
+
+  /**
    * Check if this is a system-placed tool (from templates)
    */
   get isSystemTool(): boolean {
@@ -188,6 +214,8 @@ export class PlacedTool extends Entity<PlacedToolProps> {
       isEditable: props.isEditable ?? true,
       state: props.state ?? {},
       stateUpdatedAt: props.stateUpdatedAt ?? null,
+      toolVersion: props.toolVersion ?? null,
+      isOutdated: props.isOutdated ?? false,
     };
 
     return Result.ok<PlacedTool>(new PlacedTool(placedToolProps, id));
@@ -340,6 +368,40 @@ export class PlacedTool extends Entity<PlacedToolProps> {
   public unlock(): Result<void> {
     this.props.isEditable = true;
     return Result.ok<void>();
+  }
+
+  /**
+   * Mark this placement as outdated (source tool was updated)
+   */
+  public markOutdated(): Result<void> {
+    this.props.isOutdated = true;
+    return Result.ok<void>();
+  }
+
+  /**
+   * Update to a new tool version (clears outdated flag)
+   */
+  public updateToVersion(version: string): Result<void> {
+    if (!version || version.trim().length === 0) {
+      return Result.fail<void>('Version is required');
+    }
+    this.props.toolVersion = version.trim();
+    this.props.isOutdated = false;
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set version from external data (repository layer)
+   */
+  public setToolVersion(version: string | null): void {
+    this.props.toolVersion = version;
+  }
+
+  /**
+   * Set outdated flag from external data (repository layer)
+   */
+  public setIsOutdated(isOutdated: boolean): void {
+    this.props.isOutdated = isOutdated;
   }
 
   /**

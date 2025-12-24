@@ -236,6 +236,10 @@ export interface PlacedToolDTO {
   isEditable: boolean;
   state: Record<string, unknown>;
   stateUpdatedAt: string | null;
+  /** Version of the tool when placed */
+  toolVersion: string | null;
+  /** Whether the source tool has been updated since placement */
+  isOutdated: boolean;
 }
 
 /**
