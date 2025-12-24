@@ -31,6 +31,30 @@ export interface SpaceDocument {
   createdBy?: string;  // Current field name in DB
   visibility: 'public' | 'private';
   /**
+   * Space type - determines templates, suggestions, AI context
+   */
+  spaceType?: 'uni' | 'student' | 'greek' | 'residential';
+  /**
+   * Governance model - determines how roles work
+   */
+  governance?: 'flat' | 'emergent' | 'hybrid' | 'hierarchical';
+  /**
+   * Lifecycle status (unclaimed, active, claimed, verified)
+   */
+  status?: 'unclaimed' | 'active' | 'claimed' | 'verified';
+  /**
+   * Source (ublinked, user-created)
+   */
+  source?: 'ublinked' | 'user-created';
+  /**
+   * External ID for pre-seeded spaces
+   */
+  externalId?: string;
+  /**
+   * When the space was claimed
+   */
+  claimedAt?: { toDate: () => Date } | null;
+  /**
    * Publishing status for stealth mode
    * - stealth: Space is being set up, only visible to leaders
    * - live: Space is publicly visible (default for existing spaces)
@@ -93,8 +117,20 @@ export interface SpacePersistenceData {
   description: string;
   category: string;
   campusId: string;
-  creatorId: string;
+  creatorId?: string;  // Optional for unclaimed spaces
   visibility: 'public' | 'private';
+  /** Space type */
+  spaceType: 'uni' | 'student' | 'greek' | 'residential';
+  /** Governance model */
+  governance: 'flat' | 'emergent' | 'hybrid' | 'hierarchical';
+  /** Lifecycle status */
+  status: 'unclaimed' | 'active' | 'claimed' | 'verified';
+  /** Source */
+  source: 'ublinked' | 'user-created';
+  /** External ID for pre-seeded spaces */
+  externalId?: string;
+  /** When claimed */
+  claimedAt: Date | null;
   /** Publishing status for stealth mode */
   publishStatus: 'stealth' | 'live' | 'rejected';
   /** When the space went live */
@@ -175,11 +211,14 @@ export class SpaceMapper {
         return Result.fail<EnhancedSpace>(campusIdResult.error!);
       }
 
-      // Create ProfileId for creator (handle both field names)
-      const creatorIdValue = data.createdBy || data.creatorId || 'unknown';
-      const creatorIdResult = ProfileId.create(creatorIdValue);
-      if (creatorIdResult.isFailure) {
-        return Result.fail<EnhancedSpace>(creatorIdResult.error!);
+      // Create ProfileId for creator (handle both field names) - optional for unclaimed spaces
+      const creatorIdValue = data.createdBy || data.creatorId;
+      let creatorProfileId: ProfileId | undefined;
+      if (creatorIdValue) {
+        const creatorIdResult = ProfileId.create(creatorIdValue);
+        if (creatorIdResult.isSuccess) {
+          creatorProfileId = creatorIdResult.getValue();
+        }
       }
 
       // Create SpaceId
@@ -204,9 +243,14 @@ export class SpaceMapper {
         slug,
         description: descriptionResult.getValue(),
         category: categoryResult.getValue(),
-        createdBy: creatorIdResult.getValue(),
+        createdBy: creatorProfileId,  // Can be undefined for unclaimed spaces
         campusId: campusIdResult.getValue(),
-        visibility: data.visibility === 'private' ? 'private' : 'public'
+        visibility: data.visibility === 'private' ? 'private' : 'public',
+        spaceType: data.spaceType || 'student',
+        governance: data.governance,
+        source: data.source || 'user-created',
+        externalId: data.externalId,
+        publishStatus: data.publishStatus || 'live'
       });
 
       if (spaceResult.isFailure) {
@@ -223,6 +267,10 @@ export class SpaceMapper {
       space.setLastActivityAt(data.lastActivityAt?.toDate() || new Date());
       if (data.createdAt) space.setCreatedAt(data.createdAt.toDate());
       if (data.updatedAt) space.setUpdatedAt(data.updatedAt.toDate());
+
+      // Set new fields
+      if (data.status) space.setStatus(data.status);
+      if (data.claimedAt) space.setClaimedAt(data.claimedAt.toDate());
 
       // Set publishing status (default to 'live' for existing spaces without this field)
       space.setPublishStatus(data.publishStatus || 'live');
@@ -286,8 +334,16 @@ export class SpaceMapper {
       description: space.description.value,
       category: space.category.value,
       campusId: space.campusId.id,
-      creatorId: space.owner.value,
+      creatorId: space.owner?.value,  // Optional for unclaimed spaces
       visibility: space.isPublic ? 'public' : 'private',
+      // New fields
+      spaceType: space.spaceType,
+      governance: space.governance,
+      status: space.status,
+      source: space.source,
+      externalId: space.externalId,
+      claimedAt: space.claimedAt || null,
+      // Existing fields
       publishStatus: space.publishStatus,
       wentLiveAt: space.wentLiveAt || null,
       isVerified: space.isVerified,

@@ -55,7 +55,14 @@ export {
 } from "./domain/spaces/constants/space-categories";
 export type { SpaceCategoryValue } from "./domain/spaces/constants/space-categories";
 export { EnhancedSpace } from "./domain/spaces/aggregates/enhanced-space";
-export type { SpaceMemberRole, LeaderRequestStatus } from "./domain/spaces/aggregates/enhanced-space";
+export type {
+  SpaceMemberRole,
+  LeaderRequestStatus,
+  SpaceType,
+  GovernanceModel,
+  SpaceStatus,
+  SpaceSource
+} from "./domain/spaces/aggregates/enhanced-space";
 // Space publishing status (stealth mode)
 export type { SpacePublishStatus } from "./domain/spaces/events";
 export { SpaceStatusChangedEvent, SpaceWentLiveEvent } from "./domain/spaces/events";
@@ -65,6 +72,15 @@ export { Board } from "./domain/spaces/entities/board";
 export type { BoardType, BoardPermission } from "./domain/spaces/entities/board";
 export { PlacedTool } from "./domain/spaces/entities/placed-tool";
 export type { PlacementLocation, PlacementSource, PlacementVisibility } from "./domain/spaces/entities/placed-tool";
+export {
+  getSystemToolsForType,
+  getInlineTools,
+  isSystemTool,
+  getAllSystemToolIds,
+  SYSTEM_TOOLS_BY_TYPE,
+  INLINE_TOOLS
+} from "./domain/spaces/system-tool-registry";
+export type { SystemToolDefinition } from "./domain/spaces/system-tool-registry";
 export {
   SpaceCreatedEvent,
   SpaceMemberJoinedEvent,

@@ -15,6 +15,7 @@ import { ProfileId } from '../../profile/value-objects/profile-id.value';
 import { Tab } from '../entities/tab';
 import { Widget } from '../entities/widget';
 import { PlacedTool, PlacementLocation, PlacementVisibility } from '../entities/placed-tool';
+import { getSystemToolsForType } from '../system-tool-registry';
 import {
   SpaceUpdatedEvent,
   TabCreatedEvent,
@@ -46,6 +47,58 @@ import {
  * - guest: Read-only access (for private spaces)
  */
 export type SpaceMemberRole = 'owner' | 'admin' | 'moderator' | 'member' | 'guest';
+
+/**
+ * Space types - determines templates, suggestions, and AI context
+ * - uni: Official university entities (departments, programs, student gov)
+ * - student: Student-run organizations (clubs, orgs, interest groups)
+ * - greek: Fraternities & sororities (chapters, councils)
+ * - residential: Dorms, floors, housing communities
+ */
+export type SpaceType = 'uni' | 'student' | 'greek' | 'residential';
+
+/**
+ * Governance models - determines how roles and permissions work
+ * - flat: Everyone equal, no designated roles
+ * - emergent: Roles form from activity/contribution
+ * - hybrid: Some designated roles + earned roles
+ * - hierarchical: Clear chain of command (owner → admin → mod → member)
+ */
+export type GovernanceModel = 'flat' | 'emergent' | 'hybrid' | 'hierarchical';
+
+/**
+ * Space lifecycle status - ownership/claiming lifecycle
+ * - unclaimed: Pre-seeded from UBLinked, no owner yet
+ * - active: Has activity but still unclaimed
+ * - claimed: Owner has claimed the space
+ * - verified: Official verification granted
+ */
+export type SpaceStatus = 'unclaimed' | 'active' | 'claimed' | 'verified';
+
+/**
+ * Space source - where the space came from
+ * - ublinked: Pre-seeded from UBLinked/CampusLabs data
+ * - user-created: Created by a student
+ */
+export type SpaceSource = 'ublinked' | 'user-created';
+
+/**
+ * Get default governance model based on space type
+ */
+function getDefaultGovernance(spaceType: SpaceType): GovernanceModel {
+  switch (spaceType) {
+    case 'uni':
+      return 'hierarchical';
+    case 'greek':
+      return 'hierarchical';
+    case 'student':
+      return 'hybrid';
+    case 'residential':
+      return 'flat';
+    default:
+      return 'hybrid';
+  }
+}
 
 interface SpaceMember {
   profileId: ProfileId;
@@ -90,7 +143,8 @@ interface EnhancedSpaceProps {
   description: SpaceDescription;
   category: SpaceCategory;
   campusId: CampusId;
-  createdBy: ProfileId;
+  /** Creator - optional for pre-seeded unclaimed spaces */
+  createdBy?: ProfileId;
   members: SpaceMember[];
   leaderRequests: LeaderRequest[];
   tabs: Tab[];
@@ -99,6 +153,30 @@ interface EnhancedSpaceProps {
   settings: SpaceSettings;
   rssUrl?: string;
   visibility: 'public' | 'private';
+  /**
+   * Space type - determines templates, suggestions, AI context
+   */
+  spaceType: SpaceType;
+  /**
+   * Governance model - determines how roles work
+   */
+  governance: GovernanceModel;
+  /**
+   * Lifecycle status - ownership/claiming lifecycle
+   */
+  status: SpaceStatus;
+  /**
+   * Source - where the space came from
+   */
+  source: SpaceSource;
+  /**
+   * External ID - for pre-seeded spaces (e.g., UBLinked org ID)
+   */
+  externalId?: string;
+  /**
+   * When the space was claimed (if applicable)
+   */
+  claimedAt?: Date;
   /**
    * Publishing status for stealth mode
    * - stealth: Space is being set up, only visible to leaders
@@ -131,10 +209,77 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.slug;
   }
 
-  get owner(): ProfileId {
+  /**
+   * Get the owner ProfileId, if one exists.
+   * Unclaimed spaces have no owner.
+   */
+  get owner(): ProfileId | undefined {
     const ownerMember = this.props.members.find(m => m.role === 'owner');
     // Fall back to createdBy if no explicit owner (legacy data)
     return ownerMember?.profileId || this.props.createdBy;
+  }
+
+  /**
+   * Whether this space has an owner (is claimed)
+   */
+  get hasOwner(): boolean {
+    return this.owner !== undefined;
+  }
+
+  /**
+   * Space type (uni, student, greek, residential)
+   */
+  get spaceType(): SpaceType {
+    return this.props.spaceType;
+  }
+
+  /**
+   * Governance model (flat, emergent, hybrid, hierarchical)
+   */
+  get governance(): GovernanceModel {
+    return this.props.governance;
+  }
+
+  /**
+   * Lifecycle status (unclaimed, active, claimed, verified)
+   */
+  get status(): SpaceStatus {
+    return this.props.status;
+  }
+
+  /**
+   * Source (ublinked, user-created)
+   */
+  get source(): SpaceSource {
+    return this.props.source;
+  }
+
+  /**
+   * External ID for pre-seeded spaces
+   */
+  get externalId(): string | undefined {
+    return this.props.externalId;
+  }
+
+  /**
+   * When the space was claimed
+   */
+  get claimedAt(): Date | undefined {
+    return this.props.claimedAt;
+  }
+
+  /**
+   * Whether this space is unclaimed (pre-seeded, no owner)
+   */
+  get isUnclaimed(): boolean {
+    return this.props.status === 'unclaimed' || this.props.status === 'active';
+  }
+
+  /**
+   * Whether this space is claimed (has owner)
+   */
+  get isClaimed(): boolean {
+    return this.props.status === 'claimed' || this.props.status === 'verified';
   }
 
   get leaderRequests(): LeaderRequest[] {
@@ -282,10 +427,6 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.settings;
   }
 
-  get spaceType(): string {
-    return this.props.category.value;
-  }
-
   get posts(): any[] {
     // Posts are managed separately - return empty array for interface compatibility
     return [];
@@ -309,10 +450,28 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       description: SpaceDescription;
       category: SpaceCategory;
       campusId: CampusId;
-      createdBy: ProfileId;
+      /** Creator - optional for pre-seeded unclaimed spaces */
+      createdBy?: ProfileId;
       settings?: Partial<SpaceSettings>;
       visibility?: 'public' | 'private';
       rssUrl?: string;
+      /**
+       * Space type - determines templates and AI context
+       * Defaults to 'student' for user-created spaces
+       */
+      spaceType?: SpaceType;
+      /**
+       * Governance model - defaults based on space type
+       */
+      governance?: GovernanceModel;
+      /**
+       * Source - 'ublinked' for pre-seeded, 'user-created' for new
+       */
+      source?: SpaceSource;
+      /**
+       * External ID for pre-seeded spaces
+       */
+      externalId?: string;
       /**
        * Initial publish status
        * - 'stealth' (default): Space starts hidden, leader sets up before going live
@@ -330,16 +489,32 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       ...props.settings
     };
 
-    // Creator becomes the owner (highest permission level)
-    const creator: SpaceMember = {
-      profileId: props.createdBy,
-      role: 'owner',
-      joinedAt: new Date()
-    };
+    // Determine source
+    const source = props.source ?? 'user-created';
 
-    // Default to 'stealth' for new spaces claimed during onboarding
-    // Pre-seeded spaces can be set to 'live' explicitly
-    const publishStatus = props.publishStatus ?? 'stealth';
+    // Determine space type - default to 'student'
+    const spaceType = props.spaceType ?? 'student';
+
+    // Determine governance based on space type if not provided
+    const governance = props.governance ?? getDefaultGovernance(spaceType);
+
+    // Determine initial status
+    const isUnclaimed = source === 'ublinked' && !props.createdBy;
+    const status: SpaceStatus = isUnclaimed ? 'unclaimed' : 'claimed';
+
+    // Members array - empty for unclaimed, has owner for claimed
+    const members: SpaceMember[] = [];
+    if (props.createdBy) {
+      members.push({
+        profileId: props.createdBy,
+        role: 'owner',
+        joinedAt: new Date()
+      });
+    }
+
+    // Default to 'stealth' for new claimed spaces
+    // Pre-seeded unclaimed spaces should be 'live' (visible in directory)
+    const publishStatus = props.publishStatus ?? (isUnclaimed ? 'live' : 'stealth');
 
     const spaceProps: EnhancedSpaceProps = {
       spaceId: props.spaceId,
@@ -349,7 +524,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       category: props.category,
       campusId: props.campusId,
       createdBy: props.createdBy,
-      members: [creator],
+      members,
       leaderRequests: [],
       tabs: [],
       widgets: [],
@@ -357,6 +532,12 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       settings: defaultSettings,
       rssUrl: props.rssUrl,
       visibility: props.visibility || 'public',
+      spaceType,
+      governance,
+      status,
+      source,
+      externalId: props.externalId,
+      claimedAt: props.createdBy ? new Date() : undefined,
       publishStatus,
       wentLiveAt: publishStatus === 'live' ? new Date() : undefined,
       isActive: true,
@@ -373,6 +554,12 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
     // Create default tabs
     space.createDefaultTabs();
+
+    // Auto-deploy system tools for pre-seeded (ublinked) spaces
+    // These spaces should be useful from day one, before a leader claims them
+    if (source === 'ublinked') {
+      space.autoDeploySystemTools();
+    }
 
     return Result.ok<EnhancedSpace>(space);
   }
@@ -1082,6 +1269,43 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   /**
+   * Auto-deploy default system tools based on space type.
+   * Called automatically for pre-seeded spaces or when a space goes live.
+   *
+   * @returns Array of successfully placed tools
+   */
+  public autoDeploySystemTools(): PlacedTool[] {
+    const systemTools = getSystemToolsForType(this.spaceType);
+    const placedTools: PlacedTool[] = [];
+
+    for (const toolDef of systemTools) {
+      // Skip if tool already placed
+      if (this.hasToolPlaced(toolDef.toolId)) {
+        continue;
+      }
+
+      const result = this.placeSystemTool(toolDef.toolId, toolDef.placement, {
+        order: toolDef.order,
+        visibility: toolDef.visibility,
+        isEditable: toolDef.isEditable,
+      });
+
+      if (result.isSuccess) {
+        placedTools.push(result.getValue());
+      }
+    }
+
+    return placedTools;
+  }
+
+  /**
+   * Check if a tool is already placed in this space
+   */
+  public hasToolPlaced(toolId: string): boolean {
+    return this.props.placedTools.some(pt => pt.toolId === toolId);
+  }
+
+  /**
    * Update a placed tool's properties
    */
   public updatePlacedTool(
@@ -1377,6 +1601,80 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   // ============================================================
+  // Space Claiming Methods
+  // ============================================================
+
+  /**
+   * Claim an unclaimed space.
+   * This sets the claimer as owner and transitions status to 'claimed'.
+   */
+  public claim(claimedBy: ProfileId): Result<void> {
+    if (this.isClaimed) {
+      return Result.fail<void>('Space is already claimed');
+    }
+
+    // Add the claimer as owner
+    this.props.members.push({
+      profileId: claimedBy,
+      role: 'owner',
+      joinedAt: new Date()
+    });
+
+    // Update status
+    this.props.status = 'claimed';
+    this.props.claimedAt = new Date();
+    this.props.createdBy = claimedBy;
+
+    // Transition to stealth for setup
+    this.props.publishStatus = 'stealth';
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set space type from external data (repository layer)
+   */
+  public setSpaceType(spaceType: SpaceType): void {
+    (this.props as any).spaceType = spaceType;
+  }
+
+  /**
+   * Set governance from external data (repository layer)
+   */
+  public setGovernance(governance: GovernanceModel): void {
+    (this.props as any).governance = governance;
+  }
+
+  /**
+   * Set status from external data (repository layer)
+   */
+  public setStatus(status: SpaceStatus): void {
+    (this.props as any).status = status;
+  }
+
+  /**
+   * Set source from external data (repository layer)
+   */
+  public setSource(source: SpaceSource): void {
+    (this.props as any).source = source;
+  }
+
+  /**
+   * Set external ID from external data (repository layer)
+   */
+  public setExternalId(externalId: string | undefined): void {
+    (this.props as any).externalId = externalId;
+  }
+
+  /**
+   * Set claimedAt from external data (repository layer)
+   */
+  public setClaimedAt(date: Date | undefined): void {
+    (this.props as any).claimedAt = date;
+  }
+
+  // ============================================================
   // Basic Info Update (Phase 1 - DDD Foundation)
   // ============================================================
 
@@ -1512,8 +1810,8 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       description: this.props.description,
       category: this.props.category,
       campusId: this.props.campusId,
-      createdBy: this.props.createdBy,
-      ownerId: this.owner.value,
+      createdBy: this.props.createdBy?.value,
+      ownerId: this.owner?.value,
       members: this.props.members.map(m => ({
         profileId: m.profileId.value,
         role: m.role,
@@ -1549,11 +1847,23 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       })),
       settings: this.props.settings,
       visibility: this.props.visibility,
+      // New fields
+      spaceType: this.props.spaceType,
+      governance: this.props.governance,
+      status: this.props.status,
+      source: this.props.source,
+      externalId: this.props.externalId,
+      claimedAt: this.props.claimedAt,
+      // Existing fields
       publishStatus: this.props.publishStatus,
       wentLiveAt: this.props.wentLiveAt,
       isStealth: this.isStealth,
       isLive: this.isLive,
+      isUnclaimed: this.isUnclaimed,
+      isClaimed: this.isClaimed,
+      hasOwner: this.hasOwner,
       isActive: this.props.isActive,
+      isVerified: this.props.isVerified,
       memberCount: this.memberCount,
       postCount: this.props.postCount,
       createdAt: this.props.createdAt,
