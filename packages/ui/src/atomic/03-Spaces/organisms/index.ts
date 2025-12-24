@@ -104,6 +104,15 @@ export type {
   BoardOption,
 } from './event-create-modal';
 
+// Event Details Modal (Dec 2025)
+export { EventDetailsModal } from './event-details-modal';
+export type {
+  EventDetailsModalProps,
+  SpaceEventDetails,
+  RSVPStatus,
+  EventOrganizer,
+} from './event-details-modal';
+
 // Space Entry Animation (Dec 2025 - Signature arrival moment)
 export { SpaceEntryAnimation } from './space-entry-animation';
 export type { SpaceEntryAnimationProps } from './space-entry-animation';

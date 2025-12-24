@@ -39,6 +39,7 @@ import {
   AddWidgetModal,
   MemberInviteModal,
   EventCreateModal,
+  EventDetailsModal,
   ToolRuntimeModal,
   IntentConfirmationInline,
   AutomationsPanel,
@@ -56,6 +57,10 @@ import {
   EventsSection,
   MembersSection,
   ToolsSection,
+  // Leader onboarding components
+  SpaceLeaderOnboardingModal,
+  LeaderSetupProgress,
+  QUICK_TEMPLATES,
   type AddTabInput,
   type AddWidgetInputUI,
   type BoardData,
@@ -67,6 +72,9 @@ import {
   type DetectedIntent,
   type BoardTab,
   type MessageData,
+  type QuickTemplate,
+  type SpaceEventDetails,
+  type RSVPStatus,
 } from "@hive/ui";
 import { SpaceBoardSkeleton, toast } from "@hive/ui";
 import {
@@ -81,6 +89,7 @@ import { useChatIntent, mightHaveIntent } from "@/hooks/use-chat-intent";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
 import { useAutomations } from "@/hooks/use-automations";
+import { useLeaderOnboarding } from "@/hooks/use-leader-onboarding";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 import { logger } from "@/lib/logger";
@@ -282,6 +291,8 @@ function SpaceLeaderModals({
   setCreateEventModalOpen,
   onAddTab,
   onAddWidget,
+  onOpenHiveLab,
+  onQuickDeploy,
   onInviteMember,
   onSearchUsers,
   onCreateEvent,
@@ -300,6 +311,8 @@ function SpaceLeaderModals({
   setCreateEventModalOpen: (open: boolean) => void;
   onAddTab: (input: AddTabInput) => Promise<void>;
   onAddWidget: (input: AddWidgetInputUI) => Promise<void>;
+  onOpenHiveLab: () => void;
+  onQuickDeploy?: (template: QuickTemplate) => Promise<void>;
   onInviteMember: (input: MemberInviteInput) => Promise<void>;
   onSearchUsers: (query: string) => Promise<InviteableUser[]>;
   onCreateEvent: (input: EventCreateInput) => Promise<void>;
@@ -317,6 +330,9 @@ function SpaceLeaderModals({
         open={addWidgetModalOpen}
         onOpenChange={setAddWidgetModalOpen}
         onSubmit={onAddWidget}
+        onOpenHiveLab={onOpenHiveLab}
+        onQuickDeploy={onQuickDeploy}
+        showQuickDeploy={!!onQuickDeploy}
       />
       <MemberInviteModal
         open={inviteMemberModalOpen}
@@ -417,6 +433,10 @@ function SpaceDetailContent() {
   // Automation templates modal state (Phase 3.5)
   const [showTemplates, setShowTemplates] = React.useState(false);
 
+  // Event details modal state (Phase 2 - Events feature)
+  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
+  const [eventDetailsModalOpen, setEventDetailsModalOpen] = React.useState(false);
+
   // Mobile drawer state
   const [activeDrawer, setActiveDrawer] = React.useState<MobileDrawerType | null>(null);
 
@@ -451,6 +471,15 @@ function SpaceDetailContent() {
     remove: removeAutomation,
     refetch: refetchAutomations,
   } = useAutomations(spaceId);
+
+  // Leader onboarding (Spaces + HiveLab integration)
+  const leaderOnboarding = useLeaderOnboarding({
+    spaceId: spaceId ?? '',
+    isLeader,
+    deployedToolCount: tools.length,
+    eventCount: events.length,
+    memberCount: space?.memberCount ?? 0,
+  });
 
   // Chat intent detection (HiveLab AI-powered component creation)
   const {
@@ -579,6 +608,13 @@ function SpaceDetailContent() {
     if (!result) throw new Error("Failed to create widget");
   }, [leaderActions]);
 
+  // Handle open HiveLab with space context
+  const handleOpenHiveLab = React.useCallback(() => {
+    if (!spaceId) return;
+    // Navigate to tool creation with space context
+    router.push(`/tools/create?spaceId=${spaceId}`);
+  }, [router, spaceId]);
+
   // Handle invite member
   const handleInviteMember = React.useCallback(async (input: MemberInviteInput) => {
     if (!spaceId) throw new Error("Space not found");
@@ -645,6 +681,143 @@ function SpaceDetailContent() {
     // Refresh to show new event
     refresh();
   }, [spaceId, refresh]);
+
+  // Handle event RSVP
+  const handleEventRSVP = React.useCallback(async (eventId: string, status: RSVPStatus) => {
+    if (!spaceId) throw new Error("Space not found");
+    const response = await secureApiFetch(`/api/spaces/${spaceId}/events/${eventId}/rsvp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to update RSVP');
+    }
+    // Refresh events to get updated RSVP status
+    refresh();
+    toast.success('RSVP updated', status === 'going' ? "You're going!" : status === 'maybe' ? "Marked as maybe" : "RSVP removed");
+  }, [spaceId, refresh]);
+
+  // Handle opening event details modal
+  const handleEventClick = React.useCallback((eventId: string) => {
+    setSelectedEventId(eventId);
+    setEventDetailsModalOpen(true);
+  }, []);
+
+  // Compute selected event for modal - convert to SpaceEventDetails format
+  const selectedEventDetails = React.useMemo((): SpaceEventDetails | null => {
+    if (!selectedEventId) return null;
+    const event = events.find((e) => e.id === selectedEventId);
+    if (!event) return null;
+
+    // Type assertion since events from context has more fields than SpaceEventData
+    const e = event as {
+      id: string;
+      title: string;
+      description?: string;
+      type: string;
+      startDate: string;
+      endDate?: string;
+      location?: string;
+      virtualLink?: string;
+      currentAttendees: number;
+      maxAttendees?: number;
+      organizerId?: string;
+      organizerName?: string;
+      organizerAvatarUrl?: string;
+      userRSVP?: 'going' | 'maybe' | 'not_going' | null;
+      linkedBoardId?: string;
+    };
+
+    // Map event type to valid SpaceEventDetails type
+    const eventType = (['academic', 'social', 'recreational', 'cultural', 'meeting', 'virtual'] as const).includes(
+      e.type as SpaceEventDetails['type']
+    ) ? e.type as SpaceEventDetails['type'] : 'meeting';
+
+    return {
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      type: eventType,
+      startDate: e.startDate,
+      endDate: e.endDate,
+      location: e.location,
+      virtualLink: e.virtualLink,
+      currentAttendees: e.currentAttendees || 0,
+      maxAttendees: e.maxAttendees,
+      organizer: e.organizerId ? {
+        id: e.organizerId,
+        fullName: e.organizerName || 'Organizer',
+        photoURL: e.organizerAvatarUrl,
+      } : undefined,
+      userRSVP: e.userRSVP || null,
+      linkedBoardId: e.linkedBoardId,
+    };
+  }, [selectedEventId, events]);
+
+  // Handle quick deploy of a template tool
+  const handleQuickDeploy = React.useCallback(async (template: QuickTemplate) => {
+    if (!spaceId) throw new Error("Space not found");
+
+    // First, create the tool from the template
+    const createResponse = await secureApiFetch('/api/tools', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: template.name,
+        description: template.description,
+        composition: template.composition,
+        status: 'published', // Publish immediately for quick deploy
+      }),
+    });
+
+    if (!createResponse.ok) {
+      const errorData = await createResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to create tool');
+    }
+
+    const { tool } = await createResponse.json();
+
+    // Then deploy it to this space
+    const deployResponse = await secureApiFetch(`/api/spaces/${spaceId}/tools`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolId: tool.id,
+        titleOverride: template.name,
+        position: 'sidebar',
+      }),
+    });
+
+    if (!deployResponse.ok) {
+      const errorData = await deployResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to deploy tool');
+    }
+
+    // Refresh tools list to show the new tool
+    const res = await secureApiFetch(`/api/spaces/${spaceId}/tools`);
+    if (res.ok) {
+      const data = await res.json();
+      const toolList = Array.isArray(data.tools) ? data.tools : [];
+      setTools(
+        toolList.map((t: Record<string, unknown>) => ({
+          id: (t.placementId as string) || (t.toolId as string),
+          toolId: t.toolId as string,
+          placementId: t.placementId as string,
+          name: (t.titleOverride as string) || (t.name as string),
+          type: (t.category as string) || "tool",
+          isActive: t.isActive === true,
+          responseCount: (t.usageCount as number) || 0,
+        }))
+      );
+    }
+
+    // Mark the deploy-tool task as complete
+    leaderOnboarding.markTaskComplete('deployTool');
+
+    toast.success(`${template.name} deployed!`, 'Your tool is now live in the sidebar.');
+  }, [spaceId, leaderOnboarding]);
 
   // Handler for sending messages with intent detection (must be before early return)
   const handleSendMessage = React.useCallback(async (content: string, replyToId?: string) => {
@@ -1223,8 +1396,8 @@ function SpaceDetailContent() {
                     attendees: e.currentAttendees,
                     isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000,
                   }))}
-                  onEventClick={(id) => router.push(`/spaces/${spaceId}/calendar?event=${id}`)}
-                  onViewAll={() => router.push(`/spaces/${spaceId}/calendar`)}
+                  onEventClick={handleEventClick}
+                  onViewAll={() => router.push(`/spaces/${spaceId}/events`)}
                 />
               )}
 
@@ -1310,6 +1483,8 @@ function SpaceDetailContent() {
             setCreateEventModalOpen={setCreateEventModalOpen}
             onAddTab={handleAddTab}
             onAddWidget={handleAddWidget}
+            onOpenHiveLab={handleOpenHiveLab}
+            onQuickDeploy={handleQuickDeploy}
             onInviteMember={handleInviteMember}
             onSearchUsers={handleSearchUsers}
             onCreateEvent={handleCreateEvent}
@@ -1317,7 +1492,7 @@ function SpaceDetailContent() {
           />
         )}
 
-        {/* Tool Runtime Modal */}
+        {/* Tool Runtime Modal (Premium UI) */}
         {selectedTool && (
           <ToolRuntimeModal
             open={toolModalOpen}
@@ -1372,6 +1547,24 @@ function SpaceDetailContent() {
           currentUserId={user?.uid ?? "anonymous"}
           onLoadMore={loadMoreReplies}
           onSendReply={async (content: string) => { await sendThreadReply(content); }}
+        />
+
+        {/* Event Details Modal */}
+        <EventDetailsModal
+          event={selectedEventDetails}
+          open={eventDetailsModalOpen}
+          onOpenChange={(open) => {
+            setEventDetailsModalOpen(open);
+            if (!open) setSelectedEventId(null);
+          }}
+          onRSVP={handleEventRSVP}
+          onViewBoard={selectedEventDetails?.linkedBoardId ? (boardId) => {
+            changeBoard(boardId);
+            setEventDetailsModalOpen(false);
+            setSelectedEventId(null);
+          } : undefined}
+          currentUserId={user?.uid}
+          spaceId={spaceId ?? ''}
         />
       </div>
     );
@@ -1514,6 +1707,35 @@ function SpaceDetailContent() {
             </div>
           )}
 
+          {/* Leader Setup Progress - shows for leaders with incomplete setup */}
+          {leaderOnboarding.shouldShowProgress && (
+            <div className="p-4 border-b border-[#2A2A2A]">
+              <LeaderSetupProgress
+                spaceId={spaceId ?? ''}
+                tasks={leaderOnboarding.tasks.map(t => ({
+                  id: t.id,
+                  label: t.label,
+                  description: t.description,
+                  completed: t.completed,
+                  action: t.action,
+                }))}
+                completedCount={leaderOnboarding.completedCount}
+                totalCount={leaderOnboarding.totalCount}
+                percentComplete={leaderOnboarding.percentComplete}
+                onTaskAction={(action) => {
+                  if (action === 'deploy-tool') {
+                    setAddWidgetModalOpen(true);
+                  } else if (action === 'create-event') {
+                    setCreateEventModalOpen(true);
+                  } else if (action === 'invite-members') {
+                    setInviteMemberModalOpen(true);
+                  }
+                }}
+                inline
+              />
+            </div>
+          )}
+
           {/* Automations Panel - shows for leaders (HiveLab Phase 3) */}
           {canManageAutomations && (
             <div className="p-4 border-b border-[#2A2A2A] space-y-3">
@@ -1553,8 +1775,8 @@ function SpaceDetailContent() {
               },
               onViewAll: () => router.push(`/spaces/${spaceId}/tools`),
               onLeaderClick: (leaderId) => router.push(`/profile/${leaderId}`),
-              // Events - navigate to space calendar with event focused
-              onEventClick: (eventId) => router.push(`/spaces/${spaceId}/calendar?event=${eventId}`),
+              // Events - open event details modal
+              onEventClick: handleEventClick,
               // Leader actions
               onInviteMember: isLeader ? () => setInviteMemberModalOpen(true) : undefined,
               onCreateEvent: isLeader ? () => setCreateEventModalOpen(true) : undefined,
@@ -1604,6 +1826,8 @@ function SpaceDetailContent() {
           setCreateEventModalOpen={setCreateEventModalOpen}
           onAddTab={handleAddTab}
           onAddWidget={handleAddWidget}
+          onOpenHiveLab={handleOpenHiveLab}
+          onQuickDeploy={handleQuickDeploy}
           onInviteMember={handleInviteMember}
           onSearchUsers={handleSearchUsers}
           onCreateEvent={handleCreateEvent}
@@ -1718,6 +1942,43 @@ function SpaceDetailContent() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Leader Onboarding Modal - 3-step wizard for new leaders */}
+      <SpaceLeaderOnboardingModal
+        open={leaderOnboarding.shouldShowOnboarding}
+        onClose={leaderOnboarding.dismiss}
+        data={{
+          spaceName: space.name,
+          spaceId: spaceId ?? '',
+          memberCount: space.memberCount,
+          templates: QUICK_TEMPLATES,
+        }}
+        onComplete={() => {
+          leaderOnboarding.markWelcomeSeen();
+        }}
+        onDeployTemplate={handleQuickDeploy}
+        onOpenHiveLab={handleOpenHiveLab}
+        onOpenInvite={() => setInviteMemberModalOpen(true)}
+        onSkip={leaderOnboarding.dismiss}
+      />
+
+      {/* Event Details Modal */}
+      <EventDetailsModal
+        event={selectedEventDetails}
+        open={eventDetailsModalOpen}
+        onOpenChange={(open) => {
+          setEventDetailsModalOpen(open);
+          if (!open) setSelectedEventId(null);
+        }}
+        onRSVP={handleEventRSVP}
+        onViewBoard={selectedEventDetails?.linkedBoardId ? (boardId) => {
+          changeBoard(boardId);
+          setEventDetailsModalOpen(false);
+          setSelectedEventId(null);
+        } : undefined}
+        currentUserId={user?.uid}
+        spaceId={spaceId ?? ''}
+      />
 
       {/* Error state */}
       {error && (

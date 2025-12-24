@@ -234,6 +234,16 @@ export {
   getRequiredContext,
   initializeElementSystem,
 } from "./lib/hivelab/element-system";
+
+// Quick templates for one-click tool deployment
+export {
+  QUICK_TEMPLATES,
+  getQuickTemplate,
+  getTemplatesByCategory,
+  createToolFromTemplate,
+} from "./lib/hivelab/quick-templates";
+export type { QuickTemplate } from "./lib/hivelab/quick-templates";
+
 export {
   VisuallyHidden,
   SkipToContent,
@@ -721,6 +731,13 @@ export type {
   SpaceTool,
 } from "./atomic/03-Spaces/molecules/space-tools-widget";
 
+// Leader Setup Progress Widget (Dec 2025 - Leader onboarding)
+export { LeaderSetupProgress } from "./atomic/03-Spaces/molecules/leader-setup-progress";
+export type {
+  LeaderSetupProgressProps,
+  SetupTask,
+} from "./atomic/03-Spaces/molecules/leader-setup-progress";
+
 // Space Discovery Components (Dec 2025)
 // Atoms
 export { MomentumIndicator } from "./atomic/03-Spaces/atoms/momentum-indicator";
@@ -916,6 +933,13 @@ export type {
   SpaceFeatureHighlight,
 } from "./atomic/03-Spaces/organisms/space-welcome-modal";
 
+// Space Leader Onboarding Modal (Dec 2025 - Leader first-time setup)
+export { SpaceLeaderOnboardingModal } from "./atomic/03-Spaces/organisms/space-leader-onboarding-modal";
+export type {
+  SpaceLeaderOnboardingModalProps,
+  SpaceLeaderOnboardingData,
+} from "./atomic/03-Spaces/organisms/space-leader-onboarding-modal";
+
 // Brand Spinner (Dec 2025 - Design Elevation)
 export { GoldSpinner, GoldSpinnerInline } from "./components/motion-primitives/gold-spinner";
 export type { GoldSpinnerProps } from "./components/motion-primitives/gold-spinner";
@@ -1028,6 +1052,9 @@ export type { MemberInviteModalProps, MemberInviteInput, InviteableUser, MemberR
 
 export { EventCreateModal } from "./atomic/03-Spaces/organisms/event-create-modal";
 export type { EventCreateModalProps, EventCreateInput, EventType, BoardOption } from "./atomic/03-Spaces/organisms/event-create-modal";
+
+export { EventDetailsModal } from "./atomic/03-Spaces/organisms/event-details-modal";
+export type { EventDetailsModalProps, SpaceEventDetails, RSVPStatus, EventOrganizer } from "./atomic/03-Spaces/organisms/event-details-modal";
 
 // Space Templates
 export { SpaceBoardTemplate } from "./atomic/03-Spaces/templates/space-board-template";
@@ -1228,6 +1255,20 @@ export { ProfileCompletionCard } from "./atomic/04-Profile/organisms/profile-com
 export type { ProfileCompletionCardProps, ProfileCompletionStep } from "./atomic/04-Profile/organisms/profile-completion-card";
 export { HiveLabWidget } from "./atomic/05-HiveLab/organisms/hivelab-widget";
 export type { HiveLabWidgetProps } from "./atomic/05-HiveLab/organisms/hivelab-widget";
+
+// Profile HiveLab Widget (Dec 2025 - Profile Redesign)
+export { ProfileHiveLabWidget } from "./atomic/04-Profile/organisms/profile-hivelab-widget";
+export type {
+  ProfileHiveLabWidgetProps,
+  ProfileToolItem,
+} from "./atomic/04-Profile/organisms/profile-hivelab-widget";
+
+// Profile Coming Soon Section (Dec 2025 - Future Features Showcase)
+export { ProfileComingSoonSection } from "./atomic/04-Profile/organisms/profile-coming-soon";
+export type {
+  ProfileComingSoonProps,
+  FeatureKey,
+} from "./atomic/04-Profile/organisms/profile-coming-soon";
 
 // Chat Components (OpenAI-style)
 export {
