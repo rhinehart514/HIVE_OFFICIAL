@@ -50,6 +50,26 @@ export interface WidgetDetailDTO {
 }
 
 /**
+ * Space type - determines templates, suggestions, AI context
+ */
+export type SpaceTypeDTO = 'uni' | 'student' | 'greek' | 'residential';
+
+/**
+ * Governance model - determines how roles work
+ */
+export type GovernanceModelDTO = 'flat' | 'emergent' | 'hybrid' | 'hierarchical';
+
+/**
+ * Space lifecycle status
+ */
+export type SpaceStatusDTO = 'unclaimed' | 'active' | 'claimed' | 'verified';
+
+/**
+ * Space source
+ */
+export type SpaceSourceDTO = 'ublinked' | 'user-created';
+
+/**
  * Base space properties included in all responses
  */
 export interface SpaceBaseDTO {
@@ -62,6 +82,34 @@ export interface SpaceBaseDTO {
   isVerified: boolean;
   visibility: 'public' | 'private';
   /**
+   * Space type - determines templates, suggestions, AI context
+   */
+  spaceType: SpaceTypeDTO;
+  /**
+   * Governance model - determines how roles work
+   */
+  governance: GovernanceModelDTO;
+  /**
+   * Lifecycle status (unclaimed, active, claimed, verified)
+   */
+  status: SpaceStatusDTO;
+  /**
+   * Source (ublinked, user-created)
+   */
+  source: SpaceSourceDTO;
+  /**
+   * External ID for pre-seeded spaces
+   */
+  externalId?: string;
+  /**
+   * Whether this space has an owner
+   */
+  hasOwner: boolean;
+  /**
+   * When the space was claimed (if applicable)
+   */
+  claimedAt?: Date;
+  /**
    * Publishing status for stealth mode
    * - stealth: Space is being set up, only visible to leaders
    * - live: Space is publicly visible
@@ -72,6 +120,10 @@ export interface SpaceBaseDTO {
   isStealth: boolean;
   /** Convenience flag: publishStatus === 'live' */
   isLive: boolean;
+  /** Convenience flag: status === 'unclaimed' || status === 'active' */
+  isUnclaimed: boolean;
+  /** Convenience flag: status === 'claimed' || status === 'verified' */
+  isClaimed: boolean;
   /** When the space went live (if applicable) */
   wentLiveAt?: Date;
   createdAt: Date;
@@ -139,7 +191,8 @@ export interface SpaceWidgetStatsDTO {
  * Includes: membership data, activity metrics, widget stats
  */
 export interface SpaceMembershipDTO extends SpaceBaseDTO {
-  status: 'activated' | 'inactive';
+  /** Whether the space is currently active (separate from lifecycle status) */
+  activationStatus: 'activated' | 'inactive';
   updatedAt: Date;
   tabCount: number;
   widgetCount: number;

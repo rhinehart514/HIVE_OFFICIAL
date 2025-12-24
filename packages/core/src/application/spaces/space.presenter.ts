@@ -36,9 +36,21 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     memberCount: space.memberCount,
     isVerified: space.isVerified,
     visibility: space.isPublic ? 'public' : 'private',
+    // New space taxonomy fields
+    spaceType: space.spaceType,
+    governance: space.governance,
+    status: space.status,
+    source: space.source,
+    externalId: space.externalId,
+    hasOwner: space.hasOwner,
+    claimedAt: space.claimedAt,
+    // Publishing status
     publishStatus: space.publishStatus,
     isStealth: space.isStealth,
     isLive: space.isLive,
+    // Lifecycle convenience flags
+    isUnclaimed: space.status === 'unclaimed' || space.status === 'active',
+    isClaimed: space.status === 'claimed' || space.status === 'verified',
     wentLiveAt: space.wentLiveAt,
     createdAt: space.createdAt,
   };
@@ -154,7 +166,7 @@ export function toSpaceMembershipDTO(
 ): SpaceMembershipDTO {
   return {
     ...toBaseDTO(space),
-    status: space.isActive ? 'activated' : 'inactive',
+    activationStatus: space.isActive ? 'activated' : 'inactive',
     updatedAt: space.updatedAt,
     tabCount: space.tabs.length,
     widgetCount: space.widgets.length,
