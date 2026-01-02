@@ -15,7 +15,7 @@ import {
   BarChart3,
   Zap,
   ChevronRight,
-  Sparkles
+  Layers
 } from 'lucide-react';
 import { TOOL_TEMPLATES, type ToolComposition } from '../../../lib/hivelab/element-system';
 import { cn } from '../../../lib/utils';
@@ -90,7 +90,7 @@ export function TemplateBrowser({
     <div className={cn('template-browser', className)}>
       {/* Header */}
       <div className="flex items-center gap-2 px-1 mb-3">
-        <Sparkles className="h-4 w-4 text-amber-400" />
+        <Layers className="h-4 w-4 text-amber-400" />
         <h3 className="text-sm font-semibold text-muted-foreground">
           Quick Start Templates
         </h3>

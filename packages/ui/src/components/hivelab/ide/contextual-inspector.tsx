@@ -153,7 +153,7 @@ function PropertyInput({ property, onChange }: PropertyInputProps) {
             className={cn(
               'w-4 h-4 rounded',
               'bg-[#0A0A0A] border border-[#2A2A2A]',
-              'checked:bg-[#FFD700] checked:border-[#FFD700]',
+              'checked:bg-white checked:border-white',
               'focus:ring-2 focus:ring-white/20'
             )}
           />
@@ -305,7 +305,7 @@ export function ContextualInspector({
         {/* Element info */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {elementIcon && (
-            <span className="text-[#FFD700] flex-shrink-0">{elementIcon}</span>
+            <span className="text-white flex-shrink-0">{elementIcon}</span>
           )}
           <span className="text-sm font-medium text-[#FAFAFA] truncate">
             {elementName || 'Select an element'}
@@ -323,7 +323,7 @@ export function ContextualInspector({
                 'p-1.5 rounded-md',
                 'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
                 'transition-colors',
-                isPinned && 'text-[#FFD700]'
+                isPinned && 'text-white'
               )}
               aria-label={isPinned ? 'Unpin inspector' : 'Pin inspector'}
             >

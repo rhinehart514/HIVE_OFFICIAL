@@ -30,7 +30,7 @@ const pillVariants = cva(
     'relative flex items-center gap-2 px-4 py-2.5 rounded-xl',
     'text-sm font-medium whitespace-nowrap',
     'transition-colors duration-200',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
     'cursor-pointer select-none',
   ],
   {
@@ -109,22 +109,15 @@ export function CategoryPill({
       {isActive && !layoutId && (
         <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FFD700] rounded-full" />
       )}
+      {/* Removed: Decorative blur glow - gold underline alone is sufficient */}
 
-      {/* Subtle gold glow on active */}
-      {isActive && (
-        <div
-          className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FFD700] rounded-full blur-sm opacity-50"
-          aria-hidden="true"
-        />
-      )}
-
-      {icon && <span className={cn('flex-shrink-0', isActive && 'text-[#FFD700]')}>{icon}</span>}
+      {icon && <span className={cn('flex-shrink-0', isActive && 'text-white')}>{icon}</span>}
       <span className="relative">{label}</span>
       {count !== undefined && (
         <span
           className={cn(
             'ml-1 text-xs tabular-nums',
-            isActive ? 'text-[#FFD700]/70' : 'text-neutral-500'
+            isActive ? 'text-white/70' : 'text-neutral-500'
           )}
         >
           {count}

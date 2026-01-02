@@ -19,14 +19,15 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 import { cn } from '../../../lib/utils';
-import { durationSeconds, easingArrays } from '@hive/tokens';
+import { durationSeconds, easingArrays, getWarmthLevel, warmthSpectrum } from '@hive/tokens';
 import { Button } from '../../00-Global/atoms/button';
 import { MomentumIndicator } from '../atoms/momentum-indicator';
 import { MemberStack, type MemberStackMember } from '../atoms/member-stack';
 import { ActivityBadge } from '../atoms/activity-badge';
+import { AmbientGlow } from '../atoms/ambient-glow';
 import {
   spaceDiscoveryCardVariants,
   withReducedMotion,
@@ -43,6 +44,8 @@ export interface SpaceDiscoveryCardData {
   isVerified?: boolean;
   activityLevel?: 'high' | 'live' | 'quiet';
   recentMembers?: MemberStackMember[];
+  /** Active users now - for warmth calculation */
+  activeNow?: number;
 }
 
 export interface SpaceDiscoveryCardProps {
@@ -75,7 +78,12 @@ export function SpaceDiscoveryCard({
     activityLevel = 'quiet',
     recentMembers = [],
     bannerImage,
+    activeNow = 0,
   } = space;
+
+  // Phase 3: Calculate warmth level for ambient styling
+  const warmthLevel = getWarmthLevel(memberCount, activeNow);
+  const warmthState = warmthSpectrum[warmthLevel];
 
   // Generate monogram from first letter
   const monogram = name?.charAt(0)?.toUpperCase() || 'S';
@@ -105,9 +113,16 @@ export function SpaceDiscoveryCard({
       role="article"
       aria-label={`${name} space with ${memberCount} members`}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
+      style={{
+        // Phase 3: Warmth-based border
+        borderColor: warmthState.border,
+      }}
     >
+      {/* Phase 3: Warmth-based ambient glow */}
+      <AmbientGlow warmth={warmthLevel} className="absolute inset-0" />
+
       {/* Subtle glow on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-t from-[#FFD700]/5 via-transparent to-transparent rounded-xl pointer-events-none" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-white/[0.03] via-transparent to-transparent rounded-xl pointer-events-none" />
 
       <div className="relative flex">
         {/* Momentum Strip - Left border */}
@@ -120,9 +135,9 @@ export function SpaceDiscoveryCard({
             <div
               className={cn(
                 'w-12 h-12 rounded-xl flex-shrink-0 overflow-hidden',
-                'bg-gradient-to-br from-neutral-700 to-neutral-800',
-                'border border-neutral-700/50',
-                'group-hover:border-neutral-600/50 transition-colors'
+                'bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A]',
+                'border border-[#3A3A3A]',
+                'group-hover:border-[#4A4A4A] transition-colors'
               )}
             >
               {bannerImage ? (
@@ -135,8 +150,8 @@ export function SpaceDiscoveryCard({
                   transition={{ duration: durationSeconds.smooth, ease: easingArrays.default }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gold-500/20 to-gold-500/5">
-                  <span className="text-lg font-bold text-gold-500">{monogram}</span>
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/[0.12] to-white/[0.04]">
+                  <span className="text-lg font-bold text-white">{monogram}</span>
                 </div>
               )}
             </div>
@@ -144,15 +159,15 @@ export function SpaceDiscoveryCard({
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
-                <h3 className="font-semibold text-white truncate group-hover:text-gold-500 transition-colors">
+                <h3 className="font-semibold text-[#FAFAFA] truncate group-hover:text-white transition-colors">
                   {name}
                 </h3>
                 {isVerified && (
-                  <Sparkles className="w-3.5 h-3.5 text-gold-500 flex-shrink-0" />
+                  <Star className="w-3.5 h-3.5 text-[#FFD700] flex-shrink-0" />
                 )}
               </div>
 
-              <p className="text-sm text-neutral-500 mb-2">
+              <p className="text-sm text-[#71717A] mb-2">
                 {memberCount.toLocaleString()} members
               </p>
 
@@ -182,9 +197,9 @@ export function SpaceDiscoveryCard({
                 onClick={handleJoinClick}
                 disabled={isJoining}
                 className={cn(
-                  'bg-neutral-800 hover:bg-white hover:text-black',
-                  'border border-neutral-700 hover:border-white',
-                  'text-white font-medium',
+                  'bg-[#1A1A1A] hover:bg-[#FAFAFA] hover:text-[#0A0A0A]',
+                  'border border-[#3A3A3A] hover:border-[#FAFAFA]',
+                  'text-[#FAFAFA] font-medium',
                   'transition-all duration-200'
                 )}
               >
@@ -194,8 +209,8 @@ export function SpaceDiscoveryCard({
           </div>
 
           {/* Category tag */}
-          <div className="mt-3 pt-3 border-t border-neutral-800/50">
-            <span className="inline-flex items-center px-2 py-1 rounded-md bg-neutral-800/50 text-[10px] font-medium text-neutral-400 uppercase tracking-wider">
+          <div className="mt-3 pt-3 border-t border-[#2A2A2A]">
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-[#1A1A1A] text-[10px] font-medium text-[#A1A1A6] uppercase tracking-wider">
               {category.replace('_', ' ')}
             </span>
           </div>

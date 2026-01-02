@@ -40,7 +40,7 @@ export {
 } from './use-optimistic-mutation';
 
 // Utility hooks
-export { useDebounce } from './use-debounce';
+export { useDebounce, useDebouncedCallback } from './use-debounce';
 
 // HiveLab hooks
 export { useStreamingGeneration } from './use-streaming-generation';

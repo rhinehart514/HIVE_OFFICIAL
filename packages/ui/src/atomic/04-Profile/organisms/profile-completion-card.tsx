@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, Sparkles } from "lucide-react";
+import { CheckCircle, Trophy } from "lucide-react";
 import * as React from "react";
 
 import { duration, easing } from "../../../lib/motion-variants";
@@ -89,7 +89,7 @@ export function ProfileCompletionCard({
             ease: "easeInOut",
           }}
         >
-          <Sparkles className="h-4 w-4 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
+          <Trophy className="h-4 w-4 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
         </motion.div>
         <div>
           <h3 className="text-lg font-medium">Boost your profile</h3>

@@ -1,252 +1,346 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncEventsFromRSS = void 0;
-const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
-const https = __importStar(require("https"));
-const xml2js = __importStar(require("xml2js"));
-// RSS feed URL for UB events
-const UB_EVENTS_RSS_URL = 'https://buffalo.campuslabs.com/engage/events.rss';
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const https = require("https");
+const xml2js = require("xml2js");
+
 /**
- * Cloud Function to sync events from RSS to Firestore
+ * Multi-School Event Sync Cloud Function
+ *
+ * Iterates all schools in Firestore and syncs events from their configured RSS feeds.
+ * Supports campus-wide events (events that don't belong to a specific space).
+ *
  * Triggered by a schedule (once a week on Monday at 2am)
  */
 exports.syncEventsFromRSS = functions.pubsub
     .schedule('0 2 * * 1') // Run once a week on Monday at 2:00 AM
     .timeZone('America/New_York')
     .onRun(async () => {
-    console.log('Starting weekly RSS event sync...');
+    console.log('Starting multi-school RSS event sync...');
+
+    const db = admin.firestore();
+    const totalStats = {
+        schools: 0,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        campusWide: 0,
+        errors: 0,
+    };
+
     try {
-        // Fetch events from RSS feed
-        const events = await fetchEventsFromRSS();
-        console.log(`Fetched ${events.length} events from RSS`);
-        // Get the Firestore database
-        const db = admin.firestore();
-        const eventsCollection = db.collection('events');
-        // First, identify which events need to be updated by checking their source and modification status
-        const eventsToUpdate = [];
-        const eventsToSkip = [];
-        // Check each event in batches to see if it's already in Firestore and if it's been modified
-        const processingBatchSize = 10; // Process in small batches to avoid timeouts
-        for (let i = 0; i < events.length; i += processingBatchSize) {
-            const currentBatch = events.slice(i, Math.min(i + processingBatchSize, events.length));
-            // Process each event in this batch
-            await Promise.all(currentBatch.map(async (event) => {
+        // Load all active/beta schools with enabled event sources
+        const schoolsSnapshot = await db.collection('schools')
+            .where('status', 'in', ['beta', 'active'])
+            .get();
+
+        console.log(`Found ${schoolsSnapshot.size} schools to sync`);
+
+        for (const schoolDoc of schoolsSnapshot.docs) {
+            const school = { id: schoolDoc.id, ...schoolDoc.data() };
+            const eventSources = school.eventSources || [];
+            const enabledSources = eventSources.filter(s => s.enabled);
+
+            if (enabledSources.length === 0) {
+                console.log(`[${school.name}] No enabled event sources, skipping`);
+                continue;
+            }
+
+            console.log(`[${school.name}] Syncing ${enabledSources.length} source(s)`);
+            totalStats.schools++;
+
+            // Build space index for this campus
+            const spaceIndex = await buildSpaceIndex(db, school.campusId || school.id);
+            console.log(`  Found ${spaceIndex.size} spaces to match against`);
+
+            for (const source of enabledSources) {
                 try {
-                    const docRef = eventsCollection.doc(event.id);
-                    const docSnapshot = await docRef.get();
-                    if (docSnapshot.exists) {
-                        const existingData = docSnapshot.data();
-                        // Check if this event has been modified by a user
-                        const isUserModified = existingData.isUserModified === true;
-                        const source = existingData.source || 'external';
-                        // Only update RSS/external events that haven't been modified
-                        if (source.includes('external') && !isUserModified) {
-                            eventsToUpdate.push(event);
-                            console.log(`Will update RSS event: ${event.title}`);
-                        }
-                        else {
-                            eventsToSkip.push(event);
-                            console.log(`Skipping ${isUserModified ? 'user-modified' : source} event: ${event.title}`);
-                        }
+                    const stats = await syncSchoolEvents(db, school, source, spaceIndex);
+                    totalStats.created += stats.created;
+                    totalStats.updated += stats.updated;
+                    totalStats.skipped += stats.skipped;
+                    totalStats.campusWide += stats.campusWide;
+
+                    // Update lastSyncAt on the source
+                    const sourceIndex = eventSources.findIndex(s => s.url === source.url);
+                    if (sourceIndex >= 0) {
+                        eventSources[sourceIndex].lastSyncAt = new Date();
+                        await schoolDoc.ref.update({ eventSources });
                     }
-                    else {
-                        // New event, add it to Firestore
-                        eventsToUpdate.push(event);
-                        console.log(`Will add new event: ${event.title}`);
-                    }
+                } catch (error) {
+                    console.error(`  Error syncing ${source.url}:`, error.message);
+                    totalStats.errors++;
                 }
-                catch (error) {
-                    console.error(`Error checking event ${event.id}:`, error);
-                    // On error, assume it's safe to update
-                    eventsToUpdate.push(event);
-                }
-            }));
+            }
         }
-        console.log(`Will update ${eventsToUpdate.length} events and skip ${eventsToSkip.length} events`);
-        // If no events to update, we're done
-        if (eventsToUpdate.length === 0) {
-            console.log('No events need to be updated in Firestore');
-            // Update metadata even if no events were updated
-            await db.collection('metadata').doc('rss_sync').set({
-                last_sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
-                event_count: 0,
-                skipped_count: eventsToSkip.length,
-                status: 'success_nothing_to_update'
-            }, { merge: true });
-            return null;
-        }
-        // Update the events in batches
-        await saveEventsToFirestore(eventsToUpdate);
-        // Update metadata
+
+        // Update sync metadata
         await db.collection('metadata').doc('rss_sync').set({
             last_sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            event_count: eventsToUpdate.length,
-            skipped_count: eventsToSkip.length,
-            status: 'success'
+            schools_synced: totalStats.schools,
+            events_created: totalStats.created,
+            events_updated: totalStats.updated,
+            events_skipped: totalStats.skipped,
+            campus_wide_events: totalStats.campusWide,
+            errors: totalStats.errors,
+            status: totalStats.errors > 0 ? 'partial_success' : 'success'
         }, { merge: true });
-        console.log(`Weekly events sync completed successfully: ${eventsToUpdate.length} updated, ${eventsToSkip.length} skipped`);
+
+        console.log(`Sync complete: ${totalStats.schools} schools, ${totalStats.created} created, ${totalStats.updated} updated, ${totalStats.campusWide} campus-wide, ${totalStats.errors} errors`);
         return null;
-    }
-    catch (error) {
-        console.error('Error syncing events:', error);
-        // Log error to Firestore for monitoring
-        await admin.firestore().collection('metadata').doc('rss_sync').set({
+    } catch (error) {
+        console.error('Multi-school sync failed:', error);
+
+        await db.collection('metadata').doc('rss_sync').set({
             last_sync_timestamp: admin.firestore.FieldValue.serverTimestamp(),
             status: 'error',
             error_message: error.message || 'Unknown error'
         }, { merge: true });
+
         throw error;
     }
 });
+
 /**
- * Fetch events from the RSS feed
+ * Build space index for matching events to spaces
  */
-async function fetchEventsFromRSS() {
+async function buildSpaceIndex(db, campusId) {
+    const spacesSnapshot = await db.collection('spaces')
+        .where('campusId', '==', campusId)
+        .get();
+
+    const byName = new Map();
+    spacesSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        const key = (data.name || '').toLowerCase().trim();
+        if (key) {
+            byName.set(key, { id: doc.id, ...data });
+        }
+    });
+
+    return byName;
+}
+
+/**
+ * Find matching space for an event host
+ */
+function findMatchingSpace(hostName, spaceIndex) {
+    const hostStr = typeof hostName === 'string' ? hostName :
+                    (hostName?._ || hostName?.name || String(hostName || ''));
+    if (!hostStr) return null;
+
+    const key = hostStr.toLowerCase().trim();
+
+    // Exact match
+    if (spaceIndex.has(key)) {
+        return spaceIndex.get(key);
+    }
+
+    // Partial match
+    for (const [spaceName, space] of spaceIndex) {
+        if (spaceName.includes(key) || key.includes(spaceName)) {
+            return space;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Sync events from a single school's event source
+ */
+async function syncSchoolEvents(db, school, source, spaceIndex) {
+    const campusId = school.campusId || school.id;
+    console.log(`  Syncing from ${source.type}: ${source.url}`);
+
+    const stats = {
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        campusWide: 0,
+    };
+
+    // Fetch events from RSS
+    const rawEvents = await fetchEventsFromRSS(source.url, source.type);
+    console.log(`    Fetched ${rawEvents.length} events`);
+
+    for (const rawEvent of rawEvents) {
+        const event = parseEvent(rawEvent, source.type, campusId);
+        const hosts = event.source.hosts;
+
+        // Try to match to a space
+        let space = null;
+        if (hosts.length > 0) {
+            space = findMatchingSpace(hosts[0], spaceIndex);
+        }
+
+        // Generate event ID from source
+        const guidStr = event.source.guid || event.source.url || `${campusId}-event-${Date.now()}`;
+        const eventNum = (guidStr.match(/event\/(\d+)/) || [])[1] ||
+                         Buffer.from(guidStr).toString('base64').replace(/[/+=]/g, '_').substring(0, 20);
+        const eventId = `${source.type}-${eventNum}`;
+
+        // Set space reference or mark as campus-wide
+        if (space) {
+            event.spaceId = space.id;
+            event.spaceName = space.name;
+        } else {
+            event.spaceId = null;
+            event.spaceName = null;
+            event.isCampusWide = true;
+            stats.campusWide++;
+        }
+
+        const eventRef = db.collection('events').doc(eventId);
+        const existing = await eventRef.get();
+
+        // Check if user-modified
+        if (existing.exists) {
+            const existingData = existing.data();
+            if (existingData.isUserModified) {
+                stats.skipped++;
+                continue;
+            }
+        }
+
+        // Mark as external/RSS event
+        event.source.platform = source.type;
+        event.isUserModified = false;
+        event.synced_at = admin.firestore.FieldValue.serverTimestamp();
+
+        await eventRef.set(event, { merge: true });
+
+        if (existing.exists) {
+            stats.updated++;
+        } else {
+            stats.created++;
+        }
+    }
+
+    console.log(`    Results: ${stats.created} created, ${stats.updated} updated, ${stats.skipped} skipped, ${stats.campusWide} campus-wide`);
+    return stats;
+}
+
+/**
+ * Fetch events from an RSS feed
+ */
+async function fetchEventsFromRSS(url, sourceType) {
     return new Promise((resolve, reject) => {
-        https.get(UB_EVENTS_RSS_URL, (res) => {
+        const protocol = url.startsWith('https') ? https : require('http');
+
+        protocol.get(url, (res) => {
             if (res.statusCode !== 200) {
-                reject(new Error(`Failed to fetch RSS feed: ${res.statusCode}`));
+                reject(new Error(`RSS fetch failed: ${res.statusCode}`));
                 return;
             }
+
             let data = '';
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
+            res.on('data', chunk => data += chunk);
             res.on('end', async () => {
                 try {
-                    // Parse XML to JS object
                     const parser = new xml2js.Parser({ explicitArray: false });
                     const result = await parser.parseStringPromise(data);
-                    if (!result.rss || !result.rss.channel || !result.rss.channel.item) {
-                        reject(new Error('Invalid RSS format'));
-                        return;
+
+                    let items = [];
+                    if (result.rss?.channel?.item) {
+                        // RSS 2.0
+                        items = result.rss.channel.item;
+                    } else if (result.feed?.entry) {
+                        // Atom
+                        items = result.feed.entry;
                     }
-                    const items = Array.isArray(result.rss.channel.item)
-                        ? result.rss.channel.item
-                        : [result.rss.channel.item];
-                    // Process and normalize event data
-                    const events = items.map(processRssItem);
+
+                    const events = Array.isArray(items) ? items : (items ? [items] : []);
                     resolve(events);
-                }
-                catch (error) {
+                } catch (error) {
                     reject(error);
                 }
             });
-        }).on('error', (error) => {
-            reject(error);
-        });
+        }).on('error', reject);
     });
 }
+
 /**
- * Process an RSS item into our event format
+ * Parse an RSS item into event format
  */
-function processRssItem(item) {
-    // Generate an ID from the guid or title
-    const id = item.guid ? String(item.guid).replace(/[^\w-]/g, '-')
-        : String(item.title).toLowerCase().replace(/[^\w-]/g, '-');
-    // Parse dates
-    let startDate = null;
-    let endDate = null;
-    if (item.pubDate) {
-        startDate = new Date(item.pubDate);
-        // Default end date to 2 hours after start if not specified
-        endDate = new Date(startDate.getTime() + (2 * 60 * 60 * 1000));
+function parseEvent(item, sourceType, campusId) {
+    let title, description, location, startAt, endAt, hosts, guid, url, categories, imageUrl;
+
+    if (sourceType === 'campuslabs' || sourceType === 'presence' || sourceType === 'generic_rss') {
+        // RSS 2.0 format
+        title = item.title || 'Untitled Event';
+        description = stripHtml(item.description || '');
+        location = item.location || 'TBD';
+
+        const startTimestamp = parseInt(item.start, 10);
+        const endTimestamp = parseInt(item.end, 10);
+        startAt = startTimestamp ? new Date(startTimestamp * 1000) : null;
+        endAt = endTimestamp ? new Date(endTimestamp * 1000) : null;
+
+        const hostRaw = item.host;
+        hosts = Array.isArray(hostRaw) ? hostRaw : (hostRaw ? [hostRaw] : []);
+
+        guid = item.guid?._ || item.guid || item.link;
+        url = item.link;
+        categories = Array.isArray(item.category) ? item.category : (item.category ? [item.category] : []);
+        imageUrl = item.enclosure?.['$']?.url || null;
+
+    } else if (sourceType === 'atom') {
+        // Atom format
+        title = item.title?._ || item.title || 'Untitled Event';
+        description = stripHtml(item.summary?._ || item.summary || item.content?._ || item.content || '');
+        location = item['georss:point'] || 'TBD';
+
+        const pubDate = item.published || item.updated;
+        startAt = pubDate ? new Date(pubDate) : null;
+        endAt = null;
+
+        hosts = [];
+        if (item.author?.name) hosts.push(item.author.name);
+
+        guid = item.id;
+        url = item.link?.href || item.link;
+        categories = [];
+        imageUrl = null;
     }
-    // Extract more data if available
-    const location = extractLocation(item.description || '');
-    const organizerName = extractOrganizer(item.description || '', item.title || '');
+
     return {
-        id,
-        title: item.title || 'Untitled Event',
-        description: sanitizeDescription(item.description || ''),
-        startDate: startDate ? startDate.toISOString() : new Date().toISOString(),
-        endDate: endDate ? endDate.toISOString() : new Date().toISOString(),
-        location: location,
-        organizerName: organizerName,
-        link: item.link || '',
-        updatedAt: new Date().toISOString(),
-        // Add more fields that your app requires
-        synced_at: admin.firestore.FieldValue.serverTimestamp(),
+        title,
+        description,
+        location,
+        startAt: startAt || null,
+        endAt: endAt || null,
+        source: {
+            platform: sourceType,
+            guid,
+            url,
+            hosts,
+            status: item.status || 'Confirmed',
+        },
+        categories,
+        imageUrl,
+        campusId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        importedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 }
+
 /**
- * Extract location from description
+ * Strip HTML tags from text
  */
-function extractLocation(description) {
-    // Simple regex to find location patterns
-    const locationMatch = description.match(/location[:|\s]+([^<\n]+)/i);
-    return locationMatch ? locationMatch[1].trim() : '';
-}
-/**
- * Extract organizer from description or title
- */
-function extractOrganizer(description, title) {
-    // Try to find organizer in the description
-    const organizerMatch = description.match(/(?:hosted|organized|presented) by[:|\s]+([^<\n]+)/i);
-    if (organizerMatch) {
-        return organizerMatch[1].trim();
-    }
-    // If not found in description, try from title (e.g. "Organization: Event Name")
-    if (title.includes(':')) {
-        return title.split(':')[0].trim();
-    }
-    return 'University at Buffalo';
-}
-/**
- * Clean up HTML and unwanted content from description
- */
-function sanitizeDescription(description) {
-    return description
-        .replace(/<[^>]*>/g, '') // Remove HTML tags
-        .replace(/&[^;]+;/g, ' ') // Replace HTML entities
+function stripHtml(html) {
+    if (!html) return '';
+    return html
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/\s+/g, ' ')
         .trim();
-}
-/**
- * Save events to Firestore in batches, preserving user modifications
- */
-async function saveEventsToFirestore(events) {
-    const db = admin.firestore();
-    const batchSize = 500; // Firestore batch limit is 500 operations
-    console.log(`Saving ${events.length} events to Firestore in batches of ${batchSize}`);
-    // Process in batches
-    for (let i = 0; i < events.length; i += batchSize) {
-        const batch = db.batch();
-        const currentBatch = events.slice(i, i + batchSize);
-        currentBatch.forEach(event => {
-            const docRef = db.collection('events').doc(event.id);
-            // Mark this as an RSS/external event and add sync timestamp
-            event.synced_at = admin.firestore.FieldValue.serverTimestamp();
-            event.source = 'external';
-            event.isUserModified = false; // Default to false for RSS events
-            // Use merge: true to preserve any fields not in our model
-            batch.set(docRef, event, { merge: true });
-        });
-        await batch.commit();
-        console.log(`Committed batch ${i / batchSize + 1} with ${currentBatch.length} events`);
-    }
 }
 //# sourceMappingURL=events_sync.js.map

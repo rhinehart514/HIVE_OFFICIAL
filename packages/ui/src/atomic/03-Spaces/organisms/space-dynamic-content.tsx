@@ -31,7 +31,7 @@ import {
   MessageSquare,
   LayoutGrid,
   FolderOpen,
-  Sparkles,
+  Layers,
   Plus,
   GripVertical,
   Settings2,
@@ -194,7 +194,7 @@ const WIDGET_ICONS: Record<SpaceWidget["type"], React.ComponentType<{ className?
   links: Link2,
   files: FileText,
   rss: Rss,
-  custom: Sparkles,
+  custom: Layers,
 };
 
 interface DraggableWidgetCardProps {
@@ -212,7 +212,7 @@ function DraggableWidgetCard({
   onEdit,
   onRemove,
 }: DraggableWidgetCardProps) {
-  const Icon = WIDGET_ICONS[widget.type] || Sparkles;
+  const Icon = WIDGET_ICONS[widget.type] || Layers;
 
   return (
     <motion.div
@@ -234,8 +234,8 @@ function DraggableWidgetCard({
         {/* Widget header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-[#FFD700]/10">
-              <Icon className="w-4 h-4 text-[#FFD700]" />
+            <div className="p-1.5 rounded-lg bg-white/[0.06]">
+              <Icon className="w-4 h-4 text-neutral-400" />
             </div>
             <h3 className="font-medium text-sm text-neutral-100">
               {widget.title}
@@ -308,7 +308,7 @@ function EmptyState({ type, isLeader, onAddWidget }: EmptyStateProps) {
       action: isLeader ? "Add Resource" : null,
     },
     custom: {
-      icon: Sparkles,
+      icon: Layers,
       title: "Custom content area",
       description: isLeader
         ? "Configure this tab with custom content."
@@ -340,7 +340,7 @@ function EmptyState({ type, isLeader, onAddWidget }: EmptyStateProps) {
             "inline-flex items-center gap-2 px-4 py-2",
             "bg-[#FFD700] text-black font-medium text-sm rounded-lg",
             "hover:bg-[#FFD700]/90 transition-colors",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           )}
         >
           <Plus className="w-4 h-4" />
@@ -461,7 +461,7 @@ export function SpaceDynamicContent({
                   className={cn(
                     "text-sm font-medium px-3 py-1.5 rounded-lg transition-colors",
                     isEditMode
-                      ? "bg-[#FFD700] text-black"
+                      ? "bg-white/[0.12] text-white border border-white/20"
                       : "text-neutral-400 hover:text-neutral-200 hover:bg-white/5"
                   )}
                 >
@@ -520,7 +520,7 @@ export function SpaceDynamicContent({
                 onClick={onAddWidget}
                 className={cn(
                   "w-full py-4 rounded-2xl",
-                  "border-2 border-dashed border-neutral-700 hover:border-[#FFD700]/50",
+                  "border-2 border-dashed border-neutral-700 hover:border-white/30",
                   "text-neutral-500 hover:text-neutral-300",
                   "flex items-center justify-center gap-2",
                   "transition-colors duration-200"

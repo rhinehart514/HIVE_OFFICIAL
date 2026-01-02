@@ -147,7 +147,7 @@ export function SpacesDiscoveryPage({
             </h2>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
-                <Badge key={category.id} tone="muted" variant="pill">
+                <Badge key={category.id} variant="secondary">
                   {category.label}
                   {category.count !== undefined ? ` · ${category.count}` : ""}
                 </Badge>

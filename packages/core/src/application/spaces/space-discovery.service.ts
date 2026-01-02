@@ -440,8 +440,8 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       } = input;
 
       // Map sort option to repository orderBy
-      const orderByMap: Record<string, 'createdAt' | 'name_lowercase' | 'memberCount'> = {
-        trending: 'memberCount', // TODO: Add trendingScore to orderBy options
+      const orderByMap: Record<string, 'createdAt' | 'name_lowercase' | 'memberCount' | 'trendingScore'> = {
+        trending: 'trendingScore',
         recent: 'createdAt',
         popular: 'memberCount',
         alphabetical: 'name_lowercase',
@@ -768,8 +768,14 @@ export class SpaceDiscoveryService extends BaseApplicationService {
       }
 
       // Check visibility (private spaces require membership)
-      if (!space.isPublic && this.context.userId) {
-        // TODO: Check if user is a member before allowing access
+      if (!space.isPublic) {
+        if (!this.context.userId) {
+          return Result.fail<SpaceDetailDTO>('Private space requires authentication');
+        }
+        const isMember = space.members.some(m => m.profileId.value === this.context.userId);
+        if (!isMember) {
+          return Result.fail<SpaceDetailDTO>('You must be a member to view this private space');
+        }
       }
 
       return Result.ok<SpaceDetailDTO>(toSpaceDetailDTO(space));

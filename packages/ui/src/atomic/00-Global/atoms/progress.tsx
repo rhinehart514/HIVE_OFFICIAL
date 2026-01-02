@@ -6,23 +6,21 @@ import * as React from "react"
 import { cn } from "../../../lib/utils"
 
 const progressVariants = cva(
-  "relative h-4 w-full overflow-hidden rounded-full bg-[var(--hive-background-tertiary)]",
+  "relative h-4 w-full overflow-hidden rounded-full bg-[#1A1A1A]",
   {
     variants: {
       size: {
-        default: "h-4",
-        sm: "h-2",
-        lg: "h-6",
-        xl: "h-8",
         xs: "h-1.5",
+        sm: "h-2",
+        default: "h-4",
+        lg: "h-6",
       },
       variant: {
-        default: "bg-[var(--hive-background-tertiary)]",
-        secondary: "bg-[var(--hive-background-secondary)]",
-        primary: "bg-[var(--hive-brand-primary-bg,#191c2d)]",
-        success: "bg-[var(--hive-status-success)]/20",
-        warning: "bg-[var(--hive-status-warning)]/20",
-        error: "bg-[var(--hive-status-error)]/20",
+        default: "bg-[#1A1A1A]",
+        secondary: "bg-[#141414]",
+        success: "bg-[#00D46A]/10",
+        warning: "bg-[#FFB800]/10",
+        error: "bg-[#FF3737]/10",
       },
     },
     defaultVariants: {
@@ -33,35 +31,26 @@ const progressVariants = cva(
 )
 
 const progressIndicatorVariants = cva(
-  "h-full w-full flex-1 bg-[var(--hive-brand-primary)] transition-all duration-300 ease-in-out",
+  // Default: white for monochrome discipline
+  "h-full w-full flex-1 bg-white transition-all duration-300 ease-out",
   {
     variants: {
       variant: {
-        default: "bg-[var(--hive-brand-primary)]",
-        secondary: "bg-[var(--hive-text-secondary)]",
-        success: "bg-[var(--hive-status-success)]",
-        warning: "bg-[var(--hive-status-warning)]",
-        error: "bg-[var(--hive-status-error)]",
-        gradient: "bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)]",
+        default: "bg-white",
+        secondary: "bg-[#A1A1A6]",
+        success: "bg-[#00D46A]",
+        warning: "bg-[#FFB800]",
+        error: "bg-[#FF3737]",
       },
       animation: {
         none: "",
         pulse: "animate-pulse",
-        indeterminate: "animate-bounce",
-        bounce: "animate-bounce",
-        spin: "animate-spin",
+        indeterminate: "",
       },
-      gradient: {
-        none: "",
-        subtle: "bg-gradient-to-r from-current to-current/80",
-        vibrant: "bg-gradient-to-r from-current via-current/90 to-current",
-        hive: "bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)]",
-      }
     },
     defaultVariants: {
       variant: "default",
       animation: "none",
-      gradient: "none",
     },
   }
 )
@@ -79,7 +68,6 @@ export interface ProgressProps
   label?: string
   showLabel?: boolean
   showPercentage?: boolean
-  gradient?: VariantProps<typeof progressIndicatorVariants>["gradient"]
   indicatorClassName?: string
 }
 
@@ -98,7 +86,6 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
     label,
     showLabel = false,
     showPercentage = false,
-    gradient,
     indicatorClassName,
     ...props
   }, ref) => {
@@ -117,11 +104,11 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
       <div className="w-full space-y-2">
         {(showValue || showLabel || showPercentage) && (
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-[var(--hive-text-primary)]">
+            <span className="text-sm font-medium text-[#FAFAFA]">
               {label ?? "Progress"}
             </span>
             {showValue || showPercentage ? (
-              <span className="text-sm text-[var(--hive-text-secondary)]">
+              <span className="text-sm text-[#A1A1A6]">
                 {indeterminate ? "Loading..." : displayValue}
               </span>
             ) : null}
@@ -142,7 +129,6 @@ const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
               progressIndicatorVariants({
                 variant: indicatorVariant || "default",
                 animation: indeterminate ? "indeterminate" : animation,
-                gradient: gradient || "none",
               }),
               indicatorClassName
             )}
@@ -206,7 +192,7 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps &
             cy={size / 2}
             r={radius}
             strokeWidth={strokeWidth}
-            stroke="var(--hive-background-tertiary)"
+            stroke="#1A1A1A"
             fill="transparent"
           />
           {/* Progress circle */}
@@ -216,10 +202,10 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps &
             r={radius}
             strokeWidth={strokeWidth}
             stroke={
-              indicatorVariant === "success" ? "var(--hive-status-success)" :
-              indicatorVariant === "warning" ? "var(--hive-status-warning)" :
-              indicatorVariant === "error" ? "var(--hive-status-error)" :
-              "var(--hive-brand-primary)"
+              indicatorVariant === "success" ? "#00D46A" :
+              indicatorVariant === "warning" ? "#FFB800" :
+              indicatorVariant === "error" ? "#FF3737" :
+              "#FFFFFF"
             }
             fill="transparent"
             strokeDasharray={circumference}
@@ -235,7 +221,7 @@ const CircularProgress = React.forwardRef<SVGSVGElement, CircularProgressProps &
           />
         </svg>
         {showPercentage && !indeterminate && (
-          <span className="absolute text-xs font-medium text-[var(--hive-text-primary)]">
+          <span className="absolute text-xs font-medium text-[#FAFAFA]">
             {Math.round(percentage)}%
           </span>
         )}

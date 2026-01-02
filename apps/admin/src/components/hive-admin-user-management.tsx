@@ -511,7 +511,12 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
-  // const [showBulkActions, setShowBulkActions] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<HiveAdminUser | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const loadUsers = useCallback(async () => {
     if (!admin || !enableFeatureFlag) return;
@@ -570,6 +575,78 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
       setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
     } else {
       setSelectedUsers(new Set());
+    }
+  };
+
+  const handleViewDetails = (user: HiveAdminUser) => {
+    setSelectedUser(user);
+    setShowDetailsModal(true);
+  };
+
+  const handleEdit = (user: HiveAdminUser) => {
+    setSelectedUser(user);
+    setShowEditModal(true);
+  };
+
+  const handleSuspend = async (user: HiveAdminUser) => {
+    setSelectedUser(user);
+    setShowSuspendModal(true);
+  };
+
+  const confirmSuspend = async () => {
+    if (!selectedUser || !admin) return;
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}/suspend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${admin.id}`,
+        },
+        body: JSON.stringify({ reason: 'Admin action' }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setUsers(users.map(u =>
+          u.id === selectedUser.id ? { ...u, status: 'suspended' as UserStatus } : u
+        ));
+        setShowSuspendModal(false);
+        setSelectedUser(null);
+      }
+    } catch {
+      // Handle error silently - modal will stay open
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = (user: HiveAdminUser) => {
+    setSelectedUser(user);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedUser || !admin) return;
+    setActionLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${selectedUser.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${admin.id}`,
+        },
+      });
+
+      if (response.ok) {
+        // Remove from local state
+        setUsers(users.filter(u => u.id !== selectedUser.id));
+        setShowDeleteModal(false);
+        setSelectedUser(null);
+      }
+    } catch {
+      // Handle error silently - modal will stay open
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -832,10 +909,10 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <UserCard
                   key={user.id}
                   user={user}
-                  onViewDetails={() => { /* TODO: Navigate to user details */ }}
-                  onEdit={() => { /* TODO: Open user editor */ }}
-                  onSuspend={() => { /* TODO: Open suspend dialog */ }}
-                  onDelete={() => { /* TODO: Open delete confirmation */ }}
+                  onViewDetails={() => handleViewDetails(user)}
+                  onEdit={() => handleEdit(user)}
+                  onSuspend={() => handleSuspend(user)}
+                  onDelete={() => handleDelete(user)}
                   isSelected={selectedUsers.has(user.id)}
                   onSelect={(selected) => handleSelectUser(user.id, selected)}
                 />
@@ -877,6 +954,155 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
           </div>
         </CardContent>
       </Card>
+
+      {/* User Details Modal */}
+      {showDetailsModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">User Details</h2>
+              <button
+                onClick={() => { setShowDetailsModal(false); setSelectedUser(null); }}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
+                  {selectedUser.profilePhoto ? (
+                    <img src={selectedUser.profilePhoto} alt={selectedUser.displayName} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <Users className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">{selectedUser.displayName}</h3>
+                  <p className="text-gray-400">@{selectedUser.handle}</p>
+                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="p-3 bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-400">Role</p>
+                  <p className="text-white font-medium capitalize">{selectedUser.role}</p>
+                </div>
+                <div className="p-3 bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-400">Status</p>
+                  <p className="text-white font-medium capitalize">{selectedUser.status}</p>
+                </div>
+                <div className="p-3 bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-400">Spaces</p>
+                  <p className="text-white font-medium">{selectedUser.spaceMemberships.length}</p>
+                </div>
+                <div className="p-3 bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-400">Violations</p>
+                  <p className="text-white font-medium">{selectedUser.violations.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Confirmation Modal */}
+      {showSuspendModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Suspend User</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-300 mb-4">
+                Are you sure you want to suspend <strong className="text-white">{selectedUser.displayName}</strong>?
+              </p>
+              <p className="text-sm text-gray-400 mb-6">
+                This will prevent them from logging in and accessing the platform.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => { setShowSuspendModal(false); setSelectedUser(null); }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600"
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmSuspend}
+                  className="flex-1 bg-orange-600 hover:bg-orange-500"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Suspending...' : 'Suspend User'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-red-400">Delete User</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-300 mb-4">
+                Are you sure you want to delete <strong className="text-white">{selectedUser.displayName}</strong>?
+              </p>
+              <p className="text-sm text-red-400 mb-6">
+                This action cannot be undone. All user data will be permanently removed.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  onClick={() => { setShowDeleteModal(false); setSelectedUser(null); }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600"
+                  disabled={actionLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmDelete}
+                  className="flex-1 bg-red-600 hover:bg-red-500"
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? 'Deleting...' : 'Delete User'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal - Placeholder */}
+      {showEditModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">Edit User</h2>
+              <button
+                onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-400 text-center py-8">
+                User editing functionality coming soon.
+              </p>
+              <Button
+                onClick={() => { setShowEditModal(false); setSelectedUser(null); }}
+                className="w-full bg-gray-700 hover:bg-gray-600"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

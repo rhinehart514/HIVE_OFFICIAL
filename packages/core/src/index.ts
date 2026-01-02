@@ -58,6 +58,9 @@ export { EnhancedSpace } from "./domain/spaces/aggregates/enhanced-space";
 export type {
   SpaceMemberRole,
   LeaderRequestStatus,
+  LeaderProofType,
+  LeaderRequest,
+  SetupProgress,
   SpaceType,
   GovernanceModel,
   SpaceStatus,
@@ -231,7 +234,7 @@ export {
   getSystemTool,
   getSystemToolsByCategory,
   getTemplateForCategory as getSystemTemplateForCategory,
-  isSystemTool,
+  isSystemTool as isSystemToolTemplate,
   getEssentialTools,
   getEngagementTools,
   type SystemToolTemplate,
@@ -244,7 +247,24 @@ export type {
   CanvasElement,
   ElementConnection,
   ElementDefinition,
-  ElementCategory
+  ElementCategory,
+  // Tool State Types (Phase 1 State Architecture)
+  ToolSharedState,
+  ToolSharedStateUpdate,
+  ToolUserState,
+  ToolUserStateUpdate,
+  ToolSharedEntity,
+  ToolTimelineEvent,
+  ToolActionCategory,
+  ToolActionResult,
+  ToolEffect,
+  CombinedToolState,
+  ToolContext,
+  // Sharded Counter Types (Phase 1 Scaling Architecture)
+  ShardedCounterConfig,
+  ElementCounterConfig,
+  ToolCounterConfig,
+  CounterMigrationStatus,
 } from "./domain/hivelab/tool-composition.types";
 
 // HiveLab Automation Entity (Phase 3)

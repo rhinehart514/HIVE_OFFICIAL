@@ -1,21 +1,22 @@
 'use client';
 
 /**
- * BoardTabBar - Discord-style channel/board selector for Spaces
+ * BoardTabBar - Minimal channel/board selector for Spaces
  *
- * Design Direction:
- * - White underline for active board (not gold)
- * - Gold unread count badges
+ * Design Direction (The Hub - Phase 3):
+ * - Tabs feel like navigation (chrome), not content
+ * - Subtle white text/indicator (never gold)
+ * - Unread shown as small dot (not count badges)
  * - Horizontal scroll on mobile
- * - Icons per board type (#general, event, topic)
- * - Height: 44px
+ * - Height: ~44px, very lightweight
  *
  * @author HIVE Frontend Team
- * @version 2.0.0 - Dark-first design update
+ * @version 3.0.0 - Reduced visual weight for Hub layout
  */
 
 import { motion } from 'framer-motion';
 import { Hash, Calendar, MessageSquare, Plus } from 'lucide-react';
+import { springPresets } from '@hive/tokens';
 import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -116,45 +117,39 @@ export function BoardTabBar({
             <motion.button
               key={board.id}
               data-active={isActive}
-              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onBoardChange(board.id)}
               className={cn(
-                'relative flex items-center gap-2 px-3 py-2 rounded-lg',
-                'text-sm font-medium whitespace-nowrap transition-all duration-200',
+                'relative flex items-center gap-1.5 px-3 py-2 rounded-lg',
+                'text-[13px] font-medium whitespace-nowrap transition-colors duration-150',
                 // White focus ring (not gold)
                 'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
                 isActive
                   // Active: white text (not gold)
-                  ? 'text-[#FAFAFA]'
-                  // Inactive: subtle text, hover to primary
-                  : 'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]'
+                  ? 'text-white/90'
+                  // Inactive: very subtle text, hover to brighter
+                  : 'text-white/40 hover:text-white/70 hover:bg-white/[0.03]'
               )}
               aria-current={isActive ? 'page' : undefined}
               aria-label={`${board.type} board: ${board.name}${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
               <span>{board.name}</span>
 
-              {/* Unread badge - gold for visibility */}
+              {/* Unread indicator - subtle dot */}
               {unreadCount > 0 && !isActive && (
                 <span
-                  className={cn(
-                    'ml-1 px-1.5 py-0.5 text-xs rounded-full',
-                    'bg-[#FFD700] text-[#0A0A0A] font-semibold',
-                    'min-w-[18px] text-center'
-                  )}
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
+                  className="ml-0.5 w-1.5 h-1.5 rounded-full bg-white/70"
+                  aria-hidden="true"
+                />
               )}
 
-              {/* Active indicator line - white (not gold) */}
+              {/* Active indicator line - thin, no glow */}
               {isActive && (
                 <motion.div
                   layoutId="board-tab-indicator"
-                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FAFAFA] rounded-full"
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  className="absolute bottom-0 left-3 right-3 h-[2px] bg-white/80 rounded-full"
+                  transition={springPresets.snappy}
                 />
               )}
             </motion.button>
@@ -164,17 +159,16 @@ export function BoardTabBar({
         {/* Create board button (leaders only) */}
         {isLeader && onCreateBoard && (
           <motion.button
-            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onCreateBoard}
             className={cn(
               'flex items-center justify-center p-2 rounded-lg',
-              'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
+              'text-white/30 hover:text-white/60 hover:bg-white/[0.03]',
+              'transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
             )}
             aria-label="Create new board"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
           </motion.button>
         )}
       </div>

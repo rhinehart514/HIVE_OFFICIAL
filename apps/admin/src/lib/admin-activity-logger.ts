@@ -79,7 +79,7 @@ class AdminActivityLogger {
 
     this.logs.unshift(logEntry);
 
-    // TODO: Persist to database
+    // Persist to database
     await this.persistToDatabase(logEntry);
 
     // Keep only last 10000 logs in memory
@@ -243,11 +243,11 @@ class AdminActivityLogger {
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
     const initialCount = this.logs.length;
-    this.logs = this.logs.filter(log => 
+    this.logs = this.logs.filter(log =>
       new Date(log.timestamp) > cutoffDate
     );
 
-    // TODO: Also cleanup from database
+    // Also cleanup from database
     await this.cleanupFromDatabase(cutoffDate);
 
     return initialCount - this.logs.length;

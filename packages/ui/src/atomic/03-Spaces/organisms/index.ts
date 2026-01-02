@@ -7,6 +7,7 @@ export type {
   SpaceDetailHeaderProps,
   SpaceDetailData,
   SpaceMembershipState,
+  SpaceClaimStatus,
 } from './space-detail-header';
 
 export { SpaceDynamicContent } from './space-dynamic-content';
@@ -35,12 +36,12 @@ export type {
   SpaceSidebarAbout,
   SpaceSidebarTools,
   SpaceSidebarEvent,
+  SpaceSidebarSetupProgress,
   SpaceSidebarMinimalProps,
 } from './space-sidebar';
 
 // Existing Space organisms
-export { SpaceBoardLayout } from './space-board-layout';
-export type { SpaceBoardLayoutProps, PinnedPost as SpacePinnedPost } from './space-board-layout';
+// NOTE: SpaceBoardLayout was removed (unused) - use premium components instead
 
 export { SpacePostComposer } from './space-post-composer';
 export type { SpacePostComposerProps } from './space-post-composer';
@@ -84,6 +85,7 @@ export type {
 export { AddWidgetModal } from './add-widget-modal';
 export type {
   AddWidgetModalProps,
+  ExistingTool,
 } from './add-widget-modal';
 
 // Member Invite Modal (Dec 2025)
@@ -116,3 +118,30 @@ export type {
 // Space Entry Animation (Dec 2025 - Signature arrival moment)
 export { SpaceEntryAnimation } from './space-entry-animation';
 export type { SpaceEntryAnimationProps } from './space-entry-animation';
+
+// Space Threshold (Dec 2025 - Edge-to-edge welcoming entry)
+export { SpaceThreshold } from './space-threshold';
+export type { SpaceThresholdProps } from './space-threshold';
+
+// Context Panel (Phase 3 - Dec 2025 - On-demand sidebar replacement)
+export { ContextPanel } from './context-panel';
+export type {
+  ContextPanelProps,
+  SpaceContextData,
+  SpaceEventItem,
+  SpaceMemberItem,
+  SpaceToolItem,
+} from './context-panel';
+
+// Discovery Components (Dec 2025 - Landing page energy)
+export { SpaceHeroCard } from './space-hero-card';
+export type {
+  SpaceHeroCardProps,
+  ActivityFragment,
+} from './space-hero-card';
+
+export { SpaceNeighborhood } from './space-neighborhood';
+export type {
+  SpaceNeighborhoodProps,
+  NeighborhoodSpace,
+} from './space-neighborhood';

@@ -51,6 +51,11 @@ export interface ISpaceRepository extends IRepository<EnhancedSpace> {
   findByType(type: string, campusId: string): Promise<Result<EnhancedSpace[]>>;
   findUserSpaces(userId: string): Promise<Result<EnhancedSpace[]>>;
   findByMember(userId: string): Promise<Result<EnhancedSpace[]>>;
+  /**
+   * Lightweight method to get user's space memberships without loading full spaces
+   * Returns just spaceId and role - use this for browse/discovery endpoints
+   */
+  findUserMemberships(userId: string): Promise<Result<{ spaceId: string; role: string }[]>>;
   findPublicSpaces(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;
   findPublicEnhancedSpaces(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;
   findTrending(campusId: string, limit?: number): Promise<Result<EnhancedSpace[]>>;
@@ -63,7 +68,7 @@ export interface ISpaceRepository extends IRepository<EnhancedSpace> {
     searchTerm?: string;
     limit?: number;
     cursor?: string;
-    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount';
+    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount' | 'trendingScore';
     orderDirection?: 'asc' | 'desc';
   }): Promise<Result<{ spaces: EnhancedSpace[]; hasMore: boolean; nextCursor?: string }>>;
 }

@@ -4,7 +4,7 @@
 export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Card, Button } from "@hive/ui";
 import { 
   ArrowLeft, 
@@ -52,8 +52,13 @@ interface DeploymentConfig {
 
 export default function ToolDeployPage() {
   const _router = useRouter();
-  const params = useParams();  const { user, getAuthToken } = useAuth();
+  const params = useParams();
+  const searchParams = useSearchParams();
+  const { user, getAuthToken } = useAuth();
   const toolId = params.toolId as string;
+
+  // Pre-selected space from URL (when navigating from space → HiveLab → deploy)
+  const preselectedSpaceId = searchParams.get('spaceId');
 
   const [step, setStep] = useState<'target' | 'config' | 'confirm' | 'success'>('target');
   const [isLoading, setIsLoading] = useState(false);
@@ -147,13 +152,27 @@ export default function ToolDeployPage() {
         }
 
         setAvailableTargets(targets);
+
+        // Auto-select preselected space if present in URL
+        if (preselectedSpaceId) {
+          const preselectedTarget = targets.find(t => t.id === preselectedSpaceId && t.type === 'space');
+          if (preselectedTarget) {
+            setDeploymentConfig(prev => ({
+              ...prev,
+              targetType: 'space',
+              targetId: preselectedSpaceId,
+            }));
+            // Skip target selection step
+            setStep('config');
+          }
+        }
       } catch {
         setError('Failed to load data');
       }
     };
 
     loadData();
-  }, [toolId, user, getAuthToken]);
+  }, [toolId, user, getAuthToken, preselectedSpaceId]);
 
   const handleTargetSelect = (target: DeploymentTarget) => {
     setDeploymentConfig(prev => ({

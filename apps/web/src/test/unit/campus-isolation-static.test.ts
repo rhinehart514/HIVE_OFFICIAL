@@ -5,7 +5,8 @@ import glob from 'glob';
 
 type GlobSync = (pattern: string) => string[];
 
-const webRoot = join(process.cwd(), 'apps', 'web');
+// Tests run from apps/web directory, so process.cwd() is already apps/web
+const webRoot = process.cwd();
 const apiRoot = join(webRoot, 'src', 'app', 'api');
 
 function read(file: string) {

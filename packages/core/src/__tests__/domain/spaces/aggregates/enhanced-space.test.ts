@@ -86,7 +86,7 @@ describe('EnhancedSpace Aggregate', () => {
     });
 
     it('should have creator as owner', () => {
-      expect(space.owner.value).toBe('test-user-123');
+      expect(space.owner?.value).toBe('test-user-123');
     });
 
     it('should start with empty widgets', () => {

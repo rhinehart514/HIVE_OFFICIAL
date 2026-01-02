@@ -69,7 +69,7 @@ export function OnboardingFlowPage({
     <div className="min-h-screen bg-[var(--hive-background-page,#06070d)] text-[var(--hive-text-primary,#f7f7ff)]">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 pb-24 pt-14">
         <header className="space-y-4 text-center">
-          <Badge tone="contrast" variant="pill" className="uppercase tracking-caps-wider">
+          <Badge variant="primary" className="uppercase tracking-caps-wider">
             Welcome to {campusName}
           </Badge>
           <h1 className="text-3xl font-semibold text-[var(--hive-text-primary,#f5f5ff)]">Launch your campus presence</h1>

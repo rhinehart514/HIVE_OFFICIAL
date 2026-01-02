@@ -1,10 +1,8 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { Check } from 'lucide-react';
-import { HiveLogo } from '@hive/ui';
 
-type OnboardingStep = 'userType' | 'profile' | 'interests' | 'spaces' | 'completion' | string;
+type OnboardingStep = 'userType' | 'name' | 'handleSelection' | 'interestsCloud' | 'spaces' | 'completion' | string;
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -14,19 +12,30 @@ interface OnboardingLayoutProps {
   currentStep?: OnboardingStep;
 }
 
-// 4-step flow: userType → profile → interests → spaces
-const MAIN_STEPS = ['userType', 'profile', 'interests', 'spaces'] as const;
+// 5-step flow: userType → name → handleSelection → interestsCloud → spaces
+const MAIN_STEPS = ['userType', 'name', 'handleSelection', 'interestsCloud', 'spaces'] as const;
 
 function getStepIndex(step: OnboardingStep | undefined): number {
   if (!step) return 0;
   const idx = MAIN_STEPS.indexOf(step as typeof MAIN_STEPS[number]);
-  return idx >= 0 ? idx : (step === 'completion' ? MAIN_STEPS.length : 0);
+  // Handle legacy steps - map to new flow
+  if (idx < 0) {
+    if (step === 'completion') return MAIN_STEPS.length;
+    if (step === 'profile') return 1; // Map to name step
+    if (step === 'interests') return 3; // Map to interestsCloud step
+    return 0;
+  }
+  return idx;
 }
 
 /**
- * Premium onboarding layout wrapper
- * Full-screen dark background (#0A0A0A) with subtle ambient glow
- * YC/SF/OpenAI aesthetic
+ * Edge-to-Edge Onboarding Layout
+ *
+ * Matches landing page aesthetic:
+ * - #050505 background (same as landing)
+ * - No cards or containers
+ * - Content floats directly on background
+ * - Gold only on achievements
  */
 export function OnboardingLayout({ children, showLogo = true, currentStep }: OnboardingLayoutProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -36,111 +45,78 @@ export function OnboardingLayout({ children, showLogo = true, currentStep }: Onb
   return (
     <div
       className="min-h-screen min-h-[100dvh] relative overflow-hidden"
-      style={{
-        backgroundColor: 'var(--hive-bg-base)',
-        color: 'var(--hive-text-primary)',
-      }}
+      style={{ background: '#050505' }}
     >
-      {/* Ambient gold orb - breathing effect (elevated opacity for premium feel) */}
-      {!shouldReduceMotion && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: [0.04, 0.08, 0.04],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] h-[400px] md:h-[600px] rounded-full pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle, rgba(255, 215, 0, 0.12) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-          }}
-          aria-hidden="true"
-        />
-      )}
-      {/* Static ambient glow for reduced motion users */}
-      {shouldReduceMotion && (
-        <div
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] md:w-[800px] h-[400px] md:h-[600px] rounded-full pointer-events-none opacity-[0.06]"
-          style={{
-            background: 'radial-gradient(circle, rgba(255, 215, 0, 0.12) 0%, transparent 70%)',
-            filter: 'blur(80px)',
-          }}
-          aria-hidden="true"
-        />
-      )}
+      {/* Subtle top gradient - barely visible, matches landing */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,255,255,0.03) 0%, transparent 60%)',
+        }}
+        aria-hidden="true"
+      />
 
-      {/* Progress dots - top left on desktop, bottom center on mobile */}
-      {currentStep && !isCompletion && (
-        <motion.nav
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={shouldReduceMotion ? {} : { duration: 0.5, delay: 0.2 }}
-          className="fixed top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-1.5 md:gap-2"
-          aria-label={`Step ${stepIndex + 1} of ${MAIN_STEPS.length}`}
-          role="navigation"
-        >
-          {MAIN_STEPS.map((s, i) => {
-            const isComplete = i < stepIndex;
-            const isCurrent = i === stepIndex;
-            return (
-              <div key={s} className="flex items-center">
-                <motion.div
-                  initial={false}
-                  animate={shouldReduceMotion ? {} : {
-                    scale: isCurrent ? 1 : 0.85,
-                    opacity: isComplete || isCurrent ? 1 : 0.3,
-                  }}
-                  className={`
-                    w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-medium transition-colors
-                    ${isComplete ? 'bg-gold-500/20 text-gold-500' : ''}
-                    ${isCurrent ? 'bg-white/10 text-white border border-white/20' : ''}
-                    ${!isComplete && !isCurrent ? 'bg-white/[0.03] opacity-30' : ''}
-                  `}
-                  style={!isComplete && !isCurrent ? { color: 'var(--hive-text-disabled)' } : {}}
-                  aria-current={isCurrent ? 'step' : undefined}
-                  aria-label={`Step ${i + 1}${isComplete ? ' (completed)' : isCurrent ? ' (current)' : ''}`}
-                >
-                  {isComplete ? (
-                    <Check className="w-2.5 h-2.5 md:w-3 md:h-3" aria-hidden="true" />
-                  ) : (
-                    <span aria-hidden="true">{i + 1}</span>
-                  )}
-                </motion.div>
-                {i < MAIN_STEPS.length - 1 && (
-                  <div
-                    className={`w-2 md:w-4 h-px mx-0.5 md:mx-1 transition-colors ${
-                      i < stepIndex ? 'bg-gold-500/40' : 'bg-white/[0.06]'
-                    }`}
-                    aria-hidden="true"
-                  />
-                )}
-              </div>
-            );
-          })}
-        </motion.nav>
-      )}
-
-      {/* Logo - top right, subtle */}
+      {/* Minimal header - just "HIVE" text */}
       {showLogo && (
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={shouldReduceMotion ? {} : { duration: 0.5, delay: 0.2 }}
-          className="fixed top-4 right-4 md:top-6 md:right-6 z-50"
+          className="fixed top-6 left-6 md:top-8 md:left-8 z-50"
         >
-          <HiveLogo size="sm" variant="default" showIcon={false} showText />
+          <span className="text-[13px] font-medium tracking-[0.15em] text-white/30">
+            HIVE
+          </span>
         </motion.div>
       )}
 
       {/* Main content area - AnimatePresence handled by page */}
-      <main className="relative z-10 min-h-screen min-h-[100dvh]">
-        {children}
+      <main className="relative z-10 min-h-screen min-h-[100dvh] flex items-center justify-center">
+        <div className="w-full max-w-md px-6">
+          {children}
+        </div>
       </main>
+
+      {/* Progress dots - bottom center */}
+      {currentStep && !isCompletion && (
+        <motion.nav
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={shouldReduceMotion ? {} : { duration: 0.5, delay: 0.3 }}
+          className="fixed bottom-8 left-0 right-0 z-50 flex justify-center"
+          aria-label={`Step ${stepIndex + 1} of ${MAIN_STEPS.length}`}
+          role="navigation"
+        >
+          <div className="flex items-center gap-2.5">
+            {MAIN_STEPS.map((s, i) => {
+              const isCurrent = i === stepIndex;
+              const isComplete = i < stepIndex;
+              return (
+                <motion.div
+                  key={s}
+                  animate={shouldReduceMotion ? {} : {
+                    scale: isCurrent ? [1, 1.15, 1] : 1,
+                  }}
+                  transition={{
+                    scale: { duration: 2, repeat: isCurrent ? Infinity : 0, ease: 'easeInOut' },
+                  }}
+                  className="w-1.5 h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    backgroundColor: isCurrent
+                      ? 'rgba(255, 215, 0, 0.9)'
+                      : isComplete
+                        ? 'rgba(255, 255, 255, 0.4)'
+                        : 'rgba(255, 255, 255, 0.15)',
+                    boxShadow: isCurrent ? '0 0 8px rgba(255, 215, 0, 0.5)' : 'none',
+                  }}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  aria-label={`Step ${i + 1}${isCurrent ? ' (current)' : ''}`}
+                />
+              );
+            })}
+          </div>
+        </motion.nav>
+      )}
     </div>
   );
 }

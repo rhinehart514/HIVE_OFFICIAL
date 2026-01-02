@@ -50,18 +50,30 @@ import { springPresets } from '@hive/tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '../../00-Global/atoms/avatar';
 import { Button } from '../../00-Global/atoms/button';
 import { ChatInput, type ChatInputHandle, type ToolInsertData } from '../../03-Chat/chat-input';
+import { FloatingComposer, type FloatingComposerHandle } from '../../03-Chat/floating-composer';
 import { TypingIndicator } from '../../03-Chat/typing-indicator';
 import { InlineElementRenderer } from '../../../components/hivelab/inline-element-renderer';
+
+// Edge-to-edge design tokens (Phase 3 - Dec 2025)
+const EDGE_BG = '#050505';
+const BORDER_SUBTLE = 'rgba(255,255,255,0.06)';
+const BORDER_MEDIUM = 'rgba(255,255,255,0.08)';
 
 // ============================================================
 // Virtualization Configuration
 // ============================================================
 
-/** Estimated height of a regular text message (px) */
-const ESTIMATED_MESSAGE_HEIGHT = 72;
+/**
+ * Hybrid Density Heights (aligned with CHAT_SPACING tokens)
+ * - authorGap: 20px between different authors
+ * - groupGap: 6px within same author group
+ */
 
-/** Estimated height of a grouped message (no avatar/header) */
-const ESTIMATED_GROUPED_MESSAGE_HEIGHT = 32;
+/** Estimated height of a regular text message with header (pt-5 = 20px + content) */
+const ESTIMATED_MESSAGE_HEIGHT = 80;
+
+/** Estimated height of a grouped message (no avatar/header, pt-1.5 = 6px + content) */
+const ESTIMATED_GROUPED_MESSAGE_HEIGHT = 28;
 
 /** Estimated height of a message with inline component */
 const ESTIMATED_COMPONENT_MESSAGE_HEIGHT = 200;
@@ -195,6 +207,12 @@ export interface SpaceChatBoardProps {
   /** Callback when a slash command is entered */
   onSlashCommand?: (command: { command: string; primaryArg?: string; listArgs: string[]; flags: Record<string, string | boolean | number>; raw: string; isValid: boolean; error?: string }) => Promise<void>;
 
+  /** Callback when user is typing (for typing indicators) */
+  onTyping?: () => void;
+
+  /** Use edge-to-edge minimal design (Phase 3 - Dec 2025) */
+  useEdgeToEdge?: boolean;
+
   // Inline component rendering
   renderInlineComponent?: (componentData: ChatMessageData['componentData']) => React.ReactNode;
 
@@ -252,7 +270,7 @@ function BoardSelector({
               'text-sm font-medium whitespace-nowrap transition-colors',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
               isActive
-                ? 'bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/20'
+                ? 'bg-white/[0.08] text-white border border-white/[0.12]'
                 : 'text-[#A1A1A6] hover:text-[#FAFAFA] hover:bg-white/[0.04]'
             )}
           >
@@ -391,14 +409,14 @@ function MessageItem({
     );
   }
 
-  // Date separator
+  // Date separator with 32px breathing room
   const dateSeparator = showDate && (
-    <div className="flex items-center gap-4 py-4">
-      <div className="flex-1 h-px bg-[#1A1A1A]" />
-      <span className="text-xs text-[#818187] font-medium">
+    <div className="flex items-center gap-4 py-8">
+      <div className="flex-1 h-px bg-white/[0.06]" />
+      <span className="text-[11px] text-white/30 font-medium uppercase tracking-[0.05em]">
         {format(timestamp, 'MMMM d, yyyy')}
       </span>
-      <div className="flex-1 h-px bg-[#1A1A1A]" />
+      <div className="flex-1 h-px bg-white/[0.06]" />
     </div>
   );
 
@@ -420,7 +438,8 @@ function MessageItem({
         onMouseLeave={() => setShowActions(false)}
         className={cn(
           'group relative px-4 hover:bg-white/[0.02] transition-colors',
-          isGrouped ? 'py-0.5' : 'py-2',
+          // Hybrid density: 20px between authors, 6px within groups
+          isGrouped ? 'pt-1.5 pb-0' : 'pt-5 pb-0', // 6px / 20px top spacing
           message.isPinned && 'bg-[#FFD700]/5 border-l-2 border-[#FFD700]/30',
           isHighlighted && 'ring-2 ring-[#FFD700]/50 ring-inset rounded-lg'
         )}
@@ -491,7 +510,7 @@ function MessageItem({
                       'w-full px-3 py-2 text-[15px] leading-relaxed',
                       'bg-[#141414] border border-[#3A3A3A] rounded-lg',
                       'text-[#FAFAFA] placeholder-neutral-500',
-                      'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40 focus:border-transparent',
+                      'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent',
                       'resize-none min-h-[60px]',
                       isSaving && 'opacity-50 cursor-not-allowed'
                     )}
@@ -514,7 +533,7 @@ function MessageItem({
                     <button
                       onClick={handleSaveEdit}
                       disabled={isSaving || !editContent.trim() || editContent.trim() === message.content}
-                      className="p-1.5 rounded hover:bg-[#FFD700]/10 text-[#FFD700] disabled:opacity-50 disabled:text-[#818187]"
+                      className="p-1.5 rounded hover:bg-white/10 text-white disabled:opacity-50 disabled:text-[#818187]"
                       aria-label="Save edit"
                     >
                       {isSaving ? (
@@ -745,12 +764,15 @@ export function SpaceChatBoard({
   onInsertTool,
   onOpenToolGallery,
   showToolbar = true,
+  onTyping,
+  useEdgeToEdge = false,
   renderInlineComponent,
   className,
 }: SpaceChatBoardProps) {
   const shouldReduceMotion = useReducedMotion();
   const messagesContainerRef = React.useRef<HTMLDivElement>(null);
   const chatInputRef = React.useRef<ChatInputHandle>(null);
+  const floatingComposerRef = React.useRef<FloatingComposerHandle>(null);
   const [replyingTo, setReplyingTo] = React.useState<string | null>(null);
   const [isSending, setIsSending] = React.useState(false);
   const [editingMessageId, setEditingMessageId] = React.useState<string | null>(null);
@@ -795,9 +817,9 @@ export function SpaceChatBoard({
         ? ESTIMATED_GROUPED_MESSAGE_HEIGHT
         : ESTIMATED_MESSAGE_HEIGHT;
 
-    // Add height for date separator
+    // Add height for date separator (py-8 = 64px)
     if (showDate) {
-      height += 48; // Date separator height
+      height += 64; // Date separator height with 32px breathing room
     }
 
     // Add height for reactions
@@ -916,20 +938,34 @@ export function SpaceChatBoard({
 
   return (
     <div
-      className={cn('flex flex-col h-full bg-[#0A0A0A]', className)}
+      className={cn(
+        'flex flex-col h-full',
+        useEdgeToEdge ? 'bg-[#050505]' : 'bg-[#0A0A0A]',
+        className
+      )}
       role="region"
       aria-label={`${spaceName || 'Space'} chat - ${activeBoard?.name || 'General'} channel`}
     >
-      {/* Board header */}
-      <header className="flex-shrink-0 border-b border-[#2A2A2A] px-4 py-3">
+      {/* Board header - minimal in edge-to-edge mode */}
+      <header className={cn(
+        'flex-shrink-0 px-4 py-3',
+        useEdgeToEdge
+          ? 'border-b border-white/[0.06]'
+          : 'border-b border-[#2A2A2A]'
+      )}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Hash className="w-5 h-5 text-[#818187]" aria-hidden="true" />
+            {!useEdgeToEdge && (
+              <Hash className="w-5 h-5 text-[#818187]" aria-hidden="true" />
+            )}
             <div>
-              <h2 className="font-semibold text-[#FAFAFA]">
+              <h2 className={cn(
+                'font-semibold',
+                useEdgeToEdge ? 'text-[15px] text-white' : 'text-[#FAFAFA]'
+              )}>
                 {activeBoard?.name || 'General'}
               </h2>
-              {activeBoard?.description && (
+              {activeBoard?.description && !useEdgeToEdge && (
                 <p className="text-xs text-[#818187] truncate max-w-[300px]">
                   {activeBoard.description}
                 </p>
@@ -937,25 +973,64 @@ export function SpaceChatBoard({
             </div>
           </div>
 
-          {/* Online count */}
-          {onlineCount !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm text-[#818187]" aria-label={`${onlineCount} members online`}>
-              <Users className="w-4 h-4" aria-hidden="true" />
+          {/* Online count - gold in edge-to-edge mode */}
+          {onlineCount !== undefined && onlineCount > 0 && (
+            <div className={cn(
+              'flex items-center gap-1.5 text-sm',
+              useEdgeToEdge ? 'text-[#FFD700]' : 'text-[#818187]'
+            )} aria-label={`${onlineCount} members online`}>
+              {useEdgeToEdge && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.4)]" />
+              )}
+              {!useEdgeToEdge && <Users className="w-4 h-4" aria-hidden="true" />}
               <span>{onlineCount} online</span>
             </div>
           )}
         </div>
 
-        {/* Board tabs */}
+        {/* Board tabs - minimal pills in edge-to-edge mode */}
         {boards.length > 1 && (
-          <nav className="mt-3" aria-label="Chat boards">
-            <BoardSelector
-              boards={boards}
-              activeBoardId={activeBoardId}
-              onBoardChange={onBoardChange}
-              onCreateBoard={onCreateBoard}
-              isLeader={isLeader}
-            />
+          <nav className={cn('mt-3', useEdgeToEdge && '-mx-1')} aria-label="Chat boards">
+            {useEdgeToEdge ? (
+              <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide" role="tablist">
+                {boards.map((board) => {
+                  const isActive = board.id === activeBoardId;
+                  return (
+                    <button
+                      key={board.id}
+                      onClick={() => onBoardChange(board.id)}
+                      role="tab"
+                      aria-selected={isActive}
+                      className={cn(
+                        'px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors whitespace-nowrap',
+                        isActive
+                          ? 'bg-white/[0.08] text-white'
+                          : 'text-white/40 hover:text-white/60 hover:bg-white/[0.04]'
+                      )}
+                    >
+                      {board.name}
+                    </button>
+                  );
+                })}
+                {isLeader && onCreateBoard && (
+                  <button
+                    onClick={onCreateBoard}
+                    className="px-2 py-1.5 text-white/30 hover:text-white/50 transition-colors"
+                    aria-label="Add board"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <BoardSelector
+                boards={boards}
+                activeBoardId={activeBoardId}
+                onBoardChange={onBoardChange}
+                onCreateBoard={onCreateBoard}
+                isLeader={isLeader}
+              />
+            )}
           </nav>
         )}
       </header>
@@ -1010,14 +1085,15 @@ export function SpaceChatBoard({
             </p>
           </div>
         ) : (
-          /* Virtualized message list */
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: '100%',
-              position: 'relative',
-            }}
-          >
+          /* Virtualized message list - centered at 720px max-width */
+          <div className="mx-auto max-w-[720px] w-full">
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
             {virtualItems.map((virtualItem) => {
               const item = groupedMessages[virtualItem.index];
               if (!item) return null;
@@ -1078,48 +1154,103 @@ export function SpaceChatBoard({
                 </div>
               );
             })}
+            </div>
           </div>
         )}
       </main>
 
-      {/* Typing indicator */}
+      {/* Typing indicator - gold dots in edge-to-edge mode */}
       <AnimatePresence>
-        {typingUsers.length > 0 && <TypingUsersDisplay users={typingUsers} />}
+        {typingUsers.length > 0 && (
+          useEdgeToEdge ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="flex items-center gap-2 px-4 py-2 text-[13px] text-white/40"
+            >
+              <div className="flex gap-0.5">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-1.5 h-1.5 rounded-full bg-[#FFD700]"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
+                  />
+                ))}
+              </div>
+              <span>
+                {typingUsers.length === 1
+                  ? `${typingUsers[0].name} is typing...`
+                  : `${typingUsers[0].name} and ${typingUsers.length - 1} other${typingUsers.length > 2 ? 's' : ''} typing...`}
+              </span>
+            </motion.div>
+          ) : (
+            <TypingUsersDisplay users={typingUsers} />
+          )
+        )}
       </AnimatePresence>
 
       {/* Reply preview */}
       {replyingTo && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-[#141414]/50 border-t border-[#2A2A2A]">
-          <Reply className="w-4 h-4 text-[#818187]" />
-          <span className="text-sm text-[#A1A1A6] flex-1 truncate">
+        <div className={cn(
+          'flex items-center gap-2 px-4 py-2',
+          useEdgeToEdge
+            ? 'bg-white/[0.02] border-t border-white/[0.06]'
+            : 'bg-[#141414]/50 border-t border-[#2A2A2A]'
+        )}>
+          <Reply className={cn('w-4 h-4', useEdgeToEdge ? 'text-white/30' : 'text-[#818187]')} />
+          <span className={cn('text-sm flex-1 truncate', useEdgeToEdge ? 'text-white/50' : 'text-[#A1A1A6]')}>
             Replying to message
           </span>
           <button
             onClick={() => setReplyingTo(null)}
-            className="text-[#818187] hover:text-[#A1A1A6]"
+            className={cn(
+              'text-sm',
+              useEdgeToEdge ? 'text-white/40 hover:text-white/60' : 'text-[#818187] hover:text-[#A1A1A6]'
+            )}
           >
             Cancel
           </button>
         </div>
       )}
 
-      {/* Input area */}
+      {/* Input area - FloatingComposer in edge-to-edge mode */}
       {canPost ? (
-        <div className="flex-shrink-0 border-t border-[#2A2A2A]">
-          <ChatInput
-            ref={chatInputRef}
-            onSubmit={handleSendMessage}
-            onInsertTool={onInsertTool}
-            onOpenToolGallery={onOpenToolGallery}
-            showToolbar={showToolbar && !!onInsertTool}
-            canInsertTools={!isSending && !activeBoard?.isLocked}
-            placeholder={`Message #${activeBoard?.name || 'general'}...`}
-            disabled={isSending || activeBoard?.isLocked}
-          />
-        </div>
+        useEdgeToEdge ? (
+          <div className="flex-shrink-0 relative">
+            <FloatingComposer
+              ref={floatingComposerRef}
+              onSubmit={handleSendMessage}
+              onTyping={onTyping}
+              placeholder={`Type a message...`}
+              disabled={isSending || activeBoard?.isLocked}
+              showSlashHint={!isSending}
+            />
+          </div>
+        ) : (
+          <div className="flex-shrink-0 border-t border-[#2A2A2A]">
+            <ChatInput
+              ref={chatInputRef}
+              onSubmit={handleSendMessage}
+              onInsertTool={onInsertTool}
+              onOpenToolGallery={onOpenToolGallery}
+              showToolbar={showToolbar && !!onInsertTool}
+              canInsertTools={!isSending && !activeBoard?.isLocked}
+              placeholder={`Message #${activeBoard?.name || 'general'}...`}
+              disabled={isSending || activeBoard?.isLocked}
+              onTyping={onTyping}
+            />
+          </div>
+        )
       ) : (
-        <div className="flex-shrink-0 border-t border-[#2A2A2A] px-4 py-4 text-center">
-          <p className="text-sm text-[#818187]">
+        <div className={cn(
+          'flex-shrink-0 px-4 py-4 text-center',
+          useEdgeToEdge
+            ? 'border-t border-white/[0.06]'
+            : 'border-t border-[#2A2A2A]'
+        )}>
+          <p className={cn('text-sm', useEdgeToEdge ? 'text-white/40' : 'text-[#818187]')}>
             You don't have permission to send messages in this channel.
           </p>
         </div>

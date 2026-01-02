@@ -27,9 +27,46 @@ export type DataSource =
   | 'space-feed'     // Specific space's posts (leader only)
   | 'space-stats';   // Specific space's metrics (leader only)
 
+/**
+ * Shared state structure for aggregate data visible to all users.
+ * Used for polls, RSVPs, leaderboards, etc.
+ */
+export interface ElementSharedState {
+  /** Atomic counters (e.g., vote counts) - key format: "{instanceId}:{counterId}" */
+  counters: Record<string, number>;
+  /** Collections of entities - key format: "{instanceId}:{collectionName}" */
+  collections: Record<string, Record<string, { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> }>>;
+  /** Timeline of events */
+  timeline: Array<{ id: string; type: string; timestamp: string; userId: string; action: string; data?: Record<string, unknown> }>;
+  /** Computed/derived values */
+  computed: Record<string, unknown>;
+  /** Version for optimistic concurrency */
+  version: number;
+  /** Last modification timestamp */
+  lastModified: string;
+}
+
+/**
+ * User state for per-user data.
+ * All properties optional for backward compatibility with legacy flat data.
+ */
+export interface ElementUserState {
+  /** User's selections per element */
+  selections?: Record<string, unknown>;
+  /** User's participation flags per element */
+  participation?: Record<string, boolean>;
+  /** User's personal data */
+  personal?: Record<string, unknown>;
+  /** UI state (collapsed, scroll positions, etc.) */
+  ui?: Record<string, unknown>;
+  /** Allow additional properties for legacy/flat data */
+  [key: string]: unknown;
+}
+
 export interface ElementProps {
   id: string;
   config: Record<string, any>;
+  /** @deprecated Use sharedState for aggregate data, userState for per-user data */
   data?: any;
   onChange?: (data: any) => void;
   onAction?: (action: string, payload: any) => void;
@@ -40,6 +77,22 @@ export interface ElementProps {
     spaceId?: string;      // Only set if user is a leader of this space
     isSpaceLeader?: boolean;
   };
+
+  // ============================================================================
+  // Phase 1: Shared State Architecture
+  // ============================================================================
+
+  /**
+   * Shared state visible to all users (aggregate data like vote counts, RSVP lists)
+   * Read from: deployedTools/{deploymentId}/sharedState/current
+   */
+  sharedState?: ElementSharedState;
+
+  /**
+   * Per-user state (personal selections, participation, UI state)
+   * Read from: toolStates/{deploymentId}_{userId}
+   */
+  userState?: ElementUserState;
 }
 
 export interface ElementDefinition {
@@ -425,7 +478,7 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
       groupByType: true,
       autoMarkRead: false
     },
-    render: (props) => renderElement('notification-center', props)
+    render: (props) => renderElement('notification-display', props)
   },
 ];
 

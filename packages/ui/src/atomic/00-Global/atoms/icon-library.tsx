@@ -78,6 +78,8 @@ export {
   // Status & Indicators
   Loader2 as LoaderIcon,
   Sparkles as SparklesIcon,
+  Star as StarIcon,
+  Target as TargetIcon,
   TrendingUp as TrendingUpIcon,
   Activity as ActivityIcon,
   Zap as ZapIcon,

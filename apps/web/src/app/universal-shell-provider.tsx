@@ -59,11 +59,11 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
   const notificationsPayload = React.useMemo(
     () =>
       (realtimeNotifications ?? []).map(notification => ({
-        ...notification,
-        timestamp: {
-          toDate: () => notification.timestamp.toDate(),
-        },
-      })) as Array<Record<string, unknown>>,
+        id: notification.id || String(Date.now()),
+        text: notification.title || notification.body || 'New notification',
+        time: notification.timestamp?.toDate?.()?.toISOString() || new Date().toISOString(),
+        unread: !notification.read,
+      })),
     [realtimeNotifications]
   );
 
@@ -442,6 +442,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
         userAvatarUrl={auth.user?.avatarUrl ?? undefined}
         userName={auth.user?.fullName || auth.user?.displayName || undefined}
         userHandle={auth.user?.handle ?? undefined}
+        isBuilder={canAccessHiveLab}
       >
         {children}
       </UniversalShell>
@@ -469,6 +470,7 @@ export function UniversalShellProvider({ children }: { children: React.ReactNode
       userAvatarUrl={auth.user?.avatarUrl ?? undefined}
       userName={auth.user?.fullName || auth.user?.displayName || undefined}
       userHandle={auth.user?.handle ?? undefined}
+      isBuilder={canAccessHiveLab}
     >
       {children}
     </UniversalShell>

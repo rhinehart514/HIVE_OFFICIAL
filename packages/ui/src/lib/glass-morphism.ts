@@ -31,12 +31,17 @@ export const glass = {
     solid: 'bg-neutral-950/95 backdrop-blur-[8px] border-b border-neutral-800',
   },
 
-  // Glow effects (gold brand accent)
-  glow: {
-    gold: 'bg-gradient-to-t from-[#FFD700]/8 via-transparent to-transparent',
-    goldOverlay: 'before:absolute before:inset-0 before:bg-gradient-to-t before:from-[#FFD700]/8 before:via-transparent before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 before:pointer-events-none',
-    goldHover: 'hover:shadow-[0_0_20px_rgba(255,215,0,0.08)]',
-    goldRing: 'ring-2 ring-[#FFD700]/20',
+  // Premium moments only - use sparingly for achievements, CTAs, celebrations
+  // NOT for general decoration - "gold is precious"
+  premium: {
+    // Gold glow for achievement moments
+    goldGlow: 'shadow-[0_0_24px_rgba(255,215,0,0.15)]',
+    // Subtle gold ring for active/success states
+    goldRing: 'ring-1 ring-[#FFD700]/20',
+    // CTA hover enhancement
+    ctaHover: 'hover:shadow-[0_0_20px_rgba(255,215,0,0.12)]',
+    // Celebration moment (achievements, milestones)
+    celebration: 'shadow-[0_0_32px_rgba(255,215,0,0.2)] ring-1 ring-[#FFD700]/15',
   },
 
   // Depth shadows (dark theme optimized)
@@ -48,23 +53,22 @@ export const glass = {
     hoverLift: 'shadow-[0_24px_48px_rgba(0,0,0,0.3)]',
   },
 
-  // Border variants
+  // Border variants - neutral only, gold removed
   border: {
     subtle: 'border border-white/[0.06]',
     medium: 'border border-white/[0.1]',
     strong: 'border border-white/[0.15]',
-    goldSubtle: 'border border-[rgba(255,215,0,0.08)]',
-    goldHover: 'hover:border-[rgba(255,215,0,0.15)]',
+    hover: 'hover:border-white/[0.15]',
   },
 } as const;
 
 // Composable presets for common use cases
 export const glassPresets = {
-  // Discovery page cards
-  discoveryCard: `${glass.elevated.card} ${glass.border.goldSubtle} ${glass.elevated.cardHover} ${glass.border.goldHover} relative overflow-hidden`,
+  // Discovery page cards - neutral borders, no gold
+  discoveryCard: `${glass.elevated.card} ${glass.border.subtle} ${glass.elevated.cardHover} relative overflow-hidden`,
 
-  // Hero cards (more dramatic)
-  heroCard: `${glass.elevated.card} ${glass.depth.deep} ${glass.border.goldSubtle} relative overflow-hidden`,
+  // Hero cards (more dramatic) - neutral borders
+  heroCard: `${glass.elevated.card} ${glass.depth.deep} ${glass.border.subtle} relative overflow-hidden`,
 
   // Sidebar widgets
   railWidget: `${glass.panel.light} ${glass.depth.shallow} rounded-2xl`,
@@ -93,7 +97,7 @@ export const glassCSSVars = {
 export type GlassPanel = keyof typeof glass.panel;
 export type GlassElevated = keyof typeof glass.elevated;
 export type GlassSticky = keyof typeof glass.sticky;
-export type GlassGlow = keyof typeof glass.glow;
+export type GlassPremium = keyof typeof glass.premium;
 export type GlassDepth = keyof typeof glass.depth;
 export type GlassBorder = keyof typeof glass.border;
 export type GlassPreset = keyof typeof glassPresets;

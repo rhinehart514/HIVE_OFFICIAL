@@ -101,7 +101,7 @@ export function NowCard({
             className={cn(
               "w-full",
               isUrgent
-                ? "bg-gold-500/20 hover:bg-gold-500/30 text-gold-400 border border-gold-500/30"
+                ? "bg-white/10 hover:bg-white/15 text-white border border-white/20"
                 : "bg-neutral-800 hover:bg-neutral-700 text-neutral-100"
             )}
             type="button"

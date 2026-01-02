@@ -12,9 +12,13 @@
  * - Executes tool actions with optimistic updates
  * - Auto-saves state changes with debounce
  * - Handles composite deployment IDs for space placements
+ * - Phase 1: SharedState architecture for aggregate data (polls, RSVPs, leaderboards)
+ * - Phase S3: Real-time updates via Firebase RTDB (counters, collections, timeline)
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import type { ToolSharedState } from "@hive/core";
+import { useToolStateRealtime } from "./use-tool-state-realtime";
 
 // ============================================================================
 // Types
@@ -73,17 +77,28 @@ interface UseToolRuntimeOptions {
   autoSave?: boolean;
   autoSaveDelay?: number;
   enabled?: boolean;
+  /** Enable real-time RTDB subscriptions for shared state (polls, RSVPs) */
+  enableRealtime?: boolean;
   /** Callback when elements are affected by cascade - use for visual feedback */
   onCascade?: (cascadedElementIds: string[]) => void;
+  /** Callback when real-time counter updates arrive */
+  onRealtimeCounterUpdate?: (counters: Record<string, number>) => void;
 }
 
 interface UseToolRuntimeReturn {
   tool: Tool | null;
+  /** @deprecated Use userState instead for per-user state */
   state: ToolState;
+  /** Per-user state (selections, participation, personal data) */
+  userState: ToolState;
+  /** Shared state visible to all users (counters, collections, timeline) */
+  sharedState: ToolSharedState;
   isLoading: boolean;
   isExecuting: boolean;
   isSaving: boolean;
   isSynced: boolean;
+  /** Whether connected to real-time RTDB updates */
+  isRealtimeConnected: boolean;
   lastSaved: Date | null;
   error: Error | null;
   executeAction: (
@@ -105,6 +120,18 @@ interface UseToolRuntimeReturn {
 const DEFAULT_AUTO_SAVE_DELAY = 2000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
+
+/**
+ * Create empty shared state structure
+ */
+const EMPTY_SHARED_STATE: ToolSharedState = {
+  counters: {},
+  collections: {},
+  timeline: [],
+  computed: {},
+  version: 0,
+  lastModified: new Date().toISOString(),
+};
 
 // ============================================================================
 // Helper Functions
@@ -163,7 +190,9 @@ export function useToolRuntime(
     autoSave = true,
     autoSaveDelay = DEFAULT_AUTO_SAVE_DELAY,
     enabled = true,
+    enableRealtime = false,
     onCascade,
+    onRealtimeCounterUpdate,
   } = options;
 
   // Calculate effective deployment ID
@@ -171,9 +200,21 @@ export function useToolRuntime(
     providedDeploymentId ||
     (spaceId && placementId ? generateDeploymentId(spaceId, placementId) : null);
 
+  // Real-time RTDB subscription for shared state updates
+  const {
+    counters: realtimeCounters,
+    collections: realtimeCollections,
+    timeline: realtimeTimeline,
+    isConnected: isRealtimeConnected,
+  } = useToolStateRealtime(enableRealtime ? effectiveDeploymentId : null, {
+    enabled: enableRealtime && enabled,
+    onCountersChange: onRealtimeCounterUpdate,
+  });
+
   // State
   const [tool, setTool] = useState<Tool | null>(null);
   const [state, setState] = useState<ToolState>({});
+  const [sharedState, setSharedState] = useState<ToolSharedState>(EMPTY_SHARED_STATE);
   const [isLoading, setIsLoading] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -185,12 +226,69 @@ export function useToolRuntime(
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
   const stateRef = useRef<ToolState>(state); // Keep current state for save closure
+  const sharedStateRef = useRef<ToolSharedState>(sharedState); // Keep current shared state
   const initialStateRef = useRef<ToolState>({}); // Track initial state for dirty checking
 
-  // Update state ref when state changes
+  // Update state refs when state changes
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  useEffect(() => {
+    sharedStateRef.current = sharedState;
+  }, [sharedState]);
+
+  // Merge real-time RTDB updates into sharedState
+  // RTDB provides instant updates for counters, collections, and timeline
+  useEffect(() => {
+    if (!enableRealtime || !isRealtimeConnected) return;
+
+    // Only update if we have real-time data
+    const hasRealtimeData =
+      Object.keys(realtimeCounters).length > 0 ||
+      Object.keys(realtimeCollections).length > 0 ||
+      realtimeTimeline.length > 0;
+
+    if (!hasRealtimeData) return;
+
+    setSharedState((prev) => {
+      // Merge real-time counters (RTDB takes precedence for real-time accuracy)
+      const mergedCounters = { ...prev.counters };
+      for (const [key, value] of Object.entries(realtimeCounters)) {
+        // Normalize key (RTDB uses _ instead of :)
+        const normalizedKey = key.replace(/_/g, ':');
+        mergedCounters[normalizedKey] = value;
+        mergedCounters[key] = value; // Also store with original key
+      }
+
+      // Merge real-time collection summaries
+      // Note: RTDB only has summaries (count, recentIds), not full entities
+      // Full entities still come from Firestore via API
+
+      // Convert RTDB timeline events to ToolSharedState format
+      const convertedTimeline = realtimeTimeline.map((evt) => ({
+        id: evt.id,
+        type: evt.type,
+        timestamp: evt.timestamp,
+        userId: evt.userId,
+        elementInstanceId: '', // RTDB simplified format doesn't include this
+        action: evt.action,
+      }));
+
+      // Merge timelines, avoiding duplicates
+      const mergedTimeline = realtimeTimeline.length > 0
+        ? [...prev.timeline, ...convertedTimeline.filter(
+            (evt) => !prev.timeline.some((t) => t.id === evt.id)
+          )].slice(-100)
+        : prev.timeline;
+
+      return {
+        ...prev,
+        counters: mergedCounters,
+        timeline: mergedTimeline,
+      };
+    });
+  }, [enableRealtime, isRealtimeConnected, realtimeCounters, realtimeCollections, realtimeTimeline]);
 
   // ============================================================================
   // Load Tool and State (Combined - reduces N+1 queries)
@@ -272,8 +370,9 @@ export function useToolRuntime(
       });
 
       // If combined response includes state, apply it
-      if (data.state !== undefined) {
-        const loadedState = data.state || {};
+      if (data.state !== undefined || data.userState !== undefined) {
+        // Prefer userState (new), fall back to state (legacy)
+        const loadedState = data.userState || data.state || {};
         setState(loadedState);
         initialStateRef.current = loadedState;
         setIsSynced(true);
@@ -282,6 +381,13 @@ export function useToolRuntime(
         setState({});
         initialStateRef.current = {};
         setIsSynced(true);
+      }
+
+      // Load shared state if available (Phase 1: SharedState architecture)
+      if (data.sharedState !== undefined) {
+        setSharedState(data.sharedState);
+      } else {
+        setSharedState(EMPTY_SHARED_STATE);
       }
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
@@ -553,11 +659,14 @@ export function useToolRuntime(
 
   return {
     tool,
-    state,
+    state,         // Legacy: maps to userState for backward compatibility
+    userState: state, // Per-user state (selections, participation, personal data)
+    sharedState,   // Shared state visible to all users (counters, collections, timeline)
     isLoading,
     isExecuting,
     isSaving,
     isSynced,
+    isRealtimeConnected, // Whether connected to RTDB for real-time updates
     lastSaved,
     error,
     executeAction,

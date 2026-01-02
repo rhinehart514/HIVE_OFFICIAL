@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Check, Sparkles, Star, Zap } from 'lucide-react';
+import { Check, Zap, Users, Star, Trophy } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
 import {
@@ -204,13 +204,7 @@ export function JoinCelebration({
               </p>
             </div>
 
-            {/* Sparkle decorations */}
-            <div className="absolute -top-2 -right-2">
-              <Sparkles className="h-6 w-6 text-gold-400 animate-pulse" />
-            </div>
-            <div className="absolute -bottom-2 -left-2">
-              <Star className="h-5 w-5 text-gold-500 animate-pulse" style={{ animationDelay: '0.3s' }} />
-            </div>
+            {/* Removed sparkle decorations - confetti + gold glow is sufficient */}
           </motion.div>
         </motion.div>
       )}
@@ -307,9 +301,9 @@ export interface MilestoneBadgeProps {
 
 const MILESTONE_ICONS = {
   posts: Zap,
-  members: Sparkles,
+  members: Users,
   days: Star,
-  tools: Star,
+  tools: Trophy,
 };
 
 const MILESTONE_LABELS = {

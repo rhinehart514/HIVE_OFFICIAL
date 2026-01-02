@@ -9,22 +9,28 @@
  * - Large, inviting text input (17px)
  * - Gold send button that pulses when ready
  * - Centered, not edge-to-edge
+ * - Typing indicator integrated INTO the input zone (felt, not watched)
  *
- * Inspired by: ChatGPT, Linear, Superhuman
+ * Inspired by: ChatGPT, Linear, Superhuman, Discord mobile
  *
  * @author HIVE Frontend Team
- * @version 1.0.0 - Premium redesign
+ * @version 2.0.0 - Added typing indicator in input zone
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Send, Square, Sparkles, Plus, ChevronUp } from 'lucide-react';
+import { Send, Square, Loader2, Plus, ChevronUp } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { premium } from '../../../lib/premium-design';
 
 // ============================================================
 // Types
 // ============================================================
+
+export interface TypingUser {
+  id: string;
+  displayName: string;
+}
 
 export interface PremiumComposerProps {
   /** Placeholder text */
@@ -33,6 +39,8 @@ export interface PremiumComposerProps {
   onSubmit: (message: string) => Promise<void> | void;
   /** Called when user is typing (for typing indicator) */
   onTyping?: () => void;
+  /** Users currently typing (shown above input) */
+  typingUsers?: TypingUser[];
   /** Whether AI is generating a response */
   isGenerating?: boolean;
   /** Called to stop generation */
@@ -62,6 +70,7 @@ export function PremiumComposer({
   placeholder = 'Message this space...',
   onSubmit,
   onTyping,
+  typingUsers = [],
   isGenerating = false,
   onStop,
   disabled = false,
@@ -79,6 +88,14 @@ export function PremiumComposer({
 
   const canSend = message.trim().length > 0 && !disabled && !isSending;
   const isNearLimit = message.length > maxLength * 0.9;
+
+  // Format typing users text
+  const typingText = React.useMemo(() => {
+    if (typingUsers.length === 0) return null;
+    if (typingUsers.length === 1) return `${typingUsers[0].displayName} is typing`;
+    if (typingUsers.length === 2) return `${typingUsers[0].displayName} and ${typingUsers[1].displayName} are typing`;
+    return `${typingUsers[0].displayName} and ${typingUsers.length - 1} others are typing`;
+  }, [typingUsers]);
 
   // Auto-resize textarea
   React.useEffect(() => {
@@ -162,6 +179,36 @@ export function PremiumComposer({
                   <span>{action.label}</span>
                 </motion.button>
               ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Typing Indicator - Above Input (Felt, Not Watched) */}
+        <AnimatePresence>
+          {typingText && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.15 }}
+              className="flex items-center gap-2 mb-2 px-2"
+            >
+              {/* Subtle pulsing dots */}
+              <div className="flex gap-0.5">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-1 h-1 rounded-full bg-white/40"
+                    animate={{ opacity: [0.4, 0.8, 0.4] }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                    }}
+                  />
+                ))}
+              </div>
+              <span className="text-[12px] text-white/40">{typingText}</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -255,8 +302,6 @@ export function PremiumComposer({
                       ? [
                           'bg-[#FFD700] hover:bg-[#E6C200]',
                           'text-black',
-                          'shadow-[0_0_20px_rgba(255,215,0,0.25)]',
-                          'hover:shadow-[0_0_30px_rgba(255,215,0,0.35)]',
                         ]
                       : [
                           'bg-white/[0.04]',
@@ -271,7 +316,7 @@ export function PremiumComposer({
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Loader2 className="w-4 h-4" />
                     </motion.div>
                   ) : (
                     <Send className="w-4 h-4" />

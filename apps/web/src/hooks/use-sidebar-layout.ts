@@ -81,7 +81,7 @@ export interface UseSidebarLayoutReturn {
 const UNIVERSAL_DEFAULT_SLOTS: Omit<SidebarSlot, 'deploymentId'>[] = [
   {
     slotId: 'slot-about',
-    toolId: 'sys-about',
+    toolId: 'system:about',
     name: 'About',
     type: 'space-stats',
     order: 0,
@@ -90,7 +90,7 @@ const UNIVERSAL_DEFAULT_SLOTS: Omit<SidebarSlot, 'deploymentId'>[] = [
   },
   {
     slotId: 'slot-events',
-    toolId: 'sys-events',
+    toolId: 'system:events',
     name: 'Upcoming Events',
     type: 'space-events',
     order: 1,
@@ -99,7 +99,7 @@ const UNIVERSAL_DEFAULT_SLOTS: Omit<SidebarSlot, 'deploymentId'>[] = [
   },
   {
     slotId: 'slot-members',
-    toolId: 'sys-members',
+    toolId: 'system:members',
     name: 'Members',
     type: 'member-list',
     order: 2,

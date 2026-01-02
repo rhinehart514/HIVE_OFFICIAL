@@ -1,12 +1,26 @@
 import { withOptionalAuth, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { getServerProfileRepository } from '@hive/core/server';
+import { NextResponse } from 'next/server';
 
 /**
  * GET /api/profile/handle/[handle] - Lookup profile by handle
  *
+ * @deprecated This endpoint is deprecated. Use /api/profile?handle={handle} instead.
+ * Sunset date: 2026-03-01
+ *
  * Returns public profile data for the given handle.
  * Privacy rules are enforced based on viewer's relationship.
  */
+
+// Add deprecation headers to all responses
+function addDeprecationHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Deprecation', 'true');
+  response.headers.set('Sunset', 'Sat, 01 Mar 2026 00:00:00 GMT');
+  response.headers.set('Link', '</api/profile>; rel="successor-version"');
+  response.headers.set('X-Deprecation-Notice', 'Use /api/profile?handle={handle} instead');
+  return response;
+}
+
 export const GET = withOptionalAuth(
   async (request, context: { params: Promise<{ handle: string }> }, respond) => {
     const { handle } = await context.params;
@@ -104,7 +118,11 @@ export const GET = withOptionalAuth(
       });
     } catch (error) {
       console.error('Error fetching profile by handle:', error);
-      return respond.error('Failed to fetch profile', 'INTERNAL_ERROR', { status: 500 });
+      const errorResponse = NextResponse.json(
+        { success: false, error: 'Failed to fetch profile', code: 'INTERNAL_ERROR' },
+        { status: 500 }
+      );
+      return addDeprecationHeaders(errorResponse);
     }
   }
 );

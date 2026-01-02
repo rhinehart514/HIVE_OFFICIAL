@@ -1,6 +1,46 @@
 // Motion design tokens - HIVE Motion System
 // Single source of truth for all motion values
 
+/**
+ * MOTION TIERS
+ * ------------
+ * T1: Celebrations, achievements, unlocks (500-700ms) - dramatic easing
+ * T2: Standard interactions, cards, filters (300ms) - default easing
+ * T3: Ambient, hovers, micro-feedback (150-200ms) - snap easing
+ * T4: Reduced motion fallback (0-50ms) - instant
+ *
+ * Match tier to achievement magnitude - celebrations earn dramatic motion.
+ */
+
+// ============================================
+// CONSOLIDATED MOTION EXPORT (convenient access)
+// ============================================
+
+export const MOTION = {
+  duration: {
+    instant: 50,      // Micro feedback
+    micro: 100,       // State changes
+    snap: 150,        // Toggles
+    quick: 200,       // Hover effects
+    standard: 300,    // Most animations (DEFAULT)
+    smooth: 400,      // Modals
+    flowing: 500,     // Page transitions
+    dramatic: 700,    // Celebrations ONLY
+  },
+  ease: {
+    default: [0.23, 1, 0.32, 1] as const,      // Smooth, natural
+    snap: [0.25, 0.1, 0.25, 1] as const,       // Quick, decisive
+    dramatic: [0.165, 0.84, 0.44, 1] as const, // Cinematic (achievements)
+    premium: [0.22, 1, 0.36, 1] as const,      // Apple/OpenAI feel
+  },
+  spring: {
+    snappy: { stiffness: 400, damping: 30 },   // Buttons
+    default: { stiffness: 200, damping: 25 },  // General
+    gentle: { stiffness: 100, damping: 20 },   // Modals
+    bouncy: { stiffness: 300, damping: 15 },   // Celebrations
+  },
+} as const;
+
 // ============================================
 // FRAMER MOTION ARRAYS (use in components)
 // ============================================
@@ -60,7 +100,39 @@ export const springPresets = {
     stiffness: 300,
     damping: 15,
   },
+  // SNAP Nav: Decisive navigation motion - HIVE signature
+  snapNav: {
+    type: 'spring' as const,
+    stiffness: 500,
+    damping: 25,
+    mass: 0.5,
+  },
 } as const;
+
+// ============================================
+// HIVE SIGNATURE TRANSITIONS
+// ============================================
+// These create the SNAP→HOLD→SNAP rhythm that defines HIVE motion
+
+// SNAP spring - decisive nav motion (sidebar, nav items)
+export const SPRING_SNAP_NAV = {
+  type: 'spring' as const,
+  stiffness: 500,
+  damping: 25,
+  mass: 0.5,
+};
+
+// PUNCH transition - instant arrival with micro-ease
+export const PUNCH_TRANSITION = {
+  duration: 0.12,
+  ease: [0.22, 0, 0.36, 1] as const,
+};
+
+// SNAP transition - micro-impact for hover/active states
+export const SNAP_TRANSITION = {
+  duration: 0.08,
+  ease: [0.32, 0, 0.67, 0] as const,
+};
 
 // Tinder-optimized springs for card interactions
 export const tinderSprings = {
@@ -253,6 +325,245 @@ export const performance = {
   backfaceVisibility: {
     visible: 'visible',
     hidden: 'hidden',
+  },
+} as const;
+
+// ============================================
+// PHASE 5: MICRO-INTERACTION PRESETS
+// ============================================
+// Premium feel through consistent, refined motion
+
+/**
+ * Button press feedback - deeper press, shadow response
+ */
+export const buttonPressVariants = {
+  rest: {
+    scale: 1,
+    y: 0,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+  },
+  hover: {
+    scale: 1.02,
+    y: -1,
+    boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+    transition: { type: 'spring', stiffness: 400, damping: 25 },
+  },
+  tap: {
+    scale: 0.97,
+    y: 1,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+    transition: { type: 'spring', stiffness: 500, damping: 30 },
+  },
+} as const;
+
+/**
+ * Card hover - lift with shadow expansion
+ */
+export const cardHoverVariants = {
+  rest: {
+    y: 0,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    transition: { type: 'spring', stiffness: 300, damping: 25 },
+  },
+  hover: {
+    y: -8,
+    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+    transition: { type: 'spring', stiffness: 200, damping: 20 },
+  },
+} as const;
+
+/**
+ * Message entry animation - slide up with fade
+ */
+export const messageEntryVariants = {
+  initial: {
+    opacity: 0,
+    y: 12,
+    scale: 0.98,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.25,
+      ease: [0.23, 1, 0.32, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    scale: 0.98,
+    transition: {
+      duration: 0.15,
+    },
+  },
+} as const;
+
+/**
+ * Success moment - check draw with settle bounce
+ */
+export const successVariants = {
+  initial: {
+    scale: 0,
+    opacity: 0,
+  },
+  animate: {
+    scale: [0, 1.2, 1],
+    opacity: 1,
+    transition: {
+      scale: {
+        type: 'spring',
+        stiffness: 400,
+        damping: 12,
+      },
+      opacity: {
+        duration: 0.15,
+      },
+    },
+  },
+} as const;
+
+/**
+ * Error shake - physics-based shake
+ */
+export const errorShakeVariants = {
+  initial: { x: 0 },
+  shake: {
+    x: [-4, 4, -4, 4, -2, 2, 0],
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 10,
+      duration: 0.4,
+    },
+  },
+} as const;
+
+/**
+ * Page transition - fade with subtle shift
+ */
+export const pageTransitionVariants = {
+  initial: {
+    opacity: 0,
+    y: 8,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    transition: {
+      duration: 0.25,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+} as const;
+
+/**
+ * Modal entrance - scale up with backdrop
+ */
+export const modalVariants = {
+  overlay: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { duration: 0.2 } },
+    exit: { opacity: 0, transition: { duration: 0.15 } },
+  },
+  content: {
+    initial: {
+      opacity: 0,
+      scale: 0.95,
+      y: 10,
+    },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 25,
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.95,
+      y: 10,
+      transition: {
+        duration: 0.15,
+      },
+    },
+  },
+} as const;
+
+/**
+ * Dropdown menu - slide down with stagger
+ */
+export const dropdownVariants = {
+  container: {
+    initial: { opacity: 0, y: -6, scale: 0.98 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        type: 'spring',
+        stiffness: 300,
+        damping: 25,
+        staggerChildren: 0.03,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -6,
+      scale: 0.98,
+      transition: { duration: 0.15 },
+    },
+  },
+  item: {
+    initial: { opacity: 0, x: -8 },
+    animate: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.15 },
+    },
+  },
+} as const;
+
+/**
+ * Selection ring expand
+ */
+export const selectionVariants = {
+  unselected: {
+    scale: 1,
+    boxShadow: '0 0 0 0px rgba(255,215,0,0)',
+  },
+  selected: {
+    scale: 1,
+    boxShadow: '0 0 0 2px rgba(255,215,0,0.3)',
+    transition: { type: 'spring', stiffness: 400, damping: 25 },
+  },
+} as const;
+
+/**
+ * Reduced motion fallbacks
+ */
+export const reducedMotionVariants = {
+  fadeOnly: {
+    initial: { opacity: 0 },
+    animate: { opacity: 1, transition: { duration: 0.15 } },
+    exit: { opacity: 0, transition: { duration: 0.1 } },
+  },
+  instant: {
+    initial: { opacity: 1 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
   },
 } as const;
 

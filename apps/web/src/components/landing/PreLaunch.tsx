@@ -104,7 +104,7 @@ export default function PreLaunch() {
 
         {/* CTAs */}
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row" data-testid="ctas">
-          <Link href="/start" className="w-full sm:w-auto">
+          <Link href="/onboarding" className="w-full sm:w-auto">
             <Button size="lg" variant="brand" className="w-full" data-testid="cta-primary">
               Get Started
             </Button>

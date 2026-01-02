@@ -71,37 +71,32 @@
     --border-gold: rgba(255, 215, 0, 0.3);
     --border-gold-strong: rgba(255, 215, 0, 0.5);
 
-    /* Interactive States */
+    /* Interactive States - white focus for consistency */
     --hover-bg: var(--white-100);
     --active-bg: var(--white-200);
-    --focus-ring: var(--gold-400);
-    --selection-bg: rgba(255, 215, 0, 0.2);
+    --focus-ring: rgba(255, 255, 255, 0.4);
+    --selection-bg: rgba(255, 255, 255, 0.1);
   }
 
   /* ==================== COMPONENT STYLES ==================== */
 
-  /* Premium Button */
+  /* Premium Button - Clean, no glow */
   .btn-gold {
-    background: linear-gradient(135deg, var(--gold-400), var(--gold-500));
+    background: var(--gold-400);
     color: var(--black-900);
-    border: 1px solid var(--gold-400);
+    border: none;
     font-weight: 600;
     padding: 12px 24px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.12),
-      0 1px 2px rgba(0, 0, 0, 0.24),
-      0 0 20px rgba(255, 215, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
   .btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 3px 6px rgba(0, 0, 0, 0.16),
-      0 3px 6px rgba(0, 0, 0, 0.23),
-      0 0 30px rgba(255, 215, 0, 0.3);
+    transform: translateY(-1px);
+    background: var(--gold-300);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .btn-gold:active {
@@ -135,35 +130,13 @@
   }
 
   .card-sleek:hover {
-    border-color: var(--border-gold);
-    box-shadow:
-      0 10px 40px rgba(0, 0, 0, 0.8),
-      0 0 60px rgba(255, 215, 0, 0.05),
-      inset 0 0 30px rgba(255, 215, 0, 0.01);
-    transform: translateY(-4px);
+    border-color: var(--white-300);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
   }
 
-  /* Gold Accent Bar */
-  .accent-bar {
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      var(--gold-400) 20%,
-      var(--gold-400) 80%,
-      transparent
-    );
-    animation: glow-pulse 2s ease-in-out infinite;
-  }
-
-  /* Text Glow Effect */
-  .text-gold-glow {
-    color: var(--gold-400);
-    text-shadow:
-      0 0 10px rgba(255, 215, 0, 0.5),
-      0 0 20px rgba(255, 215, 0, 0.3),
-      0 0 30px rgba(255, 215, 0, 0.1);
-  }
+  /* Removed: Gold Accent Bar - decorative, not functional */
+  /* Removed: Text Glow Effect - too "AI startup" */
 
   /* Input Field */
   .input-sleek {

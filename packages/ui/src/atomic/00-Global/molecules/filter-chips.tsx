@@ -161,7 +161,7 @@ export const FilterChips = React.forwardRef<HTMLDivElement, FilterChipsProps>(
               className={cn(
                 'flex-shrink-0 inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)]',
                 isSelected
-                  ? 'border-[var(--hive-brand-primary)] bg-gradient-to-r from-[var(--hive-brand-primary)]/20 to-[var(--hive-brand-secondary)]/20 text-[var(--hive-text-primary)] shadow-lg'
+                  ? 'border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/15 text-[var(--hive-text-primary)]'
                   : 'border-[var(--hive-border-default)] bg-transparent text-[var(--hive-text-secondary)] hover:border-[var(--hive-border-strong)] hover:bg-[var(--hive-background-secondary)] hover:text-[var(--hive-text-primary)]'
               )}
               role="checkbox"

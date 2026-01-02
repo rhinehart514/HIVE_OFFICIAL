@@ -8,6 +8,8 @@ interface UseIDEKeyboardOptions {
   mode: ToolMode;
   setMode: (mode: ToolMode) => void;
   enabled?: boolean;
+  /** Current zoom level for zoom in/out shortcuts */
+  zoom?: number;
 }
 
 /**
@@ -36,6 +38,7 @@ export function useIDEKeyboard({
   mode,
   setMode,
   enabled = true,
+  zoom = 1,
 }: UseIDEKeyboardOptions) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -176,18 +179,20 @@ export function useIDEKeyboard({
       // Zoom in (Cmd+=)
       if (isMeta && (e.key === '=' || e.key === '+')) {
         e.preventDefault();
-        // actions.setZoom will be called with current + 0.1
+        const newZoom = Math.min(3, zoom + 0.1);
+        actions.setZoom?.(newZoom);
         return;
       }
 
       // Zoom out (Cmd+-)
       if (isMeta && e.key === '-') {
         e.preventDefault();
-        // actions.setZoom will be called with current - 0.1
+        const newZoom = Math.max(0.25, zoom - 0.1);
+        actions.setZoom?.(newZoom);
         return;
       }
     },
-    [enabled, actions, mode, setMode]
+    [enabled, actions, mode, setMode, zoom]
   );
 
   const handleKeyUp = useCallback(
@@ -255,5 +260,8 @@ export const SHORTCUTS = [
   { key: '⌘K', description: 'AI Assistant' },
   { key: '⌘S', description: 'Save' },
   { key: '⌘G', description: 'Toggle grid' },
+  { key: '⌘0', description: 'Reset zoom' },
+  { key: '⌘+', description: 'Zoom in' },
+  { key: '⌘-', description: 'Zoom out' },
   { key: 'Esc', description: 'Cancel / Deselect' },
 ];

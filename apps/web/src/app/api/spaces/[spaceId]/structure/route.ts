@@ -177,6 +177,8 @@ function toPlacedToolDTO(tool: PlacedTool): PlacedToolDTO {
     isEditable: tool.isEditable,
     state: tool.state,
     stateUpdatedAt: tool.stateUpdatedAt?.toISOString() ?? null,
+    toolVersion: tool.toolVersion ?? null,
+    isOutdated: tool.isOutdated ?? false,
   };
 }
 

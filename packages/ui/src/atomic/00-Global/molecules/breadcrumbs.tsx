@@ -21,6 +21,7 @@
 
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { easingArrays } from '@hive/tokens';
 import { ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
 
@@ -88,7 +89,7 @@ export function Breadcrumbs({
       x: 0,
       transition: {
         duration: 0.15,
-        ease: [0.22, 1, 0.36, 1],
+        ease: easingArrays.default,
       },
     },
   };

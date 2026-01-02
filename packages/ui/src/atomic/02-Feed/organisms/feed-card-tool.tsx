@@ -7,7 +7,7 @@ import {
   Badge,
   Button,
   ToolIcon,
-  SparklesIcon,
+  StarIcon,
   DownloadIcon,
   UsersIcon,
 } from '../../00-Global/atoms';
@@ -78,7 +78,7 @@ export const FeedCardTool = React.forwardRef<HTMLDivElement, FeedCardToolProps>(
       <article
         ref={ref}
         className={cn(
-          'group relative overflow-hidden rounded-[22px] border border-[color-mix(in_srgb,var(--hive-border-default) 78%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 96%,transparent)] shadow-[0_24px_45px_rgba(5,7,13,0.35)] transition-shadow hover:shadow-[0_26px_52px_rgba(5,7,13,0.45)]',
+          'group relative overflow-hidden rounded-[22px] border border-[color-mix(in_srgb,var(--hive-border-default) 78%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 96%,transparent)] shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-shadow hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]',
           tone === 'featured' && 'border-[var(--hive-brand-primary)]/40 bg-[color-mix(in_srgb,var(--hive-brand-primary) 6%,var(--hive-background-secondary))]',
           className
         )}
@@ -89,7 +89,7 @@ export const FeedCardTool = React.forwardRef<HTMLDivElement, FeedCardToolProps>(
             <div className="flex flex-wrap items-center gap-3">
               {meta?.featured && (
                 <Badge className="flex items-center gap-1 bg-[var(--hive-brand-primary)]/10 text-[var(--hive-brand-primary)] border-[var(--hive-brand-primary)]/40">
-                  <SparklesIcon className="h-3.5 w-3.5" />
+                  <StarIcon className="h-3.5 w-3.5" />
                   Featured Tool
                 </Badge>
               )}

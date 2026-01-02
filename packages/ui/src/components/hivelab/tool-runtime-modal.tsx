@@ -68,6 +68,22 @@ export interface ToolRuntimeModalProps {
       config?: Record<string, unknown>;
     } | null;
     state: Record<string, unknown>;
+    // Phase 1: SharedState Architecture
+    sharedState?: {
+      counters: Record<string, number>;
+      collections: Record<string, Record<string, { id: string; createdAt: string; createdBy: string; data: Record<string, unknown> }>>;
+      timeline: Array<{ id: string; type: string; timestamp: string; userId: string; action: string; data?: Record<string, unknown> }>;
+      computed: Record<string, unknown>;
+      version: number;
+      lastModified: string;
+    };
+    userState?: {
+      selections?: Record<string, unknown>;
+      participation?: Record<string, boolean>;
+      personal?: Record<string, unknown>;
+      ui?: Record<string, unknown>;
+      [key: string]: unknown;
+    };
     isLoading: boolean;
     isExecuting: boolean;
     isSaving: boolean;
@@ -92,7 +108,7 @@ const glass = {
   modal: 'bg-gray-950/95 backdrop-blur-xl border border-white/[0.08]',
 };
 
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50';
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40';
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -170,6 +186,9 @@ export function ToolRuntimeModal({
   const elements = tool?.elements || [];
   const toolConfig = tool?.config || {};
   const state = runtime?.state || {};
+  // Phase 1: SharedState Architecture
+  const sharedState = runtime?.sharedState;
+  const userState = runtime?.userState;
   const isLoading = runtime?.isLoading ?? true;
   const error = runtime?.error;
 
@@ -229,7 +248,7 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-gold-500 animate-spin mx-auto mb-3" />
+                  <Loader2 className="h-8 w-8 text-neutral-400 animate-spin mx-auto mb-3" />
                   <p className="text-sm text-gray-400">Loading tool...</p>
                 </div>
               </motion.div>
@@ -265,8 +284,8 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center max-w-sm px-4">
-                  <div className="w-12 h-12 rounded-xl bg-gold-500/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="h-6 w-6 text-gold-500" />
+                  <div className="w-12 h-12 rounded-xl bg-neutral-700/50 flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="h-6 w-6 text-neutral-400" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">No elements</h3>
                   <p className="text-sm text-gray-400">
@@ -292,6 +311,8 @@ export function ToolRuntimeModal({
                 <ToolCanvas
                   elements={elements}
                   state={state}
+                  sharedState={sharedState}
+                  userState={userState}
                   layout={(toolConfig.layout as 'grid' | 'flow' | 'stack') || 'stack'}
                   onElementChange={handleElementChange}
                   onElementAction={handleElementAction}

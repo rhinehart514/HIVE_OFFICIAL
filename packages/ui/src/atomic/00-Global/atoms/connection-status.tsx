@@ -93,30 +93,30 @@ export function ConnectionStatus({
   const stateConfig = {
     live: {
       label: 'Live',
-      color: 'bg-[var(--hive-semantic-success-background)]',
-      textColor: 'text-[var(--hive-semantic-success-text)]',
-      borderColor: 'border-[var(--hive-semantic-success-border)]',
+      color: 'bg-[#00D46A]',
+      textColor: 'text-[#00D46A]',
+      borderColor: 'border-[#00D46A]/20',
       pulse: true,
     },
     reconnecting: {
       label: 'Reconnecting...',
-      color: 'bg-[var(--hive-semantic-warning-background)]',
-      textColor: 'text-[var(--hive-semantic-warning-text)]',
-      borderColor: 'border-[var(--hive-semantic-warning-border)]',
+      color: 'bg-[#FFB800]',
+      textColor: 'text-[#FFB800]',
+      borderColor: 'border-[#FFB800]/20',
       pulse: true,
     },
     offline: {
       label: 'Offline',
-      color: 'bg-[var(--hive-semantic-error-background)]',
-      textColor: 'text-[var(--hive-semantic-error-text)]',
-      borderColor: 'border-[var(--hive-semantic-error-border)]',
+      color: 'bg-[#FF3737]',
+      textColor: 'text-[#FF3737]',
+      borderColor: 'border-[#FF3737]/20',
       pulse: false,
     },
     disconnected: {
       label: 'Disconnected',
-      color: 'bg-[var(--hive-background-tertiary)]',
-      textColor: 'text-[var(--hive-text-tertiary)]',
-      borderColor: 'border-[var(--hive-border-secondary)]',
+      color: 'bg-[#1A1A1A]',
+      textColor: 'text-[#71717A]',
+      borderColor: 'border-[#2A2A2A]',
       pulse: false,
     },
   };
@@ -138,7 +138,7 @@ export function ConnectionStatus({
         'inline-flex items-center gap-2',
         'px-3 py-1.5 rounded-full',
         'border',
-        'bg-[var(--hive-background-primary)]',
+        'bg-[#0A0A0A]',
         config.borderColor,
         compact && 'px-2 py-1',
         positionClasses,
@@ -155,7 +155,7 @@ export function ConnectionStatus({
           <span
             className={cn(
               'absolute inline-flex h-full w-full rounded-full opacity-75',
-              'animate-ping',
+              'animate-pulse',
               config.color
             )}
             aria-hidden="true"
@@ -261,16 +261,16 @@ export function ConnectionBadge({ isConnected }: { isConnected: boolean }) {
       className={cn(
         'inline-flex items-center gap-1.5',
         'px-2 py-0.5 rounded-md',
-        'bg-[var(--hive-semantic-success-background)]',
-        'text-[var(--hive-semantic-success-text)]',
+        'bg-[#00D46A]/10',
+        'text-[#00D46A]',
         'text-xs font-medium'
       )}
       role="status"
       aria-label="Live updates active"
     >
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--hive-semantic-success-text)] opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--hive-semantic-success-text)]" />
+        <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-[#00D46A] opacity-75" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00D46A]" />
       </span>
       Live
     </span>

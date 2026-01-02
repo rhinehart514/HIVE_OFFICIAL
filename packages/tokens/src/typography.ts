@@ -43,6 +43,8 @@ export const typography = {
     medium: '500',               // Emphasized text
     semibold: '600',             // Headings
     bold: '700',                 // Strong emphasis
+    extrabold: '800',            // Hero headlines, statements
+    black: '900',                // Maximum impact
   },
   lineHeight: {
     none: '1',
@@ -53,6 +55,7 @@ export const typography = {
     loose: '2',
   },
   letterSpacing: {
+    tightest: '-0.04em',          // Headlines with tension
     tighter: '-0.05em',
     tight: '-0.025em',
     normal: '0',

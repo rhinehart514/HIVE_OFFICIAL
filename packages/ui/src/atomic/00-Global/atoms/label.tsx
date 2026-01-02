@@ -8,11 +8,11 @@ const labelVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-[var(--hive-text-primary)]",
-        secondary: "text-[var(--hive-text-secondary)]",
-        destructive: "text-[var(--hive-status-error)]",
-        success: "text-[var(--hive-status-success)]",
-        warning: "text-[var(--hive-status-warning)]",
+        default: "text-[#FAFAFA]",
+        secondary: "text-[#A1A1A6]",
+        destructive: "text-[#FF3737]",
+        success: "text-[#00D46A]",
+        warning: "text-[#FFB800]",
       },
       size: {
         default: "text-sm",

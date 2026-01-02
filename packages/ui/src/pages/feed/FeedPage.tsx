@@ -238,7 +238,7 @@ function FeedPostCard({ post }: { post: FeedPost }) {
               {post.author.campusRole}
             </span>
             {post.pinned ? (
-              <Badge tone="contrast" variant="pill">
+              <Badge variant="primary">
                 Pinned
               </Badge>
             ) : null}
@@ -271,7 +271,7 @@ function FeedPostCard({ post }: { post: FeedPost }) {
       {post.tags && post.tags.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {post.tags.map((tag) => (
-            <Badge key={tag} tone="muted" variant="pill">
+            <Badge key={tag} variant="secondary">
               #{tag.replace(/\s+/g, "").toLowerCase()}
             </Badge>
           ))}
@@ -410,7 +410,7 @@ function TrendingSpaces({ spaces }: { spaces: FeedTrendingSpace[] }) {
               </p>
             </div>
             {space.status ? (
-              <Badge tone="muted" variant="pill">
+              <Badge variant="secondary">
                 {space.status === "live" ? "Live" : space.status === "growing" ? "Growing" : "Calm"}
               </Badge>
             ) : null}

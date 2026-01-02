@@ -10,7 +10,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-const sessionFilePath = join(process.cwd(), 'apps', 'web', 'src', 'lib', 'session.ts');
+// Tests run from apps/web directory, so don't include apps/web prefix
+const sessionFilePath = join(process.cwd(), 'src', 'lib', 'session.ts');
 const sessionFileContent = readFileSync(sessionFilePath, 'utf8');
 
 describe('Session Security Guards', () => {

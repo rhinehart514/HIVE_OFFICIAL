@@ -10,7 +10,7 @@ export interface FeatureFlag {
   id: string;
   name: string;
   description: string;
-  category: 'core' | 'experimental' | 'infrastructure' | 'ui_ux' | 'tools' | 'spaces' | 'admin';
+  category: 'core' | 'experimental' | 'infrastructure' | 'ui_ux' | 'tools' | 'spaces' | 'admin' | 'profile';
   enabled: boolean;
   rollout: {
     type: 'all' | 'percentage' | 'users' | 'schools' | 'ab_test';
@@ -425,12 +425,23 @@ export const HIVE_FEATURE_FLAGS = {
   VIDEO_CALLS: 'video_calls',
   COLLABORATIVE_DOCS: 'collaborative_docs',
   GAMIFICATION: 'gamification',
+
+  // Feed & Rituals (Deferred for soft launch)
+  FEED_V1: 'feed_v1',           // Aggregated feed from spaces/events
+  RITUALS_V1: 'rituals_v1',     // Core ritual mechanics (FoundingClass, Survival, Tournament)
+  RITUALS_FOUNDING_CLASS: 'rituals_founding_class', // FoundingClass ritual for January launch
+  RITUALS_LEADERS_ONLY: 'rituals_leaders_only',     // Restrict rituals to space leaders only
   
-  // Infrastructure
+  // Infrastructure & Scaling
   ADVANCED_CACHING: 'advanced_caching',
   CDN_OPTIMIZATION: 'cdn_optimization',
   REAL_TIME_ANALYTICS: 'real_time_analytics',
   AUTO_SCALING: 'auto_scaling',
+
+  // Scaling Features (controlled via env vars for immediate effect)
+  SHARDED_MEMBER_COUNT: 'sharded_member_count',     // USE_SHARDED_MEMBER_COUNT=true
+  DISTRIBUTED_RATE_LIMIT: 'distributed_rate_limit', // UPSTASH_REDIS_REST_URL set
+  SPACE_PRESENCE_INDEXED: 'space_presence_indexed', // Always enabled after firebase-realtime.ts fix
   
   // UI/UX
   DARK_MODE: 'dark_mode',
@@ -442,11 +453,21 @@ export const HIVE_FEATURE_FLAGS = {
   CUSTOM_TOOLS: 'custom_tools',
   TOOL_VERSIONING: 'tool_versioning',
   TOOL_MARKETPLACE_PAYMENTS: 'tool_marketplace_payments',
+  HIVELAB_PUBLIC: 'hivelab_public', // When false, HiveLab is only visible to leaders
   
   // Admin
   ADVANCED_MODERATION: 'advanced_moderation',
   BULK_OPERATIONS: 'bulk_operations',
-  DETAILED_ANALYTICS: 'detailed_analytics'
+  DETAILED_ANALYTICS: 'detailed_analytics',
+
+  // Profile Features - Admin Controlled
+  PROFILE_GHOST_MODE: 'profile_ghost_mode',
+  PROFILE_COMING_SOON: 'profile_coming_soon',
+  PROFILE_CALENDAR_SYNC: 'profile_calendar_sync',
+  PROFILE_AI_INSIGHTS: 'profile_ai_insights',
+  PROFILE_CAMPUS_GRAPH: 'profile_campus_graph',
+  PROFILE_BENTO_GRID: 'profile_bento_grid',
+  PROFILE_HIVELAB_WIDGET: 'profile_hivelab_widget',
 } as const;
 
 // Helper function for easy feature flag checks in React components
@@ -456,4 +477,150 @@ export async function useFeatureFlag(
 ): Promise<FeatureFlagResult> {
   return featureFlagService.isFeatureEnabled(flagId, userContext);
 }
+// Profile feature flag helpers
+export const PROFILE_FLAGS = {
+  GHOST_MODE: HIVE_FEATURE_FLAGS.PROFILE_GHOST_MODE,
+  COMING_SOON: HIVE_FEATURE_FLAGS.PROFILE_COMING_SOON,
+  CALENDAR_SYNC: HIVE_FEATURE_FLAGS.PROFILE_CALENDAR_SYNC,
+  AI_INSIGHTS: HIVE_FEATURE_FLAGS.PROFILE_AI_INSIGHTS,
+  CAMPUS_GRAPH: HIVE_FEATURE_FLAGS.PROFILE_CAMPUS_GRAPH,
+  BENTO_GRID: HIVE_FEATURE_FLAGS.PROFILE_BENTO_GRID,
+  HIVELAB_WIDGET: HIVE_FEATURE_FLAGS.PROFILE_HIVELAB_WIDGET,
+} as const;
+
+export type ProfileFeatureFlag = typeof PROFILE_FLAGS[keyof typeof PROFILE_FLAGS];
+
+/**
+ * Check multiple profile feature flags at once
+ */
+export async function getProfileFeatureFlags(
+  userContext: UserFeatureContext
+): Promise<Record<ProfileFeatureFlag, FeatureFlagResult>> {
+  const flagIds = Object.values(PROFILE_FLAGS);
+  return featureFlagService.getUserFeatureFlags(flagIds, userContext) as Promise<Record<ProfileFeatureFlag, FeatureFlagResult>>;
+}
+
+// Feed & Rituals feature flag helpers
+export const FEED_RITUALS_FLAGS = {
+  FEED: HIVE_FEATURE_FLAGS.FEED_V1,
+  RITUALS: HIVE_FEATURE_FLAGS.RITUALS_V1,
+  FOUNDING_CLASS: HIVE_FEATURE_FLAGS.RITUALS_FOUNDING_CLASS,
+  LEADERS_ONLY: HIVE_FEATURE_FLAGS.RITUALS_LEADERS_ONLY,
+} as const;
+
+export type FeedRitualsFeatureFlag = typeof FEED_RITUALS_FLAGS[keyof typeof FEED_RITUALS_FLAGS];
+
+/**
+ * Check if feed is enabled for a user
+ */
+export async function isFeedEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.FEED_V1, userContext);
+  return result.enabled;
+}
+
+/**
+ * Check if rituals are enabled for a user
+ */
+export async function isRitualsEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.RITUALS_V1, userContext);
+  return result.enabled;
+}
+
+/**
+ * Check if FoundingClass ritual is enabled
+ */
+export async function isFoundingClassEnabled(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.RITUALS_FOUNDING_CLASS, userContext);
+  return result.enabled;
+}
+
+/**
+ * Check if rituals are restricted to leaders only
+ */
+export async function isRitualsLeadersOnly(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  const result = await featureFlagService.isFeatureEnabled(HIVE_FEATURE_FLAGS.RITUALS_LEADERS_ONLY, userContext);
+  return result.enabled;
+}
+
+// Scaling configuration helpers
+export const SCALING_FLAGS = {
+  SHARDED_MEMBER_COUNT: HIVE_FEATURE_FLAGS.SHARDED_MEMBER_COUNT,
+  DISTRIBUTED_RATE_LIMIT: HIVE_FEATURE_FLAGS.DISTRIBUTED_RATE_LIMIT,
+  SPACE_PRESENCE_INDEXED: HIVE_FEATURE_FLAGS.SPACE_PRESENCE_INDEXED,
+} as const;
+
+/**
+ * Check scaling infrastructure status
+ * Returns current state of all scaling optimizations
+ */
+export function getScalingStatus(): {
+  shardedMemberCount: boolean;
+  distributedRateLimit: boolean;
+  spacePresenceIndexed: boolean;
+  redisConfigured: boolean;
+  allScalingEnabled: boolean;
+} {
+  const shardedMemberCount = process.env.USE_SHARDED_MEMBER_COUNT === 'true';
+  const redisConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  const spacePresenceIndexed = true; // Always enabled after firebase-realtime.ts fix
+
+  return {
+    shardedMemberCount,
+    distributedRateLimit: redisConfigured,
+    spacePresenceIndexed,
+    redisConfigured,
+    allScalingEnabled: shardedMemberCount && redisConfigured && spacePresenceIndexed,
+  };
+}
+
+/**
+ * Log scaling status on startup (call from middleware or app initialization)
+ */
+export function logScalingStatus(): void {
+  const status = getScalingStatus();
+  logger.info('Scaling infrastructure status', {
+    shardedMemberCount: status.shardedMemberCount,
+    distributedRateLimit: status.distributedRateLimit,
+    spacePresenceIndexed: status.spacePresenceIndexed,
+    redisConfigured: status.redisConfigured,
+    allScalingEnabled: status.allScalingEnabled,
+  });
+}
+
+// HiveLab visibility helpers
+export const HIVELAB_FLAGS = {
+  PUBLIC: HIVE_FEATURE_FLAGS.HIVELAB_PUBLIC,
+} as const;
+
+/**
+ * Check if HiveLab should be visible to a user
+ * Returns true if:
+ * - HIVELAB_PUBLIC flag is enabled, OR
+ * - User is a space leader
+ */
+export async function isHiveLabVisible(
+  userContext: UserFeatureContext
+): Promise<boolean> {
+  // Check if HiveLab is public
+  const publicResult = await featureFlagService.isFeatureEnabled(
+    HIVE_FEATURE_FLAGS.HIVELAB_PUBLIC,
+    userContext
+  );
+
+  if (publicResult.enabled) {
+    return true;
+  }
+
+  // If not public, it's leaders-only - caller needs to check leader status
+  return false;
+}
+
 import 'server-only';

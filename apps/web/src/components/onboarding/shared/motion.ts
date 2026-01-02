@@ -327,3 +327,66 @@ export const successCheckVariants: Variants = {
     },
   },
 };
+
+// =============================================================================
+// MONOCHROME DESIGN SYSTEM
+// =============================================================================
+// Gold is earned, not given. 99% grayscale, gold only on achievement.
+
+/** Monochrome style tokens - ChatGPT/OpenAI aesthetic */
+export const MONOCHROME = {
+  // Gold only appears on achievement (handle claimed, space selected, etc.)
+  goldText: 'text-gold-500',
+  goldBorder: 'border-gold-500/30',
+  goldBg: 'bg-gold-500/[0.04]',
+  goldGlow: '0 0 20px rgba(255, 215, 0, 0.5)',
+  goldHoverGlow: '0 0 30px rgba(255, 215, 0, 0.15)',
+  goldUnlockGlow: '0 0 40px rgba(255, 215, 0, 0.06)',
+
+  // Everything else is grayscale
+  inputBase: 'w-full h-14 px-0 bg-transparent border-0 border-b border-neutral-800 text-white text-lg text-center placeholder:text-neutral-700 focus:outline-none focus:border-white/50 transition-all duration-300',
+  cardBg: 'bg-white/[0.02] backdrop-blur-sm',
+  cardBorder: 'border border-white/[0.06]',
+  cardHoverBorder: 'hover:border-white/[0.12]',
+  cardHoverBg: 'hover:bg-white/[0.04]',
+
+  // Typography
+  heading: 'text-[32px] font-normal tracking-tight text-white',
+  subheading: 'text-neutral-500',
+
+  // Buttons
+  buttonPrimary: 'h-12 px-8 rounded-full bg-white/95 text-black text-sm font-medium hover:bg-white hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] transition-all duration-300 disabled:bg-neutral-900/80 disabled:text-neutral-700 disabled:cursor-not-allowed',
+  buttonGold: 'h-12 px-8 rounded-full bg-gold-500 text-black text-sm font-medium hover:bg-gold-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.3)] transition-all duration-300',
+  buttonGhost: 'text-sm font-medium text-neutral-600 hover:text-neutral-400 transition-colors',
+
+  // Spacing
+  sectionGap: 'mb-16',
+  itemGap: 'mb-12',
+} as const;
+
+/** Monochrome unlock animation - golden underline draws in */
+export const monochromeUnlockVariants: Variants = {
+  hidden: { scaleX: 0, opacity: 0 },
+  visible: {
+    scaleX: 1,
+    opacity: 1,
+    transition: {
+      duration: 0.6,
+      ease: EASE_PREMIUM,
+      delay: 0.2,
+    },
+  },
+};
+
+/** Background glow that appears on unlock */
+export const unlockGlowVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: [0, 0.08, 0.04],
+    scale: [0.8, 1.2, 1],
+    transition: {
+      duration: 1,
+      ease: EASE_PREMIUM,
+    },
+  },
+};

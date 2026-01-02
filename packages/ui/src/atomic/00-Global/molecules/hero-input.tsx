@@ -16,7 +16,7 @@
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, ArrowRight, Sparkles } from "lucide-react";
+import { Send, Loader2, ArrowRight, Command } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../../../lib/utils";
@@ -57,8 +57,6 @@ export interface HeroInputProps
   submitVariant?: "default" | "gold" | "icon";
   /** Submit button label */
   submitLabel?: string;
-  /** Show AI sparkle icon */
-  showSparkle?: boolean;
   /** Left icon/element */
   leftElement?: React.ReactNode;
   /** Wrapper className */
@@ -75,7 +73,6 @@ const HeroInput = React.forwardRef<HTMLInputElement, HeroInputProps>(
       loading = false,
       submitVariant = "default",
       submitLabel = "Send",
-      showSparkle = false,
       leftElement,
       wrapperClassName,
       placeholder = "Ask anything...",
@@ -86,7 +83,6 @@ const HeroInput = React.forwardRef<HTMLInputElement, HeroInputProps>(
     ref
   ) => {
     const [value, setValue] = React.useState("");
-    const [isFocused, setIsFocused] = React.useState(false);
 
     const handleSubmit = () => {
       if (value.trim() && !loading && !disabled) {
@@ -118,17 +114,10 @@ const HeroInput = React.forwardRef<HTMLInputElement, HeroInputProps>(
 
     return (
       <div className={cn(heroInputVariants({ variant, size }), wrapperClassName)}>
-        {/* Left element / Sparkle */}
-        {(leftElement || showSparkle) && (
+        {/* Left element */}
+        {leftElement && (
           <div className="flex items-center pr-3">
-            {leftElement || (
-              <motion.div
-                animate={{ rotate: isFocused ? 15 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Sparkles className="h-5 w-5 text-[#818187]" />
-              </motion.div>
-            )}
+            {leftElement}
           </div>
         )}
 
@@ -138,8 +127,6 @@ const HeroInput = React.forwardRef<HTMLInputElement, HeroInputProps>(
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled || loading}

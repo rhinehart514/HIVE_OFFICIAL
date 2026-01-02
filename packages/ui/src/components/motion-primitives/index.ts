@@ -7,6 +7,12 @@
  * - AutoAnimate (zero-config list animations)
  * - Lottie (After Effects imports)
  *
+ * Design Philosophy:
+ * - Neutral colors by default (white/gray)
+ * - Gold reserved for achievements and CTAs only
+ * - Respects prefers-reduced-motion
+ * - Accessible with proper ARIA labels
+ *
  * @see packages/tokens/src/motion.ts - Motion token system
  */
 
@@ -25,29 +31,15 @@ export {
   lottiePresets,
   type LottieAnimationProps,
 } from './lottie-animation';
-export { GlowEffect, AnimatedGoldIcon, type GlowEffectProps } from './glow-effect';
+export {
+  GlowEffect,
+  AnimatedGoldIcon,
+  GLOW_COLORS,
+  type GlowEffectProps,
+} from './glow-effect';
 export { SwipeableCarousel, type SwipeableCarouselProps } from './swipeable-carousel';
 
-// Premium Card Effects (Nov 2025 - Billion-Dollar UI)
-export {
-  ShineBorder,
-  ShineBorderCard,
-  type ShineBorderProps,
-  type ShineBorderCardProps,
-} from './shine-border';
-export {
-  BorderBeam,
-  BorderBeamCard,
-  type BorderBeamProps,
-  type BorderBeamCardProps,
-} from './border-beam';
-export {
-  SparklesText,
-  sparklePresets,
-  type SparklesTextProps,
-} from './sparkles-text';
-
-// Space Celebrations (Nov 2025 - Motion-Rich Premium)
+// Space Celebrations (for achievement moments - gold is appropriate here)
 export {
   GoldConfettiBurst,
   JoinCelebration,
@@ -61,5 +53,13 @@ export type {
   MilestoneBadgeProps,
 } from './space-celebrations';
 
-// Brand Spinner (Dec 2025 - Design Elevation)
-export { GoldSpinner, GoldSpinnerInline, type GoldSpinnerProps } from './gold-spinner';
+// Brand Spinner (configurable colors, neutral by default)
+export {
+  BrandSpinner,
+  BrandSpinnerInline,
+  GoldSpinner, // deprecated alias
+  GoldSpinnerInline, // deprecated alias
+  SPINNER_VARIANTS,
+  type BrandSpinnerProps,
+  type GoldSpinnerProps, // deprecated alias
+} from './gold-spinner';

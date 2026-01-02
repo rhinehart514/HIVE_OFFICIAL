@@ -6,11 +6,11 @@ import {
   Calendar,
   Flame,
   GripVertical,
+  Heart,
   Maximize2,
   Minimize2,
   Search,
   Settings,
-  Sparkles,
   Star,
   TrendingUp,
   Trophy,
@@ -27,9 +27,6 @@ import {
 import { Button } from "../../00-Global/atoms/button";
 import { Card } from "../../00-Global/atoms/card";
 import { InView } from "../../../components/motion-primitives/in-view";
-import { ShineBorder } from "../../../components/motion-primitives/shine-border";
-import { BorderBeam } from "../../../components/motion-primitives/border-beam";
-import { SparklesText } from "../../../components/motion-primitives/sparkles-text";
 
 type GridCard = {
   id: string;
@@ -57,14 +54,110 @@ interface BentoGridLayout {
   lastModified?: Date | string | null;
 }
 
+// ============================================================================
+// Profile Data Types (for type safety in card rendering)
+// ============================================================================
+
+interface ProfileConnection {
+  id?: string;
+  displayName?: string;
+  sharedSpaces?: string[];
+  mutualCount?: number;
+  isMutual?: boolean;
+  isFriend?: boolean;
+}
+
+interface ProfileBadge {
+  id?: string;
+  name: string;
+  icon?: string;
+  earnedAt?: string;
+}
+
+interface ProfileActivity {
+  type?: string;
+  action?: string;
+  spaceName?: string;
+  timestamp?: string;
+}
+
+interface ProfileOverlap {
+  time?: string;
+  name?: string;
+  location?: string;
+}
+
+interface ProfileSuggestion {
+  name?: string;
+  reason?: string;
+  reasons?: string[];
+  type?: string;
+}
+
+interface ProfilePresence {
+  isOnline?: boolean;
+  vibe?: string;
+  beacon?: {
+    active?: boolean;
+    location?: string;
+  };
+}
+
+interface ProfileStats {
+  spacesJoined?: number;
+  friends?: number;
+  reputation?: number;
+  currentStreak?: number;
+  longestStreak?: number;
+  toolsCreated?: number;
+  activeRituals?: number;
+  mutualFriends?: number;
+  sharedSpaces?: number;
+}
+
+interface ProfileConnections {
+  friends?: ProfileConnection[];
+  connections?: ProfileConnection[];
+}
+
+interface ProfileIntelligence {
+  overlaps?: ProfileOverlap[];
+  suggestions?: ProfileSuggestion[];
+}
+
+interface ProfilePersonal {
+  interests?: string[];
+}
+
+interface ProfileIdentity {
+  badges?: ProfileBadge[];
+}
+
+/** Internal profile shape used by bento grid card renderers */
+interface ProfileCardData {
+  grid?: BentoGridLayout;
+  stats?: ProfileStats;
+  connections?: ProfileConnections;
+  intelligence?: ProfileIntelligence;
+  personal?: ProfilePersonal;
+  identity?: ProfileIdentity;
+  presence?: ProfilePresence;
+  activities?: ProfileActivity[];
+  interests?: string[];
+  badges?: (ProfileBadge | string)[];
+  isOnline?: boolean;
+}
+
 interface ProfileSystem {
-  grid?: unknown;
+  grid?: BentoGridLayout;
+  [key: string]: unknown;
 }
 
 export interface ProfileBentoGridProps {
   profile: ProfileSystem;
   editable?: boolean;
   onLayoutChange?: (layout: BentoGridLayout) => void;
+  onViewConnections?: () => void;
   className?: string;
 }
 
@@ -107,7 +200,7 @@ const CARD_CONFIGS: Record<string, {
   rituals_active: { title: "Rituals", icon: Activity },
   reputation: { title: "Rep", icon: TrendingUp, isGoldAccent: true },
   badges: { title: "Achievements", icon: Trophy, isGoldAccent: true },
-  interests: { title: "Interests", icon: Sparkles },
+  interests: { title: "Interests", icon: Heart },
   activity_timeline: { title: "Activity", icon: Activity },
   streak: { title: "Streak", icon: Flame },
   stats_spaces: { title: "Spaces", icon: Users },
@@ -165,14 +258,25 @@ function normalizeLayout(layout: Partial<GridLayout> | undefined): GridLayout {
  * - Tablet: 3 columns
  * - Desktop: 4 columns full grid
  */
+/** Safely extract grid from profile with type coercion */
+function getProfileGrid(profile: ProfileSystem): Partial<GridLayout> | undefined {
+  return profile.grid as Partial<GridLayout> | undefined;
+}
+
+/** Safely coerce profile to ProfileCardData for card rendering */
+function getProfileCardData(profile: ProfileSystem): ProfileCardData {
+  return profile as unknown as ProfileCardData;
+}
+
 export function ProfileBentoGrid({
   profile,
   editable = false,
   onLayoutChange,
+  onViewConnections,
   className,
 }: ProfileBentoGridProps) {
   const [layout, setLayout] = useState<GridLayout>(() =>
-    normalizeLayout((profile as any)?.grid),
+    normalizeLayout(getProfileGrid(profile)),
   );
   const [isDragging, setIsDragging] = useState(false);
   const [draggedCard, setDraggedCard] = useState<string | null>(null);
@@ -180,7 +284,7 @@ export function ProfileBentoGrid({
   const gridRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    setLayout(normalizeLayout((profile as any)?.grid));
+    setLayout(normalizeLayout(getProfileGrid(profile)));
   }, [profile]);
 
   useEffect(() => {
@@ -262,13 +366,13 @@ export function ProfileBentoGrid({
 
   const renderCardContent = (card: GridCard) => {
     const cardType = card.type === "custom" ? card.customType : card.type;
-    const cardProfile = profile as any;
+    const cardProfile = getProfileCardData(profile);
 
     switch (cardType) {
       case "spaces_hub": {
         const activeSpaces =
           cardProfile?.connections?.connections?.filter(
-            (conn: any) => conn.sharedSpaces?.length > 0,
+            (conn: ProfileConnection) => (conn.sharedSpaces?.length ?? 0) > 0,
           ) ?? [];
         const hasSpaces = activeSpaces.length > 0;
 
@@ -294,9 +398,9 @@ export function ProfileBentoGrid({
                     msOverflowStyle: 'none',
                   }}
                 >
-                  {activeSpaces.slice(0, 5).map((conn: any, index: number) => (
+                  {activeSpaces.slice(0, 5).map((conn: ProfileConnection, index: number) => (
                     <motion.div
-                      key={index}
+                      key={conn.id ?? index}
                       className="snap-start flex-shrink-0 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.98 }}
@@ -368,7 +472,7 @@ export function ProfileBentoGrid({
                       }).map((_, index) => (
                         <motion.div
                           key={index}
-                          className="h-8 w-8 rounded-full border-2 border-hive-background-primary bg-gradient-to-br from-hive-accent/40 to-hive-accent/20"
+                          className="h-8 w-8 rounded-full border-2 border-hive-background-primary bg-gradient-to-br from-neutral-600 to-neutral-700"
                           variants={{
                             initial: { y: 0, x: 0, scale: 1 },
                             hover: {
@@ -398,8 +502,13 @@ export function ProfileBentoGrid({
                     </p>
                   </div>
                 )}
-                <Button size="sm" variant="outline" className="mt-auto w-full text-xs rounded-lg">
-                  Find Friends
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-auto w-full text-xs rounded-lg"
+                  onClick={onViewConnections}
+                >
+                  {hasConnections ? 'View All' : 'Find Friends'}
                 </Button>
               </div>
             )}
@@ -511,7 +620,7 @@ export function ProfileBentoGrid({
             )}
             {card.size !== "1x1" && overlaps.length > 0 ? (
               <div className="mt-2 space-y-1">
-                {overlaps.slice(0, 2).map((overlap: any, index: number) => (
+                {overlaps.slice(0, 2).map((overlap: ProfileOverlap, index: number) => (
                   <div
                     key={index}
                     className="text-xs text-hive-text-primary"
@@ -545,7 +654,7 @@ export function ProfileBentoGrid({
               <div className="mt-3">
                 {hasSuggestions ? (
                   <div className="space-y-2">
-                    {suggestions.slice(0, 2).map((suggestion: any, index: number) => (
+                    {suggestions.slice(0, 2).map((suggestion: ProfileSuggestion, index: number) => (
                       <div
                         key={index}
                         className="rounded bg-hive-background-secondary p-2"
@@ -636,7 +745,7 @@ export function ProfileBentoGrid({
               <div className="mt-2">
                 <div className="h-2 w-full rounded-full bg-white/[0.06]">
                   <div
-                    className="h-2 rounded-full bg-gold-500 transition-all duration-500"
+                    className="h-2 rounded-full bg-gold-500 transition-all duration-300"
                     style={{ width: `${Math.min(100, reputation)}%` }}
                   />
                 </div>
@@ -649,20 +758,14 @@ export function ProfileBentoGrid({
       // ===== NEW MURU-INSPIRED CARD TYPES =====
 
       case "badges": {
-        // Billion-dollar UI: SparklesText for achievements
         const badges = cardProfile?.identity?.badges ?? cardProfile?.badges ?? [];
         return (
           <div className="mt-2 space-y-2">
             <div className="flex items-center gap-2">
-              <SparklesText
-                text={badges.length.toString()}
-                sparkleColor="#FFD700"
-                sparkleCount={8}
-                minSize={4}
-                maxSize={10}
-                className="text-3xl font-black text-white"
-              />
-              <Trophy size={18} className="text-gold-500" />
+              <span className="text-3xl font-black text-white tabular-nums">
+                {badges.length}
+              </span>
+              <Trophy size={18} className="text-neutral-400" />
             </div>
             <div className="text-xs text-hive-text-secondary uppercase tracking-wider">
               Achievements
@@ -673,7 +776,7 @@ export function ProfileBentoGrid({
                 whileHover="hover"
                 initial="initial"
               >
-                {badges.slice(0, card.size === "2x2" ? 8 : 4).map((badge: any, i: number) => (
+                {badges.slice(0, card.size === "2x2" ? 8 : 4).map((badge: ProfileBadge | string, i: number) => (
                   <motion.span
                     key={i}
                     className="rounded-full bg-gold-500/15 px-2.5 py-1 text-xs font-medium text-gold-500 border border-gold-500/20"
@@ -692,7 +795,7 @@ export function ProfileBentoGrid({
                     }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    {badge.name ?? badge}
+                    {typeof badge === 'string' ? badge : badge.name}
                   </motion.span>
                 ))}
                 {badges.length > (card.size === "2x2" ? 8 : 4) && (
@@ -762,7 +865,7 @@ export function ProfileBentoGrid({
           <div className="mt-2 space-y-2">
             {activities.length > 0 ? (
               <div className="space-y-2">
-                {activities.slice(0, maxItems).map((activity: any, i: number) => (
+                {activities.slice(0, maxItems).map((activity: ProfileActivity, i: number) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
                     <div className="mt-1 h-1.5 w-1.5 rounded-full bg-neutral-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -848,22 +951,15 @@ export function ProfileBentoGrid({
       }
 
       case "stats_rep": {
-        // Premium Dark: Gold is the ONE accent, keep it clean
-        // Billion-dollar UI: SparklesText for premium feel
         const rep = cardProfile?.stats?.reputation ?? 0;
 
         return (
           <div className="mt-2 space-y-1">
             <div className="flex items-center gap-2">
-              <SparklesText
-                text={rep.toLocaleString()}
-                sparkleColor="#FFD700"
-                sparkleCount={6}
-                minSize={3}
-                maxSize={8}
-                className="text-3xl font-bold text-gold-500 tabular-nums"
-              />
-              <Star size={18} className="text-gold-500" />
+              <span className="text-3xl font-bold text-white tabular-nums">
+                {rep.toLocaleString()}
+              </span>
+              <Star size={18} className="text-neutral-400" />
             </div>
             <div className="text-xs text-neutral-500 uppercase tracking-wider">
               Rep
@@ -877,7 +973,7 @@ export function ProfileBentoGrid({
       case "mutual_friends": {
         // HIVE Brand: monochrome styling
         const connections = cardProfile?.connections?.connections ?? [];
-        const mutualFriends = connections.filter((conn: any) => conn.mutualCount > 0 || conn.isMutual);
+        const mutualFriends = connections.filter((conn: ProfileConnection) => (conn.mutualCount ?? 0) > 0 || conn.isMutual);
         const mutualCount = mutualFriends.length || (cardProfile?.stats?.mutualFriends ?? 0);
         const maxDisplay = card.size === "1x1" ? 3 : card.size === "2x1" ? 5 : 8;
 
@@ -907,8 +1003,13 @@ export function ProfileBentoGrid({
                     </div>
                   )}
                 </div>
-                {card.size === "2x2" && (
-                  <Button size="sm" variant="outline" className="mt-4 w-full text-xs">
+                {card.size === "2x2" && onViewConnections && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-4 w-full text-xs"
+                    onClick={onViewConnections}
+                  >
                     View All Mutuals
                   </Button>
                 )}
@@ -922,7 +1023,7 @@ export function ProfileBentoGrid({
         // HIVE Brand: monochrome, no colored accents
         const connections = cardProfile?.connections?.connections ?? [];
         const sharedSpacesList: string[] = [];
-        connections.forEach((conn: any) => {
+        connections.forEach((conn: ProfileConnection) => {
           if (conn.sharedSpaces) {
             sharedSpacesList.push(...conn.sharedSpaces);
           }
@@ -1013,8 +1114,6 @@ export function ProfileBentoGrid({
     const isHeroCard = card.size === "2x2";
     const isWideCard = card.size === "2x1" || card.size === "3x1";
 
-    // Premium Dark: Solid backgrounds, subtle border hover, no 3D transforms
-    // Billion-dollar UI: ShineBorder for gold cards, BorderBeam for hero cards
     return (
       <InView
         key={card.id}
@@ -1031,35 +1130,12 @@ export function ProfileBentoGrid({
           className={cn(
             "group relative overflow-hidden cursor-pointer rounded-xl",
             minHeightClass,
-            // Premium Dark: Solid backgrounds, subtle borders
             "bg-neutral-900 border border-neutral-800",
-            // Simple hover: border color change only
             "transition-colors duration-200",
-            "hover:border-neutral-700",
-            // Gold accent cards get subtle gold border on hover
-            isGoldAccent && "hover:border-gold-500/30",
+            "hover:border-neutral-600",
           )}
           style={gridStyle}
         >
-          {/* Premium border effects - Billion-dollar UI patterns */}
-          {isGoldAccent && (
-            <ShineBorder
-              shineColor={['#FFD700', '#FFA500', '#FFD700']}
-              duration={8}
-              borderWidth={1}
-              className="opacity-60 group-hover:opacity-100 transition-opacity"
-            />
-          )}
-          {isHeroCard && !isGoldAccent && (
-            <BorderBeam
-              size={100}
-              duration={15}
-              colorFrom="#A1A1AA"
-              colorTo="#525252"
-              borderWidth={1}
-              className="opacity-0 group-hover:opacity-50 transition-opacity"
-            />
-          )}
           {/* Card header */}
           <div className={cn("px-4 pt-4 pb-1", isHeroCard && "px-5 pt-5")}>
             <div className="flex items-center justify-between">
@@ -1075,18 +1151,21 @@ export function ProfileBentoGrid({
               )} />
             </div>
 
-            {/* Edit controls */}
+            {/* Edit controls - 44x44px touch target for accessibility */}
             {editable && (
               <button
                 type="button"
                 onClick={() => toggleCardSize(card.id)}
-                className="absolute right-3 top-3 w-6 h-6 rounded-md bg-neutral-800 flex items-center justify-center opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity"
+                className="absolute right-0 top-0 w-11 h-11 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
+                aria-label={card.size === "2x2" ? "Minimize card" : "Expand card"}
               >
-                {card.size === "2x2" ? (
-                  <Minimize2 size={12} className="text-neutral-400" />
-                ) : (
-                  <Maximize2 size={12} className="text-neutral-400" />
-                )}
+                <span className="w-7 h-7 rounded-md bg-neutral-800/90 flex items-center justify-center">
+                  {card.size === "2x2" ? (
+                    <Minimize2 size={14} className="text-neutral-300" />
+                  ) : (
+                    <Maximize2 size={14} className="text-neutral-300" />
+                  )}
+                </span>
               </button>
             )}
           </div>

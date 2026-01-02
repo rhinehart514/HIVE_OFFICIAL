@@ -142,13 +142,15 @@ export const POST = withAuthValidationAndErrors(
     let spaces = searchResult.getValue();
 
     // Get user's spaces to check if they're a leader (for stealth mode visibility)
-    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    // SCALING FIX: Use lightweight membership query instead of loading full spaces
+    const membershipsResult = await spaceRepo.findUserMemberships(userId);
     const leaderSpaceIds = new Set<string>();
-    if (userSpacesResult.isSuccess) {
-      for (const space of userSpacesResult.getValue()) {
-        const member = space.members.find(m => m.profileId.value === userId);
-        if (member && (member.role === 'owner' || member.role === 'admin')) {
-          leaderSpaceIds.add(space.spaceId.value);
+    const userSpaceIds = new Set<string>();
+    if (membershipsResult.isSuccess) {
+      for (const membership of membershipsResult.getValue()) {
+        userSpaceIds.add(membership.spaceId);
+        if (membership.role === 'owner' || membership.role === 'admin') {
+          leaderSpaceIds.add(membership.spaceId);
         }
       }
     }
@@ -198,35 +200,39 @@ export const POST = withAuthValidationAndErrors(
       }
     });
 
-    // Get user's memberships to mark joined spaces (reusing the earlier query)
-    const userSpaceIds = new Set(
-      userSpacesResult.isSuccess
-        ? userSpacesResult.getValue().map(s => s.spaceId.value)
-        : []
-    );
+    // NOTE: userSpaceIds is now computed above with membershipsResult
 
     // Paginate
     const paginatedSpaces = scoredSpaces.slice(offset, offset + limit);
 
-    // Fetch creator info for results (batch lookup)
+    // SCALING FIX: Batch fetch creator info instead of N+1 queries
+    // Collect unique creator IDs first, then batch fetch
+    const creatorIds = [...new Set(
+      paginatedSpaces
+        .map(({ space }) => space.owner?.value)
+        .filter((id): id is string => !!id)
+    )];
+
     const creatorCache = new Map<string, { id: string; name: string; avatar: string | null }>();
 
-    for (const { space } of paginatedSpaces) {
-      const creatorId = space.owner.value;
-      if (creatorId && !creatorCache.has(creatorId)) {
-        try {
-          const creatorDoc = await dbAdmin.collection('users').doc(creatorId).get();
-          if (creatorDoc.exists) {
-            const data = creatorDoc.data();
-            creatorCache.set(creatorId, {
-              id: creatorDoc.id,
+    if (creatorIds.length > 0) {
+      try {
+        // Batch fetch all creators in one query
+        const creatorRefs = creatorIds.map(id => dbAdmin.collection('users').doc(id));
+        const creatorDocs = await dbAdmin.getAll(...creatorRefs);
+
+        for (const doc of creatorDocs) {
+          if (doc.exists) {
+            const data = doc.data();
+            creatorCache.set(doc.id, {
+              id: doc.id,
               name: data?.fullName || data?.displayName || 'Unknown',
               avatar: data?.photoURL || null,
             });
           }
-        } catch {
-          // Ignore creator lookup failures
         }
+      } catch {
+        // Ignore creator lookup failures - cache will be empty
       }
     }
 
@@ -237,10 +243,12 @@ export const POST = withAuthValidationAndErrors(
         score,
         highlights,
         userSpaceIds.has(space.spaceId.value),
-        creatorCache.get(space.owner.value) || null
+        (space.owner?.value ? creatorCache.get(space.owner.value) : null) || null
       )
     );
 
+    // SCALING FIX: Add cache headers for Vercel Edge caching
+    // Search results are cacheable for 60s with stale-while-revalidate for 5 minutes
     return respond.success({
       spaces: results,
       total: scoredSpaces.length,
@@ -254,6 +262,10 @@ export const POST = withAuthValidationAndErrors(
         ...searchParams,
         executedAt: new Date().toISOString(),
       },
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
     });
   }
 );

@@ -9,6 +9,69 @@ import type { Transaction } from 'firebase-admin/firestore';
  * Fixes race condition between check-handle and complete-onboarding APIs
  */
 
+/**
+ * Retry with exponential backoff helper
+ * Used for transient Firestore failures during handle operations
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  options: {
+    maxRetries?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    operationName?: string;
+  } = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    baseDelayMs = 100,
+    maxDelayMs = 2000,
+    operationName = 'operation'
+  } = options;
+
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on final attempt
+      if (attempt === maxRetries) {
+        break;
+      }
+
+      // Check if error is retryable (transient)
+      const isRetryable =
+        lastError.message.includes('DEADLINE_EXCEEDED') ||
+        lastError.message.includes('UNAVAILABLE') ||
+        lastError.message.includes('RESOURCE_EXHAUSTED') ||
+        lastError.message.includes('INTERNAL') ||
+        lastError.message.includes('ECONNRESET') ||
+        lastError.message.includes('timeout');
+
+      if (!isRetryable) {
+        break; // Non-retryable error, fail immediately
+      }
+
+      // Calculate delay with exponential backoff and jitter
+      const exponentialDelay = baseDelayMs * Math.pow(2, attempt);
+      const jitter = Math.random() * 0.3 * exponentialDelay; // 30% jitter
+      const delay = Math.min(exponentialDelay + jitter, maxDelayMs);
+
+      logger.debug(`Retrying ${operationName} after ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries})`, {
+        component: 'handle-service',
+        error: lastError.message
+      });
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}
+
 // Check if we're in development mode
 const isDevelopmentMode = currentEnvironment === 'development' || process.env.NODE_ENV === 'development';
 
@@ -179,16 +242,23 @@ export async function checkHandleAvailability(handle: string): Promise<HandleVal
   }
 
   try {
-    // Check both collections (but not atomically)
-    const [userQuery, handleDoc] = await Promise.all([
-      dbAdmin.collection('users')
-        .where('handle', '==', normalizedHandle)
-        .limit(1)
-        .get(),
-      dbAdmin.collection('handles').doc(normalizedHandle).get()
-    ]);
+    // Check both collections with retry for transient failures
+    const result = await withRetry(
+      async () => {
+        const [userQuery, handleDoc] = await Promise.all([
+          dbAdmin.collection('users')
+            .where('handle', '==', normalizedHandle)
+            .limit(1)
+            .get(),
+          dbAdmin.collection('handles').doc(normalizedHandle).get()
+        ]);
 
-    if (!userQuery.empty || handleDoc.exists) {
+        return { userQuery, handleDoc };
+      },
+      { operationName: 'checkHandleAvailability', maxRetries: 3 }
+    );
+
+    if (!result.userQuery.empty || result.handleDoc.exists) {
       return {
         isAvailable: false,
         error: 'This handle is already taken',
@@ -229,7 +299,10 @@ export async function releaseHandleReservation(handle: string): Promise<void> {
   }
 
   try {
-    await dbAdmin.collection('handles').doc(handle).delete();
+    await withRetry(
+      () => dbAdmin.collection('handles').doc(handle).delete(),
+      { operationName: 'releaseHandleReservation', maxRetries: 2 }
+    );
   } catch (error) {
     logger.error('Error releasing handle reservation', { component: 'handle-service', handle }, error instanceof Error ? error : undefined);
     // Don't throw - this is cleanup, should not break the main flow
@@ -380,7 +453,10 @@ export async function getHandleChangeStatus(userId: string): Promise<{
   }
 
   try {
-    const userDoc = await dbAdmin.collection('users').doc(userId).get();
+    const userDoc = await withRetry(
+      () => dbAdmin.collection('users').doc(userId).get(),
+      { operationName: 'getHandleChangeStatus', maxRetries: 3 }
+    );
 
     if (!userDoc.exists) {
       return { canChange: false, changeCount: 0, isFirstChangeFree: true };

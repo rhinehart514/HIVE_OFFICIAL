@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Zap, Clock, ChevronRight, Wrench } from 'lucide-react';
+import { Zap, Clock, ChevronRight, Wrench, X, Edit3 } from 'lucide-react';
 
 import { cn } from '../../../lib/utils';
 import { CollapsibleWidget } from './collapsible-widget';
@@ -39,6 +39,8 @@ export interface SpaceToolsWidgetData {
 export interface SpaceToolsWidgetCallbacks {
   onToolClick?: (toolId: string) => void;
   onViewAll?: (spaceId: string) => void;
+  /** Remove a tool from the space (leader only) */
+  onRemoveTool?: (toolId: string) => void;
 }
 
 export interface SpaceToolsWidgetProps
@@ -55,6 +57,12 @@ export interface SpaceToolsWidgetProps
    * Used when widget is rendered inside a unified container (SpaceSidebar unified mode)
    */
   inline?: boolean;
+  /** Whether the user is a space leader with edit permissions */
+  isLeader?: boolean;
+  /** Whether edit mode is active (shows remove buttons) - controlled mode */
+  isEditMode?: boolean;
+  /** Callback when edit mode changes - if provided, component is controlled */
+  onEditModeChange?: (isEditMode: boolean) => void;
 }
 
 export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidgetProps>(
@@ -66,8 +74,12 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
       defaultCollapsed = false,
       compact = false,
       inline = false,
+      isLeader = false,
+      isEditMode: isEditModeProp,
+      onEditModeChange,
       onToolClick,
       onViewAll,
+      onRemoveTool,
       className,
       ...props
     },
@@ -76,6 +88,13 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
     const shouldReduceMotion = useReducedMotion();
     const visibleTools = data.tools.slice(0, maxVisible);
     const hiddenCount = Math.max(0, data.tools.length - maxVisible);
+
+    // Internal edit mode state (uncontrolled mode)
+    const [internalEditMode, setInternalEditMode] = React.useState(false);
+
+    // Use controlled or uncontrolled mode
+    const isEditMode = onEditModeChange !== undefined ? (isEditModeProp ?? false) : internalEditMode;
+    const setEditMode = onEditModeChange ?? setInternalEditMode;
 
     const content = data.tools.length === 0 ? (
       <ToolsEmptyState
@@ -100,25 +119,25 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
                 'group flex items-start gap-3 rounded-xl border border-transparent p-3 text-left',
                 'transition-colors duration-150',
                 'hover:border-neutral-800/50 hover:bg-neutral-900/50',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50'
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
               )}
               whileHover={shouldReduceMotion ? undefined : { x: 4 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               aria-label={`Open ${tool.name} tool${tool.responseCount ? `, ${tool.responseCount} responses` : ''}`}
             >
               {/* Tool Icon */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gold-500/10 text-lg">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-lg">
                 {tool.icon ? (
                   <span>{tool.icon}</span>
                 ) : (
-                  <Zap className="h-5 w-5 text-gold-400" />
+                  <Zap className="h-5 w-5 text-neutral-400" />
                 )}
               </div>
 
               {/* Tool Info */}
               <div className="flex flex-1 flex-col gap-2 min-w-0">
                 <div className="space-y-1">
-                  <h4 className="text-sm font-semibold text-neutral-100 truncate group-hover:text-gold-400 transition-colors">
+                  <h4 className="text-sm font-semibold text-neutral-100 truncate group-hover:text-white transition-colors">
                     {tool.name}
                   </h4>
                   <div className="flex flex-wrap items-center gap-2">
@@ -139,14 +158,33 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
                 {/* Close Time Countdown */}
                 {tool.closeTime && (
                   <div className="flex items-center gap-1.5 text-xs text-neutral-400">
-                    <Clock className="h-3.5 w-3.5 text-gold-400" />
+                    <Clock className="h-3.5 w-3.5 text-neutral-500" />
                     <span>{tool.closeTime}</span>
                   </div>
                 )}
               </div>
 
-              {/* Chevron */}
-              <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-400" />
+              {/* Chevron or Remove button */}
+              {isEditMode && isLeader && onRemoveTool ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveTool(tool.id);
+                  }}
+                  className={cn(
+                    'shrink-0 p-1.5 rounded-lg',
+                    'bg-red-500/10 hover:bg-red-500/20',
+                    'text-red-400 hover:text-red-300',
+                    'transition-colors duration-150',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50'
+                  )}
+                  aria-label={`Remove ${tool.name} from space`}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : (
+                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-600 transition-colors group-hover:text-neutral-400" />
+              )}
             </motion.button>
           ))}
         </motion.div>
@@ -178,11 +216,38 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
               <Wrench className="h-4 w-4 text-neutral-400" />
               <span className="font-medium text-sm text-neutral-100">Active Tools</span>
             </div>
-            {data.tools.length > 0 && (
-              <span className="text-xs text-neutral-500 bg-neutral-800/50 px-1.5 py-0.5 rounded-full">
-                {data.tools.length}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {data.tools.length > 0 && (
+                <span className="text-xs text-neutral-500 bg-neutral-800/50 px-1.5 py-0.5 rounded-full">
+                  {data.tools.length}
+                </span>
+              )}
+              {/* Edit toggle for leaders */}
+              {isLeader && data.tools.length > 0 && onRemoveTool && (
+                <button
+                  onClick={() => setEditMode(!isEditMode)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
+                    'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                    isEditMode
+                      ? 'bg-white/[0.08] text-white border border-white/[0.12]'
+                      : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                  )}
+                >
+                  {isEditMode ? (
+                    <>
+                      <X className="w-3 h-3" />
+                      Done
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="w-3 h-3" />
+                      Edit
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
           </div>
           {content}
         </div>
@@ -200,6 +265,35 @@ export const SpaceToolsWidget = React.forwardRef<HTMLDivElement, SpaceToolsWidge
           persistKey={`space-tools-${data.spaceId}`}
           glass
           isEmpty={data.tools.length === 0}
+          headerActions={
+            isLeader && data.tools.length > 0 && onRemoveTool ? (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditMode(!isEditMode);
+                }}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium',
+                  'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                  isEditMode
+                    ? 'bg-white/[0.08] text-white border border-white/[0.12]'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/5'
+                )}
+              >
+                {isEditMode ? (
+                  <>
+                    <X className="w-3 h-3" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="w-3 h-3" />
+                    Edit
+                  </>
+                )}
+              </button>
+            ) : undefined
+          }
         >
           {content}
         </CollapsibleWidget>

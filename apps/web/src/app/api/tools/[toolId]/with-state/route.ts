@@ -8,6 +8,13 @@ import {
   getUserId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
+import type { ToolSharedState, ToolSharedEntity } from "@hive/core";
+import { shardedCounterService } from "@/lib/services/sharded-counter.service";
+import { extractedCollectionService } from "@/lib/services/extracted-collection.service";
+
+// Feature flags for Phase 1 Scaling Architecture (matches execute/route.ts)
+const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === "true";
+const USE_EXTRACTED_COLLECTIONS = process.env.USE_EXTRACTED_COLLECTIONS === "true";
 
 /**
  * GET /api/tools/[toolId]/with-state
@@ -94,21 +101,20 @@ export const GET = withAuthAndErrors(async (
   }
 
   // Normalize elements for consistent response
-  const normalizedElements = (toolData.elements || []).map(
-    (el: Record<string, unknown>) => {
-      const rawInstanceId = (el.instanceId ?? el.id ?? el.elementId) as string | number | undefined;
-      const rawElementId = (el.elementId ?? el.id) as string | number | undefined;
-      return {
-        id: el.id as string | undefined,
-        elementId: rawElementId != null ? String(rawElementId) : String(rawInstanceId ?? ""),
-        instanceId: rawInstanceId != null ? String(rawInstanceId) : String(rawElementId ?? ""),
-        type: el.type as string | undefined,
-        config: (el.config as Record<string, unknown>) || {},
-        position: el.position,
-        size: el.size,
-      };
-    }
-  );
+  const elements = (toolData.elements || []) as Record<string, unknown>[];
+  const normalizedElements = elements.map((el) => {
+    const rawInstanceId = (el.instanceId ?? el.id ?? el.elementId) as string | number | undefined;
+    const rawElementId = (el.elementId ?? el.id) as string | number | undefined;
+    return {
+      id: el.id as string | undefined,
+      elementId: rawElementId != null ? String(rawElementId) : String(rawInstanceId ?? ""),
+      instanceId: rawInstanceId != null ? String(rawInstanceId) : String(rawElementId ?? ""),
+      type: el.type as string | undefined,
+      config: (el.config as Record<string, unknown>) || {},
+      position: el.position,
+      size: el.size,
+    };
+  });
 
   // Prepare tool response
   const toolResponse = {
@@ -121,8 +127,19 @@ export const GET = withAuthAndErrors(async (
   // Fetch Deployment State (if deploymentId provided)
   // ============================================================
 
+  // Helper to create empty shared state
+  const createEmptySharedState = (): ToolSharedState => ({
+    counters: {},
+    collections: {},
+    timeline: [],
+    computed: {},
+    version: 0,
+    lastModified: new Date().toISOString(),
+  });
+
   let stateResponse: {
-    state: Record<string, unknown>;
+    userState: Record<string, unknown>;
+    sharedState: ToolSharedState;
     metadata: {
       version: string;
       lastSaved: string | null;
@@ -161,16 +178,24 @@ export const GET = withAuthAndErrors(async (
           }
 
           if (hasAccess) {
-            // Fetch state from placement or global
+            // Fetch user state and shared state in parallel
             const placementContext = await getPlacementFromDeploymentDoc(deploymentDoc);
-            const placementStateDoc = placementContext
-              ? await placementContext.ref.collection("state").doc(userId).get()
-              : null;
 
-            const globalStateDoc = await dbAdmin
-              .collection("toolStates")
-              .doc(`${deploymentId}_${userId}`)
-              .get();
+            const [placementStateDoc, globalStateDoc, sharedStateDoc] = await Promise.all([
+              // User state from placement
+              placementContext
+                ? placementContext.ref.collection("state").doc(userId).get()
+                : Promise.resolve(null),
+              // User state from global
+              dbAdmin.collection("toolStates").doc(`${deploymentId}_${userId}`).get(),
+              // Shared state (aggregate data visible to all users)
+              dbAdmin
+                .collection("deployedTools")
+                .doc(deploymentId)
+                .collection("sharedState")
+                .doc("current")
+                .get(),
+            ]);
 
             interface StateDocData {
               state: Record<string, unknown>;
@@ -182,7 +207,8 @@ export const GET = withAuthAndErrors(async (
               };
             }
 
-            const stateDoc =
+            // Get user state (prefer placement, fall back to global)
+            const userStateDoc =
               (placementStateDoc && placementStateDoc.exists
                 ? (placementStateDoc.data() as StateDocData)
                 : null) ??
@@ -190,29 +216,78 @@ export const GET = withAuthAndErrors(async (
                 ? (globalStateDoc.data() as StateDocData)
                 : null);
 
-            if (stateDoc) {
-              stateResponse = {
-                state: stateDoc.state || {},
-                metadata: {
-                  version: stateDoc.metadata?.version || "1.0.0",
-                  lastSaved: stateDoc.metadata?.lastSaved || null,
-                  autoSave: stateDoc.metadata?.autoSave !== false,
-                  size: stateDoc.metadata?.size || 0,
-                },
-                exists: true,
+            // Get shared state
+            let sharedState: ToolSharedState = createEmptySharedState();
+
+            // Get counters - aggregate from shards if sharding enabled
+            // This works even if sharedStateDoc doesn't exist (new tools with sharding only)
+            let counters: Record<string, number> = {};
+
+            if (USE_SHARDED_COUNTERS) {
+              // Aggregate counters from shards (200+ writes/sec capacity)
+              const shardedCounters = await shardedCounterService.getAllCounters(deploymentId);
+              counters = shardedCounters;
+            }
+
+            // Get collections - aggregate from subcollections if extraction enabled
+            let collections: Record<string, Record<string, ToolSharedEntity>> = {};
+
+            if (USE_EXTRACTED_COLLECTIONS) {
+              // Aggregate collections from subcollections (unlimited scale)
+              collections = await extractedCollectionService.getAllCollections(deploymentId);
+            }
+
+            if (sharedStateDoc.exists) {
+              const data = sharedStateDoc.data();
+
+              if (!USE_SHARDED_COUNTERS) {
+                // Legacy path: read counters directly from document
+                counters = (data?.counters as Record<string, number>) || {};
+              } else {
+                // Merge any legacy counters (migration support)
+                const legacyCounters = (data?.counters as Record<string, number>) || {};
+                counters = { ...legacyCounters, ...counters };
+              }
+
+              if (!USE_EXTRACTED_COLLECTIONS) {
+                // Legacy path: read collections directly from document
+                collections = (data?.collections as Record<string, Record<string, ToolSharedEntity>>) || {};
+              } else {
+                // Merge any legacy collections (migration support)
+                const legacyCollections = (data?.collections as Record<string, Record<string, ToolSharedEntity>>) || {};
+                for (const [key, entities] of Object.entries(legacyCollections)) {
+                  collections[key] = { ...entities, ...(collections[key] || {}) };
+                }
+              }
+
+              sharedState = {
+                counters,
+                collections,
+                timeline: (data?.timeline as ToolSharedState["timeline"]) || [],
+                computed: (data?.computed as Record<string, unknown>) || {},
+                version: (data?.version as number) || 0,
+                lastModified: (data?.lastModified as string) || new Date().toISOString(),
               };
-            } else {
-              stateResponse = {
-                state: {},
-                metadata: {
-                  version: "1.0.0",
-                  lastSaved: null,
-                  autoSave: true,
-                  size: 0,
-                },
-                exists: false,
+            } else if (Object.keys(counters).length > 0 || Object.keys(collections).length > 0) {
+              // No main document but shards/collections exist - return state with data we have
+              sharedState = {
+                ...sharedState,
+                counters,
+                collections,
               };
             }
+
+            stateResponse = {
+              userState: userStateDoc?.state || {},
+              sharedState,
+              metadata: {
+                version: userStateDoc?.metadata?.version || "1.0.0",
+                lastSaved: userStateDoc?.metadata?.lastSaved || null,
+                autoSave: userStateDoc?.metadata?.autoSave !== false,
+                size: userStateDoc?.metadata?.size || 0,
+              },
+              exists: userStateDoc !== null || sharedStateDoc.exists,
+            };
           }
         }
       }
@@ -221,7 +296,8 @@ export const GET = withAuthAndErrors(async (
       console.error("Failed to fetch state for combined endpoint:", err);
       // Return empty state on error
       stateResponse = {
-        state: {},
+        userState: {},
+        sharedState: createEmptySharedState(),
         metadata: {
           version: "1.0.0",
           lastSaved: null,
@@ -240,7 +316,11 @@ export const GET = withAuthAndErrors(async (
   return respond.success({
     tool: toolResponse,
     ...(stateResponse && {
-      state: stateResponse.state,
+      // Legacy: Keep 'state' for backward compatibility (maps to userState)
+      state: stateResponse.userState,
+      // Phase 1: Shared State Architecture
+      userState: stateResponse.userState,
+      sharedState: stateResponse.sharedState,
       stateMetadata: stateResponse.metadata,
       stateExists: stateResponse.exists,
     }),

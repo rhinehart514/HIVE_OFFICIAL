@@ -105,14 +105,16 @@ export function useSpaceDiscovery(
 
       if (enableSections && data.sections) {
         setSections({
-          featured: data.sections.featured || [],
-          recommended: data.sections.recommended || [],
-          popular: data.sections.popular || [],
-          new: data.sections.new || [],
+          featured: Array.isArray(data.sections.featured) ? data.sections.featured : [],
+          recommended: Array.isArray(data.sections.recommended) ? data.sections.recommended : [],
+          popular: Array.isArray(data.sections.popular) ? data.sections.popular : [],
+          new: Array.isArray(data.sections.new) ? data.sections.new : [],
         });
       }
 
-      setSpaces(data.spaces || data.data || []);
+      // Ensure we always set an array
+      const spacesData = data.spaces ?? data.data;
+      setSpaces(Array.isArray(spacesData) ? spacesData : []);
     } catch (err) {
       logger.error("Failed to fetch spaces", { component: "useSpaceDiscovery" }, err instanceof Error ? err : undefined);
       setError(err instanceof Error ? err.message : "Failed to load spaces");

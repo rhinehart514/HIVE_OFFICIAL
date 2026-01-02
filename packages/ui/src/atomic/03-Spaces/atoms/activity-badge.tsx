@@ -21,7 +21,7 @@ const badgeVariants = cva(
   {
     variants: {
       level: {
-        high: 'text-gold-500', // Gold
+        high: 'text-white', // White for prominence
         live: 'text-status-success', // Emerald
         quiet: 'text-neutral-500', // Gray
       },
@@ -40,7 +40,7 @@ const badgeVariants = cva(
 const dotVariants = cva('w-1.5 h-1.5 rounded-full', {
   variants: {
     level: {
-      high: 'bg-gold-500',
+      high: 'bg-white',
       live: 'bg-status-success animate-pulse shadow-[0_0_6px_rgba(0,212,106,0.8)]',
       quiet: 'bg-neutral-600',
     },

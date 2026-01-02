@@ -28,7 +28,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  'fixed z-50 flex flex-col bg-background-secondary text-text-primary shadow-2xl border border-border-default data-[state=open]:animate-in data-[state=closed]:animate-out motion-reduce:animate-none',
+  'fixed z-50 flex flex-col bg-[#141414] text-[#FAFAFA] shadow-2xl border border-[#2A2A2A] data-[state=open]:animate-in data-[state=closed]:animate-out motion-reduce:animate-none',
   {
     variants: {
       side: {
@@ -62,7 +62,7 @@ const SheetContent = React.forwardRef<
       ref={ref}
       className={cn(
         sheetVariants({ side }),
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong focus-visible:ring-offset-2 focus-visible:ring-offset-background-primary',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]',
         side === 'bottom' || side === 'top' ? 'px-5 pb-6 pt-4' : 'px-6 py-6',
         className
       )}
@@ -71,7 +71,7 @@ const SheetContent = React.forwardRef<
       {showClose ? (
         <SheetClose
           className={cn(
-            'absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border-subtle bg-background-tertiary text-text-muted transition-colors hover:bg-background-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-interactive-focus',
+            'absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#2A2A2A] bg-[#1A1A1A] text-[#818187] transition-colors hover:bg-[#2A2A2A] hover:text-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
             side === 'left' ? 'left-4 right-auto' : null
           )}
         >
@@ -102,7 +102,7 @@ const SheetFooter = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      'mt-auto flex flex-col gap-3 border-t border-border-subtle px-1 pt-4',
+      'mt-auto flex flex-col gap-3 border-t border-[#2A2A2A] px-1 pt-4',
       className
     )}
     {...props}
@@ -116,7 +116,7 @@ const SheetTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-base font-medium text-text-primary', className)}
+    className={cn('text-base font-medium text-[#FAFAFA]', className)}
     {...props}
   />
 ));
@@ -128,7 +128,7 @@ const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn('text-sm text-text-secondary leading-relaxed', className)}
+    className={cn('text-sm text-[#A1A1A6] leading-relaxed', className)}
     {...props}
   />
 ));

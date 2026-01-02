@@ -22,6 +22,7 @@ import { SpaceAboutWidget, type SpaceAboutData, type SpaceAboutWidgetCallbacks }
 import { SpaceToolsWidget, type SpaceToolsWidgetData, type SpaceToolsWidgetCallbacks } from '../molecules/space-tools-widget';
 import { RailWidget, type RailWidgetProps } from '../molecules/rail-widget';
 import { NowCard, type NowCardProps } from '../molecules/now-card';
+import { LeaderSetupProgress, type SetupTask } from '../molecules/leader-setup-progress';
 import { listStaggerVariants, staggerFadeItemVariants, railWidgetVariants } from '../../../lib/motion-variants-spaces';
 import { GlassWidget } from '../atoms/glass-surface';
 
@@ -43,11 +44,20 @@ export interface SpaceSidebarEvent {
   isUrgent?: boolean;
 }
 
+export interface SpaceSidebarSetupProgress {
+  tasks: SetupTask[];
+  completedCount: number;
+  totalCount: number;
+  percentComplete: number;
+}
+
 export interface SpaceSidebarData {
   spaceId: string;
   about?: SpaceSidebarAbout;
   tools?: SpaceSidebarTools;
   upcomingEvents?: SpaceSidebarEvent[];
+  /** Leader setup progress - only shown for leaders with incomplete setup */
+  setupProgress?: SpaceSidebarSetupProgress;
   quickActions?: Array<{
     id: string;
     variant: RailWidgetProps['variant'];
@@ -65,6 +75,8 @@ export interface SpaceSidebarCallbacks extends SpaceAboutWidgetCallbacks, SpaceT
   onInviteMember?: () => void;
   /** Leader action: open create event modal */
   onCreateEvent?: () => void;
+  /** Leader setup: triggered when user clicks a setup task action */
+  onSetupTaskAction?: (action: SetupTask['action']) => void;
 }
 
 export interface SpaceSidebarProps {
@@ -80,6 +92,10 @@ export interface SpaceSidebarProps {
   collapsible?: boolean;
   /** Default collapsed state for widgets */
   defaultCollapsed?: boolean;
+  /** Whether the current user is a space leader (for edit mode) */
+  isLeader?: boolean;
+  /** Whether edit mode is active (shows remove buttons) */
+  isEditMode?: boolean;
   /**
    * Unified mode: single glass container with dividers between sections
    * When true, all widgets are rendered in one container
@@ -151,6 +167,8 @@ export function SpaceSidebar({
   animate = true,
   collapsible = true,
   defaultCollapsed = false,
+  isLeader = false,
+  isEditMode = false,
   unified = true, // Default to new unified mode
   sticky = true,
   stickyTop = '88px', // Header height + padding
@@ -165,10 +183,12 @@ export function SpaceSidebar({
     onLeaderClick,
     onToolClick,
     onViewAll,
+    onRemoveTool,
     onEventClick,
     onQuickActionClick,
     onInviteMember,
     onCreateEvent,
+    onSetupTaskAction,
   } = callbacks;
 
   // Smart defaults: calculate collapsed state per widget based on context
@@ -203,6 +223,23 @@ export function SpaceSidebar({
   // Count how many sections we have for rendering dividers
   const sections: React.ReactNode[] = [];
 
+  // Leader Setup Progress - shown at the top for leaders with incomplete setup
+  if (isLeader && data.setupProgress && data.setupProgress.completedCount < data.setupProgress.totalCount) {
+    sections.push(
+      <LeaderSetupProgress
+        key="setup"
+        spaceId={data.spaceId}
+        tasks={data.setupProgress.tasks}
+        completedCount={data.setupProgress.completedCount}
+        totalCount={data.setupProgress.totalCount}
+        percentComplete={data.setupProgress.percentComplete}
+        onTaskAction={onSetupTaskAction}
+        collapsible={false}
+        inline
+      />
+    );
+  }
+
   // About section content
   if (data.about) {
     sections.push(
@@ -230,8 +267,11 @@ export function SpaceSidebar({
         }}
         collapsible={collapsible}
         defaultCollapsed={getSmartCollapsedState.tools}
+        isLeader={isLeader}
+        isEditMode={isEditMode}
         onToolClick={onToolClick}
         onViewAll={onViewAll}
+        onRemoveTool={onRemoveTool}
       />
     );
   }
@@ -394,8 +434,11 @@ export function SpaceSidebar({
             }}
             collapsible={collapsible}
             defaultCollapsed={defaultCollapsed}
+            isLeader={isLeader}
+            isEditMode={isEditMode}
             onToolClick={onToolClick}
             onViewAll={onViewAll}
+            onRemoveTool={onRemoveTool}
           />
         </ItemWrapper>
       )}

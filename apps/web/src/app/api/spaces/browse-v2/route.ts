@@ -11,10 +11,6 @@ import {
 } from '@hive/core/server';
 import { logger } from '@/lib/structured-logger';
 import { withOptionalAuth } from '@/lib/middleware';
-import { currentEnvironment } from '@/lib/env';
-
-// Check if we're in development mode
-const isDevelopmentMode = currentEnvironment === 'development' || process.env.NODE_ENV === 'development';
 
 // Using unified toSpaceBrowseDTOList from @hive/core/server
 
@@ -70,37 +66,6 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     endpoint: '/api/spaces/browse-v2'
   });
 
-  // Development mode: Return mock data when Firestore isn't available
-  if (isDevelopmentMode) {
-    logger.info('Development mode: Returning mock spaces data', {
-      endpoint: '/api/spaces/browse-v2'
-    });
-
-    const mockSpaces = [
-      { id: 'mock-space-1', name: 'Computer Science Club', memberCount: 125, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
-      { id: 'mock-space-2', name: 'Engineering Society', memberCount: 89, category: 'student_org', hasLeader: true, leaderHandle: 'admin', createdAt: new Date().toISOString() },
-      { id: 'mock-space-3', name: 'Alpha Beta Gamma', memberCount: 45, category: 'greek_life', hasLeader: false, createdAt: new Date().toISOString() },
-      { id: 'mock-space-4', name: 'Ellicott Hall', memberCount: 234, category: 'residential', hasLeader: false, createdAt: new Date().toISOString() },
-      { id: 'mock-space-5', name: 'Student Government', memberCount: 56, category: 'university_org', hasLeader: true, leaderHandle: 'sgpres', createdAt: new Date().toISOString() },
-      { id: 'mock-space-6', name: 'Data Science Club', memberCount: 67, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
-      { id: 'mock-space-7', name: 'Debate Team', memberCount: 32, category: 'student_org', hasLeader: false, createdAt: new Date().toISOString() },
-      { id: 'mock-space-8', name: 'Phi Kappa Psi', memberCount: 78, category: 'greek_life', hasLeader: false, createdAt: new Date().toISOString() },
-    ];
-
-    // Filter by category if specified
-    const filteredSpaces = category !== 'all'
-      ? mockSpaces.filter(s => s.category === category)
-      : mockSpaces;
-
-    return respond.success({
-      spaces: filteredSpaces.slice(0, limit),
-      totalCount: filteredSpaces.length,
-      hasMore: false,
-      nextCursor: undefined,
-      devMode: true,
-    });
-  }
-
   const spaceRepo = getServerSpaceRepository();
   const profileRepo = getServerProfileRepository();
 
@@ -128,11 +93,11 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
 
     spacesResult = await spaceRepo.findRecommended(campusId, interests, major);
   } else if (sort === 'trending') {
-    // Fetch more than limit to account for filtering
-    spacesResult = await spaceRepo.findTrending(campusId, Math.min(limit * 2, 100));
+    // SCALING FIX: Removed 2x multiplier - fetch only what we need
+    spacesResult = await spaceRepo.findTrending(campusId, Math.min(limit, 50));
   } else {
-    // Default: fetch by campus with generous limit for client-side filtering
-    spacesResult = await spaceRepo.findByCampus(campusId, Math.min(limit * 2, 100));
+    // SCALING FIX: Removed 2x multiplier - fetch only what we need
+    spacesResult = await spaceRepo.findByCampus(campusId, Math.min(limit, 50));
   }
 
   if (spacesResult.isFailure) {
@@ -143,18 +108,20 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   const spaces = spacesResult.getValue();
 
   // Get user's joined spaces to mark them (only if authenticated)
+  // SCALING FIX: Use lightweight membership query instead of loading full spaces
+  // This prevents N+1: was loading 100 spaces × 500 members = 50K records
+  // Now loads only 100 membership records (spaceId + role)
   const userSpaceIds = new Set<string>();
   const leaderSpaceIds = new Set<string>();
 
   if (userId) {
-    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
-    if (userSpacesResult.isSuccess) {
-      for (const space of userSpacesResult.getValue()) {
-        userSpaceIds.add(space.spaceId.value);
+    const membershipsResult = await spaceRepo.findUserMemberships(userId);
+    if (membershipsResult.isSuccess) {
+      for (const membership of membershipsResult.getValue()) {
+        userSpaceIds.add(membership.spaceId);
         // Check if user is a leader (owner or admin)
-        const member = space.members.find(m => m.profileId.value === userId);
-        if (member && (member.role === 'owner' || member.role === 'admin')) {
-          leaderSpaceIds.add(space.spaceId.value);
+        if (membership.role === 'owner' || membership.role === 'admin') {
+          leaderSpaceIds.add(membership.spaceId);
         }
       }
     }

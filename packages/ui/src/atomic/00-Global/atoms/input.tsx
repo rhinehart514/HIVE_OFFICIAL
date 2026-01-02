@@ -22,30 +22,35 @@ export type InputStatus = 'idle' | 'loading' | 'success' | 'error'
  * Colors: Neutral grays + status colors
  */
 const inputVariants = cva(
-  "flex w-full rounded-lg border border-[#2A2A2A] bg-[#141414] px-3 text-sm text-[#FAFAFA] transition-colors duration-100 placeholder:text-[#71717A] focus:outline-none focus:border-white/50 focus:ring-2 focus:ring-white/10 focus:ring-offset-1 focus:ring-offset-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full text-[#FAFAFA] transition-all duration-200 placeholder:text-[#71717A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        // Default: Surface bg with subtle border
-        default: "hover:border-[#3A3A3A]",
+        // Default: Surface bg with subtle border (boxed)
+        default: "rounded-lg border border-[#2A2A2A] bg-[#141414] px-3 hover:border-[#3A3A3A] focus:border-white/50 focus:ring-2 focus:ring-white/10 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
         // Subtle: Same as default (for backwards compat)
-        subtle: "hover:border-[#3A3A3A]",
+        subtle: "rounded-lg border border-[#2A2A2A] bg-[#141414] px-3 hover:border-[#3A3A3A] focus:border-white/50 focus:ring-2 focus:ring-white/10 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
+        /**
+         * Underline: Minimal bottom-border style for onboarding/hero sections
+         * Uses monochrome aesthetic - NO gold on focus (gold is earned, not given)
+         */
+        underline: "border-0 border-b border-neutral-800 bg-transparent px-0 text-center text-lg placeholder:text-neutral-700 hover:border-neutral-700 focus:border-white/50 focus:ring-0",
         // Destructive/Error: Red border
-        destructive: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/20",
-        error: "border-[#FF3737]/50 focus:border-[#FF3737] focus:ring-[#FF3737]/20",
+        destructive: "rounded-lg border border-[#FF3737]/50 bg-[#141414] px-3 focus:border-[#FF3737] focus:ring-2 focus:ring-[#FF3737]/20 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
+        error: "rounded-lg border border-[#FF3737]/50 bg-[#141414] px-3 focus:border-[#FF3737] focus:ring-2 focus:ring-[#FF3737]/20 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
         // Success: Green border
-        success: "border-[#00D46A]/50 focus:border-[#00D46A] focus:ring-[#00D46A]/20",
-        // Brand: Gold border (use sparingly)
-        brand: "border-[#FFD700]/30 focus:border-[#FFD700] focus:ring-[#FFD700]/20",
+        success: "rounded-lg border border-[#00D46A]/50 bg-[#141414] px-3 focus:border-[#00D46A] focus:ring-2 focus:ring-[#00D46A]/20 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
+        // Brand: Gold border (use sparingly - achievements only)
+        brand: "rounded-lg border border-[#FFD700]/30 bg-[#141414] px-3 focus:border-[#FFD700] focus:ring-2 focus:ring-white/20 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
         // Ghost: No border until focus
-        ghost: "border-transparent bg-transparent focus:border-[#2A2A2A] focus:ring-white/10",
+        ghost: "rounded-lg border border-transparent bg-transparent px-3 focus:border-[#2A2A2A] focus:ring-2 focus:ring-white/10 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
         // Warning: Warning border
-        warning: "border-[#FFB800]/30 focus:border-[#FFB800] focus:ring-[#FFB800]/20",
+        warning: "rounded-lg border border-[#FFB800]/30 bg-[#141414] px-3 focus:border-[#FFB800] focus:ring-2 focus:ring-[#FFB800]/20 focus:ring-offset-1 focus:ring-offset-[#0A0A0A]",
       },
       size: {
-        sm: "h-9 min-h-[36px] text-sm px-3", // 36px for compact areas
-        default: "h-11 min-h-[44px] text-sm", // 44px - mobile touch target
-        lg: "h-12 min-h-[48px] text-sm px-4",
+        sm: "h-9 min-h-[36px] text-base md:text-sm px-3", // 16px mobile (iOS zoom fix), 14px desktop
+        default: "h-11 min-h-[44px] text-base md:text-sm", // 44px touch target, 16px mobile
+        lg: "h-12 min-h-[48px] text-base md:text-sm px-4",
         xl: "h-14 min-h-[56px] text-base px-5",
       },
       width: {

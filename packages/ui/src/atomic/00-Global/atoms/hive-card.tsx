@@ -5,21 +5,57 @@ import * as React from "react"
 import { cardVariants, duration, easing } from "../../../lib/motion-variants"
 import { cn } from "../../../lib/utils"
 
+/**
+ * HiveCard Variants - Dark-First Design System
+ *
+ * MONOCHROME DISCIPLINE:
+ * - Default state is grayscale
+ * - Gold appears ONLY in `selected` variant (earned state)
+ * - `brand` variant is deprecated (violates gold-as-reward principle)
+ *
+ * Glass morphism creates depth without heavy shadows.
+ */
 const hiveCardVariants = cva(
-  "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-200",
+  "rounded-xl border transition-all duration-200",
   {
     variants: {
       variant: {
+        // Default: Subtle surface
         default:
-          "border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] text-[var(--hive-text-primary)]",
+          "border-white/[0.06] bg-white/[0.02] text-[#FAFAFA]",
+        /**
+         * @deprecated Use `selected` for gold states - gold is earned, not given
+         * Kept for backwards compatibility only
+         */
         brand:
-          "border-[var(--hive-brand-primary)] bg-gradient-to-br from-[var(--hive-brand-primary)]/5 to-[var(--hive-brand-secondary)]/5 text-[var(--hive-text-primary)]",
+          "border-[#FFD700]/30 bg-gradient-to-br from-[#FFD700]/5 to-[#E6C200]/5 text-[#FAFAFA]",
+        // Elevated: Slightly raised with shadow
         elevated:
-          "border-[var(--hive-border-default)] bg-[var(--hive-background-primary)] text-[var(--hive-text-primary)] shadow-lg",
+          "border-white/[0.08] bg-white/[0.04] text-[#FAFAFA] shadow-lg",
+        // Interactive: Hover states for clickable cards
         interactive:
-          "border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] hover:border-[var(--hive-border-strong)] cursor-pointer",
+          "border-white/[0.06] bg-white/[0.02] text-[#FAFAFA] hover:bg-white/[0.04] hover:border-white/[0.12] cursor-pointer",
+        /**
+         * Glass: Premium glass morphism surface
+         * Use for containers, modals, dropdowns
+         */
         glass:
-          "border-[var(--hive-border-default)]/20 bg-[var(--hive-background-primary)]/80 backdrop-blur-sm text-[var(--hive-text-primary)]",
+          "border-white/[0.06] bg-white/[0.02] backdrop-blur-md text-[#FAFAFA]",
+        /**
+         * Selected: Earned gold state
+         * Use ONLY when user has accomplished something:
+         * - Selected an option (handle, interest, space)
+         * - Completed a step
+         * - Achieved something
+         */
+        selected:
+          "border-gold-500/30 bg-white/[0.06] text-[#FAFAFA] shadow-[0_0_20px_rgba(255,215,0,0.1)]",
+        /**
+         * Hero: Featured card with gold hover glow
+         * Use sparingly for hero/featured content
+         */
+        hero:
+          "border-white/[0.06] bg-white/[0.02] text-[#FAFAFA] hover:border-gold-500/20 hover:shadow-[0_0_40px_rgba(255,215,0,0.06)]",
       },
       size: {
         sm: "p-4",
@@ -44,7 +80,8 @@ export interface HiveCardProps
 
 const HiveCard = React.forwardRef<HTMLDivElement, HiveCardProps>(
   ({ className, variant, size, disableAnimation = false, ...props }, ref) => {
-    const isInteractive = variant === "interactive"
+    // Interactive variants get hover/tap motion
+    const isInteractive = variant === "interactive" || variant === "hero"
 
     // Motion variants specific to card interaction
     const cardMotionVariants = {
@@ -55,8 +92,8 @@ const HiveCard = React.forwardRef<HTMLDivElement, HiveCardProps>(
       },
       hover: isInteractive
         ? {
-            y: -4,
-            scale: 1.01,
+            y: -8,
+            scale: 1.015,
             transition: {
               duration: duration.quick,
               ease: easing.smooth,
@@ -129,7 +166,7 @@ const HiveCardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-lg font-semibold leading-none tracking-tight text-[var(--hive-text-primary)]",
+      "text-lg font-semibold leading-none tracking-tight text-[#FAFAFA]",
       className
     )}
     {...props}
@@ -145,7 +182,7 @@ const HiveCardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-[var(--hive-text-secondary)]", className)}
+    className={cn("text-sm text-[#A1A1A6]", className)}
     {...props}
   />
 ))

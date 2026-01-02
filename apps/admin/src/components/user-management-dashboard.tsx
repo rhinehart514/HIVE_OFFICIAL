@@ -1,367 +1,829 @@
 "use client";
 
-import { useState } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
-import { useAdminAuth } from "@/lib/auth";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Button,
+  HiveCard as Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Checkbox,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@hive/ui";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Search,
+  Filter,
+  Download,
+  UserCog,
+  Ban,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  AlertTriangle,
+  Shield,
+  Clock,
+  Users,
+  Wrench,
+} from "lucide-react";
+import { Sparkline } from "./charts";
 
 interface User {
   id: string;
-  email: string;
+  displayName: string;
+  email?: string;
   handle: string;
-  firstName: string;
-  lastName: string;
-  major: string;
-  classYear: string;
-  isActive: boolean;
-  isSuspended: boolean;
-  role: string;
+  role: "user" | "builder" | "admin" | "super_admin";
+  status: "active" | "suspended" | "pending" | "deleted";
+  onboardingCompleted: boolean;
   createdAt: string;
-  lastActiveAt: string;
-  spaceMemberships: number;
-  toolsCreated: number;
+  lastActive: string;
+  spaceCount: number;
+  toolCount?: number;
+  avatar?: string;
 }
 
-interface UserSearchResult {
+interface UserListResponse {
   users: User[];
-  total: number;
-  page: number;
-  limit: number;
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
 }
+
+type RoleFilter = "all" | "user" | "builder" | "admin" | "super_admin";
+type StatusFilter = "all" | "active" | "suspended" | "pending";
+type SortField = "createdAt" | "lastActive" | "displayName";
+type SortOrder = "asc" | "desc";
 
 export function UserManagementDashboard() {
-  const { admin } = useAdminAuth();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<UserSearchResult | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // Data state
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    limit: 20,
+    offset: 0,
+    hasMore: false,
+  });
 
-  const searchUsers = async () => {
-    if (!searchTerm.trim()) return;
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<SortField>("createdAt");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
 
+  // Selection state
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
+
+  // Detail panel state
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [userDetails, setUserDetails] = useState<Record<string, unknown> | null>(null);
+
+  // Bulk action state
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Fetch users
+  const fetchUsers = useCallback(async (reset = false) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin?.id || 'test-token'}`,
-        },
-        body: JSON.stringify({
-          action: 'search',
-          query: searchTerm,
-          limit: 20,
-        }),
-      });
+      const params = new URLSearchParams();
+      if (searchTerm) params.set("search", searchTerm);
+      if (roleFilter !== "all") params.set("role", roleFilter);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      params.set("sortBy", sortBy);
+      params.set("sortOrder", sortOrder);
+      params.set("limit", String(pagination.limit));
+      params.set("offset", String(reset ? 0 : pagination.offset));
+
+      const response = await fetch(`/api/admin/users?${params}`);
 
       if (!response.ok) {
-        throw new Error('Failed to search users');
+        throw new Error("Failed to fetch users");
       }
 
+      const data: UserListResponse = await response.json();
+      setUsers(data.users);
+      setPagination(data.pagination);
+
+      if (reset) {
+        setSelectedUsers(new Set());
+        setSelectAll(false);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTerm, roleFilter, statusFilter, sortBy, sortOrder, pagination.limit, pagination.offset]);
+
+  // Initial load and filter changes
+  useEffect(() => {
+    fetchUsers(true);
+  }, [roleFilter, statusFilter, sortBy, sortOrder]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== undefined) {
+        fetchUsers(true);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch user details
+  const fetchUserDetails = async (userId: string) => {
+    setDetailLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user details");
       const data = await response.json();
-      setSearchResults(data.users || { users: [], total: 0, page: 1, limit: 20 });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setUserDetails(data.data);
+    } catch {
+      setUserDetails(null);
     } finally {
-      setLoading(false);
+      setDetailLoading(false);
     }
   };
 
-  const handleUserAction = async (action: string, userId: string) => {
-    if (!admin) return;
+  // Selection handlers
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+    setSelectAll(newSelection.size === users.length);
+  };
 
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
-        },
-        body: JSON.stringify({
-          action,
-          userId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} user`);
-      }
-
-      // Refresh search results
-      await searchUsers();
-      
-      if (selectedUser?.id === userId) {
-        setSelectedUser(null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Action failed');
-    } finally {
-      setLoading(false);
+  const toggleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUsers(new Set());
+      setSelectAll(false);
+    } else {
+      setSelectedUsers(new Set(users.map((u) => u.id)));
+      setSelectAll(true);
     }
   };
 
-  const grantRole = async (userId: string, role: string) => {
-    if (!admin) return;
-
-    setLoading(true);
-    setError(null);
-
+  // User actions
+  const suspendUser = async (userId: string, reason: string = "Admin action") => {
     try {
-      const response = await fetch('/api/admin/grant-role', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${admin.id}`,
-        },
+      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason, duration: "permanent" }),
+      });
+      if (!response.ok) throw new Error("Failed to suspend user");
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    }
+  };
+
+  const unsuspendUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}/unsuspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!response.ok) throw new Error("Failed to unsuspend user");
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    }
+  };
+
+  const updateUserRole = async (userId: string, role: "user" | "builder") => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      if (!response.ok) throw new Error("Failed to update role");
+      await fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    }
+  };
+
+  // Bulk actions
+  const executeBulkAction = async (
+    operation: "suspend" | "unsuspend" | "updateRole",
+    params?: { role?: "user" | "builder"; reason?: string }
+  ) => {
+    if (selectedUsers.size === 0) return;
+
+    setBulkLoading(true);
+    try {
+      const response = await fetch("/api/admin/users/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
-          role,
+          operation,
+          userIds: Array.from(selectedUsers),
+          params,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to grant ${role} role`);
-      }
+      if (!response.ok) throw new Error("Bulk operation failed");
 
-      // Refresh search results
-      await searchUsers();
+      const result = await response.json();
+      setSelectedUsers(new Set());
+      setSelectAll(false);
+      await fetchUsers();
+
+      // Show result feedback
+      console.log("Bulk operation result:", result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Role grant failed');
+      setError(err instanceof Error ? err.message : "Bulk operation failed");
     } finally {
-      setLoading(false);
+      setBulkLoading(false);
+    }
+  };
+
+  // Export
+  const exportUsers = async (format: "csv" | "json") => {
+    const params = new URLSearchParams();
+    params.set("format", format);
+    if (roleFilter !== "all") params.set("role", roleFilter);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+
+    const response = await fetch(`/api/admin/users/export?${params}`);
+    if (!response.ok) {
+      setError("Export failed");
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hive-users-${new Date().toISOString().split("T")[0]}.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Pagination
+  const goToPage = (newOffset: number) => {
+    setPagination((prev) => ({ ...prev, offset: newOffset }));
+    fetchUsers();
+  };
+
+  const currentPage = Math.floor(pagination.offset / pagination.limit) + 1;
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
+
+  // Role badge styling
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "super_admin":
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Super Admin</Badge>;
+      case "admin":
+        return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Admin</Badge>;
+      case "builder":
+        return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Builder</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  // Status badge styling
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "suspended":
+        return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Suspended</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Pending</Badge>;
+      case "active":
+        return <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Active</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Search Section */}
-      <Card className="border-gray-700 bg-gray-900/50">
-        <CardHeader>
-          <CardTitle className="text-white">User Search</CardTitle>
+      {/* Header with Search and Filters */}
+      <Card className="border-white/10 bg-[#141414]">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white flex items-center gap-2">
+              <Users className="h-5 w-5 text-[#A1A1A6]" />
+              User Management
+              <span className="text-sm font-normal text-[#A1A1A6]">
+                ({pagination.total} total)
+              </span>
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportUsers("csv")}
+                className="border-white/10 text-[#A1A1A6] hover:bg-white/5"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportUsers("json")}
+                className="border-white/10 text-[#A1A1A6] hover:bg-white/5"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                JSON
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Search by email, handle, or user ID..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-              className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            />
-            <Button 
-              onClick={searchUsers}
-              disabled={loading || !searchTerm.trim()}
-              className="bg-amber-500 hover:bg-amber-600"
+          <div className="flex flex-wrap gap-3">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#818187]" />
+              <Input
+                placeholder="Search by name, email, or handle..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-[#0A0A0A] border-white/10 text-white placeholder:text-[#818187]"
+              />
+            </div>
+
+            {/* Role Filter */}
+            <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+              <SelectTrigger className="w-[140px] bg-[#0A0A0A] border-white/10 text-white">
+                <Filter className="h-4 w-4 mr-2 text-[#818187]" />
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#141414] border-white/10">
+                <SelectItem value="all">All Roles</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="builder">Builder</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="w-[140px] bg-[#0A0A0A] border-white/10 text-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#141414] border-white/10">
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="suspended">Suspended</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortField)}>
+              <SelectTrigger className="w-[150px] bg-[#0A0A0A] border-white/10 text-white">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#141414] border-white/10">
+                <SelectItem value="createdAt">Join Date</SelectItem>
+                <SelectItem value="lastActive">Last Active</SelectItem>
+                <SelectItem value="displayName">Name</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="text-[#A1A1A6] hover:text-white"
             >
-              {loading ? 'Searching...' : 'Search'}
+              {sortOrder === "asc" ? "↑" : "↓"}
             </Button>
           </div>
-          {error && (
-            <p className="mt-2 text-sm text-red-400">{error}</p>
+        </CardContent>
+      </Card>
+
+      {/* Error display */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400"
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span>{error}</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setError(null)}
+            className="ml-auto text-red-400 hover:text-red-300"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* User List */}
+      <Card className="border-white/10 bg-[#141414]">
+        <CardContent className="p-0">
+          {/* Table Header */}
+          <div className="flex items-center gap-4 px-4 py-3 border-b border-white/10 bg-[#0A0A0A]/50">
+            <Checkbox
+              checked={selectAll}
+              onCheckedChange={toggleSelectAll}
+              className="border-white/30"
+            />
+            <span className="flex-1 text-sm font-medium text-[#A1A1A6]">User</span>
+            <span className="w-24 text-sm font-medium text-[#A1A1A6]">Role</span>
+            <span className="w-24 text-sm font-medium text-[#A1A1A6]">Status</span>
+            <span className="w-20 text-sm font-medium text-[#A1A1A6] text-center">Spaces</span>
+            <span className="w-28 text-sm font-medium text-[#A1A1A6]">Last Active</span>
+            <span className="w-32 text-sm font-medium text-[#A1A1A6]">Actions</span>
+          </div>
+
+          {/* Loading state */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-[#FFD700]" />
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && users.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-[#A1A1A6]">
+              <Users className="h-12 w-12 mb-4 opacity-50" />
+              <p className="text-lg font-medium">No users found</p>
+              <p className="text-sm">Try adjusting your search or filters</p>
+            </div>
+          )}
+
+          {/* User rows */}
+          {!loading &&
+            users.map((user) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`flex items-center gap-4 px-4 py-3 border-b border-white/5 hover:bg-white/5 transition-colors ${
+                  selectedUsers.has(user.id) ? "bg-white/10" : ""
+                }`}
+              >
+                <Checkbox
+                  checked={selectedUsers.has(user.id)}
+                  onCheckedChange={() => toggleUserSelection(user.id)}
+                  className="border-white/30"
+                />
+
+                {/* User info */}
+                <div
+                  className="flex-1 flex items-center gap-3 cursor-pointer"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    fetchUserDetails(user.id);
+                  }}
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-amber-600/20 flex items-center justify-center text-white font-medium">
+                    {user.displayName?.[0]?.toUpperCase() || "?"}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">{user.displayName || "Unknown"}</p>
+                    <p className="text-sm text-[#818187]">@{user.handle || "no-handle"}</p>
+                  </div>
+                </div>
+
+                {/* Role */}
+                <div className="w-24">{getRoleBadge(user.role)}</div>
+
+                {/* Status */}
+                <div className="w-24">{getStatusBadge(user.status)}</div>
+
+                {/* Spaces */}
+                <div className="w-20 text-center">
+                  <span className="text-white">{user.spaceCount || 0}</span>
+                </div>
+
+                {/* Last Active */}
+                <div className="w-28 text-sm text-[#A1A1A6]">
+                  {user.lastActive
+                    ? new Date(user.lastActive).toLocaleDateString()
+                    : "Never"}
+                </div>
+
+                {/* Actions */}
+                <div className="w-32 flex items-center gap-1">
+                  {user.status === "suspended" ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => unsuspendUser(user.id)}
+                      className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => suspendUser(user.id)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                      <Ban className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedUser(user);
+                      fetchUserDetails(user.id);
+                    }}
+                    className="text-[#A1A1A6] hover:text-white"
+                  >
+                    <UserCog className="h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+
+          {/* Pagination */}
+          {!loading && users.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+              <span className="text-sm text-[#A1A1A6]">
+                Showing {pagination.offset + 1}-{Math.min(pagination.offset + users.length, pagination.total)} of{" "}
+                {pagination.total}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={currentPage === 1}
+                  onClick={() => goToPage(pagination.offset - pagination.limit)}
+                  className="text-[#A1A1A6] hover:text-white disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-white">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!pagination.hasMore}
+                  onClick={() => goToPage(pagination.offset + pagination.limit)}
+                  className="text-[#A1A1A6] hover:text-white disabled:opacity-50"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Search Results */}
-      {searchResults && (
-        <Card className="border-gray-700 bg-gray-900/50">
-          <CardHeader>
-            <CardTitle className="text-white">
-              Search Results ({searchResults.total} users found)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {searchResults.users.map((user) => (
-                <div 
-                  key={user.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 p-4"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <h3 className="font-semibold text-white">
-                          {user.firstName} {user.lastName}
-                        </h3>
-                        <p className="text-sm text-gray-400">
-                          @{user.handle} • {user.email}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {user.major} • Class of {user.classYear}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge variant={user.isActive ? "secondary" : "secondary"}>
-                          {user.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                        {user.isSuspended && (
-                          <Badge variant="destructive">Suspended</Badge>
-                        )}
-                        {user.role !== 'user' && (
-                          <Badge variant="outline">{user.role}</Badge>
-                        )}
-                      </div>
-                    </div>
+      {/* Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedUsers.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <Card className="border-white/20 bg-[#1A1A1A]/95 backdrop-blur-xl shadow-2xl">
+              <CardContent className="flex items-center gap-4 py-3 px-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 flex items-center justify-center text-[#FFD700] text-xs font-medium">
+                    {selectedUsers.size}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <span className="text-white text-sm">selected</span>
+                </div>
+
+                <div className="h-4 w-px bg-white/20" />
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeBulkAction("suspend", { reason: "Bulk suspension" })}
+                  disabled={bulkLoading}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                >
+                  <Ban className="h-4 w-4 mr-1" />
+                  Suspend All
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeBulkAction("unsuspend")}
+                  disabled={bulkLoading}
+                  className="text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                >
+                  <CheckCircle className="h-4 w-4 mr-1" />
+                  Unsuspend All
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeBulkAction("updateRole", { role: "builder" })}
+                  disabled={bulkLoading}
+                  className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                >
+                  <Shield className="h-4 w-4 mr-1" />
+                  Make Builders
+                </Button>
+
+                <div className="h-4 w-px bg-white/20" />
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedUsers(new Set());
+                    setSelectAll(false);
+                  }}
+                  className="text-[#A1A1A6] hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* User Detail Panel */}
+      <Sheet open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <SheetContent className="bg-[#0A0A0A] border-white/10 w-[400px] sm:w-[540px]">
+          <SheetHeader>
+            <SheetTitle className="text-white">User Details</SheetTitle>
+          </SheetHeader>
+
+          {selectedUser && (
+            <div className="mt-6 space-y-6">
+              {/* Profile Header */}
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-amber-600/20 flex items-center justify-center text-white text-2xl font-medium">
+                  {selectedUser.displayName?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white">
+                    {selectedUser.displayName || "Unknown User"}
+                  </h3>
+                  <p className="text-[#A1A1A6]">@{selectedUser.handle}</p>
+                  {selectedUser.email && (
+                    <p className="text-sm text-[#818187]">{selectedUser.email}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Badges */}
+              <div className="flex flex-wrap gap-2">
+                {getRoleBadge(selectedUser.role)}
+                {getStatusBadge(selectedUser.status)}
+                {!selectedUser.onboardingCompleted && (
+                  <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                    Onboarding Incomplete
+                  </Badge>
+                )}
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="border-white/10 bg-[#141414] p-4">
+                  <div className="flex items-center gap-2 text-[#A1A1A6] text-sm mb-1">
+                    <Users className="h-4 w-4" />
+                    Spaces
+                  </div>
+                  <p className="text-2xl font-semibold text-white">{selectedUser.spaceCount || 0}</p>
+                </Card>
+                <Card className="border-white/10 bg-[#141414] p-4">
+                  <div className="flex items-center gap-2 text-[#A1A1A6] text-sm mb-1">
+                    <Wrench className="h-4 w-4" />
+                    Tools
+                  </div>
+                  <p className="text-2xl font-semibold text-white">{selectedUser.toolCount || 0}</p>
+                </Card>
+                <Card className="border-white/10 bg-[#141414] p-4">
+                  <div className="flex items-center gap-2 text-[#A1A1A6] text-sm mb-1">
+                    <Clock className="h-4 w-4" />
+                    Days
+                  </div>
+                  <p className="text-2xl font-semibold text-white">
+                    {Math.floor(
+                      (Date.now() - new Date(selectedUser.createdAt).getTime()) /
+                        (1000 * 60 * 60 * 24)
+                    )}
+                  </p>
+                </Card>
+              </div>
+
+              {/* Activity Sparkline */}
+              {userDetails && (
+                <Card className="border-white/10 bg-[#141414] p-4">
+                  <p className="text-sm text-[#A1A1A6] mb-2">Activity (7 days)</p>
+                  <Sparkline
+                    data={[4, 7, 2, 9, 5, 8, 3]}
+                    color="#FFD700"
+                    height={40}
+                  />
+                </Card>
+              )}
+
+              {/* Loading state for details */}
+              {detailLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-white/20 border-t-[#FFD700]" />
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <Card className="border-white/10 bg-[#141414] p-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-[#A1A1A6]">Joined</span>
+                  <span className="text-white">
+                    {new Date(selectedUser.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#A1A1A6]">Last Active</span>
+                  <span className="text-white">
+                    {selectedUser.lastActive
+                      ? new Date(selectedUser.lastActive).toLocaleDateString()
+                      : "Never"}
+                  </span>
+                </div>
+              </Card>
+
+              {/* Actions */}
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-[#A1A1A6]">Actions</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedUser.role === "user" && (
                     <Button
                       variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedUser(user)}
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700"
+                      onClick={() => updateUserRole(selectedUser.id, "builder")}
+                      className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
                     >
-                      View Details
+                      <Shield className="h-4 w-4 mr-2" />
+                      Make Builder
                     </Button>
-                    {user.isSuspended ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUserAction('unsuspend', user.id)}
-                        className="border-green-600 text-green-400 hover:bg-green-600/10"
-                      >
-                        Unsuspend
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUserAction('suspend', user.id)}
-                        className="border-red-600 text-red-400 hover:bg-red-600/10"
-                      >
-                        Suspend
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* User Details Modal */}
-      {selectedUser && (
-        <Card className="border-gray-700 bg-gray-900/50">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-white">User Details</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedUser(null)}
-                className="text-gray-400 hover:text-white"
-              >
-                Close
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-semibold text-white mb-3">Profile Information</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-400">Name: </span>
-                    <span className="text-white">{selectedUser.firstName} {selectedUser.lastName}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Email: </span>
-                    <span className="text-white">{selectedUser.email}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Handle: </span>
-                    <span className="text-white">@{selectedUser.handle}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Major: </span>
-                    <span className="text-white">{selectedUser.major}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Class Year: </span>
-                    <span className="text-white">{selectedUser.classYear}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Role: </span>
-                    <span className="text-white">{selectedUser.role}</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-white mb-3">Activity & Stats</h4>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-gray-400">Joined: </span>
-                    <span className="text-white">{new Date(selectedUser.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Last Active: </span>
-                    <span className="text-white">{new Date(selectedUser.lastActiveAt).toLocaleDateString()}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Space Memberships: </span>
-                    <span className="text-white">{selectedUser.spaceMemberships}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Tools Created: </span>
-                    <span className="text-white">{selectedUser.toolsCreated}</span>
-                  </div>
+                  )}
+                  {selectedUser.role === "builder" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => updateUserRole(selectedUser.id, "user")}
+                      className="border-white/20 text-[#A1A1A6] hover:bg-white/5"
+                    >
+                      Remove Builder
+                    </Button>
+                  )}
+                  {selectedUser.status === "suspended" ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => unsuspendUser(selectedUser.id)}
+                      className="border-green-500/30 text-green-400 hover:bg-green-500/10"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Unsuspend
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => suspendUser(selectedUser.id)}
+                      className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    >
+                      <Ban className="h-4 w-4 mr-2" />
+                      Suspend
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
-
-            <div className="mt-6 pt-4 border-t border-gray-700">
-              <h4 className="font-semibold text-white mb-3">Admin Actions</h4>
-              <div className="flex flex-wrap gap-2">
-                {selectedUser.role === 'user' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => grantRole(selectedUser.id, 'builder')}
-                    className="border-blue-600 text-blue-400 hover:bg-blue-600/10"
-                  >
-                    Grant Builder Role
-                  </Button>
-                )}
-                {selectedUser.role === 'user' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => grantRole(selectedUser.id, 'moderator')}
-                    className="border-purple-600 text-purple-400 hover:bg-purple-600/10"
-                  >
-                    Grant Moderator Role
-                  </Button>
-                )}
-                {selectedUser.isSuspended ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUserAction('unsuspend', selectedUser.id)}
-                    className="border-green-600 text-green-400 hover:bg-green-600/10"
-                  >
-                    Unsuspend User
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUserAction('suspend', selectedUser.id)}
-                    className="border-red-600 text-red-400 hover:bg-red-600/10"
-                  >
-                    Suspend User
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

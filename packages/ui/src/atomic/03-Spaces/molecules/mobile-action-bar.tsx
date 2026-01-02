@@ -21,6 +21,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 import {
   Info,
   Calendar,
@@ -43,10 +44,14 @@ export type MobileDrawerType = 'info' | 'events' | 'tools' | 'members' | 'automa
 
 export type QuickActionType = 'poll' | 'event' | 'announcement';
 
+export type BadgeVariant = 'default' | 'presence' | 'accent';
+
 export interface BadgeConfig {
   count: number;
   /** Whether this badge represents urgent content */
   isUrgent?: boolean;
+  /** Visual variant: default (white), presence (gold pulsing dot), accent (gold badge) */
+  variant?: BadgeVariant;
   /** Custom label for screen readers */
   ariaLabel?: string;
 }
@@ -133,22 +138,68 @@ interface ActionBadgeProps {
 function ActionBadge({ config, shouldReduceMotion }: ActionBadgeProps) {
   const badgeCount = typeof config === 'number' ? config : config.count;
   const isUrgent = typeof config === 'object' && config.isUrgent;
+  const variant = typeof config === 'object' ? (config.variant ?? 'default') : 'default';
   const ariaLabel = typeof config === 'object' ? config.ariaLabel : undefined;
 
   if (badgeCount <= 0) return null;
 
+  // Presence variant: gold pulsing dot (no count)
+  if (variant === 'presence') {
+    return (
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0 }}
+        transition={shouldReduceMotion ? { duration: 0 } : springPresets.snappy}
+        className={cn(
+          'absolute -top-0.5 -right-0.5',
+          'w-2.5 h-2.5 rounded-full',
+          'bg-[#FFD700]',
+          'shadow-[0_0_6px_rgba(255,215,0,0.5)]',
+          !shouldReduceMotion && 'animate-pulse'
+        )}
+        role="status"
+        aria-label={ariaLabel || `${badgeCount} online`}
+      />
+    );
+  }
+
+  // Accent variant: gold badge with count
+  if (variant === 'accent') {
+    return (
+      <motion.span
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0 }}
+        transition={shouldReduceMotion ? { duration: 0 } : springPresets.snappy}
+        className={cn(
+          'absolute -top-1 -right-1.5 min-w-[16px] h-4',
+          'flex items-center justify-center px-1',
+          'text-[10px] font-bold rounded-full',
+          'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30',
+          isUrgent && !shouldReduceMotion && 'animate-pulse'
+        )}
+        role="status"
+        aria-label={ariaLabel || `${badgeCount} items`}
+      >
+        {badgeCount > 99 ? '99+' : badgeCount}
+      </motion.span>
+    );
+  }
+
+  // Default variant: white badge with count
   return (
     <motion.span
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       exit={{ scale: 0 }}
-      transition={shouldReduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 25 }}
+      transition={shouldReduceMotion ? { duration: 0 } : springPresets.snappy}
       className={cn(
         'absolute -top-1 -right-1.5 min-w-[16px] h-4',
         'flex items-center justify-center px-1',
         'text-[10px] font-bold rounded-full',
-        'bg-[#FFD700] text-black',
-        isUrgent && 'animate-pulse shadow-[0_0_8px_rgba(255,215,0,0.5)]'
+        'bg-white text-black',
+        isUrgent && !shouldReduceMotion && 'animate-pulse'
       )}
       role="status"
       aria-label={ariaLabel || `${badgeCount} notifications`}
@@ -288,7 +339,7 @@ function QuickActionPopover({
                     'w-full flex items-center gap-3 px-3 py-3 rounded-xl',
                     'text-left transition-colors',
                     'hover:bg-white/5 active:bg-white/10',
-                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
                   )}
                   role="menuitem"
                 >
@@ -417,10 +468,10 @@ export function MobileActionBar({
                   'relative flex flex-col items-center justify-center',
                   'min-w-[56px] min-h-[44px] py-2 px-2',
                   'rounded-lg transition-colors duration-200',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                   // Active/inactive states
                   isActive
-                    ? 'text-[#FFD700]'
+                    ? 'text-white'
                     : 'text-neutral-400 active:text-neutral-200 active:bg-white/5'
                 )}
                 aria-label={ariaLabel}
@@ -446,11 +497,11 @@ export function MobileActionBar({
                 {isActive && (
                   <motion.div
                     layoutId="mobile-action-indicator"
-                    className="absolute bottom-0.5 w-1 h-1 rounded-full bg-[#FFD700]"
+                    className="absolute bottom-0.5 w-1 h-1 rounded-full bg-white"
                     transition={
                       shouldReduceMotion
                         ? { duration: 0 }
-                        : { type: 'spring', stiffness: 500, damping: 30 }
+                        : springPresets.snappy
                     }
                   />
                 )}
@@ -473,9 +524,9 @@ export function MobileActionBar({
                 'relative flex flex-col items-center justify-center',
                 'min-w-[56px] min-h-[44px] py-2 px-2',
                 'rounded-lg transition-all duration-200',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                 quickActionsOpen
-                  ? 'text-[#FFD700] bg-[#FFD700]/10'
+                  ? 'text-white bg-white/[0.08]'
                   : 'text-neutral-400 active:text-neutral-200 active:bg-white/5',
                 isLongPressing && 'scale-110'
               )}
@@ -489,7 +540,7 @@ export function MobileActionBar({
                   transition={
                     shouldReduceMotion
                       ? { duration: 0 }
-                      : { type: 'spring', stiffness: 300, damping: 20 }
+                      : springPresets.bouncy
                   }
                 >
                   <Plus
@@ -508,7 +559,7 @@ export function MobileActionBar({
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-[#FFD700]/50"
+                    className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full bg-white/50"
                   />
                 )}
               </AnimatePresence>

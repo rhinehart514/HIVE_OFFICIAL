@@ -156,7 +156,7 @@ export function HiveLabToolsPage({
                           <p className="text-xs text-[var(--hive-text-secondary,#c5c7d8)]">{workflow.description}</p>
                         </div>
                         <Badge
-                          tone="contrast"
+                          variant="default"
                           className={cn(
                             "border-none text-xs font-semibold uppercase tracking-caps-wide",
                             STATUS_TONE[workflow.status],
@@ -169,7 +169,7 @@ export function HiveLabToolsPage({
                         <span>{workflow.updatedAt}</span>
                         <span>Owner · {workflow.owner}</span>
                         {workflow.tags?.map((tag) => (
-                          <Badge key={tag} tone="muted" variant="pill">
+                          <Badge key={tag} variant="secondary">
                             #{tag}
                           </Badge>
                         ))}
@@ -212,7 +212,7 @@ export function HiveLabToolsPage({
                           </h3>
                           <p className="text-xs text-[var(--hive-text-secondary,#c5c7d8)]">{experiment.summary}</p>
                         </div>
-                        <Badge tone="muted" variant="pill">
+                        <Badge variant="secondary">
                           {experiment.campusSpace}
                         </Badge>
                       </header>

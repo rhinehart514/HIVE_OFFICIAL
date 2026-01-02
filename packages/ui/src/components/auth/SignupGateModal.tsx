@@ -9,7 +9,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles,
+  Rocket,
   GraduationCap,
   Users,
   Zap,
@@ -101,7 +101,7 @@ export function SignupGateModal({
 
   const benefits = [
     {
-      icon: Sparkles,
+      icon: Rocket,
       title: 'Deploy to your org',
       description: 'Share custom tools with your campus community'
     },

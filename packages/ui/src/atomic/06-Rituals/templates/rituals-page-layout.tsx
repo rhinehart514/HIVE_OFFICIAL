@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Calendar, CheckCircle2 } from 'lucide-react';
+import { Star, Calendar, CheckCircle2 } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -69,7 +69,7 @@ export const RitualsPageLayout = React.forwardRef<HTMLDivElement, RitualsPageLay
     const renderEmptyState = (tab: string) => {
       const emptyStates = {
         active: {
-          icon: Sparkles,
+          icon: Star,
           title: 'No active rituals',
           description: 'Check back soon for new campus-wide challenges',
         },
@@ -124,7 +124,7 @@ export const RitualsPageLayout = React.forwardRef<HTMLDivElement, RitualsPageLay
           {activeTab === 'active' && (
             <div className="mb-8 space-y-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[var(--hive-brand-primary)]" />
+                <Star className="h-5 w-5 text-[var(--hive-brand-primary)]" />
                 <span className="text-sm font-semibold uppercase tracking-caps text-[var(--hive-text-tertiary)]">
                   Featured
                 </span>

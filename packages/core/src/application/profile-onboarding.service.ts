@@ -22,6 +22,28 @@ import {
   ISpaceRepository,
   IFeedRepository
 } from '../infrastructure/repositories/interfaces';
+import type { SpaceMemberRole } from '../domain/spaces/aggregates/enhanced-space';
+
+/**
+ * Callback for saving space membership during onboarding
+ */
+export type SaveSpaceMembershipFn = (data: {
+  spaceId: string;
+  userId: string;
+  campusId: string;
+  role: SpaceMemberRole;
+  joinedAt: Date;
+  isActive: boolean;
+  permissions: string[];
+  joinMethod: 'auto';
+}) => Promise<Result<void>>;
+
+/**
+ * Optional callbacks for onboarding operations
+ */
+export interface OnboardingCallbacks {
+  saveSpaceMember?: SaveSpaceMembershipFn;
+}
 
 export interface OnboardingData {
   email: string;
@@ -46,12 +68,14 @@ export class ProfileOnboardingService extends BaseApplicationService {
   private profileRepo: IProfileRepository;
   private spaceRepo: ISpaceRepository;
   private feedRepo: IFeedRepository;
+  private callbacks: OnboardingCallbacks;
 
-  constructor(context?: Partial<ApplicationServiceContext>) {
+  constructor(context?: Partial<ApplicationServiceContext>, callbacks?: OnboardingCallbacks) {
     super(context);
     this.profileRepo = getProfileRepository();
     this.spaceRepo = getSpaceRepository();
     this.feedRepo = getFeedRepository();
+    this.callbacks = callbacks || {};
   }
 
   /**
@@ -324,10 +348,57 @@ export class ProfileOnboardingService extends BaseApplicationService {
     return Result.ok(uniqueSpaces);
   }
 
-  private async joinDefaultSpaces(_profile: EnhancedProfile): Promise<void> {
-    // Auto-join campus-wide default spaces
-    // TODO: Implement when space joining is added
-    const _defaultSpaceNames = ['Welcome Space', 'New Students', 'Campus Updates'];
+  private async joinDefaultSpaces(profile: EnhancedProfile): Promise<void> {
+    // Skip if no callback provided for saving members
+    if (!this.callbacks.saveSpaceMember) {
+      return;
+    }
+
+    const defaultSpaceNames = ['Welcome Space', 'New Students', 'Campus Updates'];
+    const campusId = this.context.campusId;
+    const userId = profile.id;
+
+    for (const spaceName of defaultSpaceNames) {
+      try {
+        // Find the space by name
+        const spaceResult = await this.spaceRepo.findByName(spaceName, campusId);
+        if (spaceResult.isFailure) {
+          continue; // Space doesn't exist, skip
+        }
+
+        const space = spaceResult.getValue();
+
+        // Check if already a member
+        const isMember = space.members.some(m => m.profileId.value === userId);
+        if (isMember) {
+          continue; // Already a member, skip
+        }
+
+        // Add member to space aggregate
+        const addResult = space.addMember(profile.profileId, 'member');
+        if (addResult.isFailure) {
+          continue; // Failed to add, skip
+        }
+
+        // Save membership via callback
+        await this.callbacks.saveSpaceMember({
+          spaceId: space.spaceId.value,
+          userId,
+          campusId,
+          role: 'member',
+          joinedAt: new Date(),
+          isActive: true,
+          permissions: ['post'],
+          joinMethod: 'auto',
+        });
+
+        // Save space aggregate (updates memberCount)
+        await this.spaceRepo.save(space);
+      } catch {
+        // Non-critical - log and continue with other spaces
+        continue;
+      }
+    }
   }
 
   private generateNextSteps(profile: EnhancedProfile, suggestedSpaces: any[]): Array<{

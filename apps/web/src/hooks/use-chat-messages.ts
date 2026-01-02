@@ -492,13 +492,9 @@ export function useChatMessages(
     const timeSinceLastSent = now - lastTypingSentRef.current;
     const currentUserId = currentUserIdRef.current;
 
-    // PERFORMANCE FIX: Track last keystroke time to batch timeout resets
-    // Instead of clearing/creating timeout on every keystroke, we only reset
-    // the timeout if enough time has passed or if one doesn't exist
-    const shouldResetTimeout = !typingClearTimeoutRef.current;
-
     // Only send typing indicator to Firebase if interval has passed
     // This limits Firebase writes to once per 3 seconds while typing
+    // Combined with Firebase layer throttling, this prevents spam effectively
     if (timeSinceLastSent >= TYPING_INDICATOR_INTERVAL_MS) {
       lastTypingSentRef.current = now;
 
@@ -520,21 +516,22 @@ export function useChatMessages(
         });
     }
 
-    // Only reset the clear timeout if we don't have one or enough time has passed
-    // This reduces setTimeout overhead from every keystroke to roughly once per second
-    if (shouldResetTimeout || timeSinceLastSent >= 1000) {
-      if (typingClearTimeoutRef.current) {
-        clearTimeout(typingClearTimeoutRef.current);
-      }
+    // Always clear and reset the timeout on any keystroke
+    // This ensures typing indicator stays active while user is typing
+    // and clears properly when they stop
+    if (typingClearTimeoutRef.current) {
+      clearTimeout(typingClearTimeoutRef.current);
+    }
 
-      if (currentUserId) {
-        typingClearTimeoutRef.current = setTimeout(() => {
-          realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
-            .catch(() => {});
-          lastTypingSentRef.current = 0; // Reset so next keystroke sends indicator
-          typingClearTimeoutRef.current = null;
-        }, TYPING_TTL_MS);
-      }
+    if (currentUserId) {
+      typingClearTimeoutRef.current = setTimeout(() => {
+        // Clear typing indicator after TTL of no activity
+        realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
+          .catch(() => {});
+        typingClearTimeoutRef.current = null;
+        // Note: Don't reset lastTypingSentRef here - let the 3s interval handle it
+        // This prevents the race condition where clearing + immediate keystroke = double write
+      }, TYPING_TTL_MS);
     }
   }, [spaceId, activeBoardId, enableTypingIndicators]);
 
@@ -962,6 +959,27 @@ export function useChatMessages(
         realtimeService.setBoardTypingIndicator(spaceId, activeBoardId, currentUserId, false)
           .catch(() => {});
       }
+    };
+  }, [spaceId, activeBoardId, enableTypingIndicators]);
+
+  // Periodic cleanup of stale typing indicators (every 30s)
+  // This prevents RTDB bloat from crashed clients that didn't clear their typing state
+  useEffect(() => {
+    if (!spaceId || !activeBoardId || !enableTypingIndicators) return;
+
+    // Run cleanup immediately on mount
+    realtimeService.cleanupStaleTypingIndicators(spaceId, activeBoardId)
+      .catch(() => {}); // Silently fail - cleanup is non-critical
+
+    // Schedule periodic cleanup every 30 seconds
+    const cleanupInterval = setInterval(() => {
+      if (!mountedRef.current) return;
+      realtimeService.cleanupStaleTypingIndicators(spaceId, activeBoardId)
+        .catch(() => {});
+    }, 30000);
+
+    return () => {
+      clearInterval(cleanupInterval);
     };
   }, [spaceId, activeBoardId, enableTypingIndicators]);
 

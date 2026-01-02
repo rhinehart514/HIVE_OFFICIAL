@@ -484,10 +484,19 @@ export async function* mockGenerateToolStreaming(
     : newElements;
 
   // Step 3: Emit elements one by one
+  // Transform to match the format expected by use-streaming-generation.ts
+  // (matches Firebase generator output format: id/type instead of instanceId/elementId)
   for (const element of elementsToEmit) {
     yield {
       type: 'element',
-      data: element as unknown as Record<string, unknown>,
+      data: {
+        id: element.instanceId,
+        type: element.elementId,
+        name: element.elementId,
+        config: element.config,
+        position: element.position,
+        size: element.size,
+      },
     };
     await delay(150);
   }

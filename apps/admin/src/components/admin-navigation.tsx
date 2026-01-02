@@ -35,6 +35,12 @@ export function AdminNavigation({ activeTab, onTabChange, pendingCounts }: Admin
       description: 'Space management and configuration'
     },
     {
+      id: 'schools',
+      label: 'Schools',
+      icon: '🎓',
+      description: 'Multi-campus school configuration'
+    },
+    {
       id: 'content',
       label: 'Content',
       icon: '📝',
@@ -53,6 +59,12 @@ export function AdminNavigation({ activeTab, onTabChange, pendingCounts }: Admin
       label: 'Analytics',
       icon: '📊',
       description: 'Platform analytics and insights'
+    },
+    {
+      id: 'flags',
+      label: 'Flags',
+      icon: '🚩',
+      description: 'Feature flag management'
     },
     {
       id: 'system',

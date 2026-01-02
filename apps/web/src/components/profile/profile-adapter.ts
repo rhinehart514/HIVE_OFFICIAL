@@ -57,6 +57,7 @@ type ApiSpace = {
   memberCount: number;
   lastActivityAt?: string;
   headline?: string;
+  imageUrl?: string;
 };
 
 type ApiSuggestion = {

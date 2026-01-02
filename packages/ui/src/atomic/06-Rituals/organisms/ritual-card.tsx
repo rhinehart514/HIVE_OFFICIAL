@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Users, Clock, CheckCircle2 } from 'lucide-react';
+import { Calendar, Users, Clock, CheckCircle2, Zap, Target, Flame, Trophy, Star, Gift, Award, type LucideIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { duration, easing } from '../../../lib/motion-variants';
@@ -9,13 +9,33 @@ import { cn } from '../../../lib/utils';
 import { Button } from '../../00-Global/atoms';
 import { RitualProgressBar } from '../molecules/ritual-progress-bar';
 
+// Icon name to component mapping for string-based icons
+const iconMap: Record<string, LucideIcon> = {
+  zap: Zap,
+  target: Target,
+  flame: Flame,
+  trophy: Trophy,
+  sparkles: Star,
+  star: Star,
+  gift: Gift,
+  award: Award,
+  calendar: Calendar,
+};
+
+function resolveIcon(icon: string | LucideIcon | undefined): LucideIcon {
+  if (!icon) return Zap;
+  if (typeof icon === 'string') {
+    return iconMap[icon.toLowerCase()] || Zap;
+  }
+  return icon;
+}
 
 export interface RitualCardProps extends React.HTMLAttributes<HTMLDivElement> {
   ritual: {
     id: string;
     name: string;
     description: string;
-    icon?: string;
+    icon?: string | LucideIcon;
     progress: number; // 0-100
     participantCount: number;
     duration: string; // e.g., "7 days", "2 weeks"
@@ -84,7 +104,7 @@ export const RitualCard = React.forwardRef<HTMLDivElement, RitualCardProps>(
           'group relative overflow-hidden rounded-2xl border',
           isFeatured
             ? // Featured: Gold gradient
-              'border-[var(--hive-brand-primary)]/50 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.12] via-[var(--hive-brand-secondary)]/[0.08] to-transparent shadow-[0_0_24px_rgba(255,215,0,0.15)]'
+              'border-[var(--hive-brand-primary)]/30 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.08] via-transparent to-transparent'
             : // Default: Subtle border
               'border-[var(--hive-border-primary)] bg-[var(--hive-background-secondary)]',
           ritual.isCompleted && 'opacity-75',
@@ -123,7 +143,15 @@ export const RitualCard = React.forwardRef<HTMLDivElement, RitualCardProps>(
                 ease: easing.smooth,
               }}
             >
-              {ritual.icon || '✨'}
+              {(() => {
+                const IconComponent = resolveIcon(ritual.icon);
+                return (
+                  <IconComponent className={cn(
+                    "h-7 w-7",
+                    isFeatured ? "text-black" : "text-[var(--hive-brand-primary)]"
+                  )} />
+                );
+              })()}
             </motion.div>
 
             {/* Completion Badge with spring entrance */}

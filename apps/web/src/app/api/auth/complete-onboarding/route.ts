@@ -9,6 +9,10 @@ import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, valid
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
+import {
+  incrementMemberCount,
+  isShardedMemberCountEnabled
+} from '@/lib/services/sharded-member-counter.service';
 
 // Development mode guard - ONLY allow dev bypass when ALL conditions are met:
 // 1. NODE_ENV is explicitly 'development'
@@ -170,6 +174,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
   }
 
   // ALWAYS use transaction to prevent handle race condition (prod)
+  // Track new member space IDs for sharded counter update after transaction
+  const newMemberSpaceIds: string[] = [];
+
   try {
     await dbAdmin.runTransaction(async (transaction) => {
       // Check handle availability atomically
@@ -284,16 +291,34 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
           }, { merge: true }); // merge: true ensures idempotency
 
           // Only increment member count for new memberships
-          if (isNewMember) {
+          // SCALING FIX: Use sharded counter when enabled (handled after transaction)
+          if (isNewMember && !isShardedMemberCountEnabled()) {
             const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
             transaction.update(spaceRef, {
               'metrics.memberCount': admin.firestore.FieldValue.increment(1),
               updatedAt: new Date().toISOString(),
             });
           }
+
+          // Track new members for post-transaction sharded counter update
+          if (isNewMember) {
+            newMemberSpaceIds.push(spaceId);
+          }
         }
       }
     });
+
+    // SCALING FIX: Update sharded counters after transaction completes (if enabled)
+    // Sharded counters can't be updated inside transactions since they write to random shards
+    if (isShardedMemberCountEnabled() && newMemberSpaceIds.length > 0) {
+      await Promise.all(
+        newMemberSpaceIds.map(spaceId => incrementMemberCount(spaceId, 1))
+      );
+      logger.debug('[complete-onboarding] Updated sharded member counters', {
+        spaceIds: newMemberSpaceIds,
+        count: newMemberSpaceIds.length
+      });
+    }
 
     logger.info('Onboarding completed successfully', {
       userId,

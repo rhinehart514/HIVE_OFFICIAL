@@ -43,23 +43,23 @@ export function Toaster() {
       position="top-right"
       toastOptions={{
         classNames: {
-          toast: 'group border border-border-default bg-background-primary text-text-primary shadow-2xl shadow-black/50 rounded-xl',
-          title: 'text-sm font-semibold text-text-primary',
-          description: 'text-sm text-text-secondary',
-          actionButton: 'bg-brand-primary text-background-primary font-medium hover:bg-brand-primary/90',
-          cancelButton: 'bg-background-interactive text-text-secondary hover:bg-background-elevated',
-          closeButton: 'bg-background-interactive border-border-default hover:bg-background-elevated text-text-tertiary hover:text-text-primary',
-          success: 'border-status-success/40 bg-status-success/10',
-          error: 'border-status-error/40 bg-status-error/10',
-          warning: 'border-status-warning/40 bg-status-warning/10',
-          info: 'border-brand-primary/40 bg-brand-primary/10',
+          toast: 'group border border-[#2A2A2A] bg-[#0A0A0A] text-[#FAFAFA] shadow-2xl shadow-black/50 rounded-xl',
+          title: 'text-sm font-semibold text-[#FAFAFA]',
+          description: 'text-sm text-[#A1A1A6]',
+          actionButton: 'bg-[#FFD700] text-[#0A0A0A] font-medium hover:bg-[#FFD700]/90',
+          cancelButton: 'bg-[#1A1A1A] text-[#A1A1A6] hover:bg-[#2A2A2A]',
+          closeButton: 'bg-[#1A1A1A] border-[#2A2A2A] hover:bg-[#2A2A2A] text-[#71717A] hover:text-[#FAFAFA]',
+          success: 'border-[#00D46A]/40 bg-[#00D46A]/10',
+          error: 'border-[#FF3737]/40 bg-[#FF3737]/10',
+          warning: 'border-[#FFB800]/40 bg-[#FFB800]/10',
+          info: 'border-white/20 bg-white/[0.04]',
         },
       }}
       icons={{
-        success: <Check className="h-5 w-5 text-emerald-400" />,
-        error: <X className="h-5 w-5 text-red-400" />,
-        warning: <AlertCircle className="h-5 w-5 text-amber-400" />,
-        info: <Info className="h-5 w-5 text-[#D4AF37]" />,
+        success: <Check className="h-5 w-5 text-[#00D46A]" />,
+        error: <X className="h-5 w-5 text-[#FF3737]" />,
+        warning: <AlertCircle className="h-5 w-5 text-[#FFB800]" />,
+        info: <Info className="h-5 w-5 text-white/70" />,
       }}
       duration={4000}
       closeButton

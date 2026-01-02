@@ -147,7 +147,7 @@ export function CollapsibleWidget({
             'px-4 py-3',
             'text-left',
             'hover:bg-white/[0.02] transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-inset',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-inset',
             'rounded-t-2xl',
             !isCollapsed && 'border-b border-white/[0.04]'
           )}

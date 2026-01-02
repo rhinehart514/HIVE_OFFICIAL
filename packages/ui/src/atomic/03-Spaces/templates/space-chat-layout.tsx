@@ -43,7 +43,7 @@ import { PresenceDot } from '../../../identity/presence';
 import { Avatar, AvatarFallback, AvatarImage } from '../../00-Global/atoms/avatar';
 import { BoardTabBar, type BoardData } from '../molecules/board-tab-bar';
 import { FeaturedToolSlot, FeaturedToolEmpty } from '../molecules/featured-tool-slot';
-import { HeroInput, type HeroInputHandle } from '../molecules/hero-input';
+import { HeroInput, type HeroInputHandle } from '../molecules/space-chat-input';
 
 // ============================================================
 // Types
@@ -275,42 +275,50 @@ export function SpaceChatLayout({
         <FeaturedToolEmpty canAdd onAddTool={onAddFeaturedTool} />
       ) : null}
 
-      {/* Messages area (children) */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      {/* Messages area (children) - centered for intimate conversation feel */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-4">
+          {children}
+        </div>
+      </main>
 
-      {/* Typing indicator */}
+      {/* Typing indicator - centered */}
       <AnimatePresence>
         {typingUsers.length > 0 && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="flex-shrink-0 px-4 py-2"
+            className="flex-shrink-0"
           >
-            <div className="flex items-center gap-2 text-sm text-[#818187]">
-              <PresenceDot status="online" size="xs" pulse />
-              <span>
-                {typingUsers.length === 1
-                  ? `${typingUsers[0].name} is typing...`
-                  : typingUsers.length === 2
-                    ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
-                    : `${typingUsers[0].name} and ${typingUsers.length - 1} others are typing...`}
-              </span>
+            <div className="max-w-3xl mx-auto px-4 py-2">
+              <div className="flex items-center gap-2 text-sm text-[#818187]">
+                <PresenceDot status="online" size="xs" pulse />
+                <span>
+                  {typingUsers.length === 1
+                    ? `${typingUsers[0].name} is typing...`
+                    : typingUsers.length === 2
+                      ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
+                      : `${typingUsers[0].name} and ${typingUsers.length - 1} others are typing...`}
+                </span>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hero input */}
+      {/* Hero input - centered */}
       <div className="flex-shrink-0 border-t border-[#2A2A2A]">
-        <HeroInput
-          ref={heroInputRef}
-          boardName={activeBoard?.name || 'general'}
-          onSubmit={onSendMessage}
-          onOpenTools={onOpenTools}
-          onOpenMembers={onOpenMembers}
-          onOpenEvents={onOpenEvents}
-        />
+        <div className="max-w-3xl mx-auto">
+          <HeroInput
+            ref={heroInputRef}
+            boardName={activeBoard?.name || 'general'}
+            onSubmit={onSendMessage}
+            onOpenTools={onOpenTools}
+            onOpenMembers={onOpenMembers}
+            onOpenEvents={onOpenEvents}
+          />
+        </div>
       </div>
     </div>
   );

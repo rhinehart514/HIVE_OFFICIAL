@@ -113,7 +113,7 @@ export function FeaturedToolSlot({
             <span
               className={cn(
                 'px-2 py-0.5 text-xs rounded-full',
-                'bg-[#FFD700]/10 text-[#FFD700] font-medium'
+                'bg-white/[0.08] text-neutral-300 font-medium'
               )}
             >
               {interactionCount} {interactionLabel}

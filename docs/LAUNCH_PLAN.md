@@ -1,135 +1,118 @@
 # HIVE Launch Plan
 
-**Last Updated:** December 2025
+**Last Updated:** January 2026
 
 ---
 
 ## Executive Summary
 
-HIVE launches at University at Buffalo (UB) in Winter 2025-26. Three phases: Soft Launch (Dec-Jan), Beta Launch (Feb), Full Launch (Spring).
+HIVE launches at University at Buffalo (UB). Strategy: Go big or go home. We're building for 1000s of users expecting high value from day one.
 
 **The thesis:** Win one campus at density. If 50%+ of UB students use HIVE, we've proven the model. Then scale.
 
 ---
 
-## Launch Phases
+## Launch Strategy
 
-### Phase 1: Soft Launch (Dec 2025 - Jan 2026)
+### Core Principle
 
-**Goal:** Validate core flows with 10-20 trusted org leaders.
+No "soft launch" mindset. Every user who touches HIVE should experience a complete, polished product. We're not testing — we're launching.
 
-**Who:** Hand-selected leaders from high-activity UB orgs. Minimum criteria:
-- 50+ members in their org
-- Active on campus (not dormant clubs)
-- Leader is tech-forward (will give real feedback)
+### Technical Readiness Criteria
 
-**What They Get:**
-- Early access before anyone else
-- Direct line to founders for feedback
-- "Founding leader" badge (forever)
-- Input on features that ship
+Before opening to users at scale:
+- [ ] 1000 concurrent users sustained without degradation
+- [ ] <500ms p95 response time on core endpoints
+- [ ] Error rate <1%
+- [ ] No memory leaks after 24-hour soak test
+- [ ] All "mock data" references removed or gated
+- [ ] E2E tests pass for core user journeys
 
-**What We Learn:**
-- Does onboarding convert?
-- Does chat feel right?
-- Do leaders understand HiveLab?
-- What's broken that we missed?
+### What's Ready Now
 
-**Success Criteria:**
-| Metric | Target |
-|--------|--------|
-| Leaders onboarded | 15+ |
-| Leaders who create a space | 80%+ |
-| Leaders who send 10+ messages | 70%+ |
-| Leaders who deploy 1+ HiveLab tool | 50%+ |
-| NPS score | 40+ |
-| Critical bugs reported | <5 |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Spaces + Chat | ✅ 96% | Production ready, real-time works |
+| HiveLab | ✅ 100% | Tool builder complete |
+| Onboarding | ✅ 90% | OTP + 3 steps + auto-join |
+| Discovery | ✅ 80% | 400+ pre-seeded spaces |
+| Profiles | ✅ 75% | Bento grid works |
+| Admin | ✅ 70% | Internal tool ready |
 
-**Exit Criteria to Beta:**
-- 0 critical bugs open
-- Onboarding converts 80%+
-- Chat feels "instant" (no complaints about speed)
-- 3+ leaders say they'd recommend to peers
+### What Needs Work
+
+| Feature | Issue | Fix |
+|---------|-------|-----|
+| Feed | Returns mock data | Design "Coming Soon" (HIVE-branded) |
+| Infrastructure | In-memory rate limits | Deploy Redis |
+| Presence | Loads all users | Refactor to space-specific |
+| SSE | Resource leak risk | Add cleanup with timeout |
 
 ---
 
-### Phase 2: Beta Launch (Feb 2026)
+## Go-to-Market
 
-**Goal:** 50+ active spaces, onboarding refined, word-of-mouth starts.
+### Pre-Launch (Now)
 
-**Who:** Expand to:
-- All orgs from soft launch invite their officers
-- 30-50 additional orgs recruited
-- Open waitlist for students (controlled)
+**Build the waitlist:**
+- Landing page live with waitlist
+- Social presence (X/Twitter)
+- Reach out to founding leaders
+
+**Seed content:**
+- 400+ spaces pre-created from CampusLabs data
+- Categories mapped: Academic, Social, Sports, Arts, etc.
+- Ready for leaders to "claim" their org
+
+### Launch Campaign
+
+**"Everyone's Here" Positioning:**
+- "100+ UB orgs are on HIVE"
+- "Your friends are already here"
+- FOMO-driven growth
 
 **Tactics:**
-- Each soft launch leader invites 5 officers
-- Cold outreach to 50 highest-activity CampusLabs orgs
-- Waitlist opens on landing page
-- Social proof: "X leaders already building"
+- Leader-first: Each leader brings 50-500 members
+- Peer-to-peer DMs from founding leaders
+- Instagram stories/posts from leaders
+- UB student media (Spectrum, etc.)
+- Campus ambassadors (3-5 students)
 
-**What We Ship:**
-- Refined onboarding based on soft launch feedback
-- 10+ HiveLab templates
-- Basic analytics (real data)
-- Mobile polish
-- Notification settings (in-app, not push)
+**Post-Launch:**
+- Student Union tabling
+- Partnerships with major events
+- Student Association endorsement
+- Featured in orientation materials (Fall 2026)
 
-**Success Criteria:**
+---
+
+## Success Criteria
+
+### First 30 Days
 | Metric | Target |
 |--------|--------|
+| Total signups | 500+ |
+| Onboarding completion | 80%+ |
 | Active spaces | 50+ |
-| Weekly active users | 500+ |
-| D7 retention | 40%+ |
-| Leaders using HiveLab | 30%+ |
-| Cross-space engagement | 25%+ (users in 2+ spaces) |
-| Organic signups (not invited) | 100+ |
+| Chat feels "instant" | No complaints |
+| NPS score | 40+ |
+| Critical bugs | <5 |
 
-**Exit Criteria to Full Launch:**
-- 50+ spaces with weekly activity
-- Retention curve flattens (not dropping)
-- Organic growth visible
-- No major stability issues
-
----
-
-### Phase 3: Full Launch (Spring 2026)
-
-**Goal:** Campus-wide awareness. Density flywheel kicks in.
-
-**Who:** Everyone at UB. Open registration.
-
-**Tactics:**
-- Public launch announcement
-- Social media campaign
-- Tabling at student union
-- Partner with Student Association
-- "Every org at UB is on HIVE" messaging
-
-**What We Ship:**
-- Push notifications
-- Email digests (opt-in)
-- Advanced analytics for leaders
-- More HiveLab elements
-- Full mobile experience
-
-**Success Criteria (End of Spring 2026):**
+### First 90 Days
 | Metric | Target |
 |--------|--------|
 | Total users | 5,000+ |
 | Weekly active users | 2,000+ |
 | Active spaces | 150+ |
 | D7 retention | 50%+ |
-| D30 retention | 30%+ |
 | Cross-space engagement | 40%+ |
 | Organic growth | 50%+ of new users |
-| NPS | 50+ |
 
 ---
 
 ## Feature Completeness Checklist
 
-### Must Ship for Soft Launch
+### Core Features (Launch Ready)
 
 **Spaces:**
 - [x] Real-time chat (SSE streaming)
@@ -138,143 +121,61 @@ HIVE launches at University at Buffalo (UB) in Winter 2025-26. Three phases: Sof
 - [x] Role management (owner/admin/mod/member)
 - [x] Pinned messages
 - [x] 60/40 layout with sidebar
-- [ ] Fix typing indicator (presence-based, not polling)
-- [ ] Real analytics (replace mock data)
+- [x] Typing indicator (3s throttle)
+- [x] Real analytics
 
 **HiveLab:**
 - [x] AI generation (natural language → tool)
-- [x] 24 element library
+- [x] 27 element library
 - [x] Visual canvas (drag-and-drop)
-- [x] Deployment to sidebar
+- [x] Deployment to sidebar/inline/modal/tab
 - [x] Tool state persistence
-- [ ] Undo/redo on canvas
-- [ ] 10+ quality templates
+- [x] 35 templates
 
 **Auth/Onboarding:**
 - [x] OTP email authentication
-- [x] 4-step onboarding flow
+- [x] 3-step onboarding flow
 - [x] JWT session management
-- [ ] Edge case fixes (email variations, timeouts)
+- [x] Auto-join recommended spaces
 
 **Landing Page:**
 - [x] Hero section
 - [x] Feature showcase
 - [x] Waitlist signup
-- [x] Legal pages (privacy, terms) as modals
-- [ ] Final copy review
+- [x] Legal pages (privacy, terms)
 
 **Mobile:**
-- [x] Responsive layout
+- [x] Responsive layout (1024px breakpoint)
 - [x] Mobile drawer for sidebar
-- [ ] Touch gestures polish
-- [ ] Keyboard-aware input
+- [x] Touch gestures
 
-### Must Ship for Beta Launch
+### Launch Blockers (Fix Now)
 
-**Spaces:**
-- [ ] Notification settings (per-space mute)
-- [ ] Member invite flow improvements
-- [ ] Board muting
-- [ ] Search messages (basic)
+**Infrastructure:**
+- [ ] Deploy Redis for distributed rate limiting
+- [ ] Refactor presence to space-specific
+- [ ] SSE cleanup with timeout
+- [ ] Enable scaling feature flags
 
-**HiveLab:**
-- [ ] Template gallery (categorized)
-- [ ] Save as template
-- [ ] Copy/paste elements
-- [ ] Multi-select on canvas
+**Stability:**
+- [ ] Session secret hardening
+- [ ] Onboarding transaction safety
+- [ ] Error boundaries on critical pages
 
-**General:**
-- [ ] In-app notification center
-- [ ] Profile completion flow
-- [ ] Space recommendations
+**User Experience:**
+- [ ] Feed "Coming Soon" (HIVE-branded)
+- [ ] Events placeholder in spaces
 
-### Deferred to Full Launch
+### Deferred (Post-Launch)
 
-**Spaces:**
+**Features:**
 - Push notifications
 - Email digests
 - Voice messages
-- Read receipts
-
-**HiveLab:**
-- Collaboration (multi-user editing)
-- External webhooks
-- Advanced analytics
-
-**Platform:**
-- Ghost mode (full privacy)
+- Ghost mode full UI
+- Rituals (75% built, feature-gated)
 - Marketplace
-- University integrations
-
----
-
-## Go-to-Market: UB Strategy
-
-### Pre-Launch (Now)
-
-**Build the waitlist:**
-- Landing page live with waitlist
-- Soft social presence (X/Twitter)
-- Reach out to 20 potential founding leaders
-
-**Seed content:**
-- 400+ spaces pre-created from CampusLabs data
-- Categories mapped: Academic, Social, Sports, Arts, etc.
-- Ready for leaders to "claim" their org
-
-### Soft Launch Outreach
-
-**Founding Leader Selection:**
-
-| Org Type | Target Count | Why |
-|----------|--------------|-----|
-| Greek Life | 3-5 | High member count, active |
-| Cultural Orgs | 3-5 | Strong community identity |
-| Academic Clubs | 3-5 | Serious engagement |
-| Club Sports | 2-3 | Coordination needs |
-| Creative/Arts | 2-3 | HiveLab appeal |
-
-**Outreach Script:**
-
-> "Hey [Name], I'm building HIVE — a new platform where campus orgs actually live. Think Discord + campus-native features. Every org at UB is already on it (we pulled CampusLabs data).
->
-> I'm looking for 10-15 founding leaders to test before anyone else. You'd get direct access to us for feedback, and a permanent 'founding leader' badge.
->
-> Want to be part of it? Takes 5 min to set up your space."
-
-### Beta Launch Campaign
-
-**"50 Leaders, 5000 Students" Campaign:**
-
-1. Each founding leader invites 5 officers
-2. Each officer invites their members
-3. Cascade effect → 10-50x growth
-
-**Positioning:**
-- "Where campus communities actually live"
-- "Your org, your rules, your tools"
-- "Finally, one place for everything"
-
-**Channels:**
-- DMs from founding leaders (peer-to-peer)
-- Instagram stories/posts from leaders
-- UB student media (Spectrum, etc.)
-- Campus ambassadors (3-5 students)
-
-### Full Launch Campaign
-
-**"Everyone's Here" Positioning:**
-
-Once 50+ spaces are active, messaging shifts:
-- "100+ UB orgs are on HIVE"
-- "Your friends are already here"
-- FOMO-driven growth
-
-**Tactics:**
-- Student Union tabling (Feb-Mar)
-- Partnerships with major events
-- Student Association endorsement
-- Featured in orientation materials (Fall 2026)
+- Multi-campus expansion
 
 ---
 
@@ -284,10 +185,10 @@ Once 50+ spaces are active, messaging shifts:
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|------------|--------|------------|
-| Chat feels slow | Medium | High | Performance testing before launch, SSE optimization |
+| Scaling issues at 1000+ | Medium | High | Deploy Redis, load testing, presence refactor |
+| Chat feels slow | Medium | High | SSE optimization, edge caching |
 | HiveLab bugs on deploy | Medium | Medium | End-to-end testing, error boundaries |
 | Firebase costs spike | Low | High | Usage alerts, rate limiting, caching |
-| Auth edge cases | Medium | High | Comprehensive email validation, session recovery |
 
 ### Market Risks
 
@@ -296,7 +197,6 @@ Once 50+ spaces are active, messaging shifts:
 | Leaders don't adopt | Medium | Critical | Deep interviews, iterate fast, be in the room |
 | Discord is "good enough" | High | High | Campus-native features, pre-seeded orgs, HiveLab |
 | University pushback | Low | Medium | Student-first positioning, no admin access |
-| Competitor launches | Low | Medium | Speed > perfection, network effects lock-in |
 
 ### Operational Risks
 
@@ -304,126 +204,37 @@ Once 50+ spaces are active, messaging shifts:
 |------|------------|--------|------------|
 | Moderation issues | Medium | High | Content moderation in place, reporting flow |
 | Support overwhelm | Medium | Medium | Good docs, in-app help, Slack for leaders |
-| Founder burnout | Medium | High | Sustainable pace, milestone celebrations |
 
 ---
 
-## Success Metrics (KPIs)
+## KPIs
 
-### North Star Metric
+### North Star
 
 **Weekly Active Spaces (WAS):** Spaces with 10+ messages in the past 7 days.
 
-This is the single number that matters. More active spaces = more activity = more users = more value.
-
 ### Supporting Metrics
 
-**Acquisition:**
-- Signups per week
-- Signup → Onboarding completion rate
-- Organic vs. invited ratio
-
-**Activation:**
-- Onboarding completion rate (target: 80%+)
-- Time to first message (target: <5 min)
-- Leaders who deploy a tool (target: 50%+)
-
-**Retention:**
-- D1 retention (target: 70%)
-- D7 retention (target: 50%)
-- D30 retention (target: 30%)
-- Weekly retention (target: 60%)
-
-**Engagement:**
-- Messages per user per week
-- Cross-space engagement (users in 2+ spaces)
-- HiveLab tool interactions
-
-**Health:**
-- NPS score (target: 50+)
-- Support tickets per 100 users
-- Critical bugs open
-
----
-
-## Team Focus Areas
-
-### Engineering
-
-**Soft Launch:**
-- Typing indicator fix (switch to presence-based)
-- Real analytics (replace mocks)
-- Undo/redo on canvas
-- Mobile polish pass
-
-**Beta Launch:**
-- Notification system (in-app)
-- Template gallery
-- Search improvements
-- Performance optimization
-
-### Design
-
-**Soft Launch:**
-- Landing page final polish
-- Mobile UX audit
-- HiveLab template designs
-
-**Beta Launch:**
-- Onboarding refinements
-- Space customization options
-- Empty states and edge cases
-
-### Growth
-
-**Soft Launch:**
-- Founding leader recruitment (15-20)
-- Waitlist growth
-- Feedback collection system
-
-**Beta Launch:**
-- Ambassador program
-- Social content
-- Campus partnerships
-
----
-
-## Timeline Summary
-
-```
-Dec 2025     Jan 2026     Feb 2026     Mar 2026     Apr 2026
-    |            |            |            |            |
-    ├────────────┤            |            |            |
-    │ SOFT LAUNCH│            |            |            |
-    │ 15 leaders │            |            |            |
-    │ Core fixes │            |            |            |
-    └────────────┘            |            |            |
-                              |            |            |
-                 ┌────────────┤            |            |
-                 │ BETA LAUNCH│            |            |
-                 │ 50+ spaces │            |            |
-                 │ 500+ users │            |            |
-                 └────────────┘            |            |
-                                           |            |
-                              ┌────────────┴────────────┤
-                              │      FULL LAUNCH        │
-                              │      5000+ users        │
-                              │      150+ spaces        │
-                              └─────────────────────────┘
-```
+| Category | Metric | Target |
+|----------|--------|--------|
+| Acquisition | Signup → Onboarding completion | 80%+ |
+| Activation | Time to first message | <5 min |
+| Retention | D7 retention | 50%+ |
+| Engagement | Cross-space (users in 2+ spaces) | 40%+ |
+| Health | NPS score | 50+ |
 
 ---
 
 ## Decision Log
 
-Track major decisions here as they're made.
-
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| Dec 2025 | Soft launch with 15-20 leaders | Quality feedback > quantity; fix issues before scale |
-| Dec 2025 | Defer push notifications | Adds complexity; in-app sufficient for soft launch |
-| Dec 2025 | Leader-first GTM | Leaders bring 50-500 members each; efficient growth |
-| Dec 2025 | UB-only for Year 1 | Prove density at one campus before expanding |
+| Jan 2026 | Full launch mindset | Build for 1000s, not 10-20 |
+| Jan 2026 | Defer push notifications | In-app sufficient for launch |
+| Jan 2026 | Leader-first GTM | Leaders bring 50-500 members each |
+| Jan 2026 | UB-only for Year 1 | Prove density at one campus |
+| Jan 2026 | Feed "Coming Soon" | Intentional design, not broken |
+| Jan 2026 | Rituals gated | Enable post-launch |
 
 ---
 

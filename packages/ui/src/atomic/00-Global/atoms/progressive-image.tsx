@@ -140,7 +140,7 @@ export function ProgressiveImage({
       ref={containerRef}
       className={cn(
         'relative overflow-hidden',
-        'bg-[var(--hive-background-tertiary)]',
+        'bg-[#1A1A1A]',
         containerClassName
       )}
       style={{
@@ -150,7 +150,7 @@ export function ProgressiveImage({
       {/* Skeleton loader */}
       {showSkeleton && !isLoaded && !hasError && (
         <div
-          className="absolute inset-0 animate-pulse bg-[var(--hive-background-tertiary)]"
+          className="absolute inset-0 animate-pulse bg-[#1A1A1A]"
           aria-hidden="true"
         />
       )}
@@ -195,8 +195,8 @@ export function ProgressiveImage({
         <div
           className={cn(
             'absolute inset-0 flex items-center justify-center',
-            'bg-[var(--hive-background-tertiary)]',
-            'text-[var(--hive-text-tertiary)]'
+            'bg-[#1A1A1A]',
+            'text-[#71717A]'
           )}
           role="img"
           aria-label="Failed to load image"
@@ -225,7 +225,7 @@ export function ProgressiveImage({
           role="status"
           aria-label="Loading image"
         >
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--hive-border-primary)] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#2A2A2A] border-t-transparent" />
         </div>
       )}
     </div>

@@ -8,21 +8,21 @@ import { duration, easing } from "../../../lib/motion-variants"
 import { cn } from "../../../lib/utils"
 
 const textareaVariants = cva(
-  "flex min-h-[108px] w-full border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] px-5 py-3 text-sm text-[var(--hive-text-primary)] transition-[border,background,box-shadow] duration-200 ease-out placeholder:text-[var(--hive-text-muted)] focus-visible:outline-none focus-visible:border-[var(--hive-border-focus)] focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus)] focus-visible:ring-offset-0 focus-visible:shadow-[0_0_28px_rgba(255,255,255,0.15)] disabled:cursor-not-allowed disabled:opacity-60",
+  "flex min-h-[108px] w-full rounded-lg border border-[#2A2A2A] bg-[#141414] px-4 py-3 text-base md:text-sm text-[#FAFAFA] transition-[border,background,box-shadow] duration-150 ease-out placeholder:text-[#71717A] focus-visible:outline-none focus-visible:border-white/50 focus-visible:ring-2 focus-visible:ring-white/10 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "hover:border-[var(--hive-border-primary)]",
-        subtle: "border-[var(--hive-border-subtle)] bg-[var(--hive-background-primary)]",
-        destructive: "border-[var(--hive-status-error)] focus-visible:ring-[color-mix(in_srgb,var(--hive-status-error) 90%,transparent)] focus-visible:shadow-[0_0_0_1px_var(--hive-status-error),0_0_32px_rgba(239,68,68,0.28)]",
-        success: "border-[var(--hive-status-success)] focus-visible:ring-[color-mix(in_srgb,var(--hive-status-success) 80%,transparent)] focus-visible:shadow-[0_0_0_1px_var(--hive-status-success),0_0_32px_rgba(16,185,129,0.24)]",
-        warning: "border-[var(--hive-status-warning)] focus-visible:ring-[color-mix(in_srgb,var(--hive-status-warning) 85%,transparent)]",
-        ghost: "border-transparent bg-transparent focus-visible:border-[var(--hive-border-default)] focus-visible:ring-[var(--hive-interactive-focus)]",
-        outline: "border-2 border-[var(--hive-border-default)] bg-transparent",
+        default: "hover:border-[#3A3A3A]",
+        subtle: "border-transparent bg-[#0A0A0A]",
+        destructive: "border-[#FF3737]/50 focus-visible:border-[#FF3737] focus-visible:ring-[#FF3737]/20",
+        success: "border-[#00D46A]/50 focus-visible:border-[#00D46A] focus-visible:ring-[#00D46A]/20",
+        warning: "border-[#FFB800]/50 focus-visible:border-[#FFB800] focus-visible:ring-[#FFB800]/20",
+        ghost: "border-transparent bg-transparent focus-visible:border-[#2A2A2A] focus-visible:ring-white/10",
+        outline: "border-2 border-[#2A2A2A] bg-transparent",
       },
       size: {
-        sm: "min-h-[72px] px-3 py-2 text-sm",
-        default: "min-h-[96px] px-4 py-3 text-sm",
+        sm: "min-h-[72px] px-3 py-2 text-base md:text-sm", // 16px mobile (iOS zoom fix)
+        default: "min-h-[96px] px-4 py-3 text-base md:text-sm",
         lg: "min-h-[128px] px-5 py-4 text-base",
         xl: "min-h-[160px] px-6 py-5 text-base",
       },
@@ -169,7 +169,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
       }),
       leftIcon && "pl-12",
       (rightIcon || (showClearButton && hasValue)) && "pr-12",
-      disabled && "bg-[var(--hive-background-tertiary)] text-[var(--hive-text-muted)]",
+      disabled && "bg-[#1A1A1A] text-[#71717A]",
       className
     )
 
@@ -235,22 +235,22 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             <motion.label
               htmlFor={textareaId}
               className={cn(
-                "text-sm font-medium text-[var(--hive-text-primary)]",
+                "text-sm font-medium text-[#FAFAFA]",
                 disabled && "opacity-70"
               )}
               animate={{
                 color: isFocused && !error
-                  ? "var(--hive-brand-primary)"
-                  : "var(--hive-text-primary)",
+                  ? "#FAFAFA"
+                  : "#A1A1A6",
               }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
             >
               {label}
               {required ? (
-                <span className="ml-1 text-[var(--hive-status-error)]">*</span>
+                <span className="ml-1 text-[#FF3737]">*</span>
               ) : null}
               {optional ? (
-                <span className="ml-1 font-normal text-[var(--hive-text-secondary)]">
+                <span className="ml-1 font-normal text-[#A1A1A6]">
                   (optional)
                 </span>
               ) : null}
@@ -260,10 +260,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                 className={cn(
                   "text-xs",
                   isOverLimit
-                    ? "text-[var(--hive-status-error)]"
+                    ? "text-[#FF3737]"
                     : isNearLimit
-                    ? "text-[var(--hive-status-warning)]"
-                    : "text-[var(--hive-text-secondary)]"
+                    ? "text-[#FFB800]"
+                    : "text-[#A1A1A6]"
                 )}
                 aria-live="polite"
                 animate={{
@@ -281,18 +281,18 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         ) : null}
 
         {description ? (
-          <p className="text-xs text-[var(--hive-text-secondary)]">{description}</p>
+          <p className="text-xs text-[#A1A1A6]">{description}</p>
         ) : null}
 
         <div className="relative">
           {leftIcon ? (
             <motion.span
-              className="pointer-events-none absolute left-4 top-4 text-[var(--hive-text-secondary)]"
+              className="pointer-events-none absolute left-4 top-4 text-[#A1A1A6]"
               aria-hidden
               animate={{
                 color: isFocused
-                  ? "var(--hive-text-primary)"
-                  : "var(--hive-text-secondary)",
+                  ? "#FAFAFA"
+                  : "#A1A1A6",
               }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
             >
@@ -303,14 +303,14 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           {textareaNode}
 
           {(rightIcon || (showClearButton && hasValue && !disabled)) ? (
-            <span className="absolute right-3 top-3 flex items-start gap-1 text-[var(--hive-text-secondary)]">
+            <span className="absolute right-3 top-3 flex items-start gap-1 text-[#A1A1A6]">
               <AnimatePresence mode="wait">
                 {showClearButton && hasValue && !disabled && onClear ? (
                   <motion.button
                     key="clear-button"
                     type="button"
                     onClick={onClear}
-                    className="rounded-full p-1 transition-colors hover:text-[var(--hive-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-brand-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)]"
+                    className="rounded-full p-1 transition-colors hover:text-[#FAFAFA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
                     aria-label="Clear text"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -341,8 +341,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                   aria-hidden
                   animate={{
                     color: isFocused
-                      ? "var(--hive-text-primary)"
-                      : "var(--hive-text-secondary)",
+                      ? "#FAFAFA"
+                      : "#A1A1A6",
                   }}
                   transition={{ duration: duration.quick, ease: easing.smooth }}
                 >
@@ -368,8 +368,8 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
                 className={cn(
                   "leading-snug",
                   error
-                    ? "text-[var(--hive-status-error)]"
-                    : "text-[var(--hive-text-secondary)]"
+                    ? "text-[#FF3737]"
+                    : "text-[#A1A1A6]"
                 )}
                 role={error ? "alert" : undefined}
               >

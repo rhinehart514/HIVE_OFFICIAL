@@ -1,508 +1,256 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  FeedPageLayout,
-  FeedCardPost,
-  FeedCardEvent,
-  PostDetailModal,
-  type FeedItem,
-  type FeedCardPostData,
-  type PostDetailData,
-  type PostDetailComment,
-} from "@hive/ui";
-import { formatDistanceToNow } from "date-fns";
-import { logger } from "@/lib/logger";
-
-// =============================================================================
-// TYPES
-// =============================================================================
-
-interface FeedPostAPI {
-  id: string;
-  type: "post" | "event" | "tool" | "system";
-  content: string;
-  authorId: string;
-  authorName?: string;
-  authorHandle?: string;
-  authorAvatar?: string;
-  spaceId?: string;
-  spaceName?: string;
-  spaceColor?: string;
-  createdAt: string;
-  updatedAt: string;
-  reactions?: {
-    heart?: number;
-    comments?: number;
-    shares?: number;
-  };
-  tags?: string[];
-  isLiked?: boolean;
-  isBookmarked?: boolean;
-  isPinned?: boolean;
-  // Event-specific
-  eventDate?: string;
-  eventLocation?: string;
-  eventCapacity?: number;
-  eventAttendees?: number;
-}
-
-interface FeedResponse {
-  success: boolean;
-  posts: FeedPostAPI[];
-  pagination: {
-    limit: number;
-    cursor?: string;
-    nextCursor?: string;
-    hasMore: boolean;
-  };
-}
-
-type FilterType = "all" | "my_spaces" | "events";
-
-// =============================================================================
-// DATA TRANSFORMATION
-// =============================================================================
+import React from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Button, HiveLogo } from "@hive/ui";
+import { Sparkles, Users, Calendar, Zap, ArrowRight } from "lucide-react";
 
 /**
- * Transform API response to FeedItem format for virtualized list
+ * Feed Coming Soon Page
+ *
+ * HIVE-branded placeholder that feels intentional, not broken.
+ * Communicates value is coming while directing users to working features.
+ *
+ * Design principles:
+ * - 95% grayscale, 5% gold (HIVE identity)
+ * - Build anticipation without frustration
+ * - Tease what Feed will be
+ * - Clear CTAs to working features
  */
-function transformToFeedItem(post: FeedPostAPI): FeedItem {
-  return {
-    id: post.id,
-    type: post.type,
-    data: post,
-  };
-}
 
-/**
- * Transform API post to FeedCardPostData format
- */
-function transformToPostCard(post: FeedPostAPI): FeedCardPostData {
-  return {
-    id: post.id,
-    author: {
-      id: post.authorId,
-      name: post.authorName || "Unknown",
-      avatarUrl: post.authorAvatar,
-    },
-    space: {
-      id: post.spaceId || "",
-      name: post.spaceName || "General",
-      color: post.spaceColor,
-    },
-    content: {
-      body: post.content,
-      tags: post.tags,
-    },
-    stats: {
-      upvotes: post.reactions?.heart || 0,
-      comments: post.reactions?.comments || 0,
-      isUpvoted: post.isLiked || false,
-      isBookmarked: post.isBookmarked || false,
-    },
-    meta: {
-      timeAgo: formatDistanceToNow(new Date(post.createdAt), { addSuffix: true }),
-      isPinned: post.isPinned,
-    },
-  };
-}
+const COMING_SOON_FEATURES = [
+  {
+    icon: Users,
+    title: "Activity from your spaces",
+    description: "See what's happening across all communities you're part of",
+  },
+  {
+    icon: Calendar,
+    title: "Upcoming events",
+    description: "Never miss what's happening on campus",
+  },
+  {
+    icon: Zap,
+    title: "Tool highlights",
+    description: "Discover new tools your spaces are using",
+  },
+  {
+    icon: Sparkles,
+    title: "Personalized for you",
+    description: "Content that matches your interests and engagement",
+  },
+];
 
-// =============================================================================
-// FEED PAGE COMPONENT
-// =============================================================================
-
-export default function FeedPage() {
-  // State
-  const [posts, setPosts] = useState<FeedPostAPI[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [cursor, setCursor] = useState<string | undefined>();
-  const [hasMore, setHasMore] = useState(true);
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [_showComposer, setShowComposer] = useState(false);
-
-  // Post detail modal state
-  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
-  const [comments, setComments] = useState<PostDetailComment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-
-  // Transform posts to FeedItems for virtualized list
-  const feedItems = useMemo<FeedItem[]>(
-    () => posts.map(transformToFeedItem),
-    [posts]
-  );
-
-  // Get selected post for modal
-  const selectedPost = useMemo<PostDetailData | null>(() => {
-    if (!selectedPostId) return null;
-    const post = posts.find((p) => p.id === selectedPostId);
-    if (!post) return null;
-
-    return {
-      id: post.id,
-      author: {
-        id: post.authorId,
-        name: post.authorName || "Unknown",
-        avatarUrl: post.authorAvatar,
-      },
-      space: {
-        id: post.spaceId || "",
-        name: post.spaceName || "General",
-        color: post.spaceColor,
-      },
-      content: {
-        body: post.content,
-        tags: post.tags,
-      },
-      stats: {
-        upvotes: post.reactions?.heart || 0,
-        comments: post.reactions?.comments || 0,
-        isUpvoted: post.isLiked || false,
-        isBookmarked: post.isBookmarked || false,
-      },
-      createdAt: post.createdAt,
-      isEdited: false,
-      isPinned: post.isPinned,
-    };
-  }, [selectedPostId, posts]);
-
-  // =============================================================================
-  // DATA FETCHING
-  // =============================================================================
-
-  const fetchFeed = useCallback(async (reset = false) => {
-    try {
-      if (reset) {
-        setIsInitialLoad(true);
-        setPosts([]);
-        setCursor(undefined);
-      } else {
-        setIsLoading(true);
-      }
-      setError(null);
-
-      const params = new URLSearchParams({
-        limit: "20",
-        type: filter === "my_spaces" ? "all" : filter,
-      });
-
-      if (!reset && cursor) {
-        params.set("cursor", cursor);
-      }
-
-      const response = await fetch(`/api/feed?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch feed: ${response.status}`);
-      }
-
-      const data: FeedResponse = await response.json();
-
-      if (reset) {
-        setPosts(data.posts);
-      } else {
-        setPosts((prev) => [...prev, ...data.posts]);
-      }
-
-      setCursor(data.pagination.nextCursor);
-      setHasMore(data.pagination.hasMore);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to load feed"));
-    } finally {
-      setIsLoading(false);
-      setIsInitialLoad(false);
-    }
-  }, [filter, cursor]);
-
-  // Initial load and filter changes
-  useEffect(() => {
-    fetchFeed(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
-
-  // =============================================================================
-  // COMMENTS
-  // =============================================================================
-
-  const fetchComments = useCallback(async (postId: string) => {
-    setIsLoadingComments(true);
-    try {
-      const response = await fetch(`/api/posts/${postId}/comments`);
-      if (response.ok) {
-        const data = await response.json();
-        setComments(data.comments || []);
-      } else {
-        setComments([]);
-      }
-    } catch {
-      setComments([]);
-    } finally {
-      setIsLoadingComments(false);
-    }
-  }, []);
-
-  const handleSubmitComment = useCallback(async (postId: string, content: string) => {
-    try {
-      const response = await fetch(`/api/posts/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-      });
-
-      if (response.ok) {
-        const newComment = await response.json();
-        setComments((prev) => [...prev, newComment]);
-        // Update comment count in posts
-        setPosts((prev) =>
-          prev.map((post) =>
-            post.id === postId
-              ? {
-                  ...post,
-                  reactions: {
-                    ...post.reactions,
-                    comments: (post.reactions?.comments || 0) + 1,
-                  },
-                }
-              : post
-          )
-        );
-      }
-    } catch (err) {
-      logger.error("Failed to submit comment", { component: "FeedPage" }, err instanceof Error ? err : undefined);
-    }
-  }, []);
-
-  const handleCommentLike = useCallback(async (commentId: string) => {
-    // Optimistic update
-    setComments((prev) =>
-      prev.map((comment) =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              hasLiked: !comment.hasLiked,
-              likes: comment.likes + (comment.hasLiked ? -1 : 1),
-            }
-          : comment
-      )
-    );
-
-    try {
-      await fetch(`/api/comments/${commentId}/like`, { method: "POST" });
-    } catch {
-      // Revert on error
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === commentId
-            ? {
-                ...comment,
-                hasLiked: !comment.hasLiked,
-                likes: comment.likes + (comment.hasLiked ? 1 : -1),
-              }
-            : comment
-        )
-      );
-    }
-  }, []);
-
-  // =============================================================================
-  // ACTION HANDLERS
-  // =============================================================================
-
-  const handleUpvote = useCallback(async (postId: string) => {
-    // Optimistic update
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              reactions: {
-                ...post.reactions,
-                heart: (post.reactions?.heart || 0) + (post.isLiked ? -1 : 1),
-              },
-            }
-          : post
-      )
-    );
-
-    try {
-      await fetch(`/api/posts/${postId}/reactions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "heart" }),
-      });
-    } catch {
-      // Revert on error
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? {
-                ...post,
-                isLiked: !post.isLiked,
-                reactions: {
-                  ...post.reactions,
-                  heart: (post.reactions?.heart || 0) + (post.isLiked ? 1 : -1),
-                },
-              }
-            : post
-        )
-      );
-    }
-  }, []);
-
-  const handleComment = useCallback((postId: string) => {
-    setSelectedPostId(postId);
-    fetchComments(postId);
-  }, [fetchComments]);
-
-  const handleBookmark = useCallback(async (postId: string) => {
-    // Optimistic update
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === postId
-          ? { ...post, isBookmarked: !post.isBookmarked }
-          : post
-      )
-    );
-
-    try {
-      await fetch(`/api/bookmarks`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
-    } catch (err) {
-      logger.error("Failed to bookmark", { component: "FeedPage" }, err instanceof Error ? err : undefined);
-      // Revert on error
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? { ...post, isBookmarked: !post.isBookmarked }
-            : post
-        )
-      );
-    }
-  }, []);
-
-  const handleShare = useCallback((postId: string) => {
-    const url = `${window.location.origin}/posts/${postId}`;
-    if (navigator.share) {
-      navigator.share({ url });
-    } else {
-      navigator.clipboard.writeText(url);
-    }
-  }, []);
-
-  const handleOpenPost = useCallback((postId: string) => {
-    setSelectedPostId(postId);
-    fetchComments(postId);
-  }, [fetchComments]);
-
-  const handleSpaceClick = useCallback((spaceId: string) => {
-    window.location.href = `/spaces/${spaceId}`;
-  }, []);
-
-  // =============================================================================
-  // RENDER ITEM
-  // =============================================================================
-
-  const renderFeedItem = useCallback(
-    (item: FeedItem, _index: number) => {
-      const post = item.data as FeedPostAPI;
-
-      // Render event cards differently
-      if (item.type === "event" && post.eventDate) {
-        return (
-          <FeedCardEvent
-            event={{
-              id: post.id,
-              title: post.content,
-              coverImage: post.authorAvatar ? { type: 'image' as const, url: post.authorAvatar } : undefined,
-              space: {
-                id: post.spaceId || "",
-                name: post.spaceName || "Event",
-              },
-              meta: {
-                scheduleLabel: post.eventDate ? new Date(post.eventDate).toLocaleDateString() : "TBD",
-                locationLabel: post.eventLocation || "TBD",
-                status: new Date(post.eventDate) > new Date() ? "upcoming" : "past",
-              },
-              stats: {
-                attendingCount: post.eventAttendees || 0,
-                capacity: post.eventCapacity,
-                isAttending: false,
-              },
-            }}
-            onToggleRsvp={() => handleOpenPost(post.id)}
-            onViewDetails={() => handleOpenPost(post.id)}
-          />
-        );
-      }
-
-      // Default: render as post card
-      const postData = transformToPostCard(post);
-
-      return (
-        <FeedCardPost
-          post={postData}
-          onOpen={handleOpenPost}
-          onSpaceClick={handleSpaceClick}
-          onUpvote={handleUpvote}
-          onComment={handleComment}
-          onBookmark={handleBookmark}
-          onShare={handleShare}
-        />
-      );
-    },
-    [handleOpenPost, handleSpaceClick, handleUpvote, handleComment, handleBookmark, handleShare]
-  );
-
-  // =============================================================================
-  // RENDER
-  // =============================================================================
-
+// Honeycomb pattern for background
+function HoneycombPattern() {
   return (
-    <>
-      <FeedPageLayout
-        title="Your Feed"
-        showComposer={true}
-        onCompose={() => setShowComposer(true)}
-        activeFilter={filter}
-        onFilterChange={setFilter}
-        feedItems={feedItems}
-        renderFeedItem={renderFeedItem}
-        onLoadMore={() => fetchFeed(false)}
-        hasMore={hasMore}
-        isLoading={isLoading}
-        isInitialLoad={isInitialLoad}
-        error={error}
-        onRetry={() => fetchFeed(true)}
-      />
+    <div className="absolute inset-0 overflow-hidden opacity-[0.03]">
+      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern
+            id="honeycomb"
+            width="56"
+            height="100"
+            patternUnits="userSpaceOnUse"
+            patternTransform="scale(2)"
+          >
+            <path
+              d="M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <path
+              d="M28 0L28 34L0 50L0 84L28 100L56 84L56 50L28 34"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#honeycomb)" />
+      </svg>
+    </div>
+  );
+}
 
-      {/* Post Detail Modal */}
-      <PostDetailModal
-        open={!!selectedPostId}
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedPostId(null);
-            setComments([]);
-          }
-        }}
-        post={selectedPost}
-        comments={comments}
-        isLoadingComments={isLoadingComments}
-        onUpvote={handleUpvote}
-        onBookmark={handleBookmark}
-        onShare={handleShare}
-        onComment={handleSubmitComment}
-        onCommentLike={handleCommentLike}
-        onSpaceClick={handleSpaceClick}
-        onAuthorClick={(authorId) => {
-          window.location.href = `/profile/${authorId}`;
-        }}
-      />
-    </>
+// Ghost card preview
+function GhostCard({ delay = 0 }: { delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay }}
+      className="rounded-xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur-sm"
+    >
+      <div className="flex items-start gap-3">
+        <div className="h-10 w-10 rounded-full bg-white/5 animate-pulse" />
+        <div className="flex-1 space-y-2">
+          <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
+          <div className="h-2 w-16 rounded bg-white/5 animate-pulse" />
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <div className="h-2 w-full rounded bg-white/5 animate-pulse" />
+        <div className="h-2 w-4/5 rounded bg-white/5 animate-pulse" />
+        <div className="h-2 w-3/5 rounded bg-white/5 animate-pulse" />
+      </div>
+      <div className="mt-4 flex gap-4">
+        <div className="h-6 w-16 rounded bg-white/5 animate-pulse" />
+        <div className="h-6 w-16 rounded bg-white/5 animate-pulse" />
+        <div className="h-6 w-16 rounded bg-white/5 animate-pulse" />
+      </div>
+    </motion.div>
+  );
+}
+
+export default function FeedComingSoonPage() {
+  return (
+    <div className="relative min-h-screen bg-[#0A0A0A] overflow-hidden">
+      {/* Background pattern */}
+      <HoneycombPattern />
+
+      {/* Gradient orb */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-amber-500/5 via-transparent to-transparent blur-3xl" />
+
+      {/* Content */}
+      <div className="relative z-10 mx-auto max-w-6xl px-4 py-16 sm:py-24">
+        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+          {/* Left: Copy */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center lg:text-left"
+          >
+            {/* Logo badge */}
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/5 px-3 py-1.5 mb-6">
+              <HiveLogo size="sm" showIcon showText={false} />
+              <span className="text-xs font-medium text-amber-500/80">Coming Soon</span>
+            </div>
+
+            {/* Headline */}
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Your{" "}
+              <span className="relative">
+                <span className="relative z-10 bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+                  Feed
+                </span>
+                <motion.span
+                  className="absolute -bottom-1 left-0 h-[2px] w-full bg-gradient-to-r from-amber-400/50 to-transparent"
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
+                />
+              </span>
+              <br />
+              is on the way
+            </h1>
+
+            {/* Subheadline */}
+            <p className="mt-6 text-lg text-[#A1A1A6] leading-relaxed max-w-lg mx-auto lg:mx-0">
+              We're building a personalized campus pulse that shows what matters
+              across all your spaces. Posts, events, tools, and more — all in one place.
+            </p>
+
+            {/* Feature list */}
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {COMING_SOON_FEATURES.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.4 + index * 0.1 }}
+                  className="flex items-start gap-3 text-left"
+                >
+                  <div className="flex-shrink-0 rounded-lg bg-white/5 p-2">
+                    <feature.icon className="h-4 w-4 text-[#A1A1A6]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{feature.title}</p>
+                    <p className="text-xs text-[#818187]">{feature.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTAs */}
+            <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+              <Button asChild size="lg" className="gap-2">
+                <Link href="/spaces">
+                  Explore Spaces
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/tools/create">Build a Tool</Link>
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Right: Ghost preview cards */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="relative hidden lg:block"
+          >
+            {/* Glass container */}
+            <div className="relative rounded-2xl border border-white/5 bg-white/[0.01] p-6 backdrop-blur-sm">
+              {/* Fake tab bar */}
+              <div className="mb-6 flex gap-4 border-b border-white/5 pb-4">
+                <div className="h-8 w-20 rounded-lg bg-white/5" />
+                <div className="h-8 w-24 rounded-lg bg-white/[0.02]" />
+                <div className="h-8 w-16 rounded-lg bg-white/[0.02]" />
+              </div>
+
+              {/* Ghost cards */}
+              <div className="space-y-4">
+                <GhostCard delay={0.3} />
+                <GhostCard delay={0.4} />
+                <GhostCard delay={0.5} />
+              </div>
+
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
+            </div>
+
+            {/* Floating notification */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+              className="absolute -bottom-4 -left-8 rounded-xl border border-amber-500/20 bg-[#141414] p-4 shadow-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-amber-500/10 p-2">
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">Personalized for you</p>
+                  <p className="text-xs text-[#818187]">Based on your interests</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Bottom note */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1 }}
+          className="mt-24 text-center"
+        >
+          <p className="text-sm text-[#818187]">
+            In the meantime, your spaces are buzzing with activity.{" "}
+            <Link href="/spaces" className="text-amber-500/80 hover:text-amber-500 transition-colors">
+              Jump in →
+            </Link>
+          </p>
+        </motion.div>
+      </div>
+    </div>
   );
 }

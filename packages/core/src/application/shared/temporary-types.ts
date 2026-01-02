@@ -438,11 +438,22 @@ export interface Post {
   [key: string]: unknown;
 }
 
+// Event source configuration for RSS/Atom feeds
+export interface EventSource {
+  type: 'campuslabs' | 'presence' | 'generic_rss' | 'atom';
+  url: string;
+  enabled: boolean;
+  lastSyncAt?: Date | any;
+  syncFrequency: 'daily' | 'weekly';
+  hostMatchField?: string; // Field in RSS that maps to org names
+}
+
 // School type definition
 export interface School {
   id: string;
   name: string;
-  domain: string;
+  shortName?: string;
+  domain: string; // Primary domain (kept for backwards compatibility)
   logo?: string;
   location: {
     city: string;
@@ -454,9 +465,34 @@ export interface School {
     facultyCount: number;
   };
   campusId: string;
-  isActive: boolean;
+  isActive: boolean; // Kept for backwards compatibility
+  status: 'waitlist' | 'beta' | 'active' | 'suspended';
   createdAt: Date | any;
   updatedAt?: Date | any;
+
+  // Email domain validation (multi-domain support)
+  emailDomains: {
+    student: string[];
+    faculty: string[];
+    staff: string[];
+    alumni: string[];
+  };
+
+  // RSS/Atom event feed configuration
+  eventSources: EventSource[];
+
+  // Branding
+  brandColors?: {
+    primary: string;
+    secondary: string;
+  };
+
+  // Capacity limits (for beta)
+  maxUsers?: number;
+
+  // Onboarding customization
+  welcomeMessage?: string;
+  setupGuideUrl?: string;
 }
 
 // User type definition

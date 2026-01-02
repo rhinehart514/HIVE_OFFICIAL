@@ -94,7 +94,7 @@ const indicatorVariants: Variants = {
     scaleX: 1,
     opacity: 1,
     transition: {
-      ...springPresets.bouncy,
+      ...springPresets.snappy, // Changed from bouncy - confident, not playful
       opacity: { duration: 0.15 },
     },
   },
@@ -105,15 +105,9 @@ const badgeVariants: Variants = {
   animate: {
     scale: 1,
     opacity: 1,
-    transition: springPresets.bouncy,
+    transition: springPresets.snappy, // Changed from bouncy
   },
-  pulse: {
-    scale: [1, 1.2, 1],
-    transition: {
-      duration: 0.3,
-      ease: "easeInOut",
-    },
-  },
+  // Removed pulse variant - badges don't need to bounce
 };
 
 // ============================================================
@@ -137,7 +131,7 @@ function TabPill({ tab, isActive, onClick, isLeader }: TabPillProps) {
       className={cn(
         "relative px-4 py-2 text-sm font-medium whitespace-nowrap",
         "rounded-full transition-colors duration-200",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50",
         isActive
           ? "text-white"
           : "text-neutral-400 hover:text-neutral-200"
@@ -162,7 +156,7 @@ function TabPill({ tab, isActive, onClick, isLeader }: TabPillProps) {
             initial="initial"
             animate="animate"
             exit={{ scale: 0, opacity: 0, transition: { duration: 0.15 } }}
-            className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FFD700] rounded-full"
+            className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full"
           />
         )}
       </AnimatePresence>
@@ -178,7 +172,7 @@ function TabPill({ tab, isActive, onClick, isLeader }: TabPillProps) {
             className={cn(
               "absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1",
               "flex items-center justify-center",
-              "text-[10px] font-bold text-black bg-[#FFD700] rounded-full"
+              "text-[10px] font-bold text-black bg-white rounded-full"
             )}
           >
             {tab.badgeCount > 99 ? "99+" : tab.badgeCount}
@@ -195,7 +189,7 @@ function TabPill({ tab, isActive, onClick, isLeader }: TabPillProps) {
             initial="initial"
             animate="animate"
             exit={{ scaleX: 0, opacity: 0, transition: { duration: 0.15 } }}
-            className="absolute bottom-0 left-2 right-2 h-0.5 bg-[#FFD700] rounded-full"
+            className="absolute bottom-0 left-2 right-2 h-0.5 bg-white rounded-full"
             style={{ originX: 0.5 }}
           />
         )}
@@ -309,7 +303,7 @@ export function SpaceTabBar({
               "bg-white/5 hover:bg-white/10",
               "border border-white/[0.06] hover:border-white/[0.1]",
               "transition-colors duration-200",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             )}
             aria-label="Add new tab"
           >
@@ -343,7 +337,7 @@ export function SpaceTabBar({
             "text-neutral-500 hover:text-neutral-300",
             "hover:bg-white/5",
             "transition-colors duration-200",
-            "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50"
+            "focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           )}
           aria-label="Space settings"
         >

@@ -48,7 +48,7 @@ const PRIVACY_LEVELS: Array<{
     label: "Ghost",
     description: "Hidden across Hive",
     icon: Ghost,
-    tone: "text-purple-400",
+    tone: "text-neutral-400",
   },
 ];
 

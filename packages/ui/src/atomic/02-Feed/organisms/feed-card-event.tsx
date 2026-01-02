@@ -92,7 +92,7 @@ export const FeedCardEvent = React.forwardRef<HTMLDivElement, FeedCardEventProps
       <article
         ref={ref}
         className={cn(
-          'group relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--hive-border-default) 70%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 96%,transparent)] shadow-[0_24px_45px_rgba(5,7,13,0.35)] transition-colors hover:border-[color-mix(in_srgb,var(--hive-border-default) 40%,transparent)]',
+          'group relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--hive-border-default) 70%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 96%,transparent)] shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-colors hover:border-[color-mix(in_srgb,var(--hive-border-default) 40%,transparent)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5)]',
           className
         )}
         {...props}

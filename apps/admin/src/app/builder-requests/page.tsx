@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@hive/ui';
 import {
   Check,
   X,
@@ -92,7 +93,7 @@ export default function BuilderRequestsPage() {
       setExpandedId(null);
       setReviewNotes('');
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Failed to process request');
+      toast.error(error instanceof Error ? error.message : 'Failed to process request');
     } finally {
       setProcessingId(null);
     }

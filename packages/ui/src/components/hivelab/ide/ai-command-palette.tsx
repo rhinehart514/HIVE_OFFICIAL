@@ -294,9 +294,9 @@ export function AICommandPalette({
               {/* Input Area */}
               <div className={cn("flex items-center gap-3 px-5 py-4 border-b", ideClasses.borderDefault)}>
                 {loading ? (
-                  <Loader2 className="h-5 w-5 text-[#FFD700] animate-spin flex-shrink-0" />
+                  <Loader2 className="h-5 w-5 text-neutral-400 animate-spin flex-shrink-0" />
                 ) : (
-                  <Sparkles className="h-5 w-5 text-[#FFD700] flex-shrink-0" />
+                  <Sparkles className="h-5 w-5 text-white flex-shrink-0" />
                 )}
                 <input
                   ref={inputRef}
@@ -323,8 +323,8 @@ export function AICommandPalette({
               {streamingText && (
                 <div className="px-5 py-4 border-b border-[#333] bg-[#151515]">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sparkles className="h-3.5 w-3.5 text-[#FFD700]" />
+                    <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Sparkles className="h-3.5 w-3.5 text-white" />
                     </div>
                     <p className="text-sm text-[#ccc] whitespace-pre-wrap">{streamingText}</p>
                   </div>
@@ -340,7 +340,7 @@ export function AICommandPalette({
                       <div className="px-4 py-1.5 text-xs font-medium text-[#666] uppercase tracking-wider flex items-center justify-between">
                         <span>Commands</span>
                         {selectedCount > 0 && (
-                          <span className="text-[#FFD700] normal-case font-normal">
+                          <span className="text-white normal-case font-normal">
                             {selectedCount} element{selectedCount > 1 ? 's' : ''} selected
                           </span>
                         )}
@@ -352,7 +352,7 @@ export function AICommandPalette({
                           className={cn(
                             'w-full px-4 py-3 flex items-center gap-3 transition-colors',
                             index === selectedIndex
-                              ? 'bg-[#FFD700]/10 text-white'
+                              ? 'bg-white/[0.08] text-white'
                               : 'text-[#999] hover:bg-[#252525] hover:text-white'
                           )}
                           onClick={() => {
@@ -365,7 +365,7 @@ export function AICommandPalette({
                             className={cn(
                               'w-8 h-8 rounded-lg flex items-center justify-center',
                               index === selectedIndex
-                                ? 'bg-[#FFD700]/20 text-[#FFD700]'
+                                ? 'bg-white/[0.12] text-white'
                                 : 'bg-[#252525] text-[#666]'
                             )}
                           >
@@ -383,10 +383,10 @@ export function AICommandPalette({
                     <div className="py-2">
                       <button
                         type="button"
-                        className="w-full px-4 py-3 flex items-center gap-3 bg-[#FFD700]/10 text-white"
+                        className="w-full px-4 py-3 flex items-center gap-3 bg-white/[0.08] text-white"
                         onClick={() => onSubmit(input, 'generate')}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-[#FFD700]/20 text-[#FFD700] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-lg bg-white/[0.12] text-white flex items-center justify-center">
                           <Wand2 className="h-4 w-4" />
                         </div>
                         <div className="flex-1 text-left">
@@ -425,7 +425,7 @@ export function AICommandPalette({
               {selectedCommand && !loading && (
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded bg-[#FFD700]/20 text-[#FFD700] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded bg-white/[0.12] text-white flex items-center justify-center">
                       {selectedCommand.icon}
                     </div>
                     <span className="text-sm font-medium text-white">{selectedCommand.label}</span>

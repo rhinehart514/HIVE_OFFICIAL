@@ -30,7 +30,7 @@ import {
   MessageSquare,
   ChevronRight,
   ChevronLeft,
-  Sparkles,
+  PartyPopper,
   Check,
 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
@@ -121,8 +121,8 @@ function WelcomeStep({ data, onNext }: StepProps) {
             className="w-20 h-20 rounded-2xl object-cover shadow-lg shadow-black/30"
           />
         ) : (
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FFD700] to-[#FFD700]/70 flex items-center justify-center shadow-lg shadow-[#FFD700]/20">
-            <span className="text-3xl font-bold text-black">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center shadow-lg shadow-black/30">
+            <span className="text-3xl font-bold text-white">
               {data.name.charAt(0)}
             </span>
           </div>
@@ -133,7 +133,7 @@ function WelcomeStep({ data, onNext }: StepProps) {
           transition={{ delay: 0.3, type: 'spring', stiffness: 300 }}
           className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#FFD700] flex items-center justify-center shadow-lg"
         >
-          <Sparkles className="w-4 h-4 text-black" />
+          <PartyPopper className="w-4 h-4 text-black" />
         </motion.div>
       </div>
 
@@ -164,7 +164,7 @@ function WelcomeStep({ data, onNext }: StepProps) {
         className="flex items-center gap-4 text-sm text-neutral-300 mb-8"
       >
         <div className="flex items-center gap-1.5">
-          <Users className="w-4 h-4 text-[#FFD700]" />
+          <Users className="w-4 h-4 text-neutral-400" />
           <span>{data.memberCount.toLocaleString()} members</span>
         </div>
         {data.category && (
@@ -246,7 +246,7 @@ function FeaturesStep({ data, onNext, onBack }: StepProps) {
       case 'discussions':
         return 'text-purple-400 bg-purple-400/10';
       default:
-        return 'text-[#FFD700] bg-[#FFD700]/10';
+        return 'text-neutral-300 bg-white/[0.08]';
     }
   };
 
@@ -342,7 +342,7 @@ function GuidelinesStep({ data, onBack, onComplete, onStartChatting }: StepProps
                 transition={{ delay: index * 0.1 }}
                 className="flex items-start gap-3 p-3 rounded-lg bg-neutral-800/30"
               >
-                <Check className="w-4 h-4 text-[#FFD700] flex-shrink-0 mt-0.5" />
+                <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
                 <span className="text-sm text-neutral-300">{guideline}</span>
               </motion.div>
             ))}
@@ -353,9 +353,9 @@ function GuidelinesStep({ data, onBack, onComplete, onStartChatting }: StepProps
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-16 h-16 rounded-full bg-[#FFD700]/10 flex items-center justify-center mx-auto mb-4"
+            className="w-16 h-16 rounded-full bg-white/[0.08] flex items-center justify-center mx-auto mb-4"
           >
-            <MessageSquare className="w-8 h-8 text-[#FFD700]" />
+            <MessageSquare className="w-8 h-8 text-neutral-300" />
           </motion.div>
           <h2 className="text-xl font-bold text-white mb-2">
             You're all set!
@@ -566,7 +566,7 @@ export function SpaceWelcomeModal({
                   className={cn(
                     'w-2 h-2 rounded-full transition-all',
                     index === currentStep
-                      ? 'bg-[#FFD700] scale-125'
+                      ? 'bg-white scale-125'
                       : 'bg-neutral-700 hover:bg-neutral-600'
                   )}
                   aria-label={`Go to step ${index + 1}`}

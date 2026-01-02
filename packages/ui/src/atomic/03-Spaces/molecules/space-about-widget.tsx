@@ -90,7 +90,7 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
       <div className={cn('flex flex-col', compact ? 'gap-3' : 'gap-5')}>
         {/* Description */}
         {data.description ? (
-          <p className="text-sm leading-relaxed text-neutral-300">
+          <p className="text-sm leading-relaxed text-[#A1A1A6]">
             {data.description}
           </p>
         ) : (
@@ -106,26 +106,28 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
         {/* Stats Grid */}
         {!compact && (
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1 rounded-xl border border-neutral-800/50 bg-neutral-900/50 p-3">
-              <div className="flex items-center gap-2 text-neutral-500">
+            {/* Members Card */}
+            <div className="group flex flex-col gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-3 transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.05]">
+              <div className="flex items-center gap-2 text-neutral-400">
                 <Users className="h-4 w-4" />
                 <span className="text-[10px] font-medium uppercase tracking-wider">
                   Members
                 </span>
               </div>
-              <span className="text-2xl font-bold text-neutral-100">
+              <span className="text-2xl font-bold text-[#FAFAFA]">
                 {memberCount.toLocaleString()}
               </span>
             </div>
 
-            <div className="flex flex-col gap-1 rounded-xl border border-neutral-800/50 bg-neutral-900/50 p-3">
-              <div className="flex items-center gap-2 text-neutral-500">
+            {/* Leaders Card - Subtle neutral */}
+            <div className="group flex flex-col gap-1.5 rounded-xl border border-[#2A2A2A] bg-[#141414]/80 p-3 transition-all duration-200 hover:border-[#3A3A3A] hover:bg-[#1A1A1A]">
+              <div className="flex items-center gap-2 text-[#71717A]">
                 <Shield className="h-4 w-4" />
                 <span className="text-[10px] font-medium uppercase tracking-wider">
                   Leaders
                 </span>
               </div>
-              <span className="text-2xl font-bold text-neutral-100">
+              <span className="text-2xl font-bold text-[#FAFAFA]">
                 {leaders.length}
               </span>
             </div>
@@ -135,7 +137,7 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
         {/* Leaders */}
         {leaders.length > 0 && (
           <div className="flex flex-col gap-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[#71717A]">
               Space Leaders
             </h4>
             <div className="flex flex-col gap-2">
@@ -146,20 +148,20 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
                   className={cn(
                     'group flex items-center gap-3 rounded-lg border border-transparent p-2',
                     'transition-colors duration-150',
-                    'hover:border-neutral-800/50 hover:bg-neutral-900/50',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50'
+                    'hover:border-[#2A2A2A] hover:bg-[#141414]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
                   )}
                   whileHover={shouldReduceMotion ? undefined : { x: 4 }}
                   whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold-500/10 text-xs font-bold text-gold-400">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-xs font-bold text-white">
                     {leader.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex flex-1 flex-col items-start gap-0.5 min-w-0">
-                    <span className="text-sm font-medium text-neutral-100 truncate w-full text-left">
+                    <span className="text-sm font-medium text-[#FAFAFA] truncate w-full text-left">
                       {leader.name}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+                    <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
                       {leader.role}
                     </span>
                   </div>
@@ -171,17 +173,17 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
 
         {/* Meta Info */}
         {!compact && (
-          <div className="flex flex-wrap gap-2 border-t border-neutral-800/50 pt-4">
+          <div className="flex flex-wrap gap-2 border-t border-[#2A2A2A] pt-4">
             {category && (
-              <Badge variant="outline" className="text-neutral-400 border-neutral-700">
+              <Badge variant="outline" className="text-[#A1A1A6] border-[#3A3A3A]">
                 {category}
               </Badge>
             )}
-            <Badge variant="outline" className="text-neutral-400 border-neutral-700">
+            <Badge variant="outline" className="text-[#A1A1A6] border-[#3A3A3A]">
               {isPublic ? 'Public' : 'Private'}
             </Badge>
             {createdDate && (
-              <span className="text-[10px] uppercase tracking-wider text-neutral-500">
+              <span className="text-[10px] uppercase tracking-wider text-[#71717A]">
                 Est. {createdDate}
               </span>
             )}
@@ -199,8 +201,8 @@ export const SpaceAboutWidget = React.forwardRef<HTMLDivElement, SpaceAboutWidge
         <div ref={ref} className={cn('px-4', className)} {...props}>
           {/* Section header for inline mode */}
           <div className="flex items-center gap-2 mb-3">
-            <Info className="h-4 w-4 text-neutral-400" />
-            <span className="font-medium text-sm text-neutral-100">About</span>
+            <Info className="h-4 w-4 text-[#71717A]" />
+            <span className="font-medium text-sm text-[#FAFAFA]">About</span>
           </div>
           {content}
         </div>

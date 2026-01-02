@@ -2,11 +2,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion, LayoutGroup } from 'framer-motion';
 import { CommandPalette, type CommandPaletteItem } from '../atomic/00-Global/organisms/command-palette';
+import { SpaceSwitcher, type SpaceSwitcherSpace } from '../atomic/00-Global/organisms/space-switcher';
+import { SpaceRail, type SpaceItem, type NotificationItem } from '../atomic/00-Global/organisms/space-rail';
+import { useMediaQuery } from '../hooks/use-media-query';
+import { easingArrays } from '@hive/tokens';
 
-// Silk easing - smooth, confident
-const SILK_EASE = [0.22, 1, 0.36, 1];
+// Silk easing - smooth, confident (from design tokens)
+const SILK_EASE = easingArrays.silk;
 
 // Spring config for OpenAI-style fluid motion
 const SPRING_CONFIG = {
@@ -14,6 +18,38 @@ const SPRING_CONFIG = {
   stiffness: 400,
   damping: 30,
 };
+
+// ============================================
+// CONTEXTUAL PANEL TYPES
+// ============================================
+
+export interface ActivityItem {
+  id: string;
+  type: 'message' | 'event' | 'mention' | 'reaction';
+  title: string;
+  subtitle?: string;
+  timestamp: string;
+  spaceId?: string;
+  spaceName?: string;
+}
+
+export interface PresenceSpaceItem {
+  id: string;
+  name: string;
+  avatar?: string;
+  memberCount: number;
+  activeNow: number;
+  isPinned?: boolean;
+  unreadCount?: number;
+  lastActivity?: string;
+}
+
+export interface UserStats {
+  spacesJoined: number;
+  connections: number;
+  eventsThisWeek?: number;
+  streak?: number;
+}
 
 // Smooth transition for content reveals
 const CONTENT_TRANSITION = {
@@ -131,6 +167,252 @@ const NAV_ICONS: Record<string, React.FC> = {
   schedules: CalendarIcon,
 };
 
+// ============================================
+// CONTEXTUAL PANEL COMPONENTS
+// ============================================
+
+// Icons for contextual panels
+const MessageIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+  </svg>
+);
+
+const HeartIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+  </svg>
+);
+
+const SmallCalendarIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+  </svg>
+);
+
+// Feed Panel — Recent activity
+const FeedContextPanel: React.FC<{ recentActivity?: ActivityItem[] }> = ({ recentActivity = [] }) => {
+  const getTypeIcon = (type: ActivityItem['type']) => {
+    switch (type) {
+      case 'mention':
+        return <span className="text-neutral-400">@</span>;
+      case 'event':
+        return <SmallCalendarIcon />;
+      case 'message':
+        return <MessageIcon />;
+      case 'reaction':
+        return <HeartIcon />;
+    }
+  };
+
+  if (recentActivity.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-[13px] text-neutral-500">No recent activity</p>
+        <p className="text-[11px] text-neutral-600 mt-1">Activity from your spaces will appear here</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-0.5">
+      <div className="px-3 py-2">
+        <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+          Recent
+        </span>
+      </div>
+      {recentActivity.slice(0, 5).map((item) => (
+        <motion.button
+          key={item.id}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-neutral-800/50 transition-colors duration-150"
+        >
+          <div className="w-5 h-5 flex items-center justify-center flex-shrink-0 text-neutral-400">
+            {getTypeIcon(item.type)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] text-neutral-300 truncate">{item.title}</div>
+          </div>
+          <div className="text-[11px] text-neutral-600 flex-shrink-0">{item.timestamp}</div>
+        </motion.button>
+      ))}
+      <div className="px-3 py-2 flex items-center gap-1.5 text-[10px] text-neutral-600">
+        <span className="px-1 py-0.5 rounded bg-neutral-800 font-mono">⌘K</span>
+        <span>search</span>
+      </div>
+    </div>
+  );
+};
+
+// Spaces Panel — Pinned + Recent with presence
+const SpacesContextPanel: React.FC<{
+  spaces?: PresenceSpaceItem[];
+  onSpaceSelect?: (id: string) => void;
+  onCreateSpace?: () => void;
+}> = ({ spaces = [], onSpaceSelect, onCreateSpace }) => {
+  const pinnedSpaces = spaces.filter((s) => s.isPinned).slice(0, 3);
+  const recentSpaces = spaces.filter((s) => !s.isPinned).slice(0, 5);
+
+  if (spaces.length === 0) {
+    return (
+      <div className="py-4 text-center">
+        <p className="text-[13px] text-neutral-500">No spaces yet</p>
+        <button
+          onClick={onCreateSpace}
+          className="mt-2 text-[12px] text-[#FFD700] hover:underline"
+        >
+          Create your first space
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {/* Pinned */}
+      {pinnedSpaces.length > 0 && (
+        <>
+          <div className="px-3 py-2">
+            <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+              Pinned
+            </span>
+          </div>
+          {pinnedSpaces.map((space) => (
+            <SpaceContextRow key={space.id} space={space} onSelect={onSpaceSelect} />
+          ))}
+        </>
+      )}
+
+      {/* Recent */}
+      {recentSpaces.length > 0 && (
+        <>
+          <div className="px-3 py-2">
+            <span className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
+              Recent
+            </span>
+          </div>
+          {recentSpaces.map((space) => (
+            <SpaceContextRow key={space.id} space={space} onSelect={onSpaceSelect} />
+          ))}
+        </>
+      )}
+
+      {/* Create space */}
+      {onCreateSpace && (
+        <button
+          onClick={onCreateSpace}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[13px] text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/30 transition-all duration-150"
+        >
+          <PlusIcon />
+          <span>Create space</span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+// Space row with presence indicator
+const SpaceContextRow: React.FC<{
+  space: PresenceSpaceItem;
+  onSelect?: (id: string) => void;
+}> = ({ space, onSelect }) => (
+  <motion.button
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    onClick={() => onSelect?.(space.id)}
+    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-neutral-800/50 transition-colors duration-150 group"
+  >
+    {/* Avatar with presence dot */}
+    <div className="relative w-8 h-8 rounded-lg bg-neutral-800 flex items-center justify-center text-neutral-400 text-[13px] font-medium flex-shrink-0">
+      {space.avatar ? (
+        <img src={space.avatar} alt={space.name} className="w-full h-full rounded-lg object-cover" />
+      ) : (
+        space.name.charAt(0)
+      )}
+      {space.activeNow > 0 && (
+        <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+      )}
+    </div>
+
+    {/* Name */}
+    <span className="flex-1 min-w-0 text-[13px] text-neutral-400 group-hover:text-neutral-200 truncate transition-colors">
+      {space.name}
+    </span>
+
+    {/* Unread badge — gold */}
+    {space.unreadCount && space.unreadCount > 0 && (
+      <span className="flex-shrink-0 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FFD700] text-black text-[10px] font-semibold flex items-center justify-center">
+        {space.unreadCount > 9 ? '9+' : space.unreadCount}
+      </span>
+    )}
+  </motion.button>
+);
+
+// Profile Panel — Stats + quick actions
+const ProfileContextPanel: React.FC<{
+  userStats?: UserStats;
+  userName?: string;
+  userHandle?: string;
+  onAction?: (action: string) => void;
+}> = ({ userStats, userName, userHandle, onAction }) => {
+  return (
+    <div className="space-y-4">
+      {/* User header */}
+      <div className="px-3 py-2 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center">
+          <UserIcon />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium text-neutral-200">{userName || 'Your Profile'}</div>
+          <div className="text-[12px] text-neutral-500">{userHandle ? `@${userHandle}` : ''}</div>
+        </div>
+      </div>
+
+      {/* Stats — inline */}
+      {userStats && (
+        <div className="px-3 flex gap-6">
+          <div>
+            <div className="text-[18px] font-medium text-neutral-200">{userStats.spacesJoined}</div>
+            <div className="text-[11px] text-neutral-500 uppercase tracking-wider">Spaces</div>
+          </div>
+          <div>
+            <div className="text-[18px] font-medium text-neutral-200">{userStats.connections}</div>
+            <div className="text-[11px] text-neutral-500 uppercase tracking-wider">Connections</div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick actions */}
+      <div className="px-1 space-y-0.5">
+        <ProfileActionButton icon={UserIcon} label="Edit Profile" onClick={() => onAction?.('edit-profile')} />
+        <ProfileActionButton icon={SmallCalendarIcon} label="Calendar" onClick={() => onAction?.('calendar')} />
+        <ProfileActionButton icon={SettingsIcon} label="Settings" shortcut="⌘," onClick={() => onAction?.('settings')} />
+      </div>
+    </div>
+  );
+};
+
+const ProfileActionButton: React.FC<{
+  icon: React.FC;
+  label: string;
+  shortcut?: string;
+  onClick?: () => void;
+}> = ({ icon: Icon, label, shortcut, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/30 transition-all duration-150 group"
+  >
+    <Icon />
+    <span className="text-[13px] flex-1">{label}</span>
+    {shortcut && (
+      <span className="text-[10px] text-neutral-600 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+        {shortcut}
+      </span>
+    )}
+  </button>
+);
+
 // Collapsible Section Component - like Income > Earnings/Refunds in reference
 interface CollapsibleSectionProps {
   id: string;
@@ -172,13 +454,13 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
         {Icon && <Icon />}
         <span className="flex-1 text-left text-[14px] font-medium">{label}</span>
         {badge && badge > 0 && (
-          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-gold-500/20 text-gold-500 rounded-md">
+          <span className="px-1.5 py-0.5 text-[11px] font-medium bg-white/10 text-white rounded-md">
             {badge}
           </span>
         )}
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.2, ease: SILK_EASE }}
           className="text-neutral-500"
         >
           <ChevronDownIcon />
@@ -191,7 +473,7 @@ const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.2, ease: SILK_EASE }}
             className="overflow-hidden"
           >
             <div className="pl-4 border-l border-neutral-800/50 ml-5 space-y-0.5">
@@ -274,7 +556,13 @@ export interface UniversalShellProps {
   mobileNavItems?: ShellMobileNavItem[];
   notificationCount?: number;
   messageCount?: number;
-  notifications?: Array<Record<string, unknown>>;
+  /** Typed notifications for the dropdown */
+  notifications?: Array<{
+    id: string;
+    text: string;
+    time: string;
+    unread?: boolean;
+  }>;
   notificationsLoading?: boolean;
   notificationsError?: string | null;
   mySpaces?: ShellSpaceSection[];
@@ -285,17 +573,45 @@ export interface UniversalShellProps {
   userAvatarUrl?: string;
   userName?: string;
   userHandle?: string;
+  userEmail?: string;
+  userMajor?: string;
+  userGradYear?: string;
+  userCampus?: string;
+  /** Sign out handler */
+  onSignOut?: () => void;
   // Command palette props
   commandPaletteItems?: CommandPaletteItem[];
   onCommandPaletteSearch?: (query: string) => void;
   commandPaletteLoading?: boolean;
   onCommandPaletteSelect?: (item: CommandPaletteItem) => void;
+  // Contextual panel props (OpenAI/Apple-style contextual sidebar)
+  /** Enable contextual panels that change based on active section */
+  enableContextualPanels?: boolean;
+  /** Recent activity for Feed panel */
+  recentActivity?: ActivityItem[];
+  /** Spaces with presence for Spaces panel */
+  presenceSpaces?: PresenceSpaceItem[];
+  /** User stats for Profile panel */
+  userStats?: UserStats;
+  /** Handler when space is selected from contextual panel */
+  onSpaceSelect?: (spaceId: string) => void;
+  /** Handler for create space action */
+  onCreateSpace?: () => void;
+  /** Handler for profile quick actions */
+  onProfileAction?: (action: string) => void;
+  // SpaceSwitcher props (⌘. to open)
+  /** Spaces for the SpaceSwitcher modal */
+  switcherSpaces?: SpaceSwitcherSpace[];
+  /** Handler when space is selected from SpaceSwitcher */
+  onSwitcherSpaceSelect?: (space: SpaceSwitcherSpace) => void;
+  // SpaceRail props (Phase 1: Space-first navigation)
+  /** Whether user has builder access (HiveLab) */
+  isBuilder?: boolean;
 }
 
 export const DEFAULT_SIDEBAR_NAV_ITEMS: ShellNavItem[] = [
-  { id: 'feed', label: 'Feed', href: '/feed' },
+  { id: 'feed', label: 'Feed', href: '/feed', comingSoon: true },
   { id: 'spaces', label: 'Spaces', href: '/spaces' },
-  { id: 'schedules', label: 'Calendar', href: '/calendar' },
   { id: 'hivelab', label: 'HiveLab', href: '/tools' },
 ];
 
@@ -305,9 +621,7 @@ export const DEFAULT_SECONDARY_NAV_ITEMS: ShellNavItem[] = [
 ];
 
 export const DEFAULT_MOBILE_NAV_ITEMS: ShellMobileNavItem[] = [
-  { id: 'feed', icon: HomeIcon, label: 'Feed', path: '/feed' },
   { id: 'spaces', icon: UsersIcon, label: 'Spaces', path: '/spaces' },
-  { id: 'schedules', icon: CalendarIcon, label: 'Calendar', path: '/calendar' },
   { id: 'hivelab', icon: BeakerIcon, label: 'Lab', path: '/tools' },
   { id: 'profile', icon: UserIcon, label: 'Profile', path: '/profile' },
 ];
@@ -355,20 +669,98 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
   secondaryNavItems = DEFAULT_SECONDARY_NAV_ITEMS,
   mobileNavItems = DEFAULT_MOBILE_NAV_ITEMS,
   notificationCount = 0,
+  notifications,
   mySpaces = [],
   userAvatarUrl,
   userName,
   userHandle,
+  userEmail,
+  userMajor,
+  userGradYear,
+  userCampus,
+  onSignOut,
   commandPaletteItems,
   onCommandPaletteSearch,
   commandPaletteLoading = false,
   onCommandPaletteSelect,
+  // Contextual panel props
+  enableContextualPanels = false,
+  recentActivity,
+  presenceSpaces,
+  userStats,
+  onSpaceSelect,
+  onCreateSpace,
+  onProfileAction,
+  // SpaceSwitcher props
+  switcherSpaces,
+  onSwitcherSpaceSelect,
+  // SpaceRail props
+  isBuilder = false,
 }) => {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isSpaceSwitcherOpen, setIsSpaceSwitcherOpen] = useState(false);
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isFirstNavVisit, setIsFirstNavVisit] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isTablet = useMediaQuery('(min-width: 768px) and (max-width: 1023px)');
+
+  // Check if this is user's first time seeing the nav (only on mount)
+  useEffect(() => {
+    try {
+      const hasSeenNav = localStorage.getItem('hive-has-seen-nav');
+      if (!hasSeenNav) {
+        setIsFirstNavVisit(true);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Mark nav as seen when first visit reveal completes
+  const handleFirstVisitComplete = useCallback(() => {
+    setIsFirstNavVisit(false);
+    try {
+      localStorage.setItem('hive-has-seen-nav', 'true');
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  // Toggle handlers for dropdowns (mutual exclusivity)
+  const handleNotificationClick = useCallback(() => {
+    setNotificationDropdownOpen(prev => !prev);
+    setProfileDropdownOpen(false);
+  }, []);
+
+  const handleProfileClick = useCallback(() => {
+    setProfileDropdownOpen(prev => !prev);
+    setNotificationDropdownOpen(false);
+  }, []);
+
+  // Convert notifications prop to NotificationItem format for RefinedRail
+  const railNotifications: NotificationItem[] = React.useMemo(() => {
+    return (notifications || []).map(n => ({
+      id: n.id,
+      text: n.text,
+      time: n.time,
+      unread: n.unread,
+    }));
+  }, [notifications]);
+
+  // Determine active section for contextual panels (3-item nav: feed, spaces, hivelab)
+  const activeSection = React.useMemo(() => {
+    if (!pathname) return 'spaces';
+    if (pathname === '/' || pathname.startsWith('/feed')) return 'feed';
+    if (pathname.startsWith('/spaces')) return 'spaces';
+    if (pathname.startsWith('/tools')) return 'hivelab';
+    // Profile and Calendar handled via user card dropdown, not main nav
+    return 'spaces'; // Default to spaces for soft launch
+  }, [pathname]);
 
   // Build command palette items from spaces and default navigation
   const allCommandPaletteItems = React.useMemo(() => {
@@ -532,6 +924,12 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
       if (e.key === 'Escape' && isCommandPaletteOpen) {
         setIsCommandPaletteOpen(false);
       }
+
+      // ⌘. (Cmd/Ctrl + period) to open SpaceSwitcher
+      if (e.key === '.' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setIsSpaceSwitcherOpen(prev => !prev);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -555,589 +953,134 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
   const allSpaces = mySpaces.flatMap(section => section.spaces);
   const hasSpaces = allSpaces.length > 0;
 
+  // Convert isCollapsed to isExpanded for RefinedRail
+  const isExpanded = !isCollapsed;
+  const handleExpandedChange = (expanded: boolean) => {
+    const newCollapsed = !expanded;
+    setIsCollapsed(newCollapsed);
+    try {
+      localStorage.setItem('hive-sidebar-collapsed', JSON.stringify(newCollapsed));
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  // Convert mySpaces (ShellSpaceSection[]) to SpaceRail format (SpaceItem[])
+  // Flatten sections and map ShellSpaceLink → SpaceItem
+  const railSpaces: SpaceItem[] = React.useMemo(() => {
+    const spaces: SpaceItem[] = [];
+
+    (mySpaces ?? []).forEach(section => {
+      (section.spaces ?? []).forEach(space => {
+        spaces.push({
+          id: space.id,
+          name: space.label,
+          slug: space.id, // Use ID as slug for now
+          category: section.id as SpaceItem['category'],
+          // Map status to activeNow (live = many active, quiet = few)
+          activeNow: space.status === 'live' ? 5 : space.status === 'new' ? 2 : 0,
+          isPinned: false, // Could derive from meta if needed
+          unreadCount: space.status === 'new' ? 1 : 0, // Show dot for new spaces
+        });
+      });
+    });
+
+    return spaces;
+  }, [mySpaces]);
+
+  // Determine which space is active based on URL
+  const activeSpaceId = React.useMemo(() => {
+    if (!pathname || !pathname.startsWith('/spaces/')) return undefined;
+    // Extract space ID from /spaces/[spaceId]/...
+    const match = pathname.match(/^\/spaces\/([^/]+)/);
+    return match?.[1];
+  }, [pathname]);
+
+  // Navigation handlers for SpaceRail
+  const handleBrowseClick = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/spaces/browse';
+    }
+  }, []);
+
+  const handleBuildClick = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/tools';
+    }
+  }, []);
+
+  const handleJoinOrCreate = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/spaces/browse';
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-black">
-      {/* Desktop Sidebar - OpenAI style: clean, spacious, minimal */}
-      <motion.aside
-        layout
-        className="hidden md:flex flex-col bg-neutral-950 fixed h-full z-40"
-        animate={{ width: isCollapsed ? 68 : 260 }}
-        transition={springTransition}
-      >
-        {/* Logo area - lots of breathing room */}
-        <motion.div
-          layout
-          className={`h-14 flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-4'}`}
-          transition={springTransition}
-        >
-          <motion.button
-            layout
-            onClick={() => {
-              if (isCollapsed) {
-                toggleCollapse();
-              } else {
-                window.location.href = '/feed';
-              }
-            }}
-            className={`flex items-center outline-none ${isCollapsed ? 'justify-center p-2' : 'gap-3'} focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:rounded-md`}
-            whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
-            whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
-            transition={springTransition}
-            aria-label={isCollapsed ? "Expand sidebar" : "Go to feed"}
-          >
-            <motion.div
-              layout
-              animate={{
-                width: isCollapsed ? 32 : 28,
-                height: isCollapsed ? 32 : 28,
-              }}
-              transition={springTransition}
-              className="flex items-center justify-center"
-            >
-              <HiveLogo className="text-white w-full h-full" />
-            </motion.div>
-            <AnimatePresence mode="wait">
-              {!isCollapsed && (
-                <motion.span
-                  className="text-white text-[15px] font-medium"
-                  initial={{ opacity: 0, x: -8, width: 0 }}
-                  animate={{ opacity: 1, x: 0, width: 'auto' }}
-                  exit={{ opacity: 0, x: -8, width: 0 }}
-                  transition={contentTransition}
-                >
-                  HIVE
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+      {/* Desktop Sidebar - SpaceRail (Space-first navigation) visible at 1024px+ */}
+      <div className="hidden lg:block">
+        <SpaceRail
+          spaces={railSpaces}
+          activeSpaceId={activeSpaceId}
+          onSpaceSelect={(spaceId) => {
+            if (onSpaceSelect) {
+              onSpaceSelect(spaceId);
+            } else if (typeof window !== 'undefined') {
+              window.location.href = `/spaces/${spaceId}`;
+            }
+          }}
+          isExpanded={isExpanded}
+          onExpandedChange={handleExpandedChange}
+          hoverExpand={true}
+          // Quick access
+          onBrowseClick={handleBrowseClick}
+          onBuildClick={handleBuildClick}
+          onJoinOrCreate={handleJoinOrCreate}
+          isBuilder={isBuilder}
+          showFeedComingSoon={true}
+          // Notifications
+          notificationCount={notificationCount}
+          notifications={railNotifications}
+          notificationDropdownOpen={notificationDropdownOpen}
+          onNotificationClick={handleNotificationClick}
+          onMarkAllRead={() => {
+            setNotificationDropdownOpen(false);
+          }}
+          // Profile
+          user={userName ? {
+            name: userName,
+            handle: userHandle,
+            avatarUrl: userAvatarUrl,
+          } : undefined}
+          profileDropdownOpen={profileDropdownOpen}
+          onProfileClick={handleProfileClick}
+          onSettingsClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/profile/settings';
+            }
+          }}
+          onSignOut={onSignOut}
+        />
+      </div>
 
-          {/* Search/Command Palette trigger + Collapse toggle */}
-          <div className="flex items-center gap-1">
-            <AnimatePresence mode="wait">
-              {!isCollapsed && (
-                <motion.button
-                  onClick={() => setIsCommandPaletteOpen(true)}
-                  className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-                  whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
-                  whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={contentTransition}
-                  aria-label="Open command palette (⌘K)"
-                  title="Search (⌘K)"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </motion.button>
-              )}
-            </AnimatePresence>
-            <AnimatePresence mode="wait">
-              {!isCollapsed && (
-                <motion.button
-                  onClick={toggleCollapse}
-                  className="p-1.5 rounded-md text-neutral-500 hover:text-white hover:bg-white/5 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/20"
-                  whileHover={shouldReduceMotion ? {} : { scale: 1.1, rotate: 180 }}
-                  whileTap={shouldReduceMotion ? {} : { scale: 0.9 }}
-                  initial={{ opacity: 0, rotate: shouldReduceMotion ? 0 : -90 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: shouldReduceMotion ? 0 : 90 }}
-                  transition={springTransition}
-                  aria-label="Collapse sidebar"
-                >
-                  <SidebarIcon />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-
-        {/* Quick Search Bar (expanded sidebar) */}
-        <AnimatePresence mode="wait">
-          {!isCollapsed && (
-            <motion.div
-              className="px-3 pb-3"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={contentTransition}
-            >
-              <button
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-900/50 border border-neutral-800/50 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800/50 hover:border-neutral-700/50 transition-all text-[13px]"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="flex-1 text-left">Search...</span>
-                <kbd className="text-[10px] text-neutral-600 bg-neutral-800 px-1.5 py-0.5 rounded">⌘K</kbd>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Primary Navigation - generous spacing */}
-        <nav className="flex-1 px-3 py-3 overflow-y-auto">
-          <motion.div
-            className="space-y-0.5"
-            variants={navContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {navItems.map((item) => {
-              const Icon = NAV_ICONS[item.id];
-              const active = isActive(item.href);
-              const isComingSoon = item.comingSoon;
-
-              // Use ComingSoonTooltip for coming soon items when collapsed
-              const TooltipWrapper = isComingSoon && isCollapsed ? ComingSoonTooltip : Tooltip;
-              const tooltipLabel = isComingSoon ? 'Launching soon' : item.label;
-
-              return (
-                <TooltipWrapper key={item.id} label={tooltipLabel} show={isCollapsed}>
-                  <motion.a
-                    href={isComingSoon ? undefined : item.href}
-                    onClick={isComingSoon ? (e: React.MouseEvent) => e.preventDefault() : undefined}
-                    variants={navItemVariants}
-                    className={`
-                      relative flex items-center gap-3 px-3 py-2.5 rounded-md
-                      transition-colors duration-75 outline-none
-                      ${isCollapsed ? 'justify-center' : ''}
-                      ${isComingSoon
-                        ? 'text-neutral-600 cursor-not-allowed'
-                        : active
-                          ? 'text-white bg-neutral-800 border border-neutral-700/50'
-                          : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
-                      }
-                      focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950
-                    `}
-                    whileHover={shouldReduceMotion || isComingSoon ? {} : { x: isCollapsed ? 0 : 2 }}
-                    whileTap={shouldReduceMotion || isComingSoon ? {} : { scale: 0.97 }}
-                    whileFocus={isComingSoon ? {} : { backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
-                    transition={springTransition}
-                  >
-                    <motion.div
-                      whileHover={shouldReduceMotion || isComingSoon ? {} : { scale: 1.1 }}
-                      transition={springTransition}
-                    >
-                      {Icon && <Icon />}
-                    </motion.div>
-
-                    <AnimatePresence mode="wait">
-                      {!isCollapsed && (
-                        <motion.span
-                          className="text-[14px]"
-                          initial={{ opacity: 0, x: -4 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -4 }}
-                          transition={contentTransition}
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Coming soon badge */}
-                    {isComingSoon && !isCollapsed && (
-                      <motion.span
-                        className="ml-auto text-[10px] text-neutral-600 uppercase tracking-wider"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={springTransition}
-                      >
-                        Soon
-                      </motion.span>
-                    )}
-
-                    {/* Badge - HIVE gold pill style */}
-                    {!isComingSoon && item.badge && item.badge > 0 && !isCollapsed && (
-                      <motion.span
-                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-gold-500 text-black rounded-full tabular-nums"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={springTransition}
-                      >
-                        {item.badge}
-                      </motion.span>
-                    )}
-
-                    {/* Badge dot for collapsed */}
-                    {!isComingSoon && item.badge && item.badge > 0 && isCollapsed && (
-                      <motion.span
-                        className="absolute top-2 right-2 w-1.5 h-1.5 bg-white rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={springTransition}
-                      />
-                    )}
-                  </motion.a>
-                </TooltipWrapper>
-              );
-            })}
-          </motion.div>
-
-          {/* My Spaces - Grouped collapsible sections */}
-          <AnimatePresence mode="wait">
-            {!isCollapsed && (
-              <motion.div
-                className="mt-6 pt-6 border-t border-neutral-800/50"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={CONTENT_TRANSITION}
-              >
-                <div className="flex items-center justify-between px-3 mb-3">
-                  <h3 className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">
-                    Your Spaces
-                  </h3>
-                  <a
-                    href="/spaces?tab=discover"
-                    className="text-neutral-600 hover:text-gold-500 transition-colors"
-                    title="Browse spaces"
-                  >
-                    <PlusIcon />
-                  </a>
-                </div>
-
-                {hasSpaces ? (
-                  <div className="space-y-1">
-                    {mySpaces.map((section) => {
-                      const sectionHasSpaces = section.spaces.length > 0;
-                      const isExpanded = isSectionExpanded(section.id, sectionHasSpaces);
-
-                      return (
-                        <div key={section.id} className="space-y-0.5">
-                          {/* Section Header - Collapsible */}
-                          <button
-                            onClick={() => toggleSection(section.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'ArrowRight' && !isExpanded) {
-                                e.preventDefault();
-                                toggleSection(section.id);
-                              } else if (e.key === 'ArrowLeft' && isExpanded) {
-                                e.preventDefault();
-                                toggleSection(section.id);
-                              }
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-left hover:bg-neutral-800/30 transition-colors group outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950"
-                            aria-expanded={isExpanded}
-                            aria-controls={`spaces-section-${section.id}`}
-                          >
-                            <motion.div
-                              animate={{ rotate: isExpanded ? 90 : 0 }}
-                              transition={{ duration: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                              className="text-neutral-600 group-hover:text-neutral-400"
-                            >
-                              <ChevronRightIcon />
-                            </motion.div>
-                            <span className="text-[12px] font-medium text-neutral-500 group-hover:text-neutral-300 flex-1">
-                              {section.label}
-                            </span>
-                            {sectionHasSpaces && (
-                              <span className="text-[10px] text-neutral-600 tabular-nums">
-                                {section.spaces.length}
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Section Content */}
-                          <AnimatePresence initial={false}>
-                            {isExpanded && (
-                              <motion.div
-                                id={`spaces-section-${section.id}`}
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                                className="overflow-hidden"
-                              >
-                                {sectionHasSpaces ? (
-                                  <div className="pl-6 space-y-0.5" role="group" aria-label={`${section.label} spaces`}>
-                                    {section.spaces.slice(0, 4).map((space) => (
-                                      <a
-                                        key={space.id}
-                                        href={space.href}
-                                        className="
-                                          flex items-center gap-2.5 px-2 py-1.5 rounded-md
-                                          text-neutral-400 hover:text-white hover:bg-neutral-800/50
-                                          transition-colors duration-75
-                                          outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-neutral-950
-                                        "
-                                      >
-                                        <span
-                                          className={`
-                                            w-1.5 h-1.5 rounded-full flex-shrink-0
-                                            ${space.status === 'live' ? 'bg-emerald-500' :
-                                              space.status === 'new' ? 'bg-gold-500' : 'bg-neutral-600'}
-                                          `}
-                                          aria-hidden="true"
-                                        />
-                                        <span className="text-[13px] truncate">{space.label}</span>
-                                        {space.status === 'new' && <span className="sr-only">(new)</span>}
-                                        {space.status === 'live' && <span className="sr-only">(active)</span>}
-                                      </a>
-                                    ))}
-                                    {section.spaces.length > 4 && (
-                                      <a
-                                        href={section.actionHref || '/spaces?tab=joined'}
-                                        className="flex items-center px-2 py-1 text-[11px] text-neutral-500 hover:text-gold-500 transition-colors outline-none focus-visible:text-gold-500"
-                                      >
-                                        +{section.spaces.length - 4} more
-                                      </a>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="pl-6 pr-3 py-2">
-                                    <p className="text-[11px] text-neutral-600 mb-1.5">
-                                      {section.emptyCopy || 'No spaces yet'}
-                                    </p>
-                                    {section.actionLabel && section.actionHref && (
-                                      <a
-                                        href={section.actionHref}
-                                        className="text-[11px] text-neutral-500 hover:text-gold-500 transition-colors"
-                                      >
-                                        {section.actionLabel} →
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      );
-                    })}
-
-                    {/* View all link */}
-                    {allSpaces.length > 8 && (
-                      <a
-                        href="/spaces?tab=joined"
-                        className="flex items-center px-3 py-2 text-[12px] text-neutral-500 hover:text-gold-500 transition-colors"
-                      >
-                        View all {allSpaces.length} spaces →
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="px-3 py-2">
-                    <p className="text-[13px] text-neutral-500 mb-2">
-                      Join spaces to see them here
-                    </p>
-                    <a
-                      href="/spaces?tab=discover"
-                      className="inline-flex items-center gap-1.5 text-[12px] text-neutral-400 hover:text-gold-500 transition-colors"
-                    >
-                      Browse spaces →
-                    </a>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </nav>
-
-        {/* Secondary Nav - Settings, Notifications */}
-        <div className="px-3 py-2 border-t border-neutral-800/50">
-          <motion.div
-            className="space-y-0.5"
-            variants={navContainerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {secondaryNavItems.map((item) => {
-              const Icon = NAV_ICONS[item.id];
-              const active = isActive(item.href);
-              const showBadge = item.id === 'notifications' && notificationCount > 0;
-
-              return (
-                <Tooltip key={item.id} label={item.label} show={isCollapsed}>
-                  <motion.a
-                    href={item.href}
-                    variants={navItemVariants}
-                    className={`
-                      relative flex items-center gap-3 px-3 py-2 rounded-md
-                      transition-colors duration-75 outline-none
-                      ${isCollapsed ? 'justify-center' : ''}
-                      ${active
-                        ? 'text-white bg-neutral-800'
-                        : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'
-                      }
-                    `}
-                    whileHover={shouldReduceMotion ? {} : { x: isCollapsed ? 0 : 2 }}
-                    whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-                    transition={springTransition}
-                  >
-                    {Icon && <Icon />}
-
-                    <AnimatePresence mode="wait">
-                      {!isCollapsed && (
-                        <motion.span
-                          className="text-[13px]"
-                          initial={{ opacity: 0, x: -4 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -4 }}
-                          transition={contentTransition}
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Notification badge */}
-                    {showBadge && !isCollapsed && (
-                      <motion.span
-                        className="ml-auto px-2 py-0.5 text-[11px] font-semibold bg-gold-500 text-black rounded-full tabular-nums"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={springTransition}
-                      >
-                        {notificationCount > 99 ? '99+' : notificationCount}
-                      </motion.span>
-                    )}
-
-                    {/* Badge dot for collapsed */}
-                    {showBadge && isCollapsed && (
-                      <motion.span
-                        className="absolute top-1.5 right-1.5 w-2 h-2 bg-gold-500 rounded-full"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={springTransition}
-                      />
-                    )}
-                  </motion.a>
-                </Tooltip>
-              );
-            })}
-
-            {/* Settings - always show */}
-            <Tooltip label="Settings" show={isCollapsed}>
-              <motion.a
-                href="/profile/settings"
-                variants={navItemVariants}
-                className={`
-                  flex items-center gap-3 px-3 py-2 rounded-md
-                  transition-colors duration-75 outline-none
-                  ${isCollapsed ? 'justify-center' : ''}
-                  ${pathname?.includes('/settings')
-                    ? 'text-white bg-neutral-800'
-                    : 'text-neutral-500 hover:text-white hover:bg-neutral-800/50'
-                  }
-                `}
-                whileHover={shouldReduceMotion ? {} : { x: isCollapsed ? 0 : 2 }}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
-                transition={springTransition}
-              >
-                <SettingsIcon />
-
-                <AnimatePresence mode="wait">
-                  {!isCollapsed && (
-                    <motion.span
-                      className="text-[13px]"
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -4 }}
-                      transition={contentTransition}
-                    >
-                      Settings
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.a>
-            </Tooltip>
-          </motion.div>
-        </div>
-
-        {/* Bottom - User Portrait Card (YC-style rectangular card) */}
-        <div className="px-3 py-4 mt-auto">
-          <AnimatePresence mode="wait">
-            {!isCollapsed ? (
-              <motion.a
-                href="/profile"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={contentTransition}
-                className="
-                  block p-3 rounded-xl
-                  bg-neutral-900/80 border border-neutral-800
-                  hover:bg-neutral-800/80 hover:border-neutral-700
-                  transition-all duration-150
-                  group
-                "
-              >
-                <div className="flex items-start gap-3">
-                  {/* Portrait Avatar - Square with rounded corners */}
-                  <div className="relative flex-shrink-0">
-                    {userAvatarUrl ? (
-                      <img
-                        src={userAvatarUrl}
-                        alt={userName || 'Profile'}
-                        className="w-11 h-11 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-11 h-11 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-black text-base font-bold">
-                        {userName ? userName.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                    )}
-                  </div>
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-semibold text-white truncate group-hover:text-gold-500 transition-colors">
-                      {userName || 'Your Profile'}
-                    </p>
-                    <p className="text-[12px] text-neutral-500 truncate">
-                      {userHandle ? `@${userHandle}` : 'Complete your profile'}
-                    </p>
-                  </div>
-                  {/* Chevron indicator */}
-                  <div className="text-neutral-600 group-hover:text-neutral-400 transition-colors mt-0.5">
-                    <ChevronRightIcon />
-                  </div>
-                </div>
-              </motion.a>
-            ) : (
-              <Tooltip label={userName || 'Profile'} show={true}>
-                <motion.a
-                  href="/profile"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="
-                    flex items-center justify-center p-2 rounded-lg
-                    hover:bg-neutral-800/50 transition-colors
-                  "
-                >
-                  {userAvatarUrl ? (
-                    <img
-                      src={userAvatarUrl}
-                      alt={userName || 'Profile'}
-                      className="w-9 h-9 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-gold-500 to-gold-600 flex items-center justify-center text-black text-sm font-bold">
-                      {userName ? userName.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                  )}
-                </motion.a>
-              </Tooltip>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.aside>
-
-      {/* Main Content */}
+      {/* Main Content - Animated margin on desktop, full-width on mobile */}
       <motion.main
-        className="flex-1"
-        animate={{ marginLeft: isCollapsed ? 68 : 260 }}
-        transition={springTransition}
+        className="flex-1 pb-14 lg:pb-0 flex flex-col"
+        initial={false}
+        animate={{
+          marginLeft: isDesktop ? (isExpanded ? 260 : 56) : 0,
+        }}
+        transition={{ type: 'spring', stiffness: 200, damping: 28 }}
       >
-        {children}
+        {/* Page content */}
+        <div className="flex-1">
+          {children}
+        </div>
       </motion.main>
 
-      {/* Mobile Bottom Nav - Enhanced with search */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-neutral-950/95 backdrop-blur-xl border-t border-neutral-800/50 z-50 pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="flex justify-around items-center h-16 px-2">
+      {/* Mobile Bottom Nav - Enhanced with search (visible below 1024px) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-neutral-950/95 backdrop-blur-xl border-t border-neutral-800/50 z-50 pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="flex justify-around items-center h-14 px-2">
           {mobileNavItems.slice(0, 4).map((item) => {
             const Icon = NAV_ICONS[item.id];
             const active = isActive(item.path);
@@ -1157,11 +1100,11 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
               <>
                 <div className="relative">
                   {Icon && <Icon />}
-                  {/* Active indicator - gold dot */}
+                  {/* Active indicator - gold dot (Phase 4 polish) */}
                   {active && !isComingSoon && (
                     <motion.span
                       layoutId="mobile-nav-indicator"
-                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gold-500"
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#FFD700]"
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -1170,7 +1113,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
 
                 {/* Badge indicator */}
                 {!isComingSoon && item.badge && item.badge > 0 && (
-                  <span className="absolute top-1 right-1/4 w-2 h-2 bg-gold-500 rounded-full border-2 border-neutral-950" />
+                  <span className="absolute top-1 right-1/4 w-2 h-2 bg-white rounded-full border-2 border-neutral-950" />
                 )}
               </>
             );
@@ -1221,6 +1164,19 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
         loading={commandPaletteLoading}
         placeholder="Search spaces, tools, or type a command..."
         emptyMessage="No results found. Try a different search."
+      />
+
+      {/* Space Switcher - ⌘. (Spotlight-style space navigation) */}
+      <SpaceSwitcher
+        isOpen={isSpaceSwitcherOpen}
+        onClose={() => setIsSpaceSwitcherOpen(false)}
+        spaces={switcherSpaces}
+        onSelectSpace={(space) => {
+          onSwitcherSpaceSelect?.(space);
+          setIsSpaceSwitcherOpen(false);
+        }}
+        onCreateSpace={onCreateSpace}
+        placeholder="Jump to a space..."
       />
     </div>
   );

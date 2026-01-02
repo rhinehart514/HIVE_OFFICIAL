@@ -209,7 +209,7 @@ export function InterestsStep({
                 setActiveCategory(null); // Clear category filter when searching
               }}
               placeholder={`Search ${totalItems} interests...`}
-              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-10 pl-9 pr-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-base md:text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
               style={{ '--tw-placeholder-opacity': 1 } as React.CSSProperties}
               aria-label="Search interests"
             />
@@ -284,10 +284,10 @@ export function InterestsStep({
                               isSelected
                                 ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                                 : isDisabled
-                                ? 'bg-white/[0.02] border border-white/[0.04] cursor-not-allowed'
+                                ? 'bg-white/[0.02] border border-white/[0.08] opacity-40 cursor-not-allowed'
                                 : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                             }`}
-                            style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-secondary)' }}
+                            style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-subtle)' : 'var(--hive-text-secondary)' }}
                             aria-pressed={isSelected}
                           >
                             {item}
@@ -320,10 +320,10 @@ export function InterestsStep({
                         isSelected
                           ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                           : isDisabled
-                          ? 'bg-white/[0.02] border border-white/[0.04] cursor-not-allowed'
+                          ? 'bg-white/[0.02] border border-white/[0.08] opacity-40 cursor-not-allowed'
                           : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                       }`}
-                      style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-secondary)' }}
+                      style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-subtle)' : 'var(--hive-text-secondary)' }}
                       aria-pressed={isSelected}
                     >
                       {item}
@@ -364,10 +364,10 @@ export function InterestsStep({
                             isSelected
                               ? 'bg-gold-500/10 border border-gold-500 text-gold-500'
                               : isDisabled
-                              ? 'bg-white/[0.01] border border-white/[0.03] cursor-not-allowed'
+                              ? 'bg-white/[0.02] border border-white/[0.08] opacity-40 cursor-not-allowed'
                               : 'bg-white/[0.02] border border-white/[0.06] hover:text-white hover:border-white/[0.12]'
                           }`}
-                          style={isSelected ? {} : { color: isDisabled ? 'var(--hive-text-disabled)' : 'var(--hive-text-subtle)' }}
+                          style={isSelected ? {} : { color: 'var(--hive-text-subtle)' }}
                           aria-pressed={isSelected}
                         >
                           {item}
@@ -407,7 +407,7 @@ export function InterestsStep({
                 placeholder="Add your own..."
                 maxLength={MAX_INTEREST_LENGTH}
                 disabled={interests.length >= MAX_INTERESTS}
-                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-10 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-base md:text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ '--tw-placeholder-opacity': 1 } as React.CSSProperties}
                 aria-label="Add custom interest"
               />

@@ -80,7 +80,7 @@ function StepIndicator({ state = "upcoming" }: StepIndicatorProps) {
         aria-hidden
         className={cn(
           base,
-          "border-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700)_45%,var(--hive-border-subtle,#2E2F39))] text-[var(--hive-brand-primary)]"
+          "border-white/40 text-white"
         )}
       >
         <CheckCircle2 className="h-4 w-4" />
@@ -94,7 +94,7 @@ function StepIndicator({ state = "upcoming" }: StepIndicatorProps) {
         aria-hidden
         className={cn(
           base,
-          "border-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700)_45%,var(--hive-border-subtle,#2E2F39))] text-[var(--hive-brand-primary)]"
+          "border-white/40 text-white"
         )}
       >
         <Dot className="h-5 w-5" />

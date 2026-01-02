@@ -16,7 +16,7 @@
  * Part of HiveLab Winter 2025 Strategy: Chat-First Foundation
  */
 
-import { Send, Square, Zap, BarChart3, Calendar, Timer, Megaphone, HelpCircle, Sparkles, Bell, UserPlus } from 'lucide-react';
+import { Send, Square, Zap, BarChart3, Calendar, Timer, Megaphone, HelpCircle, Workflow, Bell, UserPlus } from 'lucide-react';
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 
 import { cn } from '../../lib/utils';
@@ -31,63 +31,81 @@ export type { ToolInsertData, ToolType } from './chat-toolbar';
 // Slash Command Types & Data
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type SlashCommandCategory = 'create' | 'automate' | 'help';
+
 export interface SlashCommandSuggestion {
   command: string;
   description: string;
   syntax: string;
   icon: React.ReactNode;
+  category: SlashCommandCategory;
 }
 
+const CATEGORY_LABELS: Record<SlashCommandCategory, string> = {
+  create: 'Create',
+  automate: 'Automate',
+  help: 'Help',
+};
+
 const SLASH_COMMANDS: SlashCommandSuggestion[] = [
-  // Component creation commands
+  // Create - Component creation commands
   {
     command: '/poll',
     description: 'Create a poll',
     syntax: '/poll "Question?" Option1 Option2',
     icon: <BarChart3 className="h-4 w-4" />,
+    category: 'create',
   },
   {
     command: '/rsvp',
     description: 'Create an RSVP',
     syntax: '/rsvp "Event Name" --date=tomorrow',
     icon: <Calendar className="h-4 w-4" />,
+    category: 'create',
   },
   {
     command: '/countdown',
     description: 'Create a countdown',
     syntax: '/countdown "Event" 2024-12-20',
     icon: <Timer className="h-4 w-4" />,
+    category: 'create',
   },
   {
     command: '/announce',
     description: 'Post announcement',
     syntax: '/announce Your message here',
     icon: <Megaphone className="h-4 w-4" />,
+    category: 'create',
   },
-  // Automation commands (HiveLab Phase 3)
+  // Automate - Automation commands (HiveLab Phase 3)
   {
     command: '/welcome',
     description: 'Auto-greet new members',
     syntax: '/welcome "Hey {member}! Welcome!"',
     icon: <UserPlus className="h-4 w-4 text-amber-500" />,
+    category: 'automate',
   },
   {
     command: '/remind',
     description: 'Event reminder automation',
     syntax: '/remind 30 "Don\'t miss {event}!"',
     icon: <Bell className="h-4 w-4 text-amber-500" />,
+    category: 'automate',
   },
   {
     command: '/automate',
     description: 'Create custom automation',
     syntax: '/automate welcome "Greeting Bot"',
-    icon: <Sparkles className="h-4 w-4 text-amber-500" />,
+    icon: <Workflow className="h-4 w-4 text-amber-500" />,
+    category: 'automate',
   },
+  // Help
   {
     command: '/help',
     description: 'Show available commands',
     syntax: '/help [command]',
     icon: <HelpCircle className="h-4 w-4" />,
+    category: 'help',
   },
 ];
 
@@ -140,6 +158,9 @@ export interface ChatInputProps {
   /** Disabled state */
   disabled?: boolean;
 
+  /** Callback when user is typing (for typing indicators) */
+  onTyping?: () => void;
+
   /** Additional CSS classes */
   className?: string;
 }
@@ -163,10 +184,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   showToolbar = false,
   canInsertTools = true,
   enableSlashCommands = true,
-  placeholder = 'Message HIVE AI...',
+  placeholder = 'Message or type / for commands',
   maxLength = 2000,
   showCounter = false,
   disabled = false,
+  onTyping,
   className
 }, ref) {
   const [message, setMessage] = useState('');
@@ -197,6 +219,37 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       cmd.command.slice(1).startsWith(partial)
     );
   }, [message, enableSlashCommands]);
+
+  // Group commands by category for display
+  const groupedCommands = useMemo(() => {
+    const groups: Record<SlashCommandCategory, SlashCommandSuggestion[]> = {
+      create: [],
+      automate: [],
+      help: [],
+    };
+
+    filteredCommands.forEach(cmd => {
+      groups[cmd.category].push(cmd);
+    });
+
+    // Return only non-empty groups in order
+    const orderedCategories: SlashCommandCategory[] = ['create', 'automate', 'help'];
+    return orderedCategories
+      .filter(cat => groups[cat].length > 0)
+      .map(cat => ({ category: cat, commands: groups[cat] }));
+  }, [filteredCommands]);
+
+  // Get flat index for a command within grouped display
+  const getCommandIndex = useCallback((category: SlashCommandCategory, indexInGroup: number): number => {
+    let flatIndex = 0;
+    for (const group of groupedCommands) {
+      if (group.category === category) {
+        return flatIndex + indexInGroup;
+      }
+      flatIndex += group.commands.length;
+    }
+    return flatIndex;
+  }, [groupedCommands]);
 
   // Show/hide autocomplete based on filtered commands
   useEffect(() => {
@@ -350,48 +403,62 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                   <span>Quick Actions</span>
                 </div>
               </div>
-              <div className="py-1 max-h-[240px] overflow-y-auto custom-scrollbar">
-                {filteredCommands.map((cmd, index) => (
-                  <button
-                    key={cmd.command}
-                    type="button"
-                    role="option"
-                    aria-selected={index === selectedIndex}
-                    onClick={() => selectCommand(cmd)}
-                    className={cn(
-                      'w-full px-3 py-2.5 flex items-start gap-3 text-left transition-colors',
-                      index === selectedIndex
-                        ? 'bg-white/[0.08]'
-                        : 'hover:bg-white/[0.04]'
-                    )}
-                  >
-                    <div className={cn(
-                      'flex-shrink-0 p-1.5 rounded-md mt-0.5',
-                      index === selectedIndex
-                        ? 'bg-[var(--hive-gold-cta)]/20 text-[var(--hive-gold-cta)]'
-                        : 'bg-white/[0.06] text-white/60'
-                    )}>
-                      {cmd.icon}
+              <div className="py-1 max-h-[280px] overflow-y-auto custom-scrollbar">
+                {groupedCommands.map((group) => (
+                  <div key={group.category}>
+                    {/* Category Header */}
+                    <div className="px-3 pt-2 pb-1 first:pt-1">
+                      <span className="text-[10px] uppercase tracking-[0.08em] text-white/35 font-medium">
+                        {CATEGORY_LABELS[group.category]}
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-medium text-white text-sm">
-                          {cmd.command}
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          {cmd.description}
-                        </span>
-                      </div>
-                      <div className="text-white/30 text-xs mt-0.5 font-mono truncate">
-                        {cmd.syntax}
-                      </div>
-                    </div>
-                    {index === selectedIndex && (
-                      <div className="flex-shrink-0 text-[10px] text-white/40 mt-1">
-                        ↵ select
-                      </div>
-                    )}
-                  </button>
+                    {/* Commands in this category */}
+                    {group.commands.map((cmd, indexInGroup) => {
+                      const flatIndex = getCommandIndex(group.category, indexInGroup);
+                      return (
+                        <button
+                          key={cmd.command}
+                          type="button"
+                          role="option"
+                          aria-selected={flatIndex === selectedIndex}
+                          onClick={() => selectCommand(cmd)}
+                          className={cn(
+                            'w-full px-3 py-2 flex items-start gap-3 text-left transition-colors',
+                            flatIndex === selectedIndex
+                              ? 'bg-white/[0.08]'
+                              : 'hover:bg-white/[0.04]'
+                          )}
+                        >
+                          <div className={cn(
+                            'flex-shrink-0 p-1.5 rounded-md mt-0.5',
+                            flatIndex === selectedIndex
+                              ? 'bg-[var(--hive-gold-cta)]/20 text-[var(--hive-gold-cta)]'
+                              : 'bg-white/[0.06] text-white/60'
+                          )}>
+                            {cmd.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2">
+                              <span className="font-medium text-white text-sm">
+                                {cmd.command}
+                              </span>
+                              <span className="text-white/50 text-xs">
+                                {cmd.description}
+                              </span>
+                            </div>
+                            <div className="text-white/30 text-xs mt-0.5 font-mono truncate">
+                              {cmd.syntax}
+                            </div>
+                          </div>
+                          {flatIndex === selectedIndex && (
+                            <div className="flex-shrink-0 text-[10px] text-white/40 mt-1">
+                              ↵ select
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 ))}
               </div>
               <div className="px-3 py-1.5 border-t border-white/[0.08] bg-white/[0.02]">
@@ -423,17 +490,23 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             <textarea
               ref={textareaRef}
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                onTyping?.();
+              }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               disabled={disabled || isGenerating}
               maxLength={maxLength}
               rows={1}
+              aria-label="Message input"
+              aria-describedby="chat-input-help"
+              aria-invalid={maxLength ? characterCount > maxLength : undefined}
               className={cn(
                 'w-full px-6 py-4 pr-14',
                 'bg-transparent text-white placeholder:text-white/60',
                 'resize-none outline-none scrollbar-hide',
-                'text-[15px] leading-relaxed font-normal',
+                'text-base leading-relaxed font-normal', // 16px prevents iOS Safari auto-zoom
                 'transition-[height] duration-200 ease-out'
               )}
               style={{ minHeight: '52px', overflow: 'hidden' }}
@@ -488,7 +561,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         )}
 
         {/* Helper text */}
-        <p className="mt-3 px-2 text-xs text-white/35 text-center tracking-wide">
+        <p id="chat-input-help" className="mt-3 px-2 text-xs text-white/35 text-center tracking-wide">
           {enableSlashCommands
             ? 'Type / for quick actions • Enter to send • Shift+Enter for new line'
             : 'Press Enter to send, Shift+Enter for new line'

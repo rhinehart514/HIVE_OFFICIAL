@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 import { X, Search, User, Shield, Crown, Loader2, Check } from 'lucide-react';
 
 import { cn } from '../../../lib/utils';
@@ -200,7 +201,7 @@ export function MemberInviteModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            transition={springPresets.snappy}
             className={cn(
               'relative w-full max-w-md mx-4 bg-[var(--hive-background-secondary)] border border-[var(--hive-border-default)] rounded-2xl shadow-2xl',
               className

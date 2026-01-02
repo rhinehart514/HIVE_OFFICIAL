@@ -30,7 +30,7 @@ import {
   MessageSquare,
   Check,
   Plus,
-  Sparkles,
+  Wand2,
   ExternalLink,
 } from 'lucide-react';
 import {
@@ -91,7 +91,7 @@ export interface WidgetGalleryProps {
 
 const SYSTEM_WIDGETS: WidgetTemplate[] = [
   {
-    id: 'sys-about',
+    id: 'system:about',
     name: 'About',
     description: 'Space description, member count, online status',
     icon: Info,
@@ -100,7 +100,7 @@ const SYSTEM_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-events',
+    id: 'system:events',
     name: 'Upcoming Events',
     description: 'Next events with RSVP buttons',
     icon: Calendar,
@@ -109,7 +109,7 @@ const SYSTEM_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-members',
+    id: 'system:members',
     name: 'Members',
     description: 'Member list with online status',
     icon: Users,
@@ -118,7 +118,7 @@ const SYSTEM_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-tools',
+    id: 'system:tools',
     name: 'Tools',
     description: 'Deployed HiveLab tools',
     icon: Wrench,
@@ -130,7 +130,7 @@ const SYSTEM_WIDGETS: WidgetTemplate[] = [
 
 const ENGAGEMENT_WIDGETS: WidgetTemplate[] = [
   {
-    id: 'sys-poll',
+    id: 'system:poll',
     name: 'Quick Poll',
     description: 'Interactive poll for member voting',
     icon: BarChart2,
@@ -139,7 +139,7 @@ const ENGAGEMENT_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-countdown',
+    id: 'system:countdown',
     name: 'Countdown',
     description: 'Timer to upcoming event or deadline',
     icon: Timer,
@@ -148,7 +148,7 @@ const ENGAGEMENT_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-links',
+    id: 'system:links',
     name: 'Quick Links',
     description: 'Important links and resources',
     icon: Link2,
@@ -157,7 +157,7 @@ const ENGAGEMENT_WIDGETS: WidgetTemplate[] = [
     isSystem: true,
   },
   {
-    id: 'sys-announcements',
+    id: 'system:announcements',
     name: 'Announcements',
     description: 'Pinned announcements feed',
     icon: MessageSquare,
@@ -189,21 +189,21 @@ function WidgetCard({ template, isDeployed, onSelect }: WidgetCardProps) {
       className={cn(
         'relative flex flex-col items-start gap-2 p-4 rounded-xl text-left',
         'border transition-all duration-200',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
         isDeployed
-          ? 'bg-[#FFD700]/5 border-[#FFD700]/30 cursor-default'
-          : 'bg-neutral-900/50 border-neutral-800/50 hover:border-[#FFD700]/30 hover:bg-neutral-900'
+          ? 'bg-emerald-500/5 border-emerald-500/30 cursor-default'
+          : 'bg-neutral-900/50 border-neutral-800/50 hover:border-white/20 hover:bg-neutral-900'
       )}
     >
       {/* Icon */}
       <div
         className={cn(
           'w-10 h-10 rounded-lg flex items-center justify-center',
-          isDeployed ? 'bg-[#FFD700]/10' : 'bg-neutral-800'
+          isDeployed ? 'bg-emerald-500/10' : 'bg-neutral-800'
         )}
       >
         <Icon
-          className={cn('w-5 h-5', isDeployed ? 'text-[#FFD700]' : 'text-neutral-400')}
+          className={cn('w-5 h-5', isDeployed ? 'text-emerald-400' : 'text-neutral-400')}
         />
       </div>
 
@@ -213,12 +213,12 @@ function WidgetCard({ template, isDeployed, onSelect }: WidgetCardProps) {
           <span
             className={cn(
               'text-sm font-medium',
-              isDeployed ? 'text-[#FFD700]' : 'text-white'
+              isDeployed ? 'text-emerald-400' : 'text-white'
             )}
           >
             {template.name}
           </span>
-          {isDeployed && <Check className="w-4 h-4 text-[#FFD700]" />}
+          {isDeployed && <Check className="w-4 h-4 text-emerald-400" />}
         </div>
         <p className="text-xs text-neutral-500 mt-0.5 line-clamp-2">
           {template.description}
@@ -231,7 +231,7 @@ function WidgetCard({ template, isDeployed, onSelect }: WidgetCardProps) {
           className={cn(
             'absolute top-3 right-3 w-6 h-6 rounded-full',
             'flex items-center justify-center',
-            'bg-neutral-800 text-neutral-500 group-hover:bg-[#FFD700]/10 group-hover:text-[#FFD700]',
+            'bg-neutral-800 text-neutral-500 group-hover:bg-white/10 group-hover:text-white',
             'transition-colors'
           )}
         >
@@ -260,7 +260,7 @@ export function WidgetGallery({
     id: tool.id,
     name: tool.name,
     description: tool.description || 'Custom HiveLab tool',
-    icon: Sparkles,
+    icon: Wrench,
     category: 'custom',
     elementType: tool.elementType,
     isSystem: false,
@@ -356,12 +356,12 @@ export function WidgetGallery({
                   'bg-gradient-to-r from-[#FFD700]/10 to-[#FFD700]/5',
                   'border border-[#FFD700]/20 hover:border-[#FFD700]/40',
                   'transition-all duration-200',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
                 )}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#FFD700]/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-[#FFD700]" />
+                    <Wand2 className="w-5 h-5 text-[#FFD700]" />
                   </div>
                   <div className="text-left">
                     <div className="text-sm font-medium text-[#FFD700]">

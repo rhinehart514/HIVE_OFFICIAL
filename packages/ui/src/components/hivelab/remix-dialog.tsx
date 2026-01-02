@@ -16,7 +16,7 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
+  Wand2,
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -178,7 +178,7 @@ export function RemixDialog({
                   'hover:brightness-110 transition-colors'
                 )}
               >
-                <Sparkles className="w-4 h-4" />
+                <Wand2 className="w-4 h-4" />
                 Open in HiveLab
                 <ChevronRight className="w-4 h-4" />
               </button>

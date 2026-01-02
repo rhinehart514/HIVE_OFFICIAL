@@ -1,55 +1,42 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useStreamingGeneration } from '@hive/hooks';
-import {
-  PanelLeftClose,
-  PanelLeftOpen,
-  PanelRightClose,
-  PanelRightOpen,
-  Layers,
-  Box,
-} from 'lucide-react';
 import { cn } from '../../../lib/utils';
-import { ideClasses } from '@hive/tokens';
 import type {
   CanvasElement,
   Connection,
   ToolMode,
   HistoryEntry,
-  CanvasState,
 } from './types';
 import type { ElementConnection } from '@hive/core';
-import { DEFAULT_CANVAS_STATE } from './types';
-import { IDEToolbar } from './ide-toolbar';
 import { IDECanvas } from './ide-canvas';
 import { AICommandPalette } from './ai-command-palette';
-import { ElementPalette } from './element-palette';
-import { LayersPanel } from './layers-panel';
-import { PropertiesPanel } from './properties-panel';
-import { OnboardingOverlay } from './onboarding-overlay';
 import { useIDEKeyboard } from './use-ide-keyboard';
+
+// New layout components
+import { HeaderBar } from './header-bar';
+import { CommandBar } from './command-bar';
+import { ElementRail, type RailState, type RailTab } from './element-rail';
+import { ContextRail, type AlignmentType } from './context-rail';
+import { FloatingActionBar } from './floating-action-bar';
+import { StartZone } from './start-zone';
+import { TemplateGallery } from './template-gallery';
+import { toast } from '../../../atomic/00-Global/atoms/sonner-toast';
+import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 // Maximum history entries to prevent unbounded memory growth
 const MAX_HISTORY = 50;
 
 /**
  * Normalize connections to IDE format (Connection with { port } keys)
- *
- * Accepts either:
- * - ElementConnection[] (saved format with { output, input } keys)
- * - Connection[] (IDE format with { port } keys)
- *
- * Returns unified Connection[] for internal use
  */
 function normalizeConnections(saved?: ElementConnection[] | Connection[]): Connection[] {
   if (!saved || saved.length === 0) return [];
   return saved.map((conn, idx) => {
-    // Check if it's already in IDE format (has 'port' key)
     const fromConn = conn.from as { instanceId: string; port?: string; output?: string };
     const toConn = conn.to as { instanceId: string; port?: string; input?: string };
-
     const isIDEFormat = 'port' in fromConn || 'port' in toConn;
 
     return {
@@ -79,33 +66,21 @@ export interface HiveLabIDEProps {
     name?: string;
     description?: string;
     elements?: CanvasElement[];
-    /**
-     * Connections - accepts either format:
-     * - ElementConnection[] (saved/API format with { output, input } keys)
-     * - Connection[] (IDE format with { port } keys)
-     * Both will be normalized to internal IDE format
-     */
     connections?: ElementConnection[] | Connection[];
   };
-  /** Show onboarding overlay for new/empty canvases */
   showOnboarding?: boolean;
   onSave: (composition: HiveLabComposition) => Promise<void>;
   onPreview: (composition: HiveLabComposition) => void;
   onCancel: () => void;
   userId: string;
-  /** User context for element tier filtering */
   userContext?: UserContext;
-  /**
-   * Callback to receive connection flow control functions
-   * Used by tool runtime to trigger visual feedback when data flows
-   */
   onConnectionFlowReady?: (controls: ConnectionFlowControls) => void;
+  originSpaceId?: string;
+  onDeploy?: (composition: HiveLabComposition) => Promise<void>;
 }
 
 export interface ConnectionFlowControls {
-  /** Trigger visual flow animation on specified connections */
   triggerFlow: (connectionIds: string[], duration?: number) => void;
-  /** Get connection IDs from an element's outputs */
   getConnectionsFrom: (instanceId: string) => string[];
 }
 
@@ -118,31 +93,21 @@ export interface HiveLabComposition {
   layout: 'grid' | 'flow' | 'tabs' | 'sidebar';
 }
 
-const PANEL_WIDTH = 280;
-
 export function HiveLabIDE({
   initialComposition,
-  showOnboarding: initialShowOnboarding = false,
   onSave,
   onPreview,
   onCancel,
   userId,
   userContext,
   onConnectionFlowReady,
+  originSpaceId,
+  onDeploy,
 }: HiveLabIDEProps) {
   // Tool metadata
   const [toolId] = useState(initialComposition?.id || `tool_${Date.now()}`);
   const [toolName, setToolName] = useState(initialComposition?.name || '');
   const [toolDescription] = useState(initialComposition?.description || '');
-
-  // Onboarding state - show for empty canvas if not dismissed
-  const [showOnboarding, setShowOnboarding] = useState(() => {
-    // Check if user has dismissed onboarding before
-    if (typeof window !== 'undefined') {
-      return initialShowOnboarding && !localStorage.getItem('hivelab_onboarding_dismissed');
-    }
-    return initialShowOnboarding;
-  });
 
   // Canvas state
   const [elements, setElements] = useState<CanvasElement[]>(
@@ -158,26 +123,95 @@ export function HiveLabIDE({
   const [snapToGrid, setSnapToGrid] = useState(true);
   const gridSize = 20;
 
-  // UI state
+  // UI state - new layout
   const [mode, setMode] = useState<ToolMode>('select');
-  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [leftTab, setLeftTab] = useState<'elements' | 'layers'>('elements');
+  const [elementRailState, setElementRailState] = useState<RailState>('expanded');
+  const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
   const [aiPanelOpen, setAIPanelOpen] = useState(false);
+  const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deploying, setDeploying] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<number>(0);
 
-  // History for undo/redo
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  // History for undo/redo - initialize with current state
+  const [history, setHistory] = useState<HistoryEntry[]>(() => [{
+    elements: initialComposition?.elements || [],
+    connections: normalizeConnections(initialComposition?.connections),
+    timestamp: Date.now(),
+    description: 'Initial state',
+  }]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
-  // Connection flow feedback - tracks connections currently flowing data
+  // Connection flow feedback
   const [flowingConnections, setFlowingConnections] = useState<Set<string>>(new Set());
 
   // Refs
   const draggingElementId = useRef<string | null>(null);
 
-  // Get selected element
-  const selectedElement = elements.find((el) => selectedIds[0] === el.id) || null;
+  // Derived state
+  const selectedElements = elements.filter((el) => selectedIds.includes(el.id));
+  const isCanvasEmpty = elements.length === 0;
+
+  // Track unsaved changes
+  useEffect(() => {
+    if (elements.length > 0 || connections.length > 0) {
+      setHasUnsavedChanges(true);
+    }
+  }, [elements, connections]);
+
+  // Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Auto-save every 30 seconds when there are unsaved changes
+  useEffect(() => {
+    // Don't auto-save if there are no unsaved changes or already saving
+    if (!hasUnsavedChanges || saving) return;
+
+    // Don't auto-save if elements is empty (no real content yet)
+    if (elements.length === 0) return;
+
+    const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
+
+    const timeoutId = setTimeout(async () => {
+      // Double-check we still have unsaved changes and aren't saving
+      if (!hasUnsavedChanges || saving) return;
+
+      try {
+        setSaving(true);
+        const composition: HiveLabComposition = {
+          id: toolId,
+          name: toolName || 'Untitled Tool',
+          description: toolDescription,
+          elements,
+          connections,
+          layout: 'grid',
+        };
+        await onSave(composition);
+        setHasUnsavedChanges(false);
+        setLastAutoSave(Date.now());
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        // Show a warning toast so user knows to manually save
+        toast.warning('Auto-save failed', 'Your changes are not saved. Please save manually.');
+      } finally {
+        setSaving(false);
+      }
+    }, AUTO_SAVE_INTERVAL);
+
+    return () => clearTimeout(timeoutId);
+  }, [hasUnsavedChanges, saving, elements, connections, toolId, toolName, toolDescription, onSave]);
 
   // Push to history with MAX_HISTORY limit
   const pushHistory = useCallback(
@@ -189,9 +223,7 @@ export function HiveLabIDE({
         description,
       };
       setHistory((prev) => {
-        // Truncate future history (everything after current index)
         const newHistory = [...prev.slice(0, historyIndex + 1), entry];
-        // Limit to MAX_HISTORY entries (remove oldest)
         if (newHistory.length > MAX_HISTORY) {
           return newHistory.slice(newHistory.length - MAX_HISTORY);
         }
@@ -202,29 +234,30 @@ export function HiveLabIDE({
     [elements, connections, historyIndex]
   );
 
-  // Undo
+  // Undo/Redo
   const undo = useCallback(() => {
-    if (historyIndex < 0) return;
-    const entry = history[historyIndex];
-    if (entry) {
-      setElements(entry.elements);
-      setConnections(entry.connections);
-      setHistoryIndex((prev) => prev - 1);
+    // Can't undo if we're at the initial state (index 0)
+    if (historyIndex <= 0) return;
+    const previousEntry = history[historyIndex - 1];
+    if (previousEntry) {
+      setElements(previousEntry.elements);
+      setConnections(previousEntry.connections);
+      setHistoryIndex(historyIndex - 1);
     }
   }, [history, historyIndex]);
 
-  // Redo
   const redo = useCallback(() => {
+    // Can't redo if we're at the latest state
     if (historyIndex >= history.length - 1) return;
-    const entry = history[historyIndex + 1];
-    if (entry) {
-      setElements(entry.elements);
-      setConnections(entry.connections);
-      setHistoryIndex((prev) => prev + 1);
+    const nextEntry = history[historyIndex + 1];
+    if (nextEntry) {
+      setElements(nextEntry.elements);
+      setConnections(nextEntry.connections);
+      setHistoryIndex(historyIndex + 1);
     }
   }, [history, historyIndex]);
 
-  // Space-tier element IDs (require isSpaceLeader)
+  // Space-tier element IDs
   const SPACE_TIER_ELEMENTS = [
     'member-list',
     'member-selector',
@@ -238,10 +271,9 @@ export function HiveLabIDE({
   // Element operations
   const addElement = useCallback(
     (elementId: string, position: { x: number; y: number }) => {
-      // Validate element access - space-tier requires isSpaceLeader
       if (SPACE_TIER_ELEMENTS.includes(elementId) && !userContext?.isSpaceLeader) {
         console.warn(`Cannot add ${elementId}: requires space leader access`);
-        return; // Silently reject - element shouldn't be in palette anyway
+        return;
       }
 
       const newElement: CanvasElement = {
@@ -315,17 +347,15 @@ export function HiveLabIDE({
     [selectedIds, elements, pushHistory]
   );
 
-  // Clipboard state for copy/paste
+  // Clipboard
   const clipboardRef = useRef<CanvasElement[]>([]);
 
-  // Copy selected elements to clipboard
   const copyElements = useCallback(() => {
     if (selectedIds.length === 0) return;
     const toCopy = elements.filter((el) => selectedIds.includes(el.id));
-    clipboardRef.current = JSON.parse(JSON.stringify(toCopy)); // Deep clone
+    clipboardRef.current = JSON.parse(JSON.stringify(toCopy));
   }, [selectedIds, elements]);
 
-  // Paste elements from clipboard
   const pasteElements = useCallback(() => {
     if (clipboardRef.current.length === 0) return;
 
@@ -343,13 +373,82 @@ export function HiveLabIDE({
     pushHistory(`Paste ${newElements.length} element(s)`);
   }, [elements.length, pushHistory]);
 
-  // Cut selected elements (copy + delete)
   const cutElements = useCallback(() => {
     if (selectedIds.length === 0) return;
     copyElements();
     deleteElements([]);
     pushHistory(`Cut ${selectedIds.length} element(s)`);
   }, [selectedIds.length, copyElements, deleteElements, pushHistory]);
+
+  // Alignment
+  const alignElements = useCallback(
+    (alignment: AlignmentType) => {
+      if (selectedIds.length < 2) return;
+
+      const selected = elements.filter((el) => selectedIds.includes(el.id));
+      if (selected.length < 2) return;
+
+      // Calculate bounding box of selected elements
+      let minX = Infinity,
+        maxX = -Infinity,
+        minY = Infinity,
+        maxY = -Infinity;
+
+      selected.forEach((el) => {
+        minX = Math.min(minX, el.position.x);
+        maxX = Math.max(maxX, el.position.x + el.size.width);
+        minY = Math.min(minY, el.position.y);
+        maxY = Math.max(maxY, el.position.y + el.size.height);
+      });
+
+      const centerX = (minX + maxX) / 2;
+      const centerY = (minY + maxY) / 2;
+
+      setElements((prev) =>
+        prev.map((el) => {
+          if (!selectedIds.includes(el.id)) return el;
+
+          let newX = el.position.x;
+          let newY = el.position.y;
+
+          switch (alignment) {
+            case 'left':
+              newX = minX;
+              break;
+            case 'center':
+              newX = centerX - el.size.width / 2;
+              break;
+            case 'right':
+              newX = maxX - el.size.width;
+              break;
+            case 'top':
+              newY = minY;
+              break;
+            case 'middle':
+              newY = centerY - el.size.height / 2;
+              break;
+            case 'bottom':
+              newY = maxY - el.size.height;
+              break;
+          }
+
+          // Snap to grid if enabled
+          if (snapToGrid) {
+            newX = Math.round(newX / gridSize) * gridSize;
+            newY = Math.round(newY / gridSize) * gridSize;
+          }
+
+          return {
+            ...el,
+            position: { x: newX, y: newY },
+          };
+        })
+      );
+
+      pushHistory(`Align ${selected.length} elements (${alignment})`);
+    },
+    [selectedIds, elements, snapToGrid, gridSize, pushHistory]
+  );
 
   // Selection
   const selectElements = useCallback((ids: string[], append = false) => {
@@ -364,22 +463,15 @@ export function HiveLabIDE({
     setSelectedIds([]);
   }, []);
 
-  /**
-   * Trigger visual flow feedback on connections
-   * Shows animated data flow for specified duration (default 600ms)
-   */
+  // Connection flow feedback
   const triggerConnectionFlow = useCallback(
     (connectionIds: string[], duration = 600) => {
       if (connectionIds.length === 0) return;
-
-      // Add connections to flowing set
       setFlowingConnections((prev) => {
         const next = new Set(prev);
         connectionIds.forEach((id) => next.add(id));
         return next;
       });
-
-      // Remove after duration
       setTimeout(() => {
         setFlowingConnections((prev) => {
           const next = new Set(prev);
@@ -391,10 +483,6 @@ export function HiveLabIDE({
     []
   );
 
-  /**
-   * Find connections affected by an element's output change
-   * Used to trigger visual feedback when data cascades
-   */
   const getConnectionsFromElement = useCallback(
     (instanceId: string): string[] => {
       return connections
@@ -408,15 +496,9 @@ export function HiveLabIDE({
   const addConnection = useCallback(
     (from: Connection['from'], to: Connection['to']) => {
       const connectionId = `conn_${Date.now()}`;
-      const newConnection: Connection = {
-        id: connectionId,
-        from,
-        to,
-      };
+      const newConnection: Connection = { id: connectionId, from, to };
       setConnections((prev) => [...prev, newConnection]);
       pushHistory('Add connection');
-
-      // Trigger visual flow feedback when connection is created
       setTimeout(() => triggerConnectionFlow([connectionId], 800), 50);
     },
     [pushHistory, triggerConnectionFlow]
@@ -430,7 +512,7 @@ export function HiveLabIDE({
     [pushHistory]
   );
 
-  // Expose flow controls to parent component
+  // Expose flow controls
   useEffect(() => {
     if (onConnectionFlowReady) {
       onConnectionFlowReady({
@@ -459,10 +541,48 @@ export function HiveLabIDE({
         layout: 'grid',
       };
       await onSave(composition);
+      setHasUnsavedChanges(false);
+      toast.success('Tool saved', 'Your changes have been saved.');
+    } catch (error) {
+      console.error('Save failed:', error);
+      toast.error(
+        'Failed to save tool',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
     } finally {
       setSaving(false);
     }
   }, [toolId, toolName, toolDescription, elements, connections, onSave]);
+
+  // Deploy
+  const deploy = useCallback(async () => {
+    if (!onDeploy) return;
+    setSaving(true);
+    setDeploying(true);
+    try {
+      const composition: HiveLabComposition = {
+        id: toolId,
+        name: toolName || 'Untitled Tool',
+        description: toolDescription,
+        elements,
+        connections,
+        layout: 'grid',
+      };
+      await onSave(composition);
+      await onDeploy(composition);
+      setHasUnsavedChanges(false);
+      toast.success('Tool deployed', 'Your tool is now live!');
+    } catch (error) {
+      console.error('Deploy failed:', error);
+      toast.error(
+        'Failed to deploy tool',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    } finally {
+      setSaving(false);
+      setDeploying(false);
+    }
+  }, [toolId, toolName, toolDescription, elements, connections, onSave, onDeploy]);
 
   // Preview
   const preview = useCallback(() => {
@@ -479,46 +599,26 @@ export function HiveLabIDE({
 
   // AI streaming generation
   const { state: aiState, generate, cancel: cancelGeneration } = useStreamingGeneration({
-    onElementAdded: (_element, _status) => {
-      // Element added during AI generation - UI updates automatically via state
-    },
-    onComplete: (_composition) => {
-      pushHistory('AI generation complete');
-    },
-    onError: (_error) => {
-      // Generation error - state.error will be set
-    },
-    onStatusUpdate: (_status) => {
-      // Status update - state.currentStatus will be set
-    },
+    onComplete: () => pushHistory('AI generation complete'),
+    onError: () => {},
+    onStatusUpdate: () => {},
+    onElementAdded: () => {},
   });
 
-  // Helper to get position near selection (Cursor-like behavior)
+  // Position helper for AI
   const getPositionNearSelection = useCallback(() => {
-    if (selectedIds.length === 0) {
-      // No selection - place in center-ish area
-      return { x: 100, y: 100 };
-    }
-
-    // Get bounds of selected elements
+    if (selectedIds.length === 0) return { x: 100, y: 100 };
     const selected = elements.filter(el => selectedIds.includes(el.id));
     if (selected.length === 0) return { x: 100, y: 100 };
-
-    // Find rightmost edge of selection
     const maxX = Math.max(...selected.map(el => el.position.x + (el.size?.width || 240)));
     const avgY = selected.reduce((sum, el) => sum + el.position.y, 0) / selected.length;
-
-    // Place new elements to the right of selection with padding
     return { x: maxX + 40, y: avgY };
   }, [elements, selectedIds]);
 
-  // Merge AI-generated elements into canvas when generation completes
+  // Merge AI elements
   useEffect(() => {
     if (aiState.elements.length > 0 && !aiState.isGenerating) {
-      // Get position near selection for Cursor-like placement
       const insertPosition = getPositionNearSelection();
-
-      // Map AI elements to canvas elements with proper positioning
       const canvasElements: CanvasElement[] = aiState.elements.map((el, index) => ({
         id: `element_${Date.now()}_${index}`,
         elementId: el.elementId || 'unknown',
@@ -541,18 +641,12 @@ export function HiveLabIDE({
     }
   }, [aiState.elements, aiState.isGenerating, getPositionNearSelection]);
 
-  // AI handler - selection-aware (Cursor-like)
+  // AI handler
   const handleAISubmit = useCallback(async (prompt: string, type: string) => {
-    // Get selected elements for context
-    const selectedElements = elements.filter(el => selectedIds.includes(el.id));
-    const hasSelection = selectedElements.length > 0;
-
-    // Determine if this is an iteration/modification based on selection or type
+    const selectedEls = elements.filter(el => selectedIds.includes(el.id));
+    const hasSelection = selectedEls.length > 0;
     const isIteration = type === 'modify' || type === 'iterate' || hasSelection;
-
-    // Build context based on selection (Cursor-like behavior)
-    // If elements are selected, AI acts on those; otherwise, on the whole canvas
-    const elementsForContext = hasSelection ? selectedElements : elements;
+    const elementsForContext = hasSelection ? selectedEls : elements;
 
     const existingComposition = isIteration ? {
       id: toolId,
@@ -568,7 +662,6 @@ export function HiveLabIDE({
         size: el.size,
       })),
       connections: connections.filter(conn =>
-        // Only include connections involving selected elements
         elementsForContext.some(el =>
           el.instanceId === conn.from.instanceId || el.instanceId === conn.to.instanceId
         )
@@ -581,11 +674,10 @@ export function HiveLabIDE({
       updatedAt: new Date().toISOString(),
     } : undefined;
 
-    // Pass selection context to AI
     const selectionContext = hasSelection ? {
-      count: selectedElements.length,
-      types: selectedElements.map(el => el.elementId),
-      prompt: `Acting on ${selectedElements.length} selected element(s): ${selectedElements.map(el => el.elementId).join(', ')}`,
+      count: selectedEls.length,
+      types: selectedEls.map(el => el.elementId),
+      prompt: `Acting on ${selectedEls.length} selected element(s): ${selectedEls.map(el => el.elementId).join(', ')}`,
     } : undefined;
 
     await generate({
@@ -596,6 +688,74 @@ export function HiveLabIDE({
 
     setAIPanelOpen(false);
   }, [generate, toolId, toolName, toolDescription, elements, connections, selectedIds]);
+
+  // Handle quick prompt from StartZone
+  const handleQuickPrompt = useCallback((prompt: string) => {
+    setAIPanelOpen(true);
+    // The AI palette will receive this prompt
+    setTimeout(() => {
+      handleAISubmit(prompt, 'generate');
+    }, 100);
+  }, [handleAISubmit]);
+
+  // Toggle element rail
+  const toggleElementRail = useCallback(() => {
+    setElementRailState(prev => {
+      if (prev === 'expanded') return 'collapsed';
+      if (prev === 'collapsed') return 'hidden';
+      return 'expanded';
+    });
+  }, []);
+
+  // Open elements (expand rail to elements tab)
+  const openElements = useCallback(() => {
+    setElementRailState('expanded');
+    setElementRailTab('elements');
+  }, []);
+
+  // Open templates
+  const openTemplates = useCallback(() => {
+    setTemplateGalleryOpen(true);
+  }, []);
+
+  // Load template composition into canvas
+  const loadTemplateComposition = useCallback(
+    (composition: ToolComposition) => {
+      // Convert template elements to canvas elements
+      const newElements: CanvasElement[] = composition.elements.map((el, idx) => ({
+        id: `element_${Date.now()}_${idx}`,
+        elementId: el.elementId,
+        instanceId: el.instanceId,
+        position: el.position || { x: 100 + idx * 50, y: 100 + idx * 50 },
+        size: el.size || { width: 240, height: 120 },
+        config: el.config || {},
+        zIndex: idx + 1,
+        locked: false,
+        visible: true,
+      }));
+
+      // Convert connections
+      const newConnections: Connection[] = (composition.connections || []).map((conn, idx) => ({
+        id: `conn_${Date.now()}_${idx}`,
+        from: {
+          instanceId: conn.from.instanceId,
+          port: conn.from.output || 'output',
+        },
+        to: {
+          instanceId: conn.to.instanceId,
+          port: conn.to.input || 'input',
+        },
+      }));
+
+      setElements(newElements);
+      setConnections(newConnections);
+      setToolName(composition.name || 'Untitled Tool');
+      setSelectedIds([]);
+      pushHistory(`Load template: ${composition.name}`);
+      setTemplateGalleryOpen(false);
+    },
+    [pushHistory]
+  );
 
   // Keyboard shortcuts
   useIDEKeyboard({
@@ -618,219 +778,129 @@ export function HiveLabIDE({
     mode,
     setMode,
     enabled: true,
+    zoom,
   });
 
   return (
-    <div className={cn("h-screen flex flex-col overflow-hidden", ideClasses.bgCanvas, ideClasses.textPrimary)}>
-      {/* Toolbar */}
-      <IDEToolbar
-        mode={mode}
-        onModeChange={setMode}
-        zoom={zoom}
-        onZoomChange={setZoom}
-        showGrid={showGrid}
-        onToggleGrid={() => setShowGrid((prev) => !prev)}
-        canUndo={historyIndex >= 0}
-        canRedo={historyIndex < history.length - 1}
-        onUndo={undo}
-        onRedo={redo}
-        onFitToScreen={fitToScreen}
-        onOpenAI={() => setAIPanelOpen(true)}
+    <div className="h-screen flex flex-col overflow-hidden bg-[#0A0A0A]">
+      {/* Header Bar - Tool identity */}
+      <HeaderBar
+        toolName={toolName}
+        onToolNameChange={setToolName}
         onPreview={preview}
         onSave={save}
         saving={saving}
-        toolName={toolName}
-        onToolNameChange={setToolName}
+        originSpaceId={originSpaceId}
+        onDeploy={deploy}
+        deploying={deploying}
+        onBack={onCancel}
+        hasUnsavedChanges={hasUnsavedChanges}
       />
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel */}
-        <AnimatePresence mode="wait">
-          {leftPanelOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: PANEL_WIDTH, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={cn("border-r flex flex-col overflow-hidden", ideClasses.borderDefault, ideClasses.bgPanel)}
-            >
-              {/* Tab Switcher */}
-              <div className={cn("flex border-b", ideClasses.borderDefault)}>
-                <button
-                  type="button"
-                  onClick={() => setLeftTab('elements')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm transition-colors',
-                    leftTab === 'elements'
-                      ? 'bg-[#1a1a1a] text-white'
-                      : 'text-[#666] hover:text-[#999]'
-                  )}
-                >
-                  <Box className="h-4 w-4" />
-                  Elements
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLeftTab('layers')}
-                  className={cn(
-                    'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm transition-colors',
-                    leftTab === 'layers'
-                      ? 'bg-[#1a1a1a] text-white'
-                      : 'text-[#666] hover:text-[#999]'
-                  )}
-                >
-                  <Layers className="h-4 w-4" />
-                  Layers
-                </button>
-              </div>
+      {/* Command Bar - Workflow triggers + mode */}
+      <CommandBar
+        mode={mode}
+        onModeChange={setMode}
+        onOpenAI={() => setAIPanelOpen(true)}
+        onOpenTemplates={openTemplates}
+        onToggleElements={toggleElementRail}
+        elementsOpen={elementRailState !== 'hidden'}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onUndo={undo}
+        onRedo={redo}
+        isGenerating={aiState.isGenerating}
+      />
 
-              {/* Panel Content */}
-              <div className="flex-1 overflow-hidden">
-                {leftTab === 'elements' ? (
-                  <ElementPalette
-                    onDragStart={(id) => {
-                      draggingElementId.current = id;
-                    }}
-                    onDragEnd={() => {
-                      draggingElementId.current = null;
-                    }}
-                    userContext={userContext}
-                  />
-                ) : (
-                  <LayersPanel
-                    elements={elements}
-                    connections={connections}
-                    selectedIds={selectedIds}
-                    onSelect={selectElements}
-                    onUpdateElement={updateElement}
-                    onDeleteElement={(id) => deleteElements([id])}
-                    onDuplicateElement={(id) => duplicateElements([id])}
-                    onReorder={setElements}
-                  />
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Panel Toggle - Left */}
-        <button
-          type="button"
-          onClick={() => setLeftPanelOpen((prev) => !prev)}
-          className={cn(
-            "w-6 flex items-center justify-center border-r transition-colors",
-            ideClasses.borderDefault,
-            ideClasses.bgPanel,
-            ideClasses.bgInteractiveHover,
-            ideClasses.textMuted,
-            "hover:text-white"
-          )}
-        >
-          {leftPanelOpen ? (
-            <PanelLeftClose className="h-4 w-4" />
-          ) : (
-            <PanelLeftOpen className="h-4 w-4" />
-          )}
-        </button>
-
-        {/* Canvas */}
-        <IDECanvas
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Element Rail (Left) */}
+        <ElementRail
+          state={elementRailState}
+          onStateChange={setElementRailState}
+          activeTab={elementRailTab}
+          onTabChange={setElementRailTab}
           elements={elements}
           connections={connections}
           selectedIds={selectedIds}
-          zoom={zoom}
-          pan={pan}
-          showGrid={showGrid}
-          gridSize={gridSize}
-          snapToGrid={snapToGrid}
-          mode={mode}
-          flowingConnections={flowingConnections}
+          onDragStart={(id) => {
+            draggingElementId.current = id;
+          }}
+          onDragEnd={() => {
+            draggingElementId.current = null;
+          }}
           onSelect={selectElements}
           onUpdateElement={updateElement}
-          onDeleteElements={deleteElements}
-          onAddConnection={addConnection}
-          onDeleteConnection={deleteConnection}
-          onZoomChange={setZoom}
-          onPanChange={setPan}
-          onDrop={addElement}
+          onDeleteElement={(id) => deleteElements([id])}
+          onDuplicateElement={(id) => duplicateElements([id])}
+          onReorder={setElements}
+          onOpenAI={() => setAIPanelOpen(true)}
+          onOpenTemplates={openTemplates}
+          userContext={userContext}
         />
 
-        {/* Panel Toggle - Right */}
-        <button
-          type="button"
-          onClick={() => setRightPanelOpen((prev) => !prev)}
-          className={cn(
-            "w-6 flex items-center justify-center border-l transition-colors",
-            ideClasses.borderDefault,
-            ideClasses.bgPanel,
-            ideClasses.bgInteractiveHover,
-            ideClasses.textMuted,
-            "hover:text-white"
-          )}
-        >
-          {rightPanelOpen ? (
-            <PanelRightClose className="h-4 w-4" />
-          ) : (
-            <PanelRightOpen className="h-4 w-4" />
-          )}
-        </button>
-
-        {/* Right Panel */}
-        <AnimatePresence mode="wait">
-          {rightPanelOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: PANEL_WIDTH, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className={cn("border-l overflow-hidden", ideClasses.borderDefault, ideClasses.bgPanel)}
-            >
-              <PropertiesPanel
-                selectedElement={selectedElement}
-                onUpdateElement={updateElement}
-                onDeleteElement={(id) => deleteElements([id])}
-                onDuplicateElement={(id) => duplicateElements([id])}
+        {/* Canvas Area */}
+        <div className="flex-1 relative">
+          {/* Start Zone - shown when canvas is empty */}
+          <AnimatePresence>
+            {isCanvasEmpty && !aiState.isGenerating && (
+              <StartZone
+                onOpenAI={() => setAIPanelOpen(true)}
+                onOpenTemplates={openTemplates}
+                onOpenElements={openElements}
+                onQuickPrompt={handleQuickPrompt}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+
+          {/* Canvas */}
+          <IDECanvas
+            elements={elements}
+            connections={connections}
+            selectedIds={selectedIds}
+            zoom={zoom}
+            pan={pan}
+            showGrid={showGrid}
+            gridSize={gridSize}
+            snapToGrid={snapToGrid}
+            mode={mode}
+            flowingConnections={flowingConnections}
+            onSelect={selectElements}
+            onUpdateElement={updateElement}
+            onDeleteElements={deleteElements}
+            onAddConnection={addConnection}
+            onDeleteConnection={deleteConnection}
+            onZoomChange={setZoom}
+            onPanChange={setPan}
+            onDrop={addElement}
+            onTransformEnd={() => pushHistory('Transform element')}
+          />
+        </div>
+
+        {/* Context Rail (Right) - auto-show on selection */}
+        <ContextRail
+          selectedElements={selectedElements}
+          allElements={elements}
+          onUpdateElement={updateElement}
+          onDeleteElements={deleteElements}
+          onDuplicateElements={duplicateElements}
+          onAlignElements={alignElements}
+        />
       </div>
 
-      {/* Status Bar */}
-      <div className={cn(
-        "h-7 border-t flex items-center justify-between px-3 text-xs",
-        ideClasses.bgToolbar,
-        ideClasses.borderDefault,
-        ideClasses.textMuted
-      )}>
-        <div className="flex items-center gap-4">
-          <span>{elements.length} elements</span>
-          <span>{connections.length} connections</span>
-          {selectedIds.length > 0 && <span>{selectedIds.length} selected</span>}
-        </div>
-        {/* AI Generation Progress */}
-        {aiState.isGenerating && (
-          <div className="flex items-center gap-2">
-            <div className={cn("w-24 h-1.5 rounded-full overflow-hidden", ideClasses.borderDefault.replace('border-', 'bg-'))}>
-              <motion.div
-                className="h-full bg-[var(--ide-accent-primary)]"
-                initial={{ width: 0 }}
-                animate={{ width: `${aiState.progress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-            <span className={ideClasses.textAccent}>{aiState.currentStatus}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-4">
-          <span>Grid: {showGrid ? 'On' : 'Off'}</span>
-          <span>Snap: {snapToGrid ? 'On' : 'Off'}</span>
-          <span>Zoom: {Math.round(zoom * 100)}%</span>
-        </div>
-      </div>
+      {/* Floating Action Bar (Bottom Center) */}
+      <FloatingActionBar
+        zoom={zoom}
+        onZoomChange={setZoom}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid(prev => !prev)}
+        onFitToScreen={fitToScreen}
+        onOpenAI={() => setAIPanelOpen(true)}
+        snapToGrid={snapToGrid}
+        onToggleSnap={() => setSnapToGrid(prev => !prev)}
+      />
 
-      {/* AI Command Palette - selection-aware */}
+      {/* AI Command Palette */}
       <AICommandPalette
         open={aiPanelOpen}
         onClose={() => {
@@ -845,16 +915,12 @@ export function HiveLabIDE({
         selectedCount={selectedIds.length}
       />
 
-      {/* Onboarding Overlay - show for new/empty canvas */}
-      {showOnboarding && elements.length === 0 && (
-        <OnboardingOverlay
-          onDismiss={() => setShowOnboarding(false)}
-          onOpenAI={() => {
-            setShowOnboarding(false);
-            setAIPanelOpen(true);
-          }}
-        />
-      )}
+      {/* Template Gallery Modal */}
+      <TemplateGallery
+        isOpen={templateGalleryOpen}
+        onClose={() => setTemplateGalleryOpen(false)}
+        onSelectTemplate={loadTemplateComposition}
+      />
     </div>
   );
 }

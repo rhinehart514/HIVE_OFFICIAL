@@ -388,6 +388,38 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
   }
 
   /**
+   * Lightweight method to get user's space memberships without loading full spaces
+   * SCALING: This prevents N+1 queries - only queries spaceMembers, not spaces
+   * Use this for browse/discovery endpoints where you only need spaceId + role
+   */
+  async findUserMemberships(userId: string): Promise<Result<{ spaceId: string; role: string }[]>> {
+    try {
+      const membershipsSnapshot = await dbAdmin
+        .collection(this.membersCollection)
+        .where('userId', '==', userId)
+        .where('isActive', '==', true)
+        .limit(100)
+        .get();
+
+      if (membershipsSnapshot.empty) {
+        return Result.ok<{ spaceId: string; role: string }[]>([]);
+      }
+
+      const memberships = membershipsSnapshot.docs.map(doc => {
+        const data = doc.data() as SpaceMemberDocument;
+        return {
+          spaceId: data.spaceId,
+          role: data.role
+        };
+      });
+
+      return Result.ok(memberships);
+    } catch (error) {
+      return Result.fail<{ spaceId: string; role: string }[]>(`Failed to find user memberships: ${error}`);
+    }
+  }
+
+  /**
    * Find public spaces
    * Filters out hidden/moderated spaces
    */
@@ -573,7 +605,7 @@ export class FirebaseAdminSpaceRepository implements ISpaceRepository {
     searchTerm?: string;
     limit?: number;
     cursor?: string;
-    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount';
+    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount' | 'trendingScore';
     orderDirection?: 'asc' | 'desc';
   }): Promise<Result<{ spaces: EnhancedSpace[]; hasMore: boolean; nextCursor?: string }>> {
     try {

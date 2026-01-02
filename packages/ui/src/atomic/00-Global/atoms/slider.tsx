@@ -25,14 +25,14 @@ const sliderVariants = cva(
 );
 
 const sliderTrackVariants = cva(
-  "relative h-1.5 w-full grow overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--hive-background-tertiary) 62%,#ffd700 22%)] transition-colors duration-150",
+  "relative h-1.5 w-full grow overflow-hidden rounded-full bg-[#1A1A1A] transition-colors duration-150",
   {
     variants: {
       variant: {
         default: "",
-        subtle: "bg-[color-mix(in_srgb,var(--hive-background-secondary) 65%,transparent)]",
-        destructive: "",
-        success: "",
+        subtle: "bg-[#141414]",
+        destructive: "bg-[#FF3737]/10",
+        success: "bg-[#00D46A]/10",
       },
     },
     defaultVariants: {
@@ -42,14 +42,15 @@ const sliderTrackVariants = cva(
 );
 
 const sliderRangeVariants = cva(
-  "absolute h-full bg-brand-primary transition-all duration-150",
+  // Default: white for monochrome discipline
+  "absolute h-full bg-white transition-all duration-150",
   {
     variants: {
       variant: {
         default: "",
-        destructive: "bg-[var(--hive-status-error)]",
-        success: "bg-[var(--hive-status-success)]",
-        subtle: "",
+        destructive: "bg-[#FF3737]",
+        success: "bg-[#00D46A]",
+        subtle: "bg-[#A1A1A6]",
       },
     },
     defaultVariants: {
@@ -59,13 +60,14 @@ const sliderRangeVariants = cva(
 );
 
 const sliderThumbVariants = cva(
-  "block h-4 w-4 rounded-full border border-[color-mix(in_srgb,var(--hive-border-default) 64%,#ffd700 26%)] bg-[color-mix(in_srgb,#181818 82%,#ffd700 12%)] shadow-[0_4px_12px_rgba(0,0,0,0.45)] transition-[transform,box-shadow,background,border] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,215,0,0.4)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)] hover:-translate-y-[1px] data-[state=active]:scale-105 disabled:pointer-events-none disabled:opacity-50",
+  // Monochrome discipline: white focus, no gold borders
+  "block h-4 w-4 rounded-full border border-[#2A2A2A] bg-[#FAFAFA] shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-[transform,box-shadow,background,border] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] hover:-translate-y-[1px] data-[state=active]:scale-105 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "data-[state=active]:shadow-[0_8px_24px_rgba(255,215,0,0.24)] data-[state=active]:border-brand-primary data-[state=active]:bg-[color-mix(in_srgb,var(--hive-brand-primary) 35%,var(--hive-background-primary) 65%)]",
-        destructive: "border-[var(--hive-status-error)] bg-[color-mix(in_srgb,var(--hive-status-error) 88%,rgba(0,0,0,0.12))] data-[state=active]:shadow-[0_8px_22px_rgba(212,60,60,0.18)] data-[state=active]:bg-[color-mix(in_srgb,var(--hive-status-error) 42%,var(--hive-background-primary) 58%)]",
-        success: "border-[var(--hive-status-success)] bg-[color-mix(in_srgb,var(--hive-status-success) 88%,rgba(0,0,0,0.12))] data-[state=active]:shadow-[0_8px_22px_rgba(51,178,73,0.18)] data-[state=active]:bg-[color-mix(in_srgb,var(--hive-status-success) 40%,var(--hive-background-primary) 60%)]",
+        default: "data-[state=active]:shadow-[0_2px_8px_rgba(255,255,255,0.2)] data-[state=active]:border-white",
+        destructive: "border-[#FF3737] data-[state=active]:shadow-[0_2px_8px_rgba(255,55,55,0.3)]",
+        success: "border-[#00D46A] data-[state=active]:shadow-[0_2px_8px_rgba(0,212,106,0.3)]",
         subtle: "",
       },
     },
@@ -142,13 +144,13 @@ const Slider = React.forwardRef<
             <motion.label
               htmlFor={sliderId}
               className={cn(
-                "text-sm font-medium text-[var(--hive-text-primary)]",
+                "text-sm font-medium text-[#FAFAFA]",
                 disabled && "opacity-70"
               )}
               animate={{
                 color: isFocused && !error
-                  ? "var(--hive-brand-primary)"
-                  : "var(--hive-text-primary)",
+                  ? "#FAFAFA"
+                  : "#A1A1A6",
               }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
             >
@@ -160,8 +162,8 @@ const Slider = React.forwardRef<
               className={cn(
                 "text-sm font-medium tabular-nums",
                 error
-                  ? "text-[var(--hive-status-error)]"
-                  : "text-[var(--hive-text-secondary)]"
+                  ? "text-[#FF3737]"
+                  : "text-[#A1A1A6]"
               )}
               animate={{ scale: isDragging ? 1.05 : 1 }}
               transition={{ duration: duration.quick, ease: easing.smooth }}
@@ -214,13 +216,13 @@ const Slider = React.forwardRef<
               }}
             >
               <div className="relative flex items-center justify-center -translate-x-1/2">
-                <div className="px-2 py-1 rounded-md bg-[var(--hive-background-primary)] border border-[var(--hive-border-default)] shadow-lg">
-                  <span className="text-xs font-medium text-[var(--hive-text-primary)] tabular-nums">
+                <div className="px-2 py-1 rounded-md bg-[#0A0A0A] border border-[#2A2A2A] shadow-lg">
+                  <span className="text-xs font-medium text-[#FAFAFA] tabular-nums">
                     {formatValue(primaryValue)}
                   </span>
                 </div>
                 {/* Arrow */}
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[var(--hive-background-primary)] border-r border-b border-[var(--hive-border-default)]" />
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-[#0A0A0A] border-r border-b border-[#2A2A2A]" />
               </div>
             </motion.div>
           )}
@@ -230,10 +232,10 @@ const Slider = React.forwardRef<
       {/* Min/Max Labels */}
       {showMinMax && (
         <div className="flex items-center justify-between">
-          <span className="text-xs text-[var(--hive-text-tertiary)]">
+          <span className="text-xs text-[#71717A]">
             {formatValue(min)}
           </span>
-          <span className="text-xs text-[var(--hive-text-tertiary)]">
+          <span className="text-xs text-[#71717A]">
             {formatValue(max)}
           </span>
         </div>
@@ -248,8 +250,8 @@ const Slider = React.forwardRef<
             className={cn(
               "text-xs",
               error
-                ? "text-[var(--hive-status-error)]"
-                : "text-[var(--hive-text-secondary)]"
+                ? "text-[#FF3737]"
+                : "text-[#A1A1A6]"
             )}
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}

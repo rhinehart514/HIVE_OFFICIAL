@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge, toast } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import { AdminActivityLog, ActivityLogStats, AdminAction } from "@/lib/admin-activity-logger";
 
@@ -111,7 +111,7 @@ export function AdminActivityLogDashboard() {
       }
 
       const data = await response.json();
-      alert(`Cleaned up ${data.deletedCount} old logs`);
+      toast.success(`Cleaned up ${data.deletedCount} old logs`);
       await fetchActivityLogs();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cleanup logs');

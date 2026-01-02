@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
+import * as admin from "firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
@@ -11,7 +12,6 @@ import {
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import {
-  createPlacementDocument,
   buildPlacementCompositeId,
 } from "@/lib/tool-placement";
 import { notifyToolDeployment } from "@/lib/notification-service";
@@ -400,44 +400,21 @@ export const POST = withAuthValidationAndErrors(
     const placementTargetType =
       payload.deployTo === "space" ? ("space" as const) : ("profile" as const);
 
-    const placementData = {
-      toolId: payload.toolId,
-      targetType: placementTargetType,
-      targetId: payload.targetId,
-      surface: resolvedSurface ?? "tools",
-      status: "active" as const,
-      position,
-      config: payload.config ?? {},
-      permissions,
-      settings,
-      createdAt: timestamp,
-      createdBy: userId,
-      updatedAt: timestamp,
-      usageCount: 0,
-      metadata: {
-        deploymentContext: {
-          userAgent: request.headers.get("user-agent"),
-          timestamp: timestamp.toISOString(),
-        },
-      },
-    };
-
-    const placement = await createPlacementDocument({
-      deployedTo: placementTargetType,
-      targetId: payload.targetId,
-      toolId: payload.toolId,
-      deploymentId: `deployment_${Date.now()}`,
-      placedBy: userId,
-      campusId: CURRENT_CAMPUS_ID,
-      placement: 'sidebar',
-      visibility: 'all',
-      configOverrides: placementData.config,
-    });
-
+    // Build IDs for transactional writes
+    const deploymentId = `deployment_${Date.now()}`;
+    const placementId = buildPlacementCompositeId(deploymentId, payload.toolId);
     const compositeId = buildPlacementCompositeId(
       placementTargetType,
       payload.targetId
     );
+
+    // Build placement document path
+    const placementRef = placementTargetType === "space"
+      ? dbAdmin.collection("spaces").doc(payload.targetId).collection("placed_tools").doc(placementId)
+      : dbAdmin.collection("users").doc(payload.targetId).collection("placed_tools").doc(placementId);
+    const placementPath = placementTargetType === "space"
+      ? `spaces/${payload.targetId}/placed_tools/${placementId}`
+      : `users/${payload.targetId}/placed_tools/${placementId}`;
 
     const deploymentDoc: DeploymentRecord = {
       id: compositeId,
@@ -458,24 +435,50 @@ export const POST = withAuthValidationAndErrors(
         toolName: toolResult.toolData.name,
         toolVersion: toolResult.toolData.currentVersion,
       },
-      placementId: placement.id,
-      placementPath: placement.path,
+      placementId: placementId,
+      placementPath: placementPath,
       creatorId: userId,
       spaceId: placementTargetType === "space" ? payload.targetId : null,
       profileId: placementTargetType === "profile" ? payload.targetId : null,
       campusId: CURRENT_CAMPUS_ID,
     };
 
-    await dbAdmin.collection("deployedTools").doc(compositeId).set(deploymentDoc);
-
-    await dbAdmin
-      .collection("tools")
-      .doc(payload.toolId)
-      .update({
-        deploymentCount: (toolResult.toolData.deploymentCount || 0) + 1,
-        lastDeployedAt: timestamp.toISOString(),
+    // Execute all writes in a single transaction for atomicity
+    await dbAdmin.runTransaction(async (transaction) => {
+      // 1. Create placement document in space/profile subcollection
+      transaction.set(placementRef, {
+        toolId: payload.toolId,
+        placement: "sidebar",
+        order: position,
+        isActive: true,
+        source: "leader",
+        placedBy: userId,
+        placedAt: admin.firestore.FieldValue.serverTimestamp(),
+        configOverrides: payload.config ?? {},
+        visibility: "all",
+        titleOverride: null,
+        isEditable: true,
+        state: {},
+        stateUpdatedAt: null,
+        campusId: CURRENT_CAMPUS_ID,
+        deploymentId: deploymentId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+      // 2. Create deployment record in deployedTools collection
+      const deployedToolRef = dbAdmin.collection("deployedTools").doc(compositeId);
+      transaction.set(deployedToolRef, deploymentDoc);
+
+      // 3. Update tool deployment count
+      const toolRef = dbAdmin.collection("tools").doc(payload.toolId);
+      transaction.update(toolRef, {
+        deploymentCount: admin.firestore.FieldValue.increment(1),
+        lastDeployedAt: timestamp.toISOString(),
+      });
+    });
+
+    // Analytics event is non-critical, can be outside transaction
     await dbAdmin.collection("analytics_events").add({
       eventType: "tool_deployed",
       userId,

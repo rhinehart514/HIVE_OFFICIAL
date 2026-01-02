@@ -22,20 +22,32 @@ export type ButtonState = 'idle' | 'loading' | 'success'
  * - Ghost/Outline: Transparent with white text
  * - Destructive: Red for dangerous actions
  *
- * Focus: White rings (not gold)
+ * THE 1% GOLD RULE:
+ * Gold (primary/brand) buttons should appear on ~1% of screens.
+ * Gold appears ONLY when:
+ * - User accomplishes something (claimed handle, completed step)
+ * - User takes final action (Enter HIVE, Submit)
+ * - Something is live/active (presence indicator)
+ * - User is rewarded (achievement unlock, ritual complete)
+ *
+ * Focus: WHITE rings (not gold) - gold is earned, not given
  * Colors: Neutral grays + #FFD700 gold accent
  */
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0A] disabled:pointer-events-none disabled:opacity-50",
+  "relative inline-flex items-center justify-center gap-1.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0A0A0A] disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
         // Default: White button, black text (Vercel-style)
         default:
-          "bg-[#FAFAFA] text-[#0A0A0A] hover:bg-[#FAFAFA]/90",
-        // Primary: Gold CTA - use ONLY for primary actions (1% rule)
+          "bg-[#FAFAFA] text-[#0A0A0A] hover:bg-[#FAFAFA]/90 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)]",
+        /**
+         * Primary: Gold CTA - THE 1% RULE
+         * Use ONLY for final CTAs: "Enter HIVE", "Submit", "Confirm"
+         * Ask: "Has the user earned this moment?" If no, use default.
+         */
         primary:
-          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200]",
+          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]",
         // Secondary: Subtle background with border
         secondary:
           "bg-white/[0.06] text-[#FAFAFA] border border-[#2A2A2A] hover:bg-white/[0.10] hover:border-[#3A3A3A]",
@@ -51,23 +63,31 @@ const buttonVariants = cva(
         // Link: Text-only style
         link:
           "bg-transparent px-0 text-[#A1A1A6] underline-offset-4 hover:text-[#FAFAFA] hover:underline",
-        // Brand: Same as primary (gold) - for backwards compat
+        /**
+         * Brand: Same as primary (gold) - THE 1% RULE applies
+         * Kept for backwards compat - prefer 'primary' for new code
+         */
         brand:
-          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200]",
+          "bg-[#FFD700] text-[#0A0A0A] hover:bg-[#E6C200] hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]",
         // Success: Green
         success:
           "bg-[#00D46A] text-[#0A0A0A] hover:bg-[#00D46A]/90",
-        // Warning: Gold (consistent with brand)
+        // Warning: Amber
         warning:
           "bg-[#FFB800] text-[#0A0A0A] hover:bg-[#FFB800]/90",
       },
       size: {
-        sm: "h-9 min-h-[36px] px-3 text-sm", // 36px minimum for compact areas
-        md: "h-11 min-h-[44px] px-4 text-sm", // 44px - mobile touch target
-        lg: "h-12 min-h-[48px] px-6 text-base",
-        xl: "h-14 min-h-[56px] px-8 text-base",
-        icon: "h-11 w-11 min-h-[44px] min-w-[44px] p-0", // 44px touch target
-        default: "h-11 min-h-[44px] px-4 text-sm", // 44px - mobile touch target
+        sm: "h-9 min-h-[36px] px-3 text-sm rounded-lg", // 36px minimum for compact areas
+        md: "h-11 min-h-[44px] px-4 text-sm rounded-lg", // 44px - mobile touch target
+        lg: "h-12 min-h-[48px] px-6 text-base rounded-lg",
+        xl: "h-14 min-h-[56px] px-8 text-base rounded-lg",
+        icon: "h-11 w-11 min-h-[44px] min-w-[44px] p-0 rounded-lg", // 44px touch target
+        default: "h-11 min-h-[44px] px-4 text-sm rounded-lg", // 44px - mobile touch target
+        /**
+         * Pill: Full-rounded button for onboarding/hero CTAs
+         * Combines with default/primary variant for the monochrome aesthetic
+         */
+        pill: "h-12 min-h-[48px] px-8 text-sm rounded-full",
       },
       loading: {
         true: "cursor-progress",
@@ -87,6 +107,7 @@ const iconSizeMap = {
   xl: "h-5 w-5",
   icon: "h-4.5 w-4.5",
   default: "h-4 w-4",
+  pill: "h-4 w-4",
 } as const
 
 const renderIcon = (

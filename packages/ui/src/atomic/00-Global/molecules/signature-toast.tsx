@@ -36,7 +36,7 @@ export interface SignatureToastProps {
 const toastContent: Record<Exclude<SignatureToastType, 'custom'>, { message: string; icon?: string }> = {
   youreIn: { message: "You're in.", icon: '✓' },
   done: { message: 'Done.' },
-  nice: { message: 'Nice.', icon: '✨' },
+  nice: { message: 'Nice.', icon: '★' },
   welcome: { message: 'Welcome.' },
   error: { message: "That didn't work." },
 };
@@ -106,7 +106,7 @@ export function SignatureToast({
  * Simple confetti burst animation
  */
 function ConfettiBurst() {
-  const particles = Array.from({ length: 12 }, (_, i) => i);
+  const particles = Array.from({ length: 4 }, (_, i) => i);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">

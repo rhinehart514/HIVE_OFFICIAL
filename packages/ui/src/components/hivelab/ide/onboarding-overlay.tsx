@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MousePointer2, Command, Sparkles, ArrowRight } from 'lucide-react';
+import { X, MousePointer2, Command, Wand2, ArrowRight } from 'lucide-react';
 
 /**
  * Onboarding Overlay for HiveLab IDE
@@ -56,7 +56,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
       hint: 'Try "Create a lunch poll with 5 options"',
     },
     {
-      icon: <Sparkles className="w-6 h-6" />,
+      icon: <Wand2 className="w-6 h-6" />,
       title: 'Configure & connect',
       description: 'Select elements to edit properties and create data flows',
       hint: 'Connect a poll to a leaderboard for live results',
@@ -90,8 +90,8 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FFD700]/20 to-[#FFD700]/5 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-[#FFD700]" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/[0.12] to-white/[0.04] flex items-center justify-center">
+                <Wand2 className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Welcome to HiveLab</h2>
@@ -107,7 +107,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
                 key={i}
                 className={`w-full text-left p-4 rounded-xl border transition-all ${
                   step === i
-                    ? 'bg-[#FFD700]/10 border-[#FFD700]/30'
+                    ? 'bg-white/[0.08] border-white/30'
                     : 'bg-[#0f0f0f] border-[#333] hover:border-[#444]'
                 }`}
                 onClick={() => setStep(i)}
@@ -118,7 +118,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                       step === i
-                        ? 'bg-[#FFD700]/20 text-[#FFD700]'
+                        ? 'bg-white/[0.12] text-white'
                         : 'bg-[#333] text-[#888]'
                     }`}
                   >

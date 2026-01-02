@@ -51,7 +51,7 @@ export * from './00-Global/atoms/tooltip';
 // Molecules
 export * from './00-Global/molecules/description-list';
 export * from './00-Global/molecules/dropdown-menu';
-export * from './00-Global/molecules/empty-state-compact';
+export * from './00-Global/molecules/empty-state-delightful';
 export * from './00-Global/molecules/filter-chips';
 export * from './00-Global/molecules/keyboard-shortcuts-overlay';
 export * from './00-Global/molecules/kpi-delta';
@@ -114,21 +114,19 @@ export * from './00-Global/molecules/privacy-control';
 export * from './03-Spaces/molecules/rail-widget';
 export * from './03-Spaces/molecules/space-about-widget';
 export * from './03-Spaces/molecules/space-composer';
-export * from './03-Spaces/molecules/space-header';
 export * from './03-Spaces/molecules/space-tools-widget';
 export * from './03-Spaces/molecules/today-drawer';
 export * from './03-Spaces/molecules/board-tab-bar';
 export * from './03-Spaces/molecules/featured-tool-slot';
-export * from './03-Spaces/molecules/hero-input';
+export * from './03-Spaces/molecules/space-chat-input';
 export * from './03-Spaces/molecules/space-chat-message';
 
 // Organisms
-export type { SpaceBoardLayoutProps } from './03-Spaces/organisms/space-board-layout';
 export * from './03-Spaces/organisms/space-post-composer';
 export * from './03-Spaces/organisms/space-entry-animation';
+export * from './03-Spaces/organisms/space-threshold';
 
 // Templates
-export type { SpaceBoardTemplateProps } from './03-Spaces/templates/space-board-template';
 export * from './03-Spaces/templates/space-chat-layout';
 
 // === 04-PROFILE (Campus Identity) ===
@@ -191,4 +189,4 @@ export * from './06-Rituals/templates/rituals-page-layout';
 // This section can be removed once all imports are updated
 export type { FeedCardPostData, FeedCardPostCallbacks } from './02-Feed/organisms/feed-card-post';
 export type { FeedCardEventData, FeedCardEventCallbacks } from './02-Feed/organisms/feed-card-event';
-export type { SpaceMembershipState } from './03-Spaces/molecules/space-header';
+export type { MembershipState as SpaceMembershipState } from './03-Spaces/premium/premium-header';

@@ -20,6 +20,8 @@ import {
   Check,
   Crown,
   Medal,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
@@ -30,6 +32,9 @@ import {
   Button,
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
   Badge,
   Select,
   SelectContent,
@@ -1259,18 +1264,53 @@ function normalizePollOptions(options: unknown[]): PollOption[] {
   });
 }
 
-export function PollElement({ config, data, onChange, onAction }: ElementProps) {
+export function PollElement({ id, config, data, sharedState, userState, onChange, onAction }: ElementProps) {
   const rawOptions = config.options || ['Option A', 'Option B', 'Option C'];
   const options = normalizePollOptions(rawOptions);
   const prefersReducedMotion = useReducedMotion();
+  const instanceId = id || 'poll';
 
-  // Hydrate from server state (data prop) or initialize empty
+  // ============================================================================
+  // Phase 1: SharedState Architecture
+  // Read vote counts from sharedState.counters (aggregate data visible to all)
+  // Read user's selection from userState (per-user personal data)
+  // ============================================================================
+
+  // Get vote counts from sharedState counters (Phase 1 architecture)
+  const getVoteCountsFromSharedState = (): Record<string, number> => {
+    const counts: Record<string, number> = {};
+    options.forEach((opt) => {
+      // Counter key format: "{instanceId}:{optionId}"
+      const counterKey = `${instanceId}:${opt.id}`;
+      counts[opt.id] = sharedState?.counters?.[counterKey] || 0;
+    });
+    return counts;
+  };
+
+  // Get user's vote from userState (Phase 1 architecture)
+  const getUserVoteFromUserState = (): string | null => {
+    const selectionKey = `${instanceId}:selectedOption`;
+    return (userState?.selections?.[selectionKey] as string) || null;
+  };
+
+  // Get hasVoted from userState participation (Phase 1 architecture)
+  const getHasVotedFromUserState = (): boolean => {
+    const participationKey = `${instanceId}:hasVoted`;
+    return userState?.participation?.[participationKey] || false;
+  };
+
+  // ============================================================================
+  // Backward compatibility: Fall back to legacy data prop if sharedState is empty
+  // ============================================================================
+  const hasSharedState = sharedState && Object.keys(sharedState.counters || {}).length > 0;
+
+  // Legacy: Hydrate from server state (data prop) for backward compatibility
   const serverResponses = (data?.responses as Record<string, { choice: string }>) || {};
   const serverTotalVotes = (data?.totalVotes as number) || 0;
   const serverUserVote = (data?.userVote as string) || null;
 
-  // Calculate vote counts from server responses
-  const calculateVoteCounts = (): Record<string, number> => {
+  // Legacy: Calculate vote counts from server responses
+  const calculateLegacyVoteCounts = (): Record<string, number> => {
     const counts: Record<string, number> = {};
     options.forEach((opt) => { counts[opt.id] = 0; });
     Object.values(serverResponses).forEach((response) => {
@@ -1281,20 +1321,35 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
     return counts;
   };
 
-  const [votes, setVotes] = useState<Record<string, number>>(calculateVoteCounts);
-  const [userVote, setUserVote] = useState<string | null>(serverUserVote);
-  const [hasVoted, setHasVoted] = useState(!!serverUserVote);
+  // Use sharedState if available, otherwise fall back to legacy data prop
+  const initialVotes = hasSharedState ? getVoteCountsFromSharedState() : calculateLegacyVoteCounts();
+  const initialUserVote = hasSharedState ? getUserVoteFromUserState() : serverUserVote;
+  const initialHasVoted = hasSharedState ? getHasVotedFromUserState() : !!serverUserVote;
+
+  const [votes, setVotes] = useState<Record<string, number>>(initialVotes);
+  const [userVote, setUserVote] = useState<string | null>(initialUserVote);
+  const [hasVoted, setHasVoted] = useState(initialHasVoted);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justVoted, setJustVoted] = useState<string | null>(null);
 
-  // Sync with server state when data changes
+  // Sync with sharedState/userState when they change (Phase 1 architecture)
   useEffect(() => {
-    setVotes(calculateVoteCounts());
-    if (serverUserVote) {
-      setUserVote(serverUserVote);
-      setHasVoted(true);
+    if (hasSharedState) {
+      setVotes(getVoteCountsFromSharedState());
+      const userVoteFromState = getUserVoteFromUserState();
+      if (userVoteFromState) {
+        setUserVote(userVoteFromState);
+        setHasVoted(true);
+      }
+    } else {
+      // Legacy: sync with data prop
+      setVotes(calculateLegacyVoteCounts());
+      if (serverUserVote) {
+        setUserVote(serverUserVote);
+        setHasVoted(true);
+      }
     }
-  }, [data?.responses, data?.totalVotes, serverUserVote]);
+  }, [sharedState?.counters, sharedState?.version, userState?.selections, userState?.participation, data?.responses, data?.totalVotes, serverUserVote]);
 
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0) || serverTotalVotes;
   const showResults = config.showResultsBeforeVoting || hasVoted;
@@ -1314,9 +1369,9 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
     setUserVote(optionId);
     setHasVoted(true);
 
-    // Call server action
+    // Call server action - the vote handler will update sharedState atomically
     onChange?.({ selectedOption: optionId, votes });
-    onAction?.('vote', { choice: optionId });
+    onAction?.('vote', { optionId });
 
     setIsSubmitting(false);
 
@@ -1457,10 +1512,54 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
 }
 
 // Leaderboard Element
-export function LeaderboardElement({ config, data, onAction }: ElementProps) {
-  // Hydrate from server state - convert entries object to sorted array
-  const serverEntries = data?.entries as Record<string, { score: number; name?: string; updatedAt?: string }> | undefined;
+export function LeaderboardElement({ id, config, data, sharedState, onAction }: ElementProps) {
+  const instanceId = id || 'leaderboard';
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // ============================================================================
+  // Phase 1: SharedState Architecture
+  // Read leaderboard entries from sharedState.collections (aggregate data)
+  // OR from sharedState.computed for pre-computed rankings
+  // ============================================================================
+
+  // Get entries from sharedState collections (Phase 1 architecture)
+  const getEntriesFromSharedState = (): Record<string, { score: number; name?: string; updatedAt?: string }> | null => {
+    const collectionKey = `${instanceId}:entries`;
+    const collection = sharedState?.collections?.[collectionKey];
+    if (!collection) return null;
+
+    // Convert collection entities to leaderboard entries
+    const entries: Record<string, { score: number; name?: string; updatedAt?: string }> = {};
+    for (const [entryId, entity] of Object.entries(collection)) {
+      entries[entryId] = {
+        score: (entity.data?.score as number) || 0,
+        name: (entity.data?.name as string) || undefined,
+        updatedAt: entity.createdAt,
+      };
+    }
+    return entries;
+  };
+
+  // Get pre-computed rankings from sharedState.computed (Phase 1 architecture)
+  const getComputedRankings = (): Array<{ id: string; name: string; score: number; rank: number }> | null => {
+    const computedKey = `${instanceId}:rankings`;
+    const rankings = sharedState?.computed?.[computedKey];
+    if (Array.isArray(rankings)) {
+      return rankings as Array<{ id: string; name: string; score: number; rank: number }>;
+    }
+    return null;
+  };
+
+  // ============================================================================
+  // Backward compatibility: Fall back to legacy data prop if sharedState is empty
+  // ============================================================================
+  const hasSharedState = sharedState && (
+    Object.keys(sharedState.collections || {}).length > 0 ||
+    Object.keys(sharedState.computed || {}).length > 0
+  );
+
+  // Legacy: Hydrate from server state
+  const serverEntries = data?.entries as Record<string, { score: number; name?: string; updatedAt?: string }> | undefined;
 
   // Allow manual refresh action (useful for connection cascade)
   const handleRefresh = async () => {
@@ -1470,12 +1569,25 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
   };
 
   const entries = useMemo(() => {
-    if (serverEntries && Object.keys(serverEntries).length > 0) {
-      // Convert server entries object to sorted array with ranks
-      return Object.entries(serverEntries)
-        .map(([id, entry]) => ({
-          id,
-          name: entry.name || `User ${id.slice(0, 6)}`,
+    // First, check for pre-computed rankings (fastest)
+    const computedRankings = getComputedRankings();
+    if (computedRankings && computedRankings.length > 0) {
+      return computedRankings.map(entry => ({
+        ...entry,
+        change: 'same' as const,
+      }));
+    }
+
+    // Second, try sharedState collections (Phase 1 architecture)
+    const sharedStateEntries = hasSharedState ? getEntriesFromSharedState() : null;
+    const entriesToUse = sharedStateEntries || serverEntries;
+
+    if (entriesToUse && Object.keys(entriesToUse).length > 0) {
+      // Convert entries object to sorted array with ranks
+      return Object.entries(entriesToUse)
+        .map(([entryId, entry]) => ({
+          id: entryId,
+          name: entry.name || `User ${entryId.slice(0, 6)}`,
           score: entry.score || 0,
           updatedAt: entry.updatedAt,
         }))
@@ -1488,7 +1600,7 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
     }
     // Fallback to empty state (no mock data in production)
     return [];
-  }, [serverEntries]);
+  }, [sharedState?.collections, sharedState?.computed, sharedState?.version, serverEntries]);
 
   const maxEntries = config.maxEntries || 10;
   const displayEntries = entries.slice(0, maxEntries);
@@ -2482,26 +2594,118 @@ export function RoleGateElement({ config, context, children }: ElementProps & { 
 }
 
 // RSVP Button Element
-export function RsvpButtonElement({ config, data, onChange, onAction }: ElementProps) {
+export function RsvpButtonElement({ id, config, data, sharedState, userState, onChange, onAction }: ElementProps) {
   const prefersReducedMotion = useReducedMotion();
+  const instanceId = id || 'rsvp';
 
-  // Hydrate from server state
+  // ============================================================================
+  // Phase 1: SharedState Architecture
+  // Read RSVP count from sharedState.counters (aggregate data visible to all)
+  // Read attendee list from sharedState.collections
+  // Read user's RSVP status from userState (per-user personal data)
+  // ============================================================================
+
+  // Get RSVP count from sharedState counters (Phase 1 architecture)
+  const getRsvpCountFromSharedState = (): number => {
+    const counterKey = `${instanceId}:total`;
+    return sharedState?.counters?.[counterKey] || 0;
+  };
+
+  // Get attendee count from sharedState collections (Phase 1 architecture)
+  const getAttendeeCountFromSharedState = (): number => {
+    const collectionKey = `${instanceId}:attendees`;
+    const attendees = sharedState?.collections?.[collectionKey] || {};
+    return Object.keys(attendees).length;
+  };
+
+  // Get waitlist count from sharedState collections
+  const getWaitlistCountFromSharedState = (): number => {
+    const collectionKey = `${instanceId}:waitlist`;
+    const waitlist = sharedState?.collections?.[collectionKey] || {};
+    return Object.keys(waitlist).length;
+  };
+
+  // Get user's RSVP status from userState (Phase 1 architecture)
+  const getUserRsvpFromUserState = (): boolean => {
+    const participationKey = `${instanceId}:hasRsvped`;
+    return userState?.participation?.[participationKey] || false;
+  };
+
+  // Get user's waitlist status from userState
+  const getUserWaitlistFromUserState = (): boolean => {
+    const waitlistKey = `${instanceId}:onWaitlist`;
+    return userState?.participation?.[waitlistKey] || false;
+  };
+
+  // Get user's waitlist position from userState
+  const getUserWaitlistPositionFromUserState = (): number | null => {
+    const positionKey = `${instanceId}:waitlistPosition`;
+    const position = userState?.selections?.[positionKey];
+    return typeof position === 'number' ? position : null;
+  };
+
+  // Get user's response type from userState (Phase 1 architecture)
+  const getUserResponseFromUserState = (): string | null => {
+    const selectionKey = `${instanceId}:response`;
+    return (userState?.selections?.[selectionKey] as string) || null;
+  };
+
+  // ============================================================================
+  // Backward compatibility: Fall back to legacy data prop if sharedState is empty
+  // ============================================================================
+  const hasSharedState = sharedState && (
+    Object.keys(sharedState.counters || {}).length > 0 ||
+    Object.keys(sharedState.collections || {}).length > 0
+  );
+
+  // Legacy: Hydrate from server state
   const serverAttendees = (data?.attendees as Record<string, unknown>) || {};
   const serverCount = (data?.count as number) || 0;
   const serverWaitlist = (data?.waitlist as string[]) || [];
   const serverUserRsvp = (data?.userRsvp as string) || null; // 'yes', 'maybe', 'no', or null
+  const serverUserOnWaitlist = (data?.userOnWaitlist as boolean) || false;
+  const serverUserWaitlistPosition = (data?.userWaitlistPosition as number) || null;
 
-  const [isRsvped, setIsRsvped] = useState(serverUserRsvp === 'yes');
-  const [rsvpCount, setRsvpCount] = useState(serverCount || Object.keys(serverAttendees).length);
+  // Use sharedState if available, otherwise fall back to legacy data prop
+  const initialCount = hasSharedState
+    ? (getRsvpCountFromSharedState() || getAttendeeCountFromSharedState())
+    : (serverCount || Object.keys(serverAttendees).length);
+  const initialIsRsvped = hasSharedState ? getUserRsvpFromUserState() : serverUserRsvp === 'yes';
+  const initialIsOnWaitlist = hasSharedState ? getUserWaitlistFromUserState() : serverUserOnWaitlist;
+  const initialWaitlistPosition = hasSharedState ? getUserWaitlistPositionFromUserState() : serverUserWaitlistPosition;
+  const initialWaitlistCount = hasSharedState ? getWaitlistCountFromSharedState() : serverWaitlist.length;
+
+  const [isRsvped, setIsRsvped] = useState(initialIsRsvped);
+  const [rsvpCount, setRsvpCount] = useState(initialCount);
   const [isLoading, setIsLoading] = useState(false);
   const [justRsvped, setJustRsvped] = useState(false);
 
-  // Sync with server state when data changes
+  // Waitlist state
+  const [isOnWaitlist, setIsOnWaitlist] = useState(initialIsOnWaitlist);
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(initialWaitlistPosition);
+  const [waitlistCount, setWaitlistCount] = useState(initialWaitlistCount);
+  const [isWaitlistLoading, setIsWaitlistLoading] = useState(false);
+  const [justJoinedWaitlist, setJustJoinedWaitlist] = useState(false);
+
+  // Sync with sharedState/userState when they change (Phase 1 architecture)
   useEffect(() => {
-    const count = serverCount || Object.keys(serverAttendees).length;
-    setRsvpCount(count);
-    setIsRsvped(serverUserRsvp === 'yes');
-  }, [data?.attendees, data?.count, serverUserRsvp, serverCount, serverAttendees]);
+    if (hasSharedState) {
+      const count = getRsvpCountFromSharedState() || getAttendeeCountFromSharedState();
+      setRsvpCount(count);
+      setIsRsvped(getUserRsvpFromUserState());
+      setIsOnWaitlist(getUserWaitlistFromUserState());
+      setWaitlistPosition(getUserWaitlistPositionFromUserState());
+      setWaitlistCount(getWaitlistCountFromSharedState());
+    } else {
+      // Legacy: sync with data prop
+      const count = serverCount || Object.keys(serverAttendees).length;
+      setRsvpCount(count);
+      setIsRsvped(serverUserRsvp === 'yes');
+      setIsOnWaitlist(serverUserOnWaitlist);
+      setWaitlistPosition(serverUserWaitlistPosition);
+      setWaitlistCount(serverWaitlist.length);
+    }
+  }, [sharedState?.counters, sharedState?.collections, sharedState?.version, userState?.participation, userState?.selections, data?.attendees, data?.count, serverUserRsvp, serverCount, serverAttendees, serverUserOnWaitlist, serverUserWaitlistPosition, serverWaitlist.length]);
 
   const maxAttendees = config.maxAttendees || null;
   const isFull = maxAttendees && rsvpCount >= maxAttendees;
@@ -2533,6 +2737,41 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
     });
 
     setIsLoading(false);
+  };
+
+  // Handle joining or leaving the waitlist
+  const handleWaitlistToggle = async () => {
+    if (isWaitlistLoading) return;
+
+    setIsWaitlistLoading(true);
+
+    const newState = !isOnWaitlist;
+
+    // Optimistic update
+    setIsOnWaitlist(newState);
+    if (newState) {
+      const newPosition = waitlistCount + 1;
+      setWaitlistPosition(newPosition);
+      setWaitlistCount((prev: number) => prev + 1);
+      setJustJoinedWaitlist(true);
+      setTimeout(() => setJustJoinedWaitlist(false), 1500);
+    } else {
+      setWaitlistPosition(null);
+      setWaitlistCount((prev: number) => Math.max(0, prev - 1));
+    }
+
+    // Call server action
+    onChange?.({
+      isOnWaitlist: newState,
+      waitlistPosition: newState ? (waitlistCount + 1) : null,
+      waitlistCount: waitlistCount + (newState ? 1 : -1),
+    });
+    onAction?.(newState ? 'join_waitlist' : 'leave_waitlist', {
+      eventName: config.eventName,
+      position: newState ? (waitlistCount + 1) : null,
+    });
+
+    setIsWaitlistLoading(false);
   };
 
   // Capacity bar color based on fill level
@@ -2713,6 +2952,7 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
             </motion.div>
           )}
 
+          {/* Waitlist UI - Show when event is full and user hasn't RSVP'd */}
           <AnimatePresence>
             {isFull && !isRsvped && (
               <motion.div
@@ -2722,13 +2962,98 @@ export function RsvpButtonElement({ config, data, onChange, onAction }: ElementP
                 transition={springPresets.gentle}
                 className="overflow-hidden"
               >
-                <motion.div
-                  className="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-sm rounded-lg text-center border border-amber-500/20"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                <motion.button
+                  onClick={handleWaitlistToggle}
+                  disabled={isWaitlistLoading}
+                  className={`w-full p-3 text-sm rounded-lg text-center border transition-all duration-200 ${
+                    isOnWaitlist
+                      ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20'
+                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/15'
+                  }`}
+                  whileHover={!isWaitlistLoading ? { scale: 1.01 } : {}}
+                  whileTap={!isWaitlistLoading ? { scale: 0.99 } : {}}
+                  animate={justJoinedWaitlist && !prefersReducedMotion ? { scale: [1, 1.02, 1] } : {}}
+                  aria-label={isOnWaitlist ? 'Leave waitlist' : 'Join waitlist'}
                 >
-                  <span className="cursor-pointer">📋 Join the waitlist</span>
-                </motion.div>
+                  <AnimatePresence mode="wait">
+                    {isWaitlistLoading ? (
+                      <motion.span
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                        />
+                        <span>Processing...</span>
+                      </motion.span>
+                    ) : isOnWaitlist ? (
+                      <motion.span
+                        key="on-waitlist"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Check className="h-4 w-4" />
+                          <span className="font-medium">On Waitlist</span>
+                        </span>
+                        {waitlistPosition && (
+                          <span className="text-xs opacity-80">
+                            Position #{waitlistPosition} of {waitlistCount}
+                          </span>
+                        )}
+                        <span className="text-xs opacity-60 mt-0.5">Click to leave waitlist</span>
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="join"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>Join Waitlist</span>
+                        </span>
+                        {waitlistCount > 0 && (
+                          <span className="text-xs opacity-70">
+                            {waitlistCount} {waitlistCount === 1 ? 'person' : 'people'} waiting
+                          </span>
+                        )}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Celebration effect when joining waitlist */}
+                  {justJoinedWaitlist && !prefersReducedMotion && (
+                    <>
+                      {[...Array(4)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                          animate={{
+                            opacity: 0,
+                            scale: 1,
+                            x: (Math.random() - 0.5) * 40,
+                            y: (Math.random() - 0.5) * 30 - 10,
+                          }}
+                          transition={{ duration: 0.5, delay: i * 0.05 }}
+                          className="absolute text-xs"
+                          style={{ left: '50%', top: '50%' }}
+                        >
+                          {['📋', '✨', '🎯', '👍'][i]}
+                        </motion.span>
+                      ))}
+                    </>
+                  )}
+                </motion.button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -2949,6 +3274,201 @@ export function CounterElement({ config, data, onAction }: ElementProps) {
   );
 }
 
+// Availability Heatmap Element - Display member availability (space-tier, leaders only)
+export function AvailabilityHeatmapElement({ config, context, onChange, onAction }: ElementProps) {
+  const [heatmapData, setHeatmapData] = useState<Array<{
+    hour: number;
+    dayOfWeek: number;
+    available: number;
+    total: number;
+    score: number;
+  }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{
+    dayOfWeek: number;
+    hour: number;
+    duration: number;
+    score: number;
+    label: string;
+  }>>([]);
+  const [memberCount, setMemberCount] = useState(0);
+  const [connectedCount, setConnectedCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ day: number; hour: number } | null>(null);
+
+  const startHour = config.startHour || 8;
+  const endHour = config.endHour || 22;
+  const timeFormat = config.timeFormat || '12h';
+  const highlightThreshold = config.highlightThreshold || 0.7;
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  useEffect(() => {
+    if (!context?.spaceId) return;
+
+    const fetchAvailability = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/spaces/${context.spaceId}/availability`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setHeatmapData(data.heatmap || []);
+          setSuggestions(data.suggestions || []);
+          setMemberCount(data.memberCount || 0);
+          setConnectedCount(data.connectedCount || 0);
+          onChange?.({
+            heatmap: data.heatmap,
+            suggestions: data.suggestions,
+            connectedMemberCount: data.connectedCount,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch availability:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [context?.spaceId]);
+
+  const formatHour = (hour: number) => {
+    if (timeFormat === '24h') return `${hour}:00`;
+    const h = hour % 12 || 12;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${h}${ampm}`;
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= highlightThreshold) return 'bg-emerald-500/60';
+    if (score >= 0.5) return 'bg-emerald-500/30';
+    if (score >= 0.3) return 'bg-amber-500/30';
+    return 'bg-neutral-800/50';
+  };
+
+  const handleSlotClick = (day: number, hour: number) => {
+    setSelectedSlot({ day, hour });
+    onAction?.('select_slot', { dayOfWeek: day, hour });
+  };
+
+  if (!context?.spaceId) {
+    return (
+      <Card>
+        <CardContent className="p-4 text-center text-sm text-muted-foreground">
+          <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
+          <p>Connect to a space to see member availability</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-primary" />
+            <CardTitle className="text-sm font-medium">Member Availability</CardTitle>
+          </div>
+          <Button
+            onClick={() => onAction?.('refresh', {})}
+            variant="ghost"
+            size="sm"
+            disabled={isLoading}
+          >
+            <RefreshCw className={`h-3 w-3 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        <CardDescription className="text-xs">
+          {connectedCount} of {memberCount} members sharing calendars
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-3">
+        {isLoading ? (
+          <div className="py-6 text-center">
+            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+          </div>
+        ) : connectedCount === 0 ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p>No members have connected their calendars yet</p>
+          </div>
+        ) : (
+          <>
+            {/* Heatmap grid */}
+            <div className="overflow-x-auto">
+              <div className="min-w-[300px]">
+                {/* Day headers */}
+                <div className="flex gap-0.5 mb-1 pl-10">
+                  {dayNames.map((day, i) => (
+                    <div key={i} className="flex-1 text-center text-[10px] text-muted-foreground">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                {/* Hour rows */}
+                {Array.from({ length: endHour - startHour }, (_, i) => startHour + i).map(hour => (
+                  <div key={hour} className="flex gap-0.5 mb-0.5">
+                    <div className="w-10 text-right text-[10px] text-muted-foreground pr-1">
+                      {formatHour(hour)}
+                    </div>
+                    {dayNames.map((_, day) => {
+                      const cell = heatmapData.find(h => h.dayOfWeek === day && h.hour === hour);
+                      const score = cell?.score || 0;
+                      const isSelected = selectedSlot?.day === day && selectedSlot?.hour === hour;
+                      return (
+                        <div
+                          key={day}
+                          onClick={() => handleSlotClick(day, hour)}
+                          className={`flex-1 h-4 rounded-sm cursor-pointer transition-all ${getScoreColor(score)} ${
+                            isSelected ? 'ring-2 ring-white' : 'hover:ring-1 hover:ring-white/50'
+                          }`}
+                          title={`${dayNames[day]} ${formatHour(hour)}: ${Math.round(score * 100)}% available`}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-neutral-800/50" />
+                <span>Busy</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-sm bg-emerald-500/60" />
+                <span>Available</span>
+              </div>
+            </div>
+
+            {/* Suggestions */}
+            {config.showSuggestions && suggestions.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-border">
+                <p className="text-xs font-medium mb-2">Best Times</p>
+                <div className="space-y-1">
+                  {suggestions.slice(0, 3).map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between text-xs p-2 rounded bg-emerald-500/10 cursor-pointer hover:bg-emerald-500/20"
+                      onClick={() => handleSlotClick(s.dayOfWeek, s.hour)}
+                    >
+                      <span>{s.label}</span>
+                      <span className="text-emerald-400">{Math.round(s.score * 100)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // Element renderer map - focused element set for tool building
 const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => React.JSX.Element> = {
   // Input Elements - Collect user input
@@ -2963,6 +3483,10 @@ const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => React.JSX.Eleme
   // Display Elements - Show data
   'result-list': ResultListElement,
   'chart-display': ChartDisplayElement,
+  'tag-cloud': TagCloudElement,
+  'map-view': MapViewElement,
+  'notification-center': NotificationCenterElement,
+  'notification-display': NotificationCenterElement, // Alias for registry consistency
 
   // Action Elements - Interactive engagement (core of HiveLab)
   'poll-element': PollElement,
@@ -2985,6 +3509,7 @@ const ELEMENT_RENDERERS: Record<string, (props: ElementProps) => React.JSX.Eleme
   'space-stats': SpaceStatsElement,
   'announcement': AnnouncementElement,
   'role-gate': RoleGateElement,
+  'availability-heatmap': AvailabilityHeatmapElement,
 };
 
 /**

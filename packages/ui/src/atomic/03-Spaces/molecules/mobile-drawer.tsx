@@ -221,7 +221,7 @@ function InfoContent({
           <div className="text-xs text-neutral-400">Members</div>
         </div>
         <div className="bg-neutral-800/50 rounded-lg p-3">
-          <div className="text-2xl font-bold text-[#FFD700]">
+          <div className="text-2xl font-bold text-emerald-400">
             {spaceData?.onlineCount ?? 0}
           </div>
           <div className="text-xs text-neutral-400">Online now</div>
@@ -264,8 +264,8 @@ function EventsContent({
           key={event.id}
           className="bg-neutral-800/50 rounded-lg p-3 flex items-center gap-3"
         >
-          <div className="w-10 h-10 bg-[#FFD700]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Calendar className="w-5 h-5 text-[#FFD700]" />
+          <div className="w-10 h-10 bg-neutral-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Calendar className="w-5 h-5 text-neutral-300" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-white truncate">
@@ -309,8 +309,8 @@ function ToolsContent({ tools = [] }: { tools?: MobileDrawerProps['tools'] }) {
           )}
           aria-label={`Open ${tool.name} tool`}
         >
-          <div className="w-10 h-10 bg-[#FFD700]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Wrench className="w-5 h-5 text-[#FFD700]" />
+          <div className="w-10 h-10 bg-neutral-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Wrench className="w-5 h-5 text-neutral-300" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-white truncate">
@@ -360,8 +360,8 @@ function MembersContent({
       {/* Online section */}
       {onlineMembers.length > 0 && (
         <div>
-          <div className="text-xs text-[#FFD700] font-medium mb-2 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse" />
+          <div className="text-xs text-emerald-400 font-medium mb-2 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             Online — {onlineMembers.length}
           </div>
           <div className="space-y-1">
@@ -416,7 +416,7 @@ function MemberRow({
         )}
         {/* Online indicator */}
         {member.isOnline && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#FFD700] border-2 border-neutral-900 rounded-full" />
+          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-neutral-900 rounded-full" />
         )}
       </div>
 
@@ -461,7 +461,7 @@ function AutomationsContent({
         {onOpenTemplates && (
           <button
             onClick={onOpenTemplates}
-            className="px-4 py-2 bg-[#FFD700]/10 text-[#FFD700] text-sm font-medium rounded-lg hover:bg-[#FFD700]/20 transition-colors"
+            className="px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/15 transition-colors"
           >
             Browse Templates
           </button>
@@ -479,9 +479,9 @@ function AutomationsContent({
         >
           <div className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-            automation.enabled ? 'bg-[#FFD700]/10' : 'bg-neutral-700/50'
+            automation.enabled ? 'bg-emerald-500/10' : 'bg-neutral-700/50'
           )}>
-            <Zap className={cn('w-5 h-5', automation.enabled ? 'text-[#FFD700]' : 'text-neutral-500')} />
+            <Zap className={cn('w-5 h-5', automation.enabled ? 'text-emerald-400' : 'text-neutral-500')} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-white truncate">
@@ -501,7 +501,7 @@ function AutomationsContent({
               onClick={() => automation.onToggle?.(automation.id)}
               className={cn(
                 'w-10 h-6 rounded-full transition-colors relative',
-                automation.enabled ? 'bg-[#FFD700]' : 'bg-neutral-700'
+                automation.enabled ? 'bg-emerald-500' : 'bg-neutral-700'
               )}
               aria-label={automation.enabled ? 'Disable automation' : 'Enable automation'}
             >
@@ -520,7 +520,7 @@ function AutomationsContent({
       {onOpenTemplates && (
         <button
           onClick={onOpenTemplates}
-          className="w-full py-2 text-sm text-[#FFD700] hover:text-[#FFD700]/80 transition-colors"
+          className="w-full py-2 text-sm text-neutral-400 hover:text-white transition-colors"
         >
           + Add from templates
         </button>
@@ -571,7 +571,7 @@ function SnapIndicator({ currentSnap, onSnapTo }: SnapIndicatorProps) {
             className={cn(
               'w-1.5 h-1.5 rounded-full transition-all',
               currentSnap === snap
-                ? 'bg-[#FFD700] scale-125'
+                ? 'bg-white scale-125'
                 : 'bg-neutral-600 hover:bg-neutral-500'
             )}
             aria-label={`Snap to ${snap}`}
@@ -747,7 +747,7 @@ export function MobileDrawer({
               <div
                 className={cn(
                   'w-12 h-1.5 rounded-full transition-colors',
-                  isDragging ? 'bg-[#FFD700]' : 'bg-neutral-700'
+                  isDragging ? 'bg-white' : 'bg-neutral-700'
                 )}
               />
             </div>
@@ -755,8 +755,8 @@ export function MobileDrawer({
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-[#FFD700]" />
+                <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center">
+                  <Icon className="w-5 h-5 text-neutral-300" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-white">
@@ -781,7 +781,7 @@ export function MobileDrawer({
                   className={cn(
                     'w-11 h-11 rounded-lg flex items-center justify-center',
                     'text-neutral-400 hover:text-white hover:bg-neutral-800',
-                    'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                    'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
                   )}
                   aria-label="Close drawer"
                 >

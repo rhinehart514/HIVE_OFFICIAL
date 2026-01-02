@@ -22,6 +22,7 @@ import {
   SYSTEM_TOOL_TEMPLATES,
   UNIVERSAL_DEFAULT_TEMPLATE,
   getTemplateForCategory,
+  getTemplateById,
   getSystemTool,
   isSystemTool,
   type SystemToolTemplate,
@@ -382,7 +383,7 @@ export class SpaceDeploymentService extends BaseApplicationService {
 
       // Get the appropriate template
       const template = input.templateId
-        ? UNIVERSAL_DEFAULT_TEMPLATE // TODO: lookup by templateId
+        ? getTemplateById(input.templateId) ?? UNIVERSAL_DEFAULT_TEMPLATE
         : getTemplateForCategory(input.spaceCategory);
 
       const placedTools: PlaceToolResult[] = [];

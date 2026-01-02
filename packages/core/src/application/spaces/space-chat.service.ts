@@ -232,6 +232,19 @@ export interface IMessageRepository {
   update(spaceId: string, boardId: string, message: ChatMessage): Promise<Result<void>>;
   delete(spaceId: string, boardId: string, messageId: string): Promise<Result<void>>;
   incrementBoardMessageCount(spaceId: string, boardId: string): Promise<Result<void>>;
+  /**
+   * SCALING FIX: Atomically update reactions using a transaction.
+   * Prevents race conditions when multiple users react simultaneously.
+   * Optional - falls back to update() if not implemented.
+   */
+  updateReactionAtomic?(
+    spaceId: string,
+    boardId: string,
+    messageId: string,
+    emoji: string,
+    userId: string,
+    action: 'add' | 'remove'
+  ): Promise<Result<void>>;
 }
 
 /**
@@ -993,6 +1006,7 @@ export class SpaceChatService extends BaseApplicationService {
 
   /**
    * Add a reaction to a message
+   * SCALING FIX: Uses atomic transaction to prevent race conditions
    */
   async addReaction(
     userId: string,
@@ -1007,21 +1021,33 @@ export class SpaceChatService extends BaseApplicationService {
         }
       }
 
-      // Get message
-      const messageResult = await this.messageRepo.findById(input.spaceId, input.boardId, input.messageId);
-      if (messageResult.isFailure || !messageResult.getValue()) {
-        return Result.fail<ServiceResult<void>>('Message not found');
-      }
+      // SCALING FIX: Use atomic update if available (prevents lost updates under high concurrency)
+      if (this.messageRepo.updateReactionAtomic) {
+        const atomicResult = await this.messageRepo.updateReactionAtomic(
+          input.spaceId,
+          input.boardId,
+          input.messageId,
+          input.emoji,
+          userId,
+          'add'
+        );
+        if (atomicResult.isFailure) {
+          return Result.fail<ServiceResult<void>>(atomicResult.error ?? 'Failed to save reaction');
+        }
+      } else {
+        // Fallback to non-atomic update (legacy behavior)
+        const messageResult = await this.messageRepo.findById(input.spaceId, input.boardId, input.messageId);
+        if (messageResult.isFailure || !messageResult.getValue()) {
+          return Result.fail<ServiceResult<void>>('Message not found');
+        }
 
-      const message = messageResult.getValue()!;
+        const message = messageResult.getValue()!;
+        message.addReaction(input.emoji, userId);
 
-      // Add reaction
-      message.addReaction(input.emoji, userId);
-
-      // Save message
-      const saveResult = await this.messageRepo.update(input.spaceId, input.boardId, message);
-      if (saveResult.isFailure) {
-        return Result.fail<ServiceResult<void>>(saveResult.error ?? 'Failed to save reaction');
+        const saveResult = await this.messageRepo.update(input.spaceId, input.boardId, message);
+        if (saveResult.isFailure) {
+          return Result.fail<ServiceResult<void>>(saveResult.error ?? 'Failed to save reaction');
+        }
       }
 
       // Publish event
@@ -1041,33 +1067,48 @@ export class SpaceChatService extends BaseApplicationService {
   /**
    * Remove a reaction from a message
    * SECURITY: Users can only remove their own reactions
+   * SCALING FIX: Uses atomic transaction to prevent race conditions
    */
   async removeReaction(
     userId: string,
     input: ReactionInput
   ): Promise<Result<ServiceResult<void>>> {
     return this.execute(async () => {
-      // Get message
-      const messageResult = await this.messageRepo.findById(input.spaceId, input.boardId, input.messageId);
-      if (messageResult.isFailure || !messageResult.getValue()) {
-        return Result.fail<ServiceResult<void>>('Message not found');
-      }
+      // SCALING FIX: Use atomic update if available (prevents lost updates under high concurrency)
+      if (this.messageRepo.updateReactionAtomic) {
+        // Note: The atomic method handles validation internally via transaction
+        const atomicResult = await this.messageRepo.updateReactionAtomic(
+          input.spaceId,
+          input.boardId,
+          input.messageId,
+          input.emoji,
+          userId,
+          'remove'
+        );
+        if (atomicResult.isFailure) {
+          // Could be "User has not reacted" or actual error - return appropriately
+          return Result.fail<ServiceResult<void>>(atomicResult.error ?? 'Failed to remove reaction');
+        }
+      } else {
+        // Fallback to non-atomic update (legacy behavior)
+        const messageResult = await this.messageRepo.findById(input.spaceId, input.boardId, input.messageId);
+        if (messageResult.isFailure || !messageResult.getValue()) {
+          return Result.fail<ServiceResult<void>>('Message not found');
+        }
 
-      const message = messageResult.getValue()!;
+        const message = messageResult.getValue()!;
 
-      // SECURITY: Verify user has this reaction before allowing removal
-      // This is defense-in-depth - the API layer should also verify this
-      if (!message.hasUserReacted(input.emoji, userId)) {
-        return Result.fail<ServiceResult<void>>('User has not reacted with this emoji');
-      }
+        // SECURITY: Verify user has this reaction before allowing removal
+        if (!message.hasUserReacted(input.emoji, userId)) {
+          return Result.fail<ServiceResult<void>>('User has not reacted with this emoji');
+        }
 
-      // Remove reaction
-      message.removeReaction(input.emoji, userId);
+        message.removeReaction(input.emoji, userId);
 
-      // Save message
-      const saveResult = await this.messageRepo.update(input.spaceId, input.boardId, message);
-      if (saveResult.isFailure) {
-        return Result.fail<ServiceResult<void>>(saveResult.error ?? 'Failed to save reaction');
+        const saveResult = await this.messageRepo.update(input.spaceId, input.boardId, message);
+        if (saveResult.isFailure) {
+          return Result.fail<ServiceResult<void>>(saveResult.error ?? 'Failed to save reaction');
+        }
       }
 
       return Result.ok<ServiceResult<void>>({ data: undefined });

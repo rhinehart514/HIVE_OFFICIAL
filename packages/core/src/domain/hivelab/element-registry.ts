@@ -668,6 +668,34 @@ const SPACE_ELEMENTS: ElementSpec[] = [
     stateful: true,
     realtime: true,
   },
+  {
+    id: 'availability-heatmap',
+    name: 'Availability Heatmap',
+    description: 'Display aggregated member availability from connected calendars. Use for finding best meeting times.',
+    category: 'display',
+    icon: '🗓️',
+    configSchema: {
+      showSuggestions: { type: 'boolean', default: true },
+      timeFormat: { type: 'string', enum: ['12h', '24h'], default: '12h' },
+      startHour: { type: 'number', default: 8 },
+      endHour: { type: 'number', default: 22 },
+      highlightThreshold: { type: 'number', default: 0.7 },
+    },
+    defaultConfig: {
+      showSuggestions: true,
+      timeFormat: '12h',
+      startHour: 8,
+      endHour: 22,
+      highlightThreshold: 0.7,
+    },
+    actions: ['refresh', 'select_slot'],
+    outputs: ['selectedSlot', 'bestTimes', 'connectedMemberCount'],
+    inputs: ['spaceId'],
+    useCases: ['meeting scheduling', 'event planning', 'availability overview', 'best time finder'],
+    defaultSize: { width: 400, height: 320 },
+    stateful: false,
+    realtime: true,
+  },
 ];
 
 /**

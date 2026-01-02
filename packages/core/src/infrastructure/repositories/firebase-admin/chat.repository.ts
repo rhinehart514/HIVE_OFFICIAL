@@ -503,6 +503,77 @@ export class FirebaseAdminMessageRepository implements IMessageRepository {
     }
   }
 
+  /**
+   * SCALING FIX: Atomically update reactions using a transaction
+   * Prevents race conditions when multiple users react to the same message simultaneously.
+   * Without this, concurrent reactions can overwrite each other.
+   *
+   * @param spaceId - Space ID
+   * @param boardId - Board ID
+   * @param messageId - Message ID
+   * @param emoji - Emoji to add/remove
+   * @param userId - User adding/removing reaction
+   * @param action - 'add' or 'remove'
+   */
+  async updateReactionAtomic(
+    spaceId: string,
+    boardId: string,
+    messageId: string,
+    emoji: string,
+    userId: string,
+    action: 'add' | 'remove'
+  ): Promise<Result<void>> {
+    try {
+      const docRef = this.getMessagesRef(spaceId, boardId).doc(messageId);
+
+      await dbAdmin.runTransaction(async (transaction) => {
+        const doc = await transaction.get(docRef);
+        if (!doc.exists) {
+          throw new Error('Message not found');
+        }
+
+        const data = doc.data() as MessageDocument;
+        const reactions: ChatMessageReaction[] = data.reactions || [];
+
+        // Find existing reaction entry for this emoji
+        const reactionIndex = reactions.findIndex(r => r.emoji === emoji);
+
+        if (action === 'add') {
+          if (reactionIndex >= 0) {
+            // Emoji already exists - add user if not already reacted
+            if (!reactions[reactionIndex].userIds.includes(userId)) {
+              reactions[reactionIndex].count++;
+              reactions[reactionIndex].userIds.push(userId);
+            }
+          } else {
+            // New emoji - create entry
+            reactions.push({ emoji, count: 1, userIds: [userId] });
+          }
+        } else {
+          // Remove reaction
+          if (reactionIndex >= 0) {
+            const userIndex = reactions[reactionIndex].userIds.indexOf(userId);
+            if (userIndex >= 0) {
+              reactions[reactionIndex].count--;
+              reactions[reactionIndex].userIds.splice(userIndex, 1);
+
+              // Remove emoji entry if no users left
+              if (reactions[reactionIndex].count <= 0) {
+                reactions.splice(reactionIndex, 1);
+              }
+            }
+          }
+        }
+
+        transaction.update(docRef, { reactions });
+      });
+
+      return Result.ok<void>();
+    } catch (error) {
+      return Result.fail<void>(`Failed to update reaction: ${error}`);
+    }
+  }
+
   async incrementBoardMessageCount(spaceId: string, boardId: string): Promise<Result<void>> {
     try {
       const boardRef = this.getBoardRef(spaceId, boardId);

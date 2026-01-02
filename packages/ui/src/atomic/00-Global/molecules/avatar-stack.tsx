@@ -88,12 +88,12 @@ export function AvatarStack({
                 </div>
               )}
 
-              {/* Gold pulse on new join */}
+              {/* Subtle pulse on new join */}
               {isNew && (
                 <motion.div
-                  initial={{ scale: 1, opacity: 0.8 }}
-                  animate={{ scale: 2, opacity: 0 }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  initial={{ scale: 1, opacity: 0.6 }}
+                  animate={{ scale: 1.5, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
                   className="absolute inset-0 rounded-full bg-brand-primary"
                 />
               )}

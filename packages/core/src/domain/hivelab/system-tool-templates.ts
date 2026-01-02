@@ -2,10 +2,12 @@
  * System Tool Templates - Pre-built sidebar tools for spaces
  *
  * Defines system-level tool templates that can be deployed to any space sidebar.
- * These are "sys-*" prefixed tools that don't require custom HiveLab creation.
+ * These are "system:" prefixed tools that don't require custom HiveLab creation.
+ *
+ * IMPORTANT: Use "system:" prefix (not "sys-") for consistency with system-tool-registry.ts
  *
  * @author HIVE Frontend Team
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 // ============================================================
@@ -13,7 +15,7 @@
 // ============================================================
 
 export interface SystemToolTemplate {
-  /** System tool ID (e.g., 'sys-about') */
+  /** System tool ID (e.g., 'system:about') */
   id: string;
   /** Display name */
   name: string;
@@ -64,7 +66,7 @@ export interface UniversalTemplate {
 export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
   // Essential Tools
   {
-    id: 'sys-about',
+    id: 'system:about',
     name: 'About',
     description: 'Space description, member count, and online status',
     icon: 'info',
@@ -78,7 +80,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 0,
   },
   {
-    id: 'sys-events',
+    id: 'system:events',
     name: 'Upcoming Events',
     description: 'Next events with RSVP buttons',
     icon: 'calendar',
@@ -93,7 +95,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 1,
   },
   {
-    id: 'sys-members',
+    id: 'system:members',
     name: 'Members',
     description: 'Member list with online status and roles',
     icon: 'users',
@@ -108,7 +110,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 2,
   },
   {
-    id: 'sys-tools',
+    id: 'system:tools',
     name: 'Space Tools',
     description: 'Deployed HiveLab tools list',
     icon: 'wrench',
@@ -123,7 +125,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
 
   // Engagement Tools
   {
-    id: 'sys-poll',
+    id: 'system:poll',
     name: 'Quick Poll',
     description: 'Interactive poll for member voting',
     icon: 'bar-chart',
@@ -139,7 +141,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 10,
   },
   {
-    id: 'sys-countdown',
+    id: 'system:countdown',
     name: 'Countdown',
     description: 'Timer to upcoming event or deadline',
     icon: 'timer',
@@ -154,7 +156,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 11,
   },
   {
-    id: 'sys-links',
+    id: 'system:links',
     name: 'Quick Links',
     description: 'Important links and resources',
     icon: 'link',
@@ -167,7 +169,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 12,
   },
   {
-    id: 'sys-announcements',
+    id: 'system:announcements',
     name: 'Announcements',
     description: 'Pinned announcements feed',
     icon: 'megaphone',
@@ -180,7 +182,7 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     priority: 13,
   },
   {
-    id: 'sys-leaderboard',
+    id: 'system:leaderboard',
     name: 'Leaderboard',
     description: 'Member rankings and scores',
     icon: 'trophy',
@@ -191,6 +193,22 @@ export const SYSTEM_TOOL_TEMPLATES: SystemToolTemplate[] = [
     },
     category: 'engagement',
     priority: 14,
+  },
+  {
+    id: 'system:availability',
+    name: 'Availability',
+    description: 'Member availability heatmap for scheduling',
+    icon: 'calendar-clock',
+    elementType: 'availability-heatmap',
+    defaultConfig: {
+      showSuggestions: true,
+      timeFormat: '12h',
+      startHour: 8,
+      endHour: 22,
+      highlightThreshold: 0.7,
+    },
+    category: 'info',
+    priority: 20,
   },
 ];
 
@@ -210,7 +228,7 @@ export const UNIVERSAL_DEFAULT_TEMPLATE: UniversalTemplate = {
   slots: [
     {
       slotId: 'slot-about',
-      toolId: 'sys-about',
+      toolId: 'system:about',
       name: 'About',
       type: 'space-stats',
       order: 0,
@@ -223,7 +241,7 @@ export const UNIVERSAL_DEFAULT_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-events',
-      toolId: 'sys-events',
+      toolId: 'system:events',
       name: 'Upcoming Events',
       type: 'space-events',
       order: 1,
@@ -235,7 +253,7 @@ export const UNIVERSAL_DEFAULT_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-members',
-      toolId: 'sys-members',
+      toolId: 'system:members',
       name: 'Members',
       type: 'member-list',
       order: 2,
@@ -260,7 +278,7 @@ export const ACADEMIC_TEMPLATE: UniversalTemplate = {
   slots: [
     {
       slotId: 'slot-about',
-      toolId: 'sys-about',
+      toolId: 'system:about',
       name: 'About',
       type: 'space-stats',
       order: 0,
@@ -273,7 +291,7 @@ export const ACADEMIC_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-announcements',
-      toolId: 'sys-announcements',
+      toolId: 'system:announcements',
       name: 'Announcements',
       type: 'announcement',
       order: 1,
@@ -285,7 +303,7 @@ export const ACADEMIC_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-events',
-      toolId: 'sys-events',
+      toolId: 'system:events',
       name: 'Office Hours & Sessions',
       type: 'space-events',
       order: 2,
@@ -298,7 +316,7 @@ export const ACADEMIC_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-links',
-      toolId: 'sys-links',
+      toolId: 'system:links',
       name: 'Course Resources',
       type: 'result-list',
       order: 3,
@@ -310,7 +328,7 @@ export const ACADEMIC_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-members',
-      toolId: 'sys-members',
+      toolId: 'system:members',
       name: 'Classmates',
       type: 'member-list',
       order: 4,
@@ -335,7 +353,7 @@ export const SOCIAL_TEMPLATE: UniversalTemplate = {
   slots: [
     {
       slotId: 'slot-about',
-      toolId: 'sys-about',
+      toolId: 'system:about',
       name: 'About Us',
       type: 'space-stats',
       order: 0,
@@ -348,7 +366,7 @@ export const SOCIAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-events',
-      toolId: 'sys-events',
+      toolId: 'system:events',
       name: 'Upcoming Events',
       type: 'space-events',
       order: 1,
@@ -362,7 +380,7 @@ export const SOCIAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-leaderboard',
-      toolId: 'sys-leaderboard',
+      toolId: 'system:leaderboard',
       name: 'Top Contributors',
       type: 'leaderboard',
       order: 2,
@@ -374,7 +392,7 @@ export const SOCIAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-poll',
-      toolId: 'sys-poll',
+      toolId: 'system:poll',
       name: 'Community Poll',
       type: 'poll-element',
       order: 3,
@@ -388,7 +406,7 @@ export const SOCIAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-members',
-      toolId: 'sys-members',
+      toolId: 'system:members',
       name: 'Members',
       type: 'member-list',
       order: 4,
@@ -414,7 +432,7 @@ export const PROFESSIONAL_TEMPLATE: UniversalTemplate = {
   slots: [
     {
       slotId: 'slot-about',
-      toolId: 'sys-about',
+      toolId: 'system:about',
       name: 'About',
       type: 'space-stats',
       order: 0,
@@ -427,7 +445,7 @@ export const PROFESSIONAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-announcements',
-      toolId: 'sys-announcements',
+      toolId: 'system:announcements',
       name: 'Opportunities',
       type: 'announcement',
       order: 1,
@@ -439,7 +457,7 @@ export const PROFESSIONAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-events',
-      toolId: 'sys-events',
+      toolId: 'system:events',
       name: 'Networking Events',
       type: 'space-events',
       order: 2,
@@ -451,7 +469,7 @@ export const PROFESSIONAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-links',
-      toolId: 'sys-links',
+      toolId: 'system:links',
       name: 'Resources',
       type: 'result-list',
       order: 3,
@@ -463,7 +481,7 @@ export const PROFESSIONAL_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-members',
-      toolId: 'sys-members',
+      toolId: 'system:members',
       name: 'Network',
       type: 'member-list',
       order: 4,
@@ -488,7 +506,7 @@ export const INTEREST_TEMPLATE: UniversalTemplate = {
   slots: [
     {
       slotId: 'slot-about',
-      toolId: 'sys-about',
+      toolId: 'system:about',
       name: 'About',
       type: 'space-stats',
       order: 0,
@@ -501,7 +519,7 @@ export const INTEREST_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-poll',
-      toolId: 'sys-poll',
+      toolId: 'system:poll',
       name: 'Quick Poll',
       type: 'poll-element',
       order: 1,
@@ -515,7 +533,7 @@ export const INTEREST_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-events',
-      toolId: 'sys-events',
+      toolId: 'system:events',
       name: 'Meetups',
       type: 'space-events',
       order: 2,
@@ -527,7 +545,7 @@ export const INTEREST_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-leaderboard',
-      toolId: 'sys-leaderboard',
+      toolId: 'system:leaderboard',
       name: 'Active Members',
       type: 'leaderboard',
       order: 3,
@@ -538,7 +556,7 @@ export const INTEREST_TEMPLATE: UniversalTemplate = {
     },
     {
       slotId: 'slot-members',
-      toolId: 'sys-members',
+      toolId: 'system:members',
       name: 'Community',
       type: 'member-list',
       order: 4,
@@ -627,10 +645,18 @@ export function getTemplateForCategory(
 }
 
 /**
+ * Get template by ID
+ */
+export function getTemplateById(templateId: string): UniversalTemplate | undefined {
+  return ALL_TEMPLATES.find(t => t.id === templateId);
+}
+
+/**
  * Check if a tool ID is a system tool
+ * Supports both 'system:' prefix (canonical) and legacy 'sys-' prefix
  */
 export function isSystemTool(toolId: string): boolean {
-  return toolId.startsWith('sys-');
+  return toolId.startsWith('system:') || toolId.startsWith('sys-');
 }
 
 /**

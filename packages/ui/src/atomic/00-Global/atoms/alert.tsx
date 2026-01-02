@@ -6,20 +6,20 @@ import * as React from "react"
 import { cn } from "../../../lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4",
   {
     variants: {
       variant: {
         default:
-          "bg-[var(--hive-background-secondary)] text-[var(--hive-text-primary)] border-[var(--hive-border-default)]",
+          "bg-[#141414] text-[#FAFAFA] border-[#2A2A2A] [&>svg]:text-[#A1A1A6]",
         destructive:
-          "border-[var(--hive-status-error)]/50 text-[var(--hive-status-error)] bg-[var(--hive-status-error)]/10 [&>svg]:text-[var(--hive-status-error)]",
+          "border-[#FF3737]/30 text-[#FF3737] bg-[#FF3737]/10 [&>svg]:text-[#FF3737]",
         success:
-          "border-[var(--hive-status-success)]/50 text-[var(--hive-status-success)] bg-[var(--hive-status-success)]/10 [&>svg]:text-[var(--hive-status-success)]",
+          "border-[#00D46A]/30 text-[#00D46A] bg-[#00D46A]/10 [&>svg]:text-[#00D46A]",
         warning:
-          "border-[var(--hive-status-warning)]/50 text-[var(--hive-status-warning)] bg-[var(--hive-status-warning)]/10 [&>svg]:text-[var(--hive-status-warning)]",
+          "border-[#FFB800]/30 text-[#FFB800] bg-[#FFB800]/10 [&>svg]:text-[#FFB800]",
         info:
-          "border-[var(--hive-brand-primary)]/50 text-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/10 [&>svg]:text-[var(--hive-brand-primary)]",
+          "border-[#3B82F6]/30 text-[#3B82F6] bg-[#3B82F6]/10 [&>svg]:text-[#3B82F6]",
       },
     },
     defaultVariants: {
@@ -52,7 +52,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         {dismissible && (
           <button
             onClick={onDismiss}
-            className="absolute right-2 top-2 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[var(--hive-interactive-focus)] focus:ring-offset-2"
+            className="absolute right-2 top-2 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-[#0A0A0A]"
           >
             <svg
               width="15"

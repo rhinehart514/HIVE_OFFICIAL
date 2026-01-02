@@ -16,7 +16,7 @@ export function HiveLabLintPanel({ issues = [] }: HiveLabLintPanelProps) {
           )}
           {issues.map((it, i) => (
             <div key={i} className="flex items-start gap-2 text-sm">
-              <Badge tone={it.level === 'error' ? 'contrast' : 'muted'} variant="pill">{it.level}</Badge>
+              <Badge variant={it.level === 'error' ? 'destructive' : 'secondary'}>{it.level}</Badge>
               <div className="text-hive-text-secondary">{it.message}</div>
             </div>
           ))}

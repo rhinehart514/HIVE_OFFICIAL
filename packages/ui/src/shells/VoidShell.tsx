@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { easingArrays } from '@hive/tokens';
 import { HiveLogo } from '../atomic/00-Global/atoms/hive-logo';
 
 /**
@@ -117,7 +118,7 @@ export function VoidShell({
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: 0.5,
-              ease: [0.22, 1, 0.36, 1],
+              ease: easingArrays.default,
             }}
             className={`w-full ${maxWidthClasses[maxWidth]}`}
           >

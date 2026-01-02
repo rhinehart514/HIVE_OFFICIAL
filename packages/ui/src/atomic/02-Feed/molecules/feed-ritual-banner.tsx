@@ -8,7 +8,7 @@
  * - Gold accent (one of the allowed use cases!)
  * - Progress bar showing participation
  * - CTA button to join ritual
- * - Sparkles icon for ritual identity
+ * - Target icon for ritual identity
  *
  * Usage:
  * ```tsx
@@ -29,7 +29,7 @@ import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
 import { Button } from '../../00-Global/atoms/button';
-import { SparklesIcon, UsersIcon, LucideCheck } from '../../00-Global/atoms/icon-library';
+import { TargetIcon, UsersIcon, LucideCheck } from '../../00-Global/atoms/icon-library';
 import { Progress } from '../../00-Global/atoms/progress';
 
 export interface FeedRitualBannerProps {
@@ -119,7 +119,7 @@ export const FeedRitualBanner = React.forwardRef<HTMLDivElement, FeedRitualBanne
                     aria-hidden="true"
                   />
                 ) : (
-                  <SparklesIcon className="h-6 w-6 text-[var(--hive-brand-primary-text)]" />
+                  <TargetIcon className="h-6 w-6 text-[var(--hive-brand-primary-text)]" />
                 )}
               </div>
 

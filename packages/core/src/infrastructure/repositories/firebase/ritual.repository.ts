@@ -298,18 +298,8 @@ export class FirebaseRitualRepository implements IRitualRepository {
         ritual.setMilestones(milestones);
       }
 
-      // TODO: Load rewards - temporarily disabled
-      // if (data.rewards && Array.isArray(data.rewards)) {
-      //   ritual.rewards = data.rewards.map((rewardData: any) => ({
-      //     id: { id: rewardData.id, equals: () => false },
-      //     type: rewardData.type,
-      //     name: rewardData.name,
-      //     description: rewardData.description,
-      //     icon: rewardData.icon,
-      //     threshold: rewardData.threshold,
-      //     isClaimed: rewardData.isClaimed || false
-      //   }));
-      // }
+      // Rewards are loaded as part of milestones (milestone.rewards)
+      // Access via ritual.rewards getter which aggregates from all milestones
 
       return Result.ok<EnhancedRitual>(ritual);
     } catch (error) {

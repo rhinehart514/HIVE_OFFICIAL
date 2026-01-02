@@ -30,7 +30,7 @@ export interface AcademicIdentity {
 }
 export interface Badge {
     id: string;
-    type: 'builder' | 'student_leader' | 'contributor' | 'early_adopter';
+    type: 'builder' | 'student_leader' | 'contributor' | 'early_adopter' | 'founding_leader' | 'founding_member' | 'verified_leader';
     name: string;
     description: string;
     earnedAt: Date;

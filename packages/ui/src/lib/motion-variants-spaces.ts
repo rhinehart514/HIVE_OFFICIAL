@@ -37,7 +37,7 @@ export const spaceHeroCardVariants = {
   hover: {
     y: -8,
     scale: 1.02,
-    boxShadow: '0 32px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,215,0,0.12)',
+    boxShadow: '0 32px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08)',
     transition: tinderSprings.cardLift
   },
   tap: {
@@ -55,15 +55,14 @@ export const spaceHeroCardVariants = {
 export const spaceJoinCelebrationVariants = {
   initial: {
     opacity: 0,
-    scale: 0.5
+    scale: 0.9
   },
   animate: {
     opacity: 1,
-    scale: [0.5, 1.15, 1],
+    scale: 1, // Removed overshoot [0.5, 1.15, 1] - confident, not bouncy
     transition: {
-      duration: 0.6,
-      ease: easingArrays.dramatic,
-      times: [0, 0.6, 1]
+      duration: 0.4,
+      ease: easingArrays.silk
     }
   },
   exit: {
@@ -118,7 +117,7 @@ export const spaceDiscoveryCardVariants = {
   hover: {
     y: -6,
     scale: 1.015,
-    boxShadow: '0 24px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,215,0,0.08)',
+    boxShadow: '0 24px 48px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.06)',
     transition: springPresets.snappy
   },
   tap: {
@@ -240,9 +239,9 @@ export const nowCardVariants = {
   },
   urgent: {
     boxShadow: [
-      '0 0 0 0 rgba(255,215,0,0)',
-      '0 0 8px 2px rgba(255,215,0,0.3)',
-      '0 0 0 0 rgba(255,215,0,0)'
+      '0 0 0 0 rgba(255,255,255,0)',
+      '0 0 8px 2px rgba(255,255,255,0.15)',
+      '0 0 0 0 rgba(255,255,255,0)'
     ],
     transition: {
       duration: 2,
@@ -472,9 +471,9 @@ export const confettiParticleVariants = {
     scale: [0, 1, 0.5],
     x: (Math.random() - 0.5) * 200,
     y: (Math.random() - 0.5) * 200 - 80,
-    rotate: Math.random() * 720,
+    rotate: Math.random() * 360, // Capped from 720 - one rotation max
     transition: {
-      duration: 1.2,
+      duration: 0.9, // Reduced from 1.2 - faster exit
       delay: i * 0.02,
       ease: easingArrays.out
     }
@@ -484,13 +483,13 @@ export const confettiParticleVariants = {
 export const successCheckVariants = {
   initial: {
     scale: 0,
-    rotate: -180
+    rotate: -90
   },
   animate: {
-    scale: [0, 1.2, 1],
+    scale: 1, // Removed overshoot [0, 1.2, 1] - confident appearance
     rotate: 0,
     transition: {
-      ...springPresets.bouncy,
+      ...springPresets.default, // Changed from bouncy
       delay: 0.1
     }
   }

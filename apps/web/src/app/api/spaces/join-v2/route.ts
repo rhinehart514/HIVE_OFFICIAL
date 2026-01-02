@@ -12,6 +12,10 @@ import { withAuthValidationAndErrors, getUserId, getCampusId, type Authenticated
 import { validateSpaceJoinability, addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
 import { notifySpaceJoin } from "@/lib/notification-service";
+import {
+  incrementMemberCount,
+  isShardedMemberCountEnabled
+} from "@/lib/services/sharded-member-counter.service";
 
 /**
  * Space Join API v2
@@ -175,9 +179,18 @@ export const POST = withAuthValidationAndErrors(
       },
       updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
         try {
+          // SCALING FIX: Use sharded counters for memberCount to handle 200+ writes/sec
+          if (metrics.memberCountDelta && isShardedMemberCountEnabled()) {
+            await incrementMemberCount(spaceIdParam, metrics.memberCountDelta);
+            logger.debug('[join-v2] Used sharded member counter', { spaceId: spaceIdParam, delta: metrics.memberCountDelta });
+          }
+
+          // Update space document (activeMembers still uses inline, memberCount uses sharded when enabled)
           const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
           const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
-          if (metrics.memberCountDelta) {
+
+          // Fallback to inline counter if sharding not enabled
+          if (metrics.memberCountDelta && !isShardedMemberCountEnabled()) {
             updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
           }
           if (metrics.activeCountDelta) {

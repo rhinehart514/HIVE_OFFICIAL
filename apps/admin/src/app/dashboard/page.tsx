@@ -1,20 +1,30 @@
-import { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { getCurrentAdmin } from "@/lib/auth";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAdminAuth } from "@/lib/auth";
 import { ComprehensiveAdminDashboard } from "../../components/comprehensive-admin-dashboard";
 
-export const dynamic = 'force-dynamic';
+export default function AdminDashboard() {
+  const router = useRouter();
+  const { admin, loading, isAuthenticated } = useAdminAuth();
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard | HIVE",
-  description: "HIVE administration and moderation tools - complete platform control.",
-};
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace("/auth/login");
+    }
+  }, [loading, isAuthenticated, router]);
 
-export default async function AdminDashboard() {
-  const admin = await getCurrentAdmin();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
 
   if (!admin) {
-    redirect("/auth/login");
+    return null;
   }
 
   return <ComprehensiveAdminDashboard />;

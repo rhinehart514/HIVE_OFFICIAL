@@ -105,7 +105,10 @@ export async function GET(
   // Track last seen timestamp to only send new messages
   let lastTimestamp = Date.now();
   let unsubscribe: (() => void) | null = null;
+  let unsubscribeComponents: (() => void) | null = null;
   let isStreamClosed = false;
+  // SCALING FIX: Track heartbeat interval at outer scope for proper cleanup
+  let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   const stream = new ReadableStream({
     start(controller) {
@@ -229,10 +232,59 @@ export async function GET(
           }
         );
 
+      // Also listen for inline component state updates (poll votes, RSVP changes)
+      const componentsRef = dbAdmin
+        .collection('spaces')
+        .doc(spaceId)
+        .collection('boards')
+        .doc(boardId)
+        .collection('inline_components');
+
+      unsubscribeComponents = componentsRef.onSnapshot(
+        (snapshot) => {
+          if (isStreamClosed) return;
+
+          for (const change of snapshot.docChanges()) {
+            // Only send modified components (state updates from participation)
+            if (change.type === 'modified') {
+              const data = change.doc.data();
+              const componentUpdate = {
+                type: 'component_update',
+                data: {
+                  componentId: change.doc.id,
+                  elementType: data.elementType,
+                  sharedState: data.sharedState,
+                  isActive: data.isActive,
+                  version: data.version,
+                  updatedAt: data.updatedAt,
+                },
+              };
+
+              try {
+                const sseData = `data: ${JSON.stringify(componentUpdate)}\n\n`;
+                controller.enqueue(new TextEncoder().encode(sseData));
+              } catch {
+                isStreamClosed = true;
+                if (unsubscribe) unsubscribe();
+                if (unsubscribeComponents) unsubscribeComponents();
+              }
+            }
+          }
+        },
+        (error) => {
+          logger.error('Firestore inline_components snapshot error', {
+            error: error instanceof Error ? error.message : String(error),
+            spaceId,
+            boardId,
+          });
+        }
+      );
+
       // Send heartbeat every 30 seconds to keep connection alive
-      const heartbeat = setInterval(() => {
+      // SCALING FIX: Use outer-scoped variable for proper cleanup in cancel()
+      heartbeatInterval = setInterval(() => {
         if (isStreamClosed) {
-          clearInterval(heartbeat);
+          if (heartbeatInterval) clearInterval(heartbeatInterval);
           return;
         }
         try {
@@ -240,16 +292,25 @@ export async function GET(
           controller.enqueue(new TextEncoder().encode(ping));
         } catch {
           isStreamClosed = true;
-          clearInterval(heartbeat);
+          if (heartbeatInterval) clearInterval(heartbeatInterval);
           if (unsubscribe) unsubscribe();
+          if (unsubscribeComponents) unsubscribeComponents();
         }
       }, 30000);
     },
 
     cancel() {
       isStreamClosed = true;
+      // SCALING FIX: Clear heartbeat immediately on cancel (not after 30s delay)
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
       if (unsubscribe) {
         unsubscribe();
+      }
+      if (unsubscribeComponents) {
+        unsubscribeComponents();
       }
       logger.info('Chat SSE stream closed', { userId: user.uid, spaceId, boardId });
     },

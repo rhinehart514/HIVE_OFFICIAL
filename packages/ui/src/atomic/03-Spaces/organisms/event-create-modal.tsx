@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 import {
   X,
   BookOpen,
@@ -22,6 +23,9 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  Sparkles,
+  Loader2,
+  CalendarClock,
 } from 'lucide-react';
 
 import { cn } from '../../../lib/utils';
@@ -53,6 +57,14 @@ export interface BoardOption {
   name: string;
 }
 
+export interface AvailabilitySuggestion {
+  day: string;
+  dayOfWeek: string;
+  hour: number;
+  availability: number;
+  memberCount: number;
+}
+
 export interface EventCreateModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,6 +72,14 @@ export interface EventCreateModalProps {
   boards?: BoardOption[];
   defaultBoardId?: string;
   className?: string;
+  /** Space ID for fetching availability data */
+  spaceId?: string;
+  /** Optional callback to fetch availability (returns suggestions) */
+  onFetchAvailability?: (spaceId: string) => Promise<{
+    suggestions: AvailabilitySuggestion[];
+    memberCount: number;
+    connectedCount: number;
+  } | null>;
 }
 
 // ============================================================
@@ -118,8 +138,15 @@ export function EventCreateModal({
   boards = [],
   defaultBoardId,
   className,
+  spaceId,
+  onFetchAvailability,
 }: EventCreateModalProps) {
   const [step, setStep] = React.useState<'basic' | 'details'>('basic');
+
+  // Availability state
+  const [availabilitySuggestions, setAvailabilitySuggestions] = React.useState<AvailabilitySuggestion[]>([]);
+  const [availabilityMeta, setAvailabilityMeta] = React.useState<{ memberCount: number; connectedCount: number } | null>(null);
+  const [isLoadingAvailability, setIsLoadingAvailability] = React.useState(false);
 
   // Form state
   const [title, setTitle] = React.useState('');
@@ -153,8 +180,30 @@ export function EventCreateModal({
       setAnnounceToSpace(true);
       setLinkedBoardId(defaultBoardId || '');
       setError(null);
+      setAvailabilitySuggestions([]);
+      setAvailabilityMeta(null);
     }
   }, [open, defaultBoardId]);
+
+  // Fetch availability when entering details step
+  React.useEffect(() => {
+    if (step === 'details' && spaceId && onFetchAvailability && availabilitySuggestions.length === 0) {
+      setIsLoadingAvailability(true);
+      onFetchAvailability(spaceId)
+        .then((data) => {
+          if (data) {
+            setAvailabilitySuggestions(data.suggestions);
+            setAvailabilityMeta({ memberCount: data.memberCount, connectedCount: data.connectedCount });
+          }
+        })
+        .catch(() => {
+          // Silently fail - availability is optional enhancement
+        })
+        .finally(() => {
+          setIsLoadingAvailability(false);
+        });
+    }
+  }, [step, spaceId, onFetchAvailability, availabilitySuggestions.length]);
 
   // Close on escape
   React.useEffect(() => {
@@ -185,6 +234,14 @@ export function EventCreateModal({
   const handleBack = () => {
     setStep('basic');
     setError(null);
+  };
+
+  // Apply an availability suggestion to the date fields
+  const applySuggestion = (suggestion: AvailabilitySuggestion) => {
+    const suggestionDate = new Date(suggestion.day);
+    suggestionDate.setHours(suggestion.hour, 0, 0, 0);
+    setStartDate(suggestionDate);
+    setEndDate(addHours(suggestionDate, 1));
   };
 
   const handleSubmit = async () => {
@@ -234,7 +291,7 @@ export function EventCreateModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            transition={springPresets.snappy}
             className={cn(
               'relative w-full max-w-lg mx-4 bg-[var(--hive-background-secondary)] border border-[var(--hive-border-default)] rounded-2xl shadow-2xl',
               className
@@ -366,6 +423,70 @@ export function EventCreateModal({
                     transition={{ duration: 0.2 }}
                     className="space-y-4"
                   >
+                    {/* Best Times - Availability Suggestions */}
+                    {spaceId && onFetchAvailability && (
+                      <div>
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-[var(--hive-text-primary)] mb-2">
+                          <Sparkles className="h-3.5 w-3.5 text-[var(--hive-brand-primary)]" />
+                          Best Times
+                          {availabilityMeta && availabilityMeta.connectedCount > 0 && (
+                            <span className="text-xs text-[var(--hive-text-tertiary)] font-normal">
+                              based on {availabilityMeta.connectedCount} connected calendar{availabilityMeta.connectedCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </label>
+
+                        {isLoadingAvailability ? (
+                          <div className="flex items-center gap-2 py-3 px-3 bg-[var(--hive-background-tertiary)] rounded-xl">
+                            <Loader2 className="h-4 w-4 animate-spin text-[var(--hive-text-tertiary)]" />
+                            <span className="text-sm text-[var(--hive-text-tertiary)]">
+                              Checking member availability...
+                            </span>
+                          </div>
+                        ) : availabilitySuggestions.length > 0 ? (
+                          <div className="flex gap-2 overflow-x-auto pb-1">
+                            {availabilitySuggestions.slice(0, 4).map((suggestion, idx) => {
+                              const availabilityPercent = Math.round(suggestion.availability * 100);
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => applySuggestion(suggestion)}
+                                  className={cn(
+                                    'flex flex-col items-center px-3 py-2 rounded-xl border transition-all shrink-0',
+                                    'border-[var(--hive-border-default)] hover:border-[var(--hive-brand-primary)] bg-[var(--hive-background-tertiary)]',
+                                    'hover:bg-[var(--hive-brand-primary)]/10'
+                                  )}
+                                >
+                                  <span className="text-xs font-medium text-[var(--hive-text-secondary)]">
+                                    {suggestion.dayOfWeek}
+                                  </span>
+                                  <span className="text-sm font-semibold text-[var(--hive-text-primary)]">
+                                    {suggestion.hour > 12 ? suggestion.hour - 12 : suggestion.hour || 12}
+                                    {suggestion.hour >= 12 ? 'PM' : 'AM'}
+                                  </span>
+                                  <span className={cn(
+                                    'text-[10px] font-medium',
+                                    availabilityPercent >= 70 ? 'text-[var(--hive-status-success)]' :
+                                    availabilityPercent >= 40 ? 'text-[var(--hive-brand-primary)]' :
+                                    'text-[var(--hive-text-tertiary)]'
+                                  )}>
+                                    {availabilityPercent}% free
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : availabilityMeta && availabilityMeta.connectedCount === 0 ? (
+                          <div className="flex items-center gap-2 py-2 px-3 bg-[var(--hive-background-tertiary)] rounded-xl">
+                            <CalendarClock className="h-4 w-4 text-[var(--hive-text-tertiary)]" />
+                            <span className="text-xs text-[var(--hive-text-tertiary)]">
+                              No members have connected calendars yet
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+
                     {/* Date/Time Row */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>

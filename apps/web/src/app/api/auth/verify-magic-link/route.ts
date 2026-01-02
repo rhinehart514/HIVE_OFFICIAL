@@ -250,7 +250,12 @@ export async function POST(request: NextRequest) {
         isAdmin: false,
         isBuilder: false,
       });
-      
+
+      // Set custom claims for Firestore security rules
+      await auth.setCustomUserClaims(userRecord.uid, {
+        campusId: normalizedCampusId,
+      });
+
       await auditAuthEvent('success', request, {
         userId: userRecord.uid,
         operation: 'verify_magic_link'
@@ -278,19 +283,31 @@ export async function POST(request: NextRequest) {
       }));
     } else {
       // Existing user - they can proceed to app
+      const userData = userDoc.data();
+      const existingCampusId = userData?.campusId || userData?.schoolId || schoolId || 'ub-buffalo';
+
       await auditAuthEvent('success', request, {
         userId: userRecord.uid,
         operation: 'verify_magic_link'
       });
+
+      // Ensure campusId claim is set for existing users (migration path)
+      const currentClaims = userRecord.customClaims || {};
+      if (!currentClaims.campusId) {
+        await auth.setCustomUserClaims(userRecord.uid, {
+          ...currentClaims,
+          campusId: existingCampusId,
+        });
+      }
 
       // Check if user should be granted admin permissions
       // SECURITY: Uses shouldGrantAdmin() which checks if auto-grant is enabled
       const adminCheck = shouldGrantAdmin(email);
       if (adminCheck.shouldGrant && adminCheck.role) {
         try {
-          // Check if they already have admin claims
-          const currentClaims = userRecord.customClaims || {};
-          if (!currentClaims.isAdmin) {
+          // Refresh claims after potential campusId update
+          const refreshedClaims = userRecord.customClaims || {};
+          if (!refreshedClaims.isAdmin) {
             // Log admin grant attempt for audit
             logAdminOperation('admin_grant_attempt', userRecord.uid, email, {
               role: adminCheck.role,
@@ -299,9 +316,10 @@ export async function POST(request: NextRequest) {
 
             const permissions = getPermissionsForRole(adminCheck.role);
 
-            // Set admin claims
+            // Set admin claims (include campusId)
             await auth.setCustomUserClaims(userRecord.uid, {
-              ...currentClaims,
+              ...refreshedClaims,
+              campusId: existingCampusId,
               role: adminCheck.role,
               permissions,
               isAdmin: true,

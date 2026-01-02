@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Trophy } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -53,10 +53,8 @@ export const RitualStrip = React.forwardRef<HTMLDivElement, RitualStripProps>(
         className={cn(
           'group relative overflow-hidden rounded-2xl border transition-all duration-240',
           // Gold gradient background
-          'border-[var(--hive-brand-primary)]/50 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.12] via-[var(--hive-brand-secondary)]/[0.08] to-transparent',
-          // Gold glow
-          'shadow-[0_0_24px_rgba(255,215,0,0.15)]',
-          'hover:shadow-[0_0_32px_rgba(255,215,0,0.2)]',
+          'border-[var(--hive-brand-primary)]/30 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.08] via-transparent to-transparent',
+          'hover:border-[var(--hive-brand-primary)]/40',
           className
         )}
         {...props}
@@ -69,7 +67,7 @@ export const RitualStrip = React.forwardRef<HTMLDivElement, RitualStripProps>(
           <div className="mb-3 flex items-start gap-3">
             {/* Icon */}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)] text-2xl shadow-lg">
-              {ritual.icon || <Sparkles className="h-6 w-6 text-black" />}
+              {ritual.icon || <Trophy className="h-6 w-6 text-black" />}
             </div>
 
             {/* Title + Meta */}

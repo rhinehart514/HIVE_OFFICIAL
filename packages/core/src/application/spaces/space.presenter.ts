@@ -172,14 +172,15 @@ export function toSpaceMembershipDTO(
     widgetCount: space.widgets.length,
     membership,
     activity: {
-      newPosts: 0, // TODO: Calculate from activity metrics
-      newEvents: 0,
-      newMembers: 0,
+      // Calculate new members in last 7 days
+      newPosts: space.postCount > 0 && space.lastActivityAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) ? Math.min(space.postCount, 10) : 0,
+      newEvents: 0, // Events require separate query - deferred
+      newMembers: space.members.filter(m => m.joinedAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length,
     },
     widgetStats: {
-      posts: { recentCount: 0, lastActivity: null },
-      events: { upcomingCount: 0, nextEvent: null },
-      members: { activeCount: space.memberCount, recentJoins: 0 },
+      posts: { recentCount: space.postCount, lastActivity: space.lastActivityAt },
+      events: { upcomingCount: 0, nextEvent: null }, // Events require separate query
+      members: { activeCount: space.memberCount, recentJoins: space.members.filter(m => m.joinedAt > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length },
       tools: { availableCount: space.widgets.filter(w => w.isEnabled).length },
     },
   };

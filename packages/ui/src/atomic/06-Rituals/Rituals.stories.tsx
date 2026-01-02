@@ -1,16 +1,23 @@
 'use client';
 
 import * as React from 'react';
+import { useState } from 'react';
 
 import { RitualBetaLottery } from './organisms/ritual-beta-lottery';
 import { RitualCard } from './organisms/ritual-card';
+import { RitualCompletionCelebration } from './organisms/ritual-completion-celebration';
 import { RitualFeatureDrop } from './organisms/ritual-feature-drop';
-import { RitualFeedBannerCard } from './organisms/ritual-feed-banner';
 import { RitualFoundingClass } from './organisms/ritual-founding-class';
+import { RitualLaunchCountdown } from './organisms/ritual-launch-countdown';
+import { RitualLeak } from './organisms/ritual-leak';
+import { RitualRuleInversion } from './organisms/ritual-rule-inversion';
 import { RitualStrip } from './organisms/ritual-strip';
 import { RitualSurvival } from './organisms/ritual-survival';
 import { RitualTournamentBracket } from './organisms/ritual-tournament-bracket';
 import { RitualUnlockChallenge } from './organisms/ritual-unlock-challenge';
+import { RitualEmptyState } from './molecules/ritual-empty-state';
+import { RitualLoadingSkeleton } from './molecules/ritual-loading-skeleton';
+import { RitualProgressBar } from './molecules/ritual-progress-bar';
 
 import type { Meta, StoryObj } from '@storybook/react';
 
@@ -23,14 +30,26 @@ const meta = {
         component: 'Campus-wide behavioral campaigns. This is the MOAT - creates campus-specific moments that Instagram/TikTok can\'t replicate. "UB only" experiences build community loyalty.',
       },
     },
+    backgrounds: {
+      default: 'dark',
+    },
   },
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="min-h-[200px] bg-[#0A0A0A] p-6">
+        <Story />
+      </div>
+    ),
+  ],
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// ===== MOCK DATA =====
+// ============================================================================
+// MOCK DATA
+// ============================================================================
 
 const mockRituals = [
   {
@@ -95,11 +114,160 @@ const mockRituals = [
   },
 ];
 
-// ===== RITUAL CARD STORIES =====
+const mockMembers = Array.from({ length: 67 }, (_, i) => ({
+  id: `member-${i}`,
+  name: `Student ${i + 1}`,
+  avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
+}));
+
+// ============================================================================
+// MOLECULES: PROGRESS BAR
+// ============================================================================
+
+export const ProgressBar_Default: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualProgressBar progress={45} label="Campus Challenge" />
+    </div>
+  ),
+};
+
+export const ProgressBar_WithMilestones: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualProgressBar
+        progress={62}
+        label="Unlock Challenge"
+        milestones={[
+          { percentage: 25, label: 'Bronze', isCompleted: true },
+          { percentage: 50, label: 'Silver', isCompleted: true },
+          { percentage: 75, label: 'Gold', isCompleted: false },
+          { percentage: 100, label: 'Platinum', isCompleted: false },
+        ]}
+      />
+    </div>
+  ),
+};
+
+export const ProgressBar_Compact: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualProgressBar progress={78} variant="compact" />
+    </div>
+  ),
+};
+
+export const ProgressBar_Complete: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualProgressBar progress={100} label="Challenge Complete!" />
+    </div>
+  ),
+};
+
+export const ProgressBar_JustStarted: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualProgressBar progress={5} label="Just getting started" />
+    </div>
+  ),
+};
+
+export const ProgressBar_Comparison: Story = {
+  render: () => (
+    <div className="max-w-md space-y-6">
+      <div>
+        <h4 className="text-sm text-white/60 mb-2">Default Variant</h4>
+        <RitualProgressBar progress={50} label="Default" />
+      </div>
+      <div>
+        <h4 className="text-sm text-white/60 mb-2">Compact Variant</h4>
+        <RitualProgressBar progress={50} variant="compact" label="Compact" />
+      </div>
+    </div>
+  ),
+};
+
+// ============================================================================
+// MOLECULES: EMPTY & LOADING STATES
+// ============================================================================
+
+export const EmptyState_Default: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualEmptyState />
+    </div>
+  ),
+};
+
+export const EmptyState_WithAction: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualEmptyState
+        icon="🔔"
+        title="No Active Rituals"
+        message="Be the first to know when new campus events launch!"
+        actionLabel="Enable Notifications"
+        onAction={() => console.log('Enable notifications')}
+      />
+    </div>
+  ),
+};
+
+export const EmptyState_CustomIcon: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualEmptyState
+        icon="🎉"
+        title="All Caught Up!"
+        message="You've participated in all available rituals. Check back soon!"
+      />
+    </div>
+  ),
+};
+
+export const LoadingSkeleton_Card: Story = {
+  render: () => (
+    <div className="max-w-sm">
+      <RitualLoadingSkeleton variant="card" />
+    </div>
+  ),
+};
+
+export const LoadingSkeleton_Banner: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualLoadingSkeleton variant="banner" />
+    </div>
+  ),
+};
+
+export const LoadingSkeleton_Detail: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualLoadingSkeleton variant="detail" />
+    </div>
+  ),
+};
+
+export const LoadingSkeleton_Grid: Story = {
+  render: () => (
+    <div className="grid grid-cols-2 gap-4 max-w-2xl">
+      <RitualLoadingSkeleton variant="card" />
+      <RitualLoadingSkeleton variant="card" />
+      <RitualLoadingSkeleton variant="card" />
+      <RitualLoadingSkeleton variant="card" />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: RITUAL CARD
+// ============================================================================
 
 export const Card_Default: Story = {
   render: () => (
-    <div className="max-w-[360px] p-6">
+    <div className="max-w-[360px]">
       <RitualCard
         ritual={mockRituals[1]}
         onJoin={() => console.log('Join clicked')}
@@ -111,7 +279,7 @@ export const Card_Default: Story = {
 
 export const Card_Featured: Story = {
   render: () => (
-    <div className="max-w-[360px] p-6">
+    <div className="max-w-[360px]">
       <RitualCard
         ritual={mockRituals[0]}
         variant="featured"
@@ -124,7 +292,7 @@ export const Card_Featured: Story = {
 
 export const Card_Participating: Story = {
   render: () => (
-    <div className="max-w-[360px] p-6">
+    <div className="max-w-[360px]">
       <RitualCard
         ritual={mockRituals[3]}
         onViewDetails={() => console.log('View details clicked')}
@@ -135,7 +303,7 @@ export const Card_Participating: Story = {
 
 export const Card_Completed: Story = {
   render: () => (
-    <div className="max-w-[360px] p-6">
+    <div className="max-w-[360px]">
       <RitualCard
         ritual={{
           ...mockRituals[0],
@@ -149,110 +317,172 @@ export const Card_Completed: Story = {
   ),
 };
 
-// ===== FEED BANNER =====
-
-export const FeedBanner_Active: Story = {
+export const Card_HighProgress: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-4">
-      <RitualFeedBannerCard
-        banner={{
-          ritualId: 'founding-100',
-          title: 'Founding 100 - Join Now!',
-          description: 'First 100 users get exclusive badge. Only 33 spots left!',
-          cta: 'Join the Founding 100',
-          progress: 67,
-          urgency: 'high' as const,
-        }}
-        onAction={() => console.log('Join clicked')}
-      />
-    </div>
-  ),
-};
-
-export const FeedBanner_UrgentProgress: Story = {
-  render: () => (
-    <div className="max-w-[600px] mx-auto p-4">
-      <RitualFeedBannerCard
-        banner={{
-          ritualId: 'unlock-challenge',
-          title: 'Unlock Challenge - Almost There!',
-          description: '95% complete - 25 more posts to unlock anonymous mode!',
-          cta: 'Contribute Now',
+    <div className="max-w-[360px]">
+      <RitualCard
+        ritual={{
+          ...mockRituals[1],
           progress: 95,
-          urgency: 'critical' as const,
+          participantCount: 1847,
         }}
-        onAction={() => console.log('Contribute clicked')}
+        variant="featured"
+        onJoin={() => console.log('Join clicked')}
+        onViewDetails={() => console.log('View details clicked')}
       />
     </div>
   ),
 };
 
-// ===== RITUAL STRIP =====
-
-export const Strip_HorizontalScroll: Story = {
+export const Card_Grid: Story = {
   render: () => (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-4">
-        {mockRituals.map((ritual) => (
-          <RitualStrip
-            key={ritual.id}
-            ritual={ritual}
-            onJoin={() => console.log('Join:', ritual.id)}
-            onViewDetails={() => console.log('Details:', ritual.id)}
-            variant="compact"
-            showProgress={true}
-          />
-        ))}
-      </div>
+    <div className="grid md:grid-cols-2 gap-4 max-w-3xl">
+      {mockRituals.map((ritual, i) => (
+        <RitualCard
+          key={ritual.id}
+          ritual={ritual}
+          variant={i === 0 ? 'featured' : 'default'}
+          onJoin={() => console.log('Join:', ritual.id)}
+          onViewDetails={() => console.log('Details:', ritual.id)}
+        />
+      ))}
     </div>
   ),
 };
 
-// ===== TOURNAMENT BRACKET =====
+export const Card_Interactive: Story = {
+  render: () => {
+    const [isParticipating, setIsParticipating] = useState(false);
+
+    return (
+      <div className="max-w-[360px]">
+        <RitualCard
+          ritual={{
+            ...mockRituals[1],
+            isParticipating,
+          }}
+          onJoin={() => setIsParticipating(true)}
+          onViewDetails={() => console.log('View details')}
+        />
+        {isParticipating && (
+          <p className="mt-4 text-sm text-[#FFD700]">You've joined the ritual!</p>
+        )}
+      </div>
+    );
+  },
+};
+
+// ============================================================================
+// ORGANISMS: RITUAL STRIP
+// ============================================================================
+
+export const Strip_Default: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualStrip
+        ritual={mockRituals[0]}
+        onJoin={() => console.log('Join clicked')}
+        onViewDetails={() => console.log('View details clicked')}
+      />
+    </div>
+  ),
+};
+
+export const Strip_Compact: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualStrip
+        ritual={mockRituals[1]}
+        variant="compact"
+        onJoin={() => console.log('Join clicked')}
+        onViewDetails={() => console.log('View details clicked')}
+      />
+    </div>
+  ),
+};
+
+export const Strip_NoProgress: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualStrip
+        ritual={mockRituals[2]}
+        showProgress={false}
+        onJoin={() => console.log('Join clicked')}
+      />
+    </div>
+  ),
+};
+
+export const Strip_Participating: Story = {
+  render: () => (
+    <div className="max-w-2xl">
+      <RitualStrip
+        ritual={mockRituals[3]}
+        onViewDetails={() => console.log('View details clicked')}
+      />
+    </div>
+  ),
+};
+
+export const Strip_Stack: Story = {
+  render: () => (
+    <div className="space-y-4 max-w-2xl">
+      {mockRituals.slice(0, 3).map((ritual) => (
+        <RitualStrip
+          key={ritual.id}
+          ritual={ritual}
+          onJoin={() => console.log('Join:', ritual.id)}
+          onViewDetails={() => console.log('Details:', ritual.id)}
+        />
+      ))}
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: TOURNAMENT BRACKET
+// ============================================================================
 
 export const Tournament_CampusMadness: Story = {
   render: () => (
-    <div className="p-6">
-      <RitualTournamentBracket
-        title="Campus Madness: Best Dining Hall"
-        matchups={[
-          {
-            id: 'match-1',
-            round: 1,
-            a: 'Pigeon Dining',
-            b: 'Ellicott Dining',
-            votesA: 234,
-            votesB: 156,
-          },
-          {
-            id: 'match-2',
-            round: 1,
-            a: 'Governors Dining',
-            b: 'C3 Crossroads',
-            votesA: 189,
-            votesB: 278,
-          },
-          {
-            id: 'match-3',
-            round: 2,
-            a: 'Pigeon Dining',
-            b: 'C3 Crossroads',
-            votesA: 0,
-            votesB: 0,
-          },
-        ]}
-        currentRound={2}
-        onVote={(matchupId, choice) => console.log('Vote:', matchupId, choice)}
-      />
-    </div>
+    <RitualTournamentBracket
+      title="Campus Madness: Best Dining Hall"
+      matchups={[
+        { id: 'match-1', round: 1, a: 'Pigeon Dining', b: 'Ellicott Dining', votesA: 234, votesB: 156 },
+        { id: 'match-2', round: 1, a: 'Governors Dining', b: 'C3 Crossroads', votesA: 189, votesB: 278 },
+        { id: 'match-3', round: 2, a: 'Pigeon Dining', b: 'C3 Crossroads', votesA: 0, votesB: 0 },
+      ]}
+      currentRound={2}
+      onVote={(matchupId, choice) => console.log('Vote:', matchupId, choice)}
+    />
   ),
 };
 
-// ===== BETA LOTTERY =====
+export const Tournament_ManyMatchups: Story = {
+  render: () => (
+    <RitualTournamentBracket
+      title="Best Study Spot Tournament"
+      matchups={[
+        { id: 'r1-1', round: 1, a: 'Lockwood Library', b: 'Capen Hall', votesA: 345, votesB: 287 },
+        { id: 'r1-2', round: 1, a: 'Student Union', b: 'Silverman Library', votesA: 198, votesB: 412 },
+        { id: 'r1-3', round: 1, a: 'One World Cafe', b: 'Davis Hall', votesA: 267, votesB: 234 },
+        { id: 'r1-4', round: 1, a: 'Baldy Hall', b: 'NSC', votesA: 189, votesB: 301 },
+        { id: 'r2-1', round: 2, a: 'Lockwood Library', b: 'Silverman Library', votesA: 0, votesB: 0 },
+        { id: 'r2-2', round: 2, a: 'One World Cafe', b: 'NSC', votesA: 0, votesB: 0 },
+      ]}
+      currentRound={2}
+      onVote={(matchupId, choice) => console.log('Vote:', matchupId, choice)}
+    />
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: BETA LOTTERY
+// ============================================================================
 
 export const BetaLottery_Entry: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualBetaLottery
         title="Beta Access Lottery"
         description="Enter for early access to new features"
@@ -277,7 +507,7 @@ export const BetaLottery_Entry: Story = {
 
 export const BetaLottery_Entered: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualBetaLottery
         title="Beta Access Lottery"
         description="You're entered for early access!"
@@ -300,14 +530,63 @@ export const BetaLottery_Entered: Story = {
   ),
 };
 
-// ===== FOUNDING CLASS =====
+export const BetaLottery_HighDemand: Story = {
+  render: () => (
+    <div className="max-w-[600px] mx-auto">
+      <RitualBetaLottery
+        title="Voice Messages Beta"
+        description="Record and send voice messages in spaces"
+        feature={{
+          id: 'feature-2',
+          name: 'Voice Messages',
+          description: 'Send audio messages to your communities',
+          teaser: {
+            images: ['https://api.dicebear.com/7.x/shapes/svg?seed=voice'],
+          },
+        }}
+        slots={25}
+        applicants={1847}
+        entryDeadline="Dec 15 at 12:00 PM"
+        drawingDate="Dec 16 at 6:00 PM"
+        hasEntered={false}
+        onEnter={() => console.log('Enter lottery')}
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: FOUNDING CLASS
+// ============================================================================
 
 export const FoundingClass_Members: Story = {
   render: () => (
-    <div className="max-w-[800px] mx-auto p-6">
+    <div className="max-w-[800px] mx-auto">
       <RitualFoundingClass
         title="Founding 100 Members"
-        members={Array.from({ length: 67 }, (_, i) => ({
+        members={mockMembers}
+      />
+    </div>
+  ),
+};
+
+export const FoundingClass_Few: Story = {
+  render: () => (
+    <div className="max-w-[800px] mx-auto">
+      <RitualFoundingClass
+        title="Founding 10 - Early Adopters"
+        members={mockMembers.slice(0, 10)}
+      />
+    </div>
+  ),
+};
+
+export const FoundingClass_Full: Story = {
+  render: () => (
+    <div className="max-w-[800px] mx-auto">
+      <RitualFoundingClass
+        title="Founding 100 - Complete!"
+        members={Array.from({ length: 100 }, (_, i) => ({
           id: `member-${i}`,
           name: `Student ${i + 1}`,
           avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
@@ -317,11 +596,13 @@ export const FoundingClass_Members: Story = {
   ),
 };
 
-// ===== UNLOCK CHALLENGE =====
+// ============================================================================
+// ORGANISMS: UNLOCK CHALLENGE
+// ============================================================================
 
 export const UnlockChallenge_InProgress: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualUnlockChallenge
         title="Unlock Anonymous Posting"
         description="Entire campus works together to reach 500 posts"
@@ -348,7 +629,7 @@ export const UnlockChallenge_InProgress: Story = {
 
 export const UnlockChallenge_NearComplete: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualUnlockChallenge
         title="Unlock Anonymous Posting"
         description="Almost there! Just 10 more posts needed"
@@ -373,11 +654,40 @@ export const UnlockChallenge_NearComplete: Story = {
   ),
 };
 
-// ===== SURVIVAL =====
+export const UnlockChallenge_EarlyStage: Story = {
+  render: () => (
+    <div className="max-w-[600px] mx-auto">
+      <RitualUnlockChallenge
+        title="Unlock Dark Mode Campus-Wide"
+        description="Work together to reach 1000 interactions"
+        goalMetric="Interactions"
+        targetValue={1000}
+        currentValue={156}
+        reward={{
+          type: 'feature',
+          name: 'Campus Dark Mode',
+          description: 'Dark mode unlocked for all campus spaces',
+          teaser: 'A sleek dark theme for late-night studying!',
+        }}
+        milestones={[
+          { threshold: 250, unlock: 'Dim mode preview', message: 'Getting started!', completed: false },
+          { threshold: 500, unlock: 'Partial dark mode', message: 'Halfway there!', completed: false },
+          { threshold: 1000, unlock: 'Full dark mode', message: 'Final goal!', completed: false },
+        ]}
+        onContribute={() => console.log('Contribute')}
+        encouragement="Every like, comment, and post counts!"
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: SURVIVAL
+// ============================================================================
 
 export const Survival_Active: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualSurvival
         title="Dining Hall Survival"
         description="Vote out one dining hall each day until only one remains"
@@ -397,11 +707,34 @@ export const Survival_Active: Story = {
   ),
 };
 
-// ===== FEATURE DROP =====
+export const Survival_FinalRound: Story = {
+  render: () => (
+    <div className="max-w-[600px] mx-auto">
+      <RitualSurvival
+        title="Best Coffee Spot - FINALS"
+        description="The final two remain! Vote for the winner!"
+        contestants={[
+          { id: '1', name: 'Tim Hortons', eliminated: false, votes: 234 },
+          { id: '2', name: 'Starbucks', eliminated: false, votes: 267 },
+          { id: '3', name: 'Dunkin', eliminated: true, votes: 0 },
+          { id: '4', name: 'Local Cafe', eliminated: true, votes: 0 },
+        ]}
+        round={3}
+        totalRounds={3}
+        deadline="Tomorrow at 6:00 PM"
+        onVote={(contestantId) => console.log('Vote:', contestantId)}
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: FEATURE DROP
+// ============================================================================
 
 export const FeatureDrop_Announcement: Story = {
   render: () => (
-    <div className="max-w-[600px] mx-auto p-6">
+    <div className="max-w-[600px] mx-auto">
       <RitualFeatureDrop
         title="New Feature Drop: Voice Messages"
         description="Record and send voice messages in any space"
@@ -416,15 +749,325 @@ export const FeatureDrop_Announcement: Story = {
   ),
 };
 
-// ===== THE MOAT =====
+export const FeatureDrop_LimitedTime: Story = {
+  render: () => (
+    <div className="max-w-[600px] mx-auto">
+      <RitualFeatureDrop
+        title="Weekend Special: GIF Reactions"
+        description="React to messages with animated GIFs"
+        featureName="GIF Reactions"
+        icon="🎬"
+        availableFor="48 hours"
+        expiresAt="Monday at 12:00 AM"
+        onTryNow={() => console.log('Try GIF reactions')}
+        onDismiss={() => console.log('Dismiss')}
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: LAUNCH COUNTDOWN
+// ============================================================================
+
+export const LaunchCountdown_Default: Story = {
+  render: () => (
+    <div className="max-w-sm">
+      <RitualLaunchCountdown
+        title="Beta Launch"
+        targetTime={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()}
+      />
+    </div>
+  ),
+};
+
+export const LaunchCountdown_Soon: Story = {
+  render: () => (
+    <div className="max-w-sm">
+      <RitualLaunchCountdown
+        title="Feature Drops"
+        targetTime={new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString()}
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: RULE INVERSION
+// ============================================================================
+
+export const RuleInversion_AnonymousPosting: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualRuleInversion
+        ruleDescription="Anonymous Posting is ENABLED"
+        notes="For the next 24 hours, all posts in general spaces can be anonymous. Use responsibly!"
+      />
+    </div>
+  ),
+};
+
+export const RuleInversion_NoLimits: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualRuleInversion
+        ruleDescription="Rate Limits Suspended"
+        notes="Post, react, and comment as much as you want until midnight!"
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// ORGANISMS: LEAK (MYSTERY REVEALS)
+// ============================================================================
+
+export const Leak_Default: Story = {
+  render: () => (
+    <div className="max-w-md">
+      <RitualLeak
+        title="Upcoming Feature Hints"
+        clues={[
+          { id: '1', hint: 'Something big is coming to profiles...', revealed: false },
+          { id: '2', hint: 'Your voice will be heard soon', revealed: false },
+          { id: '3', hint: 'Connect like never before', revealed: true },
+        ]}
+        onReveal={(id) => console.log('Reveal clue:', id)}
+      />
+    </div>
+  ),
+};
+
+export const Leak_Interactive: Story = {
+  render: () => {
+    const [clues, setClues] = useState([
+      { id: '1', hint: 'A new way to discover spaces...', revealed: false },
+      { id: '2', hint: 'Your schedule, supercharged', revealed: false },
+      { id: '3', hint: 'AI-powered assistance coming', revealed: false },
+    ]);
+
+    const handleReveal = (id: string) => {
+      setClues(prev => prev.map(c => c.id === id ? { ...c, revealed: true } : c));
+    };
+
+    return (
+      <div className="max-w-md">
+        <RitualLeak
+          title="What's Coming Next?"
+          clues={clues}
+          onReveal={handleReveal}
+        />
+      </div>
+    );
+  },
+};
+
+// ============================================================================
+// ORGANISMS: COMPLETION CELEBRATION
+// ============================================================================
+
+export const CompletionCelebration_Default: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-[#FFD700]/20 text-[#FFD700] rounded-lg hover:bg-[#FFD700]/30 transition-colors"
+        >
+          Show Celebration
+        </button>
+        <RitualCompletionCelebration
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onShare={() => console.log('Share')}
+          ritual={{
+            name: 'Founding 100',
+            icon: '🏆',
+            streak: 7,
+            rank: 42,
+            totalParticipants: 100,
+          }}
+        />
+      </>
+    );
+  },
+};
+
+export const CompletionCelebration_HighRank: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-[#FFD700]/20 text-[#FFD700] rounded-lg"
+        >
+          Show Celebration
+        </button>
+        <RitualCompletionCelebration
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onShare={() => console.log('Share')}
+          ritual={{
+            name: 'Campus Madness Champion',
+            icon: '🏀',
+            rank: 1,
+            totalParticipants: 842,
+          }}
+        />
+      </>
+    );
+  },
+};
+
+export const CompletionCelebration_LongStreak: Story = {
+  render: () => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+      <>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="px-4 py-2 bg-[#FFD700]/20 text-[#FFD700] rounded-lg"
+        >
+          Show Celebration
+        </button>
+        <RitualCompletionCelebration
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onShare={() => console.log('Share')}
+          ritual={{
+            name: 'Daily Check-in Champion',
+            icon: '🔥',
+            streak: 30,
+          }}
+        />
+      </>
+    );
+  },
+};
+
+// ============================================================================
+// COMPOSITION STORIES
+// ============================================================================
+
+export const RitualsPage_Layout: Story = {
+  render: () => (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white mb-2">Campus Rituals</h1>
+        <p className="text-white/60">Campus-wide events and challenges</p>
+      </div>
+
+      {/* Featured */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4">Featured</h2>
+        <RitualStrip
+          ritual={mockRituals[0]}
+          onJoin={() => console.log('Join')}
+        />
+      </section>
+
+      {/* Active */}
+      <section>
+        <h2 className="text-lg font-semibold text-white mb-4">Active Rituals</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          {mockRituals.slice(1).map((ritual) => (
+            <RitualCard
+              key={ritual.id}
+              ritual={ritual}
+              onJoin={() => console.log('Join:', ritual.id)}
+              onViewDetails={() => console.log('Details:', ritual.id)}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
+  ),
+};
+
+export const RitualsPage_Mobile: Story = {
+  render: () => (
+    <div className="max-w-[375px] mx-auto">
+      <div className="p-4 space-y-4">
+        <h2 className="text-2xl font-bold text-white">Active Rituals</h2>
+        {mockRituals.slice(0, 3).map((ritual) => (
+          <RitualCard
+            key={ritual.id}
+            ritual={ritual}
+            onJoin={() => console.log('Join:', ritual.id)}
+            onViewDetails={() => console.log('Details:', ritual.id)}
+          />
+        ))}
+      </div>
+    </div>
+  ),
+  parameters: {
+    viewport: {
+      defaultViewport: 'mobile1',
+    },
+  },
+};
+
+export const RitualsPage_Loading: Story = {
+  render: () => (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center">
+        <div className="h-8 w-48 bg-white/10 rounded mx-auto mb-2 animate-pulse" />
+        <div className="h-4 w-64 bg-white/5 rounded mx-auto animate-pulse" />
+      </div>
+
+      <section>
+        <div className="h-5 w-24 bg-white/10 rounded mb-4 animate-pulse" />
+        <RitualLoadingSkeleton variant="banner" />
+      </section>
+
+      <section>
+        <div className="h-5 w-32 bg-white/10 rounded mb-4 animate-pulse" />
+        <div className="grid md:grid-cols-2 gap-4">
+          <RitualLoadingSkeleton variant="card" />
+          <RitualLoadingSkeleton variant="card" />
+          <RitualLoadingSkeleton variant="card" />
+          <RitualLoadingSkeleton variant="card" />
+        </div>
+      </section>
+    </div>
+  ),
+};
+
+export const RitualsPage_Empty: Story = {
+  render: () => (
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-white mb-2">Campus Rituals</h1>
+        <p className="text-white/60">Campus-wide events and challenges</p>
+      </div>
+
+      <RitualEmptyState
+        icon="🎭"
+        title="No Active Rituals"
+        message="Check back soon for exciting campus-wide events and challenges!"
+        actionLabel="Get Notified"
+        onAction={() => console.log('Enable notifications')}
+      />
+    </div>
+  ),
+};
+
+// ============================================================================
+// THE MOAT - STRATEGIC OVERVIEW
+// ============================================================================
 
 export const Rituals_TheMoat: Story = {
   render: () => (
-    <div className="max-w-[900px] mx-auto p-6">
+    <div className="max-w-[900px] mx-auto">
       <div className="space-y-8">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-3">Rituals: The Campus Moat</h1>
-          <p className="text-xl text-muted-foreground">
+          <h1 className="text-4xl font-bold text-white mb-3">Rituals: The Campus Moat</h1>
+          <p className="text-xl text-white/60">
             Campus-specific behavioral campaigns that Instagram/TikTok can't replicate
           </p>
         </div>
@@ -453,61 +1096,55 @@ export const Rituals_TheMoat: Story = {
           />
         </div>
 
-        <div className="mt-12 p-8 bg-primary/10 rounded-2xl border-2 border-primary/20">
-          <h3 className="text-2xl font-bold mb-4">Why Instagram Can't Copy This</h3>
-          <div className="space-y-3 text-sm">
+        <div className="mt-12 p-8 bg-[#FFD700]/10 rounded-2xl border-2 border-[#FFD700]/20">
+          <h3 className="text-2xl font-bold text-white mb-4">Why Instagram Can't Copy This</h3>
+          <div className="space-y-3 text-sm text-white/80">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🌍</span>
               <div>
-                <strong>Instagram is global</strong> (1 billion users) - They can't create "UB only" moments
+                <strong className="text-white">Instagram is global</strong> (1 billion users) - They can't create "UB only" moments
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">🎯</span>
               <div>
-                <strong>HIVE is campus-specific</strong> (10,000 users at UB) - We create tight-knit community experiences
+                <strong className="text-white">HIVE is campus-specific</strong> (10,000 users at UB) - We create tight-knit community experiences
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">🏆</span>
               <div>
-                <strong>Campus-wide moments</strong> - "Founding 100" badge only 100 UB students will ever have
+                <strong className="text-white">Campus-wide moments</strong> - "Founding 100" badge only 100 UB students will ever have
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">🤝</span>
               <div>
-                <strong>Community ownership</strong> - Students feel "This is OUR campus app" vs "Global app I use"
+                <strong className="text-white">Community ownership</strong> - Students feel "This is OUR campus app" vs "Global app I use"
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-2xl">💪</span>
               <div>
-                <strong>Network effects</strong> - More engaged 10K students {'>'} 1M disengaged users globally
+                <strong className="text-white">Network effects</strong> - More engaged 10K students {'>'} 1M disengaged users globally
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 p-6 bg-muted/50 rounded-xl">
-          <h3 className="text-lg font-semibold mb-3">9 Ritual Archetypes</h3>
-          <div className="grid md:grid-cols-3 gap-4 text-sm">
-            <div><strong>🏀 Tournament:</strong> Campus Madness bracket</div>
-            <div><strong>🎁 Feature Drop:</strong> Limited-time unlock</div>
-            <div><strong>🔄 Rule Inversion:</strong> Temporary rule suspension</div>
-            <div><strong>🏆 Founding Class:</strong> First 100 users</div>
-            <div><strong>⏱️ Launch Countdown:</strong> Pre-launch hype</div>
-            <div><strong>🎰 Beta Lottery:</strong> Random early access</div>
-            <div><strong>🎭 Unlock Challenge:</strong> Group goals</div>
-            <div><strong>👑 Survival:</strong> Vote people out</div>
-            <div><strong>🔍 Leak:</strong> Mystery reveals</div>
+        <div className="mt-8 p-6 bg-white/5 rounded-xl">
+          <h3 className="text-lg font-semibold text-white mb-3">9 Ritual Archetypes</h3>
+          <div className="grid md:grid-cols-3 gap-4 text-sm text-white/80">
+            <div><strong className="text-[#FFD700]">🏀 Tournament:</strong> Campus Madness bracket</div>
+            <div><strong className="text-[#FFD700]">🎁 Feature Drop:</strong> Limited-time unlock</div>
+            <div><strong className="text-[#FFD700]">🔄 Rule Inversion:</strong> Temporary rule suspension</div>
+            <div><strong className="text-[#FFD700]">🏆 Founding Class:</strong> First 100 users</div>
+            <div><strong className="text-[#FFD700]">⏱️ Launch Countdown:</strong> Pre-launch hype</div>
+            <div><strong className="text-[#FFD700]">🎰 Beta Lottery:</strong> Random early access</div>
+            <div><strong className="text-[#FFD700]">🎭 Unlock Challenge:</strong> Group goals</div>
+            <div><strong className="text-[#FFD700]">👑 Survival:</strong> Vote people out</div>
+            <div><strong className="text-[#FFD700]">🔍 Leak:</strong> Mystery reveals</div>
           </div>
-        </div>
-
-        <div className="mt-8 p-6 bg-green-500/10 rounded-xl border border-green-500/20">
-          <p className="text-sm text-green-700 dark:text-green-300">
-            <strong>✅ All ritual components are now available!</strong> This includes Tournament brackets, Beta lottery, Founding class, Unlock challenges, Survival games, and Feature drops.
-          </p>
         </div>
       </div>
     </div>
@@ -518,31 +1155,6 @@ export const Rituals_TheMoat: Story = {
       description: {
         story: 'Rituals are HIVE\'s competitive moat. Campus-specific behavioral campaigns create "UB only" moments that build community loyalty. Instagram (global platform) can\'t replicate this campus-specific engagement.',
       },
-    },
-  },
-};
-
-// ===== MOBILE VIEW =====
-
-export const Rituals_Mobile: Story = {
-  render: () => (
-    <div className="max-w-[375px] mx-auto">
-      <div className="p-4 space-y-4">
-        <h2 className="text-2xl font-bold">Active Rituals</h2>
-        {mockRituals.slice(0, 3).map((ritual) => (
-          <RitualCard
-            key={ritual.id}
-            ritual={ritual}
-            onJoin={() => console.log('Join:', ritual.id)}
-            onViewDetails={() => console.log('Details:', ritual.id)}
-          />
-        ))}
-      </div>
-    </div>
-  ),
-  parameters: {
-    viewport: {
-      defaultViewport: 'mobile',
     },
   },
 };

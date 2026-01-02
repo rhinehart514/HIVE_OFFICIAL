@@ -1,4 +1,4 @@
-import { type Database, getDatabase, ref, push, set, onValue, serverTimestamp, runTransaction, type DataSnapshot, type Unsubscribe } from 'firebase/database';
+import { type Database, getDatabase, ref, push, set, get, update, onValue, serverTimestamp, runTransaction, type DataSnapshot, type Unsubscribe } from 'firebase/database';
 import { app } from '@hive/core';
 import { logger } from './structured-logger';
 
@@ -74,6 +74,10 @@ export interface TypingIndicator {
 export class FirebaseRealtimeService {
   private database: Database;
   private listeners: Map<string, Unsubscribe[]> = new Map();
+  /** Track last typing indicator write to prevent spam (key: spaceId:boardId:userId) */
+  private lastTypingWrite: Map<string, { time: number; isTyping: boolean }> = new Map();
+  /** Minimum interval between typing indicator writes (ms) - matches client TYPING_INDICATOR_INTERVAL_MS */
+  private static readonly TYPING_WRITE_THROTTLE_MS = 3000;
 
   constructor() {
     this.database = getDatabase(app);
@@ -169,20 +173,28 @@ export class FirebaseRealtimeService {
 
   /**
    * Update user presence
+   * SCALING: Dual-write to both user-indexed and space-indexed paths
+   * - `presence/{userId}` for user lookups
+   * - `space_presence/{spaceId}/{userId}` for space-specific queries (O(space members) not O(all users))
    */
   async updatePresence(userId: string, presenceData: Omit<PresenceData, 'userId'>): Promise<void> {
     try {
-      const presenceRef = ref(this.database, `presence/${userId}`);
       const fullPresenceData: PresenceData = {
         userId,
         ...presenceData,
         lastSeen: serverTimestamp()
       };
 
+      // Write to user-indexed path (for user lookups)
+      const presenceRef = ref(this.database, `presence/${userId}`);
       await set(presenceRef, fullPresenceData);
 
-      // Broadcast presence update to relevant spaces
+      // SCALING FIX: Also write to space-indexed path for efficient space queries
       if (presenceData.currentSpace) {
+        const spacePresenceRef = ref(this.database, `space_presence/${presenceData.currentSpace}/${userId}`);
+        await set(spacePresenceRef, fullPresenceData);
+
+        // Broadcast presence update to relevant spaces
         await this.sendMessage({
           type: 'presence',
           channel: `space:${presenceData.currentSpace}:presence`,
@@ -205,6 +217,24 @@ export class FirebaseRealtimeService {
     } catch (error) {
       logger.error('Error updating presence', { error: { error: error instanceof Error ? error.message : String(error) }, userId });
       throw error;
+    }
+  }
+
+  /**
+   * Clear user presence from a space
+   * Call when user leaves a space or goes offline
+   */
+  async clearSpacePresence(userId: string, spaceId: string): Promise<void> {
+    try {
+      const spacePresenceRef = ref(this.database, `space_presence/${spaceId}/${userId}`);
+      await set(spacePresenceRef, null);
+      logger.info('Space presence cleared', { userId, spaceId });
+    } catch (error) {
+      logger.error('Error clearing space presence', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
+        spaceId
+      });
     }
   }
 
@@ -508,6 +538,7 @@ export class FirebaseRealtimeService {
 
   /**
    * Set typing indicator for a specific board
+   * Throttled to prevent spam - only writes if state changed or interval passed
    */
   async setBoardTypingIndicator(
     spaceId: string,
@@ -516,6 +547,29 @@ export class FirebaseRealtimeService {
     isTyping: boolean
   ): Promise<void> {
     try {
+      const cacheKey = `${spaceId}:${boardId}:${userId}`;
+      const now = Date.now();
+      const lastWrite = this.lastTypingWrite.get(cacheKey);
+
+      // Throttle logic: skip write if same state and interval hasn't passed
+      if (lastWrite) {
+        const timeSinceLastWrite = now - lastWrite.time;
+        const stateUnchanged = lastWrite.isTyping === isTyping;
+
+        // If state unchanged and we're within throttle window, skip
+        if (stateUnchanged && timeSinceLastWrite < FirebaseRealtimeService.TYPING_WRITE_THROTTLE_MS) {
+          return;
+        }
+
+        // If setting to false and already false, skip entirely
+        if (!isTyping && !lastWrite.isTyping) {
+          return;
+        }
+      }
+
+      // Update cache before write
+      this.lastTypingWrite.set(cacheKey, { time: now, isTyping });
+
       const typingRef = ref(this.database, `typing/${spaceId}/${boardId}/${userId}`);
 
       if (isTyping) {
@@ -540,21 +594,80 @@ export class FirebaseRealtimeService {
   }
 
   /**
-   * Listen to presence updates for a space
+   * Clean up stale typing indicators for a board
+   * Removes typing indicators older than TTL (default 10 seconds)
+   * Called periodically by the listener to prevent RTDB bloat from crashed clients
    */
-  listenToPresence(spaceId: string, callback: (presence: Record<string, PresenceData>) => void): () => void {
-    const presenceRef = ref(this.database, 'presence');
+  async cleanupStaleTypingIndicators(
+    spaceId: string,
+    boardId: string,
+    ttlMs: number = 10000
+  ): Promise<number> {
+    try {
+      const typingRef = ref(this.database, `typing/${spaceId}/${boardId}`);
+      const snapshot = await get(typingRef);
 
-    const unsubscribe = onValue(presenceRef, (snapshot: DataSnapshot) => {
-      const allPresence: Record<string, PresenceData> = {};
+      if (!snapshot.exists()) {
+        return 0;
+      }
+
+      const now = Date.now();
+      let cleanedCount = 0;
+      const updates: Record<string, null> = {};
+
       snapshot.forEach((childSnapshot: DataSnapshot) => {
-        const presenceData = childSnapshot.val() as PresenceData;
-        if (presenceData.currentSpace === spaceId && childSnapshot.key) {
-          allPresence[childSnapshot.key] = presenceData;
+        const typingData = childSnapshot.val() as TypingIndicator;
+        const timestamp = typeof typingData.timestamp === 'number' ? typingData.timestamp : 0;
+
+        // If older than TTL, mark for deletion
+        if (now - timestamp > ttlMs) {
+          if (childSnapshot.key) {
+            updates[childSnapshot.key] = null;
+            cleanedCount++;
+          }
         }
       });
 
-      callback(allPresence);
+      // Batch delete stale indicators
+      if (cleanedCount > 0) {
+        await update(typingRef, updates);
+        logger.debug('Cleaned up stale typing indicators', {
+          spaceId,
+          boardId,
+          cleanedCount
+        });
+      }
+
+      return cleanedCount;
+    } catch (error) {
+      logger.error('Error cleaning up typing indicators', {
+        error: { error: error instanceof Error ? error.message : String(error) },
+        spaceId,
+        boardId
+      });
+      return 0;
+    }
+  }
+
+  /**
+   * Listen to presence updates for a space
+   * SCALING FIX: Now uses space-indexed path `space_presence/{spaceId}` instead of loading all users
+   * This reduces data transfer from O(all users) to O(space members)
+   */
+  listenToPresence(spaceId: string, callback: (presence: Record<string, PresenceData>) => void): () => void {
+    // SCALING: Use space-indexed path instead of loading all presence data
+    const spacePresenceRef = ref(this.database, `space_presence/${spaceId}`);
+
+    const unsubscribe = onValue(spacePresenceRef, (snapshot: DataSnapshot) => {
+      const spacePresence: Record<string, PresenceData> = {};
+      snapshot.forEach((childSnapshot: DataSnapshot) => {
+        const presenceData = childSnapshot.val() as PresenceData;
+        if (childSnapshot.key) {
+          spacePresence[childSnapshot.key] = presenceData;
+        }
+      });
+
+      callback(spacePresence);
     });
 
     const listenerKey = `presence:${spaceId}`;

@@ -9,7 +9,6 @@ import { authAdmin } from './firebase-admin';
 import { isAdminEmail } from './admin/roles';
 import { logger } from './logger';
 import {
-  _checkRedisRateLimit,
   getRateLimitHeaders,
   checkIpRateLimit,
   checkUserRateLimit

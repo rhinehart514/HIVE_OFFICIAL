@@ -17,7 +17,7 @@ export function HiveLabToolLibraryCard({ name, description, category, installs, 
       <CardContent className="p-4 flex-1 flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold text-white truncate" title={name}>{name}</div>
-          {category && <Badge tone="muted" variant="pill">{category}</Badge>}
+          {category && <Badge variant="secondary">{category}</Badge>}
         </div>
         <div className="text-sm text-hive-text-tertiary line-clamp-2">{description}</div>
         <div className="mt-auto flex items-center justify-between text-xs text-hive-text-tertiary">

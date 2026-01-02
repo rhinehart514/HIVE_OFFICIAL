@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageSquare, FileText, AlertCircle, CheckCircle2, Sparkles, Pen } from 'lucide-react';
+import { MessageSquare, FileText, AlertCircle, CheckCircle2, Lightbulb, Pen } from 'lucide-react';
 import * as React from 'react';
 
 import { Textarea } from './textarea';
@@ -545,7 +545,7 @@ export const FeedbackForm: Story = {
               showCount
               size="lg"
               required
-              leftIcon={<Sparkles className="h-4 w-4" />}
+              leftIcon={<Lightbulb className="h-4 w-4" />}
               helperText="Your feedback helps us build a better platform for everyone."
             />
             <button

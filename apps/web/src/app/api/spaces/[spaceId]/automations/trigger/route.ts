@@ -13,8 +13,10 @@ import {
   createServerSpaceChatService,
   type CheckPermissionFn,
   type GetUserProfileFn,
+  type InlineComponentType,
 } from "@hive/core/server";
 import { checkSpacePermission } from "@/lib/space-permission-middleware";
+import { createBulkNotifications } from "@/lib/notification-service";
 
 /**
  * Automation Trigger API
@@ -176,7 +178,10 @@ async function executeAction(
       return executeSendMessage(action.config, spaceId, campusId, userId, triggerData);
 
     case 'create_component':
-      return executeCreateComponent(action.config, spaceId, campusId, userId);
+      return executeCreateComponent(action.config, spaceId, campusId, userId, triggerData);
+
+    case 'notify':
+      return executeNotify(action.config, spaceId, campusId, triggerData);
 
     default:
       throw new Error(`Unsupported action type: ${action.type}`);
@@ -283,22 +288,246 @@ async function executeSendMessage(
 
 /**
  * Execute create_component action
+ * Creates inline components (polls, countdowns, RSVPs) in chat
  */
 async function executeCreateComponent(
   config: Record<string, unknown>,
   spaceId: string,
-  _campusId: string,
-  _userId: string
+  campusId: string,
+  userId: string,
+  triggerData: TriggerData['data']
 ): Promise<Record<string, unknown>> {
-  // For now, just log - full implementation would create the component
-  logger.info('Create component action triggered', {
+  const componentType = (config.componentType as string) || 'poll';
+  const boardId = (config.boardId as string) || 'general';
+
+  // Create permission check callback
+  const checkPermission: CheckPermissionFn = async (uid: string, sid: string) => {
+    const permCheck = await checkSpacePermission(sid, uid, 'member');
+    if (!permCheck.hasPermission) {
+      return { allowed: false };
+    }
+    return { allowed: true, role: permCheck.role };
+  };
+
+  // Create user profile getter callback
+  const getUserProfile: GetUserProfileFn = async (uid: string) => {
+    const userDoc = await dbAdmin.collection('profiles').doc(uid).get();
+    if (!userDoc.exists) return null;
+    const data = userDoc.data()!;
+    return {
+      displayName: data.displayName || data.name || 'HIVE Bot',
+      avatarUrl: data.avatarUrl || data.photoURL,
+    };
+  };
+
+  // Find the target board
+  const boardsRef = dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('boards');
+
+  let targetBoardId = boardId;
+
+  if (boardId === 'general') {
+    const generalBoard = await boardsRef
+      .where('name', '==', 'General')
+      .limit(1)
+      .get();
+
+    if (!generalBoard.empty) {
+      targetBoardId = generalBoard.docs[0].id;
+    } else {
+      const anyBoard = await boardsRef.limit(1).get();
+      if (!anyBoard.empty) {
+        targetBoardId = anyBoard.docs[0].id;
+      } else {
+        throw new Error('No board found for component');
+      }
+    }
+  }
+
+  // Build component config based on type
+  let componentConfig: Record<string, unknown> = {};
+  let content = '';
+
+  if (componentType === 'poll') {
+    componentConfig = {
+      question: (config.question as string) || 'What do you think?',
+      options: (config.options as string[]) || ['Option A', 'Option B'],
+      allowMultiple: config.allowMultiple ?? false,
+      showResults: 'after_vote',
+    };
+    content = `📊 ${componentConfig.question}`;
+  } else if (componentType === 'countdown') {
+    // Interpolate event title if available
+    let title = (config.title as string) || 'Upcoming Event';
+    if (triggerData.eventTitle) {
+      title = title.replace(/\{event\}/g, triggerData.eventTitle)
+        .replace(/\{event\.title\}/g, triggerData.eventTitle);
+    }
+    componentConfig = {
+      title,
+      targetDate: config.targetDate ? new Date(config.targetDate as string) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    };
+    content = `⏱️ Countdown to: ${title}`;
+  } else if (componentType === 'rsvp') {
+    componentConfig = {
+      eventId: triggerData.eventId || config.eventId,
+      eventTitle: triggerData.eventTitle || (config.eventTitle as string) || 'Event',
+      eventDate: config.eventDate ? new Date(config.eventDate as string) : undefined,
+      maxCapacity: config.maxCapacity,
+      allowMaybe: config.allowMaybe ?? true,
+    };
+    content = `📅 RSVP for: ${componentConfig.eventTitle}`;
+  }
+
+  // Create the chat service
+  const chatService = createServerSpaceChatService(
+    { userId, campusId },
+    { checkPermission, getUserProfile }
+  );
+
+  const result = await chatService.createInlineComponent(userId, {
     spaceId,
-    componentType: config.componentType,
-    boardId: config.boardId,
+    boardId: targetBoardId,
+    content,
+    componentType: componentType as InlineComponentType,
+    componentConfig: componentConfig as {
+      question?: string;
+      options?: string[];
+      allowMultiple?: boolean;
+      showResults?: 'always' | 'after_vote' | 'after_close';
+      closesAt?: Date;
+      title?: string;
+      targetDate?: Date;
+      eventId?: string;
+      eventTitle?: string;
+      eventDate?: Date;
+      maxCapacity?: number;
+      allowMaybe?: boolean;
+    },
+  });
+
+  if (result.isFailure) {
+    throw new Error(result.error || 'Failed to create component');
+  }
+
+  const componentResult = result.getValue().data;
+
+  logger.info('Component created via automation', {
+    spaceId,
+    boardId: targetBoardId,
+    componentType,
+    messageId: componentResult.messageId,
+    componentId: componentResult.componentId,
   });
 
   return {
-    componentType: config.componentType,
+    componentType,
+    messageId: componentResult.messageId,
+    componentId: componentResult.componentId,
     status: 'created',
+  };
+}
+
+/**
+ * Execute notify action
+ * Sends in-app notifications to space leaders or specific recipients
+ */
+async function executeNotify(
+  config: Record<string, unknown>,
+  spaceId: string,
+  campusId: string,
+  triggerData: TriggerData['data']
+): Promise<Record<string, unknown>> {
+  const recipients = (config.recipients as string) || 'leaders';
+  let title = (config.title as string) || 'Automation Alert';
+  let body = (config.body as string) || '';
+
+  // Interpolate variables
+  title = title
+    .replace(/\{member\}/g, triggerData.memberName || 'Member')
+    .replace(/\{member\.name\}/g, triggerData.memberName || 'Member')
+    .replace(/\{event\}/g, triggerData.eventTitle || 'Event')
+    .replace(/\{event\.title\}/g, triggerData.eventTitle || 'Event');
+
+  body = body
+    .replace(/\{member\}/g, triggerData.memberName || 'Member')
+    .replace(/\{member\.name\}/g, triggerData.memberName || 'Member')
+    .replace(/\{event\}/g, triggerData.eventTitle || 'Event')
+    .replace(/\{event\.title\}/g, triggerData.eventTitle || 'Event')
+    .replace(/\{message\}/g, triggerData.messageContent || '');
+
+  // Get recipient user IDs
+  let userIds: string[] = [];
+
+  if (recipients === 'leaders') {
+    // Notify space leaders (owners, admins, moderators)
+    const leadersSnapshot = await dbAdmin
+      .collection('spaceMembers')
+      .where('spaceId', '==', spaceId)
+      .where('campusId', '==', campusId)
+      .where('role', 'in', ['owner', 'admin', 'moderator', 'leader'])
+      .where('isActive', '==', true)
+      .get();
+
+    userIds = leadersSnapshot.docs.map(doc => doc.data().userId);
+  } else if (recipients === 'all') {
+    // Notify all space members
+    const membersSnapshot = await dbAdmin
+      .collection('spaceMembers')
+      .where('spaceId', '==', spaceId)
+      .where('campusId', '==', campusId)
+      .where('isActive', '==', true)
+      .get();
+
+    userIds = membersSnapshot.docs.map(doc => doc.data().userId);
+  } else if (recipients.startsWith('user:')) {
+    // Notify specific user
+    userIds = [recipients.replace('user:', '')];
+  }
+
+  if (userIds.length === 0) {
+    logger.warn('No recipients found for notify action', {
+      spaceId,
+      recipients,
+    });
+    return {
+      notified: 0,
+      status: 'no_recipients',
+    };
+  }
+
+  // Get space name for notification context
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  const spaceName = spaceDoc.data()?.name || 'Space';
+
+  // Create notifications
+  const notifiedCount = await createBulkNotifications(userIds, {
+    type: 'system',
+    category: 'spaces',
+    title,
+    body,
+    actionUrl: `/spaces/${spaceId}`,
+    metadata: {
+      spaceId,
+      spaceName,
+      isAutomation: true,
+      triggerMemberId: triggerData.memberId,
+      triggerEventId: triggerData.eventId,
+    },
+  });
+
+  logger.info('Notify action executed', {
+    spaceId,
+    recipients,
+    userCount: userIds.length,
+    notifiedCount,
+  });
+
+  return {
+    notified: notifiedCount,
+    recipientType: recipients,
+    status: 'sent',
   };
 }

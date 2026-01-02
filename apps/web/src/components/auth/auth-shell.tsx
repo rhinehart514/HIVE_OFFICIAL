@@ -2,48 +2,59 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { HiveLogo } from '@hive/ui';
+import { WorldBackground } from '@/components/landing/world-background';
 
 interface AuthShellProps {
   children: React.ReactNode;
   /** Show HIVE logo (default: true) */
   showLogo?: boolean;
-  /** Logo position: 'center' for login, 'top-right' for onboarding (default: 'center') */
-  logoPosition?: 'center' | 'top-right';
+  /** Logo position: 'center' for login, 'top-left' for consistency (default: 'center') */
+  logoPosition?: 'center' | 'top-left';
+  /** Show world background (fragments). Default: true */
+  showWorldBackground?: boolean;
 }
 
-// Light theme colors for auth pages
+// Edge-to-edge theme - matches landing page
 const AUTH_COLORS = {
-  background: '#FAFAFA',  // Soft white
-  surface: '#FFFFFF',     // Pure white
-  border: '#E5E5E5',      // Light gray border
+  background: '#050505',  // Match landing page exactly
+  surface: '#0A0A0A',     // Slightly elevated
+  border: 'rgba(255, 255, 255, 0.08)',
   text: {
-    primary: '#0A0A0A',   // Near black
-    secondary: '#404040', // Dark gray
-    subtle: '#737373',    // Medium gray
-    disabled: '#A3A3A3',  // Light gray
+    primary: '#FFFFFF',
+    secondary: '#A3A3A3',
+    subtle: '#737373',
+    disabled: '#525252',
   },
   gold: {
-    base: '#D4A012',      // Rich gold (darker for light bg)
-    subtle: 'rgba(212, 160, 18, 0.08)',
+    base: '#FFD700',
+    subtle: 'rgba(255, 215, 0, 0.08)',
   },
-  error: '#DC2626',
+  error: '#EF4444',
 };
 
 /**
- * Shared layout shell for auth pages (login, verify, expired)
+ * Edge-to-Edge Auth Shell
  *
- * Bright, clean aesthetic with subtle gold accents.
- * YC/SF aesthetic: minimal, inviting, premium.
+ * Matches landing page and onboarding aesthetic:
+ * - #030303 background (matches WindowLanding)
+ * - World fragments in background (dimmed)
+ * - No cards or containers
+ * - Content floats directly on background
+ * - Gold only on success states
  */
-export function AuthShell({ children, showLogo = true, logoPosition = 'center' }: AuthShellProps) {
+export function AuthShell({
+  children,
+  showLogo = true,
+  logoPosition = 'center',
+  showWorldBackground = true,
+}: AuthShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
     <div
       className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
       style={{
-        backgroundColor: AUTH_COLORS.background,
-        // Override CSS variables for light theme
+        background: '#030303', // Match WindowLanding exactly
         '--hive-bg-base': AUTH_COLORS.background,
         '--hive-bg-surface': AUTH_COLORS.surface,
         '--hive-text-primary': AUTH_COLORS.text.primary,
@@ -57,54 +68,36 @@ export function AuthShell({ children, showLogo = true, logoPosition = 'center' }
       } as React.CSSProperties}
       suppressHydrationWarning
     >
-      {/* Ambient gold orb - breathing effect (softer on light bg) */}
-      {!shouldReduceMotion && (
-        <motion.div
-          initial={{ opacity: 0.15 }}
-          animate={{
-            opacity: [0.15, 0.25, 0.15],
-            scale: [1, 1.05, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] md:w-[700px] h-[500px] md:h-[700px] rounded-full pointer-events-none"
-          style={{
-            background: 'radial-gradient(circle, rgba(212, 160, 18, 0.15) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          aria-hidden="true"
-        />
+      {/* World background - shows fragments from landing, dimmed */}
+      {showWorldBackground && !shouldReduceMotion && (
+        <WorldBackground opacity={0.3} animated={true} fragmentCount={5} />
       )}
 
-      {/* Static orb for reduced motion */}
-      {shouldReduceMotion && (
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] md:w-[700px] h-[500px] md:h-[700px] rounded-full pointer-events-none opacity-[0.12]"
-          style={{
-            background: 'radial-gradient(circle, rgba(212, 160, 18, 0.2) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          aria-hidden="true"
-        />
-      )}
+      {/* Subtle top gradient - matches landing */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,255,255,0.02) 0%, transparent 60%)',
+        }}
+        aria-hidden="true"
+      />
 
-      {/* Logo - top right (for consistency with onboarding) */}
-      {showLogo && logoPosition === 'top-right' && (
+      {/* Logo - top left (matches onboarding) */}
+      {showLogo && logoPosition === 'top-left' && (
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={shouldReduceMotion ? {} : { duration: 0.5, delay: 0.2 }}
-          className="fixed top-4 right-4 md:top-6 md:right-6 z-50"
+          className="fixed top-6 left-6 md:top-8 md:left-8 z-50"
         >
-          <HiveLogo size="sm" variant="dark" showIcon={false} showText />
+          <span className="text-[13px] font-medium tracking-[0.15em] text-white/30">
+            HIVE
+          </span>
         </motion.div>
       )}
 
-      {/* Content container */}
-      <div className="w-full max-w-sm relative z-10">
+      {/* Content container - above world background */}
+      <div className="w-full max-w-sm relative z-20">
         {/* Logo - centered (for login) */}
         {showLogo && logoPosition === 'center' && (
           <motion.div
@@ -113,7 +106,7 @@ export function AuthShell({ children, showLogo = true, logoPosition = 'center' }
             transition={shouldReduceMotion ? {} : { duration: 0.5 }}
             className="flex justify-center mb-12"
           >
-            <HiveLogo size="lg" variant="dark" showText />
+            <HiveLogo size="lg" variant="white" showText />
           </motion.div>
         )}
 
@@ -131,7 +124,7 @@ export function AuthShellStatic({ children }: { children: React.ReactNode }) {
     <div
       className="min-h-screen min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
       style={{
-        backgroundColor: AUTH_COLORS.background,
+        background: AUTH_COLORS.background,
         '--hive-bg-base': AUTH_COLORS.background,
         '--hive-bg-surface': AUTH_COLORS.surface,
         '--hive-text-primary': AUTH_COLORS.text.primary,
@@ -145,12 +138,11 @@ export function AuthShellStatic({ children }: { children: React.ReactNode }) {
       } as React.CSSProperties}
       suppressHydrationWarning
     >
-      {/* Static ambient glow */}
+      {/* Subtle top gradient */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full pointer-events-none opacity-[0.12]"
+        className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle, rgba(212, 160, 18, 0.2) 0%, transparent 70%)',
-          filter: 'blur(100px)',
+          background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,255,255,0.03) 0%, transparent 60%)',
         }}
         aria-hidden="true"
       />
@@ -159,7 +151,7 @@ export function AuthShellStatic({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-sm relative z-10">
         {/* Logo - centered */}
         <div className="flex justify-center mb-12">
-          <HiveLogo size="lg" variant="dark" showText />
+          <HiveLogo size="lg" variant="white" showText />
         </div>
 
         {children}

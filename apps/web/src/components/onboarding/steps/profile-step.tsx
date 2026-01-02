@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Check, ChevronsUpDown, Loader2, AtSign } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, ArrowLeft } from 'lucide-react';
 import {
   Command,
   CommandEmpty,
@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@hive/ui';
-import { Button, Input } from '@hive/ui';
+import { Button } from '@hive/ui';
 import {
   containerVariants,
   itemVariants,
@@ -37,6 +37,7 @@ interface ProfileStepProps {
   handleSuggestions: string[];
   onUpdate: (updates: Partial<OnboardingData>) => void;
   onNext: () => void;
+  onBack?: () => void;
   error: string | null;
   setError: (error: string | null) => void;
   isSubmitting?: boolean;
@@ -82,11 +83,13 @@ export function ProfileStep({
   handleSuggestions,
   onUpdate,
   onNext,
+  onBack,
   error,
   setError,
 }: ProfileStepProps) {
   const { name, handle, major, graduationYear, userType, livingSituation } = data;
   const [majorOpen, setMajorOpen] = useState(false);
+  const [majorSearch, setMajorSearch] = useState('');
   const [shouldPulse, setShouldPulse] = useState(false);
   const prevHandleStatus = useRef<HandleStatus>(handleStatus);
   const handleInputRef = useRef<HTMLInputElement>(null);
@@ -295,7 +298,7 @@ export function ProfileStep({
                 setError(null);
               }}
               placeholder="Your name"
-              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
+              className="w-full h-12 px-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-white text-base md:text-sm focus:outline-none focus:border-gold-500/40 focus:ring-2 focus:ring-gold-500/20 transition-all"
               aria-describedby="name-hint"
               required
             />
@@ -340,22 +343,25 @@ export function ProfileStep({
                 <CommandInput
                   placeholder="Search majors..."
                   className="h-11 bg-transparent px-4 text-sm text-white"
+                  value={majorSearch}
+                  onValueChange={setMajorSearch}
                 />
                 <div className="px-3 py-1.5 text-xs" style={{ color: 'var(--hive-text-subtle)', borderBottomColor: 'var(--hive-border-default)', borderBottomWidth: '1px' }}>
-                  {availableMajors.length} programs available
+                  {majorSearch ? 'Searching...' : `Showing 10 of ${availableMajors.length} — type to search`}
                 </div>
                 <CommandList className="max-h-[280px] overflow-y-auto p-1">
                   <CommandEmpty className="py-4 text-center text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
                     No matching major found
                   </CommandEmpty>
                   <CommandGroup>
-                    {availableMajors.map((m) => (
+                    {(majorSearch ? availableMajors : availableMajors.slice(0, 10)).map((m) => (
                       <CommandItem
                         key={m}
                         value={m}
                         onSelect={() => {
                           onUpdate({ major: m });
                           setMajorOpen(false);
+                          setMajorSearch('');
                           setError(null);
                         }}
                         className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg cursor-pointer text-white hover:bg-white/[0.06]"
@@ -455,8 +461,19 @@ export function ProfileStep({
           )}
         </AnimatePresence>
 
-        {/* Continue */}
-        <motion.div variants={safeItemVariants} className="flex justify-center">
+        {/* Navigation */}
+        <motion.div variants={safeItemVariants} className="flex items-center justify-center gap-4">
+          {onBack && (
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              size="lg"
+              className="text-white/50 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={!canContinue}

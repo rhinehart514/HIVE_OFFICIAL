@@ -24,24 +24,33 @@ function debounce<T extends (...args: string[]) => void | Promise<void>>(
   };
 }
 
-// Migrate legacy steps to new 4-step flow
+// Migrate legacy steps to new streamlined 3-step flow (Phase 6)
 function migrateLegacyStep(step: OnboardingStep): OnboardingStep {
   switch (step) {
+    // Active steps
     case 'userType':
       return 'userType';
+    case 'quickProfile':
+      return 'quickProfile';
+    case 'interestsCloud':
+      return 'interestsCloud';
+    // Legacy step migrations to new flow
+    case 'name':
+    case 'handleSelection':
+      return 'quickProfile'; // Combined into quickProfile
+    case 'spaces':
+    case 'completion':
+      return 'interestsCloud'; // Spaces selection removed, auto-join in interests
     case 'identity':
     case 'profile':
-      return 'profile'; // Both merge into profile
+      return 'quickProfile'; // Old profile → quickProfile
     case 'interests':
-      return 'interests'; // Interests is now its own step
+      return 'interestsCloud'; // Old interests → new cloud
     case 'leader':
-    case 'spaces':
-      return 'spaces'; // Leader merged into spaces
-    case 'completion':
-      return 'completion';
+      return 'interestsCloud'; // Leader merged into interests
     case 'alumniWaitlist':
     case 'facultyProfile':
-      return 'profile'; // Legacy paths → profile
+      return 'quickProfile'; // Legacy paths → quickProfile
     default:
       return 'userType';
   }
@@ -113,10 +122,17 @@ const INITIAL_DATA: OnboardingData = {
 // Map OnboardingStep to analytics step names
 function mapStepToAnalyticsName(step: OnboardingStep): 'welcome' | 'name' | 'academics' | 'handle' | 'photo' | 'builder' | 'legal' {
   switch (step) {
+    // Active steps (Phase 6)
     case 'userType': return 'welcome';
-    case 'profile': return 'handle'; // Profile step is primarily about handle
+    case 'quickProfile': return 'handle'; // Combined name+handle
+    case 'interestsCloud': return 'academics'; // Interests + auto-join
+    // Legacy mappings
+    case 'name': return 'name';
+    case 'handleSelection': return 'handle';
     case 'spaces': return 'builder';
     case 'completion': return 'legal';
+    case 'profile': return 'handle';
+    case 'interests': return 'academics';
     default: return 'welcome';
   }
 }
@@ -321,41 +337,45 @@ export function useOnboarding() {
     checkHandle(data.handle);
   }, [data.handle, checkHandle]);
 
-  // Step calculations - new 4-step flow
+  // Step calculations - streamlined 3-step flow (Phase 6)
   const getStepNumber = (): number => {
-    // New flow: userType → profile → interests → spaces → completion
-    const steps: OnboardingStep[] = ["userType", "profile", "interests", "spaces"];
+    // New flow: userType → quickProfile → interestsCloud → land in space
+    const steps: OnboardingStep[] = ["userType", "quickProfile", "interestsCloud"];
     const index = steps.indexOf(step);
-    // For completion or legacy steps, return 4
-    return index === -1 ? 4 : index + 1;
+    // For legacy steps, map to closest step
+    if (index === -1) {
+      if (step === 'name' || step === 'handleSelection' || step === 'profile') return 2;
+      if (step === 'spaces' || step === 'completion' || step === 'interests') return 3;
+      return 1;
+    }
+    return index + 1;
   };
 
   const getTotalSteps = (): number => {
-    // Always 4 steps in new flow
-    return 4;
+    // Streamlined 3-step flow
+    return 3;
   };
 
-  // Navigation handlers - new 4-step flow
+  // Navigation handlers - streamlined 3-step flow (Phase 6)
   const handleUserTypeSelect = (type: UserType, isLeader: boolean) => {
     // isLeader is now explicit from the button clicked:
     // - "I run a club" passes true
     // - "Looking around" passes false
     updateData({ userType: type, isLeader });
     setError(null);
-    // All paths go to profile step
-    setStep("profile");
+    // Go directly to quickProfile (combined name + handle)
+    setStep("quickProfile");
   };
 
   const handleBack = () => {
     setError(null);
-    // New 4-step navigation
-    if (step === "profile") setStep("userType");
-    else if (step === "interests") setStep("profile");
-    else if (step === "spaces") setStep("interests");
-    else if (step === "completion") setStep("spaces");
+    // Streamlined 3-step navigation
+    if (step === "quickProfile") setStep("userType");
+    else if (step === "interestsCloud") setStep("quickProfile");
     // Legacy step migration - redirect to new flow
-    else if (step === "identity") setStep("userType");
-    else if (step === "leader") setStep("interests");
+    else if (step === "name" || step === "handleSelection" || step === "profile") setStep("userType");
+    else if (step === "spaces" || step === "completion" || step === "interests") setStep("quickProfile");
+    else if (step === "identity" || step === "leader") setStep("userType");
   };
 
   const handleNext = (nextStep: OnboardingStep) => {
@@ -387,7 +407,8 @@ export function useOnboarding() {
     const resolvedIsLeader = options?.isLeaderOverride ?? data.isLeader;
 
     // Basic validation before hitting the API
-    if (!data.handle.trim() || !data.name.trim() || !data.major.trim() || !data.graduationYear) {
+    // Only require name and handle in new flow (major/year removed)
+    if (!data.handle.trim() || !data.name.trim()) {
       setError("Please complete all required fields.");
       return false;
     }
@@ -497,8 +518,8 @@ export function useOnboarding() {
 
   const handleLeaderChoice = async (isLeader: boolean) => {
     updateData({ isLeader });
-    // Go directly to spaces step (leader step removed in new flow)
-    setStep("spaces");
+    // In streamlined flow, interests handles space recommendation/joining
+    setStep("interestsCloud");
   };
 
   // Set leader status directly (for new flow)

@@ -8,16 +8,18 @@ import { duration, easing } from "../../../lib/motion-variants"
 import { cn } from "../../../lib/utils"
 
 const switchVariants = cva(
-  "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border border-[color-mix(in_srgb,var(--hive-border-subtle) 58%,#ffd700 28%)] bg-[color-mix(in_srgb,var(--hive-background-secondary) 74%,#ffd700 16%)] transition-[background,border,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,215,0,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)] disabled:cursor-not-allowed disabled:opacity-40 data-[state=unchecked]:bg-[color-mix(in_srgb,var(--hive-background-tertiary) 66%,#ffd700 12%)] data-[state=unchecked]:border-[color-mix(in_srgb,var(--hive-border-default) 68%,#ffd700 18%)]",
+  // Clean, neutral unchecked state - no gold bleeding
+  "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border border-[#2A2A2A] bg-[#1A1A1A] transition-[background,border,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] disabled:cursor-not-allowed disabled:opacity-40 data-[state=unchecked]:bg-[#1A1A1A] data-[state=unchecked]:border-[#2A2A2A]",
   {
     variants: {
       variant: {
+        // Default: White when checked (monochrome discipline - gold only for CTAs/achievements)
         default:
-          "data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary data-[state=checked]:shadow-[0_14px_38px_rgba(255,215,0,0.4)]",
+          "data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:shadow-[0_4px_12px_rgba(255,255,255,0.15)]",
         destructive:
-          "data-[state=checked]:bg-[var(--hive-status-error)] data-[state=checked]:border-[var(--hive-status-error)]",
+          "data-[state=checked]:bg-[#FF3737] data-[state=checked]:border-[#FF3737] data-[state=checked]:shadow-[0_4px_12px_rgba(255,55,55,0.25)]",
         success:
-          "data-[state=checked]:bg-[var(--hive-status-success)] data-[state=checked]:border-[var(--hive-status-success)]",
+          "data-[state=checked]:bg-[#00D46A] data-[state=checked]:border-[#00D46A] data-[state=checked]:shadow-[0_4px_12px_rgba(0,212,106,0.25)]",
       },
       size: {
         default: "h-6 w-11",
@@ -33,7 +35,8 @@ const switchVariants = cva(
 )
 
 const switchThumbVariants = cva(
-  "pointer-events-none block rounded-full bg-[color-mix(in_srgb,#1f1f1f 82%,#ffd700 10%)] shadow-[0_4px_14px_rgba(0,0,0,0.45)] ring-0 transition-transform duration-150 data-[state=checked]:bg-[#101010] data-[state=checked]:shadow-[0_8px_20px_rgba(0,0,0,0.45)]",
+  // Neutral thumb - dark gray, subtle shadow
+  "pointer-events-none block rounded-full bg-[#0A0A0A] shadow-[0_1px_3px_rgba(0,0,0,0.4)] ring-0 transition-transform duration-150 data-[state=checked]:bg-[#0A0A0A] data-[state=checked]:shadow-[0_2px_6px_rgba(0,0,0,0.4)]",
   {
     variants: {
       size: {
@@ -147,7 +150,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
             >
             <motion.span
               className={cn(
-                "pointer-events-none block rounded-full bg-[var(--hive-background-primary)] shadow-[0_4px_14px_rgba(0,0,0,0.45)]",
+                "pointer-events-none block rounded-full bg-[#FAFAFA] shadow-[0_1px_3px_rgba(0,0,0,0.3)]",
                 size === 'sm' && "h-4 w-4",
                 size === 'default' && "h-5 w-5",
                 size === 'lg' && "h-6 w-6"
@@ -155,12 +158,12 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
               animate={{
                 x: getThumbX(),
                 boxShadow: isChecked
-                  ? "0 8px 20px rgba(0,0,0,0.45)"
-                  : "0 4px 14px rgba(0,0,0,0.45)",
+                  ? "0 2px 6px rgba(0,0,0,0.35)"
+                  : "0 1px 3px rgba(0,0,0,0.3)",
               }}
               transition={{
                 type: "spring",
-                stiffness: 500,
+                stiffness: 400,
                 damping: 30,
               }}
             />
@@ -168,23 +171,17 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
           )})()}
 
           {label && (
-            <motion.label
+            <label
               htmlFor={switchId}
               className={cn(
                 "text-sm font-medium leading-none cursor-pointer select-none",
-                "text-[var(--hive-text-primary)]",
+                "text-[#FAFAFA]",
                 disabled && "cursor-not-allowed opacity-70"
               )}
               onClick={!disabled ? handleClick : undefined}
-              animate={{
-                color: isFocused && !error
-                  ? "var(--hive-brand-primary)"
-                  : "var(--hive-text-primary)",
-              }}
-              transition={{ duration: duration.quick, ease: easing.smooth }}
             >
               {label}
-            </motion.label>
+            </label>
           )}
         </div>
 
@@ -196,8 +193,8 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
               className={cn(
                 "text-xs ml-14",
                 error
-                  ? "text-[var(--hive-status-error)]"
-                  : "text-[var(--hive-text-secondary)]"
+                  ? "text-[#FF3737]"
+                  : "text-[#A1A1A6]"
               )}
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}

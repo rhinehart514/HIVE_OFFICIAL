@@ -151,3 +151,40 @@ export async function requireAdmin(userId: string): Promise<AdminRecord> {
   }
   return adminRecord;
 }
+
+/**
+ * Verify admin request from Authorization header
+ * Used for API routes that need admin verification
+ */
+export async function verifyAdminRequest(request: Request): Promise<
+  | { success: true; admin: AdminRecord }
+  | { success: false; error: string }
+> {
+  try {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader) {
+      return { success: false, error: 'Authorization header required' };
+    }
+
+    // Extract user ID from Bearer token
+    const userId = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : authHeader;
+
+    if (!userId) {
+      return { success: false, error: 'Invalid authorization token' };
+    }
+
+    const adminRecord = await getAdminRecord(userId);
+    if (!adminRecord) {
+      return { success: false, error: 'Admin access required' };
+    }
+
+    return { success: true, admin: adminRecord };
+  } catch (error) {
+    logger.error('Admin verification failed', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    return { success: false, error: 'Authentication failed' };
+  }
+}

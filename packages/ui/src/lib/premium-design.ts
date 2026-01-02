@@ -74,14 +74,11 @@ export const premiumColors = {
     strong: 'rgba(255, 255, 255, 0.20)',  // Emphasized
     focus: 'rgba(255, 255, 255, 0.40)',   // Focus rings
   },
-  // Gold - Reserved for key moments
+  // Gold - Reserved for CTAs and achievements ONLY
   gold: {
     primary: '#FFD700',
     hover: '#E6C200',
-    dim: '#B8960B',
-    glow: 'rgba(255, 215, 0, 0.15)',
-    subtle: 'rgba(255, 215, 0, 0.08)',
-    border: 'rgba(255, 215, 0, 0.25)',
+    // Removed: glow, subtle, border - these encouraged decorative gold usage
   },
   // Status
   status: {
@@ -242,9 +239,8 @@ export const premiumPresets = {
     text-black
     font-semibold
     rounded-xl
-    shadow-[0_0_20px_rgba(255,215,0,0.2)]
-    hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]
-    transition-shadow
+    hover:bg-[#E6C200]
+    transition-colors
   `.trim().replace(/\s+/g, ' '),
 
   // Text classes
@@ -277,20 +273,16 @@ export function hoverClasses(variant: 'subtle' | 'lift' | 'glow' = 'subtle'): st
   const variantMap = {
     subtle: 'hover:bg-white/[0.04] transition-colors duration-150',
     lift: 'hover:translate-y-[-2px] hover:shadow-lg transition-all duration-200',
-    glow: 'hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] transition-shadow duration-200',
+    glow: 'hover:border-neutral-600 transition-colors duration-200',
   };
   return variantMap[variant];
 }
 
 /**
- * Generate focus ring classes
+ * Generate focus ring classes - always white for consistency
  */
-export function focusClasses(color: 'white' | 'gold' = 'white'): string {
-  const colorMap = {
-    white: 'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]',
-    gold: 'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]',
-  };
-  return colorMap[color];
+export function focusClasses(): string {
+  return 'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]';
 }
 
 // ============================================================

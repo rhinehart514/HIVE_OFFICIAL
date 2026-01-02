@@ -31,11 +31,7 @@ export class CampusId extends ValueObject<CampusIdProps> {
       return Result.fail<CampusId>('CampusId cannot be empty');
     }
 
-    // For v1, only UB Buffalo is supported
-    if (id !== CampusId.UB_BUFFALO) {
-      return Result.fail<CampusId>('Only UB Buffalo campus is supported in v1');
-    }
-
+    // Accept any valid campus ID - validation happens at school config level
     return Result.ok<CampusId>(new CampusId({ value: id }));
   }
 

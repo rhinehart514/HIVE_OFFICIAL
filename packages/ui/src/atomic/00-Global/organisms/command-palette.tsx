@@ -20,7 +20,7 @@ import {
   Calendar,
   Users,
   Settings,
-  Sparkles,
+  Zap,
   X
 } from "lucide-react";
 import * as React from "react";
@@ -63,7 +63,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   events: <Calendar className="h-4 w-4" />,
   people: <Users className="h-4 w-4" />,
   settings: <Settings className="h-4 w-4" />,
-  ai: <Sparkles className="h-4 w-4" />,
+  ai: <Zap className="h-4 w-4" />,
 };
 
 const CommandPalette = React.forwardRef<HTMLDivElement, CommandPaletteProps>(

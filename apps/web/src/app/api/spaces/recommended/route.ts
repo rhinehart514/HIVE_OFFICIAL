@@ -13,6 +13,14 @@ const RecommendedQuerySchema = z.object({
 });
 
 /**
+ * Zod schema for POST body validation (used by onboarding)
+ */
+const RecommendedBodySchema = z.object({
+  interests: z.array(z.string()).optional().default([]),
+  limit: z.number().min(1).max(50).optional().default(20),
+});
+
+/**
  * SPEC.md Behavioral Psychology Algorithm:
  * Score = (AnxietyRelief × 0.4) + (SocialProof × 0.3) + (InsiderAccess × 0.3)
  */
@@ -68,18 +76,22 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     const userData = userDoc.data() ?? {}; // Empty object if no profile
 
     // Get user's connections for social proof
+    // SCALING FIX: Add limit to prevent loading thousands of connections
     const connectionsSnapshot = await dbAdmin
       .collection('connections')
       .where('userId', '==', userId)
       .where('status', '==', 'connected')
+      .limit(500)
       .get();
     const connectionIds = connectionsSnapshot.docs.map(doc => doc.data().connectedUserId);
 
     // Get user's friends
+    // SCALING FIX: Add limit to prevent loading thousands of friends
     const friendsSnapshot = await dbAdmin
       .collection('friends')
       .where('userId', '==', userId)
       .where('status', '==', 'accepted')
+      .limit(500)
       .get();
     const friendIds = friendsSnapshot.docs.map(doc => doc.data().friendId);
 
@@ -95,13 +107,13 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     const allSpaces = spacesResult.getValue();
 
     // Get user's spaces to check if they're a leader (for stealth mode visibility)
-    const userSpacesResult = await spaceRepo.findUserSpaces(userId);
+    // SCALING FIX: Use lightweight membership query instead of loading full spaces
+    const membershipsResult = await spaceRepo.findUserMemberships(userId);
     const leaderSpaceIds = new Set<string>();
-    if (userSpacesResult.isSuccess) {
-      for (const space of userSpacesResult.getValue()) {
-        const member = space.members.find(m => m.profileId.value === userId);
-        if (member && (member.role === 'owner' || member.role === 'admin')) {
-          leaderSpaceIds.add(space.spaceId.value);
+    if (membershipsResult.isSuccess) {
+      for (const membership of membershipsResult.getValue()) {
+        if (membership.role === 'owner' || membership.role === 'admin') {
+          leaderSpaceIds.add(membership.spaceId);
         }
       }
     }
@@ -226,6 +238,130 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
   }
 });
+
+/**
+ * POST /api/spaces/recommended - Get personalized recommendations based on interests
+ *
+ * Used by onboarding flow to get recommendations based on selected interests
+ */
+export const POST = withAuthAndErrors(async (request, context, respond) => {
+  const req = request as AuthenticatedRequest;
+  const userId = getUserId(req);
+  const campusId = getCampusId(req);
+
+  // Parse request body
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return respond.error('Invalid JSON body', 'VALIDATION_ERROR', { status: 400 });
+  }
+
+  const parseResult = RecommendedBodySchema.safeParse(body);
+  if (!parseResult.success) {
+    return respond.error('Invalid request body', 'VALIDATION_ERROR', {
+      status: 400,
+      details: parseResult.error.flatten()
+    });
+  }
+
+  const { interests, limit } = parseResult.data;
+
+  try {
+    // Get user profile for personalization
+    const userDoc = await dbAdmin.collection('users').doc(userId).get();
+    const userData = userDoc.data() ?? {};
+
+    // Use DDD repository to get spaces
+    const spaceRepo = getServerSpaceRepository();
+    const spacesResult = await spaceRepo.findByCampus(campusId, 100);
+
+    if (spacesResult.isFailure) {
+      logger.error('Failed to load spaces for recommendations', { error: spacesResult.error });
+      return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
+    }
+
+    const allSpaces = spacesResult.getValue();
+
+    // Filter to only live spaces (stealth spaces are hidden during onboarding)
+    const visibleSpaces = allSpaces.filter(space => space.isLive);
+
+    // Score spaces with interest matching
+    const scoredSpaces = visibleSpaces.map(space => {
+      const anxietyReliefScore = calculateAnxietyReliefScore(space, userData);
+      const interestScore = calculateInterestScore(space, interests);
+      const insiderAccessScore = calculateInsiderAccessScore(space);
+
+      // Weighted score: interests heavily weighted for onboarding
+      const recommendationScore =
+        (interestScore * 0.5) +
+        (anxietyReliefScore * 0.3) +
+        (insiderAccessScore * 0.2);
+
+      return {
+        id: space.spaceId.value,
+        name: space.name.value,
+        slug: space.slug?.value,
+        description: space.description.value,
+        category: space.category.value,
+        memberCount: space.memberCount,
+        isVerified: space.isVerified,
+        isPrivate: !space.isPublic,
+        interestScore,
+        recommendationScore,
+      };
+    });
+
+    // Sort by recommendation score
+    scoredSpaces.sort((a, b) => b.recommendationScore - a.recommendationScore);
+
+    // Return top recommendations in the format onboarding expects
+    return respond.success({
+      spaces: scoredSpaces.slice(0, limit),
+      meta: {
+        totalSpaces: visibleSpaces.length,
+        interestsMatched: interests.length
+      }
+    });
+
+  } catch (error) {
+    logger.error('Error generating interest-based recommendations', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      interests
+    });
+    return respond.error("Failed to generate recommendations", "INTERNAL_ERROR", { status: 500 });
+  }
+});
+
+/**
+ * Calculate interest matching score
+ * Matches user interests against space name, description, and category
+ */
+function calculateInterestScore(space: EnhancedSpace, interests: string[]): number {
+  if (!interests.length) return 0;
+
+  let matchCount = 0;
+  const spaceName = space.name.value.toLowerCase();
+  const spaceDesc = space.description.value.toLowerCase();
+  const spaceCategory = space.category.value.toLowerCase();
+
+  for (const interest of interests) {
+    const interestLower = interest.toLowerCase();
+    // Check for matches in name, description, or category
+    if (
+      spaceName.includes(interestLower) ||
+      spaceDesc.includes(interestLower) ||
+      spaceCategory.includes(interestLower) ||
+      interestLower.includes(spaceCategory)
+    ) {
+      matchCount++;
+    }
+  }
+
+  // Return score from 0-1 based on match ratio
+  return Math.min(matchCount / Math.max(interests.length, 1), 1);
+}
 
 /**
  * Calculate anxiety relief score based on space characteristics

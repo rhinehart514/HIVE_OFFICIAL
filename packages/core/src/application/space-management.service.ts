@@ -1344,7 +1344,7 @@ export class SpaceManagementService extends BaseApplicationService {
       const space = spaceResult.getValue();
 
       // Verify current owner
-      if (space.owner.value !== ownerProfileId.value) {
+      if (!space.owner || space.owner.value !== ownerProfileId.value) {
         return Result.fail<void>('Only the owner can transfer ownership');
       }
 
@@ -2145,7 +2145,12 @@ export class SpaceManagementService extends BaseApplicationService {
       const space = spaceResult.getValue();
 
       // Determine which leader to verify (default to owner)
-      const verifiedLeaderId = leaderId || space.owner.value;
+      const verifiedLeaderId = leaderId || space.owner?.value;
+      if (!verifiedLeaderId) {
+        return Result.fail<ServiceResult<{ spaceId: string; spaceName: string; wentLiveAt: Date; verifiedLeaderId: string }>>(
+          'No leader ID provided and space has no owner'
+        );
+      }
 
       // Call domain method to verify and go live
       const leaderProfileIdResult = ProfileId.create(verifiedLeaderId);

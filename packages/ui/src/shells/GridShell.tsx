@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { easingArrays } from '@hive/tokens';
 
 /**
  * GridShell - The Grid Experience
@@ -68,7 +69,7 @@ export function GridShell({
         <motion.header
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.4, ease: easingArrays.default }}
           className="
             sticky top-0 z-40
             backdrop-blur-xl
@@ -86,7 +87,7 @@ export function GridShell({
           <motion.aside
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+            transition={{ duration: 0.4, ease: easingArrays.default, delay: 0.1 }}
             className="
               hidden lg:block
               w-64
@@ -129,7 +130,7 @@ export const gridItemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
+      ease: easingArrays.default,
     },
   },
 };

@@ -75,7 +75,7 @@ const FilePreview = ({ file, onRemove }: FilePreviewProps) => {
   const isVideo = isVideoFile(file);
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)]">
+    <div className="group relative aspect-square overflow-hidden rounded-lg border border-[#2A2A2A] bg-[#141414]">
       {/* Preview */}
       {isImage && previewUrl && (
         <img
@@ -93,7 +93,7 @@ const FilePreview = ({ file, onRemove }: FilePreviewProps) => {
       )}
       {!isImage && !isVideo && (
         <div className="flex h-full w-full items-center justify-center">
-          <Icon className="h-12 w-12 text-[var(--hive-text-tertiary)]" />
+          <Icon className="h-12 w-12 text-[#71717A]" />
         </div>
       )}
 
@@ -101,7 +101,7 @@ const FilePreview = ({ file, onRemove }: FilePreviewProps) => {
       <button
         type="button"
         onClick={onRemove}
-        className="absolute top-2 right-2 flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[var(--hive-background-primary)]/90 text-[var(--hive-text-primary)] opacity-0 transition-opacity hover:bg-[var(--hive-status-error)] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus)] group-hover:opacity-100"
+        className="absolute top-2 right-2 flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-[#0A0A0A]/90 text-[#FAFAFA] opacity-0 transition-opacity hover:bg-[#FF3737] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 group-hover:opacity-100"
         aria-label={`Remove ${file.name}`}
       >
         <XIcon className="h-4 w-4" />
@@ -271,8 +271,8 @@ export const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
           className={cn(
             'relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors',
             isDragging
-              ? 'border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]/5'
-              : 'border-[var(--hive-border-default)] hover:border-[var(--hive-brand-primary)]/50',
+              ? 'border-white bg-white/[0.02]'
+              : 'border-[#2A2A2A] hover:border-white/50',
             disabled && 'cursor-not-allowed opacity-50',
             files.length >= maxFiles && 'hidden' // Hide when max files reached
           )}
@@ -293,13 +293,13 @@ export const FileUpload = React.forwardRef<HTMLDivElement, FileUploadProps>(
             aria-label="Upload files"
           />
 
-          <UploadIcon className="h-10 w-10 mb-3 text-[var(--hive-text-tertiary)]" />
+          <UploadIcon className="h-10 w-10 mb-3 text-[#71717A]" />
 
-          <p className="text-sm font-medium text-[var(--hive-text-primary)]">
+          <p className="text-sm font-medium text-[#FAFAFA]">
             {isDragging ? 'Drop files here' : 'Drag & drop or click to upload'}
           </p>
 
-          <p className="mt-1 text-xs text-[var(--hive-text-tertiary)]">
+          <p className="mt-1 text-xs text-[#71717A]">
             {accept.includes('image') && 'Images'}
             {accept.includes('image') && accept.includes('video') && ' & '}
             {accept.includes('video') && 'Videos'} • Max {maxFiles} files • Up to{' '}

@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, AlertTriangle, BoxSelect } from 'lucide-react';
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
-import type { ElementProps } from '../../lib/hivelab/element-system';
+import type { ElementProps, ElementSharedState, ElementUserState } from '../../lib/hivelab/element-system';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -78,6 +78,22 @@ export interface ToolCanvasProps {
   error?: string | null;
   /** Context for space/deployment-aware elements */
   context?: ToolCanvasContext;
+
+  // ============================================================================
+  // Phase 1: Shared State Architecture
+  // ============================================================================
+
+  /**
+   * Shared state visible to all users (aggregate data like vote counts, RSVP lists)
+   * Read from: deployedTools/{deploymentId}/sharedState/current
+   */
+  sharedState?: ElementSharedState;
+
+  /**
+   * Per-user state (personal selections, participation, UI state)
+   * Read from: toolStates/{deploymentId}_{userId}
+   */
+  userState?: ElementUserState;
 }
 
 // ============================================================================
@@ -90,10 +106,13 @@ interface LayoutProps {
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
   context?: ToolCanvasContext;
+  // Phase 1: SharedState Architecture
+  sharedState?: ElementSharedState;
+  userState?: ElementUserState;
 }
 
 // Grid layout: position-based rendering with 12-column grid
-function GridLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
+function GridLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   // Sort by position (top to bottom, left to right)
@@ -145,6 +164,8 @@ function GridLayout({ elements, state, onElementChange, onElementAction, context
                     onElementChange={onElementChange}
                     onElementAction={onElementAction}
                     context={context}
+                    sharedState={sharedState}
+                    userState={userState}
                   />
                 </motion.div>
               );
@@ -156,7 +177,7 @@ function GridLayout({ elements, state, onElementChange, onElementAction, context
 }
 
 // Flow layout: flex wrap for responsive horizontal flow
-function FlowLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
+function FlowLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -178,6 +199,8 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, context
             onElementChange={onElementChange}
             onElementAction={onElementAction}
             context={context}
+            sharedState={sharedState}
+            userState={userState}
           />
         </motion.div>
       ))}
@@ -186,7 +209,7 @@ function FlowLayout({ elements, state, onElementChange, onElementAction, context
 }
 
 // Stack layout: vertical stack (default, mobile-friendly)
-function StackLayout({ elements, state, onElementChange, onElementAction, context }: LayoutProps) {
+function StackLayout({ elements, state, onElementChange, onElementAction, context, sharedState, userState }: LayoutProps) {
   const prefersReducedMotion = useReducedMotion();
 
   return (
@@ -207,6 +230,8 @@ function StackLayout({ elements, state, onElementChange, onElementAction, contex
             onElementChange={onElementChange}
             onElementAction={onElementAction}
             context={context}
+            sharedState={sharedState}
+            userState={userState}
           />
         </motion.div>
       ))}
@@ -224,12 +249,17 @@ function ElementWrapper({
   onElementChange,
   onElementAction,
   context,
+  sharedState,
+  userState,
 }: {
   element: ToolElement;
   state: Record<string, unknown>;
   onElementChange?: (instanceId: string, data: unknown) => void;
   onElementAction?: (instanceId: string, action: string, payload: unknown) => void;
   context?: ToolCanvasContext;
+  // Phase 1: SharedState Architecture
+  sharedState?: ElementSharedState;
+  userState?: ElementUserState;
 }) {
   const elementState = state[element.instanceId];
 
@@ -262,6 +292,9 @@ function ElementWrapper({
     onChange: handleChange,
     onAction: handleAction,
     context: elementContext,
+    // Phase 1: SharedState Architecture
+    sharedState,
+    userState,
   };
 
   return renderElementSafe(element.elementId, props);
@@ -345,6 +378,8 @@ export function ToolCanvas({
   isLoading,
   error,
   context,
+  sharedState,
+  userState,
 }: ToolCanvasProps) {
   if (isLoading) {
     return <CanvasSkeleton />;
@@ -364,6 +399,9 @@ export function ToolCanvas({
     onElementChange,
     onElementAction,
     context,
+    // Phase 1: SharedState Architecture
+    sharedState,
+    userState,
   };
 
   return (

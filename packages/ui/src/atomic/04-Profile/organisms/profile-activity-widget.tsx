@@ -86,8 +86,8 @@ export function ProfileActivityWidget({
     >
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-[color-mix(in_srgb,var(--hive-background-tertiary,#141522) 85%,transparent)] p-2">
-            <Activity className="h-4 w-4 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--hive-background-tertiary,#141522)_85%,transparent)]">
+            <Activity className="h-5 w-5 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
           </div>
           <h3 className="text-lg font-medium text-[var(--hive-text-primary,#f7f7ff)]">Recent activity</h3>
         </div>

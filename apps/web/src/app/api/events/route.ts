@@ -26,6 +26,7 @@ const GetEventsSchema = z.object({
   upcoming: z.coerce.boolean().default(true),
   myEvents: z.coerce.boolean().default(false),
   spaceId: z.string().optional(),
+  campusWide: z.coerce.boolean().optional(), // Filter for campus-wide events only
 });
 
 export const GET = withAuthAndErrors(async (
@@ -62,6 +63,11 @@ export const GET = withAuthAndErrors(async (
     // Filter by space if provided
     if (queryParams.spaceId) {
       query = query.where("spaceId", "==", queryParams.spaceId);
+    }
+
+    // Filter for campus-wide events (events without a space)
+    if (queryParams.campusWide) {
+      query = query.where("isCampusWide", "==", true);
     }
 
     query = query.offset(queryParams.offset).limit(queryParams.limit);
@@ -194,6 +200,7 @@ export const GET = withAuthAndErrors(async (
               type: spaceData.category || 'general',
             }
           : null,
+        isCampusWide: eventData.isCampusWide === true || !eventData.spaceId,
         maxCapacity: eventData.maxAttendees || 100,
         currentCapacity: rsvpCountSnapshot.size,
         tags: eventData.tags || [],

@@ -8,7 +8,7 @@ import {
   Badge,
   Button,
   XIcon,
-  SparklesIcon,
+  TargetIcon,
   MegaphoneIcon,
   AlertTriangleIcon,
   ChevronRightIcon,
@@ -48,11 +48,11 @@ const cardVariants = cva(
     variants: {
       variant: {
         ritual:
-          'border-[var(--hive-brand-primary)]/50 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.12] via-[var(--hive-background-secondary)] to-[var(--hive-background-secondary)] shadow-[0_0_50px_rgba(255,215,0,0.20)]',
+          'border-[var(--hive-brand-primary)]/30 bg-gradient-to-br from-[var(--hive-brand-primary)]/[0.08] via-[var(--hive-background-secondary)] to-[var(--hive-background-secondary)]',
         announcement:
           'border-blue-500/40 bg-gradient-to-br from-blue-500/[0.08] via-[var(--hive-background-secondary)] to-[var(--hive-background-secondary)]',
         urgent:
-          'border-red-500/50 bg-gradient-to-br from-red-500/[0.12] via-[var(--hive-background-secondary)] to-[var(--hive-background-secondary)] shadow-[0_0_40px_rgba(239,68,68,0.15)]',
+          'border-red-500/50 bg-gradient-to-br from-red-500/[0.12] via-[var(--hive-background-secondary)] to-[var(--hive-background-secondary)]',
       },
     },
     defaultVariants: {
@@ -65,7 +65,7 @@ const getVariantConfig = (variant: FeedSystemVariant) => {
   switch (variant) {
     case 'ritual':
       return {
-        icon: <SparklesIcon className="h-5 w-5" />,
+        icon: <TargetIcon className="h-5 w-5" />,
         label: 'Campus Ritual',
         badgeClassName:
           'bg-[var(--hive-brand-primary)]/15 text-[var(--hive-brand-primary)] border-[var(--hive-brand-primary)]/50',

@@ -141,7 +141,7 @@ export function ProfileOverviewPage({
             </div>
             <div className="flex flex-wrap gap-2">
               {badges.map((badge) => (
-                <Badge key={badge} tone="contrast" variant="pill">
+                <Badge key={badge} variant="primary">
                   {badge}
                 </Badge>
               ))}
@@ -179,7 +179,7 @@ export function ProfileOverviewPage({
                           <h3 className="text-sm font-semibold text-[var(--hive-text-primary,#f5f5ff)]">
                             {highlight.title}
                           </h3>
-                          <Badge tone="muted" variant="pill">
+                          <Badge variant="secondary">
                             {highlight.category}
                           </Badge>
                         </header>
@@ -216,7 +216,7 @@ export function ProfileOverviewPage({
                       {experience.tags && experience.tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {experience.tags.map((tag) => (
-                            <Badge key={tag} tone="muted" variant="pill">
+                            <Badge key={tag} variant="secondary">
                               {tag}
                             </Badge>
                           ))}

@@ -51,6 +51,76 @@ export const INTEREST_TAGS = [
   "Science",
 ];
 
+/**
+ * Word Cloud Interests - 180+ flat tags for the interests cloud step
+ * Organized by category but displayed as a flat scattered cloud
+ */
+export const CLOUD_INTERESTS = [
+  // Sports & Athletics (25)
+  "Basketball", "Soccer", "Football", "Tennis", "Volleyball",
+  "Swimming", "Running", "Track & Field", "Hockey", "Lacrosse",
+  "Baseball", "Softball", "Golf", "Rowing", "Fencing",
+  "Ultimate Frisbee", "Intramurals", "Rock Climbing", "Martial Arts", "Boxing",
+  "Yoga", "Cycling", "Skiing", "Snowboarding", "Hiking",
+
+  // Gaming & Esports (15)
+  "Gaming", "Esports", "Board Games", "D&D", "Minecraft",
+  "Chess", "Poker", "Video Games", "Retro Gaming", "Game Dev",
+  "VR Gaming", "Mobile Games", "Speedrunning", "Streaming", "Magic: The Gathering",
+
+  // Music (20)
+  "Hip Hop", "EDM", "Indie", "K-Pop", "Jazz",
+  "Classical", "Rock", "R&B", "Country", "Pop",
+  "Metal", "Punk", "Singing", "Guitar", "Piano",
+  "Drums", "DJ", "Music Production", "A Cappella", "Concerts",
+
+  // Arts & Creative (20)
+  "Photography", "Film", "Theater", "Dance", "Painting",
+  "Drawing", "Sculpture", "Ceramics", "Graphic Design", "Animation",
+  "Digital Art", "Fashion Design", "Writing", "Poetry", "Creative Writing",
+  "Filmmaking", "Video Editing", "Improv", "Stand-up Comedy", "Cosplay",
+
+  // Tech & Building (20)
+  "Coding", "AI", "Startups", "Design", "Robotics",
+  "Web Dev", "App Dev", "Machine Learning", "Cybersecurity", "Data Science",
+  "Blockchain", "3D Printing", "Hardware", "Open Source", "Hackathons",
+  "Product Design", "UX Design", "Game Development", "Cloud Computing", "Tech Entrepreneurship",
+
+  // Academic & Career (20)
+  "Pre-Med", "Pre-Law", "Research", "Finance", "Consulting",
+  "Investment Banking", "Engineering", "Architecture", "Psychology", "Neuroscience",
+  "Biology", "Chemistry", "Physics", "Math", "Economics",
+  "Political Science", "Philosophy", "History", "Literature", "Journalism",
+
+  // Social & Causes (20)
+  "Volunteering", "Activism", "Greek Life", "Mentoring", "Sustainability",
+  "Climate Action", "Social Justice", "Community Service", "Tutoring", "Nonprofit",
+  "Mental Health Advocacy", "LGBTQ+ Advocacy", "Women in STEM", "DEI", "Animal Welfare",
+  "Food Security", "Homelessness", "Education Equity", "Healthcare Access", "Voting Rights",
+
+  // Lifestyle (20)
+  "Fitness", "Cooking", "Fashion", "Travel", "Coffee",
+  "Wine", "Beer", "Foodie", "Wellness", "Meditation",
+  "Self-Improvement", "Productivity", "Journaling", "Minimalism", "Sustainability",
+  "Plant-Based", "Thrifting", "Skincare", "Sneakers", "Watches",
+
+  // Culture & Identity (15)
+  "African Culture", "Asian Culture", "Latino Culture", "South Asian", "Middle Eastern",
+  "European", "Caribbean", "Native American", "International Students", "First-Gen",
+  "LGBTQ+", "Women's Empowerment", "Cultural Exchange", "Language Learning", "Study Abroad",
+
+  // Entertainment (15)
+  "Anime", "K-Drama", "True Crime", "Reality TV", "Podcasts",
+  "Documentaries", "Marvel", "Star Wars", "Harry Potter", "Lord of the Rings",
+  "Sci-Fi", "Fantasy", "Horror", "Comedy", "Drama",
+
+  // Hobbies (10)
+  "Collecting", "Puzzles", "Trivia", "Escape Rooms", "Karaoke",
+  "Bowling", "Camping", "Fishing", "Gardening", "Astronomy",
+] as const;
+
+export type CloudInterest = typeof CLOUD_INTERESTS[number];
+
 // Max interests a user can select (curated + custom combined)
 export const MAX_INTERESTS = 10;
 export const MAX_INTEREST_LENGTH = 50;

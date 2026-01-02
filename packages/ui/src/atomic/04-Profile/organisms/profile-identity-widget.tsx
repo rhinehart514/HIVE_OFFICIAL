@@ -192,7 +192,7 @@ export function ProfileIdentityWidget({
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-background-tertiary/75">
             <div
-              className="h-full rounded-full bg-brand-primary/90 transition-[width] duration-500"
+              className="h-full rounded-full bg-brand-primary/90 transition-[width] duration-300"
               style={{ width: `${Math.min(100, Math.max(0, resolvedCompletionPercentage))}%` }}
             />
           </div>

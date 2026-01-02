@@ -79,10 +79,10 @@ function ToolbarButton({
       disabled={disabled}
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm',
-        'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+        'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40',
         disabled && 'opacity-50 cursor-not-allowed',
         isActive
-          ? 'bg-[#FFD700]/10 text-[#FFD700]'
+          ? 'bg-white/10 text-white'
           : 'text-neutral-400 hover:text-white hover:bg-white/5'
       )}
     >
@@ -156,7 +156,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
             'w-full px-3 py-2 rounded-lg text-sm',
             'bg-neutral-800 border border-neutral-700',
             'text-white placeholder:text-neutral-500',
-            'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+            'focus:outline-none focus:ring-2 focus:ring-white/40'
           )}
           autoFocus
         />
@@ -173,7 +173,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
                   'flex-1 px-3 py-1.5 rounded-lg text-sm',
                   'bg-neutral-800/50 border border-neutral-700/50',
                   'text-white placeholder:text-neutral-500',
-                  'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+                  'focus:outline-none focus:ring-2 focus:ring-white/40'
                 )}
               />
               {options.length > 2 && (
@@ -191,7 +191,7 @@ function PollCreator({ onSubmit, onClose, reducedMotion }: PollCreatorProps) {
         {options.length < 6 && (
           <button
             onClick={addOption}
-            className="text-xs text-neutral-400 hover:text-[#FFD700] transition-colors"
+            className="text-xs text-neutral-400 hover:text-white transition-colors"
           >
             + Add option
           </button>
@@ -263,7 +263,7 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
             'w-full px-3 py-2 rounded-lg text-sm',
             'bg-neutral-800 border border-neutral-700',
             'text-white placeholder:text-neutral-500',
-            'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+            'focus:outline-none focus:ring-2 focus:ring-white/40'
           )}
           autoFocus
         />
@@ -277,7 +277,7 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
               'flex-1 px-3 py-1.5 rounded-lg text-sm',
               'bg-neutral-800/50 border border-neutral-700/50',
               'text-white',
-              'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+              'focus:outline-none focus:ring-2 focus:ring-white/40'
             )}
           />
           <input
@@ -288,7 +288,7 @@ function CountdownCreator({ onSubmit, onClose, reducedMotion }: CountdownCreator
               'w-24 px-2 py-1.5 rounded-lg text-sm',
               'bg-neutral-800/50 border border-neutral-700/50',
               'text-white',
-              'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+              'focus:outline-none focus:ring-2 focus:ring-white/40'
             )}
           />
         </div>

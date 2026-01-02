@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Box,
@@ -9,6 +9,9 @@ import {
   Trash2,
   GripVertical,
 } from 'lucide-react';
+
+// Viewport buffer - render elements this many pixels outside visible area
+const VIEWPORT_BUFFER = 200;
 import { cn } from '../../../lib/utils';
 import { springPresets, easingArrays } from '@hive/tokens';
 import type { CanvasElement, Connection, ToolMode } from './types';
@@ -34,6 +37,8 @@ interface IDECanvasProps {
   onZoomChange: (zoom: number) => void;
   onPanChange: (pan: { x: number; y: number }) => void;
   onDrop: (elementId: string, position: { x: number; y: number }) => void;
+  /** Called when a drag/resize operation completes (for undo history) */
+  onTransformEnd?: () => void;
 }
 
 interface ElementNodeProps {
@@ -50,11 +55,70 @@ interface ElementNodeProps {
   snapToGrid: boolean;
   snapToElements: boolean;
   gridSize: number;
+  /** Called when drag/resize completes (for undo history) */
+  onTransformEnd?: () => void;
 }
 
 // Minimum element dimensions
 const MIN_WIDTH = 120;
 const MIN_HEIGHT = 80;
+
+/**
+ * Calculate viewport bounds in canvas coordinates
+ */
+function getViewportBounds(
+  containerWidth: number,
+  containerHeight: number,
+  pan: { x: number; y: number },
+  zoom: number,
+  buffer: number = VIEWPORT_BUFFER
+): { left: number; top: number; right: number; bottom: number } {
+  // Convert viewport to canvas coordinates
+  const left = (-pan.x - buffer) / zoom;
+  const top = (-pan.y - buffer) / zoom;
+  const right = (containerWidth - pan.x + buffer) / zoom;
+  const bottom = (containerHeight - pan.y + buffer) / zoom;
+
+  return { left, top, right, bottom };
+}
+
+/**
+ * Check if an element is within the viewport bounds
+ */
+function isElementVisible(
+  element: CanvasElement,
+  bounds: { left: number; top: number; right: number; bottom: number }
+): boolean {
+  const elLeft = element.position.x;
+  const elTop = element.position.y;
+  const elRight = element.position.x + element.size.width;
+  const elBottom = element.position.y + element.size.height;
+
+  // Check if rectangles intersect
+  return (
+    elLeft < bounds.right &&
+    elRight > bounds.left &&
+    elTop < bounds.bottom &&
+    elBottom > bounds.top
+  );
+}
+
+/**
+ * Check if a connection should be visible
+ * A connection is visible if either endpoint element is visible
+ */
+function isConnectionVisible(
+  connection: Connection,
+  elements: CanvasElement[],
+  bounds: { left: number; top: number; right: number; bottom: number }
+): boolean {
+  const fromElement = elements.find((e) => e.instanceId === connection.from.instanceId);
+  const toElement = elements.find((e) => e.instanceId === connection.to.instanceId);
+
+  if (!fromElement || !toElement) return false;
+
+  return isElementVisible(fromElement, bounds) || isElementVisible(toElement, bounds);
+}
 
 function ElementNode({
   element,
@@ -70,6 +134,7 @@ function ElementNode({
   snapToGrid,
   snapToElements,
   gridSize,
+  onTransformEnd,
 }: ElementNodeProps) {
   const prefersReducedMotion = useReducedMotion();
   const [isDragging, setIsDragging] = useState(false);
@@ -149,6 +214,8 @@ function ElementNode({
     const handleMouseUp = () => {
       setIsDragging(false);
       onDragStateChange(false);
+      // Push to undo history when drag completes
+      onTransformEnd?.();
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -158,7 +225,7 @@ function ElementNode({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragOffset, snapToGrid, snapToElements, gridSize, onUpdate, allElements, element.id, element.size, onDragStateChange]);
+  }, [isDragging, dragOffset, snapToGrid, snapToElements, gridSize, onUpdate, allElements, element.id, element.size, onDragStateChange, onTransformEnd]);
 
   // Handle resizing
   useEffect(() => {
@@ -186,6 +253,8 @@ function ElementNode({
 
     const handleMouseUp = () => {
       setIsResizing(false);
+      // Push to undo history when resize completes
+      onTransformEnd?.();
     };
 
     window.addEventListener('mousemove', handleMouseMove);
@@ -195,7 +264,7 @@ function ElementNode({
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, resizeStart, snapToGrid, gridSize, onUpdate]);
+  }, [isResizing, resizeStart, snapToGrid, gridSize, onUpdate, onTransformEnd]);
 
   const displayName = element.elementId
     .replace(/-/g, ' ')
@@ -210,7 +279,7 @@ function ElementNode({
         scale: isDragging ? 1.02 : 1,
         y: 0,
         boxShadow: isSelected
-          ? '0 0 0 2px rgba(255,215,0,0.3), 0 8px 32px rgba(0,0,0,0.4)'
+          ? '0 0 0 2px rgba(255,255,255,0.3), 0 8px 32px rgba(0,0,0,0.4)'
           : isDragging
             ? '0 16px 48px rgba(0,0,0,0.5)'
             : '0 4px 16px rgba(0,0,0,0.3)',
@@ -221,7 +290,7 @@ function ElementNode({
       className={cn(
         'absolute rounded-xl border-2 bg-[#1a1a1a]',
         isSelected
-          ? 'border-[#FFD700]'
+          ? 'border-white/60'
           : 'border-[#333] hover:border-[#555]',
         isDragging && 'cursor-grabbing z-50',
         element.locked && 'opacity-60',
@@ -250,19 +319,19 @@ function ElementNode({
               opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
               scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
             }}
-            className="absolute -inset-1 rounded-xl border-2 border-[#FFD700]/40 pointer-events-none"
+            className="absolute -inset-1 rounded-xl border-2 border-white/30 pointer-events-none"
           />
         )}
       </AnimatePresence>
 
       {/* Outer glow ring when selected */}
       {isSelected && (
-        <div className="absolute -inset-[3px] rounded-xl bg-gradient-to-r from-[#FFD700]/10 via-[#FFD700]/5 to-[#FFD700]/10 pointer-events-none" />
+        <div className="absolute -inset-[3px] rounded-xl bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-white/[0.06] pointer-events-none" />
       )}
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-[#333] bg-[#252525] rounded-t-xl">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-[#FFD700]" />
+          <div className="w-3 h-3 rounded-full bg-neutral-500" />
           <span className="text-sm font-medium text-white truncate max-w-[120px]">
             {displayName}
           </span>
@@ -356,7 +425,7 @@ function ElementNode({
             viewBox="0 0 12 12"
             className={cn(
               "transition-colors",
-              isResizing ? "text-[#FFD700]" : "text-[#666] group-hover:text-[#888]"
+              isResizing ? "text-white" : "text-[#666] group-hover:text-[#888]"
             )}
           >
             <path
@@ -374,7 +443,7 @@ function ElementNode({
         <>
           {/* Right edge */}
           <div
-            className="absolute -right-1 top-4 bottom-4 w-2 cursor-e-resize hover:bg-[#FFD700]/20 rounded"
+            className="absolute -right-1 top-4 bottom-4 w-2 cursor-e-resize hover:bg-white/[0.12] rounded"
             onMouseDown={(e) => {
               if (element.locked) return;
               e.stopPropagation();
@@ -400,6 +469,8 @@ function ElementNode({
                 setIsResizing(false);
                 window.removeEventListener('mousemove', handleMove);
                 window.removeEventListener('mouseup', handleUp);
+                // Push to undo history
+                onTransformEnd?.();
               };
               window.addEventListener('mousemove', handleMove);
               window.addEventListener('mouseup', handleUp);
@@ -407,7 +478,7 @@ function ElementNode({
           />
           {/* Bottom edge */}
           <div
-            className="absolute -bottom-1 left-4 right-4 h-2 cursor-s-resize hover:bg-[#FFD700]/20 rounded"
+            className="absolute -bottom-1 left-4 right-4 h-2 cursor-s-resize hover:bg-white/[0.12] rounded"
             onMouseDown={(e) => {
               if (element.locked) return;
               e.stopPropagation();
@@ -426,6 +497,8 @@ function ElementNode({
                 setIsResizing(false);
                 window.removeEventListener('mousemove', handleMove);
                 window.removeEventListener('mouseup', handleUp);
+                // Push to undo history
+                onTransformEnd?.();
               };
               setIsResizing(true);
               window.addEventListener('mousemove', handleMove);
@@ -490,7 +563,7 @@ function ConnectionLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? "#00FF88" : "#FFD700"}
+        stroke={isFlowing ? "#00FF88" : "#888888"}
         strokeWidth={isFlowing ? 12 : 8}
         strokeOpacity="0"
         strokeLinecap="round"
@@ -505,7 +578,7 @@ function ConnectionLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? "#00FF88" : "#FFD700"}
+        stroke={isFlowing ? "#00FF88" : "#888888"}
         strokeWidth={isFlowing ? 3 : 2}
         strokeLinecap="round"
         initial={{ pathLength: 0, strokeOpacity: 0.3 }}
@@ -523,7 +596,7 @@ function ConnectionLine({
       {/* Animated flow particles along the path */}
       <motion.circle
         r={isFlowing ? 5 : 3}
-        fill={isFlowing ? "#00FF88" : "#FFD700"}
+        fill={isFlowing ? "#00FF88" : "#888888"}
         className="pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{
@@ -566,7 +639,7 @@ function ConnectionLine({
       <motion.circle
         cx={toX}
         cy={toY}
-        fill={isFlowing ? "#00FF88" : "#FFD700"}
+        fill={isFlowing ? "#00FF88" : "#888888"}
         initial={{ r: 0, opacity: 0 }}
         animate={{
           r: showFlowAnimation ? (isFlowing ? 8 : 6) : 4,
@@ -583,7 +656,7 @@ function ConnectionLine({
             cx={toX}
             cy={toY}
             fill="none"
-            stroke={isFlowing ? "#00FF88" : "#FFD700"}
+            stroke={isFlowing ? "#00FF88" : "#888888"}
             strokeWidth="2"
             initial={{ r: 4, opacity: 0.8 }}
             animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
@@ -629,6 +702,106 @@ function ConnectionLine({
   );
 }
 
+/**
+ * Visual preview of a connection being drawn
+ */
+function ConnectionPreviewLine({
+  fromElement,
+  toPosition,
+  fromPort,
+}: {
+  fromElement: CanvasElement;
+  toPosition: { x: number; y: number };
+  fromPort: string;
+}) {
+  // Calculate from position based on port type
+  const fromX =
+    fromPort === 'output'
+      ? fromElement.position.x + fromElement.size.width
+      : fromElement.position.x;
+  const fromY = fromElement.position.y + fromElement.size.height / 2;
+
+  const toX = toPosition.x;
+  const toY = toPosition.y;
+
+  // Bezier curve control points
+  const midX = (fromX + toX) / 2;
+  const path = `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`;
+
+  return (
+    <g className="pointer-events-none">
+      {/* Glow effect */}
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="#FFD700"
+        strokeWidth={8}
+        strokeOpacity={0.2}
+        strokeLinecap="round"
+        style={{ filter: 'blur(4px)' }}
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.2 }}
+      />
+
+      {/* Main path */}
+      <motion.path
+        d={path}
+        fill="none"
+        stroke="#FFD700"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeDasharray="8 4"
+        initial={{ pathLength: 0, opacity: 0.5 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 0.2 }}
+      />
+
+      {/* Animated dots along path */}
+      <motion.circle
+        r={4}
+        fill="#FFD700"
+        animate={{
+          opacity: [0.3, 1, 0.3],
+          offsetDistance: ['0%', '100%'],
+        }}
+        transition={{
+          duration: 0.8,
+          repeat: Infinity,
+          ease: 'linear',
+        }}
+        style={{
+          offsetPath: `path("${path}")`,
+        }}
+      />
+
+      {/* Source port indicator */}
+      <motion.circle
+        cx={fromX}
+        cy={fromY}
+        r={6}
+        fill="#FFD700"
+        initial={{ scale: 0 }}
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+      />
+
+      {/* Cursor endpoint */}
+      <motion.circle
+        cx={toX}
+        cy={toY}
+        r={8}
+        fill="transparent"
+        stroke="#FFD700"
+        strokeWidth={2}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 500 }}
+      />
+    </g>
+  );
+}
+
 export function IDECanvas({
   elements,
   connections,
@@ -648,6 +821,7 @@ export function IDECanvas({
   onZoomChange,
   onPanChange,
   onDrop,
+  onTransformEnd,
 }: IDECanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -656,9 +830,61 @@ export function IDECanvas({
     instanceId: string;
     port: string;
   } | null>(null);
+  // Mouse position for connection preview
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
   // Track which element is being dragged for smart guides
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null);
   const [snapToElements] = useState(true); // Enable snap to elements by default
+
+  // Selection rectangle state
+  const [selectionRect, setSelectionRect] = useState<{
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  } | null>(null);
+  const [isDrawingSelection, setIsDrawingSelection] = useState(false);
+
+  // Viewport size for virtualization
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+
+  // Track container size with ResizeObserver
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setViewportSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+
+    resizeObserver.observe(canvasRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Calculate viewport bounds for virtualization
+  const viewportBounds = useMemo(() => {
+    if (viewportSize.width === 0 || viewportSize.height === 0) {
+      // Return very large bounds if size not yet measured
+      return { left: -10000, top: -10000, right: 10000, bottom: 10000 };
+    }
+    return getViewportBounds(viewportSize.width, viewportSize.height, pan, zoom);
+  }, [viewportSize.width, viewportSize.height, pan, zoom]);
+
+  // Filter elements and connections to only visible ones (virtualization)
+  const visibleElements = useMemo(() => {
+    // Don't virtualize if dragging (need all elements for snapping)
+    if (draggingElementId) return elements.filter((el) => el.visible);
+    return elements.filter((el) => el.visible && isElementVisible(el, viewportBounds));
+  }, [elements, viewportBounds, draggingElementId]);
+
+  const visibleConnections = useMemo(() => {
+    return connections.filter((conn) => isConnectionVisible(conn, elements, viewportBounds));
+  }, [connections, elements, viewportBounds]);
 
   // Handle wheel zoom
   const handleWheel = useCallback(
@@ -679,7 +905,7 @@ export function IDECanvas({
     [zoom, pan, mode, onZoomChange, onPanChange]
   );
 
-  // Handle pan drag
+  // Handle pan drag and selection rectangle
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (mode === 'pan' || e.button === 1) {
@@ -688,11 +914,21 @@ export function IDECanvas({
         setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
         e.preventDefault();
       } else if (mode === 'select' && e.target === canvasRef.current?.querySelector('.canvas-bg')) {
-        // Click on background - clear selection
-        onSelect([]);
+        // Click on background - start selection rectangle
+        const rect = canvasRef.current!.getBoundingClientRect();
+        const x = (e.clientX - rect.left - pan.x) / zoom;
+        const y = (e.clientY - rect.top - pan.y) / zoom;
+
+        setSelectionRect({ startX: x, startY: y, endX: x, endY: y });
+        setIsDrawingSelection(true);
+
+        // Clear selection unless shift is held
+        if (!e.shiftKey) {
+          onSelect([]);
+        }
       }
     },
-    [mode, pan, onSelect]
+    [mode, pan, zoom, onSelect]
   );
 
   useEffect(() => {
@@ -717,6 +953,69 @@ export function IDECanvas({
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isPanning, panStart, onPanChange]);
+
+  // Handle selection rectangle drag
+  useEffect(() => {
+    if (!isDrawingSelection || !canvasRef.current) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvasRef.current!.getBoundingClientRect();
+      const x = (e.clientX - rect.left - pan.x) / zoom;
+      const y = (e.clientY - rect.top - pan.y) / zoom;
+
+      setSelectionRect((prev) =>
+        prev ? { ...prev, endX: x, endY: y } : null
+      );
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (selectionRect) {
+        // Calculate normalized rectangle bounds
+        const left = Math.min(selectionRect.startX, selectionRect.endX);
+        const right = Math.max(selectionRect.startX, selectionRect.endX);
+        const top = Math.min(selectionRect.startY, selectionRect.endY);
+        const bottom = Math.max(selectionRect.startY, selectionRect.endY);
+
+        // Find elements that intersect with selection rectangle
+        const selectedElementIds = elements
+          .filter((el) => {
+            const elLeft = el.position.x;
+            const elRight = el.position.x + el.size.width;
+            const elTop = el.position.y;
+            const elBottom = el.position.y + el.size.height;
+
+            // Check if rectangles intersect
+            return (
+              elLeft < right &&
+              elRight > left &&
+              elTop < bottom &&
+              elBottom > top
+            );
+          })
+          .map((el) => el.id);
+
+        if (selectedElementIds.length > 0) {
+          // If shift was held, add to existing selection
+          if (e.shiftKey) {
+            onSelect([...new Set([...selectedIds, ...selectedElementIds])]);
+          } else {
+            onSelect(selectedElementIds);
+          }
+        }
+      }
+
+      setSelectionRect(null);
+      setIsDrawingSelection(false);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDrawingSelection, selectionRect, pan, zoom, elements, selectedIds, onSelect]);
 
   // Handle drop
   const handleDrop = useCallback(
@@ -751,13 +1050,65 @@ export function IDECanvas({
 
   const handleEndConnection = (instanceId: string, port: string) => {
     if (connectionStart && connectionStart.instanceId !== instanceId) {
-      onAddConnection(
-        { instanceId: connectionStart.instanceId, port: connectionStart.port },
-        { instanceId, port }
-      );
+      // Validate port types: connections must go from output → input
+      const isValidConnection =
+        connectionStart.port === 'output' && port === 'input';
+
+      if (isValidConnection) {
+        onAddConnection(
+          { instanceId: connectionStart.instanceId, port: connectionStart.port },
+          { instanceId, port }
+        );
+      }
+      // Invalid connections (output→output, input→input) are silently ignored
     }
     setConnectionStart(null);
+    setMousePos(null);
   };
+
+  // Track mouse position when drawing a connection
+  useEffect(() => {
+    if (!connectionStart || !canvasRef.current) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvasRef.current!.getBoundingClientRect();
+      setMousePos({
+        x: (e.clientX - rect.left - pan.x) / zoom,
+        y: (e.clientY - rect.top - pan.y) / zoom,
+      });
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setConnectionStart(null);
+        setMousePos(null);
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      // If clicking on empty space, cancel connection
+      const target = e.target as HTMLElement;
+      if (!target.closest('button')) {
+        setConnectionStart(null);
+        setMousePos(null);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [connectionStart, pan, zoom]);
+
+  // Get source element for connection preview
+  const connectionSourceElement = connectionStart
+    ? elements.find((e) => e.instanceId === connectionStart.instanceId)
+    : null;
 
   return (
     <div
@@ -800,7 +1151,7 @@ export function IDECanvas({
           className="absolute inset-0 pointer-events-none overflow-visible"
           style={{ width: 4000, height: 4000 }}
         >
-          {connections.map((conn) => (
+          {visibleConnections.map((conn) => (
             <ConnectionLine
               key={conn.id}
               connection={conn}
@@ -809,39 +1160,47 @@ export function IDECanvas({
               isFlowing={flowingConnections?.has(conn.id)}
             />
           ))}
+
+          {/* Connection preview wire while dragging */}
+          {connectionStart && connectionSourceElement && mousePos && (
+            <ConnectionPreviewLine
+              fromElement={connectionSourceElement}
+              toPosition={mousePos}
+              fromPort={connectionStart.port}
+            />
+          )}
         </svg>
 
-        {/* Elements */}
-        {elements
-          .filter((el) => el.visible)
-          .map((element) => (
-            <ElementNode
-              key={element.id}
-              element={element}
-              allElements={elements}
-              isSelected={selectedIds.includes(element.id)}
-              mode={mode}
-              onSelect={(append) =>
-                onSelect(
-                  append
-                    ? selectedIds.includes(element.id)
-                      ? selectedIds.filter((id) => id !== element.id)
-                      : [...selectedIds, element.id]
-                    : [element.id]
-                )
-              }
-              onUpdate={(updates) => onUpdateElement(element.id, updates)}
-              onDelete={() => onDeleteElements([element.id])}
-              onStartConnection={(port) => handleStartConnection(element.instanceId, port)}
-              onEndConnection={(port) => handleEndConnection(element.instanceId, port)}
-              onDragStateChange={(isDragging) => {
-                setDraggingElementId(isDragging ? element.id : null);
-              }}
-              snapToGrid={snapToGrid}
-              snapToElements={snapToElements}
-              gridSize={gridSize}
-            />
-          ))}
+        {/* Elements (virtualized - only visible ones rendered) */}
+        {visibleElements.map((element) => (
+          <ElementNode
+            key={element.id}
+            element={element}
+            allElements={elements}
+            isSelected={selectedIds.includes(element.id)}
+            mode={mode}
+            onSelect={(append) =>
+              onSelect(
+                append
+                  ? selectedIds.includes(element.id)
+                    ? selectedIds.filter((id) => id !== element.id)
+                    : [...selectedIds, element.id]
+                  : [element.id]
+              )
+            }
+            onUpdate={(updates) => onUpdateElement(element.id, updates)}
+            onDelete={() => onDeleteElements([element.id])}
+            onStartConnection={(port) => handleStartConnection(element.instanceId, port)}
+            onEndConnection={(port) => handleEndConnection(element.instanceId, port)}
+            onDragStateChange={(isDragging) => {
+              setDraggingElementId(isDragging ? element.id : null);
+            }}
+            snapToGrid={snapToGrid}
+            snapToElements={snapToElements}
+            gridSize={gridSize}
+            onTransformEnd={onTransformEnd}
+          />
+        ))}
 
         {/* Smart Guides - show during drag */}
         <SmartGuides
@@ -850,6 +1209,21 @@ export function IDECanvas({
           threshold={8}
           zoom={zoom}
         />
+
+        {/* Selection Rectangle */}
+        {selectionRect && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute pointer-events-none border-2 border-[#FFD700]/50 bg-[#FFD700]/10 rounded-sm"
+            style={{
+              left: Math.min(selectionRect.startX, selectionRect.endX),
+              top: Math.min(selectionRect.startY, selectionRect.endY),
+              width: Math.abs(selectionRect.endX - selectionRect.startX),
+              height: Math.abs(selectionRect.endY - selectionRect.startY),
+            }}
+          />
+        )}
       </div>
 
       {/* Empty State */}
@@ -869,16 +1243,38 @@ export function IDECanvas({
         </div>
       )}
 
-      {/* Zoom indicator */}
-      <div className="absolute bottom-4 right-4 px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-xs text-[#888]">
-        {Math.round(zoom * 100)}%
+      {/* Zoom indicator with virtualization stats */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-2">
+        {/* Virtualization indicator - only show when actually virtualizing */}
+        {elements.length > 0 && visibleElements.length < elements.length && (
+          <div className="px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-xs text-[#666]">
+            <span className="text-white">{visibleElements.length}</span>
+            <span className="mx-1">/</span>
+            <span>{elements.length}</span>
+            <span className="ml-1">visible</span>
+          </div>
+        )}
+        <div className="px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-xs text-[#888]">
+          {Math.round(zoom * 100)}%
+        </div>
       </div>
 
       {/* Connection mode indicator */}
       {connectionStart && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-sm text-blue-400">
-          Click an input port to connect
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#1a1a1a] border border-[#FFD700]/30 rounded-lg shadow-lg"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-[#FFD700] animate-pulse" />
+            <span className="text-sm text-white">
+              Click an <span className="text-green-400 font-medium">input port</span> to connect
+            </span>
+            <span className="text-xs text-[#666]">or press ESC to cancel</span>
+          </div>
+        </motion.div>
       )}
     </div>
   );

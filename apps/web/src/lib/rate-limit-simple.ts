@@ -1,10 +1,51 @@
 /**
  * SECURE in-memory rate limiting with no bypass vulnerabilities
  * NO SILENT FAILURES - PRODUCTION SAFE FALLBACK
+ *
+ * SCALING: Uses LRU eviction to prevent memory leaks at scale
  */
 
 import { logSecurityEvent } from './structured-logger';
 import { currentEnvironment } from './env';
+
+// ============================================================================
+// CONFIGURABLE LIMITS - Override via environment variables for production
+// ============================================================================
+const MAX_CLIENTS = parseInt(process.env.RATE_LIMIT_MAX_CLIENTS || '10000', 10);
+const CLEANUP_INTERVAL_MS = parseInt(process.env.RATE_LIMIT_CLEANUP_INTERVAL_MS || '300000', 10); // 5 min default
+const MAX_AGE_MS = parseInt(process.env.RATE_LIMIT_MAX_AGE_MS || '3600000', 10); // 1 hour default
+
+// Rate limit configurations (overridable via env)
+const RATE_LIMITS = {
+  auth: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_AUTH_REQUESTS || '5', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_AUTH_WINDOW_MS || '60000', 10),
+  },
+  api: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_API_REQUESTS || '100', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_API_WINDOW_MS || '60000', 10),
+  },
+  strict: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_STRICT_REQUESTS || '10', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_STRICT_WINDOW_MS || '60000', 10),
+  },
+  aiGeneration: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_AI_REQUESTS || '5', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_AI_WINDOW_MS || '60000', 10),
+  },
+  search: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_SEARCH_REQUESTS || '30', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_SEARCH_WINDOW_MS || '60000', 10),
+  },
+  chat: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_CHAT_REQUESTS || '20', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_CHAT_WINDOW_MS || '60000', 10),
+  },
+  sse: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_SSE_REQUESTS || '100', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_SSE_WINDOW_MS || '60000', 10),
+  },
+};
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -26,11 +67,38 @@ interface ClientRecord {
   windowStart: number;
   violations: number;
   lastViolation: number;
+  lastAccess: number; // For LRU eviction
 }
 
-// In-memory store for rate limiting
+// In-memory store for rate limiting with LRU tracking
 const clients = new Map<string, ClientRecord>();
 const rateLimiterHealth = new Map<string, { failures: number; lastFailure: number }>();
+
+/**
+ * LRU eviction when client limit reached
+ * Removes least recently accessed clients to prevent memory leak
+ */
+function evictLRUClients(): void {
+  if (clients.size < MAX_CLIENTS) return;
+
+  // Find and remove oldest 10% of clients
+  const evictionCount = Math.ceil(MAX_CLIENTS * 0.1);
+  const sortedByAccess = [...clients.entries()]
+    .sort((a, b) => a[1].lastAccess - b[1].lastAccess);
+
+  for (let i = 0; i < evictionCount && i < sortedByAccess.length; i++) {
+    clients.delete(sortedByAccess[i][0]);
+  }
+
+  logSecurityEvent('rate_limit', {
+    operation: 'lru_eviction',
+    tags: {
+      evicted: evictionCount.toString(),
+      remaining: clients.size.toString(),
+      environment: currentEnvironment
+    }
+  });
+}
 
 /**
  * SECURE rate limiter - NO BYPASSES ALLOWED
@@ -51,22 +119,29 @@ export function rateLimit(config: RateLimitConfig = { maxRequests: 100, windowMs
           return createBlockedResult(maxRequests, resetTime, 'abusive_pattern');
         }
 
+        // Evict LRU clients if at capacity BEFORE adding new client
+        evictLRUClients();
+
         // Get or create client record
         let client = clients.get(normalizedClientId);
-        
+
         if (!client || client.windowStart !== windowStart) {
           // New window, reset the client but preserve violation history
           const previousViolations = client?.violations || 0;
           const lastViolation = client?.lastViolation || 0;
-          
+
           client = {
             requests: [],
             windowStart: windowStart,
             violations: previousViolations,
-            lastViolation: lastViolation
+            lastViolation: lastViolation,
+            lastAccess: now
           };
           clients.set(normalizedClientId, client);
         }
+
+        // Update last access for LRU tracking
+        client.lastAccess = now;
 
         // Clean up old requests (outside current window)
         client.requests = client.requests.filter(requestTime => requestTime >= windowStart);
@@ -222,95 +297,109 @@ function resetHealthStatus(identifier: string): void {
 
 /**
  * SECURE cleanup with safety checks
+ * Runs every CLEANUP_INTERVAL_MS (default 5 minutes)
  */
 function secureCleanup() {
   try {
     const now = Date.now();
-    const maxAge = 60 * 60 * 1000; // 1 hour
     const beforeSize = clients.size;
-    
+
     for (const [clientId, client] of clients.entries()) {
-      if (now - client.windowStart > maxAge) {
+      if (now - client.windowStart > MAX_AGE_MS) {
         clients.delete(clientId);
       }
     }
-    
+
     const cleaned = beforeSize - clients.size;
-    if (cleaned > 0) {
-      // Intentionally empty - cleanup count logged elsewhere if needed
+    if (cleaned > 100) {
+      // Log significant cleanups for monitoring
+      logSecurityEvent('rate_limit', {
+        operation: 'cleanup',
+        tags: {
+          cleaned: cleaned.toString(),
+          remaining: clients.size.toString(),
+          environment: currentEnvironment
+        }
+      });
     }
   } catch {
     // Silently ignore cleanup errors
   }
 }
 
-// Run cleanup every 15 minutes
-setInterval(secureCleanup, 15 * 60 * 1000);
+// Run cleanup every CLEANUP_INTERVAL_MS (default 5 minutes, configurable)
+setInterval(secureCleanup, CLEANUP_INTERVAL_MS);
 
 /**
  * SECURE pre-configured rate limiters
+ * All limits configurable via environment variables (see RATE_LIMITS above)
  */
-export const authRateLimit = rateLimit({ 
-  maxRequests: 5, 
-  windowMs: 60000, 
+export const authRateLimit = rateLimit({
+  maxRequests: RATE_LIMITS.auth.maxRequests,
+  windowMs: RATE_LIMITS.auth.windowMs,
   identifier: 'auth_simple',
-  blockOnError: true 
+  blockOnError: true
 });
 
-export const apiRateLimit = rateLimit({ 
-  maxRequests: 100, 
-  windowMs: 60000, 
+export const apiRateLimit = rateLimit({
+  maxRequests: RATE_LIMITS.api.maxRequests,
+  windowMs: RATE_LIMITS.api.windowMs,
   identifier: 'api_simple',
-  blockOnError: true 
+  blockOnError: true
 });
 
 export const strictRateLimit = rateLimit({
-  maxRequests: 10,
-  windowMs: 60000,
+  maxRequests: RATE_LIMITS.strict.maxRequests,
+  windowMs: RATE_LIMITS.strict.windowMs,
   identifier: 'strict_simple',
   blockOnError: true
 });
 
 /**
- * AI generation rate limiter - very strict (5 requests per minute)
+ * AI generation rate limiter - very strict (default 5 requests per minute)
  * AI operations are expensive, so limit aggressively
+ * Override: RATE_LIMIT_AI_REQUESTS, RATE_LIMIT_AI_WINDOW_MS
  */
 export const aiGenerationRateLimit = rateLimit({
-  maxRequests: 5,
-  windowMs: 60000,
+  maxRequests: RATE_LIMITS.aiGeneration.maxRequests,
+  windowMs: RATE_LIMITS.aiGeneration.windowMs,
   identifier: 'ai_generation',
   blockOnError: true
 });
 
 /**
- * Search rate limiter - moderate (30 requests per minute)
+ * Search rate limiter - moderate (default 30 requests per minute)
  * Search is moderately expensive, allow reasonable usage
+ * Override: RATE_LIMIT_SEARCH_REQUESTS, RATE_LIMIT_SEARCH_WINDOW_MS
  */
 export const searchRateLimit = rateLimit({
-  maxRequests: 30,
-  windowMs: 60000,
+  maxRequests: RATE_LIMITS.search.maxRequests,
+  windowMs: RATE_LIMITS.search.windowMs,
   identifier: 'search',
   blockOnError: true
 });
 
 /**
- * Chat message rate limiter - moderate (20 messages per minute)
+ * Chat message rate limiter - moderate (default 20 messages per minute)
  * Prevents spam while allowing active conversation
+ * Override: RATE_LIMIT_CHAT_REQUESTS, RATE_LIMIT_CHAT_WINDOW_MS
  */
 export const chatRateLimit = rateLimit({
-  maxRequests: 20,
-  windowMs: 60000,
+  maxRequests: RATE_LIMITS.chat.maxRequests,
+  windowMs: RATE_LIMITS.chat.windowMs,
   identifier: 'chat_message',
   blockOnError: true
 });
 
 /**
- * SSE connection rate limiter - strict (10 connections per minute)
- * SSE connections are expensive (long-lived), limit aggressively to prevent DoS
+ * SSE connection rate limiter - scaled for production (default 100 connections per minute)
+ * SSE connections are long-lived but necessary for real-time chat.
+ * At 100/min, supports 100+ concurrent users opening boards.
+ * Override: RATE_LIMIT_SSE_REQUESTS, RATE_LIMIT_SSE_WINDOW_MS
  */
 export const sseConnectionRateLimit = rateLimit({
-  maxRequests: 10,
-  windowMs: 60000,
+  maxRequests: RATE_LIMITS.sse.maxRequests,
+  windowMs: RATE_LIMITS.sse.windowMs,
   identifier: 'sse_connection',
   blockOnError: true
 });
@@ -320,6 +409,8 @@ export const sseConnectionRateLimit = rateLimit({
  */
 export function getRateLimiterHealth(): {
   totalClients: number;
+  maxClients: number;
+  utilizationPercent: number;
   rateLimiters: Array<{
     identifier: string;
     failures: number;
@@ -330,6 +421,20 @@ export function getRateLimiterHealth(): {
 
   return {
     totalClients: clients.size,
+    maxClients: MAX_CLIENTS,
+    utilizationPercent: Math.round((clients.size / MAX_CLIENTS) * 100),
     rateLimiters: limiters.map(limiter => limiter.getHealthStatus())
+  };
+}
+
+/**
+ * Get current rate limit configuration (for monitoring/debugging)
+ */
+export function getRateLimitConfig() {
+  return {
+    maxClients: MAX_CLIENTS,
+    cleanupIntervalMs: CLEANUP_INTERVAL_MS,
+    maxAgeMs: MAX_AGE_MS,
+    limits: RATE_LIMITS
   };
 }

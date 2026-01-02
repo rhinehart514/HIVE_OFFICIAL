@@ -28,7 +28,7 @@ import type { ToolComposition } from '../../lib/hivelab/element-system';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ResizableDivider } from '../../atomic/molecules/resizable-divider';
 import { cn } from '../../lib/utils';
-import { Command, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Command, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ElementShowcaseSidebar } from '../../components/hivelab/showcase';
 
 const EXAMPLE_PROMPTS = [
@@ -500,7 +500,7 @@ export function AILandingPageChat({
                 )}
                 title="Browse elements"
               >
-                <Sparkles className="w-4 h-4" />
+                <Wand2 className="w-4 h-4" />
                 <span className="text-xs font-medium hidden sm:inline">Elements</span>
                 <ChevronRight className="w-3 h-3" />
               </motion.button>

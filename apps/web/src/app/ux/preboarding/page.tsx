@@ -24,7 +24,7 @@ export default function PreboardingUXPage() {
               Campus‑first access. Verify with your <span className="font-mono">@buffalo.edu</span> or similar.
             </p>
             <div className="flex gap-3">
-              <Button variant="brand" onClick={() => router.push("/start")}>Get Started</Button>
+              <Button variant="brand" onClick={() => router.push("/onboarding")}>Get Started</Button>
               <Link href="/landing" className="text-sm underline underline-offset-2 self-center text-white/70 hover:text-white">
                 Learn more
               </Link>
@@ -46,7 +46,7 @@ export default function PreboardingUXPage() {
         <section id="preview-feed" aria-labelledby="preview-title" className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 id="preview-title" className="text-lg font-medium">Tonight at UB (Preview)</h2>
-            <Link href="/start" className="text-sm underline underline-offset-2 text-white/70 hover:text-white">
+            <Link href="/onboarding" className="text-sm underline underline-offset-2 text-white/70 hover:text-white">
               Verify to post
             </Link>
           </div>

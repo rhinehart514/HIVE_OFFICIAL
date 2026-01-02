@@ -19,6 +19,7 @@ import {
   Download,
   Share2,
   MoreHorizontal,
+  Rocket,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
@@ -43,6 +44,12 @@ interface IDEToolbarProps {
   saving?: boolean;
   toolName: string;
   onToolNameChange: (name: string) => void;
+  /** Origin space ID - when set, shows "Save & Deploy" button */
+  originSpaceId?: string;
+  /** Callback for deploy action (only shown when originSpaceId is set) */
+  onDeploy?: () => void;
+  /** Whether deploy is in progress */
+  deploying?: boolean;
 }
 
 interface ToolButtonProps {
@@ -60,17 +67,19 @@ function ToolButton({ active, onClick, icon, label, shortcut }: ToolButtonProps)
       onClick={onClick}
       className={cn(
         'relative p-2 rounded-lg transition-all group',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
         active
-          ? 'bg-[#FFD700]/20 text-[#FFD700]'
+          ? 'bg-white/15 text-white'
           : 'text-[#888] hover:text-white hover:bg-[#333]'
       )}
-      title={`${label}${shortcut ? ` (${shortcut})` : ''}`}
+      aria-label={`${label}${shortcut ? `, keyboard shortcut ${shortcut}` : ''}`}
+      aria-pressed={active}
     >
       {icon}
       {active && (
         <motion.div
           layoutId="active-tool"
-          className="absolute inset-0 bg-[#FFD700]/10 rounded-lg border border-[#FFD700]/30"
+          className="absolute inset-0 bg-white/10 rounded-lg border border-white/20"
           transition={{ duration: 0.15 }}
         />
       )}
@@ -100,8 +109,14 @@ export function IDEToolbar({
   saving,
   toolName,
   onToolNameChange,
+  originSpaceId,
+  onDeploy,
+  deploying,
 }: IDEToolbarProps) {
   const [editingName, setEditingName] = useState(false);
+
+  // Show deploy button when coming from a space
+  const showDeployButton = !!originSpaceId && !!onDeploy;
 
   return (
     <div className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between px-3 gap-3">
@@ -149,12 +164,13 @@ export function IDEToolbar({
             onClick={onUndo}
             disabled={!canUndo}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
               canUndo
                 ? 'text-[#888] hover:text-white hover:bg-[#333]'
                 : 'text-[#444] cursor-not-allowed'
             )}
-            title="Undo (⌘Z)"
+            aria-label="Undo, keyboard shortcut Command Z"
+            aria-disabled={!canUndo}
           >
             <Undo2 className="h-4 w-4" />
           </button>
@@ -163,12 +179,13 @@ export function IDEToolbar({
             onClick={onRedo}
             disabled={!canRedo}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
               canRedo
                 ? 'text-[#888] hover:text-white hover:bg-[#333]'
                 : 'text-[#444] cursor-not-allowed'
             )}
-            title="Redo (⌘⇧Z)"
+            aria-label="Redo, keyboard shortcut Command Shift Z"
+            aria-disabled={!canRedo}
           >
             <Redo2 className="h-4 w-4" />
           </button>
@@ -184,14 +201,14 @@ export function IDEToolbar({
             onChange={(e) => onToolNameChange(e.target.value)}
             onBlur={() => setEditingName(false)}
             onKeyDown={(e) => e.key === 'Enter' && setEditingName(false)}
-            className="bg-[#252525] border border-[#444] rounded-lg px-3 py-1.5 text-white text-center text-sm w-64 outline-none focus:border-[#FFD700]"
+            className="bg-[#252525] border border-[#444] rounded-lg px-3 py-1.5 text-white text-center text-sm w-64 outline-none focus:border-white focus:ring-2 focus:ring-white/30"
             autoFocus
           />
         ) : (
           <button
             type="button"
             onClick={() => setEditingName(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#252525] transition-colors group"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-[#252525] transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <span className="text-white font-medium text-sm">
               {toolName || 'Untitled Tool'}
@@ -207,9 +224,10 @@ export function IDEToolbar({
         <button
           type="button"
           onClick={onOpenAI}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#252525] hover:bg-[#333] text-white transition-colors border border-[#333] hover:border-[#444]"
+          aria-label="Open AI assistant, keyboard shortcut Command K"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#252525] hover:bg-[#333] text-white transition-colors border border-[#333] hover:border-[#444] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
         >
-          <Sparkles className="h-4 w-4 text-[#FFD700]" />
+          <Sparkles className="h-4 w-4 text-white" />
           <span className="text-sm hidden sm:block">AI</span>
           <kbd className="hidden sm:block px-1.5 py-0.5 text-[10px] bg-[#333] rounded text-[#666]">⌘K</kbd>
         </button>
@@ -217,28 +235,28 @@ export function IDEToolbar({
         <Divider />
 
         {/* Zoom Controls */}
-        <div className="flex items-center gap-1 bg-[#252525] rounded-lg">
+        <div className="flex items-center gap-1 bg-[#252525] rounded-lg" role="group" aria-label="Zoom controls">
           <button
             type="button"
             onClick={() => onZoomChange(Math.max(0.25, zoom - 0.1))}
-            className="p-2 text-[#888] hover:text-white transition-colors"
-            title="Zoom Out"
+            className="p-2 text-[#888] hover:text-white transition-colors rounded-l-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+            aria-label="Zoom out"
           >
             <ZoomOut className="h-4 w-4" />
           </button>
           <button
             type="button"
             onClick={() => onZoomChange(1)}
-            className="px-2 py-1 text-sm text-[#888] hover:text-white min-w-[50px] text-center transition-colors"
-            title="Reset Zoom"
+            className="px-2 py-1 text-sm text-[#888] hover:text-white min-w-[50px] text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+            aria-label={`Current zoom ${Math.round(zoom * 100)}%, click to reset to 100%`}
           >
             {Math.round(zoom * 100)}%
           </button>
           <button
             type="button"
             onClick={() => onZoomChange(Math.min(3, zoom + 0.1))}
-            className="p-2 text-[#888] hover:text-white transition-colors"
-            title="Zoom In"
+            className="p-2 text-[#888] hover:text-white transition-colors rounded-r-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+            aria-label="Zoom in"
           >
             <ZoomIn className="h-4 w-4" />
           </button>
@@ -247,8 +265,8 @@ export function IDEToolbar({
         <button
           type="button"
           onClick={onFitToScreen}
-          className="p-2 text-[#888] hover:text-white hover:bg-[#333] rounded-lg transition-colors"
-          title="Fit to Screen"
+          className="p-2 text-[#888] hover:text-white hover:bg-[#333] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
+          aria-label="Fit canvas to screen"
         >
           <Maximize className="h-4 w-4" />
         </button>
@@ -257,12 +275,13 @@ export function IDEToolbar({
           type="button"
           onClick={onToggleGrid}
           className={cn(
-            'p-2 rounded-lg transition-colors',
+            'p-2 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
             showGrid
               ? 'bg-[#333] text-white'
               : 'text-[#888] hover:text-white hover:bg-[#333]'
           )}
-          title="Toggle Grid (⌘G)"
+          aria-label={`${showGrid ? 'Hide' : 'Show'} grid, keyboard shortcut Command G`}
+          aria-pressed={showGrid}
         >
           <Grid3X3 className="h-4 w-4" />
         </button>
@@ -273,31 +292,54 @@ export function IDEToolbar({
         <button
           type="button"
           onClick={onPreview}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#252525] hover:bg-[#333] text-white transition-colors"
+          aria-label="Preview tool"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#252525] hover:bg-[#333] text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
         >
-          <Play className="h-4 w-4" />
+          <Play className="h-4 w-4" aria-hidden="true" />
           <span className="text-sm hidden sm:block">Preview</span>
         </button>
 
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium',
-            saving
-              ? 'bg-[#333] text-[#666] cursor-not-allowed'
-              : 'bg-[#FFD700] hover:bg-[#FFE033] text-black'
-          )}
-        >
-          <Save className="h-4 w-4" />
-          <span className="text-sm">{saving ? 'Saving...' : 'Save'}</span>
-        </button>
+        {/* Save or Save & Deploy */}
+        {showDeployButton ? (
+          <button
+            type="button"
+            onClick={onDeploy}
+            disabled={saving || deploying}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
+              saving || deploying
+                ? 'bg-[#333] text-[#666] cursor-not-allowed'
+                : 'bg-[#FFD700] hover:bg-[#FFE033] text-black'
+            )}
+          >
+            <Rocket className="h-4 w-4" />
+            <span className="text-sm">
+              {deploying ? 'Deploying...' : saving ? 'Saving...' : 'Save & Deploy'}
+            </span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]',
+              saving
+                ? 'bg-[#333] text-[#666] cursor-not-allowed'
+                : 'bg-[#FFD700] hover:bg-[#FFE033] text-black'
+            )}
+          >
+            <Save className="h-4 w-4" />
+            <span className="text-sm">{saving ? 'Saving...' : 'Save'}</span>
+          </button>
+        )}
 
         {/* More */}
         <button
           type="button"
-          className="p-2 text-[#888] hover:text-white hover:bg-[#333] rounded-lg transition-colors"
+          aria-label="More options"
+          aria-haspopup="menu"
+          className="p-2 text-[#888] hover:text-white hover:bg-[#333] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]"
         >
           <MoreHorizontal className="h-4 w-4" />
         </button>

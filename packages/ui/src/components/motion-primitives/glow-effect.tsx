@@ -1,13 +1,18 @@
 /**
  * GlowEffect Component
- * Animated glow effect for highlighting achievements and important elements
+ * Animated glow effect for highlighting achievements and celebrations
  *
- * HIVE Brand: Gold glow ONLY for achievements, reputation, primary CTAs
+ * Use sparingly - only for:
+ * - Achievement moments
+ * - Celebration overlays
+ * - Completion states
+ *
+ * NOT for: General decoration, hover states, featured items
  *
  * @example
  * ```tsx
- * <GlowEffect color="#FFD700" size="md">
- *   <Star className="text-[#FFD700]" />
+ * <GlowEffect color="gold" size="md">
+ *   <Trophy className="text-gold-400" />
  * </GlowEffect>
  * ```
  */
@@ -18,12 +23,20 @@ import { motion, type HTMLMotionProps } from 'framer-motion';
 import { type ReactNode, forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
+/** Preset colors for glow effects */
+const GLOW_COLORS = {
+  gold: '#FFD700',
+  white: 'rgba(255, 255, 255, 0.8)',
+  success: '#22C55E',
+  neutral: 'rgba(255, 255, 255, 0.5)',
+} as const;
+
 export interface GlowEffectProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   /** Child elements to wrap with glow */
   children: ReactNode;
 
-  /** Glow color (default: #FFD700 gold) */
-  color?: string;
+  /** Glow color preset or custom hex (default: 'neutral') */
+  color?: keyof typeof GLOW_COLORS | string;
 
   /** Glow size preset */
   size?: 'sm' | 'md' | 'lg';
@@ -57,7 +70,7 @@ export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
   (
     {
       children,
-      color = '#FFD700',
+      color = 'neutral',
       size = 'md',
       mode = 'breathe',
       blur = 'medium',
@@ -69,19 +82,21 @@ export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
   ) => {
     const { spread, opacity } = sizeMap[size];
     const blurValue = blurMap[blur];
+    // Resolve color from preset or use as custom hex
+    const resolvedColor = GLOW_COLORS[color as keyof typeof GLOW_COLORS] || color;
 
     const glowVariants = {
       static: {
         boxShadow: active
-          ? `0 0 ${spread}px ${blurValue}px ${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`
+          ? `0 0 ${spread}px ${blurValue}px ${resolvedColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`
           : 'none',
       },
       pulse: {
         boxShadow: active
           ? [
-              `0 0 ${spread}px ${blurValue}px ${color}${Math.round(opacity * 0.3 * 255).toString(16).padStart(2, '0')}`,
-              `0 0 ${spread * 1.5}px ${blurValue * 1.5}px ${color}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`,
-              `0 0 ${spread}px ${blurValue}px ${color}${Math.round(opacity * 0.3 * 255).toString(16).padStart(2, '0')}`,
+              `0 0 ${spread}px ${blurValue}px ${resolvedColor}${Math.round(opacity * 0.3 * 255).toString(16).padStart(2, '0')}`,
+              `0 0 ${spread * 1.5}px ${blurValue * 1.5}px ${resolvedColor}${Math.round(opacity * 255).toString(16).padStart(2, '0')}`,
+              `0 0 ${spread}px ${blurValue}px ${resolvedColor}${Math.round(opacity * 0.3 * 255).toString(16).padStart(2, '0')}`,
             ]
           : 'none',
       },
@@ -108,7 +123,7 @@ export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
           <motion.div
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{
-              background: `radial-gradient(circle, ${color}40 0%, transparent 70%)`,
+              background: `radial-gradient(circle, ${resolvedColor}40 0%, transparent 70%)`,
               filter: `blur(${blurValue}px)`,
             }}
             animate={glowVariants[mode]}
@@ -125,15 +140,16 @@ export const GlowEffect = forwardRef<HTMLDivElement, GlowEffectProps>(
 GlowEffect.displayName = 'GlowEffect';
 
 /**
- * AnimatedStar - Pre-configured gold star with glow for achievements
+ * AnimatedIcon - Pre-configured icon wrapper with subtle glow for achievements
+ * @deprecated Use GlowEffect directly with color="gold" for achievements
  */
 export const AnimatedGoldIcon = forwardRef<
   HTMLDivElement,
-  { children: ReactNode; active?: boolean; className?: string }
->(({ children, active = true, className }, ref) => (
+  { children: ReactNode; active?: boolean; className?: string; color?: keyof typeof GLOW_COLORS }
+>(({ children, active = true, className, color = 'gold' }, ref) => (
   <GlowEffect
     ref={ref}
-    color="#FFD700"
+    color={color}
     size="sm"
     mode="breathe"
     blur="soft"
@@ -145,3 +161,6 @@ export const AnimatedGoldIcon = forwardRef<
 ));
 
 AnimatedGoldIcon.displayName = 'AnimatedGoldIcon';
+
+// Re-export color presets for external use
+export { GLOW_COLORS };

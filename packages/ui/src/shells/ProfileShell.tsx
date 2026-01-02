@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { easingArrays } from '@hive/tokens';
 
 /**
  * ProfileShell - The Profile Experience
@@ -52,7 +53,7 @@ export function ProfileShell({
         <motion.header
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.3, ease: easingArrays.default }}
           className="
             sticky top-0 z-50
             backdrop-blur-xl
@@ -69,7 +70,7 @@ export function ProfileShell({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.6, ease: easingArrays.default }}
           className={`
             relative
             ${heroHeightClasses[heroHeight]}
@@ -96,7 +97,7 @@ export function ProfileShell({
           animate={{ opacity: 1, y: 0 }}
           transition={{
             duration: 0.5,
-            ease: [0.22, 1, 0.36, 1],
+            ease: easingArrays.default,
             delay: 0.15,
           }}
         >
@@ -116,7 +117,7 @@ export const profileCardVariants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
+      ease: easingArrays.default,
     },
   },
 };

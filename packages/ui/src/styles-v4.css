@@ -66,8 +66,7 @@
   --shadow-hive-level1: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-hive-level2: 0 4px 6px rgba(0, 0, 0, 0.3);
   --shadow-hive-level3: 0 8px 15px rgba(0, 0, 0, 0.3);
-  --shadow-hive-gold-glow: 0 0 20px rgba(255, 215, 0, 0.3);
-  --shadow-hive-gold-glow-strong: 0 0 30px rgba(255, 215, 0, 0.4);
+  /* Removed gold glow shadows - gold is for CTAs only, not decoration */
 }
 
 /* === KEYFRAMES === */
@@ -81,10 +80,7 @@
   to { height: 0; }
 }
 
-@keyframes hive-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
-}
+/* Removed hive-glow keyframe - reserved gold for CTAs only */
 
 @keyframes hive-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
@@ -116,7 +112,7 @@
 
   .hive-interactive:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
   }
 
   .hive-interactive:active {

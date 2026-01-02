@@ -37,7 +37,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { Button, Input, Card, toast, cn, AddTabModal, AddWidgetModal } from "@hive/ui";
+import { Button, Input, Card, toast, cn, AddTabModal, AddWidgetModal, HiveConfirmModal } from "@hive/ui";
 import type { AddTabInput, AddWidgetInputUI } from "@hive/ui";
 import { springPresets, easingArrays } from "@hive/tokens";
 import {
@@ -47,6 +47,7 @@ import {
   useSpaceLeader,
 } from "@/contexts/space";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
+import { useAuth } from "@hive/auth-logic";
 
 // =============================================================================
 // TYPES
@@ -128,6 +129,7 @@ const listItemVariants: Variants = {
 function SpaceSettingsContent() {
   const router = useRouter();
   const shouldReduceMotion = useReducedMotion();
+  const { user } = useAuth();
 
   // Use focused context hooks for better performance
   const {
@@ -161,6 +163,26 @@ function SpaceSettingsContent() {
   // Modal state for Add Tab and Add Widget
   const [addTabModalOpen, setAddTabModalOpen] = React.useState(false);
   const [addWidgetModalOpen, setAddWidgetModalOpen] = React.useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  // Check if user has provisional access (pending leader verification)
+  const hasProvisionalAccess = React.useMemo(() => {
+    if (!space || !user?.uid) return false;
+    // Access leaderRequests from space data - it's included in toSpaceWithToolsDTO
+    const leaderRequests = (space as { leaderRequests?: Array<{
+      profileId: string;
+      status: string;
+      provisionalAccessGranted?: boolean;
+      reviewedAt?: string | null;
+    }> }).leaderRequests;
+    if (!leaderRequests) return false;
+
+    const userRequest = leaderRequests.find(
+      (r) => r.profileId === user.uid && r.status === 'pending'
+    );
+    return userRequest?.provisionalAccessGranted && !userRequest.reviewedAt;
+  }, [space, user?.uid]);
 
   // Initialize form when space loads
   React.useEffect(() => {
@@ -249,25 +271,35 @@ function SpaceSettingsContent() {
   const handleDeleteSpace = async () => {
     if (!spaceId) return;
 
-    if (
-      !confirm(
-        "Are you sure you want to delete this space? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-
     try {
+      setIsDeleting(true);
       const res = await secureApiFetch(`/api/spaces/${spaceId}`, {
         method: "DELETE",
       });
 
-      if (!res.ok) throw new Error("Failed to delete");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        // Handle provisional access restriction
+        if (data.code === "PROVISIONAL_ACCESS_RESTRICTED") {
+          toast.error(
+            "Action restricted",
+            "Space deletion is disabled while your leader verification is pending."
+          );
+          return;
+        }
+        throw new Error(data.error || "Failed to delete");
+      }
 
       toast.success("Space deleted", "The space has been permanently deleted.");
       router.push("/spaces");
-    } catch {
-      toast.error("Failed to delete", "Please try again.");
+    } catch (error) {
+      toast.error(
+        "Failed to delete",
+        error instanceof Error ? error.message : "Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -800,6 +832,24 @@ function SpaceSettingsContent() {
                       These actions are irreversible. Please be certain.
                     </p>
 
+                    {/* Provisional Access Warning */}
+                    {hasProvisionalAccess && (
+                      <div className="p-4 bg-amber-500/10 rounded-lg border border-amber-500/30 mb-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <h3 className="font-medium text-amber-400 mb-1">
+                              Verification Pending
+                            </h3>
+                            <p className="text-sm text-amber-400/70">
+                              Destructive actions like space deletion are disabled while your leader verification is in progress.
+                              This usually takes less than 24 hours.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
                       <h3 className="font-medium text-white mb-2">Delete Space</h3>
                       <p className="text-sm text-neutral-400 mb-3">
@@ -808,8 +858,12 @@ function SpaceSettingsContent() {
                       </p>
                       <Button
                         variant="outline"
-                        onClick={handleDeleteSpace}
-                        className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={hasProvisionalAccess}
+                        className={cn(
+                          "border-red-500/50 text-red-400 hover:bg-red-500/10",
+                          hasProvisionalAccess && "opacity-50 cursor-not-allowed hover:bg-transparent"
+                        )}
                       >
                         <Trash2 className="h-4 w-4 mr-1.5" />
                         Delete Space
@@ -854,6 +908,18 @@ function SpaceSettingsContent() {
           onSubmit={handleAddWidget}
         />
       )}
+
+      {/* Delete Space Confirmation */}
+      <HiveConfirmModal
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Space"
+        description="Are you sure you want to delete this space? All content, members, and history will be permanently lost. This action cannot be undone."
+        confirmText="Delete Space"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteSpace}
+      />
     </motion.div>
   );
 }

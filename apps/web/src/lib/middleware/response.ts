@@ -42,6 +42,11 @@ export class ResponseFormatter {
       message?: string;
       status?: number;
       meta?: Partial<ApiSuccessResponse<T>['meta']>;
+      /**
+       * SCALING FIX: Support cache headers for edge caching
+       * Example: { 'Cache-Control': 'public, s-maxage=60' }
+       */
+      headers?: Record<string, string>;
     }
   ): Response {
     const response: ApiSuccessResponse<T> = {
@@ -55,7 +60,8 @@ export class ResponseFormatter {
     };
 
     return NextResponse.json(response, {
-      status: options?.status || 200
+      status: options?.status || 200,
+      headers: options?.headers
     });
   }
 

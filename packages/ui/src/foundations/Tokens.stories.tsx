@@ -1,10 +1,7 @@
 import {
-  colors,
-  overlay,
-  gradients,
+  foundation,
   semantic,
   spacing,
-  layoutSizes,
   typography,
   radius,
   motion,
@@ -188,7 +185,7 @@ const TokensOverview = () => (
     </header>
 
     <Section title="Core Palette" description="Monochrome base with accent gold. Includes semantic groupings for background, text, brand, and status tokens.">
-      <ColorGrid palette={flattenColorObject({ colors, overlay, gradients, semantic })} />
+      <ColorGrid palette={flattenColorObject({ foundation, semantic })} />
     </Section>
 
     <Section title="Spacing Scale" description="4px grid expressed in rem for responsive layouts. Bars show pixel equivalent.">
@@ -205,21 +202,6 @@ const TokensOverview = () => (
 
     <Section title="Motion" description="Timing and easing primitives for calm interactions. Respect reduced-motion preferences in components.">
       <MotionTable />
-    </Section>
-
-    <Section title="Layout Sizes" description="Common width/height dimensions referenced across layouts.">
-      <table style={tableStyle}>
-        <tbody>
-          {Object.entries(layoutSizes).flatMap(([dimension, tokens]) =>
-            Object.entries(tokens).map(([token, value]) => (
-              <tr key={`${dimension}-${token}`}>
-                <td><code>{dimension}.{token}</code></td>
-                <td>{value}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
     </Section>
 
     <footer style={{ fontSize: '0.8rem', color: 'rgba(229,229,231,0.55)' }}>

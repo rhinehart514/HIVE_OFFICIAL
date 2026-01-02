@@ -19,9 +19,9 @@ const ideInputVariants = cva(
   {
     variants: {
       size: {
-        sm: 'h-7 px-2 text-xs rounded-md',
-        md: 'h-8 px-3 text-sm rounded-lg',
-        lg: 'h-10 px-4 text-sm rounded-lg',
+        sm: 'h-7 px-2 text-base md:text-xs rounded-md', // 16px mobile (iOS zoom fix)
+        md: 'h-8 px-3 text-base md:text-sm rounded-lg',
+        lg: 'h-10 px-4 text-base md:text-sm rounded-lg',
       },
     },
     defaultVariants: {

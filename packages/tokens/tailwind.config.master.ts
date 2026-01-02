@@ -125,6 +125,11 @@ const masterConfig: Config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'shimmer': {
+          '100%': {
+            transform: 'translateX(100%)',
+          },
+        },
         'hive-glow': {
           '0%, 100%': {
             boxShadow: '0 0 20px rgba(255, 215, 0, 0.3)'
@@ -148,6 +153,7 @@ const masterConfig: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'shimmer': 'shimmer 1.5s infinite',
         'hive-glow': 'hive-glow 2s ease-in-out infinite',
         'hive-pulse': 'hive-pulse 2s ease-in-out infinite',
       },

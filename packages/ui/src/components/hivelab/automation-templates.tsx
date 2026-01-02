@@ -19,7 +19,7 @@ import {
   AlertCircle,
   Star,
   Smile,
-  Sparkles,
+  Zap,
   Check,
   X,
   ChevronRight,
@@ -71,11 +71,11 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   AlertCircle,
   Star,
   Smile,
-  Sparkles,
+  Zap,
 };
 
 function getIcon(iconName: string): React.ComponentType<{ className?: string }> {
-  return ICON_MAP[iconName] || Sparkles;
+  return ICON_MAP[iconName] || Zap;
 }
 
 // ============================================================================
@@ -269,7 +269,7 @@ export function AutomationTemplates({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[var(--hive-gold-cta)]" />
+            <Zap className="h-5 w-5 text-[var(--hive-gold-cta)]" />
             Automation Templates
           </h2>
           <p className="text-white/50 text-sm mt-0.5">
@@ -385,7 +385,7 @@ export function AutomationTemplatesCompact({
       )}
     >
       <div className="p-2 rounded-lg bg-amber-500/20">
-        <Sparkles className="h-4 w-4 text-amber-400" />
+        <Zap className="h-4 w-4 text-amber-400" />
       </div>
       <div className="flex-1 text-left">
         <p className="text-white text-sm font-medium">Quick Automations</p>

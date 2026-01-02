@@ -31,6 +31,9 @@ import {
   Settings,
   BadgeCheck,
   LogOut,
+  Clock,
+  Crown,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { springPresets, easingArrays, tinderSprings } from "@hive/tokens";
@@ -51,6 +54,8 @@ export type SpaceMembershipState =
   | "owner"
   | "admin";
 
+export type SpaceClaimStatus = 'unclaimed' | 'pending_verification' | 'claimed' | 'verified';
+
 export interface SpaceDetailData {
   id: string;
   name: string;
@@ -61,6 +66,10 @@ export interface SpaceDetailData {
   isVerified?: boolean;
   memberCount: number;
   onlineCount?: number;
+  /** Claim status for leader flow banners */
+  claimStatus?: SpaceClaimStatus;
+  /** Whether current user has provisional access (leader with pending verification) */
+  hasProvisionalAccess?: boolean;
 }
 
 export interface SpaceDetailHeaderProps {
@@ -84,6 +93,10 @@ export interface SpaceDetailHeaderProps {
     boardId?: string;
     onNavigate?: (target: 'campus' | 'space' | 'board') => void;
   };
+  /** Callback when user clicks "Claim This Space" on unclaimed banner */
+  onClaim?: () => void;
+  /** Callback when user clicks "Know the leader?" link on unclaimed banner */
+  onReferLeader?: () => void;
   className?: string;
 }
 
@@ -209,10 +222,10 @@ function SpaceAvatar({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-[#FFD700] to-[#FFD700]/70 flex items-center justify-center">
+          <div className="w-full h-full bg-gradient-to-br from-neutral-700 to-neutral-800 flex items-center justify-center">
             <span
               className={cn(
-                "font-bold text-black",
+                "font-bold text-white",
                 size === "sm" && "text-sm",
                 size === "md" && "text-lg md:text-xl",
                 size === "lg" && "text-2xl md:text-3xl"
@@ -231,10 +244,7 @@ function SpaceAvatar({
             variants={verifiedBadgeVariants}
             initial="initial"
             animate="animate"
-            className={cn(
-              "absolute -bottom-1 -right-1 bg-[#FFD700] rounded-full p-0.5",
-              "shadow-lg shadow-[#FFD700]/30"
-            )}
+            className="absolute -bottom-1 -right-1 bg-[#FFD700] rounded-full p-0.5"
           >
             <BadgeCheck className="w-4 h-4 text-black" />
           </motion.div>
@@ -262,6 +272,8 @@ export function SpaceDetailHeader({
   onAddTab,
   showTabs = true,
   breadcrumb,
+  onClaim,
+  onReferLeader,
   className,
 }: SpaceDetailHeaderProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -282,7 +294,13 @@ export function SpaceDetailHeader({
     isVerified,
     memberCount,
     onlineCount,
+    claimStatus,
+    hasProvisionalAccess,
   } = space;
+
+  // Determine if we should show banners
+  const showUnclaimedBanner = claimStatus === 'unclaimed' && !isLeader;
+  const showPendingBanner = hasProvisionalAccess && claimStatus === 'pending_verification';
 
   const isJoined = ["joined", "owner", "admin"].includes(membershipState);
   const isPending = membershipState === "pending";
@@ -369,6 +387,86 @@ export function SpaceDetailHeader({
           "max-w-[1200px] mx-auto"
         )}
       >
+        {/* Unclaimed Space Banner */}
+        <AnimatePresence>
+          {showUnclaimedBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: easingArrays.silk }}
+              className="mb-4 p-4 rounded-xl bg-[#FFD700]/[0.08] border border-[#FFD700]/20"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-8 h-8 rounded-lg bg-[#FFD700]/20 flex items-center justify-center">
+                    <Crown className="w-4 h-4 text-[#FFD700]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-white">
+                      This space is waiting for a leader
+                    </h3>
+                    <p className="text-xs text-white/50">
+                      Are you involved with {name}?
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {onClaim && (
+                    <Button
+                      variant="brand"
+                      size="sm"
+                      onClick={onClaim}
+                      className="font-medium"
+                    >
+                      Claim This Space
+                    </Button>
+                  )}
+                  {onReferLeader && (
+                    <button
+                      onClick={onReferLeader}
+                      className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                    >
+                      Know the leader?
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Pending Verification Banner (for leaders with provisional access) */}
+        <AnimatePresence>
+          {showPendingBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: easingArrays.silk }}
+              className="mb-4 p-4 rounded-xl bg-white/[0.04] border border-white/[0.08]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/[0.08] flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-white/60" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium text-white">
+                    Verification Pending
+                  </h3>
+                  <p className="text-xs text-white/50">
+                    We&apos;re reviewing your claim (usually &lt;24h). You can start setting up while you wait.
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-white/30">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Reviewing</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Main content row - Single line on desktop */}
         <div className="flex items-center gap-3 md:gap-4">
           {/* Avatar - Smaller for compact header */}
@@ -397,11 +495,7 @@ export function SpaceDetailHeader({
                 {onlineCount !== undefined && onlineCount > 0 && (
                   <span className="inline-flex items-center gap-1 text-[#FFD700]" aria-label={`${onlineCount} members online`}>
                     <span
-                      className={cn(
-                        "w-1.5 h-1.5 rounded-full bg-[#FFD700]",
-                        "shadow-[0_0_6px_#FFD700]",
-                        "animate-pulse"
-                      )}
+                      className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse"
                       aria-hidden="true"
                     />
                     <span>{onlineCount}</span>
@@ -455,8 +549,7 @@ export function SpaceDetailHeader({
                 aria-label={isJoined ? "Leave this space" : "Join this space"}
                 className={cn(
                   "min-w-[110px] h-10 font-semibold",
-                  isJoined && "border-white/20 hover:border-red-500/50 hover:text-red-400",
-                  !isJoined && "shadow-[0_0_20px_rgba(255,215,0,0.15)]"
+                  isJoined && "border-white/20 hover:border-red-500/50 hover:text-red-400"
                 )}
               >
                 {isLoading && (
@@ -495,7 +588,7 @@ export function SpaceDetailHeader({
                 size="icon"
                 onClick={onSettings}
                 aria-label="Space settings"
-                className="hidden md:flex h-11 w-11 text-neutral-400 hover:text-[#FFD700] hover:bg-white/10"
+                className="hidden md:flex h-11 w-11 text-neutral-400 hover:text-white hover:bg-white/10"
               >
                 <Settings className="w-4 h-4" />
               </Button>

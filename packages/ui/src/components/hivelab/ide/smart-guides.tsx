@@ -200,7 +200,7 @@ export function SmartGuides({
             y1="3"
             x2="6"
             y2="3"
-            stroke="#FFD700"
+            stroke="#888888"
             strokeWidth="1"
             strokeDasharray="2 2"
           />
@@ -217,7 +217,7 @@ export function SmartGuides({
                 y1={guide.start - 20}
                 x2={guide.position}
                 y2={guide.end + 20}
-                stroke="#FFD700"
+                stroke="#888888"
                 strokeWidth={1 / zoom}
                 strokeDasharray="4 2"
                 opacity={0.8}
@@ -227,13 +227,13 @@ export function SmartGuides({
                 cx={guide.position}
                 cy={guide.start - 20}
                 r={2 / zoom}
-                fill="#FFD700"
+                fill="#888888"
               />
               <circle
                 cx={guide.position}
                 cy={guide.end + 20}
                 r={2 / zoom}
-                fill="#FFD700"
+                fill="#888888"
               />
             </>
           ) : (
@@ -244,7 +244,7 @@ export function SmartGuides({
                 y1={guide.position}
                 x2={guide.end + 20}
                 y2={guide.position}
-                stroke="#FFD700"
+                stroke="#888888"
                 strokeWidth={1 / zoom}
                 strokeDasharray="4 2"
                 opacity={0.8}
@@ -254,13 +254,13 @@ export function SmartGuides({
                 cx={guide.start - 20}
                 cy={guide.position}
                 r={2 / zoom}
-                fill="#FFD700"
+                fill="#888888"
               />
               <circle
                 cx={guide.end + 20}
                 cy={guide.position}
                 r={2 / zoom}
-                fill="#FFD700"
+                fill="#888888"
               />
             </>
           )}

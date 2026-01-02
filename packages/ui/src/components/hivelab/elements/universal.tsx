@@ -506,8 +506,8 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
                     <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(field.options || []).map((opt: string, optIndex: number) => (
-                      <SelectItem key={optIndex} value={opt}>{opt}</SelectItem>
+                    {(field.options || []).map((opt, optIndex) => (
+                      <SelectItem key={optIndex} value={opt.value}>{opt.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -7,8 +7,11 @@
  * - Avatar sizing: 28px (7 Tailwind units) with 8px overlap
  * - Border: 2px solid background color for separation
  * - Gradient fallback: Gold gradient for missing avatars
+ * - Presence: Green dots appear on HOVER only (felt, not watched)
  *
  * Usage: Show recent members on space cards with "+N more" indicator
+ *
+ * @version 2.0.0 - Added presence indicators (hover reveal)
  */
 
 import React from 'react';
@@ -46,6 +49,8 @@ export interface MemberStackMember {
   avatarUrl?: string;
   /** Display name (used for fallback initial) */
   name?: string;
+  /** Whether member is online (shown on hover) */
+  isOnline?: boolean;
 }
 
 export interface MemberStackProps extends VariantProps<typeof stackVariants> {
@@ -72,28 +77,45 @@ export function MemberStack({
   const remaining = total - displayMembers.length;
 
   return (
-    <div className={cn(stackVariants({ size }), className)}>
+    <div className={cn(stackVariants({ size }), 'group', className)}>
       <div className={cn('flex', overlapSizes[size])}>
         {displayMembers.map((member, index) => (
           <div
             key={index}
-            className={cn(
-              'rounded-full border-2 border-neutral-900 flex items-center justify-center overflow-hidden',
-              'bg-gradient-to-br from-neutral-700 to-neutral-800',
-              avatarSizes[size]
-            )}
+            className="relative"
             style={{ zIndex: displayMembers.length - index }}
           >
-            {member.avatarUrl ? (
-              <img
-                src={member.avatarUrl}
-                alt={member.name || 'Member'}
-                className="w-full h-full object-cover"
+            <div
+              className={cn(
+                'rounded-full border-2 border-[#1A1A1A] flex items-center justify-center overflow-hidden',
+                'bg-gradient-to-br from-[#2A2A2A] to-[#1A1A1A]',
+                avatarSizes[size]
+              )}
+            >
+              {member.avatarUrl ? (
+                <img
+                  src={member.avatarUrl}
+                  alt={member.name || 'Member'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="font-medium text-[#A1A1A6]">
+                  {member.name?.charAt(0)?.toUpperCase() || '?'}
+                </span>
+              )}
+            </div>
+            {/* Online indicator - appears on hover only */}
+            {member.isOnline && (
+              <div
+                className={cn(
+                  'absolute -bottom-0.5 -right-0.5',
+                  'w-2 h-2 rounded-full',
+                  'bg-green-500 border border-[#1A1A1A]',
+                  'opacity-0 group-hover:opacity-100',
+                  'transition-opacity duration-150'
+                )}
+                aria-label="Online"
               />
-            ) : (
-              <span className="font-medium text-neutral-400">
-                {member.name?.charAt(0)?.toUpperCase() || '?'}
-              </span>
             )}
           </div>
         ))}
@@ -102,7 +124,7 @@ export function MemberStack({
       {remaining > 0 && (
         <span
           className={cn(
-            'ml-2 font-medium text-neutral-500 tabular-nums',
+            'ml-2 font-medium text-[#71717A] tabular-nums',
             size === 'sm' && 'text-[10px]',
             size === 'md' && 'text-xs',
             size === 'lg' && 'text-sm'

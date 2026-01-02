@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { easingArrays } from '@hive/tokens';
 
 /**
  * StreamShell - The Stream Experience
@@ -61,7 +62,7 @@ export function StreamShell({
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.4, ease: easingArrays.default }}
         className="
           sticky top-0 z-50
           backdrop-blur-xl
@@ -112,10 +113,10 @@ export function StreamShell({
         </div>
       </main>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav (visible below 1024px) */}
       {showBottomNav && bottomNavContent && (
         <nav className="
-          md:hidden
+          lg:hidden
           sticky bottom-0
           backdrop-blur-xl
           bg-[var(--hive-background-primary)]/80
@@ -137,7 +138,7 @@ export const streamItemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
+      ease: easingArrays.default,
     },
   },
 };

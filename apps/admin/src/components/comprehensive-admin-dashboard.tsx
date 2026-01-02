@@ -3,15 +3,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { AdminNavigation } from "./admin-navigation";
+import { AdminSidebar } from "./admin-sidebar";
+import { OverviewDashboard } from "./overview-dashboard";
 import { UserManagementDashboard } from "./user-management-dashboard";
 import { SpaceManagementDashboard } from "./space-management-dashboard";
+import { SchoolManagementDashboard } from "./school-management-dashboard";
 import { ContentModerationDashboard } from "./content-moderation-dashboard";
 import { BuilderQueueEnhanced } from "./builder-queue-enhanced";
 import { AnalyticsDashboard } from "./analytics-dashboard";
-import { MetricCards } from "./metric-cards";
 import { AdminNotifications } from "./admin-notifications";
 import { AdminActivityLogDashboard } from "./admin-activity-log";
+import { FeatureFlagManagement } from "./feature-flag-management";
+import { SpaceHealthDashboard } from "./space-health-dashboard";
+import { ToolReviewDashboard } from "./tool-review-dashboard";
+import { OnboardingFunnelDashboard } from "./onboarding-funnel-dashboard";
+import { AlertPanel } from "./alert-panel";
+import { SystemHealthDashboard } from "./system-health-dashboard";
+import { ActivityLogViewer } from "./activity-log-viewer";
+import { ClaimsQueue } from "./claims-queue";
+import { LeaderHealthDashboard } from "./leader-health-dashboard";
+import { Bell, Search, LogOut } from "lucide-react";
 
 interface AdminDashboardProps {
   initialTab?: string;
@@ -24,28 +35,34 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
     builderRequests: 0,
     flaggedContent: 0,
     userReports: 0,
+    pendingClaims: 0,
   });
 
   const fetchPendingCounts = useCallback(async () => {
     if (!admin) return;
 
     try {
-      const [builderResponse, contentResponse] = await Promise.all([
+      const [builderResponse, contentResponse, claimsResponse] = await Promise.all([
         fetch('/api/admin/builder-requests', {
           headers: { 'Authorization': `Bearer ${admin.id}` },
         }),
         fetch('/api/admin/content-moderation', {
           headers: { 'Authorization': `Bearer ${admin.id}` },
         }),
+        fetch('/api/admin/claims?status=pending', {
+          headers: { 'Authorization': `Bearer ${admin.id}` },
+        }),
       ]);
 
       const builderData = await builderResponse.json();
       const contentData = await contentResponse.json();
+      const claimsData = claimsResponse.ok ? await claimsResponse.json() : { claims: [] };
 
       setPendingCounts({
         builderRequests: builderData.requests?.filter((r: { status: string }) => r.status === 'pending').length || 0,
         flaggedContent: contentData.flaggedContent?.filter((c: { status: string }) => c.status === 'pending').length || 0,
         userReports: 0, // TODO: Implement user reports
+        pendingClaims: claimsData.data?.summary?.pending || claimsData.summary?.pending || (claimsData.data?.claims || claimsData.claims || []).length,
       });
     } catch {
       // Pending counts fetch failed - will retry on next interval
@@ -62,59 +79,18 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return (
-          <div className="space-y-6">
-            <MetricCards />
-            <div className="grid gap-6 lg:grid-cols-3">
-              <Card className="border-gray-700 bg-gray-900/50">
-                <CardHeader>
-                  <CardTitle className="text-white">Recent Builder Requests</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <BuilderQueueEnhanced />
-                </CardContent>
-              </Card>
-              <Card className="border-gray-700 bg-gray-900/50">
-                <CardHeader>
-                  <CardTitle className="text-white">Platform Health</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">System Status</span>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-green-400">Healthy</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Pending Actions</span>
-                      <span className="text-white">
-                        {pendingCounts.builderRequests + pendingCounts.flaggedContent}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-gray-400">Active Admins</span>
-                      <span className="text-white">1</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <div className="lg:col-span-1">
-                <AdminNotifications maxHeight="300px" />
-              </div>
-            </div>
-          </div>
-        );
+        return <OverviewDashboard />;
       case 'users':
         return <UserManagementDashboard />;
       case 'spaces':
         return <SpaceManagementDashboard />;
+      case 'schools':
+        return <SchoolManagementDashboard />;
       case 'content':
         return <ContentModerationDashboard />;
       case 'builders':
         return (
-          <Card className="border-gray-700 bg-gray-900/50">
+          <Card className="border-white/10 bg-[#141414]">
             <CardHeader>
               <CardTitle className="text-white">Builder Approval Queue</CardTitle>
             </CardHeader>
@@ -125,18 +101,20 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
         );
       case 'analytics':
         return <AnalyticsDashboard />;
+      case 'flags':
+        return <FeatureFlagManagement />;
       case 'system':
         return (
           <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
-              <Card className="border-gray-700 bg-gray-900/50">
+              <Card className="border-white/10 bg-[#141414]">
                 <CardHeader>
                   <CardTitle className="text-white">System Configuration</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-gray-800 rounded-lg">
+                      <div className="p-4 bg-white/5 rounded-lg border border-white/10">
                         <h4 className="font-semibold text-white mb-2">Platform Settings</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
@@ -153,7 +131,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
                           </div>
                         </div>
                       </div>
-                      <div className="p-4 bg-gray-800 rounded-lg">
+                      <div className="p-4 bg-white/5 rounded-lg border border-white/10">
                         <h4 className="font-semibold text-white mb-2">Feature Flags</h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
@@ -179,10 +157,37 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
             <AdminActivityLogDashboard />
           </div>
         );
+      case 'alerts':
+        return <AlertPanel />;
+      case 'health':
+        return <SystemHealthDashboard />;
+      case 'logs':
+        return <ActivityLogViewer />;
+      case 'security':
+        return (
+          <Card className="border-white/10 bg-[#141414]">
+            <CardHeader>
+              <CardTitle className="text-white">Security Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-400">Security settings coming soon...</p>
+            </CardContent>
+          </Card>
+        );
+      case 'spaceHealth':
+        return <SpaceHealthDashboard />;
+      case 'toolReview':
+        return <ToolReviewDashboard />;
+      case 'onboardingFunnel':
+        return <OnboardingFunnelDashboard />;
+      case 'claims':
+        return <ClaimsQueue />;
+      case 'leaderHealth':
+        return <LeaderHealthDashboard />;
       default:
         return (
           <div className="text-center py-8">
-            <p className="text-gray-400">Select a tab to view its content</p>
+            <p className="text-gray-400">Select a section from the sidebar</p>
           </div>
         );
     }
@@ -197,57 +202,64 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">HIVE Admin Dashboard</h1>
-              <p className="mt-2 text-gray-400">
-                Complete platform control and oversight
-              </p>
+    <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
+      {/* Sidebar */}
+      <AdminSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        pendingCounts={pendingCounts}
+      />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <header className="flex items-center justify-between h-14 px-6 border-b border-white/10 bg-[#0A0A0A]">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-semibold text-white">
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Search */}
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <input
+                type="text"
+                placeholder="Search..."
+                className="w-64 pl-10 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#FFD700]/50"
+              />
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-400">Logged in as</p>
-              <p className="font-semibold text-white">{admin.email}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-sm text-gray-500 capitalize">{admin.role}</p>
+
+            {/* Notifications */}
+            <button className="relative p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+              <Bell className="h-5 w-5" />
+              {(pendingCounts.builderRequests + pendingCounts.flaggedContent) > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+              )}
+            </button>
+
+            {/* User Menu */}
+            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-white">{admin.email}</p>
+                <p className="text-xs text-gray-500 capitalize">{admin.role}</p>
               </div>
+              <button
+                onClick={() => window.location.href = '/auth/login'}
+                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Navigation */}
-        <AdminNavigation
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          pendingCounts={pendingCounts}
-        />
-
-        {/* Content */}
-        <div className="min-h-96">
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-6">
           {renderTabContent()}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 p-4 bg-gray-900/30 border border-gray-700 rounded-lg">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-gray-400">System Status: Healthy</span>
-              </div>
-              <div className="text-gray-400">
-                Last Updated: {new Date().toLocaleTimeString()}
-              </div>
-            </div>
-            <div className="text-gray-400">
-              HIVE Admin v1.0.0 • Built with Next.js & Firebase
-            </div>
-          </div>
-        </div>
+        </main>
       </div>
     </div>
   );

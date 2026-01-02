@@ -46,6 +46,10 @@ const PROTECTED_ROUTES = [
   '/tools',
   '/events',
   '/settings',
+  // Phase 7: Short URL aliases
+  '/browse',
+  '/build',
+  '/me',
 ];
 
 // Routes that are always public
@@ -307,5 +311,9 @@ export const config = {
     // Onboarding - include exact path AND subpaths
     '/onboarding',
     '/onboarding/:path*',
+    // Phase 7: Short URL aliases
+    '/browse',
+    '/build',
+    '/me',
   ],
 };

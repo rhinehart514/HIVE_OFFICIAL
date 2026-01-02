@@ -355,7 +355,8 @@ async function updateCacheAccess(cacheId: string): Promise<void> {
   }
 }
 
-// Helper function to generate feed content (mock implementation)
+// Helper function to generate feed content
+// TODO: Wire up FeedAggregationEngine from @/lib/feed-aggregation when feed system is prioritized
 async function generateFeedContent(_params: {
   userId: string;
   feedType: string;
@@ -364,37 +365,20 @@ async function generateFeedContent(_params: {
   timeRange: string;
   qualityThreshold: number;
 }): Promise<{ items: unknown[]; metadata: Record<string, unknown> }> {
-  // This would integrate with the actual feed algorithm APIs
-  // For now, return mock data structure
-  
-  const mockItems = [
-    {
-      id: 'mock_1',
-      type: 'tool_generated',
-      content: 'Sample tool-generated content',
-      relevanceScore: 85,
-      qualityScore: 90,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: 'mock_2',
-      type: 'space_event',
-      content: 'Sample space event',
-      relevanceScore: 75,
-      qualityScore: 80,
-      timestamp: new Date().toISOString()
-    }
-  ];
+  // Return empty feed - real implementation deferred for post-launch
+  // See: FeedAggregationEngine in @/lib/feed-aggregation.ts for future integration
+  const items: unknown[] = [];
 
   const metadata = {
-    totalItems: mockItems.length,
-    averageQuality: 85,
-    diversityScore: 80,
-    toolContentPercentage: 50,
-    algorithmVersion: '2.0'
+    totalItems: 0,
+    averageQuality: 0,
+    diversityScore: 0,
+    toolContentPercentage: 0,
+    algorithmVersion: '2.0',
+    status: 'feed_deferred'
   };
 
-  return { items: mockItems, metadata };
+  return { items, metadata };
 }
 
 // Helper function to get cache statistics

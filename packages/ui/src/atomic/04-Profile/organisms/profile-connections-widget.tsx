@@ -4,6 +4,7 @@ import { Link2, UserPlus } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../../../lib/utils";
+import { Button } from "../../00-Global/atoms/button";
 import { Card } from "../../00-Global/atoms/card";
 import {
   PrivacyControl,
@@ -24,6 +25,7 @@ export interface ProfileConnectionsWidgetProps {
   isOwnProfile?: boolean;
   privacyLevel?: PrivacyLevel;
   onPrivacyChange?: (level: PrivacyLevel) => void;
+  onViewAll?: () => void;
   className?: string;
 }
 
@@ -42,6 +44,7 @@ export function ProfileConnectionsWidget({
   isOwnProfile = false,
   privacyLevel = "public",
   onPrivacyChange,
+  onViewAll,
   className,
 }: ProfileConnectionsWidgetProps) {
   const visible = connections.slice(0, 6);
@@ -55,8 +58,8 @@ export function ProfileConnectionsWidget({
     >
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl bg-[color-mix(in_srgb,var(--hive-background-tertiary,#141522) 78%,transparent)] p-2">
-            <Link2 className="h-4 w-4 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--hive-background-tertiary,#141522)_78%,transparent)]">
+            <Link2 className="h-5 w-5 text-[var(--hive-brand-primary,#facc15)]" aria-hidden />
           </div>
           <h3 className="text-lg font-medium text-[var(--hive-text-primary,#f7f7ff)]">Connections</h3>
         </div>
@@ -99,6 +102,16 @@ export function ProfileConnectionsWidget({
             </div>
           ))}
         </div>
+      )}
+
+      {connections.length > visible.length && onViewAll && (
+        <Button
+          variant="ghost"
+          onClick={onViewAll}
+          className="mt-4 w-full justify-center text-sm text-[var(--hive-text-secondary,#c0c2cc)] hover:text-[var(--hive-text-primary,#f7f7ff)] hover:bg-[color-mix(in_srgb,var(--hive-background-tertiary,#141522)_60%,transparent)]"
+        >
+          View all {connections.length} connections
+        </Button>
       )}
     </Card>
   );

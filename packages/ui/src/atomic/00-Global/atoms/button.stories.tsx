@@ -296,7 +296,7 @@ export const InteractiveLoading: Story = {
       <Button
         variant="primary"
         onClick={handleClick}
-        loading={loading}
+        state={loading ? 'loading' : 'idle'}
         leadingIcon={<Save />}
       >
         {loading ? 'Saving...' : 'Save Changes'}
@@ -526,7 +526,7 @@ export const FileUpload: Story = {
           <Button
             variant={uploaded ? 'success' : 'secondary'}
             onClick={handleUpload}
-            loading={uploading}
+            state={uploading ? 'loading' : uploaded ? 'success' : 'idle'}
             leadingIcon={uploaded ? <Check /> : <Upload />}
           >
             {uploaded ? 'Uploaded!' : uploading ? 'Uploading...' : 'Upload File'}

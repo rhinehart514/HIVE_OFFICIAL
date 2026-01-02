@@ -3,8 +3,8 @@
 import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Loader2, ArrowLeft, Check, Mail } from 'lucide-react';
-import { Button } from '@hive/ui';
+import { Loader2, ArrowLeft, Check } from 'lucide-react';
+import { toast } from '@hive/ui';
 import { AuthShell, AuthShellStatic } from '@/components/auth/auth-shell';
 
 export const dynamic = 'force-dynamic';
@@ -75,8 +75,8 @@ function parseApiError(error: string, status?: number): string {
 
 type LoginState = 'input' | 'sending' | 'code' | 'verifying' | 'success';
 
-// Progressive resend cooldowns
-const RESEND_COOLDOWNS = [30, 60, 120, 300]; // seconds
+// Resend cooldowns - capped at 60s to avoid punishing users for typos
+const RESEND_COOLDOWNS = [30, 45, 60, 60]; // seconds (max 60s)
 
 // Premium easing
 const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
@@ -113,25 +113,25 @@ const successVariants = {
 function LoginPageFallback() {
   return (
     <AuthShellStatic>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="text-center space-y-2">
           <h1
-            className="text-2xl font-semibold"
-            style={{ color: 'var(--hive-text-primary)' }}
+            className="text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.02em]"
+            style={{ color: '#FFFFFF' }}
           >
-            Sign in
+            Enter HIVE
           </h1>
           <p
-            className="text-sm"
-            style={{ color: 'var(--hive-text-subtle)' }}
+            className="text-[14px]"
+            style={{ color: 'rgba(255, 255, 255, 0.4)' }}
           >
             Loading...
           </p>
         </div>
         <div className="flex justify-center">
           <Loader2
-            className="w-6 h-6 animate-spin"
-            style={{ color: 'var(--hive-text-subtle)' }}
+            className="w-5 h-5 animate-spin"
+            style={{ color: 'rgba(255, 255, 255, 0.4)' }}
           />
         </div>
       </div>
@@ -144,9 +144,21 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get('redirect') || '/feed';
   const isNewUser = searchParams.get('new') === 'true';
+  const sessionExpired = searchParams.get('expired') === 'true';
   const shouldReduceMotion = useReducedMotion();
 
   const [email, setEmail] = useState('');
+
+  // Show session expiry toast on mount if redirected due to expired session
+  useEffect(() => {
+    if (sessionExpired) {
+      toast.info('Session expired. Please sign in again.');
+      // Clean up URL without triggering navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete('expired');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [sessionExpired]);
   const [error, setError] = useState<string | null>(null);
   const [loginState, setLoginState] = useState<LoginState>('input');
 
@@ -265,7 +277,7 @@ function LoginContent() {
         } else {
           router.push(redirectTo);
         }
-      }, 1200);
+      }, 1800);
 
     } catch (err) {
       console.error('Verify error:', err);
@@ -322,87 +334,81 @@ function LoginContent() {
   return (
     <AuthShell>
       <AnimatePresence mode="wait">
-          {/* Success State */}
+          {/* Success State - Minimal */}
           {loginState === 'success' && (
             <motion.div
               key="success"
-              variants={successVariants}
-              initial="initial"
-              animate="animate"
-              className="text-center space-y-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center"
             >
-              {/* Animated checkmark with gold ring */}
+              {/* Simple text with inline check */}
               <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.6, ease: EASE_PREMIUM }}
-                className="relative w-20 h-20 mx-auto"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: EASE_PREMIUM }}
+                className="space-y-6"
               >
-                {/* Outer ring with glow */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="absolute inset-0 rounded-full border-2 border-gold-500/40"
-                  style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.2)' }}
-                />
-                {/* Inner filled circle */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1, duration: 0.4, ease: EASE_PREMIUM }}
-                  className="absolute inset-2 rounded-full bg-gold-500/10 flex items-center justify-center"
-                >
+                {/* Main headline with check */}
+                <div className="flex items-center justify-center gap-3">
                   <motion.div
                     initial={{ scale: 0, rotate: -45 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    transition={{ delay: 0.3, duration: 0.4, ease: EASE_PREMIUM }}
-                  >
-                    <Check className="w-8 h-8 text-gold-500" strokeWidth={2.5} />
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-
-              {/* Welcome text */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.4 }}
-                className="space-y-2"
-              >
-                <h1
-                  className="text-3xl font-bold tracking-tight"
-                  style={{ color: 'var(--hive-text-primary)' }}
-                >
-                  You&apos;re in.
-                </h1>
-                <p
-                  className="text-sm"
-                  style={{ color: 'var(--hive-text-subtle)' }}
-                >
-                  {isNewUser ? 'Let\'s get you set up' : 'Welcome back'}
-                </p>
-              </motion.div>
-
-              {/* Subtle loading indicator */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="flex items-center justify-center gap-1.5 pt-2"
-              >
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ opacity: [0.3, 1, 0.3] }}
                     transition={{
-                      duration: 1.2,
-                      repeat: Infinity,
-                      delay: i * 0.15,
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 15,
+                      delay: 0.2
                     }}
-                    className="w-1.5 h-1.5 rounded-full bg-gold-500"
-                  />
-                ))}
+                  >
+                    <Check
+                      className="w-7 h-7"
+                      strokeWidth={3}
+                      style={{ color: '#FFD700' }}
+                    />
+                  </motion.div>
+                  <h1
+                    className="text-3xl font-semibold tracking-[-0.02em]"
+                    style={{ color: '#FFFFFF' }}
+                  >
+                    You&apos;re in
+                  </h1>
+                </div>
+
+                {/* Subtext */}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.4 }}
+                  className="text-[15px]"
+                  style={{ color: 'rgba(255, 255, 255, 0.4)' }}
+                >
+                  {isNewUser ? 'Setting up your account...' : 'Taking you home...'}
+                </motion.p>
+
+                {/* Minimal loading dots */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex justify-center gap-1.5 pt-4"
+                >
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        opacity: [0.3, 1, 0.3],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.15,
+                        ease: "easeInOut"
+                      }}
+                      className="w-1 h-1 rounded-full bg-white/60"
+                    />
+                  ))}
+                </motion.div>
               </motion.div>
             </motion.div>
           )}
@@ -417,60 +423,130 @@ function LoginContent() {
               exit="exit"
               className="space-y-8"
             >
-              <motion.div variants={itemVariants} className="text-center space-y-3">
-                <div className="flex justify-center mb-4">
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: 'var(--hive-gold-subtle)' }}
-                  >
-                    <Mail className="w-6 h-6" style={{ color: 'var(--hive-gold)' }} />
-                  </div>
-                </div>
+              <motion.div variants={itemVariants} className="text-center space-y-4">
                 <h1
-                  className="text-2xl font-semibold"
+                  className="text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.02em]"
                   style={{ color: 'var(--hive-text-primary)' }}
                 >
                   Check your email
                 </h1>
-                <p className="text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
-                  We sent a code to{' '}
-                  <span style={{ color: 'var(--hive-text-secondary)' }}>{fullEmail}</span>
+                <p className="text-[15px]" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                  We sent a 6-digit code to{' '}
+                  <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{fullEmail}</span>
                 </p>
               </motion.div>
 
-              {/* OTP Input */}
+              {/* OTP Input - Buttery Animated */}
               <motion.div variants={itemVariants} className="space-y-4">
-                {/* Responsive: smaller gap and inputs on small screens */}
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
+                <div className="flex items-center justify-center gap-2.5 sm:gap-3">
+                  {[0, 1, 2, 3, 4, 5].map((index) => {
+                    const isFilled = !!code[index];
+                    const filledCount = code.filter(Boolean).length;
+                    // Progressive gold intensity based on how many digits filled
+                    const goldIntensity = filledCount / 6;
+
+                    return (
+                      <motion.div
+                        key={index}
+                        initial={shouldReduceMotion ? {} : { opacity: 0, y: 12, scale: 0.8 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{
+                          delay: index * 0.06,
+                          duration: 0.4,
+                          ease: [0.22, 1, 0.36, 1]
+                        }}
+                        className="relative"
+                      >
+                        {/* Glow effect behind filled inputs */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{
+                            opacity: isFilled ? 0.4 + (goldIntensity * 0.3) : 0,
+                            scale: isFilled ? 1.2 : 0.8
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 25
+                          }}
+                          className="absolute inset-0 rounded-xl pointer-events-none"
+                          style={{
+                            background: `radial-gradient(circle, rgba(255, 215, 0, ${0.15 + goldIntensity * 0.1}) 0%, transparent 70%)`,
+                            filter: 'blur(8px)',
+                          }}
+                        />
+
+                        <motion.input
+                          data-index={index}
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          maxLength={1}
+                          value={code[index]}
+                          onChange={(e) => handleCodeChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(index, e)}
+                          disabled={loginState === 'verifying'}
+                          autoFocus={index === 0}
+                          aria-label={`Digit ${index + 1} of 6`}
+                          animate={{
+                            scale: isFilled ? [1, 1.1, 1] : 1,
+                            backgroundColor: isFilled
+                              ? `rgba(255, 215, 0, ${0.08 + goldIntensity * 0.04})`
+                              : 'rgba(255, 255, 255, 0.03)',
+                            borderColor: codeError
+                              ? 'var(--hive-status-error)'
+                              : isFilled
+                                ? `rgba(255, 215, 0, ${0.4 + goldIntensity * 0.3})`
+                                : 'rgba(255, 255, 255, 0.1)',
+                          }}
+                          transition={{
+                            scale: {
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 15,
+                              mass: 0.5
+                            },
+                            backgroundColor: {
+                              duration: 0.3,
+                              ease: [0.22, 1, 0.36, 1]
+                            },
+                            borderColor: {
+                              duration: 0.2,
+                              ease: "easeOut"
+                            }
+                          }}
+                          className="relative w-11 sm:w-12 h-14 sm:h-16 text-center text-2xl sm:text-3xl font-semibold rounded-xl outline-none border disabled:opacity-50 disabled:cursor-not-allowed focus:border-white/40"
+                          style={{
+                            color: isFilled
+                              ? `rgb(255, ${215 + (1 - goldIntensity) * 40}, ${(1 - goldIntensity) * 100})`
+                              : 'rgba(255, 255, 255, 0.8)',
+                            textShadow: isFilled
+                              ? `0 0 ${8 + goldIntensity * 12}px rgba(255, 215, 0, ${0.3 + goldIntensity * 0.3})`
+                              : 'none',
+                          }}
+                        />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Progress indicator */}
+                <div className="flex justify-center gap-1.5 pt-2">
                   {[0, 1, 2, 3, 4, 5].map((index) => (
-                    <motion.input
+                    <motion.div
                       key={index}
-                      initial={shouldReduceMotion ? {} : { opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.3 }}
-                      data-index={index}
-                      type="text"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={1}
-                      value={code[index]}
-                      onChange={(e) => handleCodeChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      disabled={loginState === 'verifying'}
-                      autoFocus={index === 0}
-                      aria-label={`Digit ${index + 1} of 6`}
-                      className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-semibold rounded-xl outline-none transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{
-                        backgroundColor: code[index] ? 'var(--hive-gold-subtle)' : 'var(--hive-bg-surface)',
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        borderColor: codeError
-                          ? 'var(--hive-status-error)'
-                          : code[index]
-                            ? 'var(--hive-gold)'
-                            : 'var(--hive-border-default)',
-                        color: 'var(--hive-text-primary)',
+                      animate={{
+                        backgroundColor: code[index]
+                          ? '#FFD700'
+                          : 'rgba(255, 255, 255, 0.15)',
+                        scale: code[index] ? 1 : 0.8,
                       }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 25
+                      }}
+                      className="w-1.5 h-1.5 rounded-full"
                     />
                   ))}
                 </div>
@@ -540,36 +616,32 @@ function LoginContent() {
               initial="initial"
               animate="animate"
               exit="exit"
-              className="space-y-8"
+              className="space-y-6"
             >
-              {/* Header */}
+              {/* Header - Unified, confident */}
               <motion.div variants={itemVariants} className="text-center space-y-2">
                 <h1
-                  className="text-3xl font-semibold tracking-tight"
-                  style={{ color: 'var(--hive-text-primary)' }}
+                  className="text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.02em]"
+                  style={{ color: '#FFFFFF' }}
                 >
-                  {isNewUser ? 'Join HIVE' : 'Sign in to HIVE'}
+                  Enter HIVE
                 </h1>
-                <p className="text-sm" style={{ color: 'var(--hive-text-subtle)' }}>
-                  {isNewUser ? (
-                    <>Your <span style={{ color: 'var(--hive-text-secondary)' }}>{CAMPUS_CONFIG.name}</span> email is your key</>
-                  ) : (
-                    <>Use your <span style={{ color: 'var(--hive-text-secondary)' }}>{CAMPUS_CONFIG.name}</span> email</>
-                  )}
+                <p className="text-[14px]" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                  Your <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{CAMPUS_CONFIG.name}</span> email is your key
                 </p>
               </motion.div>
 
-              {/* Form */}
+              {/* Form - Tighter */}
               <motion.div variants={itemVariants} className="space-y-4">
-                {/* Email Input */}
+                {/* Email Input - Clean box style */}
                 <div className="space-y-2">
                   <div
-                    className="flex items-center rounded-xl transition-all duration-200"
+                    className="relative flex items-center rounded-xl transition-all duration-200"
                     style={{
-                      backgroundColor: 'var(--hive-bg-surface)',
-                      borderWidth: '1px',
-                      borderStyle: 'solid',
-                      borderColor: error ? 'var(--hive-status-error)' : 'var(--hive-border-default)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                      border: error
+                        ? '1px solid var(--hive-status-error)'
+                        : '1px solid rgba(255, 255, 255, 0.08)',
                     }}
                   >
                     <input
@@ -587,19 +659,17 @@ function LoginContent() {
                           handleSendCode();
                         }
                       }}
-                      placeholder="you"
+                      placeholder="yourname"
                       disabled={loginState === 'sending'}
                       aria-label="Email username"
                       aria-describedby="email-domain"
-                      className="flex-1 bg-transparent px-4 py-3.5 text-base outline-none disabled:opacity-50"
-                      style={{
-                        color: 'var(--hive-text-primary)',
-                      }}
+                      className="flex-1 bg-transparent px-4 py-3.5 text-[15px] outline-none transition-all duration-200 disabled:opacity-50 placeholder:text-white/25"
+                      style={{ color: 'var(--hive-text-primary)' }}
                     />
                     <span
                       id="email-domain"
-                      className="pr-4 text-sm"
-                      style={{ color: 'var(--hive-text-subtle)' }}
+                      className="pr-4 text-[15px] pointer-events-none select-none"
+                      style={{ color: 'rgba(255, 255, 255, 0.35)' }}
                     >
                       @{CAMPUS_CONFIG.domain}
                     </span>
@@ -610,7 +680,7 @@ function LoginContent() {
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
-                        className="text-sm px-1"
+                        className="text-[13px] px-1"
                         style={{ color: 'var(--hive-status-error)' }}
                       >
                         {error}
@@ -619,79 +689,78 @@ function LoginContent() {
                   </AnimatePresence>
                 </div>
 
-                {/* Submit Button - Using @hive/ui Button */}
-                <Button
+                {/* Submit Button - White Pill */}
+                <button
                   onClick={handleSendCode}
                   disabled={loginState === 'sending' || !email.trim()}
-                  state={loginState === 'sending' ? 'loading' : 'idle'}
-                  showArrow={loginState !== 'sending'}
-                  fullWidth
-                  size="lg"
-                  variant={email.trim() ? 'default' : 'secondary'}
+                  className="group w-full py-3.5 px-6 rounded-xl font-medium text-[15px] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    backgroundColor: email.trim() ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.06)',
+                    color: email.trim() ? '#000' : 'rgba(255, 255, 255, 0.4)',
+                  }}
                 >
-                  {loginState === 'sending' ? 'Sending code...' : 'Continue'}
-                </Button>
+                  {loginState === 'sending' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Sending code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <svg
+                        className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
               </motion.div>
 
-              {/* Footer */}
-              <motion.div variants={itemVariants} className="text-center space-y-3">
-                <p className="text-xs leading-relaxed" style={{ color: 'var(--hive-text-disabled)' }}>
+              {/* Footer - Minimal */}
+              <motion.div variants={itemVariants} className="text-center pt-2">
+                <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.3)' }}>
                   By continuing, you agree to our{' '}
                   <a
                     href="/legal/terms"
-                    className="transition-colors underline-offset-2 hover:underline"
-                    style={{ color: 'var(--hive-text-subtle)' }}
+                    className="transition-colors hover:text-white/50"
+                    style={{ color: 'rgba(255, 255, 255, 0.4)' }}
                   >
                     Terms
                   </a>{' '}
                   and{' '}
                   <a
                     href="/legal/privacy"
-                    className="transition-colors underline-offset-2 hover:underline"
-                    style={{ color: 'var(--hive-text-subtle)' }}
+                    className="transition-colors hover:text-white/50"
+                    style={{ color: 'rgba(255, 255, 255, 0.4)' }}
                   >
-                    Privacy Policy
+                    Privacy
                   </a>
                 </p>
-                {isNewUser ? (
-                  <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>
-                    Already have an account?{' '}
-                    <a
-                      href="/auth/login"
-                      className="transition-colors hover:opacity-80"
-                      style={{ color: 'var(--hive-gold)' }}
-                    >
-                      Sign in
-                    </a>
-                  </p>
-                ) : (
-                  <p className="text-xs" style={{ color: 'var(--hive-text-disabled)' }}>
-                    New to HIVE?{' '}
-                    <a
-                      href="/auth/login?new=true"
-                      className="transition-colors hover:opacity-80"
-                      style={{ color: 'var(--hive-gold)' }}
-                    >
-                      Get started
-                    </a>
-                  </p>
-                )}
               </motion.div>
 
               {/* Dev Login - Only in development */}
               {process.env.NODE_ENV === 'development' && (
                 <motion.div
                   variants={itemVariants}
-                  className="mt-8 pt-6 border-t"
-                  style={{ borderColor: 'var(--hive-border-default)' }}
+                  className="pt-6 border-t"
+                  style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
                 >
-                  <p className="text-xs text-center mb-3" style={{ color: 'var(--hive-text-disabled)' }}>
-                    🔧 Development Quick Login
+                  <p className="text-[10px] text-center mb-2 font-mono" style={{ color: 'rgba(255, 255, 255, 0.25)' }}>
+                    DEV
                   </p>
-                  <div className="flex flex-wrap gap-2 justify-center">
+                  <div className="flex gap-2 justify-center">
                     {[
-                      { email: 'jwrhineh@buffalo.edu', label: 'Founder (Completed)' },
-                      { email: 'newuser@buffalo.edu', label: 'New User' },
+                      { email: 'jwrhineh@buffalo.edu', label: 'Existing' },
+                      { email: 'newuser@buffalo.edu', label: 'New' },
                     ].map(({ email: devEmail, label }) => (
                       <button
                         key={devEmail}
@@ -713,7 +782,7 @@ function LoginContent() {
                                 } else {
                                   router.push(redirectTo);
                                 }
-                              }, 500);
+                              }, 1800);
                             } else {
                               setError(data.error || 'Dev login failed');
                               setLoginState('input');
@@ -724,11 +793,10 @@ function LoginContent() {
                           }
                         }}
                         disabled={loginState === 'sending'}
-                        className="px-3 py-1.5 text-xs rounded-lg transition-all hover:opacity-80 disabled:opacity-50"
+                        className="px-3 py-1.5 text-[11px] rounded-lg transition-all hover:bg-white/[0.06] disabled:opacity-50"
                         style={{
-                          backgroundColor: 'var(--hive-bg-surface)',
-                          color: 'var(--hive-text-secondary)',
-                          border: '1px solid var(--hive-border-default)',
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                          color: 'rgba(255, 255, 255, 0.5)',
                         }}
                       >
                         {label}

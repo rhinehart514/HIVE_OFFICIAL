@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 🎯 HIVE Notification Item Component
+ * HIVE Notification Item Component
  *
  * Behavioral Psychology Features:
  * - "Someone needs you" framing for help requests
@@ -18,10 +18,14 @@ import {
   Trash2,
   ExternalLink,
   AlertCircle,
-  Sparkles,
+  Bell,
   MessageCircle,
   Trophy,
-  Eye
+  Eye,
+  LifeBuoy,
+  Lightbulb,
+  TrendingUp,
+  Star
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -110,18 +114,19 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       case 'system':
         return <AlertCircle className={cn(iconClass, "text-hive-text-tertiary")} />;
       default:
-        return <Sparkles className={cn(iconClass, "text-hive-brand-primary")} />;
+        return <Bell className={cn(iconClass, "text-hive-brand-primary")} />;
     }
   };
 
   // Get behavioral messaging
-  const getBehavioralMessage = () => {
+  const getBehavioralMessage = (): { icon: React.ReactNode; emphasis: string; context: string } | null => {
     const { category, metadata } = notification;
+    const iconClass = "w-3 h-3";
 
     // "Someone needs you" framing
     if (category === 'someone_needs_you') {
       return {
-        prefix: "🆘",
+        icon: <LifeBuoy className={cn(iconClass, "text-hive-status-error")} />,
         emphasis: "needs your help",
         context: metadata?.['urgencyLevel'] === 'immediate' ? "Right now" : "Today"
       };
@@ -130,7 +135,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     // Social proof framing
     if (category === 'social_proof') {
       return {
-        prefix: "🏆",
+        icon: <Trophy className={cn(iconClass, "text-hive-brand-primary")} />,
         emphasis: "You're recognized!",
         context: (metadata as any)?.['exclusivityText'] || "Top contributor"
       };
@@ -139,7 +144,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     // Insider knowledge framing
     if (category === 'insider_knowledge') {
       return {
-        prefix: "💡",
+        icon: <Lightbulb className={cn(iconClass, "text-hive-brand-primary")} />,
         emphasis: "Exclusive update",
         context: "You're among the first to know"
       };
@@ -228,7 +233,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
           {/* Behavioral messaging header */}
           {behavioralMessage && (
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs">{behavioralMessage.prefix}</span>
+              {behavioralMessage.icon}
               <span className="text-xs text-hive-brand-primary font-medium">
                 {behavioralMessage.emphasis}
               </span>
@@ -256,14 +261,16 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
           {/* Social proof or exclusivity text */}
           {notification.socialProofText && (
-            <p className="text-xs text-hive-brand-secondary mb-2 font-sans">
-              💪 {notification.socialProofText}
+            <p className="flex items-center gap-1.5 text-xs text-hive-brand-secondary mb-2 font-sans">
+              <TrendingUp className="w-3 h-3" />
+              {notification.socialProofText}
             </p>
           )}
 
           {notification.exclusivityText && (
-            <p className="text-xs text-hive-brand-primary mb-2 font-sans">
-              ⭐ {notification.exclusivityText}
+            <p className="flex items-center gap-1.5 text-xs text-hive-brand-primary mb-2 font-sans">
+              <Star className="w-3 h-3" />
+              {notification.exclusivityText}
             </p>
           )}
 

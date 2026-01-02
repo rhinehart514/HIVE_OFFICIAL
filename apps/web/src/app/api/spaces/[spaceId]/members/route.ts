@@ -21,6 +21,10 @@ import {
 } from "@/lib/middleware";
 import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
+import {
+  incrementMemberCount,
+  isShardedMemberCountEnabled
+} from "@/lib/services/sharded-member-counter.service";
 
 const GetMembersQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
@@ -194,9 +198,17 @@ function createSpaceCallbacks(campusId: string): SpaceServiceCallbacks {
     },
     updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
       try {
+        // SCALING FIX: Use sharded counters for memberCount to handle 200+ writes/sec
+        if (metrics.memberCountDelta && isShardedMemberCountEnabled()) {
+          await incrementMemberCount(spaceIdParam, metrics.memberCountDelta);
+          logger.debug('[members] Used sharded member counter', { spaceId: spaceIdParam, delta: metrics.memberCountDelta });
+        }
+
         const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
         const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
-        if (metrics.memberCountDelta) {
+
+        // Fallback to inline counter if sharding not enabled
+        if (metrics.memberCountDelta && !isShardedMemberCountEnabled()) {
           updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
         }
         if (metrics.activeCountDelta) {
@@ -750,6 +762,21 @@ export const DELETE = withAuthAndErrors(async (
     const code =
       validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
     return respond.error(validation.message, code, { status: validation.status });
+  }
+
+  // Check for provisional access restriction (pending leader verification)
+  if (validation.space) {
+    const userLeaderRequest = validation.space.leaderRequests?.find(
+      r => r.profileId.id === requesterId && r.status === 'pending'
+    );
+
+    if (userLeaderRequest?.provisionalAccessGranted && !userLeaderRequest.reviewedAt) {
+      return respond.error(
+        "Member removal is disabled while your leader verification is pending. Please wait for verification to complete.",
+        "PROVISIONAL_ACCESS_RESTRICTED",
+        { status: HttpStatus.FORBIDDEN }
+      );
+    }
   }
 
   // Use DDD SpaceManagementService

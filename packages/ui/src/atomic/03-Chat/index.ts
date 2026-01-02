@@ -45,3 +45,26 @@ export {
   type ToolPreviewCardProps,
   type MobilePreviewSheetProps
 } from './tool-preview-card';
+
+// Phase 3: Floating Composer (Dec 2025 - Edge-to-edge chat redesign)
+export {
+  FloatingComposer,
+  type FloatingComposerProps,
+  type FloatingComposerHandle,
+} from './floating-composer';
+
+// Phase 4: Chat Polish - Message grouping and user typing
+export {
+  MessageGroup,
+  GroupedMessageList,
+  groupMessages,
+  type ChatMessage,
+  type MessageGroupProps,
+  type GroupedMessageListProps,
+} from './message-group';
+
+export {
+  UserTypingIndicator,
+  type UserTypingIndicatorProps,
+  type TypingUser,
+} from './user-typing-indicator';

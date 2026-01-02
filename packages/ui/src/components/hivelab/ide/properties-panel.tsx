@@ -137,12 +137,14 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             onChange={(e) => onChange(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            aria-label={schema.label}
+            aria-invalid={hasError}
             className={cn(
               'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150',
               hasError
                 ? 'border-red-500 ring-2 ring-red-500/20'
                 : isFocused
-                  ? 'border-[#FFD700] ring-2 ring-[#FFD700]/20'
+                  ? 'border-white ring-2 ring-white/20'
                   : 'border-[#333]'
             )}
           />
@@ -180,12 +182,16 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            aria-label={schema.label}
+            aria-invalid={hasError}
+            aria-valuemin={schema.min}
+            aria-valuemax={schema.max}
             className={cn(
               'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150 font-mono',
               hasError
                 ? 'border-red-500 ring-2 ring-red-500/20'
                 : isFocused
-                  ? 'border-[#FFD700] ring-2 ring-[#FFD700]/20'
+                  ? 'border-white ring-2 ring-white/20'
                   : 'border-[#333]'
             )}
           />
@@ -197,7 +203,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className={cn(
-                  'absolute right-2 top-1/2 -translate-y-1/2 text-[#FFD700]',
+                  'absolute right-2 top-1/2 -translate-y-1/2 text-white',
                   nudgeDirection === 'up' ? 'rotate-180' : ''
                 )}
               >
@@ -214,9 +220,12 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
           type="button"
           onClick={() => onChange(!currentValue)}
           whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+          role="switch"
+          aria-checked={Boolean(currentValue)}
+          aria-label={`${schema.label}: ${currentValue ? 'enabled' : 'disabled'}`}
           className={cn(
             'w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200',
-            currentValue ? 'bg-[#FFD700]' : 'bg-[#333] hover:bg-[#444]'
+            currentValue ? 'bg-emerald-500' : 'bg-[#333] hover:bg-[#444]'
           )}
         >
           {/* Track glow when on */}
@@ -224,7 +233,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
-              className="absolute inset-0 rounded-full bg-[#FFD700] blur-sm"
+              className="absolute inset-0 rounded-full bg-emerald-500 blur-sm"
             />
           )}
           {/* Thumb with spring physics */}
@@ -244,7 +253,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ delay: 0.1 }}
-                className="absolute left-[26px] top-1.5 w-3 h-3 text-[#FFD700] z-20"
+                className="absolute left-[26px] top-1.5 w-3 h-3 text-emerald-400 z-20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -267,12 +276,14 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             onChange={(e) => onChange(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            aria-label={schema.label}
+            aria-invalid={hasError}
             className={cn(
               'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150 cursor-pointer',
               hasError
                 ? 'border-red-500 ring-2 ring-red-500/20'
                 : isFocused
-                  ? 'border-[#FFD700] ring-2 ring-[#FFD700]/20'
+                  ? 'border-white ring-2 ring-white/20'
                   : 'border-[#333]'
             )}
           >
@@ -301,6 +312,7 @@ function Section({
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const prefersReducedMotion = useReducedMotion();
+  const sectionId = `section-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
     <div className="border-b border-[#333]">
@@ -309,6 +321,8 @@ function Section({
         onClick={() => setExpanded(!expanded)}
         whileHover={prefersReducedMotion ? {} : { backgroundColor: 'rgba(37, 37, 37, 0.8)' }}
         whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
+        aria-expanded={expanded}
+        aria-controls={sectionId}
         className="flex items-center justify-between w-full px-3 py-2 text-left transition-colors"
       >
         <span className="text-xs font-medium text-[#888] uppercase tracking-wider">
@@ -325,6 +339,7 @@ function Section({
       <AnimatePresence>
         {expanded && (
           <motion.div
+            id={sectionId}
             initial={prefersReducedMotion ? { opacity: 1 } : { height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }}
@@ -428,7 +443,8 @@ export function PropertiesPanel({
               whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
               whileTap={prefersReducedMotion ? {} : { scale: 0.9 }}
               className="p-1.5 text-[#666] hover:text-white rounded transition-colors"
-              title={selectedElement.visible ? 'Hide' : 'Show'}
+              aria-label={selectedElement.visible ? 'Hide element' : 'Show element'}
+              aria-pressed={selectedElement.visible}
             >
               <AnimatePresence mode="wait">
                 {selectedElement.visible ? (
@@ -470,10 +486,11 @@ export function PropertiesPanel({
               className={cn(
                 'p-1.5 rounded transition-colors',
                 selectedElement.locked
-                  ? 'text-[#FFD700] bg-[#FFD700]/10'
+                  ? 'text-amber-400 bg-amber-400/10'
                   : 'text-[#666] hover:text-white'
               )}
-              title={selectedElement.locked ? 'Unlock' : 'Lock'}
+              aria-label={selectedElement.locked ? 'Unlock element' : 'Lock element'}
+              aria-pressed={selectedElement.locked}
             >
               <Lock className="h-4 w-4" />
             </motion.button>
@@ -504,7 +521,7 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, x: Number(e.target.value) },
                   })
                 }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[#FFD700]"
+                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
               />
             </div>
             <div>
@@ -517,33 +534,39 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, y: Number(e.target.value) },
                   })
                 }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[#FFD700]"
+                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
               />
             </div>
             <div>
               <label className="text-xs text-[#666] mb-1 block">Width</label>
               <input
                 type="number"
+                min={50}
+                max={2000}
                 value={selectedElement.size.width}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = Math.max(50, Math.min(2000, Number(e.target.value) || 50));
                   onUpdateElement(selectedElement.id, {
-                    size: { ...selectedElement.size, width: Number(e.target.value) },
-                  })
-                }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[#FFD700]"
+                    size: { ...selectedElement.size, width: value },
+                  });
+                }}
+                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
               />
             </div>
             <div>
               <label className="text-xs text-[#666] mb-1 block">Height</label>
               <input
                 type="number"
+                min={30}
+                max={2000}
                 value={selectedElement.size.height}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = Math.max(30, Math.min(2000, Number(e.target.value) || 30));
                   onUpdateElement(selectedElement.id, {
-                    size: { ...selectedElement.size, height: Number(e.target.value) },
-                  })
-                }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[#FFD700]"
+                    size: { ...selectedElement.size, height: value },
+                  });
+                }}
+                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
               />
             </div>
           </div>
@@ -571,11 +594,14 @@ export function PropertiesPanel({
             <label className="text-xs text-[#666] mb-1 block">Z-Index</label>
             <input
               type="number"
+              min={1}
+              max={999}
               value={selectedElement.zIndex || 1}
-              onChange={(e) =>
-                onUpdateElement(selectedElement.id, { zIndex: Number(e.target.value) })
-              }
-              className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-[#FFD700]"
+              onChange={(e) => {
+                const value = Math.max(1, Math.min(999, Number(e.target.value) || 1));
+                onUpdateElement(selectedElement.id, { zIndex: value });
+              }}
+              className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white/50"
             />
           </div>
         </Section>
@@ -593,6 +619,7 @@ export function PropertiesPanel({
           onClick={() => onDuplicateElement(selectedElement.id)}
           whileHover={prefersReducedMotion ? {} : { scale: 1.02, backgroundColor: '#333' }}
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+          aria-label={`Duplicate ${displayName}`}
           className="w-full flex items-center justify-center gap-2 py-2 bg-[#252525] text-white rounded-lg transition-colors text-sm"
         >
           <motion.div
@@ -612,6 +639,7 @@ export function PropertiesPanel({
               : { scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.2)' }
           }
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+          aria-label={`Delete ${displayName}`}
           className="w-full flex items-center justify-center gap-2 py-2 bg-red-500/10 text-red-400 rounded-lg transition-colors text-sm group"
         >
           <motion.div

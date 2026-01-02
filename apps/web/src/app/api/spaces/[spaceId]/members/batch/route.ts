@@ -21,6 +21,10 @@ import {
   addSecureCampusMetadata,
 } from "@/lib/secure-firebase-queries";
 import { HttpStatus } from "@/lib/api-response-types";
+import {
+  incrementMemberCount,
+  isShardedMemberCountEnabled
+} from "@/lib/services/sharded-member-counter.service";
 
 const BatchInviteSchema = z.object({
   action: z.literal("invite"),
@@ -174,9 +178,17 @@ function createSpaceCallbacks(): SpaceServiceCallbacks {
     },
     updateSpaceMetrics: async (spaceIdParam: string, metrics): Promise<Result<void>> => {
       try {
+        // SCALING FIX: Use sharded counters for memberCount to handle 200+ writes/sec
+        if (metrics.memberCountDelta && isShardedMemberCountEnabled()) {
+          await incrementMemberCount(spaceIdParam, metrics.memberCountDelta);
+          logger.debug('[batch-members] Used sharded member counter', { spaceId: spaceIdParam, delta: metrics.memberCountDelta });
+        }
+
         const spaceRef = dbAdmin.collection('spaces').doc(spaceIdParam);
         const updates: Record<string, unknown> = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
-        if (metrics.memberCountDelta) {
+
+        // Fallback to inline counter if sharding not enabled
+        if (metrics.memberCountDelta && !isShardedMemberCountEnabled()) {
           updates['metrics.memberCount'] = admin.firestore.FieldValue.increment(metrics.memberCountDelta);
         }
         if (metrics.activeCountDelta) {

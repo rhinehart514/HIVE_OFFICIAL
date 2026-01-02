@@ -205,7 +205,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
             variant="outline"
             className={cn(
               'w-full justify-start text-left font-normal min-h-[44px]',
-              !value && 'text-[var(--hive-text-tertiary)]',
+              !value && 'text-[#71717A]',
               className
             )}
             disabled={disabled}
@@ -236,7 +236,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
                 <ChevronLeftIcon className="h-4 w-4" />
               </Button>
 
-              <div className="text-sm font-semibold text-[var(--hive-text-primary)]">
+              <div className="text-sm font-semibold text-[#FAFAFA]">
                 {months[viewDate.getMonth()]} {viewDate.getFullYear()}
               </div>
 
@@ -256,7 +256,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
               {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
                 <div
                   key={day}
-                  className="flex h-9 w-9 items-center justify-center text-xs font-medium text-[var(--hive-text-tertiary)]"
+                  className="flex h-9 w-9 items-center justify-center text-xs font-medium text-[#71717A]"
                 >
                   {day}
                 </div>
@@ -270,10 +270,10 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
                   onClick={() => day && selectDate(day)}
                   disabled={isDateDisabled(day)}
                   className={cn(
-                    'flex h-9 w-9 min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-sm transition-colors hover:bg-[var(--hive-background-tertiary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus)] disabled:pointer-events-none disabled:opacity-50',
+                    'flex h-9 w-9 min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-sm transition-colors hover:bg-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-50',
                     day &&
                       isDateSelected(day) &&
-                      'bg-[var(--hive-brand-primary)] text-[var(--hive-brand-primary-text)] hover:bg-[var(--hive-brand-primary)]/90',
+                      'bg-white text-[#0A0A0A] hover:bg-white/90',
                     !day && 'invisible'
                   )}
                 >
@@ -284,12 +284,12 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
 
             {/* Time Picker */}
             {showTime && selectedDate && (
-              <div className="border-t border-[var(--hive-border-default)] pt-3">
+              <div className="border-t border-[#2A2A2A] pt-3">
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
                     <label
                       htmlFor="datetime-hour"
-                      className="mb-1 block text-xs font-medium text-[var(--hive-text-secondary)]"
+                      className="mb-1 block text-xs font-medium text-[#A1A1A6]"
                     >
                       Hour
                     </label>
@@ -312,7 +312,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
                   <div className="flex-1">
                     <label
                       htmlFor="datetime-minute"
-                      className="mb-1 block text-xs font-medium text-[var(--hive-text-secondary)]"
+                      className="mb-1 block text-xs font-medium text-[#A1A1A6]"
                     >
                       Minute
                     </label>
@@ -336,7 +336,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DateTimePicker
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-2 border-t border-[var(--hive-border-default)] pt-3">
+            <div className="flex gap-2 border-t border-[#2A2A2A] pt-3">
               <Button
                 variant="outline"
                 size="sm"

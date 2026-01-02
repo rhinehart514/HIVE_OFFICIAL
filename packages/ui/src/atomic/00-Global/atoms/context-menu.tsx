@@ -13,7 +13,7 @@ const ContextMenuPortal = ContextMenuPrimitive.Portal;
 const ContextMenuSub = ContextMenuPrimitive.Sub;
 
 const baseItemClasses =
-  'relative flex cursor-default select-none items-center gap-3 rounded-xl px-3 py-2 text-sm text-[var(--hive-text-secondary)] outline-none transition-colors focus:bg-[color-mix(in_srgb,var(--hive-background-tertiary) 45%,transparent)] focus:text-[var(--hive-text-primary)] data-[disabled]:pointer-events-none data-[disabled]:opacity-40';
+  'relative flex cursor-default select-none items-center gap-3 rounded-xl px-3 py-2 text-sm text-[#A1A1A6] outline-none transition-colors focus:bg-[#1A1A1A]/45 focus:text-[#FAFAFA] data-[disabled]:pointer-events-none data-[disabled]:opacity-40';
 
 const Content = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Content>,
@@ -24,7 +24,7 @@ const Content = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'z-50 min-w-[220px] rounded-2xl border border-[color-mix(in_srgb,var(--hive-border-default) 70%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-elevated) 96%,transparent)] p-1.5 shadow-hive-level4 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 motion-reduce:animate-none',
+        'z-50 min-w-[220px] rounded-2xl border border-[#2A2A2A]/70 bg-[#141414]/96 p-1.5 shadow-2xl backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 motion-reduce:animate-none',
         className
       )}
       {...props}
@@ -41,7 +41,7 @@ const SubContent = React.forwardRef<
     ref={ref}
     sideOffset={sideOffset}
     className={cn(
-      'z-50 min-w-[200px] rounded-2xl border border-[color-mix(in_srgb,var(--hive-border-default) 70%,transparent)] bg-[color-mix(in_srgb,var(--hive-background-elevated) 96%,transparent)] p-1.5 shadow-hive-level4 backdrop-blur-md data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-left-2 data-[state=open]:slide-in-from-right-2 motion-reduce:animate-none',
+      'z-50 min-w-[200px] rounded-2xl border border-[#2A2A2A]/70 bg-[#141414]/96 p-1.5 shadow-2xl backdrop-blur-md data-[state=open]:animate-in data-[state=open]:fade-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-left-2 data-[state=open]:slide-in-from-right-2 motion-reduce:animate-none',
       className
     )}
     {...props}
@@ -89,7 +89,7 @@ const SubTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       baseItemClasses,
-      'data-[state=open]:bg-[color-mix(in_srgb,var(--hive-background-tertiary) 45%,transparent)] data-[state=open]:text-[var(--hive-text-primary)]',
+      'data-[state=open]:bg-[#1A1A1A]/45 data-[state=open]:text-[#FAFAFA]',
       className
     )}
     {...props}
@@ -107,7 +107,7 @@ const Label = React.forwardRef<
   <ContextMenuPrimitive.Label
     ref={ref}
     className={cn(
-      'px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-caps text-[color-mix(in_srgb,var(--hive-text-tertiary) 90%,transparent)]',
+      'px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-[#71717A]/90',
       className
     )}
     {...props}
@@ -122,7 +122,7 @@ const Separator = React.forwardRef<
   <ContextMenuPrimitive.Separator
     ref={ref}
     className={cn(
-      'my-1 h-px bg-[color-mix(in_srgb,var(--hive-border-default) 60%,transparent)]',
+      'my-1 h-px bg-[#2A2A2A]/60',
       className
     )}
     {...props}
@@ -132,7 +132,7 @@ Separator.displayName = ContextMenuPrimitive.Separator.displayName;
 
 const Shortcut = ({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) => (
   <span
-    className={cn('ml-auto text-body-xs font-medium uppercase tracking-wide text-[var(--hive-text-tertiary)]', className)}
+    className={cn('ml-auto text-xs font-medium uppercase tracking-wide text-[#71717A]', className)}
     {...props}
   />
 );

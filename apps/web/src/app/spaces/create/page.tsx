@@ -296,7 +296,7 @@ function CreateSpaceContent() {
                 />
                 <label htmlFor="guidelines" className="text-sm text-[var(--hive-text-secondary)]">
                   I agree to the{" "}
-                  <a href="/guidelines" className="underline hover:text-[var(--hive-text-primary)]">
+                  <a href="/terms" className="underline hover:text-[var(--hive-text-primary)]">
                     community guidelines
                   </a>{" "}
                   and will moderate this space responsibly.

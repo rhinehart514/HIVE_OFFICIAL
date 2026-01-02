@@ -1,171 +1,139 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Users, Sparkles } from 'lucide-react';
-import {
-  containerVariants,
-  itemVariants,
-  primaryCardVariants,
-  cardHoverVariants,
-  arrowVariants,
-  GLOW_GOLD_SUBTLE,
-} from '../shared/motion';
+import { ArrowRight } from 'lucide-react';
 import type { UserType } from '../shared/types';
+
+// Premium easing
+const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 interface UserTypeStepProps {
   onSelect: (type: UserType, isLeader: boolean) => void;
 }
 
 /**
- * Step 1: The Fork
- * "What brings you here?" - Conversational, not interrogative
- * Shows outcome previews to make choice feel like discovery
+ * Step 1: The Fork - Edge-to-Edge Aesthetic
+ * Floating choice cards on #050505
+ * Leader card gets subtle gold on hover
  */
 export function UserTypeStep({ onSelect }: UserTypeStepProps) {
   const shouldReduceMotion = useReducedMotion();
 
-  // Apply reduced motion to variants
-  const safeContainerVariants = shouldReduceMotion
-    ? { initial: { opacity: 1 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : containerVariants;
-
-  const safeItemVariants = shouldReduceMotion
-    ? { initial: { opacity: 1 }, animate: { opacity: 1 } }
-    : itemVariants;
-
   return (
     <motion.div
-      variants={safeContainerVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className="min-h-screen flex flex-col justify-center px-6 py-12"
+      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={shouldReduceMotion ? {} : { duration: 0.4 }}
+      className="flex flex-col"
       role="main"
       aria-labelledby="onboarding-title"
     >
-      <div className="w-full max-w-3xl mx-auto">
-        {/* The question - conversational, warm */}
-        <motion.h1
-          id="onboarding-title"
-          variants={safeItemVariants}
-          className="text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight leading-tight mb-12 md:mb-16 text-center"
-        >
-          What brings you here?
-        </motion.h1>
+      {/* The question - clean typography */}
+      <motion.h1
+        id="onboarding-title"
+        initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={shouldReduceMotion ? {} : { delay: 0.1, duration: 0.5, ease: EASE_PREMIUM }}
+        className="text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.02em] text-white mb-12 text-center"
+      >
+        What brings you here?
+      </motion.h1>
 
-        {/* Two paths - side by side on desktop */}
-        <motion.div
-          variants={safeItemVariants}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          role="group"
-          aria-label="Choose your path"
+      {/* Two paths - floating cards */}
+      <motion.div
+        initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={shouldReduceMotion ? {} : { delay: 0.2, duration: 0.5, ease: EASE_PREMIUM }}
+        className="grid grid-cols-1 gap-4 mb-12"
+        role="group"
+        aria-label="Choose your path"
+      >
+        {/* I lead something - gold hint on hover */}
+        <motion.button
+          whileHover={shouldReduceMotion ? {} : { scale: 1.01 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.99 }}
+          onClick={() => onSelect('student', true)}
+          className="relative p-6 rounded-xl text-left bg-white/[0.03] border border-white/[0.08] transition-all duration-300 hover:bg-white/[0.05] hover:border-[#FFD700]/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 group"
+          aria-describedby="leader-description"
         >
-          {/* I lead something - PRIMARY (Leader path) */}
-          <motion.button
-            variants={shouldReduceMotion ? {} : primaryCardVariants}
-            initial="rest"
-            whileHover={shouldReduceMotion ? {} : "hover"}
-            whileTap={shouldReduceMotion ? {} : "tap"}
-            onClick={() => onSelect('student', true)}
-            className="relative p-8 md:p-10 rounded-2xl border border-gold-500/20 bg-gold-500/[0.02] text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            style={{ boxShadow: GLOW_GOLD_SUBTLE }}
-            aria-describedby="leader-description"
-          >
-            <div className="flex flex-col h-full min-h-[140px]">
-              <div className="flex items-center gap-3 mb-2">
-                <Sparkles className="w-5 h-5 text-gold-500" aria-hidden="true" />
-                <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                  I lead something
-                </h2>
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-[17px] font-medium text-white mb-1.5 group-hover:text-[#FFD700] transition-colors duration-300">
+                I run a club or org
+              </h2>
               <p
                 id="leader-description"
-                className="text-sm mt-1"
-                style={{ color: 'var(--hive-text-secondary)' }}
+                className="text-[14px] text-white/40"
               >
-                Claim a club or org. Build it your way.
+                Claim your space. Set it up your way.
               </p>
-              <motion.div
-                variants={shouldReduceMotion ? {} : arrowVariants}
-                className="mt-auto pt-6 w-10 h-10 rounded-full bg-gold-500/10 flex items-center justify-center"
-                aria-hidden="true"
-              >
-                <ArrowRight className="w-5 h-5 text-gold-500" />
-              </motion.div>
             </div>
-          </motion.button>
+            <div
+              className="w-10 h-10 rounded-full bg-white/[0.04] group-hover:bg-[#FFD700]/10 flex items-center justify-center transition-all duration-300"
+              aria-hidden="true"
+            >
+              <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-[#FFD700] transition-colors duration-300" />
+            </div>
+          </div>
+        </motion.button>
 
-          {/* I'm finding my people - SECONDARY (Explorer path) */}
-          <motion.button
-            variants={shouldReduceMotion ? {} : cardHoverVariants}
-            initial="rest"
-            whileHover={shouldReduceMotion ? {} : "hover"}
-            whileTap={shouldReduceMotion ? {} : "tap"}
-            onClick={() => onSelect('student', false)}
-            className="relative p-8 md:p-10 rounded-2xl border border-white/[0.06] bg-white/[0.02] text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            aria-describedby="explorer-description"
-          >
-            <div className="flex flex-col h-full min-h-[140px]">
-              <div className="flex items-center gap-3 mb-2">
-                <Users
-                  className="w-5 h-5 group-hover:text-white transition-colors"
-                  style={{ color: 'var(--hive-text-secondary)' }}
-                  aria-hidden="true"
-                />
-                <h2 className="text-2xl md:text-3xl font-semibold text-white">
-                  I&apos;m finding my people
-                </h2>
-              </div>
+        {/* I'm finding my people - pure grayscale */}
+        <motion.button
+          whileHover={shouldReduceMotion ? {} : { scale: 1.01 }}
+          whileTap={shouldReduceMotion ? {} : { scale: 0.99 }}
+          onClick={() => onSelect('student', false)}
+          className="relative p-6 rounded-xl text-left bg-white/[0.03] border border-white/[0.08] transition-all duration-300 hover:bg-white/[0.05] hover:border-white/[0.16] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 group"
+          aria-describedby="explorer-description"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h2 className="text-[17px] font-medium text-white mb-1.5">
+                I&apos;m looking to join things
+              </h2>
               <p
                 id="explorer-description"
-                className="text-sm mt-1 group-hover:opacity-90 transition-colors"
-                style={{ color: 'var(--hive-text-subtle)' }}
+                className="text-[14px] text-white/40"
               >
-                Join communities. Discover events.
+                Browse spaces. Find your communities.
               </p>
-              <motion.div
-                variants={shouldReduceMotion ? {} : arrowVariants}
-                className="mt-auto pt-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors"
-                aria-hidden="true"
-              >
-                <ArrowRight
-                  className="w-5 h-5 group-hover:text-white transition-colors"
-                  style={{ color: 'var(--hive-text-secondary)' }}
-                />
-              </motion.div>
             </div>
-          </motion.button>
-        </motion.div>
-
-        {/* Faculty/Alumni - with proper touch targets */}
-        <motion.div
-          variants={safeItemVariants}
-          className="mt-12 md:mt-16 flex flex-col items-center gap-4"
-        >
-          <span
-            className="text-xs uppercase tracking-wide"
-            style={{ color: 'var(--hive-text-disabled)' }}
-          >
-            Not a student?
-          </span>
-          <div className="flex items-center gap-3" role="group" aria-label="Other user types">
-            <button
-              onClick={() => onSelect('faculty', false)}
-              className="min-h-[44px] px-5 py-2.5 text-sm hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              style={{ color: 'var(--hive-text-secondary)' }}
+            <div
+              className="w-10 h-10 rounded-full bg-white/[0.04] group-hover:bg-white/[0.08] flex items-center justify-center transition-all duration-300"
+              aria-hidden="true"
             >
-              Faculty
-            </button>
-            <button
-              onClick={() => onSelect('alumni', false)}
-              className="min-h-[44px] px-5 py-2.5 text-sm hover:text-white rounded-xl border border-white/[0.06] hover:border-white/[0.12] bg-white/[0.02] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              style={{ color: 'var(--hive-text-secondary)' }}
-            >
-              Alumni
-            </button>
+              <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors duration-300" />
+            </div>
           </div>
-        </motion.div>
-      </div>
+        </motion.button>
+      </motion.div>
+
+      {/* Faculty/Alumni - minimal secondary options */}
+      <motion.div
+        initial={shouldReduceMotion ? {} : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={shouldReduceMotion ? {} : { delay: 0.35, duration: 0.4 }}
+        className="flex flex-col items-center gap-3"
+      >
+        <span className="text-[13px] text-white/25">
+          Not a student?
+        </span>
+        <div className="flex items-center gap-4" role="group" aria-label="Other user types">
+          <button
+            onClick={() => onSelect('faculty', false)}
+            className="text-[13px] text-white/40 hover:text-white/70 transition-colors duration-200"
+          >
+            I&apos;m Faculty
+          </button>
+          <span className="text-white/15">·</span>
+          <button
+            onClick={() => onSelect('alumni', false)}
+            className="text-[13px] text-white/40 hover:text-white/70 transition-colors duration-200"
+          >
+            I&apos;m an Alum
+          </button>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

@@ -10,7 +10,8 @@ import { cn } from "../../../lib/utils"
 
 const selectVariants = cva(
   // Dark-first design: Surface bg, subtle border, white focus
-  "group relative inline-flex w-full items-center justify-between gap-3 rounded-lg border bg-[#141414] px-3 py-2 text-sm font-medium text-[#FAFAFA] transition-all duration-100 placeholder:text-[#71717A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+  // text-base md:text-sm = 16px mobile (iOS zoom fix), 14px desktop
+  "group relative inline-flex w-full items-center justify-between gap-3 rounded-lg border bg-[#141414] px-3 py-2 text-base md:text-sm font-medium text-[#FAFAFA] transition-all duration-100 placeholder:text-[#71717A] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40",
   {
     variants: {
       variant: {
@@ -21,9 +22,9 @@ const selectVariants = cva(
         success: "border-[#00D46A]/30 bg-[#141414] hover:bg-[#00D46A]/10",
       },
       size: {
-        sm: "h-8 px-2.5 text-sm",
-        default: "h-10 px-3 text-sm",
-        lg: "h-11 px-4 text-sm",
+        sm: "h-8 px-2.5 text-base md:text-sm",
+        default: "h-10 px-3 text-base md:text-sm",
+        lg: "h-11 px-4 text-base md:text-sm",
       },
     },
     defaultVariants: {
@@ -55,7 +56,7 @@ const selectContentVariants = cva(
 )
 
 const selectItemVariants = cva(
-  "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md px-3 py-2 text-sm font-medium outline-none transition-all duration-150 ease-out data-[disabled]:pointer-events-none data-[disabled]:opacity-30",
+  "relative flex w-full cursor-pointer select-none items-center gap-2 rounded-md px-3 py-2 text-base md:text-sm font-medium outline-none transition-all duration-150 ease-out data-[disabled]:pointer-events-none data-[disabled]:opacity-30",
   {
     variants: {
       variant: {

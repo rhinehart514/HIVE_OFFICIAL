@@ -2,11 +2,12 @@
 
 /**
  * HIVE Modal Component
- * Simple modal wrapper that integrates with the design system
+ * Portal-based modal with proper z-index stacking
  */
 
 import { X } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { cn } from '../../../lib/utils';
 
@@ -27,13 +28,32 @@ export function HiveModal({
   size = 'md',
   closeOnOverlay = true
 }: HiveModalProps) {
-  if (!open) return null;
+  const [mounted, setMounted] = useState(false);
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && closeOnOverlay) {
-      onOpenChange(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
     }
-  };
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && open) {
+        onOpenChange(false);
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [open, onOpenChange]);
+
+  if (!open || !mounted) return null;
 
   const sizeClasses = {
     sm: 'max-w-sm',
@@ -42,20 +62,23 @@ export function HiveModal({
     xl: 'max-w-6xl'
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       {/* Backdrop */}
-      <button
-        type="button"
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={handleOverlayClick}
-        aria-label="Close dialog"
+      <div
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={closeOnOverlay ? () => onOpenChange(false) : undefined}
+        aria-hidden="true"
       />
 
       {/* Modal */}
       <div className={cn(
-        // Dark-first design: Surface bg, subtle border, prominent shadow
-        'relative w-full mx-4 bg-[#141414] border border-[#2A2A2A] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.6)]',
+        'relative w-full bg-[#141414] border border-[#2A2A2A] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.8)]',
+        'animate-in fade-in-0 zoom-in-95 duration-200',
         sizeClasses[size],
         className
       )}>
@@ -63,6 +86,8 @@ export function HiveModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
 
 // Modal subcomponents for better composition

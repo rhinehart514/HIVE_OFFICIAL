@@ -12,8 +12,9 @@ import { useOnboarding } from "@/components/onboarding/hooks/use-onboarding";
 
 import {
   UserTypeStep,
-  ProfileStep,
-  InterestsStep,
+  QuickProfileStep,
+  InterestsCloudStep,
+  // Legacy steps (kept for draft compatibility)
   SpacesStep,
   CompletionStep,
 } from "@/components/onboarding/steps";
@@ -56,6 +57,8 @@ function OnboardingContent() {
 
   const renderStep = () => {
     switch (step) {
+      // === STREAMLINED 3-STEP FLOW (Phase 6) ===
+
       case "userType":
         return (
           <UserTypeStep
@@ -68,33 +71,93 @@ function OnboardingContent() {
           />
         );
 
-      case "profile":
+      case "quickProfile":
         return (
-          <ProfileStep
-            key="profile"
+          <QuickProfileStep
+            key="quickProfile"
             data={data}
             handleStatus={handleStatus}
             handleSuggestions={handleSuggestions}
             onUpdate={updateData}
-            onNext={() => {
-              // Go to interests step
-              handleNext("interests");
+            isSubmitting={isSubmitting}
+            onNext={async () => {
+              // LEADER FORK: Leaders skip interestsCloud and go to claim flow
+              if (data.isLeader) {
+                // Submit profile immediately for leaders
+                updateData({ termsAccepted: true });
+                await submitOnboarding({
+                  isLeaderOverride: true,
+                  redirectTo: '/spaces/claim',
+                });
+              } else {
+                // Explorers continue to interests selection
+                handleNext("interestsCloud");
+              }
             }}
-            error={error}
-            setError={setError}
+            onBack={handleBack}
           />
         );
 
-      case "interests":
+      case "interestsCloud":
         return (
-          <InterestsStep
-            key="interests"
+          <InterestsCloudStep
+            key="interestsCloud"
             data={data}
             onUpdate={updateData}
-            onNext={() => {
-              // Accept terms implicitly and go to spaces
+            onNext={async () => {
+              // Phase 6: Auto-join recommended spaces and submit directly
               updateData({ termsAccepted: true });
-              handleNext("spaces");
+
+              // Fetch recommended spaces based on interests
+              try {
+                const response = await fetch('/api/spaces/recommended', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    interests: data.interests,
+                    limit: 3, // Auto-join top 3 recommended
+                  }),
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  const spaces = result.data?.spaces || result.spaces || [];
+                  const spaceIds = spaces?.map((s: { id: string }) => s.id) || [];
+                  const spaceNames = spaces?.map((s: { name: string }) => s.name) || [];
+
+                  if (spaceIds.length > 0) {
+                    updateData({
+                      initialSpaceIds: spaceIds,
+                      initialSpaceNames: spaceNames,
+                      claimedSpaceId: spaceIds[0],
+                      claimedSpaceName: spaceNames[0],
+                    });
+                  }
+
+                  // Submit and redirect directly to first space
+                  const redirectPath = spaceIds.length > 0
+                    ? `/spaces/${spaceIds[0]}`
+                    : (redirectAfterOnboarding !== '/feed' ? redirectAfterOnboarding : '/spaces/browse');
+
+                  await submitOnboarding({
+                    isLeaderOverride: data.isLeader,
+                    redirectTo: redirectPath,
+                    selectedSpaceIds: spaceIds,
+                  });
+                } else {
+                  // Fallback: submit without auto-join
+                  await submitOnboarding({
+                    isLeaderOverride: data.isLeader,
+                    redirectTo: redirectAfterOnboarding !== '/feed' ? redirectAfterOnboarding : '/spaces/browse',
+                  });
+                }
+              } catch {
+                // On error, still submit but redirect to browse
+                await submitOnboarding({
+                  isLeaderOverride: data.isLeader,
+                  redirectTo: '/spaces/browse',
+                });
+              }
             }}
             onBack={handleBack}
             error={error}
@@ -102,13 +165,26 @@ function OnboardingContent() {
           />
         );
 
+      // === LEGACY STEP HANDLERS (for draft migration) ===
+
+      case "name":
+      case "handleSelection":
+      case "profile":
+        // Redirect legacy profile steps to quickProfile
+        handleNext("quickProfile");
+        return null;
+
+      case "interests":
+        handleNext("interestsCloud");
+        return null;
+
       case "spaces":
         return (
           <SpacesStep
             key="spaces"
             userType={data.userType}
             isSubmitting={isSubmitting}
-            mustSelectSpace={data.isLeader}
+            mustSelectSpace={true} // Both leaders and explorers must select at least one space
             isExplorer={!data.isLeader}
             onComplete={async (redirectTo, selectedSpaceIds, selectedSpaceNames) => {
               // Update data with selected spaces before submitting
@@ -172,18 +248,12 @@ function OnboardingContent() {
           />
         );
 
-      // Legacy step handlers - redirect to new flow
       case "identity":
-        handleNext("profile");
-        return null;
-
       case "leader":
-        handleNext("spaces");
-        return null;
-
       case "alumniWaitlist":
       case "facultyProfile":
-        handleNext("profile");
+        // Redirect all legacy steps to quickProfile
+        handleNext("quickProfile");
         return null;
 
       default:

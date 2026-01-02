@@ -27,7 +27,17 @@ import {
   BadgeCheck,
   ChevronDown,
   Hash,
+  Info,
+  MoreHorizontal,
+  LogOut,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '../../00-Global/molecules/dropdown-menu';
 import { cn } from '../../../lib/utils';
 import { premium } from '../../../lib/premium-design';
 import { Avatar, AvatarFallback, AvatarImage } from '../../00-Global/atoms/avatar';
@@ -69,6 +79,8 @@ export interface PremiumHeaderProps {
   onShare?: () => void;
   onSettings?: () => void;
   onSpaceMenuOpen?: () => void;
+  /** Opens the context panel with space info, events, members, tools */
+  onInfo?: () => void;
 
   /** Additional className */
   className?: string;
@@ -110,6 +122,7 @@ export function PremiumHeader({
   onShare,
   onSettings,
   onSpaceMenuOpen,
+  onInfo,
   className,
 }: PremiumHeaderProps) {
   const shouldReduceMotion = useReducedMotion();
@@ -147,7 +160,8 @@ export function PremiumHeader({
     try {
       await onJoin();
       setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 1500);
+      // Reduced from 1500ms to 500ms - enough to acknowledge, not block
+      setTimeout(() => setShowCelebration(false), 500);
     } finally {
       setIsJoinLoading(false);
     }
@@ -186,8 +200,8 @@ export function PremiumHeader({
             ) : (
               <AvatarFallback
                 className={cn(
-                  'bg-gradient-to-br from-[#FFD700] to-[#FFD700]/70',
-                  'text-black font-bold text-lg'
+                  'bg-gradient-to-br from-white/[0.12] to-white/[0.04]',
+                  'text-white font-bold text-lg'
                 )}
               >
                 {name.charAt(0).toUpperCase()}
@@ -201,7 +215,7 @@ export function PremiumHeader({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={premium.motion.spring.bouncy}
-              className="absolute -bottom-0.5 -right-0.5 bg-[#FFD700] rounded-full p-0.5 shadow-lg shadow-[#FFD700]/30"
+              className="absolute -bottom-0.5 -right-0.5 bg-[#FFD700] rounded-full p-0.5"
             >
               <BadgeCheck className="w-3 h-3 text-black" />
             </motion.div>
@@ -248,7 +262,7 @@ export function PremiumHeader({
               <>
                 <span className="text-[#4A4A4F]">•</span>
                 <span className="flex items-center gap-1.5 text-[13px] text-[#FFD700]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse shadow-[0_0_6px_#FFD700]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
                   <span>{onlineCount} online</span>
                 </span>
               </>
@@ -256,28 +270,88 @@ export function PremiumHeader({
           </div>
         </div>
 
-        {/* Actions */}
+        {/* Actions - Simplified hierarchy: One primary action + overflow menu */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Share */}
-          {onShare && (
+          {/* Primary Action - Contextual by role */}
+
+          {/* Non-members: Gold Join CTA */}
+          {!isJoined && (
+            <div className="relative">
+              <motion.button
+                whileHover={isJoinable && !isLoading ? { scale: 1.02 } : {}}
+                whileTap={isJoinable && !isLoading ? { scale: 0.98 } : {}}
+                onClick={handleJoin}
+                disabled={isLoading || isPending || !isJoinable}
+                className={cn(
+                  'h-9 px-5 rounded-lg',
+                  'flex items-center justify-center gap-2',
+                  'text-[14px] font-medium',
+                  'transition-all duration-200',
+                  'bg-[#FFD700] hover:bg-[#E6C200]',
+                  'text-black',
+                  (isLoading || isPending) && 'opacity-60 cursor-not-allowed'
+                )}
+                aria-label="Join space"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : null}
+                <span>{isLoading ? 'Joining...' : 'Join'}</span>
+              </motion.button>
+
+              {/* Join celebration */}
+              <AnimatePresence>
+                {showCelebration && (
+                  <motion.div
+                    variants={celebrationVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className={cn(
+                      'absolute inset-0 pointer-events-none',
+                      'flex items-center justify-center',
+                      'bg-[#FFD700]/20 rounded-lg'
+                    )}
+                  >
+                    <Check className="w-5 h-5 text-[#FFD700]" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Members (non-leaders): Online count button → opens context panel */}
+          {isJoined && !isLeader && onInfo && (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onShare}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onInfo}
               className={cn(
-                'w-9 h-9 rounded-lg',
-                'flex items-center justify-center',
-                'text-[#6B6B70] hover:text-white',
-                'hover:bg-white/[0.06]',
-                'transition-colors duration-150'
+                'h-9 px-3 rounded-lg',
+                'flex items-center justify-center gap-2',
+                'text-[13px] font-medium',
+                'transition-all duration-200',
+                'bg-white/[0.04] hover:bg-white/[0.08]',
+                'border border-white/[0.06]',
+                onlineCount && onlineCount > 0 ? 'text-[#FFD700]' : 'text-[#9A9A9F]'
               )}
-              aria-label="Share space"
+              aria-label="View space info"
             >
-              <Share2 className="w-4 h-4" />
+              {onlineCount !== undefined && onlineCount > 0 ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
+                  <span>{onlineCount} online</span>
+                </>
+              ) : (
+                <>
+                  <Users className="w-3.5 h-3.5" />
+                  <span>{memberCount.toLocaleString()}</span>
+                </>
+              )}
             </motion.button>
           )}
 
-          {/* Settings (leader only) */}
+          {/* Leaders: Settings button as primary */}
           {isLeader && onSettings && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -286,8 +360,9 @@ export function PremiumHeader({
               className={cn(
                 'w-9 h-9 rounded-lg',
                 'flex items-center justify-center',
-                'text-[#6B6B70] hover:text-[#FFD700]',
-                'hover:bg-white/[0.06]',
+                'text-[#9A9A9F] hover:text-white',
+                'bg-white/[0.04] hover:bg-white/[0.08]',
+                'border border-white/[0.06]',
                 'transition-colors duration-150'
               )}
               aria-label="Space settings"
@@ -296,65 +371,77 @@ export function PremiumHeader({
             </motion.button>
           )}
 
-          {/* Join/Status Button */}
-          <div className="relative">
-            <motion.button
-              whileHover={isJoinable ? { scale: 1.02 } : {}}
-              whileTap={isJoinable ? { scale: 0.98 } : {}}
-              onClick={isJoined ? onLeave : handleJoin}
-              disabled={isLoading || isPending || (!isJoinable && !isLeavable)}
-              className={cn(
-                'h-9 px-4 rounded-lg',
-                'flex items-center justify-center gap-2',
-                'text-[14px] font-medium',
-                'transition-all duration-200',
-                // Not joined - gold CTA
-                !isJoined &&
-                  !isLoading && [
-                    'bg-[#FFD700] hover:bg-[#E6C200]',
-                    'text-black',
-                    'shadow-[0_0_15px_rgba(255,215,0,0.20)]',
-                    'hover:shadow-[0_0_20px_rgba(255,215,0,0.30)]',
-                  ],
-                // Joined states - subtle outline
-                isJoined && [
-                  'bg-transparent',
-                  'border border-white/[0.10]',
-                  'text-[#9A9A9F]',
-                  'hover:border-red-500/30 hover:text-red-400',
-                ],
-                // Loading/Pending
-                (isLoading || isPending) && 'opacity-60 cursor-not-allowed',
-                // Disabled
-                !isJoinable && !isLeavable && !isJoined && 'opacity-50 cursor-not-allowed'
-              )}
-              aria-label={isJoined ? 'Leave space' : 'Join space'}
+          {/* Overflow Menu - Secondary actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  'w-9 h-9 rounded-lg',
+                  'flex items-center justify-center',
+                  'text-[#6B6B70] hover:text-white',
+                  'hover:bg-white/[0.06]',
+                  'transition-colors duration-150',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30'
+                )}
+                aria-label="More options"
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-48 bg-[#141414] border border-white/[0.08] rounded-lg shadow-xl"
             >
-              {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              {isJoined && !isLoading && <Check className="w-3.5 h-3.5" />}
-              <span>{getButtonLabel()}</span>
-            </motion.button>
-
-            {/* Join celebration */}
-            <AnimatePresence>
-              {showCelebration && (
-                <motion.div
-                  variants={celebrationVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className={cn(
-                    'absolute inset-0 pointer-events-none',
-                    'flex items-center justify-center',
-                    'bg-[#FFD700]/20 rounded-lg',
-                    'shadow-[0_0_30px_rgba(255,215,0,0.4)]'
-                  )}
+              {/* Share */}
+              {onShare && (
+                <DropdownMenuItem
+                  onClick={onShare}
+                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#FAFAFA] hover:bg-white/[0.06] cursor-pointer rounded-md"
                 >
-                  <Check className="w-5 h-5 text-[#FFD700]" />
-                </motion.div>
+                  <Share2 className="w-4 h-4 text-[#6B6B70]" />
+                  Share space
+                </DropdownMenuItem>
               )}
-            </AnimatePresence>
-          </div>
+
+              {/* Space info */}
+              {onInfo && (
+                <DropdownMenuItem
+                  onClick={onInfo}
+                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#FAFAFA] hover:bg-white/[0.06] cursor-pointer rounded-md"
+                >
+                  <Info className="w-4 h-4 text-[#6B6B70]" />
+                  Space info
+                </DropdownMenuItem>
+              )}
+
+              {/* Settings (for members, leaders already have button) */}
+              {!isLeader && isJoined && onSettings && (
+                <DropdownMenuItem
+                  onClick={onSettings}
+                  className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#FAFAFA] hover:bg-white/[0.06] cursor-pointer rounded-md"
+                >
+                  <Settings className="w-4 h-4 text-[#6B6B70]" />
+                  Settings
+                </DropdownMenuItem>
+              )}
+
+              {/* Leave space (for members only, not owners) */}
+              {isLeavable && (
+                <>
+                  <DropdownMenuSeparator className="bg-white/[0.06]" />
+                  <DropdownMenuItem
+                    onClick={onLeave}
+                    className="flex items-center gap-2 px-3 py-2 text-[13px] text-red-400 hover:bg-red-500/10 cursor-pointer rounded-md"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Leave space
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </motion.header>

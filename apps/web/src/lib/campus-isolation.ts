@@ -8,17 +8,19 @@ import { type Query, query, where, type QueryConstraint } from 'firebase/firesto
 import { logger } from './structured-logger';
 
 /**
- * Get the current campus ID for the user's session
- * In production, this MUST always return 'ub-buffalo' for UB launch
+ * Get the default campus ID (for background jobs or when no user context)
+ * @deprecated Use getCampusIdFromAuth() in user-facing code
+ */
+export function getDefaultCampusId(): string {
+  return process.env.NEXT_PUBLIC_DEFAULT_CAMPUS_ID || 'ub-buffalo';
+}
+
+/**
+ * @deprecated Use getDefaultCampusId() or get campusId from user session
  */
 export function getCurrentCampusId(): string {
-  // For UB launch, hardcode to UB campus
-  if (process.env.NEXT_PUBLIC_ENVIRONMENT === 'production') {
-    return 'ub-buffalo';
-  }
-
-  // In development, can be configured
-  return process.env.NEXT_PUBLIC_CAMPUS_ID || 'ub-buffalo';
+  // Kept for backwards compatibility - prefer getting from user session
+  return process.env.NEXT_PUBLIC_DEFAULT_CAMPUS_ID || 'ub-buffalo';
 }
 
 /**
@@ -100,18 +102,21 @@ export function sanitizeUserData(userData: Record<string, unknown>): Record<stri
 }
 
 /**
- * Check if a user's email belongs to the current campus
+ * Check if a user's email belongs to a specific campus
+ * Email domain validation now happens via Firestore school config
  */
-export function validateEmailCampus(email: string): boolean {
-  const campusId = getCurrentCampusId();
+export function validateEmailCampus(email: string, expectedCampusId?: string): boolean {
   const emailDomain = email.split('@')[1]?.toLowerCase();
+  if (!emailDomain) return false;
 
-  if (campusId === 'ub-buffalo') {
-    return emailDomain === 'buffalo.edu';
+  // Domain validation is now handled by the school configuration in Firestore
+  // This function is deprecated - use getCampusFromEmail() in campus-context.ts instead
+  if (expectedCampusId === 'ub-buffalo' || !expectedCampusId) {
+    return emailDomain === 'buffalo.edu' || emailDomain.endsWith('.buffalo.edu');
   }
 
-  // Add other campus validations as needed
-  return false;
+  // For other campuses, validation happens at the school config level
+  return true; // Let the caller validate against school config
 }
 
 /**

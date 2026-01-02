@@ -71,7 +71,6 @@ export {
 } from './space-empty-state';
 
 // Existing space components
-export { SpaceHeader, type SpaceHeaderProps, type SpaceHeaderSpace, type SpaceMembershipState } from './space-header';
 export { SpaceComposer, type SpaceComposerProps, type SpaceComposerRef } from './space-composer';
 export { SpaceAboutWidget } from './space-about-widget';
 export { SpaceToolsWidget } from './space-tools-widget';
@@ -123,12 +122,16 @@ export {
   type FeaturedToolEmptyProps,
 } from './featured-tool-slot';
 
-// Hero Input (Dec 2025 - Dark-first chat input)
+// Space Chat Input (Dec 2025 - Dark-first chat input for Spaces)
+// Note: Component is still named HeroInput for backwards compatibility
 export {
   HeroInput,
+  HeroInput as SpaceChatInput,
   type HeroInputProps,
+  type HeroInputProps as SpaceChatInputProps,
   type HeroInputHandle,
-} from './hero-input';
+  type HeroInputHandle as SpaceChatInputHandle,
+} from './space-chat-input';
 
 // Space Chat Message (Dec 2025 - Dark-first message component)
 export {
@@ -136,3 +139,24 @@ export {
   type SpaceChatMessageProps,
   type MessageRole,
 } from './space-chat-message';
+
+// Context Rail (Dec 2025 - Always-visible context strip)
+export {
+  ContextRail,
+  type ContextRailProps,
+} from './context-rail';
+
+// Space Welcome Banner (Dec 2025 - Inline welcome for first-time visitors)
+export {
+  SpaceWelcomeBanner,
+  hasSeenWelcome,
+  markWelcomeSeen,
+  type SpaceWelcomeBannerProps,
+} from './space-welcome-banner';
+
+// Leader Setup Progress (Dec 2025 - Sidebar setup checklist for leaders)
+export {
+  LeaderSetupProgress,
+  type LeaderSetupProgressProps,
+  type SetupTask,
+} from './leader-setup-progress';

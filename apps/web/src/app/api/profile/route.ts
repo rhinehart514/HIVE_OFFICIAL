@@ -69,9 +69,31 @@ const ProfileUpdateSchema = z.object({
   showOnlineStatus: z.boolean().optional()
 });
 
+// Default grid layout for new profiles
+const DEFAULT_GRID = {
+  cards: [
+    { id: 'spaces_hub', type: 'spaces_hub', size: '2x1' as const, visible: true },
+    { id: 'friends_network', type: 'friends_network', size: '2x1' as const, visible: true },
+    { id: 'active_now', type: 'active_now', size: '1x1' as const, visible: true },
+    { id: 'discovery', type: 'discovery', size: '1x1' as const, visible: true },
+  ],
+  mobileLayout: [
+    { id: 'spaces_hub_mobile', type: 'spaces_hub', size: '2x1' as const, visible: true },
+    { id: 'friends_network_mobile', type: 'friends_network', size: '2x1' as const, visible: true },
+  ],
+};
+
 /**
  * GET /api/profile
  * Get current user's profile using DDD EnhancedProfile aggregate
+ *
+ * Query Parameters:
+ * - include: Comma-separated list of additional data to include
+ *   - grid: Include profile bento grid layout
+ *   - widgets: Include widget visibility settings
+ *   - viewer: Include viewer relationship info (for viewing other profiles)
+ * - id: Optional user ID to view another profile
+ * - handle: Optional handle to look up a profile by handle
  */
 export const GET = withAuthAndErrors(
   async (request, _context, _respond) => {
@@ -79,39 +101,73 @@ export const GET = withAuthAndErrors(
       const userId = getUserId(request as AuthenticatedRequest);
       const campusId = getCampusId(request as AuthenticatedRequest);
 
-      // Use DDD repository to get profile
+      // Parse query parameters
+      const url = new URL(request.url);
+      const includeParam = url.searchParams.get('include') || '';
+      const includes = includeParam.split(',').filter(Boolean);
+      const targetId = url.searchParams.get('id');
+      const targetHandle = url.searchParams.get('handle');
+
+      // Determine which profile to fetch
+      let targetUserId = userId;
       const profileRepository = getServerProfileRepository();
-      const profileResult = await profileRepository.findById(userId);
+
+      if (targetHandle) {
+        // Look up by handle
+        const handleResult = await profileRepository.findByHandle(targetHandle.toLowerCase());
+        if (handleResult.isFailure) {
+          return NextResponse.json({
+            success: false,
+            error: 'Profile not found'
+          }, { status: 404 });
+        }
+        targetUserId = handleResult.getValue().id;
+      } else if (targetId) {
+        targetUserId = targetId;
+      }
+
+      const isOwnProfile = targetUserId === userId;
+
+      // Use DDD repository to get profile
+      const profileResult = await profileRepository.findById(targetUserId);
 
       if (profileResult.isFailure) {
         // Fallback to direct Firestore check for onboarding detection
-        const userSnapshot = await dbAdmin.collection('users').doc(userId).get();
+        const userSnapshot = await dbAdmin.collection('users').doc(targetUserId).get();
 
         if (!userSnapshot.exists) {
           logger.warn('Profile not found', {
-            userId,
+            userId: targetUserId,
             endpoint: '/api/profile'
           });
 
           return NextResponse.json({
             success: false,
             error: 'Profile not found',
-            needsOnboarding: true
+            needsOnboarding: isOwnProfile
           }, { status: 404 });
         }
 
         // Profile exists but failed to load as domain object - use legacy path
         const userData = userSnapshot.data()!;
-        return buildLegacyResponse(userId, userData, campusId);
+        return buildLegacyResponse(targetUserId, userData, campusId, isOwnProfile, includes);
       }
 
       const profile = profileResult.getValue();
 
-      // Get handle change status
-      const handleStatus = await getHandleChangeStatus(userId);
+      // Get handle change status (only for own profile)
+      const handleStatus = isOwnProfile ? await getHandleChangeStatus(targetUserId) : null;
+
+      // Fetch optional grid data if requested
+      let gridData = null;
+      if (includes.includes('grid')) {
+        const userDoc = await dbAdmin.collection('users').doc(targetUserId).get();
+        const userData = userDoc.data();
+        gridData = userData?.profileGrid || { ...DEFAULT_GRID, lastModified: new Date().toISOString() };
+      }
 
       // Build response from DDD aggregate
-      const response = {
+      const response: Record<string, unknown> = {
         success: true,
         data: {
           id: profile.profileId.value,
@@ -181,20 +237,33 @@ export const GET = withAuthAndErrors(
             updatedAt: profile.updatedAt?.toISOString() || new Date().toISOString(),
             lastActive: profile.lastActive?.toISOString() || null
           },
-          handleChange: {
+          handleChange: handleStatus ? {
             canChange: handleStatus.canChange,
             nextChangeDate: handleStatus.nextChangeDate?.toISOString(),
             changeCount: handleStatus.changeCount,
             isFirstChangeFree: handleStatus.isFirstChangeFree
-          },
+          } : undefined,
           completionPercentage: profile.getCompletionPercentage()
         }
       };
 
+      // Add optional includes
+      if (includes.includes('grid') && gridData) {
+        response.grid = gridData;
+      }
+
+      if (includes.includes('viewer')) {
+        response.viewer = {
+          isOwnProfile,
+          relationship: isOwnProfile ? 'self' : 'campus',
+        };
+      }
+
       logger.info('Profile fetched successfully via DDD', {
         handle: profile.handle.value,
         endpoint: '/api/profile',
-        completionPercentage: response.data.completionPercentage
+        includes,
+        completionPercentage: (response.data as { completionPercentage: number }).completionPercentage
       });
 
       return NextResponse.json(response);
@@ -216,10 +285,16 @@ export const GET = withAuthAndErrors(
  * Legacy response builder for backward compatibility
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function buildLegacyResponse(userId: string, userData: any, campusId: string) {
-  const handleStatus = await getHandleChangeStatus(userId);
+async function buildLegacyResponse(
+  userId: string,
+  userData: any,
+  campusId: string,
+  isOwnProfile: boolean = true,
+  includes: string[] = []
+) {
+  const handleStatus = isOwnProfile ? await getHandleChangeStatus(userId) : null;
 
-  return NextResponse.json({
+  const response: Record<string, unknown> = {
     success: true,
     data: {
       id: userId,
@@ -260,15 +335,29 @@ async function buildLegacyResponse(userId: string, userData: any, campusId: stri
         createdAt: userData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
         updatedAt: userData.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
       },
-      handleChange: {
+      handleChange: handleStatus ? {
         canChange: handleStatus.canChange,
         nextChangeDate: handleStatus.nextChangeDate?.toISOString(),
         changeCount: handleStatus.changeCount,
         isFirstChangeFree: handleStatus.isFirstChangeFree
-      }
+      } : undefined
     },
     _legacy: true // Flag to indicate legacy path was used
-  });
+  };
+
+  // Add optional includes
+  if (includes.includes('grid')) {
+    response.grid = userData.profileGrid || { ...DEFAULT_GRID, lastModified: new Date().toISOString() };
+  }
+
+  if (includes.includes('viewer')) {
+    response.viewer = {
+      isOwnProfile,
+      relationship: isOwnProfile ? 'self' : 'campus',
+    };
+  }
+
+  return NextResponse.json(response);
 }
 
 /**

@@ -30,6 +30,7 @@ import {
   SpaceSidebar,
   SpaceChatBoard,
   SpaceEntryAnimation,
+  SpaceThreshold,
   BoardTabBar,
   MobileActionBar,
   MobileDrawer,
@@ -57,12 +58,22 @@ import {
   EventsSection,
   MembersSection,
   ToolsSection,
+  // Phase 3: Context Panel (on-demand sidebar replacement)
+  ContextPanel,
   // Leader onboarding components
   SpaceLeaderOnboardingModal,
   LeaderSetupProgress,
   QUICK_TEMPLATES,
+  // Ritual components
+  RitualStrip,
+  // Member welcome components
+  SpaceWelcomeModal,
+  useSpaceWelcome,
+  type SpaceWelcomeData,
+  type SpaceFeatureHighlight,
   type AddTabInput,
   type AddWidgetInputUI,
+  type ExistingTool,
   type BoardData,
   type MobileDrawerType,
   type MemberInviteInput,
@@ -90,6 +101,7 @@ import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { usePinnedMessages } from "@/hooks/use-pinned-messages";
 import { useAutomations } from "@/hooks/use-automations";
 import { useLeaderOnboarding } from "@/hooks/use-leader-onboarding";
+import { useFoundingClassRitual } from "@/hooks/use-founding-class-ritual";
 import { useAuth } from "@hive/auth-logic";
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 import { logger } from "@/lib/logger";
@@ -297,6 +309,9 @@ function SpaceLeaderModals({
   onSearchUsers,
   onCreateEvent,
   existingMemberIds,
+  existingTools,
+  isLoadingTools,
+  onDeployExistingTool,
 }: {
   tabs: Array<{ name: string }>;
   boards: Array<{ id: string; name: string }>;
@@ -317,6 +332,9 @@ function SpaceLeaderModals({
   onSearchUsers: (query: string) => Promise<InviteableUser[]>;
   onCreateEvent: (input: EventCreateInput) => Promise<void>;
   existingMemberIds: string[];
+  existingTools?: ExistingTool[];
+  isLoadingTools?: boolean;
+  onDeployExistingTool?: (toolId: string) => Promise<void>;
 }) {
   return (
     <>
@@ -333,6 +351,10 @@ function SpaceLeaderModals({
         onOpenHiveLab={onOpenHiveLab}
         onQuickDeploy={onQuickDeploy}
         showQuickDeploy={!!onQuickDeploy}
+        showHiveLab={true} // Leaders always see HiveLab
+        existingTools={existingTools}
+        isLoadingTools={isLoadingTools}
+        onDeployExistingTool={onDeployExistingTool}
       />
       <MemberInviteModal
         open={inviteMemberModalOpen}
@@ -364,8 +386,9 @@ function SpaceDetailContent() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
 
-  // Premium UI toggle - add ?premium=true to URL to enable
-  const usePremiumUI = searchParams.get('premium') === 'true';
+  // Premium UI is now the default (ChatGPT/Apple fusion design)
+  // Add ?legacy=true to URL to use the legacy UI
+  const usePremiumUI = searchParams.get('legacy') !== 'true';
 
   // Use focused context hooks for better performance (only re-render when specific data changes)
   const {
@@ -405,6 +428,7 @@ function SpaceDetailContent() {
     editMessage,
     changeBoard,
     loadMore: loadMoreMessages,
+    setTyping,
     openThread,
     closeThread,
     sendThreadReply,
@@ -426,6 +450,32 @@ function SpaceDetailContent() {
   const [inviteMemberModalOpen, setInviteMemberModalOpen] = React.useState(false);
   const [createEventModalOpen, setCreateEventModalOpen] = React.useState(false);
 
+  // Existing tools for Add Widget modal
+  const [existingTools, setExistingTools] = React.useState<ExistingTool[]>([]);
+  const [isLoadingTools, setIsLoadingTools] = React.useState(false);
+
+  // Fetch user's tools when add widget modal opens
+  React.useEffect(() => {
+    if (!addWidgetModalOpen || !isLeader) return;
+
+    const fetchTools = async () => {
+      setIsLoadingTools(true);
+      try {
+        const response = await secureApiFetch('/api/tools?status=published&limit=10');
+        if (response.ok) {
+          const data = await response.json();
+          setExistingTools(data.tools || []);
+        }
+      } catch (error) {
+        logger.error('Failed to fetch existing tools', { error });
+      } finally {
+        setIsLoadingTools(false);
+      }
+    };
+
+    fetchTools();
+  }, [addWidgetModalOpen, isLeader]);
+
   // Tool runtime modal state
   const [selectedTool, setSelectedTool] = React.useState<SelectedTool | null>(null);
   const [toolModalOpen, setToolModalOpen] = React.useState(false);
@@ -436,6 +486,12 @@ function SpaceDetailContent() {
   // Event details modal state (Phase 2 - Events feature)
   const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
   const [eventDetailsModalOpen, setEventDetailsModalOpen] = React.useState(false);
+
+  // Context panel state (Phase 3 - on-demand sidebar replacement)
+  const [contextPanelOpen, setContextPanelOpen] = React.useState(false);
+
+  // Sidebar edit mode state (for leaders to remove tools)
+  const [sidebarEditMode, setSidebarEditMode] = React.useState(false);
 
   // Mobile drawer state
   const [activeDrawer, setActiveDrawer] = React.useState<MobileDrawerType | null>(null);
@@ -480,6 +536,70 @@ function SpaceDetailContent() {
     eventCount: events.length,
     memberCount: space?.memberCount ?? 0,
   });
+
+  // FoundingClass ritual tracking (January Leader Month)
+  // For now, we enable for all leaders - in production this would check the feature flag
+  const foundingClassRitual = useFoundingClassRitual({
+    isLeader,
+    isEnabled: true, // TODO: Check RITUALS_FOUNDING_CLASS feature flag
+    leaderOnboarding,
+    participantCount: 23, // TODO: Fetch from /api/rituals/founding-class/participants
+  });
+
+  // Member welcome modal (first-time visitors to this space)
+  const memberWelcome = useSpaceWelcome(spaceId ?? '');
+
+  // Show welcome modal for non-leader members who haven't seen it
+  const [showWelcomeModal, setShowWelcomeModal] = React.useState(false);
+
+  React.useEffect(() => {
+    // Only show welcome for members who aren't leaders and haven't seen it
+    if (isMember && !isLeader && memberWelcome.shouldShow && !memberWelcome.isLoading) {
+      // Small delay to let the entry animation complete
+      const timer = setTimeout(() => setShowWelcomeModal(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [isMember, isLeader, memberWelcome.shouldShow, memberWelcome.isLoading]);
+
+  // Threshold pattern: Show welcoming entry for first-time non-member visitors
+  const [showThreshold, setShowThreshold] = React.useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (!spaceId || isLoading) return;
+
+    // Skip threshold for leaders - they go straight to setup/chat
+    if (isLeader) {
+      setShowThreshold(false);
+      return;
+    }
+
+    // Skip threshold for members - they've already joined
+    if (isMember) {
+      setShowThreshold(false);
+      return;
+    }
+
+    // Check localStorage for visited spaces
+    const visitedKey = `hive_visited_spaces`;
+    const visited = JSON.parse(localStorage.getItem(visitedKey) || '[]');
+    const hasVisited = visited.includes(spaceId);
+
+    setShowThreshold(!hasVisited);
+  }, [spaceId, isLoading, isLeader, isMember]);
+
+  // Mark space as visited when user clicks "Enter Chat"
+  const handleEnterFromThreshold = React.useCallback(() => {
+    if (!spaceId) return;
+
+    const visitedKey = `hive_visited_spaces`;
+    const visited = JSON.parse(localStorage.getItem(visitedKey) || '[]');
+    if (!visited.includes(spaceId)) {
+      visited.push(spaceId);
+      localStorage.setItem(visitedKey, JSON.stringify(visited));
+    }
+
+    setShowThreshold(false);
+  }, [spaceId]);
 
   // Chat intent detection (HiveLab AI-powered component creation)
   const {
@@ -614,6 +734,30 @@ function SpaceDetailContent() {
     // Navigate to tool creation with space context
     router.push(`/tools/create?spaceId=${spaceId}`);
   }, [router, spaceId]);
+
+  // Handle deploy existing tool to space
+  const handleDeployExistingTool = React.useCallback(async (toolId: string) => {
+    if (!spaceId) throw new Error("Space not found");
+
+    const response = await secureApiFetch('/api/tools/deploy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toolId,
+        deployTo: 'space',
+        targetId: spaceId,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to deploy tool');
+    }
+
+    // Refresh sidebar tools after deployment
+    refresh();
+    toast.success('Tool deployed', 'Tool has been added to the sidebar.');
+  }, [spaceId, refresh]);
 
   // Handle invite member
   const handleInviteMember = React.useCallback(async (input: MemberInviteInput) => {
@@ -818,6 +962,38 @@ function SpaceDetailContent() {
 
     toast.success(`${template.name} deployed!`, 'Your tool is now live in the sidebar.');
   }, [spaceId, leaderOnboarding]);
+
+  // Handle removing a tool from the space sidebar
+  const handleRemoveTool = React.useCallback(async (toolId: string) => {
+    if (!spaceId) return;
+
+    // Find the tool to get placementId
+    const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
+    if (!tool?.placementId) {
+      toast.error('Tool not found', 'Unable to remove this tool.');
+      return;
+    }
+
+    try {
+      const response = await secureApiFetch(`/api/spaces/${spaceId}/tools`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placementId: tool.placementId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to remove tool');
+      }
+
+      // Update local state immediately
+      setTools((prev) => prev.filter((t) => t.placementId !== tool.placementId));
+      toast.success('Tool removed', `${tool.name} has been removed from the sidebar.`);
+    } catch (error) {
+      logger.error('Failed to remove tool', { toolId, error });
+      toast.error('Failed to remove tool', error instanceof Error ? error.message : 'Please try again.');
+    }
+  }, [spaceId, tools]);
 
   // Handler for sending messages with intent detection (must be before early return)
   const handleSendMessage = React.useCallback(async (content: string, replyToId?: string) => {
@@ -1209,6 +1385,41 @@ function SpaceDetailContent() {
     );
   }
 
+  // Threshold: Show welcoming entry for first-time non-member visitors
+  // (null = still checking, true = show threshold, false = show chat)
+  if (showThreshold === null) {
+    // Still determining if we should show threshold
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (showThreshold) {
+    return (
+      <SpaceThreshold
+        space={{
+          id: spaceId ?? "",
+          name: space.name,
+          description: space.description,
+          iconUrl: space.iconUrl,
+          bannerUrl: space.bannerUrl,
+          category: space.category,
+          memberCount: space.memberCount,
+          onlineCount: space.onlineCount,
+        }}
+        events={events.slice(0, 3).map(e => ({
+          id: e.id,
+          title: e.title,
+          date: e.startDate,
+        }))}
+        toolCount={tools.length}
+        onEnter={handleEnterFromThreshold}
+      />
+    );
+  }
+
   // Map membership state for header
   const membershipState = (() => {
     if (membership.role === "owner") return "owner" as const;
@@ -1252,6 +1463,21 @@ function SpaceDetailContent() {
         where: e.location || (e.virtualLink ? 'Online' : undefined),
         isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000, // Within 24h
       })),
+    }),
+    // Leader setup progress (for incomplete setups)
+    ...(isLeader && leaderOnboarding.shouldShowProgress && {
+      setupProgress: {
+        tasks: leaderOnboarding.tasks.map(t => ({
+          id: t.id,
+          label: t.label,
+          description: t.description,
+          completed: t.completed,
+          action: t.action,
+        })),
+        completedCount: leaderOnboarding.completedCount,
+        totalCount: leaderOnboarding.totalCount,
+        percentComplete: leaderOnboarding.percentComplete,
+      },
     }),
   };
 
@@ -1304,8 +1530,8 @@ function SpaceDetailContent() {
   );
 
   // ============================================================
-  // PREMIUM UI (ChatGPT/Apple Fusion)
-  // Enable with ?premium=true in URL
+  // PREMIUM UI (ChatGPT/Apple Fusion) - DEFAULT EXPERIENCE
+  // Use ?legacy=true in URL to switch to legacy UI
   // ============================================================
   if (usePremiumUI) {
     return (
@@ -1332,12 +1558,13 @@ function SpaceDetailContent() {
             toast.success('Link copied', 'Space URL copied to clipboard');
           }}
           onSettings={isLeader ? () => router.push(`/spaces/${spaceId}/settings`) : undefined}
+          onInfo={() => setContextPanelOpen(true)}
         />
 
-        {/* Main 60/40 Layout */}
+        {/* Full-Width Chat (Phase 3 - Edge-to-edge with on-demand context) */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Premium Chat Board - 60% */}
-          <main className="flex-1 lg:flex-[3] min-w-0 flex flex-col bg-[#0A0A0A]">
+          {/* Premium Chat Board - Full Width */}
+          <main className="flex-1 min-w-0 flex flex-col bg-[#050505]">
             <PremiumChatBoard
               spaceId={spaceId ?? ""}
               boards={premiumBoards}
@@ -1372,75 +1599,63 @@ function SpaceDetailContent() {
               composerPlaceholder={`Message ${boards.find(b => b.id === activeBoardId)?.name || 'this space'}...`}
             />
           </main>
-
-          {/* Premium Sidebar - 40% */}
-          <aside className="hidden lg:flex lg:flex-col lg:w-[380px] max-w-[400px] border-l border-white/[0.06] bg-[#0A0A0A]/50 overflow-y-auto">
-            <div className="p-5 space-y-4">
-              {/* About Section */}
-              <AboutSection
-                data={{
-                  description: space.description || "No description yet.",
-                  memberCount: space.memberCount,
-                  onlineCount: space.onlineCount,
-                  category: space.category,
-                }}
-              />
-
-              {/* Events Section */}
-              {events.length > 0 && (
-                <EventsSection
-                  events={(events as SpaceEventData[]).slice(0, 5).map((e) => ({
-                    id: e.id,
-                    title: e.title,
-                    date: new Date(e.startDate),
-                    attendees: e.currentAttendees,
-                    isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000,
-                  }))}
-                  onEventClick={handleEventClick}
-                  onViewAll={() => router.push(`/spaces/${spaceId}/events`)}
-                />
-              )}
-
-              {/* Members Section */}
-              <MembersSection
-                members={leaders.map((l) => ({
-                  id: l.id,
-                  name: l.name,
-                  avatarUrl: l.avatarUrl,
-                  role: l.role === 'owner' ? 'owner' : l.role === 'admin' ? 'admin' : 'member',
-                }))}
-                totalCount={space.memberCount}
-                onMemberClick={(id) => router.push(`/profile/${id}`)}
-                onViewAll={() => {}}
-              />
-
-              {/* Tools Section */}
-              {tools.length > 0 && (
-                <ToolsSection
-                  tools={tools.map((t) => ({
-                    id: t.id,
-                    name: t.name,
-                    isActive: t.isActive,
-                  }))}
-                  onToolClick={(toolId) => {
-                    const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
-                    if (tool) {
-                      setSelectedTool({
-                        id: tool.id,
-                        toolId: tool.toolId,
-                        placementId: tool.placementId,
-                        name: tool.name,
-                        type: tool.type,
-                      });
-                      setToolModalOpen(true);
-                    }
-                  }}
-                  onViewAll={() => router.push(`/spaces/${spaceId}/tools`)}
-                />
-              )}
-            </div>
-          </aside>
         </div>
+
+        {/* Context Panel - Slide-in sidebar replacement (Phase 3) */}
+        <ContextPanel
+          isOpen={contextPanelOpen}
+          onClose={() => setContextPanelOpen(false)}
+          space={{
+            id: spaceId ?? "",
+            name: space.name,
+            description: space.description,
+            iconUrl: space.iconUrl,
+            category: space.category,
+            memberCount: space.memberCount,
+            onlineCount: space.onlineCount,
+          }}
+          events={(events as SpaceEventData[]).slice(0, 5).map((e) => ({
+            id: e.id,
+            title: e.title,
+            date: new Date(e.startDate),
+            attendees: e.currentAttendees,
+            isUrgent: new Date(e.startDate).getTime() - Date.now() < 24 * 60 * 60 * 1000,
+          }))}
+          members={leaders.map((l) => ({
+            id: l.id,
+            name: l.name,
+            avatarUrl: l.avatarUrl,
+            role: l.role === 'owner' ? 'owner' : l.role === 'admin' ? 'admin' : 'member',
+            isOnline: false,
+          }))}
+          totalMemberCount={space.memberCount}
+          tools={tools.map((t) => ({
+            id: t.id,
+            name: t.name,
+            icon: undefined,
+            isActive: t.isActive,
+          }))}
+          onViewAllEvents={() => router.push(`/spaces/${spaceId}/events`)}
+          onViewAllMembers={() => router.push(`/spaces/${spaceId}/members`)}
+          onToolClick={(toolId) => {
+            const tool = tools.find((t) => t.id === toolId || t.toolId === toolId);
+            if (tool) {
+              setSelectedTool({
+                id: tool.id,
+                toolId: tool.toolId,
+                placementId: tool.placementId,
+                name: tool.name,
+                type: tool.type,
+              });
+              setToolModalOpen(true);
+              setContextPanelOpen(false);
+            }
+          }}
+          onEventClick={(eventId) => {
+            handleEventClick(eventId);
+            setContextPanelOpen(false);
+          }}
+        />
 
         {/* Mobile Navigation (reuse existing) */}
         <SpaceMobileNavigation
@@ -1489,6 +1704,9 @@ function SpaceDetailContent() {
             onSearchUsers={handleSearchUsers}
             onCreateEvent={handleCreateEvent}
             existingMemberIds={leaders.map((l) => l.id)}
+            existingTools={existingTools}
+            isLoadingTools={isLoadingTools}
+            onDeployExistingTool={handleDeployExistingTool}
           />
         )}
 
@@ -1518,6 +1736,9 @@ function SpaceDetailContent() {
             runtime={selectedTool.toolId && toolRuntime.tool ? {
               tool: { ...toolRuntime.tool, status: toolRuntime.tool.status || 'draft' },
               state: toolRuntime.state,
+              // Phase 1: SharedState Architecture
+              sharedState: toolRuntime.sharedState,
+              userState: toolRuntime.userState,
               isLoading: toolRuntime.isLoading,
               isExecuting: toolRuntime.isExecuting,
               isSaving: toolRuntime.isSaving,
@@ -1682,6 +1903,8 @@ function SpaceDetailContent() {
             onSlashCommand={isMember ? handleSlashCommand : undefined}
             showToolbar={isMember}
             enableSlashCommands={isMember}
+            onTyping={setTyping}
+            useEdgeToEdge={true}
           />
         </main>
 
@@ -1729,6 +1952,9 @@ function SpaceDetailContent() {
                     setCreateEventModalOpen(true);
                   } else if (action === 'invite-members') {
                     setInviteMemberModalOpen(true);
+                  } else if (action === 'customize-sidebar') {
+                    setSidebarEditMode(true);
+                    leaderOnboarding.markTaskComplete('customizeSidebar');
                   }
                 }}
                 inline
@@ -1754,9 +1980,22 @@ function SpaceDetailContent() {
             </div>
           )}
 
+          {/* FoundingClass Ritual Banner - Leader January Challenge */}
+          {foundingClassRitual.shouldShowRitual && foundingClassRitual.ritualData && (
+            <RitualStrip
+              ritual={foundingClassRitual.ritualData}
+              variant="compact"
+              showProgress={true}
+              onViewDetails={() => router.push('/rituals/founding-class-2026')}
+              className="mb-4"
+            />
+          )}
+
           {/* Main sidebar content */}
           <SpaceSidebar
             data={sidebarData}
+            isLeader={isLeader}
+            isEditMode={sidebarEditMode}
             callbacks={{
               onJoin: () => joinSpace(),
               onLeave: () => leaveSpace(),
@@ -1780,6 +2019,25 @@ function SpaceDetailContent() {
               // Leader actions
               onInviteMember: isLeader ? () => setInviteMemberModalOpen(true) : undefined,
               onCreateEvent: isLeader ? () => setCreateEventModalOpen(true) : undefined,
+              // Tool removal (leader edit mode)
+              onRemoveTool: isLeader ? handleRemoveTool : undefined,
+              // Setup task actions (for leader onboarding)
+              onSetupTaskAction: isLeader ? (action) => {
+                switch (action) {
+                  case 'deploy-tool':
+                    setAddWidgetModalOpen(true);
+                    break;
+                  case 'create-event':
+                    setCreateEventModalOpen(true);
+                    break;
+                  case 'invite-members':
+                    setInviteMemberModalOpen(true);
+                    break;
+                  case 'customize-sidebar':
+                    setSidebarEditMode(true);
+                    break;
+                }
+              } : undefined,
             }}
           />
         </aside>
@@ -1832,6 +2090,9 @@ function SpaceDetailContent() {
           onSearchUsers={handleSearchUsers}
           onCreateEvent={handleCreateEvent}
           existingMemberIds={leaders.map((l) => l.id)}
+          existingTools={existingTools}
+          isLoadingTools={isLoadingTools}
+          onDeployExistingTool={handleDeployExistingTool}
         />
       )}
 
@@ -1869,6 +2130,9 @@ function SpaceDetailContent() {
               status: toolRuntime.tool.status || 'draft',
             },
             state: toolRuntime.state,
+            // Phase 1: SharedState Architecture
+            sharedState: toolRuntime.sharedState,
+            userState: toolRuntime.userState,
             isLoading: toolRuntime.isLoading,
             isExecuting: toolRuntime.isExecuting,
             isSaving: toolRuntime.isSaving,
@@ -1960,6 +2224,50 @@ function SpaceDetailContent() {
         onOpenHiveLab={handleOpenHiveLab}
         onOpenInvite={() => setInviteMemberModalOpen(true)}
         onSkip={leaderOnboarding.dismiss}
+      />
+
+      {/* Member Welcome Modal - First-time visitor onboarding */}
+      <SpaceWelcomeModal
+        open={showWelcomeModal}
+        onClose={() => {
+          setShowWelcomeModal(false);
+          memberWelcome.markAsSeen();
+        }}
+        data={{
+          name: space.name,
+          description: space.description,
+          category: space.category,
+          iconUrl: space.iconUrl,
+          bannerUrl: space.bannerUrl,
+          leaders: leaders.map((l) => ({
+            id: l.id,
+            name: l.name,
+            avatarUrl: l.avatarUrl,
+            role: l.role,
+          })),
+          memberCount: space.memberCount,
+          features: (() => {
+            const features: SpaceFeatureHighlight[] = [];
+            if (events.length > 0) {
+              features.push({ type: 'events', title: 'Upcoming Events', description: 'Join meetups and activities', count: events.length });
+            }
+            if (tools.length > 0) {
+              features.push({ type: 'tools', title: 'Interactive Tools', description: 'Polls, signups, and more', count: tools.length });
+            }
+            features.push({ type: 'discussions', title: 'Live Discussions', description: 'Chat with the community in real-time' });
+            return features;
+          })(),
+        }}
+        onComplete={() => {
+          setShowWelcomeModal(false);
+          memberWelcome.markAsSeen();
+        }}
+        onStartChatting={() => {
+          setShowWelcomeModal(false);
+          memberWelcome.markAsSeen();
+          // Focus the chat input (the ChatInput component handles this internally)
+        }}
+        storageKey={spaceId ?? ''}
       />
 
       {/* Event Details Modal */}

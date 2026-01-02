@@ -88,7 +88,7 @@ export const RitualProgressBar = React.forwardRef<HTMLDivElement, RitualProgress
               'h-3 bg-[var(--hive-background-tertiary)] border border-[color-mix(in_srgb,var(--hive-border-default) 50%,transparent)]',
               isCompact && 'h-2'
             )}
-            indicatorClassName="bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)] shadow-[0_0_12px_rgba(255,215,0,0.4)]"
+            indicatorClassName="bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)]"
           />
 
           {/* Milestone Markers */}
@@ -105,7 +105,7 @@ export const RitualProgressBar = React.forwardRef<HTMLDivElement, RitualProgress
                     className={cn(
                       'z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-240',
                       milestone.isCompleted
-                        ? 'border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)] shadow-[0_0_8px_rgba(255,215,0,0.6)]'
+                        ? 'border-[var(--hive-brand-primary)] bg-[var(--hive-brand-primary)]'
                         : 'border-[var(--hive-border-default)] bg-[var(--hive-background-tertiary)]'
                     )}
                   >

@@ -94,17 +94,20 @@ export {
 } from "./motion";
 
 // HIVE Branded Navigation (Nov 2025)
-export { DesktopNav } from "./atomic/00-Global/organisms/desktop-nav";
-export { MobileNav, defaultNavItems } from "./atomic/00-Global/organisms/mobile-nav";
 export { NotificationDropdown } from "./atomic/00-Global/organisms/notification-dropdown-branded";
 export { ProfileDropdown } from "./atomic/00-Global/organisms/profile-dropdown-branded";
 export { Breadcrumbs, BreadcrumbsCompact } from "./atomic/00-Global/molecules/breadcrumbs";
 export type { BreadcrumbItem, BreadcrumbsProps } from "./atomic/00-Global/molecules/breadcrumbs";
-export { HiveNavigationExample, HiveNavigationLayout } from "./atomic/00-Global/organisms/hive-navigation-example";
-export type { DesktopNavProps } from "./atomic/00-Global/organisms/desktop-nav";
-export type { MobileNavProps, NavItem, MySpaceItem } from "./atomic/00-Global/organisms/mobile-nav";
 export type { NotificationDropdownProps } from "./atomic/00-Global/organisms/notification-dropdown-branded";
 export type { ProfileDropdownProps } from "./atomic/00-Global/organisms/profile-dropdown-branded";
+
+// Space Switcher (Dec 2025 - Spotlight-style space navigation)
+export { SpaceSwitcher } from "./atomic/00-Global/organisms/space-switcher";
+export type { SpaceSwitcherProps, SpaceSwitcherSpace } from "./atomic/00-Global/organisms/space-switcher";
+
+// Space Rail (Dec 2025 - Space-first navigation paradigm)
+export { SpaceRail } from "./atomic/00-Global/organisms/space-rail";
+export type { SpaceRailProps, SpaceItem, NotificationItem as SpaceRailNotification } from "./atomic/00-Global/organisms/space-rail";
 
 // Toast System (Sonner-based - Nov 2025)
 export { Toaster, toast, useToast, legacyToast } from "./atomic/00-Global/atoms/sonner-toast";
@@ -124,13 +127,7 @@ export {
   lottiePresets,
   GlowEffect,
   AnimatedGoldIcon,
-  // Premium Card Effects (Billion-Dollar UI)
-  ShineBorder,
-  ShineBorderCard,
-  BorderBeam,
-  BorderBeamCard,
-  SparklesText,
-  sparklePresets,
+  GLOW_COLORS,
 } from "./components/motion-primitives";
 
 // Premium Subtle Motion Variants (Dec 2025 - Vercel/Linear style)
@@ -143,6 +140,24 @@ export {
   scaleInVariants,
   staggerContainerVariants,
   staggerItemVariants,
+  // 2026 State Transitions
+  selectionVariants,
+  arrowRotationVariants,
+  collapseVariants,
+  checkDrawVariants,
+  successSettleVariants,
+  errorShakeVariants,
+  loadingPulseVariants,
+  skeletonShimmerVariants,
+  // 2026 Elevation & Celebration
+  elevationClasses,
+  cardElevationVariants,
+  floatingElevationVariants,
+  modalElevationVariants,
+  microCelebrationVariants,
+  standardCelebrationVariants,
+  majorCelebrationVariants,
+  celebrationGlowVariants,
 } from "./lib/motion-variants";
 
 // Spaces Motion Variants (Nov 2025 - Motion-Rich Premium)
@@ -195,26 +210,40 @@ export type {
   GlassPanel,
   GlassElevated,
   GlassSticky,
-  GlassGlow,
+  GlassPremium,
   GlassDepth,
   GlassBorder,
   GlassPreset,
 } from "./lib/glass-morphism";
+
+// Spatial Depth System (Dec 2025 - 2026 Design Elevation)
+export {
+  elevation,
+  elevationLevels,
+  getElevation,
+  shadows,
+  perspective,
+  getPerspectiveStyle,
+  getPerspectiveHover,
+  depthRelationships,
+  cardDepth,
+  backdrop,
+  elevationVariants,
+  withElevation,
+  getDarkShadow,
+  isFloatingElement,
+  getBackdrop,
+} from "./lib/spatial-depth";
 export type {
   InViewProps,
   AutoAnimatedProps,
   AnimatedNumberProps,
   LottieAnimationProps,
   GlowEffectProps,
-  // Premium Card Effects Types (Billion-Dollar UI)
-  ShineBorderProps,
-  ShineBorderCardProps,
-  BorderBeamProps,
-  BorderBeamCardProps,
-  SparklesTextProps,
 } from "./components/motion-primitives";
 
-export type { PresenceStatus } from "./identity";
+export type { PresenceStatus, ActivityLevel, ActivityPresenceProps } from "./identity";
+export { ActivityPresence, getActivityLevel } from "./identity";
 // HiveLab element system exports
 export type {
   ToolComposition,
@@ -419,9 +448,6 @@ export {
 } from "./atomic/00-Global/molecules/dropdown-menu";
 
 // Loading State Components (Nov 2025 - Loading Architecture)
-export { LoadingButton } from "./atomic/00-Global/atoms/loading-button";
-export type { LoadingButtonProps } from "./atomic/00-Global/atoms/loading-button";
-
 export { ProgressiveImage, AvatarImage as ProgressiveAvatarImage } from "./atomic/00-Global/atoms/progressive-image";
 export type { ProgressiveImageProps } from "./atomic/00-Global/atoms/progressive-image";
 
@@ -435,6 +461,9 @@ export {
 } from "./atomic/00-Global/atoms/connection-status";
 export type { ConnectionStatusProps } from "./atomic/00-Global/atoms/connection-status";
 export { HiveCard, HiveCardHeader, HiveCardContent, HiveCardTitle } from "./atomic/00-Global/atoms/hive-card";
+export { HiveModal, HiveModalHeader, HiveModalTitle, HiveModalDescription, HiveModalFooter } from "./atomic/00-Global/atoms/hive-modal";
+export { HiveConfirmModal } from "./atomic/00-Global/atoms/hive-confirm-modal";
+export type { HiveConfirmModalProps } from "./atomic/00-Global/atoms/hive-confirm-modal";
 export { Grid } from "./atomic/00-Global/atoms/grid";
 export { HiveLogo, HiveLogos } from "./atomic/00-Global/atoms/hive-logo";
 export type { HiveLogoProps } from "./atomic/00-Global/atoms/hive-logo";
@@ -485,12 +514,17 @@ export type {
   UniversalShellProps,
 } from "./shells/UniversalShell";
 
-// Experience Shells (HIVE Layout System 2025)
+// Experience Shells - 4 Canonical Layouts (Phase 2, Dec 2025)
 export {
-  VoidShell,
+  // Canonical Layouts
+  VoidShell,           // FOCUS: Auth, onboarding, settings
+  ConversationShell,   // CONVERSATION: Space chat, feed, notifications
+  BrowseShell,         // BROWSE: Discovery, galleries, member lists
+  browseItemVariants,
+  CanvasShell,         // CANVAS: HiveLab IDE, admin dashboards
+  // Specialized Layouts
   StreamShell,
   streamItemVariants,
-  CanvasShell,
   ProfileShell,
   profileCardVariants,
   statCounterVariants,
@@ -529,15 +563,7 @@ export type {
 // Space discovery/loading skeletons
 export { SpacesDiscoverySkeleton } from "./pages/spaces/SpacesSkeletons";
 
-// Spaces - shared molecules
-export { SpaceHeader } from "./atomic/03-Spaces/molecules/space-header";
-export type {
-  SpaceHeaderProps,
-  SpaceHeaderSpace,
-  SpaceMembershipState,
-} from "./atomic/03-Spaces/molecules/space-header";
-
-// NOTE: All molecules were deleted per cleanup directive.
+// NOTE: SpaceHeader was removed - use PremiumHeader from premium exports instead
 // Storybook imports from dist/ will continue to work (compiled code exists).
 // New components should be atoms (primitives) placed in atomic/atoms/
 
@@ -812,6 +838,18 @@ export {
 } from "./atomic/03-Spaces/molecules/space-empty-state";
 export type { SpaceEmptyStateProps } from "./atomic/03-Spaces/molecules/space-empty-state";
 
+// Delightful Empty States (Dec 2025 - 2026 Design)
+export {
+  EmptyStateDelightful,
+  CanvasEmptyState,
+  MembersEmptyState as MembersDelightfulEmptyState,
+  SearchEmptyState as SearchDelightfulEmptyState,
+  ErrorEmptyState,
+  SpacesEmptyState as SpacesDelightfulEmptyState,
+  ToolsEmptyState as ToolsDelightfulEmptyState,
+} from "./atomic/00-Global/molecules/empty-state-delightful";
+export type { EmptyStateDelightfulProps } from "./atomic/00-Global/molecules/empty-state-delightful";
+
 // Space layout primitives
 export {
   SpaceSplitLayout,
@@ -940,9 +978,18 @@ export type {
   SpaceLeaderOnboardingData,
 } from "./atomic/03-Spaces/organisms/space-leader-onboarding-modal";
 
-// Brand Spinner (Dec 2025 - Design Elevation)
-export { GoldSpinner, GoldSpinnerInline } from "./components/motion-primitives/gold-spinner";
-export type { GoldSpinnerProps } from "./components/motion-primitives/gold-spinner";
+// Brand Spinner (Dec 2025 - configurable colors, neutral by default)
+export {
+  BrandSpinner,
+  BrandSpinnerInline,
+  GoldSpinner, // deprecated - use BrandSpinner with variant="gold"
+  GoldSpinnerInline, // deprecated - use BrandSpinnerInline with variant="gold"
+  SPINNER_VARIANTS,
+} from "./components/motion-primitives/gold-spinner";
+export type {
+  BrandSpinnerProps,
+  GoldSpinnerProps, // deprecated alias
+} from "./components/motion-primitives/gold-spinner";
 
 // Ritual Molecules
 export { RitualProgressBar } from "./atomic/06-Rituals/molecules/ritual-progress-bar";
@@ -1003,16 +1050,8 @@ export type { SheetContentProps } from "./atomic/00-Global/atoms/sheet";
 // } from "./atomic/06-Rituals/organisms/ritual-feed-banner";
 
 // Profile Molecules
-// Temporary stub to prevent import errors while ProfileBentoGrid is disabled
-export interface ProfileBentoGridProps {
-  profile: unknown;
-  editable?: boolean;
-  onLayoutChange?: (layout: unknown) => void;
-  className?: string;
-}
-export function ProfileBentoGrid({ className }: ProfileBentoGridProps) {
-  return null; // Stub - real component disabled due to ESM/CJS issue
-}
+export { ProfileBentoGrid } from "./atomic/04-Profile/molecules/profile-bento-grid";
+export type { ProfileBentoGridProps } from "./atomic/04-Profile/molecules/profile-bento-grid";
 
 // Feed Templates
 export { FeedPageLayout } from "./atomic/02-Feed/templates/feed-page-layout";
@@ -1031,11 +1070,7 @@ export {
 export type { PostComposerSkeletonProps } from "./atomic/02-Feed/organisms/post-composer-skeleton";
 
 // Space Organisms
-export { SpaceBoardLayout } from "./atomic/03-Spaces/organisms/space-board-layout";
-export type {
-  SpaceBoardLayoutProps,
-  PinnedPost as SpacePinnedPost,
-} from "./atomic/03-Spaces/organisms/space-board-layout";
+// NOTE: SpaceBoardLayout was removed (unused) - use premium components instead
 
 export { SpacePostComposer } from "./atomic/03-Spaces/organisms/space-post-composer";
 export type { SpacePostComposerProps } from "./atomic/03-Spaces/organisms/space-post-composer";
@@ -1045,7 +1080,7 @@ export { AddTabModal } from "./atomic/03-Spaces/organisms/add-tab-modal";
 export type { AddTabModalProps, AddTabInput, TabType } from "./atomic/03-Spaces/organisms/add-tab-modal";
 
 export { AddWidgetModal } from "./atomic/03-Spaces/organisms/add-widget-modal";
-export type { AddWidgetModalProps, AddWidgetInput as AddWidgetInputUI, WidgetType } from "./atomic/03-Spaces/organisms/add-widget-modal";
+export type { AddWidgetModalProps, AddWidgetInput as AddWidgetInputUI, WidgetType, ExistingTool } from "./atomic/03-Spaces/organisms/add-widget-modal";
 
 export { MemberInviteModal } from "./atomic/03-Spaces/organisms/member-invite-modal";
 export type { MemberInviteModalProps, MemberInviteInput, InviteableUser, MemberRole } from "./atomic/03-Spaces/organisms/member-invite-modal";
@@ -1056,12 +1091,7 @@ export type { EventCreateModalProps, EventCreateInput, EventType, BoardOption } 
 export { EventDetailsModal } from "./atomic/03-Spaces/organisms/event-details-modal";
 export type { EventDetailsModalProps, SpaceEventDetails, RSVPStatus, EventOrganizer } from "./atomic/03-Spaces/organisms/event-details-modal";
 
-// Space Templates
-export { SpaceBoardTemplate } from "./atomic/03-Spaces/templates/space-board-template";
-export type {
-  SpaceBoardTemplateProps,
-  PinnedPost,
-} from "./atomic/03-Spaces/templates/space-board-template";
+// NOTE: SpaceBoardTemplate was removed (unused) - use premium components instead
 
 // Space Skeletons (Nov 2025 - Loading Architecture)
 export {
@@ -1150,6 +1180,20 @@ export type {
 export { SpaceEntryAnimation } from "./atomic/03-Spaces/organisms/space-entry-animation";
 export type { SpaceEntryAnimationProps } from "./atomic/03-Spaces/organisms/space-entry-animation";
 
+// Space Threshold (Dec 2025 - Edge-to-edge welcoming entry)
+export { SpaceThreshold } from "./atomic/03-Spaces/organisms/space-threshold";
+export type { SpaceThresholdProps } from "./atomic/03-Spaces/organisms/space-threshold";
+
+// Context Panel (Phase 3 - Dec 2025 - On-demand sidebar replacement)
+export { ContextPanel } from "./atomic/03-Spaces/organisms/context-panel";
+export type {
+  ContextPanelProps,
+  SpaceContextData,
+  SpaceEventItem,
+  SpaceMemberItem,
+  SpaceToolItem,
+} from "./atomic/03-Spaces/organisms/context-panel";
+
 // Chat Toolbar (Dec 2025 - Inline tool insertion)
 export { ChatToolbar } from "./atomic/03-Chat/chat-toolbar";
 export type {
@@ -1164,6 +1208,15 @@ export type { RitualStripProps } from "./atomic/06-Rituals/organisms/ritual-stri
 
 export { RitualCard } from "./atomic/06-Rituals/organisms/ritual-card";
 export type { RitualCardProps } from "./atomic/06-Rituals/organisms/ritual-card";
+
+export { RitualFoundingClass } from "./atomic/06-Rituals/organisms/ritual-founding-class";
+export type { RitualFoundingClassProps, FoundingMember } from "./atomic/06-Rituals/organisms/ritual-founding-class";
+
+export { RitualSurvival } from "./atomic/06-Rituals/organisms/ritual-survival";
+export type { RitualSurvivalProps, SurvivalCompetitor, SurvivalMatchup } from "./atomic/06-Rituals/organisms/ritual-survival";
+
+export { RitualTournamentBracket } from "./atomic/06-Rituals/organisms/ritual-tournament-bracket";
+export type { RitualTournamentBracketProps, TournamentCompetitor, TournamentMatchup } from "./atomic/06-Rituals/organisms/ritual-tournament-bracket";
 
 // Ritual Templates
 export { RitualsPageLayout } from "./atomic/06-Rituals/templates/rituals-page-layout";
@@ -1183,8 +1236,8 @@ export type { ProfileViewLayoutProps } from "./atomic/04-Profile/templates/profi
 // Layout Primitives (Vercel/Linear patterns - Nov 2025)
 export { Shell, shellSizes } from "./atomic/00-Global/templates/shell";
 export type { ShellProps, ShellSize } from "./atomic/00-Global/templates/shell";
-export { PageHeader } from "./atomic/00-Global/templates/page-header";
-export type { PageHeaderProps } from "./atomic/00-Global/templates/page-header";
+export { PageHeader, SectionHeader } from "./layout/page-header";
+export type { PageHeaderProps, SectionHeaderProps } from "./layout/page-header";
 export { CollapsiblePageHeader } from "./layout/collapsible-page-header";
 export type { CollapsiblePageHeaderProps, TabItem as HeaderTabItem } from "./layout/collapsible-page-header";
 
@@ -1283,6 +1336,8 @@ export {
   // Intent detection UI (HiveLab Winter 2025)
   IntentConfirmation,
   IntentConfirmationInline,
+  // Floating Composer (Phase 3 - Edge-to-edge chat redesign)
+  FloatingComposer,
 } from "./atomic/03-Chat";
 export type {
   MessageBubbleProps,
@@ -1298,6 +1353,9 @@ export type {
   DetectedIntent,
   IntentType,
   SlashCommandSuggestion,
+  // Floating Composer types (Phase 3)
+  FloatingComposerProps,
+  FloatingComposerHandle,
 } from "./atomic/03-Chat";
 
 // Parsed slash command data (for slash command handling)

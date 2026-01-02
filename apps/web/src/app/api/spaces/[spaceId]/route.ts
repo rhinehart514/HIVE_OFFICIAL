@@ -113,7 +113,7 @@ export const GET = withAuthAndErrors(async (
 
     // FALLBACK: If checkSpacePermission didn't find membership, check DDD space entity
     // This handles cases where Firestore data might be inconsistent with DDD model
-    if (!membership) {
+    if (!membership && space.owner) {
       const ownerId = space.owner.value;
       logger.info(`Fallback ownership check for space ${spaceId}`, {
         userId,
@@ -242,3 +242,71 @@ export const PATCH = withAuthValidationAndErrors(
     });
   }
 );
+
+// DELETE /api/spaces/[spaceId] - Delete space (owner only, requires verified claim)
+export const DELETE = withAuthAndErrors(async (
+  request,
+  { params }: { params: Promise<{ spaceId: string }> },
+  respond
+) => {
+  const { spaceId } = await params;
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
+
+  if (!spaceId) {
+    return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
+  }
+
+  // Load space with leader requests to check claim status
+  const spaceRepo = getServerSpaceRepository();
+  const result = await spaceRepo.findById(spaceId, { loadPlacedTools: false });
+
+  if (result.isFailure) {
+    return respond.error("Space not found", "RESOURCE_NOT_FOUND", { status: 404 });
+  }
+
+  const space = result.getValue();
+
+  // Enforce campus isolation
+  if (space.campusId.id !== campusId) {
+    return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
+  }
+
+  // Check if user is the owner
+  if (space.owner?.id !== userId) {
+    return respond.error("Only the space owner can delete a space", "FORBIDDEN", { status: 403 });
+  }
+
+  // Check if user has provisional access (pending verification)
+  const userLeaderRequest = space.leaderRequests?.find(
+    r => r.profileId.id === userId && r.status === 'pending'
+  );
+
+  if (userLeaderRequest?.provisionalAccessGranted && !userLeaderRequest.reviewedAt) {
+    return respond.error(
+      "Space deletion is disabled while your leader verification is pending. Please wait for verification to complete.",
+      "PROVISIONAL_ACCESS_RESTRICTED",
+      { status: 403 }
+    );
+  }
+
+  // Proceed with deletion using the repository directly
+  // Note: deleteSpace method not yet implemented in SpaceManagementService
+  const deleteResult = await spaceRepo.delete(spaceId);
+
+  if (deleteResult.isFailure) {
+    logger.error("Failed to delete space", {
+      spaceId,
+      userId,
+      error: deleteResult.error,
+    });
+    return respond.error(
+      deleteResult.error ?? "Failed to delete space",
+      "DELETE_FAILED",
+      { status: 500 }
+    );
+  }
+
+  logger.info("Space deleted", { spaceId, userId });
+  return respond.success({ message: "Space deleted successfully" });
+});

@@ -7,7 +7,7 @@
  * and glass morphism styling for consistency.
  */
 
-import { Calendar, Clock, Play, Sparkles } from "lucide-react";
+import { Calendar, Clock, Play, Zap } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { cn } from "../../../lib/utils";
@@ -45,9 +45,9 @@ const defaultTitle: Record<RailWidgetVariant, string> = {
 };
 
 const variantIcons: Record<RailWidgetVariant, React.ReactNode> = {
-  action: <Sparkles className="h-4 w-4 text-gold-400" aria-hidden />,
-  progress: <Play className="h-4 w-4 text-gold-400" aria-hidden />,
-  eventNow: <Calendar className="h-4 w-4 text-gold-400" aria-hidden />,
+  action: <Zap className="h-4 w-4 text-neutral-400" aria-hidden />,
+  progress: <Play className="h-4 w-4 text-neutral-400" aria-hidden />,
+  eventNow: <Calendar className="h-4 w-4 text-neutral-400" aria-hidden />,
 };
 
 export function RailWidget({

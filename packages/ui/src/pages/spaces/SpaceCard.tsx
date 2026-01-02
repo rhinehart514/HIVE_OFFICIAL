@@ -141,7 +141,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold text-[var(--hive-text-primary,#f5f5ff)]">{space.name}</h3>
             {space.isInviteOnly ? (
-              <Badge tone="muted" variant="pill">
+              <Badge variant="secondary">
                 Invite only
               </Badge>
             ) : null}
@@ -165,7 +165,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
         {space.tags && space.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {space.tags.map((tag) => (
-              <Badge key={tag} tone="muted" variant="pill">
+              <Badge key={tag} variant="secondary">
                 #{tag}
               </Badge>
             ))}

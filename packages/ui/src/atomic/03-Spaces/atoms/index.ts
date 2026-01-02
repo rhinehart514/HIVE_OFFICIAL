@@ -26,3 +26,13 @@ export {
 
 // Re-export existing atoms
 export { TopBarNav } from './top-bar-nav';
+
+// Phase 3: Visual Warmth - Ambient glow and warmth indicators
+export {
+  AmbientGlow,
+  WarmthBackground,
+  SpaceWarmthIndicator,
+  type AmbientGlowProps,
+  type WarmthBackgroundProps,
+  type SpaceWarmthIndicatorProps,
+} from './ambient-glow';

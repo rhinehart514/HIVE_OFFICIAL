@@ -5,7 +5,7 @@
  * Uses subtle 8px blur for elegant, non-distracting appearance.
  *
  * @example
- * <GlassSurface variant="card" glow="gold">
+ * <GlassSurface variant="card" interactive>
  *   <CardContent />
  * </GlassSurface>
  */
@@ -14,7 +14,7 @@
 import * as React from 'react';
 import { motion, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-import { glass, type GlassPanel, type GlassElevated, type GlassGlow, type GlassDepth } from '../../../lib/glass-morphism';
+import { glass, type GlassPanel, type GlassDepth } from '../../../lib/glass-morphism';
 
 // Surface variant types
 type SurfaceVariant = 'panel' | 'card' | 'modal' | 'dropdown' | 'header' | 'widget';
@@ -22,16 +22,12 @@ type SurfaceVariant = 'panel' | 'card' | 'modal' | 'dropdown' | 'header' | 'widg
 export interface GlassSurfaceProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   /** Surface variant - determines base glass styling */
   variant?: SurfaceVariant;
-  /** Optional glow effect */
-  glow?: 'gold' | 'goldHover' | 'goldRing' | 'none';
   /** Shadow depth level */
   depth?: GlassDepth | 'none';
   /** Panel sub-variant when variant="panel" */
   panelType?: GlassPanel;
   /** Border radius preset */
   rounded?: 'none' | 'lg' | 'xl' | '2xl' | '3xl' | 'full';
-  /** Whether to include gold border accent */
-  goldBorder?: boolean;
   /** Whether this is an interactive element (enables hover states) */
   interactive?: boolean;
   /** Children content */
@@ -45,13 +41,6 @@ const VARIANT_CLASSES: Record<SurfaceVariant, string> = {
   dropdown: glass.elevated.dropdown,
   header: glass.sticky.header,
   widget: `${glass.panel.light} ${glass.depth.shallow}`,
-};
-
-const GLOW_CLASSES: Record<string, string> = {
-  gold: glass.glow.gold,
-  goldHover: glass.glow.goldHover,
-  goldRing: glass.glow.goldRing,
-  none: '',
 };
 
 const DEPTH_CLASSES: Record<GlassDepth | 'none', string> = {
@@ -76,11 +65,9 @@ export const GlassSurface = React.forwardRef<HTMLDivElement, GlassSurfaceProps>(
   (
     {
       variant = 'panel',
-      glow = 'none',
       depth = 'none',
       panelType = 'default',
       rounded = '2xl',
-      goldBorder = false,
       interactive = false,
       className,
       children,
@@ -96,17 +83,13 @@ export const GlassSurface = React.forwardRef<HTMLDivElement, GlassSurfaceProps>(
     const classes = cn(
       // Base glass styling
       baseClass,
-      // Glow effect
-      GLOW_CLASSES[glow],
       // Depth/shadow
       DEPTH_CLASSES[depth],
       // Border radius
       ROUNDED_CLASSES[rounded],
-      // Gold border accent
-      goldBorder && glass.border.goldSubtle,
-      goldBorder && interactive && glass.border.goldHover,
-      // Interactive hover states
+      // Interactive hover states (neutral, no gold)
       interactive && variant === 'card' && glass.elevated.cardHover,
+      interactive && glass.border.hover,
       // Overflow handling
       'overflow-hidden',
       // Relative for child positioning
@@ -126,7 +109,7 @@ GlassSurface.displayName = 'GlassSurface';
 
 // Convenience presets for common use cases
 export const GlassCard = React.forwardRef<HTMLDivElement, Omit<GlassSurfaceProps, 'variant'>>(
-  (props, ref) => <GlassSurface ref={ref} variant="card" goldBorder interactive {...props} />
+  (props, ref) => <GlassSurface ref={ref} variant="card" interactive {...props} />
 );
 GlassCard.displayName = 'GlassCard';
 

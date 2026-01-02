@@ -20,12 +20,11 @@ import {
   BarChart2,
   Timer,
   Calendar,
-  Users,
-  MessageSquare,
-  Sparkles,
   Search,
   ChevronRight,
   Loader2,
+  Wrench,
+  Wand2,
 } from 'lucide-react';
 import {
   Popover,
@@ -137,7 +136,7 @@ function ToolItem({ icon: Icon, name, description, onClick, reducedMotion }: Too
       className={cn(
         'w-full flex items-center gap-3 px-3 py-3 rounded-lg min-h-[44px]',
         'text-left transition-colors',
-        'hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+        'hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
       )}
     >
       <div className="w-10 h-10 rounded-lg bg-neutral-800 flex items-center justify-center flex-shrink-0" aria-hidden="true">
@@ -237,7 +236,7 @@ export function ToolPickerPopover({
                   'w-full pl-9 pr-3 py-2 rounded-lg text-sm',
                   'bg-neutral-800/50 border border-neutral-700/50',
                   'text-white placeholder:text-neutral-500',
-                  'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40'
+                  'focus:outline-none focus:ring-2 focus:ring-white/50'
                 )}
                 autoFocus
               />
@@ -280,7 +279,7 @@ export function ToolPickerPopover({
                     {filteredDeployedTools.map((tool) => (
                       <ToolItem
                         key={tool.deploymentId}
-                        icon={Sparkles}
+                        icon={Wrench}
                         name={tool.name}
                         description={tool.description}
                         onClick={() => handleDeployedToolSelect(tool)}
@@ -314,12 +313,12 @@ export function ToolPickerPopover({
                 aria-label="Create custom tool in HiveLab"
                 className={cn(
                   'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
-                  'bg-[#FFD700]/10 text-[#FFD700] text-sm font-medium',
-                  'hover:bg-[#FFD700]/20 transition-colors',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                  'bg-white/[0.06] text-white text-sm font-medium',
+                  'hover:bg-white/[0.10] transition-colors',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
                 )}
               >
-                <Sparkles className="w-4 h-4" aria-hidden="true" />
+                <Wand2 className="w-4 h-4" aria-hidden="true" />
                 <span>Create in HiveLab</span>
               </motion.button>
             </div>

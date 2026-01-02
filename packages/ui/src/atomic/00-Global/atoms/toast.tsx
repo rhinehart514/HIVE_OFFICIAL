@@ -58,14 +58,14 @@ ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 // Toast variants
 const toastVariants = cva(
   // Semantic radius: toast = xl (24px)
-  'group pointer-events-auto relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border border-border-default bg-background-secondary px-4 py-3 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
+  'group pointer-events-auto relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl border border-[#2A2A2A] bg-[#141414] px-4 py-3 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
   {
     variants: {
       variant: {
-        default: 'border-border-default',
-        success: 'border-status-success/30 bg-status-success/10',
-        error: 'border-status-error/30 bg-status-error/10',
-        warning: 'border-status-warning/30 bg-status-warning/10',
+        default: 'border-[#2A2A2A]',
+        success: 'border-[#00D46A]/30 bg-[#00D46A]/10',
+        error: 'border-[#FF3737]/30 bg-[#FF3737]/10',
+        warning: 'border-[#FFB800]/30 bg-[#FFB800]/10',
       },
     },
     defaultVariants: {
@@ -104,10 +104,10 @@ export const ToastIcon = React.forwardRef<
   }[variant || 'default'];
 
   const iconColor = {
-    default: 'text-text-secondary',
-    success: 'text-status-success',
-    error: 'text-status-error',
-    warning: 'text-status-warning',
+    default: 'text-[#A1A1A6]',
+    success: 'text-[#00D46A]',
+    error: 'text-[#FF3737]',
+    warning: 'text-[#FFB800]',
   }[variant || 'default'];
 
   return (
@@ -126,7 +126,7 @@ export const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      'inline-flex h-7 shrink-0 items-center justify-center rounded-lg border border-border-default bg-transparent px-3 text-sm font-medium transition-colors duration-100 hover:bg-background-interactive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong disabled:pointer-events-none disabled:opacity-50',
+      'inline-flex h-7 shrink-0 items-center justify-center rounded-lg border border-[#2A2A2A] bg-transparent px-3 text-sm font-medium transition-colors duration-100 hover:bg-[#1A1A1A] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50 disabled:pointer-events-none disabled:opacity-50',
       className
     )}
     {...props}
@@ -142,7 +142,7 @@ export const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      'absolute right-2 top-2 rounded-md p-1 text-text-muted opacity-0 transition-opacity duration-100 hover:text-text-primary focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-strong group-hover:opacity-100',
+      'absolute right-2 top-2 rounded-md p-1 text-[#71717A] opacity-0 transition-opacity duration-100 hover:text-[#FAFAFA] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50 group-hover:opacity-100',
       className
     )}
     toast-close=""
@@ -160,7 +160,7 @@ export const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn('text-sm font-medium text-text-primary', className)}
+    className={cn('text-sm font-medium text-[#FAFAFA]', className)}
     {...props}
   />
 ));
@@ -173,7 +173,7 @@ export const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn('text-sm text-text-secondary', className)}
+    className={cn('text-sm text-[#A1A1A6]', className)}
     {...props}
   />
 ));

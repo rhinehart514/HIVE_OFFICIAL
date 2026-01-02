@@ -202,10 +202,36 @@ class AdminNotificationSystem {
 
   /**
    * Send security alert
+   * For soft launch: logs to console. Post-launch: integrate email/Slack
    */
-  private async sendSecurityAlert(_notification: AdminNotification): Promise<void> {
-    // TODO: Implement security alert system (email, Slack, etc.)
-    // Security alerts would be sent via email, Slack, etc.
+  private async sendSecurityAlert(notification: AdminNotification): Promise<void> {
+    // Log security alerts prominently - critical for monitoring
+    console.warn('[SECURITY ALERT]', {
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      priority: notification.priority,
+      timestamp: notification.createdAt,
+      data: notification.data,
+    });
+
+    // For critical security events, also persist to database for audit trail
+    if (notification.priority === 'critical') {
+      try {
+        await fetch('/api/admin/security-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'security_alert',
+            notification,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch {
+        // Fail silently but log - security logging should not break the app
+        console.error('[SECURITY ALERT] Failed to persist critical security event');
+      }
+    }
   }
 
   /**

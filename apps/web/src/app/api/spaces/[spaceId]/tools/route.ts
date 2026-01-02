@@ -353,6 +353,8 @@ export const GET = withAuthAndErrors(async (
       queryParams.offset + queryParams.limit
     );
 
+    // SCALING FIX: Add cache headers - tools list is relatively static
+    // Cache for 5 minutes on edge, stale-while-revalidate for 10 minutes
     return respond.success({
       tools: paginatedTools,
       pagination: {
@@ -361,6 +363,10 @@ export const GET = withAuthAndErrors(async (
         offset: queryParams.offset,
         hasMore: filteredTools.length > queryParams.offset + queryParams.limit,
       },
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
+      }
     });
   } catch (error) {
     logger.error("Error fetching space tools", {
@@ -481,6 +487,115 @@ export const POST = withAuthValidationAndErrors(
         error: error instanceof Error ? error.message : String(error),
       });
       return respond.error("Failed to deploy tool", "INTERNAL_ERROR", {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
+  },
+);
+
+// ============================================================================
+// DELETE Handler - Remove tool from space
+// ============================================================================
+
+const RemoveToolSchema = z.object({
+  placementId: z.string().min(1),
+});
+
+export const DELETE = withAuthValidationAndErrors(
+  RemoveToolSchema,
+  async (
+    request,
+    { params }: { params: Promise<{ spaceId: string }> },
+    body,
+    respond,
+  ) => {
+    try {
+      const { spaceId } = await params;
+      const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
+
+      // Validate access
+      const validation = await validateSpaceAccess(spaceId, userId, campusId);
+      if (!validation.ok) {
+        const code =
+          validation.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
+        return respond.error(validation.message, code, { status: validation.status });
+      }
+
+      // Check permission (must be leader/admin to remove tools)
+      const { membership } = validation;
+      const canRemove = ["owner", "admin", "moderator"].includes(membership.role);
+      if (!canRemove) {
+        return respond.error("Only space leaders can remove tools", "FORBIDDEN", {
+          status: HttpStatus.FORBIDDEN,
+        });
+      }
+
+      // Verify the placement exists
+      const placementRef = dbAdmin
+        .collection("spaces")
+        .doc(spaceId)
+        .collection("placed_tools")
+        .doc(body.placementId);
+
+      const placementDoc = await placementRef.get();
+      if (!placementDoc.exists) {
+        return respond.error("Tool placement not found", "RESOURCE_NOT_FOUND", {
+          status: HttpStatus.NOT_FOUND,
+        });
+      }
+
+      const placementData = placementDoc.data();
+      const toolId = placementData?.toolId;
+
+      // Execute all writes in a single transaction for atomicity
+      await dbAdmin.runTransaction(async (transaction) => {
+        // 1. Delete the placement
+        transaction.delete(placementRef);
+
+        // 2. Update tool deployment count (decrement)
+        if (toolId) {
+          const toolRef = dbAdmin.collection("tools").doc(toolId);
+          const toolDoc = await transaction.get(toolRef);
+          if (toolDoc.exists) {
+            transaction.update(toolRef, {
+              deploymentCount: admin.firestore.FieldValue.increment(-1),
+            });
+          }
+        }
+
+        // 3. Mark in deployedTools collection if exists (for analytics consistency)
+        if (toolId) {
+          const deploymentId = `${toolId}_${spaceId}`;
+          const deployedToolRef = dbAdmin.collection("deployedTools").doc(deploymentId);
+          const deployedToolDoc = await transaction.get(deployedToolRef);
+          if (deployedToolDoc.exists) {
+            transaction.update(deployedToolRef, {
+              isActive: false,
+              undeployedBy: userId,
+              undeployedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      });
+
+      logger.info("Tool removed from space", {
+        spaceId,
+        placementId: body.placementId,
+        toolId,
+        removedBy: userId,
+      });
+
+      return respond.success({
+        removed: true,
+        placementId: body.placementId,
+        toolId,
+      });
+    } catch (error) {
+      logger.error("Error removing tool from space", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return respond.error("Failed to remove tool", "INTERNAL_ERROR", {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }

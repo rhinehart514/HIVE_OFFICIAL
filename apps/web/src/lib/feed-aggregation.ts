@@ -213,8 +213,8 @@ export class FeedAggregationEngine {
       snapshot.docs.forEach((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
         const data = doc.data() as ToolInteraction;
         
-        // Convert tool interaction to feed item
-        const mockPost: Post = {
+        // Convert tool interaction to feed item (for validation purposes)
+        const toolInteractionPost: Post = {
           id: doc.id,
           spaceId: data.spaceId,
           authorId: data.userId,
@@ -234,8 +234,8 @@ export class FeedAggregationEngine {
           createdAt: data.createdAt,
           updatedAt: data.createdAt
         } as Post;
-        
-        const validation = validateFeedContent(mockPost);
+
+        const validation = validateFeedContent(toolInteractionPost);
         
         items.push({
           id: `tool_interaction_${doc.id}`,

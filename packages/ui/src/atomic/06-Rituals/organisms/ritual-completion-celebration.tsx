@@ -15,7 +15,7 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Share2, Sparkles, Users, Flame, X } from 'lucide-react';
+import { Trophy, Share2, Star, Users, Flame, X } from 'lucide-react';
 import * as React from 'react';
 import { durationSeconds, easingArrays, springPresets, staggerPresets } from '@hive/tokens';
 
@@ -271,20 +271,20 @@ export const RitualCompletionCelebration: React.FC<RitualCompletionCelebrationPr
                 </Button>
               </motion.div>
 
-              {/* Sparkle decorations */}
+              {/* Star decorations */}
               <motion.div
                 className="absolute top-4 left-4"
                 animate={{ rotate: 360, scale: [1, 1.2, 1] }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
-                <Sparkles className="w-4 h-4 text-[var(--hive-brand-primary)]/50" />
+                <Star className="w-4 h-4 text-[var(--hive-brand-primary)]/50" />
               </motion.div>
               <motion.div
                 className="absolute bottom-4 right-4"
                 animate={{ rotate: -360, scale: [1, 1.2, 1] }}
                 transition={{ duration: 4, repeat: Infinity }}
               >
-                <Sparkles className="w-4 h-4 text-[var(--hive-brand-primary)]/50" />
+                <Star className="w-4 h-4 text-[var(--hive-brand-primary)]/50" />
               </motion.div>
             </div>
           </motion.div>

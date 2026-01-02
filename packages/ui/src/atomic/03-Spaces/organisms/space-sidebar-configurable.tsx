@@ -172,10 +172,11 @@ function EventsToolContent({
         <button
           key={event.id}
           onClick={() => onEventClick?.(event.id)}
+          aria-label={`View event: ${event.title}`}
           className="w-full text-left flex items-center gap-2 py-1.5 px-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors"
         >
-          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-[#FFD700]" />
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white/[0.06] flex items-center justify-center">
+            <Calendar className="w-4 h-4 text-neutral-400" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm text-white truncate">{event.title}</p>
@@ -222,9 +223,9 @@ function MembersToolContent({
             key={member.id}
             onClick={() => onMemberClick?.(member.id)}
             className="relative group"
-            title={member.name}
+            aria-label={`View profile: ${member.name}${member.isOnline ? ', currently online' : ''}`}
           >
-            <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center overflow-hidden ring-2 ring-neutral-900 group-hover:ring-[#FFD700]/30 transition-all">
+            <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center overflow-hidden ring-2 ring-neutral-900 group-hover:ring-white/30 transition-all">
               {member.avatarUrl ? (
                 <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
               ) : (
@@ -246,7 +247,8 @@ function MembersToolContent({
       </div>
       <button
         onClick={() => onMemberClick?.('')}
-        className="text-xs text-[#FFD700] hover:underline"
+        aria-label="View all space members"
+        className="text-xs text-neutral-400 hover:text-white hover:underline transition-colors"
       >
         View all members
       </button>
@@ -278,17 +280,18 @@ function ToolsToolContent({
         <button
           key={tool.id}
           onClick={() => onToolClick?.(tool.id)}
+          aria-label={`Open tool: ${tool.name}${tool.description ? `, ${tool.description}` : ''}`}
           className="w-full text-left flex items-center gap-2 py-1.5 px-2 -mx-2 rounded-lg hover:bg-white/5 transition-colors group"
         >
-          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
             {tool.icon ? (
               <span className="text-sm">{tool.icon}</span>
             ) : (
-              <Wrench className="w-4 h-4 text-[#FFD700]" />
+              <Wrench className="w-4 h-4 text-neutral-400" />
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-white truncate group-hover:text-[#FFD700] transition-colors">
+            <p className="text-sm text-white truncate group-hover:text-white transition-colors">
               {tool.name}
             </p>
             {tool.description && (
@@ -343,16 +346,19 @@ export function SpaceSidebarConfigurable({
 
   // Render content for a slot based on its type
   const renderSlotContent = (slot: SidebarSlotData) => {
-    // System tools have special renderers
-    if (slot.toolId?.startsWith('sys-')) {
-      switch (slot.toolId) {
-        case 'sys-about':
+    // System tools have special renderers (support both system: and legacy sys- prefix)
+    const isSystemTool = slot.toolId?.startsWith('system:') || slot.toolId?.startsWith('sys-');
+    if (isSystemTool) {
+      // Normalize to system: prefix for comparison
+      const normalizedId = slot.toolId?.replace('sys-', 'system:');
+      switch (normalizedId) {
+        case 'system:about':
           return <AboutToolContent spaceData={spaceData} />;
-        case 'sys-events':
+        case 'system:events':
           return <EventsToolContent events={events} onEventClick={onEventClick} />;
-        case 'sys-members':
+        case 'system:members':
           return <MembersToolContent members={members} onMemberClick={onMemberClick} />;
-        case 'sys-tools':
+        case 'system:tools':
           return <ToolsToolContent tools={tools} onToolClick={onToolClick} />;
         default:
           return null;
@@ -403,11 +409,13 @@ export function SpaceSidebarConfigurable({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setEditMode(!editMode)}
+            aria-label={editMode ? 'Exit edit mode' : 'Enter edit mode to customize sidebar'}
+            aria-pressed={editMode}
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40',
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
               editMode
-                ? 'bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30'
+                ? 'bg-white/[0.08] text-white border border-white/[0.12]'
                 : 'text-neutral-400 hover:text-white hover:bg-white/5'
             )}
           >
@@ -490,16 +498,17 @@ export function SpaceSidebarConfigurable({
             whileHover={{ scale: 1.01, borderColor: 'rgba(255, 215, 0, 0.5)' }}
             whileTap={{ scale: 0.99 }}
             onClick={onAddWidget}
+            aria-label="Add a new widget to the sidebar"
             className={cn(
               'mt-4 w-full flex items-center justify-center gap-2',
               'px-4 py-3 rounded-xl',
-              'border-2 border-dashed border-[#FFD700]/30',
-              'text-sm font-medium text-[#FFD700]',
-              'hover:bg-[#FFD700]/5 transition-all duration-200',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+              'border-2 border-dashed border-white/20',
+              'text-sm font-medium text-white',
+              'hover:bg-white/5 hover:border-white/30 transition-all duration-200',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
             )}
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4" aria-hidden="true" />
             Add Widget
           </motion.button>
         )}

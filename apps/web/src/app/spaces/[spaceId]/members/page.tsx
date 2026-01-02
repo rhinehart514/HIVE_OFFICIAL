@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Input, Card, toast } from '@hive/ui';
+import { Button, Input, Card, toast, HiveConfirmModal } from '@hive/ui';
 import {
   ChevronLeft,
   Search,
@@ -12,6 +12,7 @@ import {
   UserMinus,
   Crown,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
@@ -81,6 +82,10 @@ export default function SpaceMembersPage() {
   // Action states
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+
+  // Provisional access state - restricts destructive actions while verification is pending
+  const [hasProvisionalAccess, setHasProvisionalAccess] = useState(false);
 
   // Load members
   useEffect(() => {
@@ -95,6 +100,17 @@ export default function SpaceMembersPage() {
         if (spaceRes.ok) {
           const spaceData = await spaceRes.json();
           setSpaceName(spaceData.name || 'Space');
+
+          // Check if user has provisional access (pending verification)
+          if (user?.uid && spaceData.leaderRequests) {
+            const userRequest = spaceData.leaderRequests.find(
+              (r: { profileId: string; status: string; provisionalAccessGranted?: boolean; reviewedAt?: string | null }) =>
+                r.profileId === user.uid && r.status === 'pending'
+            );
+            setHasProvisionalAccess(
+              userRequest?.provisionalAccessGranted && !userRequest.reviewedAt
+            );
+          }
         }
 
         // Get current user's role
@@ -162,8 +178,6 @@ export default function SpaceMembersPage() {
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this member?')) return;
-
     try {
       setActionLoading(true);
       const res = await secureApiFetch(
@@ -172,7 +186,15 @@ export default function SpaceMembersPage() {
       );
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        // Handle provisional access restriction
+        if (data.code === 'PROVISIONAL_ACCESS_RESTRICTED') {
+          toast.error(
+            'Action restricted',
+            'Member removal is disabled while your leader verification is pending.'
+          );
+          return;
+        }
         throw new Error(data.error || 'Failed to remove member');
       }
 
@@ -268,6 +290,24 @@ export default function SpaceMembersPage() {
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Provisional Access Warning */}
+        {hasProvisionalAccess && (
+          <div className="p-4 mb-6 bg-amber-500/10 rounded-lg border border-amber-500/30">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-medium text-amber-400 mb-1">
+                  Verification Pending
+                </h3>
+                <p className="text-sm text-amber-400/70">
+                  Member removal is disabled while your leader verification is in progress.
+                  You can still view members and change roles. Verification usually takes less than 24 hours.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Summary */}
         {summary && (
           <div className="grid grid-cols-3 gap-4 mb-6">
@@ -402,7 +442,11 @@ export default function SpaceMembersPage() {
                                   disabled={actionLoading}
                                   className="w-full px-3 py-2 text-left text-sm text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] flex items-center gap-2"
                                 >
-                                  <Shield className="h-4 w-4" />
+                                  {actionLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Shield className="h-4 w-4" />
+                                  )}
                                   Make Admin
                                 </button>
                               )}
@@ -412,22 +456,28 @@ export default function SpaceMembersPage() {
                                   disabled={actionLoading}
                                   className="w-full px-3 py-2 text-left text-sm text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] flex items-center gap-2"
                                 >
-                                  <UserMinus className="h-4 w-4" />
+                                  {actionLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <UserMinus className="h-4 w-4" />
+                                  )}
                                   Remove Admin
                                 </button>
                               )}
-                              <button
-                                onClick={() => handleRemoveMember(member.id)}
-                                disabled={actionLoading}
-                                className="w-full px-3 py-2 text-left text-sm text-[var(--hive-status-error)] hover:bg-[var(--hive-status-error)]/10 flex items-center gap-2"
-                              >
-                                {actionLoading ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
+                              {/* Hide remove button when leader has provisional access */}
+                              {!hasProvisionalAccess && (
+                                <button
+                                  onClick={() => {
+                                    setMemberToRemove({ id: member.id, name: member.name });
+                                    setSelectedMember(null);
+                                  }}
+                                  disabled={actionLoading}
+                                  className="w-full px-3 py-2 text-left text-sm text-[var(--hive-status-error)] hover:bg-[var(--hive-status-error)]/10 flex items-center gap-2"
+                                >
                                   <UserMinus className="h-4 w-4" />
-                                )}
-                                Remove Member
-                              </button>
+                                  Remove Member
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}
@@ -440,6 +490,23 @@ export default function SpaceMembersPage() {
           )}
         </Card>
       </div>
+
+      {/* Remove Member Confirmation */}
+      <HiveConfirmModal
+        open={!!memberToRemove}
+        onOpenChange={(open) => !open && setMemberToRemove(null)}
+        title="Remove Member"
+        description={`Are you sure you want to remove ${memberToRemove?.name} from this space? They will lose access to all space content.`}
+        confirmText="Remove"
+        variant="danger"
+        isLoading={actionLoading}
+        onConfirm={() => {
+          if (memberToRemove) {
+            handleRemoveMember(memberToRemove.id);
+            setMemberToRemove(null);
+          }
+        }}
+      />
     </div>
   );
 }

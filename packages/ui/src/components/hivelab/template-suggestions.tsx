@@ -11,7 +11,7 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Sparkles,
+  Layers,
   ChevronRight,
   Loader2,
   BarChart3,
@@ -153,7 +153,7 @@ export function TemplateSuggestions({
     return (
       <div className={cn('space-y-2', className)}>
         <div className="flex items-center gap-2 text-sm text-white/60">
-          <Sparkles className="w-4 h-4 text-[var(--hive-gold-cta)]" />
+          <Layers className="w-4 h-4 text-[var(--hive-gold-cta)]" />
           <span>Suggested tools for your space:</span>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -183,7 +183,7 @@ export function TemplateSuggestions({
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold-cta)]/20 flex items-center justify-center">
-          <Sparkles className="w-4 h-4 text-[var(--hive-gold-cta)]" />
+          <Layers className="w-4 h-4 text-[var(--hive-gold-cta)]" />
         </div>
         <div>
           <h3 className="font-medium text-white">Recommended Tools</h3>

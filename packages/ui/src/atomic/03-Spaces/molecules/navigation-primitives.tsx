@@ -15,13 +15,13 @@ const layoutClassMap: Record<NavigationLayout, string> = {
 
 const activeClassMap: Record<NavigationLayout, string> = {
   sidebar:
-    "bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 18%,transparent)] text-[var(--hive-text-primary,#F9FAFB)] border border-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 32%,var(--hive-border-subtle,#2E2F39))] shadow-[0_16px_42px_rgba(7,8,15,0.32)]",
+    "bg-white/[0.08] text-[var(--hive-text-primary,#F9FAFB)] border border-white/[0.16] shadow-[0_16px_42px_rgba(7,8,15,0.32)]",
   inline:
-    "bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 18%,transparent)] text-[var(--hive-text-primary,#F9FAFB)] border border-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 30%,var(--hive-border-subtle,#2E2F39))]",
+    "bg-white/[0.08] text-[var(--hive-text-primary,#F9FAFB)] border border-white/[0.14]",
   rail:
-    "bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 18%,transparent)] text-[var(--hive-text-primary,#F9FAFB)] border border-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 30%,var(--hive-border-subtle,#2E2F39))] shadow-[0_12px_30px_rgba(7,8,15,0.28)]",
+    "bg-white/[0.08] text-[var(--hive-text-primary,#F9FAFB)] border border-white/[0.14] shadow-[0_12px_30px_rgba(7,8,15,0.28)]",
   bottom:
-    "bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 16%,transparent)] text-[var(--hive-text-primary,#F9FAFB)] shadow-[0_-8px_28px_rgba(7,8,15,0.3)]",
+    "bg-white/[0.06] text-[var(--hive-text-primary,#F9FAFB)] shadow-[0_-8px_28px_rgba(7,8,15,0.3)]",
 };
 
 const inactiveClassMap: Record<NavigationLayout, string> = {
@@ -85,7 +85,7 @@ export const NavigationItem = React.forwardRef<HTMLElement, NavigationItemProps>
 
     const badgeValue = formatBadge(badge);
     const baseClass =
-      "group relative inline-flex items-center rounded-xl font-medium tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus,#FFD700)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary,#060608)] disabled:pointer-events-none disabled:opacity-40";
+      "group relative inline-flex items-center rounded-xl font-medium tracking-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hive-interactive-focus,rgba(255,255,255,0.5))] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary,#060608)] disabled:pointer-events-none disabled:opacity-40";
 
     const contentClasses = cn(
       baseClass,
@@ -109,7 +109,7 @@ export const NavigationItem = React.forwardRef<HTMLElement, NavigationItemProps>
             "absolute left-1/2 h-1 w-10 -translate-x-1/2 rounded-full transition-opacity duration-200 ease-out",
             layout === "bottom" ? "-top-1" : "top-1.5",
             active
-              ? "bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 82%,transparent)] opacity-100"
+              ? "bg-white/80 opacity-100"
               : "opacity-0",
           )}
           aria-hidden
@@ -156,7 +156,7 @@ export const NavigationItem = React.forwardRef<HTMLElement, NavigationItemProps>
           ) : null}
         </span>
         {badgeValue ? (
-          <span className="ml-auto inline-flex min-w-[24px] items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--hive-brand-primary,#FFD700) 20%,transparent)] px-2 py-0.5 text-xs font-semibold text-[var(--hive-text-primary,#F9FAFB)]">
+          <span className="ml-auto inline-flex min-w-[24px] items-center justify-center rounded-full bg-white/[0.12] px-2 py-0.5 text-xs font-semibold text-[var(--hive-text-primary,#F9FAFB)]">
             {badgeValue}
           </span>
         ) : null}

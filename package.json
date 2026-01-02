@@ -33,12 +33,17 @@
     "benchmark:quick": "npx ts-node scripts/benchmark-ai.ts --category basic --format table",
     "benchmark:full": "npx ts-node scripts/benchmark-ai.ts --parallel --format table",
     "benchmark:ci": "npx ts-node scripts/benchmark-ai.ts --mock --parallel --format json",
-    "benchmark:compare": "npx ts-node scripts/benchmark-compare.ts"
+    "benchmark:compare": "npx ts-node scripts/benchmark-compare.ts",
+    "migration:run": "npx tsx scripts/migrations/runner.ts run",
+    "migration:status": "npx tsx scripts/migrations/runner.ts status",
+    "migration:rollback": "npx tsx scripts/migrations/runner.ts rollback",
+    "migration:create": "npx tsx scripts/migrations/runner.ts create"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/node": "^20.19.0",
     "playwright": "^1.57.0",
+    "tsx": "^4.7.0",
     "turbo": "^2.6.1",
     "typescript": "^5.9.3",
     "xml2js": "^0.6.2"

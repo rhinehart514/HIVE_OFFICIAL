@@ -337,7 +337,7 @@ export function ThreadDrawer({
                   'flex-1 px-3 py-2 text-sm',
                   'bg-neutral-900 border border-neutral-800 rounded-lg',
                   'text-neutral-200 placeholder-neutral-500',
-                  'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/40 focus:border-transparent',
+                  'focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent',
                   'resize-none min-h-[40px] max-h-[120px]',
                   isSending && 'opacity-50 cursor-not-allowed'
                 )}

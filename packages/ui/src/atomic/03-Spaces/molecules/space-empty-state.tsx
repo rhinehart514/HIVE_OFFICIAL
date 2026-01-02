@@ -23,18 +23,15 @@
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Calendar, Search, FolderOpen, Plus } from 'lucide-react';
+// HIVE marks - distinctive brand icons replacing generic Lucide icons
 import {
-  MessageSquare,
-  Users,
-  Calendar,
-  Wrench,
-  Sparkles,
-  Search,
-  FolderOpen,
-  Plus,
-  LogIn,
-  Trash2,
-} from 'lucide-react';
+  CellMark,
+  ClusterMark,
+  BuildMark,
+  GridFragment,
+} from '../../00-Global/atoms/hive-marks';
+import { HoneycombCells } from '../../00-Global/atoms/honeycomb-texture';
 import { cn } from '../../../lib/utils';
 import { sectionRevealVariants } from '../../../lib/motion-variants-spaces';
 import { Button } from '../../00-Global/atoms/button';
@@ -98,20 +95,23 @@ interface VariantContent {
 
 const VARIANT_CONTENT: Record<Exclude<EmptyVariant, 'custom'>, VariantContent> = {
   'no-posts': {
-    icon: <MessageSquare className="h-8 w-8" />,
+    // CellMark - represents individual content unit
+    icon: <CellMark size={32} className="opacity-80" />,
     title: 'No posts yet',
     description: 'Be the first to start a conversation',
     defaultActionLabel: 'Create Post',
     defaultPrimary: true,
   },
   'no-members': {
-    icon: <Users className="h-8 w-8" />,
+    // ClusterMark - represents community/group
+    icon: <ClusterMark size={32} className="opacity-90" />,
     title: 'Be the first to join',
     description: 'This space is waiting for its first members',
     defaultActionLabel: 'Join Space',
     defaultPrimary: true,
   },
   'no-events': {
+    // Calendar is functional, keep Lucide
     icon: <Calendar className="h-8 w-8" />,
     title: 'No upcoming events',
     description: 'Events will appear here when scheduled',
@@ -119,20 +119,23 @@ const VARIANT_CONTENT: Record<Exclude<EmptyVariant, 'custom'>, VariantContent> =
     defaultPrimary: false,
   },
   'no-tools': {
-    icon: <Wrench className="h-8 w-8" />,
+    // BuildMark - represents creation/building
+    icon: <BuildMark size={32} className="opacity-80" />,
     title: 'No active tools',
     description: 'Tools can be added to enhance this space',
     defaultActionLabel: 'Browse Tools',
     defaultPrimary: false,
   },
   'no-spaces': {
-    icon: <Sparkles className="h-8 w-8" />,
+    // GridFragment - honeycomb represents discovery
+    icon: <GridFragment size={32} className="opacity-70" />,
     title: 'No spaces found',
     description: 'Discover spaces that match your interests',
     defaultActionLabel: 'Browse Spaces',
     defaultPrimary: false,
   },
   'no-results': {
+    // Search is functional, keep Lucide
     icon: <Search className="h-8 w-8" />,
     title: 'No results found',
     description: 'Try adjusting your search or filters',
@@ -140,6 +143,7 @@ const VARIANT_CONTENT: Record<Exclude<EmptyVariant, 'custom'>, VariantContent> =
     defaultPrimary: false,
   },
   'no-content': {
+    // FolderOpen is functional, keep Lucide
     icon: <FolderOpen className="h-8 w-8" />,
     title: 'Nothing here yet',
     description: 'Content will appear here when available',
@@ -201,11 +205,14 @@ export function SpaceEmptyState({
     <Wrapper
       {...wrapperProps}
       className={cn(
-        'flex flex-col items-center justify-center text-center',
+        'relative flex flex-col items-center justify-center text-center',
         sizeClasses.wrapper,
         className
       )}
     >
+      {/* Honeycomb texture background - subtle brand identity */}
+      {size !== 'sm' && <HoneycombCells count={4} opacity={0.03} />}
+
       {/* Icon with subtle glow background */}
       {(icon || content.icon) && (
         <div className="relative mb-5">
@@ -214,7 +221,7 @@ export function SpaceEmptyState({
             <div
               className={cn(
                 'absolute inset-0 rounded-full blur-xl opacity-20',
-                isPrimary ? 'bg-[#FFD700]' : 'bg-neutral-500'
+                'bg-neutral-500'
               )}
               style={{ transform: 'scale(2)' }}
             />
@@ -226,9 +233,7 @@ export function SpaceEmptyState({
               size === 'sm' && 'w-12 h-12',
               size === 'md' && 'w-16 h-16',
               size === 'lg' && 'w-20 h-20',
-              isPrimary
-                ? 'bg-[#FFD700]/10 text-[#FFD700]/70'
-                : 'bg-neutral-800/50 text-neutral-500'
+'bg-neutral-800/50 text-neutral-500'
             )}
           >
             <div className={sizeClasses.icon}>
@@ -263,7 +268,7 @@ export function SpaceEmptyState({
                 variant="brand"
                 size={size === 'sm' ? 'sm' : 'default'}
                 onClick={action.onClick}
-                className="min-w-[140px] shadow-[0_0_20px_rgba(255,215,0,0.15)]"
+                className="min-w-[140px]"
               >
                 {action.icon || <Plus className="h-4 w-4 mr-1.5" />}
                 {action.label}
@@ -275,12 +280,12 @@ export function SpaceEmptyState({
                 className={cn(
                   'inline-flex items-center gap-2',
                   'px-4 py-2 rounded-lg',
-                  'bg-[#FFD700]/10 hover:bg-[#FFD700]/20',
-                  'text-[#FFD700]/80 hover:text-[#FFD700]',
+                  'bg-white/[0.06] hover:bg-white/[0.10]',
+                  'text-neutral-300 hover:text-white',
                   size === 'sm' ? 'text-xs' : 'text-sm',
                   'font-medium',
                   'transition-colors duration-150',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50'
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
                 )}
               >
                 {action.icon || <Plus className="h-4 w-4" />}

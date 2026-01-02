@@ -73,7 +73,7 @@ export const OnboardingFrame = React.forwardRef<HTMLDivElement, OnboardingFrameP
         {/* Progress Bar */}
         <div className="mb-6 overflow-hidden rounded-full bg-[var(--hive-background-tertiary)] h-2">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-[var(--hive-brand-primary)] to-[var(--hive-brand-secondary)]"
+            className="h-full rounded-full bg-[var(--hive-brand-primary)]"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{

@@ -158,7 +158,7 @@ function TabButton({ board, isActive, onClick }: TabButtonProps) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
-            className="w-2 h-2 bg-[#FFD700] rounded-full shadow-[0_0_6px_#FFD700]"
+            className="w-2 h-2 bg-[#FFD700] rounded-full"
           />
         )}
       </AnimatePresence>
@@ -168,7 +168,7 @@ function TabButton({ board, isActive, onClick }: TabButtonProps) {
         <motion.span
           layoutId="activeBoardIndicator"
           transition={premium.motion.spring.snappy}
-          className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFD700] rounded-full"
+          className="absolute bottom-0 left-3 right-3 h-0.5 bg-white rounded-full"
         />
       )}
     </motion.button>

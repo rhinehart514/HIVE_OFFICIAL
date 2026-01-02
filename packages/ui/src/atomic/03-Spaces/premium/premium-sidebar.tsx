@@ -200,7 +200,7 @@ export function AboutSection({ data }: { data: AboutSectionData }) {
 
           {data.onlineCount !== undefined && data.onlineCount > 0 && (
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.5)]" />
+              <span className="w-2 h-2 rounded-full bg-[#FFD700]" />
               <span className="text-[14px] font-medium text-[#FFD700]">
                 {data.onlineCount}
               </span>
@@ -305,7 +305,7 @@ export function EventsSection({
           {events.length > 3 && onViewAll && (
             <button
               onClick={onViewAll}
-              className="w-full py-2 text-[13px] text-[#FFD700] hover:text-[#E6C200] transition-colors"
+              className="w-full py-2 text-[13px] text-[#9A9A9F] hover:text-white transition-colors"
             >
               View all {events.length} events
             </button>
@@ -350,7 +350,7 @@ export function MembersSection({
               className="relative group"
               title={member.name}
             >
-              <Avatar className="w-9 h-9 ring-2 ring-[#111111] group-hover:ring-[#FFD700]/30 transition-all">
+              <Avatar className="w-9 h-9 ring-2 ring-[#111111] group-hover:ring-white/30 transition-all">
                 {member.avatarUrl ? (
                   <AvatarImage src={member.avatarUrl} alt={member.name} />
                 ) : (
@@ -384,7 +384,7 @@ export function MembersSection({
         {onViewAll && (
           <button
             onClick={onViewAll}
-            className="text-[13px] text-[#FFD700] hover:text-[#E6C200] transition-colors"
+            className="text-[13px] text-[#9A9A9F] hover:text-white transition-colors"
           >
             View all members
           </button>
@@ -434,11 +434,11 @@ export function ToolsSection({
                 'transition-colors duration-150'
               )}
             >
-              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center">
+              <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center">
                 {tool.icon ? (
                   <span className="text-sm">{tool.icon}</span>
                 ) : (
-                  <Wrench className="w-4 h-4 text-[#FFD700]" />
+                  <Wrench className="w-4 h-4 text-[#9A9A9F]" />
                 )}
               </div>
 
@@ -455,7 +455,7 @@ export function ToolsSection({
           {tools.length > 5 && onViewAll && (
             <button
               onClick={onViewAll}
-              className="w-full py-2 text-[13px] text-[#FFD700] hover:text-[#E6C200] transition-colors"
+              className="w-full py-2 text-[13px] text-[#9A9A9F] hover:text-white transition-colors"
             >
               View all {tools.length} tools
             </button>

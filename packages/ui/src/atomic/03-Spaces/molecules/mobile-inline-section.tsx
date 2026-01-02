@@ -54,7 +54,7 @@ export interface MobileInlineSectionProps {
 const PRIORITY_STYLES: Record<number, { header: string; icon: string }> = {
   1: {
     header: 'text-neutral-50',
-    icon: 'text-gold-400',
+    icon: 'text-white',
   },
   2: {
     header: 'text-neutral-100',
@@ -107,7 +107,7 @@ export function MobileInlineSection({
             'px-4 py-3',
             'text-left',
             'hover:bg-white/[0.02] transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-inset'
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-inset'
           )}
           aria-expanded={isExpanded}
         >

@@ -28,19 +28,23 @@ service cloud.firestore {
 
     // CRITICAL: Campus isolation functions
     function getUserCampus() {
-      // For UB launch, hardcode to UB
-      // Later: get(/databases/$(database)/documents/users/$(request.auth.uid)).data.schoolId
-      return 'ub-buffalo';
+      // Get campus from auth token (set during sign-in)
+      return request.auth.token.campusId;
     }
 
     function isSameCampus(docCampusId) {
       return getUserCampus() == docCampusId;
     }
 
+    function hasValidCampus() {
+      // Verify user has a valid campus assigned (set during auth)
+      return isAuthenticated() && request.auth.token.campusId != null;
+    }
+
+    // Keep isUBUser for backwards compatibility but make it generic
     function isUBUser() {
-      // Verify user has @buffalo.edu email
-      return isAuthenticated() &&
-        request.auth.token.email.matches('.*@buffalo[.]edu$');
+      // Now uses campus from token instead of email matching
+      return hasValidCampus();
     }
 
     // Rate limiting helper

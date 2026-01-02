@@ -28,6 +28,7 @@ import { SpaceMapper, SpaceDocument, SpacePersistenceData } from './space.mapper
 
 export class FirebaseSpaceRepository implements ISpaceRepository {
   private readonly collectionName = 'spaces';
+  private readonly membersCollection = 'spaceMembers';
 
   async findById(id: SpaceId | any): Promise<Result<EnhancedSpace>> {
     try {
@@ -392,6 +393,39 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     return this.findUserSpaces(userId);
   }
 
+  /**
+   * Lightweight method to get user's space memberships without loading full spaces
+   * SCALING: This prevents N+1 queries - only queries spaceMembers, not spaces
+   * Use this for browse/discovery endpoints where you only need spaceId + role
+   */
+  async findUserMemberships(userId: string): Promise<Result<{ spaceId: string; role: string }[]>> {
+    try {
+      const q = query(
+        collection(db, this.membersCollection),
+        where('userId', '==', userId),
+        where('isActive', '==', true),
+        firestoreLimit(100)
+      );
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        return Result.ok<{ spaceId: string; role: string }[]>([]);
+      }
+
+      const memberships = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          spaceId: data.spaceId as string,
+          role: data.role as string
+        };
+      });
+
+      return Result.ok(memberships);
+    } catch (error) {
+      return Result.fail<{ spaceId: string; role: string }[]>(`Failed to find user memberships: ${error}`);
+    }
+  }
+
   async findPublicSpaces(campusId: string, limit: number = 100): Promise<Result<EnhancedSpace[]>> {
     try {
       const q = query(
@@ -435,7 +469,7 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
     searchTerm?: string;
     limit?: number;
     cursor?: string;
-    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount';
+    orderBy?: 'createdAt' | 'name_lowercase' | 'memberCount' | 'trendingScore';
     orderDirection?: 'asc' | 'desc';
   }): Promise<Result<{ spaces: EnhancedSpace[]; hasMore: boolean; nextCursor?: string }>> {
     try {

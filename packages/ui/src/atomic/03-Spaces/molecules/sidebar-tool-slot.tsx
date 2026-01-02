@@ -18,6 +18,7 @@
  */
 
 import * as React from 'react';
+import { springPresets } from '@hive/tokens';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { GripVertical, Settings, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../../lib/utils';
@@ -87,7 +88,7 @@ export function SidebarToolSlot({
   // Motion variants based on reduced motion preference
   const springTransition = shouldReduceMotion
     ? { duration: 0 }
-    : { type: 'spring', stiffness: 500, damping: 30 };
+    : springPresets.snappy;
 
   return (
     <motion.div
@@ -100,7 +101,7 @@ export function SidebarToolSlot({
         'rounded-xl overflow-hidden transition-all duration-200',
         'bg-neutral-900/80 border',
         isEditMode
-          ? 'border-[#FFD700]/30 shadow-[0_0_12px_rgba(255,215,0,0.1)]'
+          ? 'border-white/30'
           : 'border-neutral-800/50',
         isHovered && !isEditMode && 'border-neutral-700/50',
         className
@@ -123,7 +124,7 @@ export function SidebarToolSlot({
             className={cn(
               'flex-shrink-0 p-1 -ml-1 rounded cursor-grab active:cursor-grabbing',
               'text-neutral-500 hover:text-neutral-300 hover:bg-white/5',
-              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
             )}
             aria-label="Drag to reorder"
           >
@@ -136,7 +137,7 @@ export function SidebarToolSlot({
           onClick={onToggleCollapse}
           className={cn(
             'flex-1 flex items-center gap-2 min-w-0 text-left',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40 rounded'
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded'
           )}
           aria-expanded={!slot.collapsed}
         >
@@ -163,8 +164,8 @@ export function SidebarToolSlot({
               }}
               className={cn(
                 'p-1.5 rounded-lg',
-                'text-neutral-500 hover:text-[#FFD700] hover:bg-[#FFD700]/10',
-                'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/40'
+                'text-neutral-500 hover:text-white hover:bg-white/[0.06]',
+                'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
               )}
               aria-label={`Configure ${slot.name}`}
             >

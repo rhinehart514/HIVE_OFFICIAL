@@ -175,19 +175,42 @@ export const TEST_BOARD_ID = 'general';
 export const TEST_USER_ID = 'user-123';
 export const TEST_USER_NAME = 'Test User';
 
-export function createMockSpaceData(overrides = {}) {
+export function createMockSpaceData(overrides: Record<string, unknown> = {}) {
   return {
-    id: TEST_SPACE_ID,
-    name: 'Test Space',
-    description: 'A test space for unit tests',
-    category: 'student_org',
-    campusId: 'ub-buffalo',
-    memberCount: 10,
-    isPublic: true,
-    createdAt: Date.now(),
+    id: overrides.id ?? TEST_SPACE_ID,
+    name: overrides.name ?? 'Test Space',
+    description: overrides.description ?? 'A test space for unit tests',
+    category: overrides.category ?? 'student_org',
+    type: overrides.type ?? 'social',
+    campusId: overrides.campusId ?? 'ub-buffalo',
+    memberCount: overrides.memberCount ?? 10,
+    isPublic: overrides.isPublic ?? true,
+    visibility: overrides.visibility ?? 'public',
+    createdAt: overrides.createdAt ?? Date.now(),
     ...overrides,
   };
 }
+
+// Alias for backwards compatibility
+export const createMockSpace = createMockSpaceData;
+
+export function createMockUser(overrides: Record<string, unknown> = {}) {
+  return {
+    id: overrides.id ?? TEST_USER_ID,
+    uid: overrides.uid ?? TEST_USER_ID,
+    name: overrides.name ?? TEST_USER_NAME,
+    displayName: overrides.displayName ?? TEST_USER_NAME,
+    email: overrides.email ?? 'test@buffalo.edu',
+    campusId: overrides.campusId ?? 'ub-buffalo',
+    avatarUrl: overrides.avatarUrl ?? null,
+    createdAt: overrides.createdAt ?? Date.now(),
+    ...overrides,
+  };
+}
+
+// Underscore alias for unused import pattern
+export const _createMockUser = createMockUser;
+export const _createMockSpace = createMockSpace;
 
 export function createMockChatResponse(
   messages: ChatMessageData[] = [],

@@ -2,7 +2,7 @@
  * Campus Context - Runtime Tenant Isolation
  *
  * Provides campus identification from user session/email.
- * Replaces hardcoded CURRENT_CAMPUS_ID with dynamic resolution.
+ * Dynamically loads domain mappings from Firestore schools collection.
  */
 
 import 'server-only';
@@ -10,17 +10,14 @@ import { validateApiAuth, type AuthContext } from './api-auth-middleware';
 import { type SessionData } from './session';
 import { NextRequest } from 'next/server';
 import { logger } from './logger';
+import { dbAdmin, isFirebaseConfigured } from './firebase-admin';
 
 /**
- * Campus domain mapping
- * Add new campuses here as they're onboarded
+ * Fallback campus domain mapping (used when Firestore unavailable)
  */
-const CAMPUS_DOMAINS: Record<string, string> = {
+const FALLBACK_CAMPUS_DOMAINS: Record<string, string> = {
   'buffalo.edu': 'ub-buffalo',
   'ub.edu': 'ub-buffalo',
-  // Future campuses:
-  // 'cornell.edu': 'cornell',
-  // 'nyu.edu': 'nyu',
 };
 
 /**
@@ -29,7 +26,143 @@ const CAMPUS_DOMAINS: Record<string, string> = {
 const DEFAULT_CAMPUS_ID = 'ub-buffalo';
 
 /**
- * Derive campus ID from email domain
+ * Domain cache for performance (refreshes every 5 minutes)
+ */
+let domainCache: Map<string, string> | null = null;
+let cacheTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Load domain -> campusId mappings from Firestore schools collection
+ */
+async function loadDomainMappings(): Promise<Map<string, string>> {
+  const now = Date.now();
+
+  // Return cached if valid
+  if (domainCache && now - cacheTime < CACHE_TTL) {
+    return domainCache;
+  }
+
+  // If Firebase not configured, use fallback
+  if (!isFirebaseConfigured) {
+    const fallbackMap = new Map(Object.entries(FALLBACK_CAMPUS_DOMAINS));
+    domainCache = fallbackMap;
+    cacheTime = now;
+    return fallbackMap;
+  }
+
+  try {
+    const mapping = new Map<string, string>();
+
+    // Load all active schools
+    const schoolsSnapshot = await dbAdmin
+      .collection('schools')
+      .where('status', 'in', ['beta', 'active'])
+      .get();
+
+    for (const doc of schoolsSnapshot.docs) {
+      const school = doc.data();
+      const campusId = school.campusId || doc.id;
+
+      // Add all email domains to mapping
+      const emailDomains = school.emailDomains || {};
+      const allDomains = [
+        ...(emailDomains.student || []),
+        ...(emailDomains.faculty || []),
+        ...(emailDomains.staff || []),
+        ...(emailDomains.alumni || []),
+      ];
+
+      // Also add the legacy single domain field
+      if (school.domain) {
+        allDomains.push(school.domain);
+      }
+
+      for (const domain of allDomains) {
+        if (domain && typeof domain === 'string') {
+          mapping.set(domain.toLowerCase(), campusId);
+        }
+      }
+    }
+
+    // Ensure UB is always available (fallback safety)
+    if (!mapping.has('buffalo.edu')) {
+      mapping.set('buffalo.edu', 'ub-buffalo');
+      mapping.set('ub.edu', 'ub-buffalo');
+    }
+
+    domainCache = mapping;
+    cacheTime = now;
+
+    logger.debug('Refreshed campus domain cache', {
+      component: 'campus-context',
+      schoolCount: schoolsSnapshot.size,
+      domainCount: mapping.size,
+    });
+
+    return mapping;
+  } catch (error) {
+    logger.error('Failed to load domain mappings from Firestore', {
+      component: 'campus-context',
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    // Fall back to hardcoded mappings
+    const fallbackMap = new Map(Object.entries(FALLBACK_CAMPUS_DOMAINS));
+    domainCache = fallbackMap;
+    cacheTime = now;
+    return fallbackMap;
+  }
+}
+
+/**
+ * Get domain mappings (sync wrapper for backwards compatibility)
+ * Prefers cached data, falls back to hardcoded if cache empty
+ */
+function getDomainMappingsSync(): Map<string, string> {
+  if (domainCache) {
+    return domainCache;
+  }
+  return new Map(Object.entries(FALLBACK_CAMPUS_DOMAINS));
+}
+
+/**
+ * Derive campus ID from email domain (async version - preferred)
+ * @throws Error if domain is not recognized
+ */
+export async function getCampusFromEmailAsync(email: string): Promise<string> {
+  if (!email || typeof email !== 'string') {
+    throw new Error('Email is required for campus detection');
+  }
+
+  const parts = email.split('@');
+  if (parts.length !== 2) {
+    throw new Error('Invalid email format');
+  }
+
+  const domain = parts[1].toLowerCase();
+  const domainMap = await loadDomainMappings();
+
+  // Check for exact match first
+  if (domainMap.has(domain)) {
+    return domainMap.get(domain)!;
+  }
+
+  // Check for subdomain match (e.g., 'cs.buffalo.edu' -> 'buffalo.edu')
+  const domainParts = domain.split('.');
+  for (let i = 0; i < domainParts.length - 1; i++) {
+    const parentDomain = domainParts.slice(i).join('.');
+    if (domainMap.has(parentDomain)) {
+      return domainMap.get(parentDomain)!;
+    }
+  }
+
+  throw new Error(`Unsupported email domain: ${domain}`);
+}
+
+/**
+ * Derive campus ID from email domain (sync version for backwards compatibility)
+ * Uses cached data if available, otherwise falls back to hardcoded mappings
  * @throws Error if domain is not recognized
  */
 export function getCampusFromEmail(email: string): string {
@@ -43,18 +176,19 @@ export function getCampusFromEmail(email: string): string {
   }
 
   const domain = parts[1].toLowerCase();
+  const domainMap = getDomainMappingsSync();
 
   // Check for exact match first
-  if (CAMPUS_DOMAINS[domain]) {
-    return CAMPUS_DOMAINS[domain];
+  if (domainMap.has(domain)) {
+    return domainMap.get(domain)!;
   }
 
   // Check for subdomain match (e.g., 'cs.buffalo.edu' -> 'buffalo.edu')
   const domainParts = domain.split('.');
   for (let i = 0; i < domainParts.length - 1; i++) {
     const parentDomain = domainParts.slice(i).join('.');
-    if (CAMPUS_DOMAINS[parentDomain]) {
-      return CAMPUS_DOMAINS[parentDomain];
+    if (domainMap.has(parentDomain)) {
+      return domainMap.get(parentDomain)!;
     }
   }
 
@@ -62,7 +196,19 @@ export function getCampusFromEmail(email: string): string {
 }
 
 /**
- * Check if an email domain is supported
+ * Check if an email domain is supported (async - preferred)
+ */
+export async function isSupportedEmailDomainAsync(email: string): Promise<boolean> {
+  try {
+    await getCampusFromEmailAsync(email);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if an email domain is supported (sync for backwards compatibility)
  */
 export function isSupportedEmailDomain(email: string): boolean {
   try {
@@ -154,15 +300,47 @@ export function getDefaultCampusId(): string {
 }
 
 /**
- * Get all supported campus IDs
+ * Get all supported campus IDs (async - preferred)
  */
-export function getSupportedCampusIds(): string[] {
-  return [...new Set(Object.values(CAMPUS_DOMAINS))];
+export async function getSupportedCampusIdsAsync(): Promise<string[]> {
+  const domainMap = await loadDomainMappings();
+  return [...new Set(domainMap.values())];
 }
 
 /**
- * Validate that a campus ID is supported
+ * Get all supported campus IDs (sync for backwards compatibility)
+ */
+export function getSupportedCampusIds(): string[] {
+  const domainMap = getDomainMappingsSync();
+  return [...new Set(domainMap.values())];
+}
+
+/**
+ * Validate that a campus ID is supported (async - preferred)
+ */
+export async function isValidCampusIdAsync(campusId: string): Promise<boolean> {
+  const campusIds = await getSupportedCampusIdsAsync();
+  return campusIds.includes(campusId);
+}
+
+/**
+ * Validate that a campus ID is supported (sync for backwards compatibility)
  */
 export function isValidCampusId(campusId: string): boolean {
   return getSupportedCampusIds().includes(campusId);
+}
+
+/**
+ * Preload domain cache (call during server startup)
+ */
+export async function preloadDomainCache(): Promise<void> {
+  await loadDomainMappings();
+}
+
+/**
+ * Clear domain cache (for testing or manual refresh)
+ */
+export function clearDomainCache(): void {
+  domainCache = null;
+  cacheTime = 0;
 }

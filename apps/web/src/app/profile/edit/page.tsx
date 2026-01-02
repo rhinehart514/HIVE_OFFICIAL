@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback } from '@hive/ui';
+import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, HiveConfirmModal, Input, HiveLogo } from '@hive/ui';
 import { profileApiResponseToProfileSystem, type ProfileV2ApiResponse } from '@/components/profile/profile-adapter';
 import type { ProfileSystem } from '@hive/core';
 import { useAuth } from '@hive/auth-logic';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Check, Loader2, GripVertical } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, GripVertical, Camera, Settings, X, Plus } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { sanitizeProfileData, sanitizeTag } from '@/lib/sanitize';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -21,6 +22,15 @@ export default function EditProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasPendingChanges, setHasPendingChanges] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  // Editable profile fields
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [major, setMajor] = useState('');
+  const [interests, setInterests] = useState<string[]>([]);
+  const [newInterest, setNewInterest] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // Compute initials for avatar fallback
   const initials = useMemo(() => {
@@ -58,6 +68,12 @@ export default function EditProfilePage() {
         setProfileData(payload);
         setProfileSystem(profileApiResponseToProfileSystem(payload));
         setHasPendingChanges(false);
+
+        // Initialize editable fields
+        setDisplayName(payload.profile.fullName || '');
+        setBio(payload.profile.bio || '');
+        setMajor(payload.profile.major || '');
+        setInterests(payload.profile.interests || []);
       } catch (err) {
         logger.error('Failed to load profile for edit page', { component: 'EditProfilePage' }, err instanceof Error ? err : undefined);
         toast({
@@ -77,13 +93,25 @@ export default function EditProfilePage() {
     if (!profileSystem) return;
     try {
       setIsSaving(true);
+
+      // Sanitize all user input before saving
+      const sanitizedData = sanitizeProfileData({
+        fullName: displayName,
+        bio,
+        major,
+        interests,
+      });
+
       const response = await fetch('/api/profile/v2', {
         method: 'PATCH',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ grid: profileSystem.grid }),
+        body: JSON.stringify({
+          grid: profileSystem.grid,
+          ...sanitizedData,
+        }),
       });
 
       const json = await response.json();
@@ -118,27 +146,82 @@ export default function EditProfilePage() {
 
   const handleCancel = () => {
     if (hasPendingChanges) {
-      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-      if (!confirmed) return;
+      setShowDiscardConfirm(true);
+      return;
     }
     router.push(`/profile/${currentUser?.id}`);
   };
 
-  // Loading state
+  // Profile details handlers
+  const handleAddInterest = useCallback(() => {
+    // Sanitize the interest tag (strips HTML, normalizes, lowercases)
+    const sanitized = sanitizeTag(newInterest);
+    if (sanitized && !interests.includes(sanitized) && interests.length < 10) {
+      setInterests([...interests, sanitized]);
+      setNewInterest('');
+      setHasPendingChanges(true);
+    }
+  }, [newInterest, interests]);
+
+  const handleRemoveInterest = useCallback((interest: string) => {
+    setInterests(interests.filter((i) => i !== interest));
+    setHasPendingChanges(true);
+  }, [interests]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Invalid file', description: 'Please upload an image file.', type: 'error' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Maximum size is 5MB.', type: 'error' });
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      const json = await response.json();
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || 'Failed to upload avatar');
+      }
+
+      // Update local state with new avatar URL
+      setProfileData((prev) =>
+        prev ? { ...prev, profile: { ...prev.profile, avatarUrl: json.avatarUrl } } : prev
+      );
+
+      toast({ title: 'Avatar updated', type: 'success' });
+    } catch (err) {
+      logger.error('Failed to upload avatar', { component: 'EditProfilePage' }, err instanceof Error ? err : undefined);
+      toast({ title: 'Upload failed', description: 'Please try again.', type: 'error' });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  // Loading state (Branded HiveLogo)
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <div className="relative w-16 h-16 mx-auto mb-6">
-            <div className="absolute inset-0 rounded-full border-2 border-amber-500/20" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-pulse">
+            <HiveLogo size="xl" variant="default" showIcon showText={false} />
           </div>
-          <p className="text-neutral-400 text-sm tracking-wide">Loading your profile...</p>
-        </motion.div>
+          <p className="text-sm text-neutral-500">Loading your profile...</p>
+        </div>
       </div>
     );
   }
@@ -201,9 +284,10 @@ export default function EditProfilePage() {
             <div className="flex items-center gap-4">
               <button
                 onClick={handleCancel}
+                aria-label="Go back to profile"
                 className="p-2 -ml-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5" aria-hidden="true" />
               </button>
 
               <div className="flex items-center gap-3">
@@ -231,6 +315,7 @@ export default function EditProfilePage() {
               <Button
                 onClick={handleCancel}
                 variant="ghost"
+                aria-label="Cancel editing and go back"
                 className="hidden sm:flex text-neutral-400 hover:text-white"
               >
                 Cancel
@@ -238,16 +323,17 @@ export default function EditProfilePage() {
               <Button
                 onClick={handleDone}
                 disabled={isSaving}
+                aria-label={isSaving ? 'Saving changes' : hasPendingChanges ? 'Save changes and return to profile' : 'Return to profile'}
                 className="rounded-full px-5 bg-amber-500 text-black hover:bg-amber-400 font-medium disabled:opacity-50"
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                     Saving...
                   </>
                 ) : hasPendingChanges ? (
                   <>
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-4 h-4 mr-2" aria-hidden="true" />
                     Save & Done
                   </>
                 ) : (
@@ -259,11 +345,182 @@ export default function EditProfilePage() {
         </div>
       </motion.header>
 
-      {/* Edit Instructions Banner */}
+      {/* Profile Details Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mx-auto max-w-6xl px-4 sm:px-6 py-8 border-b border-neutral-800"
+      >
+        <h2 className="text-lg font-medium text-white mb-6">Profile Details</h2>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          {/* Avatar Upload */}
+          <div className="sm:col-span-2 flex items-center gap-6">
+            <div className="relative">
+              <Avatar className="h-24 w-24 ring-2 ring-neutral-800">
+                <AvatarImage
+                  src={profileData.profile.avatarUrl ?? undefined}
+                  alt={displayName}
+                />
+                <AvatarFallback className="text-2xl bg-neutral-900 text-white">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <label
+                className="absolute -bottom-1 -right-1 p-2 rounded-full bg-amber-500 text-black cursor-pointer hover:bg-amber-400 transition-colors"
+                aria-label={isUploadingAvatar ? 'Uploading avatar' : 'Upload new profile photo'}
+              >
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Camera className="w-4 h-4" aria-hidden="true" />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={handleAvatarUpload}
+                  disabled={isUploadingAvatar}
+                  aria-label="Choose profile photo to upload"
+                />
+              </label>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-white">Profile Photo</p>
+              <p className="text-xs text-neutral-500">Click the camera to upload. Max 5MB.</p>
+            </div>
+          </div>
+
+          {/* Display Name */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">
+              Display Name
+            </label>
+            <Input
+              value={displayName}
+              onChange={(e) => {
+                setDisplayName(e.target.value);
+                setHasPendingChanges(true);
+              }}
+              placeholder="Your name"
+              className="bg-neutral-900 border-neutral-800 text-white"
+            />
+          </div>
+
+          {/* Handle (readonly) */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">
+              Handle
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 px-3 py-2 rounded-md bg-neutral-900/50 border border-neutral-800 text-neutral-500">
+                @{profileData.profile.handle}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/settings')}
+                aria-label="Change handle in settings"
+                className="text-neutral-400 hover:text-white"
+              >
+                <Settings className="w-4 h-4" aria-hidden="true" />
+              </Button>
+            </div>
+            <p className="text-xs text-neutral-600 mt-1">Change handle in settings</p>
+          </div>
+
+          {/* Bio */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-neutral-400 mb-2">
+              Bio
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => {
+                setBio(e.target.value);
+                setHasPendingChanges(true);
+              }}
+              placeholder="Tell people about yourself..."
+              rows={3}
+              maxLength={200}
+              className="w-full px-3 py-2 rounded-md bg-neutral-900 border border-neutral-800 text-white placeholder:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+            />
+            <p className="text-xs text-neutral-600 mt-1">{bio.length}/200 characters</p>
+          </div>
+
+          {/* Major */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-2">
+              Major / Program
+            </label>
+            <Input
+              value={major}
+              onChange={(e) => {
+                setMajor(e.target.value);
+                setHasPendingChanges(true);
+              }}
+              placeholder="e.g., Computer Science"
+              className="bg-neutral-900 border-neutral-800 text-white"
+            />
+          </div>
+
+          {/* Interests */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-neutral-400 mb-2">
+              Interests ({interests.length}/10)
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {interests.map((interest) => (
+                <span
+                  key={interest}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-neutral-800 text-neutral-300 border border-neutral-700"
+                >
+                  {interest}
+                  <button
+                    onClick={() => handleRemoveInterest(interest)}
+                    aria-label={`Remove ${interest} from interests`}
+                    className="p-0.5 rounded-full hover:bg-neutral-700 transition-colors"
+                  >
+                    <X className="w-3 h-3" aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+            </div>
+            {interests.length < 10 && (
+              <div className="flex gap-2">
+                <Input
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  placeholder="Add an interest..."
+                  className="flex-1 bg-neutral-900 border-neutral-800 text-white"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddInterest();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleAddInterest}
+                  variant="secondary"
+                  disabled={!newInterest.trim()}
+                  aria-label="Add interest"
+                  className="px-3"
+                >
+                  <Plus className="w-4 h-4" aria-hidden="true" />
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Layout Customization Banner */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.15 }}
         className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-b border-amber-500/20"
       >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
@@ -272,9 +529,9 @@ export default function EditProfilePage() {
               <GripVertical className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <h2 className="text-sm font-medium text-white">Customize your profile</h2>
+              <h2 className="text-sm font-medium text-white">Customize your layout</h2>
               <p className="text-xs text-neutral-400">
-                Drag and resize tiles to personalize your layout. Changes are saved automatically.
+                Drag and resize tiles to personalize your profile grid.
               </p>
             </div>
           </div>
@@ -289,7 +546,7 @@ export default function EditProfilePage() {
         className="mx-auto max-w-6xl px-4 sm:px-6 py-8"
       >
         <ProfileBentoGrid
-          profile={profileSystem}
+          profile={profileSystem as unknown as Parameters<typeof ProfileBentoGrid>[0]['profile']}
           editable
           onLayoutChange={(layout) => {
             setProfileSystem((prev: ProfileSystem | null) =>
@@ -314,6 +571,7 @@ export default function EditProfilePage() {
               onClick={handleSaveLayout}
               disabled={isSaving}
               size="sm"
+              aria-label={isSaving ? 'Saving changes' : 'Save pending changes now'}
               className="rounded-full px-4 bg-amber-500 text-black hover:bg-amber-400 text-xs font-medium"
             >
               {isSaving ? 'Saving...' : 'Save now'}
@@ -321,6 +579,20 @@ export default function EditProfilePage() {
           </div>
         </motion.div>
       )}
+
+      {/* Discard Changes Confirmation */}
+      <HiveConfirmModal
+        open={showDiscardConfirm}
+        onOpenChange={setShowDiscardConfirm}
+        title="Discard Changes?"
+        description="You have unsaved changes. Are you sure you want to leave? Your changes will be lost."
+        confirmText="Discard"
+        variant="danger"
+        onConfirm={() => {
+          setShowDiscardConfirm(false);
+          router.push(`/profile/${currentUser?.id}`);
+        }}
+      />
     </div>
   );
 }

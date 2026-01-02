@@ -23,6 +23,7 @@ export interface StreamingChunk {
     name?: string;
     config?: Record<string, unknown>;
     position?: { x: number; y: number };
+    size?: { width: number; height: number };
     // For connection
     from?: string;
     to?: string;
@@ -197,12 +198,15 @@ export function useStreamingGeneration(callbacks?: {
               case 'element':
                 if (chunk.data.id && chunk.data.type) {
                   const elementName = chunk.data.name || chunk.data.type;
+                  // Use size from stream if provided, otherwise sensible defaults
+                  const defaultSize = { width: 280, height: 120 };
+                  const streamedSize = chunk.data.size as { width: number; height: number } | undefined;
                   const element: CanvasElement = {
-                    elementId: chunk.data.type,
-                    instanceId: chunk.data.id,
-                    config: { ...chunk.data.config, _name: elementName },
-                    position: chunk.data.position || { x: 100, y: 100 },
-                    size: { width: 280, height: 120 } // Default size for canvas rendering
+                    elementId: chunk.data.type as string,
+                    instanceId: chunk.data.id as string,
+                    config: { ...chunk.data.config as Record<string, unknown>, _name: elementName },
+                    position: (chunk.data.position as { x: number; y: number }) || { x: 100, y: 100 },
+                    size: streamedSize || defaultSize,
                   };
 
                   addedElements.push(element);

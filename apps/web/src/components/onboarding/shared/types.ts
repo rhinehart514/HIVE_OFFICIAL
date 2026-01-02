@@ -1,22 +1,25 @@
 // Onboarding Types
 
 /**
- * 4-step onboarding flow:
- * 1. userType (The Fork) - Choose leader vs explorer
- * 2. profile (Combined) - Name, handle, major, year, residential (optional)
- * 3. interests - Pick interests from curated list + custom tags (optional, 0-10)
- * 4. spaces (Claim) - Find and claim a space
- * + completion (Celebration) - Success screen
+ * Streamlined 3-step onboarding flow (Phase 6 - 300s → 120s):
+ * 1. userType (The Fork) - Choose leader vs explorer (~20s)
+ * 2. quickProfile - Name + handle combined with auto-suggestions (~25s)
+ * 3. interestsCloud - Tap interests → auto-join recommended spaces (~35s)
+ * → Land directly in space (~20s)
  *
  * Legacy steps kept for backwards compatibility with saved drafts
  */
 export type OnboardingStep =
-  | "userType"    // Step 1: The Fork
-  | "profile"     // Step 2: Combined profile
-  | "interests"   // Step 3: Pick interests (new)
-  | "spaces"      // Step 4: Claim space
-  | "completion"  // Celebration screen
-  // Legacy steps (for draft migration)
+  | "userType"         // Step 1: The Fork
+  | "quickProfile"     // Step 2: Name + handle (combined, Phase 6)
+  | "interestsCloud"   // Step 3: Interests → auto-join spaces
+  // Legacy steps (for draft migration to new flow)
+  | "name"             // → quickProfile
+  | "handleSelection"  // → quickProfile
+  | "spaces"           // → auto-join in interestsCloud
+  | "completion"       // → redirect to space
+  | "profile"
+  | "interests"
   | "identity"
   | "leader"
   | "alumniWaitlist"
@@ -63,12 +66,38 @@ export interface StepProps {
 }
 
 /**
- * Step config for 4-step flow
+ * Step config for streamlined 3-step flow
  * Note: Titles/subtitles not shown in new design (big headlines in components instead)
  */
 export const STEP_CONFIG: Record<OnboardingStep, { title: string; subtitle: string }> = {
+  // Active steps (Phase 6 streamlined flow)
   userType: {
-    title: "What brings you to HIVE?",
+    title: "What brings you here?",
+    subtitle: "",
+  },
+  quickProfile: {
+    title: "What should we call you?",
+    subtitle: "Your name and handle are how others will find you",
+  },
+  interestsCloud: {
+    title: "What are you into?",
+    subtitle: "Tap as many as you want — we'll find your spaces",
+  },
+  // Legacy - kept for draft migration
+  name: {
+    title: "What should we call you?",
+    subtitle: "",
+  },
+  handleSelection: {
+    title: "Pick your @",
+    subtitle: "This is how people will find you",
+  },
+  spaces: {
+    title: "Find your spaces",
+    subtitle: "",
+  },
+  completion: {
+    title: "",
     subtitle: "",
   },
   profile: {
@@ -77,24 +106,15 @@ export const STEP_CONFIG: Record<OnboardingStep, { title: string; subtitle: stri
   },
   interests: {
     title: "What are you into?",
-    subtitle: "Pick interests to personalize your experience",
-  },
-  spaces: {
-    title: "Find your club",
     subtitle: "",
   },
-  completion: {
-    title: "",
-    subtitle: "",
-  },
-  // Legacy - kept for migration
   identity: {
     title: "Choose your handle",
-    subtitle: "This is how others will find you",
+    subtitle: "",
   },
   leader: {
     title: "One more thing",
-    subtitle: "Do you lead a club or organization?",
+    subtitle: "",
   },
   alumniWaitlist: {
     title: "Alumni access",
@@ -102,6 +122,6 @@ export const STEP_CONFIG: Record<OnboardingStep, { title: string; subtitle: stri
   },
   facultyProfile: {
     title: "Faculty profile",
-    subtitle: "Set up your organization",
+    subtitle: "",
   },
 };

@@ -140,9 +140,8 @@ function ElementButton({
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
             // Highlighted state (AI suggestion)
             isHighlighted && [
-              'border-[#FFD700]/50',
-              'shadow-[0_0_12px_rgba(255,215,0,0.15)]',
-              'text-[#FFD700]',
+              'border-white/50',
+              'text-white',
             ]
           )}
         >
@@ -152,7 +151,7 @@ function ElementButton({
           {/* Gold pulse for highlighted elements */}
           {isHighlighted && (
             <motion.span
-              className="absolute inset-0 rounded-xl border border-[#FFD700]/30"
+              className="absolute inset-0 rounded-xl border border-white/30"
               animate={{
                 scale: [1, 1.05, 1],
                 opacity: [0.5, 0, 0.5],
@@ -214,11 +213,11 @@ export function ElementBelt({
               <div
                 className={cn(
                   'flex items-center justify-between px-4 py-2',
-                  'bg-[#FFD700]/5 border-b border-[#FFD700]/10'
+                  'bg-white/[0.03] border-b border-white/[0.06]'
                 )}
               >
                 <p className="text-sm text-[#A1A1A6]">
-                  <span className="text-[#FFD700]">Suggestion:</span>{' '}
+                  <span className="text-white font-medium">Suggestion:</span>{' '}
                   {suggestionMessage}
                 </p>
                 {onDismissSuggestion && (

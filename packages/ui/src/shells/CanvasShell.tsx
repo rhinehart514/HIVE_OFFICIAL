@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { easingArrays } from '@hive/tokens';
 
 /**
  * CanvasShell - The Canvas Experience
@@ -69,7 +70,7 @@ export function CanvasShell({
         <motion.aside
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.4, ease: easingArrays.default }}
           className={`
             hidden md:flex flex-col
             ${sidebarWidthClasses[sidebarWidth]}
@@ -88,7 +89,7 @@ export function CanvasShell({
           <motion.header
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, ease: easingArrays.default }}
             className="
               sticky top-0 z-40
               backdrop-blur-xl
@@ -108,7 +109,7 @@ export function CanvasShell({
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: 0.5,
-              ease: [0.22, 1, 0.36, 1],
+              ease: easingArrays.default,
               delay: 0.1,
             }}
             className="h-full"
@@ -154,7 +155,7 @@ export function CanvasShell({
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 20, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.3, ease: easingArrays.default }}
             className={`
               hidden md:flex flex-col
               ${inspectorWidthClasses[inspectorWidth]}

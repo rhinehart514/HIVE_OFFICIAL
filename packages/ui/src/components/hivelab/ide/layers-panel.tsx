@@ -90,7 +90,7 @@ function LayerItem({
       id={element.id}
       className={cn(
         'group flex flex-col rounded-lg transition-colors cursor-pointer',
-        isSelected ? 'bg-[#FFD700]/10' : 'hover:bg-[#252525]'
+        isSelected ? 'bg-white/[0.08]' : 'hover:bg-[#252525]'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -124,7 +124,7 @@ function LayerItem({
         <div
           className={cn(
             'w-6 h-6 rounded flex items-center justify-center',
-            isSelected ? 'bg-[#FFD700]/20 text-[#FFD700]' : 'bg-[#333] text-[#888]'
+            isSelected ? 'bg-white/[0.12] text-white' : 'bg-[#333] text-[#888]'
           )}
         >
           {getElementIcon(element.elementId)}

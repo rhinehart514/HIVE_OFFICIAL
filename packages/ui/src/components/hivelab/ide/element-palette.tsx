@@ -29,8 +29,6 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { springPresets, staggerPresets } from '@hive/tokens';
-import { ShineBorder } from '../../motion-primitives/shine-border';
-import { GlowEffect } from '../../motion-primitives/glow-effect';
 
 interface UserContext {
   userId?: string;
@@ -350,57 +348,29 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
             : '0 4px 12px rgba(0,0,0,0.3)',
       }}
       whileTap={{ scale: 0.98 }}
+      role="button"
+      aria-label={`${element.name}: ${element.description}. Drag to canvas to add.`}
+      aria-roledescription="draggable element"
       className={cn(
         'relative p-3 bg-[#1a1a1a] border border-[#333] rounded-xl cursor-grab active:cursor-grabbing transition-colors group overflow-hidden',
-        isDragging && 'border-[#FFD700]/50 shadow-lg',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]',
+        isDragging && 'border-white/50 shadow-lg',
         isPremiumTier && 'border-purple-500/30',
         isConnectedTier && 'border-blue-500/20'
       )}
     >
-      {/* Premium shine border effect on hover */}
-      {(isPremiumTier || isConnectedTier) && isHovered && !prefersReducedMotion && (
-        <ShineBorder
-          shineColor={shineColors}
-          duration={6}
-          borderWidth={1}
-        />
-      )}
-
       <div className="flex items-start gap-3 relative z-10">
-        {/* Icon with optional glow for premium tier */}
-        {isPremiumTier && !prefersReducedMotion ? (
-          <GlowEffect
-            color="#A855F7"
-            size="sm"
-            mode="breathe"
-            blur="soft"
-            active={isHovered}
-          >
-            <motion.div
-              className={cn(
-                'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                category?.bg,
-                category?.color
-              )}
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={springPresets.bouncy}
-            >
-              {element.icon}
-            </motion.div>
-          </GlowEffect>
-        ) : (
-          <motion.div
-            className={cn(
-              'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-              category?.bg,
-              category?.color
-            )}
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={springPresets.bouncy}
-          >
-            {element.icon}
-          </motion.div>
-        )}
+        <motion.div
+          className={cn(
+            'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+            category?.bg,
+            category?.color
+          )}
+          whileHover={{ scale: 1.05 }}
+          transition={springPresets.bouncy}
+        >
+          {element.icon}
+        </motion.div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-white truncate">{element.name}</p>
@@ -479,13 +449,14 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
       <div className="px-3 py-3 border-b border-[#333]">
         <h3 className="text-sm font-medium text-white mb-2">Elements</h3>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555]" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555]" aria-hidden="true" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search elements..."
-            className="w-full bg-[#252525] border border-[#333] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-[#555] outline-none focus:border-[#444]"
+            aria-label="Search elements by name or description"
+            className="w-full bg-[#252525] border border-[#333] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-[#555] outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20"
           />
         </div>
       </div>
@@ -505,7 +476,10 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
             <button
               type="button"
               onClick={() => toggleCategory(group.id)}
-              className="flex items-center gap-2 px-2 py-1.5 w-full text-left rounded-lg hover:bg-[#252525] transition-colors"
+              aria-expanded={expandedCategories.includes(group.id)}
+              aria-controls={`category-${group.id}`}
+              aria-label={`${group.name} elements, ${group.elements.length} available`}
+              className="flex items-center gap-2 px-2 py-1.5 w-full text-left rounded-lg hover:bg-[#252525] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
             >
               <motion.div
                 animate={{ rotate: expandedCategories.includes(group.id) ? 90 : 0 }}
@@ -536,11 +510,14 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
             <AnimatePresence mode="wait">
               {expandedCategories.includes(group.id) && (
                 <motion.div
+                  id={`category-${group.id}`}
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={springPresets.gentle}
                   className="space-y-2 mt-2 overflow-hidden"
+                  role="group"
+                  aria-label={`${group.name} elements`}
                 >
                   {group.elements.map((element, index) => (
                     <ElementCard

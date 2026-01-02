@@ -9,44 +9,47 @@ import { cn } from "../../../lib/utils"
 
 const checkboxVariants = cva(
   [
+    // Base: Clean, neutral unchecked state
     "peer relative inline-flex h-5 w-5 shrink-0 appearance-none items-center justify-center rounded-full cursor-pointer",
-    "border border-[color-mix(in_srgb,var(--hive-border-default) 74%,#ffd700 10%)]",
-    "bg-[color-mix(in_srgb,var(--hive-background-secondary) 95%,#ffd700 3%)]",
-    "shadow-[0_2px_6px_rgba(0,0,0,0.28)]",
-    "transition-[background,border,box-shadow] duration-140 ease-out",
-    "hover:border-[color-mix(in_srgb,var(--hive-border-default) 64%,#ffd700 22%)] hover:bg-[color-mix(in_srgb,var(--hive-background-secondary) 86%,#ffd700 10%)]",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(255,215,0,0.45)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hive-background-primary)]",
+    "border border-[#2A2A2A] bg-[#141414]",
+    "shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
+    "transition-[background,border,box-shadow] duration-150 ease-out",
+    // Hover: Subtle border brightening
+    "hover:border-[#3A3A3A] hover:bg-[#1A1A1A]",
+    // Focus: White ring (not gold) - Apple/Vercel style
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]",
     "disabled:cursor-not-allowed disabled:opacity-40",
-    "data-[state=unchecked]:bg-[color-mix(in_srgb,var(--hive-background-secondary) 97%,#ffd700 2%)]",
-    "data-[state=unchecked]:border-[color-mix(in_srgb,var(--hive-border-default) 82%,#ffd700 6%)]",
-    "data-[state=checked]:bg-brand-primary data-[state=checked]:border-brand-primary",
-    "data-[state=checked]:shadow-[0_12px_30px_rgba(255,215,0,0.35)]",
-    "data-[state=indeterminate]:bg-brand-primary data-[state=indeterminate]:border-brand-primary",
+    // Unchecked: Neutral gray
+    "data-[state=unchecked]:bg-[#141414] data-[state=unchecked]:border-[#2A2A2A]",
+    // Checked: White (monochrome discipline - gold only for CTAs/achievements)
+    "data-[state=checked]:bg-white data-[state=checked]:border-white",
+    "data-[state=checked]:shadow-[0_4px_12px_rgba(255,255,255,0.15)]",
+    "data-[state=indeterminate]:bg-white data-[state=indeterminate]:border-white",
   ].join(" "),
   {
     variants: {
       variant: {
         default: "",
         destructive: [
-          "data-[state=checked]:bg-[color-mix(in_srgb,var(--hive-status-error) 86%,#240000)]",
-          "data-[state=checked]:border-[color-mix(in_srgb,var(--hive-status-error) 88%,transparent)]",
-          "data-[state=checked]:shadow-[0_8px_24px_rgba(212,60,60,0.24)]",
-          "data-[state=indeterminate]:bg-[color-mix(in_srgb,var(--hive-status-error) 78%,#240000)]",
-          "data-[state=indeterminate]:border-[color-mix(in_srgb,var(--hive-status-error) 84%,transparent)]",
+          "data-[state=checked]:bg-[#FF3737]",
+          "data-[state=checked]:border-[#FF3737]",
+          "data-[state=checked]:shadow-[0_4px_12px_rgba(255,55,55,0.25)]",
+          "data-[state=indeterminate]:bg-[#FF3737]",
+          "data-[state=indeterminate]:border-[#FF3737]",
         ].join(" "),
         success: [
-          "data-[state=checked]:bg-[color-mix(in_srgb,var(--hive-status-success) 76%,#0d2b16)]",
-          "data-[state=checked]:border-[color-mix(in_srgb,var(--hive-status-success) 82%,transparent)]",
-          "data-[state=checked]:shadow-[0_8px_22px_rgba(51,178,73,0.2)]",
-          "data-[state=indeterminate]:bg-[color-mix(in_srgb,var(--hive-status-success) 68%,#0d2b16)]",
-          "data-[state=indeterminate]:border-[color-mix(in_srgb,var(--hive-status-success) 76%,transparent)]",
+          "data-[state=checked]:bg-[#00D46A]",
+          "data-[state=checked]:border-[#00D46A]",
+          "data-[state=checked]:shadow-[0_4px_12px_rgba(0,212,106,0.25)]",
+          "data-[state=indeterminate]:bg-[#00D46A]",
+          "data-[state=indeterminate]:border-[#00D46A]",
         ].join(" "),
         warning: [
-          "data-[state=checked]:bg-[color-mix(in_srgb,var(--hive-status-warning) 72%,#2b1a00)]",
-          "data-[state=checked]:border-[color-mix(in_srgb,var(--hive-status-warning) 80%,transparent)]",
-          "data-[state=checked]:shadow-[0_8px_22px_rgba(255,184,0,0.22)]",
-          "data-[state=indeterminate]:bg-[color-mix(in_srgb,var(--hive-status-warning) 66%,#2b1a00)]",
-          "data-[state=indeterminate]:border-[color-mix(in_srgb,var(--hive-status-warning) 74%,transparent)]",
+          "data-[state=checked]:bg-[#FFB800]",
+          "data-[state=checked]:border-[#FFB800]",
+          "data-[state=checked]:shadow-[0_4px_12px_rgba(255,184,0,0.25)]",
+          "data-[state=indeterminate]:bg-[#FFB800]",
+          "data-[state=indeterminate]:border-[#FFB800]",
         ].join(" "),
       },
       size: {

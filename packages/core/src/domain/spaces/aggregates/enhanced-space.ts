@@ -111,14 +111,53 @@ interface SpaceMember {
  */
 export type LeaderRequestStatus = 'pending' | 'approved' | 'rejected';
 
-interface LeaderRequest {
+/**
+ * Proof type for leader verification
+ */
+export type LeaderProofType = 'email' | 'document' | 'social' | 'referral' | 'none';
+
+/**
+ * Leader/claim request with verification info
+ */
+export interface LeaderRequest {
   profileId: ProfileId;
   status: LeaderRequestStatus;
   requestedAt: Date;
+  /** Role in the organization (President, VP, etc.) */
+  role?: string;
+  /** Type of proof provided */
+  proofType?: LeaderProofType;
+  /** URL to proof document/link */
+  proofUrl?: string;
+  /** Legacy reason field */
   reason?: string;
   reviewedBy?: ProfileId;
   reviewedAt?: Date;
   rejectionReason?: string;
+  /** Whether provisional access was granted before full verification */
+  provisionalAccessGranted?: boolean;
+  provisionalAccessAt?: Date;
+}
+
+/**
+ * Setup progress tracking for leaders
+ * Tracks onboarding completion for newly claimed spaces
+ */
+export interface SetupProgress {
+  /** Has leader posted a welcome message */
+  welcomeMessagePosted: boolean;
+  welcomeMessageAt?: Date;
+  /** Has leader deployed at least one tool */
+  firstToolDeployed: boolean;
+  firstToolAt?: Date;
+  /** Has leader invited a co-leader */
+  coLeaderInvited: boolean;
+  coLeaderAt?: Date;
+  /** Target number of members for setup completion */
+  minimumMembersTarget: number;
+  /** Is setup considered complete */
+  isComplete: boolean;
+  completedAt?: Date;
 }
 
 interface SpaceSettings {
@@ -194,6 +233,11 @@ interface EnhancedSpaceProps {
   updatedAt: Date;
   lastActivityAt: Date;
   postCount: number;
+  /**
+   * Setup progress tracking for claimed spaces
+   * Tracks leader onboarding completion
+   */
+  setupProgress?: SetupProgress;
 }
 
 export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
@@ -357,6 +401,21 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
   get postCount(): number {
     return this.props.postCount;
+  }
+
+  /**
+   * Setup progress for claimed spaces
+   * Returns undefined for unclaimed spaces
+   */
+  get setupProgress(): SetupProgress | undefined {
+    return this.props.setupProgress;
+  }
+
+  /**
+   * Whether the leader has completed all setup tasks
+   */
+  get isSetupComplete(): boolean {
+    return this.props.setupProgress?.isComplete ?? false;
   }
 
   get members(): SpaceMember[] {
@@ -1607,6 +1666,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   /**
    * Claim an unclaimed space.
    * This sets the claimer as owner and transitions status to 'claimed'.
+   * Initializes setup progress tracking for leader onboarding.
    */
   public claim(claimedBy: ProfileId): Result<void> {
     if (this.isClaimed) {
@@ -1628,8 +1688,216 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     // Transition to stealth for setup
     this.props.publishStatus = 'stealth';
 
+    // Initialize setup progress for leader onboarding
+    this.props.setupProgress = {
+      welcomeMessagePosted: false,
+      firstToolDeployed: false,
+      coLeaderInvited: false,
+      minimumMembersTarget: 5,
+      isComplete: false,
+    };
+
     this.updateLastActivity();
     return Result.ok<void>();
+  }
+
+  /**
+   * Submit a claim request with enhanced verification info.
+   * This creates a pending claim request that can be verified by admins.
+   * Grants provisional access immediately so leaders can start setting up.
+   */
+  public submitClaimRequest(props: {
+    profileId: ProfileId;
+    role: string;
+    proofType: LeaderProofType;
+    proofUrl?: string;
+  }): Result<void> {
+    if (this.isClaimed) {
+      return Result.fail<void>('Space is already claimed');
+    }
+
+    // Check for existing pending request from this user
+    const existingRequest = this.props.leaderRequests.find(
+      r => r.profileId.value === props.profileId.value && r.status === 'pending'
+    );
+    if (existingRequest) {
+      return Result.fail<void>('A claim request is already pending for this user');
+    }
+
+    const request: LeaderRequest = {
+      profileId: props.profileId,
+      status: 'pending',
+      requestedAt: new Date(),
+      role: props.role,
+      proofType: props.proofType,
+      proofUrl: props.proofUrl,
+      provisionalAccessGranted: true,
+      provisionalAccessAt: new Date(),
+    };
+
+    this.props.leaderRequests.push(request);
+
+    // Grant provisional access immediately - add as owner but with pending verification
+    this.props.members.push({
+      profileId: props.profileId,
+      role: 'owner',
+      joinedAt: new Date()
+    });
+
+    // Update status to show claim in progress
+    this.props.status = 'claimed';
+    this.props.claimedAt = new Date();
+    this.props.createdBy = props.profileId;
+    this.props.publishStatus = 'stealth';
+
+    // Initialize setup progress
+    this.props.setupProgress = {
+      welcomeMessagePosted: false,
+      firstToolDeployed: false,
+      coLeaderInvited: false,
+      minimumMembersTarget: 5,
+      isComplete: false,
+    };
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Check if a user has provisional access (pending verification)
+   */
+  public hasProvisionalAccess(profileId: ProfileId): boolean {
+    const request = this.props.leaderRequests.find(
+      r => r.profileId.value === profileId.value && r.status === 'pending'
+    );
+    return !!request?.provisionalAccessGranted;
+  }
+
+  /**
+   * Verify a pending claim request (admin action)
+   */
+  public verifyClaimRequest(
+    profileId: ProfileId,
+    verifiedBy: ProfileId
+  ): Result<void> {
+    const request = this.props.leaderRequests.find(
+      r => r.profileId.value === profileId.value && r.status === 'pending'
+    );
+
+    if (!request) {
+      return Result.fail<void>('No pending claim request found');
+    }
+
+    request.status = 'approved';
+    request.reviewedBy = verifiedBy;
+    request.reviewedAt = new Date();
+
+    // Update space status to verified
+    this.props.status = 'verified';
+
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  // ============================================================
+  // Setup Progress Tracking Methods
+  // ============================================================
+
+  /**
+   * Mark that the leader has posted a welcome message
+   */
+  public markWelcomeMessagePosted(): Result<void> {
+    if (!this.props.setupProgress) {
+      return Result.fail<void>('Setup progress not initialized (space not claimed)');
+    }
+
+    if (this.props.setupProgress.welcomeMessagePosted) {
+      return Result.ok<void>(); // Already marked
+    }
+
+    this.props.setupProgress.welcomeMessagePosted = true;
+    this.props.setupProgress.welcomeMessageAt = new Date();
+    this.checkAndUpdateSetupCompletion();
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Mark that the leader has deployed their first tool
+   */
+  public markFirstToolDeployed(): Result<void> {
+    if (!this.props.setupProgress) {
+      return Result.fail<void>('Setup progress not initialized (space not claimed)');
+    }
+
+    if (this.props.setupProgress.firstToolDeployed) {
+      return Result.ok<void>(); // Already marked
+    }
+
+    this.props.setupProgress.firstToolDeployed = true;
+    this.props.setupProgress.firstToolAt = new Date();
+    this.checkAndUpdateSetupCompletion();
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Mark that the leader has invited a co-leader
+   */
+  public markCoLeaderInvited(): Result<void> {
+    if (!this.props.setupProgress) {
+      return Result.fail<void>('Setup progress not initialized (space not claimed)');
+    }
+
+    if (this.props.setupProgress.coLeaderInvited) {
+      return Result.ok<void>(); // Already marked
+    }
+
+    this.props.setupProgress.coLeaderInvited = true;
+    this.props.setupProgress.coLeaderAt = new Date();
+    this.checkAndUpdateSetupCompletion();
+    this.updateLastActivity();
+    return Result.ok<void>();
+  }
+
+  /**
+   * Check if setup is complete and update the flag
+   * Called automatically when any progress is made
+   */
+  private checkAndUpdateSetupCompletion(): void {
+    if (!this.props.setupProgress) return;
+
+    const { welcomeMessagePosted, firstToolDeployed, coLeaderInvited, minimumMembersTarget } = this.props.setupProgress;
+    const hasEnoughMembers = this.memberCount >= minimumMembersTarget;
+
+    // Setup is complete when all criteria are met
+    const isComplete = welcomeMessagePosted && firstToolDeployed && coLeaderInvited && hasEnoughMembers;
+
+    if (isComplete && !this.props.setupProgress.isComplete) {
+      this.props.setupProgress.isComplete = true;
+      this.props.setupProgress.completedAt = new Date();
+    }
+  }
+
+  /**
+   * Get setup progress as a percentage (0-100)
+   */
+  public getSetupProgressPercentage(): number {
+    if (!this.props.setupProgress) return 0;
+
+    const { welcomeMessagePosted, firstToolDeployed, coLeaderInvited, minimumMembersTarget } = this.props.setupProgress;
+    const hasEnoughMembers = this.memberCount >= minimumMembersTarget;
+
+    const criteria = [welcomeMessagePosted, firstToolDeployed, coLeaderInvited, hasEnoughMembers];
+    const completed = criteria.filter(Boolean).length;
+    return Math.round((completed / criteria.length) * 100);
+  }
+
+  /**
+   * Set setup progress from external data (repository layer)
+   */
+  public setSetupProgress(progress: SetupProgress | undefined): void {
+    (this.props as any).setupProgress = progress;
   }
 
   /**
@@ -1821,10 +2089,15 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
         profileId: r.profileId.value,
         status: r.status,
         requestedAt: r.requestedAt,
+        role: r.role,
+        proofType: r.proofType,
+        proofUrl: r.proofUrl,
         reason: r.reason,
         reviewedBy: r.reviewedBy?.value,
         reviewedAt: r.reviewedAt,
-        rejectionReason: r.rejectionReason
+        rejectionReason: r.rejectionReason,
+        provisionalAccessGranted: r.provisionalAccessGranted,
+        provisionalAccessAt: r.provisionalAccessAt,
       })),
       tabs: this.props.tabs,
       widgets: this.props.widgets,
@@ -1862,6 +2135,9 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       isUnclaimed: this.isUnclaimed,
       isClaimed: this.isClaimed,
       hasOwner: this.hasOwner,
+      setupProgress: this.props.setupProgress,
+      setupProgressPercentage: this.getSetupProgressPercentage(),
+      isSetupComplete: this.isSetupComplete,
       isActive: this.props.isActive,
       isVerified: this.props.isVerified,
       memberCount: this.memberCount,

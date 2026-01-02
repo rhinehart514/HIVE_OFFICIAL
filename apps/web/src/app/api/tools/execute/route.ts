@@ -1,4 +1,5 @@
 // Use admin SDK methods since we're in an API route
+import { NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from "@/lib/logger";
@@ -15,6 +16,20 @@ import {
   type ToolComposition,
 } from '@/lib/tool-connection-engine';
 import { rateLimit } from '@/lib/rate-limit-simple';
+import { shardedCounterService } from '@/lib/services/sharded-counter.service';
+import { extractedCollectionService } from '@/lib/services/extracted-collection.service';
+import { toolStateBroadcaster } from '@/lib/services/tool-state-broadcaster.service';
+import type {
+  ToolSharedState,
+  ToolSharedEntity,
+  ToolSharedStateUpdate,
+  ToolUserStateUpdate,
+} from '@hive/core';
+
+// Feature flags for Phase 1 Scaling Architecture (enable after migration)
+const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === 'true';
+const USE_EXTRACTED_COLLECTIONS = process.env.USE_EXTRACTED_COLLECTIONS === 'true';
+const USE_RTDB_BROADCAST = process.env.USE_RTDB_BROADCAST === 'true';
 
 // Rate limiter for tool executions: 60 requests per minute per user
 const toolExecuteRateLimiter = rateLimit({
@@ -64,9 +79,26 @@ export interface ActionContext {
   elementId?: string;
   element: ActionToolElement | null;
   data: Record<string, unknown>;
+  /** @deprecated Use sharedState and userState instead */
   state: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   spaceContext?: Record<string, unknown>;
+
+  // ============================================================================
+  // Phase 1: Shared State Architecture
+  // ============================================================================
+
+  /**
+   * Shared state visible to all users (aggregate data)
+   * Contains: counters, collections, timeline, computed values
+   */
+  sharedState: ToolSharedState;
+
+  /**
+   * Per-user state (personal data)
+   * Contains: selections, participation, personal, ui
+   */
+  userState: Record<string, unknown>;
 }
 
 export interface ActionResult {
@@ -78,6 +110,7 @@ export interface ActionResult {
     content: string;
     metadata?: Record<string, unknown>;
   };
+  /** @deprecated Use sharedStateUpdate for aggregate data, userStateUpdate for personal data */
   state?: Record<string, unknown>;
   outputs?: Record<string, unknown>; // Output values for cascade connections
   notifications?: Array<{
@@ -85,6 +118,22 @@ export interface ActionResult {
     message: string;
     recipients?: string[];
   }>;
+
+  // ============================================================================
+  // Phase 1: Shared State Architecture
+  // ============================================================================
+
+  /**
+   * Updates to apply to shared state (visible to all users)
+   * Used for aggregate actions like vote, rsvp, update_score
+   */
+  sharedStateUpdate?: ToolSharedStateUpdate;
+
+  /**
+   * Updates to apply to user state (per-user, personal)
+   * Used for personal actions like toggle, select, save_draft
+   */
+  userStateUpdate?: ToolUserStateUpdate;
 }
 
 // Action handler registry
@@ -101,23 +150,63 @@ const actionHandlers: Record<string, ActionHandler> = {
   },
 
   async vote(context: ActionContext): Promise<ActionResult> {
-    const { data, state, elementId } = context;
+    const { data, elementId, userId, sharedState } = context;
     const optionId = data.optionId as string;
-    const pollState = (state[elementId || 'poll'] || { votes: {} }) as { votes: Record<string, number> };
+    const instanceId = elementId || 'poll';
+
+    // Check if user already voted (prevent double voting)
+    const voterKey = `${instanceId}:voters`;
+    const existingVoters = sharedState.collections[voterKey] || {};
+    if (existingVoters[userId]) {
+      return {
+        success: false,
+        error: 'You have already voted',
+      };
+    }
+
+    // Build counter key: "{instanceId}:{optionId}"
+    const counterKey = `${instanceId}:${optionId}`;
 
     return {
       success: true,
-      state: {
-        ...state,
-        [elementId || 'poll']: {
-          ...pollState,
-          votes: {
-            ...pollState.votes,
-            [optionId]: (pollState.votes[optionId] || 0) + 1,
-          },
-          lastVotedAt: new Date().toISOString(),
-          votedBy: [...(((pollState as Record<string, unknown>).votedBy as string[]) || []), context.userId],
+      data: {
+        action: 'vote',
+        optionId,
+        message: 'Vote recorded',
+      },
+      // Update shared state (visible to all users)
+      sharedStateUpdate: {
+        // Increment the vote counter for this option
+        counterDeltas: {
+          [counterKey]: 1,
+          [`${instanceId}:total`]: 1, // Also track total votes
         },
+        // Track who voted (for preventing double votes)
+        collectionUpserts: {
+          [voterKey]: {
+            [userId]: {
+              id: userId,
+              createdAt: new Date().toISOString(),
+              createdBy: userId,
+              data: { optionId, votedAt: new Date().toISOString() },
+            },
+          },
+        },
+        // Add to timeline
+        timelineAppend: [
+          {
+            type: 'vote',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'vote',
+            data: { optionId },
+          },
+        ],
+      },
+      // Update user state (personal tracking)
+      userStateUpdate: {
+        participation: { [`${instanceId}:hasVoted`]: true },
+        selections: { [`${instanceId}:selectedOption`]: optionId },
       },
     };
   },
@@ -176,20 +265,81 @@ const actionHandlers: Record<string, ActionHandler> = {
   },
 
   async rsvp(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data, userId } = context;
-    const eventKey = elementId || 'event';
-    const status = data.status as string || 'going';
-    const eventState = (state[eventKey] || { rsvps: {} }) as { rsvps: Record<string, string> };
+    const { elementId, data, userId, sharedState, spaceContext } = context;
+    const instanceId = elementId || 'event';
+    const status = (data.status as string) || 'going';
+    const attendeesKey = `${instanceId}:attendees`;
+
+    // Get existing RSVP status to adjust counters correctly
+    const existingRsvps = sharedState.collections[attendeesKey] || {};
+    const previousRsvp = existingRsvps[userId];
+    const previousStatus = previousRsvp?.data?.status as string | undefined;
+
+    // Build counter deltas based on status change
+    const counterDeltas: Record<string, number> = {};
+
+    // Decrement old status counter if user had previous RSVP
+    if (previousStatus && previousStatus !== status) {
+      counterDeltas[`${instanceId}:${previousStatus}`] = -1;
+    }
+
+    // Increment new status counter
+    if (!previousStatus || previousStatus !== status) {
+      counterDeltas[`${instanceId}:${status}`] = 1;
+    }
+
+    // Track total unique RSVPs if this is a new RSVP
+    if (!previousStatus) {
+      counterDeltas[`${instanceId}:total`] = 1;
+    }
+
+    // Get user display name from space context if available
+    const userDisplayName =
+      (spaceContext?.members as { list?: Array<{ id: string; displayName?: string }> })?.list
+        ?.find(m => m.id === userId)?.displayName || 'Anonymous';
 
     return {
       success: true,
-      state: {
-        ...state,
-        [eventKey]: {
-          ...eventState,
-          rsvps: { ...eventState.rsvps, [userId]: status },
-          lastUpdatedAt: new Date().toISOString(),
+      data: {
+        action: 'rsvp',
+        status,
+        previousStatus,
+        message: `RSVP updated to ${status}`,
+      },
+      // Update shared state
+      sharedStateUpdate: {
+        counterDeltas,
+        // Upsert the RSVP entry
+        collectionUpserts: {
+          [attendeesKey]: {
+            [userId]: {
+              id: userId,
+              createdAt: previousRsvp?.createdAt || new Date().toISOString(),
+              createdBy: userId,
+              updatedAt: new Date().toISOString(),
+              data: {
+                status,
+                displayName: userDisplayName,
+                rsvpAt: new Date().toISOString(),
+              },
+            },
+          },
         },
+        // Add to timeline
+        timelineAppend: [
+          {
+            type: 'rsvp',
+            userId,
+            elementInstanceId: instanceId,
+            action: previousStatus ? 'rsvp_updated' : 'rsvp_created',
+            data: { status, previousStatus },
+          },
+        ],
+      },
+      // Update user state
+      userStateUpdate: {
+        participation: { [`${instanceId}:hasRsvped`]: true },
+        selections: { [`${instanceId}:rsvpStatus`]: status },
       },
     };
   },
@@ -504,25 +654,78 @@ const actionHandlers: Record<string, ActionHandler> = {
   // =============================================================================
 
   async update_score(context: ActionContext): Promise<ActionResult> {
-    const { state, elementId, data, userId } = context;
-    const key = elementId || 'leaderboard';
-    const leaderboardState = (state[key] || { scores: {} }) as { scores: Record<string, number> };
+    const { elementId, data, userId, sharedState, spaceContext } = context;
+    const instanceId = elementId || 'leaderboard';
     const targetUserId = (data.userId as string) || userId;
     const delta = (data.delta as number) || 0;
-    const newScore = (data.score as number) ?? (leaderboardState.scores[targetUserId] || 0) + delta;
+    const absoluteScore = data.score as number | undefined;
+
+    // Key format: "{instanceId}:score:{userId}"
+    const scoreKey = `${instanceId}:score:${targetUserId}`;
+    const currentScore = sharedState.counters[scoreKey] || 0;
+
+    // Determine the score change
+    let newScore: number;
+    let scoreDelta: number;
+
+    if (absoluteScore !== undefined) {
+      // Absolute score set
+      newScore = Math.max(0, absoluteScore);
+      scoreDelta = newScore - currentScore;
+    } else {
+      // Delta-based update
+      scoreDelta = delta;
+      newScore = Math.max(0, currentScore + delta);
+    }
+
+    // Get user display name from space context if available
+    const userDisplayName =
+      (spaceContext?.members as { list?: Array<{ id: string; displayName?: string }> })?.list
+        ?.find(m => m.id === targetUserId)?.displayName || 'Anonymous';
+
+    // Update leaderboard entries collection for quick lookup
+    const entriesKey = `${instanceId}:entries`;
 
     return {
       success: true,
-      state: {
-        ...state,
-        [key]: {
-          ...leaderboardState,
-          scores: {
-            ...leaderboardState.scores,
-            [targetUserId]: Math.max(0, newScore),
-          },
-          lastUpdatedAt: new Date().toISOString(),
+      data: {
+        action: 'update_score',
+        targetUserId,
+        previousScore: currentScore,
+        newScore,
+        delta: scoreDelta,
+      },
+      sharedStateUpdate: {
+        // Update the score counter atomically
+        counterDeltas: {
+          [scoreKey]: scoreDelta,
         },
+        // Upsert the leaderboard entry for this user
+        collectionUpserts: {
+          [entriesKey]: {
+            [targetUserId]: {
+              id: targetUserId,
+              createdAt: new Date().toISOString(),
+              createdBy: userId,
+              updatedAt: new Date().toISOString(),
+              data: {
+                displayName: userDisplayName,
+                score: newScore,
+                lastUpdated: new Date().toISOString(),
+              },
+            },
+          },
+        },
+        // Add to timeline
+        timelineAppend: [
+          {
+            type: 'score_update',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'update_score',
+            data: { targetUserId, previousScore: currentScore, newScore, delta: scoreDelta },
+          },
+        ],
       },
     };
   },
@@ -851,12 +1054,29 @@ interface ToolExecutionResult {
     content: string;
     metadata?: Record<string, unknown>;
   };
+  /** @deprecated Use sharedStateUpdate and userStateUpdate instead */
   state?: Record<string, unknown>;
   notifications?: Array<{
     type: 'info' | 'success' | 'warning' | 'error';
     message: string;
     recipients?: string[];
   }>;
+
+  // ============================================================================
+  // Phase 1: Shared State Architecture
+  // ============================================================================
+
+  /**
+   * Updates to apply to shared state (visible to all users)
+   * Used for aggregate actions like vote, rsvp, update_score
+   */
+  sharedStateUpdate?: ToolSharedStateUpdate;
+
+  /**
+   * Updates to apply to user state (per-user, personal)
+   * Used for personal actions like toggle, select, save_draft
+   */
+  userStateUpdate?: ToolUserStateUpdate;
 }
 
 // Input sanitization: Limit string lengths and validate patterns
@@ -999,9 +1219,8 @@ export const POST = withAuthValidationAndErrors(
           remaining: rateLimitResult.remaining,
           retryAfter: rateLimitResult.retryAfter
         });
-        return respond.error(
-          'Too many requests. Please slow down.',
-          'RATE_LIMITED',
+        return NextResponse.json(
+          { error: 'Too many requests. Please slow down.', code: 'RATE_LIMITED' },
           { status: 429, headers: { 'Retry-After': String(rateLimitResult.retryAfter || 60) } }
         );
       }
@@ -1294,6 +1513,20 @@ async function canUserExecuteTool(
 }
 
 // Helper function to execute tool action
+/**
+ * Create empty/default shared state structure
+ */
+function createEmptySharedState(): ToolSharedState {
+  return {
+    counters: {},
+    collections: {},
+    timeline: [],
+    computed: {},
+    version: 0,
+    lastModified: new Date().toISOString(),
+  };
+}
+
 async function executeToolAction(params: {
   deployment: DeploymentData;
   tool: ToolData;
@@ -1307,21 +1540,47 @@ async function executeToolAction(params: {
   const { deployment, tool, user, action, elementId, data, placementContext } = params;
 
   try {
-    // Get or create tool state
-    const stateId = `${deployment.id}_${user.uid}`;
-    let currentState: Record<string, unknown> = {};
+    // =========================================================================
+    // Load State: Both shared (aggregate) and user (personal) state
+    // =========================================================================
 
+    const userStateId = `${deployment.id}_${user.uid}`;
+    let currentUserState: Record<string, unknown> = {};
+    let currentSharedState: ToolSharedState = createEmptySharedState();
+
+    // Reference to the deployment doc for shared state
+    const deploymentRef = dbAdmin.collection('deployedTools').doc(deployment.id);
+    const sharedStateRef = deploymentRef.collection('sharedState').doc('current');
+
+    // Load shared state (aggregate data visible to all users)
+    const sharedStateDoc = await sharedStateRef.get();
+    if (sharedStateDoc.exists) {
+      const data = sharedStateDoc.data();
+      currentSharedState = {
+        counters: (data?.counters as Record<string, number>) || {},
+        collections: (data?.collections as Record<string, Record<string, ToolSharedEntity>>) || {},
+        timeline: (data?.timeline as ToolSharedState['timeline']) || [],
+        computed: (data?.computed as Record<string, unknown>) || {},
+        version: (data?.version as number) || 0,
+        lastModified: (data?.lastModified as string) || new Date().toISOString(),
+      };
+    }
+
+    // Load user state (per-user personal data)
     let placementStateRef: admin.firestore.DocumentReference<admin.firestore.DocumentData> | null = null;
     if (placementContext) {
       placementStateRef = placementContext.ref.collection('state').doc(user.uid);
       const stateSnapshot = await placementStateRef.get();
       if (stateSnapshot.exists) {
-        currentState = (stateSnapshot.data()?.state as Record<string, unknown>) || {};
+        currentUserState = (stateSnapshot.data()?.state as Record<string, unknown>) || {};
       }
     } else {
-      const stateDoc = await dbAdmin.collection('toolStates').doc(stateId).get();
-      currentState = stateDoc.exists ? (stateDoc.data() as { state?: Record<string, unknown> })?.state || {} : {};
+      const stateDoc = await dbAdmin.collection('toolStates').doc(userStateId).get();
+      currentUserState = stateDoc.exists ? (stateDoc.data() as { state?: Record<string, unknown> })?.state || {} : {};
     }
+
+    // Legacy: Keep currentState for backward compatibility
+    const currentState = currentUserState;
 
     // Find the target element if elementId is provided
     // Elements may have 'id', 'instanceId', or 'elementId' as identifiers
@@ -1358,9 +1617,12 @@ async function executeToolAction(params: {
       elementId,
       element: targetElement as ActionToolElement | null,
       data,
-      state: currentState,
+      state: currentState, // Legacy - deprecated
       metadata: params.context,
       spaceContext, // Inject space data (events, members, etc.)
+      // Phase 1: Shared State Architecture
+      sharedState: currentSharedState,
+      userState: currentUserState,
     };
 
     // Execute action through the extensible handler registry
@@ -1403,63 +1665,358 @@ async function executeToolAction(params: {
       }
     }
 
-    // Save updated state and submission atomically using batch write
-    if (result.success && (result.state || (placementContext && action.startsWith('submit')))) {
-      const batch = dbAdmin.batch();
+    // =========================================================================
+    // Save State: Handle both shared and user state updates
+    // =========================================================================
 
-      // State update
-      if (result.state) {
-        const statePayload = {
-          deploymentId: deployment.id,
-          toolId: tool.id || deployment.toolId,
-          userId: user.uid,
-          state: result.state,
-          updatedAt: new Date().toISOString(),
-          campusId: CURRENT_CAMPUS_ID,
-        };
+    const hasSharedStateUpdate = result.sharedStateUpdate &&
+      (result.sharedStateUpdate.counterDeltas ||
+       result.sharedStateUpdate.collectionUpserts ||
+       result.sharedStateUpdate.collectionDeletes ||
+       result.sharedStateUpdate.timelineAppend ||
+       result.sharedStateUpdate.computedUpdates);
 
-        if (placementStateRef) {
-          batch.set(placementStateRef, statePayload, { merge: true });
+    const hasUserStateUpdate = result.userStateUpdate || result.state;
+    const hasSubmission = placementContext && action.startsWith('submit');
+
+    if (result.success && (hasSharedStateUpdate || hasUserStateUpdate || hasSubmission)) {
+      try {
+        // =====================================================================
+        // Apply Shared State Update
+        // Phase 1 Scaling: Uses sharded counters for high-throughput scenarios
+        // =====================================================================
+        if (hasSharedStateUpdate && result.sharedStateUpdate) {
+          // Handle counter deltas
+          if (result.sharedStateUpdate.counterDeltas) {
+            const counterDeltas = result.sharedStateUpdate.counterDeltas;
+
+            if (USE_SHARDED_COUNTERS) {
+              // New path: Use sharded counters for 200+ writes/sec capacity
+              const deltas = Object.entries(counterDeltas).map(([key, delta]) => ({
+                counterKey: key,
+                delta,
+              }));
+
+              if (deltas.length > 0) {
+                await shardedCounterService.incrementBatch(deployment.id, deltas);
+              }
+            } else {
+              // Legacy path: Use transaction (limited to 25 writes/sec)
+              await dbAdmin.runTransaction(async (transaction) => {
+                const sharedDoc = await transaction.get(sharedStateRef);
+                const existingData = sharedDoc.exists ? sharedDoc.data() : {};
+                const existingCounters = (existingData?.counters as Record<string, number>) || {};
+
+                const updatedCounters = { ...existingCounters };
+                for (const [key, delta] of Object.entries(counterDeltas)) {
+                  updatedCounters[key] = (updatedCounters[key] || 0) + delta;
+                }
+
+                transaction.set(sharedStateRef, {
+                  ...existingData,
+                  counters: updatedCounters,
+                  version: ((existingData?.version as number) || 0) + 1,
+                  lastModified: new Date().toISOString(),
+                  campusId: CURRENT_CAMPUS_ID,
+                }, { merge: true });
+              });
+            }
+          }
+
+          // Handle collections, timeline, and computed
+          const hasCollectionUpdates =
+            result.sharedStateUpdate.collectionUpserts ||
+            result.sharedStateUpdate.collectionDeletes;
+          const hasTimelineOrComputedUpdates =
+            result.sharedStateUpdate.timelineAppend ||
+            result.sharedStateUpdate.computedUpdates;
+
+          // Handle collection updates (extracted or inline based on feature flag)
+          if (hasCollectionUpdates) {
+            if (USE_EXTRACTED_COLLECTIONS) {
+              // New path: Use subcollections for unlimited scale
+              const upserts: Array<{ collectionKey: string; entityId: string; entity: ToolSharedEntity }> = [];
+              const deletes: Array<{ collectionKey: string; entityId: string }> = [];
+
+              // Collect upserts
+              if (result.sharedStateUpdate.collectionUpserts) {
+                for (const [collectionKey, entities] of Object.entries(result.sharedStateUpdate.collectionUpserts)) {
+                  for (const [entityId, entity] of Object.entries(entities)) {
+                    upserts.push({ collectionKey, entityId, entity });
+                  }
+                }
+              }
+
+              // Collect deletes
+              if (result.sharedStateUpdate.collectionDeletes) {
+                for (const [collectionKey, idsToDelete] of Object.entries(result.sharedStateUpdate.collectionDeletes)) {
+                  for (const entityId of idsToDelete) {
+                    deletes.push({ collectionKey, entityId });
+                  }
+                }
+              }
+
+              // Execute in parallel
+              await Promise.all([
+                upserts.length > 0 ? extractedCollectionService.upsertBatch(deployment.id, upserts) : Promise.resolve(),
+                deletes.length > 0 ? extractedCollectionService.deleteBatch(deployment.id, deletes) : Promise.resolve(),
+              ]);
+            } else {
+              // Legacy path: Update inline collections in main document
+              const sharedDoc = await sharedStateRef.get();
+              const existingData = sharedDoc.exists ? sharedDoc.data() : {};
+              const existingCollections = (existingData?.collections as Record<string, Record<string, ToolSharedEntity>>) || {};
+              const existingVersion = (existingData?.version as number) || 0;
+
+              const updatedCollections = { ...existingCollections };
+
+              // Apply upserts
+              if (result.sharedStateUpdate.collectionUpserts) {
+                for (const [collectionKey, entities] of Object.entries(result.sharedStateUpdate.collectionUpserts)) {
+                  updatedCollections[collectionKey] = {
+                    ...updatedCollections[collectionKey],
+                    ...entities,
+                  };
+                }
+              }
+
+              // Apply deletes
+              if (result.sharedStateUpdate.collectionDeletes) {
+                for (const [collectionKey, idsToDelete] of Object.entries(result.sharedStateUpdate.collectionDeletes)) {
+                  if (updatedCollections[collectionKey]) {
+                    for (const id of idsToDelete) {
+                      delete updatedCollections[collectionKey][id];
+                    }
+                  }
+                }
+              }
+
+              await sharedStateRef.set({
+                collections: updatedCollections,
+                version: existingVersion + 1,
+                lastModified: new Date().toISOString(),
+                campusId: CURRENT_CAMPUS_ID,
+              }, { merge: true });
+            }
+          }
+
+          // Handle timeline and computed updates (always in main document)
+          if (hasTimelineOrComputedUpdates) {
+            const sharedDoc = await sharedStateRef.get();
+            const existingData = sharedDoc.exists ? sharedDoc.data() : {};
+            const existingTimeline = (existingData?.timeline as ToolSharedState['timeline']) || [];
+            const existingComputed = (existingData?.computed as Record<string, unknown>) || {};
+            const existingVersion = (existingData?.version as number) || 0;
+
+            // Append to timeline (limit to last 100 events)
+            let updatedTimeline = [...existingTimeline];
+            if (result.sharedStateUpdate.timelineAppend) {
+              const newEvents = result.sharedStateUpdate.timelineAppend.map((event) => ({
+                ...event,
+                id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                timestamp: new Date().toISOString(),
+              }));
+              updatedTimeline = [...updatedTimeline, ...newEvents].slice(-100);
+            }
+
+            // Apply computed updates
+            const updatedComputed = {
+              ...existingComputed,
+              ...(result.sharedStateUpdate.computedUpdates || {}),
+            };
+
+            // Write updated shared state (merge to preserve other fields)
+            await sharedStateRef.set({
+              timeline: updatedTimeline,
+              computed: updatedComputed,
+              version: existingVersion + 1,
+              lastModified: new Date().toISOString(),
+              campusId: CURRENT_CAMPUS_ID,
+              // Only include counters/collections if NOT using extracted services
+              ...(USE_SHARDED_COUNTERS ? {} : { counters: existingData?.counters || {} }),
+              ...(USE_EXTRACTED_COLLECTIONS ? {} : { collections: existingData?.collections || {} }),
+            }, { merge: true });
+          }
         }
 
-        batch.set(dbAdmin.collection('toolStates').doc(stateId), statePayload, { merge: true });
-      }
+        // =====================================================================
+        // Apply User State Update (using batch for efficiency)
+        // =====================================================================
+        if (hasUserStateUpdate || hasSubmission) {
+          const batch = dbAdmin.batch();
 
-      // Submission record (if applicable)
-      if (placementContext && action.startsWith('submit')) {
-        const submissionRecord = {
-          userId: user.uid,
-          actionName: action,
-          elementId: elementId || null,
-          payload: data || {},
-          response: result.data || {},
-          metadata: {},
-          submittedAt: admin.firestore.FieldValue.serverTimestamp(),
-        };
+          // Merge user state updates
+          let finalUserState = { ...currentUserState };
 
-        batch.set(
-          placementContext.ref.collection('responses').doc(user.uid),
-          submissionRecord,
-          { merge: true }
-        );
+          // Apply userStateUpdate if present
+          if (result.userStateUpdate) {
+            if (result.userStateUpdate.selections) {
+              finalUserState = {
+                ...finalUserState,
+                selections: {
+                  ...((finalUserState.selections as Record<string, unknown>) || {}),
+                  ...result.userStateUpdate.selections,
+                },
+              };
+            }
+            if (result.userStateUpdate.participation) {
+              finalUserState = {
+                ...finalUserState,
+                participation: {
+                  ...((finalUserState.participation as Record<string, boolean>) || {}),
+                  ...result.userStateUpdate.participation,
+                },
+              };
+            }
+            if (result.userStateUpdate.personal) {
+              finalUserState = {
+                ...finalUserState,
+                personal: {
+                  ...((finalUserState.personal as Record<string, unknown>) || {}),
+                  ...result.userStateUpdate.personal,
+                },
+              };
+            }
+            if (result.userStateUpdate.ui) {
+              finalUserState = {
+                ...finalUserState,
+                ui: {
+                  ...((finalUserState.ui as Record<string, unknown>) || {}),
+                  ...result.userStateUpdate.ui,
+                },
+              };
+            }
+          }
 
-        batch.set(
-          placementContext.ref,
-          {
-            responseCount: admin.firestore.FieldValue.increment(1),
-            lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-      }
+          // Apply legacy state if present (backward compatibility)
+          if (result.state) {
+            finalUserState = { ...finalUserState, ...result.state };
+          }
 
-      // Commit all writes atomically
-      try {
-        await batch.commit();
-      } catch (batchError) {
+          // Save user state
+          const statePayload = {
+            deploymentId: deployment.id,
+            toolId: tool.id || deployment.toolId,
+            userId: user.uid,
+            state: finalUserState,
+            updatedAt: new Date().toISOString(),
+            campusId: CURRENT_CAMPUS_ID,
+          };
+
+          if (placementStateRef) {
+            batch.set(placementStateRef, statePayload, { merge: true });
+          }
+
+          batch.set(dbAdmin.collection('toolStates').doc(userStateId), statePayload, { merge: true });
+
+          // Submission record (if applicable)
+          if (hasSubmission && placementContext) {
+            const submissionRecord = {
+              userId: user.uid,
+              actionName: action,
+              elementId: elementId || null,
+              payload: data || {},
+              response: result.data || {},
+              metadata: {},
+              submittedAt: admin.firestore.FieldValue.serverTimestamp(),
+            };
+
+            batch.set(
+              placementContext.ref.collection('responses').doc(user.uid),
+              submissionRecord,
+              { merge: true }
+            );
+
+            batch.set(
+              placementContext.ref,
+              {
+                responseCount: admin.firestore.FieldValue.increment(1),
+                lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
+              },
+              { merge: true }
+            );
+          }
+
+          await batch.commit();
+        }
+
+        // =====================================================================
+        // Broadcast State to RTDB (Phase S3: Real-Time Updates)
+        // =====================================================================
+        if (USE_RTDB_BROADCAST && hasSharedStateUpdate && result.sharedStateUpdate) {
+          try {
+            // Broadcast counter updates for real-time poll/vote displays
+            if (result.sharedStateUpdate.counterDeltas) {
+              // Get updated counter values (aggregate from shards if using sharding)
+              const counterKeys = Object.keys(result.sharedStateUpdate.counterDeltas);
+              let updatedCounters: Record<string, number>;
+
+              if (USE_SHARDED_COUNTERS) {
+                updatedCounters = await shardedCounterService.getCountBatch(deployment.id, counterKeys);
+              } else {
+                // Read from Firestore
+                const sharedDoc = await sharedStateRef.get();
+                const allCounters = (sharedDoc.data()?.counters as Record<string, number>) || {};
+                updatedCounters = {};
+                for (const key of counterKeys) {
+                  updatedCounters[key] = allCounters[key] || 0;
+                }
+              }
+
+              // Broadcast each updated counter
+              for (const [key, value] of Object.entries(updatedCounters)) {
+                await toolStateBroadcaster.broadcastCounterUpdate(deployment.id, key, value);
+              }
+            }
+
+            // Broadcast timeline events for activity feeds
+            if (result.sharedStateUpdate.timelineAppend) {
+              for (const event of result.sharedStateUpdate.timelineAppend) {
+                await toolStateBroadcaster.broadcastTimelineEvent(deployment.id, {
+                  id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                  type: event.type,
+                  userId: event.userId,
+                  action: event.action,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            }
+
+            // Broadcast collection count updates for RSVP displays
+            if (result.sharedStateUpdate.collectionUpserts || result.sharedStateUpdate.collectionDeletes) {
+              const affectedCollections = new Set<string>();
+              if (result.sharedStateUpdate.collectionUpserts) {
+                Object.keys(result.sharedStateUpdate.collectionUpserts).forEach(k => affectedCollections.add(k));
+              }
+              if (result.sharedStateUpdate.collectionDeletes) {
+                Object.keys(result.sharedStateUpdate.collectionDeletes).forEach(k => affectedCollections.add(k));
+              }
+
+              for (const collectionKey of affectedCollections) {
+                let count: number;
+                if (USE_EXTRACTED_COLLECTIONS) {
+                  count = await extractedCollectionService.countEntities(deployment.id, collectionKey);
+                } else {
+                  const sharedDoc = await sharedStateRef.get();
+                  const collections = (sharedDoc.data()?.collections as Record<string, Record<string, unknown>>) || {};
+                  count = Object.keys(collections[collectionKey] || {}).length;
+                }
+                await toolStateBroadcaster.broadcastCollectionCount(deployment.id, collectionKey, count);
+              }
+            }
+          } catch (broadcastError) {
+            // Log but don't fail - RTDB broadcast is best-effort
+            logger.warn('RTDB broadcast failed', {
+              error: broadcastError instanceof Error ? broadcastError.message : String(broadcastError),
+              deploymentId: deployment.id,
+            });
+          }
+        }
+
+      } catch (stateError) {
         logger.error(
-          'Failed to save tool state atomically',
-          { error: batchError instanceof Error ? batchError.message : String(batchError) }
+          'Failed to save tool state',
+          { error: stateError instanceof Error ? stateError.message : String(stateError) }
         );
         // Return error to indicate state wasn't saved - client should retry
         return {
