@@ -1,11 +1,172 @@
 // @ts-nocheck
-// TODO: Fix MockRedis type - constructor arguments and on() handler signature
 // Advanced Redis-based caching layer for HIVE platform
+// Supports Upstash Redis (REST API) with fallback to in-memory mock
 // Optimized for multi-tenant architecture and cross-campus scaling
 
-// TEMP: ioredis disabled for HiveLab-only launch - using in-memory mock
-// import Redis, { Redis as RedisClient } from 'ioredis';
 import { logger } from '@/lib/logger';
+
+// ============================================================================
+// UPSTASH REDIS ADAPTER
+// Wraps Upstash Redis client to provide ioredis-compatible interface
+// ============================================================================
+
+const UPSTASH_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+const UPSTASH_ENABLED = !!(UPSTASH_URL && UPSTASH_TOKEN);
+
+// Upstash client type (from @upstash/redis)
+interface UpstashRedisClient {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string, options?: { ex?: number; px?: number }) => Promise<string | null>;
+  del: (...keys: string[]) => Promise<number>;
+  exists: (...keys: string[]) => Promise<number>;
+  keys: (pattern: string) => Promise<string[]>;
+  mget: <T = string>(...keys: string[]) => Promise<(T | null)[]>;
+  incrby: (key: string, increment: number) => Promise<number>;
+  ping: () => Promise<string>;
+  flushall: () => Promise<string>;
+  scan: (cursor: number, options?: { match?: string; count?: number }) => Promise<[string, string[]]>;
+}
+
+/**
+ * Adapter class that wraps Upstash Redis to provide ioredis-compatible interface
+ * This allows the existing HiveRedisCache to work with both MockRedis and Upstash
+ */
+class UpstashAdapter {
+  private client: UpstashRedisClient;
+  private eventHandlers: Map<string, Array<() => void>> = new Map();
+
+  constructor(client: UpstashRedisClient) {
+    this.client = client;
+  }
+
+  async get(key: string): Promise<string | null> {
+    return this.client.get(key);
+  }
+
+  async set(key: string, value: string, ...args: unknown[]): Promise<string> {
+    // Handle Redis set with expiry: SET key value PX milliseconds
+    if (args.length >= 2 && args[0] === 'PX' && typeof args[1] === 'number') {
+      const expiryMs = args[1];
+      await this.client.set(key, value, { px: expiryMs });
+    } else {
+      await this.client.set(key, value);
+    }
+    return 'OK';
+  }
+
+  async setex(key: string, seconds: number, value: string): Promise<string> {
+    await this.client.set(key, value, { ex: seconds });
+    return 'OK';
+  }
+
+  async del(...keys: string[]): Promise<number> {
+    if (keys.length === 0) return 0;
+    return this.client.del(...keys);
+  }
+
+  async exists(key: string): Promise<number> {
+    return this.client.exists(key);
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    // Upstash keys() works similarly to ioredis
+    return this.client.keys(pattern);
+  }
+
+  async mget(...keys: string[]): Promise<Array<string | null>> {
+    if (keys.length === 0) return [];
+    return this.client.mget<string>(...keys);
+  }
+
+  async incrby(key: string, increment: number): Promise<number> {
+    return this.client.incrby(key, increment);
+  }
+
+  async ping(): Promise<string> {
+    return this.client.ping();
+  }
+
+  async info(_section?: string): Promise<string> {
+    // Upstash doesn't support INFO command via REST API
+    // Return a mock response for compatibility
+    return `# Server
+redis_version:7.0.0-upstash
+used_memory:0
+used_memory_human:0K
+connected_clients:1
+uptime_in_seconds:0`;
+  }
+
+  async flushall(): Promise<string> {
+    await this.client.flushall();
+    return 'OK';
+  }
+
+  async quit(): Promise<string> {
+    // Upstash REST API doesn't need explicit disconnection
+    return 'OK';
+  }
+
+  pipeline() {
+    // Simple pipeline implementation for Upstash
+    // Collects operations and executes them (not truly pipelined, but compatible)
+    const operations: Array<() => Promise<string>> = [];
+
+    return {
+      setex: (key: string, ttl: number, value: string) => {
+        operations.push(async () => {
+          await this.setex(key, ttl, value);
+          return 'OK';
+        });
+        return this;
+      },
+      exec: async () => {
+        const results = await Promise.all(operations.map(op => op()));
+        return results.map(r => [r]);
+      }
+    };
+  }
+
+  on(event: string, handler: () => void) {
+    // Store event handlers
+    const handlers = this.eventHandlers.get(event) || [];
+    handlers.push(handler);
+    this.eventHandlers.set(event, handlers);
+
+    // Trigger 'ready' event immediately since Upstash is always ready
+    if (event === 'ready') {
+      setTimeout(handler, 100);
+    }
+  }
+}
+
+// Function to create Upstash client
+let upstashClientPromise: Promise<UpstashAdapter | null> | null = null;
+
+async function getUpstashClient(): Promise<UpstashAdapter | null> {
+  if (!UPSTASH_ENABLED) return null;
+  if (upstashClientPromise) return upstashClientPromise;
+
+  upstashClientPromise = (async () => {
+    try {
+      // Dynamic import to avoid build errors if package not installed
+      const { Redis } = await import('@upstash/redis');
+      const client = new Redis({
+        url: UPSTASH_URL!,
+        token: UPSTASH_TOKEN!,
+      }) as unknown as UpstashRedisClient;
+
+      logger.info('Upstash Redis client initialized for caching');
+      return new UpstashAdapter(client);
+    } catch (error) {
+      logger.error('Failed to initialize Upstash Redis client', { component: 'redis-client' }, error instanceof Error ? error : undefined);
+      return null;
+    }
+  })();
+
+  return upstashClientPromise;
+}
 
 interface CacheConfig {
   host: string;
@@ -136,9 +297,12 @@ uptime_in_seconds:3600`;
   }
 }
 
-// When real Redis is disabled, use MockRedis as a stand-in so that
-// existing initialization code can continue to call `new Redis(...)`.
-const Redis = MockRedis;
+// ============================================================================
+// REDIS CLIENT FACTORY
+// Priority: Upstash (when configured) > MockRedis (fallback)
+// ============================================================================
+
+type RedisClientType = MockRedis | UpstashAdapter;
 
 interface CacheEntry<T = unknown> {
   data: T;
@@ -161,11 +325,14 @@ interface CacheStats {
 }
 
 class HiveRedisCache {
-  private client: MockRedis;
+  private client: RedisClientType;
   private readonly config: CacheConfig;
   private stats: CacheStats;
   private healthCheckInterval?: NodeJS.Timeout;
   private _isUsingMockRedis: boolean;
+  private _isUsingUpstash: boolean;
+  private _initialized: boolean = false;
+  private _initPromise: Promise<void> | null = null;
 
   constructor() {
     this.config = {
@@ -179,7 +346,7 @@ class HiveRedisCache {
       keepAlive: 30000,
       family: 4,
       keyPrefix: 'hive:',
-      enabled: process.env.REDIS_ENABLED === 'true'
+      enabled: process.env.REDIS_ENABLED === 'true' || UPSTASH_ENABLED
     };
 
     this.stats = {
@@ -193,41 +360,56 @@ class HiveRedisCache {
       activeConnections: 0
     };
 
-    this._isUsingMockRedis = !this.config.enabled;
-    this.initializeClient();
+    // Default to mock until async init completes
+    this._isUsingMockRedis = true;
+    this._isUsingUpstash = false;
+    this.client = new MockRedis();
+
+    // Start async initialization
+    this._initPromise = this.initializeClient();
   }
 
-  private initializeClient(): void {
-    if (this.config.enabled) {
-      // Real Redis client
-      this.client = new Redis(this.config);
+  private async initializeClient(): Promise<void> {
+    // Priority 1: Try Upstash if configured
+    if (UPSTASH_ENABLED) {
+      try {
+        const upstashClient = await getUpstashClient();
+        if (upstashClient) {
+          this.client = upstashClient;
+          this._isUsingMockRedis = false;
+          this._isUsingUpstash = true;
+          this._initialized = true;
+          logger.info('Using Upstash Redis for caching (distributed)');
+          this.startHealthCheck();
+          return;
+        }
+      } catch (error) {
+        logger.error('Failed to initialize Upstash, falling back to MockRedis', { component: 'redis-client' }, error instanceof Error ? error : undefined);
+      }
+    }
 
-      this.client.on('connect', () => {
-        logger.info('Redis client connected successfully');
-      });
+    // Priority 2: Fall back to MockRedis
+    this.client = new MockRedis();
+    this._isUsingMockRedis = true;
+    this._isUsingUpstash = false;
+    this._initialized = true;
 
-      this.client.on('error', (error: unknown) => {
-        this.stats.errors++;
-        logger.error('Redis client error', { component: 'redis-client' }, error instanceof Error ? error : undefined);
-      });
-
-      this.client.on('ready', () => {
-        logger.info('Redis client ready for operations');
-        this.startHealthCheck();
-      });
-
-      this.client.on('reconnecting', () => {
-        logger.info('Redis client reconnecting...');
-      });
+    if (UPSTASH_ENABLED) {
+      logger.warn('Upstash configured but failed to connect, using MockRedis fallback');
     } else {
-      // Mock Redis for development
-      this.client = new MockRedis();
-      logger.info('Using Mock Redis for development (REDIS_ENABLED=false)');
+      logger.info('Using MockRedis for caching (Upstash not configured)');
+    }
 
-      // Simulate ready event for mock Redis
-      setTimeout(() => {
-        this.startHealthCheck();
-      }, 100);
+    // Simulate ready event for mock Redis
+    setTimeout(() => {
+      this.startHealthCheck();
+    }, 100);
+  }
+
+  // Ensure client is initialized before operations
+  private async ensureInitialized(): Promise<void> {
+    if (!this._initialized && this._initPromise) {
+      await this._initPromise;
     }
   }
 
@@ -465,6 +647,26 @@ class HiveRedisCache {
   // Check if using mock Redis
   isUsingMockRedis(): boolean {
     return this._isUsingMockRedis;
+  }
+
+  // Check if using Upstash Redis
+  isUsingUpstash(): boolean {
+    return this._isUsingUpstash;
+  }
+
+  // Get connection type string
+  getConnectionType(): 'upstash' | 'mock' {
+    return this._isUsingUpstash ? 'upstash' : 'mock';
+  }
+
+  // Check if Upstash is configured (env vars present)
+  isUpstashConfigured(): boolean {
+    return UPSTASH_ENABLED;
+  }
+
+  // Wait for initialization to complete
+  async waitForInit(): Promise<void> {
+    await this.ensureInitialized();
   }
 
   async mget<T>(namespace: string, keys: string[], campusId?: string): Promise<Array<T | null>> {

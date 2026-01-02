@@ -50,9 +50,9 @@ test.describe('Admin controls onboarding catalog (dev)', () => {
     await page.goto('/ux/onboarding/catalog-demo?campusId=ub');
     await expect(page.getByTestId('catalog-root')).toBeVisible();
 
-    const majors = page.getByTestId('catalog-majors');
-    await expect(majors.getByText('Astrophysics')).toBeVisible();
-    await expect(majors.getByText('Cognitive Science')).toBeVisible();
+    const majorsElement = page.getByTestId('catalog-majors');
+    await expect(majorsElement.getByText('Astrophysics')).toBeVisible();
+    await expect(majorsElement.getByText('Cognitive Science')).toBeVisible();
 
     await expect(page.getByTestId('catalog-years')).toHaveText(/2026–2027/);
 

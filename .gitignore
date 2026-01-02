@@ -72,3 +72,4 @@ lint-*.txt
 .env.production
 .env.production.required
 .husky/
+.vercel

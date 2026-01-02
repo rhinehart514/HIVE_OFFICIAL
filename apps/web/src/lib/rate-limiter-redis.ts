@@ -72,8 +72,7 @@ async function getRedisClient(): Promise<RedisClient | null> {
   if (redisClient) return redisClient;
 
   try {
-    // Dynamic import to avoid build errors if package not installed
-    // @ts-expect-error - Module might not be installed, handled at runtime
+    // Dynamic import for tree-shaking when Redis not configured
     const { Redis } = await import('@upstash/redis');
     redisClient = new Redis({
       url: REDIS_URL!,

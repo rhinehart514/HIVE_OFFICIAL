@@ -14,6 +14,8 @@
 import { NextResponse } from "next/server";
 import { currentEnvironment, isFirebaseAdminConfigured } from "@/lib/env";
 import { environmentInfo, dbAdmin, authAdmin } from "@/lib/firebase-admin";
+import { getRedisRateLimiterHealth } from "@/lib/rate-limiter-redis";
+import { redisCache } from "@/lib/cache/redis-client";
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -26,6 +28,7 @@ interface HealthStatus {
     firestore: CheckResult;
     auth: CheckResult;
     config: CheckResult;
+    redis: CheckResult;
   };
   details?: {
     firebaseConfigured: boolean;
@@ -51,15 +54,16 @@ export async function GET(request: Request) {
   const uptime = Math.floor((Date.now() - startTime) / 1000);
 
   // Run health checks in parallel
-  const [firestoreCheck, authCheck] = await Promise.all([
+  const [firestoreCheck, authCheck, redisCheck] = await Promise.all([
     checkFirestore(),
     checkAuth(),
+    checkRedis(),
   ]);
 
   const configCheck = checkConfig();
 
   // Determine overall status
-  const checks = { firestore: firestoreCheck, auth: authCheck, config: configCheck };
+  const checks = { firestore: firestoreCheck, auth: authCheck, config: configCheck, redis: redisCheck };
   const allPassed = Object.values(checks).every(c => c.status === 'pass');
   const anyFailed = Object.values(checks).some(c => c.status === 'fail');
 
@@ -226,4 +230,60 @@ function checkConfig(): CheckResult {
     status: 'pass',
     message: 'All required configuration present',
   };
+}
+
+/**
+ * Check Redis connectivity (rate limiting + caching)
+ */
+async function checkRedis(): Promise<CheckResult> {
+  const start = Date.now();
+
+  try {
+    // Check rate limiter Redis health
+    const rateLimiterHealth = await getRedisRateLimiterHealth();
+
+    // Check cache Redis health
+    await redisCache.waitForInit();
+    const cacheType = redisCache.getConnectionType();
+    const upstashConfigured = redisCache.isUpstashConfigured();
+
+    const latency = Date.now() - start;
+
+    // Determine status based on configuration and connectivity
+    if (upstashConfigured || rateLimiterHealth.enabled) {
+      // Upstash is configured - check if connected
+      if (rateLimiterHealth.connected && cacheType === 'upstash') {
+        return {
+          status: 'pass',
+          latency,
+          message: `Upstash Redis connected (rate limiter: ${rateLimiterHealth.memoryEntries} fallback entries, cache: ${cacheType})`,
+        };
+      } else if (rateLimiterHealth.connected) {
+        return {
+          status: 'warn',
+          latency,
+          message: `Rate limiter using Upstash, cache using ${cacheType} (${rateLimiterHealth.memoryEntries} memory entries)`,
+        };
+      } else {
+        return {
+          status: 'warn',
+          latency,
+          message: `Upstash configured but using fallback (${rateLimiterHealth.memoryEntries}/${rateLimiterHealth.maxMemoryEntries} memory entries)`,
+        };
+      }
+    }
+
+    // Upstash not configured - using in-memory (acceptable for development)
+    return {
+      status: 'warn',
+      latency,
+      message: `Using in-memory rate limiting (Upstash not configured). Set UPSTASH_REDIS_REST_URL for distributed rate limiting.`,
+    };
+  } catch (error) {
+    return {
+      status: 'fail',
+      latency: Date.now() - start,
+      message: error instanceof Error ? error.message : 'Redis health check failed',
+    };
+  }
 }

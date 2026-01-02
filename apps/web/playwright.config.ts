@@ -16,25 +16,47 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
+    // Regular E2E tests - multi-browser
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/stress/**',
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: '**/stress/**',
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: '**/stress/**',
     },
     {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
+      testIgnore: '**/stress/**',
     },
     {
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
+      testIgnore: '**/stress/**',
+    },
+
+    // Stress tests - Chromium only, single worker, long timeouts
+    {
+      name: 'stress',
+      testDir: './src/test/e2e/stress',
+      use: {
+        ...devices['Desktop Chrome'],
+        // No retries for stress tests - we want accurate metrics
+        trace: 'off',
+        screenshot: 'off',
+        video: 'off',
+      },
+      retries: 0,
+      workers: 1, // Sequential execution for accurate metrics
+      timeout: 600000, // 10 minute timeout per test
     },
   ],
   webServer: {
