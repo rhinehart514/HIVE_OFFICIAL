@@ -12,7 +12,7 @@ import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { SESSION_CONFIG } from "@/lib/session";
-import { isEmailServiceAvailable, getEmailServiceStatus } from "@/lib/config-validation";
+// Email providers: Resend (primary) or SendGrid (fallback)
 import { validateOrigin } from "@/lib/security-middleware";
 
 // Firebase Client SDK for school validation fallback
@@ -201,71 +201,100 @@ async function validateSchool(schoolId: string): Promise<SchoolData | null> {
 }
 
 /**
- * Send verification code email via SendGrid
+ * Send verification code email via Resend (primary) or SendGrid (fallback)
  */
 async function sendVerificationCodeEmail(
   email: string,
   code: string,
   schoolName: string
 ): Promise<boolean> {
-  // Check email service availability using centralized config validation
-  if (!isEmailServiceAvailable()) {
-    const status = getEmailServiceStatus();
-    logger.error('Email service not available', {
-      component: 'send-code',
-      status: status.mode,
-      provider: status.provider,
-    });
-    return false;
-  }
-
-  // Check if SendGrid is configured
-  const sendGridApiKey = process.env.SENDGRID_API_KEY;
-  const sendGridFromEmail = process.env.SENDGRID_FROM_EMAIL || 'hello@hive.college';
-
-  if (!sendGridApiKey) {
-    // In development with explicit bypass, just log the code
-    if (ALLOW_DEV_BYPASS) {
-      logger.info('===========================================');
-      logger.info(`DEV MODE: VERIFICATION CODE for ${email}: ${code}`);
-      logger.info('===========================================');
-      return true;
-    }
-    logger.error('SendGrid not configured and DEV_AUTH_BYPASS not enabled', {
-      component: 'send-code',
-      environment: currentEnvironment,
-    });
-    return false;
-  }
-
-  try {
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(sendGridApiKey);
-
-    const msg = {
-      to: email,
-      from: {
-        email: sendGridFromEmail,
-        name: 'HIVE'
-      },
-      subject: `Your HIVE verification code: ${code}`,
-      html: generateVerificationCodeHtml(code, schoolName, email)
-    };
-
-    await sgMail.send(msg);
-
-    logger.info('Verification code email sent', {
-      email: email.replace(/(.{3}).*@/, '$1***@'),
-      schoolName
-    });
-
+  // In development with explicit bypass, just log the code
+  if (ALLOW_DEV_BYPASS) {
+    logger.info('===========================================');
+    logger.info(`DEV MODE: VERIFICATION CODE for ${email}: ${code}`);
+    logger.info('===========================================');
     return true;
-  } catch (error) {
-    logger.error('Failed to send verification email', {
-      error: error instanceof Error ? error.message : String(error)
-    });
-    return false;
   }
+
+  const fromEmail = process.env.EMAIL_FROM || 'hello@hive.college';
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const sendGridApiKey = process.env.SENDGRID_API_KEY;
+
+  // Try Resend first (preferred)
+  if (resendApiKey) {
+    try {
+      const { Resend } = require('resend');
+      const resend = new Resend(resendApiKey);
+
+      const { data, error } = await resend.emails.send({
+        from: `HIVE <${fromEmail}>`,
+        to: email,
+        subject: `Your HIVE verification code: ${code}`,
+        html: generateVerificationCodeHtml(code, schoolName, email),
+      });
+
+      if (error) {
+        logger.error('Resend email failed', {
+          error: error.message,
+          component: 'send-code',
+        });
+        // Fall through to SendGrid if available
+      } else {
+        logger.info('Verification code email sent via Resend', {
+          emailId: data?.id,
+          email: email.replace(/(.{3}).*@/, '$1***@'),
+          schoolName,
+        });
+        return true;
+      }
+    } catch (error) {
+      logger.error('Resend error', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'send-code',
+      });
+      // Fall through to SendGrid
+    }
+  }
+
+  // Try SendGrid as fallback
+  if (sendGridApiKey) {
+    try {
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(sendGridApiKey);
+
+      const msg = {
+        to: email,
+        from: {
+          email: fromEmail,
+          name: 'HIVE'
+        },
+        subject: `Your HIVE verification code: ${code}`,
+        html: generateVerificationCodeHtml(code, schoolName, email)
+      };
+
+      await sgMail.send(msg);
+
+      logger.info('Verification code email sent via SendGrid', {
+        email: email.replace(/(.{3}).*@/, '$1***@'),
+        schoolName
+      });
+
+      return true;
+    } catch (error) {
+      logger.error('SendGrid email failed', {
+        error: error instanceof Error ? error.message : String(error),
+        component: 'send-code',
+      });
+      return false;
+    }
+  }
+
+  // No email provider configured
+  logger.error('No email provider configured (need RESEND_API_KEY or SENDGRID_API_KEY)', {
+    component: 'send-code',
+    environment: currentEnvironment,
+  });
+  return false;
 }
 
 /**
