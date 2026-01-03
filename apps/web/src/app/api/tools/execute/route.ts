@@ -24,6 +24,16 @@ import type {
   ToolSharedEntity,
   ToolSharedStateUpdate,
   ToolUserStateUpdate,
+  ToolCapabilities,
+  ToolBudgets,
+  BudgetUsage,
+} from '@hive/core';
+import {
+  hasCapability,
+  validateActionCapabilities,
+  checkBudget,
+  CAPABILITY_PRESETS,
+  DEFAULT_BUDGETS,
 } from '@hive/core';
 
 // Feature flags for Phase 1 Scaling Architecture (enable after migration)
@@ -1260,9 +1270,18 @@ export const POST = withAuthValidationAndErrors(
     }
     const placementData = placementContext?.snapshot?.data() as (Record<string, unknown> | undefined);
 
-    // Check if deployment is active
+    // Check deployment status (supports governance statuses)
     const deploymentStatus = placementData?.status || deployment.status;
-    if (deploymentStatus !== 'active') {
+    if (deploymentStatus === 'disabled') {
+        return respond.error("This tool has been disabled", "FORBIDDEN", { status: 403 });
+    }
+    if (deploymentStatus === 'quarantined') {
+        return respond.error("This tool is under review", "FORBIDDEN", { status: 403 });
+    }
+    if (deploymentStatus === 'paused') {
+        return respond.error("This tool is currently paused", "FORBIDDEN", { status: 403 });
+    }
+    if (deploymentStatus !== 'active' && deploymentStatus !== 'experimental') {
         return respond.error("Tool deployment is not active", "FORBIDDEN", { status: 403 });
     }
 
@@ -1392,14 +1411,93 @@ export const POST = withAuthValidationAndErrors(
       });
     }
 
-    // Generate feed content if requested and successful
+    // ===========================================================================
+    // Capability & Budget Enforcement (Hackability Governance Layer)
+    // ===========================================================================
+    const capabilities = deployment.capabilities || CAPABILITY_PRESETS.SAFE;
+    // Ensure budgets has required properties (empty object {} is truthy but invalid)
+    const rawBudgets = deployment.budgets;
+    const isValidBudgets = rawBudgets &&
+      typeof rawBudgets === 'object' &&
+      'notificationsPerDay' in rawBudgets;
+    const budgets: ToolBudgets = isValidBudgets
+      ? (rawBudgets as ToolBudgets)
+      : DEFAULT_BUDGETS.safe;
+
+    // Load today's budget usage
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const budgetDocId = `${deployment.id}_${today}`;
+    const budgetRef = dbAdmin.collection('toolBudgetUsage').doc(budgetDocId);
+
+    // Generate feed content if requested and successful (with capability check)
     if (executionResult.success && executionResult.feedContent) {
-      await generateFeedContent(deployment, tool, userId, executionResult.feedContent);
+      // Check capability
+      if (!hasCapability(capabilities, 'create_posts')) {
+        logger.warn('Tool tried to create post without capability', {
+          deploymentId: deployment.id,
+          lane: deployment.capabilityLane || 'safe',
+        });
+        // Silently skip - don't fail the execution
+      } else {
+        // Check budget
+        const budgetDoc = await budgetRef.get();
+        const usage: BudgetUsage = budgetDoc.exists
+          ? (budgetDoc.data() as BudgetUsage)
+          : { deploymentId: deployment.id, date: today, notificationsSent: 0, postsCreated: 0, automationsTriggered: 0, userExecutions: {} };
+        const budgetCheck = checkBudget(budgets, usage, { creatingPost: true });
+
+        if (!budgetCheck.allowed) {
+          logger.warn('Tool exceeded post budget', {
+            deploymentId: deployment.id,
+            reason: budgetCheck.reason,
+          });
+          // Silently skip - don't fail the execution
+        } else {
+          await generateFeedContent(deployment, tool, userId, executionResult.feedContent);
+          // Increment budget usage
+          await budgetRef.set({
+            deploymentId: deployment.id,
+            date: today,
+            postsCreated: admin.firestore.FieldValue.increment(1),
+          }, { merge: true });
+        }
+      }
     }
 
-    // Send notifications if any
-    if (executionResult.notifications) {
-      await processNotifications(deployment, executionResult.notifications);
+    // Send notifications if any (with capability check)
+    if (executionResult.notifications && executionResult.notifications.length > 0) {
+      // Check capability
+      if (!hasCapability(capabilities, 'send_notifications')) {
+        logger.warn('Tool tried to send notification without capability', {
+          deploymentId: deployment.id,
+          lane: deployment.capabilityLane || 'safe',
+        });
+        // Silently skip - don't fail the execution
+      } else {
+        // Check budget for each notification
+        const budgetDoc = await budgetRef.get();
+        const usage: BudgetUsage = budgetDoc.exists
+          ? (budgetDoc.data() as BudgetUsage)
+          : { deploymentId: deployment.id, date: today, notificationsSent: 0, postsCreated: 0, automationsTriggered: 0, userExecutions: {} };
+        const budgetCheck = checkBudget(budgets, usage, { sendingNotification: true });
+
+        if (!budgetCheck.allowed) {
+          logger.warn('Tool exceeded notification budget', {
+            deploymentId: deployment.id,
+            reason: budgetCheck.reason,
+            count: executionResult.notifications.length,
+          });
+          // Silently skip - don't fail the execution
+        } else {
+          await processNotifications(deployment, executionResult.notifications);
+          // Increment budget usage
+          await budgetRef.set({
+            deploymentId: deployment.id,
+            date: today,
+            notificationsSent: admin.firestore.FieldValue.increment(executionResult.notifications.length),
+          }, { merge: true });
+        }
+      }
     }
 
       return respond.success({

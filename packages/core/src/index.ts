@@ -267,6 +267,39 @@ export type {
   CounterMigrationStatus,
 } from "./domain/hivelab/tool-composition.types";
 
+// HiveLab Capabilities & Governance (Hackability Layer)
+export {
+  CAPABILITY_PRESETS,
+  DEFAULT_BUDGETS,
+  getCapabilityLane,
+  getDefaultBudgets,
+  hasCapability,
+  validateActionCapabilities,
+  checkBudget,
+  // P0: Object Capabilities
+  OBJECT_TYPE_ID_PATTERN,
+  isValidObjectTypeId,
+  parseObjectTypeId,
+  hasObjectCapability,
+  validateCapabilityRequest,
+  // P0: Surface Modes
+  DEFAULT_SURFACE_MODES,
+  DEFAULT_APP_CONFIG,
+} from "./domain/hivelab/capabilities";
+export type {
+  ToolCapabilities,
+  ToolBudgets,
+  DeploymentGovernanceStatus,
+  ToolProvenance,
+  BudgetUsage,
+  CapabilityLane,
+  DeploymentGovernance,
+  // P0: New Types
+  TrustTier,
+  SurfaceModes,
+  AppConfig,
+} from "./domain/hivelab/capabilities";
+
 // HiveLab Automation Entity (Phase 3)
 export {
   Automation,

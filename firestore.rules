@@ -167,6 +167,33 @@ service cloud.firestore {
         isOwner(resource.data.deployedBy) ||
         isAdmin()
       );
+
+      // Tool shared state (aggregate data visible to all users of the tool)
+      match /sharedState/{stateId} {
+        // Members of the space can read shared state
+        allow read: if isAuthenticated() && sameCampus();
+        // Only server-side writes (via Admin SDK) - no direct client writes
+        allow write: if false;
+      }
+    }
+
+    // Tool user states (per-user personal state)
+    // Document ID format: {deploymentId}_{userId}
+    match /toolStates/{stateId} {
+      // User can only read their own state
+      allow read: if isAuthenticated() && sameCampus() && (
+        stateId.matches('.*_' + request.auth.uid) ||
+        isAdmin()
+      );
+      // Only server-side writes (via Admin SDK) - no direct client writes
+      allow write: if false;
+    }
+
+    // Tool budget usage tracking (daily limits)
+    // Document ID format: {deploymentId}_{YYYY-MM-DD}
+    match /toolBudgetUsage/{budgetId} {
+      // Only server-side access
+      allow read, write: if false;
     }
 
     // Events (campus events from CampusLabs and user-created)

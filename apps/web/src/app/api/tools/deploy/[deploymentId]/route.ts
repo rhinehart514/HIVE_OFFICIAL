@@ -110,6 +110,15 @@ function buildExecutionContext(
   };
 }
 
+// Governance status enum - includes all hack lanes
+const DeploymentGovernanceStatusSchema = z.enum([
+  "active",           // Normal operation
+  "paused",           // Temporarily stopped by leader
+  "disabled",         // Kill-switched by leader or admin
+  "quarantined",      // Flagged for review
+  "experimental",     // Opt-in only, not auto-promoted
+]);
+
 const UpdateDeploymentSchema = z.object({
   config: z.record(z.any()).optional(),
   permissions: z
@@ -128,8 +137,11 @@ const UpdateDeploymentSchema = z.object({
       notifyOnInteraction: z.boolean().optional(),
     })
     .optional(),
-  status: z.enum(["active", "paused", "disabled"]).optional(),
+  status: DeploymentGovernanceStatusSchema.optional(),
   position: z.number().optional(),
+  // Kill switch - instant disable with reason
+  killSwitch: z.boolean().optional(),
+  killReason: z.string().max(500).optional(),
 });
 
 type UpdateDeploymentInput = z.infer<typeof UpdateDeploymentSchema>;
@@ -224,6 +236,30 @@ export const PUT = withAuthValidationAndErrors(
 
     if (payload.status) {
       updateData.status = payload.status;
+    }
+
+    // Kill switch - immediate disable with logging
+    if (payload.killSwitch === true) {
+      updateData.status = 'disabled';
+      updateData.killedAt = new Date().toISOString();
+      updateData.killedBy = userId;
+      updateData.killReason = payload.killReason || 'Manually disabled by leader';
+
+      // Log kill switch activation
+      await dbAdmin.collection('activityEvents').add({
+        userId,
+        campusId: CURRENT_CAMPUS_ID,
+        type: 'tool_kill_switch',
+        toolId: data.toolId,
+        spaceId: data.deployedTo === 'space' ? data.targetId : undefined,
+        metadata: {
+          deploymentId,
+          reason: payload.killReason || 'Manually disabled',
+          previousStatus: data.status,
+        },
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().split('T')[0],
+      });
     }
 
     if (payload.position !== undefined) {

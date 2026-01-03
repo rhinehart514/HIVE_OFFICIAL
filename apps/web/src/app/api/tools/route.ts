@@ -200,6 +200,15 @@ export const POST = withAuthValidationAndErrors(
       },
       createdAt: now,
       updatedAt: now,
+      // Tool Provenance (Hackability Governance Layer)
+      provenance: {
+        creatorId: userId,
+        remixedFrom: templateIdStr || undefined,
+        deploymentCount: 0,
+        uniqueUsers: 0,
+        lastUpdatedAt: now.toISOString(),
+        experimental: false,
+      },
     };
 
     // Validate the complete tool object

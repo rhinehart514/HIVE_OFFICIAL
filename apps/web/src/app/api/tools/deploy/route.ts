@@ -15,6 +15,14 @@ import {
   buildPlacementCompositeId,
 } from "@/lib/tool-placement";
 import { notifyToolDeployment } from "@/lib/notification-service";
+import {
+  CAPABILITY_PRESETS,
+  getDefaultBudgets,
+  getCapabilityLane,
+  type ToolCapabilities,
+  type ToolBudgets,
+  type DeploymentGovernanceStatus,
+} from "@hive/core";
 
 const SurfaceSchema = z.enum([
   "pinned",
@@ -43,6 +51,28 @@ const DeploymentSettingsSchema = z
   })
   .optional();
 
+// Capability schema for hackability governance
+const CapabilitiesSchema = z
+  .object({
+    read_space_context: z.boolean().optional(),
+    read_space_members: z.boolean().optional(),
+    write_shared_state: z.boolean().optional(),
+    create_posts: z.boolean().optional(),
+    send_notifications: z.boolean().optional(),
+    trigger_automations: z.boolean().optional(),
+  })
+  .optional();
+
+// Budget overrides (for power tools)
+const BudgetsSchema = z
+  .object({
+    notificationsPerDay: z.number().min(0).max(100).optional(),
+    postsPerDay: z.number().min(0).max(100).optional(),
+    automationsPerDay: z.number().min(0).max(500).optional(),
+    executionsPerUserPerHour: z.number().min(0).max(1000).optional(),
+  })
+  .optional();
+
 const DeployToolSchema = z.object({
   toolId: z.string(),
   deployTo: z.enum(["profile", "space"]),
@@ -51,6 +81,10 @@ const DeployToolSchema = z.object({
   config: z.record(z.any()).optional(),
   permissions: DeploymentPermissionsSchema,
   settings: DeploymentSettingsSchema,
+  // Hackability governance fields
+  capabilities: CapabilitiesSchema,
+  budgets: BudgetsSchema,
+  experimental: z.boolean().optional(),
 });
 
 type DeployToolInput = z.infer<typeof DeployToolSchema>;
@@ -71,7 +105,7 @@ type DeploymentRecord = {
     canEdit: boolean;
     allowedRoles: string[];
   };
-  status: "active" | "paused" | "disabled";
+  status: DeploymentGovernanceStatus;
   deployedAt: string;
   lastUsed?: string;
   usageCount: number;
@@ -88,6 +122,11 @@ type DeploymentRecord = {
   spaceId: string | null;
   profileId: string | null;
   campusId: string;
+  // Hackability Governance Layer
+  capabilities: ToolCapabilities;
+  budgets: ToolBudgets;
+  capabilityLane: "safe" | "scoped" | "power";
+  experimental: boolean;
 };
 
 function resolvePermissions(
@@ -111,6 +150,44 @@ function resolveSettings(
     allowSharing: settings?.allowSharing ?? true,
     collectAnalytics: settings?.collectAnalytics ?? true,
     notifyOnInteraction: settings?.notifyOnInteraction ?? false,
+  };
+}
+
+/**
+ * Resolve capabilities from input, defaulting to SAFE preset.
+ * Lane 1 (SAFE) is the default for all deployments.
+ */
+function resolveCapabilities(
+  capabilities: DeployToolInput["capabilities"],
+): ToolCapabilities {
+  return {
+    // Always true - core tool functionality
+    read_own_state: true,
+    write_own_state: true,
+    // Lane 2 - Scoped (default to false, opt-in)
+    read_space_context: capabilities?.read_space_context ?? false,
+    read_space_members: capabilities?.read_space_members ?? false,
+    write_shared_state: capabilities?.write_shared_state ?? true, // Allow for polls/RSVPs
+    // Lane 3 - Power (default to false, explicitly gated)
+    create_posts: capabilities?.create_posts ?? false,
+    send_notifications: capabilities?.send_notifications ?? false,
+    trigger_automations: capabilities?.trigger_automations ?? false,
+  };
+}
+
+/**
+ * Resolve budgets from input, using lane-appropriate defaults.
+ */
+function resolveBudgets(
+  budgets: DeployToolInput["budgets"],
+  capabilities: ToolCapabilities,
+): ToolBudgets {
+  const defaults = getDefaultBudgets(capabilities);
+  return {
+    notificationsPerDay: budgets?.notificationsPerDay ?? defaults.notificationsPerDay,
+    postsPerDay: budgets?.postsPerDay ?? defaults.postsPerDay,
+    automationsPerDay: budgets?.automationsPerDay ?? defaults.automationsPerDay,
+    executionsPerUserPerHour: budgets?.executionsPerUserPerHour ?? defaults.executionsPerUserPerHour,
   };
 }
 
@@ -391,6 +468,10 @@ export const POST = withAuthValidationAndErrors(
       (payload.deployTo === "space" ? ("tools" as const) : undefined);
     const permissions = resolvePermissions(payload.permissions);
     const settings = resolveSettings(payload.settings);
+    const capabilities = resolveCapabilities(payload.capabilities);
+    const capabilityLane = getCapabilityLane(capabilities);
+    const budgets = resolveBudgets(payload.budgets, capabilities);
+    const experimental = payload.experimental ?? false;
     const position = await getNextPosition(
       payload.deployTo,
       payload.targetId,
@@ -441,6 +522,11 @@ export const POST = withAuthValidationAndErrors(
       spaceId: placementTargetType === "space" ? payload.targetId : null,
       profileId: placementTargetType === "profile" ? payload.targetId : null,
       campusId: CURRENT_CAMPUS_ID,
+      // Hackability Governance Layer
+      capabilities,
+      budgets,
+      capabilityLane,
+      experimental,
     };
 
     // Execute all writes in a single transaction for atomicity
