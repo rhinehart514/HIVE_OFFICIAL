@@ -250,12 +250,17 @@ async function sendVerificationCodeEmail(
       });
 
       if (result.error) {
+        const isDomainError = result.error.message?.includes('verify a domain') ||
+                              result.error.message?.includes('only send testing emails');
+
         logger.error('Resend email failed', {
           error: result.error.message,
           errorName: result.error.name,
           component: 'send-code',
           from: resendFromEmail,
           to: email,
+          isDomainVerificationIssue: isDomainError,
+          hint: isDomainError ? 'Domain not verified in Resend. Go to resend.com/domains to verify hive.college' : undefined,
         });
         // Fall through to SendGrid if available
       } else if (result.data) {
