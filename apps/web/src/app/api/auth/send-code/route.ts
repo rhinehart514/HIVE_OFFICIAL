@@ -225,40 +225,61 @@ async function sendVerificationCodeEmail(
 
   // Try Resend first (preferred)
   if (resendApiKey) {
+    logger.info('Attempting to send email via Resend', {
+      from: resendFromEmail,
+      to: email.replace(/(.{3}).*@/, '$1***@'),
+      apiKeyPrefix: resendApiKey.substring(0, 10) + '...',
+    });
+
     try {
       const resend = new Resend(resendApiKey);
 
-      const { data, error } = await resend.emails.send({
+      const result = await resend.emails.send({
         from: `HIVE <${resendFromEmail}>`,
         to: email,
         subject: `Your HIVE verification code: ${code}`,
         html: generateVerificationCodeHtml(code, schoolName, email),
       });
 
-      if (error) {
+      logger.info('Resend API response', {
+        hasData: !!result.data,
+        hasError: !!result.error,
+        dataId: result.data?.id,
+        errorMessage: result.error?.message,
+        errorName: result.error?.name,
+      });
+
+      if (result.error) {
         logger.error('Resend email failed', {
-          error: error.message,
-          errorName: error.name,
+          error: result.error.message,
+          errorName: result.error.name,
           component: 'send-code',
           from: resendFromEmail,
           to: email,
         });
         // Fall through to SendGrid if available
-      } else if (data) {
+      } else if (result.data) {
         logger.info('Verification code email sent via Resend', {
-          emailId: data?.id,
+          emailId: result.data.id,
           email: email.replace(/(.{3}).*@/, '$1***@'),
           schoolName,
         });
         return true;
+      } else {
+        logger.warn('Resend returned neither data nor error', {
+          result: JSON.stringify(result),
+        });
       }
     } catch (error) {
-      logger.error('Resend error', {
+      logger.error('Resend exception thrown', {
         error: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
         component: 'send-code',
       });
       // Fall through to SendGrid
     }
+  } else {
+    logger.warn('RESEND_API_KEY not configured');
   }
 
   // Try SendGrid as fallback
