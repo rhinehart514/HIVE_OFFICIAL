@@ -192,11 +192,15 @@ function validateProductionConfig(config: z.infer<typeof envSchema>) {
   }
 
   // Validate Firebase Admin credentials format
+  // Handle both raw newlines and escaped \n sequences (common in Vercel)
   const privateKey = config.FIREBASE_PRIVATE_KEY;
-  if (privateKey && !privateKey.includes('BEGIN PRIVATE KEY')) {
-    throw new Error(
-      'PRODUCTION CRITICAL: FIREBASE_PRIVATE_KEY appears to be invalid. It should be a properly formatted private key.'
-    );
+  if (privateKey) {
+    const normalizedKey = privateKey.replace(/\\n/g, '\n');
+    if (!normalizedKey.includes('BEGIN PRIVATE KEY')) {
+      throw new Error(
+        'PRODUCTION CRITICAL: FIREBASE_PRIVATE_KEY appears to be invalid. It should be a properly formatted private key.'
+      );
+    }
   }
 
   // Production environment validation passed
