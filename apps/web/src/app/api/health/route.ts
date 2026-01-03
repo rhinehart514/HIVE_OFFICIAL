@@ -196,18 +196,24 @@ async function checkAuth(): Promise<CheckResult> {
  * Check configuration completeness
  */
 function checkConfig(): CheckResult {
-  const requiredEnvVars = [
-    'FIREBASE_PROJECT_ID',
-    'FIREBASE_CLIENT_EMAIL',
-    'FIREBASE_PRIVATE_KEY',
-  ];
+  // Check for Firebase credentials - accept multiple formats
+  const hasFirebasePrivateKey = !!(
+    process.env.FIREBASE_PRIVATE_KEY ||
+    process.env.FIREBASE_PRIVATE_KEY_BASE64 ||
+    process.env.FIREBASE_SERVICE_ACCOUNT_KEY
+  );
 
-  const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+  const basicRequired = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL'];
+  const missingBasic = basicRequired.filter(v => !process.env[v]);
 
-  if (missingVars.length > 0) {
+  if (missingBasic.length > 0 || !hasFirebasePrivateKey) {
+    const missing = [...missingBasic];
+    if (!hasFirebasePrivateKey) {
+      missing.push('FIREBASE_PRIVATE_KEY (or FIREBASE_PRIVATE_KEY_BASE64 or FIREBASE_SERVICE_ACCOUNT_KEY)');
+    }
     return {
       status: 'fail',
-      message: `Missing env vars: ${missingVars.join(', ')}`,
+      message: `Missing env vars: ${missing.join(', ')}`,
     };
   }
 

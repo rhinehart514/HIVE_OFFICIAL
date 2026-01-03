@@ -18,9 +18,10 @@
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { springPresets } from '@hive/tokens';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { GripVertical, Settings, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { GripVertical, Settings, X, ChevronDown, ChevronUp, ArrowUpRight } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 // ============================================================
@@ -44,11 +45,18 @@ export interface SidebarSlotData {
   collapsed: boolean;
   /** Tool-specific configuration */
   config: Record<string, unknown>;
+  /** P0: Surface modes - what surfaces this tool supports */
+  surfaceModes?: {
+    widget: boolean;
+    app: boolean;
+  };
 }
 
 export interface SidebarToolSlotProps {
   /** Slot data */
   slot: SidebarSlotData;
+  /** P0: Space ID for app navigation */
+  spaceId?: string;
   /** Whether edit mode is active (leader only) */
   isEditMode?: boolean;
   /** Callback when slot is clicked */
@@ -73,6 +81,7 @@ export interface SidebarToolSlotProps {
 
 export function SidebarToolSlot({
   slot,
+  spaceId,
   isEditMode = false,
   onClick,
   onConfigure,
@@ -84,6 +93,10 @@ export function SidebarToolSlot({
 }: SidebarToolSlotProps) {
   const [isHovered, setIsHovered] = React.useState(false);
   const shouldReduceMotion = useReducedMotion();
+
+  // P0: Determine if "View Full" link should be shown
+  const hasAppSurface = slot.surfaceModes?.app === true;
+  const showViewFull = hasAppSurface && spaceId && !isEditMode;
 
   // Motion variants based on reduced motion preference
   const springTransition = shouldReduceMotion
@@ -153,6 +166,22 @@ export function SidebarToolSlot({
 
         {/* Actions */}
         <div className="flex items-center gap-1 flex-shrink-0">
+          {/* P0: View Full link (when app surface is enabled) */}
+          {showViewFull && (
+            <Link
+              href={`/spaces/${spaceId}/apps/${slot.deploymentId}`}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1 rounded-md',
+                'text-xs text-neutral-400 hover:text-white hover:bg-white/[0.06]',
+                'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50'
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span>View Full</span>
+              <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          )}
+
           {/* Configure button (edit mode only) */}
           {isEditMode && onConfigure && (
             <motion.button

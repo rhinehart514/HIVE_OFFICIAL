@@ -200,14 +200,27 @@ export const POST = withAuthValidationAndErrors(
       },
       createdAt: now,
       updatedAt: now,
-      // Tool Provenance (Hackability Governance Layer)
+      // P0: Tool Provenance (Hackability Governance Layer)
       provenance: {
         creatorId: userId,
-        remixedFrom: templateIdStr || undefined,
+        createdAt: now.toISOString(),
+        forkedFrom: templateIdStr || undefined,
+        lineage: templateIdStr ? [templateIdStr] : [],
+        forkCount: 0,
         deploymentCount: 0,
-        uniqueUsers: 0,
-        lastUpdatedAt: now.toISOString(),
-        experimental: false,
+        trustTier: "unverified" as const,
+      },
+      // P0: Surface modes - tools default to widget only, must opt-in to app
+      supportedSurfaces: {
+        widget: true,
+        app: false,
+      },
+      recommendedSurface: "widget" as const,
+      // P0: Required capabilities for this tool
+      requiredCapabilities: {
+        read_own_state: true as const,
+        write_own_state: true as const,
+        write_shared_state: true,
       },
     };
 
@@ -289,6 +302,43 @@ export const POST = withAuthValidationAndErrors(
           creatorId: userId,
           spaceId: spaceIdStr,
           profileId: null,
+          campusId: CURRENT_CAMPUS_ID,
+          // P0: Capabilities (default safe lane)
+          capabilities: {
+            read_own_state: true,
+            write_own_state: true,
+            read_space_context: false,
+            read_space_members: false,
+            write_shared_state: true,
+            create_posts: false,
+            send_notifications: false,
+            trigger_automations: false,
+            objects_read: false,
+            objects_write: false,
+            objects_delete: false,
+          },
+          budgets: {
+            notificationsPerDay: 0,
+            postsPerDay: 0,
+            automationsPerDay: 0,
+            executionsPerUserPerHour: 100,
+          },
+          capabilityLane: 'safe',
+          experimental: false,
+          // P0: Surface modes
+          surfaceModes: {
+            widget: true,
+            app: false,
+          },
+          primarySurface: 'widget',
+          toolVersion: '1.0.0',
+          // P0: Provenance
+          provenance: {
+            creatorId: userId,
+            createdAt: now.toISOString(),
+            lineage: [],
+            trustTier: 'unverified',
+          },
         });
       } catch (error) {
         logger.warn(

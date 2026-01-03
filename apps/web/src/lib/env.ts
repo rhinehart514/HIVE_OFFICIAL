@@ -281,8 +281,15 @@ export const skipAuthInDev = isDevelopment || isTest;
 export const skipOnboardingInDev = isDevelopment || isTest;
 
 // Export whether Firebase Admin is properly configured
+// Accept multiple credential formats
 export const isFirebaseAdminConfigured = !!(
-  env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY
+  // Format 1: Individual credentials (email + raw or base64 key)
+  (env.FIREBASE_CLIENT_EMAIL && (
+    env.FIREBASE_PRIVATE_KEY ||
+    process.env.FIREBASE_PRIVATE_KEY_BASE64
+  )) ||
+  // Format 2: Base64 encoded service account JSON
+  process.env.FIREBASE_SERVICE_ACCOUNT_KEY
 );
 
 // Environment initialization complete

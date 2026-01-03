@@ -19,9 +19,15 @@ import {
   CAPABILITY_PRESETS,
   getDefaultBudgets,
   getCapabilityLane,
+  validateCapabilityRequest,
+  DEFAULT_SURFACE_MODES,
+  DEFAULT_APP_CONFIG,
   type ToolCapabilities,
   type ToolBudgets,
   type DeploymentGovernanceStatus,
+  type TrustTier,
+  type SurfaceModes,
+  type AppConfig,
 } from "@hive/core";
 
 const SurfaceSchema = z.enum([
@@ -60,6 +66,27 @@ const CapabilitiesSchema = z
     create_posts: z.boolean().optional(),
     send_notifications: z.boolean().optional(),
     trigger_automations: z.boolean().optional(),
+    // P0: Object capabilities
+    objects_read: z.union([z.boolean(), z.array(z.string())]).optional(),
+    objects_write: z.union([z.boolean(), z.array(z.string())]).optional(),
+    objects_delete: z.union([z.boolean(), z.array(z.string())]).optional(),
+  })
+  .optional();
+
+// P0: Surface modes schema
+const SurfaceModesSchema = z
+  .object({
+    widget: z.boolean(),
+    app: z.boolean(),
+  })
+  .optional();
+
+// P0: App config schema
+const AppConfigSchema = z
+  .object({
+    layout: z.enum(["full", "centered", "sidebar"]).optional(),
+    showWidgetWhenActive: z.boolean().optional(),
+    breadcrumbLabel: z.string().max(50).optional(),
   })
   .optional();
 
@@ -85,6 +112,10 @@ const DeployToolSchema = z.object({
   capabilities: CapabilitiesSchema,
   budgets: BudgetsSchema,
   experimental: z.boolean().optional(),
+  // P0: Surface modes and app config
+  surfaceModes: SurfaceModesSchema,
+  primarySurface: z.enum(["widget", "app"]).optional(),
+  appConfig: AppConfigSchema,
 });
 
 type DeployToolInput = z.infer<typeof DeployToolSchema>;
@@ -127,6 +158,20 @@ type DeploymentRecord = {
   budgets: ToolBudgets;
   capabilityLane: "safe" | "scoped" | "power";
   experimental: boolean;
+  // P0: Surface Modes
+  surfaceModes: SurfaceModes;
+  primarySurface: "widget" | "app";
+  appConfig?: AppConfig;
+  // P0: Versioning
+  toolVersion: string;
+  // P0: Provenance
+  provenance: {
+    creatorId: string;
+    forkedFrom?: string;
+    lineage: string[];
+    createdAt: string;
+    trustTier: TrustTier;
+  };
 };
 
 function resolvePermissions(
@@ -172,7 +217,83 @@ function resolveCapabilities(
     create_posts: capabilities?.create_posts ?? false,
     send_notifications: capabilities?.send_notifications ?? false,
     trigger_automations: capabilities?.trigger_automations ?? false,
+    // Lane 4 - Objects (default to false, type-specific)
+    objects_read: capabilities?.objects_read ?? false,
+    objects_write: capabilities?.objects_write ?? false,
+    objects_delete: capabilities?.objects_delete ?? false,
   };
+}
+
+/**
+ * P0: Resolve surface modes from input, with tool support validation.
+ */
+function resolveSurfaceModes(
+  input: DeployToolInput["surfaceModes"],
+  toolSupportedSurfaces?: { widget?: boolean; app?: boolean },
+): SurfaceModes {
+  const requested = input ?? DEFAULT_SURFACE_MODES;
+  const supported = toolSupportedSurfaces ?? { widget: true, app: false };
+
+  return {
+    widget: requested.widget && (supported.widget ?? true),
+    app: requested.app && (supported.app ?? false),
+  };
+}
+
+/**
+ * P0: Resolve app config from input.
+ */
+function resolveAppConfig(
+  input: DeployToolInput["appConfig"],
+  toolDefaults?: Partial<AppConfig>,
+): AppConfig {
+  return {
+    layout: input?.layout ?? toolDefaults?.layout ?? DEFAULT_APP_CONFIG.layout,
+    showWidgetWhenActive: input?.showWidgetWhenActive ?? toolDefaults?.showWidgetWhenActive ?? DEFAULT_APP_CONFIG.showWidgetWhenActive,
+    breadcrumbLabel: input?.breadcrumbLabel,
+  };
+}
+
+/**
+ * P0: Build provenance for a deployment.
+ */
+function buildProvenance(
+  toolData: FirebaseFirestore.DocumentData,
+  userId: string,
+  timestamp: Date,
+): DeploymentRecord["provenance"] {
+  const toolProvenance = toolData.provenance || {};
+  return {
+    creatorId: toolProvenance.creatorId || toolData.ownerId || userId,
+    forkedFrom: toolProvenance.forkedFrom,
+    lineage: toolProvenance.lineage || [],
+    createdAt: timestamp.toISOString(),
+    trustTier: toolProvenance.trustTier || "unverified",
+  };
+}
+
+/**
+ * P0: Validate surface modes against tool's supported surfaces.
+ */
+function validateSurfaceModes(
+  requested: DeployToolInput["surfaceModes"],
+  toolSupportedSurfaces?: { widget?: boolean; app?: boolean },
+): { ok: boolean; error?: string } {
+  if (!requested) return { ok: true };
+
+  const supported = toolSupportedSurfaces ?? { widget: true, app: false };
+
+  if (requested.app && !supported.app) {
+    return { ok: false, error: "This tool does not support app surface" };
+  }
+  if (requested.widget && !supported.widget) {
+    return { ok: false, error: "This tool does not support widget surface" };
+  }
+  if (!requested.widget && !requested.app) {
+    return { ok: false, error: "At least one surface mode must be enabled" };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -462,6 +583,31 @@ export const POST = withAuthValidationAndErrors(
       );
     }
 
+    // P0: Validate surface modes against tool's supported surfaces
+    const surfaceValidation = validateSurfaceModes(
+      payload.surfaceModes,
+      toolResult.toolData.supportedSurfaces,
+    );
+    if (!surfaceValidation.ok) {
+      return respond.error(surfaceValidation.error!, "INVALID_INPUT", {
+        status: 400,
+      });
+    }
+
+    // P0: Validate capability request against trust tier
+    const toolTrustTier: TrustTier = toolResult.toolData.provenance?.trustTier || "unverified";
+    const capabilityValidation = validateCapabilityRequest(
+      payload.capabilities || {},
+      toolTrustTier,
+    );
+    if (!capabilityValidation.valid) {
+      return respond.error(
+        `Capability validation failed: ${capabilityValidation.errors.join(", ")}`,
+        "FORBIDDEN",
+        { status: 403 },
+      );
+    }
+
     const timestamp = new Date();
     const resolvedSurface =
       payload.surface ??
@@ -472,6 +618,18 @@ export const POST = withAuthValidationAndErrors(
     const capabilityLane = getCapabilityLane(capabilities);
     const budgets = resolveBudgets(payload.budgets, capabilities);
     const experimental = payload.experimental ?? false;
+    // P0: Resolve surface modes, app config, and provenance
+    const surfaceModes = resolveSurfaceModes(
+      payload.surfaceModes,
+      toolResult.toolData.supportedSurfaces,
+    );
+    const primarySurface = payload.primarySurface ??
+      (surfaceModes.app && !surfaceModes.widget ? "app" : "widget");
+    const appConfig = surfaceModes.app
+      ? resolveAppConfig(payload.appConfig, toolResult.toolData.appDefaults)
+      : undefined;
+    const toolVersion = toolResult.toolData.currentVersion || "1.0.0";
+    const provenance = buildProvenance(toolResult.toolData, userId, timestamp);
     const position = await getNextPosition(
       payload.deployTo,
       payload.targetId,
@@ -527,6 +685,12 @@ export const POST = withAuthValidationAndErrors(
       budgets,
       capabilityLane,
       experimental,
+      // P0: Surface Modes & Provenance
+      surfaceModes,
+      primarySurface,
+      appConfig,
+      toolVersion,
+      provenance,
     };
 
     // Execute all writes in a single transaction for atomicity

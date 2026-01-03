@@ -1261,6 +1261,11 @@ export type {
 export { ToolRuntimeModal } from "./components/hivelab/tool-runtime-modal";
 export type { ToolRuntimeModalProps } from "./components/hivelab/tool-runtime-modal";
 
+// HiveLab: App Surface (P0 - Full-screen app mode within Spaces)
+export { AppBreadcrumb } from "./components/hivelab/app-breadcrumb";
+export { AppSurface, CapabilityContext, useCapabilities } from "./components/hivelab/app-surface";
+export type { AppSurfaceProps } from "./components/hivelab/app-surface";
+
 // HiveLab: Inline element renderer (for chat messages)
 export { InlineElementRenderer } from "./components/hivelab/inline-element-renderer";
 export type {
