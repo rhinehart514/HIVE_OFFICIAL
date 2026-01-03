@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 interface User {
@@ -15,6 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   signOut: () => void;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   isLoading: true,
   signOut: () => {},
+  refreshSession: async () => {},
 });
 
 export function SimpleAuthProvider({ children }: { children: React.ReactNode }) {
@@ -30,38 +32,28 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for session in localStorage or cookie
-    const checkSession = () => {
-      // First check localStorage
-      const sessionJson = window.localStorage.getItem('hive_session');
-      if (sessionJson) {
-        try {
-          const sessionData = JSON.parse(sessionJson);
-          // Verify session is not expired (24 hours)
-          const sessionAge = Date.now() - new Date(sessionData.verifiedAt).getTime();
-          const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+  // Check session via API (httpOnly cookie is sent automatically)
+  const checkSession = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include', // Include cookies
+      });
 
-          if (sessionAge <= maxAge) {
-            setUser({
-              userId: sessionData.userId,
-              email: sessionData.email,
-              schoolId: sessionData.schoolId,
-              onboardingCompleted: sessionData.onboardingCompleted
-            });
-            setIsLoading(false);
-            return;
-          } else {
-            // Session expired
-            window.localStorage.removeItem('hive_session');
-          }
-        } catch {
-          // Invalid session data, remove it
-          window.localStorage.removeItem('hive_session');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.authenticated && data.user) {
+          setUser({
+            userId: data.user.id || data.user.uid,
+            email: data.user.email,
+            schoolId: data.user.schoolId || data.user.campusId,
+            onboardingCompleted: data.user.onboardingCompleted,
+          });
+          setIsLoading(false);
+          return;
         }
       }
 
-      // Check for development mode authentication
+      // Fallback: Check localStorage for dev mode or legacy sessions
       const devAuthMode = window.localStorage.getItem('dev_auth_mode');
       const devUserData = window.localStorage.getItem('dev_user');
 
@@ -83,15 +75,34 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
 
       // No valid session found
       setUser(null);
-
       setIsLoading(false);
-    };
-
-    checkSession();
-    // Re-check on storage events (for cross-tab sync)
-    window.addEventListener('storage', checkSession);
-    return () => window.removeEventListener('storage', checkSession);
+    } catch (error) {
+      console.error('Session check failed:', error);
+      setUser(null);
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    checkSession();
+
+    // Re-check on focus (user might have logged in/out in another tab)
+    const handleFocus = () => {
+      checkSession();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Re-check on storage events (for cross-tab sync with dev mode)
+    const handleStorage = () => {
+      checkSession();
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [checkSession]);
 
   // Handle route protection
   useEffect(() => {
@@ -109,7 +120,18 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
     }
   }, [isLoading, user, pathname, router]);
 
-  const signOut = () => {
+  const signOut = async () => {
+    try {
+      // Call logout API to clear the httpOnly cookie
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Ignore errors, still clear local state
+    }
+
+    // Clear any localStorage items
     window.localStorage.removeItem('hive_session');
     window.localStorage.removeItem('emailForSignIn');
     window.localStorage.removeItem('dev_auth_mode');
@@ -124,7 +146,8 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
         user,
         isAuthenticated: !!user,
         isLoading,
-        signOut
+        signOut,
+        refreshSession: checkSession,
       }}
     >
       {children}
