@@ -216,9 +216,8 @@ async function sendVerificationCodeEmail(
     return true;
   }
 
-  // Use Resend's onboarding email until custom domain is verified
-  // Once hive.college is verified in Resend, change to: process.env.EMAIL_FROM || 'hello@hive.college'
-  const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  // Domain verified - using hello@hive.college via RESEND_FROM_EMAIL env var
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'hello@hive.college';
   const sendGridFromEmail = process.env.EMAIL_FROM || 'hello@hive.college';
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendGridApiKey = process.env.SENDGRID_API_KEY;
