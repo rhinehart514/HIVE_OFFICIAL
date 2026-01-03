@@ -18,7 +18,7 @@ import { X, Calendar, BarChart3, Link, FileText, Rss, Wand2, ExternalLink, Loade
 import { cn } from '../../../lib/utils';
 import { Button } from '../../00-Global/atoms/button';
 import { Input } from '../../00-Global/atoms/input';
-import { QUICK_TEMPLATES, type QuickTemplate } from '../../../lib/hivelab/quick-templates';
+import { QUICK_TEMPLATES, type QuickTemplate, type TemplateConfigField } from '../../../lib/hivelab/quick-templates';
 
 // ============================================================
 // Types
@@ -158,11 +158,15 @@ export function AddWidgetModal({
   const [title, setTitle] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [step, setStep] = React.useState<'select' | 'configure'>('select');
+  const [step, setStep] = React.useState<'select' | 'configure' | 'setup'>('select');
 
   // Quick deploy state
   const [deployingTemplateId, setDeployingTemplateId] = React.useState<string | null>(null);
   const [deployedTemplateIds, setDeployedTemplateIds] = React.useState<Set<string>>(new Set());
+
+  // P0: Template setup state
+  const [selectedTemplate, setSelectedTemplate] = React.useState<QuickTemplate | null>(null);
+  const [templateConfig, setTemplateConfig] = React.useState<Record<string, string>>({});
 
   // Existing tool deploy state
   const [deployingExistingToolId, setDeployingExistingToolId] = React.useState<string | null>(null);
@@ -181,23 +185,89 @@ export function AddWidgetModal({
       setError(null);
       setStep('select');
       setDeployingTemplateId(null);
+      setSelectedTemplate(null);
+      setTemplateConfig({});
       // Don't reset deployedTemplateIds to show what was already deployed
     }
   }, [open]);
 
-  // Handle quick deploy
-  const handleQuickDeploy = async (template: QuickTemplate) => {
+  // P0: Handle template selection - show setup if has fields, otherwise deploy immediately
+  const handleTemplateSelect = (template: QuickTemplate) => {
+    if (!onQuickDeploy || deployingTemplateId) return;
+
+    // If template has setup fields, show setup step
+    if (template.setupFields && template.setupFields.length > 0) {
+      setSelectedTemplate(template);
+      // Initialize config with default values
+      const initialConfig: Record<string, string> = {};
+      template.setupFields.forEach(field => {
+        if (field.defaultValue !== undefined) {
+          initialConfig[field.key] = String(field.defaultValue);
+        }
+      });
+      setTemplateConfig(initialConfig);
+      setStep('setup');
+    } else {
+      // No setup needed, deploy immediately
+      handleQuickDeploy(template);
+    }
+  };
+
+  // Handle quick deploy (with optional config)
+  const handleQuickDeploy = async (template: QuickTemplate, config?: Record<string, string>) => {
     if (!onQuickDeploy || deployingTemplateId) return;
 
     setDeployingTemplateId(template.id);
     try {
-      await onQuickDeploy(template);
+      // P0: Apply config to template composition if provided
+      let deployTemplate = template;
+      if (config && Object.keys(config).length > 0) {
+        // Clone template and apply config to first element
+        const elements = [...template.composition.elements];
+        if (elements[0]) {
+          const elementConfig = { ...elements[0].config };
+
+          // Apply each config value
+          Object.entries(config).forEach(([key, value]) => {
+            if (key === 'options' && typeof value === 'string') {
+              // Parse comma-separated options into array
+              elementConfig.options = value.split(',').map(s => s.trim()).filter(Boolean);
+            } else if (key === 'targetDate' && value) {
+              // Convert date string to ISO
+              elementConfig.targetDate = new Date(value).toISOString();
+            } else {
+              elementConfig[key] = value;
+            }
+          });
+
+          elements[0] = { ...elements[0], config: elementConfig };
+        }
+
+        deployTemplate = {
+          ...template,
+          composition: { ...template.composition, elements },
+        };
+      }
+
+      await onQuickDeploy(deployTemplate);
       setDeployedTemplateIds(prev => new Set([...prev, template.id]));
+
+      // If we were in setup step, close modal
+      if (step === 'setup') {
+        onOpenChange(false);
+      }
     } catch (err) {
       console.error('Quick deploy failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to deploy widget');
     } finally {
       setDeployingTemplateId(null);
     }
+  };
+
+  // P0: Handle setup form submission
+  const handleSetupSubmit = () => {
+    if (!selectedTemplate) return;
+    handleQuickDeploy(selectedTemplate, templateConfig);
   };
 
   // Handle deploying existing tool
@@ -266,8 +336,14 @@ export function AddWidgetModal({
   };
 
   const handleBack = () => {
-    setStep('select');
-    setSelectedType(null);
+    if (step === 'setup') {
+      setStep('select');
+      setSelectedTemplate(null);
+      setTemplateConfig({});
+    } else {
+      setStep('select');
+      setSelectedType(null);
+    }
   };
 
   return (
@@ -298,7 +374,7 @@ export function AddWidgetModal({
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--hive-border-default)]">
               <h2 className="text-base font-semibold text-[var(--hive-text-primary)]">
-                {step === 'select' ? 'Add Widget' : 'Configure Widget'}
+                {step === 'select' ? 'Add Widget' : step === 'setup' ? `Setup: ${selectedTemplate?.name || 'Widget'}` : 'Configure Widget'}
               </h2>
               <button
                 onClick={() => onOpenChange(false)}
@@ -337,7 +413,7 @@ export function AddWidgetModal({
                             return (
                               <button
                                 key={template.id}
-                                onClick={() => handleQuickDeploy(template)}
+                                onClick={() => handleTemplateSelect(template)}
                                 disabled={isDeploying || isDeployed}
                                 className={cn(
                                   "flex items-center gap-2.5 p-2.5 rounded-xl border transition-all text-left",
@@ -505,7 +581,7 @@ export function AddWidgetModal({
                       })}
                     </div>
                   </motion.div>
-                ) : (
+                ) : step === 'configure' ? (
                   <motion.div
                     key="configure"
                     initial={{ opacity: 0, x: 10 }}
@@ -559,15 +635,84 @@ export function AddWidgetModal({
                       </p>
                     )}
                   </motion.div>
-                )}
+                ) : step === 'setup' && selectedTemplate ? (
+                  <motion.div
+                    key="setup"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-4"
+                  >
+                    {/* Template info */}
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--hive-background-tertiary)] border border-[var(--hive-border-default)]">
+                      <div className="w-10 h-10 rounded-lg bg-[var(--hive-brand-primary)]/10 flex items-center justify-center">
+                        {(() => {
+                          const Icon = getQuickTemplateIcon(selectedTemplate.icon);
+                          return <Icon className="h-5 w-5 text-[var(--hive-brand-primary)]" />;
+                        })()}
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-[var(--hive-text-primary)] block">
+                          {selectedTemplate.name}
+                        </span>
+                        <span className="text-xs text-[var(--hive-text-tertiary)]">
+                          {selectedTemplate.description}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Setup fields */}
+                    <div className="space-y-3">
+                      {selectedTemplate.setupFields?.map((field) => (
+                        <div key={field.key}>
+                          <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
+                            {field.label}
+                            {field.required && <span className="text-[var(--hive-status-error)] ml-0.5">*</span>}
+                          </label>
+                          {field.type === 'textarea' ? (
+                            <textarea
+                              value={templateConfig[field.key] || ''}
+                              onChange={(e) => setTemplateConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
+                              placeholder={field.placeholder}
+                              className="w-full px-3 py-2 rounded-lg bg-[var(--hive-background-tertiary)] border border-[var(--hive-border-default)] text-[var(--hive-text-primary)] placeholder:text-[var(--hive-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-white/50 resize-none"
+                              rows={3}
+                            />
+                          ) : field.type === 'date' ? (
+                            <Input
+                              type="date"
+                              value={templateConfig[field.key] || ''}
+                              onChange={(e) => setTemplateConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
+                              className="bg-[var(--hive-background-tertiary)] border-[var(--hive-border-default)]"
+                            />
+                          ) : (
+                            <Input
+                              type={field.type === 'number' ? 'number' : 'text'}
+                              value={templateConfig[field.key] || ''}
+                              onChange={(e) => setTemplateConfig(prev => ({ ...prev, [field.key]: e.target.value }))}
+                              placeholder={field.placeholder}
+                              className="bg-[var(--hive-background-tertiary)] border-[var(--hive-border-default)]"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Error */}
+                    {error && (
+                      <p className="text-sm text-[var(--hive-status-error)] bg-[var(--hive-status-error)]/10 rounded-lg p-2">
+                        {error}
+                      </p>
+                    )}
+                  </motion.div>
+                ) : null}
               </AnimatePresence>
             </div>
 
             {/* Footer */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--hive-border-default)]">
               <div>
-                {step === 'configure' && (
-                  <Button variant="ghost" onClick={handleBack} disabled={isSubmitting}>
+                {(step === 'configure' || step === 'setup') && (
+                  <Button variant="ghost" onClick={handleBack} disabled={isSubmitting || !!deployingTemplateId}>
                     Back
                   </Button>
                 )}
@@ -576,7 +721,7 @@ export function AddWidgetModal({
                 <Button
                   variant="secondary"
                   onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !!deployingTemplateId}
                 >
                   Cancel
                 </Button>
@@ -587,6 +732,22 @@ export function AddWidgetModal({
                     className="bg-white text-black hover:bg-neutral-100"
                   >
                     {isSubmitting ? 'Creating...' : 'Add Widget'}
+                  </Button>
+                )}
+                {step === 'setup' && selectedTemplate && (
+                  <Button
+                    onClick={handleSetupSubmit}
+                    disabled={!!deployingTemplateId || (selectedTemplate.setupFields?.some(f => f.required && !templateConfig[f.key]) ?? false)}
+                    className="bg-white text-black hover:bg-neutral-100"
+                  >
+                    {deployingTemplateId ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Deploying...
+                      </>
+                    ) : (
+                      'Deploy Widget'
+                    )}
                   </Button>
                 )}
               </div>

@@ -120,6 +120,15 @@ const EnhancedCreateToolSchema = CreateToolSchema.extend({
   type: z.enum(['template', 'visual', 'code', 'wizard']).default('visual'),
   config: z.unknown().optional(), // Allow any config for flexibility
   elements: z.array(z.unknown()).optional(), // Add elements support
+  // P0: Support connections for cascade execution
+  connections: z.array(z.object({
+    id: z.string(),
+    sourceElementId: z.string(),
+    sourceOutput: z.string(),
+    targetElementId: z.string(),
+    targetInput: z.string(),
+    transform: z.string().optional(),
+  })).optional(),
 });
 
 // POST /api/tools - Create new tool (supports templates)
@@ -192,6 +201,10 @@ export const POST = withAuthValidationAndErrors(
       elements: validatedData.elements && Array.isArray(validatedData.elements)
         ? validatedData.elements
         : templateElements,
+      // P0: Save connections for cascade execution
+      connections: validatedData.connections && Array.isArray(validatedData.connections)
+        ? validatedData.connections
+        : [],
       config: { ...(toolData.config || {}), ...templateConfig, ...(validatedData.config || {}) }, // Merge configs
       metadata: {
         ...(toolData.metadata as Record<string, unknown> || {}),

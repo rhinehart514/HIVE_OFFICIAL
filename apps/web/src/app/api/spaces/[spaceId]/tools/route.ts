@@ -207,7 +207,7 @@ async function validateSpaceAccess(spaceId: string, userId: string, campusId: st
   return { ok: true as const, space, membership };
 }
 
-async function enrichToolsWithMetadata(tools: PlacedToolData[]): Promise<Array<Record<string, unknown>>> {
+async function enrichToolsWithMetadata(tools: PlacedToolData[], spaceId: string): Promise<Array<Record<string, unknown>>> {
   if (tools.length === 0) return [];
 
   // Batch fetch tool metadata
@@ -227,8 +227,32 @@ async function enrichToolsWithMetadata(tools: PlacedToolData[]): Promise<Array<R
     });
   }
 
+  // P0: Batch fetch deployment records for surfaceModes
+  const deploymentDataMap = new Map<string, FirebaseFirestore.DocumentData>();
+  for (let i = 0; i < toolIds.length; i += 30) {
+    const chunk = toolIds.slice(i, i + 30);
+    const deploymentDocs = await dbAdmin
+      .collection("deployedTools")
+      .where("toolId", "in", chunk)
+      .where("targetId", "==", spaceId)
+      .get();
+    deploymentDocs.forEach((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        deploymentDataMap.set(data.toolId, { id: doc.id, ...data });
+      }
+    });
+  }
+
   return tools.map((placedTool) => {
     const toolData = toolDataMap.get(placedTool.toolId);
+    const deploymentData = deploymentDataMap.get(placedTool.toolId);
+
+    // P0: Get surfaceModes from deployment or tool, default to widget-only
+    const surfaceModes = deploymentData?.surfaceModes
+      || toolData?.supportedSurfaces
+      || { widget: true, app: false };
+
     return {
       // Placement info
       placementId: placedTool.id,
@@ -251,6 +275,10 @@ async function enrichToolsWithMetadata(tools: PlacedToolData[]): Promise<Array<R
       category: toolData?.category || "other",
       version: toolData?.currentVersion || "1.0.0",
       elementType: toolData?.elementType || toolData?.elements?.[0]?.type || "unknown",
+
+      // P0: Surface modes for "View Full" link in sidebar
+      surfaceModes,
+      deploymentId: deploymentData?.id || placedTool.id,
 
       // Tool stats
       originalTool: toolData
@@ -322,8 +350,8 @@ export const GET = withAuthAndErrors(async (
       tools = tools.filter((t) => t.placement === queryParams.placement);
     }
 
-    // Enrich with tool metadata
-    const enrichedTools = await enrichToolsWithMetadata(tools);
+    // Enrich with tool metadata (includes P0 surfaceModes)
+    const enrichedTools = await enrichToolsWithMetadata(tools, spaceId);
 
     // Apply category filter (needs metadata)
     let filteredTools = enrichedTools;

@@ -507,6 +507,8 @@ function SpaceDetailContent() {
     placementId: selectedTool?.placementId,
     autoSave: true,
     autoSaveDelay: 1500,
+    // P0: Enable real-time RTDB subscriptions for live updates (polls, counters)
+    enableRealtime: true,
   });
 
   // Pinned messages for sidebar

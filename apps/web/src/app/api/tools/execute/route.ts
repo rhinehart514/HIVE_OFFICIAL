@@ -39,7 +39,8 @@ import {
 // Feature flags for Phase 1 Scaling Architecture (enable after migration)
 const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === 'true';
 const USE_EXTRACTED_COLLECTIONS = process.env.USE_EXTRACTED_COLLECTIONS === 'true';
-const USE_RTDB_BROADCAST = process.env.USE_RTDB_BROADCAST === 'true';
+// P0: Enable RTDB broadcast by default for real-time updates (can disable with env var)
+const USE_RTDB_BROADCAST = process.env.USE_RTDB_BROADCAST !== 'false';
 
 // Rate limiter for tool executions: 60 requests per minute per user
 const toolExecuteRateLimiter = rateLimit({
@@ -1730,6 +1731,14 @@ async function executeToolAction(params: {
     if (result.success && result.state && targetElement) {
       const toolConnections = (tool as unknown as { connections?: Array<unknown> }).connections || [];
 
+      // P0: Log cascade execution for debugging
+      logger.info('[execute] Checking cascade connections', {
+        toolId: tool.id,
+        action,
+        hasConnections: toolConnections.length > 0,
+        connectionCount: toolConnections.length,
+      });
+
       if (toolConnections.length > 0) {
         const composition: ToolComposition = {
           elements: (tool.elements || []).map(el => ({
@@ -1750,6 +1759,14 @@ async function executeToolAction(params: {
           user.uid,
           deployment.id
         );
+
+        // P0: Log cascade result
+        logger.info('[execute] Cascade execution completed', {
+          toolId: tool.id,
+          action,
+          executedElements: cascadeResult.executedElements?.length || 0,
+          executedElementIds: cascadeResult.executedElements || [],
+        });
 
         // Merge cascade state with result state
         result = {

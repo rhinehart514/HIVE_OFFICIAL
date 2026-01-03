@@ -216,7 +216,10 @@ async function sendVerificationCodeEmail(
     return true;
   }
 
-  const fromEmail = process.env.EMAIL_FROM || 'hello@hive.college';
+  // Use Resend's onboarding email until custom domain is verified
+  // Once hive.college is verified in Resend, change to: process.env.EMAIL_FROM || 'hello@hive.college'
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const sendGridFromEmail = process.env.EMAIL_FROM || 'hello@hive.college';
   const resendApiKey = process.env.RESEND_API_KEY;
   const sendGridApiKey = process.env.SENDGRID_API_KEY;
 
@@ -227,7 +230,7 @@ async function sendVerificationCodeEmail(
       const resend = new Resend(resendApiKey);
 
       const { data, error } = await resend.emails.send({
-        from: `HIVE <${fromEmail}>`,
+        from: `HIVE <${resendFromEmail}>`,
         to: email,
         subject: `Your HIVE verification code: ${code}`,
         html: generateVerificationCodeHtml(code, schoolName, email),
@@ -265,7 +268,7 @@ async function sendVerificationCodeEmail(
       const msg = {
         to: email,
         from: {
-          email: fromEmail,
+          email: sendGridFromEmail,
           name: 'HIVE'
         },
         subject: `Your HIVE verification code: ${code}`,

@@ -10,6 +10,24 @@
 
 import type { ToolComposition } from './element-system';
 
+/** Configuration field for template setup */
+export interface TemplateConfigField {
+  /** Field key matching element config property */
+  key: string;
+  /** Display label */
+  label: string;
+  /** Field type */
+  type: 'text' | 'textarea' | 'date' | 'number' | 'options';
+  /** Whether field is required */
+  required: boolean;
+  /** Placeholder text */
+  placeholder?: string;
+  /** For 'options' type: available choices */
+  options?: string[];
+  /** Default value */
+  defaultValue?: string | number;
+}
+
 export interface QuickTemplate {
   /** Unique template ID */
   id: string;
@@ -28,6 +46,8 @@ export interface QuickTemplate {
     placement: 'sidebar' | 'inline';
     collapsed: boolean;
   };
+  /** P0: Config fields for setup step (optional - if absent, deploys instantly) */
+  setupFields?: TemplateConfigField[];
 }
 
 // Generate unique IDs for elements
@@ -47,6 +67,11 @@ export const QUICK_POLL_TEMPLATE: QuickTemplate = {
     placement: 'sidebar',
     collapsed: false,
   },
+  // P0: Setup fields for customization
+  setupFields: [
+    { key: 'question', label: 'Poll Question', type: 'text', required: true, placeholder: 'What do you think about...?' },
+    { key: 'options', label: 'Options (comma-separated)', type: 'text', required: true, placeholder: 'Option A, Option B, Option C', defaultValue: 'Yes, No, Maybe' },
+  ],
   composition: {
     id: generateId(),
     name: 'Quick Poll',
@@ -85,6 +110,11 @@ export const EVENT_COUNTDOWN_TEMPLATE: QuickTemplate = {
     placement: 'sidebar',
     collapsed: false,
   },
+  // P0: Setup fields for customization
+  setupFields: [
+    { key: 'title', label: 'Event Name', type: 'text', required: true, placeholder: 'Spring Social' },
+    { key: 'targetDate', label: 'Event Date', type: 'date', required: true },
+  ],
   composition: {
     id: generateId(),
     name: 'Event Countdown',
@@ -645,6 +675,10 @@ export const DECISION_MAKER_TEMPLATE: QuickTemplate = {
     placement: 'sidebar',
     collapsed: false,
   },
+  // P0: Setup fields for customization
+  setupFields: [
+    { key: 'question', label: 'Decision Question', type: 'text', required: true, placeholder: 'Should we host a social event next week?' },
+  ],
   composition: {
     id: generateId(),
     name: 'Decision Maker',
