@@ -12,8 +12,8 @@ import { logger } from "@/lib/logger";
 import { withValidation, type ResponseFormatter } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { SESSION_CONFIG } from "@/lib/session";
-// Email providers: Resend (primary) or SendGrid (fallback)
 import { validateOrigin } from "@/lib/security-middleware";
+import { Resend } from 'resend';
 
 // Firebase Client SDK for school validation fallback
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -226,7 +226,6 @@ async function sendVerificationCodeEmail(
   // Try Resend first (preferred)
   if (resendApiKey) {
     try {
-      const { Resend } = require('resend');
       const resend = new Resend(resendApiKey);
 
       const { data, error } = await resend.emails.send({
@@ -239,10 +238,13 @@ async function sendVerificationCodeEmail(
       if (error) {
         logger.error('Resend email failed', {
           error: error.message,
+          errorName: error.name,
           component: 'send-code',
+          from: resendFromEmail,
+          to: email,
         });
         // Fall through to SendGrid if available
-      } else {
+      } else if (data) {
         logger.info('Verification code email sent via Resend', {
           emailId: data?.id,
           email: email.replace(/(.{3}).*@/, '$1***@'),
