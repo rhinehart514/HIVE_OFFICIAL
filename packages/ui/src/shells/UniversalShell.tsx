@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence, useReducedMotion, LayoutGroup } from 'framer-motion';
 import { CommandPalette, type CommandPaletteItem } from '../atomic/00-Global/organisms/command-palette';
 import { SpaceSwitcher, type SpaceSwitcherSpace } from '../atomic/00-Global/organisms/space-switcher';
-import { SpaceRail, type SpaceItem, type NotificationItem } from '../atomic/00-Global/organisms/space-rail';
+import { MinimalSidebar, type SidebarSpace } from '../atomic/00-Global/organisms/minimal-sidebar';
 import { useMediaQuery } from '../hooks/use-media-query';
 import { easingArrays } from '@hive/tokens';
 
@@ -742,15 +742,7 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
     setNotificationDropdownOpen(false);
   }, []);
 
-  // Convert notifications prop to NotificationItem format for RefinedRail
-  const railNotifications: NotificationItem[] = React.useMemo(() => {
-    return (notifications || []).map(n => ({
-      id: n.id,
-      text: n.text,
-      time: n.time,
-      unread: n.unread,
-    }));
-  }, [notifications]);
+  // Note: Notifications removed from sidebar - available via command palette or header
 
   // Determine active section for contextual panels (3-item nav: feed, spaces, hivelab)
   const activeSection = React.useMemo(() => {
@@ -965,22 +957,17 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
     }
   };
 
-  // Convert mySpaces (ShellSpaceSection[]) to SpaceRail format (SpaceItem[])
-  // Flatten sections and map ShellSpaceLink → SpaceItem
-  const railSpaces: SpaceItem[] = React.useMemo(() => {
-    const spaces: SpaceItem[] = [];
+  // Convert mySpaces (ShellSpaceSection[]) to MinimalSidebar format (SidebarSpace[])
+  const sidebarSpaces: SidebarSpace[] = React.useMemo(() => {
+    const spaces: SidebarSpace[] = [];
 
     (mySpaces ?? []).forEach(section => {
       (section.spaces ?? []).forEach(space => {
         spaces.push({
           id: space.id,
           name: space.label,
-          slug: space.id, // Use ID as slug for now
-          category: section.id as SpaceItem['category'],
-          // Map status to activeNow (live = many active, quiet = few)
-          activeNow: space.status === 'live' ? 5 : space.status === 'new' ? 2 : 0,
-          isPinned: false, // Could derive from meta if needed
-          unreadCount: space.status === 'new' ? 1 : 0, // Show dot for new spaces
+          slug: space.id,
+          unreadCount: space.status === 'new' ? 1 : 0,
         });
       });
     });
@@ -1017,10 +1004,10 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
 
   return (
     <div className="flex min-h-screen bg-black">
-      {/* Desktop Sidebar - SpaceRail (Space-first navigation) visible at 1024px+ */}
+      {/* Desktop Sidebar - MinimalSidebar (Resend/YC-style) visible at 1024px+ */}
       <div className="hidden lg:block">
-        <SpaceRail
-          spaces={railSpaces}
+        <MinimalSidebar
+          spaces={sidebarSpaces}
           activeSpaceId={activeSpaceId}
           onSpaceSelect={(spaceId) => {
             if (onSpaceSelect) {
@@ -1029,37 +1016,22 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
               window.location.href = `/spaces/${spaceId}`;
             }
           }}
-          isExpanded={isExpanded}
-          onExpandedChange={handleExpandedChange}
-          hoverExpand={true}
-          // Quick access
           onBrowseClick={handleBrowseClick}
           onBuildClick={handleBuildClick}
-          onJoinOrCreate={handleJoinOrCreate}
-          isBuilder={isBuilder}
-          showFeedComingSoon={true}
-          // Notifications
-          notificationCount={notificationCount}
-          notifications={railNotifications}
-          notificationDropdownOpen={notificationDropdownOpen}
-          onNotificationClick={handleNotificationClick}
-          onMarkAllRead={() => {
-            setNotificationDropdownOpen(false);
+          onProfileClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/profile';
+            }
           }}
-          // Profile
           user={userName ? {
             name: userName,
             handle: userHandle,
             avatarUrl: userAvatarUrl,
           } : undefined}
-          profileDropdownOpen={profileDropdownOpen}
-          onProfileClick={handleProfileClick}
-          onSettingsClick={() => {
-            if (typeof window !== 'undefined') {
-              window.location.href = '/profile/settings';
-            }
-          }}
-          onSignOut={onSignOut}
+          isBuilder={isBuilder}
+          pathname={pathname || ''}
+          isExpanded={isExpanded}
+          onExpandChange={(expanded) => setIsCollapsed(!expanded)}
         />
       </div>
 
@@ -1068,9 +1040,9 @@ export const UniversalShell: React.FC<UniversalShellProps> = ({
         className="flex-1 pb-14 lg:pb-0 flex flex-col"
         initial={false}
         animate={{
-          marginLeft: isDesktop ? (isExpanded ? 260 : 56) : 0,
+          marginLeft: isDesktop ? (isExpanded ? 240 : 64) : 0,
         }}
-        transition={{ type: 'spring', stiffness: 200, damping: 28 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
       >
         {/* Page content */}
         <div className="flex-1">
