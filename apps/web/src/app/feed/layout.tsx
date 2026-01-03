@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { isFeedEnabled, type UserFeatureContext } from "@/lib/feature-flags";
+import { verifySession } from "@/lib/session";
 
 /**
  * Feed Layout - Gates feed behind FEED_V1 feature flag
@@ -24,12 +25,15 @@ export default async function FeedLayout({
 
   if (sessionCookie?.value) {
     try {
-      const session = JSON.parse(sessionCookie.value);
-      userContext = {
-        userId: session.userId || "anonymous",
-        userRole: session.role || "member",
-        schoolId: session.campusId || "ub-buffalo",
-      };
+      // The session cookie is a JWT, not JSON - verify it properly
+      const session = await verifySession(sessionCookie.value);
+      if (session) {
+        userContext = {
+          userId: session.userId || "anonymous",
+          userRole: session.isAdmin ? "admin" : "member",
+          schoolId: session.campusId || "ub-buffalo",
+        };
+      }
     } catch {
       // Keep default anonymous context
     }
@@ -39,8 +43,8 @@ export default async function FeedLayout({
   const feedEnabled = await isFeedEnabled(userContext);
 
   if (!feedEnabled) {
-    // Feed is disabled - redirect to home
-    redirect("/");
+    // Feed is disabled - redirect to spaces browse as the main landing for authenticated users
+    redirect("/spaces/browse");
   }
 
   return <>{children}</>;

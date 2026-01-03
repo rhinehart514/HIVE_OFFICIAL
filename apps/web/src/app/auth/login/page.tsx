@@ -142,7 +142,7 @@ function LoginPageFallback() {
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') || '/feed';
+  const redirectTo = searchParams.get('redirect') || '/spaces/browse';
   const isNewUser = searchParams.get('new') === 'true';
   const sessionExpired = searchParams.get('expired') === 'true';
   const shouldReduceMotion = useReducedMotion();
