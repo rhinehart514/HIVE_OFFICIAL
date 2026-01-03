@@ -175,31 +175,41 @@ function parseEnv() {
  * Validate production-specific requirements
  */
 function validateProductionConfig(config: z.infer<typeof envSchema>) {
-  const requiredInProduction = [
-    'FIREBASE_CLIENT_EMAIL',
-    'FIREBASE_PRIVATE_KEY',
-    'NEXTAUTH_SECRET',
-    'SESSION_SECRET',
-  ] as const;
+  // Always required
+  const alwaysRequired = ['NEXTAUTH_SECRET', 'SESSION_SECRET'] as const;
+  const missingAlways = alwaysRequired.filter(key => !config[key]);
 
-  const missing = requiredInProduction.filter(key => !config[key]);
-
-  if (missing.length > 0) {
+  if (missingAlways.length > 0) {
     throw new Error(
-      `PRODUCTION CRITICAL: Missing required environment variables: ${missing.join(', ')}. ` +
+      `PRODUCTION CRITICAL: Missing required environment variables: ${missingAlways.join(', ')}. ` +
       'These are required for production deployment.'
     );
   }
 
-  // Validate Firebase Admin credentials format
-  // Handle both raw newlines and escaped \n sequences (common in Vercel)
+  // Firebase Admin credentials - accept either:
+  // 1. Individual credentials (FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY)
+  // 2. Base64 encoded service account (FIREBASE_SERVICE_ACCOUNT_KEY)
+  const hasIndividualCreds = config.FIREBASE_CLIENT_EMAIL && config.FIREBASE_PRIVATE_KEY;
+  const hasServiceAccountKey = !!process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+  if (!hasIndividualCreds && !hasServiceAccountKey) {
+    throw new Error(
+      'PRODUCTION CRITICAL: Firebase Admin credentials not configured. ' +
+      'Set either (FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY) or FIREBASE_SERVICE_ACCOUNT_KEY.'
+    );
+  }
+
+  // Validate Firebase private key format if using individual credentials
   const privateKey = config.FIREBASE_PRIVATE_KEY;
   if (privateKey) {
     const normalizedKey = privateKey.replace(/\\n/g, '\n');
     if (!normalizedKey.includes('BEGIN PRIVATE KEY')) {
-      throw new Error(
-        'PRODUCTION CRITICAL: FIREBASE_PRIVATE_KEY appears to be invalid. It should be a properly formatted private key.'
-      );
+      // Only error if we don't have a fallback service account key
+      if (!hasServiceAccountKey) {
+        throw new Error(
+          'PRODUCTION CRITICAL: FIREBASE_PRIVATE_KEY appears to be invalid. It should be a properly formatted private key.'
+        );
+      }
     }
   }
 
