@@ -28,6 +28,13 @@ export * from './contextual-inspector';
 export * from './use-ide-keyboard';
 export * from './onboarding-overlay';
 export * from './smart-guides';
+export * from './header-bar';
+export * from './template-gallery';
+export * from './start-zone';
+export * from './floating-action-bar';
+export * from './command-bar';
+export * from './context-rail';
+export * from './element-rail';
 
 // IDE component primitives
 export * from './components';

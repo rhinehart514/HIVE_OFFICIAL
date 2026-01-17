@@ -16,6 +16,7 @@ import {
   type ToolComposition,
 } from '@/lib/tool-connection-engine';
 import { rateLimit } from '@/lib/rate-limit-simple';
+import { verifyRequestAppCheck } from '@/lib/app-check-server';
 import { shardedCounterService } from '@/lib/services/sharded-counter.service';
 import { extractedCollectionService } from '@/lib/services/extracted-collection.service';
 import { toolStateBroadcaster } from '@/lib/services/tool-state-broadcaster.service';
@@ -153,10 +154,60 @@ type ActionHandler = (context: ActionContext) => Promise<ActionResult>;
 const actionHandlers: Record<string, ActionHandler> = {
   // Default handlers for common actions
   async submit(context: ActionContext): Promise<ActionResult> {
+    const { elementId, data, userId, sharedState } = context;
+    const instanceId = elementId || 'form';
+    const formData = data.formData as Record<string, unknown> || data;
+    const submissionsKey = `${instanceId}:submissions`;
+    const submissionId = `${userId}_${Date.now()}`;
+
+    // Get current submission count
+    const currentCount = sharedState.counters[`${instanceId}:submissionCount`] || 0;
+
     return {
       success: true,
-      state: { ...context.state, submitted: true, submittedAt: new Date().toISOString() },
-      data: { action: 'submit', elementId: context.elementId },
+      data: {
+        action: 'submit',
+        elementId: context.elementId,
+        submissionId,
+        message: 'Form submitted successfully',
+      },
+      // Update shared state (visible to all users)
+      sharedStateUpdate: {
+        // Increment submission counter
+        counterDeltas: {
+          [`${instanceId}:submissionCount`]: 1,
+        },
+        // Store the submission in a collection
+        collectionUpserts: {
+          [submissionsKey]: {
+            [submissionId]: {
+              id: submissionId,
+              createdAt: new Date().toISOString(),
+              createdBy: userId,
+              data: {
+                ...formData,
+                submittedAt: data.timestamp || new Date().toISOString(),
+                submissionNumber: currentCount + 1,
+              },
+            },
+          },
+        },
+        // Add to timeline
+        timelineAppend: [
+          {
+            type: 'form_submission',
+            userId,
+            elementInstanceId: instanceId,
+            action: 'submit',
+            data: { submissionId, formFields: Object.keys(formData) },
+          },
+        ],
+      },
+      // Update user state (personal tracking)
+      userStateUpdate: {
+        participation: { [`${instanceId}:hasSubmitted`]: true },
+        selections: { [`${instanceId}:lastSubmissionId`]: submissionId },
+      },
     };
   },
 
@@ -1221,6 +1272,22 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+
+      // SECURITY: Verify App Check token (logs violations, doesn't block yet for gradual rollout)
+      const appCheckResult = await verifyRequestAppCheck(request as Request);
+      if (!appCheckResult.valid) {
+        // Log App Check failures for monitoring (gradual rollout - don't block yet)
+        logger.warn('App Check verification failed for tool execution', {
+          userId,
+          error: appCheckResult.error,
+          url: (request as Request).url,
+        });
+        // TODO: Once App Check is fully deployed, uncomment to enforce:
+        // return NextResponse.json(
+        //   { error: 'App Check verification failed', code: 'APP_CHECK_FAILED' },
+        //   { status: 401 }
+        // );
+      }
 
       // SECURITY: Rate limit tool executions per user
       const rateLimitResult = toolExecuteRateLimiter.check(userId);

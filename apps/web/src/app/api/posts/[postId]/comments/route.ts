@@ -141,9 +141,10 @@ export async function POST(
       .collection('comments')
       .add(commentData);
 
-    // Increment comment count on post
+    // Increment comment count on post (both legacy and new fields)
     await dbAdmin.collection('posts').doc(postId).update({
       'reactions.comments': FieldValue.increment(1),
+      'engagement.comments': FieldValue.increment(1),
       updatedAt: new Date(),
     });
 

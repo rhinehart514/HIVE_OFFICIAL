@@ -111,7 +111,7 @@ export function handleAuthError(error: Error, redirectToLogin: boolean = true): 
     clearAuthentication();
 
     if (redirectToLogin && typeof window !== 'undefined') {
-      window.location.href = '/auth/login?reason=session_expired';
+      window.location.href = '/enter?reason=session_expired';
     }
   }
 }

@@ -8,47 +8,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit3, 
-  Trash2, 
-  Eye, 
-  Users, 
-  Settings, 
-  Activity, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Calendar, 
-  MapPin, 
-  Hash, 
-  Star, 
-  Heart, 
-  RefreshCw, 
-  Archive, 
-  Shield, 
-  Layers, 
-  Database, 
-  BarChart3, 
-  Globe,
-  Lock,
-  PlayCircle,
-  PauseCircle,
-  StopCircle,
-  Mail,
-  Flag,
-  CheckSquare,
-  X,
-  ChevronDown,
-  Copy,
-  BookOpen,
-  Building,
-  GraduationCap,
-  Home
-} from 'lucide-react';
+import { MagnifyingGlassIcon, FunnelIcon, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, EyeIcon, UsersIcon, Cog6ToothIcon, ChartBarIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon, CheckCircleIcon, ClockIcon, CalendarIcon, MapPinIcon, HashtagIcon, StarIcon, HeartIcon, ArrowPathIcon, ShieldCheckIcon, CircleStackIcon, GlobeAltIcon, LockClosedIcon, EnvelopeIcon, FlagIcon, XMarkIcon, ChevronDownIcon, ClipboardDocumentIcon, BuildingOfficeIcon, AcademicCapIcon, HomeIcon, BookOpenIcon, PauseCircleIcon, PlayCircleIcon, StopCircleIcon, ArchiveBoxIcon, CheckIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const BookOpen = BookOpenIcon;
+const PauseCircle = PauseCircleIcon;
+const PlayCircle = PlayCircleIcon;
+const StopCircle = StopCircleIcon;
+const Archive = ArchiveBoxIcon;
+const CheckSquare = CheckIcon;
+const Layers = Square3Stack3DIcon;
 
 interface AdminSpace {
   id: string;
@@ -194,34 +163,34 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
     if (subType) {
       switch (subType) {
         case 'academic_major': return <BookOpen className="w-4 h-4 text-blue-400" />;
-        case 'class_year': return <Calendar className="w-4 h-4 text-green-400" />;
-        case 'university_organization': return <Shield className="w-4 h-4 text-purple-400" />;
-        case 'dorm_building': return <Building className="w-4 h-4 text-orange-400" />;
-        case 'off_campus_area': return <MapPin className="w-4 h-4 text-yellow-400" />;
-        case 'greek_chapter': return <Star className="w-4 h-4 text-gold-400" />;
-        case 'greek_council': return <Users className="w-4 h-4 text-purple-400" />;
-        case 'student_club': return <Heart className="w-4 h-4 text-pink-400" />;
-        case 'interest_community': return <Globe className="w-4 h-4 text-teal-400" />;
-        default: return <Hash className="w-4 h-4" />;
+        case 'class_year': return <CalendarIcon className="w-4 h-4 text-green-400" />;
+        case 'university_organization': return <ShieldCheckIcon className="w-4 h-4 text-purple-400" />;
+        case 'dorm_building': return <BuildingOfficeIcon className="w-4 h-4 text-orange-400" />;
+        case 'off_campus_area': return <MapPinIcon className="w-4 h-4 text-yellow-400" />;
+        case 'greek_chapter': return <StarIcon className="w-4 h-4 text-gold-400" />;
+        case 'greek_council': return <UsersIcon className="w-4 h-4 text-purple-400" />;
+        case 'student_club': return <HeartIcon className="w-4 h-4 text-pink-400" />;
+        case 'interest_community': return <GlobeAltIcon className="w-4 h-4 text-teal-400" />;
+        default: return <HashtagIcon className="w-4 h-4" />;
       }
     }
     
     switch (type) {
-      case 'university_spaces': return <GraduationCap className="w-4 h-4 text-blue-400" />;
-      case 'residential_spaces': return <Home className="w-4 h-4 text-orange-400" />;
-      case 'greek_life_spaces': return <Users className="w-4 h-4 text-purple-400" />;
-      case 'student_spaces': return <Heart className="w-4 h-4 text-pink-400" />;
-      default: return <Hash className="w-4 h-4" />;
+      case 'university_spaces': return <AcademicCapIcon className="w-4 h-4 text-blue-400" />;
+      case 'residential_spaces': return <HomeIcon className="w-4 h-4 text-orange-400" />;
+      case 'greek_life_spaces': return <UsersIcon className="w-4 h-4 text-purple-400" />;
+      case 'student_spaces': return <HeartIcon className="w-4 h-4 text-pink-400" />;
+      default: return <HashtagIcon className="w-4 h-4" />;
     }
   };
 
   const getVisibilityIcon = (visibility: AdminSpace['visibility']) => {
     switch (visibility) {
-      case 'public': return <Globe className="w-3 h-3 text-green-400" />;
-      case 'private': return <Lock className="w-3 h-3 text-red-400" />;
-      case 'invite_only': return <Mail className="w-3 h-3 text-yellow-400" />;
-      case 'university_only': return <Shield className="w-3 h-3 text-blue-400" />;
-      default: return <Globe className="w-3 h-3" />;
+      case 'public': return <GlobeAltIcon className="w-3 h-3 text-green-400" />;
+      case 'private': return <LockClosedIcon className="w-3 h-3 text-red-400" />;
+      case 'invite_only': return <EnvelopeIcon className="w-3 h-3 text-yellow-400" />;
+      case 'university_only': return <ShieldCheckIcon className="w-3 h-3 text-blue-400" />;
+      default: return <GlobeAltIcon className="w-3 h-3" />;
     }
   };
 
@@ -265,9 +234,9 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             <div className="flex items-center space-x-2 mb-2">
               <div className={`w-3 h-3 rounded-full ${getStatusColor(space.status)}`} />
               <h3 className="font-semibold text-white truncate">{space.name}</h3>
-              {space.isVerified && <CheckCircle className="w-4 h-4 text-blue-400 flex-shrink-0" />}
-              {space.isPinned && <Star className="w-4 h-4 text-yellow-400 flex-shrink-0" />}
-              {space.isFeatured && <TrendingUp className="w-4 h-4 text-purple-400 flex-shrink-0" />}
+              {space.isVerified && <CheckCircleIcon className="w-4 h-4 text-blue-400 flex-shrink-0" />}
+              {space.isPinned && <StarIcon className="w-4 h-4 text-yellow-400 flex-shrink-0" />}
+              {space.isFeatured && <ArrowTrendingUpIcon className="w-4 h-4 text-purple-400 flex-shrink-0" />}
             </div>
             
             <div className="flex items-center space-x-3 mb-2">
@@ -312,7 +281,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <MoreVertical className="w-4 h-4" />
+              <EllipsisVerticalIcon className="w-4 h-4" />
             </Button>
 
             {showMenu && (
@@ -325,7 +294,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Eye className="w-4 h-4" />
+                    <EyeIcon className="w-4 h-4" />
                     View Details
                   </button>
                   <button
@@ -336,7 +305,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Edit3 className="w-4 h-4" />
+                    <PencilSquareIcon className="w-4 h-4" />
                     Edit Space
                   </button>
                   <button
@@ -347,8 +316,8 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Copy className="w-4 h-4" />
-                    Copy Link
+                    <ClipboardDocumentIcon className="w-4 h-4" />
+                    ClipboardDocumentIcon Link
                   </button>
                   <div className="border-t border-gray-600 my-1" />
                   {space.status === 'activated' ? (
@@ -406,7 +375,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <TrashIcon className="w-4 h-4" />
                     Delete
                   </button>
               </div>
@@ -440,13 +409,13 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-1">
-              <Activity className="w-3 h-3 text-gray-400" />
+              <ChartBarIcon className="w-3 h-3 text-gray-400" />
               <span className={`${getEngagementColor(space.analytics.engagementRate)}`}>
                 {space.analytics.engagementRate.toFixed(1)}% engagement
               </span>
             </div>
             <div className="flex items-center space-x-1">
-              <TrendingUp className="w-3 h-3 text-gray-400" />
+              <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
               <span className="text-gray-300">
                 {space.analytics.growthRate > 0 ? '+' : ''}{space.analytics.growthRate.toFixed(1)}% growth
               </span>
@@ -463,13 +432,13 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
         <div className="ml-8 flex items-center space-x-2">
           {space.reports.count > 0 && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs">
-              <Flag className="w-3 h-3 text-yellow-400" />
+              <FlagIcon className="w-3 h-3 text-yellow-400" />
               <span className="text-yellow-400">{space.reports.count} reports</span>
             </div>
           )}
           {space.violations.count > 0 && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-xs">
-              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <ExclamationTriangleIcon className="w-3 h-3 text-red-400" />
               <span className="text-red-400">{space.violations.count} violations</span>
             </div>
           )}
@@ -533,7 +502,7 @@ const BulkActionsBar: React.FC<BulkActionsBarProps> = ({
                 onClick={onClearSelection}
                 className="border-gray-600 text-gray-300"
               >
-                <X className="w-4 h-4 mr-1" />
+                <XMarkIcon className="w-4 h-4 mr-1" />
                 Clear
               </Button>
             </div>
@@ -554,7 +523,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Search and Filter State
+  // MagnifyingGlassIcon and FunnelIcon State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -565,10 +534,10 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
   const [showFilters, setShowFilters] = useState(false);
 
   const spaceTypes = [
-    { value: 'university_spaces', label: 'University Spaces', icon: GraduationCap, description: 'Academic majors, class years, university organizations' },
-    { value: 'residential_spaces', label: 'Residential Spaces', icon: Home, description: 'Dorm buildings and off-campus areas' },
-    { value: 'greek_life_spaces', label: 'Greek Life Spaces', icon: Users, description: 'Individual chapters and Greek councils' },
-    { value: 'student_spaces', label: 'Student Spaces', icon: Heart, description: 'Clubs, organizations, and interest communities' },
+    { value: 'university_spaces', label: 'University Spaces', icon: AcademicCapIcon, description: 'Academic majors, class years, university organizations' },
+    { value: 'residential_spaces', label: 'Residential Spaces', icon: HomeIcon, description: 'Dorm buildings and off-campus areas' },
+    { value: 'greek_life_spaces', label: 'Greek Life Spaces', icon: UsersIcon, description: 'Individual chapters and Greek councils' },
+    { value: 'student_spaces', label: 'Student Spaces', icon: HeartIcon, description: 'Clubs, organizations, and interest communities' },
   ];
 
 
@@ -604,7 +573,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
       const data = await response.json();
       setSpaces(data.spaces || { spaces: [], total: 0, page: 1, limit: 50, filters: { types: [], statuses: [], categories: [] } });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setError(err instanceof Error ? err.message : 'MagnifyingGlassIcon failed');
     } finally {
       setLoading(false);
     }
@@ -708,13 +677,13 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
             className="border-gray-600 text-gray-300"
           >
-            {viewMode === 'grid' ? <BarChart3 className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
+            {viewMode === 'grid' ? <ChartBarIcon className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
           </Button>
           <Button
             onClick={() => window.location.reload()}
             className="bg-amber-500 hover:bg-amber-600 text-black"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <ArrowPathIcon className="w-4 h-4 mr-2" />
             Refresh
           </Button>
         </div>
@@ -729,7 +698,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                 <p className="text-sm font-medium text-gray-400">Total Spaces</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <Database className="w-8 h-8 text-gray-400" />
+              <CircleStackIcon className="w-8 h-8 text-gray-400" />
             </div>
           </CardContent>
         </Card>
@@ -741,7 +710,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                 <p className="text-sm font-medium text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-400" />
+              <CheckCircleIcon className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -753,7 +722,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                 <p className="text-sm font-medium text-gray-400">Pending</p>
                 <p className="text-2xl font-bold text-yellow-400">{stats.pending}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-400" />
+              <ClockIcon className="w-8 h-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -765,23 +734,23 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                 <p className="text-sm font-medium text-gray-400">Issues</p>
                 <p className="text-2xl font-bold text-red-400">{stats.issues}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
+      {/* MagnifyingGlassIcon and Filters */}
       <Card className="border-gray-700 bg-gray-900/50">
         <CardContent className="p-4">
           <div className="space-y-4">
-            {/* Main Search */}
+            {/* Main MagnifyingGlassIcon */}
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search spaces by name, description, or creator..."
+                  placeholder="MagnifyingGlassIcon spaces by name, description, or creator..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && searchSpaces()}
@@ -793,16 +762,16 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                 disabled={loading}
                 className="bg-amber-500 hover:bg-amber-600 text-black"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? 'Searching...' : 'MagnifyingGlassIcon'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
                 className="border-gray-600 text-gray-300"
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <FunnelIcon className="w-4 h-4 mr-2" />
                 Filters
-                <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </Button>
             </div>
 
@@ -854,7 +823,7 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
                     }}
                     className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                   >
-                    <option value="activity-desc">Latest Activity</option>
+                    <option value="activity-desc">Latest ChartBarIcon</option>
                     <option value="created-desc">Newest First</option>
                     <option value="created-asc">Oldest First</option>
                     <option value="members-desc">Most Members</option>
@@ -897,12 +866,12 @@ const EnhancedAdminSpaceManagementInner: React.FC<EnhancedAdminSpaceManagementPr
           <CardContent>
             {loading ? (
               <div className="text-center py-8">
-                <RefreshCw className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
+                <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
                 <p className="text-gray-400">Loading spaces...</p>
               </div>
             ) : filteredSpaces.length === 0 ? (
               <div className="text-center py-12">
-                <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No spaces found</h3>
                 <p className="text-gray-400">Try adjusting your search or filters</p>
               </div>
@@ -948,7 +917,7 @@ export const EnhancedAdminSpaceManagement: React.FC<EnhancedAdminSpaceManagement
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <Cog6ToothIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Enhanced space management is not available</p>
       </div>
     );

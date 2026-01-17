@@ -4,10 +4,10 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "../../atomic/00-Global/atoms/avatar";
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../atomic/00-Global/atoms/tabs";
+} from "../../design-system/primitives/Avatar";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../design-system/primitives/Tabs";
 import { Surface } from "../../layout";
 import { cn } from "../../lib/utils";
 
@@ -238,7 +238,7 @@ function FeedPostCard({ post }: { post: FeedPost }) {
               {post.author.campusRole}
             </span>
             {post.pinned ? (
-              <Badge variant="primary">
+              <Badge variant="gold">
                 Pinned
               </Badge>
             ) : null}
@@ -271,7 +271,7 @@ function FeedPostCard({ post }: { post: FeedPost }) {
       {post.tags && post.tags.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
+            <Badge key={tag} variant="neutral">
               #{tag.replace(/\s+/g, "").toLowerCase()}
             </Badge>
           ))}
@@ -361,7 +361,7 @@ function RitualList({ rituals }: { rituals: FeedRitual[] }) {
           <h3 className="text-sm font-semibold text-[var(--hive-text-primary,#fdfdff)]">Ritual Watch</h3>
           <p className="text-xs text-[var(--hive-text-muted,#949ab0)]">Keep UB’s cadence tight.</p>
         </div>
-        <Button variant="secondary" size="sm">
+        <Button variant="neutral" size="sm">
           Submit
         </Button>
       </header>
@@ -410,7 +410,7 @@ function TrendingSpaces({ spaces }: { spaces: FeedTrendingSpace[] }) {
               </p>
             </div>
             {space.status ? (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 {space.status === "live" ? "Live" : space.status === "growing" ? "Growing" : "Calm"}
               </Badge>
             ) : null}
@@ -443,7 +443,7 @@ export function FeedPage({
               {userName}, curate the rituals, spaces, and tools that keep UB moving.
             </p>
           </div>
-          <Button size="lg" variant="primary" className="self-start md:self-auto">
+          <Button size="lg" variant="gold" className="self-start md:self-auto">
             Compose update
           </Button>
         </div>
@@ -457,7 +457,7 @@ export function FeedPage({
               className="w-full"
               onValueChange={onTabChange}
             >
-              <TabsList className="bg-[var(--hive-background-tertiary,#171827)] text-[var(--hive-text-muted,#9398af)]" variant="pills">
+              <TabsList className="bg-[var(--hive-background-tertiary,#171827)] text-[var(--hive-text-muted,#9398af)]" variant="segment">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="rituals">Rituals</TabsTrigger>
                 <TabsTrigger value="spaces">Spaces</TabsTrigger>

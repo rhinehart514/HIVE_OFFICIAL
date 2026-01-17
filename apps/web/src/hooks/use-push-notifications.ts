@@ -82,8 +82,39 @@ export function usePushPrompt(): UsePushPromptReturn {
       setShouldShow(false);
 
       if (permission === "granted") {
-        // TODO: Register FCM token
-        // await registerFCMToken();
+        // Get FCM token and register it with the server
+        try {
+          const { getMessaging, getToken } = await import("firebase/messaging");
+          const { initializeApp, getApps } = await import("firebase/app");
+
+          // Initialize Firebase if not already done
+          if (getApps().length === 0) {
+            initializeApp({
+              apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+              authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+              projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+              messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+              appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+            });
+          }
+
+          const messaging = getMessaging();
+          const token = await getToken(messaging, {
+            vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+          });
+
+          if (token) {
+            // Register token with server
+            await fetch("/api/profile/fcm-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ token }),
+            });
+          }
+        } catch (fcmError) {
+          console.error("Failed to get/register FCM token:", fcmError);
+        }
         return true;
       }
 
@@ -154,12 +185,26 @@ export function usePushNotifications(): UsePushNotificationsReturn {
   }, [state.isSupported]);
 
   const registerToken = useCallback(async (token: string): Promise<void> => {
-    // TODO: Send token to server via /api/profile/fcm-token
-    setState((prev) => ({
-      ...prev,
-      fcmToken: token,
-    }));
-    console.log("FCM token registered:", token.slice(0, 20) + "...");
+    try {
+      const response = await fetch("/api/profile/fcm-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to register FCM token");
+      }
+
+      setState((prev) => ({
+        ...prev,
+        fcmToken: token,
+      }));
+    } catch (error) {
+      console.error("Failed to register FCM token:", error);
+      throw error;
+    }
   }, []);
 
   return {

@@ -1,28 +1,34 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import {
-  Settings,
-  Type,
-  Hash,
-  ToggleLeft,
-  List,
-  Palette,
-  Move,
-  Maximize2,
-  Trash2,
-  Copy,
-  Lock,
-  Eye,
-  EyeOff,
-  ChevronDown,
-  ChevronRight,
-  AlertCircle,
-} from 'lucide-react';
+import { Cog6ToothIcon, HashtagIcon, ListBulletIcon, ArrowsPointingOutIcon, TrashIcon, ClipboardDocumentIcon, LockClosedIcon, EyeIcon, EyeSlashIcon, ChevronDownIcon, ChevronRightIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { springPresets, durationSeconds } from '@hive/tokens';
 import { cn } from '../../../lib/utils';
 import type { CanvasElement } from './types';
+
+// Make.com Light Panel Colors (consistent with context-rail.tsx)
+const PANEL_COLORS = {
+  bg: '#ffffff',
+  bgHover: '#f5f5f5',
+  bgActive: '#eeeeee',
+  border: '#e0e0e0',
+  borderEmphasis: '#9e9e9e',
+  textPrimary: '#212121',
+  textSecondary: '#757575',
+  textTertiary: '#9E9E9E',
+  accent: '#4CAF50',
+  accentLight: 'rgba(76, 175, 80, 0.1)',
+  error: '#f44336',
+  errorLight: 'rgba(244, 67, 54, 0.1)',
+  success: '#4CAF50',
+  successLight: 'rgba(76, 175, 80, 0.1)',
+  warning: '#ff9800',
+  warningLight: 'rgba(255, 152, 0, 0.1)',
+};
+
+// Workshop tokens
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4CAF50]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
 
 // Validation shake animation
 const shakeAnimation = {
@@ -50,41 +56,186 @@ interface PropertiesPanelProps {
 }
 
 // Element config schemas - defines what properties each element type has
+// Complete coverage for all 27 elements
 const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
+  // =============================================================================
+  // UNIVERSAL ELEMENTS (15)
+  // =============================================================================
+
   'search-input': [
     { key: 'placeholder', type: 'string', label: 'Placeholder', default: 'Search...' },
-    { key: 'showIcon', type: 'boolean', label: 'Show Icon', default: true },
-    { key: 'autoFocus', type: 'boolean', label: 'Auto Focus', default: false },
+    { key: 'showSuggestions', type: 'boolean', label: 'Show Suggestions', default: true },
+    { key: 'debounceMs', type: 'number', label: 'Debounce (ms)', default: 300, min: 0, max: 2000 },
   ],
+
+  'filter-selector': [
+    { key: 'allowMultiple', type: 'boolean', label: 'Allow Multiple', default: true },
+    { key: 'showCounts', type: 'boolean', label: 'Show Counts', default: false },
+  ],
+
+  'result-list': [
+    { key: 'itemsPerPage', type: 'number', label: 'Items Per Page', default: 10, min: 1, max: 100 },
+    { key: 'showPagination', type: 'boolean', label: 'Show Pagination', default: true },
+    { key: 'cardStyle', type: 'select', label: 'Card Style', options: ['standard', 'compact', 'detailed'], default: 'standard' },
+  ],
+
+  'date-picker': [
+    { key: 'includeTime', type: 'boolean', label: 'Include Time', default: false },
+    { key: 'allowRange', type: 'boolean', label: 'Allow Range', default: false },
+    { key: 'minDate', type: 'string', label: 'Min Date', default: '' },
+    { key: 'maxDate', type: 'string', label: 'Max Date', default: '' },
+  ],
+
+  'tag-cloud': [
+    { key: 'maxTags', type: 'number', label: 'Max Tags', default: 50, min: 5, max: 200 },
+    { key: 'sortBy', type: 'select', label: 'Sort By', options: ['frequency', 'alphabetical', 'recent'], default: 'frequency' },
+    { key: 'showCounts', type: 'boolean', label: 'Show Counts', default: true },
+  ],
+
+  'map-view': [
+    { key: 'defaultZoom', type: 'number', label: 'Default Zoom', default: 10, min: 1, max: 20 },
+    { key: 'allowMarkers', type: 'boolean', label: 'Allow Markers', default: true },
+    { key: 'showControls', type: 'boolean', label: 'Show Controls', default: true },
+  ],
+
+  'chart-display': [
+    { key: 'chartType', type: 'select', label: 'Chart Type', options: ['bar', 'line', 'pie', 'area', 'doughnut'], default: 'bar' },
+    { key: 'showLegend', type: 'boolean', label: 'Show Legend', default: true },
+    { key: 'animate', type: 'boolean', label: 'Animate', default: true },
+  ],
+
   'form-builder': [
     { key: 'title', type: 'string', label: 'Form Title', default: 'Form' },
     { key: 'submitLabel', type: 'string', label: 'Submit Button', default: 'Submit' },
-    { key: 'fields', type: 'array', label: 'Fields', default: [] },
+    { key: 'validateOnChange', type: 'boolean', label: 'Validate On Change', default: true },
+    { key: 'showProgress', type: 'boolean', label: 'Show Progress', default: false },
   ],
-  'date-picker': [
-    { key: 'label', type: 'string', label: 'Label', default: 'Select Date' },
-    { key: 'allowRange', type: 'boolean', label: 'Allow Range', default: false },
-    { key: 'showTime', type: 'boolean', label: 'Show Time', default: false },
+
+  'countdown-timer': [
+    { key: 'label', type: 'string', label: 'Label', default: 'Time Remaining' },
+    { key: 'targetDate', type: 'string', label: 'Target Date (ISO)', default: '' },
+    { key: 'showDays', type: 'boolean', label: 'Show Days', default: true },
+    { key: 'onComplete', type: 'string', label: 'On Complete Action', default: '' },
   ],
-  'result-list': [
-    { key: 'itemsPerPage', type: 'number', label: 'Items Per Page', default: 10 },
-    { key: 'showPagination', type: 'boolean', label: 'Show Pagination', default: true },
-    { key: 'layout', type: 'select', label: 'Layout', options: ['list', 'grid', 'cards'], default: 'list' },
-  ],
+
   'poll-element': [
     { key: 'question', type: 'string', label: 'Question', default: 'What do you think?' },
-    { key: 'allowMultiple', type: 'boolean', label: 'Multiple Choice', default: false },
+    { key: 'allowMultipleVotes', type: 'boolean', label: 'Allow Multiple Votes', default: false },
     { key: 'showResults', type: 'boolean', label: 'Show Results', default: true },
+    { key: 'anonymousVoting', type: 'boolean', label: 'Anonymous Voting', default: false },
   ],
-  'countdown-timer': [
-    { key: 'targetDate', type: 'string', label: 'Target Date', default: '' },
-    { key: 'label', type: 'string', label: 'Label', default: 'Time Remaining' },
-    { key: 'showDays', type: 'boolean', label: 'Show Days', default: true },
-  ],
+
   'leaderboard': [
     { key: 'title', type: 'string', label: 'Title', default: 'Leaderboard' },
-    { key: 'maxItems', type: 'number', label: 'Max Items', default: 10 },
+    { key: 'maxEntries', type: 'number', label: 'Max Entries', default: 10, min: 3, max: 100 },
     { key: 'showRank', type: 'boolean', label: 'Show Rank', default: true },
+    { key: 'showScore', type: 'boolean', label: 'Show Score', default: true },
+    { key: 'scoreLabel', type: 'string', label: 'Score Label', default: 'Points' },
+    { key: 'highlightTop', type: 'number', label: 'Highlight Top N', default: 3, min: 0, max: 10 },
+  ],
+
+  'notification-display': [
+    { key: 'maxNotifications', type: 'number', label: 'Max Notifications', default: 10, min: 1, max: 50 },
+    { key: 'groupByType', type: 'boolean', label: 'Group By Type', default: true },
+    { key: 'autoMarkRead', type: 'boolean', label: 'Auto Mark Read', default: false },
+  ],
+
+  'timer': [
+    { key: 'label', type: 'string', label: 'Label', default: 'Timer' },
+    { key: 'showControls', type: 'boolean', label: 'Show Controls', default: true },
+    { key: 'countUp', type: 'boolean', label: 'Count Up (vs Down)', default: true },
+    { key: 'initialSeconds', type: 'number', label: 'Initial Seconds', default: 0, min: 0 },
+  ],
+
+  'counter': [
+    { key: 'label', type: 'string', label: 'Label', default: 'Count' },
+    { key: 'initialValue', type: 'number', label: 'Initial Value', default: 0 },
+    { key: 'step', type: 'number', label: 'Step', default: 1, min: 1 },
+    { key: 'min', type: 'number', label: 'Min Value', default: 0 },
+    { key: 'max', type: 'number', label: 'Max Value', default: 999 },
+    { key: 'showControls', type: 'boolean', label: 'Show +/- Buttons', default: true },
+  ],
+
+  'availability-heatmap': [
+    { key: 'startHour', type: 'number', label: 'Start Hour', default: 8, min: 0, max: 23 },
+    { key: 'endHour', type: 'number', label: 'End Hour', default: 22, min: 1, max: 24 },
+    { key: 'timeFormat', type: 'select', label: 'Time Format', options: ['12h', '24h'], default: '12h' },
+    { key: 'highlightThreshold', type: 'number', label: 'Highlight Threshold', default: 0.7, min: 0, max: 1 },
+  ],
+
+  // =============================================================================
+  // CONNECTED ELEMENTS (5)
+  // =============================================================================
+
+  'event-picker': [
+    { key: 'showPastEvents', type: 'boolean', label: 'Show Past Events', default: false },
+    { key: 'filterByCategory', type: 'string', label: 'Filter Category', default: '' },
+    { key: 'maxEvents', type: 'number', label: 'Max Events', default: 20, min: 1, max: 100 },
+  ],
+
+  'space-picker': [
+    { key: 'filterByCategory', type: 'string', label: 'Filter Category', default: '' },
+    { key: 'showMemberCount', type: 'boolean', label: 'Show Member Count', default: true },
+  ],
+
+  'user-selector': [
+    { key: 'allowMultiple', type: 'boolean', label: 'Allow Multiple', default: false },
+    { key: 'showAvatars', type: 'boolean', label: 'Show Avatars', default: true },
+  ],
+
+  'rsvp-button': [
+    { key: 'eventName', type: 'string', label: 'Event Name', default: 'Event' },
+    { key: 'maxAttendees', type: 'number', label: 'Max Attendees', default: 100, min: 1 },
+    { key: 'showCount', type: 'boolean', label: 'Show Count', default: true },
+    { key: 'requireConfirmation', type: 'boolean', label: 'Require Confirmation', default: false },
+    { key: 'allowWaitlist', type: 'boolean', label: 'Allow Waitlist', default: true },
+  ],
+
+  'connection-list': [
+    { key: 'maxConnections', type: 'number', label: 'Max Connections', default: 10, min: 1, max: 50 },
+    { key: 'showMutual', type: 'boolean', label: 'Show Mutual', default: true },
+  ],
+
+  // =============================================================================
+  // SPACE ELEMENTS (7) - Leaders only
+  // =============================================================================
+
+  'member-list': [
+    { key: 'maxMembers', type: 'number', label: 'Max Members', default: 20, min: 1, max: 100 },
+    { key: 'showRole', type: 'boolean', label: 'Show Role', default: true },
+    { key: 'showJoinDate', type: 'boolean', label: 'Show Join Date', default: false },
+  ],
+
+  'member-selector': [
+    { key: 'allowMultiple', type: 'boolean', label: 'Allow Multiple', default: true },
+    { key: 'filterByRole', type: 'string', label: 'Filter By Role', default: '' },
+    { key: 'showAvatars', type: 'boolean', label: 'Show Avatars', default: true },
+  ],
+
+  'space-events': [
+    { key: 'showPast', type: 'boolean', label: 'Show Past Events', default: false },
+    { key: 'maxEvents', type: 'number', label: 'Max Events', default: 5, min: 1, max: 20 },
+    { key: 'showRsvpCount', type: 'boolean', label: 'Show RSVP Count', default: true },
+  ],
+
+  'space-feed': [
+    { key: 'maxPosts', type: 'number', label: 'Max Posts', default: 5, min: 1, max: 20 },
+    { key: 'showEngagement', type: 'boolean', label: 'Show Engagement', default: true },
+  ],
+
+  'space-stats': [
+    { key: 'showTrends', type: 'boolean', label: 'Show Trends', default: true },
+  ],
+
+  'announcement': [
+    { key: 'title', type: 'string', label: 'Title', default: 'Announcement' },
+    { key: 'pinned', type: 'boolean', label: 'Pinned', default: false },
+    { key: 'sendNotification', type: 'boolean', label: 'Send Notification', default: true },
+    { key: 'expiresAt', type: 'string', label: 'Expires At (ISO)', default: '' },
+  ],
+
+  'role-gate': [
+    { key: 'fallbackMessage', type: 'string', label: 'Fallback Message', default: 'This content is restricted.' },
   ],
 };
 
@@ -140,13 +291,14 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             aria-label={schema.label}
             aria-invalid={hasError}
             className={cn(
-              'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150',
-              hasError
-                ? 'border-red-500 ring-2 ring-red-500/20'
-                : isFocused
-                  ? 'border-white ring-2 ring-white/20'
-                  : 'border-[#333]'
+              'w-full rounded-lg px-3 py-2 text-sm outline-none transition-all duration-200',
+              focusRing
             )}
+            style={{
+              backgroundColor: PANEL_COLORS.bgHover,
+              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
+              color: PANEL_COLORS.textPrimary,
+            }}
           />
           {hasError && (
             <motion.div
@@ -154,7 +306,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               animate={{ opacity: 1, scale: 1 }}
               className="absolute right-2 top-1/2 -translate-y-1/2"
             >
-              <AlertCircle className="h-4 w-4 text-red-500" />
+              <ExclamationCircleIcon className="h-4 w-4" style={{ color: PANEL_COLORS.error }} />
             </motion.div>
           )}
         </motion.div>
@@ -187,13 +339,14 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             aria-valuemin={schema.min}
             aria-valuemax={schema.max}
             className={cn(
-              'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150 font-mono',
-              hasError
-                ? 'border-red-500 ring-2 ring-red-500/20'
-                : isFocused
-                  ? 'border-white ring-2 ring-white/20'
-                  : 'border-[#333]'
+              'w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200',
+              focusRing
             )}
+            style={{
+              backgroundColor: PANEL_COLORS.bgHover,
+              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
+              color: PANEL_COLORS.textPrimary,
+            }}
           />
           {/* Arrow key feedback indicator */}
           <AnimatePresence>
@@ -203,11 +356,12 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className={cn(
-                  'absolute right-2 top-1/2 -translate-y-1/2 text-white',
+                  'absolute right-2 top-1/2 -translate-y-1/2',
                   nudgeDirection === 'up' ? 'rotate-180' : ''
                 )}
+                style={{ color: PANEL_COLORS.accent }}
               >
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDownIcon className="h-3 w-3" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -223,17 +377,18 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
           role="switch"
           aria-checked={Boolean(currentValue)}
           aria-label={`${schema.label}: ${currentValue ? 'enabled' : 'disabled'}`}
-          className={cn(
-            'w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200',
-            currentValue ? 'bg-emerald-500' : 'bg-[#333] hover:bg-[#444]'
-          )}
+          className="w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200"
+          style={{
+            backgroundColor: Boolean(currentValue) ? PANEL_COLORS.success : PANEL_COLORS.bgActive,
+          }}
         >
           {/* Track glow when on */}
           {Boolean(currentValue) && !prefersReducedMotion && (
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              className="absolute inset-0 rounded-full bg-emerald-500 blur-sm"
+              animate={{ opacity: 0.3 }}
+              className="absolute inset-0 rounded-full blur-sm"
+              style={{ backgroundColor: PANEL_COLORS.success }}
             />
           )}
           {/* Thumb with spring physics */}
@@ -253,7 +408,8 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ delay: 0.1 }}
-                className="absolute left-[26px] top-1.5 w-3 h-3 text-emerald-400 z-20"
+                className="absolute left-[26px] top-1.5 w-3 h-3 z-20"
+                style={{ color: PANEL_COLORS.success }}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -279,13 +435,14 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             aria-label={schema.label}
             aria-invalid={hasError}
             className={cn(
-              'w-full bg-[#252525] border rounded-lg px-3 py-1.5 text-sm text-white outline-none transition-all duration-150 cursor-pointer',
-              hasError
-                ? 'border-red-500 ring-2 ring-red-500/20'
-                : isFocused
-                  ? 'border-white ring-2 ring-white/20'
-                  : 'border-[#333]'
+              'w-full rounded-lg px-3 py-2 text-sm cursor-pointer outline-none transition-all duration-200',
+              focusRing
             )}
+            style={{
+              backgroundColor: PANEL_COLORS.bgHover,
+              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
+              color: PANEL_COLORS.textPrimary,
+            }}
           >
             {schema.options?.map((option) => (
               <option key={option} value={option}>
@@ -297,7 +454,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
       );
 
     default:
-      return <span className="text-xs text-[#666]">Unsupported type</span>;
+      return <span className="text-xs" style={{ color: PANEL_COLORS.textTertiary }}>Unsupported type</span>;
   }
 }
 
@@ -315,17 +472,28 @@ function Section({
   const sectionId = `section-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div className="border-b border-[#333]">
+    <div style={{ borderBottom: `1px solid ${PANEL_COLORS.border}` }}>
       <motion.button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        whileHover={prefersReducedMotion ? {} : { backgroundColor: 'rgba(37, 37, 37, 0.8)' }}
         whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
         aria-expanded={expanded}
         aria-controls={sectionId}
-        className="flex items-center justify-between w-full px-3 py-2 text-left transition-colors"
+        className={cn(
+          'flex items-center justify-between w-full px-4 py-2.5 text-left transition-colors duration-200',
+          focusRing
+        )}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
-        <span className="text-xs font-medium text-[#888] uppercase tracking-wider">
+        <span
+          className="text-[10px] font-medium uppercase tracking-wider"
+          style={{ color: PANEL_COLORS.textTertiary }}
+        >
           {title}
         </span>
         {/* Spring-animated chevron rotation */}
@@ -333,7 +501,7 @@ function Section({
           animate={{ rotate: expanded ? 90 : 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : springPresets.snappy}
         >
-          <ChevronRight className="h-3.5 w-3.5 text-[#666]" />
+          <ChevronRightIcon className="h-3.5 w-3.5" style={{ color: PANEL_COLORS.textTertiary }} />
         </motion.div>
       </motion.button>
       <AnimatePresence>
@@ -354,7 +522,7 @@ function Section({
                   ? { duration: 0 }
                   : { delay: 0.05, ...springPresets.snappy }
               }
-              className="px-3 pb-3 space-y-3"
+              className="px-4 pb-4 space-y-3"
             >
               {children}
             </motion.div>
@@ -395,10 +563,10 @@ export function PropertiesPanel({
             ease: 'easeInOut',
           }}
         >
-          <Settings className="h-12 w-12 text-[#333] mb-4" />
+          <Cog6ToothIcon className="h-12 w-12 mb-4" style={{ color: `${PANEL_COLORS.textTertiary}50` }} />
         </motion.div>
-        <h3 className="text-sm font-medium text-white mb-1">No Selection</h3>
-        <p className="text-xs text-[#666]">Select an element to view its properties</p>
+        <h3 className="text-sm font-medium mb-1" style={{ color: PANEL_COLORS.textPrimary }}>No Selection</h3>
+        <p className="text-xs" style={{ color: PANEL_COLORS.textTertiary }}>Select an element to view its properties</p>
       </motion.div>
     );
   }
@@ -424,13 +592,14 @@ export function PropertiesPanel({
       className="flex flex-col h-full"
     >
       {/* Header */}
-      <div className="px-3 py-3 border-b border-[#333]">
+      <div className="px-4 py-4" style={{ borderBottom: `1px solid ${PANEL_COLORS.border}` }}>
         <div className="flex items-center justify-between">
           <motion.h3
             initial={prefersReducedMotion ? {} : { opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="text-sm font-medium text-white"
+            className="text-sm font-semibold"
+            style={{ color: PANEL_COLORS.textPrimary }}
           >
             {displayName}
           </motion.h3>
@@ -442,7 +611,16 @@ export function PropertiesPanel({
               }
               whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
               whileTap={prefersReducedMotion ? {} : { scale: 0.9 }}
-              className="p-1.5 text-[#666] hover:text-white rounded transition-colors"
+              className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
+              style={{ color: PANEL_COLORS.textTertiary }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = PANEL_COLORS.textPrimary;
+                e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = PANEL_COLORS.textTertiary;
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
               aria-label={selectedElement.visible ? 'Hide element' : 'Show element'}
               aria-pressed={selectedElement.visible}
             >
@@ -455,7 +633,7 @@ export function PropertiesPanel({
                     exit={{ scale: 0, rotate: 90 }}
                     transition={springPresets.snappy}
                   >
-                    <Eye className="h-4 w-4" />
+                    <EyeIcon className="h-4 w-4" />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -465,7 +643,7 @@ export function PropertiesPanel({
                     exit={{ scale: 0, rotate: -90 }}
                     transition={springPresets.snappy}
                   >
-                    <EyeOff className="h-4 w-4" />
+                    <EyeSlashIcon className="h-4 w-4" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -483,16 +661,27 @@ export function PropertiesPanel({
                   : {}
               }
               transition={{ duration: 0.3 }}
-              className={cn(
-                'p-1.5 rounded transition-colors',
-                selectedElement.locked
-                  ? 'text-amber-400 bg-amber-400/10'
-                  : 'text-[#666] hover:text-white'
-              )}
+              className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
+              style={{
+                color: selectedElement.locked ? PANEL_COLORS.warning : PANEL_COLORS.textTertiary,
+                backgroundColor: selectedElement.locked ? PANEL_COLORS.warningLight : 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                if (!selectedElement.locked) {
+                  e.currentTarget.style.color = PANEL_COLORS.textPrimary;
+                  e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!selectedElement.locked) {
+                  e.currentTarget.style.color = PANEL_COLORS.textTertiary;
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
               aria-label={selectedElement.locked ? 'Unlock element' : 'Lock element'}
               aria-pressed={selectedElement.locked}
             >
-              <Lock className="h-4 w-4" />
+              <LockClosedIcon className="h-4 w-4" />
             </motion.button>
           </div>
         </div>
@@ -500,9 +689,10 @@ export function PropertiesPanel({
           initial={prefersReducedMotion ? {} : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="text-xs text-[#666] mt-1"
+          className="text-xs mt-1 font-mono"
+          style={{ color: PANEL_COLORS.textTertiary }}
         >
-          ID: {selectedElement.id}
+          ID: {selectedElement.id.slice(0, 20)}...
         </motion.p>
       </div>
 
@@ -510,9 +700,9 @@ export function PropertiesPanel({
       <div className="flex-1 overflow-y-auto">
         {/* Transform */}
         <Section title="Transform">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-[#666] mb-1 block">X</label>
+              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>X</label>
               <input
                 type="number"
                 value={Math.round(selectedElement.position.x)}
@@ -521,11 +711,16 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, x: Number(e.target.value) },
                   })
                 }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                style={{
+                  backgroundColor: PANEL_COLORS.bgHover,
+                  border: `1px solid ${PANEL_COLORS.border}`,
+                  color: PANEL_COLORS.textPrimary,
+                }}
               />
             </div>
             <div>
-              <label className="text-xs text-[#666] mb-1 block">Y</label>
+              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Y</label>
               <input
                 type="number"
                 value={Math.round(selectedElement.position.y)}
@@ -534,11 +729,16 @@ export function PropertiesPanel({
                     position: { ...selectedElement.position, y: Number(e.target.value) },
                   })
                 }
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                style={{
+                  backgroundColor: PANEL_COLORS.bgHover,
+                  border: `1px solid ${PANEL_COLORS.border}`,
+                  color: PANEL_COLORS.textPrimary,
+                }}
               />
             </div>
             <div>
-              <label className="text-xs text-[#666] mb-1 block">Width</label>
+              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Width</label>
               <input
                 type="number"
                 min={50}
@@ -550,11 +750,16 @@ export function PropertiesPanel({
                     size: { ...selectedElement.size, width: value },
                   });
                 }}
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                style={{
+                  backgroundColor: PANEL_COLORS.bgHover,
+                  border: `1px solid ${PANEL_COLORS.border}`,
+                  color: PANEL_COLORS.textPrimary,
+                }}
               />
             </div>
             <div>
-              <label className="text-xs text-[#666] mb-1 block">Height</label>
+              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Height</label>
               <input
                 type="number"
                 min={30}
@@ -566,7 +771,12 @@ export function PropertiesPanel({
                     size: { ...selectedElement.size, height: value },
                   });
                 }}
-                className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white"
+                className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+                style={{
+                  backgroundColor: PANEL_COLORS.bgHover,
+                  border: `1px solid ${PANEL_COLORS.border}`,
+                  color: PANEL_COLORS.textPrimary,
+                }}
               />
             </div>
           </div>
@@ -577,7 +787,7 @@ export function PropertiesPanel({
           <Section title="Configuration">
             {schema.map((prop) => (
               <div key={prop.key}>
-                <label className="text-xs text-[#666] mb-1 block">{prop.label}</label>
+                <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>{prop.label}</label>
                 <PropertyField
                   schema={prop}
                   value={selectedElement.config[prop.key]}
@@ -591,7 +801,7 @@ export function PropertiesPanel({
         {/* Layout */}
         <Section title="Layout" defaultExpanded={false}>
           <div>
-            <label className="text-xs text-[#666] mb-1 block">Z-Index</label>
+            <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Z-Index</label>
             <input
               type="number"
               min={1}
@@ -601,7 +811,12 @@ export function PropertiesPanel({
                 const value = Math.max(1, Math.min(999, Number(e.target.value) || 1));
                 onUpdateElement(selectedElement.id, { zIndex: value });
               }}
-              className="w-full bg-[#252525] border border-[#333] rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-white/50"
+              className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+              style={{
+                backgroundColor: PANEL_COLORS.bgHover,
+                border: `1px solid ${PANEL_COLORS.border}`,
+                color: PANEL_COLORS.textPrimary,
+              }}
             />
           </div>
         </Section>
@@ -612,41 +827,66 @@ export function PropertiesPanel({
         initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="px-3 py-3 border-t border-[#333] space-y-2"
+        className="px-4 py-4 space-y-2"
+        style={{ borderTop: `1px solid ${PANEL_COLORS.border}` }}
       >
         <motion.button
           type="button"
           onClick={() => onDuplicateElement(selectedElement.id)}
-          whileHover={prefersReducedMotion ? {} : { scale: 1.02, backgroundColor: '#333' }}
+          whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
           aria-label={`Duplicate ${displayName}`}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-[#252525] text-white rounded-lg transition-colors text-sm"
+          className={cn(
+            'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
+            focusRing
+          )}
+          style={{
+            backgroundColor: PANEL_COLORS.bgHover,
+            color: PANEL_COLORS.textPrimary,
+            border: `1px solid ${PANEL_COLORS.border}`,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = PANEL_COLORS.bgActive;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+          }}
         >
           <motion.div
             whileHover={prefersReducedMotion ? {} : { rotate: 15 }}
             transition={springPresets.snappy}
           >
-            <Copy className="h-4 w-4" />
+            <ClipboardDocumentIcon className="h-4 w-4" style={{ color: PANEL_COLORS.textSecondary }} />
           </motion.div>
           Duplicate
         </motion.button>
         <motion.button
           type="button"
           onClick={() => onDeleteElement(selectedElement.id)}
-          whileHover={
-            prefersReducedMotion
-              ? {}
-              : { scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.2)' }
-          }
+          whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
           whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
           aria-label={`Delete ${displayName}`}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-red-500/10 text-red-400 rounded-lg transition-colors text-sm group"
+          className={cn(
+            'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
+            focusRing
+          )}
+          style={{
+            backgroundColor: PANEL_COLORS.errorLight,
+            color: PANEL_COLORS.error,
+            border: `1px solid rgba(244, 67, 54, 0.2)`,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = PANEL_COLORS.errorLight;
+          }}
         >
           <motion.div
             whileHover={prefersReducedMotion ? {} : { rotate: -10, scale: 1.1 }}
             transition={springPresets.snappy}
           >
-            <Trash2 className="h-4 w-4" />
+            <TrashIcon className="h-4 w-4" />
           </motion.div>
           Delete
         </motion.button>

@@ -1,31 +1,17 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import {
-  Search,
-  FormInput,
-  BarChart3,
-  Filter,
-  Calendar,
-  Users,
-  ListChecks,
-  Timer,
-  Trophy,
-  Vote,
-  PieChart,
-  CalendarDays,
-  Building,
-  UserPlus,
-  Network,
-  UsersRound,
-  UserCheck,
-  CalendarRange,
-  Newspaper,
-  TrendingUp,
-  Megaphone,
-  Shield,
-  ChevronRight,
-} from 'lucide-react';
+import { MagnifyingGlassIcon, ChartBarIcon, FunnelIcon, CalendarIcon, UsersIcon, ClockIcon, TrophyIcon, ChartPieIcon, CalendarDaysIcon, BuildingOfficeIcon, UserPlusIcon, UserIcon, ArrowTrendingUpIcon, ShieldCheckIcon, ChevronRightIcon, DocumentTextIcon, ListBulletIcon, HandThumbUpIcon, GlobeAltIcon, NewspaperIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const FormInput = DocumentTextIcon;
+const ListChecks = ListBulletIcon;
+const Vote = HandThumbUpIcon;
+const Network = GlobeAltIcon;
+const UsersRound = UsersIcon;
+const CalendarRange = CalendarDaysIcon;
+const Newspaper = NewspaperIcon;
+const Megaphone = MegaphoneIcon;
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import { springPresets, staggerPresets } from '@hive/tokens';
@@ -51,7 +37,24 @@ interface ElementDefinition {
   icon: React.ReactNode;
   category: 'input' | 'display' | 'filter' | 'action' | 'layout';
   tier: 'universal' | 'connected' | 'space';
+  /** Element status - 'ready' means fully implemented, 'coming-soon' means stub/no backend */
+  status?: 'ready' | 'coming-soon';
 }
+
+// Elements that are not yet fully implemented (stub or missing backend APIs)
+// These will be hidden from the palette until ready
+const HIDDEN_ELEMENTS = new Set([
+  'study-spot-finder', // Calls /api/campus/buildings/study-spots - API doesn't exist
+  'dining-picker',     // Calls /api/campus/dining - API doesn't exist
+]);
+
+// Elements that are coming soon - show greyed out with badge
+// Note: Space-tier elements work fine when deployed to a space context.
+// They show placeholder UI in preview but function correctly when deployed.
+const COMING_SOON_ELEMENTS = new Set<string>([
+  // Currently no elements are marked as coming-soon
+  // Space-tier elements (member-list, space-events, etc.) work when deployed to a space
+]);
 
 // Focused element set for tool building - 20 elements total
 const ELEMENTS: ElementDefinition[] = [
@@ -62,9 +65,9 @@ const ELEMENTS: ElementDefinition[] = [
   // Input (4)
   {
     id: 'search-input',
-    name: 'Search Input',
+    name: 'MagnifyingGlassIcon Input',
     description: 'Text search with suggestions',
-    icon: <Search className="h-4 w-4" />,
+    icon: <MagnifyingGlassIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'universal',
   },
@@ -80,7 +83,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'date-picker',
     name: 'Date Picker',
     description: 'Select dates and times',
-    icon: <Calendar className="h-4 w-4" />,
+    icon: <CalendarIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'universal',
   },
@@ -98,7 +101,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'chart-display',
     name: 'Chart Display',
     description: 'Visualize poll/vote results',
-    icon: <PieChart className="h-4 w-4" />,
+    icon: <ChartPieIcon className="h-4 w-4" />,
     category: 'display',
     tier: 'universal',
   },
@@ -106,7 +109,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'leaderboard',
     name: 'Leaderboard',
     description: 'Ranked scores & gamification',
-    icon: <Trophy className="h-4 w-4" />,
+    icon: <TrophyIcon className="h-4 w-4" />,
     category: 'display',
     tier: 'universal',
   },
@@ -114,17 +117,17 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'countdown-timer',
     name: 'Countdown',
     description: 'Count down to event',
-    icon: <Timer className="h-4 w-4" />,
+    icon: <ClockIcon className="h-4 w-4" />,
     category: 'display',
     tier: 'universal',
   },
 
-  // Filter (1)
+  // FunnelIcon (1)
   {
     id: 'filter-selector',
-    name: 'Filter Selector',
+    name: 'FunnelIcon Selector',
     description: 'Multi-select filters',
-    icon: <Filter className="h-4 w-4" />,
+    icon: <FunnelIcon className="h-4 w-4" />,
     category: 'filter',
     tier: 'universal',
   },
@@ -142,15 +145,15 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'counter',
     name: 'Counter',
     description: 'Track attendance & counts',
-    icon: <BarChart3 className="h-4 w-4" />,
+    icon: <ChartBarIcon className="h-4 w-4" />,
     category: 'action',
     tier: 'universal',
   },
   {
     id: 'timer',
-    name: 'Timer',
+    name: 'ClockIcon',
     description: 'Stopwatch for sessions',
-    icon: <Timer className="h-4 w-4" />,
+    icon: <ClockIcon className="h-4 w-4" />,
     category: 'action',
     tier: 'universal',
   },
@@ -164,7 +167,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'event-picker',
     name: 'Event Picker',
     description: 'Browse campus events',
-    icon: <CalendarDays className="h-4 w-4" />,
+    icon: <CalendarDaysIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'connected',
   },
@@ -172,7 +175,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'space-picker',
     name: 'Space Picker',
     description: 'Browse campus spaces',
-    icon: <Building className="h-4 w-4" />,
+    icon: <BuildingOfficeIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'connected',
   },
@@ -180,7 +183,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'user-selector',
     name: 'User Selector',
     description: 'Pick campus users',
-    icon: <Users className="h-4 w-4" />,
+    icon: <UsersIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'connected',
   },
@@ -200,7 +203,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'rsvp-button',
     name: 'RSVP Button',
     description: 'Event attendance',
-    icon: <UserPlus className="h-4 w-4" />,
+    icon: <UserPlusIcon className="h-4 w-4" />,
     category: 'action',
     tier: 'connected',
   },
@@ -214,7 +217,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'member-selector',
     name: 'Member Selector',
     description: 'Select space members',
-    icon: <UserCheck className="h-4 w-4" />,
+    icon: <UserIcon className="h-4 w-4" />,
     category: 'input',
     tier: 'space',
   },
@@ -248,7 +251,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'space-stats',
     name: 'Space Stats',
     description: 'Space analytics',
-    icon: <TrendingUp className="h-4 w-4" />,
+    icon: <ArrowTrendingUpIcon className="h-4 w-4" />,
     category: 'display',
     tier: 'space',
   },
@@ -268,7 +271,7 @@ const ELEMENTS: ElementDefinition[] = [
     id: 'role-gate',
     name: 'Role Gate',
     description: 'Restrict by role',
-    icon: <Shield className="h-4 w-4" />,
+    icon: <ShieldCheckIcon className="h-4 w-4" />,
     category: 'layout',
     tier: 'space',
   },
@@ -277,7 +280,7 @@ const ELEMENTS: ElementDefinition[] = [
 const CATEGORIES = [
   { id: 'input', name: 'Input', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   { id: 'display', name: 'Display', color: 'text-green-400', bg: 'bg-green-500/10' },
-  { id: 'filter', name: 'Filter', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { id: 'filter', name: 'FunnelIcon', color: 'text-purple-400', bg: 'bg-purple-500/10' },
   { id: 'action', name: 'Action', color: 'text-orange-400', bg: 'bg-orange-500/10' },
   { id: 'layout', name: 'Layout', color: 'text-pink-400', bg: 'bg-pink-500/10' },
 ];
@@ -298,8 +301,14 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
   // Premium tier gets special effects
   const isPremiumTier = element.tier === 'space';
   const isConnectedTier = element.tier === 'connected';
+  const isComingSoon = element.status === 'coming-soon';
 
   const handleDragStart = (e: React.DragEvent) => {
+    // Prevent dragging coming soon elements
+    if (isComingSoon) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData('elementId', element.id);
     e.dataTransfer.effectAllowed = 'copy';
     setIsDragging(true);
@@ -311,14 +320,9 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
     onDragEnd();
   };
 
-  // Premium shine colors based on tier
-  const shineColors = isPremiumTier
-    ? ['#A855F7', '#EC4899'] // Purple-pink for space tier
-    : ['#3B82F6', '#06B6D4']; // Blue-cyan for connected tier
-
   return (
     <motion.div
-      draggable
+      draggable={!isComingSoon}
       // Native HTML5 drag handlers - use any cast to avoid Framer Motion type conflict
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onDragStart={handleDragStart as any}
@@ -328,7 +332,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
       onMouseLeave={() => setIsHovered(false)}
       initial={{ opacity: 0, x: -10 }}
       animate={{
-        opacity: 1,
+        opacity: isComingSoon ? 0.5 : 1,
         x: 0,
         scale: isDragging ? 0.95 : 1,
         rotate: isDragging ? 2 : 0,
@@ -338,7 +342,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
         ...springPresets.snappy,
         delay: prefersReducedMotion ? 0 : index * staggerPresets.fast,
       }}
-      whileHover={{
+      whileHover={isComingSoon ? {} : {
         scale: 1.02,
         y: -2,
         boxShadow: isPremiumTier
@@ -347,16 +351,18 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
             ? '0 4px 16px rgba(59, 130, 246, 0.15)'
             : '0 4px 12px rgba(0,0,0,0.3)',
       }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={isComingSoon ? {} : { scale: 0.98 }}
       role="button"
-      aria-label={`${element.name}: ${element.description}. Drag to canvas to add.`}
-      aria-roledescription="draggable element"
+      aria-label={`${element.name}: ${element.description}. ${isComingSoon ? 'Coming soon.' : 'Drag to canvas to add.'}`}
+      aria-roledescription={isComingSoon ? 'coming soon element' : 'draggable element'}
+      aria-disabled={isComingSoon}
       className={cn(
-        'relative p-3 bg-[#1a1a1a] border border-[#333] rounded-xl cursor-grab active:cursor-grabbing transition-colors group overflow-hidden',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0d0d0d]',
-        isDragging && 'border-white/50 shadow-lg',
-        isPremiumTier && 'border-purple-500/30',
-        isConnectedTier && 'border-blue-500/20'
+        'relative p-3 bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)] rounded-xl transition-colors duration-[var(--workshop-duration)] group overflow-hidden',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]',
+        isDragging && 'border-[var(--hivelab-border-emphasis)] shadow-lg',
+        isPremiumTier && !isComingSoon && 'border-purple-500/30',
+        isConnectedTier && !isComingSoon && 'border-blue-500/20',
+        isComingSoon ? 'cursor-not-allowed opacity-50' : 'cursor-grab active:cursor-grabbing'
       )}
     >
       <div className="flex items-start gap-3 relative z-10">
@@ -364,17 +370,28 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
           className={cn(
             'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
             category?.bg,
-            category?.color
+            category?.color,
+            isComingSoon && 'opacity-50'
           )}
-          whileHover={{ scale: 1.05 }}
+          whileHover={isComingSoon ? {} : { scale: 1.05 }}
           transition={springPresets.bouncy}
         >
           {element.icon}
         </motion.div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-white truncate">{element.name}</p>
-            {element.tier !== 'universal' && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className={cn(
+              'text-sm font-medium truncate',
+              isComingSoon ? 'text-white/50' : 'text-white'
+            )}>
+              {element.name}
+            </p>
+            {isComingSoon && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-zinc-700/50 text-zinc-400 border border-zinc-600/50">
+                Soon
+              </span>
+            )}
+            {!isComingSoon && element.tier !== 'universal' && (
               <motion.span
                 className={cn(
                   'px-1.5 py-0.5 text-[10px] font-medium rounded',
@@ -399,7 +416,12 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
               </motion.span>
             )}
           </div>
-          <p className="text-xs text-[#888] truncate group-hover:text-[#aaa] transition-colors">
+          <p className={cn(
+            'text-xs truncate transition-colors duration-[var(--workshop-duration)]',
+            isComingSoon
+              ? 'text-[var(--hivelab-text-tertiary)]/50'
+              : 'text-[var(--hivelab-text-tertiary)] group-hover:text-[var(--hivelab-text-secondary)]'
+          )}>
             {element.description}
           </p>
         </div>
@@ -422,13 +444,26 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
     );
   };
 
-  // Filter elements by user context - space-tier requires isSpaceLeader
-  const availableElements = ELEMENTS.filter((el) => {
-    if (el.tier === 'universal') return true;
-    if (el.tier === 'connected') return true;
-    if (el.tier === 'space') return userContext?.isSpaceLeader === true;
-    return false;
-  });
+  // Filter elements by user context and implementation status
+  // - Hide completely: elements with no backend (HIDDEN_ELEMENTS)
+  // - Show greyed out: elements coming soon (COMING_SOON_ELEMENTS)
+  // - Space-tier: requires isSpaceLeader
+  const availableElements = ELEMENTS
+    .filter((el) => {
+      // First filter: hide broken elements
+      if (HIDDEN_ELEMENTS.has(el.id)) return false;
+
+      // Then check tier access
+      if (el.tier === 'universal') return true;
+      if (el.tier === 'connected') return true;
+      if (el.tier === 'space') return userContext?.isSpaceLeader === true;
+      return false;
+    })
+    .map((el) => ({
+      ...el,
+      // Mark coming soon elements
+      status: COMING_SOON_ELEMENTS.has(el.id) ? 'coming-soon' as const : 'ready' as const,
+    }));
 
   const filteredElements = searchQuery
     ? availableElements.filter(
@@ -446,17 +481,17 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-[#333]">
-        <h3 className="text-sm font-medium text-white mb-2">Elements</h3>
+      <div className="px-3 py-3 border-b border-[var(--hivelab-border)]">
+        <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-2">Elements</h3>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555]" aria-hidden="true" />
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--hivelab-text-tertiary)]" aria-hidden="true" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search elements..."
-            aria-label="Search elements by name or description"
-            className="w-full bg-[#252525] border border-[#333] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-[#555] outline-none focus:border-white/50 focus:ring-2 focus:ring-white/20"
+            placeholder="MagnifyingGlassIcon elements..."
+            aria-label="MagnifyingGlassIcon elements by name or description"
+            className="w-full bg-[var(--hivelab-surface-hover)] border border-[var(--hivelab-border)] rounded-lg pl-8 pr-3 py-1.5 text-sm text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)] outline-none focus:border-[var(--hivelab-border-emphasis)] focus:ring-2 focus:ring-white/20 transition-colors duration-[var(--workshop-duration)]"
           />
         </div>
       </div>
@@ -479,14 +514,14 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
               aria-expanded={expandedCategories.includes(group.id)}
               aria-controls={`category-${group.id}`}
               aria-label={`${group.name} elements, ${group.elements.length} available`}
-              className="flex items-center gap-2 px-2 py-1.5 w-full text-left rounded-lg hover:bg-[#252525] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
+              className="flex items-center gap-2 px-2 py-1.5 w-full text-left rounded-lg hover:bg-[var(--hivelab-surface-hover)] transition-colors duration-[var(--workshop-duration)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-inset"
             >
               <motion.div
                 animate={{ rotate: expandedCategories.includes(group.id) ? 90 : 0 }}
                 transition={springPresets.snappy}
-                className="text-[#666]"
+                className="text-[var(--hivelab-text-tertiary)]"
               >
-                <ChevronRight className="h-3.5 w-3.5" />
+                <ChevronRightIcon className="h-3.5 w-3.5" />
               </motion.div>
               <motion.span
                 className={cn('text-xs font-medium uppercase tracking-wider', group.color)}
@@ -497,7 +532,7 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
                 {group.name}
               </motion.span>
               <motion.span
-                className="ml-auto text-xs text-[#555] bg-[#252525] px-1.5 py-0.5 rounded"
+                className="ml-auto text-xs text-[var(--hivelab-text-tertiary)] bg-[var(--hivelab-surface-hover)] px-1.5 py-0.5 rounded"
                 animate={{
                   scale: expandedCategories.includes(group.id) ? 1 : 0.9,
                   opacity: expandedCategories.includes(group.id) ? 1 : 0.7,
@@ -547,17 +582,17 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
                 animate={{ y: [0, -4, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               >
-                <Search className="h-8 w-8 text-[#444] mx-auto mb-2" />
+                <MagnifyingGlassIcon className="h-8 w-8 text-[var(--hivelab-text-tertiary)] mx-auto mb-2" />
               </motion.div>
-              <p className="text-sm text-[#666]">No elements found</p>
-              <p className="text-xs text-[#555]">Try a different search</p>
+              <p className="text-sm text-[var(--hivelab-text-tertiary)]">No elements found</p>
+              <p className="text-xs text-[var(--hivelab-text-tertiary)]">Try a different search</p>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* Footer */}
-      <div className="px-3 py-2 border-t border-[#333] text-xs text-[#666]">
+      <div className="px-3 py-2 border-t border-[var(--hivelab-border)] text-xs text-[var(--hivelab-text-tertiary)]">
         Drag elements to canvas
       </div>
     </div>

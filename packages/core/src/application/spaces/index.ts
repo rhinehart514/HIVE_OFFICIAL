@@ -42,6 +42,7 @@ export type {
 export type {
   SpaceBaseDTO,
   SpaceBrowseDTO,
+  SpaceBrowseEnrichment,
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,

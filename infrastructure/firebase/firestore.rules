@@ -91,6 +91,30 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isAdmin();
     }
 
+    // Space Join Requests - Private space access requests
+    // Users can request to join private spaces; leaders can approve/reject
+    match /spaceJoinRequests/{requestId} {
+      // Users can read their own requests
+      allow read: if isAuthenticated() && sameCampus() && (
+        isOwner(resource.data.userId) ||
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Users can create their own requests
+      allow create: if isAuthenticated() && sameCampusWrite() && isOwner(request.resource.data.userId);
+      // Space leaders can update (approve/reject), users can cancel their own
+      allow update: if isAuthenticated() && sameCampusWrite() && (
+        isOwner(resource.data.userId) ||
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Users can delete their own pending requests, admins can delete any
+      allow delete: if isAuthenticated() && (
+        (isOwner(resource.data.userId) && resource.data.status == 'pending') ||
+        isAdmin()
+      );
+    }
+
     // Spaces collection - flat structure
     // IMPORTANT: Fine-grained member role permissions (owner/admin/moderator) are enforced
     // server-side via the SpaceManagementService DDD layer. Firebase rules provide:
@@ -635,6 +659,118 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ============================================
+    // HIVELAB SETUPS - Orchestrated Tool Bundles
+    // ============================================
+
+    // Setup Templates - Blueprints for orchestrated tool configurations
+    // System templates are pre-defined, custom templates can be created by admins
+    match /setupTemplates/{templateId} {
+      // All authenticated campus users can read templates (for browsing/installing)
+      allow read: if isAuthenticated() && sameCampus();
+      // Only admins can create/update/delete templates
+      allow create: if isAuthenticated() && isAdmin() && sameCampusWrite();
+      allow update: if isAuthenticated() && isAdmin() && sameCampusWrite();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
+    // Setup Deployments - Instances of templates deployed to spaces
+    // Contains orchestration state, shared data, and tool configurations
+    match /setupDeployments/{deploymentId} {
+      // Space members can read deployments in their spaces
+      allow read: if isAuthenticated() && sameCampus() && (
+        isSpaceMember(resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Only space leaders can deploy setups to their spaces
+      allow create: if isAuthenticated() && sameCampusWrite() && (
+        isSpaceLeader(request.resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Space leaders can update deployment config/status
+      allow update: if isAuthenticated() && sameCampusWrite() && campusIdUnchanged() && (
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Only space leaders or admins can archive/delete deployments
+      allow delete: if isAuthenticated() && (
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
+
+      // Setup tools - Individual tool instances within the deployment
+      match /tools/{slotId} {
+        // Space members can read tool configs
+        allow read: if isAuthenticated() && sameCampus() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Space leaders can configure tools
+        allow write: if isAuthenticated() && sameCampusWrite() && (
+          isSpaceLeader(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+      }
+
+      // Shared data - Cross-tool data (RSVP counts, event info, etc.)
+      match /sharedData/{dataKey} {
+        // Space members can read shared data
+        allow read: if isAuthenticated() && sameCampus() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Space members can write shared data (e.g., RSVP, check-in)
+        // Server validates business rules
+        allow write: if isAuthenticated() && sameCampusWrite() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+      }
+
+      // Orchestration state - Active rules, current phase, execution logs
+      match /orchestration/{stateId} {
+        // Space members can read orchestration state (for UI updates)
+        allow read: if isAuthenticated() && sameCampus() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Only server can write orchestration state (via admin SDK)
+        // This prevents clients from bypassing orchestration logic
+        allow write: if false;
+      }
+
+      // Orchestration logs - Execution history for debugging
+      match /orchestration/logs/{logId} {
+        // Space leaders can read logs for debugging
+        allow read: if isAuthenticated() && sameCampus() && (
+          isSpaceLeader(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Only server can write logs
+        allow write: if false;
+      }
+
+      // Collections - For tool-specific collections (photos, RSVPs, etc.)
+      match /collections/{collectionName}/{itemId} {
+        // Space members can read collection items
+        allow read: if isAuthenticated() && sameCampus() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Space members can create items (e.g., upload photo, submit RSVP)
+        allow create: if isAuthenticated() && sameCampusWrite() && (
+          isSpaceMember(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+        // Users can update/delete their own items, leaders can moderate
+        allow update, delete: if isAuthenticated() && sameCampusWrite() && (
+          isOwner(resource.data.createdBy) ||
+          isSpaceLeader(get(/databases/$(database)/documents/setupDeployments/$(deploymentId)).data.spaceId) ||
+          isAdmin()
+        );
+      }
+    }
+
     // Analytics events (tool usage tracking)
     match /analytics_events/{eventId} {
       // Admins can read analytics
@@ -661,6 +797,32 @@ service cloud.firestore {
     // SECURITY: No client access - prevents lockout bypass attempts
     match /verification_lockouts/{email} {
       allow read, write: if false;
+    }
+
+    // Resources collection - Space resources (links, files, documents)
+    // Top-level collection with spaceId field linking to parent space
+    match /resources/{resourceId} {
+      // Space members can read resources for their spaces
+      allow read: if isAuthenticated() && sameCampus() && (
+        isSpaceMember(resource.data.spaceId) ||
+        isAdmin()
+      );
+      // Space members can create resources
+      allow create: if isAuthenticated() && sameCampusWrite() && (
+        isSpaceMember(request.resource.data.spaceId) ||
+        isAdmin()
+      ) && request.resource.data.createdBy == request.auth.uid;
+      // Resource creators can update/delete, space leaders can moderate
+      allow update: if isAuthenticated() && sameCampusWrite() && campusIdUnchanged() && (
+        isOwner(resource.data.createdBy) ||
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
+      allow delete: if isAuthenticated() && sameCampus() && (
+        isOwner(resource.data.createdBy) ||
+        isSpaceLeader(resource.data.spaceId) ||
+        isAdmin()
+      );
     }
 
     // Default deny all other access

@@ -9,28 +9,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  GraduationCap,
-  Home,
-  Users,
-  Heart,
-  Shield,
-  CheckCircle,
-  Settings,
-  Eye,
-  Search,
-  RefreshCw,
-  Database,
-  BookOpen,
-  Calendar,
-  Building,
-  MapPin,
-  Star,
-  Globe,
-  MoreVertical,
-  Activity,
-  TrendingUp
-} from 'lucide-react';
+import { AcademicCapIcon, HomeIcon, UsersIcon, HeartIcon, ShieldCheckIcon, CheckCircleIcon, Cog6ToothIcon, EyeIcon, MagnifyingGlassIcon, ArrowPathIcon, CircleStackIcon, CalendarIcon, BuildingOfficeIcon, MapPinIcon, StarIcon, GlobeAltIcon, EllipsisVerticalIcon, ChartBarIcon, ArrowTrendingUpIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const BookOpen = BookOpenIcon;
 
 // STRICT TYPE ENFORCEMENT - ONLY THESE FOUR CATEGORIES ALLOWED
 type ValidSpaceCategory = 'university_spaces' | 'residential_spaces' | 'greek_life_spaces' | 'student_spaces';
@@ -106,7 +88,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
   university_spaces: {
     label: 'University Spaces',
     description: 'Academic majors, class years, and university organizations ONLY',
-    icon: GraduationCap,
+    icon: AcademicCapIcon,
     color: 'text-blue-400',
     systemGenerated: true, // ONLY system creates these
     allowedSubtypes: [
@@ -122,7 +104,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'class_year',
         label: 'Class Year',
         description: 'Graduating class community',
-        icon: Calendar,
+        icon: CalendarIcon,
         examples: ['Class of 2026', 'Class of 2027', 'Class of 2028'],
         autoCreate: true // System creates for each admitted class
       },
@@ -130,7 +112,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'university_organization',
         label: 'University Organization',
         description: 'Official university organizations',
-        icon: Shield,
+        icon: ShieldCheckIcon,
         examples: ['Student Government', 'University Honors', 'Campus Newspaper'],
         autoCreate: false // Requires admin approval
       }
@@ -141,16 +123,16 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
   
   residential_spaces: {
     label: 'Residential Spaces',
-    description: 'Building-level communities and off-campus areas ONLY',
-    icon: Home,
+    description: 'BuildingOfficeIcon-level communities and off-campus areas ONLY',
+    icon: HomeIcon,
     color: 'text-orange-400',
     systemGenerated: true, // ONLY system creates these
     allowedSubtypes: [
       {
         value: 'dorm_building',
-        label: 'Dorm Building',
-        description: 'Building-level community',
-        icon: Building,
+        label: 'Dorm BuildingOfficeIcon',
+        description: 'BuildingOfficeIcon-level community',
+        icon: BuildingOfficeIcon,
         examples: ['Ellicott Complex', 'Governors Hall', 'Alumni Arena'],
         autoCreate: true // System creates based on housing data
       },
@@ -158,7 +140,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'off_campus_area',
         label: 'Off-Campus Area',
         description: 'Geographic area community',
-        icon: MapPin,
+        icon: MapPinIcon,
         examples: ['North Buffalo', 'South Campus Area', 'Amherst'],
         autoCreate: true // System creates based on address clustering
       }
@@ -170,7 +152,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
   greek_life_spaces: {
     label: 'Greek Life Spaces',
     description: 'Individual chapters and Greek councils ONLY',
-    icon: Users,
+    icon: UsersIcon,
     color: 'text-purple-400',
     systemGenerated: false, // Can be requested
     allowedSubtypes: [
@@ -178,7 +160,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'greek_chapter',
         label: 'Greek Chapter',
         description: 'Individual fraternity or sorority',
-        icon: Star,
+        icon: StarIcon,
         examples: ['Alpha Phi', 'Beta Theta Pi', 'Delta Sigma Theta'],
         autoCreate: false // Requires chapter request + verification
       },
@@ -186,7 +168,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'greek_council',
         label: 'Greek Council',
         description: 'Governing council',
-        icon: Users,
+        icon: UsersIcon,
         examples: ['IFC', 'Panhellenic Council', 'MGC'],
         autoCreate: false // Requires admin creation
       }
@@ -198,7 +180,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
   student_spaces: {
     label: 'Student Spaces', 
     description: 'Clubs, organizations, and interest communities ONLY',
-    icon: Heart,
+    icon: HeartIcon,
     color: 'text-pink-400',
     systemGenerated: false, // Can be requested
     maxPerUser: 5, // Students can request max 5 spaces
@@ -207,7 +189,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'student_club',
         label: 'Student Club',
         description: 'Official student organization',
-        icon: Heart,
+        icon: HeartIcon,
         examples: ['Photography Club', 'Mock Trial Club', 'Investment Club'],
         autoCreate: false // Requires student request + approval
       },
@@ -215,7 +197,7 @@ const SPACE_CATEGORY_RULES: Record<ValidSpaceCategory, {
         value: 'interest_community', 
         label: 'Interest Community',
         description: 'Identity or interest-based community',
-        icon: Globe,
+        icon: GlobeAltIcon,
         examples: ['International Students', 'Transfer Students', 'First-Gen Students'],
         autoCreate: false // Requires student request + approval
       }
@@ -284,7 +266,7 @@ const SpaceCard: React.FC<{
                 <h3 className="font-semibold text-white truncate">{space.name}</h3>
                 <div className={`w-2 h-2 rounded-full ${getStatusColor(space.status)}`} />
                 {space.isSystemGenerated && (
-                  <Shield
+                  <ShieldCheckIcon
                     className="w-4 h-4 text-blue-400"
                     aria-label="System Generated"
                   />
@@ -308,7 +290,7 @@ const SpaceCard: React.FC<{
             }}
             className="opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <MoreVertical className="w-4 h-4" />
+            <EllipsisVerticalIcon className="w-4 h-4" />
           </Button>
 
           <AnimatePresence>
@@ -327,7 +309,7 @@ const SpaceCard: React.FC<{
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                 >
-                  <Eye className="w-4 h-4" />
+                  <EyeIcon className="w-4 h-4" />
                   View Details
                 </button>
                 <button
@@ -338,7 +320,7 @@ const SpaceCard: React.FC<{
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   Manage Surfaces
                 </button>
                 <button
@@ -349,7 +331,7 @@ const SpaceCard: React.FC<{
                   }}
                   className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                 >
-                  <Shield className="w-4 h-4" />
+                  <ShieldCheckIcon className="w-4 h-4" />
                   Audit Space
                 </button>
               </motion.div>
@@ -399,13 +381,13 @@ const SpaceCard: React.FC<{
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1">
-            <Activity className="w-3 h-3 text-gray-400" />
+            <ChartBarIcon className="w-3 h-3 text-gray-400" />
             <span className={getEngagementColor(space.analytics.engagementScore)}>
               {space.analytics.engagementScore}% engagement
             </span>
           </div>
           <div className="flex items-center space-x-1">
-            <TrendingUp className="w-3 h-3 text-gray-400" />
+            <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
             <span className="text-gray-300">{space.analytics.weeklyActiveUsers} weekly</span>
           </div>
         </div>
@@ -506,7 +488,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Space system management is not available</p>
       </div>
     );
@@ -531,9 +513,9 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
             className="border-gray-600 text-gray-300"
           >
             {loading ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
             )}
             Refresh
           </Button>
@@ -549,7 +531,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <p className="text-sm font-medium text-gray-400">Total Spaces</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <Database className="w-8 h-8 text-gray-400" />
+              <CircleStackIcon className="w-8 h-8 text-gray-400" />
             </div>
           </CardContent>
         </Card>
@@ -561,7 +543,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <p className="text-sm font-medium text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-400" />
+              <CheckCircleIcon className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -573,7 +555,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <p className="text-sm font-medium text-gray-400">System Managed</p>
                 <p className="text-2xl font-bold text-blue-400">{stats.systemManaged}</p>
               </div>
-              <Shield className="w-8 h-8 text-blue-400" />
+              <ShieldCheckIcon className="w-8 h-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -585,7 +567,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 <p className="text-sm font-medium text-gray-400">Categories</p>
                 <p className="text-2xl font-bold text-purple-400">4</p>
               </div>
-              <Settings className="w-8 h-8 text-purple-400" />
+              <Cog6ToothIcon className="w-8 h-8 text-purple-400" />
             </div>
           </CardContent>
         </Card>
@@ -621,12 +603,12 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
                 
                 <div className="mt-2 flex flex-wrap gap-1">
                   {rule.allowedSubtypes.slice(0, 2).map((subtype) => (
-                    <Badge key={subtype.value} size="xs" variant="outline" className="text-xs">
+                    <Badge key={subtype.value} size="sm" variant="outline" className="text-xs">
                       {subtype.label}
                     </Badge>
                   ))}
                   {rule.allowedSubtypes.length > 2 && (
-                    <Badge size="xs" variant="outline" className="text-xs">
+                    <Badge size="sm" variant="outline" className="text-xs">
                       +{rule.allowedSubtypes.length - 2}
                     </Badge>
                   )}
@@ -637,15 +619,15 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
         })}
       </div>
 
-      {/* Search and Filters */}
+      {/* MagnifyingGlassIcon and Filters */}
       <Card className="border-gray-700 bg-gray-900/50">
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search spaces by name or type..."
+                placeholder="MagnifyingGlassIcon spaces by name or type..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -676,12 +658,12 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
-              <RefreshCw className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
+              <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
               <p className="text-gray-400">Loading spaces...</p>
             </div>
           ) : filteredSpaces.length === 0 ? (
             <div className="text-center py-12">
-              <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <CircleStackIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No spaces found</h3>
               <p className="text-gray-400">
                 {searchTerm ? 'Try adjusting your search' : 'No spaces in this category'}
@@ -707,7 +689,7 @@ export const HiveAdminSpaceSystem: React.FC<HiveAdminSpaceSystemProps> = ({
       <Card className="border-blue-500/30 bg-blue-500/5">
         <CardHeader>
           <CardTitle className="text-blue-400 flex items-center space-x-2">
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             <span>STRICT SPACE SYSTEM RULES</span>
           </CardTitle>
         </CardHeader>

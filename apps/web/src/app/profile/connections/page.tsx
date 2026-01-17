@@ -1,367 +1,510 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button, Input, Badge, Tabs, TabsList, TabsTrigger, TabsContent } from '@hive/ui';
-import { useAuth } from '@hive/auth-logic';
-import { db } from '@hive/firebase';
-import { logger } from '@/lib/logger';
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  doc,
-  setDoc,
-  deleteDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+/**
+ * Connections Page
+ *
+ * Displays user's connections, followers, following, and friend requests.
+ * Uses the new connections API endpoints.
+ */
 
-interface Connection {
-  uid: string;
-  displayName: string;
-  avatarUrl?: string;
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  Card,
+  Button,
+  Input,
+  Badge,
+  Text,
+  getInitials,
+} from '@hive/ui/design-system/primitives';
+import { useAuth } from '@hive/auth-logic';
+
+// Types for connections API
+interface ConnectionProfile {
+  id: string;
+  handle?: string;
+  firstName?: string;
+  lastName?: string;
+  profilePhoto?: string;
   bio?: string;
   major?: string;
-  gradYear?: number;
-  connectionStrength: number;
-  isFriend: boolean;
-  connectedAt: Date;
-  sharedSpaces: number;
-  mutualConnections: number;
-  lastInteraction?: Date;
+  graduationYear?: number;
 }
 
-interface FriendRequest {
-  id: string;
-  fromUserId: string;
-  fromUserName: string;
-  fromUserAvatar?: string;
-  message?: string;
-  createdAt: Date;
-  status: 'pending' | 'accepted' | 'rejected';
+interface ConnectionData {
+  connectionId: string;
+  relationship: 'friend' | 'following' | 'follower' | 'pending';
+  profile?: ConnectionProfile;
+  source?: string;
+  mutualSpaces?: string[];
+  interactionCount?: number;
+  createdAt?: string | null;
 }
+
+interface FriendData {
+  id: string;
+  handle?: string;
+  firstName?: string;
+  lastName?: string;
+  profilePhoto?: string;
+  bio?: string;
+  major?: string;
+  connectionDate?: string | null;
+  mutualSpaces?: string[];
+}
+
+interface FriendRequestData {
+  requestId: string;
+  fromUserId: string;
+  toUserId?: string;
+  createdAt?: string | null;
+  message?: string | null;
+}
+
+interface ConnectionStats {
+  totalConnections: number;
+  friends: number;
+  following: number;
+  followers: number;
+  pending: number;
+}
+
+// LOCKED: Premium easing
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const fadeIn = (delay: number) => ({
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.35, delay, ease: EASE },
+});
+
+type TabType = 'all' | 'friends' | 'following' | 'followers' | 'requests';
 
 export default function ConnectionsPage() {
   const { user } = useAuth();
   const router = useRouter();
-
-  const [connections, setConnections] = useState<Connection[]>([]);
-  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'friends' | 'requests'>('all');
-  const [loading, setLoading] = useState(true);
 
-  // Load connections
-  useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
+  const [connections, setConnections] = useState<ConnectionData[]>([]);
+  const [friends, setFriends] = useState<FriendData[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<FriendRequestData[]>([]);
+  const [sentRequests, setSentRequests] = useState<FriendRequestData[]>([]);
+  const [stats, setStats] = useState<ConnectionStats>({
+    totalConnections: 0,
+    friends: 0,
+    following: 0,
+    followers: 0,
+    pending: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-    const connectionsRef = collection(db, 'users', user.uid, 'connections');
-    const q = query(
-      connectionsRef,
-      where('campusId', '==', 'ub-buffalo'),
-      orderBy('connectionStrength', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const connectionsData: Connection[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        connectionsData.push({
-          uid: doc.id,
-          displayName: data.displayName,
-          avatarUrl: data.avatarUrl,
-          bio: data.bio,
-          major: data.major,
-          gradYear: data.gradYear,
-          connectionStrength: data.connectionStrength || 0,
-          isFriend: data.isFriend || false,
-          connectedAt: data.connectedAt?.toDate() || new Date(),
-          sharedSpaces: data.sharedSpaces || 0,
-          mutualConnections: data.mutualConnections || 0,
-          lastInteraction: data.lastInteraction?.toDate()
-        });
-      });
-      setConnections(connectionsData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, router]);
-
-  // Load friend requests
-  useEffect(() => {
+  // Fetch connections data
+  const fetchConnections = useCallback(async () => {
     if (!user) return;
 
-    const requestsRef = collection(db, 'users', user.uid, 'friendRequests');
-    const q = query(
-      requestsRef,
-      where('status', '==', 'pending'),
-      orderBy('createdAt', 'desc')
-    );
+    try {
+      setIsLoading(true);
+      setError(null);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const requestsData: FriendRequest[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        requestsData.push({
-          id: doc.id,
-          fromUserId: data.fromUserId,
-          fromUserName: data.fromUserName,
-          fromUserAvatar: data.fromUserAvatar,
-          message: data.message,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          status: data.status
-        });
+      // Fetch connections
+      const connectionsResponse = await fetch('/api/connections', {
+        credentials: 'include'
       });
-      setFriendRequests(requestsData);
-    });
 
-    return () => unsubscribe();
+      if (!connectionsResponse.ok) {
+        throw new Error('Failed to fetch connections');
+      }
+
+      const connectionsData = await connectionsResponse.json();
+
+      // Fetch friends and requests
+      const friendsResponse = await fetch('/api/friends?include_requests=true', {
+        credentials: 'include'
+      });
+
+      if (!friendsResponse.ok) {
+        throw new Error('Failed to fetch friends');
+      }
+
+      const friendsData = await friendsResponse.json();
+
+      setConnections(connectionsData.data || []);
+      setFriends(friendsData.friends || []);
+      setReceivedRequests(friendsData.receivedRequests || []);
+      setSentRequests(friendsData.sentRequests || []);
+      setStats({
+        totalConnections: connectionsData.stats?.totalConnections || 0,
+        friends: connectionsData.stats?.friends || friendsData.count || 0,
+        following: connectionsData.stats?.following || 0,
+        followers: connectionsData.stats?.followers || 0,
+        pending: connectionsData.stats?.pending || 0,
+      });
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
 
-  const sendFriendRequest = async (connectionId: string) => {
-    if (!user) return;
-
-    try {
-      // Create friend request in recipient's collection
-      const requestRef = doc(collection(db, 'users', connectionId, 'friendRequests'));
-      const fromUserName = (user as { displayName?: string }).displayName || 'HIVE User';
-      const fromUserAvatar = (user as { photoURL?: string }).photoURL;
-
-      await setDoc(requestRef, {
-        fromUserId: user.uid,
-        fromUserName,
-        fromUserAvatar,
-        message: 'Would like to be friends on HIVE',
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        campusId: 'ub-buffalo'
-      });
-
-      // Update local connection to show pending request
-      setConnections(prev =>
-        prev.map(conn =>
-          conn.uid === connectionId
-            ? { ...conn, friendRequestPending: true }
-            : conn
-        )
-      );
-    } catch (error) {
-      logger.error('Failed to send friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
+  useEffect(() => {
+    if (user) {
+      fetchConnections();
     }
+  }, [user, fetchConnections]);
+
+  // Action handlers
+  const sendFriendRequest = async (toUserId: string, message?: string) => {
+    const response = await fetch('/api/friends', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ toUserId, message })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to send friend request');
+    }
+    await fetchConnections();
   };
 
-  const acceptFriendRequest = async (requestId: string, fromUserId: string) => {
-    if (!user) return;
-
-    try {
-      // Update request status
-      const requestRef = doc(db, 'users', user.uid, 'friendRequests', requestId);
-      await setDoc(requestRef, { status: 'accepted' }, { merge: true });
-
-      // Update both users' connections to mark as friends
-      const myConnRef = doc(db, 'users', user.uid, 'connections', fromUserId);
-      const theirConnRef = doc(db, 'users', fromUserId, 'connections', user.uid);
-
-      await setDoc(myConnRef, { isFriend: true }, { merge: true });
-      await setDoc(theirConnRef, { isFriend: true }, { merge: true });
-
-      // Remove from pending requests
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-    } catch (error) {
-      logger.error('Failed to accept friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
+  const acceptFriendRequest = async (requestId: string) => {
+    const response = await fetch('/api/friends', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ requestId, action: 'accept' })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to accept friend request');
     }
+    await fetchConnections();
   };
 
   const rejectFriendRequest = async (requestId: string) => {
-    if (!user) return;
-
-    try {
-      const requestRef = doc(db, 'users', user.uid, 'friendRequests', requestId);
-      await deleteDoc(requestRef);
-      setFriendRequests(prev => prev.filter(req => req.id !== requestId));
-    } catch (error) {
-      logger.error('Failed to reject friend request', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
+    const response = await fetch('/api/friends', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ requestId, action: 'reject' })
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reject friend request');
     }
+    await fetchConnections();
   };
 
-  const removeConnection = async (connectionId: string) => {
-    if (!user) return;
-
-    try {
-      const connRef = doc(db, 'users', user.uid, 'connections', connectionId);
-      await deleteDoc(connRef);
-      setConnections(prev => prev.filter(conn => conn.uid !== connectionId));
-    } catch (error) {
-      logger.error('Failed to remove connection', { component: 'ConnectionsPage' }, error instanceof Error ? error : undefined);
+  const unfriend = async (friendId: string) => {
+    const response = await fetch(`/api/friends?friendId=${encodeURIComponent(friendId)}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to unfriend');
     }
+    await fetchConnections();
   };
 
-  // Filter connections based on search and tab
-  const filteredConnections = connections.filter(conn => {
-    const matchesSearch = conn.displayName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'friends' && conn.isFriend) ||
-      (activeTab === 'requests' && friendRequests.length > 0);
-    return matchesSearch && matchesTab;
-  });
+  // Redirect if not authenticated
+  if (!user) {
+    router.push('/enter');
+    return null;
+  }
 
-  // Connection strength indicator
-  const getStrengthColor = (strength: number) => {
-    if (strength >= 80) return 'bg-green-500';
-    if (strength >= 60) return 'bg-yellow-500';
-    if (strength >= 40) return 'bg-orange-500';
-    return 'bg-gray-500';
-  };
+  // Filter connections based on tab and search
+  const filteredData = useMemo(() => {
+    interface FilteredItem {
+      id: string;
+      type: 'connection' | 'friend' | 'following' | 'follower' | 'request';
+      profile?: ConnectionProfile;
+      relationship?: string;
+      mutualSpaces?: string[];
+      interactionCount?: number;
+      requestId?: string;
+      fromUserId?: string;
+      message?: string | null;
+      createdAt?: string | null;
+    }
 
-  if (loading) {
+    let items: FilteredItem[] = [];
+
+    switch (activeTab) {
+      case 'friends':
+        items = friends.map(f => ({
+          id: f.id,
+          type: 'friend' as const,
+          profile: {
+            id: f.id,
+            handle: f.handle,
+            firstName: f.firstName,
+            lastName: f.lastName,
+            profilePhoto: f.profilePhoto,
+            bio: f.bio,
+            major: f.major,
+          },
+          relationship: 'friend',
+          mutualSpaces: f.mutualSpaces || [],
+        }));
+        break;
+
+      case 'following':
+        items = connections
+          .filter(c => c.relationship === 'following')
+          .map(c => ({
+            id: c.profile?.id || c.connectionId,
+            type: 'following' as const,
+            profile: c.profile,
+            relationship: c.relationship,
+            mutualSpaces: c.mutualSpaces,
+            interactionCount: c.interactionCount,
+          }));
+        break;
+
+      case 'followers':
+        items = connections
+          .filter(c => c.relationship === 'follower')
+          .map(c => ({
+            id: c.profile?.id || c.connectionId,
+            type: 'follower' as const,
+            profile: c.profile,
+            relationship: c.relationship,
+            mutualSpaces: c.mutualSpaces,
+            interactionCount: c.interactionCount,
+          }));
+        break;
+
+      case 'requests':
+        items = [
+          ...receivedRequests.map(r => ({
+            id: r.requestId,
+            type: 'request' as const,
+            requestId: r.requestId,
+            fromUserId: r.fromUserId,
+            message: r.message,
+            createdAt: r.createdAt,
+          })),
+        ];
+        break;
+
+      default:
+        // 'all' - show all connections
+        items = connections.map(c => ({
+          id: c.profile?.id || c.connectionId,
+          type: 'connection' as const,
+          profile: c.profile,
+          relationship: c.relationship,
+          mutualSpaces: c.mutualSpaces,
+          interactionCount: c.interactionCount,
+        }));
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter(item => {
+        if (item.profile) {
+          const fullName = `${item.profile.firstName || ''} ${item.profile.lastName || ''}`.toLowerCase();
+          const handle = (item.profile.handle || '').toLowerCase();
+          return fullName.includes(query) || handle.includes(query);
+        }
+        return false;
+      });
+    }
+
+    return items;
+  }, [activeTab, connections, friends, receivedRequests, searchQuery]);
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading connections...</div>
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="text-white/60">Loading connections...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4">
+        <Text className="text-white/60">Failed to load connections</Text>
+        <Button onClick={fetchConnections}>Try Again</Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen w-full overflow-y-auto">
+      <div className="max-w-4xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Connections & Friends</h1>
-          <p className="text-gray-400">Manage your HIVE network</p>
-        </div>
+        <motion.div className="mb-10" {...fadeIn(0)}>
+          <h1
+            className="text-[28px] font-semibold text-white mb-2 tracking-tight"
+          >
+            Connections
+          </h1>
+          <p className="text-white/50">
+            Your network on HIVE
+          </p>
+        </motion.div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-gray-900 border border-white/8 rounded-lg p-4">
-            <div className="text-2xl font-bold text-[var(--hive-brand-primary)]">{connections.length}</div>
-            <div className="text-sm text-gray-400">Total Connections</div>
-          </div>
-          <div className="bg-gray-900 border border-white/8 rounded-lg p-4">
-            <div className="text-2xl font-bold text-[var(--hive-brand-primary)]">
-              {connections.filter(c => c.isFriend).length}
+        <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8" {...fadeIn(0.05)}>
+          <Card elevation="resting" className="text-center py-4">
+            <div className="text-2xl font-semibold text-white">
+              {stats.totalConnections}
             </div>
-            <div className="text-sm text-gray-400">Friends</div>
-          </div>
-          <div className="bg-gray-900 border border-white/8 rounded-lg p-4">
-            <div className="text-2xl font-bold text-[var(--hive-brand-primary)]">{friendRequests.length}</div>
-            <div className="text-sm text-gray-400">Pending Requests</div>
-          </div>
-          <div className="bg-gray-900 border border-white/8 rounded-lg p-4">
-            <div className="text-2xl font-bold text-[var(--hive-brand-primary)]">
-              {Math.round(connections.reduce((acc, c) => acc + c.connectionStrength, 0) / connections.length) || 0}%
+            <div className="text-xs text-white/40 uppercase tracking-wider">
+              Connections
             </div>
-            <div className="text-sm text-gray-400">Avg Connection Strength</div>
-          </div>
-        </div>
+          </Card>
+          <Card elevation="resting" className="text-center py-4">
+            <div className="text-2xl font-semibold text-white">
+              {stats.friends}
+            </div>
+            <div className="text-xs text-white/40 uppercase tracking-wider">
+              Friends
+            </div>
+          </Card>
+          <Card elevation="resting" className="text-center py-4">
+            <div className="text-2xl font-semibold text-white">
+              {stats.following}
+            </div>
+            <div className="text-xs text-white/40 uppercase tracking-wider">
+              Following
+            </div>
+          </Card>
+          <Card elevation="resting" className="text-center py-4">
+            <div className="text-2xl font-semibold text-white">
+              {stats.followers}
+            </div>
+            <div className="text-xs text-white/40 uppercase tracking-wider">
+              Followers
+            </div>
+          </Card>
+        </motion.div>
 
-        {/* Search and Tabs */}
-        <div className="mb-6">
+        {/* Tabs */}
+        <motion.div className="mb-6" {...fadeIn(0.1)}>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {[
+              { id: 'all', label: 'All' },
+              { id: 'friends', label: 'Friends', count: stats.friends },
+              { id: 'following', label: 'Following', count: stats.following },
+              { id: 'followers', label: 'Followers', count: stats.followers },
+              { id: 'requests', label: 'Requests', count: stats.pending },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`
+                  px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap
+                  ${activeTab === tab.id
+                    ? 'bg-white text-black'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10'
+                  }
+                `}
+              >
+                {tab.label}
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className="ml-1.5 text-xs opacity-70">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Search */}
+        <motion.div className="mb-6" {...fadeIn(0.15)}>
           <Input
             placeholder="Search connections..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="mb-4 bg-gray-900 border-white/8"
           />
+        </motion.div>
 
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'all' | 'friends' | 'requests')}>
-            <TabsList className="bg-gray-900">
-              <TabsTrigger value="all">All Connections</TabsTrigger>
-              <TabsTrigger value="friends">Friends</TabsTrigger>
-              <TabsTrigger value="requests">
-                Friend Requests {friendRequests.length > 0 && (
-                  <Badge className="ml-2 bg-[var(--hive-brand-primary)] text-black">{friendRequests.length}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+        {/* Content */}
+        <motion.div {...fadeIn(0.2)}>
+          {activeTab === 'requests' && receivedRequests.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
+                Pending Requests
+              </h3>
+              <div className="space-y-3">
+                {receivedRequests.map((request) => (
+                  <FriendRequestCard
+                    key={request.requestId}
+                    request={request}
+                    onAccept={() => acceptFriendRequest(request.requestId)}
+                    onReject={() => rejectFriendRequest(request.requestId)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-            <TabsContent value="requests" className="mt-6">
-              {friendRequests.length === 0 ? (
-                <div className="text-center py-8 text-gray-400">
-                  No pending friend requests
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {friendRequests.map((request) => (
-                    <div
-                      key={request.id}
-                      className="bg-gray-900 border border-white/8 rounded-lg p-4 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center">
-                          {request.fromUserAvatar ? (
-                            <img
-                              src={request.fromUserAvatar}
-                              alt={request.fromUserName}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-xl">👤</span>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{request.fromUserName}</div>
-                          <div className="text-sm text-gray-400">{request.message}</div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => acceptFriendRequest(request.id, request.fromUserId)}
-                          className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
-                        >
-                          Accept
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => rejectFriendRequest(request.id)}
-                          className="border-white/20"
-                        >
-                          Decline
-                        </Button>
-                      </div>
+          {activeTab === 'requests' && sentRequests.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-4">
+                Sent Requests
+              </h3>
+              <div className="space-y-3">
+                {sentRequests.map((request) => (
+                  <Card key={request.requestId} elevation="resting" className="p-4">
+                    <div className="flex items-center justify-between">
+                      <Text className="text-white/60">
+                        Request sent to user
+                      </Text>
+                      <Badge variant="neutral" size="sm">
+                        Pending
+                      </Badge>
                     </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="all" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredConnections.map((connection) => (
-                  <ConnectionCard
-                    key={connection.uid}
-                    connection={connection}
-                    onSendFriendRequest={sendFriendRequest}
-                    onRemoveConnection={removeConnection}
-                    getStrengthColor={getStrengthColor}
-                  />
+                  </Card>
                 ))}
               </div>
-            </TabsContent>
+            </div>
+          )}
 
-            <TabsContent value="friends" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredConnections.filter(c => c.isFriend).map((connection) => (
+          {filteredData.length === 0 ? (
+            <EmptyState
+              tab={activeTab}
+              onBrowseSpaces={() => router.push('/spaces/browse')}
+            />
+          ) : (
+            <div className="grid gap-3">
+              {filteredData.map((item) => {
+                if (item.type === 'request') {
+                  return null; // Handled above
+                }
+
+                return (
                   <ConnectionCard
-                    key={connection.uid}
-                    connection={connection}
-                    onSendFriendRequest={sendFriendRequest}
-                    onRemoveConnection={removeConnection}
-                    getStrengthColor={getStrengthColor}
+                    key={item.id}
+                    profile={item.profile}
+                    relationship={item.relationship}
+                    mutualSpaces={item.mutualSpaces}
+                    onViewProfile={() => router.push(`/profile/${item.id}`)}
+                    onSendFriendRequest={
+                      item.relationship === 'follower'
+                        ? () => sendFriendRequest(item.id)
+                        : undefined
+                    }
+                    onUnfriend={
+                      item.relationship === 'friend'
+                        ? () => unfriend(item.id)
+                        : undefined
+                    }
                   />
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
@@ -369,89 +512,193 @@ export default function ConnectionsPage() {
 
 // Connection Card Component
 function ConnectionCard({
-  connection,
+  profile,
+  relationship,
+  mutualSpaces,
+  onViewProfile,
   onSendFriendRequest,
-  onRemoveConnection: _onRemoveConnection,
-  getStrengthColor
+  onUnfriend,
 }: {
-  connection: Connection;
-  onSendFriendRequest: (id: string) => void;
-  onRemoveConnection: (id: string) => void;
-  getStrengthColor: (strength: number) => string;
+  profile?: {
+    id: string;
+    handle?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePhoto?: string;
+    bio?: string;
+    major?: string;
+  };
+  relationship?: string;
+  mutualSpaces?: string[];
+  onViewProfile: () => void;
+  onSendFriendRequest?: () => void;
+  onUnfriend?: () => void;
 }) {
-  const router = useRouter();
+  if (!profile) return null;
+
+  const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'HIVE User';
+  const initials = getInitials(fullName);
 
   return (
-    <div className="bg-gray-900 border border-white/8 rounded-lg p-4">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center">
-            {connection.avatarUrl ? (
-              <img
-                src={connection.avatarUrl}
-                alt={connection.displayName}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-xl">👤</span>
-            )}
-          </div>
-          <div>
-            <div className="font-medium">{connection.displayName}</div>
-            {connection.major && (
-              <div className="text-xs text-gray-400">
-                {connection.major} {connection.gradYear && `'${connection.gradYear % 100}`}
-              </div>
-            )}
-          </div>
-        </div>
-        {connection.isFriend && (
-          <Badge className="bg-[var(--hive-brand-primary)]/20 text-[var(--hive-brand-primary)] border-[var(--hive-brand-primary)]/50">
-            Friend
-          </Badge>
-        )}
-      </div>
-
-      {/* Connection Strength */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
-          <span className="text-gray-400">Connection Strength</span>
-          <span className="text-gray-400">{connection.connectionStrength}%</span>
-        </div>
-        <div className="w-full bg-gray-800 rounded-full h-1.5">
-          <div
-            className={`h-full rounded-full ${getStrengthColor(connection.connectionStrength)}`}
-            style={{ width: `${connection.connectionStrength}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="flex justify-between text-xs text-gray-400 mb-3">
-        <span>{connection.sharedSpaces} shared spaces</span>
-        <span>{connection.mutualConnections} mutual</span>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => router.push(`/profile/${connection.uid}`)}
-          className="flex-1 border-white/20"
+    <Card
+      elevation="resting"
+      interactive
+      onClick={onViewProfile}
+      className="p-4"
+    >
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
+        <div
+          className="w-12 h-12 rounded-lg overflow-hidden shrink-0"
+          style={{
+            boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.04)',
+          }}
         >
-          View Profile
-        </Button>
-        {!connection.isFriend && (
-          <Button
-            size="sm"
-            onClick={() => onSendFriendRequest(connection.uid)}
-            className="flex-1 bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
-          >
-            Add Friend
-          </Button>
-        )}
+          {profile.profilePhoto ? (
+            <img
+              src={profile.profilePhoto}
+              alt={fullName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-white/5 flex items-center justify-center">
+              <span className="text-lg text-white/30">{initials}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Text className="font-medium truncate">{fullName}</Text>
+            {relationship === 'friend' && (
+              <Badge variant="gold" size="sm">Friend</Badge>
+            )}
+          </div>
+          {profile.handle && (
+            <Text size="sm" className="text-white/40">
+              @{profile.handle}
+            </Text>
+          )}
+          {(mutualSpaces?.length || 0) > 0 && (
+            <Text size="sm" className="text-white/30 mt-0.5">
+              {mutualSpaces!.length} shared space{mutualSpaces!.length !== 1 ? 's' : ''}
+            </Text>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          {onSendFriendRequest && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onSendFriendRequest}
+            >
+              Add Friend
+            </Button>
+          )}
+          {onUnfriend && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onUnfriend}
+            >
+              Unfriend
+            </Button>
+          )}
+        </div>
       </div>
+    </Card>
+  );
+}
+
+// Friend Request Card Component
+function FriendRequestCard({
+  request,
+  onAccept,
+  onReject,
+}: {
+  request: {
+    requestId: string;
+    fromUserId: string;
+    message?: string | null;
+    createdAt?: string | null;
+  };
+  onAccept: () => void;
+  onReject: () => void;
+}) {
+  return (
+    <Card elevation="resting" className="p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <Text className="font-medium">Friend Request</Text>
+          {request.message && (
+            <Text size="sm" className="text-white/50 mt-1">
+              "{request.message}"
+            </Text>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="cta" onClick={onAccept}>
+            Accept
+          </Button>
+          <Button size="sm" variant="ghost" onClick={onReject}>
+            Decline
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// Empty State Component
+function EmptyState({
+  tab,
+  onBrowseSpaces,
+}: {
+  tab: TabType;
+  onBrowseSpaces: () => void;
+}) {
+  const messages: Record<TabType, { title: string; description: string }> = {
+    all: {
+      title: 'No connections yet',
+      description: 'Join spaces to meet people and build your network',
+    },
+    friends: {
+      title: 'No friends yet',
+      description: 'Send friend requests to people you connect with',
+    },
+    following: {
+      title: 'Not following anyone',
+      description: 'Follow people to see their activity',
+    },
+    followers: {
+      title: 'No followers yet',
+      description: 'As you participate in spaces, people will follow you',
+    },
+    requests: {
+      title: 'No pending requests',
+      description: 'Friend requests will appear here',
+    },
+  };
+
+  const { title, description } = messages[tab];
+
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
+        <svg className="w-8 h-8 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-medium text-white/60 mb-1">{title}</h3>
+      <p className="text-sm text-white/40 max-w-sm mb-6">{description}</p>
+      {tab === 'all' && (
+        <Button variant="cta" onClick={onBrowseSpaces}>
+          Browse Spaces
+        </Button>
+      )}
     </div>
   );
 }

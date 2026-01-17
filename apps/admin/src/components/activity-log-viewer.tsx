@@ -17,20 +17,35 @@ import {
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText,
-  Search,
-  Filter,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Info,
-  AlertTriangle,
-  AlertCircle,
-  XCircle,
-  Clock,
-  User,
-  Terminal,
-} from "lucide-react";
+  DocumentTextIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  ArrowPathIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  InformationCircleIcon,
+  ExclamationTriangleIcon,
+  ExclamationCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  UserIcon,
+  CommandLineIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const FileText = DocumentTextIcon;
+const Search = MagnifyingGlassIcon;
+const Filter = FunnelIcon;
+const RefreshCw = ArrowPathIcon;
+const ChevronDown = ChevronDownIcon;
+const ChevronUp = ChevronUpIcon;
+const Info = InformationCircleIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const AlertCircle = ExclamationCircleIcon;
+const XCircle = XCircleIcon;
+const Clock = ClockIcon;
+const User = UserIcon;
+const Terminal = CommandLineIcon;
 
 interface ActivityLog {
   id: string;

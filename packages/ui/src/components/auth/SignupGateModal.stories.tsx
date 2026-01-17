@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { Button } from '../../atomic/00-Global/atoms/button';
+import { Button } from '../../design-system/primitives';
 
 import { SignupGateModal } from './SignupGateModal';
 

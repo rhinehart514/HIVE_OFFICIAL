@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { notFound } from "next/navigation";
 import { Button, HiveCard, Skeleton, Input, Badge } from "@hive/ui";
 
 const colorVars = [
@@ -15,6 +16,11 @@ const colorVars = [
 ];
 
 export default function DesignSystemPage() {
+  // Gate to dev environment only
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   return (
     <div className="min-h-screen bg-[var(--hive-background)] text-[var(--hive-foreground)]">
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-12">
@@ -45,8 +51,6 @@ export default function DesignSystemPage() {
             <Button variant="secondary">Secondary</Button>
             <Button variant="ghost">Ghost</Button>
             <Button variant="outline">Outline</Button>
-            <Button variant="success">Success</Button>
-            <Button variant="warning">Warning</Button>
             <Button variant="destructive">Destructive</Button>
             <Button variant="link">Link</Button>
           </div>
@@ -83,18 +87,14 @@ export default function DesignSystemPage() {
           </HiveCard>
         </section>
 
-        {/* UX Links */}
+        {/* Dev Links */}
         <section className="space-y-3">
-          <h2 className="text-xl font-semibold">UX Sandboxes</h2>
-          <p className="text-white/60">Quick links to live design playgrounds</p>
+          <h2 className="text-xl font-semibold">Dev Tools</h2>
+          <p className="text-white/60">Quick links to development tools</p>
           <div className="grid sm:grid-cols-2 gap-4">
-            <a className="rounded-xl border p-5 hover:bg-white/5 transition" href="/ux/onboarding">
-              <div className="text-lg font-medium mb-1">Onboarding Flow</div>
-              <div className="text-sm text-white/60">Step variants, microcopy, error states</div>
-            </a>
-            <a className="rounded-xl border p-5 hover:bg-white/5 transition" href="/ux/profile">
-              <div className="text-lg font-medium mb-1">Profile Layout</div>
-              <div className="text-sm text-white/60">Blocks, privacy levels, empty states</div>
+            <a className="rounded-xl border p-5 hover:bg-white/5 transition" href="/hivelab/demo">
+              <div className="text-lg font-medium mb-1">HiveLab IDE</div>
+              <div className="text-sm text-white/60">Visual tool builder demo</div>
             </a>
           </div>
         </section>

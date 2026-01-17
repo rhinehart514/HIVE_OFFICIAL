@@ -1,23 +1,41 @@
 // HIVE Color Design System
-// PRD-Aligned: Vercel-inspired monochrome with gold accent
-// Legacy: Dark luxury theme (preserved for backward compatibility)
+// Aligned with design-system/LANGUAGE.md - "The Room at 3am"
+//
+// THE METAPHOR:
+// - The darkness: Layers of black with subtle warmth, not cold tech
+// - The campfire: Gold is the singular heat source. Rare. Precious.
+// - The breathing: Everything alive has a pulse.
 
-// Core Dark Luxury Palette - Rich blacks and sophisticated metals
+// Core Warm Dark Palette - 3am room energy
 export const colors = {
-  // Rich Blacks - Multiple depth levels
-  void: '#000000',           // Pure void for maximum contrast
-  obsidian: '#0A0A0B',      // Main background - rich black
-  charcoal: '#111113',      // Card backgrounds
-  graphite: '#1A1A1C',      // Elevated surfaces
-  slate: '#222225',         // Interactive elements
-  steel: '#2A2A2D',         // Borders and dividers
-  
-  // Luxury Grays - Sophisticated neutrals
-  platinum: '#E5E5E7',      // Primary text
-  silver: '#C1C1C4',        // Secondary text
-  mercury: '#9B9B9F',       // Muted text
-  pewter: '#6B6B70',        // Disabled text
-  smoke: '#4A4A4F',         // Subtle elements
+  // Foundation Surfaces - Warm darks (from LANGUAGE.md)
+  void: '#050504',           // The corners you can't see
+  ground: '#0A0A09',         // The floor, the walls (page background)
+  surface: '#141312',        // Furniture, shapes (cards)
+  surfaceHover: '#1A1917',   // When you look directly
+  surfaceActive: '#252521',  // When you touch
+  elevated: '#1E1D1B',       // Modals, dropdowns
+
+  // Legacy aliases (map to new warm values)
+  obsidian: '#0A0A09',       // → ground
+  charcoal: '#141312',       // → surface
+  graphite: '#1A1917',       // → surfaceHover
+  slate: '#252521',          // → surfaceActive
+  steel: '#2A2A2D',          // Borders and dividers
+
+  // Text Hierarchy - Slightly warm whites (from LANGUAGE.md)
+  textPrimary: '#FAF9F7',    // Main content - 95% visible
+  textSecondary: '#A3A19E',  // Supporting text - 65% visible
+  textTertiary: '#6B6B70',   // Subtle text - 40% visible
+  textMuted: '#3D3D42',      // Barely there - 25% visible
+  textGhost: '#2A2A2E',      // Hint - 15% visible
+
+  // Legacy text aliases
+  platinum: '#FAF9F7',       // → textPrimary
+  silver: '#A3A19E',         // → textSecondary
+  mercury: '#6B6B70',        // → textTertiary
+  pewter: '#3D3D42',         // → textMuted
+  smoke: '#2A2A2E',          // → textGhost
   
   // Accent Gold - Premium highlights (#FFD700 is canonical)
   gold: '#FFD700',          // Primary accent (CANONICAL)
@@ -192,7 +210,7 @@ export const semantic = {
 
   interactive: {
     hover: overlay['glass-medium'],     // Glass hover effect
-    focus: colors.gold,                 // Gold focus ring
+    focus: 'rgba(255, 255, 255, 0.50)', // White focus ring (NOT gold)
     active: overlay['glass-strong'],    // Glass active state
     disabled: colors.smoke,             // #4A4A4F - Disabled state
   },
@@ -209,7 +227,7 @@ export const semantic = {
     primary: border.steel,              // #2A2A2D - Primary borders
     secondary: border.graphite,         // #1A1A1C - Secondary borders
     subtle: border.glass,               // Glass subtle borders
-    focus: border.gold,                 // Gold focus borders
+    focus: 'rgba(255, 255, 255, 0.50)', // White focus borders (NOT gold)
     error: colors.ruby,                 // Red error borders
     // NEW: Add missing commonly used border colors from audit  
     muted: '#3F3F46',                   // Subtle borders (commonly used)

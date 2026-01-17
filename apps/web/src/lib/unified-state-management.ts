@@ -176,11 +176,21 @@ export function useFeedState() {
   const error = useUnifiedStore((state) => state.feed.error);
   const setFeed = useUnifiedStore((state) => state.setFeed);
   const setFeedLoading = useUnifiedStore((state) => state.setFeedLoading);
+  const setFeedError = useUnifiedStore((state) => state.setFeedError);
 
   const refresh = async (_options?: { force?: boolean }) => {
     setFeedLoading(true);
-    // Placeholder for actual feed refresh logic
-    setFeedLoading(false);
+    setFeedError(null);
+    try {
+      const response = await fetch('/api/feed', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch feed');
+      const data = await response.json();
+      setFeed(data.items || data.feed || []);
+    } catch (err) {
+      setFeedError(err instanceof Error ? err.message : 'Failed to fetch feed');
+    } finally {
+      setFeedLoading(false);
+    }
   };
 
   return { feedItems, loading, error, refresh, setFeed };
@@ -193,11 +203,21 @@ export function useSpacesState() {
   const setSpaces = useUnifiedStore((state) => state.setSpaces);
   const setActiveSpace = useUnifiedStore((state) => state.setActiveSpace);
   const setSpacesLoading = useUnifiedStore((state) => state.setSpacesLoading);
+  const setSpacesError = useUnifiedStore((state) => state.setSpacesError);
 
   const refresh = async () => {
     setSpacesLoading(true);
-    // Placeholder for actual spaces refresh logic
-    setSpacesLoading(false);
+    setSpacesError(null);
+    try {
+      const response = await fetch('/api/spaces/browse-v2', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch spaces');
+      const data = await response.json();
+      setSpaces(data.spaces || []);
+    } catch (err) {
+      setSpacesError(err instanceof Error ? err.message : 'Failed to fetch spaces');
+    } finally {
+      setSpacesLoading(false);
+    }
   };
 
   return { spaces, loading, error, refresh, setActiveSpace, setSpaces };
@@ -210,11 +230,21 @@ export function useToolsState() {
   const setTools = useUnifiedStore((state) => state.setTools);
   const setActiveTool = useUnifiedStore((state) => state.setActiveTool);
   const setToolsLoading = useUnifiedStore((state) => state.setToolsLoading);
+  const setToolsError = useUnifiedStore((state) => state.setToolsError);
 
   const refresh = async () => {
     setToolsLoading(true);
-    // Placeholder for actual tools refresh logic
-    setToolsLoading(false);
+    setToolsError(null);
+    try {
+      const response = await fetch('/api/tools', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch tools');
+      const data = await response.json();
+      setTools(data.tools || []);
+    } catch (err) {
+      setToolsError(err instanceof Error ? err.message : 'Failed to fetch tools');
+    } finally {
+      setToolsLoading(false);
+    }
   };
 
   return { tools, loading, error, refresh, setActiveTool, setTools };
@@ -236,16 +266,74 @@ export function useRealtimeState() {
   const lastSyncTime = useUnifiedStore((state) => state.realtime.lastSyncTime);
   const syncInProgress = useUnifiedStore((state) => state.realtime.syncInProgress);
   const setSyncInProgress = useUnifiedStore((state) => state.setSyncInProgress);
-  const _setOnline = useUnifiedStore((state) => state.setOnline);
+  const setRealtimeConnected = useUnifiedStore((state) => state.setRealtimeConnected);
+  const setFeed = useUnifiedStore((state) => state.setFeed);
+  const setSpaces = useUnifiedStore((state) => state.setSpaces);
+  const setTools = useUnifiedStore((state) => state.setTools);
+  const addNotification = useUnifiedStore((state) => state.addNotification);
 
-  const syncWithServer = async (_slices?: string[]) => {
+  const syncWithServer = async (slices?: string[]) => {
+    if (syncInProgress) return;
     setSyncInProgress(true);
-    // Placeholder for actual sync logic
-    setSyncInProgress(false);
+    try {
+      const syncSlices = slices || ['feed', 'spaces', 'tools'];
+
+      const promises = syncSlices.map(async (slice) => {
+        switch (slice) {
+          case 'feed': {
+            const res = await fetch('/api/feed', { credentials: 'include' });
+            if (res.ok) {
+              const data = await res.json();
+              setFeed(data.items || data.feed || []);
+            }
+            break;
+          }
+          case 'spaces': {
+            const res = await fetch('/api/spaces/browse-v2', { credentials: 'include' });
+            if (res.ok) {
+              const data = await res.json();
+              setSpaces(data.spaces || []);
+            }
+            break;
+          }
+          case 'tools': {
+            const res = await fetch('/api/tools', { credentials: 'include' });
+            if (res.ok) {
+              const data = await res.json();
+              setTools(data.tools || []);
+            }
+            break;
+          }
+        }
+      });
+
+      await Promise.all(promises);
+      setRealtimeConnected(true);
+    } catch (error) {
+      console.error('Sync failed:', error);
+    } finally {
+      setSyncInProgress(false);
+    }
   };
 
-  const handleRealtimeUpdate = (_update: unknown) => {
-    // Placeholder for handling real-time updates
+  const handleRealtimeUpdate = (update: { type: string; data: unknown }) => {
+    if (!update || !update.type) return;
+
+    switch (update.type) {
+      case 'notification':
+        addNotification(update.data as Notification);
+        break;
+      case 'feed':
+        // Trigger a feed refresh on significant updates
+        syncWithServer(['feed']);
+        break;
+      case 'space':
+        syncWithServer(['spaces']);
+        break;
+      case 'tool':
+        syncWithServer(['tools']);
+        break;
+    }
   };
 
   return {

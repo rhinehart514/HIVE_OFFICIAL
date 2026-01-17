@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 import { usePWA } from '@/hooks/use-pwa';
 
 // Pages where we don't want to show the install banner
-const HIDDEN_PATHS = ['/auth', '/onboarding', '/login'];
+const HIDDEN_PATHS = ['/enter', '/schools'];
 
 const DISMISSED_KEY = 'hive_pwa_install_dismissed';
 const DISMISSED_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days

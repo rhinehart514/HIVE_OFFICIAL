@@ -1,7 +1,8 @@
-import { ArrowLeft, Play, Edit, Settings, Eye, Maximize2, Minimize2, RefreshCw, Code2 } from 'lucide-react';
+import { ArrowLeftIcon, PlayIcon, PencilIcon, Cog6ToothIcon, EyeIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, ArrowPathIcon, CodeBracketSquareIcon } from '@heroicons/react/24/outline';
 import * as React from 'react';
 
-import { Button, Card } from '../../atomic';
+import { Button } from '../../design-system/primitives';
+import { Card } from '../../design-system/primitives';
 
 import type { ToolComposition } from '../../lib/hivelab/element-system';
 
@@ -38,7 +39,7 @@ export function ToolPreviewPage({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button size="sm" variant="ghost" onClick={onBack} className="text-hive-text-tertiary hover:text-white">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Back
               </Button>
               <div>
@@ -55,7 +56,7 @@ export function ToolPreviewPage({
                   onClick={() => setPreviewMode('preview')}
                   className={previewMode === 'preview' ? 'bg-[var(--hive-brand-primary)] text-hive-brand-on-gold' : 'text-hive-text-tertiary hover:text-white'}
                 >
-                  <Eye className="h-4 w-4 mr-2" />
+                  <EyeIcon className="h-4 w-4 mr-2" />
                   Preview
                 </Button>
                 <Button
@@ -64,22 +65,22 @@ export function ToolPreviewPage({
                   onClick={() => setPreviewMode('live')}
                   className={previewMode === 'live' ? 'bg-[var(--hive-brand-primary)] text-hive-brand-on-gold' : 'text-hive-text-tertiary hover:text-white'}
                 >
-                  <Play className="h-4 w-4 mr-2" />
+                  <PlayIcon className="h-4 w-4 mr-2" />
                   Live
                 </Button>
               </div>
 
-              <Button size="sm" variant="secondary" onClick={() => setIsFullscreen(!isFullscreen)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              <Button size="sm" variant="outline" onClick={() => setIsFullscreen(!isFullscreen)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                {isFullscreen ? <ArrowsPointingInIcon className="h-4 w-4" /> : <ArrowsPointingOutIcon className="h-4 w-4" />}
               </Button>
 
-              <Button size="sm" variant="secondary" onClick={() => onEdit?.(composition)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
+              <Button size="sm" variant="outline" onClick={() => onEdit?.(composition)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                <PencilIcon className="h-4 w-4 mr-2" />
+                PencilIcon
               </Button>
 
               <Button size="sm" onClick={() => onRun?.(composition)} className="bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover">
-                <Play className="h-4 w-4 mr-2" />
+                <PlayIcon className="h-4 w-4 mr-2" />
                 Run Tool
               </Button>
             </div>
@@ -94,11 +95,11 @@ export function ToolPreviewPage({
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">Tool Preview</h2>
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="secondary" onClick={() => window.location.reload()} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                  <RefreshCw className="h-4 w-4" />
+                <Button size="sm" variant="outline" onClick={() => window.location.reload()} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                  <ArrowPathIcon className="h-4 w-4" />
                 </Button>
-                <Button size="sm" variant="secondary" onClick={() => setShowCode(!showCode)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                  <Code2 className="h-4 w-4" />
+                <Button size="sm" variant="outline" onClick={() => setShowCode(!showCode)} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                  <CodeBracketSquareIcon className="h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -163,16 +164,16 @@ export function ToolPreviewPage({
               <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
               <div className="space-y-3">
                 <Button onClick={() => onRun?.(composition)} className="w-full bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover justify-start">
-                  <Play className="h-4 w-4 mr-3" />
+                  <PlayIcon className="h-4 w-4 mr-3" />
                   Run Tool
                 </Button>
                 <Button onClick={() => onEdit?.(composition)} className="w-full bg-[rgba(255,255,255,0.05)] text-white hover:bg-[rgba(255,255,255,0.1)] justify-start">
-                  <Edit className="h-4 w-4 mr-3" />
-                  Edit Tool
+                  <PencilIcon className="h-4 w-4 mr-3" />
+                  PencilIcon Tool
                 </Button>
                 <Button onClick={() => onOpenSettings?.(composition)} className="w-full bg-[rgba(255,255,255,0.05)] text-white hover:bg-[rgba(255,255,255,0.1)] justify-start">
-                  <Settings className="h-4 w-4 mr-3" />
-                  Tool Settings
+                  <Cog6ToothIcon className="h-4 w-4 mr-3" />
+                  Tool Cog6ToothIcon
                 </Button>
               </div>
             </Card>

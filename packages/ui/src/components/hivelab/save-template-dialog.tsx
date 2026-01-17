@@ -10,17 +10,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Share2,
-  Globe,
-  Building2,
-  Lock,
-  Tag,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react';
+import { XMarkIcon, ShareIcon, GlobeAltIcon, BuildingOffice2Icon, LockClosedIcon, TagIcon, ArrowPathIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
 
 // ============================================================================
@@ -70,9 +60,9 @@ const CATEGORIES: { value: TemplateCategory; label: string; description: string 
 ];
 
 const VISIBILITY_OPTIONS: { value: TemplateVisibility; label: string; description: string; icon: React.ElementType }[] = [
-  { value: 'private', label: 'Private', description: 'Only you can see and use this template', icon: Lock },
-  { value: 'campus', label: 'Campus', description: 'Students at your campus can use this template', icon: Building2 },
-  { value: 'public', label: 'Public', description: 'Anyone on HIVE can use this template', icon: Globe },
+  { value: 'private', label: 'Private', description: 'Only you can see and use this template', icon: LockClosedIcon },
+  { value: 'campus', label: 'Campus', description: 'Students at your campus can use this template', icon: BuildingOffice2Icon },
+  { value: 'public', label: 'Public', description: 'Anyone on HIVE can use this template', icon: GlobeAltIcon },
 ];
 
 // ============================================================================
@@ -198,7 +188,7 @@ export function SaveTemplateDialog({
           <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[var(--hive-gold-cta)]/20 flex items-center justify-center">
-                <Share2 className="w-5 h-5 text-[var(--hive-gold-cta)]" />
+                <ShareIcon className="w-5 h-5 text-[var(--hive-gold-cta)]" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Save as Template</h2>
@@ -209,7 +199,7 @@ export function SaveTemplateDialog({
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
-              <X className="w-5 h-5 text-white/60" />
+              <XMarkIcon className="w-5 h-5 text-white/60" />
             </button>
           </div>
 
@@ -217,7 +207,7 @@ export function SaveTemplateDialog({
           {success ? (
             <div className="p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Template Published!</h3>
               <p className="text-white/60">Your tool is now available in the template gallery.</p>
@@ -229,7 +219,7 @@ export function SaveTemplateDialog({
                 {/* Error */}
                 {error && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <ExclamationCircleIcon className="w-4 h-4 text-red-400 shrink-0" />
                     <p className="text-sm text-red-200">{error}</p>
                   </div>
                 )}
@@ -335,7 +325,7 @@ export function SaveTemplateDialog({
                   </label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                      <TagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                       <input
                         type="text"
                         value={tagInput}
@@ -376,7 +366,7 @@ export function SaveTemplateDialog({
                             onClick={() => handleRemoveTag(tag)}
                             className="hover:text-white"
                           >
-                            <X className="w-3 h-3" />
+                            <XMarkIcon className="w-3 h-3" />
                           </button>
                         </span>
                       ))}
@@ -410,12 +400,12 @@ export function SaveTemplateDialog({
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
                       Publishing...
                     </>
                   ) : (
                     <>
-                      <Share2 className="w-4 h-4" />
+                      <ShareIcon className="w-4 h-4" />
                       Publish Template
                     </>
                   )}

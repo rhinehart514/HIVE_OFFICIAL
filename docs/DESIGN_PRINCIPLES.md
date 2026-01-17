@@ -232,24 +232,21 @@ HIVE uses a 4-tier motion system. Match animation intensity to action importance
 | **T3** | 150-200ms | Snap | Ambient, hovers, toggles, micro-feedback |
 | **T4** | 0-50ms | Linear | Reduced motion fallback (accessibility) |
 
-### Easing (Use These)
+### Easing (LOCKED)
 | Name | Value | When |
 |------|-------|------|
-| **Default** | (0.23, 1, 0.32, 1) | 90% of animations (T2) |
-| **Snap** | (0.25, 0.1, 0.25, 1) | Toggles, checkboxes (T3) |
-| **Dramatic** | (0.165, 0.84, 0.44, 1) | Achievements ONLY (T1) |
-| **Premium** | (0.22, 1, 0.36, 1) | Apple/OpenAI feel |
+| **Smooth (Default)** | (0.22, 1, 0.36, 1) | 90% of animations — Apple/Vercel feel |
+| **Snap** | (0.25, 0.1, 0.25, 1) | Toggles, checkboxes, quick feedback |
+| **Dramatic** | (0.165, 0.84, 0.44, 1) | Achievements ONLY |
 
-### Duration
+### Duration (LOCKED)
 | Token | Time | Use |
 |-------|------|-----|
-| `instant` | 50ms | Micro-feedback |
-| `snap` | 150ms | Button presses |
-| `quick` | 200ms | Fast interactions |
-| `standard` | 300ms | Default transitions |
-| `smooth` | 400ms | Smooth movements |
-| `flowing` | 500ms | Layout changes |
-| `dramatic` | 700ms | Special moments |
+| `snap` | 100ms | Checkbox/Radio toggle |
+| `fast` | 150ms | Button feedback, tooltips |
+| `smooth` | 300ms | Default transitions, Switch glide |
+| `flowing` | 500ms | Layout changes, modals |
+| `dramatic` | 700ms | Achievements ONLY |
 
 ### Buttery Spring Presets
 
@@ -277,41 +274,50 @@ Premium motion has **mass** — not snappy, not floaty, buttery.
 | Default | 50ms | Standard stagger |
 | Slow | 100ms | Dramatic reveals |
 
-### State Animation Patterns
+### State Animation Patterns (LOCKED)
 
 | State Change | Animation | Duration | Easing |
 |--------------|-----------|----------|--------|
-| Select | Ring expand outward | 200ms | spring (stiff) |
-| Deselect | Ring contract | 150ms | spring (stiff) |
-| Expand | Height + fade | 250ms | spring (gentle) |
-| Collapse | Height + fade | 200ms | spring (gentle) |
-| Success | Draw check + settle | 400ms | ease-out + spring |
-| Error | Shake with physics | 400ms | spring (bouncy) |
-| Hover | Lift + shadow | 150ms | ease-out |
-| Press | Scale down | 50ms | ease-in |
+| Checkbox/Radio toggle | Fill appear | 100ms | snap |
+| Switch glide | Thumb translate | 300ms | smooth |
+| Modal open | Scale 0.96→1 + fade | 150ms | smooth |
+| Modal close | Scale 1→0.96 + fade | 100ms | smooth |
+| Expand/Collapse | Height + fade | 200ms | smooth |
+| Toast enter | Slide-x + scale 0.95→1 | 200ms | smooth |
+| Hover | Opacity 90% | 150ms | smooth |
+| Press | Opacity 80% | 50ms | snap |
+| **❌ NEVER** | Scale transforms | — | — |
 
 ---
 
-## Glass Morphism
+## Glass Morphism (LOCKED)
 
-### Standard Glass
+### Apple Glass Dark (Primary Surface)
+```css
+/* ✅ LOCKED — Use for Cards, Modals, Panels */
+background: linear-gradient(135deg, rgba(28,28,28,0.95), rgba(18,18,18,0.92));
+box-shadow:
+  0 0 0 1px rgba(255,255,255,0.08),  /* border */
+  0 8px 32px rgba(0,0,0,0.5),         /* depth */
+  inset 0 1px 0 rgba(255,255,255,0.1); /* highlight */
+border-radius: 16px; /* 2xl */
+
+/* Hover: brightness, NOT scale */
+filter: brightness(1.1);
+```
+
+### Standard Glass (Overlays)
 ```css
 backdrop-filter: blur(8px);
 background: rgba(255, 255, 255, 0.05);
 border: 1px solid rgba(255, 255, 255, 0.06);
 ```
 
-### Elevated Glass
-```css
-backdrop-filter: blur(8px);
-background: rgba(255, 255, 255, 0.12);
-border: 1px solid rgba(255, 255, 255, 0.12);
-```
-
 ### Rules
 - Standard blur: **8px** (never higher for performance)
 - No gold glows on glass (reserved for achievements)
-- Use for modals, cards, overlays
+- Use Apple Glass Dark for cards, modals, panels
+- Use Standard Glass for overlays, tooltips
 
 ---
 
@@ -332,24 +338,32 @@ box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 
 ---
 
-## Interactive States
+## Interactive States (LOCKED)
 
-### Hover
+### Hover — NO TRANSFORMS
 ```css
-background: rgba(255, 255, 255, 0.04);
-transform: translateY(-2px); /* optional lift */
+/* ✅ CORRECT — opacity-based */
+opacity: 0.9;
+/* or for cards: */
+filter: brightness(1.1);
+
+/* ❌ WRONG — no transforms on hover */
+transform: scale(1.02);  /* NEVER */
+transform: translateY(-2px);  /* NEVER */
 ```
 
-### Focus
+### Focus — WHITE ONLY
 ```css
 outline: none;
 box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-/* NEVER gold - always white */
+/* ❌ NEVER gold - always white */
 ```
 
-### Active/Pressed
+### Active/Pressed — OPACITY 80%
 ```css
-background: rgba(255, 255, 255, 0.08);
+opacity: 0.8;
+/* ❌ WRONG — no scale on press */
+transform: scale(0.98);  /* NEVER */
 ```
 
 ### Disabled
@@ -361,31 +375,74 @@ opacity: 0.5;
 
 ---
 
-## Button Variants
+## Button Variants (LOCKED)
 
-| Variant | Background | Text | Border | Use |
-|---------|------------|------|--------|-----|
-| **Default** | #FFFFFF | #000000 | none | Primary action |
-| **Primary** | #FFD700 | #000000 | none | CTAs (sparingly) |
-| **Secondary** | rgba(255,255,255,0.06) | #FFFFFF | white/0.08 | Secondary actions |
-| **Ghost** | transparent | #A1A1A6 | none | Tertiary actions |
-| **Destructive** | #FF3737 | #FFFFFF | none | Dangerous actions |
+| Variant | Background | Text | Border | Hover | Use |
+|---------|------------|------|--------|-------|-----|
+| **Default** | white/95 | #000000 | none | opacity: 0.9 | Primary action |
+| **CTA** | gradient gold | #000000 | none | gradient shift | CTAs (1 per view) |
+| **Secondary** | rgba(255,255,255,0.06) | #FFFFFF | white/0.08 | opacity: 0.9 | Secondary actions |
+| **Ghost** | transparent | #A1A1A6 | none | opacity: 0.9 | Tertiary actions |
+| **Destructive** | #FF3737 | #FFFFFF | none | opacity: 0.9 | Dangerous actions |
+
+### CTA Button Spec (LOCKED)
+```css
+/* ✅ Gradient with inset highlight */
+background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%);
+box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+
+/* Hover: gradient shift, not opacity */
+background: linear-gradient(180deg, #E6C200 0%, #A67700 100%);
+
+/* Press: darker gradient */
+background: linear-gradient(180deg, #CC9900 0%, #8B6914 100%);
+```
 
 ---
 
-## What We DON'T Do
+## Input Pure Float (LOCKED)
+
+Inputs FLOAT (pop up), they don't recess. Shadow-based focus, NO ring.
+
+```css
+/* ✅ LOCKED — Pure Float Input */
+background: linear-gradient(180deg, rgba(48,48,48,1), rgba(38,38,38,1));
+box-shadow:
+  0 4px 16px rgba(0,0,0,0.4),
+  inset 0 1px 0 rgba(255,255,255,0.08);
+border-radius: 12px; /* xl */
+border: none;
+
+/* Focus: brighten + deepen shadow, NO RING */
+background: linear-gradient(180deg, rgba(56,56,56,1), rgba(44,44,44,1));
+box-shadow:
+  0 6px 20px rgba(0,0,0,0.5),
+  inset 0 1px 0 rgba(255,255,255,0.12);
+
+/* Error: red-tinted, NO border */
+background: linear-gradient(180deg, rgba(60,40,40,1), rgba(45,35,35,1));
+box-shadow:
+  0 4px 16px rgba(255,50,50,0.2),
+  inset 0 1px 0 rgba(255,255,255,0.08);
+```
+
+---
+
+## What We DON'T Do (LOCKED)
 
 | Anti-Pattern | Why |
 |--------------|-----|
-| Gradients | Keep it flat and minimal |
+| **Scale on hover** | Use opacity-90 or brightness-110 instead |
+| **Scale on press** | Use opacity-80 instead |
+| **Gold focus rings** | White only for accessibility |
 | Rainbow/multi-color accents | Gold is the only accent |
 | Light mode | Dark-first, always |
 | Parallax/3D transforms | Unless earned by achievement |
 | Decorative gold | Gold is functional, not pretty |
-| Gold focus rings | White only for accessibility |
 | Cool/warm gray tints | Stay neutral, let gold warm |
 | Excessive animation | Subtle and purposeful |
 | Trendy effects | Timeless over fashionable |
+| Ring/outline on inputs | Shadow-based focus only |
 
 ---
 

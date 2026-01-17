@@ -54,8 +54,16 @@ export const GET = withErrors(async (
 
     if (idResult.isSuccess) {
       const space = idResult.getValue();
-      // Verify campus isolation
-      if (space.campusId.id === campusId) {
+      // Verify campus isolation (handle legacy spaces without campusId)
+      const spaceCampusId = space.campusId?.id;
+      if (!spaceCampusId || spaceCampusId === campusId) {
+        // Log warning for spaces missing campusId
+        if (!spaceCampusId) {
+          logger.warn('Space found without campusId - legacy data', {
+            spaceId: space.spaceId.value,
+            slug,
+          });
+        }
         return respond.success({
           spaceId: space.spaceId.value,
           slug: space.slug?.value || slug,
@@ -108,7 +116,9 @@ export const POST = withErrors(async (
     const idResult = await spaceRepo.findById(slug);
     if (idResult.isSuccess) {
       const space = idResult.getValue();
-      if (space.campusId.id === campusId) {
+      // Handle legacy spaces without campusId
+      const spaceCampusId = space.campusId?.id;
+      if (!spaceCampusId || spaceCampusId === campusId) {
         return respond.success({
           spaceId: space.spaceId.value,
           slug: space.slug?.value || slug,

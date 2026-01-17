@@ -1,41 +1,49 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+/**
+ * Profile Calendar Page
+ *
+ * Shows the user's personal calendar combined with space events.
+ * Uses the centralized /api/calendar endpoint which merges:
+ * - Personal events (from personalEvents collection)
+ * - Space events (from spaces the user is a member of)
+ */
+
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Input, Textarea } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
-import { db } from '@hive/firebase';
 import { logger } from '@/lib/logger';
+import { toast } from 'sonner';
 import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  doc,
-  setDoc,
-  deleteDoc,
-  serverTimestamp,
-  Timestamp
-} from 'firebase/firestore';
+  CalendarIcon,
+  PlusIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MapPinIcon,
+  ClockIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
+
+// ============================================
+// Types
+// ============================================
 
 interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  startTime: Date;
-  endTime: Date;
+  startDate: string;
+  endDate: string;
   location?: string;
-  type: 'class' | 'study' | 'social' | 'work' | 'personal';
-  recurring?: {
-    frequency: 'daily' | 'weekly' | 'monthly';
-    until?: Date;
-  };
+  isAllDay?: boolean;
+  type: 'personal' | 'space';
+  source?: string;
   spaceId?: string;
   spaceName?: string;
-  isPrivate: boolean;
-  attendees?: string[];
-  createdBy: string;
+  canEdit: boolean;
+  eventType?: string;
+  organizerName?: string;
 }
 
 interface TimeBlock {
@@ -44,143 +52,191 @@ interface TimeBlock {
   isFreeTime: boolean;
 }
 
-export default function CalendarPage() {
-  const { user } = useAuth();
+// ============================================
+// Helpers
+// ============================================
+
+const getEventColor = (event: CalendarEvent) => {
+  if (event.type === 'space') {
+    return 'bg-blue-500/80';
+  }
+  switch (event.eventType) {
+    case 'class': return 'bg-green-500/80';
+    case 'study': return 'bg-emerald-500/80';
+    case 'assignment': return 'bg-yellow-500/80';
+    case 'meeting': return 'bg-purple-500/80';
+    default: return 'bg-zinc-500/80';
+  }
+};
+
+const formatTimeLabel = (hour: number) => {
+  if (hour === 0) return '12 AM';
+  if (hour === 12) return '12 PM';
+  return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
+};
+
+// ============================================
+// Component
+// ============================================
+
+export default function ProfileCalendarPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
+  // State
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // New event form state
   const [newEvent, setNewEvent] = useState({
     title: '',
     description: '',
-    startTime: '',
-    endTime: '',
+    startDate: '',
+    endDate: '',
     location: '',
-    type: 'personal' as CalendarEvent['type'],
-    isPrivate: false
+    eventType: 'personal',
+    isAllDay: false,
   });
 
-  // Load calendar events
+  // Fetch calendar events from API
+  const fetchEvents = useCallback(async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/calendar', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch calendar: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setEvents(data.events || []);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load calendar';
+      logger.error('Failed to fetch calendar events', { component: 'ProfileCalendarPage' }, err instanceof Error ? err : undefined);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Load events on mount
   useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
+    if (user) {
+      fetchEvents();
+    }
+  }, [user, fetchEvents]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/enter?redirect=/profile/calendar');
+    }
+  }, [user, authLoading, router]);
+
+  // Create new event via API
+  const createEvent = async () => {
+    if (!user || !newEvent.title || !newEvent.startDate || !newEvent.endDate) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    const eventsRef = collection(db, 'users', user.uid, 'calendar');
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 7);
-
-    const q = query(
-      eventsRef,
-      where('startTime', '>=', Timestamp.fromDate(startOfWeek)),
-      where('startTime', '<=', Timestamp.fromDate(endOfWeek)),
-      orderBy('startTime', 'asc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const eventsData: CalendarEvent[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        eventsData.push({
-          id: doc.id,
-          title: data.title,
-          description: data.description,
-          startTime: data.startTime.toDate(),
-          endTime: data.endTime.toDate(),
-          location: data.location,
-          type: data.type,
-          recurring: data.recurring,
-          spaceId: data.spaceId,
-          spaceName: data.spaceName,
-          isPrivate: data.isPrivate || false,
-          attendees: data.attendees,
-          createdBy: data.createdBy
-        });
-      });
-      setEvents(eventsData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, currentDate, router]);
-
-  // Create new event
-  const createEvent = async () => {
-    if (!user || !newEvent.title || !newEvent.startTime || !newEvent.endTime) return;
+    setSaving(true);
 
     try {
-      const eventRef = doc(collection(db, 'users', user.uid, 'calendar'));
-      await setDoc(eventRef, {
-        ...newEvent,
-        startTime: Timestamp.fromDate(new Date(newEvent.startTime)),
-        endTime: Timestamp.fromDate(new Date(newEvent.endTime)),
-        createdBy: user.uid,
-        createdAt: serverTimestamp(),
-        campusId: 'ub-buffalo'
+      const response = await fetch('/api/calendar', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newEvent.title,
+          description: newEvent.description,
+          startDate: new Date(newEvent.startDate).toISOString(),
+          endDate: new Date(newEvent.endDate).toISOString(),
+          location: newEvent.location,
+          isAllDay: newEvent.isAllDay,
+        }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create event');
+      }
+
+      toast.success('Event created');
       setShowAddEvent(false);
       setNewEvent({
         title: '',
         description: '',
-        startTime: '',
-        endTime: '',
+        startDate: '',
+        endDate: '',
         location: '',
-        type: 'personal',
-        isPrivate: false
+        eventType: 'personal',
+        isAllDay: false,
       });
-    } catch (error) {
-      logger.error('Failed to create event', { component: 'CalendarPage' }, error instanceof Error ? error : undefined);
-    }
-  };
-
-  // Delete event
-  const _deleteEvent = async (eventId: string) => {
-    if (!user) return;
-
-    try {
-      await deleteDoc(doc(db, 'users', user.uid, 'calendar', eventId));
-    } catch (error) {
-      logger.error('Failed to delete event', { component: 'CalendarPage' }, error instanceof Error ? error : undefined);
+      fetchEvents();
+    } catch (err) {
+      logger.error('Failed to create event', { component: 'ProfileCalendarPage' }, err instanceof Error ? err : undefined);
+      toast.error(err instanceof Error ? err.message : 'Failed to create event');
+    } finally {
+      setSaving(false);
     }
   };
 
   // Get events for a specific day
-  const getEventsForDay = (date: Date): CalendarEvent[] => {
+  const getEventsForDay = useCallback((date: Date): CalendarEvent[] => {
     return events.filter(event => {
-      const eventDate = new Date(event.startTime);
+      const eventDate = new Date(event.startDate);
       return eventDate.toDateString() === date.toDateString();
     });
-  };
+  }, [events]);
 
-  // Get free time blocks
-  const getFreeTimeBlocks = (date: Date): TimeBlock[] => {
+  // Get time blocks for week view
+  const getTimeBlocks = useCallback((date: Date): TimeBlock[] => {
     const dayEvents = getEventsForDay(date);
     const blocks: TimeBlock[] = [];
 
     for (let hour = 8; hour < 22; hour++) {
       const hourEvents = dayEvents.filter(event => {
-        const eventHour = new Date(event.startTime).getHours();
+        const eventHour = new Date(event.startDate).getHours();
         return eventHour === hour;
       });
 
       blocks.push({
         hour,
         events: hourEvents,
-        isFreeTime: hourEvents.length === 0
+        isFreeTime: hourEvents.length === 0,
       });
     }
 
     return blocks;
-  };
+  }, [getEventsForDay]);
+
+  // Get week dates
+  const weekDates = useMemo(() => {
+    const dates: Date[] = [];
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(date.getDate() + i);
+      dates.push(date);
+    }
+
+    return dates;
+  }, [currentDate]);
 
   // Navigate dates
   const navigateDate = (direction: 'prev' | 'next') => {
@@ -195,113 +251,148 @@ export default function CalendarPage() {
     setCurrentDate(newDate);
   };
 
-  // Get type color
-  const getTypeColor = (type: CalendarEvent['type']) => {
-    switch (type) {
-      case 'class': return 'bg-blue-500';
-      case 'study': return 'bg-green-500';
-      case 'social': return 'bg-purple-500';
-      case 'work': return 'bg-orange-500';
-      case 'personal': return 'bg-gray-500';
-      default: return 'bg-gray-500';
-    }
-  };
+  // Free time analysis
+  const freeTimeByDay = useMemo(() => {
+    return weekDates.map(date => ({
+      date,
+      freeBlocks: getTimeBlocks(date).filter(b => b.isFreeTime),
+    })).filter(d => d.freeBlocks.length > 0);
+  }, [weekDates, getTimeBlocks]);
 
-  if (loading) {
+  // Stats
+  const stats = useMemo(() => {
+    const personal = events.filter(e => e.type === 'personal').length;
+    const space = events.filter(e => e.type === 'space').length;
+    return { personal, space, total: events.length };
+  }, [events]);
+
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Loading calendar...</div>
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-white/10 border-t-white/50 rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[var(--text-secondary)]">Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center p-8">
+        <Card className="max-w-md p-8 bg-[var(--bg-surface)] border-[var(--border-subtle)] text-center">
+          <CalendarIcon className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Couldn't load calendar</h2>
+          <p className="text-[var(--text-secondary)] mb-6">{error}</p>
+          <Button onClick={fetchEvents}>Try Again</Button>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
+    <div className="min-h-screen bg-[var(--bg-ground)] text-[var(--text-primary)] p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">My Calendar</h1>
-            <p className="text-gray-400">Manage your schedule and find free time</p>
+            <p className="text-[var(--text-secondary)]">
+              {stats.total === 0
+                ? 'No events scheduled'
+                : `${stats.personal} personal, ${stats.space} space events`
+              }
+            </p>
           </div>
           <Button
             onClick={() => setShowAddEvent(!showAddEvent)}
-            className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
+            className="bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold)]/90"
           >
-            + Add Event
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Event
           </Button>
         </div>
 
         {/* Add Event Form */}
         {showAddEvent && (
-          <Card className="mb-6 p-6 bg-gray-900 border-white/8">
+          <Card className="mb-6 p-6 bg-[var(--bg-surface)] border-[var(--border-subtle)]">
             <h3 className="text-lg font-semibold mb-4">Add New Event</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
-                placeholder="Event title"
+                placeholder="Event title *"
                 value={newEvent.title}
                 onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                className="bg-black border-white/20"
+                className="bg-[var(--bg-muted)] border-[var(--border-subtle)]"
               />
               <select
-                value={newEvent.type}
-                onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value as CalendarEvent['type'] })}
-                className="px-3 py-2 bg-black border border-white/20 rounded-lg"
+                value={newEvent.eventType}
+                onChange={(e) => setNewEvent({ ...newEvent, eventType: e.target.value })}
+                className="px-3 py-2 bg-[var(--bg-muted)] border border-[var(--border-subtle)] rounded-lg text-[var(--text-primary)]"
               >
                 <option value="personal">Personal</option>
                 <option value="class">Class</option>
                 <option value="study">Study</option>
-                <option value="social">Social</option>
-                <option value="work">Work</option>
+                <option value="meeting">Meeting</option>
+                <option value="assignment">Assignment</option>
               </select>
-              <Input
-                type="datetime-local"
-                placeholder="Start time"
-                value={newEvent.startTime}
-                onChange={(e) => setNewEvent({ ...newEvent, startTime: e.target.value })}
-                className="bg-black border-white/20"
-              />
-              <Input
-                type="datetime-local"
-                placeholder="End time"
-                value={newEvent.endTime}
-                onChange={(e) => setNewEvent({ ...newEvent, endTime: e.target.value })}
-                className="bg-black border-white/20"
-              />
+              <div>
+                <label className="block text-sm text-[var(--text-tertiary)] mb-1">Start *</label>
+                <Input
+                  type="datetime-local"
+                  value={newEvent.startDate}
+                  onChange={(e) => setNewEvent({ ...newEvent, startDate: e.target.value })}
+                  className="bg-[var(--bg-muted)] border-[var(--border-subtle)]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-[var(--text-tertiary)] mb-1">End *</label>
+                <Input
+                  type="datetime-local"
+                  value={newEvent.endDate}
+                  onChange={(e) => setNewEvent({ ...newEvent, endDate: e.target.value })}
+                  className="bg-[var(--bg-muted)] border-[var(--border-subtle)]"
+                />
+              </div>
               <Input
                 placeholder="Location (optional)"
                 value={newEvent.location}
                 onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-                className="bg-black border-white/20"
+                className="bg-[var(--bg-muted)] border-[var(--border-subtle)]"
               />
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={newEvent.isPrivate}
-                  onChange={(e) => setNewEvent({ ...newEvent, isPrivate: e.target.checked })}
-                  className="rounded border-white/20"
+                  id="allDay"
+                  checked={newEvent.isAllDay}
+                  onChange={(e) => setNewEvent({ ...newEvent, isAllDay: e.target.checked })}
+                  className="rounded border-[var(--border-subtle)]"
                 />
-                <label className="text-sm">Private event</label>
+                <label htmlFor="allDay" className="text-sm text-[var(--text-secondary)]">All day event</label>
               </div>
             </div>
             <Textarea
               placeholder="Description (optional)"
               value={newEvent.description}
               onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-              className="mt-4 bg-black border-white/20"
+              className="mt-4 bg-[var(--bg-muted)] border-[var(--border-subtle)]"
               rows={3}
             />
             <div className="flex gap-2 mt-4">
               <Button
                 onClick={createEvent}
-                className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
+                disabled={saving || !newEvent.title || !newEvent.startDate || !newEvent.endDate}
+                className="bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold)]/90 disabled:opacity-50"
               >
-                Create Event
+                {saving ? 'Creating...' : 'Create Event'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowAddEvent(false)}
-                className="border-white/20"
+                className="border-[var(--border-subtle)]"
               >
                 Cancel
               </Button>
@@ -310,32 +401,32 @@ export default function CalendarPage() {
         )}
 
         {/* Calendar Navigation */}
-        <div className="mb-6 flex justify-between items-center">
-          <div className="flex gap-2">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               onClick={() => navigateDate('prev')}
-              className="border-white/20"
+              className="border-[var(--border-subtle)]"
             >
-              ← Previous
+              <ChevronLeftIcon className="w-4 h-4" />
             </Button>
             <Button
               variant="outline"
               onClick={() => setCurrentDate(new Date())}
-              className="border-white/20"
+              className="border-[var(--border-subtle)]"
             >
               Today
             </Button>
             <Button
               variant="outline"
               onClick={() => navigateDate('next')}
-              className="border-white/20"
+              className="border-[var(--border-subtle)]"
             >
-              Next →
+              <ChevronRightIcon className="w-4 h-4" />
             </Button>
           </div>
 
-          <h2 className="text-xl font-semibold">
+          <h2 className="text-xl font-semibold text-center">
             {currentDate.toLocaleDateString('en-US', {
               month: 'long',
               year: 'numeric',
@@ -343,83 +434,90 @@ export default function CalendarPage() {
             })}
           </h2>
 
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'day' ? 'default' : 'outline'}
-              onClick={() => setViewMode('day')}
-              className={viewMode === 'day' ? 'bg-[var(--hive-brand-primary)] text-black' : 'border-white/20'}
-              size="sm"
-            >
-              Day
-            </Button>
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'outline'}
-              onClick={() => setViewMode('week')}
-              className={viewMode === 'week' ? 'bg-[var(--hive-brand-primary)] text-black' : 'border-white/20'}
-              size="sm"
-            >
-              Week
-            </Button>
-            <Button
-              variant={viewMode === 'month' ? 'default' : 'outline'}
-              onClick={() => setViewMode('month')}
-              className={viewMode === 'month' ? 'bg-[var(--hive-brand-primary)] text-black' : 'border-white/20'}
-              size="sm"
-            >
-              Month
-            </Button>
+          <div className="flex gap-2 justify-center sm:justify-end">
+            {(['day', 'week', 'month'] as const).map((mode) => (
+              <Button
+                key={mode}
+                variant={viewMode === mode ? 'default' : 'outline'}
+                onClick={() => setViewMode(mode)}
+                className={viewMode === mode
+                  ? 'bg-[var(--life-gold)] text-[var(--bg-ground)]'
+                  : 'border-[var(--border-subtle)]'
+                }
+                size="sm"
+              >
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </Button>
+            ))}
           </div>
         </div>
 
-        {/* Calendar View */}
+        {/* Week View */}
         {viewMode === 'week' && (
-          <div className="grid grid-cols-8 gap-2">
+          <div className="grid grid-cols-8 gap-2 overflow-x-auto">
             {/* Time column */}
             <div className="space-y-2">
-              <div className="h-12"></div>
+              <div className="h-12" />
               {Array.from({ length: 14 }, (_, i) => i + 8).map(hour => (
-                <div key={hour} className="h-20 text-xs text-gray-400 text-right pr-2">
-                  {hour > 12 ? `${hour - 12}PM` : `${hour}AM`}
+                <div key={hour} className="h-20 text-xs text-[var(--text-tertiary)] text-right pr-2 pt-1">
+                  {formatTimeLabel(hour)}
                 </div>
               ))}
             </div>
 
             {/* Days */}
-            {Array.from({ length: 7 }, (_, i) => {
-              const date = new Date(currentDate);
-              date.setDate(date.getDate() - date.getDay() + i);
-              const _dayEvents = getEventsForDay(date);
+            {weekDates.map((date, i) => {
+              const isToday = date.toDateString() === new Date().toDateString();
+              const dayEvents = getEventsForDay(date);
 
               return (
-                <div key={i} className="space-y-2">
+                <div key={i} className="space-y-2 min-w-[100px]">
                   <div className="h-12 text-center">
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-[var(--text-tertiary)]">
                       {date.toLocaleDateString('en-US', { weekday: 'short' })}
                     </div>
-                    <div className={`text-lg font-semibold ${
-                      date.toDateString() === new Date().toDateString() ? 'text-[var(--hive-brand-primary)]' : ''
-                    }`}>
+                    <div className={`text-lg font-semibold ${isToday ? 'text-[var(--life-gold)]' : ''}`}>
                       {date.getDate()}
                     </div>
+                    {dayEvents.length > 0 && (
+                      <div className="flex justify-center gap-0.5 mt-0.5">
+                        {dayEvents.slice(0, 3).map((e, j) => (
+                          <div key={j} className={`w-1.5 h-1.5 rounded-full ${getEventColor(e)}`} />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Hour blocks */}
-                  {getFreeTimeBlocks(date).map((block) => (
+                  {getTimeBlocks(date).map((block) => (
                     <div
                       key={block.hour}
-                      className={`h-20 border border-white/8 rounded-lg p-1 ${
-                        block.isFreeTime ? 'bg-gray-900/50' : ''
+                      className={`h-20 border border-[var(--border-subtle)] rounded-lg p-1 ${
+                        block.isFreeTime ? 'bg-[var(--bg-muted)]/30' : 'bg-[var(--bg-surface)]'
                       }`}
                     >
                       {block.events.map((event) => (
                         <div
                           key={event.id}
-                          className={`${getTypeColor(event.type)} text-xs p-1 rounded mb-1 cursor-pointer hover:opacity-80`}
-                          onClick={() => router.push(`/profile/calendar/event/${event.id}`)}
+                          className={`${getEventColor(event)} text-xs p-1.5 rounded mb-1 cursor-pointer hover:opacity-80 transition-opacity`}
+                          onClick={() => {
+                            if (event.type === 'space' && event.spaceId) {
+                              router.push(`/spaces/${event.spaceId}`);
+                            }
+                          }}
                         >
-                          <div className="font-medium truncate">{event.title}</div>
+                          <div className="font-medium truncate text-white">{event.title}</div>
+                          {event.type === 'space' && event.spaceName && (
+                            <div className="text-white/70 truncate flex items-center gap-1">
+                              <UserGroupIcon className="w-3 h-3" />
+                              {event.spaceName}
+                            </div>
+                          )}
                           {event.location && (
-                            <div className="text-white/70 truncate">{event.location}</div>
+                            <div className="text-white/70 truncate flex items-center gap-1">
+                              <MapPinIcon className="w-3 h-3" />
+                              {event.location}
+                            </div>
                           )}
                         </div>
                       ))}
@@ -431,42 +529,176 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {/* Free Time Finder */}
-        <Card className="mt-8 p-6 bg-gray-900 border-white/8">
-          <h3 className="text-lg font-semibold mb-4">Free Time This Week</h3>
+        {/* Day View */}
+        {viewMode === 'day' && (
           <div className="space-y-2">
-            {Array.from({ length: 7 }, (_, i) => {
-              const date = new Date(currentDate);
-              date.setDate(date.getDate() - date.getDay() + i);
-              const freeBlocks = getFreeTimeBlocks(date).filter(b => b.isFreeTime);
+            {getTimeBlocks(currentDate).map((block) => (
+              <div
+                key={block.hour}
+                className={`flex gap-4 p-3 rounded-lg border ${
+                  block.isFreeTime
+                    ? 'border-[var(--border-subtle)] bg-[var(--bg-muted)]/30'
+                    : 'border-[var(--border-default)] bg-[var(--bg-surface)]'
+                }`}
+              >
+                <div className="w-16 text-sm text-[var(--text-tertiary)] pt-1">
+                  {formatTimeLabel(block.hour)}
+                </div>
+                <div className="flex-1 min-h-[60px]">
+                  {block.events.length === 0 ? (
+                    <div className="text-xs text-[var(--text-muted)] pt-1">Free</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {block.events.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`${getEventColor(event)} p-3 rounded-lg cursor-pointer hover:opacity-90 transition-opacity`}
+                          onClick={() => {
+                            if (event.type === 'space' && event.spaceId) {
+                              router.push(`/spaces/${event.spaceId}`);
+                            }
+                          }}
+                        >
+                          <div className="font-medium text-white">{event.title}</div>
+                          <div className="flex items-center gap-4 mt-1 text-sm text-white/70">
+                            {event.type === 'space' && event.spaceName && (
+                              <span className="flex items-center gap-1">
+                                <UserGroupIcon className="w-4 h-4" />
+                                {event.spaceName}
+                              </span>
+                            )}
+                            {event.location && (
+                              <span className="flex items-center gap-1">
+                                <MapPinIcon className="w-4 h-4" />
+                                {event.location}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <ClockIcon className="w-4 h-4" />
+                              {new Date(event.startDate).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              })} - {new Date(event.endDate).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
-              if (freeBlocks.length === 0) return null;
+        {/* Month View - Simple list */}
+        {viewMode === 'month' && (
+          <div className="space-y-4">
+            {events.length === 0 ? (
+              <Card className="p-12 bg-[var(--bg-surface)] border-[var(--border-subtle)] text-center">
+                <CalendarIcon className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No events this month</h3>
+                <p className="text-[var(--text-secondary)] mb-6">Create a personal event or join space events</p>
+                <Button
+                  onClick={() => setShowAddEvent(true)}
+                  className="bg-[var(--life-gold)] text-[var(--bg-ground)]"
+                >
+                  <PlusIcon className="w-4 h-4 mr-2" />
+                  Add Event
+                </Button>
+              </Card>
+            ) : (
+              events.map((event) => (
+                <Card
+                  key={event.id}
+                  className="p-4 bg-[var(--bg-surface)] border-[var(--border-subtle)] hover:border-[var(--border-default)] transition-colors cursor-pointer"
+                  onClick={() => {
+                    if (event.type === 'space' && event.spaceId) {
+                      router.push(`/spaces/${event.spaceId}`);
+                    }
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className={`w-2 h-2 rounded-full ${getEventColor(event)}`} />
+                        <h3 className="font-medium text-[var(--text-primary)]">{event.title}</h3>
+                        {event.type === 'space' && (
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                            Space
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-[var(--text-secondary)]">
+                        <span className="flex items-center gap-1">
+                          <CalendarIcon className="w-4 h-4" />
+                          {new Date(event.startDate).toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ClockIcon className="w-4 h-4" />
+                          {new Date(event.startDate).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                        {event.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPinIcon className="w-4 h-4" />
+                            {event.location}
+                          </span>
+                        )}
+                        {event.spaceName && (
+                          <span className="flex items-center gap-1">
+                            <UserGroupIcon className="w-4 h-4" />
+                            {event.spaceName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
+          </div>
+        )}
 
-              return (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-24 text-sm text-gray-400">
+        {/* Free Time Finder */}
+        {viewMode === 'week' && freeTimeByDay.length > 0 && (
+          <Card className="mt-8 p-6 bg-[var(--bg-surface)] border-[var(--border-subtle)]">
+            <h3 className="text-lg font-semibold mb-4">Free Time This Week</h3>
+            <div className="space-y-3">
+              {freeTimeByDay.map(({ date, freeBlocks }) => (
+                <div key={date.toISOString()} className="flex items-center gap-4">
+                  <div className="w-32 text-sm text-[var(--text-secondary)]">
                     {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </div>
                   <div className="flex gap-2 flex-wrap">
-                    {freeBlocks.slice(0, 3).map((block) => (
+                    {freeBlocks.slice(0, 4).map((block) => (
                       <Badge
                         key={block.hour}
-                        className="bg-green-900/20 text-green-400 border-green-400/50"
+                        className="bg-green-500/20 text-green-400 border-green-500/30"
                       >
-                        {block.hour > 12 ? `${block.hour - 12}PM` : `${block.hour}AM`}
+                        {formatTimeLabel(block.hour)}
                       </Badge>
                     ))}
-                    {freeBlocks.length > 3 && (
-                      <Badge className="bg-gray-800 text-gray-400">
-                        +{freeBlocks.length - 3} more
+                    {freeBlocks.length > 4 && (
+                      <Badge className="bg-[var(--bg-muted)] text-[var(--text-tertiary)]">
+                        +{freeBlocks.length - 4} more
                       </Badge>
                     )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -1,3 +1,11 @@
+/* Import distinctive display font - Clash Display for manifesto energy */
+/* @import must come before @tailwind directives */
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
+
+/* Import design system tokens from @hive/ui */
+/* This provides --life-*, --status-*, --bg-*, --text-* variables used by primitives */
+@import '../../../../packages/ui/src/design-system/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,9 +15,6 @@
  * Apple/Vercel craft with HIVE warmth (gold)
  * No light mode - dark is the only mode
  */
-
-/* Import distinctive display font - Clash Display for manifesto energy */
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
 
 :root {
   /* ===================================
@@ -62,6 +67,19 @@
   --hive-status-error-dim: rgba(255, 55, 55, 0.15);
   --hive-status-info: #0070F3;
   --hive-status-info-dim: rgba(0, 112, 243, 0.15);
+
+  /* ===================================
+   * CATEGORY COLORS (Space Types)
+   * Semantic colors for distinguishing content types
+   * =================================== */
+  --hive-category-university: #3B82F6;
+  --hive-category-university-dim: rgba(59, 130, 246, 0.15);
+  --hive-category-student: #F59E0B;
+  --hive-category-student-dim: rgba(245, 158, 11, 0.15);
+  --hive-category-residential: #10B981;
+  --hive-category-residential-dim: rgba(16, 185, 129, 0.15);
+  --hive-category-greek: #8B5CF6;
+  --hive-category-greek-dim: rgba(139, 92, 246, 0.15);
 
   /* ===================================
    * SEMANTIC ALIASES
@@ -389,6 +407,33 @@
     color: var(--hive-badge-text);
     border: 1px solid var(--hive-badge-border);
   }
+
+  /* Category Indicators (Space types) */
+  .category-indicator {
+    width: 4px;
+    border-radius: var(--hive-radius-full);
+    flex-shrink: 0;
+  }
+
+  .category-indicator-university { background-color: var(--hive-category-university); }
+  .category-indicator-student { background-color: var(--hive-category-student); }
+  .category-indicator-residential { background-color: var(--hive-category-residential); }
+  .category-indicator-greek { background-color: var(--hive-category-greek); }
+
+  .category-accent-university { background-color: var(--hive-category-university); }
+  .category-accent-student { background-color: var(--hive-category-student); }
+  .category-accent-residential { background-color: var(--hive-category-residential); }
+  .category-accent-greek { background-color: var(--hive-category-greek); }
+
+  .category-text-university { color: var(--hive-category-university); }
+  .category-text-student { color: var(--hive-category-student); }
+  .category-text-residential { color: var(--hive-category-residential); }
+  .category-text-greek { color: var(--hive-category-greek); }
+
+  .category-bg-university { background-color: var(--hive-category-university-dim); }
+  .category-bg-student { background-color: var(--hive-category-student-dim); }
+  .category-bg-residential { background-color: var(--hive-category-residential-dim); }
+  .category-bg-greek { background-color: var(--hive-category-greek-dim); }
 
   /* Gold glow effect */
   .gold-glow {

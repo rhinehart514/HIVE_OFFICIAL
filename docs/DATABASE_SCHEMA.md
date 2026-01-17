@@ -1,5 +1,7 @@
 # HIVE Database Schema
 
+**Last Updated:** January 2026
+
 ## Overview
 HIVE uses Firebase Firestore as its primary database. All collections follow a consistent structure with campus isolation for multi-tenancy support.
 
@@ -11,21 +13,45 @@ interface BaseDocument {
   campusId: string;          // 'ub-buffalo' for vBETA
   createdAt: Timestamp;      // Creation timestamp
   updatedAt: Timestamp;      // Last update timestamp
-  createdBy: string;         // User UID who created
+  createdBy?: string;        // User UID who created
 }
 ```
+
+---
 
 ## Primary Collections
 
 ### users
-User profiles and account information.
+Firebase Auth accounts with basic metadata.
 ```typescript
 interface User extends BaseDocument {
-  // Identity
   uid: string;               // Firebase Auth UID
   email: string;             // University email
   handle: string;            // Unique @handle
   displayName: string;       // Full name
+  photoURL?: string;         // Avatar URL
+
+  // Status
+  onboardingComplete: boolean;
+  emailVerified: boolean;
+  isBuilder: boolean;
+
+  // FCM
+  fcmTokens?: string[];      // Push notification tokens
+}
+```
+
+### profiles
+Extended user profile data (separate from auth).
+```typescript
+interface Profile extends BaseDocument {
+  userId: string;            // Links to users.uid
+
+  // Identity
+  displayName: string;
+  handle: string;
+  avatarUrl?: string;
+  bio?: string;
 
   // Academic
   userType: 'student' | 'faculty' | 'alumni';
@@ -33,27 +59,21 @@ interface User extends BaseDocument {
   academicYear?: 'freshman' | 'sophomore' | 'junior' | 'senior';
   graduationYear?: number;
 
-  // Profile
-  bio?: string;
-  photoURL?: string;
-  interests: string[];
-
-  // Status
-  onboardingComplete: boolean;
-  emailVerified: boolean;
-  isBuilder: boolean;
-
   // Social
+  interests: string[];
   followerCount: number;
   followingCount: number;
   spaceCount: number;
 
-  // Settings
+  // Privacy
   privacy: {
     profileVisibility: 'public' | 'campus' | 'private';
     showEmail: boolean;
     showAcademicInfo: boolean;
   };
+
+  // Status
+  role?: string;             // 'member', 'leader', 'admin'
 }
 ```
 
@@ -63,25 +83,26 @@ Communities, organizations, and groups.
 interface Space extends BaseDocument {
   // Identity
   name: string;
-  handle: string;
+  handle: string;            // Unique @space-handle
+  slug: string;              // URL-friendly slug
   description: string;
 
   // Classification
-  type: SpaceType;           // See SpaceType enum below
+  type: SpaceType;
   subType?: string;
   tags: string[];
+  category?: string;
 
   // Visuals
   coverImageURL?: string;
   iconURL?: string;
 
-  // Membership
-  memberCount: number;
-  leaderIds: string[];
-  moderatorIds: string[];
+  // Leadership
+  leaderIds: string[];       // Primary leaders
+  moderatorIds: string[];    // Moderators
 
   // Settings
-  isPrivate: boolean;
+  visibility: 'public' | 'private' | 'members_only';
   requiresApproval: boolean;
   isActive: boolean;
 
@@ -91,7 +112,8 @@ interface Space extends BaseDocument {
   hasRSS: boolean;
   rssUrl?: string;
 
-  // Stats
+  // Counts
+  memberCount: number;
   postCount: number;
   eventCount: number;
   toolCount: number;
@@ -106,72 +128,24 @@ enum SpaceType {
 }
 ```
 
-### spaces/[spaceId]/posts
-Posts within a space.
+### spaceMembers
+Top-level membership collection (NOT a subcollection).
 ```typescript
-interface Post extends BaseDocument {
-  // Content
-  content: string;
-  mediaUrls?: string[];
-
-  // Author
-  authorId: string;
-  authorName: string;
-  authorPhotoURL?: string;
-
-  // Engagement
-  likeCount: number;
-  commentCount: number;
-  shareCount: number;
-
-  // Metadata
+interface SpaceMember extends BaseDocument {
   spaceId: string;
-  spaceName: string;
-  isPinned: boolean;
-
-  // Moderation
-  isReported: boolean;
-  isHidden: boolean;
-}
-```
-
-### spaces/[spaceId]/posts/[postId]/comments
-Comments on posts.
-```typescript
-interface Comment extends BaseDocument {
-  // Content
-  content: string;
-
-  // Author
-  authorId: string;
-  authorName: string;
-  authorPhotoURL?: string;
-
-  // Relations
-  postId: string;
-  parentCommentId?: string;  // For nested comments
-
-  // Engagement
-  likeCount: number;
-}
-```
-
-### spaces/[spaceId]/members
-Space membership records.
-```typescript
-interface Member extends BaseDocument {
-  // User
   userId: string;
-  userName: string;
-  userPhotoURL?: string;
-  userHandle: string;
 
-  // Membership
-  role: 'leader' | 'moderator' | 'member';
+  // User snapshot
+  userName: string;
+  userHandle: string;
+  userPhotoURL?: string;
+
+  // Role
+  role: 'owner' | 'leader' | 'moderator' | 'member';
   joinedAt: Timestamp;
 
   // Activity
-  lastActiveAt: Timestamp;
+  lastActiveAt?: Timestamp;
   postCount: number;
 
   // Permissions
@@ -181,8 +155,81 @@ interface Member extends BaseDocument {
 }
 ```
 
+### posts
+Top-level posts collection (NOT a subcollection under spaces).
+```typescript
+interface Post extends BaseDocument {
+  // Content
+  content: string;
+  title?: string;
+  mediaUrls?: string[];
+
+  // Type
+  contentType: 'user_post' | 'tool_generated' | 'tool_enhanced' | 'space_event' | 'builder_announcement' | 'rss_import';
+  toolId?: string;
+
+  // Author
+  authorId: string;
+  authorName: string;
+  authorHandle?: string;
+  authorAvatar?: string;
+  authorRole?: string;
+
+  // Location
+  spaceId?: string;          // Optional - can be global
+  spaceName?: string;
+
+  // Engagement
+  engagement: {
+    likes: number;
+    comments: number;
+    shares: number;
+    views: number;
+  };
+
+  // Legacy (some posts use this)
+  reactions?: {
+    likes: number;
+    comments: number;
+  };
+
+  // Visibility
+  visibility: 'public' | 'private' | 'members_only';
+  isHidden: boolean;
+  isDeleted: boolean;
+  isPinned: boolean;
+}
+```
+
+### posts/[postId]/comments
+Comments subcollection under posts.
+```typescript
+interface Comment extends BaseDocument {
+  postId: string;
+
+  // Content
+  content: string;
+
+  // Author
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  authorRole?: string;
+
+  // Threading
+  parentCommentId?: string;  // For nested replies
+
+  // Engagement
+  likeCount: number;
+
+  // Moderation
+  isHidden: boolean;
+  isDeleted: boolean;
+}
+```
+
 ### tools
-Student-created tools and utilities.
+HiveLab tools and utilities.
 ```typescript
 interface Tool extends BaseDocument {
   // Identity
@@ -192,23 +239,25 @@ interface Tool extends BaseDocument {
 
   // Ownership
   creatorId: string;
-  spaceId?: string;          // Tools can belong to spaces
+  creatorName?: string;
 
   // Configuration
   type: 'template' | 'custom';
   templateId?: string;
-  configuration: Record<string, any>;
+  configuration: Record<string, unknown>;
 
-  // Elements (for custom tools)
-  elements: ToolElement[];
+  // Code
+  code?: string;             // Tool source code
+  elements?: ToolElement[];  // Visual elements
+
+  // Status
+  status: 'draft' | 'published' | 'archived';
+  isPublic: boolean;
+  isTemplate: boolean;
 
   // Usage
   usageCount: number;
   lastUsedAt?: Timestamp;
-
-  // Sharing
-  isPublic: boolean;
-  isTemplate: boolean;
 
   // Analytics
   analytics: {
@@ -217,92 +266,31 @@ interface Tool extends BaseDocument {
     avgSessionTime: number;
   };
 }
-
-interface ToolElement {
-  id: string;
-  type: string;
-  props: Record<string, any>;
-  position: { x: number; y: number };
-}
 ```
 
-### rituals
-Platform-wide collective experiences.
+### placed_tools
+Deployed tools in spaces or profiles.
 ```typescript
-interface Ritual extends BaseDocument {
-  // Identity
-  name: string;
-  title: string;
-  description: string;
-  tagline: string;
+interface PlacedTool extends BaseDocument {
+  toolId: string;
+  toolName: string;
 
-  // Classification
-  type: RitualType;
-  category: string;
-  tags: string[];
+  // Placement
+  placementType: 'space' | 'profile';
+  spaceId?: string;
+  profileId?: string;
 
-  // Timing
-  status: RitualStatus;
-  startTime: Timestamp;
-  endTime?: Timestamp;
-  duration?: number;         // Minutes
-
-  // Scope
-  universities: string[];
-  isGlobal: boolean;
-
-  // Participation
-  participationType: ParticipationType;
-  maxParticipants?: number;
-  minParticipants?: number;
-
-  // Mechanics
-  actions: RitualAction[];
-  milestones: RitualMilestone[];
-  rewards: RitualReward[];
-
-  // Metrics
-  metrics: {
-    participationRate: number;
-    completionRate: number;
-    engagementScore: number;
-    socialImpact: number;
-  };
-}
-
-enum RitualType {
-  ONBOARDING = 'onboarding',
-  SEASONAL = 'seasonal',
-  COMMUNITY = 'community',
-  EMERGENCY = 'emergency'
-}
-```
-
-### ritual_participation
-User participation in rituals.
-```typescript
-interface RitualParticipation extends BaseDocument {
-  // Relations
-  ritualId: string;
-  userId: string;
+  // Position
+  position: 'sidebar' | 'main' | 'header';
+  order: number;
 
   // Status
-  status: 'invited' | 'joined' | 'active' | 'completed' | 'dropped';
-  joinedAt: Timestamp;
-  completedAt?: Timestamp;
+  isActive: boolean;
+  placedAt: Timestamp;
+  placedBy: string;
 
-  // Progress
-  actionsCompleted: string[];
-  progressPercentage: number;
-
-  // Engagement
-  timeSpent: number;         // Minutes
-  interactionCount: number;
-  socialScore: number;
-
-  // Rewards
-  rewardsEarned: string[];
-  badgesAwarded: string[];
+  // Config override
+  configOverride?: Record<string, unknown>;
 }
 ```
 
@@ -318,6 +306,7 @@ interface Event extends BaseDocument {
   startTime: Timestamp;
   endTime: Timestamp;
   timezone: string;
+  allDay?: boolean;
 
   // Location
   location: string;
@@ -327,7 +316,9 @@ interface Event extends BaseDocument {
 
   // Organization
   spaceId?: string;
+  spaceName?: string;
   organizerId: string;
+  organizerName?: string;
 
   // Attendance
   rsvpCount: number;
@@ -343,114 +334,365 @@ interface Event extends BaseDocument {
 }
 ```
 
+### rsvps
+Event RSVP records.
+```typescript
+interface RSVP extends BaseDocument {
+  eventId: string;
+  userId: string;
+
+  // User snapshot
+  userName: string;
+  userAvatar?: string;
+
+  // Status
+  status: 'going' | 'maybe' | 'not_going';
+  respondedAt: Timestamp;
+
+  // Calendar
+  addedToCalendar?: boolean;
+}
+```
+
 ### handles
 Unique handle registry.
 ```typescript
-interface Handle extends BaseDocument {
-  handle: string;            // The @handle
-  userId: string;           // Owner's UID
-  type: 'user' | 'space';  // Handle type
-  reservedAt: Timestamp;    // When claimed
+interface Handle {
+  handle: string;            // The @handle (doc ID)
+  userId: string;            // Owner's UID
+  type: 'user' | 'space';    // Handle type
+  reservedAt: Timestamp;
 }
 ```
+
+### notifications
+User notifications.
+```typescript
+interface Notification extends BaseDocument {
+  userId: string;            // Recipient
+
+  // Content
+  type: NotificationType;
+  title: string;
+  body: string;
+
+  // Reference
+  referenceType?: 'space' | 'post' | 'event' | 'user' | 'tool';
+  referenceId?: string;
+
+  // Status
+  read: boolean;
+  readAt?: Timestamp;
+
+  // Actor
+  actorId?: string;
+  actorName?: string;
+  actorAvatar?: string;
+}
+
+type NotificationType =
+  | 'space_invite'
+  | 'space_join'
+  | 'post_like'
+  | 'post_comment'
+  | 'mention'
+  | 'event_reminder'
+  | 'follow'
+  | 'system';
+```
+
+---
+
+## Chat Collections
+
+### chatChannels
+Space chat channels (boards).
+```typescript
+interface ChatChannel extends BaseDocument {
+  spaceId: string;
+
+  // Identity
+  name: string;
+  description?: string;
+
+  // Type
+  type: 'general' | 'announcements' | 'custom';
+  isDefault: boolean;
+
+  // Settings
+  allowReplies: boolean;
+  slowMode?: number;         // Seconds between messages
+
+  // Stats
+  messageCount: number;
+  lastMessageAt?: Timestamp;
+}
+```
+
+### channelMemberships
+User channel membership state.
+```typescript
+interface ChannelMembership {
+  id: string;                // `${channelId}_${userId}`
+  channelId: string;
+  userId: string;
+
+  // State
+  lastReadAt: Timestamp;
+  unreadCount: number;
+  muted: boolean;
+
+  joinedAt: Timestamp;
+}
+```
+
+### chatMessages
+Chat messages.
+```typescript
+interface ChatMessage extends BaseDocument {
+  channelId: string;
+  spaceId: string;
+
+  // Content
+  content: string;
+  type: 'text' | 'system' | 'tool_output';
+
+  // Author
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+
+  // Threading
+  replyToId?: string;
+  replyCount: number;
+
+  // Reactions
+  reactions: Record<string, string[]>; // emoji -> userIds
+
+  // Status
+  isPinned: boolean;
+  isEdited: boolean;
+  editedAt?: Timestamp;
+  isDeleted: boolean;
+}
+```
+
+---
+
+## Analytics Collections
+
+### analytics_metrics
+Raw analytics events.
+```typescript
+interface AnalyticsMetric extends BaseDocument {
+  // Event
+  eventType: string;
+  eventName: string;
+
+  // Context
+  userId?: string;
+  spaceId?: string;
+  toolId?: string;
+
+  // Data
+  value: number;
+  metadata: Record<string, unknown>;
+
+  timestamp: Timestamp;
+}
+```
+
+### analytics_aggregates
+Aggregated analytics.
+```typescript
+interface AnalyticsAggregate {
+  id: string;                // `${metricType}_${period}_${entityId}`
+
+  metricType: string;
+  period: 'hourly' | 'daily' | 'weekly' | 'monthly';
+  entityType: 'space' | 'tool' | 'user' | 'campus';
+  entityId: string;
+
+  // Values
+  count: number;
+  sum: number;
+  avg: number;
+  min: number;
+  max: number;
+
+  periodStart: Timestamp;
+  periodEnd: Timestamp;
+}
+```
+
+---
+
+## Ritual Collections
+
+### rituals
+Platform-wide collective experiences.
+```typescript
+interface Ritual extends BaseDocument {
+  name: string;
+  title: string;
+  description: string;
+  tagline: string;
+
+  // Classification
+  type: 'onboarding' | 'seasonal' | 'community' | 'emergency';
+  category: string;
+  tags: string[];
+
+  // Timing
+  status: 'draft' | 'scheduled' | 'active' | 'completed';
+  startTime: Timestamp;
+  endTime?: Timestamp;
+
+  // Scope
+  universities: string[];
+  isGlobal: boolean;
+
+  // Participation
+  participationType: 'individual' | 'team' | 'space';
+  maxParticipants?: number;
+
+  // Mechanics
+  actions: RitualAction[];
+  milestones: RitualMilestone[];
+  rewards: RitualReward[];
+}
+```
+
+### ritual_participation
+User participation in rituals.
+```typescript
+interface RitualParticipation extends BaseDocument {
+  ritualId: string;
+  userId: string;
+
+  // Status
+  status: 'invited' | 'joined' | 'active' | 'completed' | 'dropped';
+  joinedAt: Timestamp;
+  completedAt?: Timestamp;
+
+  // Progress
+  actionsCompleted: string[];
+  progressPercentage: number;
+
+  // Engagement
+  timeSpent: number;
+  interactionCount: number;
+}
+```
+
+---
+
+## Support Collections
 
 ### schools
 University configuration.
 ```typescript
 interface School extends BaseDocument {
-  // Identity
   name: string;
   shortName: string;
-
-  // Configuration
   emailDomain: string;
   campusId: string;
 
-  // Status
   isActive: boolean;
   launchDate?: Timestamp;
 
-  // Customization
   brandColors: {
     primary: string;
     secondary: string;
   };
 
-  // Stats
   totalUsers: number;
   activeUsers: number;
 }
 ```
 
-### presence
-Real-time user presence.
+### realtimeMessages
+Real-time update queue for SSE.
 ```typescript
-interface Presence {
-  userId: string;
-  status: 'online' | 'away' | 'offline';
-  lastActiveAt: Timestamp;
-  currentSpaceId?: string;
-  currentPage?: string;
+interface RealtimeMessage {
+  type: string;
+  payload: unknown;
+  targetUsers?: string[];
+  targetSpaces?: string[];
+  timestamp: Timestamp;
+  ttl: Timestamp;            // Auto-delete after
 }
 ```
 
-## Subcollections Pattern
+---
 
-Many collections have subcollections for related data:
-```
-spaces/
-  └── [spaceId]/
-      ├── posts/
-      │   └── [postId]/
-      │       └── comments/
-      ├── members/
-      ├── events/
-      └── tools/
+## Collection Summary
 
-users/
-  └── [userId]/
-      ├── followers/
-      ├── following/
-      └── notifications/
-```
+| Collection | Type | Purpose |
+|------------|------|---------|
+| `users` | Top-level | Auth accounts |
+| `profiles` | Top-level | Extended user data |
+| `spaces` | Top-level | Communities |
+| `spaceMembers` | Top-level | Space memberships |
+| `posts` | Top-level | Feed posts |
+| `posts/*/comments` | Subcollection | Post comments |
+| `tools` | Top-level | HiveLab tools |
+| `placed_tools` | Top-level | Deployed tools |
+| `events` | Top-level | Calendar events |
+| `rsvps` | Top-level | Event RSVPs |
+| `handles` | Top-level | Handle registry |
+| `notifications` | Top-level | User notifications |
+| `chatChannels` | Top-level | Space chat channels |
+| `channelMemberships` | Top-level | Channel state |
+| `chatMessages` | Top-level | Chat messages |
+| `analytics_metrics` | Top-level | Raw analytics |
+| `analytics_aggregates` | Top-level | Aggregated stats |
+| `rituals` | Top-level | Ritual definitions |
+| `ritual_participation` | Top-level | User participation |
+| `schools` | Top-level | University config |
+| `realtimeMessages` | Top-level | SSE queue |
+
+---
 
 ## Indexes
 
-Critical indexes for performance:
+Critical composite indexes are defined in `infrastructure/firebase/firestore.indexes.json`.
+
+Key indexes:
 ```
-// Spaces - for discovery
-spaces: campusId + type + memberCount (DESC)
-spaces: campusId + isActive + createdAt (DESC)
+// Posts - feed queries
+posts: campusId + isDeleted + isHidden + createdAt (DESC)
+posts: spaceId + isDeleted + createdAt (DESC)
 
-// Posts - for feeds
-posts: spaceId + createdAt (DESC)
-posts: authorId + createdAt (DESC)
+// Space members
+spaceMembers: spaceId + campusId + role
+spaceMembers: userId + campusId
 
-// Events - for calendar
+// Events
 events: campusId + startTime (ASC)
 events: spaceId + startTime (ASC)
 
-// Rituals - for active campaigns
-rituals: campusId + status + startTime (DESC)
+// Placed tools
+placed_tools: spaceId + isActive + placedAt (DESC)
+placed_tools: profileId + isActive + placedAt (DESC)
+
+// Notifications
+notifications: userId + read + createdAt (DESC)
 ```
 
-## Security Rules Pattern
+---
 
-All collections follow this security pattern:
+## Security Rules
+
+All collections enforce campus isolation and authentication:
+
 ```javascript
-// Read: Authenticated users from same campus
+// Base pattern
 allow read: if request.auth != null &&
   resource.data.campusId == 'ub-buffalo';
 
-// Write: Authenticated users, enforce campus isolation
-allow write: if request.auth != null &&
-  request.resource.data.campusId == 'ub-buffalo' &&
-  request.auth.uid == request.resource.data.createdBy;
+allow create: if request.auth != null &&
+  request.resource.data.campusId == 'ub-buffalo';
 ```
 
-## Data Retention
-
-- Posts: Retained indefinitely
-- Events: Archived 6 months after end date
-- Presence: Cleared after 24 hours offline
-- Analytics: Aggregated monthly, raw data retained 90 days
+Full rules in `infrastructure/firebase/firestore.rules`.

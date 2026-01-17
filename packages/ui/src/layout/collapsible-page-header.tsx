@@ -9,7 +9,7 @@ import {
   useReducedMotion,
   AnimatePresence
 } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 import { cn } from '../lib/utils';
 
@@ -261,7 +261,7 @@ export const CollapsiblePageHeader = React.forwardRef<
                 >
                   {activeTabItem?.icon}
                   {activeTabItem?.label || 'All'}
-                  <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+                  <ChevronDownIcon className="w-3.5 h-3.5 ml-0.5" />
                 </button>
 
                 <AnimatePresence>

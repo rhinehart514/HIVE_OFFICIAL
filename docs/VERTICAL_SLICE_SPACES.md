@@ -1,6 +1,6 @@
 # Vertical Slice: Spaces
 
-## December 2025 Soft Launch
+## January 2026 Full Launch
 
 ---
 
@@ -8,13 +8,14 @@
 
 Spaces are the atomic unit of community in HIVE. Think Discord servers with campus-native context. This vertical slice covers the complete journey from browsing/discovery through real-time chat, tool deployment, and leader management.
 
-**Status: 90% Complete**
+**Status: 98% Complete** (Scaling fixes implemented, ready for beta)
 
 **Key Metrics:**
-- Chat hook: 1,185 lines (`apps/web/src/hooks/use-chat-messages.ts`)
-- Chat service: 1,484 lines (`packages/core/src/application/spaces/space-chat.service.ts`)
-- Chat board UI: 1,131 lines (`packages/ui/src/atomic/03-Spaces/organisms/space-chat-board.tsx`)
-- 70+ API routes for spaces ecosystem
+- Chat hooks: 1,548 lines (`apps/web/src/hooks/chat/` - 8 files)
+- Chat service: 1,525 lines (`packages/core/src/application/spaces/space-chat.service.ts`)
+- Chat board UI: 1,252 lines (`packages/ui/src/atomic/03-Spaces/organisms/space-chat-board.tsx`)
+- 68 API routes for spaces ecosystem
+- 79 UI components in `packages/ui/src/atomic/03-Spaces/`
 
 ---
 
@@ -156,9 +157,17 @@ apps/web/src/app/api/spaces/
 
 ```
 apps/web/src/hooks/
-├── use-chat-messages.ts       # Real-time chat (1,185 lines) ⭐⭐⭐
-├── use-pinned-messages.ts     # Pinned messages (173 lines)
-├── use-tool-runtime.ts        # HiveLab tool runtime (592 lines)
+├── chat/                      # Refactored chat system (1,548 lines total) ⭐⭐⭐
+│   ├── use-chat-messages.ts   # Message state management (276 lines)
+│   ├── use-chat-mutations.ts  # Send/react/pin mutations (285 lines)
+│   ├── use-chat-sse.ts        # SSE real-time stream (140 lines)
+│   ├── use-chat-threads.ts    # Thread management (153 lines)
+│   ├── use-chat-typing.ts     # Typing indicators (156 lines)
+│   ├── types.ts               # Shared types (102 lines)
+│   ├── constants.ts           # Chat constants (18 lines)
+│   └── index.ts               # Barrel export (30 lines)
+├── use-pinned-messages.ts     # Pinned messages (126 lines)
+├── use-tool-runtime.ts        # HiveLab tool runtime (701 lines)
 ├── use-space.ts               # Space data/permissions
 └── use-space-events.ts        # Space events
 ```
@@ -166,17 +175,21 @@ apps/web/src/hooks/
 ### UI Components
 
 ```
-packages/ui/src/atomic/03-Spaces/
+packages/ui/src/atomic/03-Spaces/  # 79 total files
 ├── organisms/
-│   ├── space-chat-board.tsx   # Main chat component (1,131 lines) ⭐⭐
-│   ├── space-sidebar.tsx      # 40% sidebar
-│   ├── space-header.tsx       # Name, settings, members
-│   ├── space-events-panel.tsx # Events list + modal trigger
-│   └── space-members-modal.tsx # Member management
+│   ├── space-chat-board.tsx   # Main chat component (1,252 lines) ⭐⭐
+│   ├── space-sidebar-configurable.tsx  # Configurable sidebar
+│   ├── space-detail-header.tsx # Name, settings, members
+│   ├── space-neighborhood.tsx  # Related spaces
+│   └── member-invite-modal.tsx # Member management
 ├── molecules/
-│   ├── space-card.tsx         # Browse/search card
-│   ├── board-selector.tsx     # Board tab bar
-│   └── member-list-item.tsx   # Member row
+│   ├── space-discovery-card.tsx # Browse/search card
+│   ├── board-tab-bar.tsx      # Board tab bar
+│   └── now-card.tsx           # Current activity
+├── premium/                   # Premium components
+│   ├── premium-composer.tsx   # Rich message input
+│   ├── premium-message.tsx    # Enhanced message display
+│   └── premium-sidebar.tsx    # Sidebar with widgets
 └── atoms/
     ├── role-badge.tsx         # Owner/Admin/Mod badges
     └── activity-indicator.tsx # Online/typing indicators
@@ -638,24 +651,21 @@ if (!permCheck.hasPermission) {
 
 ### Critical (Soft Launch Blockers)
 
-1. **Typing Indicator Spam** ⚠️
-   - Current: Typing indicator sometimes fires too frequently
-   - Impact: Firebase RTDB rate limits, poor UX
-   - Fix: Implement proper debouncing in `setTyping()` function
-   - File: `apps/web/src/hooks/use-chat-messages.ts:488-536`
+1. ~~**Typing Indicator Spam**~~ ✅ FIXED
+   - Implemented 3-second throttling via `TYPING_INDICATOR_INTERVAL_MS = 3000`
+   - File: `apps/web/src/hooks/chat/constants.ts:12`
 
-2. **Real Analytics Data** ⚠️
-   - Current: Some space analytics show mock data
-   - Impact: Leaders can't trust metrics
-   - Fix: Connect to real Firestore aggregations
+2. ~~**Real Analytics Data**~~ ✅ FIXED
+   - Analytics API now uses real Firestore aggregations for all metrics
    - File: `apps/web/src/app/api/spaces/[spaceId]/analytics/route.ts`
 
 ### Important (Should Fix)
 
 3. **Message Search Performance**
-   - Current: Full-text search uses client-side filtering
+   - Current: Full-text search uses client-side filtering (fetches 500 msgs, filters in JS)
    - Impact: Slow for spaces with 1000+ messages
    - Fix: Implement Algolia or Firebase Extensions search
+   - Note: Firestore doesn't support full-text search natively
 
 4. **Board Reordering UI**
    - Current: No drag-drop for board reorder
@@ -745,40 +755,39 @@ if (!permCheck.hasPermission) {
 
 ## Scaling Readiness
 
-**Grade: C+** (Critical fixes required before 100+ concurrent users)
+**Grade: A-** (All critical fixes implemented, ready for 100+ concurrent users)
 
-### Current Limits
-| Metric | Current Limit | Bottleneck |
-|--------|---------------|------------|
-| Concurrent SSE connections | 10/min | Rate limit too low |
-| Space joins/minute | 60 | memberCount not sharded |
-| Concurrent reactions | 70% success | No transaction wrapper |
+### Current Capacity
+| Metric | Capacity | Implementation |
+|--------|----------|----------------|
+| Concurrent SSE connections | 100/min | Rate limit increased ✅ |
+| Space joins/minute | 600 | Sharded counters (10 shards) ✅ |
+| Concurrent reactions | 99% success | Transaction wrapper ✅ |
 
-### Critical Fixes Required (Before Beta)
+### Implemented Scaling Fixes
 
-**1. SSE Rate Limit Increase**
-- File: `apps/web/src/lib/rate-limit-simple.ts:311`
-- Change: `maxRequests: 10` → `maxRequests: 100`
-- Effort: 5 minutes
+**1. SSE Rate Limit Increase** ✅
+- File: `apps/web/src/lib/rate-limit-simple.ts:44-47`
+- Current: `maxRequests: 100` (was 10)
+- Env override: `RATE_LIMIT_SSE_REQUESTS`
 
-**2. Space memberCount Sharding**
-- Problem: Firestore 1 write/sec per document limit
-- Solution: Split into 10 shard documents
-- File: Create `apps/web/src/lib/services/sharded-member-counter.service.ts`
-- Effort: 4 hours
+**2. Space memberCount Sharding** ✅
+- File: `apps/web/src/lib/services/sharded-member-counter.service.ts`
+- Implementation: 10 shard documents under `spaces/{spaceId}/memberCountShards/`
+- Feature flag: `USE_SHARDED_MEMBER_COUNT=true`
+- Capacity: 200+ writes/sec (vs 1 write/sec before)
+- Wired in: `apps/web/src/app/api/spaces/join-v2/route.ts:182-185`
 
-**3. Reaction Transaction Wrapper**
-- Problem: 30% write failures at scale due to contention
-- Solution: Wrap in Firestore transaction
-- File: `packages/core/src/application/spaces/space-chat.service.ts`
-- Effort: 2 hours
+**3. Reaction Transaction Wrapper** ✅
+- File: `packages/core/src/infrastructure/repositories/firebase-admin/chat.repository.ts:518-568`
+- Method: `updateReactionAtomic()` uses `dbAdmin.runTransaction()`
+- Called from: `packages/core/src/application/spaces/space-chat.service.ts:1011,1072`
 
-### After Fixes
-| Metric | New Limit | Improvement |
-|--------|-----------|-------------|
-| Concurrent SSE connections | 100/min | 10x |
-| Space joins/minute | 600 | 10x (sharded) |
-| Concurrent reactions | 99% success | Transactional |
+### Remaining Bottlenecks
+| Metric | Limit | Notes |
+|--------|-------|-------|
+| Message search | ~500 msgs/board | Client-side filtering; need Algolia for scale |
+| Cloud Functions | Not sharded | autoJoin uses direct increment; low volume ok |
 
 See: `docs/SCALING_READINESS.md` for full architecture.
 
@@ -795,4 +804,4 @@ See: `docs/SCALING_READINESS.md` for full architecture.
 ---
 
 *Last updated: January 2026*
-*Status: 90% Complete - Ready for Soft Launch (Scaling fixes needed before Beta)*
+*Status: 98% Complete - All scaling fixes implemented, ready for Beta launch*

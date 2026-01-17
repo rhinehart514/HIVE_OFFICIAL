@@ -54,6 +54,37 @@ export {
   type IInlineComponentRepository,
 } from './infrastructure/repositories/firebase-admin/inline-component.repository';
 
+// Setup System Repositories (Orchestrated Tool Bundles)
+// Firebase Admin implementations - import directly from repository file
+export {
+  FirebaseAdminSetupTemplateRepository,
+  getServerSetupTemplateRepository,
+  FirebaseAdminSetupDeploymentRepository,
+  getServerSetupDeploymentRepository,
+  resetSetupRepositories,
+} from './domain/hivelab/setup/setup.repository';
+
+// Setup types and entities - import from main setup exports
+export {
+  // Types
+  type ISetupTemplateRepository,
+  type SetupTemplateQueryOptions,
+  type ISetupDeploymentRepository,
+  type SetupDeploymentQueryOptions,
+  type PaginatedResult as SetupPaginatedResult,
+  // Entities
+  SetupTemplate,
+  SetupDeployment,
+  // DTOs
+  toSetupTemplateListDTO,
+  toSetupTemplateDetailDTO,
+  toSetupDeploymentListDTO,
+  toSetupDeploymentDetailDTO,
+  // Types
+  type SetupCategory,
+  type SetupDeploymentStatus,
+} from './domain/hivelab/setup';
+
 // Inline Component Domain Entity
 export {
   InlineComponent,
@@ -184,6 +215,7 @@ export {
 export type {
   SpaceBaseDTO,
   SpaceBrowseDTO,
+  SpaceBrowseEnrichment,
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,

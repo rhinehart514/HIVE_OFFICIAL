@@ -11,12 +11,11 @@ export const WelcomeMatProvider = ({ children }: WelcomeMatProviderProps) => {
   const { user, isLoading } = useSession();
   const { isOpen, closeFlow } = useWelcomeMat();
 
-  // Only show welcome mat for authenticated users who have completed onboarding
-  // AND are not on auth/onboarding pages
+  // Only show welcome mat for authenticated users who have completed entry
+  // AND are not on entry/schools pages
   const isOnAuthPage = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/schools') ||
-    window.location.pathname.startsWith('/auth') ||
-    window.location.pathname.startsWith('/onboarding') ||
+    window.location.pathname.startsWith('/enter') ||
     window.location.pathname.startsWith('/waitlist')
   );
   

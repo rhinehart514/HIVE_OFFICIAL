@@ -1,7 +1,9 @@
-import { ArrowLeft, CheckCircle, Rocket, Settings, Shield, Users as UsersIcon, User as UserIcon } from 'lucide-react';
+import { ArrowLeftIcon, CheckCircleIcon, RocketLaunchIcon, Cog6ToothIcon, ShieldCheckIcon, UserIcon, UsersIcon } from '@heroicons/react/24/outline';
 import * as React from 'react';
 
-import { Button, Card, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../atomic';
+import { Button } from '../../design-system/primitives';
+import { Card } from '../../design-system/primitives';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../design-system/components/Dialog';
 
 export type DeploymentTarget = {
   id: string;
@@ -27,6 +29,11 @@ export type DeploymentConfig = {
     collectAnalytics: boolean;
     notifyOnInteraction: boolean;
   };
+  // Profile-specific privacy settings
+  privacy?: {
+    visibility: 'public' | 'campus' | 'connections' | 'private';
+    inheritFromProfile: boolean;
+  };
 };
 
 export interface ToolDeployModalProps {
@@ -36,9 +43,11 @@ export interface ToolDeployModalProps {
   availableTargets: DeploymentTarget[];
   onDeploy: (config: DeploymentConfig) => Promise<void> | void;
   initialConfig?: Partial<DeploymentConfig>;
+  /** Called when user clicks "View in space" after successful deployment */
+  onViewInSpace?: (spaceId: string) => void;
 }
 
-export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets, onDeploy, initialConfig }: ToolDeployModalProps) {
+export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets, onDeploy, initialConfig, onViewInSpace }: ToolDeployModalProps) {
   const [step, setStep] = React.useState<'target' | 'config' | 'confirm' | 'success'>('target');
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -49,6 +58,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
     surface: initialConfig?.surface,
     permissions: initialConfig?.permissions ?? { canInteract: true, canView: true, canEdit: false },
     settings: initialConfig?.settings ?? { showInDirectory: true, allowSharing: true, collectAnalytics: true, notifyOnInteraction: false },
+    privacy: initialConfig?.privacy ?? { visibility: 'public', inheritFromProfile: true },
   }));
 
   React.useEffect(() => {
@@ -100,7 +110,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
                   <div className="text-sm text-[var(--hive-text-secondary)]">{target.description}</div>
                 )}
               </div>
-              <ArrowLeft className="h-4 w-4 text-[var(--hive-text-secondary)] rotate-180" />
+              <ArrowLeftIcon className="h-4 w-4 text-[var(--hive-text-secondary)] rotate-180" />
             </div>
           </Card>
         ))}
@@ -115,11 +125,18 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
     { id: 'events', name: 'Events', description: 'Events section' },
   ];
 
+  const profileVisibilityOptions = [
+    { id: 'public', name: 'Public', description: 'Anyone can see this tool' },
+    { id: 'campus', name: 'Campus', description: 'Only campus members can see' },
+    { id: 'connections', name: 'Connections', description: 'Only your connections can see' },
+    { id: 'private', name: 'Private', description: 'Only you can see' },
+  ] as const;
+
   const renderConfiguration = () => (
     <div className="space-y-6">
       {deploymentConfig.targetType === 'space' && (
         <Card className="p-4">
-          <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><Settings className="h-4 w-4" /> Surface Location</h4>
+          <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4" /> Surface Location</h4>
           <div className="grid gap-2">
             {spaceSurfaces.map((s) => (
               <label
@@ -145,8 +162,69 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
           </div>
         </Card>
       )}
+
+      {/* Profile Privacy Settings */}
+      {deploymentConfig.targetType === 'profile' && (
+        <Card className="p-4">
+          <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><ShieldCheckIcon className="h-4 w-4" /> Tool Visibility</h4>
+          <p className="text-sm text-[var(--hive-text-secondary)] mb-3">Choose who can see this tool on your profile</p>
+
+          {/* Inherit from profile toggle */}
+          <label className="flex items-center gap-2 mb-4 p-2 rounded-lg border border-[var(--hive-border-primary)] cursor-pointer hover:bg-[var(--hive-background-secondary)]">
+            <input
+              type="checkbox"
+              checked={deploymentConfig.privacy?.inheritFromProfile ?? true}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleConfigUpdate({
+                  privacy: {
+                    ...deploymentConfig.privacy!,
+                    inheritFromProfile: e.target.checked,
+                  },
+                })
+              }
+            />
+            <div>
+              <div className="font-medium text-[var(--hive-text-primary)]">Use profile privacy</div>
+              <div className="text-sm text-[var(--hive-text-secondary)]">Inherit visibility from your profile settings</div>
+            </div>
+          </label>
+
+          {/* Custom visibility options (only shown when not inheriting) */}
+          {!deploymentConfig.privacy?.inheritFromProfile && (
+            <div className="grid gap-2">
+              {profileVisibilityOptions.map((opt) => (
+                <label
+                  key={opt.id}
+                  className="flex items-center gap-3 p-2 rounded-lg border border-[var(--hive-border-primary)] cursor-pointer hover:bg-[var(--hive-background-secondary)]"
+                >
+                  <input
+                    type="radio"
+                    name="visibility"
+                    value={opt.id}
+                    checked={deploymentConfig.privacy?.visibility === opt.id}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleConfigUpdate({
+                        privacy: {
+                          ...deploymentConfig.privacy!,
+                          visibility: e.target.value as 'public' | 'campus' | 'connections' | 'private',
+                        },
+                      })
+                    }
+                    aria-label={opt.name}
+                  />
+                  <div>
+                    <div className="font-medium text-[var(--hive-text-primary)]">{opt.name}</div>
+                    <div className="text-sm text-[var(--hive-text-secondary)]">{opt.description}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
       <Card className="p-4">
-        <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><Settings className="h-4 w-4" /> Deployment Settings</h4>
+        <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4" /> Deployment Cog6ToothIcon</h4>
         <div className="space-y-3">
           <label className="flex items-center gap-2">
             <input
@@ -179,7 +257,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
       </Card>
 
       <Card className="p-4">
-        <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><Shield className="h-4 w-4" /> Permissions</h4>
+        <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2 flex items-center gap-2"><ShieldCheckIcon className="h-4 w-4" /> Permissions</h4>
         <div className="space-y-3">
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={deploymentConfig.permissions.canView} onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleConfigUpdate({ permissions: { ...deploymentConfig.permissions, canView: e.target.checked } })} />
@@ -212,7 +290,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-[var(--hive-text-secondary)]">Tool:</span><span className="text-[var(--hive-text-primary)] font-medium">{toolName}</span></div>
             <div className="flex justify-between"><span className="text-[var(--hive-text-secondary)]">Target:</span><span className="text-[var(--hive-text-primary)] font-medium">{target?.name}</span></div>
-            <div className="flex justify-between"><span className="text-[var(--hive-text-secondary)]">Visibility:</span><span className="text-[var(--hive-text-primary)] font-medium">{deploymentConfig.settings.showInDirectory ? 'Public' : 'Private'}</span></div>
+            <div className="flex justify-between"><span className="text-[var(--hive-text-secondary)]">Visibility:</span><span className="text-[var(--hive-text-primary)] font-medium">{deploymentConfig.targetType === 'profile' ? (deploymentConfig.privacy?.inheritFromProfile ? 'Inherits from profile' : (deploymentConfig.privacy?.visibility || 'Public')) : (deploymentConfig.settings.showInDirectory ? 'Public' : 'Private')}</span></div>
           </div>
         </Card>
         {error && (
@@ -228,7 +306,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
               </>
             ) : (
               <>
-                <Rocket className="h-4 w-4" />
+                <RocketLaunchIcon className="h-4 w-4" />
                 Deploy Tool
               </>
             )}
@@ -238,16 +316,50 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
     );
   };
 
-  const renderSuccess = () => (
-    <div className="text-center space-y-3">
-      <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-        <CheckCircle className="h-6 w-6 text-green-400" />
+  const renderSuccess = () => {
+    const target = availableTargets.find(t => t.id === deploymentConfig.targetId);
+    const isSpaceDeployment = deploymentConfig.targetType === 'space';
+
+    return (
+      <div className="text-center space-y-4">
+        <div className="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+          <CheckCircleIcon className="h-8 w-8 text-green-400" />
+        </div>
+
+        <div>
+          <div className="text-lg text-[var(--hive-text-primary)] font-semibold">
+            Deployed to {target?.name || 'target'}
+          </div>
+          <p className="text-sm text-[var(--hive-text-secondary)] mt-1">
+            {isSpaceDeployment
+              ? 'Space members can now use this tool.'
+              : 'This tool is now visible on your profile.'}
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+          {isSpaceDeployment && onViewInSpace && (
+            <Button
+              onClick={() => {
+                onViewInSpace(deploymentConfig.targetId);
+                onOpenChange(false);
+              }}
+              className="bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover"
+            >
+              View in space →
+            </Button>
+          )}
+          <Button
+            variant={isSpaceDeployment && onViewInSpace ? "secondary" : "default"}
+            onClick={() => onOpenChange(false)}
+            className={!isSpaceDeployment || !onViewInSpace ? "bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover" : ""}
+          >
+            {isSpaceDeployment && onViewInSpace ? 'Stay here' : 'Done'}
+          </Button>
+        </div>
       </div>
-      <div className="text-[var(--hive-text-primary)] font-semibold">Tool Deployed Successfully</div>
-      <p className="text-sm text-[var(--hive-text-secondary)]">Your tool is now live and accessible.</p>
-      <Button onClick={() => onOpenChange(false)} className="bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover">Close</Button>
-    </div>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -264,7 +376,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
 
         <DialogFooter className="justify-between">
           {step !== 'target' && step !== 'success' ? (
-            <Button variant="ghost" onClick={() => setStep('target')}><ArrowLeft className="h-4 w-4 mr-2" />Start Over</Button>
+            <Button variant="ghost" onClick={() => setStep('target')}><ArrowLeftIcon className="h-4 w-4 mr-2" />Start Over</Button>
           ) : <span />}
         </DialogFooter>
       </DialogContent>

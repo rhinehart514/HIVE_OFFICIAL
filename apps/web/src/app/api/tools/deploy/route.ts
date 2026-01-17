@@ -323,6 +323,12 @@ const SPACE_TIER_ELEMENTS = [
   'role-gate',
 ];
 
+// Elements that are hidden (missing backend APIs) - cannot be deployed
+const BLOCKED_ELEMENTS = [
+  'study-spot-finder', // Calls /api/campus/buildings/study-spots - API doesn't exist
+  'dining-picker',     // Calls /api/campus/dining - API doesn't exist
+];
+
 /**
  * Check if tool composition contains space-tier elements
  */
@@ -331,6 +337,22 @@ function compositionHasSpaceElements(toolData: FirebaseFirestore.DocumentData): 
   return elements.some((el: { elementId?: string }) =>
     SPACE_TIER_ELEMENTS.includes(el.elementId || '')
   );
+}
+
+/**
+ * Check if tool composition contains blocked elements (missing backend APIs)
+ * Returns the list of blocked element IDs found, or empty array if none
+ */
+function getBlockedElements(toolData: FirebaseFirestore.DocumentData): string[] {
+  const elements = toolData.composition?.elements || toolData.elements || [];
+  const blockedFound: string[] = [];
+  for (const el of elements) {
+    const elementId = el.elementId || '';
+    if (BLOCKED_ELEMENTS.includes(elementId)) {
+      blockedFound.push(elementId);
+    }
+  }
+  return blockedFound;
 }
 
 async function ensureToolIsDeployable(toolId: string, userId: string) {
@@ -526,6 +548,16 @@ export const POST = withAuthValidationAndErrors(
       return respond.error(toolResult.message, "FORBIDDEN", {
         status: toolResult.status,
       });
+    }
+
+    // Validate composition - block tools with elements that have no backend APIs
+    const blockedElements = getBlockedElements(toolResult.toolData);
+    if (blockedElements.length > 0) {
+      return respond.error(
+        `This tool cannot be deployed: it contains elements that are not yet ready (${blockedElements.join(', ')}). Please remove these elements and try again.`,
+        "FORBIDDEN",
+        { status: 400 },
+      );
     }
 
     // Validate composition - space-tier elements require space deployment

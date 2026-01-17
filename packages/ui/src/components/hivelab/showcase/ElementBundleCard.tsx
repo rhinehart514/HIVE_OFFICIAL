@@ -9,7 +9,7 @@
 
 import React, { useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRightIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
   ELEMENT_BUNDLES,
   getBundleElements,
@@ -246,7 +246,7 @@ export function ElementBundleCard({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <X className="h-4 w-4" />
+            <XMarkIcon className="h-4 w-4" />
           </motion.div>
         ) : (
           <div className="flex items-center gap-3">
@@ -262,7 +262,7 @@ export function ElementBundleCard({
                 repeatDelay: 2,
               }}
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRightIcon className="h-5 w-5" />
             </motion.div>
           </div>
         )}
@@ -318,7 +318,7 @@ export function ElementBundleCard({
                 <span className="flex-1 text-sm text-foreground">
                   &ldquo;{bundle.promptSuggestion}&rdquo;
                 </span>
-                <ChevronRight className={cn('h-4 w-4', colors.accent)} />
+                <ChevronRightIcon className={cn('h-4 w-4', colors.accent)} />
               </motion.button>
             </div>
           </motion.div>

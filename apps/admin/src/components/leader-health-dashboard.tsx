@@ -15,19 +15,33 @@ import { useState, useEffect, useCallback } from "react";
 import { Button, Badge, HiveCard as Card, CardContent, CardHeader, CardTitle, Progress } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import {
-  Crown,
-  Users,
-  MessageSquare,
-  Wrench,
-  TrendingUp,
-  AlertTriangle,
-  RefreshCw,
-  Mail,
-  ExternalLink,
-  Loader2,
-  CheckCircle2,
-  Clock,
-} from "lucide-react";
+  TrophyIcon,
+  UsersIcon,
+  ChatBubbleLeftIcon,
+  WrenchIcon,
+  ArrowTrendingUpIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon,
+  EnvelopeIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowPathIcon as ArrowPathIcon2,
+  CheckCircleIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Crown = TrophyIcon;
+const Users = UsersIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const Wrench = WrenchIcon;
+const TrendingUp = ArrowTrendingUpIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const RefreshCw = ArrowPathIcon;
+const Mail = EnvelopeIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
+const Loader2 = ArrowPathIcon2;
+const CheckCircle2 = CheckCircleIcon;
+const Clock = ClockIcon;
 
 interface LeaderHealthMetrics {
   totalVerified: number;

@@ -4,27 +4,49 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@hive/ui";
 import {
-  LayoutDashboard,
-  Users,
-  Hash,
-  GraduationCap,
-  FileText,
-  Wrench,
-  BarChart3,
-  Flag,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
-  Shield,
-  Activity,
-  Rocket,
-  Layers,
-  UserPlus,
-  ScrollText,
-  Crown,
-  HeartPulse,
-} from "lucide-react";
+  Squares2X2Icon,
+  UsersIcon,
+  HashtagIcon,
+  AcademicCapIcon,
+  DocumentTextIcon,
+  WrenchIcon,
+  ChartBarIcon,
+  FlagIcon,
+  Cog6ToothIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  BellIcon,
+  ShieldCheckIcon,
+  ChartBarIcon as ActivityIcon,
+  RocketLaunchIcon,
+  Square2StackIcon,
+  UserPlusIcon,
+  DocumentTextIcon as ScrollTextIcon,
+  TrophyIcon,
+  HeartIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const LayoutDashboard = Squares2X2Icon;
+const Users = UsersIcon;
+const Hash = HashtagIcon;
+const GraduationCap = AcademicCapIcon;
+const FileText = DocumentTextIcon;
+const Wrench = WrenchIcon;
+const BarChart3 = ChartBarIcon;
+const Flag = FlagIcon;
+const Settings = Cog6ToothIcon;
+const ChevronLeft = ChevronLeftIcon;
+const ChevronRight = ChevronRightIcon;
+const Bell = BellIcon;
+const Shield = ShieldCheckIcon;
+const Activity = ActivityIcon;
+const Rocket = RocketLaunchIcon;
+const Layers = Square2StackIcon;
+const UserPlus = UserPlusIcon;
+const ScrollText = ScrollTextIcon;
+const Crown = TrophyIcon;
+const HeartPulse = HeartIcon;
 
 interface AdminSidebarProps {
   activeTab: string;

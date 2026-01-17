@@ -510,6 +510,60 @@ export {
   type OutputFormat,
 } from "./application/hivelab/benchmarks";
 
+// HiveLab Setup System (Orchestrated Tool Bundles)
+export {
+  // SetupTemplate Entity & Types
+  SetupTemplate,
+  type SetupTemplateProps,
+  type SetupCategory,
+  type SetupSource,
+  type SetupToolSlot,
+  type SetupConfigField,
+  // Orchestration Types
+  type OrchestrationRule,
+  type OrchestrationTriggerType,
+  type OrchestrationTriggerConfig,
+  type ToolEventTriggerConfig,
+  type TimeRelativeTriggerConfig,
+  type DataConditionTriggerConfig,
+  type ManualTriggerConfig,
+  type OrchestrationActionType,
+  type OrchestrationActionConfig,
+  type DataFlowActionConfig,
+  type VisibilityActionConfig,
+  type ConfigActionConfig,
+  type NotificationActionConfig,
+  type StateActionConfig,
+  // SetupTemplate DTOs
+  type SetupTemplateListDTO,
+  type SetupTemplateDetailDTO,
+  toSetupTemplateListDTO,
+  toSetupTemplateDetailDTO,
+  // SetupDeployment Entity & Types
+  SetupDeployment,
+  type SetupDeploymentProps,
+  type SetupDeploymentStatus,
+  type DeployedSetupTool,
+  type OrchestrationState,
+  type OrchestrationLogEntry,
+  // SetupDeployment DTOs
+  type SetupDeploymentListDTO,
+  type SetupDeploymentDetailDTO,
+  toSetupDeploymentListDTO,
+  toSetupDeploymentDetailDTO,
+  // Repository Interfaces (types only - implementations in @hive/core/server)
+  type ISetupTemplateRepository,
+  type ISetupDeploymentRepository,
+  type SetupTemplateQueryOptions,
+  type SetupDeploymentQueryOptions,
+  type PaginatedResult,
+  // System Templates
+  EVENT_SERIES_TEMPLATE,
+  SYSTEM_SETUP_TEMPLATES,
+  getSystemSetupTemplate,
+  getSystemSetupTemplatesByCategory,
+} from "./domain/hivelab/setup";
+
 // Application Services - Use Case Orchestration
 export * from "./application";
 
@@ -529,6 +583,11 @@ export type { PresenceData, PresenceStatus } from "./services/presence-service";
 // Constants
 export * from "./constants/majors";
 export * from "./constants/onboarding-interests";
+export * from "./constants/http-status";
+export * from "./constants/timing";
+
+// Campus Domain (Dining, Buildings, Study Spaces)
+export * from "./domain/campus";
 
 // Stores
 export * from "./stores/useAppStore";

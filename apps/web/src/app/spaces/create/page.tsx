@@ -1,77 +1,69 @@
-"use client";
+'use client';
 
-import { useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2, Check, ArrowLeft } from "lucide-react";
-import Image from "next/image";
-import { Button, Input } from "@hive/ui";
-import { motion } from "framer-motion";
+/**
+ * /spaces/create — Create Student Organization
+ *
+ * Archetype: Focus Flow (Shell ON, centered form)
+ * Pattern: Progressive form
+ * Shell: ON
+ *
+ * IMPORTANT: Only student organizations can be created here.
+ * University, Residential, and Greek spaces are pre-seeded and
+ * must be claimed at /spaces/claim with institutional verification.
+ *
+ * @version 7.0.0 - Student org only (Jan 2026)
+ */
 
-export const dynamic = "force-dynamic";
+import * as React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Check, Loader2, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Text, Button, Input } from '@hive/ui/design-system/primitives';
+import { toast } from '@hive/ui';
 
-// Animation variants
-const fadeVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 },
-};
+// Animation
+const EASE = [0.22, 1, 0.36, 1] as const;
+const fadeIn = (delay: number) => ({
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.35, delay, ease: EASE },
+});
 
-const transition = {
-  duration: 0.2,
-  ease: [0.22, 1, 0.36, 1],
-};
-
-// Note: 'residential' category exists but is hidden from user-facing UI
-// Residential spaces have locked leadership (RA-only) and aren't ready for self-service creation
-const CATEGORY_OPTIONS = [
-  { value: 'student_org', label: 'Student Organization', description: 'Clubs, teams, academic groups' },
-  { value: 'greek_life', label: 'Greek Life', description: 'Fraternities, sororities, chapters' },
-];
-
-const JOIN_POLICY_OPTIONS = [
-  { value: 'open', label: 'Open', description: 'Anyone can join immediately' },
-  { value: 'approval', label: 'Approval Required', description: 'Leaders approve join requests' },
-  { value: 'invite_only', label: 'Invite Only', description: 'Members must be invited' },
-];
-
-function CreateSpaceContent() {
+export default function CreateSpacePage() {
   const router = useRouter();
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<string>("");
-  const [joinPolicy, setJoinPolicy] = useState("open");
-  const [visibility, setVisibility] = useState("public");
-  const [agreedToGuidelines, setAgreedToGuidelines] = useState(false);
+  // Form state
+  const [name, setName] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [agreedToGuidelines, setAgreedToGuidelines] = React.useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [createdSpace, setCreatedSpace] = useState<{ id: string; name: string } | null>(null);
+  // UI state
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [createdSpace, setCreatedSpace] = React.useState<{ id: string; name: string } | null>(null);
 
   const handleCreate = async () => {
     // Validate
     if (!name.trim()) {
-      setError("Please enter a space name");
+      setError('Please enter a space name');
       return;
     }
     if (name.length > 100) {
-      setError("Name must be under 100 characters");
+      setError('Name must be under 100 characters');
       return;
     }
     if (!description.trim()) {
-      setError("Please enter a description");
+      setError('Please enter a description');
       return;
     }
     if (description.length > 500) {
-      setError("Description must be under 500 characters");
-      return;
-    }
-    if (!category) {
-      setError("Please select a category");
+      setError('Description must be under 500 characters');
       return;
     }
     if (!agreedToGuidelines) {
-      setError("You must agree to the community guidelines");
+      setError('You must agree to the community guidelines');
       return;
     }
 
@@ -79,15 +71,16 @@ function CreateSpaceContent() {
     setError(null);
 
     try {
-      const response = await fetch("/api/spaces", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/spaces', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           name: name.trim(),
           description: description.trim(),
-          category,
-          joinPolicy,
-          visibility,
+          category: 'student_org', // Always student_org
+          joinPolicy: 'open',
+          visibility: 'public',
           tags: [],
           agreedToGuidelines,
         }),
@@ -96,264 +89,190 @@ function CreateSpaceContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to create space");
+        throw new Error(data.error || data.message || 'Failed to create space');
       }
 
       setCreatedSpace({ id: data.space?.id, name: name.trim() });
+      toast.success('Space created!');
 
-      // Redirect to the new space after delay
+      // Redirect after brief delay
       setTimeout(() => {
         router.push(`/spaces/${data.space?.id}`);
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to create space");
+      setError(err instanceof Error ? err.message : 'Unable to create space');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Success state
   if (createdSpace) {
     return (
-      <div className="min-h-screen bg-[var(--hive-background-primary)] text-[var(--hive-text-primary)] flex flex-col">
-        <header className="p-4">
-          <div className="flex items-center gap-2">
-            <Image src="/assets/hive-logo-gold.svg" alt="HIVE" width={28} height={28} />
-            <span className="text-lg font-bold text-[var(--hive-text-primary)]">HIVE</span>
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <motion.div
+          className="text-center space-y-4"
+          {...fadeIn(0)}
+        >
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto category-bg-student">
+            <Check className="h-8 w-8 category-text-student" />
           </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
-          <div className="w-full max-w-md">
-            <motion.div
-              variants={fadeVariants}
-              initial="initial"
-              animate="animate"
-              transition={transition}
-              className="space-y-6 text-center"
-            >
-              <div className="h-16 w-16 rounded-2xl bg-[var(--hive-status-success)]/20 flex items-center justify-center mx-auto">
-                <Check className="h-8 w-8 text-[var(--hive-status-success)]" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-[var(--hive-text-primary)] mb-2">
-                  Space created!
-                </h1>
-                <p className="text-[var(--hive-text-secondary)]">
-                  <strong>{createdSpace.name}</strong> is now live. Redirecting you there...
-                </p>
-              </div>
-            </motion.div>
+          <div>
+            <Text weight="semibold" size="lg" className="text-white mb-1">
+              It&apos;s yours.
+            </Text>
+            <Text className="text-white/60">
+              <strong className="text-white">{createdSpace.name}</strong> is live.
+            </Text>
+            <Text size="sm" className="text-white/40 mt-2">
+              Taking you there now...
+            </Text>
           </div>
-        </main>
-
-        <footer className="p-4 text-center">
-          <p className="text-xs text-[var(--hive-text-tertiary)]">University at Buffalo</p>
-        </footer>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[var(--hive-background-primary)] text-[var(--hive-text-primary)] flex flex-col">
-      <header className="p-4">
-        <div className="flex items-center gap-2">
-          <Image src="/assets/hive-logo-gold.svg" alt="HIVE" width={28} height={28} />
-          <span className="text-lg font-bold text-[var(--hive-text-primary)]">HIVE</span>
-        </div>
-      </header>
+    <div className="min-h-screen w-full relative">
+      {/* Category accent line */}
+      <div className="absolute top-0 left-0 right-0 h-1 category-accent-student" />
 
-      <main className="flex-1 flex items-center justify-center px-4 md:px-6 py-8 md:py-12">
-        <div className="w-full max-w-md">
-          <motion.div
-            variants={fadeVariants}
-            initial="initial"
-            animate="animate"
-            transition={transition}
-            className="space-y-6"
+      <div className="max-w-lg mx-auto px-6 py-12">
+        {/* Back link */}
+        <motion.div className="mb-8" {...fadeIn(0)}>
+          <Link
+            href="/spaces/browse"
+            className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
           >
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="flex items-center gap-1 text-sm text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </button>
+            <ArrowLeft className="h-4 w-4" />
+            Back to browse
+          </Link>
+        </motion.div>
 
-            <div className="text-center">
-              <h1 className="text-2xl md:text-3xl font-bold text-[var(--hive-text-primary)] mb-2">
-                Create a space
-              </h1>
-              <p className="text-sm md:text-base text-[var(--hive-text-secondary)]">
-                Start a new community on HIVE
-              </p>
+        {/* Header */}
+        <motion.div className="mb-8" {...fadeIn(0.04)}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center category-bg-student">
+              <Users className="h-5 w-5 category-text-student" />
             </div>
+            <h1 className="text-2xl font-semibold text-white tracking-tight">
+              Create Student Org
+            </h1>
+          </div>
+          <Text className="text-white/50">
+            Start a new club, team, or student organization.
+          </Text>
+        </motion.div>
 
-            <div className="bg-[var(--hive-background-secondary)] rounded-2xl p-5 md:p-6 border border-[var(--hive-border-default)] space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
-                  Space name
-                </label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., UB Photography Club"
-                  maxLength={100}
-                />
-                <div className="mt-1 text-xs text-[var(--hive-text-tertiary)] text-right">
-                  {name.length}/100
-                </div>
-              </div>
+        {/* Form */}
+        <motion.div
+          className="space-y-6 p-6 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+          {...fadeIn(0.08)}
+        >
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">
+              Space name
+            </label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., UB Photography Club"
+              maxLength={100}
+            />
+            <Text size="xs" className="text-white/30 mt-1.5 text-right">
+              {name.length}/100
+            </Text>
+          </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
-                  Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="What's this space about? What will members do here?"
-                  className="w-full rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] px-3 py-2 text-sm text-[var(--hive-text-primary)] placeholder:text-[var(--hive-text-tertiary)] focus:outline-none focus:ring-2 focus:ring-white/20 min-h-[80px] resize-none"
-                  maxLength={500}
-                />
-                <div className="mt-1 text-xs text-[var(--hive-text-tertiary)] text-right">
-                  {description.length}/500
-                </div>
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
-                  Category
-                </label>
-                <div className="space-y-2">
-                  {CATEGORY_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setCategory(option.value)}
-                      className={`w-full rounded-lg border px-4 py-3 text-left transition-colors ${
-                        category === option.value
-                          ? 'border-white bg-white/5'
-                          : 'border-[var(--hive-border-default)] hover:border-[var(--hive-text-tertiary)]'
-                      }`}
-                    >
-                      <div className="font-medium text-[var(--hive-text-primary)] text-sm">
-                        {option.label}
-                      </div>
-                      <div className="text-xs text-[var(--hive-text-tertiary)]">
-                        {option.description}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Join Policy */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
-                  Who can join?
-                </label>
-                <select
-                  value={joinPolicy}
-                  onChange={(e) => setJoinPolicy(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] px-3 py-2 text-sm text-[var(--hive-text-primary)] focus:outline-none focus:ring-2 focus:ring-white/20"
-                >
-                  {JOIN_POLICY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label} - {option.description}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Visibility */}
-              <div>
-                <label className="block text-sm font-medium text-[var(--hive-text-primary)] mb-1.5">
-                  Visibility
-                </label>
-                <select
-                  value={visibility}
-                  onChange={(e) => setVisibility(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] px-3 py-2 text-sm text-[var(--hive-text-primary)] focus:outline-none focus:ring-2 focus:ring-white/20"
-                >
-                  <option value="public">Public - Anyone can see posts</option>
-                  <option value="members_only">Members Only - Only members see content</option>
-                </select>
-              </div>
-
-              {/* Guidelines Agreement */}
-              <div className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  id="guidelines"
-                  checked={agreedToGuidelines}
-                  onChange={(e) => setAgreedToGuidelines(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] text-white focus:ring-2 focus:ring-white/20"
-                />
-                <label htmlFor="guidelines" className="text-sm text-[var(--hive-text-secondary)]">
-                  I agree to the{" "}
-                  <a href="/terms" className="underline hover:text-[var(--hive-text-primary)]">
-                    community guidelines
-                  </a>{" "}
-                  and will moderate this space responsibly.
-                </label>
-              </div>
-
-              {error && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.15 }}
-                  className="text-sm text-[var(--hive-status-error)]"
-                >
-                  {error}
-                </motion.p>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-white/70 mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What's this space about? What will members do here?"
+              maxLength={500}
+              rows={4}
+              className={cn(
+                'w-full px-3 py-2.5 rounded-lg',
+                'bg-white/[0.04] border border-white/[0.08]',
+                'text-white placeholder:text-white/30',
+                'focus:outline-none focus:ring-2 focus:ring-white/20',
+                'resize-none transition-all duration-150'
               )}
+            />
+            <Text size="xs" className="text-white/30 mt-1.5 text-right">
+              {description.length}/500
+            </Text>
+          </div>
 
-              <Button
-                type="button"
-                onClick={handleCreate}
-                disabled={isSubmitting}
-                className="w-full bg-white text-black hover:bg-neutral-100 font-semibold"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Create space"
-                )}
-              </Button>
+          {/* Guidelines */}
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="guidelines"
+              checked={agreedToGuidelines}
+              onChange={(e) => setAgreedToGuidelines(e.target.checked)}
+              className={cn(
+                'mt-0.5 h-4 w-4 rounded',
+                'border border-white/20 bg-transparent',
+                'focus:ring-2 focus:ring-white/20 focus:ring-offset-0',
+                'checked:bg-white checked:border-white'
+              )}
+            />
+            <label htmlFor="guidelines" className="text-sm text-white/60">
+              I agree to the{' '}
+              <Link href="/legal/community-guidelines" className="underline hover:text-white/80">
+                community guidelines
+              </Link>{' '}
+              and will moderate this space responsibly.
+            </label>
+          </div>
 
-              <p className="text-xs text-[var(--hive-text-tertiary)] text-center">
-                You'll become the owner of this space.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </main>
+          {/* Error */}
+          {error && (
+            <Text size="sm" className="text-red-400">
+              {error}
+            </Text>
+          )}
 
-      <footer className="p-4 text-center">
-        <p className="text-xs text-[var(--hive-text-tertiary)]">University at Buffalo</p>
-      </footer>
+          {/* Submit */}
+          <Button
+            variant="default"
+            size="lg"
+            onClick={handleCreate}
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              'Create Space'
+            )}
+          </Button>
+
+          <Text size="xs" className="text-white/30 text-center">
+            Your space will be visible in browse once created.
+          </Text>
+        </motion.div>
+
+        {/* Alternative */}
+        <motion.div className="mt-8 text-center" {...fadeIn(0.12)}>
+          <Text size="sm" className="text-white/40">
+            Looking for an existing university, residential, or Greek space?{' '}
+            <Link
+              href="/spaces/claim"
+              className="text-white/60 hover:text-white/80 underline underline-offset-2"
+            >
+              Claim it instead
+            </Link>
+          </Text>
+        </motion.div>
+      </div>
     </div>
-  );
-}
-
-function CreateSpaceFallback() {
-  return (
-    <div className="min-h-screen bg-[var(--hive-background-primary)] flex items-center justify-center">
-      <Loader2 className="h-5 w-5 animate-spin text-[var(--hive-text-tertiary)]" />
-    </div>
-  );
-}
-
-export default function CreateSpacePage() {
-  return (
-    <Suspense fallback={<CreateSpaceFallback />}>
-      <CreateSpaceContent />
-    </Suspense>
   );
 }

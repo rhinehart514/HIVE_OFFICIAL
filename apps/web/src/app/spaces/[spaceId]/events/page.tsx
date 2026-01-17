@@ -1,16 +1,24 @@
-"use client";
+'use client';
 
 /**
  * Space Events Page - Full events listing for a space
  *
- * Features:
- * - Full EventsPanel with filtering
- * - EventDetailsModal for viewing event details
- * - EventCreateModal for leaders
- * - Uses SpaceContext for events data
+ * Archetype: Discovery (Shell ON)
+ * Pattern: List + tabs
+ * Shell: ON
+ *
+ * @version 7.0.0 - Redesigned for Spaces Vertical Slice (Jan 2026)
  */
 
-import * as React from "react";
+import * as React from 'react';
+
+// Category accent colors (domain-based)
+const CATEGORY_COLORS: Record<string, string> = {
+  university: '#3B82F6',
+  student_org: '#F59E0B',
+  residential: '#10B981',
+  greek: '#8B5CF6',
+};
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@hive/auth-logic";
 import {
@@ -21,7 +29,10 @@ import {
   type EventCreateInput,
   toast,
 } from "@hive/ui";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
 import { EventsPanel, type SpaceEvent } from "@/components/spaces/panels/events-panel";
 import {
   SpaceContextProvider,
@@ -115,9 +126,10 @@ function SpaceEventsContent() {
       linkedBoardId?: string;
     };
 
-    const eventType = (['academic', 'social', 'recreational', 'cultural', 'meeting', 'virtual'] as const).includes(
-      e.type as SpaceEventDetails['type']
-    ) ? e.type as SpaceEventDetails['type'] : 'meeting';
+    const validTypes = ['academic', 'social', 'recreational', 'cultural', 'meeting', 'virtual'] as const;
+    const eventType = e.type && validTypes.includes(e.type as typeof validTypes[number])
+      ? (e.type as typeof validTypes[number])
+      : 'meeting';
 
     return {
       id: e.id,
@@ -193,27 +205,36 @@ function SpaceEventsContent() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="text-[#A1A1A6]">Loading...</div>
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center">
+        <div className="text-white/70">Loading...</div>
       </div>
     );
   }
 
+  // Get category color for accent
+  const categoryColor = CATEGORY_COLORS[space.category || ''] || CATEGORY_COLORS.student_org;
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A]">
+    <div className="min-h-screen bg-[var(--bg-ground)] relative">
+      {/* Category accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-1 z-40"
+        style={{ backgroundColor: categoryColor }}
+      />
+
       {/* Header */}
-      <div className="border-b border-white/[0.06] bg-[#0A0A0A]/95 backdrop-blur-lg sticky top-0 z-10">
+      <div className="border-b border-white/[0.06] bg-[var(--bg-ground)]/95 backdrop-blur-lg sticky top-0 z-10 pt-1">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push(`/spaces/${spaceId}`)}
-              className="p-2 rounded-lg hover:bg-white/5 text-[#A1A1A6] hover:text-[#FAFAFA] transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.05] text-white/70 hover:text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-xl font-semibold text-[#FAFAFA]">{space.name}</h1>
-              <p className="text-sm text-[#818187]">Events</p>
+              <h1 className="text-xl font-semibold text-white">{space.name}</h1>
+              <p className="text-sm text-white/50">Events</p>
             </div>
           </div>
         </div>
@@ -270,8 +291,8 @@ export default function SpaceEventsPage() {
 
   if (!spaceId) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <div className="text-[#A1A1A6]">Space not found</div>
+      <div className="min-h-screen bg-[var(--bg-ground)] flex items-center justify-center">
+        <div className="text-white/70">Space not found</div>
       </div>
     );
   }

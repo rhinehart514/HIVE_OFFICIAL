@@ -2,7 +2,10 @@
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Loader2, AlertTriangle, BoxSelect } from 'lucide-react';
+import { ArrowPathIcon, ExclamationTriangleIcon, ViewfinderCircleIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const BoxSelect = ViewfinderCircleIcon;
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import type { ElementProps, ElementSharedState, ElementUserState } from '../../lib/hivelab/element-system';
@@ -327,7 +330,7 @@ function CanvasError({ message }: { message: string }) {
       className={cn("rounded-xl p-6 text-center", glass.error)}
     >
       <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-        <AlertTriangle className="h-6 w-6 text-red-400" />
+        <ExclamationTriangleIcon className="h-6 w-6 text-red-400" />
       </div>
       <p className="text-red-400 font-medium mb-1">Failed to load tool</p>
       <p className="text-sm text-red-400/60">{message}</p>

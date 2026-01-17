@@ -1,40 +1,21 @@
 'use client';
 
-import {
-  ArrowRight,
-  Box,
-  CheckCircle,
-  Copy,
-  Eye,
-  Grid,
-  Layers,
-  Link,
-  Maximize2 as Resize,
-  Move,
-  Palette,
-  Play,
-  Save,
-  Search,
-  Settings,
-  Trash2,
-  Zap,
-} from 'lucide-react';
+import { ArrowRightIcon, CheckCircleIcon, ClipboardDocumentIcon, EyeIcon, Squares2X2Icon, LinkIcon, PlayIcon, BookmarkIcon, MagnifyingGlassIcon, Cog6ToothIcon, TrashIcon, BoltIcon, CubeIcon, Square3Stack3DIcon, ArrowsPointingOutIcon, ArrowsRightLeftIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Box = CubeIcon;
+const Layers = Square3Stack3DIcon;
+const Move = ArrowsPointingOutIcon;
+const Resize = ArrowsRightLeftIcon;
 import { useCallback, useRef, useState } from 'react';
 
-import {
-  Alert,
-  AlertDescription,
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  Input,
-  Label,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../atomic';
+import { Alert, AlertDescription } from '../../design-system/components/Alert';
+import { Badge } from '../../design-system/primitives';
+import { Button } from '../../design-system/primitives';
+import { Card, CardContent } from '../../design-system/primitives';
+import { Input } from '../../design-system/primitives';
+import { Label } from '../../design-system/primitives/Label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../design-system/primitives';
 import {
   type ElementDefinition,
   ElementRegistry,
@@ -240,10 +221,10 @@ export function VisualToolComposer({
 
   const elementCategories = [
     { id: 'input', name: 'Input', icon: 'Type', color: 'text-blue-400' },
-    { id: 'display', name: 'Display', icon: 'Eye', color: 'text-green-400' },
+    { id: 'display', name: 'Display', icon: 'EyeIcon', color: 'text-green-400' },
     { id: 'filter', name: 'Filter', icon: 'Filter', color: 'text-purple-400' },
-    { id: 'action', name: 'Action', icon: 'Zap', color: 'text-orange-400' },
-    { id: 'layout', name: 'Layout', icon: 'Grid', color: 'text-pink-400' },
+    { id: 'action', name: 'Action', icon: 'BoltIcon', color: 'text-orange-400' },
+    { id: 'layout', name: 'Layout', icon: 'Squares2X2Icon', color: 'text-pink-400' },
   ];
 
   return (
@@ -277,8 +258,8 @@ export function VisualToolComposer({
               showGrid ? 'bg-hive-brand-primary/20 text-hive-brand-primary' : undefined
             )}
           >
-            <Grid className="h-4 w-4" />
-            Grid
+            <Squares2X2Icon className="h-4 w-4" />
+            Squares2X2Icon
           </Button>
           
           <div className="flex items-center space-x-1 bg-hive-background-tertiary rounded-lg p-1 border border-hive-border-default">
@@ -307,7 +288,7 @@ export function VisualToolComposer({
             disabled={canvasElements.length === 0}
             className="flex items-center gap-2"
           >
-            <Play className="h-4 w-4" />
+            <PlayIcon className="h-4 w-4" />
             Preview
           </Button>
           
@@ -317,8 +298,8 @@ export function VisualToolComposer({
             disabled={!toolName.trim() || canvasElements.length === 0}
             className="flex items-center gap-2 bg-hive-brand-primary text-hive-obsidian hover:bg-hive-champagne"
           >
-            <Save className="h-4 w-4" />
-            Save Tool
+            <BookmarkIcon className="h-4 w-4" />
+            BookmarkIcon Tool
           </Button>
           
           <Button variant="outline" onClick={onCancel}>
@@ -337,7 +318,7 @@ export function VisualToolComposer({
                 Elements
               </TabsTrigger>
               <TabsTrigger value="properties" className="text-sm data-[state=active]:bg-hive-background-secondary">
-                <Settings className="h-4 w-4 mr-2" />
+                <Cog6ToothIcon className="h-4 w-4 mr-2" />
                 Properties
               </TabsTrigger>
             </TabsList>
@@ -479,7 +460,7 @@ export function VisualToolComposer({
                           >
                             {selectedCanvasElement.config[key] ? (
                               <span className="flex items-center gap-1">
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircleIcon className="h-4 w-4" />
                                 Enabled
                               </span>
                             ) : (
@@ -510,14 +491,14 @@ export function VisualToolComposer({
                       onClick={() => handleElementDelete(selectedCanvasElement.id)}
                       className="text-red-400 border-red-500 hover:bg-red-500/10 flex items-center gap-2"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <TrashIcon className="h-4 w-4" />
                       Delete Element
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Settings className="h-12 w-12 mx-auto mb-3 text-hive-text-mutedLight opacity-50" />
+                  <Cog6ToothIcon className="h-12 w-12 mx-auto mb-3 text-hive-text-mutedLight opacity-50" />
                   <p className="text-sm text-hive-text-mutedLight">
                     Select an element to view its properties
                   </p>
@@ -590,7 +571,7 @@ export function VisualToolComposer({
                         <Resize className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-hive-text-mutedLight">
-                        <Copy className="h-4 w-4" />
+                        <ClipboardDocumentIcon className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -601,7 +582,7 @@ export function VisualToolComposer({
                           handleElementDelete(element.id);
                         }}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <TrashIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -625,7 +606,7 @@ export function VisualToolComposer({
                     }}
                     aria-label="Start connection from element"
                   >
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRightIcon className="h-3 w-3" />
                   </button>
                   
                   <button
@@ -642,7 +623,7 @@ export function VisualToolComposer({
                     }}
                     aria-label="Connect to element"
                   >
-                    <ArrowRight className="h-3 w-3 rotate-180" />
+                    <ArrowRightIcon className="h-3 w-3 rotate-180" />
                   </button>
                 </div>
               );
@@ -691,7 +672,7 @@ export function VisualToolComposer({
                     Drag elements from the palette to create your custom tool, then connect them to power your workflows.
                   </p>
                   <div className="flex items-center justify-center gap-2 text-xs text-hive-text-mutedLight">
-                    <Eye className="h-3 w-3" />
+                    <EyeIcon className="h-3 w-3" />
                     <span>Preview to simulate data flow</span>
                   </div>
                 </div>
@@ -711,7 +692,7 @@ export function VisualToolComposer({
         <div className="flex items-center space-x-4">
           {isConnecting && (
             <div className="flex items-center space-x-2 text-hive-brand-primary">
-              <Link className="h-3 w-3" />
+              <LinkIcon className="h-3 w-3" />
               <span>Click target element to connect</span>
             </div>
           )}

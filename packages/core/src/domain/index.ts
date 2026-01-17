@@ -11,3 +11,6 @@ export * from './identity';
 
 // Analytics Domain (Event Tracking and Metrics)
 export * from './analytics';
+
+// Campus Domain (Dining, Buildings, Location Services)
+export * from './campus';

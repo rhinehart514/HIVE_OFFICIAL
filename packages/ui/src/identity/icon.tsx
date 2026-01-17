@@ -26,7 +26,7 @@ const wrapperVariants = cva(
       },
       interactive: {
         false: "",
-        true: "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--hive-interactive-focus,#FFD700)] hover:-translate-y-0.5",
+        true: "cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50 hover:-translate-y-0.5",
       },
       disabled: {
         true: "pointer-events-none opacity-40",

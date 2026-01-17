@@ -11,7 +11,10 @@
 
 import * as React from "react";
 import { createContext, useContext, useMemo } from "react";
-import { Loader2 } from "lucide-react";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Loader2 = ArrowPathIcon;
 import { cn } from "../../lib/utils";
 import { ToolCanvas, type ToolElement } from "./tool-canvas";
 import type { ToolCapabilities, AppConfig } from "@hive/core";
@@ -80,8 +83,8 @@ export interface AppSurfaceProps {
 // ============================================================================
 
 const glass = {
-  surface: "bg-[#0A0A0A]",
-  loading: "bg-[#141414]",
+  surface: "bg-[var(--hivelab-bg)]",
+  loading: "bg-[var(--hivelab-surface)]",
 };
 
 // ============================================================================
@@ -106,9 +109,9 @@ function SidebarLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full h-full overflow-auto grid grid-cols-[1fr_300px] gap-4">
       <div className="overflow-auto">{children}</div>
-      <aside className="overflow-auto border-l border-white/5 p-4">
+      <aside className="overflow-auto border-l border-[var(--hivelab-border)] p-4">
         {/* Reserved for sidebar widgets */}
-        <div className="text-white/40 text-sm text-center pt-8">
+        <div className="text-[var(--hivelab-text-tertiary)] text-sm text-center pt-8">
           Sidebar tools coming soon
         </div>
       </aside>
@@ -129,7 +132,7 @@ function AppSurfaceLoading() {
         "rounded-lg m-4"
       )}
     >
-      <div className="flex flex-col items-center gap-3 text-white/60">
+      <div className="flex flex-col items-center gap-3 text-[var(--hivelab-text-tertiary)]">
         <Loader2 className="w-6 h-6 animate-spin" />
         <span className="text-sm">Loading app...</span>
       </div>

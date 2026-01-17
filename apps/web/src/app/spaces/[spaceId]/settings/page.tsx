@@ -1,45 +1,46 @@
-"use client";
+'use client';
 
 /**
- * Space Settings Page - Complete Rebuild
+ * Space Settings Page
  *
- * Leader-only settings with:
- * - SpaceContext integration
- * - Tab and Widget management
- * - T2 Motion tier animations
- * - Glass morphism styling
+ * Archetype: Focus Flow (Shell ON)
+ * Pattern: Tab navigation (sidebar desktop, horizontal mobile)
+ * Shell: ON
  *
- * @author HIVE Frontend Team
- * @version 2.0.0
+ * Leader-only settings with category accent.
+ *
+ * @version 7.0.0 - Redesigned for Spaces Vertical Slice (Jan 2026)
  */
 
-import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
+import * as React from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import {
   motion,
   AnimatePresence,
   useReducedMotion,
   type Variants,
-} from "framer-motion";
+} from 'framer-motion';
 import {
-  ChevronLeft,
-  Settings,
-  Users,
-  Shield,
-  Wrench,
-  Trash2,
-  Save,
-  AlertTriangle,
-  Plus,
-  LayoutGrid,
-  Loader2,
-  GripVertical,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-import { Button, Input, Card, toast, cn, AddTabModal, AddWidgetModal, HiveConfirmModal } from "@hive/ui";
-import type { AddTabInput, AddWidgetInputUI } from "@hive/ui";
-import { springPresets, easingArrays } from "@hive/tokens";
+  ChevronLeftIcon,
+  Cog6ToothIcon,
+  UsersIcon,
+  ShieldCheckIcon,
+  WrenchIcon,
+  CheckIcon,
+  ExclamationTriangleIcon,
+  Squares2X2Icon,
+  ArrowPathIcon,
+} from '@heroicons/react/24/outline';
+import { Button, cn, toast } from '@hive/ui';
+import { springPresets, easingArrays } from '@hive/tokens';
+
+// Category accent colors (domain-based)
+const CATEGORY_COLORS: Record<string, string> = {
+  university: '#3B82F6',
+  student_org: '#F59E0B',
+  residential: '#10B981',
+  greek: '#8B5CF6',
+};
 import {
   SpaceContextProvider,
   useSpaceMetadata,
@@ -49,19 +50,19 @@ import {
 import { secureApiFetch } from "@/lib/secure-auth-utils";
 import { useAuth } from "@hive/auth-logic";
 
+import {
+  GeneralTab,
+  StructureTab,
+  MembersTab,
+  PermissionsTab,
+  IntegrationsTab,
+  DangerTab,
+  type SpaceSettingsForm,
+} from "./components";
+
 // =============================================================================
 // TYPES
 // =============================================================================
-
-interface SpaceSettingsForm {
-  name: string;
-  description: string;
-  category: string;
-  joinPolicy: "open" | "approval" | "invite_only";
-  visibility: "public" | "private";
-  allowRSS: boolean;
-  requireApproval: boolean;
-}
 
 type SettingsTab =
   | "general"
@@ -101,10 +102,7 @@ const tabContentVariants: Variants = {
   animate: {
     opacity: 1,
     x: 0,
-    transition: {
-      duration: 0.2,
-      ease: easingArrays.silk,
-    },
+    transition: { duration: 0.2, ease: easingArrays.silk },
   },
   exit: {
     opacity: 0,
@@ -123,6 +121,19 @@ const listItemVariants: Variants = {
 };
 
 // =============================================================================
+// TAB CONFIG
+// =============================================================================
+
+const settingsTabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+  { id: "general", label: "General", icon: <Cog6ToothIcon className="h-4 w-4" /> },
+  { id: "structure", label: "Layout", icon: <Squares2X2Icon className="h-4 w-4" /> },
+  { id: "members", label: "Members", icon: <UsersIcon className="h-4 w-4" /> },
+  { id: "permissions", label: "Permissions", icon: <ShieldCheckIcon className="h-4 w-4" /> },
+  { id: "integrations", label: "Integrations", icon: <WrenchIcon className="h-4 w-4" /> },
+  { id: "danger", label: "Danger Zone", icon: <ExclamationTriangleIcon className="h-4 w-4" /> },
+];
+
+// =============================================================================
 // SETTINGS CONTENT COMPONENT
 // =============================================================================
 
@@ -131,23 +142,10 @@ function SpaceSettingsContent() {
   const shouldReduceMotion = useReducedMotion();
   const { user } = useAuth();
 
-  // Use focused context hooks for better performance
-  const {
-    space,
-    spaceId,
-    membership,
-    isLoading,
-    error,
-  } = useSpaceMetadata();
-
-  const {
-    tabs,
-    widgets,
-  } = useSpaceStructureContext();
-
+  const { space, spaceId, membership, isLoading, error } = useSpaceMetadata();
+  const { tabs, widgets } = useSpaceStructureContext();
   const { leaderActions } = useSpaceLeader();
 
-  // Local state
   const [activeTab, setActiveTab] = React.useState<SettingsTab>("general");
   const [saving, setSaving] = React.useState(false);
   const [form, setForm] = React.useState<SpaceSettingsForm>({
@@ -160,16 +158,9 @@ function SpaceSettingsContent() {
     requireApproval: false,
   });
 
-  // Modal state for Add Tab and Add Widget
-  const [addTabModalOpen, setAddTabModalOpen] = React.useState(false);
-  const [addWidgetModalOpen, setAddWidgetModalOpen] = React.useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
-  const [isDeleting, setIsDeleting] = React.useState(false);
-
-  // Check if user has provisional access (pending leader verification)
+  // Check provisional access
   const hasProvisionalAccess = React.useMemo(() => {
     if (!space || !user?.uid) return false;
-    // Access leaderRequests from space data - it's included in toSpaceWithToolsDTO
     const leaderRequests = (space as { leaderRequests?: Array<{
       profileId: string;
       status: string;
@@ -177,14 +168,13 @@ function SpaceSettingsContent() {
       reviewedAt?: string | null;
     }> }).leaderRequests;
     if (!leaderRequests) return false;
-
     const userRequest = leaderRequests.find(
       (r) => r.profileId === user.uid && r.status === 'pending'
     );
     return userRequest?.provisionalAccessGranted && !userRequest.reviewedAt;
   }, [space, user?.uid]);
 
-  // Initialize form when space loads
+  // Initialize form
   React.useEffect(() => {
     if (space) {
       setForm({
@@ -207,10 +197,8 @@ function SpaceSettingsContent() {
     }
   }, [isLoading, membership.isLeader, spaceId, router]);
 
-  // Handle form save
   const handleSave = async () => {
     if (!spaceId) return;
-
     setSaving(true);
     try {
       const res = await secureApiFetch(`/api/spaces/${spaceId}`, {
@@ -226,9 +214,7 @@ function SpaceSettingsContent() {
           },
         }),
       });
-
       if (!res.ok) throw new Error("Failed to save");
-
       toast.success("Settings saved", "Your changes have been applied.");
     } catch {
       toast.error("Failed to save", "Please try again.");
@@ -237,83 +223,6 @@ function SpaceSettingsContent() {
     }
   };
 
-  // Handle tab visibility toggle
-  const handleToggleTab = async (tabId: string, isVisible: boolean) => {
-    if (!leaderActions) return;
-    await leaderActions.updateTab(tabId, { isVisible });
-  };
-
-  // Handle adding a new tab
-  const handleAddTab = async (input: AddTabInput) => {
-    if (!leaderActions) return;
-    const result = await leaderActions.addTab(input);
-    if (result) {
-      toast.success("Tab added", `"${input.name}" tab has been created.`);
-      setAddTabModalOpen(false);
-    } else {
-      toast.error("Failed to add tab", "Please try again.");
-    }
-  };
-
-  // Handle adding a new widget
-  const handleAddWidget = async (input: AddWidgetInputUI) => {
-    if (!leaderActions) return;
-    const result = await leaderActions.addWidget(input);
-    if (result) {
-      toast.success("Widget added", "The widget has been created.");
-      setAddWidgetModalOpen(false);
-    } else {
-      toast.error("Failed to add widget", "Please try again.");
-    }
-  };
-
-  // Handle delete space
-  const handleDeleteSpace = async () => {
-    if (!spaceId) return;
-
-    try {
-      setIsDeleting(true);
-      const res = await secureApiFetch(`/api/spaces/${spaceId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        // Handle provisional access restriction
-        if (data.code === "PROVISIONAL_ACCESS_RESTRICTED") {
-          toast.error(
-            "Action restricted",
-            "Space deletion is disabled while your leader verification is pending."
-          );
-          return;
-        }
-        throw new Error(data.error || "Failed to delete");
-      }
-
-      toast.success("Space deleted", "The space has been permanently deleted.");
-      router.push("/spaces");
-    } catch (error) {
-      toast.error(
-        "Failed to delete",
-        error instanceof Error ? error.message : "Please try again."
-      );
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-    }
-  };
-
-  // Tab configuration
-  const settingsTabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
-    { id: "general", label: "General", icon: <Settings className="h-4 w-4" /> },
-    { id: "structure", label: "Layout", icon: <LayoutGrid className="h-4 w-4" /> },
-    { id: "members", label: "Members", icon: <Users className="h-4 w-4" /> },
-    { id: "permissions", label: "Permissions", icon: <Shield className="h-4 w-4" /> },
-    { id: "integrations", label: "Integrations", icon: <Wrench className="h-4 w-4" /> },
-    { id: "danger", label: "Danger Zone", icon: <AlertTriangle className="h-4 w-4" /> },
-  ];
-
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black">
@@ -330,15 +239,24 @@ function SpaceSettingsContent() {
 
   if (!space) return null;
 
+  // Get category color for accent
+  const categoryColor = CATEGORY_COLORS[space.category || ''] || CATEGORY_COLORS.student_org;
+
   return (
     <motion.div
       variants={shouldReduceMotion ? undefined : pageVariants}
       initial="initial"
       animate="animate"
-      className="min-h-screen bg-black"
+      className="min-h-screen bg-black relative"
     >
+      {/* Category accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-1 z-40"
+        style={{ backgroundColor: categoryColor }}
+      />
+
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-neutral-800/50">
+      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-xl border-b border-neutral-800/50 pt-1">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -348,7 +266,7 @@ function SpaceSettingsContent() {
                 onClick={() => router.push(`/spaces/${spaceId}`)}
                 className="p-2 -ml-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeftIcon className="h-5 w-5" />
               </motion.button>
               <div>
                 <h1 className="text-xl font-bold text-white">Space Settings</h1>
@@ -360,12 +278,12 @@ function SpaceSettingsContent() {
               <Button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-semibold"
+                className="bg-life-gold text-black hover:bg-life-gold/90 font-semibold"
               >
                 {saving ? (
-                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  <ArrowPathIcon className="h-4 w-4 mr-1.5 animate-spin" />
                 ) : (
-                  <Save className="h-4 w-4 mr-1.5" />
+                  <CheckIcon className="h-4 w-4 mr-1.5" />
                 )}
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
@@ -377,12 +295,9 @@ function SpaceSettingsContent() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Sidebar tabs - glass morphism container with gold accents */}
-          <motion.nav
-            variants={sectionVariants}
-            className="md:w-52 flex-shrink-0"
-          >
-            {/* Desktop: vertical list in glass container */}
+          {/* Sidebar tabs */}
+          <motion.nav variants={sectionVariants} className="md:w-52 flex-shrink-0">
+            {/* Desktop */}
             <div className="hidden md:block bg-neutral-900/60 backdrop-blur-sm border border-white/[0.06] rounded-xl p-2">
               <div className="flex flex-col gap-0.5">
                 {settingsTabs.map((tab, index) => (
@@ -399,16 +314,15 @@ function SpaceSettingsContent() {
                       tab.id === "danger" && "text-red-400 hover:text-red-300"
                     )}
                   >
-                    {/* Gold left border indicator for active */}
                     {activeTab === tab.id && (
                       <motion.div
                         layoutId="settings-tab-indicator"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#FFD700] rounded-full"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-life-gold rounded-full"
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
                       />
                     )}
                     <span className={cn(
-                      activeTab === tab.id && tab.id !== "danger" && "text-[#FFD700]"
+                      activeTab === tab.id && tab.id !== "danger" && "text-life-gold"
                     )}>
                       {tab.icon}
                     </span>
@@ -418,7 +332,7 @@ function SpaceSettingsContent() {
               </div>
             </div>
 
-            {/* Mobile: horizontal scrollable */}
+            {/* Mobile */}
             <div className="flex md:hidden gap-2 overflow-x-auto pb-2 -mx-4 px-4">
               {settingsTabs.map((tab) => (
                 <button
@@ -432,16 +346,15 @@ function SpaceSettingsContent() {
                     tab.id === "danger" && activeTab !== tab.id && "text-red-400"
                   )}
                 >
-                  {/* Gold underline for active */}
                   {activeTab === tab.id && (
                     <motion.div
                       layoutId="settings-tab-mobile-indicator"
-                      className="absolute bottom-0 left-3 right-3 h-0.5 bg-[#FFD700] rounded-full"
+                      className="absolute bottom-0 left-3 right-3 h-0.5 bg-life-gold rounded-full"
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
                   <span className={cn(
-                    activeTab === tab.id && tab.id !== "danger" && "text-[#FFD700]"
+                    activeTab === tab.id && tab.id !== "danger" && "text-life-gold"
                   )}>
                     {tab.icon}
                   </span>
@@ -455,429 +368,55 @@ function SpaceSettingsContent() {
           <div className="flex-1">
             <AnimatePresence mode="wait">
               {activeTab === "general" && (
-                <motion.div
-                  key="general"
+                <GeneralTab
+                  form={form}
+                  setForm={setForm}
                   variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <h2 className="text-lg font-semibold text-white mb-6">
-                      General Settings
-                    </h2>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-300 mb-1.5">
-                          Space Name
-                        </label>
-                        <Input
-                          value={form.name}
-                          onChange={(e) =>
-                            setForm((prev) => ({ ...prev, name: e.target.value }))
-                          }
-                          className="bg-neutral-800/50 border-neutral-700"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-300 mb-1.5">
-                          Description
-                        </label>
-                        <textarea
-                          value={form.description}
-                          onChange={(e) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                          rows={4}
-                          className="w-full bg-neutral-800/50 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm resize-none focus:border-[#FFD700]/50 focus:ring-[#FFD700]/20"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-300 mb-1.5">
-                          Category
-                        </label>
-                        <select
-                          value={form.category}
-                          onChange={(e) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              category: e.target.value,
-                            }))
-                          }
-                          className="w-full bg-neutral-800/50 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm"
-                        >
-                          <option value="club">Club</option>
-                          <option value="academic">Academic</option>
-                          <option value="student_org">Student Org</option>
-                          <option value="residential">Residential</option>
-                          <option value="university_org">University Org</option>
-                          <option value="greek_life">Greek Life</option>
-                          <option value="sports">Sports</option>
-                          <option value="arts">Arts</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-300 mb-1.5">
-                          Visibility
-                        </label>
-                        <select
-                          value={form.visibility}
-                          onChange={(e) =>
-                            setForm((prev) => ({
-                              ...prev,
-                              visibility: e.target.value as "public" | "private",
-                            }))
-                          }
-                          className="w-full bg-neutral-800/50 border border-neutral-700 rounded-lg px-3 py-2 text-white text-sm"
-                        >
-                          <option value="public">Public - Anyone can discover</option>
-                          <option value="private">Private - Invite only</option>
-                        </select>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2">
-                        <div>
-                          <p className="text-sm font-medium text-white">
-                            Require Approval
-                          </p>
-                          <p className="text-xs text-neutral-500">
-                            New members must be approved
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              requireApproval: !prev.requireApproval,
-                            }))
-                          }
-                          className={cn(
-                            "relative w-11 h-6 rounded-full transition-colors",
-                            form.requireApproval
-                              ? "bg-[#FFD700]"
-                              : "bg-neutral-700"
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform",
-                              form.requireApproval ? "left-6" : "left-1"
-                            )}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
+                />
               )}
 
               {activeTab === "structure" && (
-                <motion.div
-                  key="structure"
+                <StructureTab
+                  tabs={tabs}
+                  widgets={widgets}
+                  leaderActions={leaderActions as Parameters<typeof StructureTab>[0]['leaderActions']}
                   variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="space-y-4"
-                >
-                  {/* Tabs Management */}
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-white">Tabs</h2>
-                      {leaderActions && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setAddTabModalOpen(true)}
-                          className="border-neutral-700 text-neutral-300 hover:bg-white/5"
-                        >
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          Add Tab
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="space-y-2">
-                      {tabs.map((tab, index) => (
-                        <motion.div
-                          key={tab.id}
-                          variants={listItemVariants}
-                          custom={index}
-                          className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/30 border border-neutral-700/50"
-                        >
-                          <div className="flex items-center gap-3">
-                            <GripVertical className="h-4 w-4 text-neutral-600 cursor-grab" />
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                {tab.name}
-                              </p>
-                              <p className="text-xs text-neutral-500 capitalize">
-                                {tab.type}
-                                {tab.isDefault && " • Default"}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleToggleTab(tab.id, !tab.isVisible)}
-                              className={cn(
-                                "p-1.5 rounded transition-colors",
-                                tab.isVisible
-                                  ? "text-[#FFD700] hover:bg-[#FFD700]/10"
-                                  : "text-neutral-500 hover:bg-white/5"
-                              )}
-                            >
-                              {tab.isVisible ? (
-                                <Eye className="h-4 w-4" />
-                              ) : (
-                                <EyeOff className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </Card>
-
-                  {/* Widgets Management */}
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-semibold text-white">Widgets</h2>
-                      {leaderActions && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setAddWidgetModalOpen(true)}
-                          className="border-neutral-700 text-neutral-300 hover:bg-white/5"
-                        >
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          Add Widget
-                        </Button>
-                      )}
-                    </div>
-
-                    {widgets.length === 0 ? (
-                      <div className="py-8 text-center text-neutral-500">
-                        <LayoutGrid className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No widgets configured</p>
-                        <p className="text-xs mt-1">
-                          Add widgets to customize your space
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {widgets.map((widget, index) => (
-                          <motion.div
-                            key={widget.id}
-                            variants={listItemVariants}
-                            custom={index}
-                            className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/30 border border-neutral-700/50"
-                          >
-                            <div>
-                              <p className="text-sm font-medium text-white">
-                                {widget.title}
-                              </p>
-                              <p className="text-xs text-neutral-500 capitalize">
-                                {widget.type}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={cn(
-                                  "px-2 py-0.5 rounded text-xs",
-                                  widget.isEnabled
-                                    ? "bg-green-500/10 text-green-400"
-                                    : "bg-neutral-700/50 text-neutral-400"
-                                )}
-                              >
-                                {widget.isEnabled ? "Enabled" : "Disabled"}
-                              </span>
-                            </div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                </motion.div>
+                />
               )}
 
               {activeTab === "members" && (
-                <motion.div
-                  key="members"
+                <MembersTab
+                  spaceId={spaceId!}
                   variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <h2 className="text-lg font-semibold text-white mb-4">
-                      Member Management
-                    </h2>
-                    <p className="text-neutral-400 mb-4">
-                      View and manage space members, promote to admin, or remove
-                      members.
-                    </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push(`/spaces/${spaceId}/members`)}
-                      className="border-neutral-700 text-neutral-300 hover:bg-white/5"
-                    >
-                      <Users className="h-4 w-4 mr-1.5" />
-                      Manage Members
-                    </Button>
-                  </Card>
-                </motion.div>
+                />
               )}
 
               {activeTab === "permissions" && (
-                <motion.div
-                  key="permissions"
-                  variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <h2 className="text-lg font-semibold text-white mb-4">
-                      Permissions
-                    </h2>
-                    <p className="text-neutral-400 mb-4">
-                      Configure what different roles can do in your space.
-                    </p>
-                    <div className="p-4 bg-neutral-800/30 rounded-lg border border-neutral-700/50">
-                      <p className="text-sm text-neutral-500">
-                        Advanced permissions coming soon.
-                      </p>
-                    </div>
-                  </Card>
-                </motion.div>
+                <PermissionsTab variants={tabContentVariants} />
               )}
 
               {activeTab === "integrations" && (
-                <motion.div
-                  key="integrations"
+                <IntegrationsTab
+                  spaceId={spaceId!}
+                  form={form}
+                  setForm={setForm}
                   variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-white/[0.06]">
-                    <h2 className="text-lg font-semibold text-white mb-4">
-                      Integrations
-                    </h2>
-                    <p className="text-neutral-400 mb-4">
-                      Enable tools like calendar, polls, and custom HiveLab tools.
-                    </p>
-
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-neutral-800/30 border border-neutral-700/50 mb-3">
-                      <div>
-                        <p className="text-sm font-medium text-white">RSS Feed</p>
-                        <p className="text-xs text-neutral-500">
-                          Allow members to subscribe to updates
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setForm((prev) => ({
-                            ...prev,
-                            allowRSS: !prev.allowRSS,
-                          }))
-                        }
-                        className={cn(
-                          "relative w-11 h-6 rounded-full transition-colors",
-                          form.allowRSS ? "bg-[#FFD700]" : "bg-neutral-700"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "absolute top-1 w-4 h-4 rounded-full bg-white transition-transform",
-                            form.allowRSS ? "left-6" : "left-1"
-                          )}
-                        />
-                      </button>
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      onClick={() => router.push(`/spaces/${spaceId}/tools`)}
-                      className="border-neutral-700 text-neutral-300 hover:bg-white/5"
-                    >
-                      <Wrench className="h-4 w-4 mr-1.5" />
-                      Manage Tools
-                    </Button>
-                  </Card>
-                </motion.div>
+                />
               )}
 
               {activeTab === "danger" && (
-                <motion.div
-                  key="danger"
+                <DangerTab
+                  spaceId={spaceId!}
+                  hasProvisionalAccess={hasProvisionalAccess ?? false}
                   variants={tabContentVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                >
-                  <Card className="p-6 bg-neutral-900/60 backdrop-blur-sm border-red-500/20">
-                    <h2 className="text-lg font-semibold text-red-400 mb-4">
-                      Danger Zone
-                    </h2>
-                    <p className="text-neutral-400 mb-4">
-                      These actions are irreversible. Please be certain.
-                    </p>
-
-                    {/* Provisional Access Warning */}
-                    {hasProvisionalAccess && (
-                      <div className="p-4 bg-amber-500/10 rounded-lg border border-amber-500/30 mb-4">
-                        <div className="flex items-start gap-3">
-                          <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <h3 className="font-medium text-amber-400 mb-1">
-                              Verification Pending
-                            </h3>
-                            <p className="text-sm text-amber-400/70">
-                              Destructive actions like space deletion are disabled while your leader verification is in progress.
-                              This usually takes less than 24 hours.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
-                      <h3 className="font-medium text-white mb-2">Delete Space</h3>
-                      <p className="text-sm text-neutral-400 mb-3">
-                        Permanently delete this space and all its content. This
-                        cannot be undone.
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        disabled={hasProvisionalAccess}
-                        className={cn(
-                          "border-red-500/50 text-red-400 hover:bg-red-500/10",
-                          hasProvisionalAccess && "opacity-50 cursor-not-allowed hover:bg-transparent"
-                        )}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1.5" />
-                        Delete Space
-                      </Button>
-                    </div>
-                  </Card>
-                </motion.div>
+                />
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
 
-      {/* Error state */}
+      {/* Error toast */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -889,43 +428,12 @@ function SpaceSettingsContent() {
           </div>
         </motion.div>
       )}
-
-      {/* Add Tab Modal */}
-      {leaderActions && (
-        <AddTabModal
-          open={addTabModalOpen}
-          onOpenChange={setAddTabModalOpen}
-          onSubmit={handleAddTab}
-          existingTabNames={tabs.map((t) => t.name)}
-        />
-      )}
-
-      {/* Add Widget Modal */}
-      {leaderActions && (
-        <AddWidgetModal
-          open={addWidgetModalOpen}
-          onOpenChange={setAddWidgetModalOpen}
-          onSubmit={handleAddWidget}
-        />
-      )}
-
-      {/* Delete Space Confirmation */}
-      <HiveConfirmModal
-        open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
-        title="Delete Space"
-        description="Are you sure you want to delete this space? All content, members, and history will be permanently lost. This action cannot be undone."
-        confirmText="Delete Space"
-        variant="danger"
-        isLoading={isDeleting}
-        onConfirm={handleDeleteSpace}
-      />
     </motion.div>
   );
 }
 
 // =============================================================================
-// PAGE COMPONENT WITH PROVIDER
+// PAGE COMPONENT
 // =============================================================================
 
 export default function SpaceSettingsPage() {

@@ -5,7 +5,11 @@ import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
 import { motion } from 'framer-motion';
-import { X, Check, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { XMarkIcon, CheckIcon, ArrowUturnLeftIcon, MinusCircleIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const ZoomOut = MinusCircleIcon;
+const ZoomIn = PlusCircleIcon;
 import { transitionSpring } from '@/lib/motion-primitives';
 import { logger } from '@/lib/logger';
 
@@ -92,7 +96,7 @@ export function ImageCropper({
           onClick={onCancel}
           className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
         >
-          <X className="w-5 h-5" />
+          <XMarkIcon className="w-5 h-5" />
         </button>
         <span className="text-sm font-medium text-white">Adjust photo</span>
         <button
@@ -104,7 +108,7 @@ export function ImageCropper({
           {isProcessing ? (
             <div className="w-5 h-5 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin" />
           ) : (
-            <Check className="w-5 h-5" />
+            <CheckIcon className="w-5 h-5" />
           )}
         </button>
       </div>
@@ -170,7 +174,7 @@ export function ImageCropper({
             onClick={handleRotate}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
           >
-            <RotateCcw className="w-4 h-4" />
+            <ArrowUturnLeftIcon className="w-4 h-4" />
             Rotate
           </button>
         </div>

@@ -2,9 +2,17 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, LayoutTemplate, Shapes, ArrowRight } from 'lucide-react';
+import { SparklesIcon, ArrowRightIcon, RectangleStackIcon, RectangleGroupIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const LayoutTemplate = RectangleStackIcon;
+const Shapes = RectangleGroupIcon;
 import { cn } from '../../../lib/utils';
-import { focusClasses, premiumMotion, premiumPresets } from '../../../lib/premium-design';
+
+// Workshop tokens
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]';
+const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
+const workshopTransitionSnappy = { type: 'spring' as const, stiffness: 500, damping: 30 };
 
 interface StartZoneProps {
   onOpenAI: () => void;
@@ -45,41 +53,41 @@ function WorkflowCard({
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={premiumMotion.spring.snappy}
+      transition={workshopTransitionSnappy}
       className={cn(
         'relative flex flex-col items-center text-center p-6 rounded-2xl',
-        'border transition-colors group',
+        'border transition-colors duration-[var(--workshop-duration)] group',
         primary
-          ? 'bg-gradient-to-b from-white/[0.08] to-white/[0.04] border-white/[0.15] hover:border-white/[0.25]'
-          : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.12] hover:bg-white/[0.05]',
-        focusClasses()
+          ? 'bg-[var(--hivelab-surface)] border-[var(--hivelab-border-emphasis)] hover:border-[var(--life-gold)]/30'
+          : 'bg-[var(--hivelab-surface)]/50 border-[var(--hivelab-border)] hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface)]',
+        focusRing
       )}
     >
       {/* Icon */}
       <div
         className={cn(
           'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-          'transition-transform group-hover:scale-110',
-          iconBg || 'bg-white/[0.08]'
+          'transition-transform duration-[var(--workshop-duration)] group-hover:scale-110',
+          iconBg || 'bg-[var(--hivelab-bg)]'
         )}
       >
         {icon}
       </div>
 
       {/* Title */}
-      <h3 className="text-white font-semibold text-base mb-1">{title}</h3>
+      <h3 className="text-[var(--hivelab-text-primary)] font-semibold text-base mb-1">{title}</h3>
 
       {/* Subtitle */}
-      <p className="text-[#9A9A9F] text-sm mb-3">{subtitle}</p>
+      <p className="text-[var(--hivelab-text-secondary)] text-sm mb-3">{subtitle}</p>
 
       {/* Shortcut */}
-      <kbd className="px-2 py-1 text-xs bg-white/[0.06] rounded-md text-[#6B6B70] font-mono">
+      <kbd className="px-2 py-1 text-xs bg-[var(--hivelab-bg)] rounded-md text-[var(--hivelab-text-tertiary)] font-mono">
         {shortcut}
       </kbd>
 
       {/* Glow effect for primary */}
       {primary && (
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-[#FFD700]/5 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 rounded-2xl bg-[var(--life-gold)]/5 pointer-events-none" />
       )}
     </motion.button>
   );
@@ -100,7 +108,7 @@ export function StartZone({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+      transition={workshopTransition}
       className="absolute inset-0 flex items-center justify-center p-8"
     >
       <div className="max-w-2xl w-full">
@@ -111,10 +119,10 @@ export function StartZone({
           transition={{ delay: 0.1 }}
           className="text-center mb-10"
         >
-          <h2 className="text-[28px] font-semibold text-white tracking-[-0.02em] mb-2">
+          <h2 className="text-[28px] font-semibold text-[var(--hivelab-text-primary)] tracking-[-0.02em] mb-2">
             What would you like to build?
           </h2>
-          <p className="text-[#9A9A9F] text-base">
+          <p className="text-[var(--hivelab-text-secondary)] text-base">
             Create tools your community will love
           </p>
         </motion.div>
@@ -127,23 +135,23 @@ export function StartZone({
           className="grid grid-cols-3 gap-4 mb-8"
         >
           <WorkflowCard
-            icon={<Sparkles className="h-6 w-6 text-[#FFD700]" />}
+            icon={<SparklesIcon className="h-6 w-6 text-[var(--life-gold)]" />}
             title="Describe it"
             subtitle="AI creates your tool"
             shortcut="⌘K"
             onClick={onOpenAI}
             primary
-            iconBg="bg-[#FFD700]/10"
+            iconBg="bg-[var(--life-gold)]/10"
           />
           <WorkflowCard
-            icon={<LayoutTemplate className="h-6 w-6 text-white/80" />}
+            icon={<LayoutTemplate className="h-6 w-6 text-[var(--hivelab-text-secondary)]" />}
             title="Use a template"
             subtitle="10 ready-to-use tools"
             shortcut="⌘T"
             onClick={onOpenTemplates}
           />
           <WorkflowCard
-            icon={<Shapes className="h-6 w-6 text-white/80" />}
+            icon={<Shapes className="h-6 w-6 text-[var(--hivelab-text-secondary)]" />}
             title="Build manually"
             subtitle="27 elements to combine"
             shortcut="⌘E"
@@ -159,21 +167,22 @@ export function StartZone({
             transition={{ delay: 0.3 }}
             className={cn(
               'p-4 rounded-xl',
-              'bg-white/[0.03] border border-white/[0.06]'
+              'bg-[var(--hivelab-surface)]/50 border border-[var(--hivelab-border)]'
             )}
           >
-            <p className="text-sm text-[#6B6B70] mb-2">Try this:</p>
+            <p className="text-sm text-[var(--hivelab-text-tertiary)] mb-2">Try this:</p>
             <button
               type="button"
               onClick={() => onQuickPrompt(randomPrompt)}
               className={cn(
                 'group flex items-center gap-2 text-left',
-                'text-white/90 hover:text-[#FFD700] transition-colors',
-                focusClasses()
+                'text-[var(--hivelab-text-primary)] hover:text-[var(--life-gold)]',
+                'transition-colors duration-[var(--workshop-duration)]',
+                focusRing
               )}
             >
               <span className="text-base">"{randomPrompt}"</span>
-              <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+              <ArrowRightIcon className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-[var(--workshop-duration)]" />
             </button>
           </motion.div>
         )}
@@ -183,9 +192,9 @@ export function StartZone({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-center text-[#4A4A4F] text-sm mt-8"
+          className="text-center text-[var(--hivelab-text-tertiary)] text-sm mt-8"
         >
-          Press <kbd className="px-1.5 py-0.5 bg-white/[0.06] rounded text-[#6B6B70]">/</kbd>{' '}
+          Press <kbd className="px-1.5 py-0.5 bg-[var(--hivelab-surface)] rounded text-[var(--hivelab-text-tertiary)]">/</kbd>{' '}
           anywhere to quickly add elements
         </motion.p>
       </div>

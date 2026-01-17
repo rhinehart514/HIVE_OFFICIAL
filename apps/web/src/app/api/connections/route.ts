@@ -1,306 +1,193 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/session';
+import { dbAdmin as db } from '@/lib/firebase-admin';
+
+interface ConnectionData {
+  connectionId: string;
+  profileId1: string;
+  profileId2: string;
+  type: 'friend' | 'following' | 'follower' | 'pending' | 'blocked';
+  source: string;
+  requestedBy?: string;
+  acceptedBy?: string;
+  isActive: boolean;
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+  mutualSpaces?: string[];
+  interactionCount?: number;
+}
+
+interface ProfileData {
+  id: string;
+  handle?: string;
+  firstName?: string;
+  lastName?: string;
+  profilePhoto?: string;
+  bio?: string;
+  major?: string;
+  graduationYear?: number;
+}
+
 /**
- * HIVE Connections API
- * Handles automatic connection detection and retrieval
- */
-
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest, type ResponseFormatter } from "@/lib/middleware/index";
-import { dbAdmin } from '@/lib/firebase-admin';
-import { logger } from "@/lib/structured-logger";
-import type { ConnectionSource } from '@hive/core';
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-
-// Extended connection type with additional properties from Firestore
-type FirestoreConnection = {
-  userId: string;
-  strength?: number;
-  sources?: string[];  // Array of sources
-  connectedAt?: unknown;
-  type?: string;
-  source?: ConnectionSource | string;
-  createdAt?: unknown;
-  [key: string]: unknown;
-};
-
-/**
- * Get user's connections
  * GET /api/connections
+ * Get current user's connections with optional filters
+ *
+ * Query params:
+ * - type: 'all' | 'friends' | 'following' | 'followers' | 'pending'
+ * - limit: number (default 50)
+ * - offset: number (default 0)
  */
-export const GET = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-
+export async function GET(request: NextRequest) {
   try {
-    // Get all automatic connections
-    const connectionsRef = dbAdmin
-      .collection('users')
-      .doc(userId)
-      .collection('connections');
+    const session = await getSession(request);
+    if (!session?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    const connectionsSnapshot = await connectionsRef
-      .orderBy('strength', 'desc')
-      .limit(100)
-      .get();
+    const userId = session.userId;
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'all';
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const offset = parseInt(searchParams.get('offset') || '0');
 
-    const connections = connectionsSnapshot.docs.map((doc: QueryDocumentSnapshot) => ({
-      ...doc.data(),
-      userId: doc.id
-    })) as unknown as FirestoreConnection[];
+    // Get all connections where user is involved (both directions)
+    const [asId1Snapshot, asId2Snapshot] = await Promise.all([
+      db.collection('connections')
+        .where('profileId1', '==', userId)
+        .where('isActive', '==', true)
+        .get(),
+      db.collection('connections')
+        .where('profileId2', '==', userId)
+        .where('isActive', '==', true)
+        .get(),
+    ]);
 
-    // Get friends list
-    const friendsRef = dbAdmin
-      .collection('users')
-      .doc(userId)
-      .collection('friends');
+    // Combine and deduplicate connections
+    const connectionsMap = new Map<string, ConnectionData>();
 
-    const friendsSnapshot = await friendsRef.get();
-    const friendIds = friendsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.id);
+    asId1Snapshot.docs.forEach(doc => {
+      const data = doc.data() as ConnectionData;
+      connectionsMap.set(doc.id, data);
+    });
 
-    // Get mutual connections count for each connection
-    const connectionsWithMutuals = await Promise.all(
-      connections.map(async (connection) => {
-        // Check if this connection also has us as a connection
-        const reverseConnectionRef = dbAdmin
-          .collection('users')
-          .doc(connection.userId)
-          .collection('connections')
-          .doc(userId);
+    asId2Snapshot.docs.forEach(doc => {
+      const data = doc.data() as ConnectionData;
+      connectionsMap.set(doc.id, data);
+    });
 
-        const reverseConnection = await reverseConnectionRef.get();
-        const isMutual = reverseConnection.exists;
+    let connections = Array.from(connectionsMap.values());
 
-        // Check if they're a friend
-        const isFriend = friendIds.includes(connection.userId);
+    // Filter by type
+    if (type === 'friends') {
+      connections = connections.filter(c => c.type === 'friend');
+    } else if (type === 'following') {
+      connections = connections.filter(c =>
+        c.type === 'following' && c.requestedBy === userId
+      );
+    } else if (type === 'followers') {
+      connections = connections.filter(c =>
+        c.type === 'following' && c.requestedBy !== userId
+      );
+    } else if (type === 'pending') {
+      connections = connections.filter(c => c.type === 'pending');
+    }
 
-        // Get basic profile info for the connection
-        const userDoc = await dbAdmin
-          .collection('users')
-          .doc(connection.userId)
+    // Get unique profile IDs to fetch
+    const profileIds = new Set<string>();
+    connections.forEach(conn => {
+      const otherId = conn.profileId1 === userId ? conn.profileId2 : conn.profileId1;
+      profileIds.add(otherId);
+    });
+
+    // Fetch profile data for connections
+    const profiles = new Map<string, ProfileData>();
+    const profileIdsArray = Array.from(profileIds);
+
+    // Batch fetch profiles (Firestore limit is 10 for 'in' queries)
+    for (let i = 0; i < profileIdsArray.length; i += 10) {
+      const batch = profileIdsArray.slice(i, i + 10);
+      if (batch.length > 0) {
+        const profilesSnapshot = await db.collection('users')
+          .where('__name__', 'in', batch)
           .get();
 
-        const userData = userDoc.data();
-
-        return {
-          ...connection,
-          isMutual,
-          isFriend,
-          profile: userData ? {
-            fullName: userData.fullName,
-            handle: userData.handle,
-            avatarUrl: userData.avatarUrl,
-            major: userData.academic?.major,
-            academicYear: userData.academic?.academicYear,
-            housing: userData.academic?.housing,
-            statusMessage: userData.personal?.statusMessage,
-            currentVibe: userData.personal?.currentVibe,
-            availabilityStatus: userData.personal?.availabilityStatus
-          } : null
-        };
-      })
-    );
-
-    // Get connection statistics
-    const stats = {
-      totalConnections: connections.length,
-      friends: friendIds.length,
-      averageStrength: connections.length > 0
-        ? connections.reduce((sum, c) => sum + (c.strength || 0), 0) / connections.length
-        : 0,
-      strongConnections: connections.filter(c => (c.strength || 0) >= 70).length,
-      connectionSources: connections.reduce((acc, c) => {
-        // Handle both sources array and single source
-        const sources = c.sources || (c.source ? [c.source as string] : []);
-        sources.forEach((source: string) => {
-          acc[source] = (acc[source] || 0) + 1;
+        profilesSnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          profiles.set(doc.id, {
+            id: doc.id,
+            handle: data.handle,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            profilePhoto: data.profilePhoto,
+            bio: data.bio,
+            major: data.major,
+            graduationYear: data.graduationYear,
+          });
         });
-        return acc;
-      }, {} as Record<string, number>)
-    };
-
-    logger.info('Connections retrieved', {
-      userId,
-      connectionCount: connections.length,
-      friendCount: friendIds.length
-    });
-
-    return respond.success({
-      connections: connectionsWithMutuals,
-      stats
-    });
-  } catch (error) {
-    logger.error(
-      'Error fetching connections',
-      { error: { error: error instanceof Error ? error.message : String(error) }, userId }
-    );
-    return respond.error('Failed to fetch connections', 'INTERNAL_ERROR');
-  }
-});
-
-/**
- * Detect and create automatic connections
- * POST /api/connections/detect
- */
-export const POST = withAuthAndErrors(async (request, _context: Record<string, string | string[]>, respond: typeof ResponseFormatter) => {
-  const userId = getUserId(request as AuthenticatedRequest);
-
-  try {
-    // Get user's profile
-    const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      return respond.error('User profile not found', 'RESOURCE_NOT_FOUND');
-    }
-
-    const userData = userDoc.data()!;
-    const detectedConnections: FirestoreConnection[] = [];
-    const batch = dbAdmin.batch();
-
-    // 1. Find users with same major
-    if (userData.academic?.major) {
-      const majorQuery = dbAdmin
-        .collection('users')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
-        .where('academic.major', '==', userData.academic.major)
-        .limit(50);
-
-      const majorUsers = await majorQuery.get();
-      majorUsers.forEach((doc: QueryDocumentSnapshot) => {
-        if (doc.id !== userId) {
-          const connection: FirestoreConnection = {
-            userId: doc.id,
-            connectedAt: new Date().toISOString(),
-            sources: ['same_major'],
-            strength: 30
-          };
-          detectedConnections.push(connection);
-        }
-      });
-    }
-
-    // 2. Find users in same dorm
-    if (userData.academic?.housing) {
-      const dormQuery = dbAdmin
-        .collection('users')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
-        .where('academic.housing', '==', userData.academic.housing)
-        .limit(30);
-
-      const dormUsers = await dormQuery.get();
-      dormUsers.forEach((doc: QueryDocumentSnapshot) => {
-        if (doc.id !== userId) {
-          const existing = detectedConnections.find(c => c.userId === doc.id);
-          if (existing && existing.sources) {
-            existing.sources.push('same_dorm');
-            existing.strength = Math.min((existing.strength || 0) + 40, 100);
-          } else {
-            const connection: FirestoreConnection = {
-              userId: doc.id,
-              connectedAt: new Date().toISOString(),
-              sources: ['same_dorm'],
-              strength: 40
-            };
-            detectedConnections.push(connection);
-          }
-        }
-      });
-    }
-
-    // 3. Find users in same year
-    if (userData.academic?.academicYear) {
-      const yearQuery = dbAdmin
-        .collection('users')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
-        .where('academic.academicYear', '==', userData.academic.academicYear)
-        .limit(20);
-
-      const yearUsers = await yearQuery.get();
-      yearUsers.forEach((doc: QueryDocumentSnapshot) => {
-        if (doc.id !== userId) {
-          const existing = detectedConnections.find(c => c.userId === doc.id);
-          if (existing && existing.sources) {
-            if (!existing.sources.includes('same_year')) {
-              existing.sources.push('same_year');
-              existing.strength = Math.min((existing.strength || 0) + 10, 100);
-            }
-          }
-        }
-      });
-    }
-
-    // 4. Find users in same spaces
-    const userSpacesQuery = dbAdmin
-      .collection('spaces')
-      .where('members', 'array-contains', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(10);
-
-    const userSpaces = await userSpacesQuery.get();
-
-    for (const spaceDoc of userSpaces.docs) {
-      const members = spaceDoc.data().members || [];
-
-      for (const memberId of members) {
-        if (memberId !== userId) {
-          const existing = detectedConnections.find(c => c.userId === memberId);
-          if (existing && existing.sources) {
-            if (!existing.sources.includes('same_space')) {
-              existing.sources.push('same_space');
-              existing.strength = Math.min((existing.strength || 0) + 20, 100);
-            }
-          } else {
-            const connection: FirestoreConnection = {
-              userId: memberId,
-              connectedAt: new Date().toISOString(),
-              sources: ['same_space'],
-              strength: 20
-            };
-            detectedConnections.push(connection);
-          }
-        }
       }
     }
 
-    // Save all connections (bidirectional)
-    for (const connection of detectedConnections) {
-      // Save connection for current user
-      const connectionRef = dbAdmin
-        .collection('users')
-        .doc(userId)
-        .collection('connections')
-        .doc(connection.userId);
+    // Build response with profile data
+    const result = connections
+      .map(conn => {
+        const otherId = conn.profileId1 === userId ? conn.profileId2 : conn.profileId1;
+        const profile = profiles.get(otherId);
 
-      batch.set(connectionRef, connection, { merge: true });
+        // Determine relationship type from current user's perspective
+        let relationship: 'friend' | 'following' | 'follower' | 'pending' = 'following';
+        if (conn.type === 'friend') {
+          relationship = 'friend';
+        } else if (conn.type === 'following') {
+          relationship = conn.requestedBy === userId ? 'following' : 'follower';
+        } else if (conn.type === 'pending') {
+          relationship = 'pending';
+        }
 
-      // Save reverse connection
-      const reverseConnectionRef = dbAdmin
-        .collection('users')
-        .doc(connection.userId)
-        .collection('connections')
-        .doc(userId);
+        return {
+          connectionId: conn.connectionId,
+          relationship,
+          profile,
+          source: conn.source,
+          mutualSpaces: conn.mutualSpaces || [],
+          interactionCount: conn.interactionCount || 0,
+          createdAt: conn.createdAt?.toDate?.()?.toISOString() || null,
+        };
+      })
+      .filter(c => c.profile) // Only include connections with valid profiles
+      .sort((a, b) => {
+        // Sort friends first, then by creation date
+        if (a.relationship === 'friend' && b.relationship !== 'friend') return -1;
+        if (b.relationship === 'friend' && a.relationship !== 'friend') return 1;
+        return 0;
+      })
+      .slice(offset, offset + limit);
 
-      batch.set(reverseConnectionRef, {
-        userId: userId,
-        connectedAt: connection.connectedAt,
-        sources: connection.sources,
-        strength: connection.strength
-      }, { merge: true });
-    }
+    // Calculate stats
+    const allConnections = Array.from(connectionsMap.values());
+    const stats = {
+      totalConnections: allConnections.length,
+      friends: allConnections.filter(c => c.type === 'friend').length,
+      following: allConnections.filter(c => c.type === 'following' && c.requestedBy === userId).length,
+      followers: allConnections.filter(c => c.type === 'following' && c.requestedBy !== userId).length,
+      pending: allConnections.filter(c => c.type === 'pending').length,
+    };
 
-    await batch.commit();
-
-    logger.info('Connections detected and created', {
-      userId,
-      detectCount: detectedConnections.length
-    });
-
-    return respond.success({
-      message: 'Connections detected successfully',
-      detected: detectedConnections.length,
-      connections: detectedConnections.slice(0, 20) // Return first 20 for preview
+    return NextResponse.json({
+      success: true,
+      data: result,
+      stats,
+      pagination: {
+        total: connections.length,
+        limit,
+        offset,
+        hasMore: offset + limit < connections.length,
+      },
     });
   } catch (error) {
-    logger.error(
-      'Error detecting connections',
-      { error: { error: error instanceof Error ? error.message : String(error) }, userId }
+    console.error('Error fetching connections:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch connections' },
+      { status: 500 }
     );
-    return respond.error('Failed to detect connections', 'INTERNAL_ERROR');
   }
-});
+}

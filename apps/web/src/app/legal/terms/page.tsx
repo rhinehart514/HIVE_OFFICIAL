@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Scale } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ScaleIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Scale = ScaleIcon;
 import Link from "next/link";
 import { TermsContent } from "@/components/legal/terms-content";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | HIVE",
+  title: "Terms of Service",
   description:
     "Terms of Service for HIVE - the social platform for college students.",
 };

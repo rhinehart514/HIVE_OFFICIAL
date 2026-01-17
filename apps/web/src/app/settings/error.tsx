@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw, User, Home } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon, UserIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 
 export default function SettingsError({
@@ -24,7 +24,7 @@ export default function SettingsError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-[var(--hive-brand-primary)]/10 p-4">
-            <AlertTriangle className="h-8 w-8 text-[var(--hive-brand-primary)]" aria-hidden="true" />
+            <ExclamationTriangleIcon className="h-8 w-8 text-[var(--hive-brand-primary)]" aria-hidden="true" />
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function SettingsError({
             aria-label="Retry loading settings"
             className="gap-2 bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-primary)]/90"
           >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             Try again
           </Button>
           <Button
@@ -54,7 +54,7 @@ export default function SettingsError({
             aria-label="Go to your profile"
             className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
-            <User className="h-4 w-4" aria-hidden="true" />
+            <UserIcon className="h-4 w-4" aria-hidden="true" />
             My Profile
           </Button>
           <Button
@@ -63,7 +63,7 @@ export default function SettingsError({
             aria-label="Go to feed"
             className="gap-2 border-white/20 text-white hover:bg-white/10"
           >
-            <Home className="h-4 w-4" aria-hidden="true" />
+            <HomeIcon className="h-4 w-4" aria-hidden="true" />
             Feed
           </Button>
         </div>

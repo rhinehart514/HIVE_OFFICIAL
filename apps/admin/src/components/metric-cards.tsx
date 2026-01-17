@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from '@hive/ui'
-import { Users, TrendingUp, AlertTriangle, Wrench, Loader2 } from 'lucide-react'
+import { UsersIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon, WrenchIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 
 interface AdminMetrics {
   totalUsers: number
@@ -72,7 +72,7 @@ export const MetricCards = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-gold" />
+        <ArrowPathIcon className="h-6 w-6 animate-spin text-gold" />
       </div>
     )
   }
@@ -98,13 +98,13 @@ export const MetricCards = () => {
 
       {/* Metrics Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Users */}
+        {/* Total UsersIcon */}
         <Card className="border-gray-700 bg-gray-900/50">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">
-              Total Users
+              Total UsersIcon
             </CardTitle>
-            <Users className="h-4 w-4 text-gold" />
+            <UsersIcon className="h-4 w-4 text-gold" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
@@ -122,7 +122,7 @@ export const MetricCards = () => {
             <CardTitle className="text-sm font-medium text-gray-300">
               Conversion Rate
             </CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-500" />
+            <ArrowTrendingUpIcon className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
@@ -140,7 +140,7 @@ export const MetricCards = () => {
             <CardTitle className="text-sm font-medium text-gray-300">
               Drop-off Rate
             </CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
@@ -158,7 +158,7 @@ export const MetricCards = () => {
             <CardTitle className="text-sm font-medium text-gray-300">
               Active Tools
             </CardTitle>
-            <Wrench className="h-4 w-4 text-gold" />
+            <WrenchIcon className="h-4 w-4 text-gold" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white">
@@ -176,7 +176,7 @@ export const MetricCards = () => {
         <Card className="border-red-500/20 bg-red-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
               <div>
                 <p className="text-sm font-medium text-red-400">
                   {metrics.flaggedContent} items require moderation

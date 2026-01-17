@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Trophy, Zap, Heart, Users, TrendingUp, Award, Crown } from 'lucide-react';
+import { StarIcon, TrophyIcon, BoltIcon, HeartIcon, UsersIcon, ArrowTrendingUpIcon, TrophyIcon, TrophyIcon } from '@heroicons/react/24/outline';
 
 import { InView } from './in-view';
 import { AutoAnimated } from './auto-animated';
@@ -15,9 +15,9 @@ import { AnimatedNumber, numberSpringPresets } from './animated-number';
 import { GoldSpinner, GoldSpinnerInline } from './gold-spinner';
 import { GlowEffect, AnimatedGoldIcon } from './glow-effect';
 import { GoldConfettiBurst, JoinCelebration, FirstPostCelebration, MilestoneBadge } from './space-celebrations';
-import { Button } from '../../atomic/00-Global/atoms/button';
-import { Card } from '../../atomic/00-Global/atoms/card';
-import { Badge } from '../../atomic/00-Global/atoms/badge';
+import { Button } from '../../design-system/primitives';
+import { Card } from '../../design-system/primitives';
+import { Badge } from '../../design-system/primitives';
 
 const meta: Meta = {
   title: 'Design System/Motion Primitives',
@@ -117,7 +117,7 @@ export const AnimatedNumber_WithFormat: StoryObj = {
           formatFn={(v) => `${(v / 1000).toFixed(1)}K`}
           className="text-3xl font-bold text-blue-400"
         />
-        <p className="text-white/50 mt-1">Users</p>
+        <p className="text-white/50 mt-1">UsersIcon</p>
       </div>
     </div>
   ),
@@ -200,7 +200,7 @@ export const GlowEffect_Modes: StoryObj = {
       {(['static', 'pulse', 'breathe'] as const).map((mode) => (
         <div key={mode} className="text-center">
           <GlowEffect mode={mode} size="md">
-            <Star className="h-8 w-8 text-[#FFD700]" fill="#FFD700" />
+            <StarIcon className="h-8 w-8 text-[#FFD700]" fill="#FFD700" />
           </GlowEffect>
           <p className="text-white/50 text-xs mt-4">{mode}</p>
         </div>
@@ -215,7 +215,7 @@ export const GlowEffect_Sizes: StoryObj = {
       {(['sm', 'md', 'lg'] as const).map((size) => (
         <div key={size} className="text-center">
           <GlowEffect size={size} mode="breathe">
-            <Trophy className="h-8 w-8 text-[#FFD700]" />
+            <TrophyIcon className="h-8 w-8 text-[#FFD700]" />
           </GlowEffect>
           <p className="text-white/50 text-xs mt-4">{size}</p>
         </div>
@@ -228,9 +228,9 @@ export const GlowEffect_Colors: StoryObj = {
   render: () => (
     <div className="flex items-center gap-12">
       {[
-        { color: '#FFD700', label: 'Gold', icon: Trophy },
-        { color: '#60A5FA', label: 'Blue', icon: Heart },
-        { color: '#34D399', label: 'Green', icon: Award },
+        { color: '#FFD700', label: 'Gold', icon: TrophyIcon },
+        { color: '#60A5FA', label: 'Blue', icon: HeartIcon },
+        { color: '#34D399', label: 'Green', icon: TrophyIcon },
       ].map(({ color, label, icon: Icon }) => (
         <div key={color} className="text-center">
           <GlowEffect color={color} mode="pulse" size="md">
@@ -247,7 +247,7 @@ export const GlowEffect_Achievement: StoryObj = {
   render: () => (
     <div className="flex items-center gap-4 p-6 bg-white/5 rounded-xl">
       <AnimatedGoldIcon>
-        <Crown className="h-10 w-10 text-[#FFD700]" />
+        <TrophyIcon className="h-10 w-10 text-[#FFD700]" />
       </AnimatedGoldIcon>
       <div>
         <p className="text-white font-semibold">Campus Legend</p>
@@ -449,7 +449,7 @@ export const Combined_AchievementCard: StoryObj = {
   render: () => (
     <Card className="p-6 max-w-sm border-neutral-800 bg-neutral-900">
       <div className="flex items-center gap-4">
-        <Trophy className="h-10 w-10 text-neutral-400" />
+        <TrophyIcon className="h-10 w-10 text-neutral-400" />
         <div>
           <p className="text-lg font-semibold text-white">Builder Badge Earned!</p>
           <p className="text-white/50 text-sm">Created 5 tools for spaces</p>
@@ -469,9 +469,9 @@ export const Combined_StatsRow: StoryObj = {
         </Button>
         <div key={key} className="flex gap-6">
           {[
-            { value: 1247, label: 'Rep', icon: TrendingUp, color: '#FFD700' },
-            { value: 47, label: 'Connections', icon: Users, color: '#60A5FA' },
-            { value: 12, label: 'Spaces', icon: Award, color: '#34D399' },
+            { value: 1247, label: 'Rep', icon: ArrowTrendingUpIcon, color: '#FFD700' },
+            { value: 47, label: 'Connections', icon: UsersIcon, color: '#60A5FA' },
+            { value: 12, label: 'Spaces', icon: TrophyIcon, color: '#34D399' },
           ].map(({ value, label, icon: Icon, color }, i) => (
             <div key={label} className="text-center">
               <Icon className="h-5 w-5 mx-auto mb-2" style={{ color }} />
@@ -535,7 +535,7 @@ export const Combined_LoadingToSuccess: StoryObj = {
               className="flex flex-col items-center gap-4"
             >
               <div className="h-16 w-16 rounded-full bg-emerald-500 flex items-center justify-center">
-                <Zap className="h-8 w-8 text-white" />
+                <BoltIcon className="h-8 w-8 text-white" />
               </div>
               <p className="text-2xl font-bold text-emerald-400">Success!</p>
             </motion.div>

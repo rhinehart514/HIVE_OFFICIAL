@@ -8,28 +8,20 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Rocket,
-  GraduationCap,
-  Users,
-  Zap,
-  Mail,
-  Lock,
-  CheckCircle2
-} from 'lucide-react';
+import { RocketLaunchIcon, AcademicCapIcon, UsersIcon, BoltIcon, EnvelopeIcon, LockClosedIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useState } from 'react';
 import { durationSeconds, staggerPresets } from '@hive/tokens';
 
-import { Button } from '../../atomic/00-Global/atoms/button';
+import { Button } from '../../design-system/primitives';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../../atomic/00-Global/atoms/dialog';
-import { Input } from '../../atomic/00-Global/atoms/input';
-import { Label } from '../../atomic/00-Global/atoms/label';
+} from '../../design-system/components/Dialog';
+import { Input } from '../../design-system/primitives';
+import { Label } from '../../design-system/primitives/Label';
 
 
 export interface SignupGateModalProps {
@@ -101,17 +93,17 @@ export function SignupGateModal({
 
   const benefits = [
     {
-      icon: Rocket,
+      icon: RocketLaunchIcon,
       title: 'Deploy to your org',
       description: 'Share custom tools with your campus community'
     },
     {
-      icon: Users,
+      icon: UsersIcon,
       title: 'Join your campus',
       description: 'Connect with 10,000+ UB students on HIVE'
     },
     {
-      icon: Zap,
+      icon: BoltIcon,
       title: 'Build unlimited tools',
       description: 'Create as many AI-powered tools as you need'
     }
@@ -125,7 +117,7 @@ export function SignupGateModal({
           <div className="bg-gradient-to-br from-muted/50 via-muted/20 to-background p-8 border-r border-border">
             <DialogHeader className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
-                <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                <AcademicCapIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">Campus Tool Builder</span>
               </div>
 
@@ -163,7 +155,7 @@ export function SignupGateModal({
             {toolName && (
               <div className="mt-6 p-4 rounded-lg border border-border bg-background/50">
                 <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircleIcon className="h-4 w-4 text-green-500" />
                   <span className="font-medium">Tool ready to deploy:</span>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground font-mono">
@@ -216,7 +208,7 @@ export function SignupGateModal({
                 <div className="space-y-2">
                   <Label htmlFor="email">Campus Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="email"
                       type="email"
@@ -237,7 +229,7 @@ export function SignupGateModal({
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
                       type="password"

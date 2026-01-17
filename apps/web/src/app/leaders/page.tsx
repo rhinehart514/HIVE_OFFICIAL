@@ -190,11 +190,11 @@ export default function LeadersPage() {
         <div className="max-w-6xl mx-auto px-6 md:px-12 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <HiveLogo variant="default" size="lg" />
+              <HiveLogo className="w-8 h-8 text-[#FFD700]" />
               <span className="text-lg font-semibold text-white">HIVE</span>
             </Link>
             <Link
-              href="/auth/login"
+              href="/enter"
               className="text-sm text-white/40 hover:text-white/70 transition-colors"
             >
               Sign in
@@ -261,7 +261,7 @@ export default function LeadersPage() {
           >
             <button
               onClick={handleClaimClick}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-[#FFD700] text-black font-semibold rounded-full transition-all duration-300 hover:bg-[#FFD700]/90 hover:shadow-[0_0_60px_rgba(255,215,0,0.3)] focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50 focus:ring-offset-2 focus:ring-offset-[#050505]"
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-[var(--life-gold)] text-black font-semibold rounded-full transition-all duration-300 hover:bg-[var(--life-gold-hover)] hover:shadow-[0_0_60px_var(--life-glow)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-void)]"
             >
               <span className="text-[15px]">Find Your Organization</span>
               <svg

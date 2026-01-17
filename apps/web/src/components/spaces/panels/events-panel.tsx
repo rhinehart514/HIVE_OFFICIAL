@@ -3,9 +3,9 @@
  *
  * Features:
  * - Event list (upcoming first, then past)
- * - Filter tabs: "Upcoming" | "Past" | "My RSVPs"
+ * - FunnelIcon tabs: "Upcoming" | "Past" | "My RSVPs"
  * - Type filter chips (academic, social, etc.)
- * - Search by title
+ * - MagnifyingGlassIcon by title
  * - Empty state with "Create Event" CTA (leaders)
  * - Click event → opens EventDetailsModal
  * - Floating "Create Event" button (leaders)
@@ -17,23 +17,13 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Calendar,
-  MapPin,
-  Users,
-  Clock,
-  Search,
-  Plus,
-  Video,
-  GraduationCap,
-  PartyPopper,
-  Gamepad2,
-  Music,
-  Briefcase,
-  Monitor,
-  Filter,
-  X,
-} from 'lucide-react';
+import { CalendarIcon, MapPinIcon, UsersIcon, ClockIcon, MagnifyingGlassIcon, PlusIcon, VideoCameraIcon, AcademicCapIcon, ComputerDesktopIcon, FunnelIcon, XMarkIcon, SparklesIcon, PuzzlePieceIcon, MusicalNoteIcon, BriefcaseIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const PartyPopper = SparklesIcon;
+const Gamepad2 = PuzzlePieceIcon;
+const Music = MusicalNoteIcon;
+const Briefcase = BriefcaseIcon;
 import { cn } from '@/lib/utils';
 import { Button } from '@hive/ui';
 
@@ -77,12 +67,12 @@ export interface EventsPanelProps {
 // ============================================================
 
 const EVENT_TYPE_CONFIG: Record<EventType, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
-  academic: { label: 'Academic', icon: GraduationCap, color: 'text-blue-400 bg-blue-500/10' },
+  academic: { label: 'Academic', icon: AcademicCapIcon, color: 'text-blue-400 bg-blue-500/10' },
   social: { label: 'Social', icon: PartyPopper, color: 'text-pink-400 bg-pink-500/10' },
   recreational: { label: 'Rec', icon: Gamepad2, color: 'text-green-400 bg-green-500/10' },
   cultural: { label: 'Cultural', icon: Music, color: 'text-purple-400 bg-purple-500/10' },
   meeting: { label: 'Meeting', icon: Briefcase, color: 'text-orange-400 bg-orange-500/10' },
-  virtual: { label: 'Virtual', icon: Monitor, color: 'text-cyan-400 bg-cyan-500/10' },
+  virtual: { label: 'Virtual', icon: ComputerDesktopIcon, color: 'text-cyan-400 bg-cyan-500/10' },
 };
 
 // ============================================================
@@ -156,8 +146,8 @@ function RSVPBadge({ status }: { status: RSVPStatus }) {
     <span className={cn(
       'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
       status === 'going'
-        ? 'text-[#FFD700] bg-[#FFD700]/10 ring-1 ring-[#FFD700]/20'
-        : 'text-[#A1A1A6] bg-white/5'
+        ? 'text-[var(--life-gold)] bg-[var(--life-gold)]/10 ring-1 ring-[var(--life-gold)]/20'
+        : 'text-white/70 bg-white/5'
     )}>
       {status === 'going' ? "You're going" : 'Maybe'}
     </span>
@@ -181,8 +171,8 @@ function EventCard({
         'w-full text-left p-4 rounded-xl transition-all',
         'bg-white/[0.02] hover:bg-white/[0.05]',
         'border border-white/[0.06] hover:border-white/[0.1]',
-        'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/20',
-        isUrgent && 'ring-1 ring-[#FFD700]/30'
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+        isUrgent && 'ring-1 ring-[var(--life-gold)]/30'
       )}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
@@ -191,17 +181,17 @@ function EventCard({
         {/* Date Column */}
         <div className={cn(
           'flex flex-col items-center justify-center min-w-[48px] p-2 rounded-lg',
-          isEventUpcoming ? 'bg-[#FFD700]/10' : 'bg-white/5'
+          isEventUpcoming ? 'bg-[var(--life-gold)]/10' : 'bg-white/5'
         )}>
           <span className={cn(
             'text-xs font-medium uppercase',
-            isEventUpcoming ? 'text-[#FFD700]' : 'text-[#818187]'
+            isEventUpcoming ? 'text-[var(--life-gold)]' : 'text-white/50'
           )}>
             {new Date(event.startDate).toLocaleDateString('en-US', { month: 'short' })}
           </span>
           <span className={cn(
             'text-xl font-bold',
-            isEventUpcoming ? 'text-[#FAFAFA]' : 'text-[#A1A1A6]'
+            isEventUpcoming ? 'text-white' : 'text-white/70'
           )}>
             {new Date(event.startDate).getDate()}
           </span>
@@ -212,7 +202,7 @@ function EventCard({
           <div className="flex items-start justify-between gap-2 mb-1">
             <h3 className={cn(
               'font-medium truncate',
-              isEventUpcoming ? 'text-[#FAFAFA]' : 'text-[#A1A1A6]'
+              isEventUpcoming ? 'text-white' : 'text-white/70'
             )}>
               {event.title}
             </h3>
@@ -220,14 +210,14 @@ function EventCard({
           </div>
 
           {/* Time */}
-          <div className="flex items-center gap-4 text-sm text-[#818187] mb-2">
+          <div className="flex items-center gap-4 text-sm text-white/50 mb-2">
             <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
+              <ClockIcon className="w-3.5 h-3.5" />
               {formatEventTime(event.startDate)}
             </span>
             <span className={cn(
               'text-xs',
-              isUrgent ? 'text-[#FFD700]' : ''
+              isUrgent ? 'text-[var(--life-gold)]' : ''
             )}>
               {getRelativeTime(event.startDate)}
             </span>
@@ -235,15 +225,15 @@ function EventCard({
 
           {/* Location / Link */}
           {(event.location || event.virtualLink) && (
-            <div className="flex items-center gap-1 text-sm text-[#A1A1A6] mb-2">
+            <div className="flex items-center gap-1 text-sm text-white/70 mb-2">
               {event.virtualLink ? (
                 <>
-                  <Video className="w-3.5 h-3.5 text-cyan-400" />
+                  <VideoCameraIcon className="w-3.5 h-3.5 text-cyan-400" />
                   <span className="truncate">Online Event</span>
                 </>
               ) : (
                 <>
-                  <MapPin className="w-3.5 h-3.5" />
+                  <MapPinIcon className="w-3.5 h-3.5" />
                   <span className="truncate">{event.location}</span>
                 </>
               )}
@@ -252,8 +242,8 @@ function EventCard({
 
           {/* Footer: Attendees + RSVP */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1 text-sm text-[#818187]">
-              <Users className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1 text-sm text-white/50">
+              <UsersIcon className="w-3.5 h-3.5" />
               <span>
                 {event.currentAttendees}
                 {event.maxAttendees && ` / ${event.maxAttendees}`}
@@ -261,6 +251,38 @@ function EventCard({
             </div>
             <RSVPBadge status={event.userRSVP || null} />
           </div>
+
+          {/* RSVP Progress Bar (only for events with capacity) */}
+          {event.maxAttendees && isEventUpcoming && (
+            <div className="mt-3">
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className={cn(
+                    'h-full transition-all duration-300',
+                    event.currentAttendees >= event.maxAttendees
+                      ? 'bg-red-400'
+                      : event.currentAttendees >= event.maxAttendees * 0.8
+                        ? 'bg-[var(--life-gold)]'
+                        : 'bg-emerald-400'
+                  )}
+                  style={{ width: `${Math.min((event.currentAttendees / event.maxAttendees) * 100, 100)}%` }}
+                />
+              </div>
+              <p className={cn(
+                'text-xs mt-1',
+                event.currentAttendees >= event.maxAttendees
+                  ? 'text-red-400'
+                  : event.currentAttendees >= event.maxAttendees * 0.8
+                    ? 'text-[var(--life-gold)]'
+                    : 'text-white/40'
+              )}>
+                {event.currentAttendees >= event.maxAttendees
+                  ? 'Event is full'
+                  : `${event.maxAttendees - event.currentAttendees} spots left`
+                }
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </motion.button>
@@ -278,35 +300,58 @@ function EmptyState({
 }) {
   const messages = {
     upcoming: {
-      title: 'No upcoming events',
+      title: isLeader ? 'Create your first event' : 'No upcoming events',
       description: isLeader
-        ? 'Create your first event to bring your community together.'
-        : 'Check back later for new events.',
+        ? 'Events bring your community together. Study sessions, meetings, social hangouts — you decide.'
+        : 'The leaders haven\'t posted any events yet. Check back soon!',
+      icon: CalendarIcon,
+      iconBg: isLeader ? 'bg-[var(--life-gold)]/10' : 'bg-white/[0.03]',
+      iconColor: isLeader ? 'text-[var(--life-gold)]' : 'text-white/40',
     },
     past: {
       title: 'No past events',
-      description: 'Events you attend will appear here.',
+      description: 'Events you\'ve attended will show up here for reference.',
+      icon: ClockIcon,
+      iconBg: 'bg-white/[0.03]',
+      iconColor: 'text-white/40',
     },
     'my-rsvps': {
-      title: "You haven't RSVP'd to any events",
-      description: 'Browse upcoming events and mark your attendance.',
+      title: "You haven't RSVP'd yet",
+      description: 'Browse upcoming events and let others know you\'re coming.',
+      icon: UsersIcon,
+      iconBg: 'bg-white/[0.03]',
+      iconColor: 'text-white/40',
     },
   };
 
-  const { title, description } = messages[type];
+  const { title, description, icon: Icon, iconBg, iconColor } = messages[type];
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4">
-      <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4">
-        <Calendar className="w-8 h-8 text-[#818187]" />
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      <div className={cn(
+        'w-16 h-16 rounded-2xl flex items-center justify-center mb-5',
+        iconBg
+      )}>
+        <Icon className={cn('w-8 h-8', iconColor)} />
       </div>
-      <h3 className="text-lg font-medium text-[#FAFAFA] mb-1">{title}</h3>
-      <p className="text-sm text-[#818187] text-center max-w-xs mb-4">{description}</p>
+      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <p className="text-sm text-white/50 text-center max-w-[280px] mb-6 leading-relaxed">
+        {description}
+      </p>
       {isLeader && type === 'upcoming' && onCreateEvent && (
-        <Button onClick={onCreateEvent} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Create Event
+        <Button
+          onClick={onCreateEvent}
+          variant="cta"
+          className="gap-2 px-6"
+        >
+          <PlusIcon className="w-4 h-4" />
+          Create your first event
         </Button>
+      )}
+      {!isLeader && type === 'upcoming' && (
+        <p className="text-xs text-white/30">
+          Want to host events? Ask a leader for permissions.
+        </p>
       )}
     </div>
   );
@@ -326,13 +371,13 @@ export function EventsPanel({
 }: EventsPanelProps) {
   const isLeader = ['owner', 'admin', 'moderator'].includes(userRole || '');
 
-  // Filter state
+  // FunnelIcon state
   const [activeTab, setActiveTab] = React.useState<FilterTab>('upcoming');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedTypes, setSelectedTypes] = React.useState<Set<EventType>>(new Set());
   const [showFilters, setShowFilters] = React.useState(false);
 
-  // Filter events
+  // FunnelIcon events
   const filteredEvents = React.useMemo(() => {
     let result = [...events];
 
@@ -349,7 +394,7 @@ export function EventsPanel({
         break;
     }
 
-    // Search filter
+    // MagnifyingGlassIcon filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(e =>
@@ -396,18 +441,18 @@ export function EventsPanel({
   const hasActiveFilters = searchQuery.trim() || selectedTypes.size > 0;
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#0A0A0A]', className)}>
+    <div className={cn('flex flex-col h-full bg-[var(--bg-ground)]', className)}>
       {/* Header */}
       <div className="px-4 pt-4 pb-2">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-[#FAFAFA]">Events</h2>
+          <h2 className="text-xl font-semibold text-white">Events</h2>
           {isLeader && onCreateEvent && (
             <Button
               size="sm"
               onClick={onCreateEvent}
               className="gap-1.5"
             >
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
               Create
             </Button>
           )}
@@ -422,8 +467,8 @@ export function EventsPanel({
               className={cn(
                 'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all',
                 activeTab === tab
-                  ? 'bg-white/10 text-[#FAFAFA]'
-                  : 'text-[#818187] hover:text-[#A1A1A6]'
+                  ? 'bg-white/10 text-white'
+                  : 'text-white/50 hover:text-white/70'
               )}
             >
               {tab === 'upcoming' && 'Upcoming'}
@@ -434,21 +479,21 @@ export function EventsPanel({
         </div>
       </div>
 
-      {/* Search & Filters */}
+      {/* MagnifyingGlassIcon & Filters */}
       <div className="px-4 py-2 space-y-2">
-        {/* Search Bar */}
+        {/* MagnifyingGlassIcon Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#818187]" />
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search events..."
+            placeholder="MagnifyingGlassIcon events..."
             className={cn(
               'w-full pl-9 pr-10 py-2 rounded-lg',
               'bg-white/[0.03] border border-white/[0.06]',
-              'text-[#FAFAFA] placeholder:text-[#818187]',
-              'focus:outline-none focus:ring-2 focus:ring-[#FFD700]/20 focus:border-transparent',
+              'text-white placeholder:text-white/50',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
               'text-sm'
             )}
           />
@@ -457,15 +502,15 @@ export function EventsPanel({
             className={cn(
               'absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-colors',
               showFilters || selectedTypes.size > 0
-                ? 'bg-[#FFD700]/10 text-[#FFD700]'
-                : 'text-[#818187] hover:text-[#A1A1A6]'
+                ? 'bg-[var(--life-gold)]/10 text-[var(--life-gold)]'
+                : 'text-white/50 hover:text-white/70'
             )}
           >
-            <Filter className="w-4 h-4" />
+            <FunnelIcon className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Type Filter Chips */}
+        {/* Type FunnelIcon Chips */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
@@ -486,7 +531,7 @@ export function EventsPanel({
                         'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                         isSelected
                           ? config.color
-                          : 'text-[#818187] bg-white/[0.03] hover:bg-white/[0.06]'
+                          : 'text-white/50 bg-white/[0.03] hover:bg-white/[0.06]'
                       )}
                     >
                       <config.icon className="w-3 h-3" />
@@ -502,14 +547,14 @@ export function EventsPanel({
         {/* Active Filters Indicator */}
         {hasActiveFilters && (
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#A1A1A6]">
+            <span className="text-white/70">
               {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''} found
             </span>
             <button
               onClick={clearFilters}
-              className="flex items-center gap-1 text-[#FFD700] hover:text-[#FFD700]/80"
+              className="flex items-center gap-1 text-[var(--life-gold)] hover:text-[var(--life-gold)]/80"
             >
-              <X className="w-3 h-3" />
+              <XMarkIcon className="w-3 h-3" />
               Clear filters
             </button>
           </div>

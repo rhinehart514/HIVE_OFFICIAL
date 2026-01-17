@@ -2,21 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Sparkles,
-  Search,
-  Wand2,
-  LayoutGrid,
-  PlusCircle,
-  Trash2,
-  Copy,
-  Palette,
-  Zap,
-  MessageSquare,
-  ArrowRight,
-  Loader2,
-  Command,
-} from 'lucide-react';
+import { SparklesIcon, MagnifyingGlassIcon, Squares2X2Icon, TrashIcon, ClipboardDocumentIcon, BoltIcon, ChatBubbleLeftIcon, ArrowRightIcon, ArrowPathIcon, PlusCircleIcon, SwatchIcon, CommandLineIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const PlusCircle = PlusCircleIcon;
+const Palette = SwatchIcon;
+const Command = CommandLineIcon;
 import { cn } from '../../../lib/utils';
 import { ideClasses } from '@hive/tokens';
 
@@ -49,7 +40,7 @@ const NO_SELECTION_COMMANDS: Command[] = [
     id: 'generate',
     label: 'Generate Tool',
     description: 'Create a new tool from scratch',
-    icon: <Wand2 className="h-4 w-4" />,
+    icon: <SparklesIcon className="h-4 w-4" />,
     type: 'generate',
     prefix: 'Create a tool that...',
     selectionMode: 'none',
@@ -80,7 +71,7 @@ const SINGLE_SELECTION_COMMANDS: Command[] = [
     id: 'duplicate-variation',
     label: 'Create Variation',
     description: 'Duplicate with changes',
-    icon: <Copy className="h-4 w-4" />,
+    icon: <ClipboardDocumentIcon className="h-4 w-4" />,
     type: 'modify',
     prefix: 'Create a variation that...',
     selectionMode: 'single',
@@ -89,7 +80,7 @@ const SINGLE_SELECTION_COMMANDS: Command[] = [
     id: 'connect-single',
     label: 'Connect To...',
     description: 'Link this element to another',
-    icon: <Zap className="h-4 w-4" />,
+    icon: <BoltIcon className="h-4 w-4" />,
     type: 'action',
     prefix: 'Connect this to...',
     selectionMode: 'single',
@@ -111,7 +102,7 @@ const MULTI_SELECTION_COMMANDS: Command[] = [
     id: 'group',
     label: 'Group Elements',
     description: 'Create a group from selection',
-    icon: <LayoutGrid className="h-4 w-4" />,
+    icon: <Squares2X2Icon className="h-4 w-4" />,
     type: 'action',
     prefix: 'Group these as...',
     selectionMode: 'multi',
@@ -120,7 +111,7 @@ const MULTI_SELECTION_COMMANDS: Command[] = [
     id: 'align',
     label: 'Align & Distribute',
     description: 'Arrange selected elements',
-    icon: <LayoutGrid className="h-4 w-4" />,
+    icon: <Squares2X2Icon className="h-4 w-4" />,
     type: 'action',
     prefix: 'Align...',
     selectionMode: 'multi',
@@ -133,7 +124,7 @@ const UNIVERSAL_COMMANDS: Command[] = [
     id: 'layout',
     label: 'Arrange Layout',
     description: 'Reorganize elements',
-    icon: <LayoutGrid className="h-4 w-4" />,
+    icon: <Squares2X2Icon className="h-4 w-4" />,
     type: 'action',
     prefix: 'Arrange elements...',
     selectionMode: 'any',
@@ -142,7 +133,7 @@ const UNIVERSAL_COMMANDS: Command[] = [
     id: 'explain',
     label: 'Explain',
     description: 'Get help understanding',
-    icon: <MessageSquare className="h-4 w-4" />,
+    icon: <ChatBubbleLeftIcon className="h-4 w-4" />,
     type: 'explain',
     prefix: 'Explain how...',
     selectionMode: 'any',
@@ -294,9 +285,9 @@ export function AICommandPalette({
               {/* Input Area */}
               <div className={cn("flex items-center gap-3 px-5 py-4 border-b", ideClasses.borderDefault)}>
                 {loading ? (
-                  <Loader2 className="h-5 w-5 text-neutral-400 animate-spin flex-shrink-0" />
+                  <ArrowPathIcon className="h-5 w-5 text-neutral-400 animate-spin flex-shrink-0" />
                 ) : (
-                  <Sparkles className="h-5 w-5 text-white flex-shrink-0" />
+                  <SparklesIcon className="h-5 w-5 text-white flex-shrink-0" />
                 )}
                 <input
                   ref={inputRef}
@@ -309,11 +300,11 @@ export function AICommandPalette({
                       ? `${selectedCommand.label}...`
                       : 'Ask AI anything or select a command...'
                   }
-                  className="flex-1 bg-transparent text-white text-lg placeholder:text-[#666] outline-none"
+                  className="flex-1 bg-transparent text-[var(--hivelab-text-primary)] text-lg placeholder:text-[var(--hivelab-text-tertiary)] outline-none"
                   disabled={loading}
                 />
-                <div className="flex items-center gap-1.5 text-xs text-[#666]">
-                  <kbd className="px-1.5 py-0.5 bg-[#252525] rounded border border-[#333]">
+                <div className="flex items-center gap-1.5 text-xs text-[var(--hivelab-text-tertiary)]">
+                  <kbd className="px-1.5 py-0.5 bg-[var(--hivelab-surface)] rounded border border-[var(--hivelab-border)]">
                     <Command className="h-3 w-3 inline" />K
                   </kbd>
                 </div>
@@ -321,12 +312,12 @@ export function AICommandPalette({
 
               {/* Streaming response */}
               {streamingText && (
-                <div className="px-5 py-4 border-b border-[#333] bg-[#151515]">
+                <div className="px-5 py-4 border-b border-[var(--hivelab-border)] bg-[var(--hivelab-surface)]">
                   <div className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Sparkles className="h-3.5 w-3.5 text-white" />
+                    <div className="w-6 h-6 rounded-full bg-[var(--hivelab-surface-hover)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <SparklesIcon className="h-3.5 w-3.5 text-white" />
                     </div>
-                    <p className="text-sm text-[#ccc] whitespace-pre-wrap">{streamingText}</p>
+                    <p className="text-sm text-[var(--hivelab-text-secondary)] whitespace-pre-wrap">{streamingText}</p>
                   </div>
                 </div>
               )}
@@ -337,10 +328,10 @@ export function AICommandPalette({
                   {filteredCommands.length > 0 ? (
                     <div className="py-2">
                       {/* Selection context indicator (Cursor-like) */}
-                      <div className="px-4 py-1.5 text-xs font-medium text-[#666] uppercase tracking-wider flex items-center justify-between">
+                      <div className="px-4 py-1.5 text-xs font-medium text-[var(--hivelab-text-tertiary)] uppercase tracking-wider flex items-center justify-between">
                         <span>Commands</span>
                         {selectedCount > 0 && (
-                          <span className="text-white normal-case font-normal">
+                          <span className="text-[var(--hivelab-text-primary)] normal-case font-normal">
                             {selectedCount} element{selectedCount > 1 ? 's' : ''} selected
                           </span>
                         )}
@@ -350,10 +341,10 @@ export function AICommandPalette({
                           key={cmd.id}
                           type="button"
                           className={cn(
-                            'w-full px-4 py-3 flex items-center gap-3 transition-colors',
+                            'w-full px-4 py-3 flex items-center gap-3 transition-colors duration-[var(--workshop-duration)]',
                             index === selectedIndex
-                              ? 'bg-white/[0.08] text-white'
-                              : 'text-[#999] hover:bg-[#252525] hover:text-white'
+                              ? 'bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)]'
+                              : 'text-[var(--hivelab-text-tertiary)] hover:bg-[var(--hivelab-surface)] hover:text-[var(--hivelab-text-primary)]'
                           )}
                           onClick={() => {
                             setSelectedCommand(cmd);
@@ -365,17 +356,17 @@ export function AICommandPalette({
                             className={cn(
                               'w-8 h-8 rounded-lg flex items-center justify-center',
                               index === selectedIndex
-                                ? 'bg-white/[0.12] text-white'
-                                : 'bg-[#252525] text-[#666]'
+                                ? 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]'
+                                : 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]'
                             )}
                           >
                             {cmd.icon}
                           </div>
                           <div className="flex-1 text-left">
                             <p className="text-sm font-medium">{cmd.label}</p>
-                            <p className="text-xs text-[#666]">{cmd.description}</p>
+                            <p className="text-xs text-[var(--hivelab-text-tertiary)]">{cmd.description}</p>
                           </div>
-                          <ArrowRight className="h-4 w-4 opacity-40" />
+                          <ArrowRightIcon className="h-4 w-4 opacity-40" />
                         </button>
                       ))}
                     </div>
@@ -383,25 +374,25 @@ export function AICommandPalette({
                     <div className="py-2">
                       <button
                         type="button"
-                        className="w-full px-4 py-3 flex items-center gap-3 bg-white/[0.08] text-white"
+                        className="w-full px-4 py-3 flex items-center gap-3 bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)]"
                         onClick={() => onSubmit(input, 'generate')}
                       >
-                        <div className="w-8 h-8 rounded-lg bg-white/[0.12] text-white flex items-center justify-center">
-                          <Wand2 className="h-4 w-4" />
+                        <div className="w-8 h-8 rounded-lg bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)] flex items-center justify-center">
+                          <SparklesIcon className="h-4 w-4" />
                         </div>
                         <div className="flex-1 text-left">
                           <p className="text-sm font-medium">Generate from prompt</p>
-                          <p className="text-xs text-[#999] truncate">"{input}"</p>
+                          <p className="text-xs text-[var(--hivelab-text-tertiary)] truncate">"{input}"</p>
                         </div>
-                        <ArrowRight className="h-4 w-4 opacity-40" />
+                        <ArrowRightIcon className="h-4 w-4 opacity-40" />
                       </button>
                     </div>
                   ) : null}
 
                   {/* Quick Suggestions */}
                   {!input && (
-                    <div className="py-2 border-t border-[#252525]">
-                      <div className="px-4 py-1.5 text-xs font-medium text-[#666] uppercase tracking-wider">
+                    <div className="py-2 border-t border-[var(--hivelab-border)]">
+                      <div className="px-4 py-1.5 text-xs font-medium text-[var(--hivelab-text-tertiary)] uppercase tracking-wider">
                         Suggestions
                       </div>
                       <div className="px-4 py-2 flex flex-wrap gap-2">
@@ -410,7 +401,7 @@ export function AICommandPalette({
                             key={suggestion}
                             type="button"
                             onClick={() => handleSuggestionClick(suggestion)}
-                            className="px-3 py-1.5 text-xs bg-[#252525] hover:bg-[#333] text-[#999] hover:text-white rounded-full transition-colors"
+                            className="px-3 py-1.5 text-xs bg-[var(--hivelab-surface)] hover:bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] rounded-full transition-colors duration-[var(--workshop-duration)]"
                           >
                             {suggestion}
                           </button>
@@ -425,39 +416,39 @@ export function AICommandPalette({
               {selectedCommand && !loading && (
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded bg-white/[0.12] text-white flex items-center justify-center">
+                    <div className="w-6 h-6 rounded bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)] flex items-center justify-center">
                       {selectedCommand.icon}
                     </div>
-                    <span className="text-sm font-medium text-white">{selectedCommand.label}</span>
+                    <span className="text-sm font-medium text-[var(--hivelab-text-primary)]">{selectedCommand.label}</span>
                     <button
                       type="button"
                       onClick={() => {
                         setSelectedCommand(null);
                         setInput('');
                       }}
-                      className="ml-auto text-xs text-[#666] hover:text-white"
+                      className="ml-auto text-xs text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] transition-colors duration-[var(--workshop-duration)]"
                     >
                       Cancel
                     </button>
                   </div>
-                  <p className="text-xs text-[#666] mb-2">{selectedCommand.description}</p>
-                  <p className="text-xs text-[#555]">Press Enter to submit</p>
+                  <p className="text-xs text-[var(--hivelab-text-tertiary)] mb-2">{selectedCommand.description}</p>
+                  <p className="text-xs text-[var(--hivelab-text-tertiary)]">Press Enter to submit</p>
                 </div>
               )}
 
               {/* Footer */}
-              <div className="px-4 py-2.5 bg-[#151515] border-t border-[#252525] flex items-center justify-between text-xs text-[#555]">
+              <div className="px-4 py-2.5 bg-[var(--hivelab-surface)] border-t border-[var(--hivelab-border)] flex items-center justify-between text-xs text-[var(--hivelab-text-tertiary)]">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[#252525] rounded text-[10px]">↑↓</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">↑↓</kbd>
                     navigate
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[#252525] rounded text-[10px]">↵</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">↵</kbd>
                     select
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[#252525] rounded text-[10px]">esc</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">esc</kbd>
                     close
                   </span>
                 </div>

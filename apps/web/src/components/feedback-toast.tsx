@@ -2,7 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X, Send, Loader2, Hexagon } from "lucide-react";
+import {
+  ChatBubbleOvalLeftIcon,
+  XMarkIcon,
+  PaperAirplaneIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const MessageCircle = ChatBubbleOvalLeftIcon;
+const X = XMarkIcon;
+const Send = PaperAirplaneIcon;
+const Loader2 = ArrowPathIcon;
+// Note: Heroicons doesn't have a direct Hexagon icon - using a custom SVG or keeping inline
+const Hexagon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M12 2l9 5.25v9.5L12 22l-9-5.25v-9.5L12 2z" />
+  </svg>
+);
 import { Button } from "@hive/ui";
 import { logger } from "@/lib/logger";
 
@@ -12,6 +29,7 @@ export function FeedbackToast() {
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -53,7 +71,9 @@ export function FeedbackToast() {
       
     } catch (error) {
       logger.error('Failed to submit feedback', { component: 'FeedbackToast' }, error instanceof Error ? error : undefined);
-      // TODO: Show error state to user
+      setHasError(true);
+      // Reset error after 3 seconds to allow retry
+      setTimeout(() => setHasError(false), 3000);
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +164,7 @@ export function FeedbackToast() {
                   animate={{ opacity: 1, y: 0 }}
                   className="text-center py-6"
                 >
-                  <div className="w-12 h-12 bg-[var(--hive-background-tertiary)] rounded-full 
+                  <div className="w-12 h-12 bg-[var(--hive-background-tertiary)] rounded-full
                                 flex items-center justify-center mx-auto mb-4 border border-[var(--hive-status-success)]">
                     <MessageCircle className="w-6 h-6 text-[var(--hive-status-success)]" />
                   </div>
@@ -154,6 +174,30 @@ export function FeedbackToast() {
                   <div className="text-xs text-[var(--hive-text-secondary)]">
                     We'll use this to make HIVE better.
                   </div>
+                </motion.div>
+              ) : hasError ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-4"
+                >
+                  <div className="w-12 h-12 bg-red-500/10 rounded-full
+                                flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+                    <X className="w-6 h-6 text-red-400" />
+                  </div>
+                  <div className="text-sm font-medium text-[var(--hive-text-primary)] mb-2">
+                    Couldn't send feedback
+                  </div>
+                  <div className="text-xs text-[var(--hive-text-secondary)] mb-4">
+                    Please try again in a moment.
+                  </div>
+                  <Button
+                    onClick={() => setHasError(false)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Try Again
+                  </Button>
                 </motion.div>
               ) : (
                 <div className="space-y-5">
@@ -196,12 +240,12 @@ export function FeedbackToast() {
                       disabled={!feedback.trim() || isSubmitting}
                       variant="default"
                       size="default"
-                      leftIcon={isSubmitting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Send className="w-4 h-4" />
-                      )}
                     >
+                      {isSubmitting ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Send className="w-4 h-4 mr-2" />
+                      )}
                       {isSubmitting ? "Sending..." : "Send"}
                     </Button>
                   </div>

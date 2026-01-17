@@ -6,8 +6,14 @@
  * and the domain service in packages/core/src/domain/profile/services/ghost-mode.service.ts
  */
 
-import type { LucideIcon } from 'lucide-react';
-import { Eye, EyeOff, Moon, Ghost } from 'lucide-react';
+import { EyeIcon, EyeSlashIcon, MoonIcon, UserIcon } from '@heroicons/react/24/outline';
+
+// Type alias for icon components
+type LucideIcon = React.ComponentType<{ className?: string }>;
+
+// Aliases for lucide compatibility
+const Moon = MoonIcon;
+const Ghost = UserIcon;
 
 export type GhostModeLevel = 'normal' | 'selective' | 'minimal' | 'invisible';
 
@@ -27,7 +33,7 @@ export const GHOST_MODE_LEVELS: readonly GhostModeLevelConfig[] = [
     description: 'Full visibility',
     detailedDescription: 'Your profile, activity, and online status are visible to everyone on campus.',
     hides: [],
-    icon: Eye,
+    icon: EyeIcon,
   },
   {
     value: 'selective',
@@ -35,7 +41,7 @@ export const GHOST_MODE_LEVELS: readonly GhostModeLevelConfig[] = [
     description: 'Hide last seen',
     detailedDescription: 'Others can see you\'re online, but not exactly when you were last active.',
     hides: ['lastSeen'],
-    icon: EyeOff,
+    icon: EyeSlashIcon,
   },
   {
     value: 'minimal',

@@ -11,22 +11,9 @@
  */
 
 import * as React from 'react';
-import {
-  UserPlus,
-  Bell,
-  Clock,
-  CalendarDays,
-  AlertCircle,
-  Star,
-  Smile,
-  Zap,
-  Check,
-  X,
-  ChevronRight,
-  Loader2,
-} from 'lucide-react';
+import { UserPlusIcon, BellIcon, ClockIcon, CalendarDaysIcon, ExclamationCircleIcon, StarIcon, FaceSmileIcon, BoltIcon, CheckIcon, XMarkIcon, ChevronRightIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
-import { Button } from '../../atomic/00-Global/atoms/button';
+import { Button } from '../../design-system/primitives';
 import type { AutomationTemplate } from '@hive/core';
 
 // ============================================================================
@@ -64,18 +51,18 @@ interface TemplateCardProps {
 // ============================================================================
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  UserPlus,
-  Bell,
-  Clock,
-  CalendarDays,
-  AlertCircle,
-  Star,
-  Smile,
-  Zap,
+  UserPlusIcon,
+  BellIcon,
+  ClockIcon,
+  CalendarDaysIcon,
+  ExclamationCircleIcon,
+  StarIcon,
+  FaceSmileIcon,
+  BoltIcon,
 };
 
 function getIcon(iconName: string): React.ComponentType<{ className?: string }> {
-  return ICON_MAP[iconName] || Zap;
+  return ICON_MAP[iconName] || BoltIcon;
 }
 
 // ============================================================================
@@ -173,13 +160,13 @@ function TemplateCard({ template, onApply, isApplying }: TemplateCardProps) {
         >
           {isApplying ? (
             <>
-              <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+              <ArrowPathIcon className="h-3 w-3 mr-1.5 animate-spin" />
               Adding...
             </>
           ) : (
             <>
               Enable
-              <ChevronRight className="h-3 w-3 ml-1" />
+              <ChevronRightIcon className="h-3 w-3 ml-1" />
             </>
           )}
         </Button>
@@ -258,7 +245,7 @@ export function AutomationTemplates({
   if (isLoading) {
     return (
       <div className={cn('flex items-center justify-center py-12', className)}>
-        <Loader2 className="h-6 w-6 text-white/40 animate-spin" />
+        <ArrowPathIcon className="h-6 w-6 text-white/40 animate-spin" />
       </div>
     );
   }
@@ -269,7 +256,7 @@ export function AutomationTemplates({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Zap className="h-5 w-5 text-[var(--hive-gold-cta)]" />
+            <BoltIcon className="h-5 w-5 text-[var(--hive-gold-cta)]" />
             Automation Templates
           </h2>
           <p className="text-white/50 text-sm mt-0.5">
@@ -310,7 +297,7 @@ export function AutomationTemplates({
       {/* Error Message */}
       {error && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-          <X className="h-4 w-4 text-red-400" />
+          <XMarkIcon className="h-4 w-4 text-red-400" />
           <span className="text-red-400 text-sm">{error}</span>
         </div>
       )}
@@ -318,7 +305,7 @@ export function AutomationTemplates({
       {/* Success Message */}
       {successId && (
         <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-          <Check className="h-4 w-4 text-green-400" />
+          <CheckIcon className="h-4 w-4 text-green-400" />
           <span className="text-green-400 text-sm">
             Automation enabled! It will start working automatically.
           </span>
@@ -385,7 +372,7 @@ export function AutomationTemplatesCompact({
       )}
     >
       <div className="p-2 rounded-lg bg-amber-500/20">
-        <Zap className="h-4 w-4 text-amber-400" />
+        <BoltIcon className="h-4 w-4 text-amber-400" />
       </div>
       <div className="flex-1 text-left">
         <p className="text-white text-sm font-medium">Quick Automations</p>
@@ -393,7 +380,7 @@ export function AutomationTemplatesCompact({
           {templateCount} templates available
         </p>
       </div>
-      <ChevronRight className="h-4 w-4 text-white/40 group-hover:text-white/60 transition-colors" />
+      <ChevronRightIcon className="h-4 w-4 text-white/40 group-hover:text-white/60 transition-colors" />
     </button>
   );
 }

@@ -1,7 +1,20 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, Users, Loader2, GraduationCap } from "lucide-react";
+import {
+  MagnifyingGlassIcon,
+  MapPinIcon,
+  UsersIcon,
+  ArrowPathIcon,
+  AcademicCapIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Search = MagnifyingGlassIcon;
+const MapPin = MapPinIcon;
+const Users = UsersIcon;
+const Loader2 = ArrowPathIcon;
+const GraduationCap = AcademicCapIcon;
 import { useEffect, useState, useRef } from "react";
 import type { School } from "@hive/core";
 import { useRouter } from "next/navigation";
@@ -59,7 +72,7 @@ export function SchoolSearch() {
 
   const handleSchoolSelect = (school: UISchool) => {
     if (school.status === "active") {
-      router.push(`/auth/login?schoolId=${school.id}&schoolName=${encodeURIComponent(school.name)}&domain=${encodeURIComponent(school.domain)}`);
+      router.push(`/enter?schoolId=${school.id}&schoolName=${encodeURIComponent(school.name)}&domain=${encodeURIComponent(school.domain)}`);
     } else {
       router.push(`/waitlist/${school.id}`);
     }

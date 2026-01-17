@@ -3,19 +3,33 @@
 import { useEffect, useState, useCallback } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
 import {
-  Users,
-  Hash,
-  Wrench,
-  MessageSquare,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+  UsersIcon,
+  HashtagIcon,
+  WrenchIcon,
+  ChatBubbleLeftIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowPathIcon,
+  ArrowPathIcon as RefreshCwIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Users = UsersIcon;
+const Hash = HashtagIcon;
+const Wrench = WrenchIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const TrendingUp = ArrowTrendingUpIcon;
+const TrendingDown = ArrowTrendingDownIcon;
+const Clock = ClockIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const CheckCircle2 = CheckCircleIcon;
+const XCircle = XCircleIcon;
+const Loader2 = ArrowPathIcon;
+const RefreshCw = RefreshCwIcon;
 import { AreaChart } from "./charts/area-chart";
 import { BarChart } from "./charts/bar-chart";
 import { LiveCounter } from "./charts/live-counter";

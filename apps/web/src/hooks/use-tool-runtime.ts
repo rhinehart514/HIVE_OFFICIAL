@@ -525,16 +525,131 @@ export function useToolRuntime(
           return { success: true, result: result.result };
         }
 
-        // If the action returns updated state, apply it
-        if (result.state) {
-          setState((prev) => ({ ...prev, ...result.state }));
-          stateRef.current = { ...stateRef.current, ...result.state };
-          // Auto-save the new state
+        // Extract the execution result (API returns { result: executionResult, ... })
+        const executionResult = result.result || {};
+
+        // ==========================================================================
+        // Handle SharedStateUpdate (aggregate data like vote counts, RSVP lists)
+        // ==========================================================================
+        const sharedStateUpdate = executionResult.sharedStateUpdate;
+        if (sharedStateUpdate) {
+          setSharedState((prev) => {
+            const updated = { ...prev };
+
+            // Apply counter deltas
+            if (sharedStateUpdate.counterDeltas) {
+              updated.counters = { ...updated.counters };
+              for (const [key, delta] of Object.entries(sharedStateUpdate.counterDeltas)) {
+                const currentValue = updated.counters[key] || 0;
+                updated.counters[key] = currentValue + (delta as number);
+              }
+            }
+
+            // Apply collection upserts
+            if (sharedStateUpdate.collectionUpserts) {
+              updated.collections = { ...updated.collections };
+              for (const [collectionKey, entities] of Object.entries(sharedStateUpdate.collectionUpserts)) {
+                // Type assertion: entities from API matches ToolSharedEntity structure
+                const typedEntities = entities as Record<string, {
+                  id: string;
+                  createdAt: string;
+                  createdBy: string;
+                  updatedAt?: string;
+                  data: Record<string, unknown>;
+                }>;
+                updated.collections[collectionKey] = {
+                  ...(updated.collections[collectionKey] || {}),
+                  ...typedEntities,
+                };
+              }
+            }
+
+            // Apply collection deletes
+            if (sharedStateUpdate.collectionDeletes) {
+              updated.collections = { ...updated.collections };
+              for (const [collectionKey, idsToDelete] of Object.entries(sharedStateUpdate.collectionDeletes)) {
+                if (updated.collections[collectionKey]) {
+                  const collection = { ...updated.collections[collectionKey] };
+                  for (const id of idsToDelete as string[]) {
+                    delete collection[id];
+                  }
+                  updated.collections[collectionKey] = collection;
+                }
+              }
+            }
+
+            // Append timeline events
+            if (sharedStateUpdate.timelineAppend) {
+              updated.timeline = [
+                ...updated.timeline,
+                ...(sharedStateUpdate.timelineAppend as typeof updated.timeline),
+              ].slice(-100); // Keep last 100 events
+            }
+
+            // Apply computed updates
+            if (sharedStateUpdate.computedUpdates) {
+              updated.computed = {
+                ...updated.computed,
+                ...(sharedStateUpdate.computedUpdates as Record<string, unknown>),
+              };
+            }
+
+            updated.version = (updated.version || 0) + 1;
+            updated.lastModified = new Date().toISOString();
+            return updated;
+          });
+        }
+
+        // ==========================================================================
+        // Handle UserStateUpdate (per-user data like selections, participation)
+        // ==========================================================================
+        const userStateUpdate = executionResult.userStateUpdate;
+        if (userStateUpdate) {
+          setState((prev) => {
+            const updated = { ...prev };
+
+            // Merge selections
+            if (userStateUpdate.selections) {
+              updated.selections = {
+                ...(updated.selections as Record<string, unknown> || {}),
+                ...userStateUpdate.selections,
+              };
+            }
+
+            // Merge participation flags
+            if (userStateUpdate.participation) {
+              updated.participation = {
+                ...(updated.participation as Record<string, boolean> || {}),
+                ...userStateUpdate.participation,
+              };
+            }
+
+            // Merge personal data
+            if (userStateUpdate.personal) {
+              updated.personal = {
+                ...(updated.personal as Record<string, unknown> || {}),
+                ...userStateUpdate.personal,
+              };
+            }
+
+            return updated;
+          });
+          stateRef.current = { ...stateRef.current, ...(userStateUpdate as Record<string, unknown>) };
+          scheduleAutoSave();
+        }
+
+        // ==========================================================================
+        // Handle legacy state updates (backward compatibility)
+        // ==========================================================================
+        const legacyState = executionResult.state || result.state;
+        if (legacyState && !userStateUpdate) {
+          setState((prev) => ({ ...prev, ...legacyState }));
+          stateRef.current = { ...stateRef.current, ...legacyState };
           scheduleAutoSave();
         }
 
         // Extract cascaded elements for visual feedback
-        const cascadedElements = result.result?.data?.cascadedElements as string[] | undefined;
+        const cascadedElements = executionResult.data?.cascadedElements as string[] | undefined;
 
         // Trigger cascade callback for visual feedback (if elements were affected)
         if (cascadedElements && cascadedElements.length > 0 && onCascade) {
@@ -543,8 +658,8 @@ export function useToolRuntime(
 
         return {
           success: true,
-          result: result.result,
-          state: result.state,
+          result: executionResult,
+          state: legacyState || userStateUpdate,
           cascadedElements,
         };
       } catch (err) {

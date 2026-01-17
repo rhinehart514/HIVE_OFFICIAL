@@ -21,7 +21,7 @@ export function BuilderQueue() {
               <Button variant="outline" size="sm">
                 Reject
               </Button>
-              <Button variant="primary" size="sm">
+              <Button variant="default" size="sm">
                 Approve
               </Button>
             </div>

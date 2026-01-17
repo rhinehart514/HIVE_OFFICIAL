@@ -53,9 +53,8 @@ async function validateSpaceAndMembership(spaceId: string, userId: string, campu
 }
 
 async function loadEvent(spaceId: string, eventId: string, campusId: string) {
+  // Query flat /events collection
   const eventDoc = await dbAdmin
-    .collection('spaces')
-    .doc(spaceId)
     .collection('events')
     .doc(eventId)
     .get();
@@ -67,6 +66,16 @@ async function loadEvent(spaceId: string, eventId: string, campusId: string) {
   const eventData = eventDoc.data();
   if (!eventData) {
     return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event data missing' };
+  }
+
+  // Verify event belongs to the requested space
+  if (eventData.spaceId !== spaceId) {
+    logger.error('SECURITY: Event/space mismatch blocked', {
+      eventId,
+      requestedSpaceId: spaceId,
+      actualSpaceId: eventData.spaceId,
+    });
+    return { ok: false as const, status: HttpStatus.NOT_FOUND, message: 'Event not found in this space' };
   }
 
   if (eventData.campusId && eventData.campusId !== campusId) {
@@ -121,12 +130,10 @@ export const POST = withAuthValidationAndErrors(
       }
 
       if (body.status === 'going' && load.eventData.maxAttendees) {
+        // Query flat /rsvps collection
         const currentGoing = await dbAdmin
-          .collection('spaces')
-          .doc(spaceId)
-          .collection('events')
-          .doc(eventId)
           .collection('rsvps')
+          .where('eventId', '==', eventId)
           .where('status', '==', 'going')
           .get();
 
@@ -137,13 +144,11 @@ export const POST = withAuthValidationAndErrors(
         }
       }
 
+      // Use flat /rsvps collection with composite key: eventId_userId
+      const rsvpId = `${eventId}_${userId}`;
       const rsvpRef = dbAdmin
-        .collection('spaces')
-        .doc(spaceId)
-        .collection('events')
-        .doc(eventId)
         .collection('rsvps')
-        .doc(userId);
+        .doc(rsvpId);
 
       const existing = await rsvpRef.get();
       const timestamp = new Date();
@@ -159,12 +164,10 @@ export const POST = withAuthValidationAndErrors(
 
       await rsvpRef.set(rsvpData, { merge: true });
 
+      // Query flat /rsvps collection for updated count
       const updatedCount = await dbAdmin
-        .collection('spaces')
-        .doc(spaceId)
-        .collection('events')
-        .doc(eventId)
         .collection('rsvps')
+        .where('eventId', '==', eventId)
         .where('status', '==', 'going')
         .get();
 
@@ -240,13 +243,11 @@ export const GET = withAuthAndErrors(async (
       return respond.error(load.message, code, { status: load.status });
     }
 
+    // Use flat /rsvps collection with composite key: eventId_userId
+    const rsvpId = `${eventId}_${userId}`;
     const rsvpDoc = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
-      .collection('events')
-      .doc(eventId)
       .collection('rsvps')
-      .doc(userId)
+      .doc(rsvpId)
       .get();
 
     const rsvpStatus = rsvpDoc.exists ? rsvpDoc.data()?.status : null;

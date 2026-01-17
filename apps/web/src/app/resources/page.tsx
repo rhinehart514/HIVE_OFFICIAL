@@ -1,328 +1,286 @@
 "use client";
 
-// Force dynamic rendering to avoid SSG issues
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowTopRightOnSquareIcon,
+  DocumentTextIcon,
+  CodeBracketIcon,
+  UsersIcon,
+  StarIcon,
+  ArrowDownTrayIcon,
+  BookOpenIcon,
+  WrenchScrewdriverIcon,
+  SparklesIcon,
+  RocketLaunchIcon
+} from '@heroicons/react/24/outline';
 
-// Temp fix for chunk 2073 useRef errors
-const Button = ({ children, _variant = "default", className = "", ...props }: { children: React.ReactNode; _variant?: string; className?: string; [key: string]: unknown }) => <button className={`px-4 py-2 rounded ${className}`} {...props}>{children}</button>;
-const Card = ({ children, className = "", ...props }: { children: React.ReactNode; className?: string; [key: string]: unknown }) => <div className={`border rounded-lg p-4 ${className}`} {...props}>{children}</div>;
-import { BookOpen, ExternalLink, Video, FileText, Code, Users, Star, Download } from 'lucide-react';
-
-// Inline PageContainer to replace deleted temp-stubs
-function PageContainer({
-  title,
-  subtitle,
-  breadcrumbs,
-  maxWidth = "6xl",
-  children
+// Inline components for this page
+function Card({
+  children,
+  className = "",
+  onClick,
+  ...props
 }: {
-  title: string;
-  subtitle?: string;
-  breadcrumbs?: { label: string; icon?: React.ComponentType<{ className?: string }> }[];
-  maxWidth?: string;
-  children: ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+  [key: string]: unknown;
 }) {
   return (
-    <div className="min-h-screen bg-black">
-      <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
-        {breadcrumbs && breadcrumbs.length > 0 && (
-          <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
-            {breadcrumbs.map((item, i) => (
-              <span key={i} className="flex items-center gap-1">
-                {item.icon && <item.icon className="h-4 w-4" />}
-                {item.label}
-              </span>
-            ))}
-          </div>
-        )}
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        {subtitle && <p className="text-white/60 mt-1">{subtitle}</p>}
-        <div className="mt-6">{children}</div>
-      </div>
+    <div
+      className={`border rounded-xl ${className}`}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      {...props}
+    >
+      {children}
     </div>
+  );
+}
+
+function Button({
+  children,
+  variant = "default",
+  className = "",
+  ...props
+}: {
+  children: React.ReactNode;
+  variant?: "default" | "secondary" | "ghost";
+  className?: string;
+  [key: string]: unknown;
+}) {
+  const baseStyles = "px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center";
+  const variantStyles = {
+    default: "bg-[#FFD700] text-black hover:bg-[#FFD700]/90",
+    secondary: "border border-white/20 text-white hover:bg-white/10",
+    ghost: "text-white/60 hover:text-white hover:bg-white/[0.06]"
+  };
+
+  return (
+    <button className={`${baseStyles} ${variantStyles[variant]} ${className}`} {...props}>
+      {children}
+    </button>
   );
 }
 
 export default function ResourcesPage() {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Prevent SSR hydration issues
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-[#0A0A09]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-400" />
       </div>
     );
   }
+
   return (
-    <PageContainer
-      title="Resources"
-      subtitle="Guides, tutorials, and documentation to help you build better"
-      breadcrumbs={[
-        { label: "Resources", icon: BookOpen }
-      ]}
-      maxWidth="xl"
-    >
-      {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        <Card 
-          className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-          onClick={() => window.open('https://docs.hive.university/api', '_blank')}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[var(--hive-brand-primary)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Code className="h-4 w-4 text-hive-brand-on-gold" />
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-white group-hover:text-[var(--hive-brand-primary)] transition-colors">API Docs</h3>
-              <p className="text-xs text-hive-text-tertiary">Technical reference</p>
-            </div>
+    <div className="min-h-screen bg-[#0A0A09]">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 text-sm text-white/50 mb-4">
+            <BookOpenIcon className="h-4 w-4" />
+            <span>Resources</span>
           </div>
-        </Card>
+          <h1 className="text-3xl font-bold text-white mb-2">Get Started with HIVE</h1>
+          <p className="text-white/60">Everything you need to build tools and grow your space</p>
+        </div>
 
-        <Card 
-          className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-          onClick={() => window.open('https://university.hive.com/tutorials', '_blank')}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[rgba(255,255,255,0.1)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Video className="h-4 w-4 text-white" />
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          <Card
+            className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+            onClick={() => router.push('/tools/create')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <WrenchScrewdriverIcon className="h-5 w-5 text-[#FFD700]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">Create a Tool</h3>
+                <p className="text-xs text-white/50">Build with HiveLab</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-white group-hover:text-[var(--hive-brand-primary)] transition-colors">Tutorials</h3>
-              <p className="text-xs text-hive-text-tertiary">Step-by-step guides</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card 
-          className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-          onClick={() => window.open('https://discord.gg/hive-university', '_blank')}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[rgba(255,255,255,0.1)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Users className="h-4 w-4 text-white" />
+          <Card
+            className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+            onClick={() => router.push('/spaces/browse')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <UsersIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">Find Spaces</h3>
+                <p className="text-xs text-white/50">Join your community</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-white group-hover:text-[var(--hive-brand-primary)] transition-colors">Community</h3>
-              <p className="text-xs text-hive-text-tertiary">Get help & share</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card 
-          className="p-4 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-          onClick={() => window.location.href = '/build?tab=templates'}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[rgba(255,255,255,0.1)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Download className="h-4 w-4 text-white" />
+          <Card
+            className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+            onClick={() => router.push('/tools')}
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <SparklesIcon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-white group-hover:text-[#FFD700] transition-colors">My Tools</h3>
+                <p className="text-xs text-white/50">Manage your creations</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-white group-hover:text-[var(--hive-brand-primary)] transition-colors">Templates</h3>
-              <p className="text-xs text-hive-text-tertiary">Ready-to-use tools</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
 
-      {/* Resource Categories */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Getting Started */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-            <Star className="h-5 w-5 mr-2 text-[var(--hive-brand-primary)]" />
+        {/* Getting Started Section */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            <StarIcon className="h-5 w-5 text-[#FFD700]" />
             Getting Started
           </h2>
-          <div className="space-y-4">
-            <Card 
-              className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-              onClick={() => window.location.href = '/build?tutorial=first-tool'}
+          <div className="space-y-3">
+            <Card
+              className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+              onClick={() => router.push('/tools/create')}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2 group-hover:text-[var(--hive-brand-primary)] transition-colors">Your First Tool</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Learn how to create your first tool using HiveLab&apos;s visual builder.
+                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                    Build Your First Tool
+                  </h3>
+                  <p className="text-sm text-white/50 mb-3">
+                    Use HiveLab's visual builder to create interactive tools for your space. No coding required.
                   </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <Video className="h-3 w-3" />
-                    <span>10 min video</span>
+                  <div className="flex items-center gap-4 text-xs text-white/40">
+                    <span className="flex items-center gap-1">
+                      <RocketLaunchIcon className="h-3 w-3" />
+                      5 min to create
+                    </span>
+                    <span>27 elements available</span>
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary group-hover:text-[var(--hive-brand-primary)] flex-shrink-0 ml-4 transition-colors" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
 
-            <Card className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
+            <Card
+              className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+              onClick={() => router.push('/spaces/create')}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2">Space Management</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Best practices for managing your space and building community.
+                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                    Start a Space
+                  </h3>
+                  <p className="text-sm text-white/50 mb-3">
+                    Create a community hub for your club, organization, or interest group.
                   </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <FileText className="h-3 w-3" />
-                    <span>5 min read</span>
+                  <div className="flex items-center gap-4 text-xs text-white/40">
+                    <span className="flex items-center gap-1">
+                      <UsersIcon className="h-3 w-3" />
+                      Real-time chat
+                    </span>
+                    <span>Event management</span>
+                    <span>Custom tools</span>
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary flex-shrink-0 ml-4" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
 
-            <Card className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
+            <Card
+              className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
+              onClick={() => router.push('/spaces/claim')}
+            >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2">Design Guidelines</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Design principles to create tools that users love.
+                  <h3 className="text-white font-medium mb-1 group-hover:text-[#FFD700] transition-colors">
+                    Claim Your Organization
+                  </h3>
+                  <p className="text-sm text-white/50 mb-3">
+                    Already have a club on campus? Claim it and unlock leader features.
                   </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <FileText className="h-3 w-3" />
-                    <span>8 min read</span>
+                  <div className="flex items-center gap-4 text-xs text-white/40">
+                    <span>400+ UB organizations available</span>
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary flex-shrink-0 ml-4" />
+                <ArrowTopRightOnSquareIcon className="h-4 w-4 text-white/30 group-hover:text-[#FFD700] flex-shrink-0 ml-4 transition-colors" />
               </div>
             </Card>
           </div>
         </div>
 
-        {/* Advanced Topics */}
-        <div>
-          <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-            <Code className="h-5 w-5 mr-2" />
-            Advanced Topics
+        {/* HiveLab Section */}
+        <div className="mb-12">
+          <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+            <CodeBracketIcon className="h-5 w-5" />
+            HiveLab Elements
           </h2>
-          <div className="space-y-4">
-            <Card className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2">Custom Components</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Build custom components for advanced functionality.
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <Code className="h-3 w-3" />
-                    <span>Technical guide</span>
-                  </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {[
+              { name: "Text Input", tier: "Universal" },
+              { name: "Number Slider", tier: "Universal" },
+              { name: "Dropdown", tier: "Universal" },
+              { name: "Checklist", tier: "Universal" },
+              { name: "Date Picker", tier: "Universal" },
+              { name: "File Upload", tier: "Universal" },
+              { name: "Calculator", tier: "Universal" },
+              { name: "Timer", tier: "Universal" },
+              { name: "Progress Bar", tier: "Universal" },
+              { name: "Member Picker", tier: "Connected" },
+              { name: "Event Embed", tier: "Connected" },
+              { name: "Poll", tier: "Space" },
+            ].map((element) => (
+              <Card
+                key={element.name}
+                className="p-4 bg-white/[0.02] border-white/[0.06]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white">{element.name}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                    element.tier === "Universal" ? "bg-white/[0.06] text-white/50" :
+                    element.tier === "Connected" ? "bg-blue-500/20 text-blue-400" :
+                    "bg-[#FFD700]/20 text-[#FFD700]"
+                  }`}>
+                    {element.tier}
+                  </span>
                 </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary flex-shrink-0 ml-4" />
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2">API Integration</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Connect your tools to external services and APIs.
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <Code className="h-3 w-3" />
-                    <span>Technical guide</span>
-                  </div>
-                </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary flex-shrink-0 ml-4" />
-              </div>
-            </Card>
-
-            <Card className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)]">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="text-white font-medium mb-2">Performance Tips</h3>
-                  <p className="text-hive-text-tertiary text-sm mb-3">
-                    Optimize your tools for speed and reliability.
-                  </p>
-                  <div className="flex items-center space-x-2 text-xs text-hive-text-tertiary">
-                    <FileText className="h-3 w-3" />
-                    <span>12 min read</span>
-                  </div>
-                </div>
-                <ExternalLink className="h-4 w-4 text-hive-text-tertiary flex-shrink-0 ml-4" />
-              </div>
-            </Card>
+              </Card>
+            ))}
           </div>
-        </div>
-      </div>
-
-      {/* Popular Templates */}
-      <div className="mt-12">
-        <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-          <Download className="h-5 w-5 mr-2" />
-          Popular Templates
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { name: "GPA Calculator", downloads: "2.1k", category: "Academic" },
-            { name: "Study Group Finder", downloads: "1.8k", category: "Social" },
-            { name: "Schedule Optimizer", downloads: "1.5k", category: "Productivity" },
-            { name: "Grade Predictor", downloads: "1.3k", category: "Academic" },
-            { name: "Room Finder", downloads: "1.1k", category: "Campus" },
-            { name: "Event Planner", downloads: "950", category: "Social" },
-          ].map((template, i) => (
-            <Card 
-              key={i} 
-              className="p-6 bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group"
-              onClick={() => window.location.href = `/build?template=${template.name.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 bg-[rgba(255,215,0,0.1)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Download className="h-5 w-5 text-[var(--hive-brand-primary)]" />
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 px-3 text-xs hover:bg-[var(--hive-brand-primary)] hover:text-hive-brand-on-gold"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    window.location.href = `/build?template=${template.name.toLowerCase().replace(/\s+/g, '-')}`;
-                  }}
-                >
-                  Use Template
-                </Button>
-              </div>
-              <h3 className="text-white font-medium mb-2 group-hover:text-[var(--hive-brand-primary)] transition-colors">{template.name}</h3>
-              <div className="flex items-center justify-between text-xs text-hive-text-tertiary">
-                <span>{template.category}</span>
-                <span>{template.downloads} downloads</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Help Section */}
-      <div className="mt-12">
-        <Card className="p-8 bg-gradient-to-r from-[rgba(255,215,0,0.1)] to-[rgba(255,215,0,0.05)] border-[rgba(255,215,0,0.2)] text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Need more help?</h2>
-          <p className="text-hive-text-tertiary mb-6 max-w-md mx-auto">
-            Join our community Discord or schedule office hours with the HIVE team.
+          <p className="text-xs text-white/40 mt-4 text-center">
+            27 total elements across 3 tiers. <span className="text-white/60 cursor-pointer hover:text-[#FFD700]" onClick={() => router.push('/tools/create')}>Explore all in HiveLab →</span>
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button 
-              className="bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover"
-              onClick={() => window.open('https://discord.gg/hive-university', '_blank')}
+        </div>
+
+        {/* Help Section */}
+        <Card className="p-8 bg-gradient-to-br from-[#FFD700]/10 via-[#FFD700]/5 to-transparent border-[#FFD700]/20">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-white mb-2">Need help?</h2>
+            <p className="text-white/50 mb-6 max-w-md mx-auto">
+              We're here to help you build something great. Reach out anytime.
+            </p>
+            <Button
+              onClick={() => window.location.href = 'mailto:hello@hive.college'}
             >
-              <Users className="h-4 w-4 mr-2" />
-              Join Discord
-            </Button>
-            <Button 
-              variant="secondary" 
-              className="border-[rgba(255,255,255,0.2)] text-white hover:bg-[rgba(255,255,255,0.1)]"
-              onClick={() => window.open('https://calendly.com/hive-university/office-hours', '_blank')}
-            >
-              Schedule Office Hours
+              Contact Us
             </Button>
           </div>
         </Card>
       </div>
-    </PageContainer>
+    </div>
   );
 }

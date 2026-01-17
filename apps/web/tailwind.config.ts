@@ -109,9 +109,35 @@ const config: Config = {
         'hive-lg': 'var(--hive-blur-lg)',
         'hive-xl': 'var(--hive-blur-xl)',
       },
+      // Perspective utilities for 3D transforms (motion primitives)
+      perspective: {
+        none: 'none',
+        500: '500px',
+        1000: '1000px',
+        2000: '2000px',
+      },
+      // Transform style for 3D preservation
+      transformStyle: {
+        flat: 'flat',
+        '3d': 'preserve-3d',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    // Custom perspective utility plugin
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, Record<string, string>>) => void }) {
+      addUtilities({
+        '.perspective-none': { perspective: 'none' },
+        '.perspective-500': { perspective: '500px' },
+        '.perspective-1000': { perspective: '1000px' },
+        '.perspective-2000': { perspective: '2000px' },
+        '.transform-style-flat': { transformStyle: 'flat' },
+        '.transform-style-3d': { transformStyle: 'preserve-3d' },
+        '.backface-visible': { backfaceVisibility: 'visible' },
+        '.backface-hidden': { backfaceVisibility: 'hidden' },
+      });
+    },
+  ],
 };
 
 export default config;

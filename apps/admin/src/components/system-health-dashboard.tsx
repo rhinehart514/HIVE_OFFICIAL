@@ -11,20 +11,35 @@ import {
 } from "@hive/ui";
 import { motion } from "framer-motion";
 import {
-  Activity,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-  RefreshCw,
-  Clock,
-  Server,
-  Database,
-  Shield,
-  HardDrive,
-  Wifi,
-  Zap,
-  TrendingUp,
-} from "lucide-react";
+  ChartBarIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  XCircleIcon,
+  ArrowPathIcon,
+  ClockIcon,
+  ServerIcon,
+  CircleStackIcon,
+  ShieldCheckIcon,
+  ServerIcon as HardDriveIcon,
+  WifiIcon,
+  BoltIcon,
+  ArrowTrendingUpIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Activity = ChartBarIcon;
+const CheckCircle = CheckCircleIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const XCircle = XCircleIcon;
+const RefreshCw = ArrowPathIcon;
+const Clock = ClockIcon;
+const Server = ServerIcon;
+const Database = CircleStackIcon;
+const Shield = ShieldCheckIcon;
+const HardDrive = HardDriveIcon;
+const Wifi = WifiIcon;
+const Zap = BoltIcon;
+const TrendingUp = ArrowTrendingUpIcon;
 
 interface ServiceHealth {
   name: string;

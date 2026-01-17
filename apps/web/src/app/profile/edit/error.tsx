@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw, User, Settings } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon, UserIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 
 export default function ProfileEditError({
@@ -24,7 +24,7 @@ export default function ProfileEditError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
-            <AlertTriangle className="h-8 w-8 text-amber-500" aria-hidden="true" />
+            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" aria-hidden="true" />
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function ProfileEditError({
             aria-label="Retry loading the editor"
             className="gap-2 bg-amber-500 text-neutral-950 hover:bg-amber-400"
           >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             Retry
           </Button>
           <Button
@@ -54,7 +54,7 @@ export default function ProfileEditError({
             aria-label="Return to your profile"
             className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
           >
-            <User className="h-4 w-4" aria-hidden="true" />
+            <UserIcon className="h-4 w-4" aria-hidden="true" />
             My Profile
           </Button>
           <Button
@@ -63,8 +63,8 @@ export default function ProfileEditError({
             aria-label="Go to settings"
             className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
           >
-            <Settings className="h-4 w-4" aria-hidden="true" />
-            Settings
+            <Cog6ToothIcon className="h-4 w-4" aria-hidden="true" />
+            Cog6ToothIcon
           </Button>
         </div>
 

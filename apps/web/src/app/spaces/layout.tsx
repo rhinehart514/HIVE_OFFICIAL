@@ -1,7 +1,7 @@
 import { type Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Spaces - HIVE',
+  title: 'Spaces',
   description: 'Discover and join communities on campus',
 };
 

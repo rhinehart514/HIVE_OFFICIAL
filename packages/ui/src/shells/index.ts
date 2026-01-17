@@ -1,27 +1,33 @@
 /**
- * HIVE Experience Shells - 4 Canonical Layouts
+ * HIVE Shell System
  *
- * Phase 2 (Dec 2025): Consolidated to 4 primary layouts
+ * January 2026: Redesigned with Top + Sidebar pattern
  *
- * CANONICAL LAYOUTS:
- * - FOCUS (VoidShell): Auth, onboarding, settings, single-task flows
- * - CONVERSATION (ConversationShell): Space chat, feed, notifications
- * - BROWSE (BrowseShell): Discovery, tool gallery, member lists
- * - CANVAS (CanvasShell): HiveLab IDE, admin dashboards
- *
- * SPECIALIZED (for specific contexts):
- * - StreamShell: Legacy feed layout (use ConversationShell for new)
- * - ProfileShell: Bento grid profile pages
- * - GridShell: Generic grid layout
+ * The shell system provides:
+ * - UniversalShell: Main app shell with top bar + sidebar + mobile nav
+ * - SpaceMobileNav: Mobile navigation for space pages
  */
 
-// Canonical Layouts (Phase 2)
-export { VoidShell } from './VoidShell';
-export { ConversationShell } from './ConversationShell';
-export { BrowseShell, browseItemVariants } from './BrowseShell';
-export { CanvasShell } from './CanvasShell';
+// Main Shell
+export { UniversalShell, SHELL_TOKENS } from './UniversalShell';
+export type {
+  UniversalShellProps,
+  SpaceData,
+  ToolData,
+  ShellMode,
+} from './UniversalShell';
 
-// Specialized Layouts
-export { StreamShell, streamItemVariants } from './StreamShell';
-export { ProfileShell, profileCardVariants, statCounterVariants } from './ProfileShell';
-export { GridShell, gridItemVariants, gridCardHoverEffect } from './GridShell';
+// Space Mobile Navigation
+export { SpaceMobileNav } from './SpaceMobileNav';
+export type { SpaceMobileNavProps, SpaceTab } from './SpaceMobileNav';
+
+// Motion Utilities
+export {
+  MotionDiv,
+  MotionSpan,
+  MotionButton,
+  MotionLink,
+  MotionNav,
+  MotionAside,
+  AnimatePresence,
+} from './motion-safe';

@@ -24,25 +24,45 @@ import {
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Wrench,
-  Check,
-  X,
-  AlertTriangle,
-  User,
-  Clock,
-  Hash,
-  ExternalLink,
-  RefreshCw,
-  Search,
-  ChevronRight,
-  Star,
-  MessageSquare,
-  Layers,
-  Sparkles,
-  ThumbsUp,
-  ThumbsDown,
-  Edit3,
-} from "lucide-react";
+  WrenchIcon,
+  CheckIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  UserIcon,
+  ClockIcon,
+  HashtagIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowPathIcon,
+  MagnifyingGlassIcon,
+  ChevronRightIcon,
+  StarIcon,
+  ChatBubbleLeftIcon,
+  Square2StackIcon,
+  SparklesIcon,
+  HandThumbUpIcon,
+  HandThumbDownIcon,
+  PencilIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Wrench = WrenchIcon;
+const Check = CheckIcon;
+const X = XMarkIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const User = UserIcon;
+const Clock = ClockIcon;
+const Hash = HashtagIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
+const RefreshCw = ArrowPathIcon;
+const Search = MagnifyingGlassIcon;
+const ChevronRight = ChevronRightIcon;
+const Star = StarIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const Layers = Square2StackIcon;
+const Sparkles = SparklesIcon;
+const ThumbsUp = HandThumbUpIcon;
+const ThumbsDown = HandThumbDownIcon;
+const Edit3 = PencilIcon;
 import { PieChart, BarChart } from "./charts";
 
 interface PendingTool {

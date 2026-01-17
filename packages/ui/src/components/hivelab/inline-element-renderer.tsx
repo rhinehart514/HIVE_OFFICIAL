@@ -22,7 +22,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, AlertCircle, Zap } from 'lucide-react';
+import { ArrowPathIcon, ExclamationCircleIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import { springPresets } from '@hive/tokens';
@@ -459,7 +459,7 @@ function InlineChatRenderer({
         )}
       >
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <ArrowPathIcon className="h-4 w-4 animate-spin" />
           <span>Loading...</span>
         </div>
       </div>
@@ -477,7 +477,7 @@ function InlineChatRenderer({
         )}
       >
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Zap className="h-4 w-4 opacity-50" />
+          <BoltIcon className="h-4 w-4 opacity-50" />
           <span>This component is no longer active</span>
         </div>
       </div>
@@ -497,7 +497,7 @@ function InlineChatRenderer({
         )}
       >
         <div className="flex items-center gap-2 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4" />
+          <ExclamationCircleIcon className="h-4 w-4" />
           <span>{error}</span>
         </div>
       </motion.div>
@@ -519,7 +519,7 @@ function InlineChatRenderer({
     >
       {isSubmitting && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-sm">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <ArrowPathIcon className="h-5 w-5 animate-spin text-primary" />
         </div>
       )}
       {renderElementSafe(elementType, elementProps)}
@@ -674,7 +674,7 @@ function DeploymentRenderer({
         )}
       >
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <ArrowPathIcon className="h-4 w-4 animate-spin" />
           <span>Loading...</span>
         </div>
       </div>
@@ -692,7 +692,7 @@ function DeploymentRenderer({
         )}
       >
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Zap className="h-4 w-4 opacity-50" />
+          <BoltIcon className="h-4 w-4 opacity-50" />
           <span>This tool is no longer active</span>
         </div>
       </div>
@@ -712,7 +712,7 @@ function DeploymentRenderer({
         )}
       >
         <div className="flex items-center gap-2 text-sm text-red-400">
-          <AlertCircle className="h-4 w-4" />
+          <ExclamationCircleIcon className="h-4 w-4" />
           <span>{error}</span>
         </div>
       </motion.div>
@@ -735,7 +735,7 @@ function DeploymentRenderer({
       {/* Executing overlay */}
       {isExecuting && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/50 backdrop-blur-sm">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <ArrowPathIcon className="h-5 w-5 animate-spin text-primary" />
         </div>
       )}
 

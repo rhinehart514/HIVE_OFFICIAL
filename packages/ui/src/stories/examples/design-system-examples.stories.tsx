@@ -9,10 +9,12 @@
  */
 
 import type { Meta, StoryObj } from '@storybook/react';
-import { StatusIndicator } from '../../atomic/00-Global/examples/example-status-indicator';
-import { UserPresence } from '../../atomic/00-Global/examples/example-user-presence';
-import { SpacePins } from '../../atomic/00-Global/examples/example-space-pins';
-import type { Pin } from '../../atomic/00-Global/examples/example-space-pins';
+import { StatusIndicator } from '../../design-system/components/PresenceIndicator';
+// TODO: These example components were removed when atomic/ was deleted.
+// Need to recreate UserPresence and SpacePins examples in design-system/components/
+// import { UserPresence } from '../../atomic/00-Global/examples/example-user-presence';
+// import { SpacePins } from '../../atomic/00-Global/examples/example-space-pins';
+// import type { Pin } from '../../atomic/00-Global/examples/example-space-pins';
 
 const meta: Meta = {
   title: 'Design System/Examples',
@@ -92,51 +94,18 @@ export const StatusIndicatorExample: StoryObj<typeof StatusIndicator> = {
 /**
  * Example 2: UserPresence Molecule
  * Demonstrates composition and semantic token usage
+ *
+ * TODO: Re-enable after recreating UserPresence component
  */
-export const UserPresenceMoleculeExample: StoryObj<typeof UserPresence> = {
+export const UserPresenceMoleculeExample: StoryObj<any> = {
   render: () => (
     <div className="space-y-6 p-6 bg-background-primary rounded-lg">
-      <div>
-        <h3 className="text-text-primary font-semibold mb-4">User Presence (Molecule)</h3>
-        <p className="text-text-secondary text-sm mb-4">
-          Composes StatusIndicator atom + uses semantic tokens for text and backgrounds
+      <div className="p-8 bg-background-secondary rounded-lg border-2 border-dashed border-border-default">
+        <p className="text-text-secondary text-center">
+          UserPresence component example temporarily disabled.
+          <br />
+          Component needs to be recreated in design-system/components/
         </p>
-
-        <div className="space-y-4">
-          <UserPresence
-            user={{ name: "Sarah Chen", handle: "sarahc", avatarUrl: undefined }}
-            status="online"
-            size="sm"
-          />
-
-          <UserPresence
-            user={{ name: "Alex Rodriguez", handle: "alexr", avatarUrl: undefined }}
-            status="online"
-            size="md"
-            showHandle
-          />
-
-          <UserPresence
-            user={{ name: "Jamie Kim", handle: "jamiek", avatarUrl: undefined }}
-            status="away"
-            size="lg"
-            showHandle
-          />
-        </div>
-      </div>
-
-      <div className="border-t border-border-default pt-4">
-        <div className="text-xs text-text-muted">
-          <p><strong>Tokens used:</strong></p>
-          <ul className="list-disc list-inside mt-1 space-y-1">
-            <li>bg-background-secondary (avatar fallback)</li>
-            <li>border-border-default (avatar border)</li>
-            <li>text-text-primary (user name)</li>
-            <li>text-text-secondary (user handle)</li>
-            <li>bg-background-tertiary (avatar initials)</li>
-          </ul>
-          <p className="mt-2"><strong>Composition:</strong> StatusIndicator + Avatar + Text</p>
-        </div>
       </div>
     </div>
   ),
@@ -145,67 +114,21 @@ export const UserPresenceMoleculeExample: StoryObj<typeof UserPresence> = {
 /**
  * Example 3: Cognitive Budget Enforcement
  * Demonstrates type-safe budget enforcement with useCognitiveBudget
+ *
+ * TODO: Re-enable after recreating SpacePins component
  */
-export const CognitiveBudgetExample: StoryObj<typeof SpacePins> = {
-  render: () => {
-    const mockPins: Pin[] = [
-      {
-        id: '1',
-        title: 'Welcome to CS Club!',
-        description: 'Join us for our first meeting of the semester. Pizza and coding!',
-        createdAt: new Date(),
-        isPinned: true,
-      },
-      {
-        id: '2',
-        title: 'Hackathon This Weekend',
-        description: '24-hour hackathon at the Innovation Center. Register now!',
-        createdAt: new Date(),
-        isPinned: true,
-      },
-      {
-        id: '3',
-        title: 'Interview Prep Workshop',
-        description: 'Learn how to ace technical interviews with FAANG engineers.',
-        createdAt: new Date(),
-        isPinned: true,
-      },
-    ];
-
-    return (
-      <div className="space-y-6 p-6 bg-background-primary rounded-lg">
-        <div>
-          <h3 className="text-text-primary font-semibold mb-4">Cognitive Budget Enforcement</h3>
-          <p className="text-text-secondary text-sm mb-4">
-            maxPins: 2 (enforced with useCognitiveBudget hook)
-          </p>
-
-          <SpacePins
-            pins={mockPins}
-            onUnpin={(id) => console.log('Unpin:', id)}
-            showBudgetWarning
-          />
-        </div>
-
-        <div className="border-t border-border-default pt-4">
-          <div className="text-xs text-text-muted space-y-2">
-            <p><strong>Cognitive Budget Pattern:</strong></p>
-            <pre className="bg-background-secondary p-3 rounded text-[10px] overflow-x-auto">
-{`const maxPins = useCognitiveBudget('spaceBoard', 'maxPins'); // 2
-const { isWithinBudget, limit, overflow } = useIsBudgetExceeded(
-  'spaceBoard',
-  'maxPins',
-  pins
-);
-const visiblePins = pins.slice(0, maxPins);`}
-            </pre>
-            <p className="mt-2"><strong>Budget: </strong>2/2 pins shown, 1 hidden (over budget)</p>
-            <p><strong>Warning shown:</strong> Yes (3 pins provided, budget is 2)</p>
-          </div>
-        </div>
+export const CognitiveBudgetExample: StoryObj<any> = {
+  render: () => (
+    <div className="space-y-6 p-6 bg-background-primary rounded-lg">
+      <div className="p-8 bg-background-secondary rounded-lg border-2 border-dashed border-border-default">
+        <p className="text-text-secondary text-center">
+          SpacePins component example temporarily disabled.
+          <br />
+          Component needs to be recreated in design-system/components/
+        </p>
       </div>
-    );
-  },
+    </div>
+  ),
 };
 
 /**
@@ -246,17 +169,8 @@ export const CompleteSystemExample: StoryObj = {
             </span>
             Molecules (Composition + Semantic Tokens)
           </h3>
-          <div className="space-y-3">
-            <UserPresence
-              user={{ name: "Sarah Chen", handle: "sarahc" }}
-              status="online"
-              showHandle
-            />
-            <UserPresence
-              user={{ name: "Alex Rodriguez", handle: "alexr" }}
-              status="away"
-              showHandle
-            />
+          <div className="p-4 bg-background-tertiary rounded border border-dashed border-border-default text-center text-text-secondary text-sm">
+            TODO: Recreate UserPresence component
           </div>
         </div>
 
@@ -268,31 +182,9 @@ export const CompleteSystemExample: StoryObj = {
             </span>
             Cognitive Budget Enforcement (Type-Safe UX)
           </h3>
-          <SpacePins
-            pins={[
-              {
-                id: '1',
-                title: 'Pin 1',
-                description: 'First pinned post',
-                createdAt: new Date(),
-                isPinned: true,
-              },
-              {
-                id: '2',
-                title: 'Pin 2',
-                description: 'Second pinned post',
-                createdAt: new Date(),
-                isPinned: true,
-              },
-              {
-                id: '3',
-                title: 'Pin 3 (Hidden)',
-                description: 'Over budget',
-                createdAt: new Date(),
-                isPinned: true,
-              },
-            ]}
-          />
+          <div className="p-4 bg-background-tertiary rounded border border-dashed border-border-default text-center text-text-secondary text-sm">
+            TODO: Recreate SpacePins component
+          </div>
         </div>
       </div>
 

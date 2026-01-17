@@ -2,17 +2,24 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronDown,
-  Play,
-  Save,
-  Rocket,
-  MoreHorizontal,
-  ArrowLeft,
-  Check,
-} from 'lucide-react';
+import { ChevronDownIcon, PlayIcon, BookmarkIcon, RocketLaunchIcon, EllipsisHorizontalIcon, ArrowLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
-import { premiumMotion, premiumPresets, focusClasses } from '../../../lib/premium-design';
+
+// Make.com Light Header Theme
+const HEADER_COLORS = {
+  bg: '#ffffff',
+  border: '#e0e0e0',
+  text: '#212121',
+  textSecondary: '#757575',
+  textTertiary: '#9E9E9E',
+  accent: '#4CAF50',
+  accentHover: '#43A047',
+  inputBg: '#f5f5f5',
+  hoverBg: '#fafafa',
+};
+
+// Focus ring - green accent for Make.com style
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4CAF50]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
 
 interface HeaderBarProps {
   toolName: string;
@@ -25,6 +32,7 @@ interface HeaderBarProps {
   deploying?: boolean;
   onBack?: () => void;
   hasUnsavedChanges?: boolean;
+  onAnalytics?: () => void;
 }
 
 export function HeaderBar({
@@ -38,11 +46,13 @@ export function HeaderBar({
   deploying,
   onBack,
   hasUnsavedChanges,
+  onAnalytics,
 }: HeaderBarProps) {
   const [editingName, setEditingName] = useState(false);
   const [localName, setLocalName] = useState(toolName);
+  const [showMenu, setShowMenu] = useState(false);
 
-  const showDeployButton = !!originSpaceId && !!onDeploy;
+  const showDeployButton = !!onDeploy;
 
   const handleNameSubmit = () => {
     setEditingName(false);
@@ -53,10 +63,11 @@ export function HeaderBar({
 
   return (
     <header
-      className={cn(
-        'h-12 flex items-center justify-between px-4',
-        premiumPresets.glassHeader
-      )}
+      className="h-12 flex items-center justify-between px-4"
+      style={{
+        backgroundColor: HEADER_COLORS.bg,
+        borderBottom: `1px solid ${HEADER_COLORS.border}`,
+      }}
     >
       {/* Left: Back + Logo */}
       <div className="flex items-center gap-3">
@@ -65,21 +76,39 @@ export function HeaderBar({
             type="button"
             onClick={onBack}
             className={cn(
-              'p-2 -ml-2 rounded-lg text-[#9A9A9F] hover:text-white hover:bg-white/[0.06] transition-colors',
-              focusClasses()
+              'p-2 -ml-2 rounded-lg transition-colors duration-200',
+              focusRing
             )}
+            style={{ color: HEADER_COLORS.textSecondary }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = HEADER_COLORS.text;
+              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = HEADER_COLORS.textSecondary;
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
             title="Back"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4" />
           </button>
         )}
 
-        {/* HiveLab Logo */}
+        {/* HiveLab Logo - Keep gold accent on light bg */}
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center shadow-[0_2px_8px_rgba(255,215,0,0.25)]">
-            <span className="text-black font-bold text-xs">H</span>
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{
+              backgroundColor: HEADER_COLORS.accent,
+              boxShadow: `0 2px 8px ${HEADER_COLORS.accent}40`,
+            }}
+          >
+            <span className="text-white font-bold text-xs">H</span>
           </div>
-          <span className="text-white/90 font-semibold text-sm hidden sm:block">
+          <span
+            className="font-semibold text-sm hidden sm:block"
+            style={{ color: HEADER_COLORS.text }}
+          >
             HiveLab
           </span>
         </div>
@@ -110,11 +139,14 @@ export function HeaderBar({
                   }
                 }}
                 className={cn(
-                  'w-full bg-white/[0.06] border border-white/[0.15] rounded-lg px-3 py-1.5',
-                  'text-white text-center text-sm font-medium',
-                  'outline-none focus:border-white/30 focus:ring-2 focus:ring-white/20',
-                  'transition-all'
+                  'w-full text-center font-medium px-3 py-1.5 rounded-lg border transition-colors',
+                  focusRing
                 )}
+                style={{
+                  backgroundColor: HEADER_COLORS.inputBg,
+                  borderColor: HEADER_COLORS.border,
+                  color: HEADER_COLORS.text,
+                }}
                 autoFocus
                 placeholder="Tool name..."
               />
@@ -131,18 +163,31 @@ export function HeaderBar({
                 setEditingName(true);
               }}
               className={cn(
-                'flex items-center gap-2 px-3 py-1.5 rounded-lg',
-                'hover:bg-white/[0.06] transition-colors group',
-                focusClasses()
+                'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors group',
+                focusRing
               )}
+              style={{ color: HEADER_COLORS.text }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
-              <span className="text-white font-medium text-sm truncate max-w-[200px]">
+              <span className="font-medium text-sm truncate max-w-[200px]">
                 {toolName || 'Untitled Tool'}
               </span>
               {hasUnsavedChanges && (
-                <span className="w-1.5 h-1.5 rounded-full bg-white/50" title="Unsaved changes" />
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: HEADER_COLORS.accent }}
+                  title="Unsaved changes"
+                />
               )}
-              <ChevronDown className="h-3.5 w-3.5 text-[#6B6B70] group-hover:text-[#9A9A9F] transition-colors" />
+              <ChevronDownIcon
+                className="h-3.5 w-3.5 transition-colors"
+                style={{ color: HEADER_COLORS.textTertiary }}
+              />
             </motion.button>
           )}
         </AnimatePresence>
@@ -150,35 +195,81 @@ export function HeaderBar({
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2">
-        {/* Preview */}
+        {/* Analytics - visible button for feedback loop */}
+        {onAnalytics && (
+          <button
+            type="button"
+            onClick={onAnalytics}
+            className={cn(
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+              focusRing
+            )}
+            style={{
+              color: HEADER_COLORS.textSecondary,
+              backgroundColor: 'transparent',
+              border: `1px solid transparent`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+              e.currentTarget.style.borderColor = HEADER_COLORS.border;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.borderColor = 'transparent';
+            }}
+            title="View analytics"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <span className="hidden sm:block">Analytics</span>
+          </button>
+        )}
+
+        {/* Preview - secondary button */}
         <button
           type="button"
           onClick={onPreview}
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-lg',
-            'bg-white/[0.06] hover:bg-white/[0.10] text-white/90',
-            'border border-white/[0.08] hover:border-white/[0.12]',
-            'transition-all text-sm font-medium',
-            focusClasses()
+            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+            focusRing
           )}
+          style={{
+            color: HEADER_COLORS.textSecondary,
+            backgroundColor: HEADER_COLORS.hoverBg,
+            border: `1px solid ${HEADER_COLORS.border}`,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = HEADER_COLORS.textSecondary;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = HEADER_COLORS.border;
+          }}
         >
-          <Play className="h-3.5 w-3.5" />
+          <PlayIcon className="h-3.5 w-3.5" />
           <span className="hidden sm:block">Preview</span>
         </button>
 
-        {/* Save or Deploy */}
+        {/* Save or Deploy - primary green button */}
         {showDeployButton ? (
           <button
             type="button"
             onClick={onDeploy}
             disabled={saving || deploying}
             className={cn(
-              'flex items-center gap-2 px-4 py-1.5 rounded-lg font-medium text-sm transition-all',
-              saving || deploying
-                ? 'bg-white/[0.10] text-white/50 cursor-not-allowed'
-                : 'bg-[#FFD700] hover:bg-[#E6C200] text-black shadow-[0_2px_12px_rgba(255,215,0,0.25)]',
-              focusClasses()
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors',
+              (saving || deploying) && 'opacity-50 cursor-not-allowed',
+              focusRing
             )}
+            style={{ backgroundColor: HEADER_COLORS.accent }}
+            onMouseEnter={(e) => {
+              if (!saving && !deploying) {
+                e.currentTarget.style.backgroundColor = HEADER_COLORS.accentHover;
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = HEADER_COLORS.accent;
+            }}
           >
             {deploying ? (
               <>
@@ -186,18 +277,18 @@ export function HeaderBar({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 >
-                  <Rocket className="h-3.5 w-3.5" />
+                  <RocketLaunchIcon className="h-3.5 w-3.5" />
                 </motion.div>
                 <span>Deploying...</span>
               </>
             ) : saving ? (
               <>
-                <Save className="h-3.5 w-3.5" />
+                <BookmarkIcon className="h-3.5 w-3.5" />
                 <span>Saving...</span>
               </>
             ) : (
               <>
-                <Rocket className="h-3.5 w-3.5" />
+                <RocketLaunchIcon className="h-3.5 w-3.5" />
                 <span>Deploy</span>
               </>
             )}
@@ -208,12 +299,19 @@ export function HeaderBar({
             onClick={onSave}
             disabled={saving}
             className={cn(
-              'flex items-center gap-2 px-4 py-1.5 rounded-lg font-medium text-sm transition-all',
-              saving
-                ? 'bg-white/[0.10] text-white/50 cursor-not-allowed'
-                : 'bg-[#FFD700] hover:bg-[#E6C200] text-black shadow-[0_2px_12px_rgba(255,215,0,0.25)]',
-              focusClasses()
+              'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-colors',
+              saving && 'opacity-50 cursor-not-allowed',
+              focusRing
             )}
+            style={{ backgroundColor: HEADER_COLORS.accent }}
+            onMouseEnter={(e) => {
+              if (!saving) {
+                e.currentTarget.style.backgroundColor = HEADER_COLORS.accentHover;
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = HEADER_COLORS.accent;
+            }}
           >
             {saving ? (
               <>
@@ -221,13 +319,13 @@ export function HeaderBar({
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 >
-                  <Save className="h-3.5 w-3.5" />
+                  <BookmarkIcon className="h-3.5 w-3.5" />
                 </motion.div>
                 <span>Saving...</span>
               </>
             ) : (
               <>
-                <Check className="h-3.5 w-3.5" />
+                <CheckIcon className="h-3.5 w-3.5" />
                 <span>Save</span>
               </>
             )}
@@ -235,15 +333,116 @@ export function HeaderBar({
         )}
 
         {/* More menu */}
-        <button
-          type="button"
-          className={cn(
-            'p-2 rounded-lg text-[#9A9A9F] hover:text-white hover:bg-white/[0.06] transition-colors',
-            focusClasses()
-          )}
-        >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowMenu(!showMenu)}
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              focusRing
+            )}
+            style={{ color: HEADER_COLORS.textSecondary }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = HEADER_COLORS.text;
+              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = HEADER_COLORS.textSecondary;
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <EllipsisHorizontalIcon className="h-4 w-4" />
+          </button>
+
+          {/* Dropdown menu */}
+          <AnimatePresence>
+            {showMenu && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMenu(false)}
+                />
+
+                {/* Menu */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 z-50 min-w-[160px] py-1 rounded-lg shadow-lg"
+                  style={{
+                    backgroundColor: HEADER_COLORS.bg,
+                    border: `1px solid ${HEADER_COLORS.border}`,
+                  }}
+                >
+                  {onAnalytics && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        onAnalytics();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
+                      style={{ color: HEADER_COLORS.text }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                      </svg>
+                      Analytics
+                    </button>
+                  )}
+
+                  {onDeploy && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMenu(false);
+                        onDeploy();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
+                      style={{ color: HEADER_COLORS.text }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <RocketLaunchIcon className="h-4 w-4" />
+                      Deploy to Space
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onSave();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors"
+                    style={{ color: HEADER_COLORS.text }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <BookmarkIcon className="h-4 w-4" />
+                    Save Tool
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </header>
   );

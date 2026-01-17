@@ -1,32 +1,56 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * Space Members Page — Manage space membership
+ *
+ * Archetype: Discovery (Shell ON)
+ * Pattern: Table with sections (Leaders, Members)
+ * Shell: ON
+ *
+ * @version 7.0.0 - Redesigned for Spaces Vertical Slice (Jan 2026)
+ */
+
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Button, Input, Card, toast, HiveConfirmModal } from '@hive/ui';
+
+// Category accent colors (domain-based)
+const CATEGORY_COLORS: Record<string, string> = {
+  university: '#3B82F6',
+  student_org: '#F59E0B',
+  residential: '#10B981',
+  greek: '#8B5CF6',
+};
+import { Button, Input, Card, toast, HiveConfirmModal, JoinRequestsPanel } from '@hive/ui';
 import {
-  ChevronLeft,
-  Search,
-  MoreVertical,
-  UserPlus,
-  Shield,
-  UserMinus,
-  Crown,
-  Loader2,
-  AlertTriangle,
-} from 'lucide-react';
+  MemberCard,
+  MemberList,
+  type MemberCardData,
+  type MemberRole,
+} from '@hive/ui/design-system/primitives';
+import { useJoinRequests } from '@/hooks/use-join-requests';
+import {
+  ChevronLeftIcon,
+  MagnifyingGlassIcon,
+  EllipsisVerticalIcon,
+  UserPlusIcon,
+  ShieldCheckIcon,
+  UserMinusIcon,
+  ArrowPathIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { logger } from '@/lib/logger';
+import { NoMembersEmptyState } from '@/components/ui/empty-state';
 
-// Spring config for fluid motion
+// Animation configs
 const SPRING_CONFIG = {
   type: "spring" as const,
   stiffness: 400,
   damping: 25,
 };
 
-// Stagger children animation
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -46,6 +70,9 @@ const itemVariants = {
   },
 };
 
+// Pagination config
+const MEMBERS_PER_PAGE = 20;
+
 interface Member {
   id: string;
   name: string;
@@ -59,10 +86,109 @@ interface Member {
   graduationYear?: string;
 }
 
+// Convert API member to MemberCardData
+function toMemberCardData(member: Member): MemberCardData {
+  const roleMap: Record<string, MemberRole> = {
+    owner: 'leader',
+    admin: 'admin',
+    moderator: 'moderator',
+    member: 'member',
+    guest: 'member',
+  };
+
+  return {
+    id: member.id,
+    name: member.name,
+    handle: `@${member.username}`,
+    avatarUrl: member.avatar,
+    role: roleMap[member.role] || 'member',
+    roleTitle: member.role === 'owner' ? 'Leader' : undefined,
+    presence: member.status === 'online' ? 'online' : 'offline',
+    bio: member.major
+      ? `${member.major}${member.graduationYear ? ` '${member.graduationYear.slice(-2)}` : ''}`
+      : undefined,
+  };
+}
+
 interface MembersSummary {
   totalMembers: number;
   onlineMembers: number;
   activeMembers: number;
+}
+
+// Action menu component for member management
+interface MemberActionMenuProps {
+  member: Member;
+  userRole: string;
+  actionLoading: boolean;
+  hasProvisionalAccess: boolean;
+  onRoleChange: (memberId: string, newRole: string) => Promise<void>;
+  onRemove: (id: string, name: string) => void;
+}
+
+function MemberActionMenu({
+  member,
+  userRole,
+  actionLoading,
+  hasProvisionalAccess,
+  onRoleChange,
+  onRemove,
+}: MemberActionMenuProps) {
+  return (
+    <div
+      className="absolute right-0 mt-1 w-48 rounded-lg border border-white/[0.06] bg-[var(--bg-surface)] shadow-lg z-10"
+      role="menu"
+      aria-label={`Actions for ${member.name}`}
+    >
+      <div className="py-1">
+        {userRole === 'owner' && member.role !== 'admin' && (
+          <button
+            onClick={() => onRoleChange(member.id, 'admin')}
+            disabled={actionLoading}
+            role="menuitem"
+            aria-label={`Promote ${member.name} to admin`}
+            className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/[0.05] flex items-center gap-2 transition-colors duration-150"
+          >
+            {actionLoading ? (
+              <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <ShieldCheckIcon className="h-4 w-4" aria-hidden="true" />
+            )}
+            Make Admin
+          </button>
+        )}
+        {member.role === 'admin' && userRole === 'owner' && (
+          <button
+            onClick={() => onRoleChange(member.id, 'member')}
+            disabled={actionLoading}
+            role="menuitem"
+            aria-label={`Remove admin role from ${member.name}`}
+            className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/[0.05] flex items-center gap-2 transition-colors duration-150"
+          >
+            {actionLoading ? (
+              <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <UserMinusIcon className="h-4 w-4" aria-hidden="true" />
+            )}
+            Remove Admin
+          </button>
+        )}
+        {/* Hide remove button when leader has provisional access */}
+        {!hasProvisionalAccess && (
+          <button
+            onClick={() => onRemove(member.id, member.name)}
+            disabled={actionLoading}
+            role="menuitem"
+            aria-label={`Remove ${member.name} from space`}
+            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition-colors duration-150"
+          >
+            <UserMinusIcon className="h-4 w-4" aria-hidden="true" />
+            Remove Member
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function SpaceMembersPage() {
@@ -70,6 +196,7 @@ export default function SpaceMembersPage() {
   const params = useParams<{ spaceId: string }>();
   const spaceId = params?.spaceId;
   const { user } = useAuth();
+  const prefersReducedMotion = useReducedMotion();
 
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
@@ -83,9 +210,14 @@ export default function SpaceMembersPage() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [spaceCategory, setSpaceCategory] = useState<string>('student_org');
 
   // Provisional access state - restricts destructive actions while verification is pending
   const [hasProvisionalAccess, setHasProvisionalAccess] = useState(false);
+
+  // Private space and tab state
+  const [isPrivateSpace, setIsPrivateSpace] = useState(false);
+  const [activeTab, setActiveTab] = useState<'members' | 'requests'>('members');
 
   // Load members
   useEffect(() => {
@@ -100,6 +232,8 @@ export default function SpaceMembersPage() {
         if (spaceRes.ok) {
           const spaceData = await spaceRes.json();
           setSpaceName(spaceData.name || 'Space');
+          setSpaceCategory(spaceData.category || 'student_org');
+          setIsPrivateSpace(spaceData.visibility === 'private' || spaceData.isPrivate === true);
 
           // Check if user has provisional access (pending verification)
           if (user?.uid && spaceData.leaderRequests) {
@@ -144,7 +278,32 @@ export default function SpaceMembersPage() {
     loadMembers();
   }, [spaceId, user, roleFilter, search]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Split members into leaders and regular members
+  const { leaders, regularMembers } = useMemo(() => {
+    const leaderRoles = ['owner', 'admin', 'moderator'];
+    return {
+      leaders: members.filter((m) => leaderRoles.includes(m.role)),
+      regularMembers: members.filter((m) => !leaderRoles.includes(m.role)),
+    };
+  }, [members]);
+
+  // Paginate regular members
+  const paginatedMembers = useMemo(() => {
+    const start = (currentPage - 1) * MEMBERS_PER_PAGE;
+    const end = start + MEMBERS_PER_PAGE;
+    return regularMembers.slice(start, end);
+  }, [regularMembers, currentPage]);
+
+  const totalPages = Math.ceil(regularMembers.length / MEMBERS_PER_PAGE);
+
   const canManageMembers = userRole === 'owner' || userRole === 'admin';
+
+  // Join requests (only for leaders of private spaces)
+  const canViewRequests = canManageMembers && isPrivateSpace;
+  const joinRequests = useJoinRequests(spaceId, canViewRequests && activeTab === 'requests');
 
   const handleRoleChange = async (memberId: string, newRole: string) => {
     try {
@@ -214,62 +373,46 @@ export default function SpaceMembersPage() {
     }
   };
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return <Crown className="h-3 w-3 text-[var(--hive-brand-primary)]" />;
-      case 'admin':
-        return <Shield className="h-3 w-3 text-blue-400" />;
-      case 'moderator':
-        return <Shield className="h-3 w-3 text-green-400" />;
-      default:
-        return null;
-    }
-  };
-
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'owner':
-        return 'bg-[var(--hive-brand-primary)]/20 text-[var(--hive-brand-primary)]';
-      case 'admin':
-        return 'bg-blue-500/20 text-blue-400';
-      case 'moderator':
-        return 'bg-green-500/20 text-green-400';
-      default:
-        return 'bg-[var(--hive-background-tertiary)] text-[var(--hive-text-tertiary)]';
-    }
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--hive-background-primary)]">
+      <div className="min-h-screen bg-[var(--bg-ground)]">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 w-48 bg-[var(--hive-background-secondary)] rounded" />
-            <div className="h-4 w-64 bg-[var(--hive-background-secondary)] rounded" />
-            <div className="h-64 bg-[var(--hive-background-secondary)] rounded-xl" />
+            <div className="h-8 w-48 bg-[var(--bg-surface)] rounded" />
+            <div className="h-4 w-64 bg-[var(--bg-surface)] rounded" />
+            <div className="h-64 bg-[var(--bg-surface)] rounded-xl" />
           </div>
         </div>
       </div>
     );
   }
 
+  // Get category color for accent
+  const categoryColor = CATEGORY_COLORS[spaceCategory] || CATEGORY_COLORS.student_org;
+
   return (
-    <div className="min-h-screen bg-[var(--hive-background-primary)]">
+    <div className="min-h-screen bg-[var(--bg-ground)] relative">
+      {/* Category accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-1 z-40"
+        style={{ backgroundColor: categoryColor }}
+      />
+
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-[var(--hive-background-primary)]/80 backdrop-blur-xl border-b border-[var(--hive-border-default)]">
+      <header className="sticky top-0 z-30 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06] pt-1">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push(`/spaces/${spaceId}/settings`)}
-                className="p-2 -ml-2 rounded-lg text-[var(--hive-text-secondary)] hover:text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-secondary)] transition-colors focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+                aria-label="Back to space settings"
+                className="p-2 -ml-2 rounded-lg text-white/70 hover:text-white hover:bg-[var(--bg-surface)] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
               </button>
               <div>
-                <h1 className="text-xl font-bold text-[var(--hive-text-primary)]">Members</h1>
-                <p className="text-sm text-[var(--hive-text-secondary)]">{spaceName}</p>
+                <h1 className="text-xl font-bold text-white">Members</h1>
+                <p className="text-sm text-white/70">{spaceName}</p>
               </div>
             </div>
 
@@ -278,9 +421,10 @@ export default function SpaceMembersPage() {
                 onClick={() => {
                   toast.info('Coming soon', 'Member invite will be available soon.');
                 }}
-                className="bg-white text-black hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-white/20 focus-visible:outline-none"
+                aria-label="Invite new members"
+                className="bg-white text-black hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-white/50"
               >
-                <UserPlus className="h-4 w-4 mr-1.5" />
+                <UserPlusIcon className="h-4 w-4 mr-1.5" aria-hidden="true" />
                 Invite
               </Button>
             )}
@@ -288,13 +432,75 @@ export default function SpaceMembersPage() {
         </div>
       </header>
 
+      {/* Tabs for private spaces (leaders only) */}
+      {canViewRequests && (
+        <div className="sticky top-[61px] z-20 bg-[var(--bg-ground)]/80 backdrop-blur-xl border-b border-white/[0.06]">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="flex gap-1 py-2" role="tablist" aria-label="Member management tabs">
+              <button
+                onClick={() => setActiveTab('members')}
+                role="tab"
+                aria-selected={activeTab === 'members'}
+                aria-controls="members-panel"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'members'
+                    ? 'bg-white/[0.10] text-white'
+                    : 'text-white/50 hover:text-white/70 hover:bg-white/[0.05]'
+                }`}
+              >
+                Members
+              </button>
+              <button
+                onClick={() => setActiveTab('requests')}
+                role="tab"
+                aria-selected={activeTab === 'requests'}
+                aria-controls="requests-panel"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+                  activeTab === 'requests'
+                    ? 'bg-white/[0.10] text-white'
+                    : 'text-white/50 hover:text-white/70 hover:bg-white/[0.05]'
+                }`}
+              >
+                Join Requests
+                {joinRequests.requests.filter(r => r.status === 'pending').length > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[var(--life-gold)] text-black text-[10px] font-bold flex items-center justify-center"
+                    aria-label={`${joinRequests.requests.filter(r => r.status === 'pending').length} pending requests`}
+                  >
+                    {joinRequests.requests.filter(r => r.status === 'pending').length > 9
+                      ? '9+'
+                      : joinRequests.requests.filter(r => r.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Join Requests Panel (for private spaces) */}
+        {canViewRequests && activeTab === 'requests' ? (
+          <JoinRequestsPanel
+            requests={joinRequests.requests}
+            isLoading={joinRequests.isLoading}
+            isActing={joinRequests.isActing}
+            error={joinRequests.error}
+            statusFilter={joinRequests.statusFilter}
+            onFilterChange={joinRequests.filterByStatus}
+            onApprove={joinRequests.approveRequest}
+            onReject={joinRequests.rejectRequest}
+            onRefresh={joinRequests.refresh}
+            className="min-h-[400px]"
+          />
+        ) : (
+          <>
         {/* Provisional Access Warning */}
         {hasProvisionalAccess && (
           <div className="p-4 mb-6 bg-amber-500/10 rounded-lg border border-amber-500/30">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+              <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="font-medium text-amber-400 mb-1">
                   Verification Pending
@@ -310,42 +516,44 @@ export default function SpaceMembersPage() {
 
         {/* Summary */}
         {summary && (
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <Card className="p-4 bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]">
-              <p className="text-2xl font-bold text-[var(--hive-text-primary)]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6" role="region" aria-label="Member statistics">
+            <Card className="p-4 bg-[var(--bg-surface)] border-white/[0.06]">
+              <p className="text-2xl font-bold text-white">
                 {summary.totalMembers}
               </p>
-              <p className="text-sm text-[var(--hive-text-tertiary)]">Total Members</p>
+              <p className="text-sm text-white/50">Total Members</p>
             </Card>
-            <Card className="p-4 bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]">
+            <Card className="p-4 bg-[var(--bg-surface)] border-white/[0.06]">
               <p className="text-2xl font-bold text-green-400">{summary.onlineMembers}</p>
-              <p className="text-sm text-[var(--hive-text-tertiary)]">Online Now</p>
+              <p className="text-sm text-white/50">Online Now</p>
             </Card>
-            <Card className="p-4 bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)]">
-              <p className="text-2xl font-bold text-[var(--hive-text-primary)]">
+            <Card className="p-4 bg-[var(--bg-surface)] border-white/[0.06]">
+              <p className="text-2xl font-bold text-white">
                 {summary.activeMembers}
               </p>
-              <p className="text-sm text-[var(--hive-text-tertiary)]">Active (7d)</p>
+              <p className="text-sm text-white/50">Active (7d)</p>
             </Card>
           </div>
         )}
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6" role="search">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--hive-text-tertiary)]" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" aria-hidden="true" />
             <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search members..."
+              aria-label="Search members by name"
               className="pl-9"
             />
           </div>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-[var(--hive-background-secondary)] border border-[var(--hive-border-default)] rounded-lg px-3 py-2 text-sm text-[var(--hive-text-primary)]"
+            aria-label="Filter by role"
+            className="bg-[var(--bg-surface)] border border-white/[0.06] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 transition-shadow"
           >
             <option value="">All Roles</option>
             <option value="owner">Owners</option>
@@ -355,140 +563,162 @@ export default function SpaceMembersPage() {
           </select>
         </div>
 
-        {/* Members List */}
-        <Card className="bg-[var(--hive-background-secondary)] border-[var(--hive-border-default)] overflow-hidden">
-          {members.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-[var(--hive-text-secondary)]">No members found</p>
-            </div>
-          ) : (
-            <motion.div
-              className="divide-y divide-[var(--hive-border-default)]"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              {members.map((member) => (
+        {/* Members List with Sections */}
+        {members.length === 0 ? (
+          <NoMembersEmptyState />
+        ) : (
+          <div className="space-y-8">
+            {/* Leaders Section */}
+            {leaders.length > 0 && (
+              <section aria-labelledby="leaders-heading">
+                <h2 id="leaders-heading" className="text-[11px] uppercase tracking-[0.15em] text-white/50 mb-4">
+                  Leaders ({leaders.length})
+                </h2>
                 <motion.div
-                  key={member.id}
-                  variants={itemVariants}
-                  className="flex items-center justify-between p-4 hover:bg-[var(--hive-background-tertiary)] transition-colors"
+                  className="grid grid-cols-1 md:grid-cols-2 gap-3"
+                  variants={prefersReducedMotion ? undefined : containerVariants}
+                  initial={prefersReducedMotion ? undefined : "hidden"}
+                  animate={prefersReducedMotion ? undefined : "visible"}
                 >
-                  <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <div className="relative">
-                      {member.avatar ? (
-                        <img
-                          src={member.avatar}
-                          alt={member.name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-10 w-10 rounded-full bg-[var(--hive-background-tertiary)] flex items-center justify-center">
-                          <span className="text-sm font-medium text-[var(--hive-text-secondary)]">
-                            {member.name.charAt(0).toUpperCase()}
-                          </span>
+                  {leaders.map((member) => (
+                    <motion.div
+                      key={member.id}
+                      variants={prefersReducedMotion ? undefined : itemVariants}
+                      className="relative"
+                    >
+                      <MemberCard
+                        member={toMemberCardData(member)}
+                        size="large"
+                        showBio
+                        onMemberClick={() => router.push(`/profile/${member.id}`)}
+                      />
+                      {/* Action menu for leaders */}
+                      {canManageMembers && member.role !== 'owner' && member.id !== user?.uid && (
+                        <div className="absolute top-4 right-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMember(selectedMember === member.id ? null : member.id);
+                            }}
+                            aria-label={`Actions for ${member.name}`}
+                            aria-expanded={selectedMember === member.id}
+                            aria-haspopup="menu"
+                            className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.05] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                          >
+                            <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                          {selectedMember === member.id && (
+                            <MemberActionMenu
+                              member={member}
+                              userRole={userRole}
+                              actionLoading={actionLoading}
+                              hasProvisionalAccess={hasProvisionalAccess}
+                              onRoleChange={handleRoleChange}
+                              onRemove={(id, name) => {
+                                setMemberToRemove({ id, name });
+                                setSelectedMember(null);
+                              }}
+                            />
+                          )}
                         </div>
                       )}
-                      {member.status === 'online' && (
-                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 border-2 border-[var(--hive-background-secondary)]" />
-                      )}
-                    </div>
-
-                    {/* Info */}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-[var(--hive-text-primary)]">
-                          {member.name}
-                        </span>
-                        {getRoleIcon(member.role)}
-                      </div>
-                      <p className="text-sm text-[var(--hive-text-tertiary)]">
-                        @{member.username}
-                        {member.major && ` · ${member.major}`}
-                        {member.graduationYear && ` '${member.graduationYear.slice(-2)}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Role Badge */}
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-medium capitalize ${getRoleBadgeColor(
-                        member.role
-                      )}`}
-                    >
-                      {member.role}
-                    </span>
-
-                    {/* Actions */}
-                    {canManageMembers && member.role !== 'owner' && member.id !== user?.uid && (
-                      <div className="relative">
-                        <button
-                          onClick={() =>
-                            setSelectedMember(selectedMember === member.id ? null : member.id)
-                          }
-                          className="p-1.5 rounded-lg text-[var(--hive-text-tertiary)] hover:text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] transition-colors"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-
-                        {selectedMember === member.id && (
-                          <div className="absolute right-0 mt-1 w-48 rounded-lg border border-[var(--hive-border-default)] bg-[var(--hive-background-secondary)] shadow-lg z-10">
-                            <div className="py-1">
-                              {userRole === 'owner' && member.role !== 'admin' && (
-                                <button
-                                  onClick={() => handleRoleChange(member.id, 'admin')}
-                                  disabled={actionLoading}
-                                  className="w-full px-3 py-2 text-left text-sm text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] flex items-center gap-2"
-                                >
-                                  {actionLoading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Shield className="h-4 w-4" />
-                                  )}
-                                  Make Admin
-                                </button>
-                              )}
-                              {member.role === 'admin' && userRole === 'owner' && (
-                                <button
-                                  onClick={() => handleRoleChange(member.id, 'member')}
-                                  disabled={actionLoading}
-                                  className="w-full px-3 py-2 text-left text-sm text-[var(--hive-text-primary)] hover:bg-[var(--hive-background-tertiary)] flex items-center gap-2"
-                                >
-                                  {actionLoading ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <UserMinus className="h-4 w-4" />
-                                  )}
-                                  Remove Admin
-                                </button>
-                              )}
-                              {/* Hide remove button when leader has provisional access */}
-                              {!hasProvisionalAccess && (
-                                <button
-                                  onClick={() => {
-                                    setMemberToRemove({ id: member.id, name: member.name });
-                                    setSelectedMember(null);
-                                  }}
-                                  disabled={actionLoading}
-                                  className="w-full px-3 py-2 text-left text-sm text-[var(--hive-status-error)] hover:bg-[var(--hive-status-error)]/10 flex items-center gap-2"
-                                >
-                                  <UserMinus className="h-4 w-4" />
-                                  Remove Member
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    </motion.div>
+                  ))}
                 </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </Card>
+              </section>
+            )}
+
+            {/* Regular Members Section */}
+            {regularMembers.length > 0 && (
+              <section aria-labelledby="members-heading">
+                <h2 id="members-heading" className="text-[11px] uppercase tracking-[0.15em] text-white/50 mb-4">
+                  Members ({regularMembers.length})
+                </h2>
+                <motion.div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
+                  variants={prefersReducedMotion ? undefined : containerVariants}
+                  initial={prefersReducedMotion ? undefined : "hidden"}
+                  animate={prefersReducedMotion ? undefined : "visible"}
+                >
+                  {paginatedMembers.map((member) => (
+                    <motion.div
+                      key={member.id}
+                      variants={prefersReducedMotion ? undefined : itemVariants}
+                      className="relative"
+                    >
+                      <MemberCard
+                        member={toMemberCardData(member)}
+                        size="compact"
+                        onMemberClick={() => router.push(`/profile/${member.id}`)}
+                      />
+                      {/* Action menu for regular members */}
+                      {canManageMembers && member.id !== user?.uid && (
+                        <div className="absolute top-3 right-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMember(selectedMember === member.id ? null : member.id);
+                            }}
+                            aria-label={`Actions for ${member.name}`}
+                            aria-expanded={selectedMember === member.id}
+                            aria-haspopup="menu"
+                            className="p-1 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.05] transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                          >
+                            <EllipsisVerticalIcon className="h-3.5 w-3.5" aria-hidden="true" />
+                          </button>
+                          {selectedMember === member.id && (
+                            <MemberActionMenu
+                              member={member}
+                              userRole={userRole}
+                              actionLoading={actionLoading}
+                              hasProvisionalAccess={hasProvisionalAccess}
+                              onRoleChange={handleRoleChange}
+                              onRemove={(id, name) => {
+                                setMemberToRemove({ id, name });
+                                setSelectedMember(null);
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <nav className="mt-6 flex items-center justify-center gap-2" aria-label="Pagination">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      aria-label="Go to previous page"
+                      className="text-white/50 hover:text-white disabled:opacity-30"
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-white/50 px-4" aria-current="page">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      aria-label="Go to next page"
+                      className="text-white/50 hover:text-white disabled:opacity-30"
+                    >
+                      Next
+                    </Button>
+                  </nav>
+                )}
+              </section>
+            )}
+          </div>
+        )}
+          </>
+        )}
       </div>
 
       {/* Remove Member Confirmation */}

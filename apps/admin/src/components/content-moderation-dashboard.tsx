@@ -20,23 +20,41 @@ import {
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
-  Flag,
-  MessageSquare,
-  Users,
-  Wrench,
-  User,
-  Clock,
-  Shield,
-  Ban,
-  Trash2,
-  AlertCircle,
-  RefreshCw,
-  ChevronRight,
-  ExternalLink,
-} from "lucide-react";
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  FlagIcon,
+  ChatBubbleLeftIcon,
+  UsersIcon,
+  WrenchIcon,
+  UserIcon,
+  ClockIcon,
+  ShieldCheckIcon,
+  NoSymbolIcon,
+  TrashIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon,
+  ChevronRightIcon,
+  ArrowTopRightOnSquareIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const AlertTriangle = ExclamationTriangleIcon;
+const CheckCircle = CheckCircleIcon;
+const XCircle = XCircleIcon;
+const Flag = FlagIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const Users = UsersIcon;
+const Wrench = WrenchIcon;
+const User = UserIcon;
+const Clock = ClockIcon;
+const Shield = ShieldCheckIcon;
+const Ban = NoSymbolIcon;
+const Trash2 = TrashIcon;
+const AlertCircle = ExclamationCircleIcon;
+const RefreshCw = ArrowPathIcon;
+const ChevronRight = ChevronRightIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
 import { PieChart, BarChart } from "./charts";
 
 interface Report {

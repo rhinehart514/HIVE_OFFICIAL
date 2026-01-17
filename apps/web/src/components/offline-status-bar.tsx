@@ -1,7 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { WifiOff, Cloud, CloudOff, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { WifiIcon, CloudIcon, CheckIcon, ExclamationCircleIcon, ArrowPathIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const CloudOff = NoSymbolIcon;
 import { cn } from '@/lib/utils';
 import { useOffline } from '@/hooks/use-offline';
 
@@ -47,7 +50,7 @@ export function OfflineStatusBar({
   const getStatusConfig = () => {
     if (showOffline) {
       return {
-        icon: WifiOff,
+        icon: WifiIcon,
         iconColor: 'text-red-400',
         bgColor: 'bg-red-500/10 border-red-500/30',
         title: "You're offline",
@@ -59,7 +62,7 @@ export function OfflineStatusBar({
 
     if (showSyncing) {
       return {
-        icon: Loader2,
+        icon: ArrowPathIcon,
         iconColor: 'text-blue-400 animate-spin',
         bgColor: 'bg-blue-500/10 border-blue-500/30',
         title: 'Syncing...',
@@ -79,7 +82,7 @@ export function OfflineStatusBar({
 
     if (showReconnected) {
       return {
-        icon: Check,
+        icon: CheckIcon,
         iconColor: 'text-green-400',
         bgColor: 'bg-green-500/10 border-green-500/30',
         title: 'Back online',
@@ -169,12 +172,12 @@ export function OfflineIndicator({ className }: { className?: string }) {
     >
       {!isOnline ? (
         <>
-          <WifiOff className="w-3 h-3" />
+          <WifiIcon className="w-3 h-3" />
           <span>Offline</span>
         </>
       ) : (
         <>
-          <Cloud className="w-3 h-3" />
+          <CloudIcon className="w-3 h-3" />
           <span>{pendingActions.length}</span>
         </>
       )}

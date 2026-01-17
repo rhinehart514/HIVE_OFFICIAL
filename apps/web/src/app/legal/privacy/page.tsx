@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Shield } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  ShieldCheckIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Shield = ShieldCheckIcon;
 import Link from "next/link";
 import { PrivacyContent } from "@/components/legal/privacy-content";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | HIVE",
+  title: "Privacy Policy",
   description:
     "Privacy Policy for HIVE - how we collect, use, and protect your personal information.",
 };

@@ -7,24 +7,10 @@
 
 import React, { useState, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, Badge } from "@hive/ui";
-import { 
-  MessageSquare, 
-  Zap, 
-  Calendar, 
-  Users, 
-  FileText, 
-  Info,
-  Settings,
-  Eye,
-  Plus,
-  Trash2,
-  Clock,
-  Hash,
-  Layers,
-  GraduationCap,
-  Home,
-  Heart
-} from 'lucide-react';
+import { ChatBubbleLeftIcon, BoltIcon, CalendarIcon, UsersIcon, DocumentTextIcon, InformationCircleIcon, Cog6ToothIcon, EyeIcon, PlusIcon, TrashIcon, ClockIcon, HashtagIcon, AcademicCapIcon, HomeIcon, HeartIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Layers = Square3Stack3DIcon;
 
 interface SpaceSurface {
   id: string;
@@ -96,13 +82,13 @@ const SurfaceCard: React.FC<{
 }> = ({ surface, onToggle, onEdit }) => {
   const getSurfaceIcon = (type: SpaceSurface['type']) => {
     switch (type) {
-      case 'post_board': return <MessageSquare className="w-5 h-5" />;
-      case 'tools': return <Zap className="w-5 h-5" />;
-      case 'events': return <Calendar className="w-5 h-5" />;
-      case 'members': return <Users className="w-5 h-5" />;
-      case 'resources': return <FileText className="w-5 h-5" />;
-      case 'about': return <Info className="w-5 h-5" />;
-      default: return <Hash className="w-5 h-5" />;
+      case 'post_board': return <ChatBubbleLeftIcon className="w-5 h-5" />;
+      case 'tools': return <BoltIcon className="w-5 h-5" />;
+      case 'events': return <CalendarIcon className="w-5 h-5" />;
+      case 'members': return <UsersIcon className="w-5 h-5" />;
+      case 'resources': return <DocumentTextIcon className="w-5 h-5" />;
+      case 'about': return <InformationCircleIcon className="w-5 h-5" />;
+      default: return <HashtagIcon className="w-5 h-5" />;
     }
   };
 
@@ -122,7 +108,7 @@ const SurfaceCard: React.FC<{
     switch (type) {
       case 'post_board': return 'Community communication and discussions';
       case 'tools': return 'Functional capabilities and coordination tools';
-      case 'events': return 'Calendar view of community events';
+      case 'events': return 'CalendarIcon view of community events';
       case 'members': return 'Directory and membership management';
       case 'resources': return 'File sharing and resource repository';
       case 'about': return 'Static community information and guidelines';
@@ -151,7 +137,7 @@ const SurfaceCard: React.FC<{
               onClick={onEdit}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <Settings className="w-4 h-4" />
+              <Cog6ToothIcon className="w-4 h-4" />
             </Button>
             <div className="flex items-center">
               <label className="relative inline-flex items-center cursor-pointer">
@@ -179,29 +165,29 @@ const SurfaceCard: React.FC<{
               </div>
               <div className="text-center p-2 bg-gray-800/50 rounded">
                 <div className="text-sm font-semibold text-green-400">{surface.analytics.activeUsers}</div>
-                <div className="text-xs text-gray-400">Active Users</div>
+                <div className="text-xs text-gray-400">Active UsersIcon</div>
               </div>
             </div>
 
-            {/* Settings Summary */}
+            {/* Cog6ToothIcon Summary */}
             <div className="flex flex-wrap gap-1">
               {surface.settings.allowComments && (
-                <Badge size="xs" className="bg-blue-500/10 text-blue-400">Comments</Badge>
+                <Badge size="sm" className="bg-blue-500/10 text-blue-400">Comments</Badge>
               )}
               {surface.settings.requireApproval && (
-                <Badge size="xs" className="bg-yellow-500/10 text-yellow-400">Approval</Badge>
+                <Badge size="sm" className="bg-yellow-500/10 text-yellow-400">Approval</Badge>
               )}
               {surface.settings.enableNotifications && (
-                <Badge size="xs" className="bg-green-500/10 text-green-400">Notifications</Badge>
+                <Badge size="sm" className="bg-green-500/10 text-green-400">Notifications</Badge>
               )}
               {surface.settings.publiclyVisible && (
-                <Badge size="xs" className="bg-purple-500/10 text-purple-400">Public</Badge>
+                <Badge size="sm" className="bg-purple-500/10 text-purple-400">Public</Badge>
               )}
             </div>
 
             {/* Last Activity */}
             <div className="text-xs text-gray-400 flex items-center space-x-1">
-              <Clock className="w-3 h-3" />
+              <ClockIcon className="w-3 h-3" />
               <span>Last activity: {new Date(surface.analytics.lastActivity).toLocaleDateString()}</span>
             </div>
           </div>
@@ -264,7 +250,7 @@ const ToolSlotCard: React.FC<{
                 <h3 className="font-semibold text-white">{slot.tool.name}</h3>
                 <p className="text-sm text-gray-400">{slot.tool.description}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <Badge size="xs" className={getCategoryColor(slot.category)}>
+                  <Badge size="sm" className={getCategoryColor(slot.category)}>
                     {slot.category.replace('_', ' ')}
                   </Badge>
                   <span className="text-xs text-gray-500">by {slot.tool.creator}</span>
@@ -273,10 +259,10 @@ const ToolSlotCard: React.FC<{
               
               <div className="flex items-center space-x-1">
                 <Button size="sm" variant="ghost" onClick={onEdit}>
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                 </Button>
                 <Button size="sm" variant="ghost" onClick={onRemove} className="text-red-400 hover:text-red-300">
-                  <Trash2 className="w-4 h-4" />
+                  <TrashIcon className="w-4 h-4" />
                 </Button>
               </div>
             </div>
@@ -298,13 +284,13 @@ const ToolSlotCard: React.FC<{
           // Empty Slot
           <div className="text-center">
             <div className="w-12 h-12 mx-auto mb-3 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center">
-              <Plus className="w-6 h-6 text-gray-600" />
+              <PlusIcon className="w-6 h-6 text-gray-600" />
             </div>
             <h3 className="font-medium text-gray-400 mb-2">Tool Slot {slot.position}</h3>
             <p className="text-sm text-gray-500 mb-3">Install a tool for your community</p>
             
             <Button size="sm" onClick={onInstall} className="bg-amber-500 hover:bg-amber-600 text-black">
-              <Plus className="w-4 h-4 mr-1" />
+              <PlusIcon className="w-4 h-4 mr-1" />
               Install Tool
             </Button>
             
@@ -313,7 +299,7 @@ const ToolSlotCard: React.FC<{
               <p className="text-xs text-gray-500 mb-2">Recommended for {spaceSubType.replace('_', ' ')}:</p>
               <div className="flex flex-wrap gap-1">
                 {recommendedTools.slice(0, 3).map((tool) => (
-                  <Badge key={tool} size="xs" variant="outline" className="text-xs">
+                  <Badge key={tool} size="sm" variant="outline" className="text-xs">
                     {tool}
                   </Badge>
                 ))}
@@ -356,10 +342,10 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
     };
 
     const typeIcons = {
-      university_spaces: GraduationCap,
-      residential_spaces: Home,
-      greek_life_spaces: Users,
-      student_spaces: Heart,
+      university_spaces: AcademicCapIcon,
+      residential_spaces: HomeIcon,
+      greek_life_spaces: UsersIcon,
+      student_spaces: HeartIcon,
     };
 
     const TypeIcon = typeIcons[space.type];
@@ -375,7 +361,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <Cog6ToothIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Space surface management is not available</p>
       </div>
     );
@@ -410,7 +396,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
             variant="outline"
             className="border-gray-600 text-gray-300"
           >
-            <Eye className="w-4 h-4 mr-2" />
+            <EyeIcon className="w-4 h-4 mr-2" />
             Preview Space
           </Button>
         </div>
@@ -428,7 +414,7 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
         >
           <Layers className="w-4 h-4" />
           <span>Six Surfaces</span>
-          <Badge size="xs" className={activeTab === 'surfaces' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={activeTab === 'surfaces' ? 'bg-white/20' : 'bg-gray-700'}>
             {space.surfaces.filter(s => s.isEnabled).length}/6
           </Badge>
         </button>
@@ -440,9 +426,9 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <Zap className="w-4 h-4" />
+          <BoltIcon className="w-4 h-4" />
           <span>Tool Slots</span>
-          <Badge size="xs" className={activeTab === 'tools' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={activeTab === 'tools' ? 'bg-white/20' : 'bg-gray-700'}>
             {space.toolSlots.filter(s => s.isOccupied).length}/{space.maxToolSlots}
           </Badge>
         </button>

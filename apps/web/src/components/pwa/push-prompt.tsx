@@ -13,7 +13,7 @@ import { usePathname } from 'next/navigation';
 import { usePushPrompt } from '@/hooks/use-push-notifications';
 
 // Pages where we don't want to show the push prompt
-const HIDDEN_PATHS = ['/auth', '/onboarding', '/login'];
+const HIDDEN_PATHS = ['/enter', '/schools'];
 
 export function PushNotificationPrompt() {
   const pathname = usePathname();

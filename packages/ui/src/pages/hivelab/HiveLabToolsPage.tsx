@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../atomic/00-Global/atoms/tabs";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../design-system/primitives/Tabs";
 import { Surface } from "../../layout";
 import { cn } from "../../lib/utils";
 
@@ -126,8 +126,8 @@ export function HiveLabToolsPage({
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary">Import flow</Button>
-            <Button variant="primary">Create workflow</Button>
+            <Button variant="neutral">Import flow</Button>
+            <Button variant="gold">Create workflow</Button>
           </div>
         </div>
       </div>
@@ -136,7 +136,7 @@ export function HiveLabToolsPage({
         <section className="space-y-6">
           <Surface className="rounded-3xl border border-[var(--hive-border-default,#232536)] bg-[var(--hive-background-secondary,#0f1019)] p-6">
             <Tabs defaultValue={activeTab} onValueChange={onTabChange}>
-              <TabsList className="bg-[var(--hive-background-tertiary,#171827)] text-[var(--hive-text-muted,#8d93a7)]" variant="pills">
+              <TabsList className="bg-[var(--hive-background-tertiary,#171827)] text-[var(--hive-text-muted,#8d93a7)]" variant="segment">
                 <TabsTrigger value="workflows">Workflows</TabsTrigger>
                 <TabsTrigger value="experiments">Experiments</TabsTrigger>
                 <TabsTrigger value="library">Library</TabsTrigger>
@@ -169,7 +169,7 @@ export function HiveLabToolsPage({
                         <span>{workflow.updatedAt}</span>
                         <span>Owner · {workflow.owner}</span>
                         {workflow.tags?.map((tag) => (
-                          <Badge key={tag} variant="secondary">
+                          <Badge key={tag} variant="neutral">
                             #{tag}
                           </Badge>
                         ))}
@@ -187,7 +187,7 @@ export function HiveLabToolsPage({
                         ))}
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="secondary">
+                        <Button size="sm" variant="neutral">
                           Edit flow
                         </Button>
                         <Button size="sm" variant="ghost">
@@ -212,7 +212,7 @@ export function HiveLabToolsPage({
                           </h3>
                           <p className="text-xs text-[var(--hive-text-secondary,#c5c7d8)]">{experiment.summary}</p>
                         </div>
-                        <Badge variant="secondary">
+                        <Badge variant="neutral">
                           {experiment.campusSpace}
                         </Badge>
                       </header>
@@ -221,7 +221,7 @@ export function HiveLabToolsPage({
                         <span>Created · {experiment.createdAt}</span>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="secondary">
+                        <Button size="sm" variant="neutral">
                           Review experiment
                         </Button>
                         <Button size="sm" variant="ghost">
@@ -235,7 +235,7 @@ export function HiveLabToolsPage({
               <TabsContent value="library">
                 <div className="mt-6 space-y-3 text-sm text-[var(--hive-text-secondary,#c5c7d8)]">
                   <p>Browse student-built templates, automations, and rituals ready for campus deployment.</p>
-                  <Button variant="secondary">Open template library</Button>
+                  <Button variant="neutral">Open template library</Button>
                 </div>
               </TabsContent>
             </Tabs>
@@ -246,7 +246,7 @@ export function HiveLabToolsPage({
           <Surface className="space-y-4 rounded-3xl border border-[var(--hive-border-default,#232536)] bg-[var(--hive-background-secondary,#0f1019)] p-6">
             <h3 className="text-sm font-semibold text-[var(--hive-text-primary,#f5f5ff)]">Quick actions</h3>
             <div className="space-y-3">
-              <Button className="w-full justify-between" variant="secondary" onClick={onLaunchClick}>
+              <Button className="w-full justify-between" variant="neutral" onClick={onLaunchClick}>
                 Launch on campus
               </Button>
               <Button className="w-full justify-between" variant="ghost">
@@ -265,7 +265,7 @@ export function HiveLabToolsPage({
               <p>Alerts: <strong className="text-[var(--hive-text-primary,#f5f5ff)]">0</strong></p>
               <p>Queue time: <strong className="text-[var(--hive-text-primary,#f5f5ff)]">1.2s</strong></p>
             </div>
-            <Button variant="secondary" className="w-full">
+            <Button variant="neutral" className="w-full">
               View analytics
             </Button>
           </Surface>

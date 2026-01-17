@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ChevronLeft = ChevronLeftIcon;
 
 interface AppBreadcrumbProps {
   spaceName: string;
@@ -19,12 +22,12 @@ export function AppBreadcrumb({
   appName,
 }: AppBreadcrumbProps) {
   return (
-    <div className="sticky top-0 z-10 bg-[#0A0A0A]/95 backdrop-blur-sm border-b border-white/5">
+    <div className="sticky top-0 z-10 bg-[var(--hivelab-bg)]/95 backdrop-blur-sm border-b border-[var(--hivelab-border)]">
       <div className="flex items-center h-12 px-4 gap-3 max-w-7xl mx-auto">
         {/* Return to space */}
         <Link
           href={`/spaces/${spaceId}`}
-          className="flex items-center gap-1.5 text-white/60 hover:text-white/90 transition-colors group"
+          className="flex items-center gap-1.5 text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] transition-colors duration-[var(--workshop-duration)] group"
           aria-label={`Back to ${spaceName}`}
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -32,12 +35,12 @@ export function AppBreadcrumb({
         </Link>
 
         {/* Separator */}
-        <span className="text-white/20" aria-hidden="true">
+        <span className="text-[var(--hivelab-text-tertiary)]" aria-hidden="true">
           /
         </span>
 
         {/* Current app */}
-        <span className="text-sm text-white/90 font-medium truncate">
+        <span className="text-sm text-[var(--hivelab-text-primary)] font-medium truncate">
           {appName}
         </span>
       </div>

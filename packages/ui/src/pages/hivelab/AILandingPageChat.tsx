@@ -28,7 +28,10 @@ import type { ToolComposition } from '../../lib/hivelab/element-system';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ResizableDivider } from '../../atomic/molecules/resizable-divider';
 import { cn } from '../../lib/utils';
-import { Command, Wand2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SparklesIcon, ChevronLeftIcon, ChevronRightIcon, CommandLineIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Command = CommandLineIcon;
 import { ElementShowcaseSidebar } from '../../components/hivelab/showcase';
 
 const EXAMPLE_PROMPTS = [
@@ -472,7 +475,7 @@ export function AILandingPageChat({
                 'text-xs text-neutral-400 hover:text-neutral-100',
                 'transition-all duration-200',
                 'flex items-center gap-2',
-                'focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30'
+                'focus:outline-none focus:ring-2 focus:ring-life-gold/30'
               )}
             >
               <Command className="w-3 h-3" />
@@ -493,16 +496,16 @@ export function AILandingPageChat({
                   'absolute left-4 top-4 z-10',
                   'flex items-center gap-2 px-3 py-2 rounded-lg',
                   'bg-neutral-900/90 hover:bg-neutral-800',
-                  'border border-neutral-800 hover:border-[#D4AF37]/30',
-                  'text-neutral-400 hover:text-[#D4AF37]',
+                  'border border-neutral-800 hover:border-life-gold/30',
+                  'text-neutral-400 hover:text-life-gold',
                   'transition-colors duration-200',
                   'backdrop-blur-sm'
                 )}
                 title="Browse elements"
               >
-                <Wand2 className="w-4 h-4" />
+                <SparklesIcon className="w-4 h-4" />
                 <span className="text-xs font-medium hidden sm:inline">Elements</span>
-                <ChevronRight className="w-3 h-3" />
+                <ChevronRightIcon className="w-3 h-3" />
               </motion.button>
             )}
           </AnimatePresence>

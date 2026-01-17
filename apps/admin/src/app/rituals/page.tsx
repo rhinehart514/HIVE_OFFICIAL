@@ -9,7 +9,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Button, Badge, useToast } from '@hive/ui';
-import { Plus, Play, Pause, StopCircle, Eye } from 'lucide-react';
+import { PlusIcon, PlayIcon, PauseIcon, EyeIcon, StopCircleIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const StopCircle = StopCircleIcon;
 import type { RitualUnion } from '@hive/core';
 
 export default function RitualsPage() {
@@ -31,11 +34,7 @@ export default function RitualsPage() {
       const { data } = await res.json();
       setRituals(data || []);
     } catch {
-      toast({
-        title: 'Error',
-        message: 'Failed to load rituals',
-        type: 'error',
-      });
+      toast.error('Error', 'Failed to load rituals');
     } finally {
       setIsLoading(false);
     }
@@ -53,18 +52,10 @@ export default function RitualsPage() {
         body: JSON.stringify({ phase: newPhase }),
       });
       if (!res.ok) throw new Error('Failed to update ritual');
-      toast({
-        title: 'Success',
-        message: `Ritual phase updated to ${newPhase}`,
-        type: 'success',
-      });
+      toast.success('Success', `Ritual phase updated to ${newPhase}`);
       fetchRituals();
     } catch {
-      toast({
-        title: 'Error',
-        message: 'Failed to update ritual phase',
-        type: 'error',
-      });
+      toast.error('Error', 'Failed to update ritual phase');
     }
   };
 
@@ -108,7 +99,7 @@ export default function RitualsPage() {
             <p className="mt-2 text-white/60">Manage campus-wide events and campaigns</p>
           </div>
           <Button onClick={() => router.push('/rituals/create')}>
-            <Plus className="mr-2 h-4 w-4" />
+            <PlusIcon className="mr-2 h-4 w-4" />
             Create Ritual
           </Button>
         </div>
@@ -138,7 +129,7 @@ export default function RitualsPage() {
               Create your first ritual to start engaging students
             </p>
             <Button onClick={() => router.push('/rituals/create')}>
-              <Plus className="mr-2 h-4 w-4" />
+              <PlusIcon className="mr-2 h-4 w-4" />
               Create First Ritual
             </Button>
           </Card>
@@ -175,7 +166,7 @@ export default function RitualsPage() {
                         variant="outline"
                         onClick={() => handlePhaseChange(ritual.id, 'announced')}
                       >
-                        <Play className="h-4 w-4" />
+                        <PlayIcon className="h-4 w-4" />
                       </Button>
                     )}
                     {ritual.phase === 'active' && (
@@ -184,7 +175,7 @@ export default function RitualsPage() {
                         variant="outline"
                         onClick={() => handlePhaseChange(ritual.id, 'cooldown')}
                       >
-                        <Pause className="h-4 w-4" />
+                        <PauseIcon className="h-4 w-4" />
                       </Button>
                     )}
                     {['announced', 'active', 'cooldown'].includes(ritual.phase) && (
@@ -201,7 +192,7 @@ export default function RitualsPage() {
                       variant="outline"
                       onClick={() => router.push(`/rituals/${ritual.id}`)}
                     >
-                      <Eye className="h-4 w-4" />
+                      <EyeIcon className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>

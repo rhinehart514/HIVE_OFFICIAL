@@ -3,9 +3,9 @@
 /**
  * Template Gallery Page
  *
- * Browse and discover tool templates. Users can:
+ * Browse and discover tool templates. UsersIcon can:
  * - Browse by category
- * - Search templates
+ * - MagnifyingGlassIcon templates
  * - Preview template compositions
  * - Use templates to create new tools
  */
@@ -14,26 +14,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  Search,
-  Sparkles,
-  Grid3X3,
-  ChevronRight,
-  BarChart3,
-  Calendar,
-  Users,
-  Megaphone,
-  GraduationCap,
-  Gamepad2,
-  ListTodo,
-  Star,
-  TrendingUp,
-  Crown,
-  Wrench,
-  Plus,
-  Loader2,
-} from 'lucide-react';
-import { cn, Button } from '@hive/ui';
+import { MagnifyingGlassIcon, SparklesIcon, ChevronRightIcon, ChartBarIcon, CalendarIcon, UsersIcon, AcademicCapIcon, StarIcon, ArrowTrendingUpIcon, TrophyIcon, WrenchIcon, PlusIcon, ArrowPathIcon, Squares2X2Icon, MegaphoneIcon, PuzzlePieceIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { logger } from '@/lib/logger';
+
+// Aliases for lucide compatibility
+const Grid3X3 = Squares2X2Icon;
+const Megaphone = MegaphoneIcon;
+const Gamepad2 = PuzzlePieceIcon;
+const ListTodo = ListBulletIcon;
+import { cn, Button, toast } from '@hive/ui';
 
 // ============================================================================
 // Types
@@ -79,12 +68,12 @@ const CATEGORIES: {
   description: string;
 }[] = [
   { value: 'all', label: 'All Templates', icon: Grid3X3, description: 'Browse all available templates' },
-  { value: 'engagement', label: 'Engagement', icon: BarChart3, description: 'Polls, quizzes, and reactions' },
-  { value: 'events', label: 'Events', icon: Calendar, description: 'RSVPs, countdowns, and calendars' },
-  { value: 'organization', label: 'Organization', icon: Users, description: 'Sign-ups, rosters, and schedules' },
-  { value: 'analytics', label: 'Analytics', icon: TrendingUp, description: 'Dashboards and leaderboards' },
+  { value: 'engagement', label: 'Engagement', icon: ChartBarIcon, description: 'Polls, quizzes, and reactions' },
+  { value: 'events', label: 'Events', icon: CalendarIcon, description: 'RSVPs, countdowns, and calendars' },
+  { value: 'organization', label: 'Organization', icon: UsersIcon, description: 'Sign-ups, rosters, and schedules' },
+  { value: 'analytics', label: 'Analytics', icon: ArrowTrendingUpIcon, description: 'Dashboards and leaderboards' },
   { value: 'communication', label: 'Communication', icon: Megaphone, description: 'Announcements and notifications' },
-  { value: 'academic', label: 'Academic', icon: GraduationCap, description: 'Study tools and course materials' },
+  { value: 'academic', label: 'Academic', icon: AcademicCapIcon, description: 'Study tools and course materials' },
   { value: 'social', label: 'Social', icon: Gamepad2, description: 'Games and icebreakers' },
   { value: 'productivity', label: 'Productivity', icon: ListTodo, description: 'Tasks and checklists' },
 ];
@@ -101,12 +90,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_ICONS: Record<string, LucideIconComponent> = {
-  engagement: BarChart3,
-  events: Calendar,
-  organization: Users,
-  analytics: TrendingUp,
+  engagement: ChartBarIcon,
+  events: CalendarIcon,
+  organization: UsersIcon,
+  analytics: ArrowTrendingUpIcon,
   communication: Megaphone,
-  academic: GraduationCap,
+  academic: AcademicCapIcon,
   social: Gamepad2,
   productivity: ListTodo,
 };
@@ -145,7 +134,7 @@ export default function TemplateGalleryPage() {
         setError(null);
       } catch (err) {
         setError('Failed to load templates. Please try again.');
-        console.error('Template fetch error:', err);
+        logger.error('Template fetch error', { component: 'TemplatesPage' }, err instanceof Error ? err : undefined);
       } finally {
         setLoading(false);
       }
@@ -197,8 +186,8 @@ export default function TemplateGalleryPage() {
       const data = await response.json();
       router.push(data.redirectUrl || `/tools/${data.tool.id}`);
     } catch (err) {
-      console.error('Use template error:', err);
-      alert(err instanceof Error ? err.message : 'Failed to use template');
+      logger.error('Use template error', { component: 'TemplatesPage' }, err instanceof Error ? err : undefined);
+      toast.error(err instanceof Error ? err.message : 'Failed to use template');
     } finally {
       setUsingTemplate(null);
     }
@@ -212,7 +201,7 @@ export default function TemplateGalleryPage() {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold-cta)] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-black" />
+                <SparklesIcon className="w-4 h-4 text-black" />
               </div>
               <span className="font-semibold text-lg">HiveLab</span>
             </Link>
@@ -226,13 +215,13 @@ export default function TemplateGalleryPage() {
               </Link>
               <Link href="/tools">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
-                  <Wrench className="w-4 h-4 mr-2" />
+                  <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
               </Link>
               <Link href="/tools/create">
                 <Button size="sm" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
-                  <Plus className="w-4 h-4 mr-1" />
+                  <PlusIcon className="w-4 h-4 mr-1" />
                   Create Tool
                 </Button>
               </Link>
@@ -258,7 +247,7 @@ export default function TemplateGalleryPage() {
             </p>
           </motion.div>
 
-          {/* Search */}
+          {/* MagnifyingGlassIcon */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -266,12 +255,12 @@ export default function TemplateGalleryPage() {
             className="mt-8 max-w-md mx-auto"
           >
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search templates..."
+                placeholder="MagnifyingGlassIcon templates..."
                 className={cn(
                   'w-full pl-12 pr-4 py-3 rounded-xl',
                   'bg-white/[0.04] border border-white/[0.08]',
@@ -314,7 +303,7 @@ export default function TemplateGalleryPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-white/40" />
+              <ArrowPathIcon className="w-8 h-8 animate-spin text-white/40" />
             </div>
           ) : error ? (
             <div className="text-center py-20">
@@ -329,16 +318,36 @@ export default function TemplateGalleryPage() {
             </div>
           ) : filteredTemplates.length === 0 ? (
             <div className="text-center py-20">
-              <Search className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <p className="text-white/60">No templates found.</p>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="mt-4 text-[var(--hive-gold-cta)] hover:underline"
-                >
-                  Clear search
-                </button>
-              )}
+              <MagnifyingGlassIcon className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No templates found</h3>
+              <p className="text-white/60 mb-6 max-w-md mx-auto">
+                {searchQuery
+                  ? "Try a different search term or browse by category"
+                  : "Templates help you get started quickly. Can't find what you need? Build from scratch."}
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                {searchQuery ? (
+                  <Button
+                    onClick={() => setSearchQuery('')}
+                    variant="ghost"
+                    className="text-white/70 hover:text-white"
+                  >
+                    Clear search
+                  </Button>
+                ) : null}
+                <Link href="/tools/create">
+                  <Button className="bg-white/10 hover:bg-white/20 text-white">
+                    <PlusIcon className="w-4 h-4 mr-1" />
+                    Build from Scratch
+                  </Button>
+                </Link>
+                <Link href="/elements">
+                  <Button variant="ghost" className="text-white/60 hover:text-white">
+                    Browse Elements
+                    <ChevronRightIcon className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           ) : (
             <AnimatePresence mode="wait">
@@ -350,7 +359,7 @@ export default function TemplateGalleryPage() {
                   className="mb-12"
                 >
                   <div className="flex items-center gap-2 mb-6">
-                    <Star className="w-5 h-5 text-amber-400" />
+                    <StarIcon className="w-5 h-5 text-amber-400" />
                     <h2 className="text-xl font-semibold text-white">Featured Templates</h2>
                   </div>
 
@@ -376,7 +385,7 @@ export default function TemplateGalleryPage() {
                   transition={{ delay: 0.1 }}
                 >
                   <div className="flex items-center gap-2 mb-6">
-                    <Crown className="w-5 h-5 text-purple-400" />
+                    <TrophyIcon className="w-5 h-5 text-purple-400" />
                     <h2 className="text-xl font-semibold text-white">Community Templates</h2>
                   </div>
 
@@ -410,14 +419,14 @@ export default function TemplateGalleryPage() {
           <div className="flex items-center justify-center gap-4">
             <Link href="/tools/create">
               <Button size="lg" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
-                <Sparkles className="w-4 h-4 mr-2" />
+                <SparklesIcon className="w-4 h-4 mr-2" />
                 Start Building
               </Button>
             </Link>
             <Link href="/elements">
               <Button size="lg" variant="ghost" className="text-white/60 hover:text-white">
                 Browse Elements
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRightIcon className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>
@@ -474,7 +483,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-white truncate">{template.name}</h3>
               {template.isFeatured && (
-                <Star className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />
+                <StarIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" />
               )}
             </div>
             <p className="text-sm text-white/50 mt-1 line-clamp-2">
@@ -495,7 +504,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
           )}
           {template.usageCount > 0 && (
             <span className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
+              <ArrowTrendingUpIcon className="w-3 h-3" />
               {template.usageCount} uses
             </span>
           )}
@@ -532,13 +541,13 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
           >
             {isUsing ? (
               <>
-                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                <ArrowPathIcon className="w-3 h-3 mr-1 animate-spin" />
                 Creating...
               </>
             ) : (
               <>
                 Use Template
-                <ChevronRight className="w-3 h-3 ml-1" />
+                <ChevronRightIcon className="w-3 h-3 ml-1" />
               </>
             )}
           </Button>

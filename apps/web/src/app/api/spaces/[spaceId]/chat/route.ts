@@ -44,10 +44,26 @@ const SendMessageSchema = z.object({
  * Create permission check callback for SpaceChatService
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+    // 'read' permission allows non-members to view public spaces
+    if (requiredRole === 'read') {
+      // First check if user is a member (any level)
+      const memberCheck = await checkSpacePermission(spaceId, userId, 'member');
+      if (memberCheck.hasPermission) {
+        return { allowed: true, role: memberCheck.role };
+      }
+      // If not a member, check if space is public (allow guest access)
+      const guestCheck = await checkSpacePermission(spaceId, userId, 'guest');
+      if (guestCheck.hasPermission && guestCheck.space?.isPublic) {
+        return { allowed: true, role: 'guest' };
+      }
+      return { allowed: false };
+    }
+
+    // For other roles, use standard permission check
     const permCheck = await checkSpacePermission(spaceId, userId, requiredRole);
     if (!permCheck.hasPermission) {
-      // Check guest access for public spaces
+      // Check guest access for public spaces (fallback for 'member' role)
       if (requiredRole === 'member') {
         const guestCheck = await checkSpacePermission(spaceId, userId, 'guest');
         if (guestCheck.hasPermission && guestCheck.space?.isPublic) {

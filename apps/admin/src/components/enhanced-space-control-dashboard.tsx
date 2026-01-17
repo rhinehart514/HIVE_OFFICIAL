@@ -3,13 +3,38 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  Search, Filter, Users, AlertTriangle, 
-  Settings, Eye, BarChart3, RefreshCw,
-  Play, Pause, Archive, RotateCcw, Edit,
-  CheckCircle, XCircle, Clock, Zap, Target, Globe,
-  MessageSquare, Calendar, Wrench, Shield
-} from "lucide-react";
+import {
+  MagnifyingGlassIcon, FunnelIcon, UsersIcon, ExclamationTriangleIcon,
+  Cog6ToothIcon, EyeIcon, ChartBarIcon, ArrowPathIcon,
+  PlayIcon, PauseIcon, ArchiveBoxIcon, ArrowPathIcon as ArrowPathIcon2, PencilIcon,
+  CheckCircleIcon, XCircleIcon, ClockIcon, BoltIcon, CursorArrowRaysIcon, GlobeAltIcon,
+  ChatBubbleLeftIcon, CalendarIcon, WrenchIcon, ShieldCheckIcon
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Search = MagnifyingGlassIcon;
+const Filter = FunnelIcon;
+const Users = UsersIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const Settings = Cog6ToothIcon;
+const Eye = EyeIcon;
+const BarChart3 = ChartBarIcon;
+const RefreshCw = ArrowPathIcon;
+const Play = PlayIcon;
+const Pause = PauseIcon;
+const Archive = ArchiveBoxIcon;
+const RotateCcw = ArrowPathIcon2;
+const Edit = PencilIcon;
+const CheckCircle = CheckCircleIcon;
+const XCircle = XCircleIcon;
+const Clock = ClockIcon;
+const Zap = BoltIcon;
+const Target = CursorArrowRaysIcon;
+const Globe = GlobeAltIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const Calendar = CalendarIcon;
+const Wrench = WrenchIcon;
+const Shield = ShieldCheckIcon;
 
 interface EnhancedSpace {
   id: string;

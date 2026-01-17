@@ -4,10 +4,10 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "../../atomic/00-Global/atoms/avatar";
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../atomic/00-Global/atoms/tabs";
+} from "../../design-system/primitives/Avatar";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../design-system/primitives/Tabs";
 import { Surface } from "../../layout";
 import { cn } from "../../lib/utils";
 
@@ -141,16 +141,16 @@ export function ProfileOverviewPage({
             </div>
             <div className="flex flex-wrap gap-2">
               {badges.map((badge) => (
-                <Badge key={badge} variant="primary">
+                <Badge key={badge} variant="gold">
                   {badge}
                 </Badge>
               ))}
             </div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <Button variant="secondary">Message</Button>
+            <Button variant="neutral">Message</Button>
             <Button variant="ghost">Share profile</Button>
-            <Button variant="primary">Invite to ritual</Button>
+            <Button variant="gold">Invite to ritual</Button>
           </div>
         </Surface>
       </div>
@@ -159,7 +159,7 @@ export function ProfileOverviewPage({
         <section className="space-y-6">
           <Surface className="rounded-3xl border border-[var(--hive-border-default,#292c3c)] bg-[var(--hive-background-secondary,#0f1019)] p-6">
             <Tabs defaultValue="highlights">
-              <TabsList className="bg-[var(--hive-background-tertiary,#181a27)] text-[var(--hive-text-muted,#8d93a7)]" variant="pills">
+              <TabsList className="bg-[var(--hive-background-tertiary,#181a27)] text-[var(--hive-text-muted,#8d93a7)]" variant="segment">
                 <TabsTrigger value="highlights">Highlights</TabsTrigger>
                 <TabsTrigger value="timeline">Timeline</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
@@ -179,7 +179,7 @@ export function ProfileOverviewPage({
                           <h3 className="text-sm font-semibold text-[var(--hive-text-primary,#f5f5ff)]">
                             {highlight.title}
                           </h3>
-                          <Badge variant="secondary">
+                          <Badge variant="neutral">
                             {highlight.category}
                           </Badge>
                         </header>
@@ -216,7 +216,7 @@ export function ProfileOverviewPage({
                       {experience.tags && experience.tags.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {experience.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary">
+                            <Badge key={tag} variant="neutral">
                               {tag}
                             </Badge>
                           ))}
@@ -271,7 +271,7 @@ export function ProfileOverviewPage({
                 </li>
               ))}
             </ul>
-            <Button variant="secondary" className="w-full">
+            <Button variant="neutral" className="w-full">
               Manage spaces
             </Button>
           </Surface>

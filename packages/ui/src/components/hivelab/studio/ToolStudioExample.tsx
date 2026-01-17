@@ -15,16 +15,14 @@
 
 'use client';
 
-import {
-  AlignLeft,
-  CheckSquare,
-  Circle,
-  Image,
-  Minus,
-  Type,
-} from 'lucide-react';
+import { StopIcon, PhotoIcon, MinusIcon, DocumentTextIcon, Bars3BottomLeftIcon, CheckIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Type = DocumentTextIcon;
+const AlignLeft = Bars3BottomLeftIcon;
+const CheckSquare = CheckIcon;
 import { useState } from 'react';
-import { Button } from '../../../atomic';
+import { Button } from '../../../design-system/primitives';
 import { useToolState } from '../../../hooks/hivelab/use-tool-state';
 import type { Tool } from '../../../lib/hivelab/tool-state-manager';
 import { CanvasDropZone } from './CanvasDropZone';
@@ -52,7 +50,7 @@ const ELEMENT_TYPES = [
     id: 'radio',
     type: 'RADIO',
     label: 'Radio Choice',
-    icon: Circle,
+    icon: StopIcon,
     description: 'Single choice',
   },
   {
@@ -65,15 +63,15 @@ const ELEMENT_TYPES = [
   {
     id: 'image-upload',
     type: 'IMAGE_UPLOAD',
-    label: 'Image Upload',
-    icon: Image,
+    label: 'PhotoIcon Upload',
+    icon: PhotoIcon,
     description: 'Upload images',
   },
   {
     id: 'divider',
     type: 'DIVIDER',
     label: 'Divider',
-    icon: Minus,
+    icon: MinusIcon,
     description: 'Section separator',
   },
 ] as const;

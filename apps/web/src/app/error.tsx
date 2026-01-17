@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Button } from '@hive/ui';
+import { ExclamationTriangleIcon, ArrowPathIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { logger } from '@/lib/logger';
 
 export default function Error({
   error,
@@ -10,40 +13,57 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Application error boundary triggered', error);
+    logger.error('Application error boundary triggered', {
+      digest: error.digest,
+      component: 'RootErrorBoundary',
+    }, error);
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[#0A0A0A]">
       <div className="mx-auto max-w-md text-center">
-        <h2 className="mb-2 text-2xl font-bold">
-          Something went wrong
+        <div className="mb-6 flex justify-center">
+          <div className="rounded-full bg-amber-500/10 p-4">
+            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
+          </div>
+        </div>
+
+        <h2 className="mb-2 text-xl font-semibold text-white">
+          Something broke.
         </h2>
 
-        <p className="mb-6 text-gray-500">
-          We encountered an unexpected error.
+        <p className="mb-6 text-sm text-neutral-400">
+          Fixing it. Try again in a sec.
         </p>
 
         {error.digest && (
-          <p className="mb-6 text-sm text-gray-400">
+          <p className="mb-6 text-xs text-neutral-500">
             Error ID: {error.digest}
           </p>
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <button
-            onClick={() => reset()}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
+          <Button onClick={() => reset()} className="gap-2">
+            <ArrowPathIcon className="h-4 w-4" />
             Try again
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => (window.location.href = '/')}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+            className="gap-2"
           >
+            <HomeIcon className="h-4 w-4" />
             Go home
-          </button>
+          </Button>
         </div>
+
+        {process.env.NODE_ENV === 'development' && error.message && (
+          <div className="mt-6 rounded-md bg-neutral-900 border border-neutral-800 p-3 text-left">
+            <p className="text-xs font-mono text-neutral-400 break-all">
+              {error.message}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

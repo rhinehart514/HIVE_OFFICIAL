@@ -22,21 +22,37 @@ import {
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search,
-  Filter,
-  Download,
-  UserCog,
-  Ban,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  AlertTriangle,
-  Shield,
-  Clock,
-  Users,
-  Wrench,
-} from "lucide-react";
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  ArrowDownTrayIcon,
+  Cog6ToothIcon,
+  NoSymbolIcon,
+  CheckCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  UsersIcon,
+  WrenchIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Search = MagnifyingGlassIcon;
+const Filter = FunnelIcon;
+const Download = ArrowDownTrayIcon;
+const UserCog = Cog6ToothIcon;
+const Ban = NoSymbolIcon;
+const CheckCircle = CheckCircleIcon;
+const ChevronLeft = ChevronLeftIcon;
+const ChevronRight = ChevronRightIcon;
+const X = XMarkIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const Shield = ShieldCheckIcon;
+const Clock = ClockIcon;
+const Users = UsersIcon;
+const Wrench = WrenchIcon;
 import { Sparkline } from "./charts";
 
 interface User {

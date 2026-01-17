@@ -200,7 +200,7 @@ export function SmartGuides({
             y1="3"
             x2="6"
             y2="3"
-            stroke="#888888"
+            stroke="var(--hivelab-text-tertiary)"
             strokeWidth="1"
             strokeDasharray="2 2"
           />
@@ -217,7 +217,7 @@ export function SmartGuides({
                 y1={guide.start - 20}
                 x2={guide.position}
                 y2={guide.end + 20}
-                stroke="#888888"
+                stroke="var(--hivelab-text-tertiary)"
                 strokeWidth={1 / zoom}
                 strokeDasharray="4 2"
                 opacity={0.8}
@@ -227,13 +227,13 @@ export function SmartGuides({
                 cx={guide.position}
                 cy={guide.start - 20}
                 r={2 / zoom}
-                fill="#888888"
+                fill="var(--hivelab-text-tertiary)"
               />
               <circle
                 cx={guide.position}
                 cy={guide.end + 20}
                 r={2 / zoom}
-                fill="#888888"
+                fill="var(--hivelab-text-tertiary)"
               />
             </>
           ) : (
@@ -244,7 +244,7 @@ export function SmartGuides({
                 y1={guide.position}
                 x2={guide.end + 20}
                 y2={guide.position}
-                stroke="#888888"
+                stroke="var(--hivelab-text-tertiary)"
                 strokeWidth={1 / zoom}
                 strokeDasharray="4 2"
                 opacity={0.8}
@@ -254,13 +254,13 @@ export function SmartGuides({
                 cx={guide.start - 20}
                 cy={guide.position}
                 r={2 / zoom}
-                fill="#888888"
+                fill="var(--hivelab-text-tertiary)"
               />
               <circle
                 cx={guide.end + 20}
                 cy={guide.position}
                 r={2 / zoom}
-                fill="#888888"
+                fill="var(--hivelab-text-tertiary)"
               />
             </>
           )}

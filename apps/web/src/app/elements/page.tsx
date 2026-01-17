@@ -11,16 +11,11 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import {
-  Grid3X3,
-  Sparkles,
-  Plug,
-  Shield,
-  Search,
-  ChevronRight,
-  Wrench,
-  Crown,
-} from 'lucide-react';
+import { SparklesIcon, ShieldCheckIcon, MagnifyingGlassIcon, ChevronRightIcon, WrenchIcon, TrophyIcon, Squares2X2Icon, LinkIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Grid3X3 = Squares2X2Icon;
+const Plug = LinkIcon;
 import { cn, Button } from '@hive/ui';
 
 // Element data - simplified version of the full element system
@@ -31,7 +26,7 @@ const ELEMENTS = {
     icon: Grid3X3,
     color: 'emerald',
     elements: [
-      { id: 'search-input', name: 'Search Input', description: 'Text search with autocomplete' },
+      { id: 'search-input', name: 'MagnifyingGlassIcon Input', description: 'Text search with autocomplete' },
       { id: 'filter-selector', name: 'Filter Selector', description: 'Multi-select filter categories' },
       { id: 'result-list', name: 'Result List', description: 'Paginated list display' },
       { id: 'date-picker', name: 'Date Picker', description: 'Date and time selection' },
@@ -55,7 +50,7 @@ const ELEMENTS = {
     elements: [
       { id: 'event-picker', name: 'Event Picker', description: 'Browse and select campus events' },
       { id: 'space-picker', name: 'Space Picker', description: 'Browse and select spaces' },
-      { id: 'user-selector', name: 'User Selector', description: 'Search and select users' },
+      { id: 'user-selector', name: 'User Selector', description: 'MagnifyingGlassIcon and select users' },
       { id: 'rsvp-button', name: 'RSVP Button', description: 'Event RSVP with capacity tracking' },
       { id: 'connection-list', name: 'Connection List', description: 'Show user connections' },
     ],
@@ -63,7 +58,7 @@ const ELEMENTS = {
   space: {
     title: 'Space Elements',
     description: 'Space leaders only. Access your space\'s private data.',
-    icon: Shield,
+    icon: ShieldCheckIcon,
     color: 'amber',
     elements: [
       { id: 'member-list', name: 'Member List', description: 'Display space members' },
@@ -133,7 +128,7 @@ export default function ElementGalleryPage() {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-[var(--hive-gold-cta)] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-black" />
+                <SparklesIcon className="w-4 h-4 text-black" />
               </div>
               <span className="font-semibold text-lg">HiveLab</span>
             </Link>
@@ -141,7 +136,7 @@ export default function ElementGalleryPage() {
             <div className="flex items-center gap-3">
               <Link href="/tools">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
-                  <Wrench className="w-4 h-4 mr-2" />
+                  <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
               </Link>
@@ -172,7 +167,7 @@ export default function ElementGalleryPage() {
             </p>
           </motion.div>
 
-          {/* Search */}
+          {/* MagnifyingGlassIcon */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,12 +175,12 @@ export default function ElementGalleryPage() {
             className="mt-8 max-w-md mx-auto"
           >
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search elements..."
+                placeholder="MagnifyingGlassIcon elements..."
                 className={cn(
                   'w-full pl-12 pr-4 py-3 rounded-xl',
                   'bg-white/[0.04] border border-white/[0.08]',
@@ -292,13 +287,13 @@ export default function ElementGalleryPage() {
                             {element.description}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
+                        <ChevronRightIcon className="w-4 h-4 text-white/20 group-hover:text-white/40 transition-colors" />
                       </div>
 
                       {/* Tier badge */}
                       {tier === 'space' && (
                         <div className="mt-3 flex items-center gap-1.5">
-                          <Crown className="w-3.5 h-3.5 text-amber-400" />
+                          <TrophyIcon className="w-3.5 h-3.5 text-amber-400" />
                           <span className="text-xs text-amber-400">Leaders only</span>
                         </div>
                       )}
@@ -316,7 +311,7 @@ export default function ElementGalleryPage() {
               animate={{ opacity: 1 }}
               className="text-center py-16"
             >
-              <Search className="w-12 h-12 text-white/20 mx-auto mb-4" />
+              <MagnifyingGlassIcon className="w-12 h-12 text-white/20 mx-auto mb-4" />
               <p className="text-white/60">No elements match your search.</p>
               <button
                 onClick={() => setSearchQuery('')}
@@ -342,14 +337,14 @@ export default function ElementGalleryPage() {
           <div className="flex items-center justify-center gap-4">
             <Link href="/tools/create">
               <Button size="lg" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
-                <Sparkles className="w-4 h-4 mr-2" />
+                <SparklesIcon className="w-4 h-4 mr-2" />
                 Start Building
               </Button>
             </Link>
             <Link href="/templates">
               <Button size="lg" variant="ghost" className="text-white/60 hover:text-white">
                 Browse Templates
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRightIcon className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>

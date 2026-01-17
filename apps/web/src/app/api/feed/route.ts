@@ -145,7 +145,8 @@ async function buildUserContext(
     userId,
     spaceEngagementScores,
     preferredSpaceIds,
-    preferredContentTypes: ['tool_generated', 'space_event', 'user_post'],
+    // Activity Stream: Focus on space activity, not user posts
+    preferredContentTypes: ['tool_generated', 'tool_enhanced', 'space_event', 'builder_announcement'],
     optimalPostingHours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
     accessibleSpaceIds,
     publicSpaceIds
@@ -205,6 +206,13 @@ async function fetchCandidates(
         return null;
       }
 
+      // ACTIVITY STREAM: Filter out user_post content type
+      // We only want space activity (events, announcements, tool content)
+      const mappedContentType = mapContentType(data.contentType || data.type);
+      if (mappedContentType === 'user_post') {
+        return null;
+      }
+
       const createdAt = data.createdAt?.toDate?.() || new Date(data.createdAt || Date.now());
 
       return {
@@ -212,7 +220,7 @@ async function fetchCandidates(
         spaceId: data.spaceId || '',
         authorId: data.authorId || data.userId || '',
         createdAt,
-        contentType: mapContentType(data.contentType || data.type),
+        contentType: mappedContentType,
         toolId: data.toolId,
         content: data.content?.text || data.text || data.description || '',
         title: data.title || data.content?.title,
@@ -389,12 +397,19 @@ async function getChronologicalFeed(
         return null;
       }
 
+      // ACTIVITY STREAM: Filter out user_post content type
+      const contentType = data.contentType || data.type || 'user_post';
+      if (contentType === 'user_post') {
+        return null;
+      }
+
       const createdAt = data.createdAt?.toDate?.() || data.createdAt || new Date(0);
       return {
         id: doc.id,
         authorId: data.authorId || data.userId || '',
         spaceId: data.spaceId || '',
         ...data,
+        contentType,
         createdAt,
         updatedAt: data.updatedAt?.toDate?.() || data.updatedAt || new Date()
       };

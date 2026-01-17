@@ -12,7 +12,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, CheckCircle2, AlertCircle, Maximize2, ExternalLink } from 'lucide-react';
+import { XMarkIcon, ArrowPathIcon, CheckCircleIcon, ExclamationCircleIcon, ArrowsPointingOutIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
 import { springPresets } from '@hive/tokens';
 
@@ -22,8 +22,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '../../atomic/00-Global/atoms/dialog';
-import { Button } from '../../atomic/00-Global/atoms/button';
+} from '../../design-system/components/Dialog';
+import { Button } from '../../design-system/primitives';
 
 // Import the ToolCanvas for rendering elements
 import { ToolCanvas } from './tool-canvas';
@@ -126,7 +126,7 @@ function SyncIndicator({
   if (isSaving) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-gray-400">
-        <Loader2 className="h-3 w-3 animate-spin" />
+        <ArrowPathIcon className="h-3 w-3 animate-spin" />
         <span>Saving...</span>
       </div>
     );
@@ -135,7 +135,7 @@ function SyncIndicator({
   if (isSynced) {
     return (
       <div className="flex items-center gap-1.5 text-xs text-emerald-400">
-        <CheckCircle2 className="h-3 w-3" />
+        <CheckCircleIcon className="h-3 w-3" />
         <span>Saved</span>
       </div>
     );
@@ -224,7 +224,7 @@ export function ToolRuntimeModal({
                   className="h-8 w-8 p-0 text-gray-400 hover:text-white"
                   title="Open in full page"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -248,7 +248,7 @@ export function ToolRuntimeModal({
                 className="flex items-center justify-center py-16"
               >
                 <div className="text-center">
-                  <Loader2 className="h-8 w-8 text-neutral-400 animate-spin mx-auto mb-3" />
+                  <ArrowPathIcon className="h-8 w-8 text-neutral-400 animate-spin mx-auto mb-3" />
                   <p className="text-sm text-gray-400">Loading tool...</p>
                 </div>
               </motion.div>
@@ -262,7 +262,7 @@ export function ToolRuntimeModal({
               >
                 <div className="text-center max-w-sm px-4">
                   <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="h-6 w-6 text-red-400" />
+                    <ExclamationCircleIcon className="h-6 w-6 text-red-400" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">Failed to load</h3>
                   <p className="text-sm text-gray-400 mb-4">{error}</p>
@@ -285,7 +285,7 @@ export function ToolRuntimeModal({
               >
                 <div className="text-center max-w-sm px-4">
                   <div className="w-12 h-12 rounded-xl bg-neutral-700/50 flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="h-6 w-6 text-neutral-400" />
+                    <ExclamationCircleIcon className="h-6 w-6 text-neutral-400" />
                   </div>
                   <h3 className="text-base font-medium text-white mb-2">No elements</h3>
                   <p className="text-sm text-gray-400">

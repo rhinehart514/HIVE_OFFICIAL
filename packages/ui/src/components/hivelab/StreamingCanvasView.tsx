@@ -8,11 +8,11 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Check } from 'lucide-react';
+import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useEffect, useState, memo } from 'react';
 import { durationSeconds, easingArrays } from '@hive/tokens';
 
-import { Card, CardContent } from '../../atomic/00-Global/atoms/card';
+import { Card, CardContent } from '../../design-system/primitives';
 import { renderElement } from './element-renderers';
 import { SkeletonCanvas } from './SkeletonCanvas';
 
@@ -153,12 +153,12 @@ export function StreamingCanvasView({
           <div className="flex items-center gap-3">
             {isGenerating ? (
               <>
-                <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 text-muted-foreground animate-spin" />
                 <span className="text-sm font-medium">{status}</span>
               </>
             ) : composition ? (
               <>
-                <Check className="h-4 w-4 text-gold-achievement" />
+                <CheckIcon className="h-4 w-4 text-gold-achievement" />
                 <span className="text-sm font-medium">{interactive ? 'Testing...' : 'Generation complete!'}</span>
               </>
             ) : (

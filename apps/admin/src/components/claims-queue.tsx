@@ -13,18 +13,31 @@ import { useState, useEffect, useCallback } from "react";
 import { Button, Badge, HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import {
-  Crown,
-  Check,
-  X,
-  Clock,
-  RefreshCw,
-  ExternalLink,
-  Mail,
-  FileText,
-  Users,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+  TrophyIcon,
+  CheckIcon,
+  XMarkIcon,
+  ClockIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
+  EnvelopeIcon,
+  DocumentTextIcon,
+  UsersIcon,
+  ArrowPathIcon as ArrowPathIcon2,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Crown = TrophyIcon;
+const Check = CheckIcon;
+const X = XMarkIcon;
+const Clock = ClockIcon;
+const RefreshCw = ArrowPathIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
+const Mail = EnvelopeIcon;
+const FileText = DocumentTextIcon;
+const Users = UsersIcon;
+const Loader2 = ArrowPathIcon2;
+const AlertCircle = ExclamationCircleIcon;
 
 interface ClaimRequest {
   id: string;

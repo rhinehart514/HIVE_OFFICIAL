@@ -1,24 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  ChevronRight,
-  ChevronDown,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  Trash2,
-  Copy,
-  GripVertical,
-  Box,
-  Search,
-  LayoutGrid,
-  Filter,
-  FormInput,
-  Zap,
-  BarChart3,
-} from 'lucide-react';
+import { ChevronRightIcon, ChevronDownIcon, EyeIcon, EyeSlashIcon, LockClosedIcon, LockOpenIcon, TrashIcon, ClipboardDocumentIcon, Bars3Icon, MagnifyingGlassIcon, Squares2X2Icon, FunnelIcon, BoltIcon, ChartBarIcon, DocumentTextIcon, CubeIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const FormInput = DocumentTextIcon;
+const Box = CubeIcon;
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { cn } from '../../../lib/utils';
 import type { CanvasElement, Connection } from './types';
@@ -36,10 +23,10 @@ interface LayersPanelProps {
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   input: <FormInput className="h-3.5 w-3.5" />,
-  display: <BarChart3 className="h-3.5 w-3.5" />,
-  filter: <Filter className="h-3.5 w-3.5" />,
-  action: <Zap className="h-3.5 w-3.5" />,
-  layout: <LayoutGrid className="h-3.5 w-3.5" />,
+  display: <ChartBarIcon className="h-3.5 w-3.5" />,
+  filter: <FunnelIcon className="h-3.5 w-3.5" />,
+  action: <BoltIcon className="h-3.5 w-3.5" />,
+  layout: <Squares2X2Icon className="h-3.5 w-3.5" />,
   default: <Box className="h-3.5 w-3.5" />,
 };
 
@@ -89,8 +76,8 @@ function LayerItem({
       value={element}
       id={element.id}
       className={cn(
-        'group flex flex-col rounded-lg transition-colors cursor-pointer',
-        isSelected ? 'bg-white/[0.08]' : 'hover:bg-[#252525]'
+        'group flex flex-col rounded-lg transition-colors duration-[var(--workshop-duration)] cursor-pointer',
+        isSelected ? 'bg-[var(--hivelab-surface)]' : 'hover:bg-[var(--hivelab-surface)]/50'
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -101,7 +88,7 @@ function LayerItem({
       >
         {/* Drag Handle */}
         <div className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing">
-          <GripVertical className="h-3.5 w-3.5 text-[#555]" />
+          <Bars3Icon className="h-3.5 w-3.5 text-[var(--hivelab-text-tertiary)]" />
         </div>
 
         {/* Expand Arrow */}
@@ -111,12 +98,12 @@ function LayerItem({
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
-          className="p-0.5 text-[#555] hover:text-[#888]"
+          className="p-0.5 text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-secondary)]"
         >
           {isExpanded ? (
-            <ChevronDown className="h-3 w-3" />
+            <ChevronDownIcon className="h-3 w-3" />
           ) : (
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRightIcon className="h-3 w-3" />
           )}
         </button>
 
@@ -124,7 +111,7 @@ function LayerItem({
         <div
           className={cn(
             'w-6 h-6 rounded flex items-center justify-center',
-            isSelected ? 'bg-white/[0.12] text-white' : 'bg-[#333] text-[#888]'
+            isSelected ? 'bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)]' : 'bg-[var(--hivelab-border)] text-[var(--hivelab-text-tertiary)]'
           )}
         >
           {getElementIcon(element.elementId)}
@@ -134,7 +121,7 @@ function LayerItem({
         <span
           className={cn(
             'flex-1 text-sm truncate',
-            isSelected ? 'text-white font-medium' : 'text-[#999]',
+            isSelected ? 'text-[var(--hivelab-text-primary)] font-medium' : 'text-[var(--hivelab-text-tertiary)]',
             !element.visible && 'opacity-50'
           )}
         >
@@ -144,7 +131,7 @@ function LayerItem({
         {/* Actions */}
         <div
           className={cn(
-            'flex items-center gap-1 transition-opacity',
+            'flex items-center gap-1 transition-opacity duration-[var(--workshop-duration)]',
             isHovered || isSelected ? 'opacity-100' : 'opacity-0'
           )}
         >
@@ -154,13 +141,13 @@ function LayerItem({
               e.stopPropagation();
               onUpdate({ visible: !element.visible });
             }}
-            className="p-1 text-[#555] hover:text-[#888]"
+            className="p-1 text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-secondary)]"
             title={element.visible ? 'Hide' : 'Show'}
           >
             {element.visible ? (
-              <Eye className="h-3.5 w-3.5" />
+              <EyeIcon className="h-3.5 w-3.5" />
             ) : (
-              <EyeOff className="h-3.5 w-3.5" />
+              <EyeSlashIcon className="h-3.5 w-3.5" />
             )}
           </button>
           <button
@@ -169,13 +156,13 @@ function LayerItem({
               e.stopPropagation();
               onUpdate({ locked: !element.locked });
             }}
-            className="p-1 text-[#555] hover:text-[#888]"
+            className="p-1 text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-secondary)]"
             title={element.locked ? 'Unlock' : 'Lock'}
           >
             {element.locked ? (
-              <Lock className="h-3.5 w-3.5" />
+              <LockClosedIcon className="h-3.5 w-3.5" />
             ) : (
-              <Unlock className="h-3.5 w-3.5" />
+              <LockOpenIcon className="h-3.5 w-3.5" />
             )}
           </button>
         </div>
@@ -193,14 +180,14 @@ function LayerItem({
           >
             <div className="pl-10 pr-2 pb-2 space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#666]">Position</span>
-                <span className="text-[#999]">
+                <span className="text-[var(--hivelab-text-tertiary)]">Position</span>
+                <span className="text-[var(--hivelab-text-secondary)]">
                   {Math.round(element.position.x)}, {Math.round(element.position.y)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#666]">Size</span>
-                <span className="text-[#999]">
+                <span className="text-[var(--hivelab-text-tertiary)]">Size</span>
+                <span className="text-[var(--hivelab-text-secondary)]">
                   {element.size.width} × {element.size.height}
                 </span>
               </div>
@@ -211,9 +198,9 @@ function LayerItem({
                     e.stopPropagation();
                     onDuplicate();
                   }}
-                  className="flex-1 flex items-center justify-center gap-1 py-1 text-xs text-[#888] hover:text-white bg-[#252525] hover:bg-[#333] rounded transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 py-1 text-xs text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] bg-[var(--hivelab-surface)] hover:bg-[var(--hivelab-surface-hover)] rounded transition-colors duration-[var(--workshop-duration)]"
                 >
-                  <Copy className="h-3 w-3" />
+                  <ClipboardDocumentIcon className="h-3 w-3" />
                   Duplicate
                 </button>
                 <button
@@ -222,9 +209,9 @@ function LayerItem({
                     e.stopPropagation();
                     onDelete();
                   }}
-                  className="flex-1 flex items-center justify-center gap-1 py-1 text-xs text-red-400 hover:text-red-300 bg-[#252525] hover:bg-red-500/10 rounded transition-colors"
+                  className="flex-1 flex items-center justify-center gap-1 py-1 text-xs text-[var(--status-error)] hover:text-[var(--status-error)] bg-[var(--hivelab-surface)] hover:bg-[var(--status-error)]/10 rounded transition-colors duration-[var(--workshop-duration)]"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <TrashIcon className="h-3 w-3" />
                   Delete
                 </button>
               </div>
@@ -260,16 +247,16 @@ export function LayersPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-3 border-b border-[#333]">
-        <h3 className="text-sm font-medium text-white mb-2">Layers</h3>
+      <div className="px-3 py-3 border-b border-[var(--hivelab-border)]">
+        <h3 className="text-sm font-medium text-[var(--hivelab-text-primary)] mb-2">Layers</h3>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#555]" />
+          <MagnifyingGlassIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[var(--hivelab-text-tertiary)]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search layers..."
-            className="w-full bg-[#252525] border border-[#333] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-[#555] outline-none focus:border-[#444]"
+            className="w-full bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)] rounded-lg pl-8 pr-3 py-1.5 text-sm text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)] outline-none focus:border-[var(--hivelab-border-emphasis)]"
           />
         </div>
       </div>
@@ -297,11 +284,11 @@ export function LayersPanel({
           </Reorder.Group>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Box className="h-8 w-8 text-[#444] mb-2" />
-            <p className="text-sm text-[#666]">
+            <Box className="h-8 w-8 text-[var(--hivelab-text-tertiary)]/30 mb-2" />
+            <p className="text-sm text-[var(--hivelab-text-tertiary)]">
               {searchQuery ? 'No matching layers' : 'No layers yet'}
             </p>
-            <p className="text-xs text-[#555] mt-1">
+            <p className="text-xs text-[var(--hivelab-text-tertiary)] mt-1">
               {searchQuery ? 'Try a different search' : 'Drag elements to the canvas'}
             </p>
           </div>
@@ -309,7 +296,7 @@ export function LayersPanel({
       </div>
 
       {/* Footer Stats */}
-      <div className="px-3 py-2 border-t border-[#333] flex items-center justify-between text-xs text-[#666]">
+      <div className="px-3 py-2 border-t border-[var(--hivelab-border)] flex items-center justify-between text-xs text-[var(--hivelab-text-tertiary)]">
         <span>{elements.length} layers</span>
         <span>{connections.length} connections</span>
       </div>

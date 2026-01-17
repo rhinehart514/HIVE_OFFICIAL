@@ -15,17 +15,12 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Vote,
-  Timer,
-  FormInput,
-  BarChart3,
-  Calendar,
-  ListChecks,
-  MoreHorizontal,
-  Search,
-  X,
-} from 'lucide-react';
+import { ClockIcon, ChartBarIcon, CalendarIcon, EllipsisHorizontalIcon, MagnifyingGlassIcon, XMarkIcon, HandThumbUpIcon, DocumentTextIcon, ListBulletIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Vote = HandThumbUpIcon;
+const FormInput = DocumentTextIcon;
+const ListChecks = ListBulletIcon;
 import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -33,13 +28,13 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../../atomic/00-Global/atoms/popover';
+} from '../../../design-system/components/Popover';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../../../atomic/00-Global/atoms/tooltip';
+} from '../../../design-system/primitives/Tooltip';
 
 // ============================================================
 // Types
@@ -80,10 +75,10 @@ export interface ElementBeltProps {
 
 const QUICK_ELEMENTS: ElementBeltItem[] = [
   { id: 'poll-element', name: 'Poll', icon: <Vote className="w-5 h-5" />, description: 'Collect votes' },
-  { id: 'timer', name: 'Timer', icon: <Timer className="w-5 h-5" />, description: 'Track time' },
+  { id: 'timer', name: 'ClockIcon', icon: <ClockIcon className="w-5 h-5" />, description: 'Track time' },
   { id: 'form-builder', name: 'Form', icon: <FormInput className="w-5 h-5" />, description: 'Collect data' },
-  { id: 'chart-display', name: 'Chart', icon: <BarChart3 className="w-5 h-5" />, description: 'Visualize results' },
-  { id: 'date-picker', name: 'Date', icon: <Calendar className="w-5 h-5" />, description: 'Select dates' },
+  { id: 'chart-display', name: 'Chart', icon: <ChartBarIcon className="w-5 h-5" />, description: 'Visualize results' },
+  { id: 'date-picker', name: 'Date', icon: <CalendarIcon className="w-5 h-5" />, description: 'Select dates' },
   { id: 'result-list', name: 'List', icon: <ListChecks className="w-5 h-5" />, description: 'Display items' },
 ];
 
@@ -132,16 +127,16 @@ function ElementButton({
           className={cn(
             'relative flex flex-col items-center justify-center gap-1',
             'w-14 h-14 rounded-xl',
-            'bg-[#1A1A1A] border border-[#2A2A2A]',
-            'text-[#A1A1A6] hover:text-[#FAFAFA]',
-            'hover:border-[#3A3A3A] hover:bg-[#242424]',
+            'bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)]',
+            'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
+            'hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface-hover)]',
             'cursor-grab active:cursor-grabbing',
-            'transition-colors duration-100',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
+            'transition-colors duration-[var(--workshop-duration)]',
+            'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]',
             // Highlighted state (AI suggestion)
             isHighlighted && [
-              'border-white/50',
-              'text-white',
+              'border-[var(--hivelab-border-emphasis)]',
+              'text-[var(--hivelab-text-primary)]',
             ]
           )}
         >
@@ -168,9 +163,9 @@ function ElementButton({
       <TooltipContent side="top">
         <p className="font-medium">{element.name}</p>
         {element.description && (
-          <p className="text-[#818187] text-xs">{element.description}</p>
+          <p className="text-[var(--hivelab-text-tertiary)] text-xs">{element.description}</p>
         )}
-        <p className="text-[#818187] text-xs mt-1">Drag to add</p>
+        <p className="text-[var(--hivelab-text-tertiary)] text-xs mt-1">Drag to add</p>
       </TooltipContent>
     </Tooltip>
   );
@@ -196,7 +191,7 @@ export function ElementBelt({
       <div
         className={cn(
           // Dark-first design: Elevated surface
-          'relative border-t border-[#2A2A2A] bg-[#0A0A0A]',
+          'relative border-t border-[var(--hivelab-border)] bg-[var(--hivelab-bg)]',
           className
         )}
       >
@@ -213,11 +208,11 @@ export function ElementBelt({
               <div
                 className={cn(
                   'flex items-center justify-between px-4 py-2',
-                  'bg-white/[0.03] border-b border-white/[0.06]'
+                  'bg-[var(--hivelab-surface)] border-b border-[var(--hivelab-border)]'
                 )}
               >
-                <p className="text-sm text-[#A1A1A6]">
-                  <span className="text-white font-medium">Suggestion:</span>{' '}
+                <p className="text-sm text-[var(--hivelab-text-secondary)]">
+                  <span className="text-[var(--hivelab-text-primary)] font-medium">Suggestion:</span>{' '}
                   {suggestionMessage}
                 </p>
                 {onDismissSuggestion && (
@@ -225,12 +220,12 @@ export function ElementBelt({
                     onClick={onDismissSuggestion}
                     className={cn(
                       'p-1 rounded-md',
-                      'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
-                      'transition-colors'
+                      'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface-hover)]',
+                      'transition-colors duration-[var(--workshop-duration)]'
                     )}
                     aria-label="Dismiss suggestion"
                   >
-                    <X className="w-4 h-4" />
+                    <XMarkIcon className="w-4 h-4" />
                   </button>
                 )}
               </div>
@@ -253,7 +248,7 @@ export function ElementBelt({
           ))}
 
           {/* Separator */}
-          <div className="w-px h-10 bg-[#2A2A2A] mx-2" />
+          <div className="w-px h-10 bg-[var(--hivelab-border)] mx-2" />
 
           {/* More elements button */}
           <Tooltip>
@@ -265,27 +260,27 @@ export function ElementBelt({
                 className={cn(
                   'flex flex-col items-center justify-center gap-1',
                   'w-14 h-14 rounded-xl',
-                  'bg-[#1A1A1A] border border-[#2A2A2A]',
-                  'text-[#818187] hover:text-[#FAFAFA]',
-                  'hover:border-[#3A3A3A] hover:bg-[#242424]',
-                  'transition-colors duration-100',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20',
-                  showFullPalette && 'border-[#3A3A3A] bg-[#242424] text-[#FAFAFA]'
+                  'bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)]',
+                  'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)]',
+                  'hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface-hover)]',
+                  'transition-colors duration-[var(--workshop-duration)]',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]',
+                  showFullPalette && 'border-[var(--hivelab-border-emphasis)] bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)]'
                 )}
                 aria-label="Show all elements"
                 aria-expanded={showFullPalette}
               >
-                <MoreHorizontal className="w-5 h-5" />
+                <EllipsisHorizontalIcon className="w-5 h-5" />
                 <span className="text-[10px] font-medium">More</span>
               </motion.button>
             </TooltipTrigger>
             <TooltipContent side="top">
               <p className="font-medium">All Elements</p>
-              <p className="text-[#818187] text-xs">Browse full catalog</p>
+              <p className="text-[var(--hivelab-text-tertiary)] text-xs">Browse full catalog</p>
             </TooltipContent>
           </Tooltip>
 
-          {/* Search elements button */}
+          {/* MagnifyingGlassIcon elements button */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Popover>
@@ -296,43 +291,43 @@ export function ElementBelt({
                     className={cn(
                       'flex flex-col items-center justify-center gap-1',
                       'w-14 h-14 rounded-xl',
-                      'bg-[#1A1A1A] border border-[#2A2A2A]',
-                      'text-[#818187] hover:text-[#FAFAFA]',
-                      'hover:border-[#3A3A3A] hover:bg-[#242424]',
-                      'transition-colors duration-100',
-                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20'
+                      'bg-[var(--hivelab-surface)] border border-[var(--hivelab-border)]',
+                      'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)]',
+                      'hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface-hover)]',
+                      'transition-colors duration-[var(--workshop-duration)]',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]'
                     )}
-                    aria-label="Search elements"
+                    aria-label="MagnifyingGlassIcon elements"
                   >
-                    <Search className="w-5 h-5" />
-                    <span className="text-[10px] font-medium">Search</span>
+                    <MagnifyingGlassIcon className="w-5 h-5" />
+                    <span className="text-[10px] font-medium">MagnifyingGlassIcon</span>
                   </motion.button>
                 </PopoverTrigger>
                 <PopoverContent side="top" className="w-72 p-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#818187]" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--hivelab-text-tertiary)]" />
                     <input
                       type="text"
-                      placeholder="Search elements..."
+                      placeholder="MagnifyingGlassIcon elements..."
                       autoFocus
                       className={cn(
                         'w-full pl-10 pr-4 py-2 rounded-lg',
-                        'bg-[#0A0A0A] border border-[#2A2A2A]',
-                        'text-[#FAFAFA] placeholder:text-[#818187]',
-                        'focus:outline-none focus:border-[#3A3A3A]',
-                        'text-sm'
+                        'bg-[var(--hivelab-bg)] border border-[var(--hivelab-border)]',
+                        'text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)]',
+                        'focus:outline-none focus:border-[var(--hivelab-border-emphasis)]',
+                        'text-sm transition-colors duration-[var(--workshop-duration)]'
                       )}
                     />
                   </div>
-                  <p className="text-xs text-[#818187] mt-2">
+                  <p className="text-xs text-[var(--hivelab-text-tertiary)] mt-2">
                     Type to search all 20+ elements
                   </p>
                 </PopoverContent>
               </Popover>
             </TooltipTrigger>
             <TooltipContent side="top">
-              <p className="font-medium">Search</p>
-              <p className="text-[#818187] text-xs">Find any element</p>
+              <p className="font-medium">MagnifyingGlassIcon</p>
+              <p className="text-[var(--hivelab-text-tertiary)] text-xs">Find any element</p>
             </TooltipContent>
           </Tooltip>
         </div>

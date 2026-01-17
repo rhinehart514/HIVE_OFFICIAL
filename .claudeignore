@@ -1,0 +1,52 @@
+# Build artifacts
+.next/
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Generated
+coverage/
+.nyc_output/
+storybook-static/
+
+# Caches
+.cache/
+.eslintcache
+.prettiercache
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE (already have settings)
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase emulator data
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Large binary files
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+
+# Archived skills (still accessible if needed, but not auto-loaded)
+.claude/skills/_archived/

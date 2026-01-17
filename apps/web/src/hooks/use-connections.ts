@@ -225,7 +225,7 @@ export function useConnections(): UseConnectionsReturn {
   const unfriend = useCallback(async (friendId: string) => {
     if (!user) throw new Error('Not authenticated');
 
-    const response = await fetch(`/api/friends/${friendId}`, {
+    const response = await fetch(`/api/friends?friendId=${encodeURIComponent(friendId)}`, {
       method: 'DELETE',
       credentials: 'include'
     });

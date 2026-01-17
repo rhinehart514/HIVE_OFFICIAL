@@ -76,6 +76,92 @@
       ".read": "auth != null",
       // Only admins can write to feed content
       ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+    },
+
+    "setupDeployments": {
+      // HiveLab Setups - Real-time orchestration data
+      // Structure:
+      // setupDeployments/{deploymentId}/
+      //   ├── tools/{slotId}/visible (boolean)
+      //   ├── sharedData/{key} (counters, dynamic values)
+      //   └── orchestration/currentPhase (string)
+
+      "$deploymentId": {
+        // All authenticated users can read deployment data
+        // (Firestore rules handle space membership, RTDB for real-time updates)
+        ".read": "auth != null",
+
+        "tools": {
+          "$slotId": {
+            "visible": {
+              // Authenticated users can read visibility state
+              ".read": "auth != null",
+              // Only server (admin SDK) can update visibility via orchestration
+              ".write": false
+            },
+
+            ".read": "auth != null",
+            ".write": false
+          }
+        },
+
+        "sharedData": {
+          // Shared counters and data for cross-tool communication
+          "$dataKey": {
+            ".read": "auth != null",
+            // Space members can update shared data (RSVP counts, check-in counts, etc.)
+            // Firestore is source of truth; RTDB for real-time broadcasting
+            ".write": "auth != null",
+            // Validate counter operations
+            ".validate": "newData.isNumber() || newData.isString() || newData.isBoolean() || newData.hasChildren()"
+          }
+        },
+
+        "orchestration": {
+          // Orchestration state is read-only for clients
+          // Server updates via admin SDK based on rule execution
+          ".read": "auth != null",
+          ".write": false,
+
+          "currentPhase": {
+            ".read": "auth != null",
+            ".write": false
+          },
+
+          "activeRules": {
+            ".read": "auth != null",
+            ".write": false
+          },
+
+          "lastTriggeredAt": {
+            ".read": "auth != null",
+            ".write": false
+          }
+        }
+      }
+    },
+
+    "spacePresence": {
+      // Real-time presence for spaces (typing indicators, online members)
+      "$spaceId": {
+        ".read": "auth != null",
+
+        "typing": {
+          "$userId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $userId",
+            // Auto-expire typing indicators after 5 seconds
+            ".validate": "newData.hasChildren(['timestamp', 'boardId']) && newData.child('timestamp').val() > now - 10000"
+          }
+        },
+
+        "online": {
+          "$userId": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $userId"
+          }
+        }
+      }
     }
   }
 }

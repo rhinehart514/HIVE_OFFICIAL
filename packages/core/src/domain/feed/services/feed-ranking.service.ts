@@ -104,17 +104,22 @@ export interface RankedItem extends RankingCandidate {
 
 /**
  * Default ranking configuration
+ *
+ * ACTIVITY STREAM WEIGHTS (Jan 2026):
+ * - Removed social signals (likes/comments) - we're not a social network
+ * - Increased space engagement (0.30) - prioritize user's active spaces
+ * - Increased temporal relevance (0.10) - events and deadlines matter more
  */
 export const DEFAULT_RANKING_CONFIG: FeedRankingConfig = {
   weights: {
-    spaceEngagement: 0.25,
-    contentRecency: 0.15,
-    contentQuality: 0.20,
-    toolInteractionValue: 0.15,
-    socialSignals: 0.10,
-    creatorInfluence: 0.05,
-    diversityFactor: 0.05,
-    temporalRelevance: 0.05
+    spaceEngagement: 0.30,        // +5% - User's engagement in source space
+    contentRecency: 0.15,         // How recent the content is
+    contentQuality: 0.20,         // Quality based on content type and completeness
+    toolInteractionValue: 0.15,   // Value of tool-generated content
+    socialSignals: 0.00,          // REMOVED - Not a social network
+    creatorInfluence: 0.05,       // Creator's role and activity level
+    diversityFactor: 0.05,        // Content type variety bonus
+    temporalRelevance: 0.10       // +5% - Time-sensitive content (events, deadlines)
   },
   maxContentAgeHours: 48,
   minRelevanceThreshold: 25,

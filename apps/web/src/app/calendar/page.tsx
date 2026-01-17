@@ -3,278 +3,80 @@
 // Force dynamic rendering to avoid SSG issues with auth context
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useMemo } from "react";
-import { Button, Card, Badge } from "@hive/ui";
+import { useState, useMemo } from "react";
+import { Button, Card, HiveModal } from "@hive/ui";
 import { logger } from "@/lib/logger";
 import { useAuth } from "@hive/auth-logic";
 import {
-  Calendar,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  MapPin,
-  Users,
-  AlertTriangle,
-  Check,
-  X,
-  Filter,
-  Download,
-  Settings
-} from "lucide-react";
+  CalendarIcon,
+  PlusIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ExclamationTriangleIcon,
+  CheckIcon,
+  XMarkIcon,
+  FunnelIcon,
+  ArrowDownTrayIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
 import { EventDetailsModal } from "../../components/events/event-details-modal";
 import { CreateEventModal, type CreateEventData } from "../../components/events/create-event-modal";
+import { PageContainer, CalendarLoadingSkeleton, EventCard } from "@/components/calendar/calendar-components";
+import {
+  useCalendar,
+  type CalendarEvent,
+  formatTime,
+  formatDate,
+  getEventDataType,
+} from "@/hooks/use-calendar";
 
-// Inline PageContainer to replace deleted temp-stubs
-function PageContainer({
-  title,
-  subtitle,
-  children,
-  actions,
-  maxWidth = "6xl"
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
-  breadcrumbs?: { label: string; icon?: React.ComponentType }[];
-  maxWidth?: string;
-}) {
-  return (
-    <div className={`max-w-${maxWidth} mx-auto px-4 py-8`}>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">{title}</h1>
-          {subtitle && <p className="text-zinc-400 mt-1">{subtitle}</p>}
-        </div>
-        {actions}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-// Inline Modal components
-function HiveModal({
-  open,
-  onOpenChange,
-  children
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  size?: string;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={() => onOpenChange(false)} />
-      <div className="relative bg-zinc-900 rounded-xl border border-zinc-700 p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function HiveModalContent({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
-// Calendar interfaces
-interface CalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  startTime: string;
-  endTime: string;
-  location?: string;
-  type: 'event' | 'class' | 'assignment' | 'meeting' | 'personal';
-  color: string;
-  source: 'hive' | 'google' | 'outlook' | 'canvas' | 'manual';
-  attendees?: string[];
-  isConflict?: boolean;
-  conflictsWith?: string[];
-  rsvpStatus?: 'going' | 'interested' | 'not_going';
-  tools?: string[];
-  space?: {
-    id: string;
-    name: string;
-  };
-}
-
-interface CalendarIntegration {
-  id: string;
-  name: string;
-  type: 'google' | 'outlook' | 'apple' | 'canvas';
-  isConnected: boolean;
-  lastSync?: string;
-  eventCount?: number;
-}
-
-function CalendarLoadingSkeleton() {
-  return (
-    <div className="p-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 w-48 bg-zinc-700 rounded" />
-        <div className="h-4 w-64 bg-zinc-800 rounded" />
-        <div className="h-64 w-full bg-zinc-900 rounded" />
-      </div>
-    </div>
-  );
-}
+// Icon aliases
+const Calendar = CalendarIcon;
+const Plus = PlusIcon;
+const ChevronLeft = ChevronLeftIcon;
+const ChevronRight = ChevronRightIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const Check = CheckIcon;
+const X = XMarkIcon;
+const Filter = FunnelIcon;
+const Download = ArrowDownTrayIcon;
+const Settings = Cog6ToothIcon;
 
 export default function CalendarPage() {
   const { user } = useAuth();
-  // Calendar hook data integration pending - currently using mock data
-  // const { data: calendarHookData, state: calendarState } = useCalendarData();
-  // Calendar hook data integration pending - currently using mock data
-  
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [integrations, setIntegrations] = useState<CalendarIntegration[]>([]);
+
+  // Use centralized calendar hook for state and data management
+  const {
+    currentDate,
+    viewMode,
+    events,
+    integrations,
+    eventTypeFilter,
+    isLoading,
+    viewEvents,
+    conflictEvents,
+    viewTitle,
+    setCurrentDate,
+    setViewMode,
+    setEventTypeFilter,
+    navigateDate,
+    goToToday,
+    addEvent,
+    updateEventRSVP,
+  } = useCalendar();
+
+  // Local UI state for modals
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [showConflicts, setShowConflicts] = useState(false);
-  const [eventTypeFilter, setEventTypeFilter] = useState<CalendarEvent['type'] | 'all'>('all');
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Fetch real calendar data
-  useEffect(() => {
-    const fetchCalendarEvents = async () => {
-      setIsLoading(true);
-      try {
-        // Use credentials: 'include' to send httpOnly session cookie
-        const response = await fetch('/api/calendar', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch calendar events: ${response.status}`);
-        }
-        
-        const data = await response.json() as { events?: unknown[] };
-        const fetchedEvents = data.events || [];
-        
-        // Transform API events to match UI format
-        const transformedEvents: CalendarEvent[] = fetchedEvents.map((event: unknown) => {
-          const eventData = event as Record<string, unknown>;
-          return {
-            id: String(eventData.id || ''),
-            title: String(eventData.title || ''),
-            description: String(eventData.description || ''),
-            startTime: String(eventData.startDate || ''),
-            endTime: String(eventData.endDate || ''),
-            location: String(eventData.location || ''),
-            type: eventData.type === 'personal' ? 'event' : (eventData.type as CalendarEvent['type']) || 'event',
-            color: eventData.type === 'personal' ? 'var(--hive-status-info)' : 
-                  eventData.type === 'space' ? 'var(--hive-status-success)' : 'var(--hive-status-warning)',
-            source: eventData.type === 'personal' ? 'hive' : (eventData.source as CalendarEvent['source']) || 'hive',
-            rsvpStatus: eventData.canEdit ? 'going' : 'interested',
-            space: eventData.spaceName ? { 
-              id: String(eventData.spaceId || ''), 
-              name: String(eventData.spaceName) 
-            } : undefined,
-            tools: Array.isArray(eventData.tools) ? eventData.tools.map(String) : []
-          };
-        });
-
-        // Set calendar integrations (placeholder for now - can be fetched from user preferences)
-        const defaultIntegrations: CalendarIntegration[] = [
-          {
-            id: 'google',
-            name: 'Google Calendar',
-            type: 'google',
-            isConnected: false
-          },
-          {
-            id: 'canvas',
-            name: 'Canvas LMS',
-            type: 'canvas',
-            isConnected: false
-          },
-          {
-            id: 'outlook',
-            name: 'Outlook Calendar',
-            type: 'outlook',
-            isConnected: false
-          }
-        ];
-
-        setEvents(transformedEvents);
-        setIntegrations(defaultIntegrations);
-      } catch (error) {
-        logger.error('Error fetching calendar events', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        // Fallback to empty state on error
-        setEvents([]);
-        setIntegrations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCalendarEvents();
-  }, []);
-
-  // Filter events by type
-  const filteredEvents = useMemo(() => {
-    if (eventTypeFilter === 'all') return events;
-    return events.filter(event => event.type === eventTypeFilter);
-  }, [events, eventTypeFilter]);
-
-  // Get events for current view
-  const getEventsForView = () => {
-    const start = new Date(currentDate);
-    const end = new Date(currentDate);
-    
-    switch (viewMode) {
-      case 'day':
-        end.setDate(start.getDate() + 1);
-        break;
-      case 'week':
-        start.setDate(start.getDate() - start.getDay());
-        end.setDate(start.getDate() + 7);
-        break;
-      case 'month':
-        start.setDate(1);
-        end.setMonth(start.getMonth() + 1, 0);
-        break;
-    }
-
-    return filteredEvents.filter(event => {
-      const eventDate = new Date(event.startTime);
-      return eventDate >= start && eventDate <= end;
-    });
-  };
-
-  const viewEvents = getEventsForView();
-  const conflictEvents = events.filter(event => event.isConflict);
 
   // Memoize selected event data for modal
   const selectedEventData = useMemo(() => {
     if (!selectedEvent) return null;
-    
+
     const event = events.find(e => e.id === selectedEvent);
     if (!event) return null;
-
-    // Map CalendarEvent types to EventData types
-    const getEventDataType = (calendarType: CalendarEvent['type']): 'academic' | 'social' | 'professional' | 'recreational' | 'official' => {
-      switch (calendarType) {
-        case 'class': return 'academic';
-        case 'assignment': return 'academic';
-        case 'event': return 'social';
-        case 'meeting': return 'professional';
-        case 'personal': return 'recreational';
-        default: return 'social';
-      }
-    };
 
     return {
       id: event.id,
@@ -323,61 +125,7 @@ export default function CalendarPage() {
     };
   }, [selectedEvent, events, user]);
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  const navigateDate = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    
-    switch (viewMode) {
-      case 'day':
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
-        break;
-      case 'week':
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-        break;
-      case 'month':
-        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-        break;
-    }
-    
-    setCurrentDate(newDate);
-  };
-
-  const getTypeColor = (type: CalendarEvent['type']) => {
-    switch (type) {
-      case 'event': return 'bg-blue-500';
-      case 'class': return 'bg-green-500';
-      case 'assignment': return 'bg-yellow-500';
-      case 'meeting': return 'bg-purple-500';
-      case 'personal': return 'bg-pink-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getTypeIcon = (type: CalendarEvent['type']) => {
-    switch (type) {
-      case 'event': return '🎉';
-      case 'class': return '📚';
-      case 'assignment': return '📝';
-      case 'meeting': return '💼';
-      case 'personal': return '👤';
-      default: return '📅';
-    }
-  };
+  // Helper functions imported from use-calendar hook: formatTime, formatDate, getTypeColor, getTypeIcon
 
   if (isLoading) {
     return <CalendarLoadingSkeleton />;
@@ -387,9 +135,6 @@ export default function CalendarPage() {
       <PageContainer
         title="Calendar"
         subtitle="Your personal schedule and campus coordination hub"
-        breadcrumbs={[
-          { label: "Calendar", icon: Calendar }
-        ]}
         actions={
           <div className="flex items-center space-x-3">
             {/* Conflict Warning */}
@@ -406,11 +151,11 @@ export default function CalendarPage() {
             )}
             
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-zinc-800 rounded-lg p-1">
+            <div className="flex items-center bg-white/[0.04] rounded-lg p-1">
               {['day', 'week', 'month'].map((mode) => (
                 <Button
                   key={mode}
-                  variant={viewMode === mode ? 'primary' : 'ghost'}
+                  variant={viewMode === mode ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => setViewMode(mode as 'month' | 'week' | 'day')}
                   className="text-xs capitalize"
@@ -433,7 +178,7 @@ export default function CalendarPage() {
             {/* Add Event */}
             <Button 
               onClick={() => setShowAddEvent(true)}
-              className="bg-[var(--hive-brand-primary)] text-[var(--hive-background-primary)] hover:bg-[var(--hive-brand-primary)]/90"
+              className="bg-life-gold text-ground hover:bg-life-gold/90"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Event
@@ -455,9 +200,7 @@ export default function CalendarPage() {
               </Button>
               
               <h2 className="text-2xl font-bold text-white min-w-[200px] text-center">
-                {viewMode === 'month' && currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                {viewMode === 'week' && `Week of ${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                {viewMode === 'day' && currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                {viewTitle}
               </h2>
               
               <Button
@@ -472,7 +215,7 @@ export default function CalendarPage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setCurrentDate(new Date())}
+              onClick={goToToday}
             >
               Today
             </Button>
@@ -480,11 +223,11 @@ export default function CalendarPage() {
 
           {/* Event Type Filter */}
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-zinc-400" />
+            <Filter className="h-4 w-4 text-white/40" />
             <select
               value={eventTypeFilter}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEventTypeFilter(e.target.value as CalendarEvent['type'] | 'all')}
-              className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1 text-white text-sm focus:border-[var(--hive-brand-primary)] focus:outline-none"
+              className="bg-surface border border-white/[0.06] rounded-lg px-3 py-1 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/50"
             >
               <option value="all">All Events</option>
               <option value="event">Campus Events</option>
@@ -496,33 +239,35 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Integration Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {integrations.filter(i => i.isConnected).map((integration) => (
-            <Card key={integration.id} className="p-4 bg-zinc-800/50 border-zinc-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <div>
-                    <div className="font-medium text-white text-sm">{integration.name}</div>
-                    <div className="text-xs text-zinc-400">
-                      {integration.eventCount} events • Last sync: {integration.lastSync && new Date(integration.lastSync).toLocaleTimeString()}
+        {/* Integration Status - Only show when integrations are actually connected */}
+        {integrations.some(i => i.isConnected && (i.eventCount ?? 0) > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {integrations.filter(i => i.isConnected && (i.eventCount ?? 0) > 0).map((integration) => (
+              <Card key={integration.id} className="p-4 bg-white/[0.02] border-white/[0.06]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div>
+                      <div className="font-medium text-white text-sm">{integration.name}</div>
+                      <div className="text-xs text-white/40">
+                        {integration.eventCount} events • Last sync: {integration.lastSync && new Date(integration.lastSync).toLocaleTimeString()}
+                      </div>
                     </div>
                   </div>
+                  <Check className="h-4 w-4 text-green-400" />
                 </div>
-                <Check className="h-4 w-4 text-green-400" />
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {/* Events List/Grid */}
         <div className="space-y-4">
           {viewEvents.length === 0 ? (
             <div className="text-center py-12">
-              <Calendar className="h-16 w-16 text-zinc-600 mx-auto mb-4" />
+              <Calendar className="h-16 w-16 text-white/20 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-white mb-2">No events scheduled</h3>
-              <p className="text-zinc-400 mb-6">
+              <p className="text-white/40 mb-6">
                 {eventTypeFilter !== 'all' 
                   ? `No ${eventTypeFilter} events found for this ${viewMode}`
                   : `No events scheduled for this ${viewMode}`
@@ -530,7 +275,7 @@ export default function CalendarPage() {
               </p>
               <Button 
                 onClick={() => setShowAddEvent(true)}
-                className="bg-[var(--hive-brand-primary)] text-[var(--hive-background-primary)] hover:bg-[var(--hive-brand-primary)]/90"
+                className="bg-life-gold text-ground hover:bg-life-gold/90"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Event
@@ -539,73 +284,11 @@ export default function CalendarPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {viewEvents.map((event) => (
-                <Card 
+                <EventCard
                   key={event.id}
-                  className={`p-4 cursor-pointer transition-all duration-200 ${
-                    event.isConflict 
-                      ? 'bg-red-500/10 border-red-500/30 hover:bg-red-500/20'
-                      : 'bg-zinc-800/50 border-zinc-700 hover:bg-zinc-800'
-                  }`}
+                  event={event}
                   onClick={() => setSelectedEvent(event.id)}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${getTypeColor(event.type)}`}></div>
-                      <span className="text-lg">{getTypeIcon(event.type)}</span>
-                    </div>
-                    {event.isConflict && (
-                      <AlertTriangle className="h-4 w-4 text-red-400" />
-                    )}
-                  </div>
-
-                  <h3 className="font-semibold text-white mb-2 leading-tight">
-                    {event.title}
-                  </h3>
-
-                  <div className="space-y-2 text-sm text-zinc-400">
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {formatDate(event.startTime)} • {formatTime(event.startTime)} - {formatTime(event.endTime)}
-                      </span>
-                    </div>
-                    
-                    {event.location && (
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="h-3 w-3" />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                    )}
-
-                    {event.attendees && event.attendees.length > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-3 w-3" />
-                        <span>{event.attendees.length} attendees</span>
-                      </div>
-                    )}
-
-                    {event.space && (
-                      <div className="text-[var(--hive-brand-primary)] text-xs">
-                        {event.space.name}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-zinc-700">
-                    <Badge variant="skill-tag" className="text-xs capitalize">
-                      {event.source}
-                    </Badge>
-                    
-                    {event.rsvpStatus && (
-                      <Badge 
-                        variant={event.rsvpStatus === 'going' ? 'building-tools' : 'skill-tag'}
-                        className="text-xs capitalize"
-                      >
-                        {event.rsvpStatus}
-                      </Badge>
-                    )}
-                  </div>
-                </Card>
+                />
               ))}
             </div>
           )}
@@ -616,7 +299,7 @@ export default function CalendarPage() {
           isOpen={showAddEvent}
           onClose={() => setShowAddEvent(false)}
           onCreateEvent={(eventData: CreateEventData) => {
-            // Convert CreateEventData to CalendarEvent format
+            // Convert CreateEventData to CalendarEvent format and add via hook
             const newEvent: CalendarEvent = {
               id: `event-${Date.now()}`,
               title: eventData.title,
@@ -628,7 +311,7 @@ export default function CalendarPage() {
                      eventData.type === 'social' ? 'event' :
                      eventData.type === 'professional' ? 'meeting' :
                      eventData.type === 'recreational' ? 'event' : 'personal',
-              color: eventData.type === 'academic' ? 'var(--hive-status-info)' : 
+              color: eventData.type === 'academic' ? 'var(--hive-status-info)' :
                      eventData.type === 'social' ? 'var(--hive-brand-primary)' :
                      eventData.type === 'professional' ? 'var(--hive-status-success)' :
                      eventData.type === 'recreational' ? 'var(--hive-status-warning)' : 'var(--hive-status-info)',
@@ -638,89 +321,114 @@ export default function CalendarPage() {
               tools: [],
               space: undefined
             };
-            
-            setEvents(prev => [newEvent, ...prev]);
+            addEvent(newEvent);
           }}
         />
 
         {/* Calendar Integrations Modal */}
         <HiveModal
           open={showIntegrations}
-          onOpenChange={() => setShowIntegrations(false)}
+          onOpenChange={setShowIntegrations}
           size="lg"
         >
-          <HiveModalContent>
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-hive-text-primary mb-4">Calendar Sync & Integrations</h2>
-            <div className="space-y-4">
-              {integrations.map((integration) => (
-                <div key={integration.id} className="flex items-center justify-between p-4 bg-zinc-800/50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${integration.isConnected ? 'bg-green-400' : 'bg-zinc-500'}`}></div>
-                    <div>
-                      <div className="font-medium text-white">{integration.name}</div>
-                      <div className="text-sm text-zinc-400">
-                        {integration.isConnected 
-                          ? `${integration.eventCount} events synced`
-                          : 'Not connected'
-                        }
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-1">Calendar Integrations</h2>
+              <p className="text-sm text-white/40">External calendar sync is coming soon</p>
+            </div>
+
+            {/* Coming Soon Banner */}
+            <div className="p-4 bg-life-gold/5 rounded-lg border border-life-gold/20">
+              <div className="flex items-start space-x-3">
+                <div className="w-8 h-8 rounded-full bg-life-gold/10 flex items-center justify-center flex-shrink-0">
+                  <CalendarIcon className="w-4 h-4 text-life-gold" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white mb-1">
+                    Integrations launching soon
+                  </p>
+                  <p className="text-sm text-white/40">
+                    We're building connections to Google Calendar, Canvas LMS, and Outlook. For now, create events directly in HIVE.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Planned Integrations */}
+            <div>
+              <p className="text-xs font-medium text-white/30 uppercase tracking-wider mb-3">Planned Integrations</p>
+              <div className="space-y-3">
+                {integrations.map((integration) => (
+                  <div key={integration.id} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-lg border border-white/[0.04] opacity-60">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                        {integration.type === 'google' && (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                          </svg>
+                        )}
+                        {integration.type === 'canvas' && (
+                          <span className="text-orange-400 text-lg font-bold">C</span>
+                        )}
+                        {integration.type === 'outlook' && (
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                            <path d="M24 7.387v10.478c0 .23-.08.424-.238.576a.805.805 0 01-.588.234h-8.479v-6.12l1.036.852c.104.086.229.13.373.13a.562.562 0 00.396-.165l5.63-4.625a.478.478 0 01.336-.13.51.51 0 01.345.13c.104.087.165.208.165.366a.478.478 0 01-.13.336l-5.666 4.66 5.666 4.66a.478.478 0 01.13.336c0 .157-.061.278-.165.365a.51.51 0 01-.345.13.478.478 0 01-.336-.13l-5.63-4.624a.562.562 0 00-.396-.166.544.544 0 00-.373.13l-1.036.853v1.609h8.479c.231 0 .428-.078.588-.234a.782.782 0 00.238-.576V7.387z" fill="#0072C6"/>
+                            <path d="M14.695 4.696v14.608H1.565a.78.78 0 01-.576-.234.805.805 0 01-.234-.588V5.518c0-.23.078-.426.234-.588a.78.78 0 01.576-.234h13.13z" fill="#0072C6"/>
+                            <ellipse cx="7.826" cy="12" rx="3.913" ry="4.174" fill="white"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-white">{integration.name}</div>
+                        <div className="text-xs text-white/30">Not connected</div>
                       </div>
                     </div>
+                    <span className="text-xs font-medium text-white/30 bg-white/[0.04] px-2 py-1 rounded">
+                      Coming Soon
+                    </span>
                   </div>
-                  <Button
-                    variant={integration.isConnected ? 'outline' : 'primary'}
-                    size="sm"
-                  >
-                    {integration.isConnected ? 'Disconnect' : 'Connect'}
-                  </Button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            
-            <div className="pt-4 border-t border-zinc-700">
-              <Button className="w-full bg-[var(--hive-brand-primary)] text-[var(--hive-background-primary)] hover:bg-[var(--hive-brand-primary)]/90">
+
+            <div className="pt-4 border-t border-white/[0.06]">
+              <Button
+                className="w-full"
+                variant="secondary"
+                disabled
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Export Calendar
+                <span className="ml-2 text-xs text-white/30">(Coming Soon)</span>
               </Button>
             </div>
-            </div>
-          </HiveModalContent>
+          </div>
         </HiveModal>
 
         {/* Conflicts Modal */}
-        <HiveModal
-          open={showConflicts}
-          onOpenChange={() => setShowConflicts(false)}
-          size="lg"
-        >
-          <HiveModalContent>
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-hive-text-primary mb-4">Schedule Conflicts</h2>
+        <HiveModal open={showConflicts} onOpenChange={setShowConflicts} size="lg">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-white mb-4">Schedule Conflicts</h2>
             {conflictEvents.map((event) => (
               <div key={event.id} className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="font-semibold text-white">{event.title}</h3>
                   <AlertTriangle className="h-5 w-5 text-red-400" />
                 </div>
-                <p className="text-sm text-zinc-400 mb-3">
+                <p className="text-sm text-white/40 mb-3">
                   {formatDate(event.startTime)} • {formatTime(event.startTime)} - {formatTime(event.endTime)}
                 </p>
                 <div className="flex items-center space-x-2">
-                  <Button variant="secondary" size="sm">
-                    <X className="h-3 w-3 mr-1" />
-                    Remove
-                  </Button>
-                  <Button variant="secondary" size="sm">
-                    Reschedule
-                  </Button>
-                  <Button variant="secondary" size="sm">
-                    Keep Both
-                  </Button>
+                  <Button variant="secondary" size="sm"><X className="h-3 w-3 mr-1" />Remove</Button>
+                  <Button variant="secondary" size="sm">Reschedule</Button>
+                  <Button variant="secondary" size="sm">Keep Both</Button>
                 </div>
               </div>
             ))}
-            </div>
-          </HiveModalContent>
+          </div>
         </HiveModal>
 
         {/* Event Details Modal */}
@@ -730,13 +438,7 @@ export default function CalendarPage() {
           event={selectedEventData}
           currentUserId={user?.id}
           onRSVP={(eventId: string, status: CalendarEvent["rsvpStatus"]) => {
-            setEvents(prevEvents =>
-              prevEvents.map(event => 
-                event.id === eventId 
-                  ? { ...event, rsvpStatus: status }
-                  : event
-              )
-            );
+            updateEventRSVP(eventId, status);
           }}
           onBookmark={(eventId: string) => {
             logger.debug('Bookmark event', { id: eventId });

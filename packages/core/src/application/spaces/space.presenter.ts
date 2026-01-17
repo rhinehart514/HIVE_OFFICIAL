@@ -9,6 +9,7 @@ import type { EnhancedSpace } from '../../domain/spaces/aggregates/enhanced-spac
 import type {
   SpaceBaseDTO,
   SpaceBrowseDTO,
+  SpaceBrowseEnrichment,
   SpaceDetailDTO,
   SpaceMembershipDTO,
   SpaceWithMembersDTO,
@@ -109,14 +110,37 @@ function toWidgetDetail(widget: EnhancedSpace['widgets'][0]): WidgetDetailDTO {
 }
 
 /**
+ * Cold start enrichment defaults
+ */
+const EMPTY_ENRICHMENT: SpaceBrowseEnrichment = {
+  eventCounts: new Map(),
+  nextEvents: new Map(),
+  mutuals: new Map(),
+  toolCounts: new Map(),
+};
+
+/**
  * Transform EnhancedSpace to browse/discovery DTO
  *
  * Used by: /api/spaces/browse-v2, /api/spaces/recommended, /api/spaces/search
  *
  * @param space - EnhancedSpace aggregate
  * @param isJoined - Whether the current user is a member
+ * @param enrichment - Cold start enrichment data (events, mutuals, tools)
  */
-export function toSpaceBrowseDTO(space: EnhancedSpace, isJoined: boolean): SpaceBrowseDTO {
+export function toSpaceBrowseDTO(
+  space: EnhancedSpace,
+  isJoined: boolean,
+  enrichment: SpaceBrowseEnrichment = EMPTY_ENRICHMENT
+): SpaceBrowseDTO {
+  const spaceId = space.spaceId.value;
+
+  // Get enrichment data for this space
+  const eventCount = enrichment.eventCounts.get(spaceId) ?? 0;
+  const nextEvent = enrichment.nextEvents.get(spaceId);
+  const mutualData = enrichment.mutuals.get(spaceId);
+  const toolCount = enrichment.toolCounts.get(spaceId) ?? space.widgets.filter(w => w.isEnabled).length;
+
   return {
     ...toBaseDTO(space),
     postCount: space.postCount,
@@ -127,6 +151,14 @@ export function toSpaceBrowseDTO(space: EnhancedSpace, isJoined: boolean): Space
     widgets: space.widgets
       .filter(w => w.isEnabled)
       .map(toWidgetSummary),
+
+    // Cold start signals
+    upcomingEventCount: eventCount,
+    nextEventAt: nextEvent?.startAt ?? null,
+    nextEventTitle: nextEvent?.title ?? null,
+    mutualCount: mutualData?.count ?? 0,
+    mutualAvatars: mutualData?.avatars ?? [],
+    toolCount,
   };
 }
 
@@ -249,13 +281,15 @@ export function toSpaceWithToolsDTO(space: EnhancedSpace): SpaceWithToolsDTO {
  *
  * @param spaces - Array of EnhancedSpace aggregates
  * @param joinedSpaceIds - Set of space IDs the user has joined
+ * @param enrichment - Cold start enrichment data (events, mutuals, tools)
  */
 export function toSpaceBrowseDTOList(
   spaces: EnhancedSpace[],
-  joinedSpaceIds: Set<string>
+  joinedSpaceIds: Set<string>,
+  enrichment: SpaceBrowseEnrichment = EMPTY_ENRICHMENT
 ): SpaceBrowseDTO[] {
   return spaces.map(space =>
-    toSpaceBrowseDTO(space, joinedSpaceIds.has(space.spaceId.value))
+    toSpaceBrowseDTO(space, joinedSpaceIds.has(space.spaceId.value), enrichment)
   );
 }
 

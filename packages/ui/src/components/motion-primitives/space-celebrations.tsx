@@ -11,7 +11,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { Check, Zap, Users, Star, Trophy } from 'lucide-react';
+import { CheckIcon, BoltIcon, UsersIcon, StarIcon, TrophyIcon } from '@heroicons/react/24/outline';
 
 import { cn } from '../../lib/utils';
 import {
@@ -191,7 +191,7 @@ export function JoinCelebration({
                 'bg-gradient-to-br from-gold-400 to-gold-600'
               )}
             >
-              <Check className="h-8 w-8 text-black" strokeWidth={3} />
+              <CheckIcon className="h-8 w-8 text-black" strokeWidth={3} />
             </motion.div>
 
             {/* Message */}
@@ -245,7 +245,7 @@ export function FirstPostCelebration({
   if (shouldReduceMotion) {
     return isActive ? (
       <div className={cn('flex items-center gap-2 text-gold-400', className)}>
-        <Zap className="h-4 w-4" />
+        <BoltIcon className="h-4 w-4" />
         <span className="text-sm font-medium">First post!</span>
       </div>
     ) : null;
@@ -273,7 +273,7 @@ export function FirstPostCelebration({
             }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
-            <Zap className="h-4 w-4 text-gold-400" />
+            <BoltIcon className="h-4 w-4 text-gold-400" />
           </motion.div>
           <span className="text-sm font-medium text-gold-400">
             First post! 🎉
@@ -300,10 +300,10 @@ export interface MilestoneBadgeProps {
 }
 
 const MILESTONE_ICONS = {
-  posts: Zap,
-  members: Users,
-  days: Star,
-  tools: Trophy,
+  posts: BoltIcon,
+  members: UsersIcon,
+  days: StarIcon,
+  tools: TrophyIcon,
 };
 
 const MILESTONE_LABELS = {

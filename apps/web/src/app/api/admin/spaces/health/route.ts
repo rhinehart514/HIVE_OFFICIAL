@@ -207,6 +207,32 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
         .get();
       const messagesLast7d = recentMessagesSnapshot.data().count;
 
+      // Get unique message authors in last 7 days (activeMembers7d)
+      const recentMessagesForAuthors = await dbAdmin
+        .collection('spaces')
+        .doc(spaceId)
+        .collection('messages')
+        .where('createdAt', '>=', sevenDaysAgo)
+        .select('authorId')
+        .get();
+      const uniqueAuthors = new Set(
+        recentMessagesForAuthors.docs
+          .map(doc => doc.data().authorId)
+          .filter(Boolean)
+      );
+      const activeMembers7d = uniqueAuthors.size;
+
+      // Count new members in last 7 days (newMembers7d)
+      const newMembersSnapshot = await dbAdmin
+        .collection('spaceMembers')
+        .where('spaceId', '==', spaceId)
+        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('joinedAt', '>=', sevenDaysAgo)
+        .where('isActive', '==', true)
+        .count()
+        .get();
+      const newMembers7d = newMembersSnapshot.data().count;
+
       // Count total messages
       const totalMessagesSnapshot = await dbAdmin
         .collection('spaces')
@@ -291,8 +317,8 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
         boardCount,
 
         messagesLast7d,
-        activeMembers7d: 0, // TODO: Calculate unique senders
-        newMembers7d: 0, // TODO: Calculate new members
+        activeMembers7d,
+        newMembers7d,
 
         ...leaderInfo,
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@hive/ui';
 import { Button } from '@hive/ui';
-import { Loader2, Check } from 'lucide-react';
+import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/lib/utils';
 import {
   GHOST_MODE_LEVELS,
@@ -69,12 +69,12 @@ export function GhostModeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px] bg-[#141414] border-[#2A2A2A]">
+      <DialogContent className="sm:max-w-[480px] bg-[var(--bg-elevated)] border-[var(--border-subtle)]">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-white">
+          <DialogTitle className="text-xl font-semibold text-[var(--text-primary)]">
             Ghost Mode
           </DialogTitle>
-          <DialogDescription className="text-white/60">
+          <DialogDescription className="text-[var(--text-secondary)]">
             Control your visibility across HIVE
           </DialogDescription>
         </DialogHeader>
@@ -82,9 +82,9 @@ export function GhostModeModal({
         <div className="space-y-6 py-4">
           {/* Current Status */}
           {isCurrentlyEnabled && currentState?.expiresAt && (
-            <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white/60">Currently active</span>
+                <span className="text-sm text-[var(--text-secondary)]">Currently active</span>
                 <GhostModeCountdown expiresAt={currentState.expiresAt} variant="full" />
               </div>
             </div>
@@ -92,7 +92,7 @@ export function GhostModeModal({
 
           {/* Level Selection */}
           <div className="space-y-3">
-            <label className="text-sm font-medium text-white/80">Select Level</label>
+            <label className="text-sm font-medium text-[var(--text-secondary)]">Select Level</label>
             <div className="space-y-2">
               {GHOST_MODE_LEVELS.map((level) => (
                 <LevelOption
@@ -107,12 +107,12 @@ export function GhostModeModal({
 
           {/* What Gets Hidden Preview */}
           {selectedLevelConfig && selectedLevelConfig.hides.length > 0 && (
-            <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-              <h4 className="text-sm font-medium text-white/80 mb-2">What gets hidden:</h4>
+            <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-subtle)] p-4">
+              <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-2">What gets hidden:</h4>
               <ul className="space-y-1">
                 {selectedLevelConfig.hides.map((item) => (
-                  <li key={item} className="text-sm text-white/50 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                  <li key={item} className="text-sm text-[var(--text-tertiary)] flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)]" />
                     {formatHiddenItem(item)}
                   </li>
                 ))}
@@ -123,7 +123,7 @@ export function GhostModeModal({
           {/* Duration Selection - only show when enabling */}
           {(!isCurrentlyEnabled || selectedLevel !== currentState?.level) && selectedLevel !== 'normal' && (
             <div className="space-y-3">
-              <label className="text-sm font-medium text-white/80">Duration</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Duration</label>
               <div className="flex flex-wrap gap-2">
                 {GHOST_MODE_DURATIONS.map((duration) => (
                   <button
@@ -131,10 +131,11 @@ export function GhostModeModal({
                     type="button"
                     onClick={() => setSelectedDuration(duration.value)}
                     className={cn(
-                      'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
                       selectedDuration === duration.value
-                        ? 'bg-white text-black'
-                        : 'bg-white/[0.06] text-white/70 hover:bg-white/[0.1] hover:text-white'
+                        ? 'bg-[var(--text-primary)] text-[var(--text-inverse)]'
+                        : 'bg-[var(--bg-muted)] text-[var(--text-secondary)] hover:bg-[var(--bg-emphasis)] hover:text-[var(--text-primary)]'
                     )}
                   >
                     {duration.shortLabel}
@@ -150,7 +151,7 @@ export function GhostModeModal({
           <Button
             variant="ghost"
             onClick={() => onOpenChange(false)}
-            className="flex-1 text-white/70 hover:text-white hover:bg-white/[0.06]"
+            className="flex-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-muted)]"
             disabled={isSubmitting}
           >
             Cancel
@@ -161,10 +162,10 @@ export function GhostModeModal({
               variant="secondary"
               onClick={handleDeactivate}
               disabled={isSubmitting}
-              className="flex-1 border-white/20 text-white hover:bg-white/10"
+              className="flex-1 border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--bg-emphasis)]"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
               ) : (
                 'Turn Off Ghost Mode'
               )}
@@ -173,10 +174,10 @@ export function GhostModeModal({
             <Button
               onClick={handleActivate}
               disabled={isSubmitting || selectedLevel === 'normal'}
-              className="flex-1 bg-[#FFD700] text-black hover:bg-[#FFD700]/90 disabled:opacity-50"
+              className="flex-1 bg-[var(--life-gold)] text-[var(--text-inverse)] hover:bg-[var(--life-gold-hover)] disabled:opacity-50"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
               ) : (
                 'Activate Ghost Mode'
               )}
@@ -202,31 +203,32 @@ function LevelOption({ config, isSelected, onSelect }: LevelOptionProps) {
       type="button"
       onClick={onSelect}
       className={cn(
-        'w-full flex items-start gap-4 p-4 rounded-lg border transition-all text-left',
+        'w-full flex items-start gap-4 p-4 rounded-lg border transition-all duration-200 text-left',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]',
         isSelected
-          ? 'border-white/30 bg-white/[0.04]'
-          : 'border-white/10 bg-transparent hover:border-white/20 hover:bg-white/[0.02]'
+          ? 'border-[var(--border-emphasis)] bg-[var(--bg-muted)]'
+          : 'border-[var(--border-subtle)] bg-transparent hover:border-[var(--border-default)] hover:bg-[var(--bg-subtle)]'
       )}
     >
       <div
         className={cn(
           'flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center',
-          isSelected ? 'bg-white/10' : 'bg-white/[0.04]'
+          isSelected ? 'bg-[var(--bg-emphasis)]' : 'bg-[var(--bg-muted)]'
         )}
       >
-        <Icon className={cn('w-5 h-5', isSelected ? 'text-white' : 'text-white/60')} />
+        <Icon className={cn('w-5 h-5', isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]')} />
       </div>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className={cn('font-medium', isSelected ? 'text-white' : 'text-white/80')}>
+          <span className={cn('font-medium', isSelected ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]')}>
             {config.label}
           </span>
           {isSelected && (
-            <Check className="w-4 h-4 text-[#FFD700]" />
+            <CheckIcon className="w-4 h-4 text-[var(--life-gold)]" />
           )}
         </div>
-        <p className="text-sm text-white/50 mt-0.5">{config.detailedDescription}</p>
+        <p className="text-sm text-[var(--text-tertiary)] mt-0.5">{config.detailedDescription}</p>
       </div>
     </button>
   );

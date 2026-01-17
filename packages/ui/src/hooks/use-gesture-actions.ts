@@ -235,7 +235,7 @@ export function useGestureActions(
 
       const deltaX = x - startPosRef.current.x;
       const deltaY = y - startPosRef.current.y;
-      const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+      const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
 
       // Cancel long press if moved too much
       if (distance > longPressMoveTolerance && longPressTimerRef.current) {
@@ -293,7 +293,7 @@ export function useGestureActions(
 
       const deltaX = x - startPosRef.current.x;
       const deltaY = y - startPosRef.current.y;
-      const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+      const distance = Math.sqrt(Math.pow(deltaX, 2) + Math.pow(deltaY, 2));
       const duration = Date.now() - startTimeRef.current;
       const velocity = distance / duration;
 

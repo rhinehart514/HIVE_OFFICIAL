@@ -1,4 +1,5 @@
 import { z } from "zod";
+import * as admin from 'firebase-admin';
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import {
@@ -135,9 +136,16 @@ export const POST = withAuthValidationAndErrors(
       const userData = userDoc.data() || {};
 
       // Build typing indicator data, filtering out undefined values
-      const typingData: { name: string; timestamp: number; avatarUrl?: string } = {
+      // expiresAt enables Firestore TTL auto-deletion (30s buffer over 5s client expiry)
+      const typingData: {
+        name: string;
+        timestamp: number;
+        expiresAt: admin.firestore.Timestamp;
+        avatarUrl?: string;
+      } = {
         name: userData.displayName || userData.name || 'Member',
         timestamp: Date.now(),
+        expiresAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 1000)),
       };
 
       // Only add avatarUrl if it exists (Firestore doesn't accept undefined)

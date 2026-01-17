@@ -8,7 +8,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { Skeleton } from '../../atomic/00-Global/atoms/skeleton';
+import { Skeleton } from '../../design-system/primitives';
 
 // Dynamic import with no SSR to prevent hooks order violations
 const StreamingCanvasView = dynamic(

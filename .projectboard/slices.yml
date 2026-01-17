@@ -1,0 +1,124 @@
+# HIVE Release Slices
+# Based on the 5-phase IA/UI/UX redesign
+
+release_target: "1.0"
+updated: "2026-01-14"
+
+slices:
+  # ============================================
+  # PHASE 1: AUTH/ONBOARDING
+  # ============================================
+  - id: S-001
+    name: "Phase 1: Auth/Onboarding"
+    goal: |
+      Complete the Auth & Onboarding vertical slice with IA, UI, and UX.
+      Students should be able to sign up with @buffalo.edu, complete
+      onboarding wizard, and land in a personalized experience.
+    status: active
+    acceptance_criteria:
+      - "IA spec complete (docs/IA_PHASE1_AUTH_ONBOARDING.md)"
+      - "All auth flows use locked primitives"
+      - "Onboarding wizard collects: name, handle, photo, major, grad year, interests"
+      - "@buffalo.edu email verification working"
+      - "Session management with JWT"
+      - "Edge cases handled (expired codes, invalid emails)"
+    allowed_paths:
+      - "app/auth/"
+      - "app/onboarding/"
+      - "components/auth/"
+      - "components/onboarding/"
+      - "packages/ui/src/design-system/"
+    forbidden_paths:
+      - "app/spaces/"
+      - "app/tools/"
+      - "app/profile/"
+    focus_paths:
+      - "apps/web/src/app/auth/"
+      - "apps/web/src/components/auth/"
+
+  # ============================================
+  # PHASE 2: SPACES
+  # ============================================
+  - id: S-002
+    name: "Phase 2: Spaces"
+    goal: |
+      Complete the Spaces vertical slice - browse, detail, and chat.
+      Students should be able to discover spaces, view space details,
+      join spaces, and participate in real-time chat.
+    status: pending
+    acceptance_criteria:
+      - "Space browse grid with filtering/search"
+      - "Space detail page with members, chat, resources"
+      - "Real-time chat with presence indicators"
+      - "Join/leave space functionality"
+      - "Space admin tools for leaders"
+    allowed_paths:
+      - "app/spaces/"
+      - "hooks/chat/"
+      - "core/domain/spaces/"
+      - "packages/ui/src/design-system/"
+    forbidden_paths:
+      - "app/auth/"
+      - "app/tools/"
+
+  # ============================================
+  # PHASE 3: PROFILES
+  # ============================================
+  - id: S-003
+    name: "Phase 3: Profiles"
+    goal: |
+      Complete the Profiles vertical slice. Students should be able to
+      view their profile, edit their info, see their spaces and activity,
+      and view other students' public profiles.
+    status: pending
+    acceptance_criteria:
+      - "Profile page with campus identity (major, year, clubs)"
+      - "Edit profile flow"
+      - "Public profile view for other students"
+      - "Activity feed on profile"
+      - "Spaces membership display"
+    allowed_paths:
+      - "app/profile/"
+      - "core/domain/profile/"
+      - "packages/ui/src/design-system/"
+
+  # ============================================
+  # PHASE 4: HIVELAB
+  # ============================================
+  - id: S-004
+    name: "Phase 4: HiveLab"
+    goal: |
+      Complete the HiveLab (creation tools) vertical slice. Students
+      should be able to create content, use AI tools, and share
+      creations within their spaces.
+    status: pending
+    acceptance_criteria:
+      - "HiveLab IDE with AI assistance"
+      - "Content creation workflow"
+      - "Share to spaces functionality"
+      - "Template library"
+    allowed_paths:
+      - "app/tools/"
+      - "components/hivelab/"
+      - "core/domain/hivelab/"
+      - "packages/ui/src/design-system/"
+
+  # ============================================
+  # PHASE 5: DISCOVERY
+  # ============================================
+  - id: S-005
+    name: "Phase 5: Discovery"
+    goal: |
+      Complete the Discovery vertical slice. Students should be able
+      to find relevant spaces, events, and content based on their
+      interests and campus activity.
+    status: pending
+    acceptance_criteria:
+      - "Discovery feed with personalized recommendations"
+      - "Event discovery"
+      - "Interest-based space suggestions"
+      - "Search across all content types"
+    allowed_paths:
+      - "app/spaces/browse/"
+      - "api/spaces/browse-v2"
+      - "packages/ui/src/design-system/"

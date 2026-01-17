@@ -1,32 +1,42 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@hive/ui';
+import { HomeIcon, ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-ground">
       <div className="mx-auto max-w-md text-center">
-        <h2 className="mb-2 text-2xl font-bold">
+        <div className="mb-6 flex justify-center">
+          <div className="rounded-full bg-neutral-800/50 p-4">
+            <MagnifyingGlassIcon className="h-8 w-8 text-neutral-400" />
+          </div>
+        </div>
+
+        <h2 className="mb-2 text-xl font-semibold text-white">
           Page not found
         </h2>
 
-        <p className="mb-6 text-gray-500">
+        <p className="mb-6 text-sm text-neutral-400">
           The page you're looking for doesn't exist or has been moved.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Link
-            href="/"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Go home
-          </Link>
-          <button
+          <Button asChild className="gap-2">
+            <Link href="/">
+              <HomeIcon className="h-4 w-4" />
+              Go home
+            </Link>
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => window.history.back()}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+            className="gap-2"
           >
+            <ArrowLeftIcon className="h-4 w-4" />
             Go back
-          </button>
+          </Button>
         </div>
       </div>
     </div>

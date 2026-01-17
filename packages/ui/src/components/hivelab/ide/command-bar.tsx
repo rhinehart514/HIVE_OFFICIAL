@@ -1,19 +1,22 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  Sparkles,
-  LayoutTemplate,
-  Shapes,
-  MousePointer2,
-  Hand,
-  GitBranch,
-  Undo2,
-  Redo2,
-} from 'lucide-react';
+import { SparklesIcon, RectangleStackIcon, RectangleGroupIcon, CursorArrowRaysIcon, HandRaisedIcon, ShareIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const LayoutTemplate = RectangleStackIcon;
+const Shapes = RectangleGroupIcon;
+const MousePointer2 = CursorArrowRaysIcon;
+const Hand = HandRaisedIcon;
+const GitBranch = ShareIcon;
+const Undo2 = ArrowUturnLeftIcon;
+const Redo2 = ArrowUturnRightIcon;
 import { cn } from '../../../lib/utils';
-import { focusClasses, premiumMotion } from '../../../lib/premium-design';
 import type { ToolMode } from './types';
+
+// Workshop tokens
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]';
+const workshopTransition = { duration: 0.15, ease: [0.22, 1, 0.36, 1] };
 
 interface CommandBarProps {
   mode: ToolMode;
@@ -44,17 +47,17 @@ function WorkflowButton({ icon, label, shortcut, onClick, active, pulse }: Workf
       type="button"
       onClick={onClick}
       className={cn(
-        'relative flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
-        'text-sm font-medium',
+        'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium',
+        'transition-all duration-[var(--workshop-duration)]',
         active
-          ? 'bg-white/[0.12] text-white border border-white/[0.15]'
-          : 'text-[#9A9A9F] hover:text-white hover:bg-white/[0.06] border border-transparent',
-        focusClasses()
+          ? 'bg-[var(--hivelab-surface-hover)] text-[var(--hivelab-text-primary)] border border-[var(--hivelab-border-emphasis)]'
+          : 'text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)] border border-transparent',
+        focusRing
       )}
     >
       {pulse && !active && (
         <motion.span
-          className="absolute inset-0 rounded-lg border-2 border-white/30"
+          className="absolute inset-0 rounded-lg border-2 border-[var(--life-gold)]/30"
           initial={{ opacity: 0.5, scale: 1 }}
           animate={{ opacity: 0, scale: 1.15 }}
           transition={{ duration: 1.5, repeat: Infinity }}
@@ -62,7 +65,7 @@ function WorkflowButton({ icon, label, shortcut, onClick, active, pulse }: Workf
       )}
       {icon}
       <span className="hidden md:block">{label}</span>
-      <kbd className="hidden lg:block px-1.5 py-0.5 text-[10px] bg-white/[0.08] rounded text-[#6B6B70]">
+      <kbd className="hidden lg:block px-1.5 py-0.5 text-[10px] bg-[var(--hivelab-surface)] rounded text-[var(--hivelab-text-tertiary)]">
         {shortcut}
       </kbd>
     </button>
@@ -83,11 +86,11 @@ function ModeButton({ active, onClick, icon, label, shortcut }: ModeButtonProps)
       type="button"
       onClick={onClick}
       className={cn(
-        'relative p-2 rounded-lg transition-all',
+        'relative p-2 rounded-lg transition-all duration-[var(--workshop-duration)]',
         active
-          ? 'text-white'
-          : 'text-[#6B6B70] hover:text-[#9A9A9F]',
-        focusClasses()
+          ? 'text-[var(--hivelab-text-primary)]'
+          : 'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-secondary)]',
+        focusRing
       )}
       title={`${label} (${shortcut})`}
     >
@@ -95,8 +98,8 @@ function ModeButton({ active, onClick, icon, label, shortcut }: ModeButtonProps)
       {active && (
         <motion.div
           layoutId="active-mode"
-          className="absolute inset-0 bg-white/[0.12] rounded-lg border border-white/[0.15]"
-          transition={premiumMotion.spring.snappy}
+          className="absolute inset-0 bg-[var(--hivelab-surface-hover)] rounded-lg border border-[var(--hivelab-border-emphasis)]"
+          transition={workshopTransition}
         />
       )}
     </button>
@@ -117,11 +120,11 @@ export function CommandBar({
   isGenerating,
 }: CommandBarProps) {
   return (
-    <div className="h-14 bg-[#111111] border-b border-white/[0.06] flex items-center justify-between px-4">
+    <div className="h-14 bg-[var(--hivelab-surface)] border-b border-[var(--hivelab-border)] flex items-center justify-between px-4">
       {/* Left: Workflow Triggers */}
       <div className="flex items-center gap-1">
         <WorkflowButton
-          icon={<Sparkles className="h-4 w-4" />}
+          icon={<SparklesIcon className="h-4 w-4" />}
           label="AI"
           shortcut="⌘K"
           onClick={onOpenAI}
@@ -144,7 +147,7 @@ export function CommandBar({
       </div>
 
       {/* Center: Mode Selector */}
-      <div className="flex items-center gap-1 bg-white/[0.04] rounded-lg p-1 border border-white/[0.06]">
+      <div className="flex items-center gap-1 bg-[var(--hivelab-bg)] rounded-lg p-1 border border-[var(--hivelab-border)]">
         <ModeButton
           active={mode === 'select'}
           onClick={() => onModeChange('select')}
@@ -175,11 +178,9 @@ export function CommandBar({
           onClick={onUndo}
           disabled={!canUndo}
           className={cn(
-            'p-2 rounded-lg transition-colors',
-            canUndo
-              ? 'text-[#9A9A9F] hover:text-white hover:bg-white/[0.06]'
-              : 'text-[#4A4A4F] cursor-not-allowed',
-            focusClasses()
+            'workshop-icon-btn',
+            !canUndo && 'opacity-30 cursor-not-allowed',
+            focusRing
           )}
           title="Undo (⌘Z)"
         >
@@ -190,11 +191,9 @@ export function CommandBar({
           onClick={onRedo}
           disabled={!canRedo}
           className={cn(
-            'p-2 rounded-lg transition-colors',
-            canRedo
-              ? 'text-[#9A9A9F] hover:text-white hover:bg-white/[0.06]'
-              : 'text-[#4A4A4F] cursor-not-allowed',
-            focusClasses()
+            'workshop-icon-btn',
+            !canRedo && 'opacity-30 cursor-not-allowed',
+            focusRing
           )}
           title="Redo (⌘⇧Z)"
         >

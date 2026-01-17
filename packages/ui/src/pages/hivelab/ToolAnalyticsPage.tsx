@@ -1,7 +1,9 @@
-import { ArrowLeft, Download, Star, Users, Activity, Share, MessageSquare, TrendingUp } from 'lucide-react';
+import { ArrowLeftIcon, ArrowDownTrayIcon, StarIcon, UsersIcon, ChartBarIcon, ShareIcon, ChatBubbleLeftIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/outline';
 import * as React from 'react';
 
-import { Button, Card, Grid } from '../../atomic';
+import { Button } from '../../design-system/primitives';
+import { Card } from '../../design-system/primitives';
+import { Grid } from '../../design-system/templates/Grid';
 
 export interface ToolAnalyticsData {
   overview: {
@@ -111,7 +113,7 @@ const FeedbackCard = ({ comment }: { comment: ToolAnalyticsData['feedback']['com
         <span className="text-white font-medium text-sm">{comment.user}</span>
       </div>
       <div className="flex items-center gap-1">
-        <Star className="h-3 w-3 fill-[var(--hive-brand-primary)] text-[var(--hive-brand-primary)]" />
+        <StarIcon className="h-3 w-3 fill-[var(--hive-brand-primary)] text-[var(--hive-brand-primary)]" />
         <span className="text-xs text-hive-text-tertiary">{comment.rating}</span>
       </div>
     </div>
@@ -144,7 +146,7 @@ export function ToolAnalyticsPage({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button size="sm" variant="ghost" onClick={onBack} className="text-hive-text-tertiary hover:text-white">
-                <ArrowLeft className="h-4 w-4 mr-2" />
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
                 Back
               </Button>
               <div>
@@ -163,8 +165,8 @@ export function ToolAnalyticsPage({
                 <option value="30d">Last 30 days</option>
                 <option value="90d">Last 3 months</option>
               </select>
-              <Button size="sm" variant="secondary" onClick={onExport} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                <Share className="h-4 w-4 mr-2" />
+              <Button size="sm" variant="outline" onClick={onExport} className="border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                <ShareIcon className="h-4 w-4 mr-2" />
                 Export
               </Button>
             </div>
@@ -176,25 +178,25 @@ export function ToolAnalyticsPage({
         {/* Overview Metrics */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Overview</h2>
-          <Grid columns={4} gap="lg">
-            <MetricCard title="Total Usage" value={analytics.overview.totalUsage} change={12} icon={Activity} />
-            <MetricCard title="Active Users" value={analytics.overview.activeUsers} change={8} icon={Users} />
-            <MetricCard title="Average Rating" value={analytics.overview.avgRating} change={5} icon={Star} format="rating" />
-            <MetricCard title="Total Downloads" value={analytics.overview.downloads} change={-2} icon={Download} />
+          <Grid columns={{ sm: 1, md: 2, lg: 4 }} gap="lg">
+            <MetricCard title="Total Usage" value={analytics.overview.totalUsage} change={12} icon={ChartBarIcon} />
+            <MetricCard title="Active Users" value={analytics.overview.activeUsers} change={8} icon={UsersIcon} />
+            <MetricCard title="Average Rating" value={analytics.overview.avgRating} change={5} icon={StarIcon} format="rating" />
+            <MetricCard title="Total Downloads" value={analytics.overview.downloads} change={-2} icon={ArrowDownTrayIcon} />
           </Grid>
         </div>
 
         {/* Usage Charts */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-6">Usage Analytics</h2>
-          <Grid columns={2} gap="lg">
+          <Grid columns={{ sm: 1, md: 2 }} gap="lg">
             <SimpleChart data={dailyUsageData} title="Daily Usage" />
             <SimpleChart data={spaceUsageData} title="Usage by Space" />
           </Grid>
         </div>
 
         {/* Feature Usage & User Feedback */}
-        <Grid columns={2} gap="xl">
+        <Grid columns={{ sm: 1, md: 2 }} gap="lg">
           <div>
             <h2 className="text-2xl font-bold text-white mb-6">Feature Usage</h2>
             <SimpleChart data={featureUsageData} title="Most Used Features" />
@@ -210,7 +212,7 @@ export function ToolAnalyticsPage({
                   <div key={index} className="flex items-center gap-3">
                     <div className="flex items-center gap-1 w-16">
                       <span className="text-sm text-hive-text-tertiary">{rating.rating}</span>
-                      <Star className="h-3 w-3 fill-[var(--hive-brand-primary)] text-[var(--hive-brand-primary)]" />
+                      <StarIcon className="h-3 w-3 fill-[var(--hive-brand-primary)] text-[var(--hive-brand-primary)]" />
                     </div>
                     <div className="flex-1 bg-white/10 rounded-full h-2">
                       <div className="bg-gradient-to-r from-[var(--hive-brand-primary)] to-hive-brand-hover h-2 rounded-full" style={{ width: `${(rating.count / Math.max(analytics.feedback.ratings[0]?.count || 1, 1)) * 100}%` }} />
@@ -229,8 +231,8 @@ export function ToolAnalyticsPage({
                   <FeedbackCard key={index} comment={comment} />
                 ))}
               </div>
-              <Button variant="secondary" className="w-full mt-4 border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
-                <MessageSquare className="h-4 w-4 mr-2" />
+              <Button variant="outline" className="w-full mt-4 border-[rgba(255,255,255,0.2)] text-hive-text-tertiary hover:text-white">
+                <ChatBubbleLeftIcon className="h-4 w-4 mr-2" />
                 View All Feedback
               </Button>
             </div>
@@ -241,7 +243,7 @@ export function ToolAnalyticsPage({
         <Card className="p-8 bg-gradient-to-r from-[rgba(255,215,0,0.05)] to-[rgba(255,215,0,0.02)] border-[rgba(255,215,0,0.1)]">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-[var(--hive-brand-primary)]/20 rounded-xl flex items-center justify-center flex-shrink-0">
-              <TrendingUp className="h-6 w-6 text-[var(--hive-brand-primary)]" />
+              <ArrowTrendingUpIcon className="h-6 w-6 text-[var(--hive-brand-primary)]" />
             </div>
             <div>
               <h3 className="text-xl font-semibold text-white mb-2">Performance Insights</h3>

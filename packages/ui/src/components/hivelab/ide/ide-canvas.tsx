@@ -2,16 +2,61 @@
 
 import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import {
-  Box,
-  ArrowRight,
-  Move,
-  Trash2,
-  GripVertical,
-} from 'lucide-react';
+import { ArrowRightIcon, TrashIcon, Bars3Icon, ArrowsPointingOutIcon, CubeIcon, PlusIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Move = ArrowsPointingOutIcon;
+const Box = CubeIcon;
 
 // Viewport buffer - render elements this many pixels outside visible area
 const VIEWPORT_BUFFER = 200;
+
+// ============================================
+// Make.com-Style Color Palette
+// ============================================
+const MAKE_COLORS = {
+  // Canvas background - mint green
+  canvasBg: '#E8F5E9',
+  canvasGrid: '#C8E6C9',
+
+  // Node category colors (light tinted backgrounds)
+  nodeInput: '#FFEBEE',      // Pink for inputs
+  nodeDisplay: '#E3F2FD',    // Blue for display
+  nodeAction: '#FFF3E0',     // Orange for actions
+  nodeLogic: '#F3E5F5',      // Purple for logic
+  nodeData: '#E8F5E9',       // Green for data
+  nodeBorder: 'rgba(0,0,0,0.08)',
+  nodeBorderHover: 'rgba(0,0,0,0.15)',
+  nodeBorderSelected: 'rgba(0,0,0,0.25)',
+
+  // Connections
+  connectionLine: '#4CAF50',
+  connectionDot: '#2E7D32',
+  connectionGlow: 'rgba(76, 175, 80, 0.3)',
+
+  // Text
+  textPrimary: '#212121',
+  textSecondary: '#757575',
+  textTertiary: '#9E9E9E',
+
+  // UI
+  panelBg: '#ffffff',
+  panelBorder: '#e0e0e0',
+};
+
+// Map element types to category colors
+function getNodeColor(elementId: string): string {
+  const inputElements = ['search-input', 'date-picker', 'user-selector', 'form-builder', 'event-picker', 'space-picker', 'member-selector'];
+  const displayElements = ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'connection-list', 'space-feed', 'space-stats'];
+  const actionElements = ['poll', 'rsvp-button', 'announcement'];
+  const logicElements = ['filter-selector', 'countdown-timer', 'counter', 'timer', 'role-gate'];
+
+  if (inputElements.includes(elementId)) return MAKE_COLORS.nodeInput;
+  if (displayElements.includes(elementId)) return MAKE_COLORS.nodeDisplay;
+  if (actionElements.includes(elementId)) return MAKE_COLORS.nodeAction;
+  if (logicElements.includes(elementId)) return MAKE_COLORS.nodeLogic;
+  return MAKE_COLORS.nodeData;
+}
 import { cn } from '../../../lib/utils';
 import { springPresets, easingArrays } from '@hive/tokens';
 import type { CanvasElement, Connection, ToolMode } from './types';
@@ -270,6 +315,9 @@ function ElementNode({
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+  // Get category-based color for Make.com style
+  const nodeColor = getNodeColor(element.elementId);
+
   return (
     <motion.div
       ref={nodeRef}
@@ -279,19 +327,16 @@ function ElementNode({
         scale: isDragging ? 1.02 : 1,
         y: 0,
         boxShadow: isSelected
-          ? '0 0 0 2px rgba(255,255,255,0.3), 0 8px 32px rgba(0,0,0,0.4)'
+          ? `0 0 0 2px ${MAKE_COLORS.nodeBorderSelected}, 0 8px 24px rgba(0,0,0,0.15)`
           : isDragging
-            ? '0 16px 48px rgba(0,0,0,0.5)'
-            : '0 4px 16px rgba(0,0,0,0.3)',
+            ? '0 16px 32px rgba(0,0,0,0.2)'
+            : '0 2px 8px rgba(0,0,0,0.08)',
       }}
       exit={{ opacity: 0, scale: 0.9, y: -10 }}
       transition={springPresets.snappy}
-      whileHover={!isDragging && !isSelected ? { scale: 1.01 } : {}}
+      whileHover={!isDragging && !isSelected ? { scale: 1.02, y: -2 } : {}}
       className={cn(
-        'absolute rounded-xl border-2 bg-[#1a1a1a]',
-        isSelected
-          ? 'border-white/60'
-          : 'border-[#333] hover:border-[#555]',
+        'absolute rounded-2xl',
         isDragging && 'cursor-grabbing z-50',
         element.locked && 'opacity-60',
         !element.visible && 'opacity-30'
@@ -302,6 +347,10 @@ function ElementNode({
         width: element.size.width,
         height: element.size.height,
         zIndex: isDragging ? 1000 : element.zIndex || 1,
+        backgroundColor: nodeColor,
+        border: isSelected
+          ? `2px solid ${MAKE_COLORS.nodeBorderSelected}`
+          : `1px solid ${MAKE_COLORS.nodeBorder}`,
       }}
       onMouseDown={handleMouseDown}
     >
@@ -311,7 +360,7 @@ function ElementNode({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{
-              opacity: [0.5, 0.8, 0.5],
+              opacity: [0.3, 0.5, 0.3],
               scale: [1, 1.02, 1],
             }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -319,20 +368,30 @@ function ElementNode({
               opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
               scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
             }}
-            className="absolute -inset-1 rounded-xl border-2 border-white/30 pointer-events-none"
+            className="absolute -inset-1 rounded-2xl border-2 pointer-events-none"
+            style={{ borderColor: MAKE_COLORS.connectionLine }}
           />
         )}
       </AnimatePresence>
 
-      {/* Outer glow ring when selected */}
-      {isSelected && (
-        <div className="absolute -inset-[3px] rounded-xl bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-white/[0.06] pointer-events-none" />
-      )}
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#333] bg-[#252525] rounded-t-xl">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-neutral-500" />
-          <span className="text-sm font-medium text-white truncate max-w-[120px]">
+      {/* Header - Make.com style */}
+      <div
+        className="flex items-center justify-between px-3 py-2.5 rounded-t-2xl"
+        style={{
+          borderBottom: `1px solid ${MAKE_COLORS.nodeBorder}`,
+          backgroundColor: 'rgba(255,255,255,0.5)',
+        }}
+      >
+        <div className="flex items-center gap-2.5">
+          {/* Category dot indicator */}
+          <div
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: MAKE_COLORS.connectionLine }}
+          />
+          <span
+            className="text-sm font-semibold truncate max-w-[140px]"
+            style={{ color: MAKE_COLORS.textPrimary }}
+          >
             {displayName}
           </span>
         </div>
@@ -340,7 +399,8 @@ function ElementNode({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              className="p-1 text-[#666] hover:text-white rounded transition-colors"
+              className="p-1 rounded transition-colors hover:bg-black/5"
+              style={{ color: MAKE_COLORS.textTertiary }}
               title="Move"
             >
               <Move className="h-3.5 w-3.5" />
@@ -351,18 +411,22 @@ function ElementNode({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-1 text-[#666] hover:text-red-400 rounded transition-colors"
+              className="p-1 rounded transition-colors hover:bg-red-50 hover:text-red-500"
+              style={{ color: MAKE_COLORS.textTertiary }}
               title="Delete"
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <TrashIcon className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-3 text-xs text-[#888]">
-        <p className="line-clamp-2">
+      {/* Content - Make.com style */}
+      <div className="p-3">
+        <p
+          className="text-xs line-clamp-2"
+          style={{ color: MAKE_COLORS.textSecondary }}
+        >
           {String(
             element.config?.placeholder ||
               element.config?.label ||
@@ -372,16 +436,19 @@ function ElementNode({
         </p>
       </div>
 
-      {/* Connection Ports */}
+      {/* Connection Ports - Make.com style with green dots */}
       {/* Input Port (Left) */}
       <button
         type="button"
         className={cn(
-          'absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all',
-          mode === 'connect'
-            ? 'bg-green-500 border-green-400 cursor-pointer hover:scale-125'
-            : 'bg-[#333] border-[#555]'
+          'absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all',
+          mode === 'connect' && 'cursor-pointer hover:scale-125'
         )}
+        style={{
+          backgroundColor: mode === 'connect' ? MAKE_COLORS.connectionLine : '#fff',
+          borderColor: mode === 'connect' ? MAKE_COLORS.connectionDot : MAKE_COLORS.nodeBorderHover,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }}
         onClick={(e) => {
           e.stopPropagation();
           if (mode === 'connect') {
@@ -391,15 +458,18 @@ function ElementNode({
         title="Input port"
       />
 
-      {/* Output Port (Right) */}
+      {/* Output Port (Right) - Plus button style */}
       <button
         type="button"
         className={cn(
-          'absolute -right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all',
-          mode === 'connect'
-            ? 'bg-blue-500 border-blue-400 cursor-pointer hover:scale-125'
-            : 'bg-[#333] border-[#555]'
+          'absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center',
+          mode === 'connect' && 'cursor-pointer hover:scale-125'
         )}
+        style={{
+          backgroundColor: mode === 'connect' ? MAKE_COLORS.connectionLine : '#fff',
+          borderColor: mode === 'connect' ? MAKE_COLORS.connectionDot : MAKE_COLORS.nodeBorderHover,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }}
         onClick={(e) => {
           e.stopPropagation();
           if (mode === 'connect') {
@@ -407,7 +477,14 @@ function ElementNode({
           }
         }}
         title="Output port"
-      />
+      >
+        {mode !== 'connect' && (
+          <PlusIcon
+            className="w-3 h-3"
+            style={{ color: MAKE_COLORS.textTertiary }}
+          />
+        )}
+      </button>
 
       {/* Resize Handle - SE corner (Figma-like) */}
       {isSelected && !element.locked && (
@@ -423,14 +500,10 @@ function ElementNode({
             width="12"
             height="12"
             viewBox="0 0 12 12"
-            className={cn(
-              "transition-colors",
-              isResizing ? "text-white" : "text-[#666] group-hover:text-[#888]"
-            )}
           >
             <path
               d="M11 1L1 11M11 6L6 11M11 11L11 11"
-              stroke="currentColor"
+              stroke={isResizing ? MAKE_COLORS.textPrimary : MAKE_COLORS.textTertiary}
               strokeWidth="1.5"
               strokeLinecap="round"
             />
@@ -443,7 +516,7 @@ function ElementNode({
         <>
           {/* Right edge */}
           <div
-            className="absolute -right-1 top-4 bottom-4 w-2 cursor-e-resize hover:bg-white/[0.12] rounded"
+            className="absolute -right-1 top-4 bottom-4 w-2 cursor-e-resize hover:bg-black/5 rounded"
             onMouseDown={(e) => {
               if (element.locked) return;
               e.stopPropagation();
@@ -478,7 +551,7 @@ function ElementNode({
           />
           {/* Bottom edge */}
           <div
-            className="absolute -bottom-1 left-4 right-4 h-2 cursor-s-resize hover:bg-white/[0.12] rounded"
+            className="absolute -bottom-1 left-4 right-4 h-2 cursor-s-resize hover:bg-black/5 rounded"
             onMouseDown={(e) => {
               if (element.locked) return;
               e.stopPropagation();
@@ -559,32 +632,32 @@ function ConnectionLine({
         onClick={onDelete}
       />
 
-      {/* Glow effect on hover/flow */}
+      {/* Glow effect on hover/flow - Make.com green style */}
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? "#00FF88" : "#888888"}
+        stroke={isFlowing ? MAKE_COLORS.connectionLine : MAKE_COLORS.connectionLine}
         strokeWidth={isFlowing ? 12 : 8}
         strokeOpacity="0"
         strokeLinecap="round"
         initial={{ strokeOpacity: 0 }}
-        animate={{ strokeOpacity: showFlowAnimation ? (isFlowing ? 0.25 : 0.15) : 0 }}
+        animate={{ strokeOpacity: showFlowAnimation ? (isFlowing ? 0.3 : 0.2) : 0 }}
         transition={{ duration: 0.2 }}
         className="pointer-events-none"
         style={{ filter: isFlowing ? 'blur(6px)' : 'blur(4px)' }}
       />
 
-      {/* Visible path with draw animation */}
+      {/* Visible path with draw animation - Make.com green */}
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? "#00FF88" : "#888888"}
+        stroke={MAKE_COLORS.connectionLine}
         strokeWidth={isFlowing ? 3 : 2}
         strokeLinecap="round"
         initial={{ pathLength: 0, strokeOpacity: 0.3 }}
         animate={{
           pathLength: 1,
-          strokeOpacity: showFlowAnimation ? 1 : 0.6,
+          strokeOpacity: showFlowAnimation ? 1 : 0.7,
         }}
         transition={{
           pathLength: { duration: 0.4, ease: 'easeOut' },
@@ -596,7 +669,7 @@ function ConnectionLine({
       {/* Animated flow particles along the path */}
       <motion.circle
         r={isFlowing ? 5 : 3}
-        fill={isFlowing ? "#00FF88" : "#888888"}
+        fill={MAKE_COLORS.connectionLine}
         className="pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{
@@ -617,7 +690,7 @@ function ConnectionLine({
       {isFlowing && (
         <motion.circle
           r={4}
-          fill="#00FF88"
+          fill={MAKE_COLORS.connectionLine}
           className="pointer-events-none"
           animate={{
             opacity: [0, 0.8, 0],
@@ -635,16 +708,27 @@ function ConnectionLine({
         />
       )}
 
-      {/* Arrow/endpoint at destination */}
+      {/* Endpoint dot - Make.com style darker green */}
       <motion.circle
         cx={toX}
         cy={toY}
-        fill={isFlowing ? "#00FF88" : "#888888"}
+        fill={MAKE_COLORS.connectionDot}
         initial={{ r: 0, opacity: 0 }}
         animate={{
-          r: showFlowAnimation ? (isFlowing ? 8 : 6) : 4,
+          r: showFlowAnimation ? (isFlowing ? 8 : 6) : 5,
           opacity: 1,
         }}
+        transition={springPresets.snappy}
+        className="pointer-events-none"
+      />
+
+      {/* Start endpoint dot */}
+      <motion.circle
+        cx={fromX}
+        cy={fromY}
+        fill={MAKE_COLORS.connectionDot}
+        initial={{ r: 0, opacity: 0 }}
+        animate={{ r: 5, opacity: 1 }}
         transition={springPresets.snappy}
         className="pointer-events-none"
       />
@@ -656,7 +740,7 @@ function ConnectionLine({
             cx={toX}
             cy={toY}
             fill="none"
-            stroke={isFlowing ? "#00FF88" : "#888888"}
+            stroke={MAKE_COLORS.connectionLine}
             strokeWidth="2"
             initial={{ r: 4, opacity: 0.8 }}
             animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
@@ -680,8 +764,8 @@ function ConnectionLine({
               cx={(fromX + toX) / 2}
               cy={(fromY + toY) / 2}
               r="12"
-              fill="#1a1a1a"
-              stroke="#ff4444"
+              fill={MAKE_COLORS.panelBg}
+              stroke="#ef4444"
               strokeWidth="2"
               className="cursor-pointer"
               onClick={onDelete}
@@ -691,7 +775,8 @@ function ConnectionLine({
               y={(fromY + toY) / 2 + 1}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-[10px] fill-[#ff4444] font-bold select-none pointer-events-none"
+              className="text-[10px] font-bold select-none pointer-events-none"
+              fill="#ef4444"
             >
               ×
             </text>
@@ -730,13 +815,13 @@ function ConnectionPreviewLine({
 
   return (
     <g className="pointer-events-none">
-      {/* Glow effect */}
+      {/* Glow effect - Make.com green */}
       <motion.path
         d={path}
         fill="none"
-        stroke="#FFD700"
+        stroke={MAKE_COLORS.connectionLine}
         strokeWidth={8}
-        strokeOpacity={0.2}
+        strokeOpacity={0.25}
         strokeLinecap="round"
         style={{ filter: 'blur(4px)' }}
         initial={{ pathLength: 0 }}
@@ -744,11 +829,11 @@ function ConnectionPreviewLine({
         transition={{ duration: 0.2 }}
       />
 
-      {/* Main path */}
+      {/* Main path - Make.com green dashed */}
       <motion.path
         d={path}
         fill="none"
-        stroke="#FFD700"
+        stroke={MAKE_COLORS.connectionLine}
         strokeWidth={2}
         strokeLinecap="round"
         strokeDasharray="8 4"
@@ -760,7 +845,7 @@ function ConnectionPreviewLine({
       {/* Animated dots along path */}
       <motion.circle
         r={4}
-        fill="#FFD700"
+        fill={MAKE_COLORS.connectionLine}
         animate={{
           opacity: [0.3, 1, 0.3],
           offsetDistance: ['0%', '100%'],
@@ -780,7 +865,7 @@ function ConnectionPreviewLine({
         cx={fromX}
         cy={fromY}
         r={6}
-        fill="#FFD700"
+        fill={MAKE_COLORS.connectionDot}
         initial={{ scale: 0 }}
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 0.5, repeat: Infinity }}
@@ -792,7 +877,7 @@ function ConnectionPreviewLine({
         cy={toY}
         r={8}
         fill="transparent"
-        stroke="#FFD700"
+        stroke={MAKE_COLORS.connectionLine}
         strokeWidth={2}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -1123,15 +1208,13 @@ export function IDECanvas({
       onDrop={handleDrop}
       onDragOver={handleDragOver}
     >
-      {/* Background with grid */}
+      {/* Background with grid - Make.com mint green style */}
       <div
-        className={cn(
-          'canvas-bg absolute inset-0',
-          showGrid && 'bg-[#0a0a0a]'
-        )}
+        className="canvas-bg absolute inset-0"
         style={{
+          backgroundColor: MAKE_COLORS.canvasBg,
           backgroundImage: showGrid
-            ? `radial-gradient(circle at 1px 1px, #333 1px, transparent 0)`
+            ? `radial-gradient(circle at 1px 1px, ${MAKE_COLORS.canvasGrid} 1px, transparent 0)`
             : 'none',
           backgroundSize: `${gridSize * zoom}px ${gridSize * zoom}px`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
@@ -1210,69 +1293,112 @@ export function IDECanvas({
           zoom={zoom}
         />
 
-        {/* Selection Rectangle */}
+        {/* Selection Rectangle - Make.com green */}
         {selectionRect && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute pointer-events-none border-2 border-[#FFD700]/50 bg-[#FFD700]/10 rounded-sm"
+            className="absolute pointer-events-none rounded-sm"
             style={{
               left: Math.min(selectionRect.startX, selectionRect.endX),
               top: Math.min(selectionRect.startY, selectionRect.endY),
               width: Math.abs(selectionRect.endX - selectionRect.startX),
               height: Math.abs(selectionRect.endY - selectionRect.startY),
+              border: `2px solid ${MAKE_COLORS.connectionLine}`,
+              backgroundColor: `${MAKE_COLORS.connectionGlow}`,
             }}
           />
         )}
       </div>
 
-      {/* Empty State */}
+      {/* Empty State - Make.com light theme */}
       {elements.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center space-y-4 max-w-md">
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
-              <Box className="h-10 w-10 text-[#444]" />
+            <div
+              className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center"
+              style={{
+                backgroundColor: MAKE_COLORS.panelBg,
+                border: `1px solid ${MAKE_COLORS.panelBorder}`,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              }}
+            >
+              <Box className="h-10 w-10" style={{ color: MAKE_COLORS.textTertiary }} />
             </div>
-            <h3 className="text-xl font-semibold text-white">Start Building</h3>
-            <p className="text-sm text-[#888]">
+            <h3 className="text-xl font-semibold" style={{ color: MAKE_COLORS.textPrimary }}>
+              Start Building
+            </h3>
+            <p className="text-sm" style={{ color: MAKE_COLORS.textSecondary }}>
               Drag elements from the left panel onto the canvas, or press{' '}
-              <kbd className="px-1.5 py-0.5 bg-[#252525] rounded text-xs">⌘K</kbd>{' '}
+              <kbd
+                className="px-1.5 py-0.5 rounded text-xs font-mono"
+                style={{
+                  backgroundColor: MAKE_COLORS.panelBg,
+                  border: `1px solid ${MAKE_COLORS.panelBorder}`,
+                  color: MAKE_COLORS.textPrimary,
+                }}
+              >
+                ⌘K
+              </kbd>{' '}
               to use AI.
             </p>
           </div>
         </div>
       )}
 
-      {/* Zoom indicator with virtualization stats */}
+      {/* Zoom indicator with virtualization stats - Make.com light theme */}
       <div className="absolute bottom-4 right-4 flex items-center gap-2">
         {/* Virtualization indicator - only show when actually virtualizing */}
         {elements.length > 0 && visibleElements.length < elements.length && (
-          <div className="px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-xs text-[#666]">
-            <span className="text-white">{visibleElements.length}</span>
+          <div
+            className="px-2 py-1 rounded text-xs"
+            style={{
+              backgroundColor: MAKE_COLORS.panelBg,
+              border: `1px solid ${MAKE_COLORS.panelBorder}`,
+              color: MAKE_COLORS.textSecondary,
+            }}
+          >
+            <span style={{ color: MAKE_COLORS.textPrimary }}>{visibleElements.length}</span>
             <span className="mx-1">/</span>
             <span>{elements.length}</span>
             <span className="ml-1">visible</span>
           </div>
         )}
-        <div className="px-2 py-1 bg-[#1a1a1a] border border-[#333] rounded text-xs text-[#888]">
+        <div
+          className="px-2 py-1 rounded text-xs font-medium"
+          style={{
+            backgroundColor: MAKE_COLORS.panelBg,
+            border: `1px solid ${MAKE_COLORS.panelBorder}`,
+            color: MAKE_COLORS.textSecondary,
+          }}
+        >
           {Math.round(zoom * 100)}%
         </div>
       </div>
 
-      {/* Connection mode indicator */}
+      {/* Connection mode indicator - Make.com green theme */}
       {connectionStart && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-[#1a1a1a] border border-[#FFD700]/30 rounded-lg shadow-lg"
+          className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg"
+          style={{
+            backgroundColor: MAKE_COLORS.panelBg,
+            border: `1px solid ${MAKE_COLORS.connectionLine}`,
+          }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-[#FFD700] animate-pulse" />
-            <span className="text-sm text-white">
-              Click an <span className="text-green-400 font-medium">input port</span> to connect
+            <div
+              className="w-3 h-3 rounded-full animate-pulse"
+              style={{ backgroundColor: MAKE_COLORS.connectionLine }}
+            />
+            <span className="text-sm" style={{ color: MAKE_COLORS.textPrimary }}>
+              Click an <span className="font-medium" style={{ color: MAKE_COLORS.connectionLine }}>input port</span> to connect
             </span>
-            <span className="text-xs text-[#666]">or press ESC to cancel</span>
+            <span className="text-xs" style={{ color: MAKE_COLORS.textTertiary }}>
+              or press ESC to cancel
+            </span>
           </div>
         </motion.div>
       )}

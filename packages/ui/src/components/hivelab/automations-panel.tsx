@@ -9,18 +9,13 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Zap,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-  ChevronDown,
-  ChevronUp,
-  Plus,
-  Settings,
-} from 'lucide-react';
-import { Button } from '../../atomic/00-Global/atoms/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../atomic/00-Global/atoms/card';
+import { BoltIcon, TrashIcon, ChevronDownIcon, ChevronUpIcon, PlusIcon, Cog6ToothIcon, CheckCircleIcon, StopIcon } from '@heroicons/react/24/outline';
+
+// Toggle icons - using check/stop as on/off state
+const ToggleRight = CheckCircleIcon;
+const ToggleLeft = StopIcon;
+import { Button } from '../../design-system/primitives';
+import { Card, CardContent, CardHeader, CardTitle } from '../../design-system/primitives';
 
 export interface AutomationItem {
   id: string;
@@ -99,7 +94,7 @@ export function AutomationsPanel({
       <Card className="border-dashed border-border/50 bg-background/50">
         <CardContent className="py-4">
           <div className="text-center space-y-2">
-            <Zap className="h-8 w-8 mx-auto text-muted-foreground/50" />
+            <BoltIcon className="h-8 w-8 mx-auto text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">No automations yet</p>
             <p className="text-xs text-muted-foreground/70">
               Type <code className="px-1 py-0.5 bg-muted rounded">/welcome</code> to set up a welcome message
@@ -118,7 +113,7 @@ export function AutomationsPanel({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-amber-500" />
+            <BoltIcon className="h-4 w-4 text-amber-500" />
             <CardTitle className="text-sm font-medium">
               Automations
             </CardTitle>
@@ -139,13 +134,13 @@ export function AutomationsPanel({
                   onAdd();
                 }}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <PlusIcon className="h-3.5 w-3.5" />
               </Button>
             )}
             {expanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUpIcon className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDownIcon className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
         </div>
@@ -177,7 +172,7 @@ export function AutomationsPanel({
                   className="w-full justify-start text-muted-foreground hover:text-foreground"
                   onClick={onSettings}
                 >
-                  <Settings className="h-3.5 w-3.5 mr-2" />
+                  <Cog6ToothIcon className="h-3.5 w-3.5 mr-2" />
                   Manage automations
                 </Button>
               )}
@@ -248,7 +243,7 @@ function AutomationRow({
                   onDelete();
                 }}
               >
-                <Trash2 className="h-3 w-3" />
+                <TrashIcon className="h-3 w-3" />
               </Button>
             </motion.div>
           )}
@@ -290,7 +285,7 @@ export function AutomationsBadge({
       onClick={onClick}
       className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-amber-500/20 text-amber-500 text-xs font-medium hover:bg-amber-500/30 transition-colors"
     >
-      <Zap className="h-3 w-3" />
+      <BoltIcon className="h-3 w-3" />
       {count} automation{count !== 1 ? 's' : ''}
     </button>
   );

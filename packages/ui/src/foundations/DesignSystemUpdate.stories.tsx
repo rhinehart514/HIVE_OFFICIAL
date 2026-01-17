@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import { Button } from '../atomic/00-Global/atoms/button';
-import { Input } from '../atomic/00-Global/atoms/input';
-import { Label } from '../atomic/00-Global/atoms/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../atomic/00-Global/atoms/select';
-import { Textarea } from '../atomic/00-Global/atoms/textarea';
+import { Button } from '../design-system/primitives';
+import { Input } from '../design-system/primitives';
+import { Label } from '../design-system/primitives/Label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../design-system/primitives';
+import { Textarea } from '../design-system/primitives';
 import { Link } from '../typography/link';
 
 import type { Meta, StoryObj } from '@storybook/react';

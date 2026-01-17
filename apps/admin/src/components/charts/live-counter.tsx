@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  MinusIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const TrendingUp = ArrowTrendingUpIcon;
+const TrendingDown = ArrowTrendingDownIcon;
+const Minus = MinusIcon;
 
 interface LiveCounterProps {
   value: number;

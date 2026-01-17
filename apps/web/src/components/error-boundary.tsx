@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon, HomeIcon, BugAntIcon } from '@heroicons/react/24/outline';
 import { Button, Card } from "@hive/ui";
 import { logger } from '../lib/logger';
 import { errorReporting } from '../lib/error-reporting';
@@ -201,7 +201,7 @@ function DefaultErrorFallback({
     <div className={`${isGlobalError ? 'min-h-screen' : 'min-h-[400px]'} bg-hive-background flex items-center justify-center p-4`}>
       <Card className="max-w-lg w-full p-8 bg-hive-surface border-hive-border-default text-center">
         <div className="w-16 h-16 bg-[var(--hive-brand-primary)]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertTriangle className="w-8 h-8 text-[var(--hive-brand-primary)]" />
+          <ExclamationTriangleIcon className="w-8 h-8 text-[var(--hive-brand-primary)]" />
         </div>
 
         <h1 className="text-xl font-bold text-hive-text-primary mb-3">{title}</h1>
@@ -248,7 +248,7 @@ function DefaultErrorFallback({
               onClick={retry}
               className="bg-[var(--hive-brand-primary)] text-hive-obsidian hover:bg-hive-champagne"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
               Try Again
             </Button>
           )}
@@ -259,7 +259,7 @@ function DefaultErrorFallback({
               onClick={() => window.location.reload()}
               className="border-hive-border text-hive-text-secondary"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
               Refresh Page
             </Button>
           )}
@@ -269,7 +269,7 @@ function DefaultErrorFallback({
             onClick={() => window.location.href = '/feed'}
             className="border-hive-border text-hive-text-secondary"
           >
-            <Home className="w-4 h-4 mr-2" />
+            <HomeIcon className="w-4 h-4 mr-2" />
             Go to Feed
           </Button>
 
@@ -292,7 +292,7 @@ function DefaultErrorFallback({
               }}
               className="border-hive-border text-hive-text-tertiary"
             >
-              <Bug className="w-4 h-4 mr-2" />
+              <BugAntIcon className="w-4 h-4 mr-2" />
               Copy Error
             </Button>
           )}

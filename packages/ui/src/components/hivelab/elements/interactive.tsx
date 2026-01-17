@@ -9,22 +9,16 @@
 
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Timer,
-  Vote,
-  Trophy,
-  Check,
-  Crown,
-  Medal,
-} from 'lucide-react';
+import { ClockIcon, TrophyIcon, CheckIcon, HandThumbUpIcon, UsersIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+
+// Alias for lucide compatibility
+const Vote = HandThumbUpIcon;
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { springPresets, easingArrays } from '@hive/tokens';
 
-import {
-  Button,
-  Card,
-  CardContent,
-} from '../../../atomic';
+import { Button } from '../../../design-system/primitives';
+import { Card, CardContent } from '../../../design-system/primitives';
+import { Progress } from '../../../design-system/primitives';
 
 import { AnimatedNumber, numberSpringPresets } from '../../motion-primitives/animated-number';
 
@@ -217,7 +211,7 @@ export function CountdownTimerElement({ config, data, onChange, onAction }: Elem
               animate={shouldPulse && !prefersReducedMotion ? { rotate: [0, -10, 10, 0] } : {}}
               transition={shouldPulse ? { duration: 0.5, repeat: Infinity } : {}}
             >
-              <Timer className={`h-5 w-5 transition-colors duration-300 ${iconColorClasses[urgencyLevel]}`} />
+              <ClockIcon className={`h-5 w-5 transition-colors duration-300 ${iconColorClasses[urgencyLevel]}`} />
             </motion.div>
             <span className="text-sm font-medium text-muted-foreground">
               {config.label || 'Time Remaining'}
@@ -303,18 +297,40 @@ function normalizePollOptions(options: unknown[]): PollOption[] {
   });
 }
 
-export function PollElement({ config, data, onChange, onAction }: ElementProps) {
+export function PollElement({ id, config, data, onChange, onAction, sharedState, userState }: ElementProps) {
   const rawOptions = config.options || ['Option A', 'Option B', 'Option C'];
   const options = normalizePollOptions(rawOptions);
   const prefersReducedMotion = useReducedMotion();
 
-  // Hydrate from server state (data prop) or initialize empty
+  // ==========================================================================
+  // State Hydration - Support both new sharedState/userState AND legacy data prop
+  // ==========================================================================
+
+  // NEW: Read from sharedState (preferred source for deployed tools)
+  // Counter keys: "{instanceId}:{optionId}" for per-option, "{instanceId}:total" for total
+  const getVoteCountsFromSharedState = (): Record<string, number> => {
+    if (!sharedState?.counters || !id) return {};
+    const counts: Record<string, number> = {};
+    options.forEach((opt) => {
+      const counterKey = `${id}:${opt.id}`;
+      counts[opt.id] = sharedState.counters[counterKey] || 0;
+    });
+    return counts;
+  };
+
+  // NEW: Read user's vote from userState
+  const getUserVoteFromUserState = (): string | null => {
+    if (!userState?.selections || !id) return null;
+    return (userState.selections[`${id}:selectedOption`] as string) || null;
+  };
+
+  // LEGACY: Read from data prop (for backward compatibility / preview mode)
   const serverResponses = (data?.responses as Record<string, { choice: string }>) || {};
   const serverTotalVotes = (data?.totalVotes as number) || 0;
-  const serverUserVote = (data?.userVote as string) || null;
+  const legacyUserVote = (data?.userVote as string) || null;
 
-  // Calculate vote counts from server responses
-  const calculateVoteCounts = (): Record<string, number> => {
+  // Calculate vote counts from legacy responses
+  const calculateLegacyVoteCounts = (): Record<string, number> => {
     const counts: Record<string, number> = {};
     options.forEach((opt) => { counts[opt.id] = 0; });
     Object.values(serverResponses).forEach((response) => {
@@ -325,20 +341,33 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
     return counts;
   };
 
-  const [votes, setVotes] = useState<Record<string, number>>(calculateVoteCounts);
-  const [userVote, setUserVote] = useState<string | null>(serverUserVote);
-  const [hasVoted, setHasVoted] = useState(!!serverUserVote);
+  // Determine which source to use (sharedState takes precedence)
+  const hasSharedState = sharedState?.counters && id && Object.keys(sharedState.counters).some(k => k.startsWith(`${id}:`));
+  const initialVotes = hasSharedState ? getVoteCountsFromSharedState() : calculateLegacyVoteCounts();
+  const initialUserVote = getUserVoteFromUserState() || legacyUserVote;
+
+  const [votes, setVotes] = useState<Record<string, number>>(initialVotes);
+  const [userVote, setUserVote] = useState<string | null>(initialUserVote);
+  const [hasVoted, setHasVoted] = useState(!!initialUserVote);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [justVoted, setJustVoted] = useState<string | null>(null);
 
-  // Sync with server state when data changes
+  // Sync with server state when sharedState or userState changes (real-time updates)
   useEffect(() => {
-    setVotes(calculateVoteCounts());
-    if (serverUserVote) {
-      setUserVote(serverUserVote);
+    if (hasSharedState) {
+      setVotes(getVoteCountsFromSharedState());
+    } else {
+      setVotes(calculateLegacyVoteCounts());
+    }
+  }, [sharedState?.counters, data?.responses, id]);
+
+  useEffect(() => {
+    const newUserVote = getUserVoteFromUserState() || legacyUserVote;
+    if (newUserVote) {
+      setUserVote(newUserVote);
       setHasVoted(true);
     }
-  }, [data?.responses, data?.totalVotes, serverUserVote]);
+  }, [userState?.selections, legacyUserVote, id]);
 
   const totalVotes = Object.values(votes).reduce((a, b) => a + b, 0) || serverTotalVotes;
   const showResults = config.showResultsBeforeVoting || hasVoted;
@@ -360,7 +389,7 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
 
     // Call server action
     onChange?.({ selectedOption: optionId, votes });
-    onAction?.('vote', { choice: optionId });
+    onAction?.('vote', { optionId }); // Must match execute API's expected field name
 
     setIsSubmitting(false);
 
@@ -445,7 +474,7 @@ export function PollElement({ config, data, onChange, onAction }: ElementProps) 
                           exit={{ scale: 0, opacity: 0 }}
                           transition={springPresets.bouncy}
                         >
-                          <Check className="h-4 w-4 text-primary" />
+                          <CheckIcon className="h-4 w-4 text-primary" />
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -542,9 +571,9 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
   const hasData = displayEntries.length > 0;
 
   const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (rank === 3) return <Medal className="h-5 w-5 text-amber-600" />;
+    if (rank === 1) return <TrophyIcon className="h-5 w-5 text-yellow-500" />;
+    if (rank === 2) return <TrophyIcon className="h-5 w-5 text-gray-400" />;
+    if (rank === 3) return <TrophyIcon className="h-5 w-5 text-amber-600" />;
     return <span className="w-5 text-center text-muted-foreground font-mono">{rank}</span>;
   };
 
@@ -552,7 +581,7 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
     <Card>
       <CardContent className="p-0">
         <div className="px-6 py-4 border-b border-border flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
+          <TrophyIcon className="h-5 w-5 text-yellow-500" />
           <span className="font-semibold">{config.title || 'Leaderboard'}</span>
         </div>
 
@@ -590,7 +619,7 @@ export function LeaderboardElement({ config, data, onAction }: ElementProps) {
             ))
           ) : (
             <div className="px-6 py-8 text-center text-muted-foreground">
-              <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <TrophyIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
               <p className="text-sm">No entries yet. Be the first to score!</p>
             </div>
           )}
@@ -633,7 +662,7 @@ export function TimerElement({ config, data, onAction }: ElementProps) {
     }
   }, [serverElapsed, serverIsRunning, serverStartedAt]);
 
-  // Timer tick
+  // ClockIcon tick
   useEffect(() => {
     if (!isRunning || !startTime) return;
 
@@ -678,9 +707,9 @@ export function TimerElement({ config, data, onAction }: ElementProps) {
     <Card className={`${isRunning ? 'border-green-500/50 bg-green-500/5' : ''}`}>
       <CardContent className="p-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <Timer className="h-5 w-5 text-primary" />
+          <ClockIcon className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium text-muted-foreground">
-            {config.label || 'Timer'}
+            {config.label || 'ClockIcon'}
           </span>
         </div>
 
@@ -822,5 +851,423 @@ export function CounterElement({ config, data, onAction }: ElementProps) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ============================================================================
+// RSVP BUTTON ELEMENT
+// ============================================================================
+
+export function RsvpButtonElement({ id, config, data, sharedState, userState, onChange, onAction }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const instanceId = id || 'rsvp';
+
+  const getRsvpCountFromSharedState = (): number => {
+    const counterKey = `${instanceId}:total`;
+    return sharedState?.counters?.[counterKey] || 0;
+  };
+
+  const getAttendeeCountFromSharedState = (): number => {
+    const collectionKey = `${instanceId}:attendees`;
+    const attendees = sharedState?.collections?.[collectionKey] || {};
+    return Object.keys(attendees).length;
+  };
+
+  const getWaitlistCountFromSharedState = (): number => {
+    const collectionKey = `${instanceId}:waitlist`;
+    const waitlist = sharedState?.collections?.[collectionKey] || {};
+    return Object.keys(waitlist).length;
+  };
+
+  const getUserRsvpFromUserState = (): boolean => {
+    const participationKey = `${instanceId}:hasRsvped`;
+    return userState?.participation?.[participationKey] || false;
+  };
+
+  const getUserWaitlistFromUserState = (): boolean => {
+    const waitlistKey = `${instanceId}:onWaitlist`;
+    return userState?.participation?.[waitlistKey] || false;
+  };
+
+  const getUserWaitlistPositionFromUserState = (): number | null => {
+    const positionKey = `${instanceId}:waitlistPosition`;
+    const position = userState?.selections?.[positionKey];
+    return typeof position === 'number' ? position : null;
+  };
+
+  const hasSharedState = sharedState && (
+    Object.keys(sharedState.counters || {}).length > 0 ||
+    Object.keys(sharedState.collections || {}).length > 0
+  );
+
+  const serverAttendees = (data?.attendees as Record<string, unknown>) || {};
+  const serverCount = (data?.count as number) || 0;
+  const serverWaitlist = (data?.waitlist as string[]) || [];
+  const serverUserRsvp = (data?.userRsvp as string) || null;
+  const serverUserOnWaitlist = (data?.userOnWaitlist as boolean) || false;
+  const serverUserWaitlistPosition = (data?.userWaitlistPosition as number) || null;
+
+  const initialCount = hasSharedState
+    ? (getRsvpCountFromSharedState() || getAttendeeCountFromSharedState())
+    : (serverCount || Object.keys(serverAttendees).length);
+  const initialIsRsvped = hasSharedState ? getUserRsvpFromUserState() : serverUserRsvp === 'yes';
+  const initialIsOnWaitlist = hasSharedState ? getUserWaitlistFromUserState() : serverUserOnWaitlist;
+  const initialWaitlistPosition = hasSharedState ? getUserWaitlistPositionFromUserState() : serverUserWaitlistPosition;
+  const initialWaitlistCount = hasSharedState ? getWaitlistCountFromSharedState() : serverWaitlist.length;
+
+  const [isRsvped, setIsRsvped] = useState(initialIsRsvped);
+  const [rsvpCount, setRsvpCount] = useState(initialCount);
+  const [isLoading, setIsLoading] = useState(false);
+  const [justRsvped, setJustRsvped] = useState(false);
+  const [isOnWaitlist, setIsOnWaitlist] = useState(initialIsOnWaitlist);
+  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(initialWaitlistPosition);
+  const [waitlistCount, setWaitlistCount] = useState(initialWaitlistCount);
+  const [isWaitlistLoading, setIsWaitlistLoading] = useState(false);
+  const [justJoinedWaitlist, setJustJoinedWaitlist] = useState(false);
+
+  useEffect(() => {
+    if (hasSharedState) {
+      const count = getRsvpCountFromSharedState() || getAttendeeCountFromSharedState();
+      setRsvpCount(count);
+      setIsRsvped(getUserRsvpFromUserState());
+      setIsOnWaitlist(getUserWaitlistFromUserState());
+      setWaitlistPosition(getUserWaitlistPositionFromUserState());
+      setWaitlistCount(getWaitlistCountFromSharedState());
+    } else {
+      const count = serverCount || Object.keys(serverAttendees).length;
+      setRsvpCount(count);
+      setIsRsvped(serverUserRsvp === 'yes');
+      setIsOnWaitlist(serverUserOnWaitlist);
+      setWaitlistPosition(serverUserWaitlistPosition);
+      setWaitlistCount(serverWaitlist.length);
+    }
+  }, [sharedState?.counters, sharedState?.collections, sharedState?.version, userState?.participation, userState?.selections]);
+
+  const maxAttendees = config.maxAttendees || null;
+  const isFull = maxAttendees && rsvpCount >= maxAttendees;
+  const capacityPercentage = maxAttendees ? Math.min(100, (rsvpCount / maxAttendees) * 100) : 0;
+  const isNearlyFull = capacityPercentage >= 80;
+  const spotsLeft = maxAttendees ? maxAttendees - rsvpCount : null;
+
+  const handleRsvp = async () => {
+    if ((isFull && !isRsvped) || isLoading) return;
+
+    setIsLoading(true);
+    const newState = !isRsvped;
+
+    setIsRsvped(newState);
+    setRsvpCount((prev: number) => (newState ? prev + 1 : Math.max(0, prev - 1)));
+
+    if (newState) {
+      setJustRsvped(true);
+      setTimeout(() => setJustRsvped(false), 1500);
+    }
+
+    onChange?.({ isRsvped: newState, rsvpCount: rsvpCount + (newState ? 1 : -1) });
+    onAction?.(newState ? 'rsvp' : 'cancel_rsvp', {
+      response: newState ? 'yes' : 'no',
+      eventName: config.eventName
+    });
+
+    setIsLoading(false);
+  };
+
+  const handleWaitlistToggle = async () => {
+    if (isWaitlistLoading) return;
+
+    setIsWaitlistLoading(true);
+    const newState = !isOnWaitlist;
+
+    setIsOnWaitlist(newState);
+    if (newState) {
+      const newPosition = waitlistCount + 1;
+      setWaitlistPosition(newPosition);
+      setWaitlistCount((prev: number) => prev + 1);
+      setJustJoinedWaitlist(true);
+      setTimeout(() => setJustJoinedWaitlist(false), 1500);
+    } else {
+      setWaitlistPosition(null);
+      setWaitlistCount((prev: number) => Math.max(0, prev - 1));
+    }
+
+    onChange?.({
+      isOnWaitlist: newState,
+      waitlistPosition: newState ? (waitlistCount + 1) : null,
+      waitlistCount: waitlistCount + (newState ? 1 : -1),
+    });
+    onAction?.(newState ? 'join_waitlist' : 'leave_waitlist', {
+      eventName: config.eventName,
+      position: newState ? (waitlistCount + 1) : null,
+    });
+
+    setIsWaitlistLoading(false);
+  };
+
+  const getCapacityColor = () => {
+    if (isFull) return 'bg-red-500';
+    if (capacityPercentage >= 90) return 'bg-orange-500';
+    if (capacityPercentage >= 80) return 'bg-amber-500';
+    return 'bg-green-500';
+  };
+
+  return (
+    <motion.div
+      initial={false}
+      animate={justRsvped ? { scale: [1, 1.02, 1] } : {}}
+      transition={springPresets.bouncy}
+    >
+      <Card
+        className={`overflow-hidden transition-all duration-300 ${
+          isRsvped ? 'border-green-500/50 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.15)]' : ''
+        }`}
+      >
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-semibold">{config.eventName || 'Event'}</div>
+              {config.eventDate && (
+                <div className="text-sm text-muted-foreground">{config.eventDate}</div>
+              )}
+            </div>
+
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              transition={springPresets.snappy}
+            >
+              <Button
+                onClick={handleRsvp}
+                disabled={isLoading || (isFull && !isRsvped)}
+                variant={isRsvped ? 'outline' : 'default'}
+                className={`relative overflow-hidden ${
+                  isRsvped ? 'border-green-500 text-green-600 hover:bg-green-500/10' : ''
+                }`}
+              >
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.span
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="flex items-center"
+                    >
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2"
+                      />
+                      ...
+                    </motion.span>
+                  ) : isRsvped ? (
+                    <motion.span
+                      key="going"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="flex items-center"
+                    >
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={springPresets.bouncy}
+                      >
+                        <CheckIcon className="h-4 w-4 mr-2" />
+                      </motion.div>
+                      Going
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="rsvp"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 10 }}
+                      className="flex items-center"
+                    >
+                      <UserPlusIcon className="h-4 w-4 mr-2" />
+                      RSVP
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+
+                {justRsvped && !prefersReducedMotion && (
+                  <>
+                    {[...Array(6)].map((_, i) => (
+                      <motion.span
+                        key={i}
+                        initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                        animate={{
+                          opacity: 0,
+                          scale: 1,
+                          x: (Math.random() - 0.5) * 60,
+                          y: (Math.random() - 0.5) * 40 - 20,
+                        }}
+                        transition={{ duration: 0.6, delay: i * 0.05 }}
+                        className="absolute text-xs"
+                        style={{ left: '50%', top: '50%' }}
+                      >
+                        {['✨', '🎉', '🎊', '⭐', '💫', '🌟'][i]}
+                      </motion.span>
+                    ))}
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </div>
+
+          {maxAttendees && config.showCount !== false && (
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-muted-foreground">Capacity</span>
+                <motion.span
+                  className={`font-medium ${isFull ? 'text-red-500' : isNearlyFull ? 'text-amber-500' : 'text-muted-foreground'}`}
+                  animate={isNearlyFull && !prefersReducedMotion ? { opacity: [1, 0.7, 1] } : {}}
+                  transition={isNearlyFull ? { duration: 1.5, repeat: Infinity } : {}}
+                >
+                  <AnimatedNumber value={rsvpCount} springOptions={numberSpringPresets.quick} />/{maxAttendees}
+                </motion.span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden relative">
+                <motion.div
+                  className={`h-full rounded-full ${getCapacityColor()} ${
+                    isNearlyFull ? 'shadow-[0_0_8px_currentColor]' : ''
+                  }`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${capacityPercentage}%` }}
+                  transition={prefersReducedMotion ? { duration: 0 } : springPresets.default}
+                />
+              </div>
+            </div>
+          )}
+
+          {config.showCount !== false && (
+            <motion.div
+              className="mt-3 flex items-center justify-between text-sm"
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 1 }}
+            >
+              <span className="text-muted-foreground flex items-center gap-1">
+                <UsersIcon className="h-4 w-4" />
+                <AnimatedNumber value={rsvpCount} springOptions={numberSpringPresets.quick} />
+                {' '}{rsvpCount === 1 ? 'person' : 'people'} going
+              </span>
+              {maxAttendees && spotsLeft !== null && (
+                <motion.span
+                  className={`font-medium ${isFull ? 'text-red-500' : spotsLeft <= 3 ? 'text-amber-500' : 'text-muted-foreground'}`}
+                  animate={spotsLeft <= 3 && spotsLeft > 0 && !prefersReducedMotion ? { scale: [1, 1.05, 1] } : {}}
+                  transition={spotsLeft <= 3 ? { duration: 0.8, repeat: Infinity } : {}}
+                >
+                  {isFull ? '🔒 Full' : `${spotsLeft} spot${spotsLeft !== 1 ? 's' : ''} left`}
+                </motion.span>
+              )}
+            </motion.div>
+          )}
+
+          <AnimatePresence>
+            {isFull && !isRsvped && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                animate={{ opacity: 1, height: 'auto', marginTop: 12 }}
+                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                transition={springPresets.gentle}
+                className="overflow-hidden"
+              >
+                <motion.button
+                  onClick={handleWaitlistToggle}
+                  disabled={isWaitlistLoading}
+                  className={`w-full p-3 text-sm rounded-lg text-center border transition-all duration-200 ${
+                    isOnWaitlist
+                      ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20'
+                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/15'
+                  }`}
+                  whileHover={!isWaitlistLoading ? { scale: 1.01 } : {}}
+                  whileTap={!isWaitlistLoading ? { scale: 0.99 } : {}}
+                  animate={justJoinedWaitlist && !prefersReducedMotion ? { scale: [1, 1.02, 1] } : {}}
+                  aria-label={isOnWaitlist ? 'Leave waitlist' : 'Join waitlist'}
+                >
+                  <AnimatePresence mode="wait">
+                    {isWaitlistLoading ? (
+                      <motion.span
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-2"
+                      >
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                          className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                        />
+                        <span>Processing...</span>
+                      </motion.span>
+                    ) : isOnWaitlist ? (
+                      <motion.span
+                        key="on-waitlist"
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <span className="flex items-center gap-2">
+                          <CheckIcon className="h-4 w-4" />
+                          <span className="font-medium">On Waitlist</span>
+                        </span>
+                        {waitlistPosition && (
+                          <span className="text-xs opacity-80">
+                            Position #{waitlistPosition} of {waitlistCount}
+                          </span>
+                        )}
+                        <span className="text-xs opacity-60 mt-0.5">Click to leave waitlist</span>
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="join"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="flex flex-col items-center gap-1"
+                      >
+                        <span className="flex items-center gap-2">
+                          <ClockIcon className="h-4 w-4" />
+                          <span>Join Waitlist</span>
+                        </span>
+                        {waitlistCount > 0 && (
+                          <span className="text-xs opacity-70">
+                            {waitlistCount} {waitlistCount === 1 ? 'person' : 'people'} waiting
+                          </span>
+                        )}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+
+                  {justJoinedWaitlist && !prefersReducedMotion && (
+                    <>
+                      {[...Array(4)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                          animate={{
+                            opacity: 0,
+                            scale: 1,
+                            x: (Math.random() - 0.5) * 40,
+                            y: (Math.random() - 0.5) * 30 - 10,
+                          }}
+                          transition={{ duration: 0.5, delay: i * 0.05 }}
+                          className="absolute text-xs"
+                          style={{ left: '50%', top: '50%' }}
+                        >
+                          {['📋', '✨', '🎯', '👍'][i]}
+                        </motion.span>
+                      ))}
+                    </>
+                  )}
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

@@ -5,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { type ZodTypeAny } from 'zod';
-import { authenticateRequest, type AuthConfig, type AuthContext } from './auth-middleware';
+import { validateApiAuth, type AuthOptions as AuthConfig, type AuthContext } from './api-auth-middleware';
 import { handleApiError, validateRequest } from './api-error-handler';
 import { trackApiCall } from './error-monitoring';
 import { createRequestLogger, logApiCall, logPerformance, logger } from './structured-logger';
@@ -107,7 +107,7 @@ export function createApiHandler(
 
       // 3. Authentication
       if (!config.public) {
-        authContext = await authenticateRequest(request, config.auth);
+        authContext = await validateApiAuth(request, config.auth);
       }
 
       // 4. Request validation
@@ -171,7 +171,6 @@ export function createApiHandler(
             statusCode: responseStatus,
             duration,
             metadata: {
-              isTestUser: authContext?.isTestUser,
               ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
               userAgent: request.headers.get('user-agent') || undefined,
               tags: {
@@ -294,7 +293,7 @@ export function createAdminHandler(
     {
       ...config,
       auth: {
-        required: true,
+        requireAdmin: true,
         operation: 'admin_access'
       }
     }
@@ -325,7 +324,7 @@ export function createAuthenticatedHandler(
     handler,
     {
       ...config,
-      auth: { required: true }
+      auth: {}
     }
   );
 }

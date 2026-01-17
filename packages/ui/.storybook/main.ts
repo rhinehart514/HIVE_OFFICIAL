@@ -10,9 +10,14 @@ function getAbsolutePath(value: string): any {
 }
 
 const config: StorybookConfig = {
+  // ============================================
+  // HIVE Design System: Only show new primitives & components
+  // Old atomic stories are excluded
+  // ============================================
   stories: [
-    '../src/**/*.mdx',
-    '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    // Design System stories ONLY
+    '../src/design-system/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../src/design-system/**/*.mdx',
   ],
 
   addons: [

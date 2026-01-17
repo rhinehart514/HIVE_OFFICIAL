@@ -1,10 +1,23 @@
 // Typography design tokens
 
+/**
+ * HIVE Typography System
+ * Aligned with design-system/LANGUAGE.md
+ *
+ * Font pairing:
+ * - Clash Display: Headlines, personality, geometric warmth
+ * - Geist: Body text, builder credibility, dark-mode optimized
+ * - Geist Mono: Technical content, stats, code
+ */
 export const typography = {
   fontFamily: {
-    sans: ['Geist Sans', 'system-ui', 'sans-serif'],
-    display: ['Space Grotesk', 'system-ui', 'sans-serif'],
-    mono: ['JetBrains Mono', 'monospace'],
+    // Design System fonts (from LANGUAGE.md)
+    display: ['Clash Display', 'SF Pro Display', 'system-ui', 'sans-serif'],
+    body: ['Geist', 'SF Pro Text', 'system-ui', 'sans-serif'],
+    mono: ['Geist Mono', 'SF Mono', 'ui-monospace', 'monospace'],
+
+    // Legacy aliases (map to new system)
+    sans: ['Geist', 'SF Pro Text', 'system-ui', 'sans-serif'],
   },
   fontSize: {
     // Display Scale (Hero/Marketing) - Mobile-optimized

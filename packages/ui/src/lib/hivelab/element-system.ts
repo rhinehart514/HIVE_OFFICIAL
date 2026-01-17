@@ -155,60 +155,6 @@ export class ElementRegistry {
   }
 }
 
-// Element Execution Engine
-export class ElementEngine {
-  private compositions: Map<string, ToolComposition> = new Map();
-  private elementStates: Map<string, any> = new Map();
-
-  executeComposition(composition: ToolComposition) {
-    // Initialize element states
-    for (const element of composition.elements) {
-      this.elementStates.set(element.instanceId, {});
-    }
-
-    // Process connections and data flow
-    this.processDataFlow(composition);
-  }
-
-  private processDataFlow(composition: ToolComposition) {
-    const processed = new Set<string>();
-    const processing = new Set<string>();
-
-    const processElement = (instanceId: string) => {
-      if (processed.has(instanceId)) return;
-      if (processing.has(instanceId)) {
-        throw new Error(`Circular dependency detected involving ${instanceId}`);
-      }
-
-      processing.add(instanceId);
-
-      // Find all inputs for this element
-      const inputs = composition.connections.filter(conn => conn.to.instanceId === instanceId);
-      
-      // Process all input dependencies first
-      for (const input of inputs) {
-        processElement(input.from.instanceId);
-      }
-
-      // Now process this element
-      const elementConfig = composition.elements.find(el => el.instanceId === instanceId);
-      if (elementConfig) {
-        const elementDef = ElementRegistry.getInstance().getElement(elementConfig.elementId);
-        if (elementDef) {
-          // Execute element logic here
-        }
-      }
-
-      processing.delete(instanceId);
-      processed.add(instanceId);
-    };
-
-    // Process all elements
-    for (const element of composition.elements) {
-      processElement(element.instanceId);
-    }
-  }
-}
 
 // =============================================================================
 // TIER 1: UNIVERSAL ELEMENTS
@@ -348,20 +294,28 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
   {
     id: 'chart-display',
     name: 'Chart Display',
-    description: 'Data visualization charts',
+    description: 'Data visualization charts (bar, line, pie)',
     category: 'display',
     tier: 'universal',
     dataSource: 'none',
     icon: 'BarChart',
     configSchema: {
-      chartType: { type: 'string', default: 'bar' },
+      chartType: { type: 'string', default: 'bar', enum: ['bar', 'line', 'pie'] },
+      title: { type: 'string', default: 'Analytics' },
+      height: { type: 'number', default: 280 },
       showLegend: { type: 'boolean', default: true },
-      animate: { type: 'boolean', default: true }
+      dataKey: { type: 'string', default: 'value' },
+      secondaryKey: { type: 'string', default: '' },
+      data: { type: 'array', default: [] }
     },
     defaultConfig: {
       chartType: 'bar',
+      title: 'Analytics',
+      height: 280,
       showLegend: true,
-      animate: true
+      dataKey: 'value',
+      secondaryKey: '',
+      data: []
     },
     render: (props) => renderElement('chart-display', props)
   },
@@ -480,6 +434,111 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
     },
     render: (props) => renderElement('notification-display', props)
   },
+
+  {
+    id: 'timer',
+    name: 'Timer',
+    description: 'Stopwatch-style timer with start/stop/reset controls',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Timer',
+    configSchema: {
+      label: { type: 'string', default: 'Timer' },
+      showControls: { type: 'boolean', default: true },
+      countUp: { type: 'boolean', default: true },
+      initialSeconds: { type: 'number', default: 0 }
+    },
+    defaultConfig: {
+      label: 'Timer',
+      showControls: true,
+      countUp: true,
+      initialSeconds: 0
+    },
+    render: (props) => renderElement('timer', props)
+  },
+
+  {
+    id: 'counter',
+    name: 'Counter',
+    description: 'Interactive counter with increment/decrement controls',
+    category: 'action',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Hash',
+    configSchema: {
+      label: { type: 'string', default: 'Count' },
+      initialValue: { type: 'number', default: 0 },
+      step: { type: 'number', default: 1 },
+      min: { type: 'number', default: 0 },
+      max: { type: 'number', default: 999 },
+      showControls: { type: 'boolean', default: true }
+    },
+    defaultConfig: {
+      label: 'Count',
+      initialValue: 0,
+      step: 1,
+      min: 0,
+      max: 999,
+      showControls: true
+    },
+    render: (props) => renderElement('counter', props)
+  },
+
+  {
+    id: 'availability-heatmap',
+    name: 'Availability Heatmap',
+    description: 'Visual heatmap showing member availability by time slots',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Grid3x3',
+    configSchema: {
+      startHour: { type: 'number', default: 8 },
+      endHour: { type: 'number', default: 22 },
+      timeFormat: { type: 'string', default: '12h' },
+      highlightThreshold: { type: 'number', default: 0.7 }
+    },
+    defaultConfig: {
+      startHour: 8,
+      endHour: 22,
+      timeFormat: '12h',
+      highlightThreshold: 0.7
+    },
+    render: (props) => renderElement('availability-heatmap', props)
+  },
+
+  // Photo Gallery - For Event Series and general photo sharing
+  {
+    id: 'photo-gallery',
+    name: 'Photo Gallery',
+    description: 'Upload and display photos in a masonry grid with lightbox',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Images',
+    configSchema: {
+      maxPhotos: { type: 'number', default: 50 },
+      allowUpload: { type: 'boolean', default: true },
+      columns: { type: 'number', default: 3 },
+      showCaptions: { type: 'boolean', default: true },
+      moderationEnabled: { type: 'boolean', default: false },
+      allowedUploaders: { type: 'array', default: [] }, // Empty = anyone, or list of userIds
+      uploadLabel: { type: 'string', default: 'Add Photo' },
+      emptyMessage: { type: 'string', default: 'No photos yet. Be the first to share!' }
+    },
+    defaultConfig: {
+      maxPhotos: 50,
+      allowUpload: true,
+      columns: 3,
+      showCaptions: true,
+      moderationEnabled: false,
+      allowedUploaders: [],
+      uploadLabel: 'Add Photo',
+      emptyMessage: 'No photos yet. Be the first to share!'
+    },
+    render: (props) => renderElement('photo-gallery', props)
+  },
 ];
 
 // =============================================================================
@@ -590,6 +649,83 @@ const CONNECTED_ELEMENTS: ElementDefinition[] = [
       showMutual: true
     },
     render: (props) => renderElement('connection-list', props)
+  },
+
+  {
+    id: 'personalized-event-feed',
+    name: 'Personalized Event Feed',
+    description: 'Events ranked by relevance based on interests, friends, and space membership',
+    category: 'display',
+    tier: 'connected',
+    dataSource: 'campus-events',
+    icon: 'Sparkles',
+    configSchema: {
+      timeRange: { type: 'enum', options: ['tonight', 'today', 'this-week', 'this-month'], default: 'tonight' },
+      maxItems: { type: 'number', default: 8 },
+      showFriendCount: { type: 'boolean', default: true },
+      showMatchReasons: { type: 'boolean', default: true },
+      title: { type: 'string', default: '' }
+    },
+    defaultConfig: {
+      timeRange: 'tonight',
+      maxItems: 8,
+      showFriendCount: true,
+      showMatchReasons: true,
+      title: ''
+    },
+    render: (props) => renderElement('personalized-event-feed', props)
+  },
+
+  {
+    id: 'dining-picker',
+    name: 'Dining Picker',
+    description: 'Browse campus dining locations with real-time status and recommendations',
+    category: 'display',
+    tier: 'connected',
+    dataSource: 'campus-events', // Using campus data
+    icon: 'BuildingStorefront',
+    configSchema: {
+      title: { type: 'string', default: 'Campus Dining' },
+      showRecommendation: { type: 'boolean', default: true },
+      showFilters: { type: 'boolean', default: true },
+      maxItems: { type: 'number', default: 8 },
+      sortBy: { type: 'enum', options: ['name', 'distance', 'closing-soon'], default: 'closing-soon' }
+    },
+    defaultConfig: {
+      title: 'Campus Dining',
+      showRecommendation: true,
+      showFilters: true,
+      maxItems: 8,
+      sortBy: 'closing-soon'
+    },
+    render: (props) => renderElement('dining-picker', props)
+  },
+
+  {
+    id: 'study-spot-finder',
+    name: 'Study Spot Finder',
+    description: 'Find the perfect study spot based on noise level, power outlets, and distance',
+    category: 'display',
+    tier: 'connected',
+    dataSource: 'campus-events', // Using campus data
+    icon: 'BookOpen',
+    configSchema: {
+      title: { type: 'string', default: 'Find a Study Spot' },
+      showFilters: { type: 'boolean', default: true },
+      showRecommendation: { type: 'boolean', default: true },
+      defaultNoiseLevel: { type: 'enum', options: ['silent', 'quiet', 'moderate', 'social'], default: null },
+      defaultNeedsPower: { type: 'boolean', default: false },
+      maxItems: { type: 'number', default: 8 }
+    },
+    defaultConfig: {
+      title: 'Find a Study Spot',
+      showFilters: true,
+      showRecommendation: true,
+      defaultNoiseLevel: null,
+      defaultNeedsPower: false,
+      maxItems: 8
+    },
+    render: (props) => renderElement('study-spot-finder', props)
   },
 ];
 
@@ -845,6 +981,385 @@ export function getRequiredContext(element: ElementDefinition): string[] {
 
 // Tool Templates built from elements
 export const TOOL_TEMPLATES: ToolComposition[] = [
+  // ============================================================================
+  // QUICK ACTION TEMPLATES
+  // ============================================================================
+  {
+    id: 'quick-poll',
+    name: 'Quick Poll',
+    description: 'Create a poll and see live results',
+    elements: [
+      {
+        elementId: 'poll-element',
+        instanceId: 'poll-main',
+        config: {
+          question: 'What do you think?',
+          options: ['Option A', 'Option B', 'Option C'],
+          showResults: true,
+          allowMultipleVotes: false
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 320, height: 280 }
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: 'poll-results',
+        config: {
+          chartType: 'bar',
+          title: 'Results',
+          height: 200,
+          showLegend: false
+        },
+        position: { x: 460, y: 100 },
+        size: { width: 320, height: 240 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'poll-main', output: 'results' },
+        to: { instanceId: 'poll-results', input: 'data' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'event-rsvp',
+    name: 'Event RSVP',
+    description: 'Event signup with attendee list and capacity tracking',
+    elements: [
+      {
+        elementId: 'rsvp-button',
+        instanceId: 'rsvp-main',
+        config: {
+          eventName: 'My Event',
+          maxAttendees: 50,
+          showCount: true,
+          allowWaitlist: true
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 280, height: 180 }
+      },
+      {
+        elementId: 'counter',
+        instanceId: 'attendee-count',
+        config: {
+          label: 'Attending',
+          showControls: false
+        },
+        position: { x: 420, y: 100 },
+        size: { width: 200, height: 120 }
+      },
+      {
+        elementId: 'result-list',
+        instanceId: 'attendee-list',
+        config: {
+          itemsPerPage: 10,
+          showPagination: true,
+          cardStyle: 'compact'
+        },
+        position: { x: 100, y: 320 },
+        size: { width: 520, height: 300 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'rsvp-main', output: 'attendeeCount' },
+        to: { instanceId: 'attendee-count', input: 'value' }
+      },
+      {
+        from: { instanceId: 'rsvp-main', output: 'attendeeList' },
+        to: { instanceId: 'attendee-list', input: 'items' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'weekly-checkin',
+    name: 'Weekly Check-in',
+    description: 'Team mood check and weekly reflection',
+    elements: [
+      {
+        elementId: 'poll-element',
+        instanceId: 'mood-poll',
+        config: {
+          question: 'How was your week?',
+          options: ['Great', 'Good', 'Okay', 'Tough'],
+          showResults: true,
+          anonymousVoting: true
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 300, height: 240 }
+      },
+      {
+        elementId: 'form-builder',
+        instanceId: 'reflection-form',
+        config: {
+          fields: [
+            { name: 'wins', type: 'textarea', label: 'What went well?', required: false },
+            { name: 'challenges', type: 'textarea', label: 'Any challenges?', required: false },
+            { name: 'goals', type: 'textarea', label: 'Goals for next week?', required: false }
+          ],
+          validateOnChange: false
+        },
+        position: { x: 440, y: 100 },
+        size: { width: 340, height: 320 }
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: 'mood-trends',
+        config: {
+          chartType: 'line',
+          title: 'Team Mood Over Time',
+          height: 180,
+          showLegend: true
+        },
+        position: { x: 100, y: 380 },
+        size: { width: 680, height: 220 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'mood-poll', output: 'results' },
+        to: { instanceId: 'mood-trends', input: 'data' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'competition-leaderboard',
+    name: 'Competition Leaderboard',
+    description: 'Track scores and rankings for competitions',
+    elements: [
+      {
+        elementId: 'leaderboard',
+        instanceId: 'main-board',
+        config: {
+          maxEntries: 10,
+          showRank: true,
+          showScore: true,
+          scoreLabel: 'Points',
+          highlightTop: 3
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 360, height: 400 }
+      },
+      {
+        elementId: 'counter',
+        instanceId: 'score-input',
+        config: {
+          label: 'Add Points',
+          step: 10,
+          min: 0,
+          max: 1000,
+          showControls: true
+        },
+        position: { x: 500, y: 100 },
+        size: { width: 220, height: 140 }
+      },
+      {
+        elementId: 'user-selector',
+        instanceId: 'player-select',
+        config: {
+          allowMultiple: false,
+          showAvatars: true
+        },
+        position: { x: 500, y: 280 },
+        size: { width: 220, height: 160 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'score-input', output: 'value' },
+        to: { instanceId: 'main-board', input: 'scoreUpdate' }
+      },
+      {
+        from: { instanceId: 'player-select', output: 'selected' },
+        to: { instanceId: 'main-board', input: 'targetPlayer' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'meeting-scheduler',
+    name: 'Meeting Scheduler',
+    description: 'Find the best time for everyone to meet',
+    elements: [
+      {
+        elementId: 'availability-heatmap',
+        instanceId: 'availability-grid',
+        config: {
+          startHour: 9,
+          endHour: 18,
+          timeFormat: '12h',
+          highlightThreshold: 0.7
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 500, height: 340 }
+      },
+      {
+        elementId: 'date-picker',
+        instanceId: 'date-select',
+        config: {
+          includeTime: false,
+          allowRange: true
+        },
+        position: { x: 640, y: 100 },
+        size: { width: 240, height: 200 }
+      },
+      {
+        elementId: 'user-selector',
+        instanceId: 'attendee-select',
+        config: {
+          allowMultiple: true,
+          showAvatars: true
+        },
+        position: { x: 640, y: 340 },
+        size: { width: 240, height: 180 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'date-select', output: 'selectedDates' },
+        to: { instanceId: 'availability-grid', input: 'dateRange' }
+      },
+      {
+        from: { instanceId: 'attendee-select', output: 'selectedUsers' },
+        to: { instanceId: 'availability-grid', input: 'participants' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'feedback-form',
+    name: 'Feedback Form',
+    description: 'Collect and visualize feedback',
+    elements: [
+      {
+        elementId: 'form-builder',
+        instanceId: 'feedback-input',
+        config: {
+          fields: [
+            { name: 'rating', type: 'rating', label: 'Overall Rating', required: true },
+            { name: 'liked', type: 'textarea', label: 'What did you like?', required: false },
+            { name: 'improve', type: 'textarea', label: 'What could be improved?', required: false },
+            { name: 'recommend', type: 'select', label: 'Would you recommend?', options: ['Yes', 'Maybe', 'No'], required: true }
+          ],
+          showProgress: true
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 380, height: 380 }
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: 'rating-chart',
+        config: {
+          chartType: 'bar',
+          title: 'Ratings Distribution',
+          height: 180,
+          showLegend: false
+        },
+        position: { x: 520, y: 100 },
+        size: { width: 320, height: 220 }
+      },
+      {
+        elementId: 'counter',
+        instanceId: 'response-count',
+        config: {
+          label: 'Responses',
+          showControls: false
+        },
+        position: { x: 520, y: 360 },
+        size: { width: 160, height: 100 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'feedback-input', output: 'submissions' },
+        to: { instanceId: 'rating-chart', input: 'data' }
+      },
+      {
+        from: { instanceId: 'feedback-input', output: 'submissionCount' },
+        to: { instanceId: 'response-count', input: 'value' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  {
+    id: 'study-timer',
+    name: 'Study Timer',
+    description: 'Pomodoro-style study timer with session tracking',
+    elements: [
+      {
+        elementId: 'countdown-timer',
+        instanceId: 'pomodoro-timer',
+        config: {
+          seconds: 1500, // 25 minutes
+          label: 'Focus Time',
+          showDays: false
+        },
+        position: { x: 100, y: 100 },
+        size: { width: 280, height: 200 }
+      },
+      {
+        elementId: 'counter',
+        instanceId: 'session-count',
+        config: {
+          label: 'Sessions Completed',
+          initialValue: 0,
+          step: 1,
+          min: 0,
+          max: 99,
+          showControls: false
+        },
+        position: { x: 420, y: 100 },
+        size: { width: 200, height: 120 }
+      },
+      {
+        elementId: 'timer',
+        instanceId: 'total-time',
+        config: {
+          label: 'Total Study Time',
+          countUp: true,
+          showControls: false
+        },
+        position: { x: 420, y: 260 },
+        size: { width: 200, height: 120 }
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: 'study-chart',
+        config: {
+          chartType: 'bar',
+          title: 'This Week',
+          height: 160,
+          showLegend: false
+        },
+        position: { x: 100, y: 340 },
+        size: { width: 520, height: 200 }
+      }
+    ],
+    connections: [
+      {
+        from: { instanceId: 'pomodoro-timer', output: 'complete' },
+        to: { instanceId: 'session-count', input: 'increment' }
+      },
+      {
+        from: { instanceId: 'session-count', output: 'value' },
+        to: { instanceId: 'study-chart', input: 'todayValue' }
+      }
+    ],
+    layout: 'flow'
+  },
+
+  // ============================================================================
+  // ORIGINAL TEMPLATES (PRESERVED)
+  // ============================================================================
   {
     id: 'basic-search-tool',
     name: 'Basic Search Tool',

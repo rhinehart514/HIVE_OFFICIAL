@@ -46,27 +46,44 @@ const PROTECTED_ROUTES = [
   '/tools',
   '/events',
   '/settings',
-  // Phase 7: Short URL aliases
-  '/browse',
-  '/build',
-  '/me',
+  '/connections',
+  '/claim',
+  '/create',
+  '/calendar',
+  '/notifications',
 ];
 
 // Routes that are always public
 const PUBLIC_ROUTES = [
   '/',
-  '/auth',
-  '/auth/login',
-  '/auth/verify',
-  '/auth/expired',
+  '/enter',         // New unified entry flow
   '/schools',
   '/about',
-  '/privacy',
-  '/terms',
+  '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
+  '/s',             // Short space URLs
+  '/u',             // Short profile URLs
+  '/spaces/browse', // Guest-accessible discovery
+  '/tools',         // HiveLab landing (view-only for guests)
 ];
 
 // Admin-only routes
 const ADMIN_ROUTES = ['/admin'];
+
+// Route redirects (replacing deleted client-side redirect pages)
+const ROUTE_REDIRECTS: Record<string, string> = {
+  // Alias routes
+  '/browse': '/spaces/browse',
+  '/build': '/tools/create',
+  // Settings section shortcuts
+  '/settings/privacy': '/settings?section=privacy',
+  '/settings/security': '/settings?section=account',
+  '/settings/profile': '/settings?section=profile',
+  '/settings/account': '/settings?section=account',
+  '/settings/notifications': '/settings?section=notifications',
+  // Legacy routes
+  '/privacy': '/legal/privacy',
+  '/terms': '/legal/terms',
+};
 
 // Routes that require completed onboarding
 const ONBOARDING_REQUIRED_ROUTES = [
@@ -251,6 +268,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle route redirects (from deleted client-side redirect pages)
+  const redirectTarget = ROUTE_REDIRECTS[pathname];
+  if (redirectTarget) {
+    return NextResponse.redirect(new URL(redirectTarget, request.url));
+  }
+
   // Public routes - no auth required
   if (isPublicRoute(pathname)) {
     return NextResponse.next();
@@ -259,11 +282,11 @@ export async function middleware(request: NextRequest) {
   // Get session cookie
   const sessionCookie = request.cookies.get('hive_session')?.value;
 
-  // Protected route without session - redirect to login
+  // Protected route without session - redirect to entry flow
   if (isProtectedRoute(pathname) && !sessionCookie) {
-    const loginUrl = new URL('/auth/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    const enterUrl = new URL('/enter', request.url);
+    enterUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(enterUrl);
   }
 
   // If we have a session, verify it for admin and onboarding routes
@@ -280,15 +303,24 @@ export async function middleware(request: NextRequest) {
 
     // Check onboarding status for protected routes
     if (session && requiresOnboarding(pathname) && !session.onboardingCompleted) {
-      // User hasn't completed onboarding - redirect to onboarding
-      const onboardingUrl = new URL('/onboarding', request.url);
-      onboardingUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(onboardingUrl);
+      // User hasn't completed entry - redirect to /enter?state=identity
+      const enterUrl = new URL('/enter', request.url);
+      enterUrl.searchParams.set('state', 'identity');
+      enterUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(enterUrl);
     }
 
-    // Reverse guard: if user visits /onboarding but already completed, redirect to feed
+    // Reverse guard: if user visits /enter with identity state but already completed, redirect to spaces
+    if (session && pathname === '/enter' && session.onboardingCompleted) {
+      const stateParam = request.nextUrl.searchParams.get('state');
+      if (stateParam === 'identity') {
+        return NextResponse.redirect(new URL('/spaces/browse', request.url));
+      }
+    }
+
+    // Legacy /onboarding redirect (in case URL redirect didn't catch it)
     if (session && pathname === '/onboarding' && session.onboardingCompleted) {
-      return NextResponse.redirect(new URL('/feed', request.url));
+      return NextResponse.redirect(new URL('/spaces/browse', request.url));
     }
   }
 
@@ -308,12 +340,21 @@ export const config = {
     '/events/:path*',
     '/settings/:path*',
     '/admin/:path*',
-    // Onboarding - include exact path AND subpaths
-    '/onboarding',
-    '/onboarding/:path*',
-    // Phase 7: Short URL aliases
+    '/connections/:path*',
+    '/claim/:path*',
+    '/create/:path*',
+    '/calendar/:path*',
+    '/notifications/:path*',
+    // Entry flow - unified auth
+    '/enter',
+    '/enter/:path*',
+    // Redirects (handled by middleware)
     '/browse',
     '/build',
-    '/me',
+    '/privacy',
+    '/terms',
+    // Campus routes
+    '/campus',
+    '/campus/:path*',
   ],
 };

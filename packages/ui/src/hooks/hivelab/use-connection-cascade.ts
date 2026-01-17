@@ -5,13 +5,24 @@
  * When an element fires an action, this hook finds all connected elements
  * and triggers them with the output value as input.
  *
+ * Uses DAG-based topological sorting to ensure correct execution order
+ * and detect cycles before they cause infinite loops.
+ *
  * This mirrors the backend cascade engine for instant preview feedback.
  */
 
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useMemo } from 'react';
 import type { CanvasElement, Connection } from '../../components/hivelab/ide/types';
+import {
+  buildDAG,
+  detectCycles,
+  topologicalSort,
+  getAffectedNodes,
+  analyzeDAG,
+  type DAGAnalysis,
+} from '../../lib/hivelab/dag-utils';
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -28,6 +39,8 @@ export interface CascadeContext {
   onStateUpdate: (instanceId: string, newState: Record<string, unknown>) => void;
   /** Optional callback when cascade completes */
   onCascadeComplete?: (updatedElements: string[]) => void;
+  /** Optional callback for cycle detection */
+  onCycleDetected?: (cycleNodes: string[]) => void;
 }
 
 export interface CascadeResult {
@@ -35,6 +48,25 @@ export interface CascadeResult {
   updatedElements: string[];
   /** Any errors that occurred */
   errors: Array<{ elementId: string; error: string }>;
+  /** Whether a cycle was detected */
+  hasCycle?: boolean;
+  /** Nodes involved in cycle (if any) */
+  cycleNodes?: string[];
+}
+
+export interface ConnectionGraphInfo {
+  /** Full DAG analysis */
+  analysis: DAGAnalysis;
+  /** Whether the graph is valid (no cycles) */
+  isValid: boolean;
+  /** Nodes in cycles (empty if valid) */
+  cycleNodes: string[];
+  /** Execution order (topologically sorted) */
+  executionOrder: string[];
+  /** Root nodes (no incoming connections) */
+  rootNodes: string[];
+  /** Leaf nodes (no outgoing connections) */
+  leafNodes: string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -193,14 +225,76 @@ function applyTransform(data: unknown, transform?: string): unknown {
 // HOOK
 // ═══════════════════════════════════════════════════════════════════
 
-const MAX_CASCADE_DEPTH = 5;
+const MAX_CASCADE_DEPTH = 10;
 
 export function useConnectionCascade(ctx: CascadeContext) {
   const cascadeDepthRef = useRef(0);
   const executedInCascadeRef = useRef<Set<string>>(new Set());
+  const cachedOutputsRef = useRef<Map<string, Map<string, unknown>>>(new Map());
+
+  /**
+   * Memoized DAG analysis - recalculates when connections or elements change
+   */
+  const graphInfo = useMemo((): ConnectionGraphInfo => {
+    const { connections, elements } = ctx;
+    const nodeIds = elements.map((el) => el.instanceId);
+    const analysis = analyzeDAG(connections, nodeIds);
+
+    return {
+      analysis,
+      isValid: analysis.isValid,
+      cycleNodes: analysis.cycleNodes,
+      executionOrder: analysis.executionOrder,
+      rootNodes: analysis.rootNodes,
+      leafNodes: analysis.leafNodes,
+    };
+  }, [ctx.connections, ctx.elements]);
+
+  /**
+   * Get cached output value for an element
+   */
+  const getCachedOutput = useCallback(
+    (instanceId: string, outputPort: string): unknown | undefined => {
+      const elementCache = cachedOutputsRef.current.get(instanceId);
+      return elementCache?.get(outputPort);
+    },
+    []
+  );
+
+  /**
+   * Cache output value for an element
+   */
+  const setCachedOutput = useCallback(
+    (instanceId: string, outputPort: string, value: unknown): void => {
+      let elementCache = cachedOutputsRef.current.get(instanceId);
+      if (!elementCache) {
+        elementCache = new Map();
+        cachedOutputsRef.current.set(instanceId, elementCache);
+      }
+      elementCache.set(outputPort, value);
+    },
+    []
+  );
+
+  /**
+   * Clear cache for downstream elements when source changes
+   */
+  const invalidateDownstreamCache = useCallback(
+    (sourceInstanceId: string): void => {
+      const { connections, elements } = ctx;
+      const nodeIds = elements.map((el) => el.instanceId);
+      const affected = getAffectedNodes(connections, nodeIds, sourceInstanceId);
+
+      for (const nodeId of affected) {
+        cachedOutputsRef.current.delete(nodeId);
+      }
+    },
+    [ctx]
+  );
 
   /**
    * Trigger cascade from a specific element and output
+   * Uses topological ordering for correct execution sequence
    */
   const triggerCascade = useCallback(
     (
@@ -209,28 +303,48 @@ export function useConnectionCascade(ctx: CascadeContext) {
       outputValue: unknown,
       transform?: string
     ): CascadeResult => {
-      const { connections, elements, elementStates, onStateUpdate, onCascadeComplete } = ctx;
+      const { connections, elements, elementStates, onStateUpdate, onCascadeComplete, onCycleDetected } = ctx;
       const updatedElements: string[] = [];
       const errors: Array<{ elementId: string; error: string }> = [];
 
-      // Prevent infinite loops
+      // Check for cycles before cascading
+      if (!graphInfo.isValid && graphInfo.cycleNodes.includes(sourceInstanceId)) {
+        onCycleDetected?.(graphInfo.cycleNodes);
+        return {
+          updatedElements: [],
+          errors: [{
+            elementId: sourceInstanceId,
+            error: `Cycle detected involving nodes: ${graphInfo.cycleNodes.join(', ')}`,
+          }],
+          hasCycle: true,
+          cycleNodes: graphInfo.cycleNodes,
+        };
+      }
+
+      // Prevent infinite loops (fallback safety)
       if (cascadeDepthRef.current >= MAX_CASCADE_DEPTH) {
-        return { updatedElements, errors: [{ elementId: sourceInstanceId, error: 'Max cascade depth reached' }] };
+        return {
+          updatedElements,
+          errors: [{ elementId: sourceInstanceId, error: 'Max cascade depth reached' }],
+        };
       }
 
       cascadeDepthRef.current++;
 
       try {
-        // Find all connections FROM this element's output
-        const outgoingConnections = connections.filter(
-          (conn) =>
-            conn.from.instanceId === sourceInstanceId &&
-            conn.from.port === outputPort
-        );
+        // Invalidate cache for downstream elements
+        invalidateDownstreamCache(sourceInstanceId);
 
-        for (const connection of outgoingConnections) {
-          const targetInstanceId = connection.to.instanceId;
+        // Cache the output value
+        const transformedValue = applyTransform(outputValue, transform);
+        setCachedOutput(sourceInstanceId, outputPort, transformedValue);
 
+        // Get affected nodes in topological order
+        const nodeIds = elements.map((el) => el.instanceId);
+        const affectedInOrder = getAffectedNodes(connections, nodeIds, sourceInstanceId);
+
+        // Process each affected node in dependency order
+        for (const targetInstanceId of affectedInOrder) {
           // Prevent duplicate execution in same cascade chain
           if (executedInCascadeRef.current.has(targetInstanceId)) {
             continue;
@@ -242,27 +356,58 @@ export function useConnectionCascade(ctx: CascadeContext) {
             continue;
           }
 
-          // Apply transform if specified
-          const transformedValue = applyTransform(outputValue, transform);
+          // Gather all inputs for this element from its incoming connections
+          const incomingConnections = connections.filter(
+            (conn) => conn.to.instanceId === targetInstanceId
+          );
 
-          // Update target element's state with input data
           const currentState = elementStates[targetInstanceId] || {};
-          const newState = {
-            ...currentState,
-            [connection.to.port]: transformedValue,
-            _cascadeSource: sourceInstanceId,
-            _cascadeOutput: outputPort,
-            _lastCascadeAt: new Date().toISOString(),
-          };
+          let newState = { ...currentState };
+
+          // Apply each incoming connection's data
+          for (const conn of incomingConnections) {
+            const sourceState = elementStates[conn.from.instanceId] || {};
+            const sourceElement = elements.find((el) => el.instanceId === conn.from.instanceId);
+            const sourceElementId = sourceElement?.elementId || '';
+
+            // Get value from source element's output
+            let value = extractOutputValue(sourceState, conn.from.port, sourceElementId);
+
+            // Check cache if value is undefined
+            if (value === undefined) {
+              value = getCachedOutput(conn.from.instanceId, conn.from.port);
+            }
+
+            // Apply transform from connection if any
+            if (conn.transform) {
+              value = applyTransform(value, conn.transform);
+            }
+
+            // Set the input port value
+            if (value !== undefined) {
+              newState = {
+                ...newState,
+                [conn.to.port]: value,
+                _cascadeSource: conn.from.instanceId,
+                _cascadeOutput: conn.from.port,
+                _lastCascadeAt: new Date().toISOString(),
+              };
+            }
+          }
 
           executedInCascadeRef.current.add(targetInstanceId);
           onStateUpdate(targetInstanceId, newState);
           updatedElements.push(targetInstanceId);
 
-          // Recursive cascade from target element (using 'data' as default output)
-          const nestedResult = triggerCascade(targetInstanceId, 'data', newState);
-          updatedElements.push(...nestedResult.updatedElements);
-          errors.push(...nestedResult.errors);
+          // Cache this element's output for downstream elements
+          const targetElementId = targetElement.elementId;
+          const outputs = getAffectedOutputs('update', targetElementId);
+          for (const output of outputs) {
+            const outputVal = extractOutputValue(newState, output, targetElementId);
+            if (outputVal !== undefined) {
+              setCachedOutput(targetInstanceId, output, outputVal);
+            }
+          }
         }
       } finally {
         cascadeDepthRef.current--;
@@ -278,7 +423,7 @@ export function useConnectionCascade(ctx: CascadeContext) {
 
       return { updatedElements, errors };
     },
-    [ctx]
+    [ctx, graphInfo, invalidateDownstreamCache, getCachedOutput, setCachedOutput]
   );
 
   /**
@@ -294,26 +439,75 @@ export function useConnectionCascade(ctx: CascadeContext) {
       const affectedOutputs = getAffectedOutputs(actionName, elementId);
       const allUpdatedElements: string[] = [];
       const allErrors: Array<{ elementId: string; error: string }> = [];
+      let hasCycle = false;
+      let cycleNodes: string[] = [];
 
       for (const output of affectedOutputs) {
         const outputValue = extractOutputValue(newState, output, elementId);
         const result = triggerCascade(instanceId, output, outputValue);
         allUpdatedElements.push(...result.updatedElements);
         allErrors.push(...result.errors);
+        if (result.hasCycle) {
+          hasCycle = true;
+          cycleNodes = result.cycleNodes || [];
+        }
       }
 
       // Remove duplicates
       const uniqueUpdated = [...new Set(allUpdatedElements)];
 
-      return { updatedElements: uniqueUpdated, errors: allErrors };
+      return { updatedElements: uniqueUpdated, errors: allErrors, hasCycle, cycleNodes };
     },
     [triggerCascade]
   );
+
+  /**
+   * Validate the connection graph (detect cycles)
+   */
+  const validateGraph = useCallback((): { isValid: boolean; cycleNodes: string[] } => {
+    return {
+      isValid: graphInfo.isValid,
+      cycleNodes: graphInfo.cycleNodes,
+    };
+  }, [graphInfo]);
+
+  /**
+   * Get the execution order for all elements
+   */
+  const getExecutionOrder = useCallback((): string[] => {
+    return graphInfo.executionOrder;
+  }, [graphInfo]);
+
+  /**
+   * Get graph analysis info
+   */
+  const getGraphInfo = useCallback((): ConnectionGraphInfo => {
+    return graphInfo;
+  }, [graphInfo]);
+
+  /**
+   * Clear all cached outputs (useful when resetting state)
+   */
+  const clearCache = useCallback((): void => {
+    cachedOutputsRef.current.clear();
+  }, []);
 
   return {
     /** Trigger cascade from specific output port */
     triggerCascade,
     /** Handle element action and cascade affected outputs */
     handleElementAction,
+    /** Validate the connection graph for cycles */
+    validateGraph,
+    /** Get topological execution order */
+    getExecutionOrder,
+    /** Get full graph analysis */
+    getGraphInfo,
+    /** Clear output cache */
+    clearCache,
+    /** Whether the current graph is valid (no cycles) */
+    isGraphValid: graphInfo.isValid,
+    /** Nodes involved in cycles (if any) */
+    cycleNodes: graphInfo.cycleNodes,
   };
 }

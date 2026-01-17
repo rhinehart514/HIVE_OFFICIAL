@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw, ArrowLeft, Home } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon, ArrowLeftIcon, HomeIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 
 export default function SpacesBrowseError({
@@ -24,7 +24,7 @@ export default function SpacesBrowseError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
-            <AlertTriangle className="h-8 w-8 text-amber-500" />
+            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
           </div>
         </div>
 
@@ -38,7 +38,7 @@ export default function SpacesBrowseError({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button onClick={() => reset()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
+            <ArrowPathIcon className="h-4 w-4" />
             Try again
           </Button>
           <Button
@@ -46,7 +46,7 @@ export default function SpacesBrowseError({
             onClick={() => window.location.href = '/spaces'}
             className="gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4" />
             Back to Spaces
           </Button>
           <Button
@@ -54,7 +54,7 @@ export default function SpacesBrowseError({
             onClick={() => window.location.href = '/'}
             className="gap-2"
           >
-            <Home className="h-4 w-4" />
+            <HomeIcon className="h-4 w-4" />
             Go home
           </Button>
         </div>

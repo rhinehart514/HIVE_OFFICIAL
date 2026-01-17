@@ -8,8 +8,10 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
+
+// Type alias for lucide compatibility
+type LucideIcon = React.ComponentType<{ className?: string }>;
 import { cn } from '../../../lib/utils';
 
 export interface DraggablePaletteItemProps {

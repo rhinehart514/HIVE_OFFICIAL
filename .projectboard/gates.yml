@@ -1,0 +1,27 @@
+# HIVE Quality Gates
+# Run these before shipping
+
+updated: "2026-01-14"
+
+gates:
+  - id: typecheck
+    name: "TypeScript"
+    command: "pnpm typecheck"
+    required: true
+
+  - id: lint
+    name: "ESLint"
+    command: "pnpm lint"
+    required: true
+
+  - id: build
+    name: "Build"
+    command: "pnpm build"
+    required: true
+
+# Optional gates (run when relevant)
+optional_gates:
+  - id: test
+    name: "Tests"
+    command: "pnpm test"
+    when: "tests exist for changed files"

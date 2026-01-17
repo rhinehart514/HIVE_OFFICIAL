@@ -271,7 +271,7 @@ export interface IInlineComponentRepository {
 export type CheckPermissionFn = (
   userId: string,
   spaceId: string,
-  requiredRole: 'member' | 'leader' | 'owner'
+  requiredRole: 'member' | 'leader' | 'owner' | 'read'
 ) => Promise<{ allowed: boolean; role?: string | null }>;
 
 /**
@@ -343,9 +343,9 @@ export class SpaceChatService extends BaseApplicationService {
     spaceId: string
   ): Promise<Result<ServiceResult<Board[]>>> {
     return this.execute(async () => {
-      // Check permission (member level for listing boards)
+      // Check permission (read level for listing boards - allows non-members on public spaces)
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, spaceId, 'member');
+        const permResult = await this.checkPermission(userId, spaceId, 'read');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<Board[]>>('Access denied');
         }
@@ -603,9 +603,9 @@ export class SpaceChatService extends BaseApplicationService {
     options: ListMessagesOptions
   ): Promise<Result<ServiceResult<ListMessagesResult>>> {
     return this.execute(async () => {
-      // Check permission (member level for listing messages)
+      // Check permission (read level for listing messages - allows non-members on public spaces)
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, options.spaceId, 'member');
+        const permResult = await this.checkPermission(userId, options.spaceId, 'read');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<ListMessagesResult>>('Access denied');
         }
@@ -654,9 +654,9 @@ export class SpaceChatService extends BaseApplicationService {
     }
   ): Promise<Result<ServiceResult<ListMessagesResult>>> {
     return this.execute(async () => {
-      // Check permission (member level for listing messages)
+      // Check permission (read level for listing thread replies - allows non-members on public spaces)
       if (this.checkPermission) {
-        const permResult = await this.checkPermission(userId, options.spaceId, 'member');
+        const permResult = await this.checkPermission(userId, options.spaceId, 'read');
         if (!permResult.allowed) {
           return Result.fail<ServiceResult<ListMessagesResult>>('Access denied');
         }

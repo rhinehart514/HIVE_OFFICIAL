@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon, HomeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 import { useRouter } from 'next/navigation';
 
@@ -27,7 +27,7 @@ export default function ProfileViewError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
-            <AlertTriangle className="h-8 w-8 text-amber-500" aria-hidden="true" />
+            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" aria-hidden="true" />
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function ProfileViewError({
             aria-label="Retry loading the profile"
             className="gap-2 bg-amber-500 text-neutral-950 hover:bg-amber-400"
           >
-            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+            <ArrowPathIcon className="h-4 w-4" aria-hidden="true" />
             Try again
           </Button>
           <Button
@@ -54,7 +54,7 @@ export default function ProfileViewError({
             aria-label="Go back to previous page"
             className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
           >
-            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            <ArrowLeftIcon className="h-4 w-4" aria-hidden="true" />
             Go back
           </Button>
           <Button
@@ -63,7 +63,7 @@ export default function ProfileViewError({
             aria-label="Go to feed page"
             className="gap-2 border-neutral-700 text-neutral-300 hover:bg-neutral-800"
           >
-            <Home className="h-4 w-4" aria-hidden="true" />
+            <HomeIcon className="h-4 w-4" aria-hidden="true" />
             Feed
           </Button>
         </div>

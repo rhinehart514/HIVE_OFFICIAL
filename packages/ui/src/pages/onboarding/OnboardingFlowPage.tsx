@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
-import { Checkbox } from "../../atomic/00-Global/atoms/checkbox";
-import { Input } from "../../atomic/00-Global/atoms/input";
-import { Label } from "../../atomic/00-Global/atoms/label";
-import { Textarea } from "../../atomic/00-Global/atoms/textarea";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
+import { Checkbox } from "../../design-system/primitives/Checkbox";
+import { Input } from "../../design-system/primitives/Input";
+import { Label } from "../../design-system/primitives/Label";
+import { Textarea } from "../../design-system/primitives/Textarea";
 import { Surface } from "../../layout";
 import { cn } from "../../lib/utils";
 
@@ -69,7 +69,7 @@ export function OnboardingFlowPage({
     <div className="min-h-screen bg-[var(--hive-background-page,#06070d)] text-[var(--hive-text-primary,#f7f7ff)]">
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-6 pb-24 pt-14">
         <header className="space-y-4 text-center">
-          <Badge variant="primary" className="uppercase tracking-caps-wider">
+          <Badge variant="gold" className="uppercase tracking-caps-wider">
             Welcome to {campusName}
           </Badge>
           <h1 className="text-3xl font-semibold text-[var(--hive-text-primary,#f5f5ff)]">Launch your campus presence</h1>
@@ -124,7 +124,7 @@ export function OnboardingFlowPage({
             </div>
             <div className="flex justify-between">
               <Button variant="ghost">Exit</Button>
-              <Button variant="primary" className="px-8">
+              <Button variant="gold" className="px-8">
                 Continue
               </Button>
             </div>
@@ -195,7 +195,7 @@ export function OnboardingFlowPage({
               <p>Spaces suggested tonight: Robotics Collective, Hive Founders, Sustainability Studio.</p>
               <p>HiveLab templates: Campus service board, live ritual RSVP, campus quiet hours guard.</p>
             </div>
-            <Button variant="secondary" className="w-full">
+            <Button variant="neutral" className="w-full">
               Save & exit
             </Button>
           </div>

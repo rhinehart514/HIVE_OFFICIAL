@@ -8,25 +8,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  AlertTriangle,
-  XCircle,
-  CheckCircle,
-  Shield,
-  Lock,
-  Trash2,
-  Archive,
-  Flag,
-  Users,
-  GraduationCap,
-  Home,
-  Heart,
-  Database,
-  RefreshCw,
-  Search,
-  Ban,
-  Zap,
-} from 'lucide-react';
+import { ExclamationTriangleIcon, XCircleIcon, CheckCircleIcon, ShieldCheckIcon, LockClosedIcon, TrashIcon, FlagIcon, UsersIcon, AcademicCapIcon, HomeIcon, HeartIcon, CircleStackIcon, ArrowPathIcon, MagnifyingGlassIcon, NoSymbolIcon, BoltIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Archive = ArchiveBoxIcon;
 
 // STRICT TYPE DEFINITIONS - NO DEVIATION ALLOWED
 type ValidSpaceType = 'university_spaces' | 'residential_spaces' | 'greek_life_spaces' | 'student_spaces';
@@ -99,7 +84,7 @@ const ALLOWED_SPACE_CONFIGURATIONS: Record<ValidSpaceType, {
   university_spaces: {
     label: 'University Spaces',
     description: 'Academic majors, class years, and university organizations ONLY',
-    icon: GraduationCap,
+    icon: AcademicCapIcon,
     allowedSubTypes: ['academic_major', 'class_year', 'university_organization'],
     maxInstances: 'unlimited',
     systemGenerated: true, // Only system creates these based on university data
@@ -108,7 +93,7 @@ const ALLOWED_SPACE_CONFIGURATIONS: Record<ValidSpaceType, {
   residential_spaces: {
     label: 'Residential Spaces',
     description: 'Building-level communities and off-campus areas ONLY',
-    icon: Home,
+    icon: HomeIcon,
     allowedSubTypes: ['dorm_building', 'off_campus_area'],
     maxInstances: 'unlimited',
     systemGenerated: true, // Only system creates these based on housing data
@@ -117,7 +102,7 @@ const ALLOWED_SPACE_CONFIGURATIONS: Record<ValidSpaceType, {
   greek_life_spaces: {
     label: 'Greek Life Spaces',
     description: 'Individual chapters and Greek councils ONLY',
-    icon: Users,
+    icon: UsersIcon,
     allowedSubTypes: ['greek_chapter', 'greek_council'],
     maxInstances: 'unlimited',
     systemGenerated: false, // Can be created by request
@@ -126,7 +111,7 @@ const ALLOWED_SPACE_CONFIGURATIONS: Record<ValidSpaceType, {
   student_spaces: {
     label: 'Student Spaces',
     description: 'Clubs, organizations, and interest communities ONLY',
-    icon: Heart,
+    icon: HeartIcon,
     allowedSubTypes: ['student_club', 'interest_community'],
     maxInstances: 'unlimited',
     systemGenerated: false, // Can be created by request
@@ -170,11 +155,11 @@ const SpaceViolationCard: React.FC<{
 
   const getActionIcon = (action: NonCompliantSpace['suggestedAction']) => {
     switch (action) {
-      case 'delete': return <Trash2 className="w-4 h-4 text-red-400" />;
-      case 'quarantine': return <Lock className="w-4 h-4 text-orange-400" />;
-      case 'convert_to_tool': return <Zap className="w-4 h-4 text-yellow-400" />;
+      case 'delete': return <TrashIcon className="w-4 h-4 text-red-400" />;
+      case 'quarantine': return <LockClosedIcon className="w-4 h-4 text-orange-400" />;
+      case 'convert_to_tool': return <BoltIcon className="w-4 h-4 text-yellow-400" />;
       case 'merge': return <Archive className="w-4 h-4 text-blue-400" />;
-      default: return <Flag className="w-4 h-4" />;
+      default: return <FlagIcon className="w-4 h-4" />;
     }
   };
 
@@ -194,7 +179,7 @@ const SpaceViolationCard: React.FC<{
         <div className="flex items-start justify-between mb-3">
           <div>
             <div className="flex items-center space-x-2 mb-1">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <ExclamationTriangleIcon className="w-5 h-5 text-red-400" />
               <h3 className="font-semibold text-white">{space.name}</h3>
             </div>
             <p className="text-sm text-gray-400 mb-2">Current Type: <span className="text-red-400">{space.currentType}</span></p>
@@ -265,7 +250,7 @@ const CompliantSpaceCard: React.FC<{
           </div>
           
           <div className="flex items-center space-x-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
+            <CheckCircleIcon className="w-5 h-5 text-green-400" />
             <Badge size="sm" className="bg-green-500/20 text-green-400">
               {space.complianceScore}% compliant
             </Badge>
@@ -348,7 +333,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <ShieldCheckIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Space enforcement system is not available</p>
       </div>
     );
@@ -360,7 +345,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
-            <Shield className="w-6 h-6 text-red-400" />
+            <ShieldCheckIcon className="w-6 h-6 text-red-400" />
             <span>HIVE Space Enforcement</span>
           </h2>
           <p className="text-gray-400 mt-1">
@@ -375,9 +360,9 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
             className="bg-red-600 hover:bg-red-700 text-white"
           >
             {loading ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <Search className="w-4 h-4 mr-2" />
+              <MagnifyingGlassIcon className="w-4 h-4 mr-2" />
             )}
             {loading ? 'Auditing...' : 'Run Full Audit'}
           </Button>
@@ -389,7 +374,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
         <Card className="border-red-500 bg-red-500/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
               <div>
                 <h3 className="font-semibold text-red-400">CRITICAL: Space System Violations Detected</h3>
                 <p className="text-sm text-gray-300 mt-1">
@@ -410,7 +395,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                 <p className="text-sm font-medium text-red-400">Violations</p>
                 <p className="text-2xl font-bold text-red-300">{tabCounts.violations}</p>
               </div>
-              <XCircle className="w-8 h-8 text-red-400" />
+              <XCircleIcon className="w-8 h-8 text-red-400" />
             </div>
           </CardContent>
         </Card>
@@ -422,7 +407,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                 <p className="text-sm font-medium text-green-400">Compliant</p>
                 <p className="text-2xl font-bold text-green-300">{tabCounts.compliant}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-400" />
+              <CheckCircleIcon className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -434,7 +419,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                 <p className="text-sm font-medium text-blue-400">Valid Types</p>
                 <p className="text-2xl font-bold text-blue-300">4</p>
               </div>
-              <Database className="w-8 h-8 text-blue-400" />
+              <CircleStackIcon className="w-8 h-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -446,7 +431,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                 <p className="text-sm font-medium text-orange-400">Forbidden</p>
                 <p className="text-2xl font-bold text-orange-300">{tabCounts.forbidden}</p>
               </div>
-              <Ban className="w-8 h-8 text-orange-400" />
+              <NoSymbolIcon className="w-8 h-8 text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -462,9 +447,9 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <XCircle className="w-4 h-4" />
+          <XCircleIcon className="w-4 h-4" />
           <span>Violations</span>
-          <Badge size="xs" className={activeTab === 'violations' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'}>
+          <Badge size="sm" className={activeTab === 'violations' ? 'bg-white/20' : 'bg-red-500/20 text-red-400'}>
             {tabCounts.violations}
           </Badge>
         </button>
@@ -477,9 +462,9 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <CheckCircle className="w-4 h-4" />
+          <CheckCircleIcon className="w-4 h-4" />
           <span>Compliant Spaces</span>
-          <Badge size="xs" className={activeTab === 'compliant' ? 'bg-white/20' : 'bg-green-500/20 text-green-400'}>
+          <Badge size="sm" className={activeTab === 'compliant' ? 'bg-white/20' : 'bg-green-500/20 text-green-400'}>
             {tabCounts.compliant}
           </Badge>
         </button>
@@ -492,7 +477,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <Ban className="w-4 h-4" />
+          <NoSymbolIcon className="w-4 h-4" />
           <span>Forbidden as Spaces</span>
         </button>
       </div>
@@ -511,7 +496,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
             {violatingSpaces.length === 0 ? (
               <Card className="border-green-500/30 bg-green-500/5">
                 <CardContent className="p-8 text-center">
-                  <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                  <CheckCircleIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-green-400 mb-2">No Violations Found</h3>
                   <p className="text-gray-400">All spaces comply with HIVE's strict four-category system.</p>
                 </CardContent>
@@ -565,7 +550,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                   {FORBIDDEN_AS_SPACES.map((forbidden, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <Ban className="w-5 h-5 text-orange-400" />
+                        <NoSymbolIcon className="w-5 h-5 text-orange-400" />
                         <span className="text-white">{forbidden}</span>
                       </div>
                       <Badge size="sm" className="bg-orange-500/20 text-orange-400">
@@ -598,7 +583,7 @@ export const HiveStrictSpaceEnforcer: React.FC<HiveStrictSpaceEnforcerProps> = (
                   <p className="text-sm text-gray-400 mb-2">{config.description}</p>
                   <div className="flex flex-wrap gap-1">
                     {config.allowedSubTypes.map((subType) => (
-                      <Badge key={subType} size="xs" variant="outline" className="text-xs">
+                      <Badge key={subType} size="sm" variant="outline" className="text-xs">
                         {subType.replace('_', ' ')}
                       </Badge>
                     ))}

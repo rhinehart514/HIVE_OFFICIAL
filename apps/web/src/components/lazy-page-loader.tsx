@@ -12,13 +12,10 @@ import React, { lazy, Suspense } from 'react';
 // const LazyCalendarPage = lazy(() => import('../app/(dashboard)/calendar/page'));
 // const LazySettingsPage = lazy(() => import('../app/(dashboard)/settings/page'));
 
-// Loading fallback component
-const LoadingFallback = ({ pageName }: { pageName: string }) => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center space-y-4">
-      <div className="w-8 h-8 border-2 border-[var(--hive-brand-primary)] border-t-transparent rounded-full animate-spin mx-auto"></div>
-      <p className="text-hive-text-secondary">Loading {pageName}...</p>
-    </div>
+// Loading fallback component - minimal, no gold
+const LoadingFallback = ({ pageName: _pageName }: { pageName: string }) => (
+  <div className="min-h-screen bg-void flex items-center justify-center">
+    <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
   </div>
 );
 

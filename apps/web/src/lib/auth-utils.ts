@@ -218,7 +218,7 @@ export async function authenticatedFetch(
       // Handle token expiry - redirect to login
       logout();
       if (typeof window !== 'undefined') {
-        window.location.href = '/auth/login';
+        window.location.href = '/enter';
       }
     }
 

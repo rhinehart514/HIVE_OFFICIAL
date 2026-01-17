@@ -578,6 +578,14 @@ export const POST = withValidation(
       const code = generateSecureCode();
       const codeHash = hashCode(code);
 
+      // Log code in development for testing
+      if (currentEnvironment === 'development') {
+        console.log('\n========================================');
+        console.log(`🔑 DEV OTP CODE: ${code}`);
+        console.log(`📧 Email: ${normalizedEmail}`);
+        console.log('========================================\n');
+      }
+
       // Store in Firestore
       if (isFirebaseConfigured) {
         const now = new Date();

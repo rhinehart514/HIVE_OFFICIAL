@@ -8,39 +8,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  Search, 
-  Filter, 
-  MoreVertical, 
-  Edit3, 
-  Eye, 
-  Users, 
-  UserCheck,
-  UserX,
-  Activity, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Mail,
-  RefreshCw, 
-  Shield, 
-  ShieldCheck,
-  BarChart3, 
-  Layers, 
-  PlayCircle,
-  PauseCircle,
-  Flag,
-  CheckSquare,
-  X,
-  ChevronDown,
-  Copy,
-  Award,
-  Briefcase,
-  GraduationCap,
-  BookOpen,
-  Download
-} from 'lucide-react';
+import { MagnifyingGlassIcon, FunnelIcon, EllipsisVerticalIcon, PencilSquareIcon, EyeIcon, UsersIcon, UserIcon, ChartBarIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon, CheckCircleIcon, ClockIcon, EnvelopeIcon, ArrowPathIcon, ShieldCheckIcon, FlagIcon, XMarkIcon, ChevronDownIcon, ClipboardDocumentIcon, TrophyIcon, AcademicCapIcon, ArrowDownTrayIcon, PauseCircleIcon, PlayCircleIcon, UserMinusIcon, Square3Stack3DIcon, CheckIcon, BriefcaseIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const PauseCircle = PauseCircleIcon;
+const PlayCircle = PlayCircleIcon;
+const UserX = UserMinusIcon;
+const Layers = Square3Stack3DIcon;
+const CheckSquare = CheckIcon;
+const Briefcase = BriefcaseIcon;
+const BookOpen = BookOpenIcon;
 
 interface AdminUser {
   id: string;
@@ -212,22 +189,22 @@ const UserCard: React.FC<UserCardProps> = ({
 
   const getRoleIcon = (role: AdminUser['role']) => {
     switch (role) {
-      case 'admin': return <ShieldCheck className="w-4 h-4 text-red-400" />;
-      case 'moderator': return <Shield className="w-4 h-4 text-blue-400" />;
-      case 'builder': return <Award className="w-4 h-4 text-purple-400" />;
-      case 'faculty': return <GraduationCap className="w-4 h-4 text-green-400" />;
+      case 'admin': return <ShieldCheckIcon className="w-4 h-4 text-red-400" />;
+      case 'moderator': return <ShieldCheckIcon className="w-4 h-4 text-blue-400" />;
+      case 'builder': return <TrophyIcon className="w-4 h-4 text-purple-400" />;
+      case 'faculty': return <AcademicCapIcon className="w-4 h-4 text-green-400" />;
       case 'staff': return <Briefcase className="w-4 h-4 text-orange-400" />;
       case 'student': return <BookOpen className="w-4 h-4 text-gray-400" />;
-      default: return <Users className="w-4 h-4 text-gray-400" />;
+      default: return <UsersIcon className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getVerificationIcon = (status: AdminUser['verificationStatus']) => {
     switch (status) {
-      case 'verified': return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'pending': return <Clock className="w-4 h-4 text-yellow-400" />;
-      case 'rejected': return <X className="w-4 h-4 text-red-400" />;
-      default: return <AlertTriangle className="w-4 h-4 text-gray-400" />;
+      case 'verified': return <CheckCircleIcon className="w-4 h-4 text-green-400" />;
+      case 'pending': return <ClockIcon className="w-4 h-4 text-yellow-400" />;
+      case 'rejected': return <XMarkIcon className="w-4 h-4 text-red-400" />;
+      default: return <ExclamationTriangleIcon className="w-4 h-4 text-gray-400" />;
     }
   };
 
@@ -297,8 +274,8 @@ const UserCard: React.FC<UserCardProps> = ({
                 <h3 className="font-semibold text-white truncate">{user.displayName}</h3>
                 {getRoleIcon(user.role)}
                 {getVerificationIcon(user.verificationStatus)}
-                {user.emailVerified && <Mail className="w-3 h-3 text-blue-400" />}
-                {user.twoFactorEnabled && <Shield className="w-3 h-3 text-green-400" />}
+                {user.emailVerified && <EnvelopeIcon className="w-3 h-3 text-blue-400" />}
+                {user.twoFactorEnabled && <ShieldCheckIcon className="w-3 h-3 text-green-400" />}
               </div>
               
               <div className="flex items-center space-x-2 mb-1">
@@ -340,7 +317,7 @@ const UserCard: React.FC<UserCardProps> = ({
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
             >
-              <MoreVertical className="w-4 h-4" />
+              <EllipsisVerticalIcon className="w-4 h-4" />
             </Button>
 
             {showMenu && (
@@ -353,7 +330,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Eye className="w-4 h-4" />
+                    <EyeIcon className="w-4 h-4" />
                     View Full Profile
                   </button>
                   <button
@@ -364,7 +341,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Edit3 className="w-4 h-4" />
+                    <PencilSquareIcon className="w-4 h-4" />
                     Edit User
                   </button>
                   <button
@@ -375,8 +352,8 @@ const UserCard: React.FC<UserCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Copy className="w-4 h-4" />
-                    Copy Email
+                    <ClipboardDocumentIcon className="w-4 h-4" />
+                    ClipboardDocumentIcon Email
                   </button>
                   <button
                     onClick={(e) => {
@@ -386,7 +363,7 @@ const UserCard: React.FC<UserCardProps> = ({
                     }}
                     className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <Mail className="w-4 h-4" />
+                    <EnvelopeIcon className="w-4 h-4" />
                     Send Email
                   </button>
                   <div className="border-t border-gray-600 my-1" />
@@ -457,19 +434,19 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-1">
-              <Activity className="w-3 h-3 text-gray-400" />
+              <ChartBarIcon className="w-3 h-3 text-gray-400" />
               <span className={`${getEngagementColor(user.analytics.engagementScore)}`}>
                 {user.analytics.engagementScore}% engagement
               </span>
             </div>
             <div className="flex items-center space-x-1">
-              <Clock className="w-3 h-3 text-gray-400" />
+              <ClockIcon className="w-3 h-3 text-gray-400" />
               <span className="text-gray-300">
                 {formatDuration(user.analytics.avgSessionDuration)} avg
               </span>
             </div>
             <div className="flex items-center space-x-1">
-              <TrendingUp className="w-3 h-3 text-gray-400" />
+              <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
               <span className="text-gray-300">
                 {user.analytics.dailyActiveStreak} day streak
               </span>
@@ -504,19 +481,19 @@ const UserCard: React.FC<UserCardProps> = ({
         <div className="ml-8 flex items-center space-x-2">
           {!user.emailVerified && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-xs">
-              <Mail className="w-3 h-3 text-blue-400" />
+              <EnvelopeIcon className="w-3 h-3 text-blue-400" />
               <span className="text-blue-400">Unverified</span>
             </div>
           )}
           {user.reports.count > 0 && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs">
-              <Flag className="w-3 h-3 text-yellow-400" />
+              <FlagIcon className="w-3 h-3 text-yellow-400" />
               <span className="text-yellow-400">{user.reports.count} reports</span>
             </div>
           )}
           {user.violations.count > 0 && (
             <div className="flex items-center space-x-1 px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-xs">
-              <AlertTriangle className="w-3 h-3 text-red-400" />
+              <ExclamationTriangleIcon className="w-3 h-3 text-red-400" />
               <span className="text-red-400">{user.violations.count} violations</span>
             </div>
           )}
@@ -540,7 +517,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Search and Filter State
+  // MagnifyingGlassIcon and FunnelIcon State
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -595,7 +572,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
         } 
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed');
+      setError(err instanceof Error ? err.message : 'MagnifyingGlassIcon failed');
     } finally {
       setLoading(false);
     }
@@ -689,7 +666,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Enhanced user management is not available</p>
       </div>
     );
@@ -709,13 +686,13 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
             className="border-gray-600 text-gray-300"
           >
-            {viewMode === 'grid' ? <BarChart3 className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
+            {viewMode === 'grid' ? <ChartBarIcon className="w-4 h-4" /> : <Layers className="w-4 h-4" />}
           </Button>
           <Button
             onClick={() => window.location.reload()}
             className="bg-amber-500 hover:bg-amber-600 text-black"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <ArrowPathIcon className="w-4 h-4 mr-2" />
             Refresh
           </Button>
         </div>
@@ -727,10 +704,10 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Total Users</p>
+                <p className="text-sm font-medium text-gray-400">Total UsersIcon</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <Users className="w-8 h-8 text-gray-400" />
+              <UsersIcon className="w-8 h-8 text-gray-400" />
             </div>
           </CardContent>
         </Card>
@@ -742,7 +719,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                 <p className="text-sm font-medium text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-400" />
+              <CheckCircleIcon className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -754,7 +731,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                 <p className="text-sm font-medium text-gray-400">Verified</p>
                 <p className="text-2xl font-bold text-blue-400">{stats.verified}</p>
               </div>
-              <ShieldCheck className="w-8 h-8 text-blue-400" />
+              <ShieldCheckIcon className="w-8 h-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -766,23 +743,23 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                 <p className="text-sm font-medium text-gray-400">Issues</p>
                 <p className="text-2xl font-bold text-red-400">{stats.issues}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Filters */}
+      {/* MagnifyingGlassIcon and Filters */}
       <Card className="border-gray-700 bg-gray-900/50">
         <CardContent className="p-4">
           <div className="space-y-4">
-            {/* Main Search */}
+            {/* Main MagnifyingGlassIcon */}
             <div className="flex items-center space-x-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search users by name, email, handle, or university..."
+                  placeholder="MagnifyingGlassIcon users by name, email, handle, or university..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
@@ -794,16 +771,16 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                 disabled={loading}
                 className="bg-amber-500 hover:bg-amber-600 text-black"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? 'Searching...' : 'MagnifyingGlassIcon'}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
                 className="border-gray-600 text-gray-300"
               >
-                <Filter className="w-4 h-4 mr-2" />
+                <FunnelIcon className="w-4 h-4 mr-2" />
                 Filters
-                <ChevronDown className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+                <ChevronDownIcon className={`w-4 h-4 ml-2 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
               </Button>
             </div>
 
@@ -889,13 +866,13 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
         </CardContent>
       </Card>
 
-      {/* Users List */}
+      {/* UsersIcon List */}
       {users && (
         <Card className="border-gray-700 bg-gray-900/50">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-white">
-                Users ({users.total} found)
+                UsersIcon ({users.total} found)
               </CardTitle>
               <div className="flex items-center space-x-2">
                 <Button
@@ -912,12 +889,12 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
           <CardContent>
             {loading ? (
               <div className="text-center py-8">
-                <RefreshCw className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
+                <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
                 <p className="text-gray-400">Loading users...</p>
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="text-center py-12">
-                <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No users found</h3>
                 <p className="text-gray-400">Try adjusting your search or filters</p>
               </div>
@@ -961,7 +938,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                   onClick={() => handleBulkAction('activate')}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <UserCheck className="w-4 h-4 mr-1" />
+                  <UserIcon className="w-4 h-4 mr-1" />
                   Activate
                 </Button>
                 <Button
@@ -977,7 +954,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                   onClick={() => handleBulkAction('verify')}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <ShieldCheck className="w-4 h-4 mr-1" />
+                  <ShieldCheckIcon className="w-4 h-4 mr-1" />
                   Verify
                 </Button>
                 <Button
@@ -985,7 +962,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                   onClick={() => handleBulkAction('export')}
                   className="bg-purple-600 hover:bg-purple-700 text-white"
                 >
-                  <Download className="w-4 h-4 mr-1" />
+                  <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
                   Export
                 </Button>
                 <Button
@@ -994,7 +971,7 @@ export const EnhancedAdminUserManagement: React.FC<EnhancedAdminUserManagementPr
                   onClick={() => setSelectedUsers([])}
                   className="border-gray-600 text-gray-300"
                 >
-                  <X className="w-4 h-4 mr-1" />
+                  <XMarkIcon className="w-4 h-4 mr-1" />
                   Clear
                 </Button>
               </div>

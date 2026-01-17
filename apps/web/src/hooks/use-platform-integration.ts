@@ -524,13 +524,19 @@ export function useRealtimeIntegration() {
 
   const subscribeToUpdates = useCallback(() => {
     const integration = getPlatformIntegration();
-    
+
+    // Wrapper to adapt callback signature from (...args: unknown[]) to { type, data }
+    const wrapCallback = (eventType: string) => (...args: unknown[]) => {
+      const data = args[0];
+      handleRealtimeUpdate({ type: eventType, data });
+    };
+
     const unsubscribers = [
-      integration.subscribe('platform_update', handleRealtimeUpdate),
-      integration.subscribe('feed_update', handleRealtimeUpdate),
-      integration.subscribe('space_activity', handleRealtimeUpdate),
-      integration.subscribe('tool_interaction', handleRealtimeUpdate),
-      integration.subscribe('notification', handleRealtimeUpdate)
+      integration.subscribe('platform_update', wrapCallback('platform_update')),
+      integration.subscribe('feed_update', wrapCallback('feed_update')),
+      integration.subscribe('space_activity', wrapCallback('space_activity')),
+      integration.subscribe('tool_interaction', wrapCallback('tool_interaction')),
+      integration.subscribe('notification', wrapCallback('notification'))
     ];
 
     return () => {

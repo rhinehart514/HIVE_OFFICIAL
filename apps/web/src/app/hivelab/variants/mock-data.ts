@@ -1,9 +1,9 @@
-import {
-  Type,
-  KeyRound as InputIcon,
-  Container,
-  BarChart3
-} from 'lucide-react';
+import { ChartBarIcon, CubeIcon, DocumentTextIcon, CursorArrowRippleIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Container = CubeIcon;
+const Type = DocumentTextIcon;
+const InputIcon = CursorArrowRippleIcon;
 
 // Mock elements for the tool builder  
 export const mockElements = [
@@ -104,7 +104,7 @@ export const elementCategories = [
   { id: 'all', name: 'All Elements', icon: Container },
   { id: 'Display & Layout', name: 'Display & Layout', icon: Type },
   { id: 'Inputs & Choices', name: 'Inputs & Choices', icon: InputIcon },
-  { id: 'Logic & Dynamics', name: 'Logic & Dynamics', icon: BarChart3 },
+  { id: 'Logic & Dynamics', name: 'Logic & Dynamics', icon: ChartBarIcon },
 ] as const;
 
 // Mock templates for template mode

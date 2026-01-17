@@ -33,11 +33,11 @@ export const presenceVariants = cva(
     variants: {
       status: {
         // Dark-first design: Gold = Life
-        online: "bg-[#FFD700]",
-        offline: "bg-[#52525B]",
-        away: "bg-transparent border-2 border-[#FFD700]",
+        online: "bg-life-gold",
+        offline: "bg-[var(--text-muted)]",
+        away: "bg-transparent border-2 border-life-gold",
         ghost: "bg-purple-500/50",
-        busy: "bg-[#FF3737]",
+        busy: "bg-[var(--status-error)]",
       },
       size: {
         xs: "w-2 h-2",
@@ -77,7 +77,7 @@ export const PresenceDot: React.FC<PresenceDotProps> = ({
       {ring && (
         <span
           className={cn(
-            "absolute inset-0 rounded-full bg-[#0A0A0A]",
+            "absolute inset-0 rounded-full bg-ground",
             size === "xs" && "-m-0.5",
             size === "sm" && "-m-0.5",
             size === "md" && "-m-1",
@@ -189,9 +189,8 @@ export const ActivityPresence: React.FC<ActivityPresenceProps> = ({
       {/* Glow effect for live state */}
       {level === 'live' && (
         <motion.span
-          className="absolute inset-0 rounded-full"
+          className="absolute inset-0 rounded-full bg-life-gold"
           style={{
-            backgroundColor: '#FFD700',
             filter: 'blur(4px)',
           }}
           animate={{

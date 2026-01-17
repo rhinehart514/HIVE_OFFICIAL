@@ -27,27 +27,49 @@ import {
 } from "@hive/ui";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Rocket,
-  AlertTriangle,
-  CheckCircle,
-  Users,
-  MessageSquare,
-  Wrench,
-  Crown,
-  Star,
-  StarOff,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Eye,
-  ExternalLink,
-  RefreshCw,
-  Search,
-  ChevronRight,
-  Zap,
-  Clock,
-  Hash,
-} from "lucide-react";
+  RocketLaunchIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  ChatBubbleLeftIcon,
+  WrenchIcon,
+  TrophyIcon,
+  StarIcon,
+  StarIcon as StarOffIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ChartBarIcon,
+  EyeIcon,
+  ArrowTopRightOnSquareIcon,
+  ArrowPathIcon,
+  MagnifyingGlassIcon,
+  ChevronRightIcon,
+  BoltIcon,
+  ClockIcon,
+  HashtagIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Rocket = RocketLaunchIcon;
+const AlertTriangle = ExclamationTriangleIcon;
+const CheckCircle = CheckCircleIcon;
+const Users = UsersIcon;
+const MessageSquare = ChatBubbleLeftIcon;
+const Wrench = WrenchIcon;
+const Crown = TrophyIcon;
+const Star = StarIcon;
+const StarOff = StarOffIcon;
+const TrendingUp = ArrowTrendingUpIcon;
+const TrendingDown = ArrowTrendingDownIcon;
+const Activity = ChartBarIcon;
+const Eye = EyeIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
+const RefreshCw = ArrowPathIcon;
+const Search = MagnifyingGlassIcon;
+const ChevronRight = ChevronRightIcon;
+const Zap = BoltIcon;
+const Clock = ClockIcon;
+const Hash = HashtagIcon;
 import { BarChart, PieChart } from "./charts";
 
 interface SpaceHealth {

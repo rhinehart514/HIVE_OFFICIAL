@@ -16,20 +16,35 @@ import {
 } from "@hive/ui";
 import { motion } from "framer-motion";
 import {
-  Users,
-  UserPlus,
-  CheckCircle,
-  XCircle,
-  ArrowDown,
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  Target,
-  RefreshCw,
-  ChevronDown,
-  Sparkles,
-  Heart,
-} from "lucide-react";
+  UsersIcon,
+  UserPlusIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ArrowDownIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ClockIcon,
+  CursorArrowRaysIcon,
+  ArrowPathIcon,
+  ChevronDownIcon,
+  SparklesIcon,
+  HeartIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Users = UsersIcon;
+const UserPlus = UserPlusIcon;
+const CheckCircle = CheckCircleIcon;
+const XCircle = XCircleIcon;
+const ArrowDown = ArrowDownIcon;
+const TrendingUp = ArrowTrendingUpIcon;
+const TrendingDown = ArrowTrendingDownIcon;
+const Clock = ClockIcon;
+const Target = CursorArrowRaysIcon;
+const RefreshCw = ArrowPathIcon;
+const ChevronDown = ChevronDownIcon;
+const Sparkles = SparklesIcon;
+const Heart = HeartIcon;
 import { AreaChart, BarChart, PieChart } from "./charts";
 
 interface FunnelStage {

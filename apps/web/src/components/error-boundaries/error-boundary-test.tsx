@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, Card } from "@hive/ui";
-import { Bug, AlertTriangle } from 'lucide-react';
+import { BugAntIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { FeedErrorBoundary, SpacesErrorBoundary, ProfileErrorBoundary, ToolsErrorBoundary } from './';
 
 interface ErrorTriggerProps {
@@ -38,7 +38,7 @@ function ErrorTrigger({ errorType, context }: ErrorTriggerProps) {
   return (
     <Card className="p-4 bg-hive-surface border-hive-border">
       <div className="flex items-center gap-3 mb-3">
-        <Bug className="w-5 h-5 text-[var(--hive-brand-primary)]" />
+        <BugAntIcon className="w-5 h-5 text-[var(--hive-brand-primary)]" />
         <h3 className="font-medium text-hive-text-primary">
           {context} Error Test
         </h3>
@@ -52,7 +52,7 @@ function ErrorTrigger({ errorType, context }: ErrorTriggerProps) {
         size="sm"
         className="border-red-500 text-red-400 hover:bg-red-500/10"
       >
-        <AlertTriangle className="w-4 h-4 mr-2" />
+        <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
         Trigger {errorType} Error
       </Button>
     </Card>

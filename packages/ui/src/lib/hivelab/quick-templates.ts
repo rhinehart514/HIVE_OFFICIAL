@@ -28,6 +28,21 @@ export interface TemplateConfigField {
   defaultValue?: string | number;
 }
 
+/** Template complexity level */
+export type TemplateComplexity = 'simple' | 'app';
+
+/** Template categories - use-case based for GTM */
+export type TemplateCategory =
+  | 'apps'          // Featured multi-element apps (4+ elements)
+  | 'events'        // RSVP, check-in, countdowns, photo capture
+  | 'engagement'    // Polls, leaderboards, challenges, voting
+  | 'resources'     // Lending, scheduling, directories, booking
+  | 'feedback'      // Surveys, suggestions, Q&A, forms
+  | 'teams';        // Matching, attendance, coordination, announcements
+
+/** Template readiness status */
+export type TemplateStatus = 'ready' | 'coming-soon' | 'hidden';
+
 export interface QuickTemplate {
   /** Unique template ID */
   id: string;
@@ -36,9 +51,11 @@ export interface QuickTemplate {
   /** Short description */
   description: string;
   /** Icon name from Lucide */
-  icon: 'bar-chart-2' | 'timer' | 'link-2' | 'users' | 'calendar' | 'message-square' | 'file-text' | 'sparkles' | 'clipboard-list' | 'target' | 'trending-up' | 'wallet';
+  icon: 'bar-chart-2' | 'timer' | 'link-2' | 'users' | 'calendar' | 'message-square' | 'file-text' | 'sparkles' | 'clipboard-list' | 'target' | 'trending-up' | 'wallet' | 'camera' | 'trophy' | 'inbox' | 'grid';
   /** Category for grouping */
-  category: 'engagement' | 'organization' | 'communication';
+  category: TemplateCategory;
+  /** Complexity level - 'simple' (1-2 elements) or 'app' (4+ elements) */
+  complexity: TemplateComplexity;
   /** The pre-built composition */
   composition: ToolComposition;
   /** Default sidebar placement config */
@@ -48,6 +65,10 @@ export interface QuickTemplate {
   };
   /** P0: Config fields for setup step (optional - if absent, deploys instantly) */
   setupFields?: TemplateConfigField[];
+  /** Template status - 'ready' (all elements work), 'coming-soon' (has stub elements), 'hidden' (missing APIs) */
+  status?: TemplateStatus;
+  /** List of element IDs that are incomplete/stub - shown as warning to user */
+  incompleteElements?: string[];
 }
 
 // Generate unique IDs for elements
@@ -63,6 +84,7 @@ export const QUICK_POLL_TEMPLATE: QuickTemplate = {
   description: 'Gather member opinions with a simple poll',
   icon: 'bar-chart-2',
   category: 'engagement',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -105,7 +127,8 @@ export const EVENT_COUNTDOWN_TEMPLATE: QuickTemplate = {
   name: 'Event Countdown',
   description: 'Count down to your next big event',
   icon: 'timer',
-  category: 'engagement',
+  category: 'events',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -150,7 +173,8 @@ export const QUICK_LINKS_TEMPLATE: QuickTemplate = {
   name: 'Quick Links',
   description: 'Important links and resources for members',
   icon: 'link-2',
-  category: 'organization',
+  category: 'resources',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -191,7 +215,8 @@ export const STUDY_GROUP_TEMPLATE: QuickTemplate = {
   name: 'Study Group Signup',
   description: 'Collect signups for study sessions',
   icon: 'users',
-  category: 'organization',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -231,7 +256,8 @@ export const ANNOUNCEMENTS_TEMPLATE: QuickTemplate = {
   name: 'Announcements',
   description: 'Important announcements for members',
   icon: 'message-square',
-  category: 'communication',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -275,7 +301,8 @@ export const MEETING_NOTES_TEMPLATE: QuickTemplate = {
   name: 'Meeting Notes',
   description: 'Collaborative meeting notes',
   icon: 'file-text',
-  category: 'organization',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: true,
@@ -311,7 +338,8 @@ export const OFFICE_HOURS_TEMPLATE: QuickTemplate = {
   name: 'Office Hours',
   description: 'Let members book time slots for 1:1s or office hours',
   icon: 'calendar',
-  category: 'organization',
+  category: 'resources',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -359,6 +387,7 @@ export const LEADERBOARD_TEMPLATE: QuickTemplate = {
   description: 'Show top contributors and active members',
   icon: 'sparkles',
   category: 'engagement',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -397,7 +426,8 @@ export const EVENT_RSVP_TEMPLATE: QuickTemplate = {
   name: 'Event RSVP',
   description: 'Quick RSVP for upcoming events',
   icon: 'calendar',
-  category: 'engagement',
+  category: 'events',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -437,6 +467,7 @@ export const MEMBER_SPOTLIGHT_TEMPLATE: QuickTemplate = {
   description: 'Highlight featured members of the week',
   icon: 'users',
   category: 'engagement',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -475,7 +506,8 @@ export const ANONYMOUS_QA_TEMPLATE: QuickTemplate = {
   name: 'Anonymous Q&A',
   description: 'Let members ask questions anonymously',
   icon: 'message-square',
-  category: 'engagement',
+  category: 'feedback',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -514,7 +546,8 @@ export const EVENT_CHECKIN_TEMPLATE: QuickTemplate = {
   name: 'Event Check-In',
   description: 'Track attendance at your events',
   icon: 'users',
-  category: 'organization',
+  category: 'events',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'inline',
     collapsed: false,
@@ -555,6 +588,7 @@ export const SPACE_STATS_TEMPLATE: QuickTemplate = {
   description: 'Display engagement and activity metrics',
   icon: 'bar-chart-2',
   category: 'engagement',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -592,7 +626,8 @@ export const UPCOMING_EVENTS_TEMPLATE: QuickTemplate = {
   name: 'Upcoming Events',
   description: 'Show upcoming events in sidebar',
   icon: 'calendar',
-  category: 'organization',
+  category: 'events',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -629,7 +664,8 @@ export const FEEDBACK_FORM_TEMPLATE: QuickTemplate = {
   name: 'Feedback Form',
   description: 'Collect feedback from members',
   icon: 'clipboard-list',
-  category: 'communication',
+  category: 'feedback',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -671,6 +707,7 @@ export const DECISION_MAKER_TEMPLATE: QuickTemplate = {
   description: 'Quick yes/no decisions for the group',
   icon: 'target',
   category: 'engagement',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -713,7 +750,8 @@ export const PROGRESS_TRACKER_TEMPLATE: QuickTemplate = {
   name: 'Progress Tracker',
   description: 'Track project or goal completion',
   icon: 'trending-up',
-  category: 'organization',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -757,7 +795,8 @@ export const MEETING_AGENDA_TEMPLATE: QuickTemplate = {
   name: 'Meeting Agenda',
   description: 'Structured agenda for meetings',
   icon: 'clipboard-list',
-  category: 'organization',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -793,7 +832,8 @@ export const BUDGET_OVERVIEW_TEMPLATE: QuickTemplate = {
   name: 'Budget Overview',
   description: 'Track your organization\'s budget',
   icon: 'wallet',
-  category: 'organization',
+  category: 'resources',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -837,7 +877,8 @@ export const WEEKLY_UPDATE_TEMPLATE: QuickTemplate = {
   name: 'Weekly Update',
   description: 'Regular update bulletin for members',
   icon: 'file-text',
-  category: 'communication',
+  category: 'teams',
+  complexity: 'simple',
   defaultConfig: {
     placement: 'sidebar',
     collapsed: false,
@@ -865,9 +906,998 @@ export const WEEKLY_UPDATE_TEMPLATE: QuickTemplate = {
 };
 
 /**
+ * What Should I Eat Template (Hero Demo 2)
+ * Campus dining discovery with smart recommendations
+ */
+export const WHAT_SHOULD_I_EAT_TEMPLATE: QuickTemplate = {
+  id: 'what-should-i-eat',
+  name: "What Should I Eat?",
+  description: 'Find the perfect dining option based on mood, dietary needs, and location',
+  icon: 'sparkles',
+  category: 'resources',
+  complexity: 'simple',
+  status: 'hidden',
+  incompleteElements: ['dining-picker'],
+  defaultConfig: {
+    placement: 'sidebar',
+    collapsed: false,
+  },
+  setupFields: [
+    {
+      key: 'sortBy',
+      label: 'Sort By',
+      type: 'options',
+      required: false,
+      options: ['closing-soon', 'distance', 'name'],
+      defaultValue: 'closing-soon'
+    },
+  ],
+  composition: {
+    id: generateId(),
+    name: "What Should I Eat?",
+    description: 'Campus dining finder with smart recommendations',
+    elements: [
+      {
+        elementId: 'dining-picker',
+        instanceId: generateId(),
+        config: {
+          title: "What Should I Eat?",
+          showRecommendation: true,
+          showFilters: true,
+          maxItems: 8,
+          sortBy: 'closing-soon',
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 350, height: 550 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Tonight's Events Template (Hero Demo 1)
+ * Personalized event discovery based on interests, friends, and spaces
+ */
+export const TONIGHTS_EVENTS_TEMPLATE: QuickTemplate = {
+  id: 'tonights-events',
+  name: "Tonight's Events",
+  description: 'Discover events personalized for you based on interests and friends',
+  icon: 'sparkles',
+  category: 'events',
+  complexity: 'simple',
+  defaultConfig: {
+    placement: 'sidebar',
+    collapsed: false,
+  },
+  setupFields: [
+    {
+      key: 'timeRange',
+      label: 'Time Range',
+      type: 'options',
+      required: false,
+      options: ['tonight', 'today', 'this-week', 'this-month'],
+      defaultValue: 'tonight'
+    },
+  ],
+  composition: {
+    id: generateId(),
+    name: "Tonight's Events",
+    description: 'Personalized event feed based on your interests and social graph',
+    elements: [
+      {
+        elementId: 'personalized-event-feed',
+        instanceId: generateId(),
+        config: {
+          timeRange: 'tonight',
+          maxItems: 8,
+          showFriendCount: true,
+          showMatchReasons: true,
+          title: "Events For You Tonight",
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 350, height: 500 },
+      },
+      {
+        elementId: 'filter-selector',
+        instanceId: generateId(),
+        config: {
+          title: 'Filter by Type',
+          options: [
+            { label: 'Social', value: 'social' },
+            { label: 'Academic', value: 'academic' },
+            { label: 'Sports', value: 'sports' },
+            { label: 'Music', value: 'music' },
+            { label: 'Arts', value: 'arts' },
+          ],
+          allowMultiple: true,
+          showCounts: false,
+        },
+        position: { x: 0, y: 520 },
+        size: { width: 350, height: 80 },
+      },
+    ],
+    connections: [
+      {
+        from: { instanceId: 'filter', output: 'selection' },
+        to: { instanceId: 'feed', input: 'eventTypes' },
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Study Spot Finder Template (Hero Demo 3)
+ * Find the perfect study spot based on noise, power, and distance
+ */
+export const STUDY_SPOT_FINDER_TEMPLATE: QuickTemplate = {
+  id: 'study-spot-finder',
+  name: "Study Spot Finder",
+  description: 'Find the perfect study spot based on noise level, power outlets, and location',
+  icon: 'sparkles',
+  category: 'resources',
+  complexity: 'simple',
+  status: 'hidden',
+  incompleteElements: ['study-spot-finder'],
+  defaultConfig: {
+    placement: 'sidebar',
+    collapsed: false,
+  },
+  setupFields: [
+    {
+      key: 'defaultNoiseLevel',
+      label: 'Preferred Noise Level',
+      type: 'options',
+      required: false,
+      options: ['silent', 'quiet', 'moderate', 'social'],
+      defaultValue: undefined
+    },
+    {
+      key: 'defaultNeedsPower',
+      label: 'Need Power Outlets?',
+      type: 'options',
+      required: false,
+      options: ['yes', 'no'],
+      defaultValue: 'no'
+    },
+  ],
+  composition: {
+    id: generateId(),
+    name: "Study Spot Finder",
+    description: 'Find the perfect place to study on campus',
+    elements: [
+      {
+        elementId: 'study-spot-finder',
+        instanceId: generateId(),
+        config: {
+          title: "Find a Study Spot",
+          showRecommendation: true,
+          showFilters: true,
+          maxItems: 8,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 380, height: 600 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+// =============================================================================
+// APP-TIER TEMPLATES (4+ elements with connections)
+// These are sophisticated multi-element compositions that feel like apps
+// =============================================================================
+
+/**
+ * Photo Challenge App Template
+ * Run photo contests with voting and winners
+ * Elements: photo-gallery + poll-element + leaderboard + countdown-timer
+ */
+export const PHOTO_CHALLENGE_TEMPLATE: QuickTemplate = {
+  id: 'photo-challenge',
+  name: 'Photo Challenge',
+  description: 'Run photo contests with voting, leaderboards, and deadlines',
+  icon: 'camera',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'challengeTitle', label: 'Challenge Name', type: 'text', required: true, placeholder: 'Best Campus Shot' },
+    { key: 'deadline', label: 'Submission Deadline', type: 'date', required: true },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Photo Challenge',
+    description: 'Photo submission, voting, and leaderboard',
+    elements: [
+      {
+        elementId: 'countdown-timer',
+        instanceId: generateId(),
+        config: {
+          title: 'Submissions Close In',
+          style: 'compact',
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'photo-gallery',
+        instanceId: generateId(),
+        config: {
+          title: 'Submissions',
+          allowUpload: true,
+          maxPhotos: 50,
+          layout: 'masonry',
+        },
+        position: { x: 0, y: 120 },
+        size: { width: 300, height: 300 },
+      },
+      {
+        elementId: 'poll-element',
+        instanceId: generateId(),
+        config: {
+          question: 'Vote for your favorite!',
+          options: [],
+          showResults: true,
+          allowMultiple: false,
+        },
+        position: { x: 0, y: 440 },
+        size: { width: 300, height: 150 },
+      },
+      {
+        elementId: 'leaderboard',
+        instanceId: generateId(),
+        config: {
+          title: 'Top Photos',
+          metric: 'votes',
+          maxEntries: 5,
+          showAvatars: true,
+        },
+        position: { x: 0, y: 610 },
+        size: { width: 300, height: 200 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'gallery',
+        to: 'poll',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'poll',
+        to: 'leaderboard',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Attendance Tracker App Template
+ * Track attendance with points and trends
+ * Elements: rsvp-button + leaderboard + counter + chart-display
+ */
+export const ATTENDANCE_TRACKER_TEMPLATE: QuickTemplate = {
+  id: 'attendance-tracker',
+  name: 'Attendance Tracker',
+  description: 'Track meeting attendance with points and engagement trends',
+  icon: 'users',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'eventName', label: 'Event/Meeting Name', type: 'text', required: true, placeholder: 'Weekly Meeting' },
+    { key: 'pointsPerAttendance', label: 'Points per Check-in', type: 'number', required: false, defaultValue: 10 },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Attendance Tracker',
+    description: 'Check-in, points, and attendance trends',
+    elements: [
+      {
+        elementId: 'rsvp-button',
+        instanceId: generateId(),
+        config: {
+          eventTitle: 'Check In Now',
+          showAttendeeCount: true,
+          checkInMode: true,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 120 },
+      },
+      {
+        elementId: 'counter',
+        instanceId: generateId(),
+        config: {
+          title: 'Total Check-ins Today',
+          value: 0,
+          showAnimation: true,
+        },
+        position: { x: 0, y: 140 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'leaderboard',
+        instanceId: generateId(),
+        config: {
+          title: 'Top Attendees',
+          metric: 'attendance points',
+          maxEntries: 10,
+          showAvatars: true,
+          showChange: true,
+        },
+        position: { x: 0, y: 260 },
+        size: { width: 300, height: 250 },
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: generateId(),
+        config: {
+          title: 'Attendance Trends',
+          chartType: 'line',
+          showLegend: false,
+          animate: true,
+        },
+        position: { x: 0, y: 530 },
+        size: { width: 300, height: 200 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'rsvp',
+        to: 'counter',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'rsvp',
+        to: 'leaderboard',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'rsvp',
+        to: 'chart',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Resource Signup System App Template
+ * Equipment lending, room booking, resource management
+ * Elements: form-builder + result-list + counter + announcement
+ */
+export const RESOURCE_SIGNUP_TEMPLATE: QuickTemplate = {
+  id: 'resource-signup',
+  name: 'Resource Signup',
+  description: 'Manage equipment lending, room booking, or resource checkout',
+  icon: 'clipboard-list',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'resourceType', label: 'Resource Type', type: 'text', required: true, placeholder: 'Equipment, Room, etc.' },
+    { key: 'maxResources', label: 'Total Available', type: 'number', required: true, defaultValue: 10 },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Resource Signup',
+    description: 'Request form, availability, and policies',
+    elements: [
+      {
+        elementId: 'announcement',
+        instanceId: generateId(),
+        config: {
+          title: 'Resource Policies',
+          items: [
+            {
+              title: 'How to Book',
+              content: 'Fill out the form below to request a resource. You will be notified when approved.',
+              priority: 'normal',
+            },
+          ],
+          maxItems: 3,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'counter',
+        instanceId: generateId(),
+        config: {
+          title: 'Available Now',
+          value: 10,
+          showAnimation: true,
+          variant: 'large',
+        },
+        position: { x: 0, y: 120 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'form-builder',
+        instanceId: generateId(),
+        config: {
+          fields: [
+            { name: 'name', label: 'Your Name', type: 'text', required: true },
+            { name: 'resource', label: 'Resource Needed', type: 'text', required: true },
+            { name: 'date', label: 'Date Needed', type: 'text', required: true },
+            { name: 'duration', label: 'Duration', type: 'text', required: true },
+            { name: 'reason', label: 'Purpose', type: 'textarea', required: false },
+          ],
+          submitLabel: 'Request Resource',
+          showProgress: true,
+        },
+        position: { x: 0, y: 240 },
+        size: { width: 300, height: 320 },
+      },
+      {
+        elementId: 'result-list',
+        instanceId: generateId(),
+        config: {
+          title: 'Current Reservations',
+          itemsPerPage: 5,
+          showPagination: true,
+          emptyMessage: 'No current reservations',
+        },
+        position: { x: 0, y: 580 },
+        size: { width: 300, height: 200 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'result-list',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'counter',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Multi-Poll Dashboard App Template
+ * Board meetings, group decisions with multiple votes
+ * Elements: 3x poll-element + countdown-timer + announcement
+ */
+export const MULTI_POLL_DASHBOARD_TEMPLATE: QuickTemplate = {
+  id: 'multi-poll-dashboard',
+  name: 'Multi-Poll Dashboard',
+  description: 'Run multiple votes simultaneously for board meetings or group decisions',
+  icon: 'grid',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'meetingTitle', label: 'Meeting/Session Title', type: 'text', required: true, placeholder: 'Board Meeting Vote' },
+    { key: 'deadline', label: 'Voting Deadline', type: 'date', required: true },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Multi-Poll Dashboard',
+    description: 'Multiple simultaneous votes with deadline',
+    elements: [
+      {
+        elementId: 'announcement',
+        instanceId: generateId(),
+        config: {
+          title: 'Voting Session',
+          items: [
+            {
+              title: 'Instructions',
+              content: 'Please vote on all items below before the deadline. Each member gets one vote per item.',
+              priority: 'high',
+            },
+          ],
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 80 },
+      },
+      {
+        elementId: 'countdown-timer',
+        instanceId: generateId(),
+        config: {
+          title: 'Voting Closes In',
+          style: 'prominent',
+        },
+        position: { x: 0, y: 100 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'poll-element',
+        instanceId: generateId(),
+        config: {
+          question: 'Vote 1: Budget Allocation',
+          options: ['Approve', 'Reject', 'Abstain'],
+          showResults: true,
+          anonymous: false,
+        },
+        position: { x: 0, y: 220 },
+        size: { width: 300, height: 150 },
+      },
+      {
+        elementId: 'poll-element',
+        instanceId: generateId(),
+        config: {
+          question: 'Vote 2: Event Planning',
+          options: ['Approve', 'Reject', 'Abstain'],
+          showResults: true,
+          anonymous: false,
+        },
+        position: { x: 0, y: 390 },
+        size: { width: 300, height: 150 },
+      },
+      {
+        elementId: 'poll-element',
+        instanceId: generateId(),
+        config: {
+          question: 'Vote 3: New Initiative',
+          options: ['Approve', 'Reject', 'Abstain'],
+          showResults: true,
+          anonymous: false,
+        },
+        position: { x: 0, y: 560 },
+        size: { width: 300, height: 150 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Event Series Hub App Template
+ * Weekly meetups, semester-long programs
+ * Elements: space-events + photo-gallery + poll-element + countdown-timer
+ */
+export const EVENT_SERIES_HUB_TEMPLATE: QuickTemplate = {
+  id: 'event-series-hub',
+  name: 'Event Series Hub',
+  description: 'Manage recurring events with photos, feedback, and countdowns',
+  icon: 'calendar',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'seriesName', label: 'Series Name', type: 'text', required: true, placeholder: 'Weekly Game Night' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Event Series Hub',
+    description: 'Events, photos, voting for next event',
+    elements: [
+      {
+        elementId: 'countdown-timer',
+        instanceId: generateId(),
+        config: {
+          title: 'Next Event In',
+          style: 'prominent',
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'space-events',
+        instanceId: generateId(),
+        config: {
+          title: 'Upcoming in This Series',
+          maxEvents: 3,
+          showDescription: true,
+          showRSVP: true,
+          filterPast: true,
+        },
+        position: { x: 0, y: 120 },
+        size: { width: 300, height: 250 },
+      },
+      {
+        elementId: 'photo-gallery',
+        instanceId: generateId(),
+        config: {
+          title: 'Event Photos',
+          allowUpload: true,
+          maxPhotos: 20,
+          layout: 'grid',
+        },
+        position: { x: 0, y: 390 },
+        size: { width: 300, height: 200 },
+      },
+      {
+        elementId: 'poll-element',
+        instanceId: generateId(),
+        config: {
+          question: 'What should we do next time?',
+          options: ['Same as usual', 'Try something new', 'Special theme'],
+          showResults: true,
+          allowMultiple: false,
+        },
+        position: { x: 0, y: 610 },
+        size: { width: 300, height: 150 },
+      },
+    ],
+    connections: [],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Suggestion Box App Template
+ * Feedback collection with triage and trends
+ * Elements: form-builder + result-list + filter-selector + chart-display
+ */
+export const SUGGESTION_BOX_TEMPLATE: QuickTemplate = {
+  id: 'suggestion-box',
+  name: 'Suggestion Box',
+  description: 'Collect feedback with filtering, triage, and trend visualization',
+  icon: 'inbox',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'boxTitle', label: 'Suggestion Box Title', type: 'text', required: true, placeholder: 'Share Your Ideas' },
+    { key: 'allowAnonymous', label: 'Allow Anonymous?', type: 'options', options: ['Yes', 'No'], required: false, defaultValue: 'Yes' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Suggestion Box',
+    description: 'Submit suggestions with triage and trends',
+    elements: [
+      {
+        elementId: 'form-builder',
+        instanceId: generateId(),
+        config: {
+          fields: [
+            { name: 'category', label: 'Category', type: 'select', required: true, options: ['Idea', 'Feedback', 'Issue', 'Question'] },
+            { name: 'title', label: 'Title', type: 'text', required: true },
+            { name: 'description', label: 'Details', type: 'textarea', required: true },
+            { name: 'priority', label: 'Priority', type: 'select', required: false, options: ['Low', 'Medium', 'High'] },
+          ],
+          submitLabel: 'Submit Suggestion',
+          showProgress: true,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 280 },
+      },
+      {
+        elementId: 'filter-selector',
+        instanceId: generateId(),
+        config: {
+          title: 'Filter by Status',
+          options: [
+            { label: 'All', value: 'all' },
+            { label: 'New', value: 'new' },
+            { label: 'In Review', value: 'review' },
+            { label: 'Planned', value: 'planned' },
+            { label: 'Completed', value: 'done' },
+          ],
+          allowMultiple: false,
+        },
+        position: { x: 0, y: 300 },
+        size: { width: 300, height: 60 },
+      },
+      {
+        elementId: 'result-list',
+        instanceId: generateId(),
+        config: {
+          title: 'Suggestions',
+          itemsPerPage: 5,
+          showPagination: true,
+          emptyMessage: 'No suggestions yet. Be the first!',
+        },
+        position: { x: 0, y: 380 },
+        size: { width: 300, height: 250 },
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: generateId(),
+        config: {
+          title: 'Submission Trends',
+          chartType: 'bar',
+          showLegend: true,
+          animate: true,
+        },
+        position: { x: 0, y: 650 },
+        size: { width: 300, height: 180 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'result-list',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'filter',
+        to: 'result-list',
+        type: 'filter',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'chart',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Study Group Matcher App Template
+ * Form availability, heatmap, group suggestions
+ * Elements: form-builder + availability-heatmap + result-list + member-selector
+ */
+export const STUDY_GROUP_MATCHER_TEMPLATE: QuickTemplate = {
+  id: 'study-group-matcher',
+  name: 'Study Group Matcher',
+  description: 'Match study partners based on availability and courses',
+  icon: 'users',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'course', label: 'Course/Subject', type: 'text', required: true, placeholder: 'CS 101' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Study Group Matcher',
+    description: 'Submit availability, see matches',
+    elements: [
+      {
+        elementId: 'form-builder',
+        instanceId: generateId(),
+        config: {
+          fields: [
+            { name: 'name', label: 'Your Name', type: 'text', required: true },
+            { name: 'course', label: 'Course', type: 'text', required: true },
+            { name: 'topics', label: 'Topics to Study', type: 'textarea', required: false },
+            { name: 'availability', label: 'Available Times', type: 'textarea', required: true, placeholder: 'Mon 2-4pm, Wed 6-8pm' },
+            { name: 'groupSize', label: 'Preferred Group Size', type: 'select', options: ['2-3', '4-5', '6+'], required: false },
+          ],
+          submitLabel: 'Find Study Partners',
+          showProgress: true,
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 350 },
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: generateId(),
+        config: {
+          title: 'Popular Study Times',
+          chartType: 'bar',
+          showLegend: false,
+          animate: true,
+        },
+        position: { x: 0, y: 370 },
+        size: { width: 300, height: 180 },
+      },
+      {
+        elementId: 'result-list',
+        instanceId: generateId(),
+        config: {
+          title: 'Potential Study Partners',
+          itemsPerPage: 5,
+          showPagination: true,
+          emptyMessage: 'Submit your availability to find matches!',
+        },
+        position: { x: 0, y: 570 },
+        size: { width: 300, height: 200 },
+      },
+      {
+        elementId: 'member-list',
+        instanceId: generateId(),
+        config: {
+          title: 'My Study Group',
+          displayMode: 'list',
+          maxMembers: 6,
+          showBio: false,
+          showRole: true,
+        },
+        position: { x: 0, y: 790 },
+        size: { width: 300, height: 150 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'heatmap',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'result-list',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
+ * Competition Tracker App Template
+ * Fundraising, challenges, competitions with goals
+ * Elements: leaderboard + counter + form-builder + chart-display
+ */
+export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
+  id: 'competition-tracker',
+  name: 'Competition Tracker',
+  description: 'Track fundraising, challenges, or competitions with goals and leaderboards',
+  icon: 'trophy',
+  category: 'apps',
+  complexity: 'app',
+  defaultConfig: {
+    placement: 'inline',
+    collapsed: false,
+  },
+  setupFields: [
+    { key: 'competitionName', label: 'Competition Name', type: 'text', required: true, placeholder: 'Spring Fundraiser' },
+    { key: 'goal', label: 'Goal Amount/Target', type: 'number', required: true, defaultValue: 1000 },
+    { key: 'unit', label: 'Unit (e.g., $, points)', type: 'text', required: false, defaultValue: '$' },
+  ],
+  composition: {
+    id: generateId(),
+    name: 'Competition Tracker',
+    description: 'Goals, standings, and score submission',
+    elements: [
+      {
+        elementId: 'progress-indicator',
+        instanceId: generateId(),
+        config: {
+          title: 'Progress to Goal',
+          target: 1000,
+          current: 0,
+          unit: '$',
+          showMilestones: true,
+          milestones: [
+            { value: 250, label: '25%' },
+            { value: 500, label: '50%' },
+            { value: 750, label: '75%' },
+            { value: 1000, label: 'Goal!' },
+          ],
+        },
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 120 },
+      },
+      {
+        elementId: 'counter',
+        instanceId: generateId(),
+        config: {
+          title: 'Total Raised',
+          value: 0,
+          showAnimation: true,
+          variant: 'large',
+          prefix: '$',
+        },
+        position: { x: 0, y: 140 },
+        size: { width: 300, height: 100 },
+      },
+      {
+        elementId: 'leaderboard',
+        instanceId: generateId(),
+        config: {
+          title: 'Top Contributors',
+          metric: 'contribution',
+          maxEntries: 10,
+          showAvatars: true,
+          showChange: true,
+          highlightTop: 3,
+        },
+        position: { x: 0, y: 260 },
+        size: { width: 300, height: 280 },
+      },
+      {
+        elementId: 'form-builder',
+        instanceId: generateId(),
+        config: {
+          fields: [
+            { name: 'name', label: 'Your Name', type: 'text', required: true },
+            { name: 'amount', label: 'Amount', type: 'number', required: true },
+            { name: 'note', label: 'Note (optional)', type: 'text', required: false },
+          ],
+          submitLabel: 'Log Contribution',
+          showProgress: false,
+        },
+        position: { x: 0, y: 560 },
+        size: { width: 300, height: 200 },
+      },
+      {
+        elementId: 'chart-display',
+        instanceId: generateId(),
+        config: {
+          title: 'Daily Progress',
+          chartType: 'line',
+          showLegend: false,
+          animate: true,
+        },
+        position: { x: 0, y: 780 },
+        size: { width: 300, height: 180 },
+      },
+    ],
+    connections: [
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'counter',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'leaderboard',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'progress',
+        type: 'data-flow',
+      },
+      {
+        id: generateId(),
+        from: 'form',
+        to: 'chart',
+        type: 'data-flow',
+      },
+    ],
+    layout: 'flow',
+  },
+};
+
+/**
  * All quick templates
  */
 export const QUICK_TEMPLATES: QuickTemplate[] = [
+  // App-tier templates (featured first)
+  PHOTO_CHALLENGE_TEMPLATE,
+  ATTENDANCE_TRACKER_TEMPLATE,
+  RESOURCE_SIGNUP_TEMPLATE,
+  MULTI_POLL_DASHBOARD_TEMPLATE,
+  EVENT_SERIES_HUB_TEMPLATE,
+  SUGGESTION_BOX_TEMPLATE,
+  STUDY_GROUP_MATCHER_TEMPLATE,
+  COMPETITION_TRACKER_TEMPLATE,
+  // Simple templates
   QUICK_POLL_TEMPLATE,
   EVENT_COUNTDOWN_TEMPLATE,
   QUICK_LINKS_TEMPLATE,
@@ -888,6 +1918,9 @@ export const QUICK_TEMPLATES: QuickTemplate[] = [
   MEETING_AGENDA_TEMPLATE,
   BUDGET_OVERVIEW_TEMPLATE,
   WEEKLY_UPDATE_TEMPLATE,
+  TONIGHTS_EVENTS_TEMPLATE,
+  WHAT_SHOULD_I_EAT_TEMPLATE,
+  STUDY_SPOT_FINDER_TEMPLATE,
 ];
 
 /**
@@ -900,8 +1933,41 @@ export function getQuickTemplate(id: string): QuickTemplate | undefined {
 /**
  * Get templates by category
  */
-export function getTemplatesByCategory(category: QuickTemplate['category']): QuickTemplate[] {
+export function getTemplatesByCategory(category: TemplateCategory): QuickTemplate[] {
   return QUICK_TEMPLATES.filter(t => t.category === category);
+}
+
+/**
+ * Get templates by complexity
+ */
+export function getTemplatesByComplexity(complexity: TemplateComplexity): QuickTemplate[] {
+  return QUICK_TEMPLATES.filter(t => t.complexity === complexity);
+}
+
+/**
+ * Get App-tier templates (featured multi-element apps)
+ */
+export function getAppTemplates(): QuickTemplate[] {
+  return QUICK_TEMPLATES.filter(t => t.complexity === 'app' && t.status !== 'hidden');
+}
+
+/**
+ * Get all available templates (excluding hidden ones)
+ */
+export function getAvailableTemplates(): QuickTemplate[] {
+  return QUICK_TEMPLATES.filter(t => t.status !== 'hidden');
+}
+
+/**
+ * Get all unique categories with counts (excluding hidden templates)
+ */
+export function getCategoriesWithCounts(): { category: TemplateCategory; count: number }[] {
+  const counts = new Map<TemplateCategory, number>();
+  for (const template of QUICK_TEMPLATES) {
+    if (template.status === 'hidden') continue;
+    counts.set(template.category, (counts.get(template.category) || 0) + 1);
+  }
+  return Array.from(counts.entries()).map(([category, count]) => ({ category, count }));
 }
 
 /**

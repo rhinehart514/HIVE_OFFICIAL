@@ -52,6 +52,11 @@ function generateDevSecret(): string {
 
 const SESSION_SECRET = rawSecret || generateDevSecret();
 
+// Log session secret source on startup (only in development)
+if (isDevelopment) {
+  console.log(`🔐 Session secret: ${rawSecret ? 'using .env.local (persistent)' : 'generated random (sessions will NOT persist)'}`);
+}
+
 // Cookie names
 const SESSION_COOKIE_NAME = 'hive_session';
 const REFRESH_COOKIE_NAME = 'hive_refresh';

@@ -10,20 +10,14 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Layers,
-  ChevronRight,
-  Loader2,
-  BarChart3,
-  Calendar,
-  Users,
-  TrendingUp,
-  Megaphone,
-  GraduationCap,
-  Gamepad2,
-  ListTodo,
-  Grid3X3,
-} from 'lucide-react';
+import { ChevronRightIcon, ArrowPathIcon, ChartBarIcon, CalendarIcon, UsersIcon, ArrowTrendingUpIcon, AcademicCapIcon, MegaphoneIcon, PuzzlePieceIcon, ListBulletIcon, Square3Stack3DIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Megaphone = MegaphoneIcon;
+const Gamepad2 = PuzzlePieceIcon;
+const ListTodo = ListBulletIcon;
+const Layers = Square3Stack3DIcon;
+const Grid3X3 = Squares2X2Icon;
 import { cn } from '../../lib/utils';
 
 // ============================================================================
@@ -68,12 +62,12 @@ const SPACE_TO_TEMPLATE_CATEGORIES: Record<string, string[]> = {
 };
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  engagement: BarChart3,
-  events: Calendar,
-  organization: Users,
-  analytics: TrendingUp,
+  engagement: ChartBarIcon,
+  events: CalendarIcon,
+  organization: UsersIcon,
+  analytics: ArrowTrendingUpIcon,
   communication: Megaphone,
-  academic: GraduationCap,
+  academic: AcademicCapIcon,
   social: Gamepad2,
   productivity: ListTodo,
 };
@@ -140,7 +134,7 @@ export function TemplateSuggestions({
   if (loading) {
     return (
       <div className={cn('p-4 flex items-center justify-center', className)}>
-        <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+        <ArrowPathIcon className="w-5 h-5 animate-spin text-white/40" />
       </div>
     );
   }
@@ -225,7 +219,7 @@ export function TemplateSuggestions({
                     {template.usageCount > 0 && ` · ${template.usageCount} uses`}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/50 shrink-0" />
+                <ChevronRightIcon className="w-4 h-4 text-white/30 group-hover:text-white/50 shrink-0" />
               </div>
             </motion.button>
           );

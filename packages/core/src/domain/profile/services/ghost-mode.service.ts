@@ -345,14 +345,13 @@ export class GhostModeService {
         return true;
 
       case 'minimal':
-        // Only visible to space members
+        // Only visible to users who share at least one space
+        // If sharedSpaceIds is provided and has items, the user is visible
         if (sharedSpaceIds && sharedSpaceIds.length > 0) {
-          return false;
+          return false; // Visible - they share a space
         }
-        // Check if viewer is member of any same spaces
-        return !viewer.memberOfSpaceIds.some(spaceId =>
-          viewer.memberOfSpaceIds.includes(spaceId)
-        );
+        // No shared spaces known = hidden
+        return true;
 
       case 'selective':
         // Visible to close community members (2+ shared spaces)

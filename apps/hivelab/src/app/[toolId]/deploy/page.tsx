@@ -13,7 +13,11 @@ import {
   type ToolDeploymentConfig,
 } from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
-import { ArrowLeft, Rocket } from 'lucide-react';
+import { ArrowLeftIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Rocket = RocketLaunchIcon;
 
 /**
  * HiveLab Tool Deploy Page

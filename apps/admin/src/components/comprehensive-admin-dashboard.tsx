@@ -22,7 +22,16 @@ import { SystemHealthDashboard } from "./system-health-dashboard";
 import { ActivityLogViewer } from "./activity-log-viewer";
 import { ClaimsQueue } from "./claims-queue";
 import { LeaderHealthDashboard } from "./leader-health-dashboard";
-import { Bell, Search, LogOut } from "lucide-react";
+import {
+  BellIcon,
+  MagnifyingGlassIcon,
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Bell = BellIcon;
+const Search = MagnifyingGlassIcon;
+const LogOut = ArrowRightOnRectangleIcon;
 
 interface AdminDashboardProps {
   initialTab?: string;
@@ -227,7 +236,7 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
               <input
                 type="text"
                 placeholder="Search..."
-                className="w-64 pl-10 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#FFD700]/50"
+                className="w-64 pl-10 pr-4 py-1.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-white/50"
               />
             </div>
 

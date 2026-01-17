@@ -24,14 +24,18 @@ const ALLOW_DEV_BYPASS =
   process.env.DEV_AUTH_BYPASS === 'true';
 
 // Use SecureSchemas for security validation on user inputs
+// UPDATED Jan 12, 2026: Made major and graduationYear OPTIONAL
+// Rationale: Don't collect data we're not using to deliver value
+// These fields can be collected later via progressive profiling when we build features that use them
 const schema = z.object({
   fullName: SecureSchemas.name,
   userType: z.enum(['student', 'alumni', 'faculty']),
   firstName: z.string().max(50).optional(),
   lastName: z.string().max(50).optional(),
-  major: z.string().min(1).max(100),
-  // FIX: Allow past graduation years for alumni/faculty (1950+) and future for students
-  graduationYear: z.number().int().min(1950).max(new Date().getFullYear() + 10),
+  // OPTIONAL: Will collect via progressive profiling when we build "Find students in your program"
+  major: z.string().max(100).optional().default(''),
+  // OPTIONAL: Only required for alumni (past year) - students can add later
+  graduationYear: z.number().int().min(1950).max(new Date().getFullYear() + 10).optional().nullable(),
   handle: SecureSchemas.handle,
   avatarUrl: SecureSchemas.url.optional(),
   interests: z.array(z.string().max(50)).max(20).optional(),
@@ -39,56 +43,57 @@ const schema = z.object({
   consentGiven: z.boolean().refine(v => v === true, 'Consent is required'),
   academicLevel: z.enum(['undergraduate', 'graduate', 'doctoral']).optional(),
   bio: z.string().max(200).optional(),
-  livingSituation: z.enum(['on-campus', 'off-campus', 'commuter', 'not-sure']).optional(),
+  livingSituation: z.enum(['on-campus', 'off-campus', 'commuter', 'not-sure']).nullish(),
   // Leadership status - important for space builder requests
   isLeader: z.boolean().optional(),
   // Initial spaces to join during onboarding
   initialSpaceIds: z.array(SecureSchemas.id).max(20).optional(),
-}).refine((data) => {
-  // Validate graduation year based on user type
-  const currentYear = new Date().getFullYear();
-  if (data.userType === 'student') {
-    // Students must have future or current graduation year
-    return data.graduationYear >= currentYear;
-  }
-  // Alumni/faculty can have any valid year
-  return true;
-}, {
-  message: 'Students must have a current or future graduation year',
-  path: ['graduationYear']
 });
+// NOTE: Removed graduation year validation - field is now optional
+// When we add progressive profiling, we can validate at that point
 
 type OnboardingBody = z.infer<typeof schema>;
 
 /**
  * Infer academic level from major and graduation year
  * Graduate programs typically indicated by major name or longer timelines
+ * Returns null if insufficient data to infer
  */
-function inferAcademicLevel(major: string, graduationYear: number): 'undergraduate' | 'graduate' | 'doctoral' {
+function inferAcademicLevel(major?: string, graduationYear?: number | null): 'undergraduate' | 'graduate' | 'doctoral' | null {
+  // If no data provided, can't infer
+  if (!major && !graduationYear) return null;
+
   const currentYear = new Date().getFullYear();
-  const yearsToGrad = graduationYear - currentYear;
-  const majorLower = major.toLowerCase();
+  const majorLower = (major || '').toLowerCase();
 
   // Graduate programs typically indicated by major name
   const gradIndicators = ['mba', 'phd', 'masters', 'md', 'jd', 'law', 'mfa', 'mph', 'msw', 'ms ', 'ma '];
-  if (gradIndicators.some(g => majorLower.includes(g))) {
-    return yearsToGrad > 4 ? 'doctoral' : 'graduate';
+  if (majorLower && gradIndicators.some(g => majorLower.includes(g))) {
+    if (graduationYear) {
+      const yearsToGrad = graduationYear - currentYear;
+      return yearsToGrad > 4 ? 'doctoral' : 'graduate';
+    }
+    return 'graduate';
   }
 
   // Doctoral indicators
   const doctoralIndicators = ['doctoral', 'doctorate', 'phd'];
-  if (doctoralIndicators.some(d => majorLower.includes(d))) {
+  if (majorLower && doctoralIndicators.some(d => majorLower.includes(d))) {
     return 'doctoral';
   }
 
   // If graduating 5+ years out, likely doctoral
-  if (yearsToGrad > 5) return 'doctoral';
+  if (graduationYear) {
+    const yearsToGrad = graduationYear - currentYear;
+    if (yearsToGrad > 5) return 'doctoral';
+  }
 
-  // Default undergraduate
+  // Default undergraduate if we have any data
   return 'undergraduate';
 }
 
-export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
+// Cast schema to match inferred type - the default() transforms make the Zod type inference tricky
+export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBody>, async (request, _ctx: Record<string, string | string[]>, body: OnboardingBody, _respondFmt: typeof ResponseFormatter) => {
   // Rate limit: 5 onboarding attempts per hour per IP
   const rateLimitResult = await enforceRateLimit('authStrict', request as NextRequest);
   if (!rateLimitResult.allowed) {
@@ -208,6 +213,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         : null;
 
       // Update user document with all onboarding data
+      // Academic fields are now optional - only include if provided
+      const inferredAcademicLevel = body.academicLevel || inferAcademicLevel(body.major, body.graduationYear);
+
       transaction.set(userRef, {
         // Identity
         fullName: body.fullName,
@@ -215,10 +223,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName || body.fullName.split(' ').slice(1).join(' ') || '',
         handle: normalizedHandle,
         email: email || '',
-        // Academic
-        major: body.major,
-        graduationYear: body.graduationYear,
-        academicLevel: body.academicLevel || inferAcademicLevel(body.major, body.graduationYear),
+        // Academic (optional - collected via progressive profiling when needed)
+        ...(body.major && { major: body.major }),
+        ...(body.graduationYear && { graduationYear: body.graduationYear }),
+        ...(inferredAcademicLevel && { academicLevel: inferredAcademicLevel }),
         // Profile
         bio: body.bio || null,
         interests: body.interests || [],

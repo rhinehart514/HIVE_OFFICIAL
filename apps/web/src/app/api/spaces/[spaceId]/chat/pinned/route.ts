@@ -24,7 +24,18 @@ import type { ChatMessageReaction } from "@hive/core";
  * Create permission check callback for SpaceChatService
  */
 function createPermissionChecker(): CheckPermissionFn {
-  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner') => {
+  return async (userId: string, spaceId: string, requiredRole: 'member' | 'leader' | 'owner' | 'read') => {
+    if (requiredRole === 'read') {
+      const memberCheck = await checkSpacePermission(spaceId, userId, 'member');
+      if (memberCheck.hasPermission) {
+        return { allowed: true, role: memberCheck.role };
+      }
+      const guestCheck = await checkSpacePermission(spaceId, userId, 'guest');
+      if (guestCheck.hasPermission && guestCheck.space?.isPublic) {
+        return { allowed: true, role: 'guest' };
+      }
+      return { allowed: false };
+    }
     const permCheck = await checkSpacePermission(spaceId, userId, requiredRole);
     if (!permCheck.hasPermission) {
       if (requiredRole === 'member') {

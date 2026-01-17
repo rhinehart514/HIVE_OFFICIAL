@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
 import { Surface } from "../../layout";
 
 import { SpaceCard, type SpaceCardData } from "./SpaceCard";
@@ -113,7 +113,7 @@ export function SpacesDiscoveryPage({
               Discover rituals, tools, and hosts powering the {campusName} campus drop by drop.
             </p>
           </div>
-          <Button variant="primary" size="lg">
+          <Button variant="gold" size="lg">
             Create a space
           </Button>
         </div>
@@ -129,7 +129,7 @@ export function SpacesDiscoveryPage({
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="secondary">View schedule</Button>
+              <Button variant="neutral">View schedule</Button>
               <Button variant="ghost">Campus map</Button>
             </div>
           </header>
@@ -147,7 +147,7 @@ export function SpacesDiscoveryPage({
             </h2>
             <div className="flex flex-wrap gap-2">
               {categories.map((category) => (
-                <Badge key={category.id} variant="secondary">
+                <Badge key={category.id} variant="neutral">
                   {category.label}
                   {category.count !== undefined ? ` · ${category.count}` : ""}
                 </Badge>
@@ -171,7 +171,7 @@ export function SpacesDiscoveryPage({
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="secondary">Start onboarding</Button>
+            <Button variant="neutral">Start onboarding</Button>
             <Button variant="ghost">Share link</Button>
           </div>
         </Surface>

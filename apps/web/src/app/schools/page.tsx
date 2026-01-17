@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect } from 'react';
 // import { useRouter } from 'next/navigation';
-import { Search, Users, ArrowRight, MapPin } from 'lucide-react';
+import { MagnifyingGlassIcon, UsersIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { Button } from '@hive/ui';
 import { logger } from '@/lib/logger';
@@ -363,7 +363,7 @@ export default function SchoolsPage() {
         domain: school.domain,
       });
       // Use window.location for more reliable navigation in E2E tests
-      window.location.href = `/auth/login?${params.toString()}`;
+      window.location.href = `/enter?${params.toString()}`;
     }
   };
 
@@ -407,7 +407,7 @@ export default function SchoolsPage() {
           {/* Search Bar */}
           <div className="max-w-md mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
               <input
                 type="text"
                 placeholder="Search universities..."
@@ -487,11 +487,11 @@ export default function SchoolsPage() {
                     
                     <div className="flex items-center hive-gap-md hive-font-sans text-sm text-hive-text-tertiary">
                       <div className="flex items-center hive-gap-xs">
-                        <MapPin className="w-4 h-4" />
+                        <MapPinIcon className="w-4 h-4" />
                         <span className="font-medium">{school.location}</span>
                       </div>
                       <div className="flex items-center hive-gap-xs">
-                        <Users className="w-4 h-4" />
+                        <UsersIcon className="w-4 h-4" />
                         <span className="font-mono text-xs">@{school.domain}</span>
                       </div>
                     </div>
@@ -501,7 +501,7 @@ export default function SchoolsPage() {
                     {school.isActive ? (
                       <div className="flex items-center hive-gap-sm text-white">
                         <span className="hive-font-sans font-medium text-sm">Enter HIVE</span>
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRightIcon className="w-4 h-4" />
                       </div>
                     ) : (
                       <div className="text-center">
@@ -528,7 +528,7 @@ export default function SchoolsPage() {
         {filteredSchools.length === 0 && (
           <div className="text-center py-12 hive-animate-silk-emerge">
             <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-6 h-6 text-white/40" />
+              <MagnifyingGlassIcon className="w-6 h-6 text-white/40" />
             </div>
             <h3 className="hive-font-sans text-lg font-semibold mb-2 text-hive-text-primary">
               No universities found

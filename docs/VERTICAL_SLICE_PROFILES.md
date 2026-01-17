@@ -1,6 +1,6 @@
 # Vertical Slice: Profiles (Connection Layer)
 
-## December 2025 Soft Launch
+## January 2026 Full Launch
 
 ---
 
@@ -14,7 +14,7 @@ The insight: on campus, everyone is connected by context. Same dorm. Same major.
 
 ---
 
-## Current Status: 70% Complete
+## Current Status: 75% Complete
 
 | Submodule | Status | Notes |
 |-----------|--------|-------|
@@ -68,7 +68,8 @@ packages/core/src/domain/profile/
 | `profile-privacy.value.ts` | 108 | 4-level privacy value object |
 | `/api/profile/route.ts` | 484 | Profile CRUD with DDD integration |
 | `/api/connections/route.ts` | 306 | Connection detection and retrieval |
-| `ProfilePageContent.tsx` | 605 | Main profile view component |
+| `ProfilePageContent.tsx` | 852 | Main profile view component |
+| `profile-bento-grid.tsx` | 1,332 | Customizable bento grid layout |
 
 ---
 

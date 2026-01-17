@@ -9,30 +9,30 @@
 
 import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Search,
-  Filter,
-  Calendar,
-  Tag,
-  MapPin,
-  FileText,
-  Bell,
-  Check,
-} from 'lucide-react';
+import { MagnifyingGlassIcon, FunnelIcon, CalendarIcon, TagIcon, MapPinIcon, DocumentTextIcon, BellIcon, CheckIcon, UsersIcon } from '@heroicons/react/24/outline';
+
+import { Input } from '../../../design-system/primitives';
+import { Button } from '../../../design-system/primitives';
+import { Card, CardContent } from '../../../design-system/primitives';
+import { Badge } from '../../../design-system/primitives';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../design-system/primitives';
+import { Progress } from '../../../design-system/primitives';
 
 import {
-  Input,
-  Button,
-  Card,
-  CardContent,
-  Badge,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Progress,
-} from '../../../atomic';
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 import type { ElementProps } from '../../../lib/hivelab/element-system';
 
@@ -40,7 +40,7 @@ import type { ElementProps } from '../../../lib/hivelab/element-system';
 // TYPE DEFINITIONS
 // ============================================================================
 
-/** Filter option can be a string or an object with value/label/count */
+/** FunnelIcon option can be a string or an object with value/label/count */
 interface FilterOption {
   value: string;
   label: string;
@@ -114,11 +114,11 @@ export function SearchInputElement({ config, onChange }: ElementProps) {
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={query}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-          placeholder={config.placeholder || 'Search...'}
+          placeholder={config.placeholder || 'MagnifyingGlassIcon...'}
           className="pl-10"
         />
       </div>
@@ -172,7 +172,7 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center space-x-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
+        <FunnelIcon className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Filters</span>
       </div>
 
@@ -192,7 +192,7 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
             >
               {label}
               {config.showCounts && count && (
-                <Badge variant="sophomore" className="ml-2 h-4 text-xs">
+                <Badge variant="secondary" className="ml-2 h-4 text-xs">
                   {count}
                 </Badge>
               )}
@@ -292,7 +292,7 @@ export function DatePickerElement({ config, onChange }: ElementProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Calendar className="h-4 w-4 text-muted-foreground" />
+        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-medium">Date & Time</span>
       </div>
 
@@ -326,8 +326,8 @@ export function TagCloudElement({ config, data }: ElementProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Tag className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Tag Cloud</span>
+        <TagIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">TagIcon Cloud</span>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -351,7 +351,7 @@ export function TagCloudElement({ config, data }: ElementProps) {
           ))
         ) : (
           <div className="w-full py-4 text-center text-sm text-muted-foreground">
-            <Tag className="h-6 w-6 mx-auto mb-2 opacity-40" />
+            <TagIcon className="h-6 w-6 mx-auto mb-2 opacity-40" />
             <p>No tags yet. Tags will appear when data is connected.</p>
           </div>
         )}
@@ -361,45 +361,195 @@ export function TagCloudElement({ config, data }: ElementProps) {
 }
 
 // ============================================================================
-// MAP VIEW ELEMENT - Re-exports from element-renderers
-// The full implementation is in element-renderers.tsx with interactive markers
-// ============================================================================
-
-export { MapViewElement } from '../element-renderers';
-
-// ============================================================================
 // CHART DISPLAY ELEMENT
 // ============================================================================
 
-export function ChartDisplayElement({ config }: ElementProps) {
+/** Chart data point structure */
+interface ChartDataPoint {
+  name: string;
+  value: number;
+  [key: string]: string | number;
+}
+
+/** Default sample data for charts */
+const DEFAULT_CHART_DATA: ChartDataPoint[] = [
+  { name: 'Week 1', value: 60, secondary: 45 },
+  { name: 'Week 2', value: 40, secondary: 55 },
+  { name: 'Week 3', value: 80, secondary: 70 },
+  { name: 'Week 4', value: 55, secondary: 50 },
+  { name: 'Week 5', value: 70, secondary: 65 },
+];
+
+/** HIVE color palette for charts - uses CSS custom properties */
+const CHART_COLORS = [
+  'var(--life-gold)', // Gold - primary
+  'var(--hivelab-text-primary)', // White - secondary
+  'var(--hivelab-text-secondary)', // Gray
+  'var(--hivelab-surface)', // Dark gray
+  'var(--hivelab-text-tertiary)', // Medium gray
+];
+
+export function ChartDisplayElement({ config, data }: ElementProps) {
+  const chartType = (config.chartType as string) || 'bar';
+  const title = (config.title as string) || 'Analytics';
+  const chartData = (data?.chartData as ChartDataPoint[]) ||
+                    (config.data as ChartDataPoint[]) ||
+                    DEFAULT_CHART_DATA;
+  const height = (config.height as number) || 280;
+  const showLegend = config.showLegend !== false;
+  const dataKey = (config.dataKey as string) || 'value';
+  const secondaryKey = (config.secondaryKey as string) || undefined;
+
+  const renderChart = () => {
+    switch (chartType) {
+      case 'line':
+        return (
+          <ResponsiveContainer width="100%" height={height}>
+            <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis
+                dataKey="name"
+                stroke="rgba(255,255,255,0.5)"
+                fontSize={12}
+                tickLine={false}
+              />
+              <YAxis
+                stroke="rgba(255,255,255,0.5)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+              />
+              {showLegend && <Legend />}
+              <Line
+                type="monotone"
+                dataKey={dataKey}
+                stroke={CHART_COLORS[0]}
+                strokeWidth={2}
+                dot={{ fill: CHART_COLORS[0], strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: CHART_COLORS[0] }}
+              />
+              {secondaryKey && (
+                <Line
+                  type="monotone"
+                  dataKey={secondaryKey}
+                  stroke={CHART_COLORS[1]}
+                  strokeWidth={2}
+                  dot={{ fill: CHART_COLORS[1], strokeWidth: 0 }}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        );
+
+      case 'pie':
+        return (
+          <ResponsiveContainer width="100%" height={height}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={100}
+                paddingAngle={2}
+                dataKey={dataKey}
+                nameKey="name"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {chartData.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+              />
+              {showLegend && <Legend />}
+            </PieChart>
+          </ResponsiveContainer>
+        );
+
+      case 'bar':
+      default:
+        return (
+          <ResponsiveContainer width="100%" height={height}>
+            <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis
+                dataKey="name"
+                stroke="rgba(255,255,255,0.5)"
+                fontSize={12}
+                tickLine={false}
+              />
+              <YAxis
+                stroke="rgba(255,255,255,0.5)"
+                fontSize={12}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(0,0,0,0.9)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '8px',
+                  fontSize: '12px',
+                }}
+                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+              />
+              {showLegend && <Legend />}
+              <Bar
+                dataKey={dataKey}
+                fill={CHART_COLORS[0]}
+                radius={[4, 4, 0, 0]}
+              />
+              {secondaryKey && (
+                <Bar
+                  dataKey={secondaryKey}
+                  fill={CHART_COLORS[1]}
+                  radius={[4, 4, 0, 0]}
+                />
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        );
+    }
+  };
+
   return (
     <Card className="bg-gradient-to-br from-muted/50 to-muted">
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Chart Preview</p>
-            <p className="text-2xl font-semibold">Registration Flow</p>
+            <p className="text-sm font-medium text-muted-foreground">Analytics</p>
+            <p className="text-xl font-semibold">{title}</p>
           </div>
           <Badge variant="outline" className="uppercase text-body-xs tracking-wide">
-            {config.chartType || 'bar'} chart
+            {chartType} chart
           </Badge>
         </div>
 
-        <div className="space-y-4">
-          {[60, 40, 80, 55].map((value, index) => (
-            <div key={index}>
-              <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                <span>Week {index + 1}</span>
-                <span>{value}%</span>
-              </div>
-              <Progress value={value} />
-            </div>
-          ))}
+        <div className="w-full">
+          {renderChart()}
         </div>
 
-        <div className="text-xs text-muted-foreground">
-          Sample data shown. Connect analytics data to see real student behavior.
-        </div>
+        {!data?.chartData && !config.data && (
+          <div className="text-xs text-muted-foreground text-center">
+            Sample data shown. Connect analytics data to see real metrics.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -409,7 +559,8 @@ export function ChartDisplayElement({ config }: ElementProps) {
 // FORM BUILDER ELEMENT
 // ============================================================================
 
-export function FormBuilderElement({ config, data, onChange, onAction }: ElementProps) {
+export function FormBuilderElement({ id, config, data, onChange, onAction, sharedState, userState }: ElementProps) {
+  const instanceId = id || 'form';
   const fields = config.fields || [
     { name: 'Title', type: 'text', required: true },
     { name: 'Description', type: 'textarea', required: false },
@@ -417,17 +568,30 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
     { name: 'Date', type: 'date', required: true },
   ];
 
-  const serverSubmissions = (data?.submissions as Array<Record<string, unknown>>) || [];
-  const serverSubmissionCount = (data?.submissionCount as number) || serverSubmissions.length;
+  // Read submission count from shared state (server-side) or data (legacy)
+  const sharedSubmissionCount = sharedState?.counters?.[`${instanceId}:submissionCount`] || 0;
+  const legacySubmissions = (data?.submissions as Array<Record<string, unknown>>) || [];
+  const legacySubmissionCount = (data?.submissionCount as number) || legacySubmissions.length;
+  const serverSubmissionCount = sharedSubmissionCount || legacySubmissionCount;
+
+  // Check if user has already submitted (from userState)
+  const hasUserSubmitted = userState?.participation?.[`${instanceId}:hasSubmitted`] === true;
 
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(hasUserSubmitted);
   const [submissionCount, setSubmissionCount] = useState(serverSubmissionCount);
 
+  // Sync with server state
   useEffect(() => {
     setSubmissionCount(serverSubmissionCount);
   }, [serverSubmissionCount]);
+
+  useEffect(() => {
+    if (hasUserSubmitted && !config.allowMultipleSubmissions) {
+      setSubmitted(true);
+    }
+  }, [hasUserSubmitted, config.allowMultipleSubmissions]);
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
@@ -447,7 +611,8 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
     setIsSubmitting(true);
     setSubmitted(true);
     setSubmissionCount(prev => prev + 1);
-    onAction?.('submit', { formData, timestamp: new Date().toISOString() });
+    // Pass formData with instanceId for proper server-side storage
+    onAction?.('submit', { formData, timestamp: new Date().toISOString(), elementId: instanceId });
     setIsSubmitting(false);
   };
 
@@ -460,7 +625,7 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
     return (
       <Card className="border-green-500/50 bg-green-500/5">
         <CardContent className="p-6 text-center">
-          <Check className="h-8 w-8 text-green-500 mx-auto mb-2" />
+          <CheckIcon className="h-8 w-8 text-green-500 mx-auto mb-2" />
           <p className="font-medium">Response submitted!</p>
           <p className="text-sm text-muted-foreground mt-1">
             {submissionCount} total submission{submissionCount !== 1 ? 's' : ''}
@@ -479,7 +644,7 @@ export function FormBuilderElement({ config, data, onChange, onAction }: Element
     <Card>
       <CardContent className="p-4 space-y-4">
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-muted-foreground" />
+          <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">{config.title || 'Form'}</span>
         </div>
 
@@ -561,7 +726,7 @@ export function NotificationCenterElement({ config, data }: ElementProps) {
       <CardContent className="p-0">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-muted-foreground" />
+            <BellIcon className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">{config.title || 'Live Notifications'}</span>
           </div>
           <Badge variant="outline">{notifications.length} / {maxNotifications}</Badge>
@@ -582,7 +747,7 @@ export function NotificationCenterElement({ config, data }: ElementProps) {
             ))
           ) : (
             <div className="px-6 py-8 text-center">
-              <Bell className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
+              <BellIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
               <p className="text-sm text-muted-foreground">
                 No notifications yet. They will appear here in real-time.
               </p>
@@ -593,3 +758,279 @@ export function NotificationCenterElement({ config, data }: ElementProps) {
     </Card>
   );
 }
+
+// ============================================================================
+// USER SELECTOR ELEMENT
+// ============================================================================
+
+interface UserOption {
+  id: string;
+  name: string;
+  handle: string;
+  photoURL?: string;
+}
+
+export function UserSelectorElement({ config, onChange, data, context, onAction }: ElementProps) {
+  const [selectedUser, setSelectedUser] = useState<string | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const effectiveSpaceId = context?.spaceId || config.spaceId || data?.spaceId;
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (data?.users && Array.isArray(data.users)) {
+        setUsers(data.users.map((u: Record<string, unknown>) => ({
+          id: u.id as string,
+          name: u.fullName as string || u.name as string || 'Unknown',
+          handle: u.handle as string || `@${(u.id as string).slice(0, 8)}`,
+          photoURL: u.photoURL as string | undefined
+        })));
+        return;
+      }
+
+      if (!searchQuery && !effectiveSpaceId) {
+        setUsers([]);
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch('/api/users/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: searchQuery || 'a',
+            limit: config.maxResults || 20,
+            spaceId: effectiveSpaceId,
+            campusId: context?.campusId,
+            sortBy: 'relevance'
+          })
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch users');
+
+        const result = await response.json();
+        setUsers((result.users || []).map((u: Record<string, unknown>) => ({
+          id: u.id as string,
+          name: u.fullName as string || 'Unknown',
+          handle: u.handle as string || `@${(u.id as string).slice(0, 8)}`,
+          photoURL: u.photoURL as string | undefined
+        })));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load users');
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const timer = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, effectiveSpaceId, config.maxResults, data?.users, context?.campusId]);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <UsersIcon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">{config.label || 'Select user'}</span>
+      </div>
+
+      <Input
+        value={searchQuery}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+        placeholder="Search members..."
+        className="mb-2"
+      />
+
+      <Select
+        value={selectedUser}
+        onValueChange={(value) => {
+          setSelectedUser(value);
+          const user = users.find(u => u.id === value);
+          onChange?.({ selectedUser: value, userId: value, selectedUserData: user });
+          onAction?.('select', { selectedUser: value, userId: value, selectedUserData: user });
+        }}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={isLoading ? "Loading..." : "Choose a member"} />
+        </SelectTrigger>
+        <SelectContent>
+          {isLoading ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">Loading users...</div>
+          ) : error ? (
+            <div className="px-3 py-2 text-sm text-red-500">{error}</div>
+          ) : users.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">
+              {searchQuery ? 'No users found' : 'Type to search for members'}
+            </div>
+          ) : (
+            users.map((user) => (
+              <SelectItem key={user.id} value={user.id}>
+                <div className="flex items-center gap-2">
+                  {user.photoURL && (
+                    <img src={user.photoURL} alt="" className="h-5 w-5 rounded-full object-cover" />
+                  )}
+                  <div className="flex flex-col">
+                    <span>{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.handle}</span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))
+          )}
+        </SelectContent>
+      </Select>
+
+      {config.allowMultiple && (
+        <div className="text-xs text-muted-foreground">
+          Hold Ctrl/Cmd to select multiple members
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// MAP VIEW ELEMENT
+// ============================================================================
+
+interface MapMarker {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  type?: 'building' | 'event' | 'meetup' | 'custom';
+  color?: string;
+}
+
+export function MapViewElement({ config, data, onChange, onAction }: ElementProps) {
+  const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
+
+  const defaultMarkers: MapMarker[] = [
+    { id: '1', name: 'Student Union', x: 45, y: 35, type: 'building' },
+    { id: '2', name: 'Library', x: 60, y: 45, type: 'building' },
+    { id: '3', name: 'Commons', x: 35, y: 55, type: 'meetup' },
+    { id: '4', name: 'Study Hall', x: 70, y: 30, type: 'building' },
+  ];
+
+  const markers: MapMarker[] = data?.markers || config?.markers || defaultMarkers;
+  const mapTitle = config?.title || 'Campus Map';
+  const showGrid = config?.showGrid !== false;
+
+  const getMarkerColor = (marker: MapMarker) => {
+    if (marker.color) return marker.color;
+    switch (marker.type) {
+      case 'event': return 'rgb(245 158 11)';
+      case 'meetup': return 'rgb(16 185 129)';
+      case 'custom': return 'rgb(139 92 246)';
+      default: return 'rgb(59 130 246)';
+    }
+  };
+
+  const handleMarkerClick = (marker: MapMarker) => {
+    setSelectedMarker(marker.id);
+    onChange?.({ selectedMarker: marker });
+    onAction?.('select_location', { marker, markerId: marker.id, name: marker.name });
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
+        <div className="relative bg-gradient-to-br from-emerald-50 to-sky-50 dark:from-emerald-950/30 dark:to-sky-950/30">
+          <div className="absolute top-3 left-3 z-10 bg-background/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+            <p className="text-sm font-medium">{mapTitle}</p>
+          </div>
+
+          <svg viewBox="0 0 100 70" className="w-full h-56" preserveAspectRatio="xMidYMid slice">
+            {showGrid && (
+              <g className="opacity-10">
+                {[20, 40, 60, 80].map((x) => (
+                  <line key={`v${x}`} x1={x} y1="0" x2={x} y2="70" stroke="currentColor" strokeWidth="0.2" />
+                ))}
+                {[15, 30, 45, 60].map((y) => (
+                  <line key={`h${y}`} x1="0" y1={y} x2="100" y2={y} stroke="currentColor" strokeWidth="0.2" />
+                ))}
+              </g>
+            )}
+
+            <g className="text-muted-foreground/30">
+              <path d="M10,35 Q50,20 90,40" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M25,10 Q40,40 55,65" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <path d="M70,15 L75,55" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            </g>
+
+            <g className="text-muted-foreground/20">
+              <rect x="42" y="32" width="8" height="6" rx="1" fill="currentColor" />
+              <rect x="57" y="42" width="7" height="8" rx="1" fill="currentColor" />
+              <rect x="32" y="52" width="6" height="5" rx="1" fill="currentColor" />
+              <rect x="67" y="27" width="6" height="5" rx="1" fill="currentColor" />
+            </g>
+
+            {markers.map((marker) => (
+              <g
+                key={marker.id}
+                className="cursor-pointer transition-transform hover:scale-110"
+                onClick={() => handleMarkerClick(marker)}
+                style={{ transformOrigin: `${marker.x}px ${marker.y}px` }}
+              >
+                <circle
+                  cx={marker.x}
+                  cy={marker.y}
+                  r={selectedMarker === marker.id ? 3 : 2.5}
+                  fill={getMarkerColor(marker)}
+                  className="transition-all"
+                />
+                {selectedMarker === marker.id && (
+                  <circle
+                    cx={marker.x}
+                    cy={marker.y}
+                    r="4"
+                    fill="none"
+                    stroke={getMarkerColor(marker)}
+                    strokeWidth="0.5"
+                    className="animate-ping"
+                  />
+                )}
+              </g>
+            ))}
+          </svg>
+
+          <div className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm rounded-lg p-2 shadow-sm">
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="text-muted-foreground">Building</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="text-muted-foreground">Meetup</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {selectedMarker && (
+          <div className="p-3 border-t bg-muted/30">
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {markers.find(m => m.id === selectedMarker)?.name || 'Selected Location'}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
+// PHOTO GALLERY ELEMENT - Re-export from universal/ directory
+// ============================================================================
+
+export { PhotoGalleryElement } from './universal/photo-gallery';

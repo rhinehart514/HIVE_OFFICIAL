@@ -202,10 +202,13 @@ export const PATCH = withAuthValidationAndErrors(
     // Map incoming request to service input
     // Note: bannerUrl and tags are not yet supported in DDD - they would need
     // to be added to the aggregate if needed
+    // Note: allowMemberPosts and allowGuestView are in the schema but not yet
+    // in the DDD SpaceSettings interface - they will be ignored for now
     const result = await spaceService.updateSpace(userId, {
       spaceId,
       name: updates.name,
       description: updates.description,
+      visibility: updates.visibility,
       settings: updates.settings ? {
         allowInvites: undefined, // Not in current schema
         requireApproval: updates.settings.requireApproval,

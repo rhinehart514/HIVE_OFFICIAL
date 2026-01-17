@@ -16,7 +16,7 @@
   /* Border tokens */
   --ide-border-default: #333333;
   --ide-border-subtle: #222222;
-  --ide-border-focus: #ffd700;
+  --ide-border-focus: rgba(255, 255, 255, 0.50);
   --ide-border-accent: #ffd700;
 
   /* Text tokens */

@@ -9,7 +9,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { Bars3Icon, TrashIcon } from '@heroicons/react/24/outline';
 import { ReactNode } from 'react';
 import { cn } from '../../../lib/utils';
 
@@ -96,7 +96,7 @@ export function SortableCanvasElement({
         )}
         aria-label="Drag to reorder"
       >
-        <GripVertical className="w-4 h-4 text-text-tertiary" />
+        <Bars3Icon className="w-4 h-4 text-text-tertiary" />
       </div>
 
       {/* Delete Button */}
@@ -119,7 +119,7 @@ export function SortableCanvasElement({
         aria-label="Delete element"
         type="button"
       >
-        <Trash2 className="w-4 h-4" />
+        <TrashIcon className="w-4 h-4" />
       </button>
 
       {/* Element Content */}

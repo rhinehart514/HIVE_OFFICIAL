@@ -5,8 +5,10 @@
  * Organizes 14 elements into 4 bundles based on user problems they solve.
  */
 
-import type { LucideIcon } from 'lucide-react';
-import { Calendar, Users, Search, BarChart3 } from 'lucide-react';
+import { CalendarIcon, UsersIcon, MagnifyingGlassIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+
+// Type alias for lucide compatibility
+type LucideIcon = React.ComponentType<{ className?: string }>;
 
 // ============================================================================
 // Types
@@ -39,7 +41,7 @@ export const ELEMENT_BUNDLES: Record<string, ElementBundleDefinition> = {
     id: 'run-event',
     name: 'Run an Event',
     tagline: 'From invites to reminders',
-    icon: Calendar,
+    icon: CalendarIcon,
     elements: ['date-picker', 'rsvp-button', 'countdown-timer', 'notification-center'],
     promptSuggestion: 'Build an event registration with countdown and reminders',
     color: 'amber',
@@ -48,7 +50,7 @@ export const ELEMENT_BUNDLES: Record<string, ElementBundleDefinition> = {
     id: 'engage-members',
     name: 'Engage Members',
     tagline: 'Get your club involved',
-    icon: Users,
+    icon: UsersIcon,
     elements: ['poll-element', 'leaderboard', 'user-selector', 'result-list'],
     promptSuggestion: 'Create a weekly poll with live results and leaderboard',
     color: 'violet',
@@ -57,7 +59,7 @@ export const ELEMENT_BUNDLES: Record<string, ElementBundleDefinition> = {
     id: 'organize-find',
     name: 'Organize & Find',
     tagline: 'Help members find things',
-    icon: Search,
+    icon: MagnifyingGlassIcon,
     elements: ['search-input', 'filter-selector', 'tag-cloud'],
     promptSuggestion: 'Build a searchable resource library with filters',
     color: 'sky',
@@ -66,7 +68,7 @@ export const ELEMENT_BUNDLES: Record<string, ElementBundleDefinition> = {
     id: 'track-display',
     name: 'Track & Display',
     tagline: 'Collect and visualize',
-    icon: BarChart3,
+    icon: ChartBarIcon,
     elements: ['chart-display', 'form-builder', 'map-view'],
     promptSuggestion: 'Create a feedback form with response analytics',
     color: 'emerald',
@@ -225,7 +227,7 @@ export const ELEMENT_SHOWCASE_DATA: Record<string, ElementShowcaseMetadata> = {
       'Create a member search tool',
     ],
     demoConfig: {
-      placeholder: 'Search resources...',
+      placeholder: 'MagnifyingGlassIcon resources...',
       showSuggestions: true,
       suggestions: ['Study guides', 'Past exams', 'Lecture notes'],
     },

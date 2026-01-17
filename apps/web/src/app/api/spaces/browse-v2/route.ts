@@ -1,6 +1,13 @@
 /**
  * Spaces Browse API Route V2
  * Uses DDD repository layer for space discovery
+ *
+ * COLD START SIGNALS (Jan 2026):
+ * Enriches browse results with:
+ * - upcomingEventCount: Shows value without chat activity
+ * - nextEvent: Creates urgency ("Tournament · Friday")
+ * - mutualCount: Social proof ("2 friends are members")
+ * - toolCount: Shows utility
  */
 
 import { z } from 'zod';
@@ -8,11 +15,11 @@ import {
   getServerSpaceRepository,
   getServerProfileRepository,
   toSpaceBrowseDTOList,
+  type SpaceBrowseEnrichment,
 } from '@hive/core/server';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
 import { withOptionalAuth } from '@/lib/middleware';
-
-// Using unified toSpaceBrowseDTOList from @hive/core/server
 
 /**
  * Zod schema for browse query params validation
@@ -24,6 +31,156 @@ const BrowseQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
   cursor: z.string().optional(), // Cursor for pagination (spaceId to start after)
 });
+
+/**
+ * Fetch upcoming events for a set of spaces
+ * Returns event counts and next event info per space
+ */
+async function fetchEventEnrichment(spaceIds: string[]): Promise<{
+  eventCounts: Map<string, number>;
+  nextEvents: Map<string, { title: string; startAt: Date }>;
+}> {
+  const eventCounts = new Map<string, number>();
+  const nextEvents = new Map<string, { title: string; startAt: Date }>();
+
+  if (spaceIds.length === 0) {
+    return { eventCounts, nextEvents };
+  }
+
+  try {
+    const now = new Date();
+
+    // Query upcoming events for all visible spaces
+    // Events are in flat 'events' collection with spaceId field
+    const eventsSnapshot = await dbAdmin
+      .collection('events')
+      .where('spaceId', 'in', spaceIds.slice(0, 30)) // Firestore 'in' limit is 30
+      .where('startAt', '>=', now)
+      .where('status', '==', 'published')
+      .orderBy('startAt', 'asc')
+      .limit(100)
+      .get();
+
+    // Process events into maps
+    for (const doc of eventsSnapshot.docs) {
+      const data = doc.data();
+      const spaceId = data.spaceId as string;
+      const startAt = data.startAt?.toDate?.() ?? new Date(data.startAt);
+      const title = data.title as string;
+
+      // Increment count
+      eventCounts.set(spaceId, (eventCounts.get(spaceId) ?? 0) + 1);
+
+      // Set next event (first one wins due to orderBy)
+      if (!nextEvents.has(spaceId)) {
+        nextEvents.set(spaceId, { title, startAt });
+      }
+    }
+  } catch (error) {
+    logger.warn('Failed to fetch event enrichment', { error });
+    // Non-fatal - return empty maps
+  }
+
+  return { eventCounts, nextEvents };
+}
+
+/**
+ * Fetch mutual friends who are members of given spaces
+ * Returns count and avatar URLs per space
+ */
+async function fetchMutualEnrichment(
+  userId: string,
+  spaceIds: string[]
+): Promise<Map<string, { count: number; avatars: string[] }>> {
+  const mutuals = new Map<string, { count: number; avatars: string[] }>();
+
+  if (!userId || spaceIds.length === 0) {
+    return mutuals;
+  }
+
+  try {
+    // Step 1: Get user's connections (accepted)
+    const [outgoing, incoming] = await Promise.all([
+      dbAdmin
+        .collection('connections')
+        .where('fromProfileId', '==', userId)
+        .where('status', '==', 'accepted')
+        .get(),
+      dbAdmin
+        .collection('connections')
+        .where('toProfileId', '==', userId)
+        .where('status', '==', 'accepted')
+        .get()
+    ]);
+
+    const connectionIds = new Set<string>();
+    outgoing.docs.forEach(doc => {
+      const toId = doc.data().toProfileId;
+      if (toId) connectionIds.add(toId);
+    });
+    incoming.docs.forEach(doc => {
+      const fromId = doc.data().fromProfileId;
+      if (fromId) connectionIds.add(fromId);
+    });
+
+    if (connectionIds.size === 0) {
+      return mutuals;
+    }
+
+    // Step 2: Find which connections are members of which spaces
+    // Query spaceMembers for connection IDs
+    const connectionIdArray = Array.from(connectionIds).slice(0, 30);
+    const membershipsSnapshot = await dbAdmin
+      .collection('spaceMembers')
+      .where('userId', 'in', connectionIdArray)
+      .where('spaceId', 'in', spaceIds.slice(0, 10)) // Limit due to compound 'in' query
+      .get();
+
+    // Group by spaceId
+    const spaceToMembers = new Map<string, { userId: string; avatarUrl?: string }[]>();
+    for (const doc of membershipsSnapshot.docs) {
+      const data = doc.data();
+      const spaceId = data.spaceId as string;
+      const userId = data.userId as string;
+
+      if (!spaceToMembers.has(spaceId)) {
+        spaceToMembers.set(spaceId, []);
+      }
+      spaceToMembers.get(spaceId)!.push({ userId, avatarUrl: data.avatarUrl });
+    }
+
+    // Step 3: Get avatar URLs for mutuals (up to 3 per space)
+    for (const [spaceId, members] of spaceToMembers) {
+      const avatars: string[] = [];
+      for (const member of members.slice(0, 3)) {
+        if (member.avatarUrl) {
+          avatars.push(member.avatarUrl);
+        } else {
+          // Fetch from profile if not cached in membership
+          try {
+            const profileDoc = await dbAdmin.collection('profiles').doc(member.userId).get();
+            const profileData = profileDoc.data();
+            if (profileData?.avatarUrl) {
+              avatars.push(profileData.avatarUrl);
+            }
+          } catch {
+            // Skip if profile fetch fails
+          }
+        }
+      }
+
+      mutuals.set(spaceId, {
+        count: members.length,
+        avatars: avatars.slice(0, 3) // Max 3 avatars
+      });
+    }
+  } catch (error) {
+    logger.warn('Failed to fetch mutual enrichment', { error });
+    // Non-fatal - return empty map
+  }
+
+  return mutuals;
+}
 
 /**
  * GET /api/spaces/browse-v2 - Browse/discover spaces
@@ -137,8 +294,26 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     return false;
   });
 
+  // Extract visible space IDs for enrichment queries
+  const visibleSpaceIds = visibleSpaces.map(s => s.spaceId.value);
+
+  // COLD START SIGNALS: Fetch event and mutual enrichment in parallel
+  // These show value even when spaces have no chat activity
+  const [eventEnrichment, mutualEnrichment] = await Promise.all([
+    fetchEventEnrichment(visibleSpaceIds),
+    userId ? fetchMutualEnrichment(userId, visibleSpaceIds) : Promise.resolve(new Map())
+  ]);
+
+  // Build enrichment object for presenter
+  const enrichment: SpaceBrowseEnrichment = {
+    eventCounts: eventEnrichment.eventCounts,
+    nextEvents: eventEnrichment.nextEvents,
+    mutuals: mutualEnrichment,
+    toolCounts: new Map(), // Tool count comes from widgets, already in aggregate
+  };
+
   // Transform spaces for API response using unified DTO presenter
-  const transformedSpaces = toSpaceBrowseDTOList(visibleSpaces, userSpaceIds);
+  const transformedSpaces = toSpaceBrowseDTOList(visibleSpaces, userSpaceIds, enrichment);
 
   // Apply sorting based on sort parameter
   // This handles all sort types including when category filter is applied

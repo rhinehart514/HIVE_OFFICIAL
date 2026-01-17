@@ -18,17 +18,29 @@ import {
 } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
 import {
-  Flag,
-  Search,
-  Plus,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Users,
-  Percent,
-  School,
-} from "lucide-react";
+  FlagIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  ArrowPathIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+  Cog6ToothIcon,
+  UsersIcon,
+  PercentBadgeIcon,
+  AcademicCapIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const Flag = FlagIcon;
+const Search = MagnifyingGlassIcon;
+const Plus = PlusIcon;
+const Loader2 = ArrowPathIcon;
+const AlertCircle = ExclamationCircleIcon;
+const CheckCircle = CheckCircleIcon;
+const Settings = Cog6ToothIcon;
+const Users = UsersIcon;
+const Percent = PercentBadgeIcon;
+const School = AcademicCapIcon;
 
 interface FeatureFlag {
   id: string;

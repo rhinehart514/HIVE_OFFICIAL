@@ -2,7 +2,22 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Users, Calendar, Clock, Trophy, Star } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  UsersIcon,
+  CalendarIcon,
+  ClockIcon,
+  TrophyIcon,
+  StarIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Users = UsersIcon;
+const Calendar = CalendarIcon;
+const Clock = ClockIcon;
+const Trophy = TrophyIcon;
+const Star = StarIcon;
 import { RitualUnion } from "@hive/core";
 import { Button, RitualFoundingClass, RitualSurvival, RitualTournamentBracket } from "@hive/ui";
 import { logger } from "@/lib/logger";
@@ -56,8 +71,11 @@ export default function RitualDetailPage() {
         if (leaderboardRes.ok) {
           const lbData = await leaderboardRes.json();
           setLeaderboard(lbData.leaderboard || []);
-          // Check if user is participating
-          if (lbData.currentUserEntry) {
+          // Check if user is participating (either in top leaderboard or has currentUserEntry)
+          const isInLeaderboard = (lbData.leaderboard || []).some(
+            (e: LeaderboardEntry) => e.isCurrentUser
+          );
+          if (lbData.currentUserEntry || isInLeaderboard) {
             setIsParticipating(true);
           }
         }
@@ -238,7 +256,7 @@ export default function RitualDetailPage() {
           {(String(ritual.archetype).toLowerCase() === "founding_class" ||
             ritual.archetype === "FOUNDING_CLASS") && (
             <RitualFoundingClass
-              ritual={ritual as Parameters<typeof RitualFoundingClass>[0]["ritual"]}
+              ritual={ritual as unknown as Parameters<typeof RitualFoundingClass>[0]["ritual"]}
               isParticipating={isParticipating}
               onJoin={handleJoin}
             />
@@ -247,7 +265,7 @@ export default function RitualDetailPage() {
           {(String(ritual.archetype).toLowerCase() === "survival" ||
             ritual.archetype === "SURVIVAL") && (
             <RitualSurvival
-              ritual={ritual as Parameters<typeof RitualSurvival>[0]["ritual"]}
+              ritual={ritual as unknown as Parameters<typeof RitualSurvival>[0]["ritual"]}
               isParticipating={isParticipating}
               onVote={(matchId: string, choice: string) => {
                 logger.info("Vote cast", { ritualId: ritual.id, matchId, choice });
@@ -258,7 +276,7 @@ export default function RitualDetailPage() {
           {(String(ritual.archetype).toLowerCase() === "tournament" ||
             ritual.archetype === "TOURNAMENT") && (
             <RitualTournamentBracket
-              ritual={ritual as Parameters<typeof RitualTournamentBracket>[0]["ritual"]}
+              ritual={ritual as unknown as Parameters<typeof RitualTournamentBracket>[0]["ritual"]}
               isParticipating={isParticipating}
             />
           )}

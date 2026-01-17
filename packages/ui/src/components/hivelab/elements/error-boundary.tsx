@@ -1,8 +1,9 @@
 'use client';
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Bell } from 'lucide-react';
-import { Card, CardContent, Button } from '../../../atomic';
+import { BellIcon } from '@heroicons/react/24/outline';
+import { Card, CardContent } from '../../../design-system/primitives';
+import { Button } from '../../../design-system/primitives';
 
 interface ElementErrorBoundaryProps {
   elementType: string;
@@ -72,7 +73,7 @@ export function ElementErrorFallback({
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="rounded-full bg-destructive/10 p-2">
-            <Bell className="h-4 w-4 text-destructive" />
+            <BellIcon className="h-4 w-4 text-destructive" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-destructive">

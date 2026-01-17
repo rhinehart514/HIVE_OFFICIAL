@@ -5,21 +5,45 @@ export const dynamic = 'force-dynamic';
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, Settings, Share, Activity, Zap, CheckCircle2, AlertCircle, Loader2, CloudOff, LogIn } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  Cog6ToothIcon,
+  ShareIcon,
+  ChartBarIcon,
+  BoltIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+  ArrowPathIcon,
+  CloudIcon,
+  ArrowLeftOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Settings = Cog6ToothIcon;
+const Share = ShareIcon;
+const Activity = ChartBarIcon;
+const Zap = BoltIcon;
+const CheckCircle2 = CheckCircleIcon;
+const AlertCircle = ExclamationCircleIcon;
+const Loader2 = ArrowPathIcon;
+const CloudOff = CloudIcon;
+const LogIn = ArrowLeftOnRectangleIcon;
 import { ToolCanvas } from "@hive/ui";
 import { useToolRuntime } from "@/hooks/use-tool-runtime";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
 // DESIGN TOKENS (from HIVE design system)
+// Using workshop tokens for HiveLab pages - zero glass, flat surfaces
 // ============================================================================
 
-const glass = {
-  card: "bg-white/[0.03] backdrop-blur-[8px] border border-white/[0.06]",
-  header: "bg-gray-950/80 backdrop-blur-[16px] border-b border-white/[0.08]",
+const workshop = {
+  card: "workshop-card",
+  header: "workshop-header",
 };
 
-const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950";
+const focusRing = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]";
 
 // Motion variants (T2: Standard interactions)
 const fadeInUp = {
@@ -56,7 +80,7 @@ function SyncStatus({
 
   if (isSaving) {
     return (
-      <div className="flex items-center gap-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 text-xs workshop-text-secondary">
         <Loader2 className={cn("h-3 w-3", !prefersReducedMotion && "animate-spin")} />
         <span>Saving...</span>
       </div>
@@ -65,7 +89,7 @@ function SyncStatus({
 
   if (isSynced) {
     return (
-      <div className="flex items-center gap-2 text-xs text-emerald-400">
+      <div className="flex items-center gap-2 text-xs text-[var(--status-success)]">
         <CheckCircle2 className="h-3 w-3" />
         <span>
           {lastSaved
@@ -78,9 +102,9 @@ function SyncStatus({
   }
 
   return (
-    <div className="flex items-center gap-2 text-xs text-amber-400">
+    <div className="flex items-center gap-2 text-xs text-[var(--life-gold)]">
       <motion.div
-        className="h-2 w-2 rounded-full bg-amber-400"
+        className="h-2 w-2 rounded-full bg-[var(--life-gold)]"
         animate={prefersReducedMotion ? {} : { opacity: [1, 0.5, 1] }}
         transition={{ duration: 1.5, repeat: Infinity }}
       />
@@ -110,9 +134,9 @@ function IconButton({
       className={cn(
         // 44px touch target (h-11 = 44px)
         "h-11 w-11 flex items-center justify-center",
-        "rounded-lg text-gray-400 hover:text-white",
-        "bg-transparent hover:bg-white/[0.06]",
-        "transition-colors duration-150",
+        "rounded-lg workshop-text-secondary hover:workshop-text-primary",
+        "bg-transparent hover:bg-[var(--hivelab-surface)]",
+        "transition-colors duration-[var(--workshop-duration)]",
         focusRing,
         className
       )}
@@ -122,8 +146,8 @@ function IconButton({
   );
 }
 
-// Glass card component
-function GlassCard({
+// Workshop card component (flat, no glass)
+function WorkshopCard({
   children,
   className,
 }: {
@@ -134,8 +158,7 @@ function GlassCard({
     <motion.div
       variants={fadeInUp}
       className={cn(
-        "rounded-2xl p-4",
-        glass.card,
+        workshop.card,
         className
       )}
     >
@@ -153,11 +176,11 @@ function StatusDot({
   const prefersReducedMotion = useReducedMotion();
 
   const colors = {
-    success: "bg-emerald-400",
-    warning: "bg-amber-400",
-    error: "bg-red-400",
+    success: "bg-[var(--status-success)]",
+    warning: "bg-[var(--status-warning)]",
+    error: "bg-[var(--status-error)]",
     info: "bg-sky-400",
-    active: "bg-gold-500", // Using gold for "active" instead of purple
+    active: "bg-[var(--life-gold)]", // Using gold for "active" instead of purple
   };
 
   return (
@@ -195,6 +218,8 @@ export default function ToolRunPage() {
   const {
     tool,
     state,
+    userState,
+    sharedState,
     isLoading,
     isExecuting,
     isSaving,
@@ -209,6 +234,7 @@ export default function ToolRunPage() {
     deploymentId,
     autoSave: true,
     autoSaveDelay: 1500,
+    enableRealtime: true, // Enable real-time updates for polls, counters, etc.
   });
 
   // Action logging for debug panel
@@ -287,17 +313,17 @@ export default function ToolRunPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="workshop min-h-screen flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
           <Loader2 className={cn(
-            "h-8 w-8 text-gold-500 mx-auto mb-4",
+            "h-8 w-8 text-[var(--life-gold)] mx-auto mb-4",
             !prefersReducedMotion && "animate-spin"
           )} />
-          <p className="text-gray-300 font-medium">Loading tool...</p>
+          <p className="workshop-text-secondary font-medium">Loading tool...</p>
         </motion.div>
       </div>
     );
@@ -318,17 +344,17 @@ export default function ToolRunPage() {
         : '';
 
       return (
-        <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+        <div className="workshop min-h-screen flex items-center justify-center px-4">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center max-w-md"
           >
-            <div className="w-16 h-16 rounded-2xl bg-gold-500/10 flex items-center justify-center mx-auto mb-6">
-              <LogIn className="h-8 w-8 text-gold-500" />
+            <div className="w-16 h-16 rounded-2xl bg-[var(--life-gold)]/10 flex items-center justify-center mx-auto mb-6">
+              <LogIn className="h-8 w-8 text-[var(--life-gold)]" />
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">Sign in required</h2>
-            <p className="text-gray-400 mb-8">
+            <h2 className="text-xl font-semibold workshop-text-primary mb-2">Sign in required</h2>
+            <p className="workshop-text-secondary mb-8">
               You need to be signed in to use this tool. Sign in to continue.
             </p>
             <div className="flex gap-3 justify-center">
@@ -337,22 +363,18 @@ export default function ToolRunPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "h-11 px-6 rounded-lg",
-                  "bg-white/[0.06] text-white border border-white/[0.08]",
-                  "hover:bg-white/[0.1] transition-colors",
+                  "workshop-btn",
                   focusRing
                 )}
               >
                 Go Back
               </motion.button>
               <motion.button
-                onClick={() => router.push(`/auth/login?returnUrl=${returnUrl}`)}
+                onClick={() => router.push(`/enter?redirect=${returnUrl}`)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={cn(
-                  "h-11 px-6 rounded-lg",
-                  "bg-gold-500 text-gray-950 font-medium",
-                  "hover:bg-gold-400 transition-colors",
+                  "workshop-btn workshop-btn-primary",
                   focusRing
                 )}
               >
@@ -366,25 +388,23 @@ export default function ToolRunPage() {
 
     // Other errors
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+      <div className="workshop min-h-screen flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
         >
-          <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="h-8 w-8 text-red-400" />
+          <div className="w-16 h-16 rounded-2xl bg-[var(--status-error)]/10 flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-8 w-8 text-[var(--status-error)]" />
           </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Failed to load tool</h2>
-          <p className="text-gray-400 mb-8">{errorMessage || 'Tool not found'}</p>
+          <h2 className="text-xl font-semibold workshop-text-primary mb-2">Failed to load tool</h2>
+          <p className="workshop-text-secondary mb-8">{errorMessage || 'Tool not found'}</p>
           <motion.button
             onClick={() => router.back()}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={cn(
-              "h-11 px-6 rounded-lg",
-              "bg-white/[0.06] text-white border border-white/[0.08]",
-              "hover:bg-white/[0.1] transition-colors",
+              "workshop-btn",
               focusRing
             )}
           >
@@ -401,9 +421,9 @@ export default function ToolRunPage() {
   const toolMetadata = tool.metadata || {};
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      {/* Header with glass morphism */}
-      <header className={cn("sticky top-0 z-40", glass.header)}>
+    <div className="workshop min-h-screen">
+      {/* Header */}
+      <header className={cn("sticky top-0 z-40", workshop.header)}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Left section */}
@@ -415,8 +435,8 @@ export default function ToolRunPage() {
                 whileTap={{ scale: 0.95 }}
                 className={cn(
                   "h-11 px-3 flex items-center gap-2",
-                  "rounded-lg text-gray-400 hover:text-white",
-                  "hover:bg-white/[0.04] transition-colors",
+                  "rounded-lg workshop-text-secondary hover:workshop-text-primary",
+                  "hover:bg-[var(--hivelab-surface)] transition-colors",
                   focusRing
                 )}
               >
@@ -424,20 +444,20 @@ export default function ToolRunPage() {
                 <span className="hidden sm:inline text-sm font-medium">Back</span>
               </motion.button>
 
-              <div className="h-6 w-px bg-white/[0.08] hidden sm:block" />
+              <div className="h-6 w-px bg-[var(--hivelab-border)] hidden sm:block" />
 
               {/* Tool info */}
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2 truncate">
+                <h1 className="text-base sm:text-lg font-semibold workshop-text-primary flex items-center gap-2 truncate">
                   {tool.name}
                   {isExecuting && (
                     <Loader2 className={cn(
-                      "h-4 w-4 text-gold-500 shrink-0",
+                      "h-4 w-4 text-[var(--life-gold)] shrink-0",
                       !prefersReducedMotion && "animate-spin"
                     )} />
                   )}
                 </h1>
-                <p className="text-sm text-gray-500 truncate hidden sm:block">
+                <p className="text-sm workshop-text-tertiary truncate hidden sm:block">
                   {tool.description || 'Interactive tool'}
                   {tool.currentVersion && ` · v${tool.currentVersion}`}
                 </p>
@@ -472,7 +492,7 @@ export default function ToolRunPage() {
       </header>
 
       {/* Mobile sync status */}
-      <div className="sm:hidden px-4 py-2 border-b border-white/[0.06]">
+      <div className="sm:hidden px-4 py-2 border-b border-[var(--hivelab-border)]">
         <SyncStatus isSynced={isSynced} isSaving={isSaving} lastSaved={lastSaved} />
       </div>
 
@@ -492,7 +512,7 @@ export default function ToolRunPage() {
             <div
               className={cn(
                 "rounded-2xl p-4 sm:p-6 min-h-[400px] sm:min-h-[600px]",
-                glass.card
+                workshop.card
               )}
               style={{
                 backgroundColor: typeof toolConfig.backgroundColor === 'string'
@@ -504,11 +524,17 @@ export default function ToolRunPage() {
                 <ToolCanvas
                   elements={elements}
                   state={state}
+                  sharedState={sharedState}
+                  userState={userState}
                   layout={(toolConfig.layout as 'grid' | 'flow' | 'stack') || 'stack'}
                   onElementChange={handleElementChange}
                   onElementAction={handleElementAction}
                   isLoading={isLoading}
                   error={errorMessage || null}
+                  context={{
+                    spaceId,
+                    deploymentId,
+                  }}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center py-16">
@@ -517,17 +543,17 @@ export default function ToolRunPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                   >
-                    <div className="w-16 h-16 bg-gold-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <Zap className="h-8 w-8 text-gold-500" />
+                    <div className="w-16 h-16 bg-[var(--life-gold)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <Zap className="h-8 w-8 text-[var(--life-gold)]" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-2">
+                    <h3 className="text-lg font-semibold workshop-text-primary mb-2">
                       No Elements Configured
                     </h3>
-                    <p className="text-gray-400 text-sm mb-4">
+                    <p className="workshop-text-secondary text-sm mb-4">
                       This tool hasn't been configured with any elements yet.
                     </p>
                     {deployment && (
-                      <p className="text-xs text-gray-600 font-mono">
+                      <p className="text-xs workshop-text-tertiary font-mono">
                         {deployment.deploymentId}
                       </p>
                     )}
@@ -543,63 +569,63 @@ export default function ToolRunPage() {
             variants={staggerContainer}
           >
             {/* Tool Info */}
-            <GlassCard>
-              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+            <WorkshopCard>
+              <h3 className="workshop-label mb-3">
                 Tool Info
               </h3>
               <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Status</span>
-                  <span className="text-white capitalize">{tool.status}</span>
+                  <span className="workshop-text-tertiary">Status</span>
+                  <span className="workshop-text-primary capitalize">{tool.status}</span>
                 </div>
                 {tool.currentVersion && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Version</span>
-                    <span className="text-white font-mono text-xs">{tool.currentVersion}</span>
+                    <span className="workshop-text-tertiary">Version</span>
+                    <span className="workshop-text-primary font-mono text-xs">{tool.currentVersion}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Elements</span>
-                  <span className="text-white">{elements.length}</span>
+                  <span className="workshop-text-tertiary">Elements</span>
+                  <span className="workshop-text-primary">{elements.length}</span>
                 </div>
                 {tool.category && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Category</span>
-                    <span className="text-white capitalize">{tool.category}</span>
+                    <span className="workshop-text-tertiary">Category</span>
+                    <span className="workshop-text-primary capitalize">{tool.category}</span>
                   </div>
                 )}
                 {typeof toolMetadata.useCount === 'number' && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Uses</span>
-                    <span className="text-white">{toolMetadata.useCount.toLocaleString()}</span>
+                    <span className="workshop-text-tertiary">Uses</span>
+                    <span className="workshop-text-primary">{toolMetadata.useCount.toLocaleString()}</span>
                   </div>
                 )}
               </div>
-            </GlassCard>
+            </WorkshopCard>
 
             {/* Deployment Info */}
             {deployment && (
-              <GlassCard>
-                <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+              <WorkshopCard>
+                <h3 className="workshop-label mb-3">
                   Deployment
                 </h3>
                 <div className="space-y-2.5 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Status</span>
+                    <span className="workshop-text-tertiary">Status</span>
                     <span className={cn(
                       "capitalize",
-                      deployment.status === 'active' ? 'text-emerald-400' : 'text-gray-400'
+                      deployment.status === 'active' ? 'text-[var(--status-success)]' : 'workshop-text-secondary'
                     )}>
                       {deployment.status}
                     </span>
                   </div>
                   {spaceId && (
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Space</span>
+                      <span className="workshop-text-tertiary">Space</span>
                       <button
                         onClick={() => router.push(`/spaces/${spaceId}`)}
                         className={cn(
-                          "text-gray-300 hover:text-white underline underline-offset-2",
+                          "workshop-text-secondary hover:workshop-text-primary underline underline-offset-2",
                           "transition-colors",
                           focusRing
                         )}
@@ -610,56 +636,56 @@ export default function ToolRunPage() {
                   )}
                   {typeof deployment.usageCount === 'number' && (
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-500">Usage</span>
-                      <span className="text-white">{deployment.usageCount} times</span>
+                      <span className="workshop-text-tertiary">Usage</span>
+                      <span className="workshop-text-primary">{deployment.usageCount} times</span>
                     </div>
                   )}
                 </div>
-              </GlassCard>
+              </WorkshopCard>
             )}
 
             {/* Runtime Status - NO PURPLE, using semantic colors */}
-            <GlassCard>
-              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide">
+            <WorkshopCard>
+              <h3 className="workshop-label mb-3">
                 Runtime
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <StatusDot status={!error ? 'success' : 'error'} />
-                  <span className="text-sm text-white">
+                  <span className="text-sm workshop-text-primary">
                     {!error ? 'Runtime Active' : 'Runtime Error'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusDot status={isConnected ? 'success' : 'warning'} />
-                  <span className="text-sm text-white">
+                  <span className="text-sm workshop-text-primary">
                     {isConnected ? 'Real-time Connected' : 'Connecting...'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusDot status={isSynced ? 'info' : 'warning'} />
-                  <span className="text-sm text-white">
+                  <span className="text-sm workshop-text-primary">
                     {isSynced ? 'State Synced' : 'Pending Sync'}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusDot status="active" />
-                  <span className="text-sm text-white">Auto-save Enabled</span>
+                  <span className="text-sm workshop-text-primary">Auto-save Enabled</span>
                 </div>
               </div>
-            </GlassCard>
+            </WorkshopCard>
 
             {/* Action Log */}
-            <GlassCard>
-              <h3 className="text-sm font-semibold text-white mb-3 uppercase tracking-wide flex items-center gap-2">
-                <Activity className="h-4 w-4 text-gray-500" />
+            <WorkshopCard>
+              <h3 className="workshop-label mb-3 flex items-center gap-2">
+                <Activity className="h-4 w-4 workshop-text-tertiary" />
                 Action Log
               </h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {actionLog.length === 0 ? (
                   <div className="text-center py-6">
-                    <CloudOff className="h-6 w-6 text-gray-600 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500">
+                    <CloudOff className="h-6 w-6 workshop-text-tertiary mx-auto mb-2" />
+                    <p className="text-xs workshop-text-tertiary">
                       No actions yet
                     </p>
                   </div>
@@ -669,28 +695,28 @@ export default function ToolRunPage() {
                       key={index}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="text-xs border-l-2 border-gold-500/30 pl-3 py-1"
+                      className="text-xs border-l-2 border-[var(--life-gold)]/30 pl-3 py-1"
                     >
-                      <div className="text-gray-600">{log.time}</div>
-                      <div className="text-white font-mono truncate">
+                      <div className="workshop-text-tertiary">{log.time}</div>
+                      <div className="workshop-text-primary font-mono truncate">
                         {log.instanceId}: {log.action}
                       </div>
                     </motion.div>
                   ))
                 )}
               </div>
-            </GlassCard>
+            </WorkshopCard>
 
             {/* State Debug (dev only) */}
             {process.env.NODE_ENV === 'development' && Object.keys(state).length > 0 && (
-              <GlassCard className="border-amber-500/20">
-                <h3 className="text-sm font-semibold text-amber-400 mb-3 uppercase tracking-wide">
+              <WorkshopCard className="border-[var(--life-gold)]/20">
+                <h3 className="workshop-label text-[var(--life-gold)] mb-3">
                   State (Dev)
                 </h3>
-                <pre className="text-xs text-gray-400 overflow-auto max-h-32 font-mono">
+                <pre className="text-xs workshop-text-secondary overflow-auto max-h-32 font-mono">
                   {JSON.stringify(state, null, 2)}
                 </pre>
-              </GlassCard>
+              </WorkshopCard>
             )}
           </motion.div>
         </div>

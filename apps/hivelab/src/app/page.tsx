@@ -15,14 +15,23 @@ import {
 } from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
 import {
-  Plus,
-  Play,
-  Edit,
-  BarChart3,
-  Rocket,
-  Sparkles,
-  ExternalLink,
-} from 'lucide-react';
+  PlusIcon,
+  PlayIcon,
+  PencilIcon,
+  ChartBarIcon,
+  RocketLaunchIcon,
+  SparklesIcon,
+  ArrowTopRightOnSquareIcon,
+} from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Plus = PlusIcon;
+const Play = PlayIcon;
+const Edit = PencilIcon;
+const BarChart3 = ChartBarIcon;
+const Rocket = RocketLaunchIcon;
+const Sparkles = SparklesIcon;
+const ExternalLink = ArrowTopRightOnSquareIcon;
 
 /**
  * HiveLab Dashboard

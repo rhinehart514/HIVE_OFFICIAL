@@ -1,22 +1,16 @@
 /**
  * HiveLab Elements - Modular Element Components
  *
- * This directory contains split versions of the element renderers for better maintainability.
- * The original element-renderers.tsx (2530 lines) has been partially extracted here.
+ * All elements have been fully extracted from the legacy monolithic file.
  *
  * Structure:
  * - error-boundary.tsx: Error boundary for safe element rendering
- * - universal.tsx: Basic UI elements (SearchInput, Filter, ResultList, DatePicker, TagCloud, MapView, Chart, Form, Notifications)
- * - interactive.tsx: Engagement elements (Poll, Timer, Counter, Leaderboard, Countdown) ✅ EXTRACTED
- * - connected.tsx: Data-bound elements (EventPicker, SpacePicker, UserSelector, ConnectionList, RSVP) [TODO: extract]
- * - space.tsx: Space-specific elements (MemberList, MemberSelector, SpaceEvents, SpaceFeed, SpaceStats, Announcement, RoleGate) [TODO: extract]
+ * - universal.tsx: Basic UI elements (SearchInput, Filter, ResultList, DatePicker, TagCloud, MapView, Chart, Form, Notifications, UserSelector)
+ * - interactive.tsx: Engagement elements (Poll, Timer, Counter, Leaderboard, Countdown, RSVP)
+ * - connected/: Data-bound elements (EventPicker, SpacePicker, ConnectionList, DiningPicker, StudySpotFinder)
+ * - space/: Space-specific elements (MemberList, MemberSelector, SpaceEvents, SpaceFeed, SpaceStats, Announcement, RoleGate)
  *
- * Migration Strategy:
- * 1. New code should import from these split files
- * 2. The original element-renderers.tsx remains the source of truth for the ELEMENT_RENDERERS map
- * 3. Gradually move elements here as they need updates
- *
- * @see element-renderers.tsx for the complete element registry
+ * @see registry.tsx for the complete element registry
  */
 
 // Export error boundary
@@ -28,11 +22,13 @@ export {
   FilterSelectorElement,
   ResultListElement,
   DatePickerElement,
+  UserSelectorElement,
   TagCloudElement,
   MapViewElement,
   ChartDisplayElement,
   FormBuilderElement,
   NotificationCenterElement,
+  PhotoGalleryElement,
 } from './universal';
 
 // Export interactive elements (engagement)
@@ -42,22 +38,21 @@ export {
   TimerElement,
   CounterElement,
   LeaderboardElement,
+  RsvpButtonElement,
 } from './interactive';
 
-// Re-export everything from the main file for backward compatibility
+// Export connected elements (data-bound)
 export {
-  // Core utilities
-  renderElement,
-  renderElementSafe,
-  isElementSupported,
-  getSupportedElementTypes,
-  // Connected elements (still in main file)
-  UserSelectorElement,
   EventPickerElement,
   SpacePickerElement,
   ConnectionListElement,
-  RsvpButtonElement,
-  // Space elements (still in main file)
+  DiningPickerElement,
+  StudySpotFinderElement,
+} from './connected';
+export { PersonalizedEventFeedElement } from './connected/personalized-event-feed';
+
+// Export space elements
+export {
   MemberListElement,
   MemberSelectorElement,
   SpaceEventsElement,
@@ -65,4 +60,14 @@ export {
   SpaceStatsElement,
   AnnouncementElement,
   RoleGateElement,
-} from '../element-renderers';
+  AvailabilityHeatmapElement,
+} from './space';
+
+// Re-export core utilities from the registry
+export {
+  renderElement,
+  renderElementSafe,
+  isElementSupported,
+  getSupportedElementTypes,
+  getElementsByCategory,
+} from './registry';

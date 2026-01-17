@@ -8,33 +8,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  Users,
-  UserPlus,
-  Shield,
-  Crown,
-  AlertTriangle,
-  CheckCircle,
-  Ban,
-  Eye,
-  Mail,
-  Heart,
-  Activity,
-  TrendingUp,
-  Clock,
-  GraduationCap,
-  Home,
-  Zap,
-  Search,
-  RefreshCw,
-  MoreVertical,
-  Edit3,
-  Trash2,
-  Globe,
-  Download,
-  ChevronDown,
-  ChevronRight
-} from 'lucide-react';
+import { UsersIcon, UserPlusIcon, ShieldCheckIcon, TrophyIcon, ExclamationTriangleIcon, CheckCircleIcon, NoSymbolIcon, EyeIcon, EnvelopeIcon, HeartIcon, ChartBarIcon, ArrowTrendingUpIcon, ClockIcon, AcademicCapIcon, HomeIcon, BoltIcon, MagnifyingGlassIcon, ArrowPathIcon, EllipsisVerticalIcon, PencilSquareIcon, TrashIcon, GlobeAltIcon, ArrowDownTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 // STRICT USER TYPES WITH HIVE SPACE SYSTEM ENFORCEMENT
 type UserRole = 'student' | 'faculty' | 'admin' | 'builder' | 'system';
@@ -142,7 +116,7 @@ interface HiveAdminUser {
   socialMetrics: UserSocialMetrics;
   privacySettings: UserPrivacySettings;
   
-  // Platform Activity
+  // Platform ChartBarIcon
   deviceInfo: {
     platform: string;
     browser: string;
@@ -222,12 +196,12 @@ const UserCard: React.FC<{
 
   const getRoleIcon = (role: UserRole) => {
     switch (role) {
-      case 'admin': return <Crown className="w-4 h-4" />;
-      case 'faculty': return <GraduationCap className="w-4 h-4" />;
-      case 'builder': return <Zap className="w-4 h-4" />;
-      case 'student': return <Users className="w-4 h-4" />;
-      case 'system': return <Shield className="w-4 h-4" />;
-      default: return <Users className="w-4 h-4" />;
+      case 'admin': return <TrophyIcon className="w-4 h-4" />;
+      case 'faculty': return <AcademicCapIcon className="w-4 h-4" />;
+      case 'builder': return <BoltIcon className="w-4 h-4" />;
+      case 'student': return <UsersIcon className="w-4 h-4" />;
+      case 'system': return <ShieldCheckIcon className="w-4 h-4" />;
+      default: return <UsersIcon className="w-4 h-4" />;
     }
   };
 
@@ -251,11 +225,11 @@ const UserCard: React.FC<{
 
   const getSpaceCategoryIcon = (category: ValidSpaceCategory) => {
     switch (category) {
-      case 'university_spaces': return <GraduationCap className="w-3 h-3" />;
-      case 'residential_spaces': return <Home className="w-3 h-3" />;
-      case 'greek_life_spaces': return <Users className="w-3 h-3" />;
-      case 'student_spaces': return <Heart className="w-3 h-3" />;
-      default: return <Globe className="w-3 h-3" />;
+      case 'university_spaces': return <AcademicCapIcon className="w-3 h-3" />;
+      case 'residential_spaces': return <HomeIcon className="w-3 h-3" />;
+      case 'greek_life_spaces': return <UsersIcon className="w-3 h-3" />;
+      case 'student_spaces': return <HeartIcon className="w-3 h-3" />;
+      default: return <GlobeAltIcon className="w-3 h-3" />;
     }
   };
 
@@ -284,7 +258,7 @@ const UserCard: React.FC<{
                   {user.profilePhoto ? (
                     <img src={user.profilePhoto} alt={user.displayName} className="w-full h-full object-cover" />
                   ) : (
-                    <Users className="w-6 h-6 text-gray-400" />
+                    <UsersIcon className="w-6 h-6 text-gray-400" />
                   )}
                 </div>
                 <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-900 ${getStatusColor(user.status)}`} />
@@ -298,7 +272,7 @@ const UserCard: React.FC<{
                     {getRoleIcon(user.role)}
                   </div>
                   {user.violations.length > 0 && (
-                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                    <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />
                   )}
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-400 mb-1">
@@ -335,7 +309,7 @@ const UserCard: React.FC<{
                 }}
                 className="opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <MoreVertical className="w-4 h-4" />
+                <EllipsisVerticalIcon className="w-4 h-4" />
               </Button>
 
               {showMenu && (
@@ -348,7 +322,7 @@ const UserCard: React.FC<{
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                     >
-                      <Eye className="w-4 h-4" />
+                      <EyeIcon className="w-4 h-4" />
                       View Details
                     </button>
                     <button
@@ -359,7 +333,7 @@ const UserCard: React.FC<{
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center gap-2"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <PencilSquareIcon className="w-4 h-4" />
                       Edit User
                     </button>
                     <button
@@ -370,7 +344,7 @@ const UserCard: React.FC<{
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-yellow-400 hover:bg-gray-700 flex items-center gap-2"
                     >
-                      <Ban className="w-4 h-4" />
+                      <NoSymbolIcon className="w-4 h-4" />
                       Suspend User
                     </button>
                     <button
@@ -381,7 +355,7 @@ const UserCard: React.FC<{
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <TrashIcon className="w-4 h-4" />
                       Delete User
                     </button>
                 </div>
@@ -416,7 +390,7 @@ const UserCard: React.FC<{
               className="flex items-center justify-between w-full text-xs text-gray-400 hover:text-white transition-colors"
             >
               <span>Space Memberships ({user.spaceMemberships.length})</span>
-              {showSpaces ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+              {showSpaces ? <ChevronDownIcon className="w-3 h-3" /> : <ChevronRightIcon className="w-3 h-3" />}
             </button>
             
             {showSpaces && (
@@ -426,7 +400,7 @@ const UserCard: React.FC<{
                       <div className="flex items-center space-x-2">
                         {getSpaceCategoryIcon(space.spaceCategory)}
                         <span className="text-white truncate max-w-[120px]">{space.spaceName}</span>
-                        <Badge size="xs" className="bg-purple-500/10 text-purple-400">
+                        <Badge size="sm" className="bg-purple-500/10 text-purple-400">
                           {space.role}
                         </Badge>
                       </div>
@@ -444,17 +418,17 @@ const UserCard: React.FC<{
             )}
           </div>
 
-          {/* Engagement & Activity */}
+          {/* Engagement & ChartBarIcon */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-1">
-                <Activity className="w-3 h-3 text-gray-400" />
+                <ChartBarIcon className="w-3 h-3 text-gray-400" />
                 <span className={getEngagementColor(user.socialMetrics.engagementRate)}>
                   {user.socialMetrics.engagementRate}% engagement
                 </span>
               </div>
               <div className="flex items-center space-x-1">
-                <TrendingUp className="w-3 h-3 text-gray-400" />
+                <ArrowTrendingUpIcon className="w-3 h-3 text-gray-400" />
                 <span className="text-gray-300">{user.socialMetrics.influenceScore} influence</span>
               </div>
             </div>
@@ -468,7 +442,7 @@ const UserCard: React.FC<{
             <div className="mt-3 pt-3 border-t border-gray-700">
               <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center space-x-2 text-red-400">
-                  <AlertTriangle className="w-3 h-3" />
+                  <ExclamationTriangleIcon className="w-3 h-3" />
                   <span>{user.violations.length} active violations</span>
                 </div>
                 <div className="text-red-400">
@@ -482,7 +456,7 @@ const UserCard: React.FC<{
           <div className="mt-3 pt-3 border-t border-gray-700">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-2">
-                <Shield className="w-3 h-3 text-blue-400" />
+                <ShieldCheckIcon className="w-3 h-3 text-blue-400" />
                 <span className="text-blue-400">Space System Compliance</span>
               </div>
               <div className={`${user.spaceViolations.length === 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -675,7 +649,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">User management system is not available</p>
       </div>
     );
@@ -700,15 +674,15 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
             className="border-gray-600 text-gray-300"
           >
             {loading ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
             )}
             Refresh
           </Button>
           
           <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-            <UserPlus className="w-4 h-4 mr-2" />
+            <UserPlusIcon className="w-4 h-4 mr-2" />
             Add User
           </Button>
         </div>
@@ -720,10 +694,10 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-400">Total Users</p>
+                <p className="text-sm font-medium text-gray-400">Total UsersIcon</p>
                 <p className="text-2xl font-bold text-white">{stats.total}</p>
               </div>
-              <Users className="w-8 h-8 text-gray-400" />
+              <UsersIcon className="w-8 h-8 text-gray-400" />
             </div>
           </CardContent>
         </Card>
@@ -735,7 +709,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <p className="text-sm font-medium text-gray-400">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.active}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-400" />
+              <CheckCircleIcon className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -747,7 +721,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <p className="text-sm font-medium text-gray-400">Suspended</p>
                 <p className="text-2xl font-bold text-red-400">{stats.suspended}</p>
               </div>
-              <Ban className="w-8 h-8 text-red-400" />
+              <NoSymbolIcon className="w-8 h-8 text-red-400" />
             </div>
           </CardContent>
         </Card>
@@ -759,7 +733,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <p className="text-sm font-medium text-gray-400">Violations</p>
                 <p className="text-2xl font-bold text-orange-400">{stats.withViolations}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-orange-400" />
+              <ExclamationTriangleIcon className="w-8 h-8 text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -771,7 +745,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <p className="text-sm font-medium text-gray-400">Space Issues</p>
                 <p className="text-2xl font-bold text-purple-400">{stats.spaceViolators}</p>
               </div>
-              <Shield className="w-8 h-8 text-purple-400" />
+              <ShieldCheckIcon className="w-8 h-8 text-purple-400" />
             </div>
           </CardContent>
         </Card>
@@ -783,21 +757,21 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                 <p className="text-sm font-medium text-gray-400">Pending</p>
                 <p className="text-2xl font-bold text-yellow-400">{stats.pending}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-400" />
+              <ClockIcon className="w-8 h-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
+      {/* Filters and MagnifyingGlassIcon */}
       <Card className="border-gray-700 bg-gray-900/50">
         <CardContent className="p-4">
           <div className="flex items-center space-x-4 mb-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search users by name, handle, or email..."
+                placeholder="MagnifyingGlassIcon users by name, handle, or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -848,19 +822,19 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
               </div>
               <div className="flex items-center space-x-2">
                 <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
-                  <CheckCircle className="w-4 h-4 mr-1" />
+                  <CheckCircleIcon className="w-4 h-4 mr-1" />
                   Activate
                 </Button>
                 <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700 text-white">
-                  <Ban className="w-4 h-4 mr-1" />
+                  <NoSymbolIcon className="w-4 h-4 mr-1" />
                   Suspend
                 </Button>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Mail className="w-4 h-4 mr-1" />
+                  <EnvelopeIcon className="w-4 h-4 mr-1" />
                   Message
                 </Button>
                 <Button size="sm" className="bg-gray-600 hover:bg-gray-700 text-white">
-                  <Download className="w-4 h-4 mr-1" />
+                  <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
                   Export
                 </Button>
               </div>
@@ -869,12 +843,12 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
         </CardContent>
       </Card>
 
-      {/* Users List */}
+      {/* UsersIcon List */}
       <Card className="border-gray-700 bg-gray-900/50">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-white">
-              Users ({filteredUsers.length})
+              UsersIcon ({filteredUsers.length})
             </CardTitle>
             <div className="flex items-center space-x-2">
               <label className="flex items-center text-sm text-gray-400">
@@ -892,12 +866,12 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
-              <RefreshCw className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
+              <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
               <p className="text-gray-400">Loading users...</p>
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <UsersIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-white mb-2">No users found</h3>
               <p className="text-gray-400">
                 {searchTerm ? 'Try adjusting your search' : 'No users match the current filters'}
@@ -926,7 +900,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
       <Card className="border-blue-500/30 bg-blue-500/5">
         <CardHeader>
           <CardTitle className="text-blue-400 flex items-center space-x-2">
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             <span>HIVE SPACE SYSTEM ENFORCEMENT</span>
           </CardTitle>
         </CardHeader>
@@ -974,7 +948,7 @@ export const HiveAdminUserManagement: React.FC<HiveAdminUserManagementProps> = (
                   {selectedUser.profilePhoto ? (
                     <img src={selectedUser.profilePhoto} alt={selectedUser.displayName} className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <Users className="w-8 h-8 text-gray-400" />
+                    <UsersIcon className="w-8 h-8 text-gray-400" />
                   )}
                 </div>
                 <div>

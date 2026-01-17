@@ -9,14 +9,10 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Search,
-  Calendar,
-  BarChart3,
-  Zap,
-  ChevronRight,
-  Layers
-} from 'lucide-react';
+import { MagnifyingGlassIcon, CalendarIcon, ChartBarIcon, BoltIcon, ChevronRightIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Layers = Square3Stack3DIcon;
 import { TOOL_TEMPLATES, type ToolComposition } from '../../../lib/hivelab/element-system';
 import { cn } from '../../../lib/utils';
 
@@ -38,9 +34,9 @@ export interface TemplateBrowserProps {
 // ============================================================================
 
 const TEMPLATE_ICONS: Record<string, React.FC<{ className?: string }>> = {
-  'basic-search-tool': Search,
-  'event-manager-tool': Calendar,
-  'analytics-dashboard-tool': BarChart3,
+  'basic-search-tool': MagnifyingGlassIcon,
+  'event-manager-tool': CalendarIcon,
+  'analytics-dashboard-tool': ChartBarIcon,
 };
 
 const TEMPLATE_COLORS: Record<string, string> = {
@@ -121,7 +117,7 @@ export function TemplateBrowser({
       {/* Empty state if no templates */}
       {TOOL_TEMPLATES.length === 0 && (
         <div className="py-8 text-center text-sm text-muted-foreground">
-          <Zap className="h-8 w-8 mx-auto mb-2 opacity-40" />
+          <BoltIcon className="h-8 w-8 mx-auto mb-2 opacity-40" />
           <p>No templates available yet.</p>
         </div>
       )}
@@ -140,7 +136,7 @@ interface TemplateCardProps {
 }
 
 function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
-  const Icon = TEMPLATE_ICONS[template.id] || Zap;
+  const Icon = TEMPLATE_ICONS[template.id] || BoltIcon;
   const colorClass = TEMPLATE_COLORS[template.id] || 'from-neutral-500/20 to-neutral-600/10 border-neutral-500/30';
 
   return (
@@ -151,7 +147,7 @@ function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
         'group relative w-full text-left rounded-lg border',
         'bg-gradient-to-br transition-all duration-200',
         'hover:scale-[1.02] hover:shadow-lg',
-        'focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         colorClass,
         compact ? 'p-3' : 'p-4'
       )}
@@ -177,7 +173,7 @@ function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
             )}>
               {template.name}
             </h4>
-            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ChevronRightIcon className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
 
           {/* Description */}

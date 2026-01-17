@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../../../lib/utils';
 
 export interface IDESectionProps {
@@ -43,9 +43,9 @@ export function IDESection({
           {title}
         </span>
         {expanded ? (
-          <ChevronDown className="h-3.5 w-3.5 text-[var(--ide-text-muted)]" />
+          <ChevronDownIcon className="h-3.5 w-3.5 text-[var(--ide-text-muted)]" />
         ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-[var(--ide-text-muted)]" />
+          <ChevronRightIcon className="h-3.5 w-3.5 text-[var(--ide-text-muted)]" />
         )}
       </button>
       <AnimatePresence>

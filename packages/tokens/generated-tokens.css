@@ -61,7 +61,7 @@
   --hive-brand-accent: #FFA500;
   --hive-brand-muted: #CD7F32;
   --hive-interactive-hover: rgba(255, 255, 255, 0.08);
-  --hive-interactive-focus: #FFD700;
+  --hive-interactive-focus: rgba(255, 255, 255, 0.50);
   --hive-interactive-active: rgba(255, 255, 255, 0.12);
   --hive-interactive-disabled: #4A4A4F;
   --hive-status-success: #00D46A;

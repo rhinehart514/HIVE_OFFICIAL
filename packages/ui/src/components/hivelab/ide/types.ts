@@ -22,6 +22,8 @@ export interface Connection {
   id: string;
   from: { instanceId: string; port: string };
   to: { instanceId: string; port: string };
+  /** Optional transform to apply to data flowing through this connection */
+  transform?: 'toArray' | 'toCount' | 'toSorted' | 'toTop5' | 'toBoolean' | 'toString';
 }
 
 export interface CanvasState {

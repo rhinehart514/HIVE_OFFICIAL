@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { FileText, RefreshCw, ArrowLeft } from 'lucide-react';
+import { DocumentTextIcon, ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 
 export default function SpaceResourcesError({
@@ -24,7 +24,7 @@ export default function SpaceResourcesError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
-            <FileText className="h-8 w-8 text-amber-500" />
+            <DocumentTextIcon className="h-8 w-8 text-amber-500" />
           </div>
         </div>
 
@@ -38,7 +38,7 @@ export default function SpaceResourcesError({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button onClick={() => reset()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
+            <ArrowPathIcon className="h-4 w-4" />
             Try again
           </Button>
           <Button
@@ -46,7 +46,7 @@ export default function SpaceResourcesError({
             onClick={() => window.history.back()}
             className="gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeftIcon className="h-4 w-4" />
             Go back
           </Button>
         </div>

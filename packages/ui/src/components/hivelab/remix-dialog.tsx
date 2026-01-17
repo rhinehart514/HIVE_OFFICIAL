@@ -10,15 +10,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Copy,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Wand2,
-  ChevronRight,
-} from 'lucide-react';
+import { XMarkIcon, ClipboardDocumentIcon, ArrowPathIcon, CheckCircleIcon, ExclamationCircleIcon, SparklesIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { cn } from '../../lib/utils';
 
 // ============================================================================
@@ -142,7 +134,7 @@ export function RemixDialog({
           <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Copy className="w-5 h-5 text-purple-400" />
+                <ClipboardDocumentIcon className="w-5 h-5 text-purple-400" />
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">Use Template</h2>
@@ -153,7 +145,7 @@ export function RemixDialog({
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
             >
-              <X className="w-5 h-5 text-white/60" />
+              <XMarkIcon className="w-5 h-5 text-white/60" />
             </button>
           </div>
 
@@ -161,7 +153,7 @@ export function RemixDialog({
           {success ? (
             <div className="p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                <CheckCircleIcon className="w-8 h-8 text-emerald-400" />
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Tool Created!</h3>
               <p className="text-white/60 mb-4">Your tool is ready to customize.</p>
@@ -178,9 +170,9 @@ export function RemixDialog({
                   'hover:brightness-110 transition-colors'
                 )}
               >
-                <Wand2 className="w-4 h-4" />
+                <SparklesIcon className="w-4 h-4" />
                 Open in HiveLab
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRightIcon className="w-4 h-4" />
               </button>
             </div>
           ) : (
@@ -213,7 +205,7 @@ export function RemixDialog({
                 {/* Error */}
                 {error && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <ExclamationCircleIcon className="w-4 h-4 text-red-400 shrink-0" />
                     <p className="text-sm text-red-200">{error}</p>
                   </div>
                 )}
@@ -293,13 +285,13 @@ export function RemixDialog({
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <ArrowPathIcon className="w-4 h-4 animate-spin" />
                       Creating...
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
-                      Create My Copy
+                      <ClipboardDocumentIcon className="w-4 h-4" />
+                      Create My ClipboardDocumentIcon
                     </>
                   )}
                 </button>

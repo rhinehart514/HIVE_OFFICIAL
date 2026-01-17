@@ -22,6 +22,19 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 /**
+ * Feature flag: Use rules-based generation (mock generator) as primary
+ *
+ * Benefits:
+ * - $0/month cost (vs $1,000-2,500/month with Gemini at scale)
+ * - ~100ms latency (vs ~2,000ms with Gemini)
+ * - Deterministic, explainable results
+ * - Fully controllable quality
+ *
+ * Set to 'false' to use Firebase AI (Gemini) as primary when available.
+ */
+const USE_RULES_BASED_GENERATION = process.env.USE_RULES_BASED_GENERATION !== 'false';
+
+/**
  * Request schema for tool generation
  */
 const GenerateToolRequestSchema = z.object({
@@ -117,8 +130,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validated = GenerateToolRequestSchema.parse(body);
 
-    // Check if Firebase AI is available
-    const useFirebaseAI = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
+    // Determine which generator to use
+    // Priority: Rules-based (free) > Firebase AI (paid) > Mock fallback
+    const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
+    const useFirebaseAI = !USE_RULES_BASED_GENERATION && firebaseAvailable;
 
     // Create generation context for quality tracking
     const generationContext: GenerationContext = {
@@ -141,7 +156,14 @@ export async function POST(request: NextRequest) {
             : mockGenerateToolStreaming(validated);
 
           const mode = validated.isIteration ? 'iteration' : 'new';
-          logger.info(`Tool generation (${mode})`, { component: 'tools-generate', provider: useFirebaseAI ? 'Firebase AI (Gemini)' : 'Mock generator', userId: userId || 'anonymous' });
+          const providerName = useFirebaseAI ? 'Firebase AI (Gemini 2.0 Flash)' : 'Rules-based generator ($0)';
+          logger.info(`Tool generation (${mode})`, {
+            component: 'tools-generate',
+            provider: providerName,
+            userId: userId || 'anonymous',
+            cost: useFirebaseAI ? '~$0.001' : '$0',
+            rulesBasedPrimary: USE_RULES_BASED_GENERATION,
+          });
 
           // Start streaming generation
           for await (const chunk of generator) {
@@ -233,18 +255,28 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   const { DEMO_PROMPTS } = await import('@hive/core');
-  const firebaseAvailable = isFirebaseAIAvailable();
+  const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
+  const usingRulesBasedPrimary = USE_RULES_BASED_GENERATION;
+  const activeBackend = usingRulesBasedPrimary ? 'rules-based' : (firebaseAvailable ? 'firebase-ai' : 'rules-based');
 
   return NextResponse.json({
     demoPrompts: Array.from(DEMO_PROMPTS),
-    model: firebaseAvailable ? 'gemini-2.0-flash' : 'mock',
-    backend: firebaseAvailable ? 'firebase-ai' : 'mock',
+    model: activeBackend === 'rules-based' ? 'rules-based-v1' : 'gemini-2.0-flash',
+    backend: activeBackend,
     maxPromptLength: 1000,
     streamingSupported: true,
+    costPerGeneration: activeBackend === 'rules-based' ? '$0' : '~$0.001',
+    latency: activeBackend === 'rules-based' ? '~100ms' : '~2000ms',
     features: {
-      structuredOutput: firebaseAvailable,
-      complexTools: firebaseAvailable,
-      multiStage: firebaseAvailable,
+      structuredOutput: true,
+      complexTools: activeBackend !== 'rules-based',
+      multiStage: activeBackend !== 'rules-based',
+      campusSpecificIntents: true,
+      refinementSupport: true,
+    },
+    config: {
+      USE_RULES_BASED_GENERATION: usingRulesBasedPrimary,
+      firebaseAIAvailable: firebaseAvailable,
     },
   });
 }

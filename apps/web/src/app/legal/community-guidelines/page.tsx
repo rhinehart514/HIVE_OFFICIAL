@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Calendar, Heart } from "lucide-react";
+import {
+  ArrowLeftIcon,
+  CalendarIcon,
+  HeartIcon,
+} from "@heroicons/react/24/outline";
+
+// Aliases for lucide compatibility
+const ArrowLeft = ArrowLeftIcon;
+const Calendar = CalendarIcon;
+const Heart = HeartIcon;
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -422,7 +431,7 @@ const CURRENT_GUIDELINES: LegalDocument = {
 };
 
 export const metadata: Metadata = {
-  title: "Community Guidelines | HIVE",
+  title: "Community Guidelines",
   description:
     "Community Guidelines for HIVE - standards for respectful and productive community interaction.",
 };

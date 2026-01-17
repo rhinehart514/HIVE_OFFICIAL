@@ -15,16 +15,11 @@
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  Pin,
-  PinOff,
-  Trash2,
-  Copy,
-  GripVertical,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { XMarkIcon, TrashIcon, ClipboardDocumentIcon, Bars3Icon, ChevronDownIcon, ChevronUpIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Pin = BookmarkIcon;
+const PinOff = BookmarkIcon;
 import * as React from 'react';
 
 import { cn } from '../../../lib/utils';
@@ -97,10 +92,10 @@ interface PropertyInputProps {
 function PropertyInput({ property, onChange }: PropertyInputProps) {
   const baseInputClass = cn(
     'w-full px-3 py-2 rounded-lg',
-    'bg-[#0A0A0A] border border-[#2A2A2A]',
-    'text-sm text-[#FAFAFA] placeholder:text-[#818187]',
-    'focus:outline-none focus:border-[#3A3A3A]',
-    'transition-colors'
+    'bg-[var(--hivelab-bg)] border border-[var(--hivelab-border)]',
+    'text-sm text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)]',
+    'focus:outline-none focus:border-[var(--hivelab-border-emphasis)]',
+    'transition-colors duration-[var(--workshop-duration)]'
   );
 
   switch (property.type) {
@@ -152,12 +147,12 @@ function PropertyInput({ property, onChange }: PropertyInputProps) {
             onChange={(e) => onChange(e.target.checked)}
             className={cn(
               'w-4 h-4 rounded',
-              'bg-[#0A0A0A] border border-[#2A2A2A]',
-              'checked:bg-white checked:border-white',
-              'focus:ring-2 focus:ring-white/20'
+              'bg-[var(--hivelab-bg)] border border-[var(--hivelab-border)]',
+              'checked:bg-[var(--hivelab-text-primary)] checked:border-[var(--hivelab-text-primary)]',
+              'focus:ring-2 focus:ring-white/50'
             )}
           />
-          <span className="text-sm text-[#A1A1A6]">Enabled</span>
+          <span className="text-sm text-[var(--hivelab-text-secondary)]">Enabled</span>
         </label>
       );
 
@@ -211,22 +206,22 @@ function InspectorSectionComponent({
   const [isExpanded, setIsExpanded] = React.useState(section.defaultExpanded ?? true);
 
   return (
-    <div className="border-b border-[#2A2A2A] last:border-b-0">
+    <div className="border-b border-[var(--hivelab-border)] last:border-b-0">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className={cn(
           'flex items-center justify-between w-full px-4 py-3',
-          'text-left hover:bg-white/[0.02]',
-          'transition-colors'
+          'text-left hover:bg-[var(--hivelab-surface)]',
+          'transition-colors duration-[var(--workshop-duration)]'
         )}
       >
-        <span className="text-xs font-medium uppercase tracking-wider text-[#818187]">
+        <span className="text-xs font-medium uppercase tracking-wider text-[var(--hivelab-text-tertiary)]">
           {section.title}
         </span>
         {isExpanded ? (
-          <ChevronUp className="w-4 h-4 text-[#818187]" />
+          <ChevronUpIcon className="w-4 h-4 text-[var(--hivelab-text-tertiary)]" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-[#818187]" />
+          <ChevronDownIcon className="w-4 h-4 text-[var(--hivelab-text-tertiary)]" />
         )}
       </button>
 
@@ -242,7 +237,7 @@ function InspectorSectionComponent({
             <div className="px-4 pb-4 space-y-3">
               {section.properties.map((property) => (
                 <div key={property.id}>
-                  <label className="block text-xs text-[#A1A1A6] mb-1.5">
+                  <label className="block text-xs text-[var(--hivelab-text-secondary)] mb-1.5">
                     {property.label}
                   </label>
                   <PropertyInput
@@ -295,19 +290,19 @@ export function ContextualInspector({
       <div
         className={cn(
           'flex items-center gap-3 px-4 py-3',
-          'border-b border-[#2A2A2A]',
-          'bg-[#0A0A0A]/50',
+          'border-b border-[var(--hivelab-border)]',
+          'bg-[var(--hivelab-bg)]/50',
           !isDocked && 'cursor-move'
         )}
       >
-        {!isDocked && <GripVertical className="w-4 h-4 text-[#818187] flex-shrink-0" />}
+        {!isDocked && <Bars3Icon className="w-4 h-4 text-[var(--hivelab-text-tertiary)] flex-shrink-0" />}
 
         {/* Element info */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
           {elementIcon && (
-            <span className="text-white flex-shrink-0">{elementIcon}</span>
+            <span className="text-[var(--hivelab-text-primary)] flex-shrink-0">{elementIcon}</span>
           )}
-          <span className="text-sm font-medium text-[#FAFAFA] truncate">
+          <span className="text-sm font-medium text-[var(--hivelab-text-primary)] truncate">
             {elementName || 'Select an element'}
           </span>
         </div>
@@ -321,9 +316,9 @@ export function ContextualInspector({
               onClick={onTogglePin}
               className={cn(
                 'p-1.5 rounded-md',
-                'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
-                'transition-colors',
-                isPinned && 'text-white'
+                'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+                'transition-colors duration-[var(--workshop-duration)]',
+                isPinned && 'text-[var(--hivelab-text-primary)]'
               )}
               aria-label={isPinned ? 'Unpin inspector' : 'Pin inspector'}
             >
@@ -338,12 +333,12 @@ export function ContextualInspector({
               onClick={onClose}
               className={cn(
                 'p-1.5 rounded-md',
-                'text-[#818187] hover:text-[#FAFAFA] hover:bg-white/[0.04]',
-                'transition-colors'
+                'text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
+                'transition-colors duration-[var(--workshop-duration)]'
               )}
               aria-label="Close inspector"
             >
-              <X className="w-4 h-4" />
+              <XMarkIcon className="w-4 h-4" />
             </motion.button>
           )}
         </div>
@@ -362,7 +357,7 @@ export function ContextualInspector({
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center p-8">
-          <p className="text-sm text-[#818187] text-center">
+          <p className="text-sm text-[var(--hivelab-text-tertiary)] text-center">
             Select an element on the canvas to view its properties
           </p>
         </div>
@@ -373,7 +368,7 @@ export function ContextualInspector({
         <div
           className={cn(
             'flex items-center gap-2 px-4 py-3',
-            'border-t border-[#2A2A2A]'
+            'border-t border-[var(--hivelab-border)]'
           )}
         >
           {onDuplicate && (
@@ -383,12 +378,12 @@ export function ContextualInspector({
               onClick={onDuplicate}
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg',
-                'text-sm text-[#A1A1A6] hover:text-[#FAFAFA]',
-                'hover:bg-white/[0.04]',
-                'transition-colors'
+                'text-sm text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)]',
+                'hover:bg-[var(--hivelab-surface)]',
+                'transition-colors duration-[var(--workshop-duration)]'
               )}
             >
-              <Copy className="w-4 h-4" />
+              <ClipboardDocumentIcon className="w-4 h-4" />
               Duplicate
             </motion.button>
           )}
@@ -405,7 +400,7 @@ export function ContextualInspector({
                 'transition-colors'
               )}
             >
-              <Trash2 className="w-4 h-4" />
+              <TrashIcon className="w-4 h-4" />
               Delete
             </motion.button>
           )}
@@ -426,7 +421,7 @@ export function ContextualInspector({
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className={cn(
               'fixed top-0 right-0 bottom-0 w-80 z-30',
-              'bg-[#141414] border-l border-[#2A2A2A]',
+              'bg-[var(--hivelab-panel)] border-l border-[var(--hivelab-border)]',
               'flex flex-col',
               className
             )}
@@ -462,7 +457,7 @@ export function ContextualInspector({
           }}
           className={cn(
             'fixed z-40 w-72',
-            'bg-[#141414] border border-[#2A2A2A] rounded-xl',
+            'bg-[var(--hivelab-panel)] border border-[var(--hivelab-border)] rounded-xl',
             'shadow-[0_8px_24px_rgba(0,0,0,0.5)]',
             'flex flex-col max-h-[400px]',
             className

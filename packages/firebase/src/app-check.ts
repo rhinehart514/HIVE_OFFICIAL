@@ -142,27 +142,42 @@ export async function addAppCheckHeader(
 }
 
 /**
- * Server-side App Check verification
- * Use this in API routes to verify requests
+ * Server-side App Check verification (CLIENT-SIDE STUB)
+ *
+ * WARNING: This is a client-side package. For actual token verification,
+ * use the server-side implementation in apps/web/src/lib/app-check-server.ts
+ * which uses Firebase Admin SDK for cryptographic verification.
+ *
+ * This stub is kept for API compatibility but should NOT be used for security.
+ *
+ * @deprecated Use apps/web/src/lib/app-check-server.ts for actual verification
  */
 export async function verifyAppCheckToken(
   token: string | null,
   _projectId: string
 ): Promise<boolean> {
+  // WARNING: This function cannot perform real verification
+  // as it runs in a client-side context without Firebase Admin SDK.
+  // For real verification, import from '@/lib/app-check-server'
+
   if (!token) {
     return false;
   }
 
-  // In production, verify with Firebase Admin SDK
-  if (process.env.NODE_ENV === 'production') {
-    // This would be done server-side with admin SDK
-    // For now, we trust the token if it exists
-    // Real implementation would verify with Firebase Admin
-    return true;
+  // In development, accept debug tokens
+  if (process.env.NODE_ENV === 'development') {
+    return token.startsWith('debug-') || token === 'test-token';
   }
 
-  // In development, accept debug tokens
-  return token.startsWith('debug-');
+  // In production, this function CANNOT verify tokens properly.
+  // Log a warning and return false to force callers to use the proper server-side implementation.
+  console.warn(
+    'verifyAppCheckToken: This client-side stub cannot verify tokens. ' +
+    'Use apps/web/src/lib/app-check-server.ts for server-side verification.'
+  );
+
+  // Return false by default - callers should use the server-side implementation
+  return false;
 }
 
 export default {

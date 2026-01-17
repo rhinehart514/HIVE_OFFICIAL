@@ -1,0 +1,128 @@
+# HIVE Work Orders
+# Current active work for Phase 1: Auth/Onboarding
+
+updated: "2026-01-14"
+
+work_orders:
+  # ============================================
+  # S-001: PHASE 1 WORK ORDERS
+  # ============================================
+
+  # IA (Complete)
+  - id: WO-001
+    slice: S-001
+    title: "Document Auth/Onboarding Information Architecture"
+    description: |
+      Create comprehensive IA spec covering page structure, user flows,
+      navigation patterns, and data requirements for auth/onboarding.
+    status: complete
+    evidence:
+      - "docs/IA_PHASE1_AUTH_ONBOARDING.md"
+    completed_at: "2026-01-10"
+
+  # UI (In Progress)
+  - id: WO-002
+    slice: S-001
+    title: "Implement Auth UI with locked primitives"
+    description: |
+      Build all auth screens (login, signup, verification) using only
+      locked primitives from @hive/ui/design-system/primitives.
+      No custom CSS. Apply Apple Glass Dark aesthetic.
+    status: in_progress
+    acceptance_criteria:
+      - "Login page uses Button, Input, Card primitives"
+      - "Signup flow uses multi-step form with Progress"
+      - "Verification screen with code input"
+      - "Error states use Toast feedback"
+      - "Loading states use Skeleton/Progress"
+    focus_paths:
+      - "apps/web/src/app/auth/login/page.tsx"
+      - "apps/web/src/app/auth/signup/page.tsx"
+      - "apps/web/src/components/auth/"
+
+  - id: WO-003
+    slice: S-001
+    title: "Implement Onboarding Wizard UI"
+    description: |
+      Build the 10-step onboarding wizard that collects student identity
+      (name, handle, photo, major, grad year, interests). Use locked
+      primitives, ensure smooth transitions between steps.
+    status: pending
+    acceptance_criteria:
+      - "Step indicator showing progress"
+      - "Each step uses appropriate primitives"
+      - "Photo upload with Avatar preview"
+      - "Interest selection with multi-select"
+      - "Skip/back functionality"
+    focus_paths:
+      - "apps/web/src/app/onboarding/"
+      - "apps/web/src/components/onboarding/"
+
+  # UX (Pending)
+  - id: WO-004
+    slice: S-001
+    title: "Auth UX polish and edge cases"
+    description: |
+      Handle all edge cases: expired verification codes, invalid emails,
+      network errors, session timeouts. Ensure smooth interactions and
+      helpful error messages.
+    status: pending
+    acceptance_criteria:
+      - "Expired code shows re-send option"
+      - "Invalid email shows inline validation"
+      - "Network errors show retry option"
+      - "Session timeout redirects gracefully"
+      - "All error messages are student-friendly"
+
+  - id: WO-005
+    slice: S-001
+    title: "Onboarding UX and completion flow"
+    description: |
+      Ensure onboarding completion triggers proper state updates,
+      redirects to personalized dashboard, and records completion
+      for analytics.
+    status: pending
+    acceptance_criteria:
+      - "Completion triggers confetti/celebration"
+      - "Redirect to spaces/browse with personalized content"
+      - "Onboarding_complete flag set in user profile"
+      - "Can return to edit profile later"
+
+  # ============================================
+  # RECENTLY COMPLETED (for context)
+  # ============================================
+  - id: WO-006
+    slice: S-001
+    title: "MinimalSidebar implementation"
+    description: |
+      Replace SpaceRail with MinimalSidebar following Resend/YC aesthetic.
+      Clean, modern navigation that doesn't distract from content.
+    status: complete
+    evidence:
+      - "packages/ui/src/shells/00-Global/organisms/minimal-sidebar/"
+      - "commit: 47e7e7b"
+    completed_at: "2026-01-14"
+
+  - id: WO-007
+    slice: S-001
+    title: "Fix JWT session verification"
+    description: |
+      Auth provider now checks session via /api/auth/me instead of
+      localStorage. Feed layout properly verifies JWT and redirects.
+    status: complete
+    evidence:
+      - "commit: ed978d7"
+      - "commit: e7a5a18"
+    completed_at: "2026-01-14"
+
+  - id: WO-008
+    slice: S-001
+    title: "Resend email integration"
+    description: |
+      Configure Resend for email verification with verified domain
+      hello@hive.college. Proper error logging for debugging.
+    status: complete
+    evidence:
+      - "commit: 5ea94d9"
+      - "commit: 4acc84e"
+    completed_at: "2026-01-14"

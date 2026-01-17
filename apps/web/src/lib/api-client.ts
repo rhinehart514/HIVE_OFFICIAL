@@ -1,29 +1,14 @@
 /**
  * Authenticated API Client
- * SECURITY: Uses Firebase Auth tokens for all authenticated requests
+ * SECURITY: Uses httpOnly JWT cookies (hive_session) for authentication
+ * Cookies are automatically sent via credentials: 'include'
  */
 
 import { logger } from './structured-logger';
 
-// Lazy import Firebase auth to avoid initialization errors
-let authModule: { auth: { currentUser: { getIdToken: () => Promise<string> } | null } } | null = null;
-
-async function getFirebaseAuth() {
-  if (!authModule) {
-    try {
-      authModule = await import('./firebase');
-    } catch (error) {
-      logger.warn('Firebase not available', { component: 'api-client', error });
-      return null;
-    }
-  }
-  return authModule?.auth || null;
-}
-
 type RequestInitType = globalThis.RequestInit;
 
 interface ApiOptions extends RequestInitType {
-  skipAuth?: boolean;
   suppressToast?: boolean;
 }
 
@@ -31,44 +16,17 @@ class ApiClient {
   private baseUrl = '';
 
   /**
-   * Get the current user's auth token
-   * SECURITY: Only uses real Firebase tokens - no dev token fallbacks
-   */
-  private async getAuthToken(): Promise<string | null> {
-    try {
-      const auth = await getFirebaseAuth();
-      if (auth?.currentUser) {
-        return await auth.currentUser.getIdToken();
-      }
-
-      return null;
-    } catch (error) {
-      logger.error('Failed to get auth token', { component: 'api-client', action: 'get_auth_token' }, error instanceof Error ? error : undefined);
-      return null;
-    }
-  }
-
-  /**
    * Make an authenticated API request
+   * Authentication is handled via httpOnly cookies - no explicit token needed
    */
   async fetch(url: string, options: ApiOptions = {}): Promise<Response> {
-    const { skipAuth = false, suppressToast = false, headers = {}, ...restOptions } = options;
+    const { suppressToast = false, headers = {}, ...restOptions } = options;
 
     // Build headers
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(headers as Record<string, string>),
     };
-
-    // Add auth token unless explicitly skipped
-    if (!skipAuth) {
-      const token = await this.getAuthToken();
-      if (token) {
-        requestHeaders['Authorization'] = `Bearer ${token}`;
-      } else {
-        logger.warn('No auth token available for API request', { component: 'api-client', action: 'missing_auth_token', url });
-      }
-    }
 
     // Make the request
     const start = performance.now?.() ?? Date.now();

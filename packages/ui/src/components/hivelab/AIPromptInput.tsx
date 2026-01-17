@@ -7,10 +7,10 @@
  * Hero component for landing page AI experience.
  */
 
-import { Sparkles, Send, Loader2, Zap } from 'lucide-react';
+import { SparklesIcon, PaperAirplaneIcon, ArrowPathIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { useState, useRef, useEffect } from 'react';
 
-import { Button } from '../../atomic/00-Global/atoms/button';
+import { Button } from '../../design-system/primitives';
 
 export interface AIPromptInputProps {
   /** Callback when user submits prompt */
@@ -106,7 +106,7 @@ export function AIPromptInput({
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <SparklesIcon className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium text-muted-foreground">AI-Powered Tool Builder</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight">
@@ -146,7 +146,7 @@ export function AIPromptInput({
             <div className="text-xs text-muted-foreground">
               {isGenerating ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <ArrowPathIcon className="h-3 w-3 animate-spin" />
                   {status || 'Generating...'}
                 </span>
               ) : (
@@ -165,12 +165,12 @@ export function AIPromptInput({
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
                   Generating
                 </>
               ) : (
                 <>
-                  <Send className="h-4 w-4" />
+                  <PaperAirplaneIcon className="h-4 w-4" />
                   Generate
                 </>
               )}
@@ -182,7 +182,7 @@ export function AIPromptInput({
         {showSuggestions && demoPrompts.length > 0 && !isGenerating && (
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Zap className="h-3.5 w-3.5" />
+              <BoltIcon className="h-3.5 w-3.5" />
               <span>Try these examples:</span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -193,7 +193,7 @@ export function AIPromptInput({
                   className="group text-left px-4 py-3 rounded-lg border border-border hover:border-white/10 hover:bg-muted/50 transition-all text-sm"
                 >
                   <div className="flex items-start gap-2">
-                    <Sparkles className="h-3.5 w-3.5 mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <SparklesIcon className="h-3.5 w-3.5 mt-0.5 text-muted-foreground group-hover:text-foreground transition-colors" />
                     <span className="text-muted-foreground group-hover:text-foreground transition-colors">
                       {suggestion}
                     </span>
@@ -241,9 +241,9 @@ export function AIPromptInput({
             className="shrink-0 bg-gold-cta hover:brightness-110 text-black disabled:bg-muted disabled:text-muted-foreground transition-all"
           >
             {isGenerating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <PaperAirplaneIcon className="h-4 w-4" />
             )}
           </Button>
         </div>
@@ -253,7 +253,7 @@ export function AIPromptInput({
           <div className="px-3 pb-2 text-xs text-muted-foreground">
             {isGenerating ? (
               <span className="flex items-center gap-1.5">
-                <Loader2 className="h-3 w-3 animate-spin" />
+                <ArrowPathIcon className="h-3 w-3 animate-spin" />
                 {status || 'Generating...'}
               </span>
             ) : (

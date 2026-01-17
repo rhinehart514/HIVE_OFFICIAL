@@ -259,6 +259,35 @@ export const GET = withAuthAndErrors(
         };
       }
 
+      // Fetch deployed tools if requested
+      if (includes.includes('tools')) {
+        const placedToolsSnap = await dbAdmin
+          .collection('users')
+          .doc(targetUserId)
+          .collection('placed_tools')
+          .where('isActive', '==', true)
+          .orderBy('placedAt', 'desc')
+          .limit(20)
+          .get();
+
+        const deployedTools = placedToolsSnap.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            toolId: data.toolId,
+            name: data.name || 'Untitled Tool',
+            description: data.description || '',
+            icon: data.icon || 'Wrench',
+            deploymentId: doc.id,
+            isActive: data.isActive ?? true,
+            config: data.config || {},
+            placedAt: data.placedAt || null,
+          };
+        });
+
+        response.deployedTools = deployedTools;
+      }
+
       logger.info('Profile fetched successfully via DDD', {
         handle: profile.handle.value,
         endpoint: '/api/profile',

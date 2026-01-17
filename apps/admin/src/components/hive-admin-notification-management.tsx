@@ -8,35 +8,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  Bell,
-  AlertTriangle,
-  XCircle,
-  Clock,
-  Send,
-  User,
-  Globe,
-  Shield,
-  Zap,
-  Calendar,
-  Heart,
-  Flag,
-  Search,
-  RefreshCw,
-  Eye,
-  Edit3,
-  Plus,
-  Minus,
-  ChevronDown,
-  ChevronUp,
-  ArrowUp,
-  ArrowDown,
-  RotateCcw,
-  Target,
-  BarChart3,
-  FileText,
-  Megaphone
-} from 'lucide-react';
+import { BellIcon, ExclamationTriangleIcon, XCircleIcon, ClockIcon, PaperAirplaneIcon, UserIcon, GlobeAltIcon, ShieldCheckIcon, BoltIcon, CalendarIcon, HeartIcon, FlagIcon, MagnifyingGlassIcon, ArrowPathIcon, EyeIcon, PencilSquareIcon, PlusIcon, MinusIcon, ChevronDownIcon, ChevronUpIcon, ArrowUpIcon, ArrowDownIcon, ArrowUturnLeftIcon, ViewfinderCircleIcon, ChartBarIcon, DocumentTextIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const Megaphone = MegaphoneIcon;
 
 // NOTIFICATION TYPES WITH SPACE SYSTEM ENFORCEMENT
 type NotificationType = 
@@ -236,17 +211,17 @@ const NotificationCard: React.FC<{
 
   const getTypeIcon = (type: NotificationType) => {
     switch (type) {
-      case 'system_alert': return <AlertTriangle className="w-4 h-4" />;
-      case 'space_violation': return <Shield className="w-4 h-4" />;
-      case 'space_update': return <Globe className="w-4 h-4" />;
-      case 'user_action': return <User className="w-4 h-4" />;
-      case 'tool_notification': return <Zap className="w-4 h-4" />;
-      case 'event_reminder': return <Calendar className="w-4 h-4" />;
-      case 'social_notification': return <Heart className="w-4 h-4" />;
-      case 'compliance_alert': return <Flag className="w-4 h-4" />;
-      case 'security_warning': return <Shield className="w-4 h-4" />;
+      case 'system_alert': return <ExclamationTriangleIcon className="w-4 h-4" />;
+      case 'space_violation': return <ShieldCheckIcon className="w-4 h-4" />;
+      case 'space_update': return <GlobeAltIcon className="w-4 h-4" />;
+      case 'user_action': return <UserIcon className="w-4 h-4" />;
+      case 'tool_notification': return <BoltIcon className="w-4 h-4" />;
+      case 'event_reminder': return <CalendarIcon className="w-4 h-4" />;
+      case 'social_notification': return <HeartIcon className="w-4 h-4" />;
+      case 'compliance_alert': return <FlagIcon className="w-4 h-4" />;
+      case 'security_warning': return <ShieldCheckIcon className="w-4 h-4" />;
       case 'platform_announcement': return <Megaphone className="w-4 h-4" />;
-      default: return <Bell className="w-4 h-4" />;
+      default: return <BellIcon className="w-4 h-4" />;
     }
   };
 
@@ -308,7 +283,7 @@ const NotificationCard: React.FC<{
                 <h3 className="font-semibold text-white truncate">{notification.title}</h3>
                 <div className={`w-2 h-2 rounded-full ${getPriorityColor(notification.priority)}`} />
                 {notification.complianceLevel === 'violation' && (
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <ExclamationTriangleIcon className="w-4 h-4 text-red-400" />
                 )}
               </div>
               <p className="text-sm text-gray-400 line-clamp-2">{notification.message}</p>
@@ -324,21 +299,21 @@ const NotificationCard: React.FC<{
           
           <div className="flex items-center space-x-2">
             <Button size="sm" variant="ghost" onClick={onViewDetails}>
-              <Eye className="w-4 h-4" />
+              <EyeIcon className="w-4 h-4" />
             </Button>
             {notification.status === 'draft' && (
               <Button size="sm" variant="ghost" onClick={onEdit}>
-                <Edit3 className="w-4 h-4" />
+                <PencilSquareIcon className="w-4 h-4" />
               </Button>
             )}
             {notification.status === 'failed' && (
               <Button size="sm" variant="ghost" onClick={onResend} className="text-green-400">
-                <RotateCcw className="w-4 h-4" />
+                <ArrowUturnLeftIcon className="w-4 h-4" />
               </Button>
             )}
             {['scheduled', 'draft'].includes(notification.status) && (
               <Button size="sm" variant="ghost" onClick={onCancel} className="text-red-400">
-                <XCircle className="w-4 h-4" />
+                <XCircleIcon className="w-4 h-4" />
               </Button>
             )}
           </div>
@@ -347,18 +322,18 @@ const NotificationCard: React.FC<{
         {/* Channels */}
         <div className="flex flex-wrap gap-1 mb-3">
           {notification.channels.map((channel) => (
-            <Badge key={channel} size="xs" className="bg-blue-500/10 text-blue-400">
+            <Badge key={channel} size="sm" className="bg-blue-500/10 text-blue-400">
               {channel.replace('_', ' ')}
             </Badge>
           ))}
           {notification.relatedSpaceId && (
-            <Badge size="xs" className="bg-purple-500/10 text-purple-400">
+            <Badge size="sm" className="bg-purple-500/10 text-purple-400">
               Space-Related
             </Badge>
           )}
           {notification.complianceLevel && (
             <Badge 
-              size="xs" 
+              size="sm" 
               className={`${
                 notification.complianceLevel === 'violation' ? 'bg-red-500/10 text-red-400' :
                 notification.complianceLevel === 'warning' ? 'bg-yellow-500/10 text-yellow-400' :
@@ -378,7 +353,7 @@ const NotificationCard: React.FC<{
               className="flex items-center justify-between w-full text-xs text-gray-400 hover:text-white transition-colors mb-2"
             >
               <span>Performance Metrics</span>
-              {showMetrics ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {showMetrics ? <ChevronUpIcon className="w-3 h-3" /> : <ChevronDownIcon className="w-3 h-3" />}
             </button>
             
             {showMetrics && (
@@ -424,7 +399,7 @@ const NotificationCard: React.FC<{
           <div className="mt-3 pt-3 border-t border-gray-700">
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center space-x-2">
-                <Shield className="w-3 h-3 text-blue-400" />
+                <ShieldCheckIcon className="w-3 h-3 text-blue-400" />
                 <span className="text-blue-400">Space System Context</span>
               </div>
               <div className="text-gray-300 capitalize">
@@ -462,9 +437,9 @@ const QuickStatsCard: React.FC<{
                 trend.direction === 'down' ? 'text-red-400' :
                 'text-gray-400'
               }`}>
-                {trend.direction === 'up' ? <ArrowUp className="w-3 h-3" /> :
-                 trend.direction === 'down' ? <ArrowDown className="w-3 h-3" /> :
-                 <Minus className="w-3 h-3" />}
+                {trend.direction === 'up' ? <ArrowUpIcon className="w-3 h-3" /> :
+                 trend.direction === 'down' ? <ArrowDownIcon className="w-3 h-3" /> :
+                 <MinusIcon className="w-3 h-3" />}
                 <span>{Math.abs(trend.value)}%</span>
               </div>
             )}
@@ -532,7 +507,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <BellIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Notification management system is not available</p>
       </div>
     );
@@ -584,15 +559,15 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             className="border-gray-600 text-gray-300"
           >
             {loading ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
             )}
             Refresh
           </Button>
           
           <Button className="bg-amber-500 hover:bg-amber-600 text-black">
-            <Plus className="w-4 h-4 mr-2" />
+            <PlusIcon className="w-4 h-4 mr-2" />
             Create Notification
           </Button>
         </div>
@@ -603,45 +578,45 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
         <QuickStatsCard
           title="Total Notifications"
           value={stats.total}
-          icon={Bell}
+          icon={BellIcon}
           color="text-blue-400"
         />
         <QuickStatsCard
           title="Sent Today"
           value={stats.sent}
           trend={{ value: 12, direction: 'up' }}
-          icon={Send}
+          icon={PaperAirplaneIcon}
           color="text-green-400"
         />
         <QuickStatsCard
           title="Scheduled"
           value={stats.scheduled}
-          icon={Clock}
+          icon={ClockIcon}
           color="text-yellow-400"
         />
         <QuickStatsCard
           title="Failed"
           value={stats.failed}
-          icon={XCircle}
+          icon={XCircleIcon}
           color="text-red-400"
         />
         <QuickStatsCard
           title="Space Related"
           value={stats.spaceRelated}
-          icon={Globe}
+          icon={GlobeAltIcon}
           color="text-purple-400"
         />
         <QuickStatsCard
           title="Compliance Alerts"
           value={stats.complianceAlerts}
-          icon={Shield}
+          icon={ShieldCheckIcon}
           color="text-orange-400"
         />
         <QuickStatsCard
           title="Delivery Rate"
           value={analytics ? `${Math.round(analytics.deliveryRate)}%` : 'N/A'}
           trend={{ value: 3, direction: 'up' }}
-          icon={Target}
+          icon={ViewfinderCircleIcon}
           color="text-cyan-400"
         />
       </div>
@@ -656,9 +631,9 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <Bell className="w-4 h-4" />
+          <BellIcon className="w-4 h-4" />
           <span>Notifications</span>
-          <Badge size="xs" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'notifications' ? 'bg-white/20' : 'bg-gray-700'}>
             {stats.total}
           </Badge>
         </button>
@@ -673,7 +648,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
         >
           <Megaphone className="w-4 h-4" />
           <span>Campaigns</span>
-          <Badge size="xs" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'campaigns' ? 'bg-white/20' : 'bg-gray-700'}>
             {campaigns.length}
           </Badge>
         </button>
@@ -686,9 +661,9 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <DocumentTextIcon className="w-4 h-4" />
           <span>Templates</span>
-          <Badge size="xs" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-gray-700'}>
+          <Badge size="sm" className={selectedTab === 'templates' ? 'bg-white/20' : 'bg-gray-700'}>
             {templates.length}
           </Badge>
         </button>
@@ -701,7 +676,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
               : 'text-gray-400 hover:text-white'
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
+          <ChartBarIcon className="w-4 h-4" />
           <span>Analytics</span>
         </button>
       </div>
@@ -714,10 +689,10 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
             <CardContent className="p-4">
               <div className="flex items-center space-x-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search notifications..."
+                    placeholder="MagnifyingGlassIcon notifications..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
@@ -734,7 +709,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
                   <option value="space_violation">Space Violation</option>
                   <option value="compliance_alert">Compliance Alert</option>
                   <option value="platform_announcement">Announcement</option>
-                  <option value="user_action">User Action</option>
+                  <option value="user_action">UserIcon Action</option>
                   <option value="tool_notification">Tool Notification</option>
                   <option value="event_reminder">Event Reminder</option>
                   <option value="social_notification">Social</option>
@@ -761,12 +736,12 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
           <div>
             {loading ? (
               <div className="text-center py-8">
-                <RefreshCw className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
+                <ArrowPathIcon className="w-8 h-8 text-amber-500 mx-auto mb-4 animate-spin" />
                 <p className="text-gray-400">Loading notifications...</p>
               </div>
             ) : filteredNotifications.length === 0 ? (
               <div className="text-center py-12">
-                <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <BellIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-white mb-2">No notifications found</h3>
                 <p className="text-gray-400">
                   {searchTerm ? 'Try adjusting your search' : 'No notifications match the current filters'}
@@ -794,7 +769,7 @@ export const HiveAdminNotificationManagement: React.FC<HiveAdminNotificationMana
       <Card className="border-blue-500/30 bg-blue-500/5">
         <CardHeader>
           <CardTitle className="text-blue-400 flex items-center space-x-2">
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             <span>SPACE SYSTEM NOTIFICATION ENFORCEMENT</span>
           </CardTitle>
         </CardHeader>

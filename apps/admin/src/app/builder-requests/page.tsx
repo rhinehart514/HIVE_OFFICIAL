@@ -2,18 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from '@hive/ui';
-import {
-  Check,
-  X,
-  Clock,
-  User,
-  Building,
-  FileText,
-  Loader2,
-  ChevronLeft,
-  RefreshCw,
-} from 'lucide-react';
+import { useToast } from '@hive/ui';
+import { CheckIcon, XMarkIcon, ClockIcon, UserIcon, BuildingOfficeIcon, DocumentTextIcon, ArrowPathIcon, ChevronLeftIcon } from '@heroicons/react/24/outline';
 
 interface BuilderRequest {
   id: string;
@@ -36,6 +26,7 @@ interface BuilderRequest {
 
 export default function BuilderRequestsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [requests, setRequests] = useState<BuilderRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
@@ -93,7 +84,7 @@ export default function BuilderRequestsPage() {
       setExpandedId(null);
       setReviewNotes('');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to process request');
+      toast.error(error instanceof Error ? error.message : 'Failed to process request', '');
     } finally {
       setProcessingId(null);
     }
@@ -113,7 +104,7 @@ export default function BuilderRequestsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0A0A0A] via-[#0F0F0F] to-[#1A1A1A] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+        <ArrowPathIcon className="h-8 w-8 animate-spin text-white/50" />
       </div>
     );
   }
@@ -129,7 +120,7 @@ export default function BuilderRequestsPage() {
                 onClick={() => router.push('/dashboard')}
                 className="p-2 -ml-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeftIcon className="h-5 w-5" />
               </button>
               <div>
                 <h1 className="text-xl font-bold text-white">Builder Requests</h1>
@@ -143,7 +134,7 @@ export default function BuilderRequestsPage() {
               onClick={loadRequests}
               className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/5 transition-colors"
             >
-              <RefreshCw className="h-5 w-5" />
+              <ArrowPathIcon className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -153,7 +144,7 @@ export default function BuilderRequestsPage() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         {requests.length === 0 ? (
           <div className="text-center py-16">
-            <Clock className="h-12 w-12 text-white/20 mx-auto mb-4" />
+            <ClockIcon className="h-12 w-12 text-white/20 mx-auto mb-4" />
             <p className="text-white/60">No pending requests</p>
           </div>
         ) : (
@@ -167,7 +158,7 @@ export default function BuilderRequestsPage() {
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
-                      <User className="h-5 w-5 text-white/60" />
+                      <UserIcon className="h-5 w-5 text-white/60" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -198,9 +189,9 @@ export default function BuilderRequestsPage() {
                       className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                     >
                       {processingId === request.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
                       ) : (
-                        <X className="h-4 w-4" />
+                        <XMarkIcon className="h-4 w-4" />
                       )}
                     </button>
                     <button
@@ -209,9 +200,9 @@ export default function BuilderRequestsPage() {
                       className="p-2 rounded-lg text-green-400 hover:bg-green-500/10 transition-colors disabled:opacity-50"
                     >
                       {processingId === request.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <ArrowPathIcon className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Check className="h-4 w-4" />
+                        <CheckIcon className="h-4 w-4" />
                       )}
                     </button>
                   </div>
@@ -223,7 +214,7 @@ export default function BuilderRequestsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-white/60 mb-2">
-                          <FileText className="h-4 w-4" />
+                          <DocumentTextIcon className="h-4 w-4" />
                           Motivation
                         </div>
                         <p className="text-sm text-white/80 whitespace-pre-wrap">
@@ -232,7 +223,7 @@ export default function BuilderRequestsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-white/60 mb-2">
-                          <User className="h-4 w-4" />
+                          <UserIcon className="h-4 w-4" />
                           Experience
                         </div>
                         <p className="text-sm text-white/80 whitespace-pre-wrap">
@@ -241,7 +232,7 @@ export default function BuilderRequestsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 text-sm font-medium text-white/60 mb-2">
-                          <Building className="h-4 w-4" />
+                          <BuildingOfficeIcon className="h-4 w-4" />
                           Plans
                         </div>
                         <p className="text-sm text-white/80 whitespace-pre-wrap">{request.plans}</p>

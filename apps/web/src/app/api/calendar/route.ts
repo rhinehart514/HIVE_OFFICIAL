@@ -7,7 +7,6 @@ import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/
 import { withAuth, ApiResponse as _ApiResponse, type AuthContext } from '@/lib/api-auth-middleware';
 import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import type { QueryDocumentSnapshot, QuerySnapshot } from 'firebase-admin/firestore';
-import { isTestUserId } from "@/lib/security-service";
 
 // Personal event type for calendar tool
 interface PersonalEvent {
@@ -45,11 +44,10 @@ interface CalendarEvent {
 // Fetch user's calendar events from Firebase
 async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]> {
   try {
-    // Get user's personal events
+    // Get user's personal events from flat /personalEvents collection
     const personalEventsSnapshot = await dbAdmin
-      .collection('calendar_events')
+      .collection('personalEvents')
       .where('userId', '==', userId)
-      .where('type', '==', 'personal')
       .orderBy('startDate', 'asc')
       .get();
 
@@ -64,21 +62,24 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 
     let spaceEvents: Array<Record<string, unknown>> = [];
     if (spaceIds.length > 0) {
-      // Batch query for space events (Firestore has a limit of 10 for 'in' queries)
+      // Batch query for space events from flat /events collection (Firestore has a limit of 10 for 'in' queries)
       const eventQueries = [];
       for (let i = 0; i < spaceIds.length; i += 10) {
         const batch = spaceIds.slice(i, i + 10);
         eventQueries.push(
           dbAdmin
-            .collection('calendar_events')
+            .collection('events')
             .where('spaceId', 'in', batch)
-            .where('type', '==', 'space')
+            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('state', '==', 'published')
             .get()
         );
       }
-      
+
       const spaceEventSnapshots = await Promise.all(eventQueries);
-      spaceEvents = spaceEventSnapshots.flatMap((snapshot: QuerySnapshot) => snapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data()));
+      spaceEvents = spaceEventSnapshots.flatMap((snapshot: QuerySnapshot) =>
+        snapshot.docs.map((doc: QueryDocumentSnapshot) => ({ id: doc.id, ...doc.data() }))
+      );
     }
 
     // Combine and format events
@@ -87,10 +88,10 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
         const data = doc.data();
         return {
           id: doc.id,
-          title: data.title,
+          title: data.title || 'Untitled Event',
           description: data.description || '',
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: data.startDate || new Date().toISOString(),
+          endDate: data.endDate || data.startDate || new Date().toISOString(),
           location: data.location,
           isAllDay: data.isAllDay || false,
           type: 'personal' as const,
@@ -100,19 +101,19 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
       }),
       ...spaceEvents.map(data => ({
         id: data.id as string,
-        title: data.title as string,
+        title: (data.title as string) || (data.name as string) || 'Untitled Event',
         description: (data.description as string) || '',
-        startDate: data.startDate as string,
-        endDate: data.endDate as string,
-        location: data.location as string,
+        startDate: (data.startDate as string) || (data.startTime as string) || new Date().toISOString(),
+        endDate: (data.endDate as string) || (data.endTime as string) || (data.startDate as string) || new Date().toISOString(),
+        location: (data.location as string) || '',
         isAllDay: (data.isAllDay as boolean) || false,
         type: 'space' as const,
-        source: (data.spaceName as string) || 'Unknown Space',
+        source: (data.spaceName as string) || 'Space Event',
         spaceId: data.spaceId as string,
-        spaceName: data.spaceName as string,
+        spaceName: (data.spaceName as string) || '',
         canEdit: false,
-        eventType: (data.eventType as string) || 'event',
-        organizerName: data.organizerName as string
+        eventType: (data.eventType as string) || (data.type as string) || 'event',
+        organizerName: (data.organizerName as string) || (data.creatorName as string) || ''
       }))
     ];
 
@@ -127,97 +128,6 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 export const GET = withAuth(async (request, authContext: AuthContext) => {
   try {
     const userId = authContext.userId;
-    
-    // Try to fetch real calendar events from Firebase
-    try {
-      const realEvents = await fetchUserCalendarEvents(userId);
-      if (realEvents.length > 0) {
-        return NextResponse.json({
-          success: true,
-          events: realEvents,
-          totalCount: realEvents.length,
-          userId,
-          message: 'Calendar events retrieved successfully'
-        });
-      }
-    } catch {
-      logger.error('Failed to fetch real calendar events, using mock data');
-    }
-
-    // For development mode or fallback, return mock calendar events (ONLY in development)
-    if (isTestUserId(userId)) {
-      const mockEvents: CalendarEvent[] = [
-        {
-          id: 'event_1',
-          title: 'Data Structures Study Session',
-          description: 'Review binary trees and graph algorithms',
-          startDate: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours from now
-          endDate: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(), // 5 hours from now
-          location: 'Library Study Room 3',
-          isAllDay: false,
-          type: 'space',
-          source: 'CS Study Group',
-          spaceId: 'cs_study_group',
-          spaceName: 'CS Study Group',
-          canEdit: false,
-          eventType: 'study',
-          organizerName: 'Study Group Admin'
-        },
-        {
-          id: 'event_2',
-          title: 'Math Homework Due',
-          description: 'Calculus problem set 7',
-          startDate: new Date(Date.now() + 86400000).toISOString(), // Tomorrow
-          endDate: new Date(Date.now() + 86400000 + 60*60*1000).toISOString(), // Tomorrow + 1 hour
-          isAllDay: false,
-          type: 'personal',
-          canEdit: true,
-          eventType: 'assignment'
-        },
-        {
-          id: 'event_3',
-          title: 'Debate Club Meeting',
-          description: 'Weekly debate practice session',
-          startDate: new Date(Date.now() + 2 * 86400000).toISOString(), // Day after tomorrow
-          endDate: new Date(Date.now() + 2 * 86400000 + 2*60*60*1000).toISOString(), // +2 hours
-          location: 'Student Center Room 204',
-          isAllDay: false,
-          type: 'space',
-          source: 'Debate Club',
-          spaceId: 'debate_club',
-          spaceName: 'Debate Club',
-          canEdit: false,
-          eventType: 'meeting',
-          organizerName: 'Debate Club President'
-        }
-      ];
-      
-      const { searchParams } = new URL(request.url);
-      const startDate = searchParams.get('startDate');
-      const endDate = searchParams.get('endDate');
-      
-      // Filter events by date range if provided
-      let filteredEvents = mockEvents;
-      if (startDate) {
-        filteredEvents = filteredEvents.filter(event => new Date(event.startDate) >= new Date(startDate));
-      }
-      if (endDate) {
-        filteredEvents = filteredEvents.filter(event => new Date(event.endDate) <= new Date(endDate));
-      }
-      
-      logger.info('Development mode: Returning mock calendar events', { 
-        eventCount: filteredEvents.length, 
-        endpoint: '/api/calendar' 
-      });
-      
-      return NextResponse.json({
-        success: true,
-        events: filteredEvents,
-        message: 'Calendar events retrieved successfully (development mode)',
-        // SECURITY: Development mode removed for production safety
-      });
-    }
-
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');

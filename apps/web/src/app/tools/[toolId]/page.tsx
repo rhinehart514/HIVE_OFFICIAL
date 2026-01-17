@@ -1,297 +1,564 @@
-"use client";
+'use client';
 
-// Force dynamic rendering to avoid SSG issues
-export const dynamic = 'force-dynamic';
-
-import { useState, useEffect, useCallback, type ReactNode } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button, Card, Badge } from "@hive/ui";
+import { useState, useEffect, useCallback, use } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { useAuth } from '@hive/auth-logic';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Play,
-  Settings,
-  BarChart3,
-  Share2,
-  Download,
-  Star,
-  Users,
-  Clock,
-  Code,
-  Zap
-} from 'lucide-react';
-import { authenticatedFetch } from "@/lib/auth-utils";
-import { logger } from "@/lib/logger";
-import { useAuth } from "@hive/auth-logic";
+  HiveLabIDE,
+  HeaderBar,
+  Skeleton,
+  ToolDeployModal,
+  type HiveLabComposition,
+  type IDECanvasElement,
+  type IDEConnection,
+  type UserContext,
+  type ToolDeploymentTarget as DeploymentTarget,
+  type ToolDeploymentConfig as DeploymentConfig,
+} from '@hive/ui';
+import { ToolAnalyticsPanel } from './components/analytics-panel';
 
-// Inline PageContainer to replace deleted temp-stubs
-function PageContainer({
-  title,
-  children
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="min-h-screen bg-black">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold text-white mb-6">{title}</h1>
-        {children}
-      </div>
-    </div>
-  );
+/**
+ * Tool Studio Page - Full HiveLabIDE Experience
+ *
+ * Canvas-first IDE with:
+ * - Element palette (drag-drop)
+ * - Properties panel
+ * - Layers panel
+ * - AI Command Palette (⌘K)
+ * - Smart guides & grid snapping
+ * - Undo/redo history
+ * - Auto-save
+ * - Deploy modal with space selection
+ * - Analytics panel
+ */
+
+interface ToolApiResponse {
+  tool: {
+    id: string;
+    name: string;
+    description: string;
+    status: 'draft' | 'published' | 'archived';
+    visibility?: 'public' | 'private' | 'space';
+    category?: string;
+    config?: {
+      composition?: {
+        elements?: Array<{
+          id?: string;
+          elementId: string;
+          instanceId?: string;
+          config?: Record<string, unknown>;
+          position?: { x: number; y: number };
+          size?: { width: number; height: number };
+        }>;
+        connections?: Array<{
+          from: { instanceId: string; port?: string; output?: string };
+          to: { instanceId: string; port?: string; input?: string };
+        }>;
+      };
+    };
+    elements?: Array<{
+      id?: string;
+      elementId: string;
+      instanceId?: string;
+      config?: Record<string, unknown>;
+      position?: { x: number; y: number };
+      size?: { width: number; height: number };
+    }>;
+    connections?: Array<{
+      from: { instanceId: string; port?: string; output?: string };
+      to: { instanceId: string; port?: string; input?: string };
+    }>;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
-interface Tool {
+interface Space {
   id: string;
   name: string;
-  description: string;
-  category: string;
-  creator: string;
-  downloads: number;
-  rating: number;
-  ratingCount: number;
-  tags: string[];
-  version: string;
-  lastUpdated: string;
-  isInstalled?: boolean;
-  isRunning?: boolean;
+  memberCount?: number;
+  description?: string;
 }
 
-export default function ToolPage() {
-  const params = useParams();
-  const router = useRouter();
-  const { user: _user } = useAuth();
-  const isAuthenticated = !!_user;
-  const toolId = params.toolId as string;
-  
-  const [tool, setTool] = useState<Tool | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isInstalling, setIsInstalling] = useState(false);
-  const [_isRunning, _setIsRunning] = useState(false);
-
-  const fetchTool = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await authenticatedFetch(`/api/tools/${toolId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setTool(data.tool);
-      } else {
-        setError('Tool not found');
-      }
-    } catch {
-      setError('Failed to load tool');
-    } finally {
-      setLoading(false);
+// Fetch tool data
+async function fetchTool(toolId: string): Promise<ToolApiResponse['tool']> {
+  const response = await fetch(`/api/tools/${toolId}`, {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error('Tool not found');
     }
-  }, [toolId]);
+    throw new Error('Failed to load tool');
+  }
+  const data = await response.json();
+  return data.tool || data;
+}
 
+// Fetch user's spaces for deployment
+async function fetchUserSpaces(): Promise<Space[]> {
+  const response = await fetch('/api/profile/my-spaces?limit=50', {
+    credentials: 'include',
+  });
+  if (!response.ok) {
+    return [];
+  }
+  const data = await response.json();
+  return data.spaces || [];
+}
+
+// Save tool
+async function saveTool(
+  toolId: string,
+  composition: HiveLabComposition
+): Promise<void> {
+  const response = await fetch(`/api/tools/${toolId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      name: composition.name,
+      description: composition.description,
+      elements: composition.elements.map((el) => ({
+        elementId: el.elementId,
+        instanceId: el.instanceId,
+        config: el.config,
+        position: el.position,
+        size: el.size,
+      })),
+      connections: composition.connections.map((conn) => ({
+        from: conn.from,
+        to: conn.to,
+      })),
+      layout: composition.layout,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to save tool');
+  }
+}
+
+// Deploy tool to space
+async function deployToolToTarget(
+  toolId: string,
+  config: DeploymentConfig
+): Promise<void> {
+  const response = await fetch(`/api/tools/${toolId}/deploy`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      targetType: config.targetType,
+      targetId: config.targetId,
+      surface: config.surface,
+      permissions: config.permissions,
+      settings: config.settings,
+      privacy: config.privacy,
+    }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to deploy tool');
+  }
+}
+
+// Transform API tool data to IDE canvas elements
+function transformToCanvasElements(
+  tool: ToolApiResponse['tool']
+): { elements: IDECanvasElement[]; connections: IDEConnection[] } {
+  // Get elements from either nested composition or flat structure
+  const rawElements =
+    tool.config?.composition?.elements || tool.elements || [];
+  const rawConnections =
+    tool.config?.composition?.connections || tool.connections || [];
+
+  const elements: IDECanvasElement[] = rawElements.map((el, index) => ({
+    id: el.id || `element_${index}`,
+    elementId: el.elementId,
+    instanceId: el.instanceId || `${el.elementId}_${index}`,
+    position: el.position || { x: 100 + index * 50, y: 100 + index * 50 },
+    size: el.size || { width: 240, height: 120 },
+    config: el.config || {},
+    zIndex: index + 1,
+    locked: false,
+    visible: true,
+  }));
+
+  const connections: IDEConnection[] = rawConnections.map((conn, index) => ({
+    id: `conn_${index}`,
+    from: {
+      instanceId: conn.from.instanceId,
+      port: conn.from.port || conn.from.output || 'output',
+    },
+    to: {
+      instanceId: conn.to.instanceId,
+      port: conn.to.port || conn.to.input || 'input',
+    },
+  }));
+
+  return { elements, connections };
+}
+
+interface Props {
+  params: Promise<{ toolId: string }>;
+}
+
+export default function ToolStudioPage({ params }: Props) {
+  const { toolId } = use(params);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const { user, isLoading: authLoading } = useAuth();
+
+  const isNewTool = searchParams.get('new') === 'true';
+  const showDeployOnMount = searchParams.get('deploy') === 'true';
+  const showAnalyticsOnMount = searchParams.get('analytics') === 'true';
+  const preselectedSpaceId = searchParams.get('spaceId');
+
+  // State
+  const [composition, setComposition] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    elements: IDECanvasElement[];
+    connections: IDEConnection[];
+  } | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Modal states
+  const [deployModalOpen, setDeployModalOpen] = useState(showDeployOnMount);
+  const [analyticsOpen, setAnalyticsOpen] = useState(showAnalyticsOnMount);
+
+  // Queries
+  const {
+    data: tool,
+    isLoading: toolLoading,
+    error: toolError,
+  } = useQuery({
+    queryKey: ['tool', toolId],
+    queryFn: () => fetchTool(toolId),
+    enabled: !!user && !!toolId && !isNewTool,
+    staleTime: 60000,
+  });
+
+  const { data: userSpaces = [] } = useQuery({
+    queryKey: ['user-spaces'],
+    queryFn: fetchUserSpaces,
+    enabled: !!user,
+    staleTime: 300000,
+  });
+
+  // Check if user is a space leader (for gated elements)
+  const isSpaceLeader = userSpaces.length > 0;
+  const leadingSpaceIds = userSpaces.map((s) => s.id);
+
+  // User context for element permissions
+  const userContext: UserContext = {
+    userId: user?.uid || 'anonymous',
+    campusId: 'ub-buffalo',
+    isSpaceLeader,
+    leadingSpaceIds,
+  };
+
+  // Build deployment targets from user's spaces + profile
+  const deploymentTargets: DeploymentTarget[] = [
+    {
+      id: 'profile',
+      name: 'My Profile',
+      type: 'profile',
+      description: 'Add this tool to your personal profile',
+    },
+    ...userSpaces.map((space) => ({
+      id: space.id,
+      name: space.name,
+      type: 'space' as const,
+      description: space.description || `Deploy to ${space.name}`,
+    })),
+  ];
+
+  // Initialize composition from tool or blank
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/login');
+    if (isNewTool) {
+      // New tool - start with blank canvas
+      setComposition({
+        id: toolId,
+        name: '',
+        description: '',
+        elements: [],
+        connections: [],
+      });
+
+      // Show onboarding for new tools (unless dismissed)
+      const hasSeenOnboarding = localStorage.getItem(
+        'hivelab_onboarding_dismissed'
+      );
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+
+      // Clean up URL
+      window.history.replaceState({}, '', `/tools/${toolId}`);
       return;
     }
 
-    fetchTool();
-  }, [toolId, isAuthenticated, router, fetchTool]);
-
-  const handleInstallTool = async () => {
-    if (!tool) return;
-    
-    try {
-      setIsInstalling(true);
-      const response = await authenticatedFetch('/api/tools/install', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId: tool.id })
+    if (tool) {
+      const { elements, connections } = transformToCanvasElements(tool);
+      setComposition({
+        id: tool.id,
+        name: tool.name || 'Untitled Tool',
+        description: tool.description || '',
+        elements,
+        connections,
       });
-      
-      if (response.ok) {
-        setTool({ ...tool, isInstalled: true });
-      }
-    } catch (err) {
-      logger.error('Failed to install tool', { component: 'ToolPage' }, err instanceof Error ? err : undefined);
-    } finally {
-      setIsInstalling(false);
     }
-  };
+  }, [tool, toolId, isNewTool]);
 
-  const handleRunTool = async () => {
-    if (!tool) return;
-    
-    router.push(`/tools/${tool.id}/run`);
-  };
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/enter');
+    }
+  }, [authLoading, user, router]);
 
-  if (loading) {
+  // Handle save
+  const handleSave = useCallback(
+    async (comp: HiveLabComposition) => {
+      setSaving(true);
+      try {
+        await saveTool(toolId, comp);
+        setHasUnsavedChanges(false);
+        queryClient.invalidateQueries({ queryKey: ['tool', toolId] });
+        toast.success('Tool saved');
+      } catch (error) {
+        console.error('Save failed:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to save tool'
+        );
+        throw error;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [toolId, queryClient]
+  );
+
+  // Handle preview
+  const handlePreview = useCallback(
+    (comp: HiveLabComposition) => {
+      // Store composition for preview page
+      localStorage.setItem(`hivelab_preview_${toolId}`, JSON.stringify(comp));
+      router.push(`/tools/${toolId}/run`);
+    },
+    [toolId, router]
+  );
+
+  // Handle cancel/back
+  const handleCancel = useCallback(() => {
+    if (hasUnsavedChanges) {
+      const confirmLeave = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave?'
+      );
+      if (!confirmLeave) return;
+    }
+    router.push('/tools');
+  }, [router, hasUnsavedChanges]);
+
+  // Handle deploy via modal
+  const handleDeploy = useCallback(
+    async (config: DeploymentConfig) => {
+      // Save first if there are unsaved changes
+      if (hasUnsavedChanges && composition) {
+        await saveTool(toolId, {
+          id: composition.id,
+          name: composition.name,
+          description: composition.description,
+          elements: composition.elements,
+          connections: composition.connections,
+          layout: 'grid',
+        });
+      }
+
+      await deployToolToTarget(toolId, config);
+      setHasUnsavedChanges(false);
+      // Don't auto-navigate - let modal handle with "View in space" button
+    },
+    [toolId, hasUnsavedChanges, composition]
+  );
+
+  // Handle view in space after deployment
+  const handleViewInSpace = useCallback(
+    (spaceId: string) => {
+      router.push(`/spaces/${spaceId}`);
+    },
+    [router]
+  );
+
+  // Loading state
+  if (authLoading || (toolLoading && !isNewTool)) {
     return (
-      <PageContainer title="Loading Tool...">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+      <div className="h-screen bg-[#E8F5E9] flex flex-col">
+        {/* Header skeleton */}
+        <div className="h-12 bg-white border-b border-[#e0e0e0] flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-7 w-7 rounded-lg" />
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <Skeleton className="h-5 w-32" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20 rounded-lg" />
+            <Skeleton className="h-8 w-16 rounded-lg" />
+          </div>
         </div>
-      </PageContainer>
+
+        {/* Main content skeleton */}
+        <div className="flex-1 flex">
+          {/* Left rail */}
+          <div className="w-12 bg-white border-r border-[#e0e0e0] p-2 space-y-2">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+
+          {/* Canvas */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <Skeleton className="h-16 w-16 mx-auto rounded-2xl" />
+              <Skeleton className="h-6 w-32 mx-auto" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  if (error || !tool) {
+  // Error state
+  if (toolError && !isNewTool) {
     return (
-      <PageContainer title="Tool Not Found">
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold text-white mb-2">Tool Not Found</h2>
-          <p className="text-neutral-400 mb-4">{error || 'The requested tool could not be found.'}</p>
-          <Button onClick={() => router.push('/tools')}>
+      <div className="h-screen bg-[#E8F5E9] flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md text-center">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-[#212121] mb-2">
+            Tool not found
+          </h2>
+          <p className="text-[#757575] mb-6">
+            This tool may have been deleted or you don't have access to it.
+          </p>
+          <button
+            onClick={() => router.push('/tools')}
+            className="px-4 py-2 bg-[#4CAF50] text-white rounded-lg font-medium hover:bg-[#43A047] transition-colors"
+          >
             Back to Tools
-          </Button>
-        </Card>
-      </PageContainer>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // No composition yet
+  if (!composition) {
+    return (
+      <div className="h-screen bg-[#E8F5E9] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#4CAF50] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#757575]">Preparing canvas...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <PageContainer title={tool.name}>
-        <div className="space-y-6">
-          {/* Tool Header */}
-          <Card className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <Code className="h-8 w-8 text-blue-400" />
-                  <h1 className="text-2xl font-bold text-white">{tool.name}</h1>
-                  <Badge variant="sophomore">{tool.category}</Badge>
-                </div>
-                <p className="text-neutral-300 mb-4">{tool.description}</p>
-                
-                <div className="flex items-center gap-6 text-sm text-neutral-400">
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{tool.downloads.toLocaleString()} downloads</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span>{tool.rating.toFixed(1)} ({tool.ratingCount} reviews)</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    <span>Updated {new Date(tool.lastUpdated).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {tool.tags.map((tag) => (
-                    <Badge key={tag} variant="freshman" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-2 ml-6">
-                {!tool.isInstalled ? (
-                  <Button 
-                    onClick={handleInstallTool}
-                    disabled={isInstalling}
-                    className="min-w-[120px]"
-                  >
-                    {isInstalling ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Installing...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4 mr-2" />
-                        Install Tool
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={handleRunTool}
-                    className="min-w-[120px]"
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Run Tool
-                  </Button>
-                )}
-                
-                <Button 
-                  variant="secondary" 
-                  onClick={() => router.push(`/tools/${tool.id}/analytics`)}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Analytics
-                </Button>
-                
-                <Button 
-                  variant="secondary"
-                  onClick={() => router.push(`/tools/${tool.id}/settings`)}
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </Button>
-              </div>
-            </div>
-          </Card>
+    <div className="h-screen flex flex-col bg-[#E8F5E9]">
+      {/* Header Bar */}
+      <HeaderBar
+        toolName={composition.name || 'Untitled Tool'}
+        onToolNameChange={(name: string) => {
+          setComposition((prev) => (prev ? { ...prev, name } : null));
+          setHasUnsavedChanges(true);
+        }}
+        onPreview={() =>
+          handlePreview({
+            id: composition.id,
+            name: composition.name,
+            description: composition.description,
+            elements: composition.elements,
+            connections: composition.connections,
+            layout: 'grid',
+          })
+        }
+        onSave={() =>
+          handleSave({
+            id: composition.id,
+            name: composition.name,
+            description: composition.description,
+            elements: composition.elements,
+            connections: composition.connections,
+            layout: 'grid',
+          })
+        }
+        saving={saving}
+        onBack={handleCancel}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onDeploy={() => setDeployModalOpen(true)}
+        onAnalytics={() => setAnalyticsOpen(true)}
+      />
 
-          {/* Tool Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="p-4 hover:bg-neutral-800 transition-colors cursor-pointer" 
-                  onClick={() => router.push(`/tools/${tool.id}/run`)}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/20 rounded-lg">
-                  <Zap className="h-5 w-5 text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Run Tool</h3>
-                  <p className="text-sm text-neutral-400">Execute this tool</p>
-                </div>
-              </div>
-            </Card>
+      {/* HiveLab IDE */}
+      <div className="flex-1 overflow-hidden">
+        <HiveLabIDE
+          initialComposition={composition}
+          showOnboarding={showOnboarding}
+          onSave={handleSave}
+          onPreview={handlePreview}
+          onCancel={handleCancel}
+          userId={user?.uid || 'anonymous'}
+          userContext={userContext}
+        />
+      </div>
 
-            <Card className="p-4 hover:bg-neutral-800 transition-colors cursor-pointer"
-                  onClick={() => router.push(`/tools/${tool.id}/analytics`)}>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <BarChart3 className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">View Analytics</h3>
-                  <p className="text-sm text-neutral-400">Usage insights</p>
-                </div>
-              </div>
-            </Card>
+      {/* Deploy Modal */}
+      <ToolDeployModal
+        open={deployModalOpen}
+        onOpenChange={setDeployModalOpen}
+        toolName={composition.name || 'Untitled Tool'}
+        availableTargets={deploymentTargets}
+        onDeploy={handleDeploy}
+        onViewInSpace={handleViewInSpace}
+        initialConfig={
+          preselectedSpaceId
+            ? { targetType: 'space', targetId: preselectedSpaceId }
+            : undefined
+        }
+      />
 
-            <Card className="p-4 hover:bg-neutral-800 transition-colors cursor-pointer">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 rounded-lg">
-                  <Share2 className="h-5 w-5 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">Share Tool</h3>
-                  <p className="text-sm text-neutral-400">Share with others</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Tool Information */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">About {tool.name}</h2>
-            <div className="space-y-4 text-neutral-300">
-              <div>
-                <h3 className="font-medium text-white mb-2">Creator</h3>
-                <p>{tool.creator}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-white mb-2">Version</h3>
-                <p>{tool.version}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-white mb-2">Category</h3>
-                <p>{tool.category}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-    </PageContainer>
+      {/* Analytics Panel */}
+      {analyticsOpen && (
+        <ToolAnalyticsPanel
+          toolId={toolId}
+          toolName={composition.name || 'Untitled Tool'}
+          onClose={() => setAnalyticsOpen(false)}
+        />
+      )}
+    </div>
   );
 }

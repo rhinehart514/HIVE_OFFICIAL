@@ -33,7 +33,7 @@ export const colors = {
   // Borders
   borderDefault: '#2A2A2A', // Standard borders
   borderHover: '#3A3A3A',   // Hover state borders
-  borderFocus: '#FFD700',   // Focus rings (gold)
+  borderFocus: 'rgba(255, 255, 255, 0.50)', // Focus rings (white, NOT gold)
 
   // Brand - Gold
   gold: '#FFD700',          // Primary gold (canonical)
@@ -237,16 +237,16 @@ export const componentTokens = {
       border: colors.borderDefault,
       text: colors.textPrimary,
       placeholder: colors.textSubtle,
-      focusBorder: colors.gold,
-      focusGlow: colors.goldGlow,
+      focusBorder: colors.borderFocus,
+      focusGlow: 'rgba(255, 255, 255, 0.15)',
     },
     hero: {
       bg: colors.bgSurface,
       border: colors.borderDefault,
       text: colors.textPrimary,
       placeholder: colors.textSubtle,
-      focusBorder: colors.gold,
-      focusGlow: '0 0 0 3px rgba(255, 215, 0, 0.2)',
+      focusBorder: colors.borderFocus,
+      focusGlow: '0 0 0 3px rgba(255, 255, 255, 0.2)',
       minHeight: '56px',
     },
   },

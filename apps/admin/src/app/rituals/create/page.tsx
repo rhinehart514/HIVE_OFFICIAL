@@ -24,7 +24,7 @@ import {
   type RitualTemplate,
   type RitualTemplateId,
 } from '@hive/core';
-import { ChevronRight, ChevronLeft, Check, Sparkles } from 'lucide-react';
+import { ChevronRightIcon, ChevronLeftIcon, CheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
 
 type WizardStep = 'template' | 'basic' | 'config' | 'presentation' | 'review';
 type RitualFormData = Partial<BaseRitual>;
@@ -103,19 +103,11 @@ export default function CreateRitualPage() {
 
       await res.json();
 
-      toast({
-        title: 'Ritual Created!',
-        message: `${ritualData.title} has been created and will start in 1 hour.`,
-        type: 'success',
-      });
+      toast.success('Ritual Created!', `${ritualData.title} has been created and will start in 1 hour.`);
 
       router.push('/rituals');
     } catch (error) {
-      toast({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to create ritual',
-        type: 'error',
-      });
+      toast.error('Error', error instanceof Error ? error.message : 'Failed to create ritual');
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +136,7 @@ export default function CreateRitualPage() {
                     }`}
                   >
                     {idx < currentStepIndex ? (
-                      <Check className="h-5 w-5" />
+                      <CheckIcon className="h-5 w-5" />
                     ) : (
                       step.number
                     )}
@@ -273,7 +265,7 @@ export default function CreateRitualPage() {
               </h2>
               <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/10 p-4">
                 <p className="text-sm text-yellow-400">
-                  <Sparkles className="mr-2 inline h-4 w-4" />
+                  <SparklesIcon className="mr-2 inline h-4 w-4" />
                   Using smart defaults from template. Advanced config coming soon!
                 </p>
               </div>
@@ -387,13 +379,13 @@ export default function CreateRitualPage() {
               onClick={handleBack}
               disabled={currentStepIndex === 0}
             >
-              <ChevronLeft className="mr-2 h-4 w-4" />
+              <ChevronLeftIcon className="mr-2 h-4 w-4" />
               Back
             </Button>
             {currentStep !== 'review' ? (
               <Button onClick={handleNext} disabled={!selectedTemplate}>
                 Next
-                <ChevronRight className="ml-2 h-4 w-4" />
+                <ChevronRightIcon className="ml-2 h-4 w-4" />
               </Button>
             ) : (
               <Button onClick={handleLaunch} disabled={isSubmitting}>

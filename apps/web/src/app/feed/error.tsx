@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { Button } from '@hive/ui';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
 
 export default function FeedError({
@@ -24,7 +24,7 @@ export default function FeedError({
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-500/10 p-4">
-            <AlertTriangle className="h-8 w-8 text-amber-500" />
+            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
           </div>
         </div>
 
@@ -38,7 +38,7 @@ export default function FeedError({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Button onClick={() => reset()} className="gap-2">
-            <RefreshCw className="h-4 w-4" />
+            <ArrowPathIcon className="h-4 w-4" />
             Reload feed
           </Button>
           <Button

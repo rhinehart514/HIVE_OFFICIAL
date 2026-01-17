@@ -37,33 +37,30 @@ export function AuthGuard({
       return;
     }
 
-    // If user is authenticated but needs onboarding, redirect to onboarding
+    // If user is authenticated but needs onboarding, redirect to entry flow
     if (isAuthenticated && user && !user.onboardingCompleted) {
-      // Allow access to onboarding pages
-      if (pathname.startsWith('/onboarding')) {
+      // Allow access to entry pages
+      if (pathname.startsWith('/enter')) {
         return;
       }
-      
-      router.push('/onboarding');
+
+      router.push('/enter?state=identity');
       return;
     }
 
-    // If user is authenticated and on auth pages, redirect to dashboard
-    if (isAuthenticated && (pathname.startsWith('/auth') || pathname.startsWith('/schools'))) {
-      router.push('/');
+    // If user is authenticated and on entry/schools pages, redirect to browse
+    if (isAuthenticated && (pathname.startsWith('/enter') || pathname.startsWith('/schools'))) {
+      router.push('/spaces/browse');
       return;
     }
 
   }, [isLoading, isAuthenticated, user, pathname, requireAuth, redirectTo, router]);
 
-  // Show loading state while auth is initializing
+  // Show loading state while auth is initializing - minimal, no gold
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--hive-background-primary)] flex items-center justify-center">
-        <div className="flex items-center space-x-3 text-[var(--hive-text-primary)]">
-          <div className="w-6 h-6 bg-[var(--hive-brand-primary)] rounded-lg animate-pulse" />
-          <span className="font-medium">Loading HIVE...</span>
-        </div>
+      <div className="min-h-screen bg-ground flex items-center justify-center">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
       </div>
     );
   }

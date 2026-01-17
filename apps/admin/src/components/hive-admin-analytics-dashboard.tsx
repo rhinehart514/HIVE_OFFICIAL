@@ -8,29 +8,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
-import { 
-  BarChart3,
-  Activity,
-  Users,
-  Zap,
-  MessageSquare,
-  Shield,
-  AlertTriangle,
-  CheckCircle,
-  Globe,
-  Smartphone,
-  Monitor,
-  Tablet,
-  MapPin,
-  Heart,
-  Download,
-  RefreshCw,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-  GraduationCap,
-  Home
-} from 'lucide-react';
+import { ChartBarIcon, UsersIcon, BoltIcon, ChatBubbleLeftIcon, ShieldCheckIcon, ExclamationTriangleIcon, CheckCircleIcon, GlobeAltIcon, DevicePhoneMobileIcon, ComputerDesktopIcon, DeviceTabletIcon, MapPinIcon, HeartIcon, ArrowDownTrayIcon, ArrowPathIcon, ArrowUpIcon, ArrowDownIcon, MinusIcon, AcademicCapIcon, HomeIcon } from '@heroicons/react/24/outline';
 
 // ANALYTICS TYPES WITH SPACE SYSTEM COMPLIANCE
 type TimeRange = '1h' | '24h' | '7d' | '30d' | '90d' | 'all';
@@ -173,9 +151,9 @@ const MetricCard: React.FC<{
   const getTrendIcon = () => {
     if (!change) return null;
     
-    if (trend === 'up') return <ArrowUp className="w-3 h-3 text-green-400" />;
-    if (trend === 'down') return <ArrowDown className="w-3 h-3 text-red-400" />;
-    return <Minus className="w-3 h-3 text-gray-400" />;
+    if (trend === 'up') return <ArrowUpIcon className="w-3 h-3 text-green-400" />;
+    if (trend === 'down') return <ArrowDownIcon className="w-3 h-3 text-red-400" />;
+    return <MinusIcon className="w-3 h-3 text-gray-400" />;
   };
 
   const getTrendColor = () => {
@@ -217,11 +195,11 @@ const SpaceCategoryCard: React.FC<{
 }> = ({ category, onViewDetails }) => {
   const getCategoryIcon = (cat: ValidSpaceCategory) => {
     switch (cat) {
-      case 'university_spaces': return <GraduationCap className="w-5 h-5" />;
-      case 'residential_spaces': return <Home className="w-5 h-5" />;
-      case 'greek_life_spaces': return <Users className="w-5 h-5" />;
-      case 'student_spaces': return <Heart className="w-5 h-5" />;
-      default: return <Globe className="w-5 h-5" />;
+      case 'university_spaces': return <AcademicCapIcon className="w-5 h-5" />;
+      case 'residential_spaces': return <HomeIcon className="w-5 h-5" />;
+      case 'greek_life_spaces': return <UsersIcon className="w-5 h-5" />;
+      case 'student_spaces': return <HeartIcon className="w-5 h-5" />;
+      default: return <GlobeAltIcon className="w-5 h-5" />;
     }
   };
 
@@ -284,7 +262,7 @@ const SpaceCategoryCard: React.FC<{
           </div>
           {category.violationsCount > 0 && (
             <div className="flex items-center space-x-1 text-red-400">
-              <AlertTriangle className="w-3 h-3" />
+              <ExclamationTriangleIcon className="w-3 h-3" />
               <span>{category.violationsCount} violations</span>
             </div>
           )}
@@ -303,7 +281,7 @@ const ViolationAlert: React.FC<{
       <Card className="border-green-500/30 bg-green-500/5">
         <CardContent className="p-4">
           <div className="flex items-center space-x-3">
-            <CheckCircle className="w-8 h-8 text-green-400" />
+            <CheckCircleIcon className="w-8 h-8 text-green-400" />
             <div>
               <h3 className="font-semibold text-green-400">No Pending Violations</h3>
               <p className="text-sm text-gray-300">All space system violations have been resolved</p>
@@ -319,7 +297,7 @@ const ViolationAlert: React.FC<{
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <AlertTriangle className="w-8 h-8 text-red-400" />
+            <ExclamationTriangleIcon className="w-8 h-8 text-red-400" />
             <div>
               <h3 className="font-semibold text-red-400">
                 {violations.pendingViolations} Pending Violations
@@ -331,7 +309,7 @@ const ViolationAlert: React.FC<{
                 {violations.topViolationTypes.slice(0, 3).map((violation) => (
                   <Badge 
                     key={violation.type} 
-                    size="xs" 
+                    size="sm" 
                     className={`${
                       violation.severity === 'critical' ? 'bg-red-500/20 text-red-400' :
                       violation.severity === 'high' ? 'bg-orange-500/20 text-orange-400' :
@@ -449,7 +427,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
   if (!enableFeatureFlag) {
     return (
       <div className="text-center py-8">
-        <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <ChartBarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-400">Analytics dashboard is not available</p>
       </div>
     );
@@ -506,15 +484,15 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             className="border-gray-600 text-gray-300"
           >
             {loading ? (
-              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <ArrowPathIcon className="w-4 h-4 mr-2" />
             )}
             Refresh
           </Button>
           
           <Button onClick={handleExport} className="bg-amber-500 hover:bg-amber-600 text-black">
-            <Download className="w-4 h-4 mr-2" />
+            <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
             Export
           </Button>
         </div>
@@ -525,9 +503,9 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
         <Card className="border-green-500/30 bg-green-500/5">
           <CardHeader>
             <CardTitle className="text-green-400 flex items-center space-x-2">
-              <Activity className="w-5 h-5" />
+              <ChartBarIcon className="w-5 h-5" />
               <span>Real-Time Metrics</span>
-              <Badge size="xs" className="bg-green-500/20 text-green-400 animate-pulse">
+              <Badge size="sm" className="bg-green-500/20 text-green-400 animate-pulse">
                 LIVE
               </Badge>
             </CardTitle>
@@ -575,19 +553,19 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       {platformMetrics && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <MetricCard
-            title="Total Users"
+            title="Total UsersIcon"
             value={platformMetrics.totalUsers}
             change={12}
             trend="up"
-            icon={Users}
+            icon={UsersIcon}
             color="text-blue-400"
           />
           <MetricCard
-            title="Active Users"
+            title="Active UsersIcon"
             value={platformMetrics.activeUsers}
             change={8}
             trend="up"
-            icon={Activity}
+            icon={ChartBarIcon}
             color="text-green-400"
           />
           <MetricCard
@@ -595,7 +573,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             value={platformMetrics.totalSpaces}
             change={5}
             trend="up"
-            icon={Globe}
+            icon={GlobeAltIcon}
             color="text-purple-400"
             subtitle={`${platformMetrics.compliantSpaces} compliant`}
           />
@@ -604,7 +582,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             value={platformMetrics.activeTools}
             change={15}
             trend="up"
-            icon={Zap}
+            icon={BoltIcon}
             color="text-amber-400"
           />
           <MetricCard
@@ -612,7 +590,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             value={platformMetrics.totalPosts}
             change={-3}
             trend="down"
-            icon={MessageSquare}
+            icon={ChatBubbleLeftIcon}
             color="text-cyan-400"
           />
           <MetricCard
@@ -620,7 +598,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
             value={platformMetrics.violatingSpaces}
             change={-20}
             trend="down"
-            icon={AlertTriangle}
+            icon={ExclamationTriangleIcon}
             color="text-red-400"
           />
         </div>
@@ -661,7 +639,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
           <Card className="border-gray-700 bg-gray-900/50">
             <CardHeader>
               <CardTitle className="text-white flex items-center space-x-2">
-                <Smartphone className="w-5 h-5" />
+                <DevicePhoneMobileIcon className="w-5 h-5" />
                 <span>Device Analytics</span>
               </CardTitle>
             </CardHeader>
@@ -669,22 +647,22 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Smartphone className="w-4 h-4 text-blue-400" />
+                    <DevicePhoneMobileIcon className="w-4 h-4 text-blue-400" />
                     <span className="text-gray-300">Mobile</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.mobile}%</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Monitor className="w-4 h-4 text-green-400" />
+                    <ComputerDesktopIcon className="w-4 h-4 text-green-400" />
                     <span className="text-gray-300">Desktop</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.desktop}%</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Tablet className="w-4 h-4 text-purple-400" />
-                    <span className="text-gray-300">Tablet</span>
+                    <DeviceTabletIcon className="w-4 h-4 text-purple-400" />
+                    <span className="text-gray-300">DeviceTabletIcon</span>
                   </div>
                   <div className="text-white font-semibold">{deviceData.tablet}%</div>
                 </div>
@@ -710,7 +688,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
         <Card className="border-gray-700 bg-gray-900/50">
           <CardHeader>
             <CardTitle className="text-white flex items-center space-x-2">
-              <MapPin className="w-5 h-5" />
+              <MapPinIcon className="w-5 h-5" />
               <span>Geographic Distribution</span>
             </CardTitle>
           </CardHeader>
@@ -739,7 +717,7 @@ export const HiveAdminAnalyticsDashboard: React.FC<HiveAdminAnalyticsDashboardPr
       <Card className="border-blue-500/30 bg-blue-500/5">
         <CardHeader>
           <CardTitle className="text-blue-400 flex items-center space-x-2">
-            <Shield className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             <span>SPACE SYSTEM ENFORCEMENT ANALYTICS</span>
           </CardTitle>
         </CardHeader>

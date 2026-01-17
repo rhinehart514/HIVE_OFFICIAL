@@ -16,14 +16,12 @@ import { AICommandPalette } from './ai-command-palette';
 import { useIDEKeyboard } from './use-ide-keyboard';
 
 // New layout components
-import { HeaderBar } from './header-bar';
-import { CommandBar } from './command-bar';
 import { ElementRail, type RailState, type RailTab } from './element-rail';
 import { ContextRail, type AlignmentType } from './context-rail';
 import { FloatingActionBar } from './floating-action-bar';
 import { StartZone } from './start-zone';
 import { TemplateGallery } from './template-gallery';
-import { toast } from '../../../atomic/00-Global/atoms/sonner-toast';
+import { toast } from 'sonner';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 // Maximum history entries to prevent unbounded memory growth
@@ -125,7 +123,8 @@ export function HiveLabIDE({
 
   // UI state - new layout
   const [mode, setMode] = useState<ToolMode>('select');
-  const [elementRailState, setElementRailState] = useState<RailState>('expanded');
+  // Start collapsed like Make.com - icon-only sidebar by default
+  const [elementRailState, setElementRailState] = useState<RailState>('collapsed');
   const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
   const [aiPanelOpen, setAIPanelOpen] = useState(false);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
@@ -204,7 +203,7 @@ export function HiveLabIDE({
       } catch (error) {
         console.error('Auto-save failed:', error);
         // Show a warning toast so user knows to manually save
-        toast.warning('Auto-save failed', 'Your changes are not saved. Please save manually.');
+        toast.warning('Auto-save failed', { description: 'Your changes are not saved. Please save manually.' });
       } finally {
         setSaving(false);
       }
@@ -542,13 +541,12 @@ export function HiveLabIDE({
       };
       await onSave(composition);
       setHasUnsavedChanges(false);
-      toast.success('Tool saved', 'Your changes have been saved.');
+      toast.success('Tool saved', { description: 'Your changes have been saved.' });
     } catch (error) {
       console.error('Save failed:', error);
-      toast.error(
-        'Failed to save tool',
-        error instanceof Error ? error.message : 'Please try again.'
-      );
+      toast.error('Failed to save tool', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
     } finally {
       setSaving(false);
     }
@@ -571,13 +569,12 @@ export function HiveLabIDE({
       await onSave(composition);
       await onDeploy(composition);
       setHasUnsavedChanges(false);
-      toast.success('Tool deployed', 'Your tool is now live!');
+      toast.success('Tool deployed', { description: 'Your tool is now live!' });
     } catch (error) {
       console.error('Deploy failed:', error);
-      toast.error(
-        'Failed to deploy tool',
-        error instanceof Error ? error.message : 'Please try again.'
-      );
+      toast.error('Failed to deploy tool', {
+        description: error instanceof Error ? error.message : 'Please try again.'
+      });
     } finally {
       setSaving(false);
       setDeploying(false);
@@ -782,38 +779,20 @@ export function HiveLabIDE({
   });
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-[#0A0A0A]">
-      {/* Header Bar - Tool identity */}
-      <HeaderBar
-        toolName={toolName}
-        onToolNameChange={setToolName}
-        onPreview={preview}
-        onSave={save}
-        saving={saving}
-        originSpaceId={originSpaceId}
-        onDeploy={deploy}
-        deploying={deploying}
-        onBack={onCancel}
-        hasUnsavedChanges={hasUnsavedChanges}
-      />
-
-      {/* Command Bar - Workflow triggers + mode */}
-      <CommandBar
-        mode={mode}
-        onModeChange={setMode}
-        onOpenAI={() => setAIPanelOpen(true)}
-        onOpenTemplates={openTemplates}
-        onToggleElements={toggleElementRail}
-        elementsOpen={elementRailState !== 'hidden'}
-        canUndo={historyIndex > 0}
-        canRedo={historyIndex < history.length - 1}
-        onUndo={undo}
-        onRedo={redo}
-        isGenerating={aiState.isGenerating}
-      />
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative">
+    <div
+      className="h-screen w-screen flex items-center justify-center p-4 overflow-hidden"
+      style={{ backgroundColor: '#E8F5E9' }} // Make.com mint green background
+    >
+      {/* Make.com style: Rounded card container */}
+      <div
+        className="w-full h-full flex overflow-hidden"
+        style={{
+          backgroundColor: '#E8F5E9',
+          borderRadius: '24px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+          border: '1px solid rgba(0, 0, 0, 0.06)',
+        }}
+      >
         {/* Element Rail (Left) */}
         <ElementRail
           state={elementRailState}

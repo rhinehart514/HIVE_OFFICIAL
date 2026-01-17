@@ -1,6 +1,6 @@
 # Vertical Slice: HiveLab / Tools
 
-## December 2025 Soft Launch
+## January 2026 Full Launch
 
 ---
 
@@ -8,14 +8,15 @@
 
 HiveLab is Figma + Cursor for campus tools. A visual builder with AI generation that lets space leaders create custom tools without code. The signature moment: describe what you want, see it appear on canvas, deploy to your space.
 
-**Status: 100% Complete** ✅
+**Status: 100% Builder Complete / 70% Infrastructure** ✅
 
 **Key Metrics:**
-- Element system: 27 elements across 3 tiers
-- IDE component: 700+ lines (`packages/ui/src/components/hivelab/ide/hivelab-ide.tsx`)
-- Tool runtime hook: 592 lines (`apps/web/src/hooks/use-tool-runtime.ts`)
+- Element system: 27 elements across 3 tiers (1,102 lines in `element-system.ts`)
+- IDE component: 926 lines (`packages/ui/src/components/hivelab/ide/hivelab-ide.tsx`)
+- IDE folder: 20+ files for complete visual builder
+- Tool runtime hook: 701 lines (`apps/web/src/hooks/use-tool-runtime.ts`)
 - AI generation: Gemini 2.0 Flash with streaming
-- 28 API routes for tools ecosystem
+- 26 API routes for tools ecosystem
 
 ---
 

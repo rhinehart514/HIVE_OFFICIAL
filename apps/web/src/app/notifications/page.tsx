@@ -4,18 +4,12 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback } from 'react';
 import { Shell, PageHeader, Card, Button, Badge, toast } from '@hive/ui';
-import {
-  Bell,
-  Heart,
-  MessageCircle,
-  Users,
-  Settings,
-  CheckCheck,
-  Trash2,
-  Calendar,
-  Megaphone,
-  Loader2,
-} from 'lucide-react';
+import { BellIcon, HeartIcon, ChatBubbleOvalLeftIcon, UsersIcon, Cog6ToothIcon, TrashIcon, CalendarIcon, ArrowPathIcon, MegaphoneIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import { logger } from '@/lib/logger';
+
+// Aliases for lucide compatibility
+const Megaphone = MegaphoneIcon;
+const CheckCheck = CheckBadgeIcon;
 import Link from 'next/link';
 
 interface Notification {
@@ -42,18 +36,18 @@ const FILTER_TABS = [
 function getNotificationIcon(type: string) {
   switch (type) {
     case 'like':
-      return <Heart className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />;
+      return <HeartIcon className="w-5 h-5 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />;
     case 'comment':
     case 'mention':
-      return <MessageCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />;
+      return <ChatBubbleOvalLeftIcon className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />;
     case 'follow':
-      return <Users className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />;
+      return <UsersIcon className="w-5 h-5 text-green-500 shrink-0 mt-0.5" aria-hidden="true" />;
     case 'event':
-      return <Calendar className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" />;
+      return <CalendarIcon className="w-5 h-5 text-purple-500 shrink-0 mt-0.5" aria-hidden="true" />;
     case 'announcement':
-      return <Megaphone className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />;
+      return <Megaphone className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />;
     default:
-      return <Bell className="w-5 h-5 text-text-tertiary shrink-0 mt-0.5" />;
+      return <BellIcon className="w-5 h-5 text-text-tertiary shrink-0 mt-0.5" aria-hidden="true" />;
   }
 }
 
@@ -96,7 +90,7 @@ export default function NotificationsPage() {
         setUnreadCount(data.unreadCount || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch notifications:', error);
+      logger.error('Failed to fetch notifications', { component: 'NotificationsPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to load notifications');
     } finally {
       setIsLoading(false);
@@ -130,7 +124,7 @@ export default function NotificationsPage() {
         throw new Error('Failed to mark notifications as read');
       }
     } catch (error) {
-      console.error('Error marking all read:', error);
+      logger.error('Error marking all read', { component: 'NotificationsPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to mark notifications as read');
     } finally {
       setIsMarkingRead(false);
@@ -157,7 +151,7 @@ export default function NotificationsPage() {
         throw new Error('Failed to delete notification');
       }
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      logger.error('Error deleting notification', { component: 'NotificationsPage' }, error instanceof Error ? error : undefined);
       toast.error('Failed to delete notification');
     }
   };
@@ -185,27 +179,28 @@ export default function NotificationsPage() {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read', { component: 'NotificationsPage' }, error instanceof Error ? error : undefined);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background-primary flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+      <div className="min-h-screen bg-background-primary flex items-center justify-center" role="status" aria-label="Loading notifications">
+        <ArrowPathIcon className="w-8 h-8 animate-spin text-brand-primary" aria-hidden="true" />
+        <span className="sr-only">Loading notifications...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background-primary">
+    <main className="min-h-screen bg-background-primary" aria-label="Notifications">
       <Shell size="md" noVerticalPadding>
         <PageHeader
           title="Notifications"
           className="sticky top-0 z-10 bg-background-primary border-b border-[var(--hive-border-subtle)]"
           eyebrow={
             unreadCount > 0 ? (
-              <Badge variant="secondary" className="bg-brand-primary text-black">
+              <Badge variant="secondary" className="bg-brand-primary text-black" aria-label={`${unreadCount} new notifications`}>
                 {unreadCount} new
               </Badge>
             ) : null
@@ -217,17 +212,18 @@ export default function NotificationsPage() {
                 size="sm"
                 onClick={handleMarkAllRead}
                 disabled={isMarkingRead || unreadCount === 0}
+                aria-label="Mark all notifications as read"
               >
                 {isMarkingRead ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <ArrowPathIcon className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
                 ) : (
-                  <CheckCheck className="w-4 h-4 mr-2" />
+                  <CheckCheck className="w-4 h-4 mr-2" aria-hidden="true" />
                 )}
                 Mark all read
               </Button>
-              <Link href="/settings">
-                <Button variant="outline" size="sm">
-                  <Settings className="w-4 h-4" />
+              <Link href="/settings" aria-label="Go to notification settings">
+                <Button variant="outline" size="sm" aria-label="Settings">
+                  <Cog6ToothIcon className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </Link>
             </div>
@@ -235,10 +231,13 @@ export default function NotificationsPage() {
         />
 
         {/* Filter tabs */}
-        <div className="flex gap-1 mb-6 overflow-x-auto pb-2">
+        <div className="flex gap-1 mb-6 overflow-x-auto pb-2" role="tablist" aria-label="Filter notifications by type">
           {FILTER_TABS.map((tab) => (
             <button
               key={tab.id}
+              role="tab"
+              aria-selected={activeFilter === tab.id}
+              aria-controls="notification-list"
               onClick={() => {
                 setActiveFilter(tab.id);
                 setIsLoading(true);
@@ -255,18 +254,33 @@ export default function NotificationsPage() {
         </div>
 
         {/* Notification list */}
-        <div className="space-y-3 pb-8">
+        <div id="notification-list" role="tabpanel" className="space-y-3 pb-8" aria-label={`${activeFilter} notifications`}>
           {notifications.length === 0 ? (
-            <Card className="p-8 text-center bg-background-secondary border-border-default">
-              <Bell className="w-10 h-10 text-text-tertiary mx-auto mb-3" />
+            <Card className="p-8 text-center bg-background-secondary border-border-default" role="status">
+              <BellIcon className="w-10 h-10 text-text-tertiary mx-auto mb-3" aria-hidden="true" />
               <h3 className="text-base font-semibold text-text-primary mb-1">
                 {activeFilter === 'all' ? 'No notifications yet' : `No ${activeFilter} notifications`}
               </h3>
-              <p className="text-sm text-text-secondary">
+              <p className="text-sm text-text-secondary mb-4">
                 {activeFilter === 'all'
-                  ? "When you get notifications, they'll show up here"
+                  ? "Join spaces and participate to start receiving notifications"
                   : 'Try checking a different category'}
               </p>
+              {activeFilter === 'all' && (
+                <div className="flex items-center justify-center gap-3">
+                  <Link href="/spaces/browse">
+                    <Button variant="default" size="sm">
+                      Browse Spaces
+                    </Button>
+                  </Link>
+                  <Link href="/settings?tab=notifications">
+                    <Button variant="outline" size="sm">
+                      <Cog6ToothIcon className="w-4 h-4 mr-1" aria-hidden="true" />
+                      Settings
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </Card>
           ) : (
             notifications.map((notification) => (
@@ -276,6 +290,8 @@ export default function NotificationsPage() {
                   !notification.isRead ? 'border-l-4 border-l-brand-primary' : ''
                 }`}
                 onClick={() => handleMarkRead(notification.id)}
+                role="article"
+                aria-label={`${notification.isRead ? '' : 'Unread: '}${notification.title}`}
               >
                 <div className="flex items-start gap-4">
                   {getNotificationIcon(notification.type)}
@@ -287,19 +303,20 @@ export default function NotificationsPage() {
                       </p>
                     )}
                     <p className="text-text-tertiary text-xs mt-2">
-                      {formatTimestamp(notification.timestamp)}
+                      <time dateTime={notification.timestamp}>{formatTimestamp(notification.timestamp)}</time>
                     </p>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="shrink-0"
+                    aria-label={`Delete notification: ${notification.title}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(notification.id);
                     }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <TrashIcon className="w-4 h-4" aria-hidden="true" />
                   </Button>
                 </div>
               </Card>
@@ -308,13 +325,13 @@ export default function NotificationsPage() {
 
           {/* All caught up message when there are notifications but all are read */}
           {notifications.length > 0 && unreadCount === 0 && (
-            <Card className="p-6 text-center bg-background-secondary border-border-default">
-              <CheckCheck className="w-8 h-8 text-green-500 mx-auto mb-2" />
+            <Card className="p-6 text-center bg-background-secondary border-border-default" role="status" aria-live="polite">
+              <CheckCheck className="w-8 h-8 text-green-500 mx-auto mb-2" aria-hidden="true" />
               <p className="text-sm text-text-secondary">All caught up!</p>
             </Card>
           )}
         </div>
       </Shell>
-    </div>
+    </main>
   );
 }

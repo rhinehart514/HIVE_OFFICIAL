@@ -273,6 +273,13 @@ function extractOutputValue(
       count: 'notificationCount',
       data: 'notifications',
     },
+    'availability-heatmap': {
+      availability: 'availabilityData',
+      slots: 'slots',
+      suggestions: 'suggestedSlots',
+      selectedSlot: 'selectedSlot',
+      data: 'availabilityData',
+    },
 
     // ═══════════════════════════════════════════════════════════════════
     // CONNECTED ELEMENTS (5)
@@ -653,6 +660,12 @@ export function getAffectedOutputs(action: string, elementId: string): string[] 
       dismiss: ['notifications', 'count', 'data'],
       clear: ['notifications', 'count', 'data'],
     },
+    'availability-heatmap': {
+      select_slot: ['selectedSlot', 'data'],
+      toggle_availability: ['availability', 'slots', 'data'],
+      refresh: ['availability', 'slots', 'suggestions', 'data'],
+      clear: ['selectedSlot', 'data'],
+    },
 
     // ═══════════════════════════════════════════════════════════════════
     // CONNECTED ELEMENTS (5)
@@ -817,6 +830,7 @@ registerElementActionHandler('notification-display', 'refresh', genericRefreshHa
 registerElementActionHandler('tag-cloud', 'refresh', genericRefreshHandler);
 registerElementActionHandler('map-view', 'refresh', genericRefreshHandler);
 registerElementActionHandler('filter-selector', 'refresh', genericRefreshHandler);
+registerElementActionHandler('availability-heatmap', 'refresh', genericRefreshHandler);
 
 // Connected elements
 registerElementActionHandler('event-picker', 'refresh', genericRefreshHandler);

@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Providers } from './providers';
+import { PageTransitionWrapper } from '@/components/layout';
 
 export const metadata: Metadata = {
   title: {
@@ -86,12 +87,8 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head />
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <Providers>
-          <div className="relative flex min-h-screen flex-col">
-            <main className="flex-1">{children}</main>
-          </div>
-        </Providers>
+      <body style={{ backgroundColor: '#0A0A09', color: '#FAFAFA', minHeight: '100vh' }}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

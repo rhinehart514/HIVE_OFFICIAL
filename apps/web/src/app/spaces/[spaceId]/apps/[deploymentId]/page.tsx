@@ -49,7 +49,7 @@ export default async function AppPage({ params }: AppPageProps) {
 
   if (!result.ok) {
     if (result.status === 401) {
-      redirect(`/auth/login?redirect=/spaces/${spaceId}/apps/${deploymentId}`);
+      redirect(`/enter?redirect=/spaces/${spaceId}/apps/${deploymentId}`);
     }
     if (result.status === 404) {
       notFound();

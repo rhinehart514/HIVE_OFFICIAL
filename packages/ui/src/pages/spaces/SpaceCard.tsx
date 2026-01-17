@@ -1,11 +1,14 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Check } from "lucide-react";
+import { CheckIcon } from "@heroicons/react/24/outline";
 import * as React from "react";
+
+// Aliases for lucide compatibility
+const Check = CheckIcon;
 import { springPresets } from "@hive/tokens";
 
-import { Avatar, AvatarFallback, AvatarImage } from "../../atomic/00-Global/atoms/avatar";
-import { Badge } from "../../atomic/00-Global/atoms/badge";
-import { Button } from "../../atomic/00-Global/atoms/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../../design-system/primitives/Avatar";
+import { Badge } from "../../design-system/primitives/Badge";
+import { Button } from "../../design-system/primitives/Button";
 import { Surface } from "../../layout";
 import { duration, easing } from "../../lib/motion-variants";
 import { cn } from "../../lib/utils";
@@ -141,7 +144,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-semibold text-[var(--hive-text-primary,#f5f5ff)]">{space.name}</h3>
             {space.isInviteOnly ? (
-              <Badge variant="secondary">
+              <Badge variant="neutral">
                 Invite only
               </Badge>
             ) : null}
@@ -165,7 +168,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
         {space.tags && space.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {space.tags.map((tag) => (
-              <Badge key={tag} variant="secondary">
+              <Badge key={tag} variant="neutral">
                 #{tag}
               </Badge>
             ))}

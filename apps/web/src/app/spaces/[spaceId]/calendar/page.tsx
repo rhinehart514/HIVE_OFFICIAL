@@ -1,12 +1,30 @@
 'use client';
 
+/**
+ * Space Calendar Page - Calendar view of space events
+ *
+ * Archetype: Discovery (Shell ON)
+ * Pattern: Calendar grid
+ * Shell: ON
+ *
+ * @version 7.0.0 - Redesigned for Spaces Vertical Slice (Jan 2026)
+ */
+
 import * as React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@hive/ui';
-import { ChevronLeft, ChevronRight, Calendar, Loader2 } from 'lucide-react';
+import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, ArrowPathIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { logger } from '@/lib/logger';
+
+// Category accent colors (domain-based)
+const CATEGORY_COLORS: Record<string, string> = {
+  university: '#3B82F6',
+  student_org: '#F59E0B',
+  residential: '#10B981',
+  greek: '#8B5CF6',
+};
 
 interface SpaceEvent {
   id: string;
@@ -71,6 +89,8 @@ export default function SpaceCalendarPage() {
   const [events, setEvents] = useState<SpaceEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [spaceName, setSpaceName] = useState<string>('');
+  const [spaceCategory, setSpaceCategory] = useState<string>('student_org');
 
   const today = useMemo(() => new Date(), []);
   const days = useMemo(() => buildMonthGrid(currentMonth), [currentMonth]);
@@ -88,22 +108,30 @@ export default function SpaceCalendarPage() {
     return map;
   }, [events]);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // Fetch both upcoming and past events to show full calendar
-      const response = await secureApiFetch(
-        `/api/spaces/${spaceId}/events?limit=100&upcoming=true`
-      );
+      // Fetch space data and events in parallel
+      const [spaceRes, eventsRes] = await Promise.all([
+        secureApiFetch(`/api/spaces/${spaceId}`),
+        secureApiFetch(`/api/spaces/${spaceId}/events?limit=100&upcoming=true`),
+      ]);
 
-      if (!response.ok) {
+      if (spaceRes.ok) {
+        const spaceData = await spaceRes.json();
+        const space = spaceData.space || spaceData;
+        setSpaceName(space.name || '');
+        setSpaceCategory(space.category || 'student_org');
+      }
+
+      if (!eventsRes.ok) {
         throw new Error('Failed to fetch events');
       }
 
-      const data = await response.json();
-      setEvents(data.events || []);
+      const eventsData = await eventsRes.json();
+      setEvents(eventsData.events || []);
     } catch (err) {
       logger.error('Failed to fetch calendar events', {
         component: 'SpaceCalendarPage',
@@ -117,8 +145,8 @@ export default function SpaceCalendarPage() {
   }, [spaceId]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+    fetchData();
+  }, [fetchData]);
 
   const goToPreviousMonth = () => {
     setCurrentMonth((prev) => {
@@ -148,48 +176,70 @@ export default function SpaceCalendarPage() {
     return (
       <main className="mx-auto w-full max-w-5xl p-6">
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <ArrowPathIcon className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </main>
     );
   }
 
+  // Get category color for accent
+  const categoryColor = CATEGORY_COLORS[spaceCategory] || CATEGORY_COLORS.student_org;
+
   if (error) {
     return (
       <main className="mx-auto w-full max-w-5xl p-6">
         <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-          <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+          <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Button onClick={fetchEvents}>Try again</Button>
+          <Button onClick={fetchData}>Try again</Button>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-5xl p-6">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Calendar</h1>
-          <p className="text-muted-foreground text-sm">
-            {events.length} upcoming event{events.length !== 1 ? 's' : ''}
-          </p>
+    <div className="min-h-screen bg-[var(--bg-ground)] relative">
+      {/* Category accent line */}
+      <div
+        className="absolute top-0 left-0 right-0 h-1 z-40"
+        style={{ backgroundColor: categoryColor }}
+      />
+
+      {/* Header */}
+      <div className="border-b border-white/[0.06] bg-[var(--bg-ground)]/95 backdrop-blur-lg sticky top-0 z-10 pt-1">
+        <div className="max-w-5xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push(`/spaces/${spaceId}`)}
+                className="p-2 rounded-lg hover:bg-white/[0.05] text-white/70 hover:text-white transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              >
+                <ArrowLeftIcon className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-xl font-semibold text-white">{spaceName || 'Space'}</h1>
+                <p className="text-sm text-white/50">Calendar</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={goToToday}>
+                Today
+              </Button>
+              <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[160px] text-center font-medium text-white">
+                {getMonthName(currentMonth)}
+              </span>
+              <Button variant="ghost" size="icon" onClick={goToNextMonth}>
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToToday}>
-            Today
-          </Button>
-          <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="min-w-[160px] text-center font-medium">
-            {getMonthName(currentMonth)}
-          </span>
-          <Button variant="ghost" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </header>
+      </div>
+
+      <main className="mx-auto w-full max-w-5xl px-4 py-6">
 
       <section className="overflow-hidden rounded-xl border border-[color:var(--hive-border-subtle)]">
         {/* Day headers */}
@@ -201,7 +251,7 @@ export default function SpaceCalendarPage() {
           ))}
         </div>
 
-        {/* Calendar grid */}
+        {/* CalendarIcon grid */}
         <div className="grid grid-cols-7">
           {days.map((d) => {
             const key = dayKey(d);
@@ -266,6 +316,7 @@ export default function SpaceCalendarPage() {
           </div>
         ))}
       </div>
-    </main>
+      </main>
+    </div>
   );
 }

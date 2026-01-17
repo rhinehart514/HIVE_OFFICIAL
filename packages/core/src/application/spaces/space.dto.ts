@@ -132,6 +132,12 @@ export interface SpaceBaseDTO {
 /**
  * Space DTO for browse/discovery endpoints
  * Includes: isJoined flag, trending data, simplified tabs/widgets
+ *
+ * COLD START SIGNALS (Jan 2026):
+ * - upcomingEventCount: Shows value without chat activity
+ * - nextEventAt/nextEventTitle: Creates urgency ("Tournament · Friday")
+ * - mutualCount/mutualAvatars: Social proof ("2 friends are members")
+ * - toolCount: Shows utility ("Has 5 tools")
  */
 export interface SpaceBrowseDTO extends SpaceBaseDTO {
   postCount: number;
@@ -140,6 +146,20 @@ export interface SpaceBrowseDTO extends SpaceBaseDTO {
   isJoined: boolean;
   tabs: TabSummaryDTO[];
   widgets: WidgetSummaryDTO[];
+
+  // Cold start signals - show value without activity
+  /** Number of upcoming events in this space */
+  upcomingEventCount: number;
+  /** When the next event starts (null if none) */
+  nextEventAt: Date | null;
+  /** Title of the next event (null if none) */
+  nextEventTitle: string | null;
+  /** Number of user's friends who are members */
+  mutualCount: number;
+  /** Avatar URLs of mutual friends (max 3) */
+  mutualAvatars: string[];
+  /** Number of tools deployed in this space */
+  toolCount: number;
 }
 
 /**
@@ -208,6 +228,21 @@ export interface SpaceMemberDTO {
   userId: string;
   role: string;
   joinedAt: Date;
+}
+
+/**
+ * Cold start enrichment data for browse endpoint
+ * Passed to presenter to populate cold start signals
+ */
+export interface SpaceBrowseEnrichment {
+  /** Map of spaceId -> upcoming event count */
+  eventCounts: Map<string, number>;
+  /** Map of spaceId -> next event info */
+  nextEvents: Map<string, { title: string; startAt: Date }>;
+  /** Map of spaceId -> mutual friend data */
+  mutuals: Map<string, { count: number; avatars: string[] }>;
+  /** Map of spaceId -> tool count */
+  toolCounts: Map<string, number>;
 }
 
 /**

@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MousePointer2, Command, Wand2, ArrowRight } from 'lucide-react';
+import { XMarkIcon, SparklesIcon, ArrowRightIcon, CursorArrowRaysIcon, CommandLineIcon } from '@heroicons/react/24/outline';
+
+// Aliases for lucide compatibility
+const MousePointer2 = CursorArrowRaysIcon;
+const Command = CommandLineIcon;
 
 /**
  * Onboarding Overlay for HiveLab IDE
@@ -56,7 +60,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
       hint: 'Try "Create a lunch poll with 5 options"',
     },
     {
-      icon: <Wand2 className="w-6 h-6" />,
+      icon: <SparklesIcon className="w-6 h-6" />,
       title: 'Configure & connect',
       description: 'Select elements to edit properties and create data flows',
       hint: 'Connect a poll to a leaderboard for live results',
@@ -77,25 +81,25 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative max-w-md w-full mx-4 bg-[#1a1a1a] rounded-2xl border border-[#333] shadow-2xl overflow-hidden"
+          className="relative max-w-md w-full mx-4 bg-[var(--hivelab-panel)] rounded-2xl border border-[var(--hivelab-border)] shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="relative p-6 pb-4 border-b border-[#333]">
+          <div className="relative p-6 pb-4 border-b border-[var(--hivelab-border)]">
             <button
               onClick={handleDismiss}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-[#888] hover:text-white hover:bg-[#333] transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)] transition-colors duration-[var(--workshop-duration)]"
             >
-              <X className="w-4 h-4" />
+              <XMarkIcon className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/[0.12] to-white/[0.04] flex items-center justify-center">
-                <Wand2 className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-[var(--hivelab-surface-hover)] flex items-center justify-center">
+                <SparklesIcon className="w-5 h-5 text-[var(--hivelab-text-primary)]" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">Welcome to HiveLab</h2>
-                <p className="text-sm text-[#888]">Build visual tools for your campus</p>
+                <h2 className="text-lg font-semibold text-[var(--hivelab-text-primary)]">Welcome to HiveLab</h2>
+                <p className="text-sm text-[var(--hivelab-text-tertiary)]">Build visual tools for your campus</p>
               </div>
             </div>
           </div>
@@ -105,10 +109,10 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
             {steps.map((s, i) => (
               <motion.button
                 key={i}
-                className={`w-full text-left p-4 rounded-xl border transition-all ${
+                className={`w-full text-left p-4 rounded-xl border transition-all duration-[var(--workshop-duration)] ${
                   step === i
-                    ? 'bg-white/[0.08] border-white/30'
-                    : 'bg-[#0f0f0f] border-[#333] hover:border-[#444]'
+                    ? 'bg-[var(--hivelab-surface-hover)] border-[var(--hivelab-border-emphasis)]'
+                    : 'bg-[var(--hivelab-bg)] border-[var(--hivelab-border)] hover:border-[var(--hivelab-border-emphasis)]'
                 }`}
                 onClick={() => setStep(i)}
                 whileHover={{ scale: 1.01 }}
@@ -118,22 +122,22 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                       step === i
-                        ? 'bg-white/[0.12] text-white'
-                        : 'bg-[#333] text-[#888]'
+                        ? 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]'
+                        : 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]'
                     }`}
                   >
                     {s.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`font-medium ${step === i ? 'text-white' : 'text-[#ccc]'}`}>
+                    <h3 className={`font-medium ${step === i ? 'text-[var(--hivelab-text-primary)]' : 'text-[var(--hivelab-text-secondary)]'}`}>
                       {s.title}
                     </h3>
-                    <p className="text-sm text-[#888] mt-0.5">{s.description}</p>
+                    <p className="text-sm text-[var(--hivelab-text-tertiary)] mt-0.5">{s.description}</p>
                     {step === i && (
                       <motion.p
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="text-xs text-[#666] mt-2 italic"
+                        className="text-xs text-[var(--hivelab-text-tertiary)] mt-2 italic"
                       >
                         💡 {s.hint}
                       </motion.p>
@@ -148,7 +152,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
           <div className="p-6 pt-2 flex items-center justify-between">
             <button
               onClick={handleDismiss}
-              className="text-sm text-[#888] hover:text-white transition-colors"
+              className="text-sm text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] transition-colors duration-[var(--workshop-duration)]"
             >
               Skip intro
             </button>
@@ -159,7 +163,7 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
                   handleDismiss();
                   onOpenAI?.();
                 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium text-sm hover:bg-[#FFD700]/90 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--life-gold)] text-black font-medium text-sm hover:bg-[var(--life-gold)]/90 transition-colors duration-[var(--workshop-duration)]"
               >
                 <span>Try AI</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-black/20 text-xs">⌘K</kbd>
@@ -169,8 +173,8 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
 
           {/* Keyboard hint */}
           <div className="px-6 pb-4">
-            <p className="text-xs text-[#666] text-center">
-              Press <kbd className="px-1 py-0.5 rounded bg-[#333] text-[#888]">Esc</kbd> to close
+            <p className="text-xs text-[var(--hivelab-text-tertiary)] text-center">
+              Press <kbd className="px-1 py-0.5 rounded bg-[var(--hivelab-surface)] text-[var(--hivelab-text-tertiary)]">Esc</kbd> to close
             </p>
           </div>
         </motion.div>
