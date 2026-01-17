@@ -1163,20 +1163,7 @@ export const PHOTO_CHALLENGE_TEMPLATE: QuickTemplate = {
         size: { width: 300, height: 200 },
       },
     ],
-    connections: [
-      {
-        id: generateId(),
-        from: 'gallery',
-        to: 'poll',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'poll',
-        to: 'leaderboard',
-        type: 'data-flow',
-      },
-    ],
+    connections: [],
     layout: 'flow',
   },
 };
@@ -1255,24 +1242,6 @@ export const ATTENDANCE_TRACKER_TEMPLATE: QuickTemplate = {
       },
     ],
     connections: [
-      {
-        id: generateId(),
-        from: 'rsvp',
-        to: 'counter',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'rsvp',
-        to: 'leaderboard',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'rsvp',
-        to: 'chart',
-        type: 'data-flow',
-      },
     ],
     layout: 'flow',
   },
@@ -1362,20 +1331,7 @@ export const RESOURCE_SIGNUP_TEMPLATE: QuickTemplate = {
         size: { width: 300, height: 200 },
       },
     ],
-    connections: [
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'result-list',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'counter',
-        type: 'data-flow',
-      },
-    ],
+    connections: [],
     layout: 'flow',
   },
 };
@@ -1633,26 +1589,7 @@ export const SUGGESTION_BOX_TEMPLATE: QuickTemplate = {
         size: { width: 300, height: 180 },
       },
     ],
-    connections: [
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'result-list',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'filter',
-        to: 'result-list',
-        type: 'filter',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'chart',
-        type: 'data-flow',
-      },
-    ],
+    connections: [],
     layout: 'flow',
   },
 };
@@ -1736,20 +1673,7 @@ export const STUDY_GROUP_MATCHER_TEMPLATE: QuickTemplate = {
         size: { width: 300, height: 150 },
       },
     ],
-    connections: [
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'heatmap',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'result-list',
-        type: 'data-flow',
-      },
-    ],
+    connections: [],
     layout: 'flow',
   },
 };
@@ -1854,32 +1778,7 @@ export const COMPETITION_TRACKER_TEMPLATE: QuickTemplate = {
         size: { width: 300, height: 180 },
       },
     ],
-    connections: [
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'counter',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'leaderboard',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'progress',
-        type: 'data-flow',
-      },
-      {
-        id: generateId(),
-        from: 'form',
-        to: 'chart',
-        type: 'data-flow',
-      },
-    ],
+    connections: [],
     layout: 'flow',
   },
 };
