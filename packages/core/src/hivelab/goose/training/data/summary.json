@@ -1,0 +1,21 @@
+{
+  "total_examples": 304,
+  "training_examples": 274,
+  "validation_examples": 30,
+  "element_types_covered": [
+    "poll-element",
+    "chart-display",
+    "leaderboard",
+    "rsvp-button",
+    "search-input",
+    "filter-selector",
+    "result-list",
+    "countdown-timer",
+    "form-builder",
+    "availability-heatmap",
+    "date-picker",
+    "timer",
+    "counter"
+  ],
+  "generated_at": "2026-01-19T08:19:38.414Z"
+}

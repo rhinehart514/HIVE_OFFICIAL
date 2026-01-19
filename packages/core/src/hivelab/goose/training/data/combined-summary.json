@@ -1,0 +1,38 @@
+{
+  "total_examples": 389,
+  "datasets": {
+    "synthetic": {
+      "training": 274,
+      "validation": 29,
+      "total": 303
+    },
+    "templates": {
+      "system_templates": 9,
+      "composed_templates": 8,
+      "total_examples": 86
+    }
+  },
+  "combined_training": 389,
+  "validation": 29,
+  "element_types_covered": [
+    "poll-element",
+    "chart-display",
+    "leaderboard",
+    "rsvp-button",
+    "search-input",
+    "filter-selector",
+    "result-list",
+    "countdown-timer",
+    "form-builder",
+    "availability-heatmap",
+    "date-picker",
+    "timer",
+    "counter",
+    "space-stats",
+    "member-list",
+    "space-events",
+    "announcement"
+  ],
+  "generated_at": "2026-01-19T08:20:00.000Z",
+  "notes": "Initial training data set. Target: 1,500 examples. Current coverage is sufficient for initial model testing."
+}

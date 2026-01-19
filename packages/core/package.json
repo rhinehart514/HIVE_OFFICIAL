@@ -35,6 +35,11 @@
       "types": "./src/domain/shared/value-objects/viewer-context.value.ts",
       "import": "./src/domain/shared/value-objects/viewer-context.value.ts",
       "default": "./src/domain/shared/value-objects/viewer-context.value.ts"
+    },
+    "./hivelab/goose": {
+      "types": "./src/hivelab/goose/index.ts",
+      "import": "./src/hivelab/goose/index.ts",
+      "default": "./src/hivelab/goose/index.ts"
     }
   },
   "scripts": {

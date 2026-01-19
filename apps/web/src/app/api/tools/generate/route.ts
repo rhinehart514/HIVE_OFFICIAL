@@ -1,11 +1,14 @@
 /**
  * AI Tool Generation API (Streaming)
  *
- * Generates HiveLab tools from natural language prompts using Firebase AI (Gemini).
- * Returns streaming response for real-time canvas updates.
+ * Generates HiveLab tools from natural language prompts.
+ * Supports multiple backends: Goose (Ollama), Firebase AI (Gemini), Groq, or rules-based.
  *
- * Uses Firebase AI with Gemini 2.0 Flash for fast, structured tool generation.
- * Falls back to mock generator if Firebase AI is unavailable.
+ * Priority order:
+ * 1. Goose (Ollama) - Custom fine-tuned model, self-hosted
+ * 2. Groq - Fast cloud inference, low cost
+ * 3. Firebase AI - Gemini 2.0 Flash
+ * 4. Rules-based - Zero cost fallback
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -15,6 +18,12 @@ import {
   isFirebaseAIAvailable,
   type GenerationContext,
 } from '@/lib/firebase-ai-generator';
+import {
+  generateToolStream,
+  getAvailableBackend,
+  checkOllamaHealth,
+  type GooseBackend,
+} from '@/lib/goose-server';
 import { canGenerate, recordGeneration } from '@/lib/ai-usage-tracker';
 import { validateApiAuth } from '@/lib/api-auth-middleware';
 import { aiGenerationRateLimit } from '@/lib/rate-limit-simple';
@@ -22,16 +31,20 @@ import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
 /**
- * Feature flag: Use rules-based generation (mock generator) as primary
+ * Backend selection configuration
  *
- * Benefits:
- * - $0/month cost (vs $1,000-2,500/month with Gemini at scale)
- * - ~100ms latency (vs ~2,000ms with Gemini)
- * - Deterministic, explainable results
- * - Fully controllable quality
+ * GOOSE_BACKEND options:
+ * - 'goose' or 'ollama': Use Goose (fine-tuned Phi-3) via Ollama - self-hosted, free
+ * - 'groq': Use Groq cloud API - fast, ~$0.0001/request
+ * - 'firebase': Use Firebase AI (Gemini) - ~$0.001/request
+ * - 'rules': Use rules-based generator - $0, deterministic
  *
- * Set to 'false' to use Firebase AI (Gemini) as primary when available.
+ * Default behavior:
+ * 1. Try Goose/Ollama if GOOSE_BACKEND=goose and Ollama is running
+ * 2. Try Groq if GROQ_API_KEY is set
+ * 3. Fall back to rules-based (always works, $0)
  */
+const GOOSE_BACKEND = process.env.GOOSE_BACKEND as GooseBackend | undefined;
 const USE_RULES_BASED_GENERATION = process.env.USE_RULES_BASED_GENERATION !== 'false';
 
 /**
@@ -131,9 +144,11 @@ export async function POST(request: NextRequest) {
     const validated = GenerateToolRequestSchema.parse(body);
 
     // Determine which generator to use
-    // Priority: Rules-based (free) > Firebase AI (paid) > Mock fallback
+    // Priority: Goose (Ollama) > Groq > Firebase AI > Rules-based
     const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
-    const useFirebaseAI = !USE_RULES_BASED_GENERATION && firebaseAvailable;
+    const gooseBackend = GOOSE_BACKEND || (await getAvailableBackend());
+    const useGoose = gooseBackend === 'ollama' || gooseBackend === 'groq';
+    const useFirebaseAI = !useGoose && !USE_RULES_BASED_GENERATION && firebaseAvailable;
 
     // Create generation context for quality tracking
     const generationContext: GenerationContext = {
@@ -149,20 +164,38 @@ export async function POST(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Use Firebase AI (Gemini) if available, otherwise fall back to mock
-          // Pass generation context for quality tracking
-          const generator = useFirebaseAI
-            ? firebaseGenerateToolStreaming(validated, generationContext)
-            : mockGenerateToolStreaming(validated);
+          // Select generator based on available backend
+          // Priority: Goose > Firebase AI > Rules-based
+          let generator: AsyncGenerator<StreamingChunk>;
+          let providerName: string;
+          let costEstimate: string;
+
+          if (useGoose) {
+            // Use Goose (Ollama or Groq)
+            generator = generateToolStream({
+              prompt: validated.prompt,
+              existingComposition: validated.existingComposition as any,
+              isIteration: validated.isIteration,
+            }) as AsyncGenerator<StreamingChunk>;
+            providerName = gooseBackend === 'ollama' ? 'Goose (Ollama)' : 'Goose (Groq)';
+            costEstimate = gooseBackend === 'ollama' ? '$0' : '~$0.0001';
+          } else if (useFirebaseAI) {
+            generator = firebaseGenerateToolStreaming(validated, generationContext);
+            providerName = 'Firebase AI (Gemini 2.0 Flash)';
+            costEstimate = '~$0.001';
+          } else {
+            generator = mockGenerateToolStreaming(validated);
+            providerName = 'Rules-based generator';
+            costEstimate = '$0';
+          }
 
           const mode = validated.isIteration ? 'iteration' : 'new';
-          const providerName = useFirebaseAI ? 'Firebase AI (Gemini 2.0 Flash)' : 'Rules-based generator ($0)';
           logger.info(`Tool generation (${mode})`, {
             component: 'tools-generate',
             provider: providerName,
+            backend: gooseBackend,
             userId: userId || 'anonymous',
-            cost: useFirebaseAI ? '~$0.001' : '$0',
-            rulesBasedPrimary: USE_RULES_BASED_GENERATION,
+            cost: costEstimate,
           });
 
           // Start streaming generation
@@ -256,27 +289,58 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   const { DEMO_PROMPTS } = await import('@hive/core');
   const firebaseAvailable = isFirebaseAIAvailable() && process.env.NEXT_PUBLIC_USE_FIREBASE_AI !== 'false';
-  const usingRulesBasedPrimary = USE_RULES_BASED_GENERATION;
-  const activeBackend = usingRulesBasedPrimary ? 'rules-based' : (firebaseAvailable ? 'firebase-ai' : 'rules-based');
+  const gooseBackend = await getAvailableBackend();
+  const ollamaHealthy = await checkOllamaHealth();
+
+  // Determine active backend for response
+  let activeBackend: string;
+  let model: string;
+  let costPerGeneration: string;
+  let latency: string;
+
+  if (gooseBackend === 'ollama' && ollamaHealthy) {
+    activeBackend = 'goose-ollama';
+    model = 'goose-phi3-finetuned';
+    costPerGeneration = '$0 (self-hosted)';
+    latency = '~500ms';
+  } else if (gooseBackend === 'groq') {
+    activeBackend = 'goose-groq';
+    model = 'llama-3.1-8b-instant';
+    costPerGeneration = '~$0.0001';
+    latency = '~300ms';
+  } else if (!USE_RULES_BASED_GENERATION && firebaseAvailable) {
+    activeBackend = 'firebase-ai';
+    model = 'gemini-2.0-flash';
+    costPerGeneration = '~$0.001';
+    latency = '~2000ms';
+  } else {
+    activeBackend = 'rules-based';
+    model = 'rules-based-v1';
+    costPerGeneration = '$0';
+    latency = '~100ms';
+  }
 
   return NextResponse.json({
     demoPrompts: Array.from(DEMO_PROMPTS),
-    model: activeBackend === 'rules-based' ? 'rules-based-v1' : 'gemini-2.0-flash',
+    model,
     backend: activeBackend,
     maxPromptLength: 1000,
     streamingSupported: true,
-    costPerGeneration: activeBackend === 'rules-based' ? '$0' : '~$0.001',
-    latency: activeBackend === 'rules-based' ? '~100ms' : '~2000ms',
+    costPerGeneration,
+    latency,
     features: {
       structuredOutput: true,
       complexTools: activeBackend !== 'rules-based',
       multiStage: activeBackend !== 'rules-based',
       campusSpecificIntents: true,
       refinementSupport: true,
+      gooseModel: activeBackend.startsWith('goose'),
     },
     config: {
-      USE_RULES_BASED_GENERATION: usingRulesBasedPrimary,
+      GOOSE_BACKEND: GOOSE_BACKEND,
+      USE_RULES_BASED_GENERATION,
       firebaseAIAvailable: firebaseAvailable,
+      ollamaHealthy,
     },
   });
 }
