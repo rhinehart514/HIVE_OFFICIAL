@@ -9,7 +9,7 @@
 - **Collections**: 50+ (core + auxiliary + subcollections)
 - **Multi-tenancy**: Campus isolation via `campusId`
 - **Document limit**: 1MB per document
-- **Naming convention**: `snake_case` for collections, `camelCase` for fields
+- **Naming convention**: Mixed (`spaceMembers`, `user_follows`, `contentReports`) — no strict convention
 
 ---
 
@@ -23,7 +23,6 @@ erDiagram
     USERS ||--o{ SPACE_MEMBERS : joins
     USERS ||--o{ POSTS : creates
     USERS ||--o{ CONNECTIONS : has
-    USERS ||--o{ USER_FOLLOWS : initiates
     USERS ||--o{ HANDLES : reserves
 
     SPACES ||--o{ SPACE_MEMBERS : contains
@@ -178,13 +177,6 @@ erDiagram
         string type
         timestamp reservedAt
     }
-
-    USER_FOLLOWS {
-        string id PK
-        string followerId FK
-        string followedId FK
-        timestamp createdAt
-    }
 ```
 
 ### 2. Events & RSVPs
@@ -195,6 +187,7 @@ erDiagram
     EVENTS ||--o{ RSVPS : has
     USERS ||--o{ RSVPS : makes
     USERS ||--o{ PERSONAL_EVENTS : owns
+    SCHOOLS ||--o{ CAMPUS_EVENTS : aggregates
 
     EVENTS {
         string id PK
@@ -596,6 +589,7 @@ erDiagram
     USERS ||--o{ USER_BANS : receives
     CONTENT_REPORTS ||--o{ MODERATION_QUEUE : populates
     MODERATION_QUEUE ||--o{ MODERATION_FEEDBACK : receives
+    MODERATION_QUEUE ||--o{ DELETED_CONTENT : archives
 
     CONTENT_REPORTS {
         string id PK
@@ -1238,6 +1232,19 @@ interface BaseDocument {
   createdBy?: string;        // User UID who created
 }
 ```
+
+---
+
+## Legacy Collections (Dead Code)
+
+The following collections have references in the codebase but are **not actively used**:
+
+| Collection | Location | Notes |
+|------------|----------|-------|
+| `clubs` | `analytics.ts`, `notifications.ts` | Predates "spaces" unification. Count returns 0. |
+| `reports` | `feed/report.ts` | Superseded by `contentReports` in moderation service |
+
+These should be cleaned up in a future refactor.
 
 ---
 
