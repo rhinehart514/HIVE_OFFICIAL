@@ -257,37 +257,67 @@ export class FirebaseSpaceRepository implements ISpaceRepository {
 
   async searchSpaces(searchQuery: string, campusId: string): Promise<Result<EnhancedSpace[]>> {
     try {
-      // Firebase doesn't support full-text search natively
-      // For MVP, we'll do a simple name-based search
-      // In production, use Algolia or Elasticsearch
+      // Use server-side prefix search with name_lowercase field
+      // This is more efficient than fetching all docs and filtering client-side
+      const searchLower = searchQuery.toLowerCase().trim();
+
+      if (!searchLower) {
+        // Empty search - return popular spaces
+        return this.findByCampus(campusId, 20);
+      }
+
+      // Firestore range query for prefix search
+      // name_lowercase >= "searchterm" AND name_lowercase < "searchterm\uf8ff"
       const q = query(
         collection(db, this.collectionName),
         where('campusId', '==', campusId),
         where('isActive', '==', true),
-        orderBy('name'),
-        firestoreLimit(50)
+        where('name_lowercase', '>=', searchLower),
+        where('name_lowercase', '<=', searchLower + '\uf8ff'),
+        orderBy('name_lowercase'),
+        firestoreLimit(20)
       );
 
       const snapshot = await getDocs(q);
       const spaces: EnhancedSpace[] = [];
-      const searchLower = searchQuery.toLowerCase();
 
       for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const nameLower = data.name?.toLowerCase() || '';
-        const descriptionLower = data.description?.toLowerCase() || '';
-
-        if (nameLower.includes(searchLower) || descriptionLower.includes(searchLower)) {
-          const result = await SpaceMapper.toDomain(doc.id, data as SpaceDocument);
-          if (result.isSuccess) {
-            spaces.push(result.getValue());
-          }
+        const result = await SpaceMapper.toDomain(doc.id, doc.data() as SpaceDocument);
+        if (result.isSuccess) {
+          spaces.push(result.getValue());
         }
       }
 
       return Result.ok<EnhancedSpace[]>(spaces);
     } catch (error) {
-      return Result.fail<EnhancedSpace[]>(`Search failed: ${error}`);
+      // If name_lowercase field doesn't exist, fall back to basic query
+      // This handles legacy data that may not have the lowercase field
+      try {
+        const fallbackQuery = query(
+          collection(db, this.collectionName),
+          where('campusId', '==', campusId),
+          where('isActive', '==', true),
+          orderBy('memberCount', 'desc'),
+          firestoreLimit(20)
+        );
+        const snapshot = await getDocs(fallbackQuery);
+        const spaces: EnhancedSpace[] = [];
+        const searchLower = searchQuery.toLowerCase();
+
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const nameLower = data.name?.toLowerCase() || '';
+          if (nameLower.includes(searchLower)) {
+            const result = await SpaceMapper.toDomain(doc.id, data as SpaceDocument);
+            if (result.isSuccess) {
+              spaces.push(result.getValue());
+            }
+          }
+        }
+        return Result.ok<EnhancedSpace[]>(spaces);
+      } catch (fallbackError) {
+        return Result.fail<EnhancedSpace[]>(`Search failed: ${error}`);
+      }
     }
   }
 

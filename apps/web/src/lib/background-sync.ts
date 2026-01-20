@@ -70,8 +70,7 @@ export async function queueForSync(request: QueuedRequest): Promise<boolean> {
       ...request,
     });
     return result.success;
-  } catch (error) {
-    console.error('[BackgroundSync] Failed to queue request:', error);
+  } catch {
     return false;
   }
 }
@@ -87,8 +86,7 @@ export async function triggerSync(): Promise<boolean> {
       type: 'TRIGGER_SYNC',
     });
     return result.success;
-  } catch (error) {
-    console.error('[BackgroundSync] Failed to trigger sync:', error);
+  } catch {
     return false;
   }
 }
@@ -101,8 +99,7 @@ export async function getSyncStatus(): Promise<SyncStatus> {
     return await sendMessageToSW<SyncStatus>({
       type: 'GET_SYNC_STATUS',
     });
-  } catch (error) {
-    console.error('[BackgroundSync] Failed to get sync status:', error);
+  } catch {
     return { pending: 0, items: [] };
   }
 }
@@ -112,7 +109,6 @@ export async function getSyncStatus(): Promise<SyncStatus> {
  */
 export async function registerBackgroundSync(tag: string = 'hive-background-sync'): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('sync' in window)) {
-    console.warn('[BackgroundSync] Background sync not supported');
     return false;
   }
 
@@ -122,8 +118,7 @@ export async function registerBackgroundSync(tag: string = 'hive-background-sync
     await registration.sync.register(tag);
     if (isDev) console.log('[BackgroundSync] Registered for:', tag);
     return true;
-  } catch (error) {
-    console.error('[BackgroundSync] Failed to register:', error);
+  } catch {
     return false;
   }
 }
@@ -146,7 +141,6 @@ export async function registerPeriodicSync(
 
     // Check if periodic sync is supported
     if (!('periodicSync' in registration)) {
-      console.warn('[BackgroundSync] Periodic sync not supported');
       return false;
     }
 
@@ -157,7 +151,6 @@ export async function registerPeriodicSync(
     });
 
     if (status.state !== 'granted') {
-      console.warn('[BackgroundSync] Periodic sync permission not granted');
       return false;
     }
 
@@ -168,8 +161,7 @@ export async function registerPeriodicSync(
 
     if (isDev) console.log('[BackgroundSync] Registered periodic sync:', tag);
     return true;
-  } catch (error) {
-    console.error('[BackgroundSync] Failed to register periodic sync:', error);
+  } catch {
     return false;
   }
 }

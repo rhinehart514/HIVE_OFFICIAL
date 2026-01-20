@@ -200,7 +200,7 @@ export default function JoinSpacePage() {
               </Button>
 
               <button
-                onClick={() => router.push('/spaces/browse')}
+                onClick={() => router.push('/spaces')}
                 className="w-full text-sm text-white/50 hover:text-white/80 transition-colors"
               >
                 Cancel
@@ -253,7 +253,7 @@ export default function JoinSpacePage() {
                 <p className="text-sm text-white/50">{error}</p>
               </div>
               <Button
-                onClick={() => router.push('/spaces/browse')}
+                onClick={() => router.push('/spaces')}
                 variant="secondary"
                 className="w-full"
               >

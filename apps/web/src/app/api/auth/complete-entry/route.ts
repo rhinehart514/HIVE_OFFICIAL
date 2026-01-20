@@ -100,7 +100,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
       },
-      redirect: '/spaces/browse',
+      redirect: '/spaces',
       devMode: true,
     });
 
@@ -196,7 +196,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
       },
-      redirect: '/spaces/browse',
+      redirect: '/spaces',
     });
 
     setSessionCookie(response, newToken, { isAdmin });

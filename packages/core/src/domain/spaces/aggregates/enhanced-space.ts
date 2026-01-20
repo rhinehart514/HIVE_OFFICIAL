@@ -182,6 +182,11 @@ interface EnhancedSpaceProps {
   description: SpaceDescription;
   category: SpaceCategory;
   campusId: CampusId;
+  // Branding / Visual identity
+  /** Space icon/logo URL */
+  iconURL?: string;
+  /** Cover/banner image URL */
+  coverImageURL?: string;
   /** Creator - optional for pre-seeded unclaimed spaces */
   createdBy?: ProfileId;
   members: SpaceMember[];
@@ -403,6 +408,20 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.postCount;
   }
 
+  // ============================================
+  // BRANDING / VISUAL IDENTITY
+  // ============================================
+
+  /** Space icon/logo URL */
+  get iconURL(): string | undefined {
+    return this.props.iconURL;
+  }
+
+  /** Cover/banner image URL */
+  get coverImageURL(): string | undefined {
+    return this.props.coverImageURL;
+  }
+
   /**
    * Setup progress for claimed spaces
    * Returns undefined for unclaimed spaces
@@ -509,6 +528,11 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       description: SpaceDescription;
       category: SpaceCategory;
       campusId: CampusId;
+      // Branding / Visual identity
+      /** Space icon/logo URL */
+      iconURL?: string;
+      /** Cover/banner image URL */
+      coverImageURL?: string;
       /** Creator - optional for pre-seeded unclaimed spaces */
       createdBy?: ProfileId;
       settings?: Partial<SpaceSettings>;
@@ -582,6 +606,9 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       description: props.description,
       category: props.category,
       campusId: props.campusId,
+      // Branding / Visual identity
+      iconURL: props.iconURL,
+      coverImageURL: props.coverImageURL,
       createdBy: props.createdBy,
       members,
       leaderRequests: [],

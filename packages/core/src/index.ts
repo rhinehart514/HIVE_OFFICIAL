@@ -656,3 +656,6 @@ export * from "./application/shared/temporary-types";
 
 // Schemas
 export * from "./schemas/admin/dashboard";
+
+// HiveLab Intelligence Module (Rules-Based, Free)
+export * from "./hivelab/intelligence";

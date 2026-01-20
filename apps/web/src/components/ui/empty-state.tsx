@@ -114,7 +114,7 @@ export function NoConnectionsEmptyState({ onFindPeople }: { onFindPeople?: () =>
       title="No connections yet"
       description="Join spaces to meet people and build your network"
       actions={[
-        { label: 'Browse Spaces', href: '/spaces/browse', variant: 'cta' },
+        { label: 'Browse Spaces', href: '/spaces', variant: 'cta' },
         ...(onFindPeople ? [{ label: 'Find People', onClick: onFindPeople }] : []),
       ]}
     />
@@ -149,7 +149,7 @@ export function NoSpacesEmptyState() {
       title="No spaces found"
       description="Try a different search or browse categories"
       actions={[
-        { label: 'Browse All', href: '/spaces/browse' },
+        { label: 'Browse All', href: '/spaces' },
       ]}
     />
   );
@@ -168,7 +168,7 @@ export function NoEventsEmptyState({ onCreateEvent }: { onCreateEvent?: () => vo
       actions={onCreateEvent ? [
         { label: 'Create Event', onClick: onCreateEvent, variant: 'cta' },
       ] : [
-        { label: 'Browse Spaces', href: '/spaces/browse' },
+        { label: 'Browse Spaces', href: '/spaces' },
       ]}
     />
   );
@@ -200,7 +200,7 @@ export function NoNotificationsEmptyState() {
       title="No notifications yet"
       description="Join spaces and participate to start receiving updates"
       actions={[
-        { label: 'Browse Spaces', href: '/spaces/browse' },
+        { label: 'Browse Spaces', href: '/spaces' },
       ]}
     />
   );

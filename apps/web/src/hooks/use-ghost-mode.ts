@@ -83,7 +83,6 @@ export function useGhostMode(): UseGhostModeReturn {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error('Failed to fetch ghost mode:', err);
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +179,6 @@ export function useGhostMode(): UseGhostModeReturn {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to enable ghost mode');
-      console.error('Failed to enable ghost mode:', err);
       return false;
     }
   }, []);
@@ -210,7 +208,6 @@ export function useGhostMode(): UseGhostModeReturn {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to disable ghost mode');
-      console.error('Failed to disable ghost mode:', err);
       return false;
     }
   }, []);
@@ -253,7 +250,6 @@ export function useGhostMode(): UseGhostModeReturn {
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update ghost mode level');
-      console.error('Failed to update ghost mode level:', err);
       return false;
     }
   }, [state.enabled]);

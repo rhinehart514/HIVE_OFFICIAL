@@ -142,7 +142,7 @@ export default function CreateSpacePage() {
         {/* Back link */}
         <motion.div className="mb-8" {...fadeIn(0)}>
           <Link
-            href="/spaces/browse"
+            href="/spaces"
             className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

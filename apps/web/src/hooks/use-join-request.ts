@@ -102,8 +102,7 @@ export function useJoinRequest(spaceId: string | null | undefined): UseJoinReque
       } else {
         setError(data.error?.message || 'Failed to fetch join request');
       }
-    } catch (err) {
-      console.error('[useJoinRequest] Fetch error:', err);
+    } catch {
       setError('Failed to fetch join request');
     } finally {
       setIsLoading(false);
@@ -140,8 +139,7 @@ export function useJoinRequest(spaceId: string | null | undefined): UseJoinReque
           setError(data.error?.message || 'Failed to create join request');
           return false;
         }
-      } catch (err) {
-        console.error('[useJoinRequest] Create error:', err);
+      } catch {
         setError('Failed to create join request');
         return false;
       } finally {
@@ -175,8 +173,7 @@ export function useJoinRequest(spaceId: string | null | undefined): UseJoinReque
         setError(data.error?.message || 'Failed to cancel join request');
         return false;
       }
-    } catch (err) {
-      console.error('[useJoinRequest] Cancel error:', err);
+    } catch {
       setError('Failed to cancel join request');
       return false;
     } finally {

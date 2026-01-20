@@ -128,8 +128,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       mutualCount,
       mutualConnectionIds: mutualIds.slice(0, 5), // First 5 for preview
     });
-  } catch (error) {
-    console.error('Error fetching connections:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch connections' },
       { status: 500 }

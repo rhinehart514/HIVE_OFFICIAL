@@ -40,8 +40,7 @@ export const POST = withAuthValidationAndErrors(
       });
 
       return respond.success({ tokenId });
-    } catch (error) {
-      console.error('[FCM Token] Failed to save token:', error);
+    } catch {
       return respond.error('Failed to save push token', 'INTERNAL_ERROR', { status: 500 });
     }
   }
@@ -81,8 +80,7 @@ export const DELETE = withAuthValidationAndErrors(
       }
 
       return respond.success({ removed: true });
-    } catch (error) {
-      console.error('[FCM Token] Failed to remove token:', error);
+    } catch {
       return respond.error('Failed to remove push token', 'INTERNAL_ERROR', { status: 500 });
     }
   }

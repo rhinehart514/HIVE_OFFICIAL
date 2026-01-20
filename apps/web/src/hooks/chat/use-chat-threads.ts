@@ -80,8 +80,7 @@ export function useChatThreads(
             hasMore: data.hasMore || false,
           });
         }
-      } catch (err) {
-        console.error("Error loading thread:", err);
+      } catch {
         if (mountedRef.current) {
           setThread((prev) => ({ ...prev, isLoading: false }));
         }
@@ -150,8 +149,7 @@ export function useChatThreads(
             )
           );
         }
-      } catch (err) {
-        console.error("Error sending thread reply:", err);
+      } catch {
         if (mountedRef.current) {
           setThread((prev) => ({
             ...prev,
@@ -197,8 +195,7 @@ export function useChatThreads(
           hasMore: data.hasMore || false,
         }));
       }
-    } catch (err) {
-      console.error("Error loading more replies:", err);
+    } catch {
       if (mountedRef.current) {
         setThread((prev) => ({ ...prev, isLoadingMore: false }));
       }

@@ -84,8 +84,7 @@ export async function GET(request: NextRequest) {
       hasMore,
       nextCursor,
     });
-  } catch (error) {
-    console.error('[API] Error fetching deployments:', error);
+  } catch {
     return errorResponse('Failed to fetch deployments', 500);
   }
 }

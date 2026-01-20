@@ -113,8 +113,8 @@ export default function PostDetailPage() {
             setPost(foundPost);
           }
         }
-      } catch (error) {
-        console.error("Failed to fetch post:", error);
+      } catch {
+        // Failed to fetch post
       }
     }
     fetchPost();
@@ -131,8 +131,8 @@ export default function PostDetailPage() {
           const data = await response.json();
           setComments(data.comments || []);
         }
-      } catch (error) {
-        console.error("Failed to fetch comments:", error);
+      } catch {
+        // Failed to fetch comments
       } finally {
         setIsLoading(false);
       }

@@ -112,8 +112,8 @@ export function usePushPrompt(): UsePushPromptReturn {
               body: JSON.stringify({ token }),
             });
           }
-        } catch (fcmError) {
-          console.error("Failed to get/register FCM token:", fcmError);
+        } catch {
+          // FCM token registration failed - notifications won't work
         }
         return true;
       }
@@ -124,8 +124,7 @@ export function usePushPrompt(): UsePushPromptReturn {
       }
 
       return false;
-    } catch (error) {
-      console.error("Failed to request notification permission:", error);
+    } catch {
       return false;
     }
   }, []);
@@ -178,8 +177,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       }));
 
       return isEnabled;
-    } catch (error) {
-      console.error("Failed to request permission:", error);
+    } catch {
       return false;
     }
   }, [state.isSupported]);
@@ -202,7 +200,6 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         fcmToken: token,
       }));
     } catch (error) {
-      console.error("Failed to register FCM token:", error);
       throw error;
     }
   }, []);

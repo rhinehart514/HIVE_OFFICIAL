@@ -89,8 +89,8 @@ export function useChatMessages(
           setActiveBoardId(defaultBoard.id);
         }
       }
-    } catch (err) {
-      console.error("Error fetching boards:", err);
+    } catch {
+      // Failed to fetch boards - will use default
     }
   }, [spaceId, initialBoardId]);
 
@@ -135,7 +135,6 @@ export function useChatMessages(
           setHasMore(data.hasMore || false);
         }
       } catch (err) {
-        console.error("Error fetching messages:", err);
         if (mountedRef.current) {
           setError(
             err instanceof Error ? err.message : "Failed to fetch messages"
@@ -167,8 +166,8 @@ export function useChatMessages(
         if (mountedRef.current) {
           setPinnedMessages(data.messages || []);
         }
-      } catch (err) {
-        console.error("Error fetching pinned messages:", err);
+      } catch {
+        // Failed to fetch pinned messages - will show empty
       }
     },
     [spaceId]

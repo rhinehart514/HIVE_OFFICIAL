@@ -1,7 +1,9 @@
 /**
- * Temporary stub for real-time feed listeners.
- * The full implementation was removed during refactors but hooks still import it.
- * This keeps type-checking and runtime imports working until the feature is rebuilt.
+ * Real-time Feed Listeners
+ *
+ * Provides no-op implementations for real-time feed functionality.
+ * The feed currently operates in polling mode via the /api/feed endpoint.
+ * Real-time Firebase listeners can be added here when needed for instant updates.
  */
 
 export type RealtimeFeedItem = Record<string, unknown>;
@@ -15,13 +17,13 @@ export function getRealtimeFeedManager(_userId?: string) {
       _spaceIds: string[],
       _onUpdate: (items: RealtimeFeedItem[], updateType: 'added' | 'modified' | 'removed') => void
     ) => {
-      // No-op in stub.
+      // No-op: real-time listeners not yet implemented
     },
     cleanup: () => {},
   };
 }
 
 export function cleanupRealtimeFeedManager(_userId?: string) {
-  // No-op stub for now.
+  // No-op: cleanup not needed until real-time listeners are implemented
 }
 

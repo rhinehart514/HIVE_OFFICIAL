@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { collection, onSnapshot, query, where, orderBy, limit, type QueryConstraint } from 'firebase/firestore';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { collection, getDocs, query, where, orderBy, limit, type QueryConstraint } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@hive/auth-logic';
 import type { Space } from '@hive/core';
@@ -10,19 +10,25 @@ interface UseRealtimeSpacesOptions {
   limitCount?: number;
 }
 
+/**
+ * Hook to fetch spaces with filtering and search.
+ * Uses one-time reads (getDocs) instead of real-time listeners for cost efficiency.
+ * Browsing spaces doesn't need real-time updates - users can refresh manually.
+ */
 export function useRealtimeSpaces(options: UseRealtimeSpacesOptions = {}) {
   const { filterType = 'all', searchQuery = '', limitCount = 50 } = options;
   const { user } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const fetchIdRef = useRef(0);
 
-  useEffect(() => {
+  const fetchSpaces = useCallback(async () => {
+    const currentFetchId = ++fetchIdRef.current;
     setLoading(true);
     setError(null);
 
     try {
-      // Build query constraints
       const constraints: QueryConstraint[] = [];
 
       // SECURITY: Campus isolation is MANDATORY
@@ -51,64 +57,42 @@ export function useRealtimeSpaces(options: UseRealtimeSpacesOptions = {}) {
       // Add limit
       constraints.push(limit(limitCount));
 
-      // Create the query
+      // Create and execute the query (one-time read)
       const spacesQuery = query(
         collection(db, 'spaces'),
         ...constraints
       );
 
-      // Set up real-time listener
-      const unsubscribe = onSnapshot(
-        spacesQuery,
-        (snapshot) => {
-          const updatedSpaces = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data()
-          })) as Space[];
+      const snapshot = await getDocs(spacesQuery);
 
-          setSpaces(updatedSpaces);
-          setLoading(false);
+      // Only update state if this is still the latest fetch
+      if (currentFetchId === fetchIdRef.current) {
+        const fetchedSpaces = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Space[];
 
-          // Log real-time updates
-          if (!snapshot.metadata.hasPendingWrites) {
-            const changes = snapshot.docChanges();
-            changes.forEach(change => {
-              if (change.type === 'added') {
-                // Space added - no action needed, already in list
-              } else if (change.type === 'modified') {
-                // Space modified - already updated in list
-              } else if (change.type === 'removed') {
-                // Space removed - already removed from list
-              }
-            });
-          }
-        },
-        (err) => {
-          setError(err as Error);
-          setLoading(false);
-        }
-      );
-
-      // Cleanup function
-      return () => {
-        unsubscribe();
-      };
+        setSpaces(fetchedSpaces);
+        setLoading(false);
+      }
     } catch (err) {
-      setError(err as Error);
-      setLoading(false);
+      if (currentFetchId === fetchIdRef.current) {
+        setError(err as Error);
+        setLoading(false);
+      }
     }
   }, [filterType, searchQuery, limitCount, user?.campusId]);
 
-  const refetch = useCallback(() => {
-    // Trigger a re-render by changing a dependency
-    setLoading(true);
-  }, []);
+  // Fetch on mount and when dependencies change
+  useEffect(() => {
+    fetchSpaces();
+  }, [fetchSpaces]);
 
   return {
     spaces,
     loading,
     error,
-    refetch,
+    refetch: fetchSpaces,
     totalCount: spaces.length
   };
 }

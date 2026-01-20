@@ -5,7 +5,8 @@
  */
 
 // Layout
-export { EntryShell, EntryShellStatic, type EntryShellProps } from './EntryShell';
+export { EntryShell, EntryShellStatic, type EntryShellProps, type EntryStep } from './EntryShell';
+export { EntryProgress } from './EntryProgress';
 
 // State components
 export * from './states';

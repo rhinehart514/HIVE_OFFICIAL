@@ -62,9 +62,13 @@ const PUBLIC_ROUTES = [
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
   '/s',             // Short space URLs
   '/u',             // Short profile URLs
-  '/spaces/browse', // Guest-accessible discovery
+  '/spaces',        // Unified Spaces Hub (browse without auth)
   '/tools',         // HiveLab landing (view-only for guests)
 ];
+
+// Routes that are public only as exact matches (not prefix matching)
+// Note: /spaces is now in PUBLIC_ROUTES with prefix matching
+const EXACT_PUBLIC_ROUTES: string[] = [];
 
 // Admin-only routes
 const ADMIN_ROUTES = ['/admin'];
@@ -72,7 +76,7 @@ const ADMIN_ROUTES = ['/admin'];
 // Route redirects (replacing deleted client-side redirect pages)
 const ROUTE_REDIRECTS: Record<string, string> = {
   // Alias routes
-  '/browse': '/spaces/browse',
+  '/browse': '/spaces',
   '/build': '/tools/create',
   // Settings section shortcuts
   '/settings/privacy': '/settings?section=privacy',
@@ -155,6 +159,11 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 function isPublicRoute(pathname: string): boolean {
+  // Check exact public routes first
+  if (EXACT_PUBLIC_ROUTES.includes(pathname)) {
+    return true;
+  }
+  // Check prefix-based public routes
   return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 }
 
@@ -314,13 +323,13 @@ export async function middleware(request: NextRequest) {
     if (session && pathname === '/enter' && session.onboardingCompleted) {
       const stateParam = request.nextUrl.searchParams.get('state');
       if (stateParam === 'identity') {
-        return NextResponse.redirect(new URL('/spaces/browse', request.url));
+        return NextResponse.redirect(new URL('/spaces', request.url));
       }
     }
 
     // Legacy /onboarding redirect (in case URL redirect didn't catch it)
     if (session && pathname === '/onboarding' && session.onboardingCompleted) {
-      return NextResponse.redirect(new URL('/spaces/browse', request.url));
+      return NextResponse.redirect(new URL('/spaces', request.url));
     }
   }
 

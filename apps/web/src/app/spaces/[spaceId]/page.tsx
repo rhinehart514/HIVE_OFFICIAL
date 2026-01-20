@@ -47,6 +47,8 @@ import {
   ErrorToast,
   SpaceEntryWrapper,
   SpaceTheaterLayout,
+  LeaderOnboardingBanner,
+  LeaderQuickActions,
 } from "./components";
 
 // ============================================================
@@ -259,7 +261,8 @@ function SpaceDetailContent() {
   };
 
   const handleAddTool = () => {
-    setModal('templates', true);
+    // Open QuickCreate wizard for "blind build" experience
+    setModal('quickCreate', true);
   };
 
   const handleRemoveTool = (placementId: string) => {
@@ -354,6 +357,18 @@ function SpaceDetailContent() {
           iconUrl: space.iconUrl,
           category: space.category,
         }}
+        // Leader onboarding (shows after claiming)
+        leaderOnboardingBanner={isLeader ? (
+          <LeaderOnboardingBanner
+            spaceId={spaceId ?? ""}
+            hasAvatar={!!space.iconUrl}
+            hasBanner={!!space.bannerUrl}
+            memberCount={space.memberCount ?? 0}
+            eventCount={events.length}
+            onOpenInviteModal={() => setModal('inviteMember', true)}
+            onOpenEventModal={() => setModal('createEvent', true)}
+          />
+        ) : undefined}
         // Membership
         isMember={isMember}
         onJoin={handlers.handleEnterFromThreshold}
@@ -429,6 +444,15 @@ function SpaceDetailContent() {
 
       {/* Error Toast */}
       {error && <ErrorToast error={error} onRetry={handlers.refresh} />}
+
+      {/* Leader Quick Actions FAB */}
+      {isLeader && (
+        <LeaderQuickActions
+          spaceId={spaceId ?? ""}
+          onOpenInviteModal={() => setModal('inviteMember', true)}
+          onOpenEventModal={() => setModal('createEvent', true)}
+        />
+      )}
     </>
   );
 }

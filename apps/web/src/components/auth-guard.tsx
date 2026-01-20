@@ -48,9 +48,9 @@ export function AuthGuard({
       return;
     }
 
-    // If user is authenticated and on entry/schools pages, redirect to browse
+    // If user is authenticated and on entry/schools pages, redirect to spaces
     if (isAuthenticated && (pathname.startsWith('/enter') || pathname.startsWith('/schools'))) {
-      router.push('/spaces/browse');
+      router.push('/spaces');
       return;
     }
 

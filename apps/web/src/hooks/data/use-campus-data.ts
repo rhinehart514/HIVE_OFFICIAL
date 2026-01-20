@@ -206,9 +206,8 @@ export function useCampusData(options: UseCampusDataOptions = {}): CampusDataRes
             }))
           );
         }
-      } catch (error) {
+      } catch {
         if (!cancelled) {
-          console.error('Failed to fetch tools for campus dock:', error);
           setTools([]);
         }
       } finally {

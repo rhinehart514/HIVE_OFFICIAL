@@ -68,7 +68,6 @@ export function usePinnedMessages(
         setMessages(data.messages || []);
       }
     } catch (err) {
-      console.error("Error fetching pinned messages:", err);
       if (mountedRef.current) {
         setError(
           err instanceof Error ? err.message : "Failed to fetch pinned messages"
@@ -119,7 +118,6 @@ export function usePinnedMessages(
         // Refresh pinned messages list
         await fetchPinnedMessages();
       } catch (err) {
-        console.error("Error pinning message:", err);
         throw err;
       } finally {
         pinningRef.current.delete(messageId);
@@ -151,7 +149,6 @@ export function usePinnedMessages(
           throw new Error(`Failed to unpin message: ${response.status}`);
         }
       } catch (err) {
-        console.error("Error unpinning message:", err);
         // Refresh to get correct state
         await fetchPinnedMessages();
         throw err;

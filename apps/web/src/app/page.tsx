@@ -1,32 +1,26 @@
 'use client';
 
 /**
- * HIVE Landing Page v3
+ * HIVE Landing Page v4 - Glassmorphism
  *
- * Motion: Cursor tracking, 3D tilt, text reveal, horizontal scroll
- * Layout: Asymmetric hero, sticky sections, overlapping layers
+ * Direction 1: Glass panels, depth layers, data visualization
+ * Optimized for conversion with social proof
  */
 
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import {
   Button,
   Badge,
   Skeleton,
-  // Motion primitives
-  Tilt,
-  Magnetic,
-  TextReveal,
-  CursorGlow,
-  NoiseOverlay,
   motion,
-  useScroll,
-  useTransform,
   useInView,
+  NoiseOverlay,
 } from '@hive/ui/design-system/primitives';
-import { usePlatformStats, formatStatNumber, formatActivityTime } from '@/hooks/use-platform-stats';
+import { usePlatformStats, formatStatNumber } from '@/hooks/use-platform-stats';
+import { useFeaturedSpaces } from '@/hooks/use-featured-spaces';
 
 // ============================================
-// VISUAL COMPONENTS
+// COMPONENTS
 // ============================================
 
 const HiveMark = ({ className }: { className?: string }) => (
@@ -35,72 +29,173 @@ const HiveMark = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// Glass card component
+function GlassCard({
+  children,
+  className = '',
+  hover = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+}) {
+  return (
+    <div
+      className={`
+        relative rounded-2xl
+        bg-white/[0.02] backdrop-blur-xl
+        border border-white/[0.06]
+        ${hover ? 'transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.04]' : ''}
+        ${className}
+      `}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Stat card with progress bar visualization
+function StatCard({
+  value,
+  label,
+  loading,
+  highlight = false,
+}: {
+  value: string | number;
+  label: string;
+  loading?: boolean;
+  highlight?: boolean;
+}) {
+  const displayValue = typeof value === 'number' ? formatStatNumber(value) : value;
+
+  return (
+    <GlassCard className="p-4">
+      {loading ? (
+        <>
+          <Skeleton className="h-8 w-20 mb-2" />
+          <Skeleton className="h-4 w-16" />
+        </>
+      ) : (
+        <>
+          <div className="flex items-baseline gap-2 mb-1">
+            <span className={`text-2xl font-bold tabular-nums ${highlight ? 'text-[#FFD700]' : 'text-white'}`}>
+              {displayValue}
+            </span>
+          </div>
+          <div className="text-xs text-white/40 uppercase tracking-wide">{label}</div>
+          {/* Mini progress bar */}
+          <div className="mt-3 h-1 bg-white/[0.06] rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full ${highlight ? 'bg-[#FFD700]/60' : 'bg-white/20'}`}
+              initial={{ width: 0 }}
+              animate={{ width: '70%' }}
+              transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+            />
+          </div>
+        </>
+      )}
+    </GlassCard>
+  );
+}
+
+// Live activity indicator
+function LiveIndicator() {
+  return (
+    <div className="flex items-center gap-2">
+      <motion.div
+        className="w-2 h-2 rounded-full bg-[#FFD700]"
+        animate={{ opacity: [1, 0.4, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+      <span className="text-xs text-white/60">Live</span>
+    </div>
+  );
+}
+
 // ============================================
 // SECTIONS
 // ============================================
 
-// Hero with split layout and parallax
-function HeroSection({ stats, loading }: { stats: ReturnType<typeof usePlatformStats>['stats']; loading: boolean }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
-
-  const textY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-  const bgY = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
+// Navigation
+function Navigation() {
   return (
-    <section ref={ref} className="relative min-h-[120vh] flex items-center overflow-hidden">
-      {/* Background elements */}
-      <motion.div className="absolute inset-0" style={{ y: bgY }}>
-        {/* Large gradient orb */}
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px]">
-          <motion.div
-            className="w-full h-full rounded-full blur-[150px]"
-            style={{ background: 'radial-gradient(circle, rgba(255,215,0,0.12) 0%, transparent 70%)' }}
-            animate={{ scale: [1, 1.15, 1], rotate: [0, 10, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+    <motion.header
+      className="fixed top-4 left-4 right-4 z-50"
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, delay: 0.2 }}
+    >
+      <nav className="max-w-6xl mx-auto">
+        <GlassCard className="px-4 h-14 flex items-center justify-between" hover={false}>
+          <a
+            href="/"
+            className="flex items-center gap-2 rounded-lg px-2 py-1 -mx-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            <HiveMark className="w-5 h-5 text-[#FFD700]" />
+            <span className="font-semibold text-sm tracking-tight">HIVE</span>
+          </a>
+
+          <div className="hidden md:flex items-center gap-6">
+            <a
+              href="/spaces"
+              className="text-sm text-white/50 hover:text-white transition-colors rounded-md px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            >
+              Spaces
+            </a>
+            <a
+              href="/build"
+              className="text-sm text-white/50 hover:text-white transition-colors rounded-md px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+            >
+              HiveLab
+            </a>
+          </div>
+
+          <Button variant="ghost" size="sm" asChild>
+            <a href="/enter">Sign in</a>
+          </Button>
+        </GlassCard>
+      </nav>
+    </motion.header>
+  );
+}
+
+// Hero with bento grid layout
+function HeroSection({
+  stats,
+  loading,
+}: {
+  stats: ReturnType<typeof usePlatformStats>['stats'];
+  loading: boolean;
+}) {
+  return (
+    <section className="relative min-h-screen flex items-center pt-24 pb-16">
+      {/* Background gradient */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px]">
+          <div
+            className="w-full h-full rounded-full blur-[150px] opacity-60"
+            style={{ background: 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%)' }}
           />
         </div>
-
-        {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '80px 80px',
-        }} />
-
-        {/* Diagonal lines */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(5)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute h-px w-[200%] bg-gradient-to-r from-transparent via-white/5 to-transparent"
-              style={{
-                top: `${20 + i * 20}%`,
-                left: '-50%',
-                transform: 'rotate(-15deg)',
-              }}
-              initial={{ x: '-100%', opacity: 0 }}
-              animate={{ x: '0%', opacity: 1 }}
-              transition={{ duration: 2, delay: 0.5 + i * 0.2 }}
-            />
-          ))}
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px]">
+          <div
+            className="w-full h-full rounded-full blur-[120px] opacity-40"
+            style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)' }}
+          />
         </div>
-      </motion.div>
+      </div>
 
-      {/* Main content */}
-      <motion.div className="relative z-10 w-full max-w-7xl mx-auto px-6" style={{ y: textY, opacity }}>
-        <div className="grid lg:grid-cols-12 gap-12 items-center">
-          {/* Left: Text */}
-          <div className="lg:col-span-7">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
+        {/* Bento Grid */}
+        <div className="grid lg:grid-cols-3 gap-4">
+          {/* Main hero card - spans 2 columns */}
+          <GlassCard className="lg:col-span-2 p-8 md:p-12" hover={false}>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <Badge variant="outline" className="mb-8 inline-flex">
+              <Badge variant="outline" className="mb-6 inline-flex">
                 <motion.span
                   className="w-1.5 h-1.5 rounded-full bg-[#FFD700] mr-2"
                   animate={{ opacity: [1, 0.4, 1] }}
@@ -110,305 +205,242 @@ function HeroSection({ stats, loading }: { stats: ReturnType<typeof usePlatformS
               </Badge>
             </motion.div>
 
-            <h1 className="text-[clamp(3rem,8vw,6rem)] font-bold leading-[0.9] tracking-tight mb-8">
-              <TextReveal text="Student" className="block" />
-              <TextReveal text="infrastructure" className="block text-white/30" delay={0.2} />
-              <TextReveal text="for the" className="block text-white/30 text-[0.5em]" delay={0.4} />
-              <TextReveal text="new era" className="block text-[#FFD700]/80" delay={0.5} />
-            </h1>
-
-            <motion.p
-              className="text-lg md:text-xl text-white/50 max-w-md mb-10"
+            <motion.h1
+              className="text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] tracking-tight mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.4 }}
             >
-              Communities, AI tools, and connections—built by students, owned by students.
+              <span className="text-[#FFD700]">400+</span> student orgs.
+              <br />
+              <span className="text-white/40">One platform.</span>
+            </motion.h1>
+
+            <motion.p
+              className="text-lg text-white/50 max-w-md mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              Your clubs, your events, your tools — finally in one place.
             </motion.p>
 
             <motion.div
               className="flex flex-wrap items-center gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
+              transition={{ delay: 0.6 }}
             >
-              <Magnetic>
-                <Button variant="cta" size="lg" asChild>
-                  <a href="/enter">
-                    Enter HIVE
-                    <motion.span
-                      className="ml-2 inline-block"
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      →
-                    </motion.span>
-                  </a>
-                </Button>
-              </Magnetic>
+              <Button variant="cta" size="lg" asChild>
+                <a href="/enter" className="gap-2">
+                  Enter HIVE
+                  <motion.span
+                    className="inline-block"
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    →
+                  </motion.span>
+                </a>
+              </Button>
+              <span className="text-sm text-white/30">Free with .edu email</span>
+            </motion.div>
+          </GlassCard>
 
-              <span className="text-sm text-white/30">
-                Free with .edu email
-              </span>
+          {/* Stats column */}
+          <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <StatCard
+                value={stats.totalSpaces || 400}
+                label="Spaces Live"
+                loading={loading}
+                highlight
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <StatCard
+                value={stats.totalUsers || 0}
+                label="Students"
+                loading={loading}
+              />
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <GlassCard className="p-4 flex-1">
+                <LiveIndicator />
+                <div className="mt-3 flex gap-1">
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-[#FFD700]/60"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-2 text-xs text-white/40">Campus activity</div>
+              </GlassCard>
             </motion.div>
           </div>
-
-          {/* Right: Visual */}
-          <div className="lg:col-span-5 relative">
-            <Tilt className="perspective-1000">
-              <motion.div
-                className="relative aspect-square"
-                initial={{ opacity: 0, scale: 0.8, rotateY: -20 }}
-                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-                transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {/* Hexagon pattern */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <HiveMark className="w-3/4 h-3/4 text-white/[0.02]" />
-                </div>
-
-                {/* Floating cards - Real stats */}
-                <motion.div
-                  className="absolute top-[10%] left-[10%] p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-sm"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                  style={{ transform: 'translateZ(40px)' }}
-                >
-                  <div className="text-xs text-white/50 mb-1">Active now</div>
-                  {loading ? (
-                    <Skeleton className="h-7 w-16 bg-white/10" />
-                  ) : (
-                    <div className="text-2xl font-bold text-[#FFD700]">
-                      {stats.activeUsers > 0 ? formatStatNumber(stats.activeUsers) : '—'}
-                    </div>
-                  )}
-                  <div className="text-xs text-white/30">students</div>
-                </motion.div>
-
-                <motion.div
-                  className="absolute bottom-[15%] right-[5%] p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-sm"
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                  style={{ transform: 'translateZ(60px)' }}
-                >
-                  {stats.recentActivity ? (
-                    <>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded bg-[#FFD700]/20" />
-                        <span className="text-sm font-medium">
-                          {stats.recentActivity.handle ? `@${stats.recentActivity.handle}` : stats.recentActivity.spaceName}
-                        </span>
-                      </div>
-                      <div className="text-xs text-white/40">
-                        {stats.recentActivity.type === 'space_created' ? 'Just claimed their space' : 'Just joined HIVE'}
-                        {' · '}{formatActivityTime(stats.recentActivity.timestamp)}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded bg-[#FFD700]/20" />
-                        <span className="text-sm font-medium">New spaces daily</span>
-                      </div>
-                      <div className="text-xs text-white/40">Join the community</div>
-                    </>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  className="absolute top-[40%] right-[15%] px-3 py-2 rounded-full bg-[#FFD700]/10 border border-[#FFD700]/20"
-                  animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  style={{ transform: 'translateZ(30px)' }}
-                >
-                  <span className="text-xs font-medium text-[#FFD700]">
-                    {loading ? '...' : stats.totalSpaces > 0 ? `${formatStatNumber(stats.totalSpaces)} Spaces` : 'Launch soon'}
-                  </span>
-                </motion.div>
-              </motion.div>
-            </Tilt>
-          </div>
         </div>
-      </motion.div>
-
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-12 left-1/2 -translate-x-1/2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-      >
-        <motion.div
-          className="w-px h-20 bg-gradient-to-b from-white/30 to-transparent"
-          animate={{ scaleY: [0.5, 1, 0.5], opacity: [0.3, 0.6, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-      </motion.div>
+      </div>
     </section>
   );
 }
 
-// Horizontal scroll showcase
-function ShowcaseSection() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ['start end', 'end start'],
-  });
+// Org ticker with auto-scroll
+function OrgTicker() {
+  const { spaces } = useFeaturedSpaces(30);
 
-  const x = useTransform(scrollYProgress, [0.2, 0.8], ['0%', '-50%']);
+  // Fallback org names if API hasn't loaded
+  const fallbackOrgs = [
+    'Student Association',
+    'UB Hacking',
+    'Pre-Med Society',
+    'Dance Marathon',
+    'Debate Club',
+    'Engineering Club',
+    'Business Society',
+    'Art Collective',
+  ];
+
+  const orgNames = spaces.length > 0
+    ? spaces.map(s => s.name)
+    : fallbackOrgs;
+
+  // Duplicate for seamless loop
+  const duplicatedOrgs = [...orgNames, ...orgNames];
+
+  return (
+    <section className="py-8 overflow-hidden border-y border-white/[0.04]">
+      <div className="max-w-6xl mx-auto px-6 mb-4">
+        <span className="text-xs text-white/30 uppercase tracking-wide">Already here</span>
+      </div>
+
+      <div className="relative">
+        {/* Fade edges */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-[#0A0A09] to-transparent z-10" />
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#0A0A09] to-transparent z-10" />
+
+        <motion.div
+          className="flex gap-3"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+        >
+          {duplicatedOrgs.map((name, i) => (
+            <div
+              key={`${name}-${i}`}
+              className="shrink-0 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.06] text-sm text-white/60"
+            >
+              {name}
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// Feature triptych
+function FeaturesSection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
 
   const features = [
     {
       title: 'Spaces',
-      desc: 'Real communities with real activity',
-      color: '#FFFFFF',
-      icon: '◇',
+      description: 'Find your people. 400+ clubs and organizations waiting.',
+      visual: (
+        <div className="aspect-video rounded-lg bg-white/[0.02] border border-white/[0.04] p-3 mb-4">
+          <div className="flex gap-2 mb-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="w-8 h-8 rounded-lg bg-white/[0.06]" />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <div className="h-2 bg-white/[0.06] rounded w-3/4" />
+            <div className="h-2 bg-white/[0.04] rounded w-1/2" />
+          </div>
+        </div>
+      ),
     },
     {
       title: 'HiveLab',
-      desc: 'Build tools with AI in seconds',
-      color: '#FFD700',
-      icon: '◈',
-    },
-    {
-      title: 'Connect',
-      desc: 'Find your people across campus',
-      color: '#FFFFFF',
-      icon: '◆',
+      description: 'Build AI tools. 35 templates ready to deploy.',
+      isTerminal: true,
+      visual: (
+        <div className="aspect-video rounded-lg bg-black/50 border border-white/[0.08] p-3 mb-4 font-mono text-xs">
+          <div className="text-white/40 mb-1">{'>'} HIVELAB_</div>
+          <div className="text-[#FFD700]/80">{'>'} build.ai()</div>
+          <div className="text-white/30">{'>'} deploy()</div>
+          <motion.span
+            className="inline-block w-2 h-4 bg-white/60 ml-1"
+            animate={{ opacity: [1, 0, 1] }}
+            transition={{ duration: 1, repeat: Infinity }}
+          />
+        </div>
+      ),
     },
     {
       title: 'Events',
-      desc: 'Never miss what matters',
-      color: '#FFFFFF',
-      icon: '◉',
-    },
-  ];
-
-  return (
-    <section ref={containerRef} className="relative py-32 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 mb-16">
-        <motion.p
-          className="text-sm font-medium tracking-widest uppercase text-[#FFD700] mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          The Platform
-        </motion.p>
-        <motion.h2
-          className="text-4xl md:text-6xl font-bold"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1 }}
-        >
-          Everything students need.
-          <br />
-          <span className="text-white/30">Nothing they don't.</span>
-        </motion.h2>
-      </div>
-
-      {/* Horizontal scroll cards */}
-      <motion.div className="flex gap-6 px-6" style={{ x }}>
-        {features.map((feature, i) => (
-          <Tilt key={feature.title}>
-            <motion.div
-              className="relative shrink-0 w-[400px] h-[500px] rounded-3xl border border-white/[0.08] bg-white/[0.02] p-8 overflow-hidden group"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-100px' }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ borderColor: 'rgba(255,255,255,0.15)' }}
-            >
-              {/* Glow on hover */}
-              <div
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{
-                  background: `radial-gradient(circle at 50% 0%, ${feature.color === '#FFD700' ? 'rgba(255,215,0,0.1)' : 'rgba(255,255,255,0.05)'}, transparent 60%)`,
-                }}
-              />
-
-              {/* Content */}
-              <div className="relative h-full flex flex-col">
-                <span
-                  className="text-6xl mb-auto"
-                  style={{ color: feature.color, opacity: feature.color === '#FFD700' ? 0.8 : 0.2 }}
-                >
-                  {feature.icon}
-                </span>
-
-                <div>
-                  <h3 className="text-3xl font-bold mb-3" style={{ color: feature.color === '#FFD700' ? '#FFD700' : 'white' }}>
-                    {feature.title}
-                  </h3>
-                  <p className="text-white/50 text-lg">{feature.desc}</p>
-                </div>
+      description: "Never miss what's on. All in one calendar.",
+      visual: (
+        <div className="aspect-video rounded-lg bg-white/[0.02] border border-white/[0.04] p-3 mb-4">
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="aspect-square rounded bg-white/[0.04] flex items-center justify-center text-[8px] text-white/30">
+                {i + 1}
               </div>
-
-              {/* Corner decoration */}
-              <div className="absolute bottom-0 right-0 w-32 h-32 border-l border-t border-white/[0.04] rounded-tl-3xl" />
-            </motion.div>
-          </Tilt>
-        ))}
-      </motion.div>
-    </section>
-  );
-}
-
-// Sticky stats section with parallax numbers
-function StatsSection({ stats, loading }: { stats: ReturnType<typeof usePlatformStats>['stats']; loading: boolean }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
-
-  const y1 = useTransform(scrollYProgress, [0, 1], [100, -100]);
-  const y2 = useTransform(scrollYProgress, [0, 1], [50, -150]);
-  const y3 = useTransform(scrollYProgress, [0, 1], [150, -50]);
-
-  // Build stats array with real data
-  const displayStats = [
-    {
-      value: loading ? '...' : stats.totalUsers > 0 ? formatStatNumber(stats.totalUsers) : '—',
-      label: 'Students',
-      y: y1,
+            ))}
+          </div>
+          <div className="h-2 bg-[#FFD700]/20 rounded w-full mb-1" />
+          <div className="h-2 bg-white/[0.04] rounded w-2/3" />
+        </div>
+      ),
     },
-    {
-      value: loading ? '...' : stats.totalSpaces > 0 ? formatStatNumber(stats.totalSpaces) : '—',
-      label: 'Spaces',
-      y: y2,
-    },
-    { value: '24/7', label: 'Always on', y: y3 },
   ];
 
   return (
-    <section ref={ref} className="relative py-40 overflow-hidden">
-      {/* Background text */}
-      <motion.div
-        className="absolute inset-0 flex items-center justify-center"
-        style={{ y: useTransform(scrollYProgress, [0, 1], [0, 200]) }}
-      >
-        <span className="text-[30vw] font-bold text-white/[0.015] select-none">HIVE</span>
-      </motion.div>
+    <section ref={ref} className="py-24">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">What you get</h2>
+          <p className="text-white/40">Everything students need. Nothing they don&apos;t.</p>
+        </motion.div>
 
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-12">
-          {displayStats.map((stat, i) => (
+        <div className="grid md:grid-cols-3 gap-6">
+          {features.map((feature, i) => (
             <motion.div
-              key={stat.label}
-              className="text-center"
-              style={{ y: stat.y }}
+              key={feature.title}
+              initial={{ opacity: 0, y: 30 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: i * 0.1 }}
             >
-              <motion.div
-                className="text-7xl md:text-8xl font-bold mb-4 tabular-nums"
-                style={{ color: i === 0 ? '#FFD700' : 'white' }}
-                initial={{ opacity: 0, scale: 0.5 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2, type: 'spring', stiffness: 100 }}
-              >
-                {stat.value}
-              </motion.div>
-              <div className="text-white/40 text-lg">{stat.label}</div>
+              <GlassCard className="p-6 h-full">
+                {feature.visual}
+                <h3 className={`text-xl font-bold mb-2 ${feature.isTerminal ? 'text-[#FFD700]' : 'text-white'}`}>
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-white/50">{feature.description}</p>
+              </GlassCard>
             </motion.div>
           ))}
         </div>
@@ -417,67 +449,135 @@ function StatsSection({ stats, loading }: { stats: ReturnType<typeof usePlatform
   );
 }
 
-// Final CTA with dramatic reveal
-function CTASection() {
+// Founding Class CTA
+function FoundingClassSection() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const { stats } = usePlatformStats();
+
+  // Animated counter
+  const [count, setCount] = useState(0);
+  const targetCount = stats.totalUsers || 147;
+
+  useEffect(() => {
+    if (isInView && targetCount > 0) {
+      const duration = 1500;
+      const steps = 30;
+      const increment = targetCount / steps;
+      let current = 0;
+
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= targetCount) {
+          setCount(targetCount);
+          clearInterval(timer);
+        } else {
+          setCount(Math.floor(current));
+        }
+      }, duration / steps);
+
+      return () => clearInterval(timer);
+    }
+  }, [isInView, targetCount]);
 
   return (
-    <section ref={ref} className="relative py-40">
-      {/* Background gradient */}
-      <motion.div
-        className="absolute inset-0"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
-      >
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] rounded-full blur-[200px]"
-          style={{ background: 'radial-gradient(circle, rgba(255,215,0,0.08) 0%, transparent 70%)' }}
-        />
-      </motion.div>
-
-      <div className="relative max-w-4xl mx-auto px-6 text-center">
+    <section ref={ref} className="py-24">
+      <div className="max-w-3xl mx-auto px-6">
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.6 }}
         >
-          <h2 className="text-5xl md:text-7xl font-bold mb-6">
-            <TextReveal text="Ready?" delay={0} />
-          </h2>
-        </motion.div>
+          <GlassCard className="p-8 md:p-12 text-center relative overflow-hidden">
+            {/* Gold glow border effect */}
+            <div className="absolute inset-0 rounded-2xl opacity-50">
+              <div className="absolute inset-[-1px] rounded-2xl bg-gradient-to-b from-[#FFD700]/20 via-transparent to-[#FFD700]/10" />
+            </div>
 
-        <motion.p
-          className="text-xl md:text-2xl text-white/40 mb-12"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.3 }}
-        >
-          Your campus is already here.
-        </motion.p>
+            <div className="relative z-10">
+              <motion.div
+                className="inline-flex items-center gap-2 text-[#FFD700] text-sm font-medium mb-6"
+                animate={{ opacity: [0.7, 1, 0.7] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <span className="text-lg">✦</span>
+                FOUNDING CLASS
+                <span className="text-lg">✦</span>
+              </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.5 }}
-        >
-          <Magnetic className="inline-block">
-            <Button variant="cta" size="lg" asChild>
-              <a href="/enter" className="px-12">
-                Get started free
-                <motion.span
-                  className="ml-3 inline-block"
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  →
-                </motion.span>
-              </a>
-            </Button>
-          </Magnetic>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Join this week.
+                <br />
+                <span className="text-white/40">Get recognized forever.</span>
+              </h2>
+
+              <div className="flex flex-wrap justify-center gap-4 text-sm text-white/50 mb-8">
+                <span className="flex items-center gap-2">
+                  <span className="text-[#FFD700]">✓</span> Gold badge
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-[#FFD700]">✓</span> Early access
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="text-[#FFD700]">✓</span> Launch credits
+                </span>
+              </div>
+
+              <Button variant="cta" size="lg" asChild>
+                <a href="/enter" className="gap-2">
+                  Claim your spot
+                  <motion.span
+                    className="inline-block"
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    →
+                  </motion.span>
+                </a>
+              </Button>
+
+              <div className="mt-6 text-sm text-white/30">
+                <span className="text-white/60 font-medium tabular-nums">{count}</span> students joined
+              </div>
+            </div>
+          </GlassCard>
         </motion.div>
       </div>
     </section>
+  );
+}
+
+// Footer
+function Footer() {
+  return (
+    <footer className="border-t border-white/[0.06] py-8">
+      <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <HiveMark className="w-4 h-4 text-white/30" />
+          <span className="text-xs text-white/30">© 2026 HIVE</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <a
+            href="/legal/terms"
+            className="text-xs text-white/30 hover:text-white/60 transition-colors rounded px-1.5 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            Terms
+          </a>
+          <a
+            href="/legal/privacy"
+            className="text-xs text-white/30 hover:text-white/60 transition-colors rounded px-1.5 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            Privacy
+          </a>
+          <a
+            href="/legal/community-guidelines"
+            className="text-xs text-white/30 hover:text-white/60 transition-colors rounded px-1.5 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          >
+            Guidelines
+          </a>
+        </div>
+      </div>
+    </footer>
   );
 }
 
@@ -486,58 +586,18 @@ function CTASection() {
 // ============================================
 
 export default function LandingPage() {
-  // Fetch real platform stats
   const { stats, loading } = usePlatformStats();
 
   return (
     <div className="min-h-screen bg-[#0A0A09] text-white overflow-x-hidden">
-      <CursorGlow />
       <NoiseOverlay />
 
-      {/* Floating nav */}
-      <motion.header
-        className="fixed top-4 left-4 right-4 z-50"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-      >
-        <nav className="max-w-7xl mx-auto px-4 h-12 flex items-center justify-between rounded-full border border-white/[0.08] bg-black/60 backdrop-blur-xl">
-          <a href="/" className="flex items-center gap-2">
-            <HiveMark className="w-5 h-5 text-[#FFD700]" />
-            <span className="font-semibold text-sm tracking-tight">HIVE</span>
-          </a>
-
-          <div className="hidden md:flex items-center gap-8">
-            <a href="/spaces/browse" className="text-sm text-white/50 hover:text-white transition-colors">Spaces</a>
-            <a href="/tools" className="text-sm text-white/50 hover:text-white transition-colors">HiveLab</a>
-            <a href="/schools" className="text-sm text-white/50 hover:text-white transition-colors">Schools</a>
-          </div>
-
-          <Button variant="ghost" size="sm" asChild>
-            <a href="/enter">Sign in</a>
-          </Button>
-        </nav>
-      </motion.header>
-
+      <Navigation />
       <HeroSection stats={stats} loading={loading} />
-      <ShowcaseSection />
-      <StatsSection stats={stats} loading={loading} />
-      <CTASection />
-
-      {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <HiveMark className="w-4 h-4 text-white/30" />
-            <span className="text-xs text-white/30">© 2026 HIVE</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a href="/legal/terms" className="text-xs text-white/30 hover:text-white/60 transition-colors">Terms</a>
-            <a href="/legal/privacy" className="text-xs text-white/30 hover:text-white/60 transition-colors">Privacy</a>
-            <a href="/legal/community-guidelines" className="text-xs text-white/30 hover:text-white/60 transition-colors">Guidelines</a>
-          </div>
-        </div>
-      </footer>
+      <OrgTicker />
+      <FeaturesSection />
+      <FoundingClassSection />
+      <Footer />
     </div>
   );
 }

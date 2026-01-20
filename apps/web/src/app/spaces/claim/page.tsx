@@ -189,6 +189,16 @@ export default function ClaimSpacePage() {
       setStep('success');
       toast.success('Space claimed!');
 
+      // Set flag for onboarding banner
+      try {
+        localStorage.setItem(
+          `hive_just_claimed_${selectedSpace.id}`,
+          new Date().toISOString()
+        );
+      } catch {
+        // Ignore storage errors
+      }
+
       // Redirect after brief delay
       setTimeout(() => {
         router.push(`/spaces/${selectedSpace.id}`);
@@ -382,7 +392,7 @@ export default function ClaimSpacePage() {
         {/* Back */}
         <motion.div className="mb-8" {...fadeIn(0)}>
           <Link
-            href="/spaces/browse"
+            href="/spaces"
             className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

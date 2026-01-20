@@ -19,14 +19,14 @@ export default function HiveLabDemoPage() {
           elements: [],
           connections: [],
         }}
-        onSave={async (composition) => {
-          console.log('Save:', composition);
+        onSave={async () => {
+          // Demo mode - save is no-op
         }}
         onPreview={() => {
-          console.log('Preview');
+          // Demo mode - preview is no-op
         }}
         onCancel={() => {
-          console.log('Cancel');
+          // Demo mode - cancel is no-op
         }}
         userId="demo-user"
         userContext={{

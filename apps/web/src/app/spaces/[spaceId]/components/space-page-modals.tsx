@@ -24,9 +24,12 @@ import {
   AutomationTemplates,
   SpaceLeaderOnboardingModal,
   SpaceWelcomeModal,
+  QuickCreateWizard,
   QUICK_TEMPLATES,
+  getQuickTemplate,
   toast,
   type SpaceFeature,
+  type QuickCreateResult,
 } from '@hive/ui';
 import { SpaceLeaderModals } from './space-leader-modals';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
@@ -200,6 +203,58 @@ export function SpacePageModals({ state, router, tabs }: SpacePageModalsProps) {
         }
         currentUserId={state.currentUserId}
         spaceId={spaceId ?? ''}
+      />
+
+      {/* Quick Create Wizard - "Blind Build" experience */}
+      <QuickCreateWizard
+        open={modals.quickCreate}
+        onOpenChange={(open) => setModal('quickCreate', open)}
+        spaceContext={{
+          spaceId: spaceId ?? undefined,
+          spaceName: space.name,
+          spaceType: space.category,
+          memberCount: space.memberCount ?? 0,
+        }}
+        onComplete={async (result: QuickCreateResult) => {
+          // Get the template for this intent
+          const template = getQuickTemplate(result.templateId);
+          if (!template) {
+            toast.error('Template not found', 'Unable to create this tool.');
+            return;
+          }
+
+          // Apply config values to the template
+          const configuredTemplate = {
+            ...template,
+            name: result.config.name || template.name,
+            composition: {
+              ...template.composition,
+              name: result.config.name || template.composition.name,
+              elements: template.composition.elements.map((el, idx) => {
+                if (idx === 0) {
+                  // Apply config to the first element (primary element)
+                  const updatedConfig = { ...el.config };
+                  for (const [key, value] of Object.entries(result.config)) {
+                    if (key !== 'name' && value) {
+                      // Handle special cases like options (comma-separated)
+                      if (key === 'options' && typeof value === 'string') {
+                        updatedConfig[key] = value.split(',').map((s: string) => s.trim());
+                      } else {
+                        updatedConfig[key] = value;
+                      }
+                    }
+                  }
+                  return { ...el, config: updatedConfig };
+                }
+                return el;
+              }),
+            },
+          };
+
+          // Deploy using existing quick deploy handler
+          await handlers.handleQuickDeploy(configuredTemplate);
+          setModal('quickCreate', false);
+        }}
       />
     </>
   );

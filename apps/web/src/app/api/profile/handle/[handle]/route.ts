@@ -116,8 +116,7 @@ export const GET = withOptionalAuth(
         isOwnProfile,
         viewerType,
       });
-    } catch (error) {
-      console.error('Error fetching profile by handle:', error);
+    } catch {
       const errorResponse = NextResponse.json(
         { success: false, error: 'Failed to fetch profile', code: 'INTERNAL_ERROR' },
         { status: 500 }

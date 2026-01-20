@@ -35,6 +35,8 @@ export * from './floating-action-bar';
 export * from './command-bar';
 export * from './context-rail';
 export * from './element-rail';
+export * from './port-picker';
+export * from './connection-config';
 
 // IDE component primitives
 export * from './components';

@@ -1,26 +1,17 @@
 'use client';
 
 /**
- * TemplateGallery - Modal for browsing and selecting HiveLab templates
+ * TemplateGallery - Premium template browser for HiveLab
  *
- * Shows all available templates organized by category with preview
- * and one-click selection.
+ * Make.com / Figma inspired design with:
+ * - Custom visual elements (not basic icons)
+ * - Gradient accents and glow effects
+ * - Immersive selection experience
  */
 
 import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { XMarkIcon, MagnifyingGlassIcon, ChartBarIcon, ClockIcon, LinkIcon, UsersIcon, CalendarIcon, ChatBubbleLeftIcon, DocumentTextIcon, SparklesIcon, CheckIcon, ArrowRightIcon, ViewfinderCircleIcon, ArrowTrendingUpIcon, ClipboardDocumentListIcon, WalletIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
-
-// Aliases for lucide compatibility
-const ClipboardList = ClipboardDocumentListIcon;
-const Wallet = WalletIcon;
-const Layers = Square3Stack3DIcon;
 import { cn } from '../../../lib/utils';
-
-// Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-bg)]';
-const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
-const workshopTransitionSnappy = { type: 'spring' as const, stiffness: 500, damping: 30 };
 import {
   QUICK_TEMPLATES,
   type QuickTemplate,
@@ -30,41 +21,51 @@ import {
 } from '../../../lib/hivelab/quick-templates';
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
-const ICON_MAP = {
-  'bar-chart-2': ChartBarIcon,
-  timer: ClockIcon,
-  'link-2': LinkIcon,
-  users: UsersIcon,
-  calendar: CalendarIcon,
-  'message-square': ChatBubbleLeftIcon,
-  'file-text': DocumentTextIcon,
-  sparkles: SparklesIcon,
-  'clipboard-list': ClipboardList,
-  target: ViewfinderCircleIcon,
-  'trending-up': ArrowTrendingUpIcon,
-  wallet: Wallet,
-  camera: SparklesIcon, // Photo challenge
-  trophy: SparklesIcon, // Competition
-  inbox: ChatBubbleLeftIcon, // Suggestion box
-  grid: Layers, // Multi-poll
-} as const;
+// Premium motion tokens
+const springSnappy = { type: 'spring' as const, stiffness: 500, damping: 30 };
+const springSmooth = { type: 'spring' as const, stiffness: 300, damping: 25 };
+
+// Category visual config - emoji + gradient pairs
+const CATEGORY_CONFIG: Record<TemplateCategory, { emoji: string; gradient: string; glow: string }> = {
+  apps: {
+    emoji: '⚡',
+    gradient: 'from-amber-500/20 via-yellow-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]'
+  },
+  events: {
+    emoji: '📅',
+    gradient: 'from-violet-500/20 via-purple-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(139,92,246,0.15)]'
+  },
+  engagement: {
+    emoji: '🎯',
+    gradient: 'from-orange-500/20 via-amber-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(249,115,22,0.15)]'
+  },
+  resources: {
+    emoji: '📚',
+    gradient: 'from-blue-500/20 via-cyan-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(59,130,246,0.15)]'
+  },
+  feedback: {
+    emoji: '💬',
+    gradient: 'from-emerald-500/20 via-green-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(16,185,129,0.15)]'
+  },
+  teams: {
+    emoji: '👥',
+    gradient: 'from-cyan-500/20 via-teal-500/10 to-transparent',
+    glow: 'group-hover:shadow-[0_0_30px_rgba(6,182,212,0.15)]'
+  },
+};
 
 const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   apps: 'Apps',
-  events: 'For Events',
+  events: 'Events',
   engagement: 'Engagement',
   resources: 'Resources',
   feedback: 'Feedback',
-  teams: 'For Teams',
-};
-
-const CATEGORY_COLORS: Record<TemplateCategory, string> = {
-  apps: 'bg-[var(--life-gold)]/10 text-[var(--life-gold)]',
-  events: 'bg-purple-500/10 text-purple-400',
-  engagement: 'bg-amber-500/10 text-amber-400',
-  resources: 'bg-blue-500/10 text-blue-400',
-  feedback: 'bg-emerald-500/10 text-emerald-400',
-  teams: 'bg-cyan-500/10 text-cyan-400',
+  teams: 'Teams',
 };
 
 interface TemplateGalleryProps {
@@ -73,179 +74,165 @@ interface TemplateGalleryProps {
   onSelectTemplate: (composition: ToolComposition) => void;
 }
 
+// Premium template card with custom visuals
 function TemplateCard({
   template,
   isSelected,
   onSelect,
   onUse,
+  index,
 }: {
   template: QuickTemplate;
   isSelected: boolean;
   onSelect: () => void;
   onUse: () => void;
+  index: number;
 }) {
-  const Icon = ICON_MAP[template.icon as keyof typeof ICON_MAP] ?? Layers;
+  const config = CATEGORY_CONFIG[template.category] || CATEGORY_CONFIG.apps;
+  const isApp = template.complexity === 'app';
+  const isComingSoon = template.status === 'coming-soon';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ ...springSmooth, delay: index * 0.03 }}
+      className="relative"
+    >
+      <motion.button
+        type="button"
+        onClick={isSelected ? onUse : onSelect}
+        whileHover={{ y: -4, scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        transition={springSnappy}
+        className={cn(
+          'group relative w-full text-left rounded-2xl overflow-hidden',
+          'transition-all duration-300',
+          config.glow,
+          isSelected
+            ? 'ring-2 ring-[var(--life-gold)] ring-offset-2 ring-offset-[var(--hivelab-bg)]'
+            : ''
+        )}
+      >
+        {/* Background with gradient */}
+        <div className={cn(
+          'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+          config.gradient
+        )} />
+
+        {/* Card content */}
+        <div className={cn(
+          'relative p-5 border rounded-2xl transition-all duration-300',
+          'bg-[var(--hivelab-surface)]/80 backdrop-blur-sm',
+          isSelected
+            ? 'border-[var(--life-gold)]/50 bg-[var(--hivelab-surface)]'
+            : 'border-[var(--hivelab-border)] group-hover:border-white/10 group-hover:bg-[var(--hivelab-surface)]'
+        )}>
+          {/* Top row: Emoji + badges */}
+          <div className="flex items-start justify-between mb-3">
+            {/* Emoji with glow */}
+            <div className="relative">
+              <span className="text-2xl select-none">{config.emoji}</span>
+              {isApp && (
+                <motion.div
+                  className="absolute -inset-1 bg-[var(--life-gold)]/20 rounded-full blur-md"
+                  animate={{ opacity: [0.5, 0.8, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
+            </div>
+
+            {/* Badges */}
+            <div className="flex items-center gap-1.5">
+              {isApp && (
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-[var(--life-gold)] to-amber-500 text-black">
+                  APP
+                </span>
+              )}
+              {isComingSoon && (
+                <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/60">
+                  Soon
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Title */}
+          <h4 className={cn(
+            'font-semibold text-[15px] mb-1 transition-colors',
+            isSelected ? 'text-white' : 'text-[var(--hivelab-text-primary)] group-hover:text-white'
+          )}>
+            {template.name}
+          </h4>
+
+          {/* Description */}
+          <p className="text-xs text-[var(--hivelab-text-tertiary)] line-clamp-2 leading-relaxed">
+            {template.description}
+          </p>
+
+          {/* Selection indicator */}
+          <AnimatePresence>
+            {isSelected && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={springSnappy}
+                className="mt-4 pt-3 border-t border-[var(--life-gold)]/20"
+              >
+                {isComingSoon ? (
+                  <div className="text-center py-2 text-xs text-white/40">
+                    Coming soon
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2 py-1 text-sm font-medium text-[var(--life-gold)]">
+                    <span>Click to use</span>
+                    <motion.span
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    >
+                      →
+                    </motion.span>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.button>
+    </motion.div>
+  );
+}
+
+// Category pill with emoji
+function CategoryPill({
+  category,
+  isActive,
+  onClick,
+}: {
+  category: TemplateCategory | null;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const config = category ? CATEGORY_CONFIG[category] : null;
+  const label = category ? CATEGORY_LABELS[category] : 'All';
 
   return (
     <motion.button
       type="button"
-      onClick={onSelect}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       className={cn(
-        'relative w-full p-4 rounded-xl text-left',
-        'border transition-all duration-[var(--workshop-duration)]',
-        isSelected
-          ? 'bg-[var(--hivelab-surface)] border-[var(--hivelab-border-emphasis)]'
-          : 'bg-[var(--hivelab-surface)]/50 border-[var(--hivelab-border)] hover:bg-[var(--hivelab-surface)] hover:border-[var(--hivelab-border-emphasis)]',
-        focusRing
+        'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200',
+        isActive
+          ? 'bg-white/10 text-white border border-white/20'
+          : 'bg-transparent text-white/50 hover:text-white/80 hover:bg-white/5 border border-transparent'
       )}
     >
-      {/* Selected indicator */}
-      {isSelected && (
-        <motion.div
-          layoutId="template-selected"
-          className="absolute inset-0 rounded-xl border-2 border-[var(--life-gold)]/50 pointer-events-none"
-          transition={workshopTransitionSnappy}
-        />
-      )}
-
-      <div className="flex items-start gap-3">
-        {/* Icon */}
-        <div
-          className={cn(
-            'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
-            CATEGORY_COLORS[template.category] || 'bg-[var(--hivelab-bg)] text-[var(--hivelab-text-tertiary)]'
-          )}
-        >
-          <Icon className="h-5 w-5" />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-[var(--hivelab-text-primary)] text-sm truncate">{template.name}</h4>
-          <p className="text-xs text-[var(--hivelab-text-tertiary)] mt-0.5 line-clamp-2">{template.description}</p>
-
-          {/* Category and complexity badges */}
-          <div className="mt-2 flex items-center gap-1.5">
-            <span
-              className={cn(
-                'inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium',
-                CATEGORY_COLORS[template.category] || 'bg-[var(--hivelab-bg)] text-[var(--hivelab-text-tertiary)]'
-              )}
-            >
-              {CATEGORY_LABELS[template.category] || template.category}
-            </span>
-            {template.complexity === 'app' && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-gradient-to-r from-[var(--life-gold)]/20 to-amber-500/20 text-[var(--life-gold)]">
-                App
-              </span>
-            )}
-            {template.status === 'coming-soon' && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium bg-orange-500/20 text-orange-400">
-                Soon
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Use button on hover/selected */}
-      <AnimatePresence>
-        {isSelected && (
-          <motion.div
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            className="mt-3 pt-3 border-t border-[var(--hivelab-border)]"
-          >
-            {template.status === 'coming-soon' ? (
-              <div className="w-full flex flex-col items-center gap-1.5 px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                <span className="text-orange-400 text-xs font-medium">Coming Soon</span>
-                <span className="text-orange-400/60 text-[10px] text-center">
-                  Some elements in this template are still being built
-                </span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUse();
-                }}
-                className={cn(
-                  'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
-                  'bg-[var(--life-gold)] text-black font-medium text-sm',
-                  'hover:bg-[var(--life-gold)]/90 transition-colors duration-[var(--workshop-duration)]',
-                  focusRing
-                )}
-              >
-                <CheckIcon className="h-4 w-4" />
-                Use Template
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {config && <span className="text-sm">{config.emoji}</span>}
+      {label}
     </motion.button>
-  );
-}
-
-function CategoryFilter({
-  categories,
-  activeCategory,
-  onCategoryChange,
-  showAppsFirst = true,
-}: {
-  categories: TemplateCategory[];
-  activeCategory: TemplateCategory | null;
-  onCategoryChange: (category: TemplateCategory | null) => void;
-  showAppsFirst?: boolean;
-}) {
-  // Sort categories: 'apps' first if showAppsFirst, then alphabetically
-  const sortedCategories = [...categories].sort((a, b) => {
-    if (showAppsFirst) {
-      if (a === 'apps') return -1;
-      if (b === 'apps') return 1;
-    }
-    return (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b);
-  });
-
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <button
-        type="button"
-        onClick={() => onCategoryChange(null)}
-        className={cn(
-          'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-[var(--workshop-duration)]',
-          activeCategory === null
-            ? 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]'
-            : 'bg-[var(--hivelab-surface)]/50 text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-          focusRing
-        )}
-      >
-        All
-      </button>
-      {sortedCategories.map((category) => (
-        <button
-          key={category}
-          type="button"
-          onClick={() => onCategoryChange(category)}
-          className={cn(
-            'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-[var(--workshop-duration)]',
-            activeCategory === category
-              ? 'bg-[var(--hivelab-surface)] text-[var(--hivelab-text-primary)]'
-              : 'bg-[var(--hivelab-surface)]/50 text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-            category === 'apps' && activeCategory !== category
-              ? 'text-[var(--life-gold)]'
-              : '',
-            focusRing
-          )}
-        >
-          {CATEGORY_LABELS[category] || category}
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -254,25 +241,17 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
   const [activeCategory, setActiveCategory] = useState<TemplateCategory | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
-  // Get unique categories (apps first)
   const categories = useMemo(() => {
     const cats = new Set(QUICK_TEMPLATES.map((t) => t.category));
     return Array.from(cats) as TemplateCategory[];
   }, []);
 
-  // Get app templates for featured section
   const appTemplates = useMemo(() => getAppTemplates(), []);
 
-  // Filter templates - hide templates with 'hidden' status (missing APIs)
   const filteredTemplates = useMemo(() => {
     return QUICK_TEMPLATES.filter((template) => {
-      // Hide templates marked as hidden (no backend APIs)
       if (template.status === 'hidden') return false;
-
-      // Category filter
       if (activeCategory && template.category !== activeCategory) return false;
-
-      // MagnifyingGlassIcon filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -280,13 +259,13 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
           template.description.toLowerCase().includes(query)
         );
       }
-
       return true;
     });
   }, [activeCategory, searchQuery]);
 
   const handleUseTemplate = useCallback(
     (template: QuickTemplate) => {
+      if (template.status === 'coming-soon') return;
       const composition = createToolFromTemplate(template);
       onSelectTemplate(composition);
       onClose();
@@ -294,12 +273,9 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
     [onSelectTemplate, onClose]
   );
 
-  // Close on escape
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     },
     [onClose]
   );
@@ -307,145 +283,148 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-          />
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex items-center justify-center"
+          onClick={onClose}
+          onKeyDown={handleKeyDown}
+        >
+          {/* Premium backdrop with gradient */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--life-gold)]/5 via-transparent to-purple-500/5" />
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={workshopTransition}
-            onKeyDown={handleKeyDown}
-            className={cn(
-              'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-              'w-full max-w-3xl max-h-[85vh]',
-              'bg-[var(--hivelab-panel)] border border-[var(--hivelab-border)] rounded-2xl shadow-2xl',
-              'flex flex-col overflow-hidden'
-            )}
+            transition={springSmooth}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl max-h-[85vh] mx-4 flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-[var(--hivelab-bg)]/95 backdrop-blur-xl shadow-2xl"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--hivelab-border)]">
-              <div>
-                <h2 className="text-lg font-semibold text-[var(--hivelab-text-primary)]">Template Gallery</h2>
-                <p className="text-sm text-[var(--hivelab-text-tertiary)] mt-0.5">
-                  {QUICK_TEMPLATES.length} ready-to-use templates
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className={cn(
-                  'p-2 rounded-lg text-[var(--hivelab-text-tertiary)] hover:text-[var(--hivelab-text-primary)] hover:bg-[var(--hivelab-surface)]',
-                  'transition-colors duration-[var(--workshop-duration)]',
-                  focusRing
-                )}
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </button>
-            </div>
+            {/* Decorative glow */}
+            <div className="absolute -top-40 -right-40 w-80 h-80 bg-[var(--life-gold)]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            {/* Search & Filters */}
-            <div className="px-6 py-4 border-b border-[var(--hivelab-border)] space-y-3">
+            {/* Header */}
+            <div className="relative px-8 pt-8 pb-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--life-gold)] to-amber-600 flex items-center justify-center">
+                      <span className="text-xl">✨</span>
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-white tracking-tight">Templates</h2>
+                      <p className="text-sm text-white/40">{filteredTemplates.length} ready to use</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close button */}
+                <motion.button
+                  type="button"
+                  onClick={onClose}
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </motion.button>
+              </div>
+
               {/* Search */}
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--hivelab-text-tertiary)]" />
+              <div className="relative mt-6">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
                 <input
                   type="text"
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={cn(
-                    'w-full pl-10 pr-4 py-2.5 rounded-lg',
-                    'bg-[var(--hivelab-surface)]/50 border border-[var(--hivelab-border)]',
-                    'text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)]',
-                    'focus:outline-none focus:border-[var(--hivelab-border-emphasis)] focus:bg-[var(--hivelab-surface)]',
-                    'transition-colors duration-[var(--workshop-duration)] text-sm'
-                  )}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:outline-none focus:border-[var(--life-gold)]/50 focus:bg-white/[0.07] transition-all text-sm"
                 />
               </div>
 
               {/* Category filters */}
-              <CategoryFilter
-                categories={categories}
-                activeCategory={activeCategory}
-                onCategoryChange={setActiveCategory}
-              />
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                <CategoryPill
+                  category={null}
+                  isActive={activeCategory === null}
+                  onClick={() => setActiveCategory(null)}
+                />
+                {categories.map((cat) => (
+                  <CategoryPill
+                    key={cat}
+                    category={cat}
+                    isActive={activeCategory === cat}
+                    onClick={() => setActiveCategory(cat)}
+                  />
+                ))}
+              </div>
             </div>
 
-            {/* Template Grid */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Template grid */}
+            <div className="relative flex-1 overflow-y-auto px-8 pb-8">
               {filteredTemplates.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <Layers className="h-10 w-10 text-[var(--hivelab-text-tertiary)]/50 mb-3" />
-                  <p className="text-[var(--hivelab-text-secondary)] text-sm">No templates found</p>
-                  <p className="text-[var(--hivelab-text-tertiary)] text-xs mt-1">Try adjusting your search or filters</p>
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <span className="text-4xl mb-4">🔍</span>
+                  <p className="text-white/60 text-sm">No templates found</p>
+                  <p className="text-white/30 text-xs mt-1">Try a different search or category</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Featured Apps Section (only shown when viewing All with no search) */}
+                <div className="space-y-8">
+                  {/* Featured Apps */}
                   {activeCategory === null && !searchQuery && appTemplates.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <SparklesIcon className="h-4 w-4 text-[var(--life-gold)]" />
-                        <h3 className="text-sm font-semibold text-[var(--hivelab-text-primary)]">Featured Apps</h3>
-                        <span className="text-xs text-[var(--hivelab-text-tertiary)]">Multi-element templates</span>
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <span className="text-lg">⚡</span>
+                        <h3 className="text-sm font-semibold text-white">Featured Apps</h3>
+                        <span className="text-xs text-white/30">Multi-element power tools</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        {appTemplates.slice(0, 4).map((template) => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {appTemplates.slice(0, 6).map((template, i) => (
                           <TemplateCard
                             key={template.id}
                             template={template}
                             isSelected={selectedTemplateId === template.id}
                             onSelect={() => setSelectedTemplateId(template.id)}
                             onUse={() => handleUseTemplate(template)}
+                            index={i}
                           />
                         ))}
                       </div>
-                      {appTemplates.length > 4 && (
-                        <button
-                          type="button"
-                          onClick={() => setActiveCategory('apps')}
-                          className={cn(
-                            'w-full py-2 text-xs text-[var(--life-gold)] hover:text-[var(--life-gold)]/80',
-                            'transition-colors duration-[var(--workshop-duration)]',
-                            focusRing
-                          )}
-                        >
-                          View all {appTemplates.length} apps
-                        </button>
-                      )}
                     </div>
                   )}
 
-                  {/* All Templates Section */}
-                  <div className="space-y-3">
+                  {/* All Templates */}
+                  <div>
                     {activeCategory === null && !searchQuery && appTemplates.length > 0 && (
-                      <h3 className="text-sm font-semibold text-[var(--hivelab-text-primary)]">All Templates</h3>
+                      <h3 className="text-sm font-semibold text-white mb-4">All Templates</h3>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {filteredTemplates
                         .filter(t => {
-                          // If showing featured apps section, filter out app templates from main list
                           if (activeCategory === null && !searchQuery && appTemplates.length > 0) {
                             return t.complexity !== 'app';
                           }
                           return true;
                         })
-                        .map((template) => (
+                        .map((template, i) => (
                           <TemplateCard
                             key={template.id}
                             template={template}
                             isSelected={selectedTemplateId === template.id}
                             onSelect={() => setSelectedTemplateId(template.id)}
                             onUse={() => handleUseTemplate(template)}
+                            index={i}
                           />
                         ))}
                     </div>
@@ -454,15 +433,14 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
               )}
             </div>
 
-            {/* Footer hint */}
-            <div className="px-6 py-3 border-t border-[var(--hivelab-border)] bg-[var(--hivelab-bg)]">
-              <p className="text-xs text-[var(--hivelab-text-tertiary)] text-center">
-                Click a template to preview, then click{' '}
-                <span className="text-[var(--life-gold)]">Use Template</span> to start building
+            {/* Footer */}
+            <div className="relative px-8 py-4 border-t border-white/5 bg-black/20">
+              <p className="text-xs text-white/30 text-center">
+                Click to select • Click again to use • <span className="text-white/50">ESC</span> to close
               </p>
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

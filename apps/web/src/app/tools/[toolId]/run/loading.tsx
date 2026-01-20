@@ -1,31 +1,13 @@
-import { Skeleton } from '@hive/ui';
-
+/**
+ * Loading state for /run redirect page
+ * Minimal since it immediately redirects to the unified tool page
+ */
 export default function RunToolLoading() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      {/* Tool header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Skeleton className="h-14 w-14 rounded-xl" />
-        <div>
-          <Skeleton className="h-7 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-      </div>
-
-      {/* Tool runtime container */}
-      <div className="rounded-xl border border-neutral-800/50 bg-neutral-900/30 p-6 space-y-6">
-        {/* Tool elements */}
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="space-y-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-12 w-full rounded-lg" />
-          </div>
-        ))}
-
-        {/* Action button */}
-        <div className="pt-4">
-          <Skeleton className="h-12 w-full rounded-lg" />
-        </div>
+    <div className="min-h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-[var(--hivelab-text-secondary)] text-sm">Loading...</p>
       </div>
     </div>
   );

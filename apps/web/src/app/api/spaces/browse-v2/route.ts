@@ -24,12 +24,14 @@ import { withOptionalAuth } from '@/lib/middleware';
 /**
  * Zod schema for browse query params validation
  * Supports cursor-based pagination via 'cursor' param
+ * Supports full-text search via 'search' param
  */
 const BrowseQuerySchema = z.object({
   category: z.string().max(50).default('all'),
   sort: z.enum(['trending', 'recommended', 'newest', 'popular']).default('trending'),
   limit: z.coerce.number().min(1).max(50).default(20),
   cursor: z.string().optional(), // Cursor for pagination (spaceId to start after)
+  search: z.string().max(100).optional(), // Full-text search across name and description
 });
 
 /**
@@ -212,13 +214,14 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     });
   }
 
-  const { category, sort, limit, cursor } = parseResult.data;
+  const { category, sort, limit, cursor, search } = parseResult.data;
 
   logger.info('Browse spaces request', {
     category,
     sort,
     limit,
     cursor,
+    search,
     userId: userId ?? undefined,
     endpoint: '/api/spaces/browse-v2'
   });
@@ -288,11 +291,22 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // - Show all 'live' spaces
   // - Only show 'stealth' spaces if user is a leader of that space
   // - Never show 'rejected' spaces in browse
-  const visibleSpaces = spaces.filter(space => {
+  let visibleSpaces = spaces.filter(space => {
     if (space.isLive) return true;
     if (space.isStealth && leaderSpaceIds.has(space.spaceId.value)) return true;
     return false;
   });
+
+  // Apply search filter if provided
+  // Search across name and description (case-insensitive)
+  if (search && search.trim().length > 0) {
+    const searchLower = search.toLowerCase().trim();
+    visibleSpaces = visibleSpaces.filter(space => {
+      const name = space.name.value.toLowerCase();
+      const description = space.description?.value?.toLowerCase() ?? '';
+      return name.includes(searchLower) || description.includes(searchLower);
+    });
+  }
 
   // Extract visible space IDs for enrichment queries
   const visibleSpaceIds = visibleSpaces.map(s => s.spaceId.value);

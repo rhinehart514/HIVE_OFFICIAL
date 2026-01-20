@@ -51,15 +51,15 @@ function WorkflowCard({
     <motion.button
       type="button"
       onClick={onClick}
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -6, scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
       transition={workshopTransitionSnappy}
       className={cn(
         'relative flex flex-col items-center text-center p-6 rounded-2xl',
-        'border transition-colors duration-[var(--workshop-duration)] group',
+        'border transition-all duration-200 group',
         primary
-          ? 'bg-[var(--hivelab-surface)] border-[var(--hivelab-border-emphasis)] hover:border-[var(--life-gold)]/30'
-          : 'bg-[var(--hivelab-surface)]/50 border-[var(--hivelab-border)] hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface)]',
+          ? 'bg-[var(--hivelab-surface)] border-[var(--hivelab-border-emphasis)] hover:border-[var(--life-gold)]/50 hover:shadow-[0_0_20px_rgba(212,175,55,0.15)]'
+          : 'bg-[var(--hivelab-surface)]/50 border-[var(--hivelab-border)] hover:border-[var(--hivelab-border-emphasis)] hover:bg-[var(--hivelab-surface)] hover:shadow-lg',
         focusRing
       )}
     >
@@ -67,7 +67,7 @@ function WorkflowCard({
       <div
         className={cn(
           'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-          'transition-transform duration-[var(--workshop-duration)] group-hover:scale-110',
+          'transition-all duration-200 group-hover:scale-115 group-hover:rotate-3',
           iconBg || 'bg-[var(--hivelab-bg)]'
         )}
       >
@@ -75,19 +75,19 @@ function WorkflowCard({
       </div>
 
       {/* Title */}
-      <h3 className="text-[var(--hivelab-text-primary)] font-semibold text-base mb-1">{title}</h3>
+      <h3 className="text-[var(--hivelab-text-primary)] font-semibold text-base mb-1 transition-colors group-hover:text-white">{title}</h3>
 
       {/* Subtitle */}
-      <p className="text-[var(--hivelab-text-secondary)] text-sm mb-3">{subtitle}</p>
+      <p className="text-[var(--hivelab-text-secondary)] text-sm mb-3 transition-colors group-hover:text-[var(--hivelab-text-primary)]">{subtitle}</p>
 
       {/* Shortcut */}
-      <kbd className="px-2 py-1 text-xs bg-[var(--hivelab-bg)] rounded-md text-[var(--hivelab-text-tertiary)] font-mono">
+      <kbd className="px-2 py-1 text-xs bg-[var(--hivelab-bg)] rounded-md text-[var(--hivelab-text-tertiary)] font-mono transition-colors group-hover:text-[var(--hivelab-text-secondary)] group-hover:bg-[var(--hivelab-surface)]">
         {shortcut}
       </kbd>
 
       {/* Glow effect for primary */}
       {primary && (
-        <div className="absolute inset-0 rounded-2xl bg-[var(--life-gold)]/5 pointer-events-none" />
+        <div className="absolute inset-0 rounded-2xl bg-[var(--life-gold)]/5 pointer-events-none transition-opacity group-hover:bg-[var(--life-gold)]/10" />
       )}
     </motion.button>
   );
@@ -109,7 +109,11 @@ export function StartZone({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={workshopTransition}
-      className="absolute inset-0 flex items-center justify-center p-8"
+      className="absolute inset-0 z-20 flex items-center justify-center p-8"
+      style={{
+        backgroundColor: 'var(--hivelab-bg, #0A0A0A)',
+        isolation: 'isolate',
+      }}
     >
       <div className="max-w-2xl w-full">
         {/* Header */}
@@ -146,7 +150,7 @@ export function StartZone({
           <WorkflowCard
             icon={<LayoutTemplate className="h-6 w-6 text-[var(--hivelab-text-secondary)]" />}
             title="Use a template"
-            subtitle="10 ready-to-use tools"
+            subtitle="29 templates to start"
             shortcut="⌘T"
             onClick={onOpenTemplates}
           />

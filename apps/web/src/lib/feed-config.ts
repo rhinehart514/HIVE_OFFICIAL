@@ -10,10 +10,10 @@
  * experimentation with engagement mechanics.
  */
 
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { logger } from '@/lib/logger';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 // ═══════════════════════════════════════════════════════════════════════
 // Type Definitions
@@ -139,11 +139,17 @@ export const DEFAULT_FEED_CONFIG: FeedConfiguration = {
 // Configuration Manager (Singleton)
 // ═══════════════════════════════════════════════════════════════════════
 
+// Cache TTL: 5 minutes - config rarely changes, no need for real-time
+const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
+// Poll interval when there are active subscribers
+const CONFIG_POLL_INTERVAL_MS = 5 * 60 * 1000;
+
 class FeedConfigurationManager {
   private static instance: FeedConfigurationManager;
   private config: FeedConfiguration | null = null;
+  private configLoadedAt: number = 0;
   private listeners: Set<(config: FeedConfiguration) => void> = new Set();
-  private unsubscribeFirestore: (() => void) | null = null;
+  private pollInterval: NodeJS.Timeout | null = null;
   private initPromise: Promise<FeedConfiguration> | null = null;
 
   private constructor() {
@@ -163,7 +169,8 @@ class FeedConfigurationManager {
   }
 
   /**
-   * Initialize configuration and set up real-time listener
+   * Initialize configuration with one-time read (no persistent listener)
+   * COST OPTIMIZATION: Uses polling instead of onSnapshot to reduce reads
    */
   async initialize(): Promise<FeedConfiguration> {
     // Return existing promise if initialization in progress
@@ -179,49 +186,85 @@ class FeedConfigurationManager {
     try {
       const docRef = doc(db, 'platform_config', 'feed_config');
 
-      // Set up real-time listener
-      this.unsubscribeFirestore = onSnapshot(
-        docRef,
-        (snapshot) => {
-          if (snapshot.exists()) {
-            this.config = snapshot.data() as FeedConfiguration;
-            logger.info('Feed configuration updated', {
-              metadata: {
-                version: this.config.metadata.version,
-                updatedBy: this.config.metadata.updatedBy
-              }
-            });
-          } else {
-            // Document doesn't exist, use defaults
-            this.config = DEFAULT_FEED_CONFIG;
-            logger.info('Using default feed configuration');
-          }
-
-          // Notify all listeners
-          this.notifyListeners();
-        },
-        (error) => {
-          logger.error('Error listening to feed configuration', { error: { error: error instanceof Error ? error.message : String(error) } });
-          // Fall back to defaults on error
-          this.config = DEFAULT_FEED_CONFIG;
-        }
-      );
-
-      // Wait for first snapshot
+      // One-time read instead of persistent listener
       const snapshot = await getDoc(docRef);
       if (snapshot.exists()) {
         this.config = snapshot.data() as FeedConfiguration;
+        logger.info('Feed configuration loaded', {
+          metadata: {
+            version: this.config.metadata.version,
+            updatedBy: this.config.metadata.updatedBy
+          }
+        });
       } else {
         this.config = DEFAULT_FEED_CONFIG;
         // Create the document with defaults
         await this.saveConfig(this.config);
+        logger.info('Using default feed configuration');
       }
 
+      this.configLoadedAt = Date.now();
       return this.config;
     } catch (error) {
       logger.error('Failed to initialize feed configuration', { error: { error: error instanceof Error ? error.message : String(error) } });
       this.config = DEFAULT_FEED_CONFIG;
+      this.configLoadedAt = Date.now();
       return this.config;
+    }
+  }
+
+  /**
+   * Check if cached config is stale
+   */
+  private isCacheStale(): boolean {
+    return Date.now() - this.configLoadedAt > CONFIG_CACHE_TTL_MS;
+  }
+
+  /**
+   * Refresh config from Firestore if stale
+   */
+  private async refreshIfStale(): Promise<void> {
+    if (!this.isCacheStale()) return;
+
+    try {
+      const docRef = doc(db, 'platform_config', 'feed_config');
+      const snapshot = await getDoc(docRef);
+
+      if (snapshot.exists()) {
+        const newConfig = snapshot.data() as FeedConfiguration;
+        // Only notify if config actually changed
+        if (!this.config || newConfig.metadata.version !== this.config.metadata.version) {
+          this.config = newConfig;
+          this.notifyListeners();
+          logger.info('Feed configuration refreshed', { version: newConfig.metadata.version });
+        }
+      }
+      this.configLoadedAt = Date.now();
+    } catch (error) {
+      logger.warn('Failed to refresh feed configuration', { error: String(error) });
+    }
+  }
+
+  /**
+   * Start polling for config updates (only when there are subscribers)
+   */
+  private startPolling(): void {
+    if (this.pollInterval) return;
+
+    this.pollInterval = setInterval(() => {
+      if (this.listeners.size > 0) {
+        this.refreshIfStale();
+      }
+    }, CONFIG_POLL_INTERVAL_MS);
+  }
+
+  /**
+   * Stop polling when no subscribers
+   */
+  private stopPolling(): void {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
     }
   }
 
@@ -231,6 +274,10 @@ class FeedConfigurationManager {
   async getConfig(): Promise<FeedConfiguration> {
     if (!this.config) {
       return this.initialize();
+    }
+    // Refresh in background if stale (don't block)
+    if (this.isCacheStale()) {
+      this.refreshIfStale();
     }
     return this.config;
   }
@@ -261,6 +308,10 @@ class FeedConfigurationManager {
     };
 
     await this.saveConfig(newConfig);
+    // Update local cache immediately after save
+    this.config = newConfig;
+    this.configLoadedAt = Date.now();
+    this.notifyListeners();
     return newConfig;
   }
 
@@ -285,6 +336,11 @@ class FeedConfigurationManager {
   subscribe(listener: (config: FeedConfiguration) => void): () => void {
     this.listeners.add(listener);
 
+    // Start polling when first subscriber joins
+    if (this.listeners.size === 1) {
+      this.startPolling();
+    }
+
     // Immediately call with current config if available
     if (this.config) {
       listener(this.config);
@@ -293,6 +349,10 @@ class FeedConfigurationManager {
     // Return unsubscribe function
     return () => {
       this.listeners.delete(listener);
+      // Stop polling when last subscriber leaves
+      if (this.listeners.size === 0) {
+        this.stopPolling();
+      }
     };
   }
 
@@ -315,10 +375,7 @@ class FeedConfigurationManager {
    * Clean up resources
    */
   destroy(): void {
-    if (this.unsubscribeFirestore) {
-      this.unsubscribeFirestore();
-      this.unsubscribeFirestore = null;
-    }
+    this.stopPolling();
     this.listeners.clear();
     this.config = null;
     this.initPromise = null;

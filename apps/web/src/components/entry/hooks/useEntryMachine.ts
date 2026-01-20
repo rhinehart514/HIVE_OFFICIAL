@@ -2,33 +2,45 @@
 
 /**
  * useEntryMachine - State Machine for /enter Flow
+ * UPDATED: Jan 18, 2026
  *
  * Manages the entry state machine:
- * email → sending → code → verifying → [identity → submitting] → arrival
+ * school → email → role → sending → code → verifying → [identity → submitting] → arrival
  *
- * New users go through identity step, returning users skip to arrival
+ * Role-based flows:
+ * - Student: Full flow with identity/profile setup
+ * - Faculty: Skip identity, go straight to arrival after verification
+ * - Alumni: Skip verification entirely, go to waitlist
  */
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { HandleStatus } from '@hive/ui/design-system/primitives';
+import type { UserRole } from '../states/RoleState';
+import type { School } from '../states/SchoolState';
 
 // ============================================
 // TYPES
 // ============================================
 
 export type EntryState =
+  | 'school'
   | 'email'
   | 'sending'
   | 'code'
   | 'verifying'
+  | 'role'
   | 'identity'
   | 'submitting'
-  | 'arrival';
+  | 'arrival'
+  | 'alumni-waitlist';
 
 export interface EntryData {
+  school: School | null;
   email: string;
   code: string[];
+  role: UserRole | null;
+  alumniSpace: string;
   firstName: string;
   lastName: string;
   handle: string;
@@ -60,18 +72,25 @@ export interface UseEntryMachineReturn {
   resendCooldown: number;
 
   // Actions
+  setSchool: (school: School) => void;
   setEmail: (email: string) => void;
   setCode: (code: string[]) => void;
+  setRole: (role: UserRole) => void;
+  setAlumniSpace: (space: string) => void;
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
   setHandle: (handle: string) => void;
   selectSuggestion: (handle: string) => void;
 
   // Transitions
-  sendCode: () => Promise<void>;
+  selectSchool: (school: School) => void;
+  proceedToRole: () => void;
   verifyCode: (code: string) => Promise<void>;
+  submitRole: () => Promise<void>;
   completeEntry: () => Promise<void>;
+  goBackToSchool: () => void;
   goBackToEmail: () => void;
+  goBackToRole: () => void;
   resendCode: () => Promise<void>;
 
   // Navigation
@@ -135,7 +154,7 @@ function generateHandleSuggestions(
 // ============================================
 
 export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachineReturn {
-  const { domain, campusId, schoolId, defaultRedirect = '/spaces/browse' } = options;
+  const { domain, campusId, schoolId, defaultRedirect = '/spaces' } = options;
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -144,7 +163,7 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   const redirectTo = searchParams.get('redirect') || defaultRedirect;
 
   // Initial state from URL
-  const initialState = (searchParams.get('state') as EntryState) || 'email';
+  const initialState = (searchParams.get('state') as EntryState) || 'school';
 
   // ============================================
   // STATE
@@ -155,8 +174,11 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   const [isNewUser, setIsNewUser] = useState(false);
 
   const [data, setData] = useState<EntryData>({
+    school: null,
     email: '',
     code: ['', '', '', '', '', ''],
+    role: null,
+    alumniSpace: '',
     firstName: '',
     lastName: '',
     handle: '',
@@ -177,9 +199,12 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   // COMPUTED VALUES
   // ============================================
 
+  // Use selected school domain or fall back to default
+  const activeDomain = data.school?.domain || domain;
+
   const fullEmail = data.email.includes('@')
     ? data.email
-    : `${data.email}@${domain}`;
+    : `${data.email}@${activeDomain}`;
 
   // ============================================
   // EFFECTS
@@ -252,7 +277,6 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
         if (err instanceof Error && err.name === 'AbortError') {
           return; // Ignored - request was cancelled
         }
-        console.error('Handle check failed:', err);
         setHandleStatus('idle'); // Fail silently, let user try
       }
     },
@@ -269,6 +293,11 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   // DATA SETTERS
   // ============================================
 
+  const setSchool = useCallback((school: School) => {
+    setData((prev) => ({ ...prev, school }));
+    setError(null);
+  }, []);
+
   const setEmail = useCallback((email: string) => {
     setData((prev) => ({ ...prev, email }));
     setError(null);
@@ -277,6 +306,15 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   const setCode = useCallback((code: string[]) => {
     setData((prev) => ({ ...prev, code }));
     setError(null);
+  }, []);
+
+  const setRole = useCallback((role: UserRole) => {
+    setData((prev) => ({ ...prev, role }));
+    setError(null);
+  }, []);
+
+  const setAlumniSpace = useCallback((alumniSpace: string) => {
+    setData((prev) => ({ ...prev, alumniSpace }));
   }, []);
 
   const setFirstName = useCallback((firstName: string) => {
@@ -308,35 +346,61 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   // TRANSITIONS
   // ============================================
 
-  const sendCode = useCallback(async () => {
+  // Select school and proceed to email
+  const selectSchool = useCallback((school: School) => {
+    setData((prev) => ({ ...prev, school }));
+    setError(null);
+    setState('email');
+  }, []);
+
+  // Validate and proceed to role selection
+  const proceedToRole = useCallback(() => {
+    // Validate school is selected
+    if (!data.school) {
+      setError('Select your school first');
+      return;
+    }
+
     // Validate email
     if (!data.email.trim()) {
       setError('Enter your email');
       return;
     }
 
-    const emailToSend = fullEmail;
-    if (!emailToSend.includes('@') || !emailToSend.includes('.')) {
+    const emailToValidate = fullEmail;
+    if (!emailToValidate.includes('@') || !emailToValidate.includes('.')) {
       setError('Enter a valid email address');
       return;
     }
 
-    const emailDomain = emailToSend.split('@')[1];
-    if (emailDomain !== domain) {
-      setError(`Use your ${domain} email`);
+    const emailDomain = emailToValidate.split('@')[1];
+    if (emailDomain !== activeDomain) {
+      setError(`Use your ${activeDomain} email`);
       return;
     }
 
+    // Store email for session
+    localStorage.setItem(PENDING_EMAIL_KEY, emailToValidate);
+
+    setError(null);
+    setState('role');
+  }, [data.email, data.school, fullEmail, activeDomain]);
+
+  // Send verification code (called after role selection for student/faculty)
+  const sendCode = useCallback(async () => {
     setState('sending');
     setError(null);
+
+    // Use selected school ID or fall back to default
+    const activeSchoolId = data.school?.id || schoolId;
 
     try {
       const response = await fetch('/api/auth/send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: emailToSend,
-          schoolId,
+          email: fullEmail,
+          schoolId: activeSchoolId,
         }),
       });
 
@@ -346,9 +410,6 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
         throw new Error(result.error || 'Failed to send code');
       }
 
-      // Store email for session
-      localStorage.setItem(PENDING_EMAIL_KEY, emailToSend);
-
       // Set cooldown
       const cooldownDuration =
         RESEND_COOLDOWNS[Math.min(resendCount, RESEND_COOLDOWNS.length - 1)];
@@ -357,16 +418,18 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
 
       setState('code');
     } catch (err) {
-      console.error('Send code error:', err);
       setError(err instanceof Error ? err.message : 'Unable to send code');
-      setState('email');
+      setState('role');
     }
-  }, [data.email, fullEmail, domain, schoolId, resendCount]);
+  }, [fullEmail, data.school?.id, schoolId, resendCount]);
 
   const verifyCode = useCallback(
     async (codeString: string) => {
       setState('verifying');
       setError(null);
+
+      // Use selected school ID or fall back to default
+      const activeSchoolId = data.school?.id || schoolId;
 
       try {
         const response = await fetch('/api/auth/verify-code', {
@@ -376,7 +439,7 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
           body: JSON.stringify({
             email: fullEmail,
             code: codeString,
-            schoolId,
+            schoolId: activeSchoolId,
           }),
         });
 
@@ -391,38 +454,102 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
         }
 
         // Determine if new or returning user
-        const needsIdentity = result.needsOnboarding || !result.user?.handle;
-        setIsNewUser(needsIdentity);
+        const needsOnboarding = result.needsOnboarding || !result.user?.handle;
+        setIsNewUser(needsOnboarding);
 
-        if (needsIdentity) {
-          // Pre-fill name if available
-          if (result.user?.firstName) {
-            setData((prev) => ({
-              ...prev,
-              firstName: result.user.firstName || '',
-              lastName: result.user.lastName || '',
-              handle: result.user.handle || '',
-            }));
-          }
-          setState('identity');
-        } else {
-          // Pre-fill for arrival message
+        if (!needsOnboarding) {
+          // Returning user - pre-fill and go to arrival
           setData((prev) => ({
             ...prev,
             firstName: result.user.firstName || 'there',
             handle: result.user.handle || '',
+            role: result.user.role || data.role || 'student',
           }));
           setState('arrival');
+          return;
         }
-      } catch (err) {
-        console.error('Verify error:', err);
+
+        // New user - route based on role (already selected before code)
+        if (data.role === 'faculty') {
+          // Faculty skip identity, complete entry directly
+          setState('submitting');
+
+          const completeResponse = await fetch('/api/auth/complete-entry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              firstName: '',
+              lastName: '',
+              handle: '',
+              role: 'faculty',
+            }),
+          });
+
+          const completeResult = await completeResponse.json();
+
+          if (!completeResponse.ok) {
+            throw new Error(completeResult.error || 'Failed to complete setup');
+          }
+
+          setData((prev) => ({
+            ...prev,
+            firstName: completeResult.user?.firstName || 'there',
+            handle: completeResult.user?.handle || '',
+          }));
+
+          setState('arrival');
+        } else {
+          // Student - go to identity for profile setup
+          setState('identity');
+        }
+      } catch {
         setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
         setError('Verification failed');
         setState('code');
       }
     },
-    [fullEmail, schoolId]
+    [fullEmail, data.school?.id, schoolId, data.role]
   );
+
+  const submitRole = useCallback(async () => {
+    if (!data.role) {
+      setError('Select your role');
+      return;
+    }
+
+    setError(null);
+
+    // Alumni flow - goes straight to waitlist (no verification needed)
+    if (data.role === 'alumni') {
+      if (!data.alumniSpace.trim()) {
+        setError('Tell us which spaces you were part of');
+        return;
+      }
+
+      // Submit to waitlist
+      try {
+        await fetch('/api/auth/alumni-waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: fullEmail,
+            spaces: data.alumniSpace,
+          }),
+        });
+      } catch {
+        // Continue anyway - we don't want to block them
+      }
+
+      setState('alumni-waitlist');
+      return;
+    }
+
+    // Student/Faculty - send verification code
+    // Routing after verification is handled in verifyCode based on role
+    await sendCode();
+  }, [data.role, data.alumniSpace, fullEmail, sendCode]);
 
   const completeEntry = useCallback(async () => {
     // Validate
@@ -448,6 +575,7 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
           firstName: data.firstName.trim(),
           lastName: data.lastName.trim(),
           handle: data.handle.trim(),
+          role: data.role || 'student',
         }),
       });
 
@@ -459,14 +587,25 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
 
       setState('arrival');
     } catch (err) {
-      console.error('Complete entry error:', err);
       setError(err instanceof Error ? err.message : 'Setup failed');
       setState('identity');
     }
-  }, [data.firstName, data.lastName, data.handle, handleStatus]);
+  }, [data.firstName, data.lastName, data.handle, data.role, handleStatus]);
+
+  const goBackToSchool = useCallback(() => {
+    setState('school');
+    setError(null);
+    setData((prev) => ({ ...prev, school: null, email: '', code: ['', '', '', '', '', ''], role: null, alumniSpace: '' }));
+  }, []);
 
   const goBackToEmail = useCallback(() => {
     setState('email');
+    setError(null);
+    setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''], role: null, alumniSpace: '' }));
+  }, []);
+
+  const goBackToRole = useCallback(() => {
+    setState('role');
     setError(null);
     setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
   }, []);
@@ -479,13 +618,21 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
   const handleArrivalComplete = useCallback(() => {
     // Clear pending email
     localStorage.removeItem(PENDING_EMAIL_KEY);
+
+    // Handle alumni waitlist differently
+    if (state === 'alumni-waitlist') {
+      router.push('/');
+      return;
+    }
+
     // Set flag for first-time welcome on browse page
     if (isNewUser) {
       sessionStorage.setItem('hive-just-entered', 'true');
     }
+
     // Navigate to redirect
     router.push(redirectTo);
-  }, [router, redirectTo, isNewUser]);
+  }, [router, redirectTo, isNewUser, state]);
 
   // ============================================
   // RETURN
@@ -506,18 +653,25 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
     resendCooldown,
 
     // Data setters
+    setSchool,
     setEmail,
     setCode,
+    setRole,
+    setAlumniSpace,
     setFirstName,
     setLastName,
     setHandle,
     selectSuggestion,
 
     // Transitions
-    sendCode,
+    selectSchool,
+    proceedToRole,
     verifyCode,
+    submitRole,
     completeEntry,
+    goBackToSchool,
     goBackToEmail,
+    goBackToRole,
     resendCode,
 
     // Navigation

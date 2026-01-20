@@ -23,8 +23,8 @@ export default function ToolsError({
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-[var(--hive-gold)]/10 p-4">
-            <ExclamationTriangleIcon className="h-8 w-8 text-[var(--hive-gold)]" />
+          <div className="rounded-full bg-red-500/10 p-4">
+            <ExclamationTriangleIcon className="h-8 w-8 text-red-400" />
           </div>
         </div>
 

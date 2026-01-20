@@ -109,8 +109,7 @@ export async function POST(
     }
 
     return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
-  } catch (error) {
-    console.error('Error toggling comment like:', error);
+  } catch {
     return NextResponse.json({ error: 'Failed to toggle like' }, { status: 500 });
   }
 }

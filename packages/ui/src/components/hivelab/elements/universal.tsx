@@ -5,11 +5,18 @@
  *
  * These elements have no data dependencies and can be used in any context.
  * Split from element-renderers.tsx for better maintainability.
+ *
+ * GTM Polish Pass (January 2026):
+ * - Added Framer Motion animations
+ * - Improved focus states and transitions
+ * - Better visual feedback on interactions
  */
 
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
-import { MagnifyingGlassIcon, FunnelIcon, CalendarIcon, TagIcon, MapPinIcon, DocumentTextIcon, BellIcon, CheckIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { MagnifyingGlassIcon, FunnelIcon, CalendarIcon, TagIcon, MapPinIcon, DocumentTextIcon, BellIcon, CheckIcon, UsersIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 
 import { Input } from '../../../design-system/primitives';
 import { Button } from '../../../design-system/primitives';
@@ -79,18 +86,28 @@ function normalizeFilterOption(option: string | FilterOption): FilterOption {
 }
 
 // ============================================================================
-// SEARCH INPUT ELEMENT
+// SEARCH INPUT ELEMENT - Premium search with animated suggestions
 // ============================================================================
 
 export function SearchInputElement({ config, onChange }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const debounceMs = config.debounceMs || 300;
 
   useEffect(() => {
+    if (query.length > 0) {
+      setIsSearching(true);
+    }
+
     const timer = setTimeout(() => {
+      setIsSearching(false);
       if (onChange && query !== '') {
         onChange({ query, searchTerm: query });
       }
@@ -111,44 +128,143 @@ export function SearchInputElement({ config, onChange }: ElementProps) {
     return () => clearTimeout(timer);
   }, [query, debounceMs, onChange, config.showSuggestions]);
 
+  // Keyboard navigation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault();
+      setQuery(suggestions[selectedIndex]);
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+    }
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="relative">
+    <motion.div
+      className="relative"
+      initial={false}
+      animate={isFocused ? { scale: 1.01 } : { scale: 1 }}
+      transition={springPresets.snappy}
+    >
       <div className="relative">
-        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Animated search icon */}
+        <motion.div
+          className="absolute left-3 top-1/2 -translate-y-1/2 z-10"
+          animate={isSearching && !prefersReducedMotion ? { rotate: [0, 360] } : {}}
+          transition={isSearching ? { duration: 1, repeat: Infinity, ease: 'linear' } : {}}
+        >
+          <MagnifyingGlassIcon className={`h-4 w-4 transition-colors duration-200 ${
+            isFocused ? 'text-primary' : 'text-muted-foreground'
+          }`} />
+        </motion.div>
+
         <Input
+          ref={inputRef}
           value={query}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-          placeholder={config.placeholder || 'MagnifyingGlassIcon...'}
-          className="pl-10"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setQuery(e.target.value);
+            setSelectedIndex(-1);
+          }}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            setIsFocused(false);
+            // Delay hiding suggestions to allow click
+            setTimeout(() => setShowSuggestions(false), 150);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={config.placeholder || 'Search...'}
+          className={`pl-10 pr-10 transition-all duration-200 ${
+            isFocused
+              ? 'ring-2 ring-primary/20 border-primary/50'
+              : ''
+          }`}
         />
+
+        {/* Clear button with animation */}
+        <AnimatePresence>
+          {query.length > 0 && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={springPresets.snappy}
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-muted hover:bg-muted-foreground/20 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ×
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-background border border-border rounded-lg shadow-lg">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              className="w-full px-3 py-2 text-left text-sm hover:bg-accent rounded-lg"
-              onClick={() => {
-                setQuery(suggestion);
-                setShowSuggestions(false);
-              }}
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+      {/* Animated suggestions dropdown */}
+      <AnimatePresence>
+        {showSuggestions && suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={springPresets.snappy}
+            className="absolute z-20 w-full mt-2 bg-background border border-border rounded-xl shadow-xl overflow-hidden"
+          >
+            <div className="py-1">
+              {suggestions.map((suggestion, index) => (
+                <motion.button
+                  key={index}
+                  initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-3 transition-colors ${
+                    selectedIndex === index
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted/50'
+                  }`}
+                  onClick={() => {
+                    setQuery(suggestion);
+                    setShowSuggestions(false);
+                    setSelectedIndex(-1);
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                >
+                  <SparklesIcon className="h-4 w-4 text-muted-foreground" />
+                  <span>{suggestion}</span>
+                </motion.button>
+              ))}
+            </div>
+            <div className="px-4 py-2 border-t border-border text-xs text-muted-foreground">
+              Use ↑↓ to navigate, Enter to select
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 
 // ============================================================================
-// FILTER SELECTOR ELEMENT
+// FILTER SELECTOR ELEMENT - Premium animated filter pills
 // ============================================================================
 
 export function FilterSelectorElement({ config, onChange }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [justSelected, setJustSelected] = useState<string | null>(null);
   const options = config.options || [];
   const allowMultiple = config.allowMultiple !== false;
 
@@ -164,48 +280,135 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
     }
 
     setSelectedFilters(newFilters);
+    if (!selectedFilters.includes(value)) {
+      setJustSelected(value);
+      setTimeout(() => setJustSelected(null), 300);
+    }
+
     if (onChange) {
       onChange({ selectedFilters: newFilters, filters: newFilters });
     }
   };
 
+  const clearAll = () => {
+    setSelectedFilters([]);
+    onChange?.({ selectedFilters: [], filters: [] });
+  };
+
   return (
     <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <FunnelIcon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">Filters</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <motion.div
+            animate={selectedFilters.length > 0 && !prefersReducedMotion ? { rotate: [0, -10, 10, 0] } : {}}
+            transition={{ duration: 0.3 }}
+          >
+            <FunnelIcon className={`h-4 w-4 transition-colors duration-200 ${
+              selectedFilters.length > 0 ? 'text-primary' : 'text-muted-foreground'
+            }`} />
+          </motion.div>
+          <span className="text-sm font-medium">{config.label || 'Filters'}</span>
+        </div>
+
+        {/* Clear all button */}
+        <AnimatePresence>
+          {selectedFilters.length > 0 && (
+            <motion.button
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={springPresets.snappy}
+              onClick={clearAll}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear all
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <motion.div
+        className="flex flex-wrap gap-2"
+        layout
+      >
         {(options as Array<string | FilterOption>).map((rawOption, index: number) => {
           const option = normalizeFilterOption(rawOption);
           const { value, label, count } = option;
           const isSelected = selectedFilters.includes(value);
+          const wasJustSelected = justSelected === value;
 
           return (
-            <Button
-              key={index}
-              variant={isSelected ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleFilterToggle(value)}
-              className="h-8"
+            <motion.div
+              key={value}
+              initial={prefersReducedMotion ? {} : { opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.03 }}
+              layout
             >
-              {label}
-              {config.showCounts && count && (
-                <Badge variant="secondary" className="ml-2 h-4 text-xs">
-                  {count}
-                </Badge>
-              )}
-            </Button>
+              <motion.button
+                onClick={() => handleFilterToggle(value)}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                animate={wasJustSelected && !prefersReducedMotion ? { scale: [1, 1.1, 1] } : {}}
+                transition={springPresets.snappy}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  isSelected
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent hover:border-border'
+                }`}
+              >
+                {/* Animated checkmark for selected state */}
+                <AnimatePresence mode="wait">
+                  {isSelected && (
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 'auto', opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={springPresets.snappy}
+                      className="overflow-hidden"
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <span>{label}</span>
+
+                {config.showCounts && count !== undefined && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                    isSelected
+                      ? 'bg-primary-foreground/20 text-primary-foreground'
+                      : 'bg-muted-foreground/10 text-muted-foreground'
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </motion.button>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
 
-      {selectedFilters.length > 0 && (
-        <div className="text-xs text-muted-foreground">
-          {selectedFilters.length} filter{selectedFilters.length !== 1 ? 's' : ''} applied
-        </div>
-      )}
+      {/* Selected count indicator */}
+      <AnimatePresence>
+        {selectedFilters.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={springPresets.snappy}
+            className="flex items-center gap-2 text-xs"
+          >
+            <span className="text-primary font-medium">
+              {selectedFilters.length} filter{selectedFilters.length !== 1 ? 's' : ''} active
+            </span>
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">
+              {options.length - selectedFilters.length} more available
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -230,8 +433,11 @@ export function ResultListElement({ config, data }: ElementProps) {
         <div className="space-y-0">
           {paginatedItems.length > 0 ? (
             (paginatedItems as ResultItem[]).map((item, index: number) => (
-              <div
+              <motion.div
                 key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, ...springPresets.snappy }}
                 className="px-6 py-4 border-b last:border-b-0 border-border hover:bg-muted/40 transition-colors"
               >
                 <div className="flex items-start justify-between">
@@ -257,12 +463,28 @@ export function ResultListElement({ config, data }: ElementProps) {
                     Open
                   </Button>
                 </div>
-              </div>
+              </motion.div>
             ))
           ) : (
-            <div className="px-6 py-12 text-center">
-              <p className="text-sm text-muted-foreground">No results yet. Add data sources to see live preview.</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={springPresets.gentle}
+              className="px-6 py-16 text-center"
+            >
+              <motion.div
+                initial={{ y: 10 }}
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-muted/80 to-muted/40 flex items-center justify-center mx-auto mb-4"
+              >
+                <DocumentTextIcon className="h-8 w-8 text-muted-foreground/50" />
+              </motion.div>
+              <p className="font-medium text-foreground mb-1">No results yet</p>
+              <p className="text-sm text-muted-foreground">
+                Results will appear here when data is connected
+              </p>
+            </motion.div>
           )}
         </div>
 
@@ -330,32 +552,51 @@ export function TagCloudElement({ config, data }: ElementProps) {
         <span className="text-sm font-medium">TagIcon Cloud</span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <motion.div className="flex flex-wrap gap-2" layout>
         {sortedTags.length > 0 ? (
           sortedTags.map((tag, index) => (
-            <Badge
+            <motion.div
               key={index}
-              variant="outline"
-              className="text-sm font-medium px-3 py-1"
-              style={{
-                fontSize: `${Math.max(12, Math.min(22, tag.weight + 12))}px`,
-              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.03, ...springPresets.snappy }}
+              whileHover={{ scale: 1.05 }}
             >
-              {tag.label}
-              {config.showCounts && (
-                <span className="text-xs text-muted-foreground ml-2">
-                  {tag.weight}
-                </span>
-              )}
-            </Badge>
+              <Badge
+                variant="outline"
+                className="text-sm font-medium px-3 py-1 cursor-default transition-colors hover:border-primary/50"
+                style={{
+                  fontSize: `${Math.max(12, Math.min(22, tag.weight + 12))}px`,
+                }}
+              >
+                {tag.label}
+                {config.showCounts && (
+                  <span className="text-xs text-muted-foreground ml-2">
+                    {tag.weight}
+                  </span>
+                )}
+              </Badge>
+            </motion.div>
           ))
         ) : (
-          <div className="w-full py-4 text-center text-sm text-muted-foreground">
-            <TagIcon className="h-6 w-6 mx-auto mb-2 opacity-40" />
-            <p>No tags yet. Tags will appear when data is connected.</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={springPresets.gentle}
+            className="w-full py-10 text-center"
+          >
+            <motion.div
+              animate={{ rotate: [0, -5, 5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatType: 'reverse' }}
+              className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-3"
+            >
+              <TagIcon className="h-7 w-7 text-primary/40" />
+            </motion.div>
+            <p className="font-medium text-foreground mb-1">No tags yet</p>
+            <p className="text-sm text-muted-foreground">Tags will appear when data is connected</p>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -556,10 +797,11 @@ export function ChartDisplayElement({ config, data }: ElementProps) {
 }
 
 // ============================================================================
-// FORM BUILDER ELEMENT
+// FORM BUILDER ELEMENT - Premium form with field animations
 // ============================================================================
 
 export function FormBuilderElement({ id, config, data, onChange, onAction, sharedState, userState }: ElementProps) {
+  const prefersReducedMotion = useReducedMotion();
   const instanceId = id || 'form';
   const fields = config.fields || [
     { name: 'Title', type: 'text', required: true },
@@ -581,6 +823,9 @@ export function FormBuilderElement({ id, config, data, onChange, onAction, share
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(hasUserSubmitted);
   const [submissionCount, setSubmissionCount] = useState(serverSubmissionCount);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   // Sync with server state
   useEffect(() => {
@@ -595,6 +840,10 @@ export function FormBuilderElement({ id, config, data, onChange, onAction, share
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
+    // Clear error when user starts typing
+    if (errors[fieldName]) {
+      setErrors(prev => ({ ...prev, [fieldName]: false }));
+    }
     onChange?.({ formData: { ...formData, [fieldName]: value } });
   };
 
@@ -605,101 +854,301 @@ export function FormBuilderElement({ id, config, data, onChange, onAction, share
       .map((f) => f.name);
 
     if (missingRequired.length > 0) {
+      // Show errors for missing fields
+      const newErrors: Record<string, boolean> = {};
+      missingRequired.forEach(name => { newErrors[name] = true; });
+      setErrors(newErrors);
       return;
     }
 
     setIsSubmitting(true);
+
+    // Simulate submission delay for visual feedback
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     setSubmitted(true);
+    setJustSubmitted(true);
     setSubmissionCount(prev => prev + 1);
-    // Pass formData with instanceId for proper server-side storage
     onAction?.('submit', { formData, timestamp: new Date().toISOString(), elementId: instanceId });
     setIsSubmitting(false);
+
+    setTimeout(() => setJustSubmitted(false), 1500);
   };
 
   const handleReset = () => {
     setFormData({});
     setSubmitted(false);
+    setErrors({});
   };
 
+  // Success state with celebration
   if (submitted && !config.allowMultipleSubmissions) {
     return (
-      <Card className="border-green-500/50 bg-green-500/5">
-        <CardContent className="p-6 text-center">
-          <CheckIcon className="h-8 w-8 text-green-500 mx-auto mb-2" />
-          <p className="font-medium">Response submitted!</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {submissionCount} total submission{submissionCount !== 1 ? 's' : ''}
-          </p>
-          {config.allowMultipleSubmissions && (
-            <Button variant="outline" size="sm" className="mt-3" onClick={handleReset}>
-              Submit another
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={springPresets.bouncy}
+      >
+        <Card className="border-green-500/50 bg-gradient-to-br from-green-500/10 to-emerald-500/5 shadow-lg shadow-green-500/10 overflow-hidden">
+          <CardContent className="p-8 text-center relative">
+            {/* Celebration particles */}
+            {justSubmitted && !prefersReducedMotion && (
+              <>
+                {[...Array(8)].map((_, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+                    animate={{
+                      opacity: 0,
+                      scale: 1,
+                      x: (Math.random() - 0.5) * 100,
+                      y: (Math.random() - 0.5) * 80 - 20,
+                    }}
+                    transition={{ duration: 0.8, delay: i * 0.05 }}
+                    className="absolute text-lg"
+                    style={{ left: '50%', top: '40%' }}
+                  >
+                    {['✨', '🎉', '✓', '⭐', '💫', '🎊', '✅', '🌟'][i]}
+                  </motion.span>
+                ))}
+              </>
+            )}
+
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ ...springPresets.bouncy, delay: 0.1 }}
+              className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4"
+            >
+              <CheckIcon className="h-8 w-8 text-green-500" />
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg font-semibold text-foreground"
+            >
+              Response submitted!
+            </motion.p>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-sm text-muted-foreground mt-2"
+            >
+              {submissionCount} total submission{submissionCount !== 1 ? 's' : ''}
+            </motion.p>
+
+            {config.allowMultipleSubmissions && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button variant="outline" size="sm" className="mt-4" onClick={handleReset}>
+                  Submit another response
+                </Button>
+              </motion.div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
+  const filledCount = Object.values(formData).filter(v => v && v.trim()).length;
+  const totalFields = fields.length;
+  const progress = (filledCount / totalFields) * 100;
+
   return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <DocumentTextIcon className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{config.title || 'Form'}</span>
-        </div>
+    <Card className="overflow-hidden">
+      <CardContent className="p-5 space-y-4">
+        {/* Header with progress */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <motion.div
+              animate={focusedField && !prefersReducedMotion ? { rotate: [0, -5, 5, 0] } : {}}
+              transition={{ duration: 0.3 }}
+            >
+              <DocumentTextIcon className={`h-4 w-4 transition-colors duration-200 ${
+                focusedField ? 'text-primary' : 'text-muted-foreground'
+              }`} />
+            </motion.div>
+            <span className="text-sm font-medium">{config.title || 'Form'}</span>
+          </div>
 
-        <div className="space-y-3">
-          {(fields as FormField[]).map((field, index: number) => (
-            <div key={index} className="space-y-1">
-              <label className="text-sm font-medium flex items-center gap-1">
-                {field.label || field.name}
-                {field.required && <span className="text-red-500">*</span>}
-              </label>
-              {field.type === 'textarea' ? (
-                <textarea
-                  value={formData[field.name] || ''}
-                  onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                  placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
-                  className="w-full h-20 p-2 text-sm bg-background border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              ) : field.type === 'select' ? (
-                <Select
-                  value={formData[field.name] || ''}
-                  onValueChange={(value) => handleFieldChange(field.name, value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(field.options || []).map((opt, optIndex) => (
-                      <SelectItem key={optIndex} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  type={field.type || 'text'}
-                  value={formData[field.name] || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange(field.name, e.target.value)}
-                  placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
-                />
-              )}
+          {/* Progress indicator */}
+          <motion.div
+            className="flex items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-primary rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={springPresets.default}
+              />
             </div>
-          ))}
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {filledCount}/{totalFields}
+            </span>
+          </motion.div>
         </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          className="w-full"
-        >
-          {isSubmitting ? 'Submitting...' : config.submitLabel || 'Submit'}
-        </Button>
+        {/* Form fields with staggered animation */}
+        <div className="space-y-4">
+          {(fields as FormField[]).map((field, index: number) => {
+            const hasError = errors[field.name];
+            const isFocused = focusedField === field.name;
+            const hasValue = formData[field.name] && formData[field.name].trim();
 
+            return (
+              <motion.div
+                key={field.name}
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="space-y-1.5"
+              >
+                <label className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${
+                  isFocused ? 'text-primary' : hasError ? 'text-red-500' : ''
+                }`}>
+                  {field.label || field.name}
+                  {field.required && (
+                    <span className={`text-xs ${hasError ? 'text-red-500' : 'text-muted-foreground'}`}>*</span>
+                  )}
+                  {hasValue && !hasError && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-green-500"
+                    >
+                      <CheckIcon className="h-3.5 w-3.5" />
+                    </motion.span>
+                  )}
+                </label>
+
+                <motion.div
+                  animate={hasError && !prefersReducedMotion ? { x: [-4, 4, -4, 4, 0] } : {}}
+                  transition={{ duration: 0.3 }}
+                >
+                  {field.type === 'textarea' ? (
+                    <textarea
+                      value={formData[field.name] || ''}
+                      onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                      onFocus={() => setFocusedField(field.name)}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
+                      className={`w-full h-24 p-3 text-sm bg-background border rounded-lg resize-none transition-all duration-200 focus:outline-none ${
+                        hasError
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                          : isFocused
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'border-border hover:border-muted-foreground/50'
+                      }`}
+                    />
+                  ) : field.type === 'select' ? (
+                    <Select
+                      value={formData[field.name] || ''}
+                      onValueChange={(value) => handleFieldChange(field.name, value)}
+                    >
+                      <SelectTrigger className={hasError ? 'border-red-500' : ''}>
+                        <SelectValue placeholder={`Select ${field.name.toLowerCase()}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(field.options || []).map((opt, optIndex) => (
+                          <SelectItem key={optIndex} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      type={field.type || 'text'}
+                      value={formData[field.name] || ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFieldChange(field.name, e.target.value)}
+                      onFocus={() => setFocusedField(field.name)}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder={field.placeholder || `Enter ${field.name.toLowerCase()}...`}
+                      className={`transition-all duration-200 ${
+                        hasError
+                          ? 'border-red-500 focus:ring-2 focus:ring-red-500/20'
+                          : ''
+                      }`}
+                    />
+                  )}
+                </motion.div>
+
+                {/* Error message */}
+                <AnimatePresence>
+                  {hasError && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-xs text-red-500"
+                    >
+                      This field is required
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Submit button with loading state */}
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full relative overflow-hidden"
+          >
+            <AnimatePresence mode="wait">
+              {isSubmitting ? (
+                <motion.span
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex items-center gap-2"
+                >
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+                  />
+                  Submitting...
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="submit"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  {config.submitLabel || 'Submit Response'}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Button>
+        </motion.div>
+
+        {/* Submission count */}
         {submissionCount > 0 && (
-          <p className="text-xs text-muted-foreground text-center">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-xs text-muted-foreground text-center"
+          >
             {submissionCount} response{submissionCount !== 1 ? 's' : ''} collected
-          </p>
+          </motion.p>
         )}
       </CardContent>
     </Card>
@@ -734,24 +1183,50 @@ export function NotificationCenterElement({ config, data }: ElementProps) {
 
         <div className="divide-y divide-border">
           {displayedNotifications.length > 0 ? (
-            displayedNotifications.map((notification, index) => (
-              <div key={index} className="px-6 py-4 hover:bg-muted/40 transition-colors">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{notification.title}</span>
-                  <span className="text-xs text-muted-foreground">{notification.timeAgo}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {notification.description}
-                </p>
-              </div>
-            ))
+            <AnimatePresence initial={false}>
+              {displayedNotifications.map((notification, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ delay: index * 0.05, ...springPresets.snappy }}
+                  className="px-6 py-4 hover:bg-muted/40 transition-colors"
+                >
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">{notification.title}</span>
+                    <span className="text-xs text-muted-foreground">{notification.timeAgo}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {notification.description}
+                  </p>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           ) : (
-            <div className="px-6 py-8 text-center">
-              <BellIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground opacity-40" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={springPresets.gentle}
+              className="px-6 py-12 text-center"
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/10 to-orange-500/5 flex items-center justify-center mx-auto mb-4"
+              >
+                <motion.div
+                  animate={{ rotate: [0, 15, -15, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse', delay: 0.5 }}
+                >
+                  <BellIcon className="h-8 w-8 text-amber-500/50" />
+                </motion.div>
+              </motion.div>
+              <p className="font-medium text-foreground mb-1">No notifications yet</p>
               <p className="text-sm text-muted-foreground">
-                No notifications yet. They will appear here in real-time.
+                They will appear here in real-time
               </p>
-            </div>
+            </motion.div>
           )}
         </div>
       </CardContent>

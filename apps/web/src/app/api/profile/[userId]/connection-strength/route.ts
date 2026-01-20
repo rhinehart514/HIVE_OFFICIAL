@@ -108,8 +108,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       factors,
       tierLabel: getTierLabel(tier),
     });
-  } catch (error) {
-    console.error('Error calculating connection strength:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to calculate connection strength' },
       { status: 500 }

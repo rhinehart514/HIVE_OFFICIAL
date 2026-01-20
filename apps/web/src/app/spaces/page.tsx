@@ -1,332 +1,226 @@
 'use client';
 
 /**
- * /spaces — Your Spaces Hub
+ * /spaces — Unified Spaces Hub
  *
- * Archetype: Orientation
- * Pattern: Pinned + Stream
- * Shell: ON
+ * "Your campus, organized."
  *
- * Structure:
- * - PINNED: User-curated favorites (cards)
- * - RECENT ACTIVITY: Spaces sorted by last message (list)
- * - ALL SPACES: Everything else (grid/list toggle)
+ * A unified page that serves as the home for campus life:
+ * - Identity Cards: Residential, Major, Greek (one-time claims)
+ * - Your Spaces: Joined spaces with smart sorting
+ * - Discover: Browse and join new spaces by category
  *
- * @version 6.0.0 - Redesigned per Spaces Vertical Slice spec (Jan 2026)
+ * @version 7.0.0 - Complete redesign per Day 1 Launch spec (Jan 2026)
  */
 
 import * as React from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, Pin, PinOff, MoreHorizontal } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Text, Button, SimpleAvatar } from '@hive/ui/design-system/primitives';
+import { motion } from 'framer-motion';
+import { toast } from '@hive/ui';
+import { useAuth } from '@hive/auth-logic';
+import { secureApiFetch } from '@/lib/secure-auth-utils';
 
-// ============================================================
-// Types
-// ============================================================
-
-interface SpaceMembership {
-  id: string;
-  name: string;
-  handle: string;
-  description?: string;
-  bannerUrl?: string;
-  avatarUrl?: string;
-  category: 'university' | 'student' | 'residential' | 'greek';
-  intent?: 'academic' | 'social' | 'professional';
-  memberCount: number;
-  membership: {
-    role: string;
-    joinedAt: string;
-    lastVisited: string;
-    notifications: number;
-    pinned: boolean;
-  };
-  lastActivity?: {
-    type: 'message' | 'event' | 'resource';
-    preview: string;
-    timestamp: string;
-    authorName?: string;
-  };
-}
-
-interface SpacesResponse {
-  activeSpaces: SpaceMembership[];
-  pinnedSpaces: SpaceMembership[];
-  stats: {
-    totalSpaces: number;
-    adminSpaces: number;
-    totalNotifications: number;
-  };
-}
-
-// ============================================================
-// Category Helpers
-// ============================================================
-
-function getCategoryAccentClass(category: string): string {
-  const map: Record<string, string> = {
-    university: 'category-accent-university',
-    student: 'category-accent-student',
-    residential: 'category-accent-residential',
-    greek: 'category-accent-greek',
-  };
-  return map[category] || 'category-accent-student';
-}
-
-function getCategoryIndicatorClass(category: string): string {
-  const map: Record<string, string> = {
-    university: 'category-indicator-university',
-    student: 'category-indicator-student',
-    residential: 'category-indicator-residential',
-    greek: 'category-indicator-greek',
-  };
-  return map[category] || 'category-indicator-student';
-}
-
-// ============================================================
-// Time Formatting
-// ============================================================
-
-function formatRelativeTime(timestamp: string): string {
-  const now = new Date();
-  const then = new Date(timestamp);
-  const diffMs = now.getTime() - then.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMins < 1) return 'now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-// ============================================================
 // Components
+import {
+  IdentityCards,
+  IdentityClaimModal,
+  YourSpacesList,
+  DiscoverSection,
+  NewUserLayout,
+  ReturningUserLayout,
+  type IdentityType,
+  type IdentityClaim,
+  type YourSpace,
+} from '@/components/spaces';
+import { Text, Skeleton } from '@hive/ui/design-system/primitives';
+
+// ============================================================
+// Hooks
 // ============================================================
 
-function PinnedSpaceCard({
-  space,
-  onUnpin,
-}: {
-  space: SpaceMembership;
-  onUnpin: (spaceId: string) => void;
-}) {
-  return (
-    <Link
-      href={`/spaces/${space.id}`}
-      className={cn(
-        'group relative flex flex-col p-4',
-        'rounded-lg bg-white/[0.02] hover:bg-white/[0.04]',
-        'border border-white/[0.06]',
-        'transition-all duration-150'
-      )}
-    >
-      {/* Category accent */}
-      <div
-        className={cn(
-          'absolute top-0 left-0 right-0 h-[3px] rounded-t-lg',
-          getCategoryAccentClass(space.category)
-        )}
-      />
+/**
+ * Hook to fetch and manage identity claims
+ */
+function useIdentityClaims(isAuthenticated: boolean) {
+  const [claims, setClaims] = React.useState<Record<IdentityType, IdentityClaim | null>>({
+    residential: null,
+    major: null,
+    greek: null,
+  });
+  const [loading, setLoading] = React.useState(true);
 
-      {/* Unpin button */}
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onUnpin(space.id);
-        }}
-        className={cn(
-          'absolute top-3 right-3 p-1.5 rounded',
-          'opacity-0 group-hover:opacity-100',
-          'bg-white/[0.06] hover:bg-white/[0.1]',
-          'transition-opacity duration-150'
-        )}
-        title="Unpin space"
-      >
-        <PinOff className="h-3.5 w-3.5 text-white/40" />
-      </button>
+  const fetchClaims = React.useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await secureApiFetch('/api/spaces/identity', {
+        method: 'GET',
+      });
+      const data = await res.json();
+      if (data.success !== false && data.data?.claims) {
+        setClaims(data.data.claims);
+      }
+    } catch {
+      // Silently handle - claims will show as unclaimed
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
-      {/* Space name */}
-      <Text weight="medium" className="text-white/90 mb-1 pr-8">
-        {space.name}
-      </Text>
+  React.useEffect(() => {
+    fetchClaims();
+  }, [fetchClaims]);
 
-      {/* Category + Intent */}
-      <Text size="xs" className="text-white/40 capitalize mb-3">
-        {space.category}{space.intent && ` · ${space.intent}`}
-      </Text>
+  const claimIdentity = async (type: IdentityType, spaceId: string) => {
+    const res = await secureApiFetch('/api/spaces/identity', {
+      method: 'POST',
+      body: JSON.stringify({ type, spaceId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Failed to claim identity');
+    }
+    // Refetch claims
+    await fetchClaims();
+    return data;
+  };
 
-      {/* Activity indicator */}
-      {space.lastActivity && (
-        <div className="mt-auto pt-2 border-t border-white/[0.04]">
-          <Text size="xs" className="text-white/50 truncate">
-            {space.lastActivity.preview}
-          </Text>
-        </div>
-      )}
-
-      {/* Online indicator */}
-      {space.membership.notifications > 0 && (
-        <span className="absolute bottom-3 right-3 w-2 h-2 rounded-full bg-[var(--hive-gold)]" />
-      )}
-    </Link>
-  );
+  return {
+    claims,
+    loading,
+    claimIdentity,
+    refetch: fetchClaims,
+  };
 }
 
-function ActivitySpaceRow({
-  space,
-  onPin,
-}: {
-  space: SpaceMembership;
-  onPin: (spaceId: string) => void;
-}) {
-  const [showMenu, setShowMenu] = React.useState(false);
+/**
+ * Hook to fetch user's joined spaces
+ */
+function useMySpaces(isAuthenticated: boolean) {
+  const [spaces, setSpaces] = React.useState<YourSpace[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  return (
-    <Link
-      href={`/spaces/${space.id}`}
-      className={cn(
-        'group flex items-center gap-4 px-4 py-3',
-        'hover:bg-white/[0.02]',
-        'border-b border-white/[0.04] last:border-b-0',
-        'transition-colors duration-150'
-      )}
-    >
-      {/* Category indicator */}
-      <div
-        className={cn(
-          'category-indicator h-10',
-          getCategoryIndicatorClass(space.category)
-        )}
-      />
+  const fetchSpaces = React.useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await secureApiFetch('/api/spaces/my', {
+        method: 'GET',
+      });
+      const data = await res.json();
 
-      {/* Avatar */}
-      <SimpleAvatar
-        src={space.avatarUrl}
-        fallback={space.name.substring(0, 2)}
-        size="default"
-      />
+      // Extract spaces from response
+      const activeSpaces = data.data?.activeSpaces || data.activeSpaces || [];
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <Text weight="medium" className="text-white/90 truncate">
-            {space.name}
-          </Text>
-          {space.membership.notifications > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--hive-gold)] text-black rounded-full">
-              {space.membership.notifications}
-            </span>
-          )}
-        </div>
-        {space.lastActivity ? (
-          <Text size="sm" className="text-white/50 truncate">
-            {space.lastActivity.authorName && `${space.lastActivity.authorName}: `}
-            {space.lastActivity.preview}
-          </Text>
-        ) : (
-          <Text size="sm" className="text-white/40">
-            {space.memberCount} members
-          </Text>
-        )}
-      </div>
+      // Transform to YourSpace format
+      const transformedSpaces: YourSpace[] = activeSpaces.map(
+        (s: {
+          id: string;
+          name: string;
+          description?: string;
+          avatarUrl?: string;
+          bannerUrl?: string;
+          category?: string;
+          memberCount?: number;
+          isVerified?: boolean;
+          lastActivity?: { timestamp?: string };
+          livePresence?: { onlineCount?: number };
+          membership?: {
+            role?: string;
+            notifications?: number;
+            lastVisited?: string;
+            pinned?: boolean;
+          };
+        }) => ({
+          id: s.id,
+          name: s.name,
+          description: s.description,
+          avatarUrl: s.avatarUrl,
+          bannerUrl: s.bannerUrl,
+          category: s.category,
+          memberCount: s.memberCount || 0,
+          isVerified: s.isVerified,
+          isJoined: true,
+          lastActivityAt: s.lastActivity?.timestamp,
+          membership: {
+            role: s.membership?.role || 'member',
+            notifications: s.membership?.notifications || 0,
+            lastVisited: s.membership?.lastVisited || new Date().toISOString(),
+            pinned: s.membership?.pinned || false,
+          },
+        })
+      );
 
-      {/* Timestamp */}
-      <Text size="xs" className="text-white/30 font-mono flex-shrink-0">
-        {space.lastActivity
-          ? formatRelativeTime(space.lastActivity.timestamp)
-          : formatRelativeTime(space.membership.lastVisited)}
-      </Text>
+      setSpaces(transformedSpaces);
+    } catch {
+      // Silently handle - spaces list will show as empty
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
-      {/* Actions */}
-      <div className="relative flex-shrink-0">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setShowMenu(!showMenu);
-          }}
-          className={cn(
-            'p-1.5 rounded',
-            'opacity-0 group-hover:opacity-100',
-            'hover:bg-white/[0.06]',
-            'transition-opacity duration-150'
-          )}
-        >
-          <MoreHorizontal className="h-4 w-4 text-white/40" />
-        </button>
+  React.useEffect(() => {
+    fetchSpaces();
+  }, [fetchSpaces]);
 
-        {showMenu && (
-          <>
-            <div
-              className="fixed inset-0 z-10"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowMenu(false);
-              }}
-            />
-            <div className="absolute right-0 top-full mt-1 z-20 py-1 bg-[#1a1a1a] border border-white/[0.08] rounded-lg shadow-xl min-w-[140px]">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onPin(space.id);
-                  setShowMenu(false);
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-white/70 hover:bg-white/[0.04]"
-              >
-                <Pin className="h-3.5 w-3.5" />
-                Pin to top
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </Link>
+  const joinedSpaceIds = React.useMemo(
+    () => new Set(spaces.map((s) => s.id)),
+    [spaces]
   );
+
+  return {
+    spaces,
+    loading,
+    joinedSpaceIds,
+    refetch: fetchSpaces,
+  };
 }
 
-function LoadingSkeleton() {
+// ============================================================
+// Loading Skeleton
+// ============================================================
+
+function PageSkeleton() {
   return (
     <div className="space-y-8 animate-pulse">
-      {/* Pinned skeleton */}
-      <div>
-        <div className="h-4 w-16 bg-white/[0.06] rounded mb-4" />
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-28 bg-white/[0.04] rounded-lg" />
-          <div className="h-28 bg-white/[0.04] rounded-lg" />
-        </div>
+      {/* Header skeleton */}
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-32" />
       </div>
-      {/* Activity skeleton */}
+
+      {/* Identity cards skeleton */}
       <div>
-        <div className="h-4 w-32 bg-white/[0.06] rounded mb-4" />
-        <div className="space-y-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-white/[0.02] rounded" />
+        <Skeleton className="h-4 w-32 mb-4" />
+        <div className="grid grid-cols-3 gap-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[100px] rounded-xl" />
           ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-function EmptyState() {
-  const router = useRouter();
-
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <Text className="text-white/40 mb-4">
-        You haven&apos;t joined any spaces yet
-      </Text>
-      <Button variant="default" onClick={() => router.push('/spaces/browse')}>
-        Browse Spaces
-      </Button>
+      {/* Your spaces skeleton */}
+      <div>
+        <Skeleton className="h-4 w-28 mb-4" />
+        <div className="rounded-xl border border-white/[0.06] overflow-hidden">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="flex items-center gap-4 px-4 py-3 border-b border-white/[0.04] last:border-b-0"
+            >
+              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -335,189 +229,213 @@ function EmptyState() {
 // Main Component
 // ============================================================
 
-export default function SpacesPage() {
+export default function SpacesHubPage() {
   const router = useRouter();
-  const [data, setData] = React.useState<SpacesResponse | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const { user, isLoading: authLoading } = useAuth();
 
-  // Fetch spaces
-  React.useEffect(() => {
-    async function fetchSpaces() {
-      try {
-        const res = await fetch('/api/spaces/my', { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to fetch spaces');
-        const json = await res.json();
-        // API returns { success: true, data: {...} }
-        if (json.success && json.data) {
-          setData(json.data);
-        } else if (json.activeSpaces !== undefined) {
-          // Direct response (no wrapper)
-          setData(json);
-        } else {
-          throw new Error(json.error?.message || 'Invalid response');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchSpaces();
-  }, []);
+  // Check if user is authenticated
+  const isAuthenticated = !!user && !authLoading;
 
-  // Refresh data helper
-  const refreshData = async () => {
-    const res = await fetch('/api/spaces/my', { credentials: 'include' });
-    if (res.ok) {
-      const json = await res.json();
-      if (json.success && json.data) {
-        setData(json.data);
-      } else if (json.activeSpaces !== undefined) {
-        setData(json);
-      }
-    }
-  };
+  // State hooks - pass auth status to skip API calls when not authenticated
+  const {
+    claims,
+    loading: claimsLoading,
+    claimIdentity,
+  } = useIdentityClaims(isAuthenticated);
+  const {
+    spaces: mySpaces,
+    loading: spacesLoading,
+    joinedSpaceIds,
+    refetch: refetchSpaces,
+  } = useMySpaces(isAuthenticated);
 
-  // Pin/Unpin handlers
-  const handlePin = async (spaceId: string) => {
-    try {
-      await fetch('/api/spaces/my', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ spaceId, action: 'pin' }),
-      });
-      await refreshData();
-    } catch (err) {
-      console.error('Failed to pin space:', err);
-    }
-  };
+  // Modal state
+  const [claimModalType, setClaimModalType] = React.useState<IdentityType | null>(null);
 
-  const handleUnpin = async (spaceId: string) => {
-    try {
-      await fetch('/api/spaces/my', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ spaceId, action: 'unpin' }),
-      });
-      await refreshData();
-    } catch (err) {
-      console.error('Failed to unpin space:', err);
-    }
-  };
+  // Loading state - only show loading for authenticated users fetching data
+  const isLoading = authLoading || (isAuthenticated && (claimsLoading && spacesLoading));
 
-  // Separate spaces into categories
-  const pinnedSpaces = data?.pinnedSpaces || [];
-  const activeSpaces = data?.activeSpaces || [];
-  const unpinnedSpaces = activeSpaces.filter(
-    (s) => !pinnedSpaces.some((p) => p.id === s.id)
+  // User state detection for conditional layout
+  const userState = React.useMemo(() => {
+    if (!isAuthenticated) return 'unauthenticated';
+    if (mySpaces.length === 0) return 'new_user';
+    return 'returning_user';
+  }, [isAuthenticated, mySpaces.length]);
+
+  // Handle navigation to space
+  const handleNavigateToSpace = React.useCallback(
+    (spaceId: string) => {
+      router.push(`/spaces/${spaceId}`);
+    },
+    [router]
   );
 
-  // Sort unpinned by recent activity
-  const sortedUnpinned = [...unpinnedSpaces].sort((a, b) => {
-    const aTime = a.lastActivity?.timestamp || a.membership.lastVisited;
-    const bTime = b.lastActivity?.timestamp || b.membership.lastVisited;
-    return new Date(bTime).getTime() - new Date(aTime).getTime();
-  });
+  // Handle browse all
+  const handleBrowseAll = React.useCallback(() => {
+    // Scroll to discover section or navigate
+    const discoverSection = document.getElementById('discover-section');
+    if (discoverSection) {
+      discoverSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Handle identity claim
+  const handleClaimIdentity = async (type: IdentityType, spaceId: string) => {
+    try {
+      await claimIdentity(type, spaceId);
+      toast.success('Identity claimed!', `Your ${type} identity has been set.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to claim';
+      toast.error('Claim failed', message);
+      throw error;
+    }
+  };
+
+  // Handle join space
+  const handleJoinSpace = async (spaceId: string) => {
+    // Redirect to login if not authenticated
+    if (!isAuthenticated) {
+      router.push(`/enter?redirect=/spaces/${spaceId}`);
+      return;
+    }
+
+    try {
+      const res = await secureApiFetch('/api/spaces/join-v2', {
+        method: 'POST',
+        body: JSON.stringify({ spaceId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error?.message || 'Failed to join space');
+      }
+
+      toast.success('Joined!', 'You are now a member of this space.');
+
+      // Refetch spaces to update the list
+      await refetchSpaces();
+
+      // Navigate to the space
+      router.push(`/spaces/${spaceId}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to join';
+      toast.error('Join failed', message);
+      throw error;
+    }
+  };
+
+  // ============================================================
+  // Handlers for layouts
+  // ============================================================
+
+  const handleClaimClick = React.useCallback(
+    (type: IdentityType) => {
+      if (!isAuthenticated) {
+        router.push(`/enter?redirect=/spaces&claim=${type}`);
+        return;
+      }
+      setClaimModalType(type);
+    },
+    [isAuthenticated, router]
+  );
+
+  // ============================================================
+  // Render
+  // ============================================================
 
   return (
     <div className="min-h-screen w-full">
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-white mb-1 tracking-tight">
-              Your Spaces
-            </h1>
-            {data && (
-              <Text size="sm" className="text-white/40">
-                {data.stats.totalSpaces} space{data.stats.totalSpaces !== 1 && 's'}
-              </Text>
-            )}
-          </div>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => router.push('/spaces/create')}
+        {/* Header - different styles based on user state */}
+        <motion.header
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mb-8"
+        >
+          <h1 className="text-2xl font-semibold text-white tracking-tight mb-1">
+            Spaces
+          </h1>
+          {userState === 'returning_user' && (
+            <Text className="text-white/40">
+              Welcome back
+            </Text>
+          )}
+        </motion.header>
+
+        {/* Loading state */}
+        {isLoading ? (
+          <PageSkeleton />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            <Plus className="h-4 w-4 mr-1.5" />
-            Create
-          </Button>
-        </div>
+            {/* Unauthenticated or New User: Discovery-first layout */}
+            {(userState === 'unauthenticated' || userState === 'new_user') && (
+              <>
+                <NewUserLayout
+                  claims={claims}
+                  claimsLoading={claimsLoading}
+                  onClaimClick={handleClaimClick}
+                  onViewSpace={handleNavigateToSpace}
+                  onNavigateToSpace={handleNavigateToSpace}
+                  onJoinSpace={handleJoinSpace}
+                  joinedSpaceIds={joinedSpaceIds}
+                />
 
-        {/* Loading */}
-        {isLoading && <LoadingSkeleton />}
-
-        {/* Error */}
-        {error && (
-          <div className="text-center py-20">
-            <Text className="text-red-400">{error}</Text>
-          </div>
-        )}
-
-        {/* Empty */}
-        {!isLoading && !error && activeSpaces.length === 0 && <EmptyState />}
-
-        {/* Content */}
-        {!isLoading && !error && activeSpaces.length > 0 && (
-          <div className="space-y-10">
-            {/* PINNED */}
-            {pinnedSpaces.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Pin className="h-3.5 w-3.5 text-white/30" />
-                  <Text
-                    weight="medium"
-                    className="text-[11px] uppercase tracking-wider text-white/40"
+                {/* Unauthenticated: Sign up CTA */}
+                {userState === 'unauthenticated' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-8 p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center"
                   >
-                    Pinned
-                  </Text>
-                </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  {pinnedSpaces.map((space) => (
-                    <PinnedSpaceCard
-                      key={space.id}
-                      space={space}
-                      onUnpin={handleUnpin}
-                    />
-                  ))}
-                </div>
-              </section>
+                    <Text weight="medium" className="text-white mb-2">
+                      Ready to join the community?
+                    </Text>
+                    <Text size="sm" className="text-white/50 mb-4">
+                      Sign in with your .edu email to join spaces and connect with your campus.
+                    </Text>
+                    <button
+                      onClick={() => router.push('/enter?redirect=/spaces')}
+                      className="px-6 py-2.5 rounded-lg bg-white text-[#0A0A09] font-medium text-sm hover:bg-white/90 transition-colors"
+                    >
+                      Get Started
+                    </button>
+                  </motion.div>
+                )}
+              </>
             )}
 
-            {/* RECENT ACTIVITY */}
-            <section>
-              <Text
-                weight="medium"
-                className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
-              >
-                Recent Activity
-              </Text>
-              <div className="rounded-lg border border-white/[0.06] overflow-hidden">
-                {sortedUnpinned.map((space) => (
-                  <ActivitySpaceRow
-                    key={space.id}
-                    space={space}
-                    onPin={handlePin}
-                  />
-                ))}
-              </div>
-            </section>
-
-            {/* Browse more */}
-            <div className="text-center pt-4">
-              <Link
-                href="/spaces/browse"
-                className="text-sm text-white/40 hover:text-white/60 transition-colors"
-              >
-                Browse more spaces →
-              </Link>
-            </div>
-          </div>
+            {/* Returning User: Spaces-first layout */}
+            {userState === 'returning_user' && (
+              <ReturningUserLayout
+                mySpaces={mySpaces}
+                spacesLoading={spacesLoading}
+                onNavigateToSpace={handleNavigateToSpace}
+                onBrowseAll={handleBrowseAll}
+                claims={claims}
+                claimsLoading={claimsLoading}
+                onClaimClick={handleClaimClick}
+                onViewSpace={handleNavigateToSpace}
+                onJoinSpace={handleJoinSpace}
+                joinedSpaceIds={joinedSpaceIds}
+              />
+            )}
+          </motion.div>
         )}
       </div>
+
+      {/* Identity Claim Modal */}
+      <IdentityClaimModal
+        type={claimModalType}
+        isOpen={!!claimModalType}
+        onClose={() => setClaimModalType(null)}
+        onClaim={handleClaimIdentity}
+      />
     </div>
   );
 }

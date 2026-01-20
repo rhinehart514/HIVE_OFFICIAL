@@ -30,6 +30,8 @@ export interface CanvasState {
   elements: CanvasElement[];
   connections: Connection[];
   selectedIds: string[];
+  /** Currently selected connection ID (mutually exclusive with element selection) */
+  selectedConnectionId: string | null;
   zoom: number;
   pan: { x: number; y: number };
   showGrid: boolean;
@@ -89,7 +91,9 @@ export interface IDEActions {
 
   // Connections
   addConnection: (from: Connection['from'], to: Connection['to']) => void;
+  updateConnection: (id: string, updates: Partial<Connection>) => void;
   deleteConnection: (id: string) => void;
+  selectConnection: (id: string | null) => void;
 
   // Canvas
   setZoom: (zoom: number) => void;
@@ -136,6 +140,7 @@ export const DEFAULT_CANVAS_STATE: CanvasState = {
   elements: [],
   connections: [],
   selectedIds: [],
+  selectedConnectionId: null,
   zoom: 1,
   pan: { x: 0, y: 0 },
   showGrid: true,

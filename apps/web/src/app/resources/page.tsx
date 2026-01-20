@@ -116,7 +116,7 @@ export default function ResourcesPage() {
 
           <Card
             className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
-            onClick={() => router.push('/spaces/browse')}
+            onClick={() => router.push('/spaces')}
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:scale-110 transition-transform">

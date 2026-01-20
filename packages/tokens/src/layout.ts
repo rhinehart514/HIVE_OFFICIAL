@@ -27,6 +27,8 @@ export const MAX_WIDTHS = {
   xl: '896px',
   /** 672px - Optimal prose (~65 chars, perfect for reading) */
   reading: '672px',
+  /** 1152px - Feed/activity stream (with sidebar) */
+  feed: '1152px',
   /** 1280px - Page container (max app width) */
   page: '1280px',
 } as const;
@@ -39,6 +41,7 @@ export const maxWidthClasses = {
   lg: 'max-w-[640px]',
   xl: 'max-w-[896px]',
   reading: 'max-w-[672px]',
+  feed: 'max-w-[1152px]',
   page: 'max-w-[1280px]',
 } as const;
 

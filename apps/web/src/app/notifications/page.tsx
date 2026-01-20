@@ -268,7 +268,7 @@ export default function NotificationsPage() {
               </p>
               {activeFilter === 'all' && (
                 <div className="flex items-center justify-center gap-3">
-                  <Link href="/spaces/browse">
+                  <Link href="/spaces">
                     <Button variant="default" size="sm">
                       Browse Spaces
                     </Button>

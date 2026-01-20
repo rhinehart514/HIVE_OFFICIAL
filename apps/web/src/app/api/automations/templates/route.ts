@@ -46,8 +46,7 @@ export async function GET(request: Request) {
       categories,
       total: templates.length,
     });
-  } catch (error) {
-    console.error("Error fetching automation templates:", error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch templates" },
       { status: 500 }

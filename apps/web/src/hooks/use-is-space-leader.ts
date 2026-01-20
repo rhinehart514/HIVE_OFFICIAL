@@ -68,7 +68,6 @@ export function useIsSpaceLeader(): UseIsSpaceLeaderReturn {
           setIsSpaceLeader(spaces.length > 0);
         }
       } catch (err) {
-        console.error("Error checking leader status:", err);
         setError(err instanceof Error ? err.message : "Failed to check leader status");
         setIsSpaceLeader(false);
         setLedSpaces([]);

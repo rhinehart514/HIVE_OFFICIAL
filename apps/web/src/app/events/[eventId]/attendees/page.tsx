@@ -59,8 +59,8 @@ export default function EventAttendeesPage() {
           const data = await attendeesRes.json();
           setAttendees(data.attendees || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch attendees:', error);
+      } catch {
+        // Failed to fetch attendees
       } finally {
         setIsLoading(false);
       }

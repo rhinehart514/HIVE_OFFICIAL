@@ -1,6 +1,20 @@
 /**
  * Real-time System Optimization & Performance Manager
  * Handles connection pooling, message batching, fallback systems, and performance monitoring
+ *
+ * @deprecated This module is part of the deprecated SSE real-time system.
+ * The SSERealtimeService it wraps has architectural issues where broadcasts
+ * fail silently. See sse-realtime-service.ts for full details.
+ *
+ * RECOMMENDED ALTERNATIVES:
+ * - For notifications: Use `/api/notifications/stream` SSE endpoint
+ * - For chat: Use `/api/spaces/[spaceId]/chat/stream` SSE endpoint
+ * - For presence: Use Firebase Realtime Database directly
+ *
+ * This module is kept for backward compatibility but should not be used
+ * for new features. It will be removed in a future release.
+ *
+ * @version 1.0.0 - Deprecated as of Jan 2026 (Spaces Perfection Plan Phase 1)
  */
 
 import { logger } from './structured-logger';

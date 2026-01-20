@@ -1,6 +1,6 @@
 /**
- * Events Loading Skeleton - Temporary stub for MVP
- * Will be fully implemented post-launch
+ * Events Loading Skeleton
+ * Displays skeleton placeholders while events are loading
  */
 
 import React from 'react';

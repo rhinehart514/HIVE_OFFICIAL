@@ -310,28 +310,77 @@ function ElementWrapper({
 function CanvasSkeleton() {
   const prefersReducedMotion = useReducedMotion();
 
+  const shimmerVariant = {
+    hidden: { opacity: 0.3 },
+    visible: { opacity: 0.6 },
+  };
+
   return (
-    <div className={cn("space-y-4", !prefersReducedMotion && "animate-pulse")}>
-      <div className="h-11 bg-white/[0.04] rounded-lg w-full" />
+    <motion.div
+      className="space-y-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="h-11 bg-white/[0.04] rounded-lg w-full"
+        variants={shimmerVariant}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="h-32 bg-white/[0.04] rounded-xl" />
-        <div className="h-32 bg-white/[0.04] rounded-xl" />
+        <motion.div
+          className="h-32 bg-white/[0.04] rounded-xl"
+          variants={shimmerVariant}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.1 }}
+        />
+        <motion.div
+          className="h-32 bg-white/[0.04] rounded-xl"
+          variants={shimmerVariant}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.2 }}
+        />
       </div>
-      <div className="h-48 bg-white/[0.04] rounded-xl" />
-    </div>
+      <motion.div
+        className="h-48 bg-white/[0.04] rounded-xl"
+        variants={shimmerVariant}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse', delay: 0.3 }}
+      />
+    </motion.div>
   );
 }
 
 function CanvasError({ message }: { message: string }) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={cn("rounded-xl p-6 text-center", glass.error)}
+      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+      className={cn("rounded-xl p-8 text-center", glass.error)}
     >
-      <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
-        <ExclamationTriangleIcon className="h-6 w-6 text-red-400" />
-      </div>
+      <motion.div
+        className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4"
+        animate={prefersReducedMotion ? {} : {
+          y: [0, -4, 0],
+          rotate: [0, -2, 2, 0]
+        }}
+        transition={{
+          duration: 3,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          ease: 'easeInOut'
+        }}
+      >
+        <ExclamationTriangleIcon className="h-7 w-7 text-red-400" />
+      </motion.div>
       <p className="text-red-400 font-medium mb-1">Failed to load tool</p>
       <p className="text-sm text-red-400/60">{message}</p>
     </motion.div>
@@ -339,16 +388,31 @@ function CanvasError({ message }: { message: string }) {
 }
 
 function CanvasEmpty() {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={cn("rounded-xl p-12 text-center", glass.empty)}
+      transition={{ type: 'spring', stiffness: 280, damping: 24 }}
+      className={cn("rounded-xl p-16 text-center", glass.empty)}
     >
-      <div className="w-12 h-12 rounded-xl bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
-        <BoxSelect className="h-6 w-6 text-gray-500" />
-      </div>
-      <p className="text-gray-400 font-medium mb-1">No elements configured</p>
+      <motion.div
+        className="w-16 h-16 rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center mx-auto mb-5"
+        animate={prefersReducedMotion ? {} : {
+          y: [0, -6, 0],
+          rotate: [0, 3, -3, 0]
+        }}
+        transition={{
+          duration: 4,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          ease: 'easeInOut'
+        }}
+      >
+        <BoxSelect className="h-8 w-8 text-gray-400" />
+      </motion.div>
+      <p className="text-gray-300 font-medium mb-1">No elements configured</p>
       <p className="text-sm text-gray-500">
         This tool has no elements to render yet.
       </p>

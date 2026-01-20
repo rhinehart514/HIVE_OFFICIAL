@@ -184,8 +184,7 @@ export async function POST(
       success: actionsExecuted.every(a => a.success),
       deployment: dto,
     });
-  } catch (error) {
-    console.error('[API] Error executing manual trigger:', error);
+  } catch {
     return errorResponse('Failed to execute manual trigger', 500);
   }
 }
@@ -260,24 +259,13 @@ async function executeAction(
     }
 
     case 'notification': {
-      const { recipients, title, body, actionUrl } = action as unknown as {
-        recipients: string;
-        title: string;
-        body: string;
-        actionUrl?: string;
-      };
-
-      console.log('[Orchestration] Would send notification:', {
-        recipients,
-        title,
-        body,
-        actionUrl,
-        spaceId: deployment.spaceId,
-      });
+      // TODO: Integrate with notification system
+      // Notification would be sent to recipients with title, body, actionUrl
       break;
     }
 
     default:
-      console.warn('[Orchestration] Unknown action type:', action.type);
+      // Unknown action type - ignored
+      break;
   }
 }

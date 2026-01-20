@@ -140,8 +140,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(response);
-  } catch (error) {
-    console.error('Error fetching friends:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch friends' },
       { status: 500 }
@@ -282,8 +281,7 @@ export async function POST(request: NextRequest) {
       message: 'Friend request sent!',
       requestId: connectionId,
     });
-  } catch (error) {
-    console.error('Error sending friend request:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to send friend request' },
       { status: 500 }
@@ -382,8 +380,7 @@ export async function PATCH(request: NextRequest) {
         message: 'Friend request declined',
       });
     }
-  } catch (error) {
-    console.error('Error responding to friend request:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to respond to friend request' },
       { status: 500 }
@@ -451,8 +448,7 @@ export async function DELETE(request: NextRequest) {
       success: true,
       message: 'Unfriended successfully',
     });
-  } catch (error) {
-    console.error('Error unfriending user:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to unfriend user' },
       { status: 500 }

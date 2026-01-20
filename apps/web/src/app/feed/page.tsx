@@ -14,7 +14,10 @@ import {
   UsersIcon,
   FireIcon,
   ArrowTopRightOnSquareIcon,
+  PlusIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/outline";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@hive/auth-logic";
 import { useToast } from "@/hooks/use-toast";
 
@@ -139,11 +142,11 @@ function getContentTypeBadge(type: FeedPost['contentType']) {
     case 'space_event':
       return <Badge variant="secondary" className="text-xs">Event</Badge>;
     case 'tool_generated':
-      return <Badge variant="secondary" className="text-xs bg-amber-500/10 text-amber-400">Tool</Badge>;
+      return <Badge variant="secondary" className="text-xs bg-[#FFD700]/10 text-[#FFD700]/80">Tool</Badge>;
     case 'tool_enhanced':
-      return <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-400">AI Enhanced</Badge>;
+      return <Badge variant="secondary" className="text-xs">AI Enhanced</Badge>;
     case 'builder_announcement':
-      return <Badge variant="secondary" className="text-xs bg-blue-500/10 text-blue-400">Announcement</Badge>;
+      return <Badge variant="secondary" className="text-xs">Announcement</Badge>;
     default:
       return null;
   }
@@ -180,7 +183,9 @@ function ActivityCard({
     <motion.article
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 hover:bg-white/[0.04] transition-colors cursor-pointer"
+      whileHover={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+      transition={{ duration: 0.15 }}
+      className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 cursor-pointer hover:border-white/[0.1] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-150"
       onClick={handleNavigate}
     >
       {/* Header */}
@@ -257,12 +262,6 @@ function ActivityCard({
         </div>
       )}
 
-      {/* Ranking debug (only in dev) */}
-      {process.env.NODE_ENV === 'development' && post.relevanceScore !== undefined && (
-        <div className="mt-3 pt-3 border-t border-white/[0.04] text-xs text-white/30">
-          Score: {post.relevanceScore.toFixed(2)} | Quality: {post.qualityScore?.toFixed(2)}
-        </div>
-      )}
     </motion.article>
   );
 }
@@ -284,7 +283,7 @@ function TrendingSpaces({ spaces }: { spaces: { id: string; name: string; member
           </Link>
         ))}
       </div>
-      <Link href="/spaces/browse" className="block mt-4 text-sm text-life-gold hover:underline">
+      <Link href="/spaces" className="block mt-4 text-sm text-life-gold hover:underline">
         See all spaces →
       </Link>
     </Card>
@@ -292,31 +291,47 @@ function TrendingSpaces({ spaces }: { spaces: { id: string; name: string; member
 }
 
 function QuickActions() {
+  const [open, setOpen] = React.useState(false);
+
   return (
     <Card className="p-5 bg-white/[0.02] border-white/[0.06]">
       <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
-      <div className="space-y-2">
-        <Link
-          href="/tools/create"
-          className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
+      <div className="relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center justify-between gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
         >
-          <WrenchScrewdriverIcon className="h-5 w-5 text-life-gold" />
-          <span className="text-sm text-white/80">Build a Tool</span>
-        </Link>
-        <Link
-          href="/spaces/create"
-          className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
-        >
-          <UsersIcon className="h-5 w-5 text-life-gold" />
-          <span className="text-sm text-white/80">Create a Space</span>
-        </Link>
-        <Link
-          href="/events"
-          className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
-        >
-          <CalendarIcon className="h-5 w-5 text-life-gold" />
-          <span className="text-sm text-white/80">Browse Events</span>
-        </Link>
+          <div className="flex items-center gap-3">
+            <PlusIcon className="h-5 w-5 text-life-gold" />
+            <span className="text-sm text-white/80">Create something</span>
+          </div>
+          <ChevronDownIcon className={cn("h-4 w-4 text-white/40 transition-transform", open && "rotate-180")} />
+        </button>
+
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.15 }}
+              className="absolute top-full left-0 right-0 mt-2 bg-[#0A0A09] border border-white/[0.08] rounded-lg overflow-hidden z-10"
+            >
+              <Link href="/tools/create" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
+                <WrenchScrewdriverIcon className="h-4 w-4 text-white/60" />
+                <span className="text-sm text-white/70">Build a Tool</span>
+              </Link>
+              <Link href="/spaces/create" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
+                <UsersIcon className="h-4 w-4 text-white/60" />
+                <span className="text-sm text-white/70">Create a Space</span>
+              </Link>
+              <Link href="/events" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
+                <CalendarIcon className="h-4 w-4 text-white/60" />
+                <span className="text-sm text-white/70">Browse Events</span>
+              </Link>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </Card>
   );
@@ -453,17 +468,26 @@ export default function FeedPage() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 animate-pulse">
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.06]" />
+                <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Icon placeholder with subtle pulse */}
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] animate-pulse" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-4 w-32 bg-white/[0.06] rounded" />
-                      <div className="h-3 w-24 bg-white/[0.06] rounded" />
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-28 bg-white/[0.06] rounded animate-pulse" />
+                        <div className="h-3 w-1 bg-white/[0.04] rounded" />
+                        <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
+                      </div>
+                      <div className="h-3 w-20 bg-white/[0.04] rounded animate-pulse" />
                     </div>
+                    {/* Badge placeholder */}
+                    <div className="h-5 w-14 bg-white/[0.04] rounded-full animate-pulse" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="h-4 w-full bg-white/[0.06] rounded" />
-                    <div className="h-4 w-4/5 bg-white/[0.06] rounded" />
+                  {/* Content lines */}
+                  <div className="space-y-2 mt-4">
+                    <div className="h-4 w-full bg-white/[0.05] rounded animate-pulse" />
+                    <div className="h-4 w-[85%] bg-white/[0.04] rounded animate-pulse" />
+                    <div className="h-4 w-[60%] bg-white/[0.03] rounded animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -480,37 +504,36 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-ground">
-      {/* Header */}
+      {/* Header - Compact, content-first */}
       <div className="border-b border-white/[0.06] bg-white/[0.02]">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-white/40">Activity Stream</p>
-              <h1 className="text-2xl font-semibold text-white">
-                {user?.displayName ? `Hey, ${user.displayName.split(' ')[0]}` : 'Activity'}
-              </h1>
-              <p className="text-sm text-white/60 mt-1">
-                Events, announcements, and tools from your spaces
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-medium text-white">Activity</h1>
+            <div className="flex items-center gap-2">
               {/* Sort toggle */}
               <div className="flex items-center bg-white/[0.04] rounded-lg p-1">
                 <Button
-                  variant={sortMode === 'algorithm' ? 'brand' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setSortMode('algorithm')}
-                  className="text-xs gap-1.5"
+                  className={`text-xs gap-1.5 transition-all ${
+                    sortMode === 'algorithm'
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/50 hover:text-white/70'
+                  }`}
                 >
                   <SparklesIcon className="h-3.5 w-3.5" />
                   For You
                 </Button>
                 <Button
-                  variant={sortMode === 'recent' ? 'brand' : 'ghost'}
+                  variant="ghost"
                   size="sm"
                   onClick={() => setSortMode('recent')}
-                  className="text-xs gap-1.5"
+                  className={`text-xs gap-1.5 transition-all ${
+                    sortMode === 'recent'
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/50 hover:text-white/70'
+                  }`}
                 >
                   <ClockIcon className="h-3.5 w-3.5" />
                   Recent
@@ -525,7 +548,7 @@ export default function FeedPage() {
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
           {/* Feed column */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Filter tabs - Activity Stream only (no Posts) */}
             <Tabs value={filter} onValueChange={(v) => setFilter(v as FeedFilter)} className="w-full">
               <TabsList className="bg-white/[0.04]">
@@ -565,7 +588,7 @@ export default function FeedPage() {
                       : `No ${filter} activity to show right now`}
                   </p>
                   <Button asChild className="bg-life-gold text-ground hover:bg-life-gold/90">
-                    <Link href="/spaces/browse">Browse Spaces</Link>
+                    <Link href="/spaces">Browse Spaces</Link>
                   </Button>
                 </div>
               ) : null}

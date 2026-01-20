@@ -125,7 +125,7 @@ export class GooseClient {
                 return;
               }
             } catch {
-              console.warn("Failed to parse message:", line);
+              // Skip malformed message lines
             }
           }
         }
@@ -167,7 +167,6 @@ export class GooseClient {
           description = message.data.description;
           break;
         case "error":
-          console.error("Generation error:", message.data);
           return null;
       }
     }

@@ -5,30 +5,31 @@ import { Cog6ToothIcon, HashtagIcon, ListBulletIcon, ArrowsPointingOutIcon, Tras
 import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { springPresets, durationSeconds } from '@hive/tokens';
 import { cn } from '../../../lib/utils';
+import { ArrayEditor } from './field-primitives';
 import type { CanvasElement } from './types';
 
-// Make.com Light Panel Colors (consistent with context-rail.tsx)
+// HiveLab Dark Panel Colors (consistent with context-rail.tsx)
 const PANEL_COLORS = {
-  bg: '#ffffff',
-  bgHover: '#f5f5f5',
-  bgActive: '#eeeeee',
-  border: '#e0e0e0',
-  borderEmphasis: '#9e9e9e',
-  textPrimary: '#212121',
-  textSecondary: '#757575',
-  textTertiary: '#9E9E9E',
-  accent: '#4CAF50',
-  accentLight: 'rgba(76, 175, 80, 0.1)',
+  bg: 'var(--hivelab-panel, #1A1A1A)',
+  bgHover: 'var(--hivelab-surface-hover, #1A1A1A)',
+  bgActive: 'var(--hivelab-surface, #141414)',
+  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+  borderEmphasis: 'var(--hivelab-border-emphasis, rgba(255, 255, 255, 0.12))',
+  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
+  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
+  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
+  accent: 'var(--life-gold, #D4AF37)',
+  accentLight: 'rgba(212, 175, 55, 0.1)',
   error: '#f44336',
   errorLight: 'rgba(244, 67, 54, 0.1)',
-  success: '#4CAF50',
-  successLight: 'rgba(76, 175, 80, 0.1)',
-  warning: '#ff9800',
-  warningLight: 'rgba(255, 152, 0, 0.1)',
+  success: '#22c55e',
+  successLight: 'rgba(34, 197, 94, 0.1)',
+  warning: '#f59e0b',
+  warningLight: 'rgba(245, 158, 11, 0.1)',
 };
 
 // Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4CAF50]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
 
 // Validation shake animation
 const shakeAnimation = {
@@ -69,6 +70,17 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
   ],
 
   'filter-selector': [
+    {
+      key: 'filters',
+      type: 'string-array',
+      label: 'Filter Options',
+      default: ['All', 'Category A', 'Category B'],
+      placeholder: 'Add filter...',
+      addButtonText: 'Add Filter',
+      emptyMessage: 'Add filter options',
+      minItems: 1,
+      maxItems: 15,
+    },
     { key: 'allowMultiple', type: 'boolean', label: 'Allow Multiple', default: true },
     { key: 'showCounts', type: 'boolean', label: 'Show Counts', default: false },
   ],
@@ -87,7 +99,17 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
   ],
 
   'tag-cloud': [
-    { key: 'maxTags', type: 'number', label: 'Max Tags', default: 50, min: 5, max: 200 },
+    {
+      key: 'tags',
+      type: 'string-array',
+      label: 'Tags',
+      default: ['Popular', 'Trending', 'New', 'Featured'],
+      placeholder: 'Add tag...',
+      addButtonText: 'Add Tag',
+      emptyMessage: 'Add tags',
+      maxItems: 50,
+    },
+    { key: 'maxTags', type: 'number', label: 'Max Visible', default: 50, min: 5, max: 200 },
     { key: 'sortBy', type: 'select', label: 'Sort By', options: ['frequency', 'alphabetical', 'recent'], default: 'frequency' },
     { key: 'showCounts', type: 'boolean', label: 'Show Counts', default: true },
   ],
@@ -106,6 +128,17 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
 
   'form-builder': [
     { key: 'title', type: 'string', label: 'Form Title', default: 'Form' },
+    {
+      key: 'fieldLabels',
+      type: 'string-array',
+      label: 'Form Fields',
+      default: ['Name', 'Email', 'Message'],
+      placeholder: 'Add field...',
+      addButtonText: 'Add Field',
+      emptyMessage: 'Add form fields',
+      minItems: 1,
+      maxItems: 20,
+    },
     { key: 'submitLabel', type: 'string', label: 'Submit Button', default: 'Submit' },
     { key: 'validateOnChange', type: 'boolean', label: 'Validate On Change', default: true },
     { key: 'showProgress', type: 'boolean', label: 'Show Progress', default: false },
@@ -120,6 +153,17 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
 
   'poll-element': [
     { key: 'question', type: 'string', label: 'Question', default: 'What do you think?' },
+    {
+      key: 'options',
+      type: 'string-array',
+      label: 'Poll Options',
+      default: ['Option 1', 'Option 2', 'Option 3'],
+      placeholder: 'Add option...',
+      addButtonText: 'Add Option',
+      emptyMessage: 'Add poll options',
+      minItems: 2,
+      maxItems: 10,
+    },
     { key: 'allowMultipleVotes', type: 'boolean', label: 'Allow Multiple Votes', default: false },
     { key: 'showResults', type: 'boolean', label: 'Show Results', default: true },
     { key: 'anonymousVoting', type: 'boolean', label: 'Anonymous Voting', default: false },
@@ -185,6 +229,17 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
 
   'rsvp-button': [
     { key: 'eventName', type: 'string', label: 'Event Name', default: 'Event' },
+    {
+      key: 'responseOptions',
+      type: 'string-array',
+      label: 'Response Options',
+      default: ['Going', 'Maybe', 'Not Going'],
+      placeholder: 'Add response...',
+      addButtonText: 'Add Response',
+      emptyMessage: 'Add response options',
+      minItems: 2,
+      maxItems: 5,
+    },
     { key: 'maxAttendees', type: 'number', label: 'Max Attendees', default: 100, min: 1 },
     { key: 'showCount', type: 'boolean', label: 'Show Count', default: true },
     { key: 'requireConfirmation', type: 'boolean', label: 'Require Confirmation', default: false },
@@ -241,12 +296,18 @@ const ELEMENT_SCHEMAS: Record<string, PropertySchema[]> = {
 
 interface PropertySchema {
   key: string;
-  type: 'string' | 'number' | 'boolean' | 'select' | 'array' | 'color';
+  type: 'string' | 'number' | 'boolean' | 'select' | 'array' | 'color' | 'string-array';
   label: string;
   default: unknown;
   options?: string[];
   min?: number;
   max?: number;
+  // For string-array type
+  placeholder?: string;
+  addButtonText?: string;
+  emptyMessage?: string;
+  maxItems?: number;
+  minItems?: number;
 }
 
 interface PropertyFieldProps {
@@ -451,6 +512,19 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             ))}
           </select>
         </motion.div>
+      );
+
+    case 'string-array':
+      return (
+        <ArrayEditor
+          value={(currentValue as string[]) || []}
+          onChange={(newValue) => onChange(newValue)}
+          placeholder={schema.placeholder}
+          addButtonText={schema.addButtonText}
+          emptyMessage={schema.emptyMessage}
+          maxItems={schema.maxItems}
+          minItems={schema.minItems}
+        />
       );
 
     default:

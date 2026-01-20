@@ -337,7 +337,7 @@ export default function RitualsPage() {
                 Get Notified at Launch
               </button>
               <button
-                onClick={() => router.push("/spaces/browse")}
+                onClick={() => router.push("/spaces")}
                 className="inline-flex items-center gap-2 rounded-xl bg-white/[0.06] border border-white/[0.08] px-6 py-3.5 text-white font-medium hover:bg-white/[0.08] transition-colors"
               >
                 Explore Spaces

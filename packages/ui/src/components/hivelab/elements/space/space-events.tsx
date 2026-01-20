@@ -5,11 +5,18 @@
  *
  * Display upcoming events for a specific space.
  * Requires: spaceId context (leaders only).
+ *
+ * GTM Polish Pass (January 2026):
+ * - Added Framer Motion animations
+ * - Improved loading skeletons with shimmer
+ * - Better empty state with illustrations
  */
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { CalendarIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 import { Card, CardContent } from '../../../../design-system/primitives';
 import { Badge } from '../../../../design-system/primitives';
 import type { ElementProps } from '../../../../lib/hivelab/element-system';
@@ -95,41 +102,67 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
         </div>
 
         {isLoading ? (
-          <div className="py-4 animate-pulse space-y-3">
+          <div className="space-y-3">
             {[1, 2].map((i) => (
               <div key={i} className="p-3 border rounded-lg">
-                <div className="h-4 bg-muted rounded w-2/3 mb-2" />
-                <div className="h-3 bg-muted rounded w-1/3" />
+                <div className="h-4 bg-muted rounded w-2/3 mb-2 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+                <div className="h-3 bg-muted rounded w-1/3 animate-pulse" style={{ animationDelay: `${i * 100 + 50}ms` }} />
               </div>
             ))}
           </div>
         ) : events.length === 0 ? (
-          <div className="py-6 text-center text-sm text-muted-foreground">
-            <CalendarIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p>No upcoming events</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={springPresets.gentle}
+            className="py-8 text-center"
+          >
+            <motion.div
+              animate={{ y: [0, -4, 0], rotate: [0, 2, -2, 0] }}
+              transition={{ duration: 3, repeat: Infinity, repeatType: 'reverse' }}
+              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center mx-auto mb-3"
+            >
+              <CalendarIcon className="h-7 w-7 text-purple-500/50" />
+            </motion.div>
+            <p className="font-medium text-foreground mb-1">No upcoming events</p>
+            <p className="text-sm text-muted-foreground">Events will appear when scheduled</p>
+          </motion.div>
         ) : (
           <div className="space-y-3">
-            {events.slice(0, maxEvents).map((event, index) => (
-              <div
-                key={event.id || index}
-                className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                  selectedEvent === event.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-                }`}
-                onClick={() => handleEventClick(event)}
-              >
-                <div className="font-medium text-sm">{event.title}</div>
-                <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
-                  <ClockIcon className="h-3 w-3" />
-                  {formatDate(event.date)}
-                </div>
-                {config.showRsvpCount && event.rsvpCount !== undefined && (
-                  <Badge variant="outline" className="mt-2 text-xs">
-                    {event.rsvpCount} attending
-                  </Badge>
-                )}
-              </div>
-            ))}
+            <AnimatePresence initial={false}>
+              {events.slice(0, maxEvents).map((event, index) => (
+                <motion.div
+                  key={event.id || index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ delay: index * 0.05, ...springPresets.snappy }}
+                  className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                    selectedEvent === event.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                  }`}
+                  onClick={() => handleEventClick(event)}
+                  whileHover={{ scale: 1.01, x: 2 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <div className="font-medium text-sm">{event.title}</div>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <ClockIcon className="h-3 w-3" />
+                    {formatDate(event.date)}
+                  </div>
+                  {config.showRsvpCount && event.rsvpCount !== undefined && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05 + 0.1 }}
+                    >
+                      <Badge variant="outline" className="mt-2 text-xs">
+                        {event.rsvpCount} attending
+                      </Badge>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </CardContent>

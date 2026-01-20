@@ -27,6 +27,9 @@ export interface SpaceDocument {
   description: string;
   category: string;
   campusId: string;
+  // Branding / Visual identity
+  iconURL?: string;
+  coverImageURL?: string;
   creatorId?: string;  // Legacy field name
   createdBy?: string;  // Current field name in DB
   visibility: 'public' | 'private';
@@ -117,6 +120,9 @@ export interface SpacePersistenceData {
   description: string;
   category: string;
   campusId: string;
+  // Branding / Visual identity
+  iconURL?: string;
+  coverImageURL?: string;
   creatorId?: string;  // Optional for unclaimed spaces
   visibility: 'public' | 'private';
   /** Space type */
@@ -245,6 +251,9 @@ export class SpaceMapper {
         category: categoryResult.getValue(),
         createdBy: creatorProfileId,  // Can be undefined for unclaimed spaces
         campusId: campusIdResult.getValue(),
+        // Branding / Visual identity
+        iconURL: data.iconURL,
+        coverImageURL: data.coverImageURL,
         visibility: data.visibility === 'private' ? 'private' : 'public',
         spaceType: data.spaceType || 'student',
         governance: data.governance,
@@ -334,6 +343,9 @@ export class SpaceMapper {
       description: space.description.value,
       category: space.category.value,
       campusId: space.campusId.id,
+      // Branding / Visual identity
+      iconURL: space.iconURL,
+      coverImageURL: space.coverImageURL,
       creatorId: space.owner?.value,  // Optional for unclaimed spaces
       visibility: space.isPublic ? 'public' : 'private',
       // New fields

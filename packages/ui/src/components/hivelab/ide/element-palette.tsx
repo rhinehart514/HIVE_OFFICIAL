@@ -65,7 +65,7 @@ const ELEMENTS: ElementDefinition[] = [
   // Input (4)
   {
     id: 'search-input',
-    name: 'MagnifyingGlassIcon Input',
+    name: 'Search Input',
     description: 'Text search with suggestions',
     icon: <MagnifyingGlassIcon className="h-4 w-4" />,
     category: 'input',
@@ -122,10 +122,10 @@ const ELEMENTS: ElementDefinition[] = [
     tier: 'universal',
   },
 
-  // FunnelIcon (1)
+  // Filter (1)
   {
     id: 'filter-selector',
-    name: 'FunnelIcon Selector',
+    name: 'Filter Selector',
     description: 'Multi-select filters',
     icon: <FunnelIcon className="h-4 w-4" />,
     category: 'filter',
@@ -151,7 +151,7 @@ const ELEMENTS: ElementDefinition[] = [
   },
   {
     id: 'timer',
-    name: 'ClockIcon',
+    name: 'Timer',
     description: 'Stopwatch for sessions',
     icon: <ClockIcon className="h-4 w-4" />,
     category: 'action',
@@ -280,7 +280,7 @@ const ELEMENTS: ElementDefinition[] = [
 const CATEGORIES = [
   { id: 'input', name: 'Input', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   { id: 'display', name: 'Display', color: 'text-green-400', bg: 'bg-green-500/10' },
-  { id: 'filter', name: 'FunnelIcon', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { id: 'filter', name: 'Filter', color: 'text-purple-400', bg: 'bg-purple-500/10' },
   { id: 'action', name: 'Action', color: 'text-orange-400', bg: 'bg-orange-500/10' },
   { id: 'layout', name: 'Layout', color: 'text-pink-400', bg: 'bg-pink-500/10' },
 ];
@@ -489,8 +489,8 @@ export function ElementPalette({ onDragStart, onDragEnd, userContext }: ElementP
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="MagnifyingGlassIcon elements..."
-            aria-label="MagnifyingGlassIcon elements by name or description"
+            placeholder="Search elements..."
+            aria-label="Search elements by name or description"
             className="w-full bg-[var(--hivelab-surface-hover)] border border-[var(--hivelab-border)] rounded-lg pl-8 pr-3 py-1.5 text-sm text-[var(--hivelab-text-primary)] placeholder:text-[var(--hivelab-text-tertiary)] outline-none focus:border-[var(--hivelab-border-emphasis)] focus:ring-2 focus:ring-white/20 transition-colors duration-[var(--workshop-duration)]"
           />
         </div>

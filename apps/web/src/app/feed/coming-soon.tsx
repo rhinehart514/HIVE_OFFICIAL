@@ -81,7 +81,7 @@ export default function FeedComingSoon() {
         {/* Actions */}
         <div className="space-y-3">
           <Button asChild className="w-full bg-life-gold text-ground hover:bg-life-gold/90">
-            <Link href="/spaces/browse">
+            <Link href="/spaces">
               <UsersIcon className="h-4 w-4 mr-2" />
               Explore Spaces
             </Link>

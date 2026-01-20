@@ -97,7 +97,6 @@ export function useOfflineStorage(): OfflineStorageState & OfflineStorageActions
           stats,
         }));
       } catch (error) {
-        console.error('[useOfflineStorage] Init failed:', error);
         setState((prev) => ({
           ...prev,
           isLoading: false,
@@ -114,8 +113,8 @@ export function useOfflineStorage(): OfflineStorageState & OfflineStorageActions
     const cleanup = async () => {
       try {
         await clearExpiredCache();
-      } catch (error) {
-        console.error('[useOfflineStorage] Cleanup failed:', error);
+      } catch {
+        // Cleanup failed - will retry next interval
       }
     };
 
@@ -130,8 +129,8 @@ export function useOfflineStorage(): OfflineStorageState & OfflineStorageActions
     try {
       const stats = await getStorageStats();
       setState((prev) => ({ ...prev, stats }));
-    } catch (error) {
-      console.error('[useOfflineStorage] Failed to refresh stats:', error);
+    } catch {
+      // Failed to refresh stats - state will be stale
     }
   }, []);
 
@@ -242,7 +241,6 @@ export function useOfflineSync(options: SyncOptions = {}): SyncState & { sync: (
 
         const endpoint = endpoints[mutation.type];
         if (!endpoint) {
-          console.error(`[OfflineSync] Unknown mutation type: ${mutation.type}`);
           return false;
         }
 
@@ -405,7 +403,6 @@ export function useOfflineData<T>(options: UseOfflineDataOptions<T>): UseOffline
       // Cache the fresh data
       await cacheFn(freshData);
     } catch (err) {
-      console.error(`[useOfflineData:${cacheKey}] Fetch failed:`, err);
       setError(err instanceof Error ? err : new Error('Fetch failed'));
     } finally {
       setIsLoading(false);
@@ -422,8 +419,8 @@ export function useOfflineData<T>(options: UseOfflineDataOptions<T>): UseOffline
           setIsStale(true);
           setIsLoading(false);
         }
-      } catch (err) {
-        console.error(`[useOfflineData:${cacheKey}] Cache read failed:`, err);
+      } catch {
+        // Cache read failed - will fetch fresh data
       }
 
       // Then fetch fresh data if online

@@ -291,10 +291,8 @@ export const GET = withAuthAndErrors(async (
           }
         }
       }
-    } catch (err) {
-      // State fetch failed - log but don't fail the request
-      console.error("Failed to fetch state for combined endpoint:", err);
-      // Return empty state on error
+    } catch {
+      // State fetch failed - don't fail the request, return empty state
       stateResponse = {
         userState: {},
         sharedState: createEmptySharedState(),

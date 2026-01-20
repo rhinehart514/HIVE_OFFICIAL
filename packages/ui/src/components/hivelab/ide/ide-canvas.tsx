@@ -12,60 +12,97 @@ const Box = CubeIcon;
 const VIEWPORT_BUFFER = 200;
 
 // ============================================
-// Make.com-Style Color Palette
+// HiveLab Dark Color Palette
 // ============================================
-const MAKE_COLORS = {
-  // Canvas background - mint green
-  canvasBg: '#E8F5E9',
-  canvasGrid: '#C8E6C9',
+const HIVELAB_COLORS = {
+  // Canvas background - dark
+  canvasBg: 'var(--hivelab-canvas, #0E0E0E)',
+  canvasGrid: 'var(--hivelab-grid, rgba(255, 255, 255, 0.04))',
 
-  // Node category colors (light tinted backgrounds)
-  nodeInput: '#FFEBEE',      // Pink for inputs
-  nodeDisplay: '#E3F2FD',    // Blue for display
-  nodeAction: '#FFF3E0',     // Orange for actions
-  nodeLogic: '#F3E5F5',      // Purple for logic
-  nodeData: '#E8F5E9',       // Green for data
-  nodeBorder: 'rgba(0,0,0,0.08)',
-  nodeBorderHover: 'rgba(0,0,0,0.15)',
-  nodeBorderSelected: 'rgba(0,0,0,0.25)',
+  // Node card colors - dark surfaces (not colored tints)
+  nodeBody: 'var(--hivelab-surface, #1A1A1A)',           // Dark card body
+  nodeHeader: 'var(--hivelab-surface-elevated, #242424)', // Slightly lighter header
+  nodeBorder: 'var(--hivelab-border, rgba(255,255,255,0.08))',
+  nodeBorderHover: 'var(--hivelab-border-emphasis, rgba(255,255,255,0.12))',
+  nodeBorderSelected: 'rgba(212, 175, 55, 0.5)',  // Gold selection
+
+  // Category indicator dots (small accent, not full background)
+  dotInput: '#FF6B6B',     // Pink/red for inputs
+  dotDisplay: '#64B5F6',   // Blue for display
+  dotAction: '#FFB74D',    // Orange for actions
+  dotLogic: '#BA68C8',     // Purple for logic
+  dotData: '#D4AF37',      // Gold for data
 
   // Connections
-  connectionLine: '#4CAF50',
-  connectionDot: '#2E7D32',
-  connectionGlow: 'rgba(76, 175, 80, 0.3)',
+  connectionLine: 'var(--life-gold, #D4AF37)',
+  connectionDot: 'var(--life-gold, #D4AF37)',
+  connectionGlow: 'rgba(212, 175, 55, 0.3)',
 
-  // Text
-  textPrimary: '#212121',
-  textSecondary: '#757575',
-  textTertiary: '#9E9E9E',
+  // Text - use CSS variables
+  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
+  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
+  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
 
   // UI
-  panelBg: '#ffffff',
-  panelBorder: '#e0e0e0',
+  panelBg: 'var(--hivelab-panel, #1A1A1A)',
+  panelBorder: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
 };
 
-// Map element types to category colors
-function getNodeColor(elementId: string): string {
+// Map element types to category dot colors (for the indicator dot, not full background)
+function getCategoryDotColor(elementId: string): string {
   const inputElements = ['search-input', 'date-picker', 'user-selector', 'form-builder', 'event-picker', 'space-picker', 'member-selector'];
   const displayElements = ['result-list', 'chart-display', 'tag-cloud', 'map-view', 'notification-center', 'connection-list', 'space-feed', 'space-stats'];
-  const actionElements = ['poll', 'rsvp-button', 'announcement'];
-  const logicElements = ['filter-selector', 'countdown-timer', 'counter', 'timer', 'role-gate'];
+  const actionElements = ['poll', 'poll-element', 'quick-poll', 'rsvp-button', 'announcement'];
+  const logicElements = ['filter-selector', 'countdown-timer', 'countdown', 'counter', 'timer', 'role-gate'];
 
-  if (inputElements.includes(elementId)) return MAKE_COLORS.nodeInput;
-  if (displayElements.includes(elementId)) return MAKE_COLORS.nodeDisplay;
-  if (actionElements.includes(elementId)) return MAKE_COLORS.nodeAction;
-  if (logicElements.includes(elementId)) return MAKE_COLORS.nodeLogic;
-  return MAKE_COLORS.nodeData;
+  if (inputElements.includes(elementId)) return HIVELAB_COLORS.dotInput;
+  if (displayElements.includes(elementId)) return HIVELAB_COLORS.dotDisplay;
+  if (actionElements.includes(elementId)) return HIVELAB_COLORS.dotAction;
+  if (logicElements.includes(elementId)) return HIVELAB_COLORS.dotLogic;
+  return HIVELAB_COLORS.dotData;
 }
 import { cn } from '../../../lib/utils';
 import { springPresets, easingArrays } from '@hive/tokens';
+import { getElementById, type ElementSpec } from '@hive/core';
 import type { CanvasElement, Connection, ToolMode } from './types';
 import { SmartGuides, snapToGuides } from './smart-guides';
+
+// ============================================
+// Port Info Helper
+// ============================================
+
+/**
+ * Get port information for an element
+ * Returns formatted tooltip text for input/output ports
+ */
+function getPortTooltip(elementId: string, direction: 'input' | 'output'): string {
+  // Normalize element ID (remove instance suffix like -1, -2, etc.)
+  const normalizedId = elementId.replace(/-\d+$/, '');
+  const spec = getElementById(normalizedId);
+
+  if (!spec) {
+    return direction === 'input' ? 'Input port' : 'Output port';
+  }
+
+  const ports = direction === 'input' ? spec.inputs : spec.outputs;
+
+  if (!ports || ports.length === 0) {
+    return direction === 'input'
+      ? 'No inputs (receives cascade data)'
+      : 'No outputs defined';
+  }
+
+  // Format: "Outputs: results, totalVotes" or "Inputs: entries, data"
+  const label = direction === 'input' ? 'Inputs' : 'Outputs';
+  return `${label}: ${ports.join(', ')}`;
+}
 
 interface IDECanvasProps {
   elements: CanvasElement[];
   connections: Connection[];
   selectedIds: string[];
+  /** Currently selected connection ID */
+  selectedConnectionId?: string | null;
   zoom: number;
   pan: { x: number; y: number };
   showGrid: boolean;
@@ -78,7 +115,10 @@ interface IDECanvasProps {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElements: (ids: string[]) => void;
   onAddConnection: (from: Connection['from'], to: Connection['to']) => void;
+  onUpdateConnection?: (id: string, updates: Partial<Connection>) => void;
   onDeleteConnection: (id: string) => void;
+  /** Callback when a connection is clicked/selected */
+  onSelectConnection?: (id: string | null) => void;
   onZoomChange: (zoom: number) => void;
   onPanChange: (pan: { x: number; y: number }) => void;
   onDrop: (elementId: string, position: { x: number; y: number }) => void;
@@ -165,6 +205,262 @@ function isConnectionVisible(
   return isElementVisible(fromElement, bounds) || isElementVisible(toElement, bounds);
 }
 
+/**
+ * Visual preview renderer for canvas elements
+ * Shows mini-previews of actual element types instead of generic placeholders
+ */
+function ElementPreview({ element }: { element: CanvasElement }) {
+  const elementId = element.elementId.replace(/-\d+$/, ''); // Normalize ID
+
+  // Quick visual previews for common elements
+  switch (elementId) {
+    case 'poll-element':
+    case 'poll':
+    case 'quick-poll': {
+      // Use actual options from config, or fallback to defaults
+      const options = (element.config?.options as string[]) || ['Option A', 'Option B', 'Option C'];
+      const question = String(element.config?.question || 'What do you think?');
+      // Generate realistic-looking percentages that add to 100%
+      const percentages = options.map((_, i) => Math.max(10, 50 - i * 15 + (i % 2 === 0 ? 5 : -5)));
+      const total = percentages.reduce((a, b) => a + b, 0);
+      const normalizedPcts = percentages.map(p => Math.round((p / total) * 100));
+
+      return (
+        <div className="space-y-2">
+          <p className="text-[11px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+            {question}
+          </p>
+          <div className="space-y-1.5">
+            {options.slice(0, 4).map((opt, i) => (
+              <div key={i} className="space-y-0.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] truncate max-w-[70%]" style={{ color: HIVELAB_COLORS.textSecondary }}>
+                    {String(opt)}
+                  </span>
+                  <span className="text-[9px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+                    {normalizedPcts[i]}%
+                  </span>
+                </div>
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${normalizedPcts[i]}%`,
+                      backgroundColor: i === 0 ? HIVELAB_COLORS.connectionLine : 'rgba(212, 175, 55, 0.5)'
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          {options.length > 4 && (
+            <p className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+              +{options.length - 4} more options
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    case 'countdown-timer':
+    case 'countdown':
+    case 'timer':
+      return (
+        <div className="flex gap-1.5 justify-center py-1">
+          {['02', '14', '32'].map((n, i) => (
+            <div key={i} className="flex flex-col items-center">
+              <div
+                className="px-2 py-1 rounded text-sm font-mono font-bold"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: HIVELAB_COLORS.textPrimary
+                }}
+              >
+                {n}
+              </div>
+              <span className="text-[8px] mt-0.5" style={{ color: HIVELAB_COLORS.textTertiary }}>
+                {['hr', 'min', 'sec'][i]}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'leaderboard':
+    case 'leaderboard-display':
+      return (
+        <div className="space-y-1">
+          {[1, 2, 3].map(n => (
+            <div key={n} className="flex items-center gap-2 text-[10px]">
+              <span
+                className="w-4 text-center font-bold"
+                style={{ color: n === 1 ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.textTertiary }}
+              >
+                #{n}
+              </span>
+              <div className="w-4 h-4 rounded-full bg-white/10" />
+              <div className="flex-1 h-1.5 bg-white/10 rounded" />
+              <span style={{ color: HIVELAB_COLORS.textSecondary }}>{100 - n * 15}</span>
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'rsvp-button':
+    case 'rsvp':
+      return (
+        <div className="flex flex-col items-center gap-1.5 py-1">
+          <div
+            className="px-4 py-1.5 rounded-lg text-[11px] font-semibold"
+            style={{
+              backgroundColor: HIVELAB_COLORS.connectionLine,
+              color: '#000'
+            }}
+          >
+            RSVP Now
+          </div>
+          <span className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+            12 attending
+          </span>
+        </div>
+      );
+
+    case 'photo-gallery':
+    case 'gallery':
+    case 'image-gallery':
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          {[1, 2, 3, 4].map(n => (
+            <div
+              key={n}
+              className="aspect-square rounded bg-white/10 flex items-center justify-center"
+            >
+              <svg className="w-3 h-3" style={{ color: HIVELAB_COLORS.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+              </svg>
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'event-card':
+    case 'event':
+      return (
+        <div className="flex items-center gap-2">
+          <div
+            className="w-8 h-8 rounded flex flex-col items-center justify-center text-center"
+            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+          >
+            <span className="text-[8px] font-medium" style={{ color: HIVELAB_COLORS.textTertiary }}>JAN</span>
+            <span className="text-sm font-bold leading-none" style={{ color: HIVELAB_COLORS.textPrimary }}>21</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-medium truncate" style={{ color: HIVELAB_COLORS.textPrimary }}>
+              {String(element.config?.title || 'Event Title')}
+            </p>
+            <p className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>7:00 PM</p>
+          </div>
+        </div>
+      );
+
+    case 'announcement':
+    case 'announcement-banner':
+      return (
+        <div
+          className="p-2 rounded text-center"
+          style={{ backgroundColor: `${HIVELAB_COLORS.connectionLine}15` }}
+        >
+          <p className="text-[10px] font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>
+            📢 {String(element.config?.message || 'Announcement')}
+          </p>
+        </div>
+      );
+
+    case 'form-builder':
+    case 'form':
+    case 'signup-form': {
+      // Use actual fields from config, or fallback to defaults
+      const fields = (element.config?.fields as Array<{ label: string; type: string }>) || [
+        { label: 'Name', type: 'text' },
+        { label: 'Email', type: 'email' },
+      ];
+      const title = String(element.config?.title || 'Form');
+
+      return (
+        <div className="space-y-2">
+          <p className="text-[10px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+            {title}
+          </p>
+          <div className="space-y-1.5">
+            {fields.slice(0, 3).map((field, i) => (
+              <div key={i}>
+                <span className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+                  {typeof field === 'string' ? field : field.label}
+                </span>
+                <div
+                  className="h-5 rounded border flex items-center px-1.5"
+                  style={{ borderColor: HIVELAB_COLORS.nodeBorder, backgroundColor: 'rgba(255,255,255,0.03)' }}
+                >
+                  <span className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+                    {typeof field === 'string' ? 'Enter...' : field.type === 'email' ? 'email@...' : 'Enter...'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {fields.length > 3 && (
+            <p className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+              +{fields.length - 3} more fields
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    case 'search-input':
+    case 'search':
+      return (
+        <div
+          className="flex items-center gap-2 px-2 py-1.5 rounded-lg border"
+          style={{ borderColor: HIVELAB_COLORS.nodeBorder, backgroundColor: 'rgba(255,255,255,0.03)' }}
+        >
+          <svg className="w-3 h-3" style={{ color: HIVELAB_COLORS.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          <span className="text-[10px]" style={{ color: HIVELAB_COLORS.textTertiary }}>Search...</span>
+        </div>
+      );
+
+    case 'counter':
+    case 'stat-counter':
+      return (
+        <div className="text-center py-1">
+          <div className="text-2xl font-bold" style={{ color: HIVELAB_COLORS.connectionLine }}>247</div>
+          <p className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+            {String(element.config?.label || 'Total Count')}
+          </p>
+        </div>
+      );
+
+    default:
+      // Fallback to config text
+      return (
+        <p
+          className="text-xs line-clamp-2"
+          style={{ color: HIVELAB_COLORS.textSecondary }}
+        >
+          {String(
+            element.config?.placeholder ||
+              element.config?.label ||
+              element.config?.title ||
+              element.config?.description ||
+              'Configure this element...'
+          )}
+        </p>
+      );
+  }
+}
+
 function ElementNode({
   element,
   allElements,
@@ -188,6 +484,12 @@ function ElementNode({
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [isNew, setIsNew] = useState(true);
   const nodeRef = useRef<HTMLDivElement>(null);
+
+  // Get element spec for port names
+  const normalizedElementId = element.elementId.replace(/-\d+$/, '');
+  const elementSpec = getElementById(normalizedElementId);
+  const defaultOutputPort = elementSpec?.outputs?.[0] || 'output';
+  const defaultInputPort = elementSpec?.inputs?.[0] || 'input';
 
   // Mark as not new after mount animation
   useEffect(() => {
@@ -315,8 +617,8 @@ function ElementNode({
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Get category-based color for Make.com style
-  const nodeColor = getNodeColor(element.elementId);
+  // Get category dot color for the indicator
+  const categoryDotColor = getCategoryDotColor(element.elementId);
 
   return (
     <motion.div
@@ -327,7 +629,7 @@ function ElementNode({
         scale: isDragging ? 1.02 : 1,
         y: 0,
         boxShadow: isSelected
-          ? `0 0 0 2px ${MAKE_COLORS.nodeBorderSelected}, 0 8px 24px rgba(0,0,0,0.15)`
+          ? `0 0 0 2px ${HIVELAB_COLORS.nodeBorderSelected}, 0 8px 24px rgba(0,0,0,0.15)`
           : isDragging
             ? '0 16px 32px rgba(0,0,0,0.2)'
             : '0 2px 8px rgba(0,0,0,0.08)',
@@ -347,10 +649,10 @@ function ElementNode({
         width: element.size.width,
         height: element.size.height,
         zIndex: isDragging ? 1000 : element.zIndex || 1,
-        backgroundColor: nodeColor,
+        backgroundColor: HIVELAB_COLORS.nodeBody,
         border: isSelected
-          ? `2px solid ${MAKE_COLORS.nodeBorderSelected}`
-          : `1px solid ${MAKE_COLORS.nodeBorder}`,
+          ? `2px solid ${HIVELAB_COLORS.nodeBorderSelected}`
+          : `1px solid ${HIVELAB_COLORS.nodeBorder}`,
       }}
       onMouseDown={handleMouseDown}
     >
@@ -369,28 +671,28 @@ function ElementNode({
               scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
             }}
             className="absolute -inset-1 rounded-2xl border-2 pointer-events-none"
-            style={{ borderColor: MAKE_COLORS.connectionLine }}
+            style={{ borderColor: HIVELAB_COLORS.connectionLine }}
           />
         )}
       </AnimatePresence>
 
-      {/* Header - Make.com style */}
+      {/* Header - Dark elevated surface */}
       <div
         className="flex items-center justify-between px-3 py-2.5 rounded-t-2xl"
         style={{
-          borderBottom: `1px solid ${MAKE_COLORS.nodeBorder}`,
-          backgroundColor: 'rgba(255,255,255,0.5)',
+          borderBottom: `1px solid ${HIVELAB_COLORS.nodeBorder}`,
+          backgroundColor: HIVELAB_COLORS.nodeHeader,
         }}
       >
         <div className="flex items-center gap-2.5">
-          {/* Category dot indicator */}
+          {/* Category dot indicator - shows element type */}
           <div
             className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: MAKE_COLORS.connectionLine }}
+            style={{ backgroundColor: categoryDotColor }}
           />
           <span
             className="text-sm font-semibold truncate max-w-[140px]"
-            style={{ color: MAKE_COLORS.textPrimary }}
+            style={{ color: HIVELAB_COLORS.textPrimary }}
           >
             {displayName}
           </span>
@@ -399,8 +701,8 @@ function ElementNode({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              className="p-1 rounded transition-colors hover:bg-black/5"
-              style={{ color: MAKE_COLORS.textTertiary }}
+              className="p-1 rounded transition-colors hover:bg-white/10"
+              style={{ color: HIVELAB_COLORS.textTertiary }}
               title="Move"
             >
               <Move className="h-3.5 w-3.5" />
@@ -411,8 +713,8 @@ function ElementNode({
                 e.stopPropagation();
                 onDelete();
               }}
-              className="p-1 rounded transition-colors hover:bg-red-50 hover:text-red-500"
-              style={{ color: MAKE_COLORS.textTertiary }}
+              className="p-1 rounded transition-colors hover:bg-red-500/20 hover:text-red-400"
+              style={{ color: HIVELAB_COLORS.textTertiary }}
               title="Delete"
             >
               <TrashIcon className="h-3.5 w-3.5" />
@@ -421,19 +723,9 @@ function ElementNode({
         )}
       </div>
 
-      {/* Content - Make.com style */}
-      <div className="p-3">
-        <p
-          className="text-xs line-clamp-2"
-          style={{ color: MAKE_COLORS.textSecondary }}
-        >
-          {String(
-            element.config?.placeholder ||
-              element.config?.label ||
-              element.config?.title ||
-              'Configure this element...'
-          )}
-        </p>
+      {/* Content - Visual Preview */}
+      <div className="p-3 overflow-hidden">
+        <ElementPreview element={element} />
       </div>
 
       {/* Connection Ports - Make.com style with green dots */}
@@ -445,17 +737,17 @@ function ElementNode({
           mode === 'connect' && 'cursor-pointer hover:scale-125'
         )}
         style={{
-          backgroundColor: mode === 'connect' ? MAKE_COLORS.connectionLine : '#fff',
-          borderColor: mode === 'connect' ? MAKE_COLORS.connectionDot : MAKE_COLORS.nodeBorderHover,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,
+          borderColor: mode === 'connect' ? HIVELAB_COLORS.connectionDot : HIVELAB_COLORS.nodeBorderHover,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => {
           e.stopPropagation();
           if (mode === 'connect') {
-            onEndConnection('input');
+            onEndConnection(defaultInputPort);
           }
         }}
-        title="Input port"
+        title={getPortTooltip(element.elementId, 'input')}
       />
 
       {/* Output Port (Right) - Plus button style */}
@@ -466,22 +758,22 @@ function ElementNode({
           mode === 'connect' && 'cursor-pointer hover:scale-125'
         )}
         style={{
-          backgroundColor: mode === 'connect' ? MAKE_COLORS.connectionLine : '#fff',
-          borderColor: mode === 'connect' ? MAKE_COLORS.connectionDot : MAKE_COLORS.nodeBorderHover,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,
+          borderColor: mode === 'connect' ? HIVELAB_COLORS.connectionDot : HIVELAB_COLORS.nodeBorderHover,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => {
           e.stopPropagation();
           if (mode === 'connect') {
-            onStartConnection('output');
+            onStartConnection(defaultOutputPort);
           }
         }}
-        title="Output port"
+        title={getPortTooltip(element.elementId, 'output')}
       >
         {mode !== 'connect' && (
           <PlusIcon
             className="w-3 h-3"
-            style={{ color: MAKE_COLORS.textTertiary }}
+            style={{ color: HIVELAB_COLORS.textTertiary }}
           />
         )}
       </button>
@@ -503,7 +795,7 @@ function ElementNode({
           >
             <path
               d="M11 1L1 11M11 6L6 11M11 11L11 11"
-              stroke={isResizing ? MAKE_COLORS.textPrimary : MAKE_COLORS.textTertiary}
+              stroke={isResizing ? HIVELAB_COLORS.textPrimary : HIVELAB_COLORS.textTertiary}
               strokeWidth="1.5"
               strokeLinecap="round"
             />
@@ -588,22 +880,27 @@ function ConnectionLine({
   connection,
   elements,
   onDelete,
+  onSelect,
   isNew = false,
   isFlowing = false,
+  isSelected = false,
 }: {
   connection: Connection;
   elements: CanvasElement[];
   onDelete: () => void;
+  onSelect?: () => void;
   isNew?: boolean;
   /** When true, shows animated data flow along the connection */
   isFlowing?: boolean;
+  /** When true, shows connection as selected (gold highlight) */
+  isSelected?: boolean;
 }) {
   const fromElement = elements.find((e) => e.instanceId === connection.from.instanceId);
   const toElement = elements.find((e) => e.instanceId === connection.to.instanceId);
   const [isHovered, setIsHovered] = useState(false);
 
   // Show flow animation when hovered OR when actively flowing data
-  const showFlowAnimation = isHovered || isFlowing;
+  const showFlowAnimation = isHovered || isFlowing || isSelected;
 
   if (!fromElement || !toElement) return null;
 
@@ -629,14 +926,32 @@ function ConnectionLine({
         fill="none"
         stroke="transparent"
         strokeWidth="20"
-        onClick={onDelete}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect?.();
+        }}
       />
+
+      {/* Selection highlight (gold border when selected) */}
+      {isSelected && (
+        <motion.path
+          d={path}
+          fill="none"
+          stroke={HIVELAB_COLORS.connectionLine}
+          strokeWidth={6}
+          strokeLinecap="round"
+          strokeOpacity={0.5}
+          className="pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        />
+      )}
 
       {/* Glow effect on hover/flow - Make.com green style */}
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? MAKE_COLORS.connectionLine : MAKE_COLORS.connectionLine}
+        stroke={isFlowing ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.connectionLine}
         strokeWidth={isFlowing ? 12 : 8}
         strokeOpacity="0"
         strokeLinecap="round"
@@ -651,7 +966,7 @@ function ConnectionLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={MAKE_COLORS.connectionLine}
+        stroke={HIVELAB_COLORS.connectionLine}
         strokeWidth={isFlowing ? 3 : 2}
         strokeLinecap="round"
         initial={{ pathLength: 0, strokeOpacity: 0.3 }}
@@ -669,7 +984,7 @@ function ConnectionLine({
       {/* Animated flow particles along the path */}
       <motion.circle
         r={isFlowing ? 5 : 3}
-        fill={MAKE_COLORS.connectionLine}
+        fill={HIVELAB_COLORS.connectionLine}
         className="pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{
@@ -690,7 +1005,7 @@ function ConnectionLine({
       {isFlowing && (
         <motion.circle
           r={4}
-          fill={MAKE_COLORS.connectionLine}
+          fill={HIVELAB_COLORS.connectionLine}
           className="pointer-events-none"
           animate={{
             opacity: [0, 0.8, 0],
@@ -712,7 +1027,7 @@ function ConnectionLine({
       <motion.circle
         cx={toX}
         cy={toY}
-        fill={MAKE_COLORS.connectionDot}
+        fill={HIVELAB_COLORS.connectionDot}
         initial={{ r: 0, opacity: 0 }}
         animate={{
           r: showFlowAnimation ? (isFlowing ? 8 : 6) : 5,
@@ -726,7 +1041,7 @@ function ConnectionLine({
       <motion.circle
         cx={fromX}
         cy={fromY}
-        fill={MAKE_COLORS.connectionDot}
+        fill={HIVELAB_COLORS.connectionDot}
         initial={{ r: 0, opacity: 0 }}
         animate={{ r: 5, opacity: 1 }}
         transition={springPresets.snappy}
@@ -740,7 +1055,7 @@ function ConnectionLine({
             cx={toX}
             cy={toY}
             fill="none"
-            stroke={MAKE_COLORS.connectionLine}
+            stroke={HIVELAB_COLORS.connectionLine}
             strokeWidth="2"
             initial={{ r: 4, opacity: 0.8 }}
             animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
@@ -764,7 +1079,7 @@ function ConnectionLine({
               cx={(fromX + toX) / 2}
               cy={(fromY + toY) / 2}
               r="12"
-              fill={MAKE_COLORS.panelBg}
+              fill={HIVELAB_COLORS.panelBg}
               stroke="#ef4444"
               strokeWidth="2"
               className="cursor-pointer"
@@ -819,7 +1134,7 @@ function ConnectionPreviewLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={MAKE_COLORS.connectionLine}
+        stroke={HIVELAB_COLORS.connectionLine}
         strokeWidth={8}
         strokeOpacity={0.25}
         strokeLinecap="round"
@@ -833,7 +1148,7 @@ function ConnectionPreviewLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={MAKE_COLORS.connectionLine}
+        stroke={HIVELAB_COLORS.connectionLine}
         strokeWidth={2}
         strokeLinecap="round"
         strokeDasharray="8 4"
@@ -845,7 +1160,7 @@ function ConnectionPreviewLine({
       {/* Animated dots along path */}
       <motion.circle
         r={4}
-        fill={MAKE_COLORS.connectionLine}
+        fill={HIVELAB_COLORS.connectionLine}
         animate={{
           opacity: [0.3, 1, 0.3],
           offsetDistance: ['0%', '100%'],
@@ -865,7 +1180,7 @@ function ConnectionPreviewLine({
         cx={fromX}
         cy={fromY}
         r={6}
-        fill={MAKE_COLORS.connectionDot}
+        fill={HIVELAB_COLORS.connectionDot}
         initial={{ scale: 0 }}
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 0.5, repeat: Infinity }}
@@ -877,7 +1192,7 @@ function ConnectionPreviewLine({
         cy={toY}
         r={8}
         fill="transparent"
-        stroke={MAKE_COLORS.connectionLine}
+        stroke={HIVELAB_COLORS.connectionLine}
         strokeWidth={2}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -891,6 +1206,7 @@ export function IDECanvas({
   elements,
   connections,
   selectedIds,
+  selectedConnectionId,
   zoom,
   pan,
   showGrid,
@@ -902,7 +1218,9 @@ export function IDECanvas({
   onUpdateElement,
   onDeleteElements,
   onAddConnection,
+  onUpdateConnection,
   onDeleteConnection,
+  onSelectConnection,
   onZoomChange,
   onPanChange,
   onDrop,
@@ -1010,10 +1328,11 @@ export function IDECanvas({
         // Clear selection unless shift is held
         if (!e.shiftKey) {
           onSelect([]);
+          onSelectConnection?.(null);
         }
       }
     },
-    [mode, pan, zoom, onSelect]
+    [mode, pan, zoom, onSelect, onSelectConnection]
   );
 
   useEffect(() => {
@@ -1210,11 +1529,11 @@ export function IDECanvas({
     >
       {/* Background with grid - Make.com mint green style */}
       <div
-        className="canvas-bg absolute inset-0"
+        className="canvas-bg absolute inset-0 pointer-events-none"
         style={{
-          backgroundColor: MAKE_COLORS.canvasBg,
+          backgroundColor: HIVELAB_COLORS.canvasBg,
           backgroundImage: showGrid
-            ? `radial-gradient(circle at 1px 1px, ${MAKE_COLORS.canvasGrid} 1px, transparent 0)`
+            ? `radial-gradient(circle at 1px 1px, ${HIVELAB_COLORS.canvasGrid} 1px, transparent 0)`
             : 'none',
           backgroundSize: `${gridSize * zoom}px ${gridSize * zoom}px`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
@@ -1240,7 +1559,9 @@ export function IDECanvas({
               connection={conn}
               elements={elements}
               onDelete={() => onDeleteConnection(conn.id)}
+              onSelect={() => onSelectConnection?.(conn.id)}
               isFlowing={flowingConnections?.has(conn.id)}
+              isSelected={selectedConnectionId === conn.id}
             />
           ))}
 
@@ -1304,8 +1625,8 @@ export function IDECanvas({
               top: Math.min(selectionRect.startY, selectionRect.endY),
               width: Math.abs(selectionRect.endX - selectionRect.startX),
               height: Math.abs(selectionRect.endY - selectionRect.startY),
-              border: `2px solid ${MAKE_COLORS.connectionLine}`,
-              backgroundColor: `${MAKE_COLORS.connectionGlow}`,
+              border: `2px solid ${HIVELAB_COLORS.connectionLine}`,
+              backgroundColor: `${HIVELAB_COLORS.connectionGlow}`,
             }}
           />
         )}
@@ -1318,24 +1639,24 @@ export function IDECanvas({
             <div
               className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center"
               style={{
-                backgroundColor: MAKE_COLORS.panelBg,
-                border: `1px solid ${MAKE_COLORS.panelBorder}`,
+                backgroundColor: HIVELAB_COLORS.panelBg,
+                border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
               }}
             >
-              <Box className="h-10 w-10" style={{ color: MAKE_COLORS.textTertiary }} />
+              <Box className="h-10 w-10" style={{ color: HIVELAB_COLORS.textTertiary }} />
             </div>
-            <h3 className="text-xl font-semibold" style={{ color: MAKE_COLORS.textPrimary }}>
+            <h3 className="text-xl font-semibold" style={{ color: HIVELAB_COLORS.textPrimary }}>
               Start Building
             </h3>
-            <p className="text-sm" style={{ color: MAKE_COLORS.textSecondary }}>
+            <p className="text-sm" style={{ color: HIVELAB_COLORS.textSecondary }}>
               Drag elements from the left panel onto the canvas, or press{' '}
               <kbd
                 className="px-1.5 py-0.5 rounded text-xs font-mono"
                 style={{
-                  backgroundColor: MAKE_COLORS.panelBg,
-                  border: `1px solid ${MAKE_COLORS.panelBorder}`,
-                  color: MAKE_COLORS.textPrimary,
+                  backgroundColor: HIVELAB_COLORS.panelBg,
+                  border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
+                  color: HIVELAB_COLORS.textPrimary,
                 }}
               >
                 ⌘K
@@ -1353,12 +1674,12 @@ export function IDECanvas({
           <div
             className="px-2 py-1 rounded text-xs"
             style={{
-              backgroundColor: MAKE_COLORS.panelBg,
-              border: `1px solid ${MAKE_COLORS.panelBorder}`,
-              color: MAKE_COLORS.textSecondary,
+              backgroundColor: HIVELAB_COLORS.panelBg,
+              border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
+              color: HIVELAB_COLORS.textSecondary,
             }}
           >
-            <span style={{ color: MAKE_COLORS.textPrimary }}>{visibleElements.length}</span>
+            <span style={{ color: HIVELAB_COLORS.textPrimary }}>{visibleElements.length}</span>
             <span className="mx-1">/</span>
             <span>{elements.length}</span>
             <span className="ml-1">visible</span>
@@ -1367,9 +1688,9 @@ export function IDECanvas({
         <div
           className="px-2 py-1 rounded text-xs font-medium"
           style={{
-            backgroundColor: MAKE_COLORS.panelBg,
-            border: `1px solid ${MAKE_COLORS.panelBorder}`,
-            color: MAKE_COLORS.textSecondary,
+            backgroundColor: HIVELAB_COLORS.panelBg,
+            border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
+            color: HIVELAB_COLORS.textSecondary,
           }}
         >
           {Math.round(zoom * 100)}%
@@ -1384,19 +1705,19 @@ export function IDECanvas({
           exit={{ opacity: 0, y: -10 }}
           className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg"
           style={{
-            backgroundColor: MAKE_COLORS.panelBg,
-            border: `1px solid ${MAKE_COLORS.connectionLine}`,
+            backgroundColor: HIVELAB_COLORS.panelBg,
+            border: `1px solid ${HIVELAB_COLORS.connectionLine}`,
           }}
         >
           <div className="flex items-center gap-3">
             <div
               className="w-3 h-3 rounded-full animate-pulse"
-              style={{ backgroundColor: MAKE_COLORS.connectionLine }}
+              style={{ backgroundColor: HIVELAB_COLORS.connectionLine }}
             />
-            <span className="text-sm" style={{ color: MAKE_COLORS.textPrimary }}>
-              Click an <span className="font-medium" style={{ color: MAKE_COLORS.connectionLine }}>input port</span> to connect
+            <span className="text-sm" style={{ color: HIVELAB_COLORS.textPrimary }}>
+              Click an <span className="font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>input port</span> to connect
             </span>
-            <span className="text-xs" style={{ color: MAKE_COLORS.textTertiary }}>
+            <span className="text-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
               or press ESC to cancel
             </span>
           </div>

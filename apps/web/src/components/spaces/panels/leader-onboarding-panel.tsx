@@ -103,11 +103,11 @@ function TaskItem({
       <div className={cn(
         'flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center',
         task.isComplete
-          ? 'bg-emerald-500/10'
+          ? 'bg-[var(--status-success-subtle)]'
           : 'bg-[var(--life-gold)]/10'
       )}>
         {task.isComplete ? (
-          <CheckCircleSolid className="w-5 h-5 text-emerald-400" />
+          <CheckCircleSolid className="w-5 h-5 text-[var(--status-success)]" />
         ) : (
           <Icon className="w-4 h-4 text-[var(--life-gold)]" />
         )}
@@ -156,7 +156,7 @@ function ProgressBar({ progress }: { progress: number }) {
       </div>
       <p className="text-xs text-white/40 mt-2">
         {progress === 100 ? (
-          <span className="text-emerald-400">All set! You're ready to go.</span>
+          <span className="text-[var(--status-success)]">All set! You're ready to go.</span>
         ) : (
           `${progress}% complete`
         )}
@@ -293,7 +293,7 @@ export function LeaderOnboardingPanel({
             transition={{ delay: 0.3, duration: 0.3 }}
             className="mt-5 pt-4 border-t border-white/[0.06] text-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-medium">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--status-success-subtle)] text-[var(--status-success)] text-sm font-medium">
               <CheckCircleIcon className="w-4 h-4" />
               Your space is ready!
             </div>

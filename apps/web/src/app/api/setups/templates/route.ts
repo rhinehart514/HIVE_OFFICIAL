@@ -67,8 +67,7 @@ export async function GET(request: NextRequest) {
       hasMore,
       nextCursor,
     });
-  } catch (error) {
-    console.error('[API] Error listing setup templates:', error);
+  } catch {
     return errorResponse('Failed to list setup templates', 500);
   }
 }

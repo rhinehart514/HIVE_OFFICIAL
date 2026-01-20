@@ -53,8 +53,7 @@ export async function GET(
     const dto = toSetupTemplateDetailDTO(template);
 
     return jsonResponse({ template: dto });
-  } catch (error) {
-    console.error('[API] Error getting setup template:', error);
+  } catch {
     return errorResponse('Failed to get setup template', 500);
   }
 }

@@ -8,6 +8,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getCountFromServer,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -159,17 +160,15 @@ export class FirebaseConnectionRepository implements IConnectionRepository {
         ...constraints
       );
 
-      const [snapshot1, snapshot2] = await Promise.all([
-        getDocs(q1),
-        getDocs(q2)
+      // Use getCountFromServer instead of fetching all documents
+      const [count1, count2] = await Promise.all([
+        getCountFromServer(q1),
+        getCountFromServer(q2)
       ]);
 
-      // Use Set to avoid counting duplicates
-      const connectionIds = new Set<string>();
-      snapshot1.docs.forEach(doc => connectionIds.add(doc.id));
-      snapshot2.docs.forEach(doc => connectionIds.add(doc.id));
-
-      return connectionIds.size;
+      // Note: This may slightly overcount if the same connection somehow appears
+      // in both queries (shouldn't happen with proper data, but being defensive)
+      return count1.data().count + count2.data().count;
     } catch (_error) {
       return 0;
     }

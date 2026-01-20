@@ -473,7 +473,7 @@ export default function ConnectionsPage() {
           {filteredData.length === 0 ? (
             <EmptyState
               tab={activeTab}
-              onBrowseSpaces={() => router.push('/spaces/browse')}
+              onBrowseSpaces={() => router.push('/spaces')}
             />
           ) : (
             <div className="grid gap-3">

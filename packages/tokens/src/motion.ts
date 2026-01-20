@@ -357,7 +357,7 @@ export const buttonPressVariants = {
 } as const;
 
 /**
- * Card hover - lift with shadow expansion
+ * Card hover - ambient lift with subtle shadow
  */
 export const cardHoverVariants = {
   rest: {
@@ -366,9 +366,9 @@ export const cardHoverVariants = {
     transition: { type: 'spring', stiffness: 300, damping: 25 },
   },
   hover: {
-    y: -8,
-    boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-    transition: { type: 'spring', stiffness: 200, damping: 20 },
+    y: -2,
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    transition: { type: 'spring', stiffness: 300, damping: 25 },
   },
 } as const;
 

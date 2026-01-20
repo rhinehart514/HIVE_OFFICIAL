@@ -7,7 +7,7 @@
 export default function SettingsLoading() {
   return (
     <div className="min-h-screen w-full">
-      <div className="max-w-3xl mx-auto px-6 py-16 md:py-20">
+      <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
         {/* Header skeleton */}
         <div className="mb-20">
           <div className="h-8 w-32 bg-white/5 rounded animate-pulse mb-2" />

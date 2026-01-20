@@ -309,8 +309,8 @@ export function useRealtimeState() {
 
       await Promise.all(promises);
       setRealtimeConnected(true);
-    } catch (error) {
-      console.error('Sync failed:', error);
+    } catch {
+      // Sync failed silently
     } finally {
       setSyncInProgress(false);
     }

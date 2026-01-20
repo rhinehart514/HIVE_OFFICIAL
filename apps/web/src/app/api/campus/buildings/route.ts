@@ -103,8 +103,7 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-  } catch (error) {
-    console.error('[Buildings API] Error:', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to fetch buildings' },
       { status: 500 }

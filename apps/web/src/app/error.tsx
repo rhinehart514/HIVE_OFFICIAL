@@ -23,8 +23,8 @@ export default function Error({
     <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-[#0A0A0A]">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-amber-500/10 p-4">
-            <ExclamationTriangleIcon className="h-8 w-8 text-amber-500" />
+          <div className="rounded-full bg-[var(--status-warning-subtle)] p-4">
+            <ExclamationTriangleIcon className="h-8 w-8 text-[var(--status-warning)]" />
           </div>
         </div>
 

@@ -82,19 +82,16 @@ export async function initOfflineStorage(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => {
-      console.error('[OfflineStorage] Failed to open database:', request.error);
       reject(request.error);
     };
 
     request.onsuccess = () => {
       db = request.result;
-      console.log('[OfflineStorage] Database initialized');
       resolve(db);
     };
 
     request.onupgradeneeded = (event) => {
       const database = (event.target as IDBOpenDBRequest).result;
-      console.log('[OfflineStorage] Upgrading database schema...');
 
       // Spaces store
       if (!database.objectStoreNames.contains(STORES.SPACES)) {

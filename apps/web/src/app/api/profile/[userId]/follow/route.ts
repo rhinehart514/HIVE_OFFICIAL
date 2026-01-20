@@ -128,8 +128,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       type: 'following',
       message: 'Now following this user',
     });
-  } catch (error) {
-    console.error('Error following user:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to follow user' },
       { status: 500 }
@@ -218,8 +217,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { error: 'Not following this user' },
       { status: 400 }
     );
-  } catch (error) {
-    console.error('Error unfollowing user:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to unfollow user' },
       { status: 500 }
@@ -279,8 +277,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       isSelf: false,
       connectionType: data?.type,
     });
-  } catch (error) {
-    console.error('Error checking follow status:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to check follow status' },
       { status: 500 }

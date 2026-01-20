@@ -72,9 +72,8 @@ export function createChatHandlers(deps: ChatHandlerDeps) {
           });
           return; // Don't send yet - wait for confirmation
         }
-      } catch (err) {
+      } catch {
         // Intent check failed, continue with normal send
-        console.warn('[Space] Intent check failed:', err);
       }
     }
 
@@ -103,14 +102,12 @@ export function createChatHandlers(deps: ChatHandlerDeps) {
         const label = (pendingIntent.intent.intentType && typeLabels[pendingIntent.intent.intentType]) || 'Component';
         toast.success(`${label} created`, 'Your interactive component is now live in the chat.');
       } else {
-        console.warn('[Space] Intent component not created:', result.error);
         toast.error(
           'Could not create component',
           result.error || 'Please try again or send as a regular message.'
         );
       }
-    } catch (err) {
-      console.error('[Space] Failed to create intent component:', err);
+    } catch {
       toast.error('Failed to create component', 'An unexpected error occurred. Please try again.');
     }
   };
@@ -179,7 +176,6 @@ export function createChatHandlers(deps: ChatHandlerDeps) {
         'Your interactive component is now live in the chat.'
       );
     } catch (err) {
-      console.error('[Space] Failed to insert tool:', err);
       toast.error('Failed to add tool', err instanceof Error ? err.message : 'Please try again.');
     }
   };

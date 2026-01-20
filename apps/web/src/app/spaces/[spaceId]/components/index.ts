@@ -11,3 +11,5 @@ export { IntentConfirmation } from './intent-confirmation';
 export { ErrorToast } from './error-toast';
 export { SpaceEntryWrapper } from './space-entry-wrapper';
 export { SpaceTheaterLayout } from './space-theater-layout';
+export { LeaderOnboardingBanner } from './leader-onboarding-banner';
+export { LeaderQuickActions } from './leader-quick-actions';

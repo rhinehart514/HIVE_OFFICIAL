@@ -448,8 +448,7 @@ export function useToolRuntime(
         setIsSynced(true);
         initialStateRef.current = { ...stateRef.current };
       }
-    } catch (err) {
-      console.error("Failed to save tool state:", err);
+    } catch {
       if (mountedRef.current) {
         setIsSynced(false);
       }
@@ -663,7 +662,6 @@ export function useToolRuntime(
           cascadedElements,
         };
       } catch (err) {
-        console.error("Action execution failed:", err);
         const error = err instanceof Error ? err : new Error("Action failed");
 
         if (mountedRef.current) {

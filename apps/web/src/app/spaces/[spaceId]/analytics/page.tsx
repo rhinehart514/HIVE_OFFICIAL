@@ -164,8 +164,7 @@ export default function SpaceAnalyticsPage() {
 
       const data = await res.json();
       setAnalytics(data.data || data);
-    } catch (e) {
-      console.error("Analytics fetch error:", e);
+    } catch {
       setError("Unable to load analytics. Please try again.");
     } finally {
       setIsLoading(false);

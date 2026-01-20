@@ -105,8 +105,7 @@ export function useJoinRequests(
       } else {
         setError(data.error?.message || 'Failed to fetch join requests');
       }
-    } catch (err) {
-      console.error('[useJoinRequests] Fetch error:', err);
+    } catch {
       setError('Failed to fetch join requests');
     } finally {
       setIsLoading(false);
@@ -148,8 +147,7 @@ export function useJoinRequests(
           setError(data.error?.message || 'Failed to approve request');
           return false;
         }
-      } catch (err) {
-        console.error('[useJoinRequests] Approve error:', err);
+      } catch {
         setError('Failed to approve request');
         return false;
       } finally {
@@ -195,8 +193,7 @@ export function useJoinRequests(
           setError(data.error?.message || 'Failed to reject request');
           return false;
         }
-      } catch (err) {
-        console.error('[useJoinRequests] Reject error:', err);
+      } catch {
         setError('Failed to reject request');
         return false;
       } finally {

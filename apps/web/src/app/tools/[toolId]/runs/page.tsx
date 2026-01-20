@@ -65,8 +65,8 @@ export default function ToolRunsPage() {
           const data = await runsRes.json();
           setRuns(data.runs || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch tool runs:', error);
+      } catch {
+        // Failed to fetch runs
       } finally {
         setIsLoading(false);
       }

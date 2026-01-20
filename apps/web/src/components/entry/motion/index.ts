@@ -11,3 +11,4 @@ export * from './entry-motion';
 export { AmbientGlow, type AmbientGlowProps } from './AmbientGlow';
 export { ParticleField, type ParticleFieldProps } from './ParticleField';
 export { GoldCheckmark, type GoldCheckmarkProps } from './GoldCheckmark';
+export { ConfettiBurst, type ConfettiBurstProps } from './ConfettiBurst';

@@ -383,8 +383,7 @@ export async function generateTool(
         // If invalid, try to sanitize
         return sanitizeComposition(composition);
       }
-    } catch (error) {
-      console.warn(`Backend ${backend} failed:`, error);
+    } catch {
       // Continue to next backend
     }
   }

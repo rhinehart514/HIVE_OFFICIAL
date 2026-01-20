@@ -72,11 +72,47 @@ function DiscoveryCardSkeleton() {
   );
 }
 
-function DiscoveryGridSkeleton({ count = 4 }: { count?: number }) {
+function DiscoveryCardSkeletonStaggered({ delay }: { delay: number }) {
+  return (
+    <div
+      className="bg-neutral-900/50 border border-neutral-800/50 rounded-xl p-4 animate-pulse"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-start gap-3.5">
+        <div
+          className="w-12 h-12 rounded-xl bg-neutral-800 animate-pulse"
+          style={{ animationDelay: `${delay + 50}ms` }}
+        />
+        <div className="flex-1 space-y-2">
+          <div
+            className="h-4 w-32 bg-neutral-800 rounded animate-pulse"
+            style={{ animationDelay: `${delay + 100}ms` }}
+          />
+          <div
+            className="h-3 w-24 bg-neutral-800/60 rounded animate-pulse"
+            style={{ animationDelay: `${delay + 150}ms` }}
+          />
+        </div>
+        <div
+          className="h-8 w-16 bg-neutral-800 rounded-lg animate-pulse"
+          style={{ animationDelay: `${delay + 200}ms` }}
+        />
+      </div>
+      <div className="mt-3 pt-3 border-t border-neutral-800/50">
+        <div
+          className="h-4 w-20 bg-neutral-800/40 rounded animate-pulse"
+          style={{ animationDelay: `${delay + 250}ms` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function DiscoveryGridSkeleton({ count = 4, startDelay = 0 }: { count?: number; startDelay?: number }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {Array.from({ length: count }).map((_, i) => (
-        <DiscoveryCardSkeleton key={i} />
+        <DiscoveryCardSkeletonStaggered key={i} delay={startDelay + i * 50} />
       ))}
     </div>
   );

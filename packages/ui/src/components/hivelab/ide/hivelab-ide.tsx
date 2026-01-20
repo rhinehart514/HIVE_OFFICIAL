@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useStreamingGeneration } from '@hive/hooks';
 import { cn } from '../../../lib/utils';
 import type {
@@ -12,16 +12,31 @@ import type {
 } from './types';
 import type { ElementConnection } from '@hive/core';
 import { IDECanvas } from './ide-canvas';
-import { AICommandPalette } from './ai-command-palette';
 import { useIDEKeyboard } from './use-ide-keyboard';
 
 // New layout components
-import { ElementRail, type RailState, type RailTab } from './element-rail';
+import { ElementRail, type RailState, type RailTab, type UserToolItem } from './element-rail';
 import { ContextRail, type AlignmentType } from './context-rail';
-import { FloatingActionBar } from './floating-action-bar';
+import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
 import { StartZone } from './start-zone';
 import { TemplateGallery } from './template-gallery';
 import { toast } from 'sonner';
+
+// Mobile detection hook
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile;
+}
 import type { ToolComposition } from '../../../lib/hivelab/element-system';
 
 // Maximum history entries to prevent unbounded memory growth
@@ -75,6 +90,14 @@ export interface HiveLabIDEProps {
   onConnectionFlowReady?: (controls: ConnectionFlowControls) => void;
   originSpaceId?: string;
   onDeploy?: (composition: HiveLabComposition) => Promise<void>;
+  /** User's tools for the "Your Tools" drawer */
+  userTools?: UserToolItem[];
+  /** Callback when user selects a tool from the drawer */
+  onToolSelect?: (id: string) => void;
+  /** Callback when user clicks "New Tool" */
+  onNewTool?: () => void;
+  /** Initial prompt to pre-fill AI palette (opens AI panel on mount) */
+  initialPrompt?: string | null;
 }
 
 export interface ConnectionFlowControls {
@@ -91,6 +114,70 @@ export interface HiveLabComposition {
   layout: 'grid' | 'flow' | 'tabs' | 'sidebar';
 }
 
+// Mobile gate component
+function MobileGate({ onBack }: { onBack: () => void }) {
+  return (
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
+      style={{ backgroundColor: 'var(--hivelab-bg, #0A0A0A)' }}
+    >
+      <div className="max-w-sm">
+        {/* Icon */}
+        <div
+          className="w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center"
+          style={{ backgroundColor: 'var(--hivelab-surface, #1A1A1A)' }}
+        >
+          <svg
+            className="w-8 h-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            style={{ color: 'var(--life-gold, #D4AF37)' }}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"
+            />
+          </svg>
+        </div>
+
+        {/* Title */}
+        <h1
+          className="text-xl font-semibold mb-2"
+          style={{ color: 'var(--hivelab-text-primary, #FAF9F7)' }}
+        >
+          Desktop Required
+        </h1>
+
+        {/* Description */}
+        <p
+          className="text-sm mb-6 leading-relaxed"
+          style={{ color: 'var(--hivelab-text-secondary, #8A8A8A)' }}
+        >
+          HiveLab's visual builder requires a larger screen. Open this page on
+          your laptop or desktop for the best experience.
+        </p>
+
+        {/* Back button */}
+        <button
+          type="button"
+          onClick={onBack}
+          className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: 'var(--hivelab-surface, #1A1A1A)',
+            color: 'var(--hivelab-text-primary, #FAF9F7)',
+            border: '1px solid var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+          }}
+        >
+          Go Back
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function HiveLabIDE({
   initialComposition,
   onSave,
@@ -101,7 +188,14 @@ export function HiveLabIDE({
   onConnectionFlowReady,
   originSpaceId,
   onDeploy,
+  userTools,
+  onToolSelect,
+  onNewTool,
+  initialPrompt,
 }: HiveLabIDEProps) {
+  // Mobile gate
+  const isMobile = useIsMobile();
+
   // Tool metadata
   const [toolId] = useState(initialComposition?.id || `tool_${Date.now()}`);
   const [toolName, setToolName] = useState(initialComposition?.name || '');
@@ -115,6 +209,7 @@ export function HiveLabIDE({
     normalizeConnections(initialComposition?.connections)
   );
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
@@ -126,10 +221,13 @@ export function HiveLabIDE({
   // Start collapsed like Make.com - icon-only sidebar by default
   const [elementRailState, setElementRailState] = useState<RailState>('collapsed');
   const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
-  const [aiPanelOpen, setAIPanelOpen] = useState(false);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+
+  // Ref for floating action bar (includes AI input)
+  const floatingBarRef = useRef<FloatingActionBarRef>(null);
   const [saving, setSaving] = useState(false);
   const [deploying, setDeploying] = useState(false);
+  const [showDeploySuccess, setShowDeploySuccess] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastAutoSave, setLastAutoSave] = useState<number>(0);
 
@@ -144,6 +242,21 @@ export function HiveLabIDE({
 
   // Connection flow feedback
   const [flowingConnections, setFlowingConnections] = useState<Set<string>>(new Set());
+
+  // Memoized confetti particles for deploy celebration
+  const confettiParticles = useMemo(() => {
+    if (!showDeploySuccess) return [];
+    return Array.from({ length: 30 }).map((_, i) => ({
+      id: i,
+      targetX: 50 + (Math.random() - 0.5) * 80,
+      targetY: 50 + (Math.random() - 0.5) * 80,
+      rotation: Math.random() * 360,
+      delay: Math.random() * 0.3,
+      size: Math.random() * 8 + 4,
+      color: ['#FFD700', '#FFA500', '#FFDF00', '#DAA520'][Math.floor(Math.random() * 4)],
+      isCircle: Math.random() > 0.5,
+    }));
+  }, [showDeploySuccess]);
 
   // Refs
   const draggingElementId = useRef<string | null>(null);
@@ -348,6 +461,8 @@ export function HiveLabIDE({
 
   // Clipboard
   const clipboardRef = useRef<CanvasElement[]>([]);
+  // Track which AI elements have been processed to prevent duplicate additions
+  const processedAIElementIdsRef = useRef<Set<string>>(new Set());
 
   const copyElements = useCallback(() => {
     if (selectedIds.length === 0) return;
@@ -452,14 +567,20 @@ export function HiveLabIDE({
   // Selection
   const selectElements = useCallback((ids: string[], append = false) => {
     setSelectedIds((prev) => (append ? [...new Set([...prev, ...ids])] : ids));
+    // Clear connection selection when selecting elements (mutually exclusive)
+    if (ids.length > 0) {
+      setSelectedConnectionId(null);
+    }
   }, []);
 
   const selectAll = useCallback(() => {
     setSelectedIds(elements.map((el) => el.id));
+    setSelectedConnectionId(null);
   }, [elements]);
 
   const clearSelection = useCallback(() => {
     setSelectedIds([]);
+    setSelectedConnectionId(null);
   }, []);
 
   // Connection flow feedback
@@ -506,9 +627,34 @@ export function HiveLabIDE({
   const deleteConnection = useCallback(
     (id: string) => {
       setConnections((prev) => prev.filter((conn) => conn.id !== id));
+      // Clear selection if deleting selected connection
+      if (selectedConnectionId === id) {
+        setSelectedConnectionId(null);
+      }
       pushHistory('Delete connection');
     },
+    [pushHistory, selectedConnectionId]
+  );
+
+  const updateConnection = useCallback(
+    (id: string, updates: Partial<Connection>) => {
+      setConnections((prev) =>
+        prev.map((conn) => (conn.id === id ? { ...conn, ...updates } : conn))
+      );
+      pushHistory('Update connection');
+    },
     [pushHistory]
+  );
+
+  const selectConnection = useCallback(
+    (id: string | null) => {
+      setSelectedConnectionId(id);
+      // Clear element selection when selecting a connection (mutually exclusive)
+      if (id !== null) {
+        setSelectedIds([]);
+      }
+    },
+    []
   );
 
   // Expose flow controls
@@ -569,7 +715,7 @@ export function HiveLabIDE({
       await onSave(composition);
       await onDeploy(composition);
       setHasUnsavedChanges(false);
-      toast.success('Tool deployed', { description: 'Your tool is now live!' });
+      setShowDeploySuccess(true);
     } catch (error) {
       console.error('Deploy failed:', error);
       toast.error('Failed to deploy tool', {
@@ -612,14 +758,22 @@ export function HiveLabIDE({
     return { x: maxX + 40, y: avgY };
   }, [elements, selectedIds]);
 
-  // Merge AI elements
+  // Merge AI elements - only process new elements that haven't been added yet
   useEffect(() => {
     if (aiState.elements.length > 0 && !aiState.isGenerating) {
+      // Filter to only elements we haven't processed yet
+      const newElements = aiState.elements.filter(
+        el => el.instanceId && !processedAIElementIdsRef.current.has(el.instanceId)
+      );
+
+      if (newElements.length === 0) return;
+
       const insertPosition = getPositionNearSelection();
-      const canvasElements: CanvasElement[] = aiState.elements.map((el, index) => ({
-        id: `element_${Date.now()}_${index}`,
+      const timestamp = Date.now();
+      const canvasElements: CanvasElement[] = newElements.map((el, index) => ({
+        id: `element_${timestamp}_${index}`,
         elementId: el.elementId || 'unknown',
-        instanceId: el.instanceId || `${el.elementId}_${Date.now()}_${index}`,
+        instanceId: el.instanceId || `${el.elementId}_${timestamp}_${index}`,
         position: el.position || {
           x: insertPosition.x + (index % 3) * 280,
           y: insertPosition.y + Math.floor(index / 3) * 160,
@@ -630,6 +784,13 @@ export function HiveLabIDE({
         locked: false,
         visible: true,
       }));
+
+      // Mark these elements as processed
+      newElements.forEach(el => {
+        if (el.instanceId) {
+          processedAIElementIdsRef.current.add(el.instanceId);
+        }
+      });
 
       if (canvasElements.length > 0) {
         setElements(prev => [...prev, ...canvasElements]);
@@ -682,14 +843,12 @@ export function HiveLabIDE({
       isIteration,
       existingComposition,
     });
-
-    setAIPanelOpen(false);
   }, [generate, toolId, toolName, toolDescription, elements, connections, selectedIds]);
 
   // Handle quick prompt from StartZone
   const handleQuickPrompt = useCallback((prompt: string) => {
-    setAIPanelOpen(true);
-    // The AI palette will receive this prompt
+    floatingBarRef.current?.focusInput();
+    // Submit the prompt directly
     setTimeout(() => {
       handleAISubmit(prompt, 'generate');
     }, 100);
@@ -714,6 +873,13 @@ export function HiveLabIDE({
   const openTemplates = useCallback(() => {
     setTemplateGalleryOpen(true);
   }, []);
+
+  // Auto-focus AI chat bar with initial prompt on mount
+  useEffect(() => {
+    if (initialPrompt && elements.length === 0) {
+      floatingBarRef.current?.focusInput();
+    }
+  }, [initialPrompt, elements.length]);
 
   // Load template composition into canvas
   const loadTemplateComposition = useCallback(
@@ -769,8 +935,8 @@ export function HiveLabIDE({
       save,
       toggleGrid: () => setShowGrid((prev) => !prev),
       setZoom,
-      openAIPanel: () => setAIPanelOpen(true),
-      closeAIPanel: () => setAIPanelOpen(false),
+      openAIPanel: () => floatingBarRef.current?.focusInput(),
+      closeAIPanel: () => {}, // No-op since chat bar is always visible
     },
     mode,
     setMode,
@@ -778,21 +944,15 @@ export function HiveLabIDE({
     zoom,
   });
 
+  // Show mobile gate on small screens
+  if (isMobile) {
+    return <MobileGate onBack={onCancel} />;
+  }
+
   return (
     <div
-      className="h-screen w-screen flex items-center justify-center p-4 overflow-hidden"
-      style={{ backgroundColor: '#E8F5E9' }} // Make.com mint green background
+      className="h-full w-full flex overflow-hidden bg-[var(--hivelab-bg)]"
     >
-      {/* Make.com style: Rounded card container */}
-      <div
-        className="w-full h-full flex overflow-hidden"
-        style={{
-          backgroundColor: '#E8F5E9',
-          borderRadius: '24px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
-        }}
-      >
         {/* Element Rail (Left) */}
         <ElementRail
           state={elementRailState}
@@ -813,18 +973,21 @@ export function HiveLabIDE({
           onDeleteElement={(id) => deleteElements([id])}
           onDuplicateElement={(id) => duplicateElements([id])}
           onReorder={setElements}
-          onOpenAI={() => setAIPanelOpen(true)}
+          onOpenAI={() => floatingBarRef.current?.focusInput()}
           onOpenTemplates={openTemplates}
           userContext={userContext}
+          userTools={userTools}
+          onToolSelect={onToolSelect}
+          onNewTool={onNewTool}
         />
 
         {/* Canvas Area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 flex flex-col relative">
           {/* Start Zone - shown when canvas is empty */}
           <AnimatePresence>
             {isCanvasEmpty && !aiState.isGenerating && (
               <StartZone
-                onOpenAI={() => setAIPanelOpen(true)}
+                onOpenAI={() => floatingBarRef.current?.focusInput()}
                 onOpenTemplates={openTemplates}
                 onOpenElements={openElements}
                 onQuickPrompt={handleQuickPrompt}
@@ -837,6 +1000,7 @@ export function HiveLabIDE({
             elements={elements}
             connections={connections}
             selectedIds={selectedIds}
+            selectedConnectionId={selectedConnectionId}
             zoom={zoom}
             pan={pan}
             showGrid={showGrid}
@@ -848,7 +1012,9 @@ export function HiveLabIDE({
             onUpdateElement={updateElement}
             onDeleteElements={deleteElements}
             onAddConnection={addConnection}
+            onUpdateConnection={updateConnection}
             onDeleteConnection={deleteConnection}
+            onSelectConnection={selectConnection}
             onZoomChange={setZoom}
             onPanChange={setPan}
             onDrop={addElement}
@@ -860,38 +1026,35 @@ export function HiveLabIDE({
         <ContextRail
           selectedElements={selectedElements}
           allElements={elements}
+          connections={connections}
+          selectedConnectionId={selectedConnectionId}
           onUpdateElement={updateElement}
           onDeleteElements={deleteElements}
           onDuplicateElements={duplicateElements}
           onAlignElements={alignElements}
+          onUpdateConnection={updateConnection}
+          onDeleteConnection={deleteConnection}
         />
-      </div>
 
-      {/* Floating Action Bar (Bottom Center) */}
+      {/* Unified Floating Action Bar with AI Input */}
       <FloatingActionBar
+        ref={floatingBarRef}
         zoom={zoom}
         onZoomChange={setZoom}
         showGrid={showGrid}
         onToggleGrid={() => setShowGrid(prev => !prev)}
         onFitToScreen={fitToScreen}
-        onOpenAI={() => setAIPanelOpen(true)}
         snapToGrid={snapToGrid}
         onToggleSnap={() => setSnapToGrid(prev => !prev)}
-      />
-
-      {/* AI Command Palette */}
-      <AICommandPalette
-        open={aiPanelOpen}
-        onClose={() => {
-          setAIPanelOpen(false);
-          if (aiState.isGenerating) {
-            cancelGeneration();
-          }
-        }}
-        onSubmit={handleAISubmit}
-        loading={aiState.isGenerating}
-        streamingText={aiState.currentStatus}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onAISubmit={handleAISubmit}
+        aiLoading={aiState.isGenerating}
+        aiStreamingText={aiState.currentStatus}
         selectedCount={selectedIds.length}
+        onAICancel={cancelGeneration}
       />
 
       {/* Template Gallery Modal */}
@@ -900,6 +1063,117 @@ export function HiveLabIDE({
         onClose={() => setTemplateGalleryOpen(false)}
         onSelectTemplate={loadTemplateComposition}
       />
+
+      {/* Deploy Success Celebration */}
+      <AnimatePresence>
+        {showDeploySuccess && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          >
+            {/* Confetti particles */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              {confettiParticles.map((particle) => (
+                <motion.div
+                  key={particle.id}
+                  initial={{
+                    x: '50%',
+                    y: '50%',
+                    scale: 0,
+                    opacity: 1,
+                  }}
+                  animate={{
+                    x: `${particle.targetX}%`,
+                    y: `${particle.targetY}%`,
+                    scale: [0, 1, 0.5],
+                    opacity: [1, 1, 0],
+                    rotate: particle.rotation,
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    delay: particle.delay,
+                    ease: 'easeOut',
+                  }}
+                  className="absolute"
+                  style={{
+                    width: particle.size,
+                    height: particle.size,
+                    backgroundColor: particle.color,
+                    borderRadius: particle.isCircle ? '50%' : '2px',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Celebration card */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="relative z-10 flex flex-col items-center gap-4 p-8 bg-[var(--hivelab-panel)] backdrop-blur-xl rounded-3xl border border-[var(--life-gold)]/20 shadow-2xl"
+            >
+              {/* Gold glow pulse */}
+              <motion.div
+                animate={{
+                  boxShadow: [
+                    '0 0 0 0 rgba(212,175,55,0)',
+                    '0 0 40px 20px rgba(212,175,55,0.15)',
+                    '0 0 0 0 rgba(212,175,55,0)',
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 rounded-3xl"
+              />
+
+              {/* Success icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 }}
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--life-gold)] to-[#B8860B]"
+              >
+                <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </motion.div>
+
+              {/* Message */}
+              <div className="text-center">
+                <h3 className="text-xl font-bold text-[var(--hivelab-text-primary)] mb-1">
+                  Tool Deployed!
+                </h3>
+                <p className="text-sm text-[var(--hivelab-text-secondary)]">
+                  Your tool is now live in the space
+                </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeploySuccess(false)}
+                  className="px-4 py-2 text-sm font-medium text-[var(--hivelab-text-secondary)] hover:text-[var(--hivelab-text-primary)] transition-colors"
+                >
+                  Continue Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeploySuccess(false);
+                    onCancel();
+                  }}
+                  className="px-4 py-2 text-sm font-semibold bg-[var(--life-gold)] text-black rounded-lg hover:bg-[var(--life-gold)]/90 transition-colors"
+                >
+                  View in Space
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

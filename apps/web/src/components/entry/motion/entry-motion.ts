@@ -64,32 +64,39 @@ export const DURATION = {
 // STATE TRANSITION VARIANTS
 // ============================================
 
-/** Page/state transition - fade up with stagger */
+/** Page/state transition - luxuriously slow with depth */
 export const stateVariants: Variants = {
   initial: {
     opacity: 0,
     y: 20,
+    scale: 0.98,
+    filter: 'blur(4px)',
   },
   animate: {
     opacity: 1,
     y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
     transition: {
-      duration: DURATION.gentle,
+      duration: DURATION.dramatic,  // 0.7s - slower, more luxurious
       ease: EASE_PREMIUM,
       staggerChildren: 0.08,
+      delayChildren: 0.1,
     },
   },
   exit: {
     opacity: 0,
-    y: -10,
+    y: -8,
+    scale: 0.99,
+    filter: 'blur(2px)',
     transition: {
-      duration: DURATION.quick,
+      duration: DURATION.gentle,  // 0.4s - graceful exit
       ease: EASE_OUT,
     },
   },
 };
 
-/** Child element variants for stagger */
+/** Child element variants for stagger - silky entrance */
 export const childVariants: Variants = {
   initial: {
     opacity: 0,
@@ -99,14 +106,16 @@ export const childVariants: Variants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: DURATION.smooth,
+      duration: DURATION.slow,  // 0.5s - slower child animations
       ease: EASE_PREMIUM,
     },
   },
   exit: {
     opacity: 0,
+    y: -4,
     transition: {
-      duration: DURATION.fast,
+      duration: DURATION.smooth,  // 0.3s
+      ease: EASE_OUT,
     },
   },
 };

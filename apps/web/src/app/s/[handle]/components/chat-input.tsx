@@ -41,8 +41,8 @@ export function ChatInput({
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
-    } catch (err) {
-      console.error('Failed to send message:', err);
+    } catch {
+      // Failed to send message
     } finally {
       setIsSending(false);
     }

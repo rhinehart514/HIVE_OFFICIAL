@@ -10,13 +10,16 @@ import {
   HeaderBar,
   Skeleton,
   ToolDeployModal,
+  ToolCanvas,
   type HiveLabComposition,
   type IDECanvasElement,
   type IDEConnection,
   type UserContext,
   type ToolDeploymentTarget as DeploymentTarget,
   type ToolDeploymentConfig as DeploymentConfig,
+  type PageMode,
 } from '@hive/ui';
+import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
 
 /**
@@ -218,6 +221,10 @@ export default function ToolStudioPage({ params }: Props) {
   const showDeployOnMount = searchParams.get('deploy') === 'true';
   const showAnalyticsOnMount = searchParams.get('analytics') === 'true';
   const preselectedSpaceId = searchParams.get('spaceId');
+  const initialMode = searchParams.get('mode') as PageMode | null;
+
+  // Page mode state - edit (IDE) or use (runtime)
+  const [pageMode, setPageMode] = useState<PageMode>(initialMode === 'use' ? 'use' : 'edit');
 
   // State
   const [composition, setComposition] = useState<{
@@ -253,6 +260,29 @@ export default function ToolStudioPage({ params }: Props) {
     enabled: !!user,
     staleTime: 300000,
   });
+
+  // Runtime hook for "use" mode - manages tool state and actions
+  // Only active when in "use" mode and we have a composition
+  const runtime = useToolRuntime({
+    toolId,
+    enabled: pageMode === 'use' && !isNewTool,
+    autoSave: true,
+    autoSaveDelay: 1500,
+    enableRealtime: false, // Single user preview - no need for real-time
+  });
+
+  // Handle mode change - update URL and reset runtime if switching to use
+  const handleModeChange = useCallback((newMode: PageMode) => {
+    setPageMode(newMode);
+    // Update URL without navigation
+    const url = new URL(window.location.href);
+    if (newMode === 'use') {
+      url.searchParams.set('mode', 'use');
+    } else {
+      url.searchParams.delete('mode');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, []);
 
   // Check if user is a space leader (for gated elements)
   const isSpaceLeader = userSpaces.length > 0;
@@ -336,7 +366,6 @@ export default function ToolStudioPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['tool', toolId] });
         toast.success('Tool saved');
       } catch (error) {
-        console.error('Save failed:', error);
         toast.error(
           error instanceof Error ? error.message : 'Failed to save tool'
         );
@@ -348,14 +377,14 @@ export default function ToolStudioPage({ params }: Props) {
     [toolId, queryClient]
   );
 
-  // Handle preview
+  // Handle preview - now just toggles to Use mode on same page
   const handlePreview = useCallback(
-    (comp: HiveLabComposition) => {
-      // Store composition for preview page
-      localStorage.setItem(`hivelab_preview_${toolId}`, JSON.stringify(comp));
-      router.push(`/tools/${toolId}/run`);
+    (_comp: HiveLabComposition) => {
+      // Instead of navigating away, toggle to Use mode on this page
+      // The composition is already in state, no need for localStorage
+      handleModeChange('use');
     },
-    [toolId, router]
+    [handleModeChange]
   );
 
   // Handle cancel/back
@@ -402,9 +431,9 @@ export default function ToolStudioPage({ params }: Props) {
   // Loading state
   if (authLoading || (toolLoading && !isNewTool)) {
     return (
-      <div className="h-screen bg-[#E8F5E9] flex flex-col">
+      <div className="h-screen bg-[var(--hivelab-bg)] flex flex-col">
         {/* Header skeleton */}
-        <div className="h-12 bg-white border-b border-[#e0e0e0] flex items-center justify-between px-4">
+        <div className="h-12 bg-[var(--hivelab-panel)] border-b border-[var(--hivelab-border)] flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <Skeleton className="h-7 w-7 rounded-lg" />
             <Skeleton className="h-5 w-16" />
@@ -419,7 +448,7 @@ export default function ToolStudioPage({ params }: Props) {
         {/* Main content skeleton */}
         <div className="flex-1 flex">
           {/* Left rail */}
-          <div className="w-12 bg-white border-r border-[#e0e0e0] p-2 space-y-2">
+          <div className="w-12 bg-[var(--hivelab-panel)] border-r border-[var(--hivelab-border)] p-2 space-y-2">
             <Skeleton className="h-8 w-8 rounded-lg" />
             <Skeleton className="h-8 w-8 rounded-lg" />
             <Skeleton className="h-8 w-8 rounded-lg" />
@@ -441,11 +470,11 @@ export default function ToolStudioPage({ params }: Props) {
   // Error state
   if (toolError && !isNewTool) {
     return (
-      <div className="h-screen bg-[#E8F5E9] flex items-center justify-center">
-        <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 flex items-center justify-center">
+      <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
+        <div className="bg-[var(--hivelab-panel)] rounded-2xl p-8 shadow-lg max-w-md text-center border border-[var(--hivelab-border)]">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 flex items-center justify-center">
             <svg
-              className="w-8 h-8 text-red-500"
+              className="w-8 h-8 text-red-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -458,15 +487,15 @@ export default function ToolStudioPage({ params }: Props) {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-[#212121] mb-2">
+          <h2 className="text-xl font-semibold text-[var(--hivelab-text-primary)] mb-2">
             Tool not found
           </h2>
-          <p className="text-[#757575] mb-6">
+          <p className="text-[var(--hivelab-text-secondary)] mb-6">
             This tool may have been deleted or you don't have access to it.
           </p>
           <button
             onClick={() => router.push('/tools')}
-            className="px-4 py-2 bg-[#4CAF50] text-white rounded-lg font-medium hover:bg-[#43A047] transition-colors"
+            className="px-4 py-2 bg-[var(--life-gold)] text-black rounded-lg font-medium hover:bg-[var(--life-gold)]/90 transition-colors"
           >
             Back to Tools
           </button>
@@ -478,17 +507,17 @@ export default function ToolStudioPage({ params }: Props) {
   // No composition yet
   if (!composition) {
     return (
-      <div className="h-screen bg-[#E8F5E9] flex items-center justify-center">
+      <div className="h-screen bg-[var(--hivelab-bg)] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#4CAF50] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#757575]">Preparing canvas...</p>
+          <div className="w-8 h-8 border-2 border-[var(--life-gold)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[var(--hivelab-text-secondary)]">Preparing canvas...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen flex flex-col bg-[#E8F5E9]">
+    <div className="h-screen flex flex-col bg-[var(--hivelab-bg)]">
       {/* Header Bar */}
       <HeaderBar
         toolName={composition.name || 'Untitled Tool'}
@@ -521,19 +550,101 @@ export default function ToolStudioPage({ params }: Props) {
         hasUnsavedChanges={hasUnsavedChanges}
         onDeploy={() => setDeployModalOpen(true)}
         onAnalytics={() => setAnalyticsOpen(true)}
+        mode={pageMode}
+        onModeChange={handleModeChange}
+        canEdit={true}
       />
 
-      {/* HiveLab IDE */}
+      {/* Main content area - IDE or Runtime based on mode */}
       <div className="flex-1 overflow-hidden">
-        <HiveLabIDE
-          initialComposition={composition}
-          showOnboarding={showOnboarding}
-          onSave={handleSave}
-          onPreview={handlePreview}
-          onCancel={handleCancel}
-          userId={user?.uid || 'anonymous'}
-          userContext={userContext}
-        />
+        {pageMode === 'edit' ? (
+          /* Edit Mode: Full HiveLab IDE */
+          <HiveLabIDE
+            initialComposition={composition}
+            showOnboarding={showOnboarding}
+            onSave={handleSave}
+            onPreview={handlePreview}
+            onCancel={handleCancel}
+            userId={user?.uid || 'anonymous'}
+            userContext={userContext}
+          />
+        ) : (
+          /* Use Mode: Interactive ToolCanvas */
+          <div className="h-full bg-[var(--hivelab-bg)] p-4 md:p-8 overflow-auto">
+            <div className="max-w-4xl mx-auto">
+              {/* Tool info header */}
+              <div className="mb-6">
+                <h1 className="text-xl font-semibold text-[var(--hivelab-text-primary)]">
+                  {composition.name || 'Untitled Tool'}
+                </h1>
+                {composition.description && (
+                  <p className="text-sm text-[var(--hivelab-text-secondary)] mt-1">
+                    {composition.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Runtime status indicator */}
+              <div className="mb-4 flex items-center gap-2 text-xs text-[var(--hivelab-text-tertiary)]">
+                <div className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                <span>Live Preview</span>
+                {runtime.isSaving && <span className="text-[var(--life-gold)]">Saving...</span>}
+              </div>
+
+              {/* Tool Canvas with runtime */}
+              <div className="bg-[var(--hivelab-panel)] rounded-2xl p-6 border border-[var(--hivelab-border)]">
+                {composition.elements.length > 0 ? (
+                  <ToolCanvas
+                    elements={composition.elements.map(el => ({
+                      elementId: el.elementId,
+                      instanceId: el.instanceId,
+                      config: el.config,
+                      position: el.position,
+                      size: el.size,
+                    }))}
+                    state={runtime.state}
+                    sharedState={runtime.sharedState}
+                    userState={runtime.userState}
+                    layout="stack"
+                    onElementChange={(instanceId, data) => {
+                      runtime.updateState({ [instanceId]: data });
+                    }}
+                    onElementAction={(instanceId, action, payload) => {
+                      runtime.executeAction(instanceId, action, payload as Record<string, unknown>);
+                    }}
+                    isLoading={runtime.isLoading || runtime.isExecuting}
+                    error={runtime.error?.message || null}
+                    context={{
+                      userId: user?.uid,
+                      isSpaceLeader,
+                    }}
+                  />
+                ) : (
+                  /* Empty state */
+                  <div className="text-center py-16">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[var(--life-gold)]/10 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-[var(--life-gold)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-[var(--hivelab-text-primary)] mb-2">
+                      No elements yet
+                    </h3>
+                    <p className="text-sm text-[var(--hivelab-text-secondary)] mb-4">
+                      Switch to Edit mode to add elements to your tool.
+                    </p>
+                    <button
+                      onClick={() => handleModeChange('edit')}
+                      className="px-4 py-2 text-sm font-medium text-black bg-[var(--life-gold)] rounded-lg hover:bg-[var(--life-gold)]/90 transition-colors"
+                    >
+                      Switch to Edit
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Deploy Modal */}

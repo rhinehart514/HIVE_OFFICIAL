@@ -14,27 +14,28 @@ const AlignEndVertical = ArrowsUpDownIcon;
 const Pin = BookmarkIcon;
 const PinOff = BookmarkIcon;
 import { cn } from '../../../lib/utils';
-import type { CanvasElement } from './types';
+import type { CanvasElement, Connection } from './types';
 import { PropertiesPanel } from './properties-panel';
+import { ConnectionConfig } from './connection-config';
 
-// Make.com Light Panel Colors
+// HiveLab Dark Panel Colors
 const PANEL_COLORS = {
-  bg: '#ffffff',
-  bgHover: '#f5f5f5',
-  bgActive: '#eeeeee',
-  border: '#e0e0e0',
-  borderLight: '#f0f0f0',
-  textPrimary: '#212121',
-  textSecondary: '#757575',
-  textTertiary: '#9E9E9E',
-  accent: '#4CAF50',
-  accentLight: 'rgba(76, 175, 80, 0.1)',
+  bg: 'var(--hivelab-panel, #1A1A1A)',
+  bgHover: 'var(--hivelab-surface-hover, #1A1A1A)',
+  bgActive: 'var(--hivelab-surface, #141414)',
+  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+  borderLight: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
+  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
+  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
+  accent: 'var(--life-gold, #D4AF37)',
+  accentLight: 'rgba(212, 175, 55, 0.1)',
   error: '#f44336',
   errorLight: 'rgba(244, 67, 54, 0.1)',
 };
 
 // Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4CAF50]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
 const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
 
 const RAIL_WIDTH = 300;
@@ -269,11 +270,15 @@ const TOOL_CATEGORIES = [
 interface ContextRailProps {
   selectedElements: CanvasElement[];
   allElements: CanvasElement[];
+  connections?: Connection[];
+  selectedConnectionId?: string | null;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElements: (ids: string[]) => void;
   onDuplicateElements: (ids: string[]) => void;
   onAlignElements?: (alignment: AlignmentType) => void;
   onDistributeElements?: (direction: 'horizontal' | 'vertical') => void;
+  onUpdateConnection?: (id: string, updates: Partial<Connection>) => void;
+  onDeleteConnection?: (id: string) => void;
 }
 
 export type AlignmentType = 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom';
@@ -801,18 +806,28 @@ function AlignButton({
 export function ContextRail({
   selectedElements,
   allElements,
+  connections = [],
+  selectedConnectionId,
   onUpdateElement,
   onDeleteElements,
   onDuplicateElements,
   onAlignElements,
   onDistributeElements,
+  onUpdateConnection,
+  onDeleteConnection,
 }: ContextRailProps) {
-  const [isPinned, setIsPinned] = useState(true); // Default to pinned for Make.com style
+  const [isPinned, setIsPinned] = useState(false); // Show only when selecting
   const hasSelection = selectedElements.length > 0;
   const isMultiSelect = selectedElements.length > 1;
+  const hasConnectionSelection = selectedConnectionId != null;
+
+  // Find selected connection for config panel
+  const selectedConnection = hasConnectionSelection
+    ? connections.find(c => c.id === selectedConnectionId)
+    : null;
 
   // Always visible for Make.com style (can be collapsed via pin button)
-  const isVisible = isPinned || hasSelection;
+  const isVisible = isPinned || hasSelection || hasConnectionSelection;
 
   return (
     <AnimatePresence>
@@ -822,16 +837,17 @@ export function ContextRail({
           animate={{ width: RAIL_WIDTH, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={workshopTransition}
-          className="h-full overflow-hidden flex flex-col"
+          className="h-full overflow-hidden flex flex-col flex-shrink-0 relative"
           style={{
             backgroundColor: PANEL_COLORS.bg,
             borderLeft: `1px solid ${PANEL_COLORS.border}`,
             borderTopRightRadius: '24px',
             borderBottomRightRadius: '24px',
+            minWidth: RAIL_WIDTH,
           }}
         >
-          {/* Pin button */}
-          <div className="absolute top-2 right-2 z-10">
+          {/* Pin button - positioned in header area with high z-index */}
+          <div className="absolute top-3 right-3 z-30">
             <button
               type="button"
               onClick={() => setIsPinned(!isPinned)}
@@ -840,20 +856,16 @@ export function ContextRail({
                 focusRing
               )}
               style={{
-                backgroundColor: isPinned ? PANEL_COLORS.bgActive : 'transparent',
+                backgroundColor: isPinned ? PANEL_COLORS.bgActive : PANEL_COLORS.bgHover,
                 color: isPinned ? PANEL_COLORS.textPrimary : PANEL_COLORS.textTertiary,
               }}
               onMouseEnter={(e) => {
-                if (!isPinned) {
-                  e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
-                  e.currentTarget.style.color = PANEL_COLORS.textPrimary;
-                }
+                e.currentTarget.style.backgroundColor = PANEL_COLORS.bgActive;
+                e.currentTarget.style.color = PANEL_COLORS.textPrimary;
               }}
               onMouseLeave={(e) => {
-                if (!isPinned) {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = PANEL_COLORS.textTertiary;
-                }
+                e.currentTarget.style.backgroundColor = isPinned ? PANEL_COLORS.bgActive : PANEL_COLORS.bgHover;
+                e.currentTarget.style.color = isPinned ? PANEL_COLORS.textPrimary : PANEL_COLORS.textTertiary;
               }}
               title={isPinned ? 'Unpin panel' : 'Pin panel'}
             >
@@ -868,7 +880,22 @@ export function ContextRail({
           {/* Content */}
           <div className="flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
-              {!hasSelection ? (
+              {selectedConnection ? (
+                <motion.div
+                  key="connection"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="h-full"
+                >
+                  <ConnectionConfig
+                    connection={selectedConnection}
+                    elements={allElements}
+                    onUpdate={(updates) => onUpdateConnection?.(selectedConnection.id, updates)}
+                    onDelete={() => onDeleteConnection?.(selectedConnection.id)}
+                  />
+                </motion.div>
+              ) : !hasSelection ? (
                 <SearchableToolsPanel key="tools" />
               ) : isMultiSelect ? (
                 <MultiSelectPanel

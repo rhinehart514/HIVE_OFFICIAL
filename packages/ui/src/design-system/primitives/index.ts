@@ -309,6 +309,46 @@ export {
   type ActivityBarCompactProps,
 } from './ActivityBar';
 
+export {
+  ActivityHeartbeat,
+  ActivityHeartbeatStrip,
+  activityHeartbeatVariants,
+  getActivityLevel,
+  isSpaceLive,
+  getHeartbeatColor,
+  type ActivityHeartbeatProps,
+  type ActivityHeartbeatStripProps,
+  type ActivityLevel,
+} from './ActivityHeartbeat';
+
+export {
+  FriendStack,
+  FriendStackInline,
+  friendStackContainerVariants,
+  friendAvatarRingVariants,
+  type FriendStackProps,
+  type FriendStackInlineProps,
+  type Friend,
+} from './FriendStack';
+
+export {
+  LiveIndicator,
+  LiveBadge,
+  LiveCountIndicator,
+  ExploringNow,
+  LiveDotOnly,
+  liveIndicatorContainerVariants,
+  liveDotVariants,
+  liveTextVariants,
+  countTextVariants,
+  liveBadgeVariants,
+  type LiveIndicatorProps,
+  type LiveBadgeProps,
+  type LiveCountIndicatorProps,
+  type ExploringNowProps,
+  type LiveDotOnlyProps,
+} from './LiveIndicator';
+
 // Note: LifeBadge is covered by Badge with variant="gold" for achievements
 
 // ============================================

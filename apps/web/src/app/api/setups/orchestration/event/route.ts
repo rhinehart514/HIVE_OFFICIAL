@@ -175,8 +175,7 @@ export async function POST(request: NextRequest) {
       logs: logEntries,
       deployment: dto,
     });
-  } catch (error) {
-    console.error('[API] Error handling orchestration event:', error);
+  } catch {
     return errorResponse('Failed to handle orchestration event', 500);
   }
 }
@@ -290,21 +289,13 @@ async function executeAction(
     }
 
     case 'notification': {
-      const { recipients, title, body, actionUrl } = action;
-
       // TODO: Integrate with notification system
-      // For now, just log that a notification would be sent
-      console.log('[Orchestration] Would send notification:', {
-        recipients,
-        title,
-        body,
-        actionUrl,
-        spaceId: deployment.spaceId,
-      });
+      // Notification would be sent to recipients with title, body, actionUrl
       break;
     }
 
     default:
-      console.warn('[Orchestration] Unknown action type:', (action as { type: string }).type);
+      // Unknown action type - ignored
+      break;
   }
 }

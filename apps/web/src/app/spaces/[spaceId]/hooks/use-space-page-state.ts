@@ -48,6 +48,7 @@ interface ModalState {
   contextPanel: boolean;
   toolModal: boolean;
   welcome: boolean;
+  quickCreate: boolean;
 }
 
 // ============================================================
@@ -218,6 +219,7 @@ export function useSpacePageState(): UseSpacePageStateReturn {
     contextPanel: false,
     toolModal: false,
     welcome: false,
+    quickCreate: false,
   });
 
   const setModal = React.useCallback((modal: keyof ModalState, open: boolean) => {
@@ -568,8 +570,8 @@ export function useSpacePageState(): UseSpacePageStateReturn {
       }
       // Update local board order optimistically (already done by dnd-kit)
       chat.reorderBoards(boardIds);
-    } catch (error) {
-      console.error('Failed to reorder boards:', error);
+    } catch {
+      // Failed to reorder boards - state already updated optimistically
     }
   }, [spaceId, chat]);
 

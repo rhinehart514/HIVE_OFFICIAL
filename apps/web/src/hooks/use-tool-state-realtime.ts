@@ -182,7 +182,6 @@ export function useToolStateRealtime(
       };
 
       const handleError = (err: Error) => {
-        console.error('RTDB subscription error:', err);
         setError(err);
         setIsConnected(false);
       };
@@ -194,7 +193,6 @@ export function useToolStateRealtime(
         off(stateRef, 'value', handleValue);
       };
     } catch (err) {
-      console.error('Failed to setup RTDB subscription:', err);
       setError(err instanceof Error ? err : new Error(String(err)));
       setIsConnected(false);
     }
@@ -228,8 +226,8 @@ export function useToolStateRealtime(
         },
         { onlyOnce: true }
       );
-    } catch (err) {
-      console.error('Failed to refresh RTDB state:', err);
+    } catch {
+      // Failed to refresh RTDB state
     }
   }, [deploymentId]);
 

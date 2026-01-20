@@ -56,8 +56,8 @@ export default function FeedSettingsPage() {
       // TODO: Implement API call to save preferences
       await new Promise(resolve => setTimeout(resolve, 500));
       router.push('/feed');
-    } catch (error) {
-      console.error('Failed to save preferences:', error);
+    } catch {
+      // Silently handle save failure - user can retry
     } finally {
       setIsSaving(false);
     }

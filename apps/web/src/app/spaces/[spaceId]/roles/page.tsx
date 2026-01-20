@@ -64,8 +64,8 @@ export default function SpaceRolesPage() {
           const data = await rolesRes.json();
           setRoles(data.roles || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch roles:', error);
+      } catch {
+        // Failed to fetch roles
       } finally {
         setIsLoading(false);
       }

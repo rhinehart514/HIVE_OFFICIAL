@@ -172,9 +172,8 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
             setBoards(boardsData.boards);
           }
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load space');
-        console.error(err);
       } finally {
         setIsLoading(false);
       }
@@ -201,8 +200,7 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           // No messages yet - that's okay
           setMessages([]);
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         setMessages([]);
       } finally {
         setIsLoadingMessages(false);

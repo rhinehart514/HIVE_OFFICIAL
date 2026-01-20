@@ -12,19 +12,19 @@ import { ElementPalette } from './element-palette';
 import { LayersPanel } from './layers-panel';
 import type { CanvasElement, Connection } from './types';
 
-// Make.com Dark Sidebar Colors
+// HiveLab Dark Sidebar Colors
 const SIDEBAR_COLORS = {
-  bg: '#1a1a1a',
-  bgHover: '#2a2a2a',
-  bgActive: '#333333',
-  border: '#333333',
-  iconDefault: 'rgba(255,255,255,0.5)',
-  iconHover: 'rgba(255,255,255,0.8)',
-  iconActive: '#ffffff',
-  textPrimary: '#ffffff',
-  textSecondary: 'rgba(255,255,255,0.7)',
-  textTertiary: 'rgba(255,255,255,0.5)',
-  accent: '#4CAF50', // Make.com green
+  bg: 'var(--hivelab-panel, #1A1A1A)',
+  bgHover: 'var(--hivelab-surface-hover, #2a2a2a)',
+  bgActive: 'var(--hivelab-surface, #333333)',
+  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
+  iconDefault: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
+  iconHover: 'var(--hivelab-text-secondary, rgba(255,255,255,0.8))',
+  iconActive: 'var(--hivelab-text-primary, #ffffff)',
+  textPrimary: 'var(--hivelab-text-primary, #ffffff)',
+  textSecondary: 'var(--hivelab-text-secondary, rgba(255,255,255,0.7))',
+  textTertiary: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
+  accent: 'var(--life-gold, #D4AF37)',
 };
 
 // Workshop tokens
@@ -32,10 +32,18 @@ const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible
 const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
 
 export type RailState = 'expanded' | 'collapsed' | 'hidden';
-export type RailTab = 'start' | 'elements' | 'layers';
+export type RailTab = 'start' | 'elements' | 'layers' | 'tools';
 
 const EXPANDED_WIDTH = 260;
 const COLLAPSED_WIDTH = 64;
+
+/** User tool item for the "Your Tools" drawer */
+export interface UserToolItem {
+  id: string;
+  name: string;
+  status: 'draft' | 'published' | 'deployed';
+  updatedAt: Date;
+}
 
 interface ElementRailProps {
   state: RailState;
@@ -60,6 +68,12 @@ interface ElementRailProps {
     isSpaceLeader?: boolean;
     leadingSpaceIds?: string[];
   };
+  /** User's saved tools for the "Your Tools" drawer */
+  userTools?: UserToolItem[];
+  /** Callback when user selects a tool from the drawer */
+  onToolSelect?: (id: string) => void;
+  /** Callback when user clicks "New Tool" */
+  onNewTool?: () => void;
 }
 
 // Make.com style app icons for sidebar
@@ -158,11 +172,11 @@ function CollapsedRail({
         borderBottomLeftRadius: '24px',
       }}
     >
-      {/* Make.com Logo - stylized M */}
+      {/* HiveLab Logo */}
       <div className="flex items-center gap-1 mb-2">
-        <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none">
-          <path d="M4 8 L10 24 L16 12 L22 24 L28 8" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--life-gold)] to-amber-500 flex items-center justify-center">
+          <span className="text-black font-bold text-sm">H</span>
+        </div>
       </div>
 
       {/* Plus Button - top right style */}
@@ -213,16 +227,9 @@ function CollapsedRail({
         </svg>
       </button>
 
-      {/* App Integration Icons - Make.com style */}
+      {/* Elements Tab */}
       <TabButton icon={<Shapes className="h-5 w-5" />} label="Elements" active={activeTab === 'elements'} onClick={() => { onTabChange('elements'); onExpand(); }} />
-      <TabButton icon={<SlackIcon />} label="Slack" active={false} onClick={onExpand} />
-      <TabButton icon={<DiscordIcon />} label="Discord" active={false} onClick={onExpand} />
-      <TabButton icon={<ChatGPTIcon />} label="ChatGPT" active={false} onClick={onExpand} />
-      <TabButton icon={<NotionIcon />} label="Notion" active={false} onClick={onExpand} />
-      <TabButton icon={<WebhookIcon />} label="Webhooks" active={false} onClick={onExpand} />
-      <TabButton icon={<GoogleDriveIcon />} label="Google Drive" active={false} onClick={onExpand} />
-      <TabButton icon={<TerminalIcon />} label="Code" active={false} onClick={onExpand} />
-      <TabButton icon={<CloudIcon />} label="Cloud" active={false} onClick={onExpand} />
+      <TabButton icon={<Layers className="h-5 w-5" />} label="Layers" active={activeTab === 'layers'} onClick={() => { onTabChange('layers'); onExpand(); }} />
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -251,17 +258,6 @@ function CollapsedRail({
         </svg>
       </button>
 
-      {/* User Avatar */}
-      <div
-        className="w-10 h-10 rounded-full overflow-hidden mt-2"
-        style={{ border: `2px solid ${SIDEBAR_COLORS.border}` }}
-      >
-        <img
-          src="https://api.dicebear.com/7.x/avataaars/svg?seed=makeuser"
-          alt="User"
-          className="w-full h-full object-cover"
-        />
-      </div>
     </div>
   );
 }
@@ -326,6 +322,9 @@ function ExpandedRail({
   onDuplicateElement,
   onReorder,
   userContext,
+  userTools,
+  onToolSelect,
+  onNewTool,
 }: {
   activeTab: RailTab;
   onTabChange: (tab: RailTab) => void;
@@ -348,6 +347,9 @@ function ExpandedRail({
     isSpaceLeader?: boolean;
     leadingSpaceIds?: string[];
   };
+  userTools?: UserToolItem[];
+  onToolSelect?: (id: string) => void;
+  onNewTool?: () => void;
 }) {
   return (
     <div
@@ -363,17 +365,19 @@ function ExpandedRail({
         className="flex items-center justify-between px-3 py-2"
         style={{ borderBottom: `1px solid ${SIDEBAR_COLORS.border}` }}
       >
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 flex-1 min-w-0">
           <button
             type="button"
             onClick={() => onTabChange('elements')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium',
-              'transition-colors duration-200',
+              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+              'transition-all duration-200',
+              activeTab === 'elements'
+                ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                : 'hover:bg-[var(--hivelab-surface-hover)]',
               focusRing
             )}
             style={{
-              backgroundColor: activeTab === 'elements' ? SIDEBAR_COLORS.bgActive : 'transparent',
               color: activeTab === 'elements' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
             }}
           >
@@ -383,16 +387,35 @@ function ExpandedRail({
             type="button"
             onClick={() => onTabChange('layers')}
             className={cn(
-              'px-3 py-1.5 rounded-lg text-xs font-medium',
-              'transition-colors duration-200',
+              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+              'transition-all duration-200',
+              activeTab === 'layers'
+                ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                : 'hover:bg-[var(--hivelab-surface-hover)]',
               focusRing
             )}
             style={{
-              backgroundColor: activeTab === 'layers' ? SIDEBAR_COLORS.bgActive : 'transparent',
               color: activeTab === 'layers' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
             }}
           >
             Layers
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange('tools')}
+            className={cn(
+              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+              'transition-all duration-200',
+              activeTab === 'tools'
+                ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                : 'hover:bg-[var(--hivelab-surface-hover)]',
+              focusRing
+            )}
+            style={{
+              color: activeTab === 'tools' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+            }}
+          >
+            Tools
           </button>
         </div>
         <button
@@ -493,7 +516,7 @@ function ExpandedRail({
                 userContext={userContext}
               />
             </motion.div>
-          ) : (
+          ) : activeTab === 'layers' ? (
             <motion.div
               key="layers"
               initial={{ opacity: 0, x: 10 }}
@@ -513,9 +536,181 @@ function ExpandedRail({
                 onReorder={onReorder}
               />
             </motion.div>
+          ) : (
+            <motion.div
+              key="tools"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-y-auto"
+            >
+              <ToolsPanel
+                userTools={userTools}
+                onToolSelect={onToolSelect}
+                onNewTool={onNewTool}
+              />
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+/** Your Tools Panel - shows user's saved tools */
+function ToolsPanel({
+  userTools,
+  onToolSelect,
+  onNewTool,
+}: {
+  userTools?: UserToolItem[];
+  onToolSelect?: (id: string) => void;
+  onNewTool?: () => void;
+}) {
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getStatusBadge = (status: 'draft' | 'published' | 'deployed') => {
+    switch (status) {
+      case 'deployed':
+        return { label: 'Live', color: '#22c55e' };
+      case 'published':
+        return { label: 'Published', color: SIDEBAR_COLORS.accent };
+      default:
+        return { label: 'Draft', color: SIDEBAR_COLORS.textTertiary };
+    }
+  };
+
+  return (
+    <div className="p-3 space-y-3">
+      {/* New Tool Button - gold accent */}
+      <button
+        type="button"
+        onClick={onNewTool}
+        className={cn(
+          'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
+          'text-sm font-medium transition-all duration-200',
+          'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]',
+          focusRing
+        )}
+        style={{
+          backgroundColor: `${SIDEBAR_COLORS.accent}15`,
+          color: SIDEBAR_COLORS.accent,
+          border: `1px solid ${SIDEBAR_COLORS.accent}30`,
+        }}
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        New Tool
+      </button>
+
+      {/* Tools List */}
+      {(!userTools || userTools.length === 0) ? (
+        <div className="text-center py-8 px-4">
+          {/* Animated sparkle icon */}
+          <div
+            className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+            style={{ backgroundColor: `${SIDEBAR_COLORS.accent}10` }}
+          >
+            <SparklesIcon className="h-7 w-7" style={{ color: SIDEBAR_COLORS.accent }} />
+          </div>
+          <p
+            className="text-sm font-medium mb-1"
+            style={{ color: SIDEBAR_COLORS.textPrimary }}
+          >
+            Create your first tool
+          </p>
+          <p
+            className="text-xs leading-relaxed mb-4"
+            style={{ color: SIDEBAR_COLORS.textTertiary }}
+          >
+            Build tools your community will love — polls, signups, countdowns, and more.
+          </p>
+          {/* CTA Button */}
+          <button
+            type="button"
+            onClick={onNewTool}
+            className={cn(
+              'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
+              'text-sm font-medium transition-all duration-200',
+              'hover:shadow-md active:scale-[0.98]',
+              focusRing
+            )}
+            style={{
+              backgroundColor: SIDEBAR_COLORS.accent,
+              color: '#000',
+            }}
+          >
+            <SparklesIcon className="h-4 w-4" />
+            Start Building
+          </button>
+          {/* Templates link */}
+          <a
+            href="/tools/templates"
+            className="inline-block mt-3 text-xs transition-colors"
+            style={{ color: SIDEBAR_COLORS.textTertiary }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = SIDEBAR_COLORS.accent; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = SIDEBAR_COLORS.textTertiary; }}
+          >
+            or browse 25+ templates →
+          </a>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {userTools.map((tool) => {
+            const badge = getStatusBadge(tool.status);
+            return (
+              <button
+                key={tool.id}
+                type="button"
+                onClick={() => onToolSelect?.(tool.id)}
+                className={cn(
+                  'w-full text-left px-3 py-2.5 rounded-lg',
+                  'transition-colors duration-200',
+                  focusRing
+                )}
+                style={{ color: SIDEBAR_COLORS.textPrimary }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium truncate">
+                    {tool.name || 'Untitled Tool'}
+                  </span>
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: `${badge.color}20`,
+                      color: badge.color,
+                    }}
+                  >
+                    {badge.label}
+                  </span>
+                </div>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: SIDEBAR_COLORS.textTertiary }}
+                >
+                  {formatDate(tool.updatedAt)}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -538,6 +733,9 @@ export function ElementRail({
   onOpenAI,
   onOpenTemplates,
   userContext,
+  userTools,
+  onToolSelect,
+  onNewTool,
 }: ElementRailProps) {
   const handleExpand = useCallback(() => {
     onStateChange('expanded');
@@ -589,6 +787,9 @@ export function ElementRail({
             onDuplicateElement={onDuplicateElement}
             onReorder={onReorder}
             userContext={userContext}
+            userTools={userTools}
+            onToolSelect={onToolSelect}
+            onNewTool={onNewTool}
           />
         </motion.div>
       )}

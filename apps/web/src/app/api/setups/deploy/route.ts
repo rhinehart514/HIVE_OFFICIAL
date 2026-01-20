@@ -222,8 +222,7 @@ export async function POST(request: NextRequest) {
       },
       201,
     );
-  } catch (error) {
-    console.error('[API] Error deploying setup:', error);
+  } catch {
     return errorResponse('Failed to deploy setup', 500);
   }
 }

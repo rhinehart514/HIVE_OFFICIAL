@@ -847,3 +847,12 @@ registerElementActionHandler('space-feed', 'refresh', genericRefreshHandler);
 registerElementActionHandler('space-stats', 'refresh', genericRefreshHandler);
 registerElementActionHandler('announcement', 'refresh', genericRefreshHandler);
 registerElementActionHandler('role-gate', 'refresh', genericRefreshHandler);
+
+// Additional universal elements (previously missing)
+registerElementActionHandler('search-input', 'refresh', genericRefreshHandler);
+registerElementActionHandler('form-builder', 'refresh', genericRefreshHandler);
+registerElementActionHandler('poll-element', 'refresh', genericRefreshHandler);
+registerElementActionHandler('counter', 'refresh', genericRefreshHandler);
+registerElementActionHandler('timer', 'refresh', genericRefreshHandler);
+registerElementActionHandler('countdown-timer', 'refresh', genericRefreshHandler);
+registerElementActionHandler('date-picker', 'refresh', genericRefreshHandler);

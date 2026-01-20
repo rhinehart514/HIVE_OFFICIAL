@@ -1,13 +1,72 @@
 # HIVE Development TODO
 
-**Last Updated:** January 16, 2026
-**Platform Status:** 97% Complete
+**Last Updated:** January 17, 2026
+**Platform Status:** Feature Complete — GTM Sprint Active
 
 ---
 
-## Current Focus
+## Current Focus: GTM BY MONDAY
 
-Maintenance mode. All core features shipped. Focus on polish and optimization.
+**Full Redesign & Rethink Sprint**
+
+Every surface goes through the 4-phase framework:
+1. **Interrogate** — Purpose, user intent, current reality
+2. **Decide** — Keep / Kill / Redesign / Add
+3. **Design** — Hierarchy, layout, components, states
+4. **Build** — Implement with design system compliance
+
+**See:** `docs/GTM_SURFACE_RETHINK_FRAMEWORK.md` for full methodology
+
+---
+
+## GTM Sprint Checklist
+
+### Entry/Auth
+- [ ] Onboarding flow feels premium
+- [ ] Transitions between steps are buttery
+- [ ] Success states create "wow" moments
+- [ ] Error states are helpful
+
+### Spaces
+- [ ] Chat feels responsive and real-time
+- [ ] Empty space states invite action
+- [ ] Board navigation is intuitive
+- [ ] Member list polish
+- [ ] Loading states match design system
+
+### Feed
+- [ ] Post cards are visually consistent
+- [ ] Comments thread cleanly
+- [ ] Trending sidebar feels alive
+- [ ] Empty feed invites first post
+
+### HiveLab
+- [ ] Builder experience is premium
+- [ ] Template gallery is discoverable
+- [ ] Tool deployment feedback is clear
+- [ ] Analytics dashboard is polished
+
+### Discovery (Browse)
+- [ ] Space cards are consistent
+- [ ] Category filtering is smooth
+- [ ] Search feels responsive
+- [ ] Territory navigation is clear
+
+### Profiles
+- [ ] Bento grid is consistent
+- [ ] Connections display clearly
+- [ ] Placed tools showcase well
+- [ ] Edit flow is intuitive
+
+### Calendar
+- [ ] Event cards are polished
+- [ ] RSVP feedback is immediate
+- [ ] Empty states invite event creation
+
+### Notifications
+- [ ] Real-time feels instant
+- [ ] Read/unread states are clear
+- [ ] Notification types are distinguishable
 
 ---
 
@@ -74,21 +133,16 @@ Maintenance mode. All core features shipped. Focus on polish and optimization.
 
 ---
 
-## Remaining Work
+## Post-GTM (After Monday)
 
-### P1 - Polish Items
-- [ ] Typing indicator optimization (reduce polling)
-- [ ] Mobile navigation refinement
-- [ ] Empty state improvements
-- [ ] Loading skeleton consistency
-
-### P2 - Feature Enhancements
+### Next Sprint
 - [ ] Thread notifications
 - [ ] Read receipts
 - [ ] Board reordering
 - [ ] Space analytics (real data)
+- [ ] Typing indicator optimization
 
-### P3 - Future Features (Gated)
+### Future Features (Gated)
 - [ ] Rituals (feature-flagged, leaders-only)
 - [ ] Push notifications (infrastructure ready)
 - [ ] Voice messages (not started)
@@ -96,19 +150,19 @@ Maintenance mode. All core features shipped. Focus on polish and optimization.
 
 ---
 
-## Technical Debt
+## Technical Debt (Post-GTM)
 
-### Low Priority
+### After Launch
 - [ ] Consolidate `users` and `profiles` collections
 - [ ] Migrate legacy `reactions` field to `engagement`
 - [ ] Add comprehensive test coverage
 - [ ] Performance audit and optimization
 
-### Documentation
-- [x] Update CLAUDE.md with current status
-- [x] Update DATABASE_SCHEMA.md with actual collections
+### Documentation (Done)
+- [x] Update CLAUDE.md with GTM sprint focus
+- [x] Update TODO.md with sprint checklist
+- [x] DATABASE_SCHEMA.md current
 - [x] Archive old audit reports
-- [x] Clean up root-level TODO files
 
 ---
 
@@ -124,17 +178,20 @@ Before any release:
 
 ## Notes
 
-### Architecture Decisions
-- Top-level collections (not subcollections) for membership, posts
-- SSE for real-time updates (not WebSockets)
-- Campus isolation via `campusId` field on all documents
-- JWT sessions with Firebase Auth backend
+### GTM Sprint Rules
+- **Redesign & Rethink** — everything is up for debate
+- **Four phases per surface** — Interrogate → Decide → Design → Build
+- **Kill what doesn't serve** — simpler is always better
+- **Design system compliance** — use tokens, not hardcoded values
+- **All states designed** — loading, empty, error, partial, full, success
+- **Ship by Monday** — prioritize P0/P1 surfaces, defer P3
 
 ### Design System
 - 93 primitives, 138 composed components
 - Use `@hive/ui/design-system/primitives` for all UI
 - Gold is earned (1% rule), white focus rings
 - Rounded square avatars (never circles)
+- See `docs/DESIGN_PRINCIPLES.md` for full spec
 
 ### Key Paths
 - Entry: `/enter` + `components/entry/`
@@ -142,3 +199,10 @@ Before any release:
 - Spaces: `/spaces/[spaceId]` + chat hooks
 - Profile: `/profile/[id]` + `/profile/edit`
 - Tools: `/tools/[toolId]` + HiveLab components
+- Discovery: `/spaces/browse` + `browse/components/`
+
+### Architecture Reference
+- Top-level collections (not subcollections) for membership, posts
+- SSE for real-time updates (not WebSockets)
+- Campus isolation via `campusId` field on all documents
+- JWT sessions with Firebase Auth backend

@@ -280,7 +280,7 @@ function SettingsContent() {
   if (activeSection) {
     return (
       <div className="min-h-screen w-full overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-16 md:py-20">
+        <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
           {/* Back button */}
           <motion.div className="mb-8" {...fadeIn(0)}>
             <button
@@ -373,7 +373,7 @@ function SettingsContent() {
   // Settings Root - Orientation Archetype
   return (
     <div className="min-h-screen w-full overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-16 md:py-20">
+      <div className="max-w-3xl mx-auto px-6 py-8 md:py-10">
 
         {/* ============================================
             CONTEXT BLOCK

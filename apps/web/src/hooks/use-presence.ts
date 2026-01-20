@@ -121,6 +121,7 @@ export function usePresence() {
 
 /**
  * Hook to get online users in a space or campus
+ * Uses batch fetching to avoid N+1 queries
  */
 export function useOnlineUsers(spaceId?: string) {
   const { user } = useAuth();
@@ -146,40 +147,55 @@ export function useOnlineUsers(spaceId?: string) {
     const unsubscribe = onSnapshot(
       q,
       async (snapshot) => {
-        const users: OnlineUser[] = [];
-
-        // Get user details for each online presence
-        const userPromises = snapshot.docs.map(async (doc) => {
+        // Collect all user IDs from presence docs
+        const presenceMap = new Map<string, PresenceData>();
+        snapshot.docs.forEach((doc) => {
           const presence = doc.data() as PresenceData;
+          presenceMap.set(presence.userId, presence);
+        });
 
-          // Fetch user profile (would be better to cache this)
-          try {
-            const userDoc = await getDocs(
+        const userIds = Array.from(presenceMap.keys());
+
+        if (userIds.length === 0) {
+          setOnlineUsers([]);
+          setLoading(false);
+          return;
+        }
+
+        // Batch fetch user profiles (max 30 per query due to 'in' limit)
+        const users: OnlineUser[] = [];
+        const BATCH_SIZE = 30;
+
+        try {
+          for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
+            const batch = userIds.slice(i, i + BATCH_SIZE);
+            const userDocs = await getDocs(
               query(
                 collection(db, 'users'),
-                where('__name__', '==', presence.userId)
+                where('__name__', 'in', batch)
               )
             );
 
-            if (!userDoc.empty) {
-              const userData = userDoc.docs[0].data();
-              users.push({
-                userId: presence.userId,
-                handle: userData.handle || 'unknown',
-                name: userData.name || 'Anonymous',
-                avatar: userData.avatar,
-                status: presence.status as 'online' | 'away',
-                lastSeen: presence.lastSeen instanceof Date
-                  ? presence.lastSeen
-                  : new Date()
-              });
-            }
-          } catch (error) {
-            logger.error('Failed to fetch user data', { error: { error: error instanceof Error ? error.message : String(error) }, userId: presence.userId });
+            userDocs.docs.forEach((userDoc) => {
+              const userData = userDoc.data();
+              const presence = presenceMap.get(userDoc.id);
+              if (presence) {
+                users.push({
+                  userId: userDoc.id,
+                  handle: userData.handle || 'unknown',
+                  name: userData.name || 'Anonymous',
+                  avatar: userData.avatar,
+                  status: presence.status as 'online' | 'away',
+                  lastSeen: presence.lastSeen instanceof Date
+                    ? presence.lastSeen
+                    : new Date()
+                });
+              }
+            });
           }
-        });
-
-        await Promise.all(userPromises);
+        } catch (error) {
+          logger.error('Failed to batch fetch user data', { error: { error: error instanceof Error ? error.message : String(error) } });
+        }
 
         setOnlineUsers(users);
         setLoading(false);

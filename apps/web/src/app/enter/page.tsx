@@ -2,13 +2,17 @@
 
 /**
  * /enter - Unified Entry Flow
+ * REDESIGNED: Jan 18, 2026
  *
- * IA Spec: docs/IA_PHASE1_AUTH_ONBOARDING.md
+ * Split-screen immersive layout with progress indicator.
  *
  * States: email → sending → code → verifying → identity (new users) → arrival
  * Goal: 60-90 seconds from landing to inside
  *
- * Uses modular component library with maximum craft motion
+ * New design:
+ * - 40/60 split (brand/content) on desktop
+ * - Progress indicator shows journey
+ * - Arrival is a celebration, not a loading screen
  */
 
 import { Suspense } from 'react';
@@ -16,12 +20,16 @@ import { AnimatePresence } from 'framer-motion';
 import {
   EntryShell,
   EntryShellStatic,
+  SchoolState,
   EmailState,
   CodeState,
+  RoleState,
   IdentityState,
   ArrivalState,
+  AlumniWaitlistState,
   useEntryMachine,
   type EmotionalState,
+  type EntryStep,
 } from '@/components/entry';
 
 export const dynamic = 'force-dynamic';
@@ -34,11 +42,14 @@ const CAMPUS_CONFIG = {
 };
 
 /**
- * Map entry state to emotional state for ambient glow
+ * Map entry machine state to emotional state for ambient glow
  */
 function getEmotionalState(state: string): EmotionalState {
   switch (state) {
+    case 'school':
     case 'email':
+      return 'neutral';
+    case 'role':
     case 'sending':
       return 'neutral';
     case 'code':
@@ -48,9 +59,40 @@ function getEmotionalState(state: string): EmotionalState {
     case 'submitting':
       return 'anticipation';
     case 'arrival':
+    case 'alumni-waitlist':
       return 'celebration';
     default:
       return 'neutral';
+  }
+}
+
+/**
+ * Map entry machine state to progress step
+ * Flow: school → email → role → code → identity → arrival
+ */
+function getProgressStep(state: string, role?: string | null): EntryStep {
+  switch (state) {
+    case 'school':
+      return 'school';
+    case 'email':
+      return 'email';
+    case 'role':
+    case 'sending':
+      return 'role';
+    case 'code':
+    case 'verifying':
+      return 'code';
+    case 'submitting':
+      // Faculty submit after code, students after identity
+      return role === 'faculty' ? 'code' : 'identity';
+    case 'identity':
+      return 'identity';
+    case 'arrival':
+      return 'arrival';
+    case 'alumni-waitlist':
+      return 'alumni-waitlist';
+    default:
+      return 'school';
   }
 }
 
@@ -63,7 +105,7 @@ function EntryPageFallback() {
       <div className="space-y-8">
         <div className="space-y-3">
           <h1 className="text-[32px] font-semibold tracking-tight text-white">
-            Enter
+            Get in
           </h1>
           <div className="flex items-center gap-2 text-white/50">
             <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
@@ -91,17 +133,24 @@ function EntryContent() {
     // Resend
     resendCooldown,
     // Setters
+    setSchool,
     setEmail,
     setCode,
+    setRole,
+    setAlumniSpace,
     setFirstName,
     setLastName,
     setHandle,
     selectSuggestion,
     // Transitions
-    sendCode,
+    selectSchool,
+    proceedToRole,
     verifyCode,
+    submitRole,
     completeEntry,
+    goBackToSchool,
     goBackToEmail,
+    goBackToRole,
     resendCode,
     // Navigation
     handleArrivalComplete,
@@ -112,29 +161,62 @@ function EntryContent() {
   });
 
   const emotionalState = getEmotionalState(state);
+  const currentStep = getProgressStep(state, data.role);
+
+  // Use selected school domain or fall back to default
+  const activeDomain = data.school?.domain || CAMPUS_CONFIG.domain;
 
   // Full email for display
   const fullEmail = data.email.includes('@')
     ? data.email
-    : `${data.email}@${CAMPUS_CONFIG.domain}`;
+    : `${data.email}@${activeDomain}`;
 
   return (
-    <EntryShell emotionalState={emotionalState}>
-      <AnimatePresence mode="wait">
-        {/* EMAIL STATE */}
-        {(state === 'email' || state === 'sending') && (
+    <EntryShell
+      emotionalState={emotionalState}
+      currentStep={currentStep}
+      showProgress={true}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        {/* SCHOOL STATE - Select campus */}
+        {state === 'school' && (
+          <SchoolState
+            key="school"
+            school={data.school}
+            onSchoolSelect={selectSchool}
+            error={error}
+            isLoading={false}
+          />
+        )}
+
+        {/* EMAIL STATE - Enter campus email */}
+        {state === 'email' && (
           <EmailState
             key="email"
             email={data.email}
             onEmailChange={setEmail}
-            onSubmit={sendCode}
+            onSubmit={proceedToRole}
             error={error}
-            isLoading={state === 'sending'}
-            domain={CAMPUS_CONFIG.domain}
+            isLoading={false}
+            domain={activeDomain}
           />
         )}
 
-        {/* CODE STATE */}
+        {/* ROLE STATE - Student/Faculty/Alumni selection */}
+        {(state === 'role' || state === 'sending') && (
+          <RoleState
+            key="role"
+            role={data.role}
+            onRoleChange={setRole}
+            onSubmit={submitRole}
+            alumniSpace={data.alumniSpace}
+            onAlumniSpaceChange={setAlumniSpace}
+            error={error}
+            isLoading={state === 'sending'}
+          />
+        )}
+
+        {/* CODE STATE - Verify email */}
         {(state === 'code' || state === 'verifying') && (
           <CodeState
             key="code"
@@ -143,15 +225,15 @@ function EntryContent() {
             onCodeChange={setCode}
             onComplete={verifyCode}
             onResend={resendCode}
-            onChangeEmail={goBackToEmail}
+            onChangeEmail={goBackToRole}
             error={error}
             isLoading={state === 'verifying'}
             resendCooldown={resendCooldown}
           />
         )}
 
-        {/* IDENTITY STATE (new users only) */}
-        {(state === 'identity' || state === 'submitting') && (
+        {/* IDENTITY STATE - Students only (profile + interests) */}
+        {(state === 'identity' || (state === 'submitting' && data.role !== 'faculty')) && (
           <IdentityState
             key="identity"
             firstName={data.firstName}
@@ -176,6 +258,15 @@ function EntryContent() {
             firstName={data.firstName || 'there'}
             handle={data.handle}
             isNewUser={isNewUser}
+            onComplete={handleArrivalComplete}
+          />
+        )}
+
+        {/* ALUMNI WAITLIST STATE */}
+        {state === 'alumni-waitlist' && (
+          <AlumniWaitlistState
+            key="alumni-waitlist"
+            spaces={data.alumniSpace}
             onComplete={handleArrivalComplete}
           />
         )}

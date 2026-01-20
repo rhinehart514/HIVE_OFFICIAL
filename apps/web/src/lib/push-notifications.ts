@@ -56,15 +56,13 @@ export function getNotificationPermission(): NotificationPermission {
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!isPushSupported()) {
-    console.warn('[Push] Notifications not supported');
     return 'denied';
   }
 
   try {
     const permission = await Notification.requestPermission();
     return permission as NotificationPermission;
-  } catch (error) {
-    console.error('[Push] Permission request failed:', error);
+  } catch {
     return 'denied';
   }
 }
@@ -83,12 +81,10 @@ export async function getFCMToken(
 
   const permission = getNotificationPermission();
   if (permission !== 'granted') {
-    console.warn('[Push] Notification permission not granted');
     return null;
   }
 
   if (!VAPID_KEY) {
-    console.error('[Push] VAPID key not configured');
     return null;
   }
 
@@ -108,8 +104,7 @@ export async function getFCMToken(
     });
 
     return token;
-  } catch (error) {
-    console.error('[Push] Failed to get FCM token:', error);
+  } catch {
     return null;
   }
 }
@@ -131,8 +126,7 @@ export async function saveFCMToken(token: string): Promise<boolean> {
     }
 
     return true;
-  } catch (error) {
-    console.error('[Push] Failed to save FCM token:', error);
+  } catch {
     return false;
   }
 }
@@ -154,8 +148,7 @@ export async function removeFCMToken(token: string): Promise<boolean> {
     }
 
     return true;
-  } catch (error) {
-    console.error('[Push] Failed to remove FCM token:', error);
+  } catch {
     return false;
   }
 }
@@ -189,8 +182,7 @@ export function onForegroundMessage(
 
       callback(notification);
     });
-  } catch (error) {
-    console.error('[Push] Failed to subscribe to foreground messages:', error);
+  } catch {
     return () => {};
   }
 }
@@ -200,7 +192,6 @@ export function onForegroundMessage(
  */
 export function showNotification(payload: NotificationPayload): void {
   if (getNotificationPermission() !== 'granted') {
-    console.warn('[Push] Cannot show notification - permission not granted');
     return;
   }
 
@@ -246,7 +237,6 @@ export async function setupPushNotifications(): Promise<PushNotificationState> {
   };
 
   if (!state.isSupported) {
-    console.warn('[Push] Push notifications not supported');
     return state;
   }
 

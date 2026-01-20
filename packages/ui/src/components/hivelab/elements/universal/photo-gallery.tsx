@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { PhotoIcon, PlusIcon, XMarkIcon, ArrowsPointingOutIcon } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { springPresets } from '@hive/tokens';
 import { Button } from '../../../../design-system/primitives';
 import type { ElementProps } from '../shared/types';
 
@@ -157,41 +159,61 @@ export function PhotoGalleryElement({
 
       {/* Photo grid */}
       {photos.length > 0 ? (
-        <div className={`grid ${columnsClass} gap-2`}>
-          {photos.map((photo) => (
-            <div
-              key={photo.id}
-              className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--hivelab-surface)] cursor-pointer"
-              onClick={() => handlePhotoClick(photo)}
-            >
-              <img
-                src={photo.thumbnailUrl || photo.url}
-                alt={photo.caption || 'Photo'}
-                className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                loading="lazy"
-              />
+        <motion.div className={`grid ${columnsClass} gap-2`} layout>
+          <AnimatePresence initial={false}>
+            {photos.map((photo, index) => (
+              <motion.div
+                key={photo.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: index * 0.03, ...springPresets.snappy }}
+                className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--hivelab-surface)] cursor-pointer"
+                onClick={() => handlePhotoClick(photo)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <img
+                  src={photo.thumbnailUrl || photo.url}
+                  alt={photo.caption || 'Photo'}
+                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  loading="lazy"
+                />
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <ArrowsPointingOutIcon className="h-6 w-6 text-white" />
-              </div>
-
-              {/* Caption */}
-              {config.showCaptions && photo.caption && (
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-xs text-white truncate">{photo.caption}</p>
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <ArrowsPointingOutIcon className="h-6 w-6 text-white" />
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+
+                {/* Caption */}
+                {config.showCaptions && photo.caption && (
+                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                    <p className="text-xs text-white truncate">{photo.caption}</p>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </motion.div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <PhotoIcon className="h-12 w-12 text-[var(--hivelab-text-tertiary)] mb-4" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={springPresets.gentle}
+          className="flex flex-col items-center justify-center py-12 text-center"
+        >
+          <motion.div
+            animate={{ y: [0, -5, 0], rotate: [0, -3, 3, 0] }}
+            transition={{ duration: 3, repeat: Infinity, repeatType: 'reverse' }}
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mx-auto mb-4"
+          >
+            <PhotoIcon className="h-8 w-8 text-primary/40" />
+          </motion.div>
+          <p className="font-medium text-foreground mb-1">No photos yet</p>
           <p className="text-sm text-[var(--hivelab-text-tertiary)]">
-            {config.emptyMessage || 'No photos yet. Be the first to share!'}
+            {config.emptyMessage || 'Be the first to share a moment!'}
           </p>
-        </div>
+        </motion.div>
       )}
 
       {/* Photo count */}

@@ -108,7 +108,6 @@ export function useChatSearch(options: UseChatSearchOptions): UseChatSearchRetur
         if (err instanceof Error && err.name === 'AbortError') {
           return; // Ignore aborted requests
         }
-        console.error('[useChatSearch] Search error:', err);
         setError(err instanceof Error ? err.message : 'Search failed');
       } finally {
         setIsSearching(false);
@@ -153,7 +152,6 @@ export function useChatSearch(options: UseChatSearchOptions): UseChatSearchRetur
       setHasMore(data.hasMore || false);
       currentOffsetRef.current += data.messages?.length || 0;
     } catch (err) {
-      console.error('[useChatSearch] Load more error:', err);
       setError(err instanceof Error ? err.message : 'Failed to load more');
     } finally {
       setIsSearching(false);

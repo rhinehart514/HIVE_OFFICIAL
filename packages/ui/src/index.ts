@@ -304,9 +304,17 @@ export {
   QUICK_TEMPLATES,
   getQuickTemplate,
   getTemplatesByCategory,
+  getTemplatesByComplexity,
+  getAppTemplates,
+  getAvailableTemplates,
+  getCategoriesWithCounts,
   createToolFromTemplate,
 } from "./lib/hivelab/quick-templates";
-export type { QuickTemplate } from "./lib/hivelab/quick-templates";
+export type { QuickTemplate, TemplateCategory, TemplateComplexity, TemplateStatus } from "./lib/hivelab/quick-templates";
+
+// HiveLab UI Components
+export { QuickCreateWizard, QUICK_CREATE_INTENTS } from "./design-system/components/hivelab";
+export type { QuickCreateIntent, QuickCreateField, QuickCreateResult, QuickCreateWizardProps } from "./design-system/components/hivelab";
 
 export {
   VisuallyHidden,
@@ -1616,6 +1624,7 @@ export type {
   CanvasElement as IDECanvasElement,
   Connection as IDEConnection,
   ToolMode,
+  PageMode,
   CanvasState,
   HistoryEntry,
   IDEState,

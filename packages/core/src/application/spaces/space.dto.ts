@@ -79,6 +79,11 @@ export interface SpaceBaseDTO {
   description: string;
   category: string;
   memberCount: number;
+  // Branding / Visual identity
+  /** Space icon/logo URL */
+  iconURL?: string;
+  /** Cover/banner image URL */
+  coverImageURL?: string;
   isVerified: boolean;
   visibility: 'public' | 'private';
   /**

@@ -8,6 +8,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  getCountFromServer,
   setDoc,
   updateDoc,
   deleteDoc,
@@ -145,36 +146,90 @@ export class FirebaseProfileRepository implements IProfileRepository {
 
   async searchByName(searchQuery: string, campusId: string): Promise<Result<EnhancedProfile[]>> {
     try {
-      // Firebase doesn't support full-text search natively
-      // For MVP, we'll do a simple prefix search on firstName and lastName
-      const q = query(
+      const searchLower = searchQuery.toLowerCase().trim();
+
+      if (!searchLower) {
+        // Empty search - return recent active profiles
+        return this.findByCampus(campusId, 20);
+      }
+
+      // Try handle prefix search first (most specific)
+      const handleQuery = query(
         collection(db, this.collectionName),
         where('campusId', '==', campusId),
         where('isActive', '==', true),
-        orderBy('firstName'),
+        where('handle', '>=', searchLower),
+        where('handle', '<=', searchLower + '\uf8ff'),
         firestoreLimit(20)
       );
 
-      const snapshot = await getDocs(q);
+      const handleSnapshot = await getDocs(handleQuery);
       const profiles: EnhancedProfile[] = [];
-      const searchLower = searchQuery.toLowerCase();
+      const addedIds = new Set<string>();
 
-      for (const doc of snapshot.docs) {
-        const data = doc.data();
-        const fullName = `${data.firstName} ${data.lastName}`.toLowerCase();
-        const handle = data.handle?.toLowerCase() || '';
+      // Add handle matches
+      for (const doc of handleSnapshot.docs) {
+        const result = await this.toDomain(doc.id, doc.data());
+        if (result.isSuccess) {
+          profiles.push(result.getValue());
+          addedIds.add(doc.id);
+        }
+      }
 
-        if (fullName.includes(searchLower) || handle.includes(searchLower)) {
-          const result = await this.toDomain(doc.id, data);
-          if (result.isSuccess) {
-            profiles.push(result.getValue());
+      // If we have few results, also search by firstName
+      if (profiles.length < 10) {
+        const firstNameQuery = query(
+          collection(db, this.collectionName),
+          where('campusId', '==', campusId),
+          where('isActive', '==', true),
+          where('firstName', '>=', searchLower.charAt(0).toUpperCase() + searchLower.slice(1)),
+          where('firstName', '<=', searchLower.charAt(0).toUpperCase() + searchLower.slice(1) + '\uf8ff'),
+          firestoreLimit(10)
+        );
+
+        const firstNameSnapshot = await getDocs(firstNameQuery);
+        for (const doc of firstNameSnapshot.docs) {
+          if (!addedIds.has(doc.id)) {
+            const result = await this.toDomain(doc.id, doc.data());
+            if (result.isSuccess) {
+              profiles.push(result.getValue());
+              addedIds.add(doc.id);
+            }
           }
         }
       }
 
       return Result.ok<EnhancedProfile[]>(profiles);
     } catch (error) {
-      return Result.fail<EnhancedProfile[]>(`Search failed: ${error}`);
+      // Fallback to simple query if indexes don't exist
+      try {
+        const fallbackQuery = query(
+          collection(db, this.collectionName),
+          where('campusId', '==', campusId),
+          where('isActive', '==', true),
+          orderBy('createdAt', 'desc'),
+          firestoreLimit(20)
+        );
+        const snapshot = await getDocs(fallbackQuery);
+        const profiles: EnhancedProfile[] = [];
+        const searchLower = searchQuery.toLowerCase();
+
+        for (const doc of snapshot.docs) {
+          const data = doc.data();
+          const fullName = `${data.firstName} ${data.lastName}`.toLowerCase();
+          const handle = data.handle?.toLowerCase() || '';
+
+          if (fullName.includes(searchLower) || handle.includes(searchLower)) {
+            const result = await this.toDomain(doc.id, data);
+            if (result.isSuccess) {
+              profiles.push(result.getValue());
+            }
+          }
+        }
+        return Result.ok<EnhancedProfile[]>(profiles);
+      } catch (fallbackError) {
+        return Result.fail<EnhancedProfile[]>(`Search failed: ${error}`);
+      }
     }
   }
 
@@ -461,12 +516,26 @@ export class FirebaseProfileRepository implements IProfileRepository {
         connectedProfileIds.add(data.fromProfileId);
       });
 
-      // Fetch all connected profiles
+      // Batch fetch profiles using 'in' operator (max 30 IDs per query)
       const profiles: EnhancedProfile[] = [];
-      for (const connectedId of connectedProfileIds) {
-        const result = await this.findById(connectedId);
-        if (result.isSuccess) {
-          profiles.push(result.getValue());
+      const profileIdArray = Array.from(connectedProfileIds);
+      const BATCH_SIZE = 30; // Firestore 'in' operator limit
+
+      for (let i = 0; i < profileIdArray.length; i += BATCH_SIZE) {
+        const batch = profileIdArray.slice(i, i + BATCH_SIZE);
+        if (batch.length === 0) continue;
+
+        const batchQuery = query(
+          collection(db, this.collectionName),
+          where('__name__', 'in', batch)
+        );
+        const batchSnapshot = await getDocs(batchQuery);
+
+        for (const docSnap of batchSnapshot.docs) {
+          const result = await this.toDomain(docSnap.id, docSnap.data());
+          if (result.isSuccess) {
+            profiles.push(result.getValue());
+          }
         }
       }
 
@@ -483,8 +552,9 @@ export class FirebaseProfileRepository implements IProfileRepository {
         where('campusId', '==', campusId),
         where('isActive', '==', true)
       );
-      const snapshot = await getDocs(q);
-      return Result.ok<number>(snapshot.size);
+      // Use getCountFromServer to avoid fetching all documents
+      const countSnapshot = await getCountFromServer(q);
+      return Result.ok<number>(countSnapshot.data().count);
     } catch (error) {
       return Result.fail<number>(`Failed to count campus users: ${error}`);
     }

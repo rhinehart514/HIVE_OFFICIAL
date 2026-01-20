@@ -131,8 +131,8 @@ export function usePWA() {
             });
           }
         });
-      } catch (error) {
-        console.error("Service worker registration failed:", error);
+      } catch {
+        // Service worker registration failed - PWA will be unavailable
       }
     };
 
@@ -160,8 +160,7 @@ export function usePWA() {
         return true;
       }
       return false;
-    } catch (error) {
-      console.error("Install prompt failed:", error);
+    } catch {
       return false;
     }
   }, []);

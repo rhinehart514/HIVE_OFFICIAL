@@ -1,25 +1,34 @@
 'use client';
 
 /**
- * ArrivalState - Celebration Step
+ * ArrivalState - The Doors Open
+ * REDESIGNED: Jan 18, 2026
  *
- * Final state in the /enter flow
- * Shows success animation, then redirects to /spaces/browse
+ * Final state in the /enter flow.
+ * This is THE celebration moment - make it feel like coming home.
  *
- * GOLD BUDGET: Checkmark + particles are allowed (celebration)
+ * Changes from previous:
+ * - "Welcome home" instead of "You're in"
+ * - Preview of what's waiting (spaces, community)
+ * - Manual CTA (user controls when to proceed)
+ * - Confetti burst + gold glow (dramatic celebration)
+ * - No rushed auto-redirect
+ *
+ * GOLD BUDGET: Full celebration mode - gold CTA, particles, glow
  */
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { CircularProgress } from '@hive/ui/design-system/primitives';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
-import { GoldCheckmark } from '../motion/GoldCheckmark';
-import { ParticleField } from '../motion/ParticleField';
+import { ConfettiBurst } from '../motion/ConfettiBurst';
 import {
   stateVariants,
   childVariants,
   EASE_PREMIUM,
   DURATION,
+  GOLD,
 } from '../motion/entry-motion';
 
 export interface ArrivalStateProps {
@@ -29,58 +38,41 @@ export interface ArrivalStateProps {
   handle: string;
   /** Whether this is a new user (show handle) or returning */
   isNewUser: boolean;
-  /** Callback when celebration completes (triggers redirect) */
+  /** Callback when user clicks to proceed */
   onComplete: () => void;
-  /** Auto-redirect delay in seconds */
-  redirectDelay?: number;
 }
 
-const REDIRECT_DELAY_MS = 2000; // 2 seconds
+// Stats to show what's waiting (creates anticipation)
+const WAITING_STATS = [
+  { label: '400+ communities', delay: 0.8 },
+  { label: '35 AI tools', delay: 0.9 },
+  { label: '20+ events this week', delay: 1.0 },
+];
 
 export function ArrivalState({
   firstName,
   handle,
   isNewUser,
   onComplete,
-  redirectDelay = 2,
 }: ArrivalStateProps) {
   const shouldReduceMotion = useReducedMotion();
-  const [showCheckmark, setShowCheckmark] = React.useState(false);
-  const [showParticles, setShowParticles] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
+  const [showConfetti, setShowConfetti] = React.useState(false);
+  const [showContent, setShowContent] = React.useState(false);
 
-  // Start checkmark animation on mount
+  // Staggered reveal: confetti → content
   React.useEffect(() => {
-    const timer = setTimeout(() => setShowCheckmark(true), 100);
-    return () => clearTimeout(timer);
+    const timers = [
+      setTimeout(() => setShowConfetti(true), 200),
+      setTimeout(() => setShowContent(true), 400),
+    ];
+    return () => timers.forEach(clearTimeout);
   }, []);
 
-  // Handle checkmark completion -> particles
-  const handleCheckmarkComplete = React.useCallback(() => {
-    setShowParticles(true);
-  }, []);
-
-  // Auto-redirect countdown
-  React.useEffect(() => {
-    const startTime = Date.now();
-    const endTime = startTime + REDIRECT_DELAY_MS;
-
-    const updateProgress = () => {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      const newProgress = Math.min((elapsed / REDIRECT_DELAY_MS) * 100, 100);
-      setProgress(newProgress);
-
-      if (now >= endTime) {
-        onComplete();
-      } else {
-        requestAnimationFrame(updateProgress);
-      }
-    };
-
-    const animationFrame = requestAnimationFrame(updateProgress);
-    return () => cancelAnimationFrame(animationFrame);
-  }, [onComplete]);
+  // Greeting based on user type
+  const greeting = isNewUser ? 'Welcome home' : 'Welcome back';
+  const subtext = isNewUser
+    ? `You're officially part of HIVE, @${handle}.`
+    : `Good to see you again.`;
 
   return (
     <motion.div
@@ -88,122 +80,125 @@ export function ArrivalState({
       initial="initial"
       animate="animate"
       exit="exit"
-      className="flex flex-col items-center text-center relative"
+      className="flex flex-col items-center text-center relative py-8"
     >
-      {/* Particle field background */}
-      <ParticleField
-        trigger={showParticles}
-        particleCount={24}
-        radius={150}
-        duration={1.5}
-      />
+      {/* Confetti burst - dramatic celebration */}
+      <ConfettiBurst trigger={showConfetti} />
 
-      {/* Checkmark */}
-      <motion.div variants={childVariants} className="mb-8">
-        <GoldCheckmark
-          show={showCheckmark}
-          size="xl"
-          delay={0}
-          showRing={true}
-          onAnimationComplete={handleCheckmarkComplete}
-        />
-      </motion.div>
-
-      {/* Message */}
-      <motion.div variants={childVariants} className="mb-8">
-        <motion.h1
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: DURATION.gentle,
-            delay: 0.5,
-            ease: EASE_PREMIUM,
-          }}
-          className="text-[32px] font-semibold tracking-tight text-white"
-        >
-          You're in{firstName ? `, ${firstName}` : ''}.
-        </motion.h1>
-
-        {isNewUser && handle && (
-          <motion.p
-            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: DURATION.smooth,
-              delay: 0.7,
-              ease: EASE_PREMIUM,
-            }}
-            className="text-[15px] mt-2 text-white/50"
-          >
-            @{handle}
-          </motion.p>
-        )}
-
-        {!isNewUser && (
-          <motion.p
-            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: DURATION.smooth,
-              delay: 0.7,
-              ease: EASE_PREMIUM,
-            }}
-            className="text-[15px] mt-2 text-white/50"
-          >
-            Welcome back.
-          </motion.p>
-        )}
-
-        {/* Destination hint */}
-        <motion.p
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{
-            duration: DURATION.smooth,
-            delay: 0.9,
-            ease: EASE_PREMIUM,
-          }}
-          className="text-[13px] mt-4 text-white/30"
-        >
-          {isNewUser ? 'Discover your spaces →' : 'Back to your spaces →'}
-        </motion.p>
-      </motion.div>
-
-      {/* Redirect indicator */}
+      {/* Main message */}
       <motion.div
         variants={childVariants}
-        className="flex items-center gap-3"
+        className="mb-10"
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
+        animate={showContent ? { opacity: 1, y: 0 } : {}}
+        transition={{
+          duration: DURATION.gentle,
+          ease: EASE_PREMIUM,
+        }}
       >
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            duration: DURATION.smooth,
-            delay: 1.1,
-            ease: EASE_PREMIUM,
+        <motion.h1
+          className="text-[36px] lg:text-[42px] font-semibold tracking-tight text-white mb-3"
+          style={{
+            textShadow: '0 0 40px rgba(255, 215, 0, 0.15)',
           }}
         >
-          <CircularProgress
-            value={progress}
-            size={20}
-            variant="gold"
-            showLabel={false}
-          />
-        </motion.div>
+          {greeting}
+          {firstName && (
+            <>
+              ,<br />
+              <span
+                className="bg-gradient-to-r from-white via-white to-white/80 bg-clip-text"
+              >
+                {firstName}
+              </span>
+            </>
+          )}
+        </motion.h1>
 
         <motion.p
           initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={showContent ? { opacity: 1 } : {}}
           transition={{
             duration: DURATION.smooth,
-            delay: 1,
+            delay: 0.2,
             ease: EASE_PREMIUM,
           }}
-          className="text-sm text-white/40"
+          className="text-[15px] text-white/50"
         >
-          Loading spaces
+          {subtext}
         </motion.p>
       </motion.div>
+
+      {/* What's waiting - stats preview */}
+      <motion.div
+        variants={childVariants}
+        className="mb-10 flex flex-col gap-3"
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+        animate={showContent ? { opacity: 1, y: 0 } : {}}
+        transition={{
+          duration: DURATION.gentle,
+          delay: 0.3,
+          ease: EASE_PREMIUM,
+        }}
+      >
+        <p className="text-xs uppercase tracking-wide text-white/30 mb-2">
+          What's waiting for you
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          {WAITING_STATS.map((stat) => (
+            <motion.div
+              key={stat.label}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+              animate={showContent ? { opacity: 1, y: 0 } : {}}
+              transition={{
+                duration: DURATION.smooth,
+                delay: stat.delay,
+                ease: EASE_PREMIUM,
+              }}
+              className="px-4 py-2 rounded-full bg-white/[0.04] border border-white/[0.06]"
+            >
+              <span className="text-sm text-white/50">{stat.label}</span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* CTA Button - GOLD (earned moment) */}
+      <motion.div
+        variants={childVariants}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.95 }}
+        animate={showContent ? { opacity: 1, scale: 1 } : {}}
+        transition={{
+          duration: DURATION.gentle,
+          delay: 0.6,
+          ease: EASE_PREMIUM,
+        }}
+        className="w-full max-w-[280px]"
+      >
+        <Button
+          onClick={onComplete}
+          variant="cta"
+          size="lg"
+          className="w-full gap-2 group"
+        >
+          <span>Explore your campus</span>
+          <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        </Button>
+      </motion.div>
+
+      {/* Subtle hint */}
+      <motion.p
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={showContent ? { opacity: 0.3 } : {}}
+        transition={{
+          duration: DURATION.smooth,
+          delay: 1,
+          ease: EASE_PREMIUM,
+        }}
+        className="mt-6 text-xs text-white/30"
+      >
+        Join spaces, connect with people, build tools
+      </motion.p>
     </motion.div>
   );
 }

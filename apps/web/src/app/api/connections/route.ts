@@ -183,8 +183,7 @@ export async function GET(request: NextRequest) {
         hasMore: offset + limit < connections.length,
       },
     });
-  } catch (error) {
-    console.error('Error fetching connections:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch connections' },
       { status: 500 }

@@ -21,7 +21,7 @@
  */
 
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowPathIcon, ExclamationCircleIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
@@ -448,39 +448,58 @@ function InlineChatRenderer({
     };
   }, [state, componentId, spaceId, userId, isSpaceLeader, campusId, handleChange, handleAction]);
 
+  const prefersReducedMotion = useReducedMotion();
+
   // Loading state
   if (isLoading) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
         className={cn(
-          'rounded-lg border border-border/50 bg-muted/30 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-border/50 bg-muted/30',
+          compact ? 'p-4' : 'p-6',
           className
         )}
       >
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <ArrowPathIcon className="h-4 w-4 animate-spin" />
+        <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+          <motion.div
+            animate={prefersReducedMotion ? {} : { rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            <ArrowPathIcon className="h-5 w-5" />
+          </motion.div>
           <span>Loading...</span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // Inactive state
   if (!isActive || (state && !state.isActive)) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={springPresets.gentle}
         className={cn(
-          'rounded-lg border border-dashed border-border/50 bg-muted/20 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-dashed border-border/50 bg-muted/20',
+          compact ? 'p-4' : 'py-6',
           className
         )}
       >
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <BoltIcon className="h-4 w-4 opacity-50" />
-          <span>This component is no longer active</span>
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
+          <motion.div
+            className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center"
+            animate={prefersReducedMotion ? {} : { y: [0, -2, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+          >
+            <BoltIcon className="h-5 w-5 text-muted-foreground/50" />
+          </motion.div>
+          <span className="text-sm text-muted-foreground">This component is no longer active</span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -490,15 +509,22 @@ function InlineChatRenderer({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={springPresets.gentle}
         className={cn(
-          'rounded-lg border border-red-500/30 bg-red-500/10 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-red-500/30 bg-red-500/10',
+          compact ? 'p-4' : 'py-6',
           className
         )}
       >
-        <div className="flex items-center gap-2 text-sm text-red-400">
-          <ExclamationCircleIcon className="h-4 w-4" />
-          <span>{error}</span>
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
+          <motion.div
+            className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"
+            animate={prefersReducedMotion ? {} : { y: [0, -2, 0], rotate: [0, -2, 2, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, repeatType: 'reverse' }}
+          >
+            <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
+          </motion.div>
+          <span className="text-sm text-red-400">{error}</span>
         </div>
       </motion.div>
     );
@@ -663,39 +689,58 @@ function DeploymentRenderer({
     },
   };
 
+  const prefersReducedMotion = useReducedMotion();
+
   // Loading state
   if (isLoading) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.2 }}
         className={cn(
-          'rounded-lg border border-border/50 bg-muted/30 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-border/50 bg-muted/30',
+          compact ? 'p-4' : 'p-6',
           className
         )}
       >
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <ArrowPathIcon className="h-4 w-4 animate-spin" />
+        <div className="flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+          <motion.div
+            animate={prefersReducedMotion ? {} : { rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            <ArrowPathIcon className="h-5 w-5" />
+          </motion.div>
           <span>Loading...</span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   // Inactive state
   if (!isActive) {
     return (
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={springPresets.gentle}
         className={cn(
-          'rounded-lg border border-dashed border-border/50 bg-muted/20 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-dashed border-border/50 bg-muted/20',
+          compact ? 'p-4' : 'py-6',
           className
         )}
       >
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <BoltIcon className="h-4 w-4 opacity-50" />
-          <span>This tool is no longer active</span>
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
+          <motion.div
+            className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center"
+            animate={prefersReducedMotion ? {} : { y: [0, -2, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse' }}
+          >
+            <BoltIcon className="h-5 w-5 text-muted-foreground/50" />
+          </motion.div>
+          <span className="text-sm text-muted-foreground">This tool is no longer active</span>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -705,15 +750,22 @@ function DeploymentRenderer({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={springPresets.gentle}
         className={cn(
-          'rounded-lg border border-red-500/30 bg-red-500/10 p-4',
-          compact && 'p-3',
+          'rounded-lg border border-red-500/30 bg-red-500/10',
+          compact ? 'p-4' : 'py-6',
           className
         )}
       >
-        <div className="flex items-center gap-2 text-sm text-red-400">
-          <ExclamationCircleIcon className="h-4 w-4" />
-          <span>{error}</span>
+        <div className="flex flex-col items-center justify-center gap-2 text-center">
+          <motion.div
+            className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center"
+            animate={prefersReducedMotion ? {} : { y: [0, -2, 0], rotate: [0, -2, 2, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, repeatType: 'reverse' }}
+          >
+            <ExclamationCircleIcon className="h-5 w-5 text-red-400" />
+          </motion.div>
+          <span className="text-sm text-red-400">{error}</span>
         </div>
       </motion.div>
     );

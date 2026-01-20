@@ -143,8 +143,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         onSearchClick={() => setCommandPaletteOpen(true)}
         searchPlaceholder="Search spaces, tools, people..."
         onCreatePost={() => {
-          // TODO: Open post composer
-          console.log('Create post');
+          // Post composer will be implemented post-launch
         }}
         onCreateEvent={() => router.push('/events/create')}
         onCreateTool={() => router.push('/tools/create')}
@@ -185,7 +184,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         }}
         onToolClick={(toolId: string) => router.push(`/tools/${toolId}`)}
         onSpaceReorder={setSpaceOrder}
-        onBrowseMoreSpaces={() => router.push('/spaces/browse')}
+        onBrowseMoreSpaces={() => router.push('/spaces')}
         onBrowseMoreTools={() => router.push('/tools')}
       />
 
@@ -217,7 +216,7 @@ export function CampusShellProvider({ children }: { children: React.ReactNode })
         onOpenChange={setCommandPaletteOpen}
         items={[
           // Navigation
-          { id: 'browse', label: 'Browse Spaces', category: 'Navigation', shortcut: ['G', 'S'], onSelect: () => router.push('/spaces/browse') },
+          { id: 'browse', label: 'Browse Spaces', category: 'Navigation', shortcut: ['G', 'S'], onSelect: () => router.push('/spaces') },
           { id: 'profile', label: 'My Profile', category: 'Navigation', shortcut: ['G', 'P'], onSelect: () => router.push('/profile') },
           { id: 'notifications', label: 'Notifications', category: 'Navigation', shortcut: ['G', 'N'], onSelect: () => router.push('/notifications') },
           { id: 'settings', label: 'Settings', category: 'Navigation', shortcut: ['G', ','], onSelect: () => router.push('/settings') },

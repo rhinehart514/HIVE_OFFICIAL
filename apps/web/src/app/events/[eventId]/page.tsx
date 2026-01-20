@@ -76,8 +76,8 @@ export default function EventDetailPage() {
           const data = await res.json();
           setEvent(data);
         }
-      } catch (error) {
-        console.error('Failed to fetch event:', error);
+      } catch {
+        // Failed to fetch event
       } finally {
         setIsLoading(false);
       }
@@ -105,8 +105,8 @@ export default function EventDetailPage() {
       if (res.ok) {
         setEvent(prev => prev ? { ...prev, rsvpStatus: status } : null);
       }
-    } catch (error) {
-      console.error('Failed to RSVP:', error);
+    } catch {
+      // Failed to RSVP
     } finally {
       setIsRsvping(false);
     }

@@ -35,6 +35,9 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     description: space.description.value,
     category: space.category.value,
     memberCount: space.memberCount,
+    // Branding / Visual identity
+    iconURL: space.iconURL,
+    coverImageURL: space.coverImageURL,
     isVerified: space.isVerified,
     visibility: space.isPublic ? 'public' : 'private',
     // New space taxonomy fields

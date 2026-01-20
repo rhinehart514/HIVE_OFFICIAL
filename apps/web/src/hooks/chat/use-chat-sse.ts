@@ -153,8 +153,7 @@ export function useChatSSE(options: UseChatSSEOptions): UseChatSSEReturn {
             }
           }, delay);
         };
-      } catch (err) {
-        console.error("Error creating EventSource:", err);
+      } catch {
         setIsConnected(false);
       }
     },

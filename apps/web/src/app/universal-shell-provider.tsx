@@ -52,7 +52,7 @@ const UniversalShell = dynamic(
 // @locked January 2026
 // ============================================
 
-// Routes that should NEVER have shell (entry, landing, legal)
+// Routes that should NEVER have shell (entry, landing, legal, builders)
 // Mode: hidden
 const NO_SHELL_ROUTES = [
   '/enter',              // Entry flow
@@ -62,6 +62,7 @@ const NO_SHELL_ROUTES = [
   '/legal',              // Legal pages (privacy, terms, guidelines)
   '/debug-auth',         // Debug only
   '/hivelab/demo',       // Demo mode
+  '/tools',              // HiveLab IDE (full-screen builder experience)
 ];
 
 // Routes that show Compact shell (sidebar collapsed, topbar visible)

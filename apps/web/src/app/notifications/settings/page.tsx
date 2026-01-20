@@ -162,8 +162,8 @@ export default function NotificationSettingsPage() {
           const apiPrefs = await response.json();
           setPreferences(apiToUiPreferences(apiPrefs));
         }
-      } catch (error) {
-        console.error('Failed to load preferences:', error);
+      } catch {
+        // Failed to load - using defaults
       } finally {
         setIsLoadingPrefs(false);
       }
@@ -199,8 +199,7 @@ export default function NotificationSettingsPage() {
 
       toast.success('Preferences saved', 'Your notification settings have been updated.');
       router.push('/notifications');
-    } catch (error) {
-      console.error('Failed to save preferences:', error);
+    } catch {
       toast.error('Save failed', 'Could not save your preferences. Please try again.');
     } finally {
       setIsSaving(false);
@@ -349,7 +348,7 @@ export default function NotificationSettingsPage() {
             />
             {preferences.quietHoursEnabled && (
               <div className="p-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-[2fr_1fr] gap-4">
                   <div>
                     <Text size="xs" tone="muted" className="mb-1">Start</Text>
                     <input

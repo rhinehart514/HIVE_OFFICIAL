@@ -202,6 +202,14 @@ export function AICommandPalette({
     }
   }, [open]);
 
+  // Scroll selected item into view
+  useEffect(() => {
+    if (listRef.current && selectedIndex >= 0) {
+      const items = listRef.current.querySelectorAll('button');
+      items[selectedIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [selectedIndex]);
+
   // Keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -275,7 +283,7 @@ export function AICommandPalette({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-2xl z-50"
+            className="fixed top-1/2 -translate-y-[55%] left-4 right-4 mx-auto w-full max-w-2xl z-50"
           >
             <div className={cn(
               "rounded-2xl shadow-2xl overflow-hidden border",
@@ -324,7 +332,7 @@ export function AICommandPalette({
 
               {/* Command List */}
               {!selectedCommand && !loading && (
-                <div ref={listRef} className="max-h-[320px] overflow-y-auto">
+                <div ref={listRef} className="max-h-[40vh] overflow-y-auto">
                   {filteredCommands.length > 0 ? (
                     <div className="py-2">
                       {/* Selection context indicator (Cursor-like) */}

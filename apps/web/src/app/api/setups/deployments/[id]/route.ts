@@ -67,8 +67,7 @@ export async function GET(
     const dto = toSetupDeploymentDetailDTO(deployment);
 
     return jsonResponse({ deployment: dto });
-  } catch (error) {
-    console.error('[API] Error getting setup deployment:', error);
+  } catch {
     return errorResponse('Failed to get setup deployment', 500);
   }
 }
@@ -144,8 +143,7 @@ export async function PATCH(
     const dto = toSetupDeploymentDetailDTO(updatedDeployment);
 
     return jsonResponse({ deployment: dto });
-  } catch (error) {
-    console.error('[API] Error updating setup deployment:', error);
+  } catch {
     return errorResponse('Failed to update setup deployment', 500);
   }
 }

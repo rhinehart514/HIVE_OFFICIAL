@@ -69,8 +69,8 @@ export default function SpaceModerationPage() {
           const data = await moderationRes.json();
           setItems(data.items || []);
         }
-      } catch (error) {
-        console.error('Failed to fetch moderation queue:', error);
+      } catch {
+        // Failed to fetch - queue will show as empty
       } finally {
         setIsLoading(false);
       }
@@ -98,8 +98,8 @@ export default function SpaceModerationPage() {
           )
         );
       }
-    } catch (error) {
-      console.error('Failed to take action:', error);
+    } catch {
+      // Failed to take action - item state unchanged
     }
   };
 

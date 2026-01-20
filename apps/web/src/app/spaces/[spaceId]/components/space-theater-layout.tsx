@@ -98,6 +98,9 @@ interface SpaceTheaterLayoutProps {
   onApproveRequest?: (requestId: string) => Promise<boolean>;
   onRejectRequest?: (requestId: string, reason?: string) => Promise<boolean>;
   onRefreshRequests?: () => void;
+
+  // Leader onboarding banner (shown in hub mode)
+  leaderOnboardingBanner?: React.ReactNode;
 }
 
 // ============================================================
@@ -161,6 +164,7 @@ export function SpaceTheaterLayout({
   onApproveRequest,
   onRejectRequest,
   onRefreshRequests,
+  leaderOnboardingBanner,
 }: SpaceTheaterLayoutProps) {
 
   return (
@@ -199,6 +203,9 @@ export function SpaceTheaterLayout({
             exit="exit"
             className="flex-1 overflow-auto"
           >
+            {/* Leader Onboarding Banner (if provided) */}
+            {leaderOnboardingBanner}
+
             <SpaceHub
               space={space}
               isMember={isMember}
