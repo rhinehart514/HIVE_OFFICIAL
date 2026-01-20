@@ -329,8 +329,9 @@ async function sendVerificationCodeEmail(
 
 /**
  * Generate HTML email template for verification code
+ * Design: Apple transactional style, dark theme
  */
-function generateVerificationCodeHtml(code: string, schoolName: string, email: string): string {
+function generateVerificationCodeHtml(code: string, _schoolName: string, _email: string): string {
   // Format code with spacing for readability: "427 851"
   const formattedCode = code.slice(0, 3) + ' ' + code.slice(3);
 
@@ -341,133 +342,61 @@ function generateVerificationCodeHtml(code: string, schoolName: string, email: s
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Your HIVE Code</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #0A0A0B;
-      color: #ffffff;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    .logo {
-      font-size: 32px;
-      font-weight: bold;
-      color: #FFD700;
-      text-decoration: none;
-    }
-    .content {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 40px;
-      text-align: center;
-    }
-    h1 {
-      font-size: 24px;
-      margin: 0 0 16px 0;
-      color: #ffffff;
-    }
-    p {
-      font-size: 16px;
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.8);
-      margin: 16px 0;
-    }
-    .school-badge {
-      display: inline-block;
-      background: rgba(255, 215, 0, 0.1);
-      border: 1px solid rgba(255, 215, 0, 0.3);
-      border-radius: 8px;
-      padding: 8px 16px;
-      margin: 20px 0;
-      color: #FFD700;
-      font-weight: 600;
-    }
-    .code-box {
-      background: rgba(255, 215, 0, 0.1);
-      border: 2px solid #FFD700;
-      border-radius: 12px;
-      padding: 24px 32px;
-      margin: 32px 0;
-      display: inline-block;
-    }
-    .code {
-      font-size: 36px;
-      font-weight: bold;
-      letter-spacing: 8px;
-      color: #FFD700;
-      font-family: 'SF Mono', Monaco, 'Courier New', monospace;
-    }
-    .expiry {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.5);
-      margin-top: 24px;
-    }
-    .warning {
-      background: rgba(255, 59, 48, 0.1);
-      border: 1px solid rgba(255, 59, 48, 0.3);
-      border-radius: 8px;
-      padding: 12px;
-      margin: 20px 0;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.7);
-    }
-    .footer {
-      margin-top: 40px;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.4);
-      font-size: 14px;
-    }
-    .footer a {
-      color: #FFD700;
-      text-decoration: none;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <a href="https://hive.college" class="logo">HIVE</a>
-    </div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #000000;">
+    <tr>
+      <td align="center" style="padding: 60px 20px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width: 400px;">
 
-    <div class="content">
-      <h1>Your verification code</h1>
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom: 48px;">
+              <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.9);">HIVE</span>
+            </td>
+          </tr>
 
-      <div class="school-badge">${schoolName}</div>
+          <!-- Code -->
+          <tr>
+            <td align="center" style="padding-bottom: 16px;">
+              <span style="font-size: 42px; font-weight: 600; letter-spacing: 0.15em; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;">${formattedCode}</span>
+            </td>
+          </tr>
 
-      <p>Enter this code to sign in to HIVE:</p>
+          <!-- Label -->
+          <tr>
+            <td align="center" style="padding-bottom: 48px;">
+              <span style="font-size: 15px; color: rgba(255, 255, 255, 0.5);">Verification code</span>
+            </td>
+          </tr>
 
-      <div class="code-box">
-        <span class="code">${formattedCode}</span>
-      </div>
+          <!-- Expiry -->
+          <tr>
+            <td align="center" style="padding-bottom: 48px;">
+              <span style="font-size: 13px; color: rgba(255, 255, 255, 0.35);">Expires in 10 minutes</span>
+            </td>
+          </tr>
 
-      <p class="expiry">This code expires in 10 minutes.</p>
+          <!-- Divider -->
+          <tr>
+            <td align="center" style="padding-bottom: 24px;">
+              <div style="width: 40px; height: 1px; background-color: rgba(255, 255, 255, 0.1);"></div>
+            </td>
+          </tr>
 
-      <div class="warning">
-        If you didn't request this code, you can safely ignore this email.
-      </div>
-    </div>
+          <!-- Footer -->
+          <tr>
+            <td align="center">
+              <span style="font-size: 12px; color: rgba(255, 255, 255, 0.25); line-height: 1.6;">
+                If you didn't request this, ignore this email.
+              </span>
+            </td>
+          </tr>
 
-    <div class="footer">
-      <p>
-        Sent to ${email}<br>
-        <a href="https://hive.college/privacy">Privacy</a> &bull;
-        <a href="https://hive.college/terms">Terms</a>
-      </p>
-      <p style="margin-top: 20px;">
-        &copy; 2025 HIVE. Connect. Coordinate. Thrive.
-      </p>
-    </div>
-  </div>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;
