@@ -55,14 +55,16 @@ const UniversalShell = dynamic(
 // Routes that should NEVER have shell (entry, landing, legal, builders)
 // Mode: hidden
 const NO_SHELL_ROUTES = [
-  '/enter',              // Entry flow
+  '/enter',              // Entry flow (signup)
+  '/login',              // Login flow (returning users)
   '/landing',            // Pre-auth landing
   '/waitlist',           // Waitlist signup
   '/schools',            // School selection
   '/legal',              // Legal pages (privacy, terms, guidelines)
   '/debug-auth',         // Debug only
   '/hivelab/demo',       // Demo mode
-  '/tools',              // HiveLab IDE (full-screen builder experience)
+  // Note: /tools landing page now shows shell (ChatGPT-style)
+  // /tools/[toolId] is hidden via FOCUS_FLOW_ROUTES
 ];
 
 // Routes that show Compact shell (sidebar collapsed, topbar visible)
@@ -91,10 +93,13 @@ const FOCUS_FLOW_ROUTES = [
   '/spaces/*/post',           // Create post in space
   '/spaces/*/event/new',      // Create event in space
 
-  // Tools
+  // Tools (IDE is full-screen, landing shows shell)
+  '/tools/new',               // New tool creation (transitional)
   '/tools/create',            // Create tool wizard
   '/tools/*/deploy',          // Deploy tool flow
   '/tools/*/run',             // Tool execution (full immersion)
+  '/tools/*/edit',            // Tool editing (legacy redirect)
+  '/tools/*/preview',         // Tool preview
 
   // Events
   '/events/*/checkin',        // Event check-in flow
