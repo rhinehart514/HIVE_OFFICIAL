@@ -44,6 +44,10 @@ export interface EventsModeProps {
   events: SpaceEvent[];
   /** Loading state */
   isLoading?: boolean;
+  /** Error message */
+  error?: string | null;
+  /** Retry callback */
+  onRetry?: () => void;
   /** Can user create events */
   canCreate?: boolean;
   /** RSVP callback */
@@ -128,8 +132,8 @@ function EventCard({ event, size = 'medium', onRsvp, onClick }: EventCardProps) 
 
   return (
     <motion.button
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       className={cn(
         'relative w-full text-left rounded-2xl overflow-hidden',
         'bg-[#141312] border border-white/[0.06]',
@@ -220,7 +224,7 @@ function EventCard({ event, size = 'medium', onRsvp, onClick }: EventCardProps) 
               <div className="flex gap-2">
                 <button
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-all active:scale-95',
                     event.userRsvp === 'going'
                       ? 'bg-[#FFD700] text-black'
                       : 'bg-white/[0.06] text-white hover:bg-white/[0.10]',
@@ -234,7 +238,7 @@ function EventCard({ event, size = 'medium', onRsvp, onClick }: EventCardProps) 
                 </button>
                 <button
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-all active:scale-95',
                     event.userRsvp === 'maybe'
                       ? 'bg-white/[0.15] text-white'
                       : 'bg-white/[0.06] text-[#A3A19E] hover:bg-white/[0.10]',
@@ -263,6 +267,8 @@ export function EventsMode({
   spaceId,
   events,
   isLoading = false,
+  error,
+  onRetry,
   canCreate = false,
   onRsvp,
   onViewEvent,
@@ -291,16 +297,42 @@ export function EventsMode({
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className={cn('flex-1 flex items-center justify-center', className)}>
+        <div className="text-center px-6">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-[#A3A19E] text-base mb-2">Something went wrong</p>
+          <p className="text-[#6B6B70] text-sm mb-4">{error}</p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 rounded-lg bg-white/[0.06] text-white text-sm font-medium
+                hover:bg-white/[0.10] active:scale-95 transition-all"
+            >
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex-1 overflow-y-auto', className)}>
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-3 md:px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-semibold text-white">Events</h1>
           {canCreate && onCreateEvent && (
             <button
               className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
-                hover:bg-[#FFD700]/90 transition-colors"
+                hover:bg-[#FFD700]/90 active:scale-95 transition-all"
               onClick={onCreateEvent}
             >
               Create Event
@@ -370,14 +402,14 @@ export function EventsMode({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-[#A3A19E] text-lg mb-2">No events yet</p>
+            <p className="text-[#A3A19E] text-lg mb-2">Nothing scheduled yet</p>
             <p className="text-[#6B6B70] text-sm mb-6">
               {canCreate ? 'Create the first event for this space' : 'Check back later for upcoming events'}
             </p>
             {canCreate && onCreateEvent && (
               <button
                 className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
-                  hover:bg-[#FFD700]/90 transition-colors"
+                  hover:bg-[#FFD700]/90 active:scale-95 transition-all"
                 onClick={onCreateEvent}
               >
                 Create Event

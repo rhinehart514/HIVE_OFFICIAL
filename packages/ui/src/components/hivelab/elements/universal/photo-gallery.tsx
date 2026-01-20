@@ -170,13 +170,13 @@ export function PhotoGalleryElement({
                 transition={{ delay: index * 0.03, ...springPresets.snappy }}
                 className="group relative aspect-square rounded-lg overflow-hidden bg-[var(--hivelab-surface)] cursor-pointer"
                 onClick={() => handlePhotoClick(photo)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
               >
                 <img
                   src={photo.thumbnailUrl || photo.url}
                   alt={photo.caption || 'Photo'}
-                  className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  className="w-full h-full object-cover transition-opacity group-hover:opacity-80"
                   loading="lazy"
                 />
 

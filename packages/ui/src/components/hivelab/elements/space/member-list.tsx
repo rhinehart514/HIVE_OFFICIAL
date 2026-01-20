@@ -139,7 +139,7 @@ export function MemberListElement({ config, data, context, onChange, onAction }:
                   }`}
                   onClick={() => handleMemberClick(member)}
                   whileHover={{ x: 2 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ opacity: 0.8 }}
                 >
                   {member.photoURL ? (
                     <motion.img

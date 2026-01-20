@@ -197,16 +197,22 @@ function TheaterComposer({
   placeholder = "Message...",
 }: TheaterComposerProps) {
   const [value, setValue] = React.useState('');
+  const [isSending, setIsSending] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value.trim() || disabled) return;
+    if (!value.trim() || disabled || isSending) return;
 
-    onSend(value.trim());
-    setValue('');
-    inputRef.current?.focus();
+    setIsSending(true);
+    try {
+      onSend(value.trim());
+      setValue('');
+      inputRef.current?.focus();
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -234,9 +240,9 @@ function TheaterComposer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-white/[0.06] bg-[#0A0A09]"
+      className="border-t border-white/[0.06] bg-[var(--bg-ground,#0A0A09)]"
     >
-      <div className="px-6 py-4">
+      <div className="px-3 md:px-6 py-4">
         <div className="flex items-end gap-3">
           <textarea
             ref={inputRef}
@@ -263,19 +269,26 @@ function TheaterComposer({
 
           <button
             type="submit"
-            disabled={!value.trim() || disabled}
+            disabled={!value.trim() || disabled || isSending}
             className={cn(
               'p-3 rounded-xl',
               'transition-all duration-200',
-              value.trim()
-                ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
+              value.trim() && !isSending
+                ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90 active:scale-95'
                 : 'bg-white/[0.06] text-[#6B6B70]',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+            {isSending ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -334,7 +347,7 @@ function VirtualMessageRow({
     };
 
     return (
-      <div id={`message-${message.id}`} className="px-6 py-3">
+      <div id={`message-${message.id}`} className="px-3 md:px-6 py-3">
         {/* Author header */}
         {showAuthor && (
           <div className="flex items-baseline gap-2 mb-2">
@@ -524,16 +537,55 @@ export function TheaterChatBoard({
     }
   };
 
-  // Loading state
+  // Loading state - message row skeletons with staggered animation
   if (isLoading) {
+    const skeletonVariants = [
+      { nameWidth: 'w-20', contentWidths: ['w-3/4', 'w-1/2'] },
+      { nameWidth: 'w-28', contentWidths: ['w-full'] },
+      { nameWidth: 'w-16', contentWidths: ['w-2/3', 'w-1/3'] },
+      { nameWidth: 'w-24', contentWidths: ['w-5/6'] },
+      { nameWidth: 'w-20', contentWidths: ['w-1/2', 'w-2/3', 'w-1/4'] },
+    ];
+
     return (
       <div className={cn('flex-1 flex flex-col', className)}>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-2 text-[#6B6B70]">
-            <div className="w-2 h-2 rounded-full bg-[#6B6B70] animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-[#6B6B70] animate-pulse delay-100" />
-            <div className="w-2 h-2 rounded-full bg-[#6B6B70] animate-pulse delay-200" />
-          </div>
+        <div className="flex-1 flex flex-col gap-1 px-3 md:px-6 py-4">
+          {skeletonVariants.map((variant, i) => (
+            <div
+              key={i}
+              className="flex gap-4 py-3"
+              style={{
+                animationDelay: `${i * 100}ms`,
+              }}
+            >
+              {/* Avatar skeleton */}
+              <div
+                className="w-10 h-10 rounded-xl bg-white/[0.04] flex-shrink-0 animate-pulse"
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
+              <div className="flex-1 space-y-2 pt-1">
+                {/* Name skeleton */}
+                <div
+                  className={cn(
+                    'h-3.5 rounded-md bg-white/[0.06] animate-pulse',
+                    variant.nameWidth
+                  )}
+                  style={{ animationDelay: `${i * 100 + 50}ms` }}
+                />
+                {/* Content lines */}
+                {variant.contentWidths.map((width, j) => (
+                  <div
+                    key={j}
+                    className={cn(
+                      'h-3 rounded bg-white/[0.04] animate-pulse',
+                      width
+                    )}
+                    style={{ animationDelay: `${i * 100 + 100 + j * 50}ms` }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -568,11 +620,20 @@ export function TheaterChatBoard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
               </div>
-              <p className="text-white/60 text-base font-medium mb-2">Be the first to say hello!</p>
-              <p className="text-white/30 text-sm mb-4">Break the ice and start a conversation with your community.</p>
-              <p className="text-white/40 text-xs italic">
-                Try: &quot;Hey everyone, excited to be here!&quot;
-              </p>
+              {canPost ? (
+                <>
+                  <p className="text-white/60 text-base font-medium mb-2">Be the first to say hello!</p>
+                  <p className="text-white/30 text-sm mb-4">Break the ice and start a conversation with your community.</p>
+                  <p className="text-white/40 text-xs italic">
+                    Try: &quot;Hey everyone, excited to be here!&quot;
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60 text-base font-medium mb-2">No messages yet</p>
+                  <p className="text-white/30 text-sm">Join this space to start chatting with the community.</p>
+                </>
+              )}
             </div>
           </div>
         )}

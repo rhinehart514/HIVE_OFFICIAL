@@ -51,8 +51,8 @@ function WorkflowCard({
     <motion.button
       type="button"
       onClick={onClick}
-      whileHover={{ y: -6, scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       transition={workshopTransitionSnappy}
       className={cn(
         'relative flex flex-col items-center text-center p-6 rounded-2xl',
@@ -67,7 +67,7 @@ function WorkflowCard({
       <div
         className={cn(
           'w-12 h-12 rounded-xl flex items-center justify-center mb-4',
-          'transition-all duration-200 group-hover:scale-115 group-hover:rotate-3',
+          'transition-all duration-200 group-hover:opacity-80',
           iconBg || 'bg-[var(--hivelab-bg)]'
         )}
       >

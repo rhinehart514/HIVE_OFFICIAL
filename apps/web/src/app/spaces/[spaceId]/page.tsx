@@ -265,6 +265,11 @@ function SpaceDetailContent() {
     setModal('quickCreate', true);
   };
 
+  const handleBuildTool = () => {
+    // Navigate to HiveLab with space context
+    router.push(`/tools/new?spaceId=${spaceId}`);
+  };
+
   const handleRemoveTool = (placementId: string) => {
     handlers.handleRemoveTool(placementId);
   };
@@ -388,6 +393,7 @@ function SpaceDetailContent() {
         onRunTool={handleRunTool}
         onViewTool={handleViewTool}
         onAddTool={handleAddTool}
+        onBuildTool={handleBuildTool}
         onRemoveTool={handleRemoveTool}
         // Members
         members={mappedMembers}

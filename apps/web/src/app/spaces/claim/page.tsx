@@ -187,7 +187,7 @@ export default function ClaimSpacePage() {
       }
 
       setStep('success');
-      toast.success('Space claimed!');
+      toast.success('Your space is live!', `You're now the admin of ${selectedSpace.name}`);
 
       // Set flag for onboarding banner
       try {
@@ -210,29 +210,81 @@ export default function ClaimSpacePage() {
     }
   };
 
-  // Success state
+  // Success state - Celebration moment
   if (step === 'success' && selectedSpace) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center">
-        <motion.div className="text-center space-y-4" {...fadeIn(0)}>
-          <div
+      <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
+        {/* Ambient celebration glow */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 0.4, scale: 1.2 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]"
+            style={{
+              background: `radial-gradient(ellipse at center, var(--life-gold) 0%, transparent 70%)`,
+              filter: 'blur(80px)',
+            }}
+          />
+        </div>
+
+        <motion.div
+          className="relative text-center space-y-6"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* Success icon with animation */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
             className={cn(
-              'w-16 h-16 rounded-2xl flex items-center justify-center mx-auto',
+              'w-20 h-20 rounded-2xl flex items-center justify-center mx-auto',
               getCategoryBgClass(selectedSpace.category)
             )}
           >
-            <Check className={cn('h-8 w-8', getCategoryTextClass(selectedSpace.category))} />
-          </div>
-          <div>
-            <Text weight="semibold" size="lg" className="text-white mb-1">
-              You&apos;re the admin.
-            </Text>
-            <Text className="text-white/60">
-              <strong className="text-white">{selectedSpace.name}</strong> is yours to lead.
-            </Text>
-            <Text size="sm" className="text-white/40 mt-2">
-              Taking you there now...
-            </Text>
+            <motion.div
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+            >
+              <Check className={cn('h-10 w-10', getCategoryTextClass(selectedSpace.category))} />
+            </motion.div>
+          </motion.div>
+
+          {/* Text content */}
+          <div className="space-y-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Text weight="semibold" size="lg" className="text-white text-xl">
+                Your space is live!
+              </Text>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Text className="text-white/60">
+                <strong className="text-white">{selectedSpace.name}</strong> is now yours to lead.
+              </Text>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="pt-2"
+            >
+              <Text size="sm" className="text-white/40">
+                Taking you there now...
+              </Text>
+            </motion.div>
           </div>
         </motion.div>
       </div>

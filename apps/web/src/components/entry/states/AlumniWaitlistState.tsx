@@ -61,11 +61,11 @@ export function AlumniWaitlistState({
         <div
           className="w-16 h-16 rounded-2xl flex items-center justify-center"
           style={{
-            background: `linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,215,0,0.05) 100%)`,
-            boxShadow: `0 0 30px rgba(255,215,0,0.1)`,
+            background: `linear-gradient(135deg, color-mix(in srgb, var(--life-gold) 15%, transparent) 0%, color-mix(in srgb, var(--life-gold) 5%, transparent) 100%)`,
+            boxShadow: `0 0 30px color-mix(in srgb, var(--life-gold) 10%, transparent)`,
           }}
         >
-          <Bell className="w-7 h-7 text-[#FFD700]" />
+          <Bell className="w-7 h-7" style={{ color: 'var(--life-gold)' }} />
         </div>
       </motion.div>
 

@@ -105,8 +105,8 @@ function PersonCard({
         transition-all duration-200
         text-left w-full
       "
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
     >
       {/* Avatar */}
       <div className="relative shrink-0">

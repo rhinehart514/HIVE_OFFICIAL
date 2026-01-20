@@ -186,8 +186,8 @@ export function SchoolSearch() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    whileHover={{ x: 4, scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ opacity: 0.9 }}
+                    whileTap={{ opacity: 0.8 }}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">

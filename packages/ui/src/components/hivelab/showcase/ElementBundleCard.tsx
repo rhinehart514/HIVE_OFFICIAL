@@ -219,8 +219,8 @@ export function ElementBundleCard({
           expanded && 'border-b ' + colors.border
         )}
         onClick={handleToggle}
-        whileHover={{ scale: 1.005 }}
-        whileTap={{ scale: 0.995 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
       >
         {/* Icon */}
         <div
@@ -243,8 +243,8 @@ export function ElementBundleCard({
         {expanded ? (
           <motion.div
             className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ opacity: 0.9 }}
+            whileTap={{ opacity: 0.8 }}
           >
             <XMarkIcon className="h-4 w-4" />
           </motion.div>
@@ -309,8 +309,8 @@ export function ElementBundleCard({
                   'hover:opacity-80'
                 )}
                 onClick={() => handlePromptClick(bundle.promptSuggestion)}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
               >
                 <span className={cn('text-sm font-medium', colors.accent)}>
                   Try:

@@ -77,7 +77,7 @@ export function ModeHeader({
         'sticky top-0 z-40',
         'flex items-center justify-between',
         'px-6 py-4',
-        'bg-[#0A0A09]/95 backdrop-blur-md',
+        'bg-[var(--bg-ground,#0A0A09)]/95 backdrop-blur-md',
         'border-b border-white/[0.04]',
         className
       )}

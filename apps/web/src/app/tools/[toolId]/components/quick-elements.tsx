@@ -58,7 +58,7 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
             text-[#A3A19E] text-sm font-medium
             transition-all duration-200
             hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-[#FAF9F7]
-            active:scale-[0.98]
+            active:opacity-80
             disabled:opacity-40 disabled:cursor-not-allowed"
           title={element.description}
         >
@@ -77,7 +77,7 @@ export function QuickElements({ onAddElement, disabled = false }: QuickElementsP
             text-[#6B6B70]
             transition-all duration-200
             hover:bg-white/[0.06] hover:border-white/[0.10] hover:text-[#A3A19E]
-            active:scale-[0.98]
+            active:opacity-80
             disabled:opacity-40 disabled:cursor-not-allowed"
           title="More elements"
         >

@@ -54,8 +54,8 @@ const EmojiButton: React.FC<{
     className={cn(
       'flex items-center justify-center rounded-lg',
       'transition-all duration-[var(--duration-snap)]',
-      'hover:bg-[var(--color-bg-elevated)] hover:scale-110',
-      'active:scale-95',
+      'hover:bg-[var(--color-bg-elevated)] hover:opacity-90',
+      'active:opacity-80',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
       selected && 'bg-[var(--color-bg-elevated)] ring-1 ring-[var(--color-accent-gold)]/30',
       size === 'sm' ? 'w-8 h-8 text-lg' : 'w-10 h-10 text-xl'

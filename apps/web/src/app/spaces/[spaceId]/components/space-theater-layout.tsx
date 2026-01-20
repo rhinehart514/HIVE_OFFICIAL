@@ -69,6 +69,7 @@ interface SpaceTheaterLayoutProps {
   onRunTool?: (toolId: string) => void;
   onViewTool?: (toolId: string) => void;
   onAddTool?: () => void;
+  onBuildTool?: () => void;
   onRemoveTool?: (placementId: string) => void;
 
   // Members data
@@ -146,6 +147,7 @@ export function SpaceTheaterLayout({
   onRunTool,
   onViewTool,
   onAddTool,
+  onBuildTool,
   onRemoveTool,
   // Members
   members = [],
@@ -168,7 +170,7 @@ export function SpaceTheaterLayout({
 }: SpaceTheaterLayoutProps) {
 
   return (
-    <div className="min-h-screen h-screen bg-[#0A0A09] flex flex-col overflow-hidden">
+    <div className="min-h-screen h-screen bg-[var(--bg-ground,#0A0A09)] flex flex-col overflow-hidden">
       {/* Context Pill (visible in all modes except hub) */}
       <AnimatePresence>
         {mode !== 'hub' && (
@@ -269,6 +271,7 @@ export function SpaceTheaterLayout({
               onRunTool={onRunTool}
               onViewTool={onViewTool}
               onAddTool={onAddTool}
+              onBuildTool={onBuildTool}
               onRemoveTool={onRemoveTool}
             />
           </motion.div>

@@ -52,7 +52,7 @@ const ReactionBadge: React.FC<ReactionBadgeProps> = ({
         hasReacted
           ? 'bg-[var(--color-accent-gold)]/10 border-[var(--color-accent-gold)]/30 text-[var(--color-accent-gold)]'
           : 'bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
-        onClick && 'cursor-pointer hover:scale-105 active:scale-95',
+        onClick && 'cursor-pointer hover:opacity-90 active:opacity-80',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         className
       )}
@@ -144,7 +144,7 @@ const ReactionBadgeExpanded: React.FC<ReactionBadgeExpandedProps> = ({
         hasReacted
           ? 'bg-[var(--color-accent-gold)]/10 border-[var(--color-accent-gold)]/30'
           : 'bg-[var(--color-bg-elevated)] border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
-        onClick && 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]',
+        onClick && 'cursor-pointer hover:opacity-90 active:opacity-80',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         className
       )}

@@ -636,7 +636,7 @@ function ElementNode({
       }}
       exit={{ opacity: 0, scale: 0.9, y: -10 }}
       transition={springPresets.snappy}
-      whileHover={!isDragging && !isSelected ? { scale: 1.02, y: -2 } : {}}
+      whileHover={!isDragging && !isSelected ? { opacity: 0.9, y: -2 } : {}}
       className={cn(
         'absolute rounded-2xl',
         isDragging && 'cursor-grabbing z-50',
@@ -734,7 +734,7 @@ function ElementNode({
         type="button"
         className={cn(
           'absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all',
-          mode === 'connect' && 'cursor-pointer hover:scale-125'
+          mode === 'connect' && 'cursor-pointer hover:opacity-80'
         )}
         style={{
           backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,
@@ -755,7 +755,7 @@ function ElementNode({
         type="button"
         className={cn(
           'absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center',
-          mode === 'connect' && 'cursor-pointer hover:scale-125'
+          mode === 'connect' && 'cursor-pointer hover:opacity-80'
         )}
         style={{
           backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,

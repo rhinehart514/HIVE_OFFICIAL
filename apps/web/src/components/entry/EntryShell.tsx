@@ -59,7 +59,7 @@ export function EntryShell({
   return (
     <div
       className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden"
-      style={{ backgroundColor: '#0A0A09' }}
+      style={{ backgroundColor: 'var(--bg-ground)' }}
       suppressHydrationWarning
     >
       {/* LEFT PANEL - Ambient Brand (40% desktop, header on mobile) */}
@@ -160,7 +160,7 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden"
-      style={{ backgroundColor: '#0A0A09' }}
+      style={{ backgroundColor: 'var(--bg-ground)' }}
       suppressHydrationWarning
     >
       {/* LEFT PANEL - Static */}

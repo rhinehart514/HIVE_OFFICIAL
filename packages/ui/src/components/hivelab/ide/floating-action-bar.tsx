@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useRef, useCallback, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowsPointingOutIcon, MinusIcon, PlusIcon, Squares2X2Icon, ArrowUturnLeftIcon, ArrowUturnRightIcon, SparklesIcon, ArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { PlayIcon as PlayIconSolid } from '@heroicons/react/24/solid';
@@ -57,6 +57,8 @@ interface FloatingActionBarProps {
   aiStreamingText?: string;
   selectedCount?: number;
   onAICancel?: () => void;
+  /** Initial prompt to pre-fill the AI input */
+  initialPrompt?: string | null;
 }
 
 export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingActionBarProps>(function FloatingActionBar({
@@ -78,6 +80,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
   aiStreamingText,
   selectedCount = 0,
   onAICancel,
+  initialPrompt,
 }, ref) {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -93,6 +96,13 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
       setShowConversation(false);
     },
   }));
+
+  // Pre-fill input with initial prompt
+  useEffect(() => {
+    if (initialPrompt) {
+      setInput(initialPrompt);
+    }
+  }, [initialPrompt]);
 
   // Get contextual placeholder
   const getPlaceholder = useCallback(() => {
@@ -330,7 +340,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             'flex items-center gap-2 px-4 py-2 rounded-xl',
             'text-black font-semibold text-sm',
             'transition-all duration-200',
-            'hover:scale-105 hover:shadow-[0_0_16px_rgba(212,175,55,0.4)] active:scale-100',
+            'hover:opacity-90 hover:shadow-[0_0_16px_rgba(212,175,55,0.4)] active:opacity-80',
             focusRing
           )}
           style={{ backgroundColor: TOOLBAR_COLORS.runButton }}

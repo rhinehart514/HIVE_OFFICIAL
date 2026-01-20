@@ -159,8 +159,8 @@ export function ElementShowcase({
           <motion.button
             onClick={handlePromptClick}
             className="mt-3 w-full rounded-lg bg-muted/50 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            whileHover={{ opacity: 0.9 }}
+            whileTap={{ opacity: 0.8 }}
           >
             <span className="opacity-60">Try: </span>
             &ldquo;{metadata.prompts[0]}&rdquo;
@@ -179,8 +179,8 @@ export function ElementShowcase({
         className
       )}
       onClick={handleClick}
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -4, opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 100, damping: 20 }}

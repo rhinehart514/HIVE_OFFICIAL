@@ -154,7 +154,7 @@ export function SpacePreviewModal({
             <h2 className="text-xl font-semibold text-white mb-1 flex items-center justify-center gap-2">
               {space.name}
               {space.isVerified && (
-                <CheckIcon className="w-4 h-4 text-life-gold" />
+                <CheckIcon className="w-4 h-4 text-gold-500" />
               )}
             </h2>
             {space.category && (
@@ -175,7 +175,7 @@ export function SpacePreviewModal({
           <div className="flex items-center justify-center gap-6 mb-6">
             <div className="flex items-center gap-2 text-sm text-white/50">
               <UserGroupIcon className="w-4 h-4" />
-              <span>{space.memberCount.toLocaleString()} members</span>
+              <span>{space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}</span>
             </div>
             {space.onlineCount !== undefined && space.onlineCount > 0 && (
               <div className="flex items-center gap-2 text-sm">
@@ -230,7 +230,7 @@ export function SpacePreviewModal({
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-center gap-2 py-3 text-life-gold"
+                className="flex items-center justify-center gap-2 py-3 text-gold-500"
               >
                 <CheckIcon className="w-5 h-5" />
                 <span className="font-medium">Welcome! Taking you there...</span>
@@ -249,7 +249,7 @@ export function SpacePreviewModal({
                 disabled={isJoining}
                 className={cn(
                   'w-full font-medium transition-all duration-200',
-                  'bg-life-gold text-[#0A0A09] hover:bg-life-gold/90',
+                  'bg-gold-500 text-[#0A0A09] hover:bg-gold-400',
                   isJoining && 'opacity-70 cursor-wait'
                 )}
               >

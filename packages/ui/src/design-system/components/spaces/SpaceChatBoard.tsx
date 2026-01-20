@@ -321,7 +321,7 @@ function BoardTabs({
   const boardIds = boards.map((b) => b.id);
 
   return (
-    <div className="flex items-center gap-1 px-4 py-2 border-b border-white/[0.06] bg-[#0A0A09] overflow-x-auto scrollbar-none">
+    <div className="flex items-center gap-1 px-3 md:px-4 py-2 border-b border-white/[0.06] bg-[var(--bg-ground,#0A0A09)] overflow-x-auto scrollbar-none">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -388,30 +388,36 @@ function ChatComposer({
 }: ChatComposerProps) {
   const [value, setValue] = React.useState('');
   const [showSlashHint, setShowSlashHint] = React.useState(false);
+  const [isSending, setIsSending] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value.trim() || disabled) return;
+    if (!value.trim() || disabled || isSending) return;
 
     const trimmed = value.trim();
+    setIsSending(true);
 
-    // Check for slash command
-    if (enableSlashCommands && trimmed.startsWith('/') && onSlashCommand) {
-      const cmd = parseSlashCommand(trimmed);
-      if (cmd && cmd.isValid) {
-        await onSlashCommand(cmd);
-        setValue('');
-        inputRef.current?.focus();
-        return;
+    try {
+      // Check for slash command
+      if (enableSlashCommands && trimmed.startsWith('/') && onSlashCommand) {
+        const cmd = parseSlashCommand(trimmed);
+        if (cmd && cmd.isValid) {
+          await onSlashCommand(cmd);
+          setValue('');
+          inputRef.current?.focus();
+          return;
+        }
       }
-    }
 
-    // Regular message
-    await onSend(trimmed);
-    setValue('');
-    inputRef.current?.focus();
+      // Regular message
+      await onSend(trimmed);
+      setValue('');
+      inputRef.current?.focus();
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -439,8 +445,8 @@ function ChatComposer({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-white/[0.06] bg-[#0A0A09]">
-      <div className="relative px-4 py-3">
+    <form onSubmit={handleSubmit} className="border-t border-white/[0.06] bg-[var(--bg-ground,#0A0A09)]">
+      <div className="relative px-3 md:px-4 py-3">
         {/* Slash command hint */}
         <AnimatePresence>
           {showSlashHint && (
@@ -485,18 +491,25 @@ function ChatComposer({
 
           <button
             type="submit"
-            disabled={!value.trim() || disabled}
+            disabled={!value.trim() || disabled || isSending}
             className={cn(
               'p-3 rounded-xl transition-all duration-200',
-              value.trim()
-                ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90'
+              value.trim() && !isSending
+                ? 'bg-[#FFD700] text-black hover:bg-[#FFD700]/90 active:scale-95'
                 : 'bg-white/[0.06] text-[#6B6B70]',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+            {isSending ? (
+              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -568,7 +581,7 @@ export function SpaceChatBoard({
   };
 
   return (
-    <div className={cn('flex flex-col h-full bg-[#0A0A09]', className)}>
+    <div className={cn('flex flex-col h-full bg-[var(--bg-ground,#0A0A09)]', className)}>
       {/* Board Tabs */}
       {boards.length > 1 && (
         <BoardTabs
@@ -585,7 +598,7 @@ export function SpaceChatBoard({
 
       {/* Search button when single board */}
       {boards.length <= 1 && onSearchOpen && (
-        <div className="flex items-center justify-end px-4 py-2 border-b border-white/[0.06]">
+        <div className="flex items-center justify-end px-3 md:px-4 py-2 border-b border-white/[0.06]">
           <button
             onClick={onSearchOpen}
             className="p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/5 transition-colors"

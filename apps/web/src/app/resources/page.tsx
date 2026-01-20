@@ -104,7 +104,7 @@ export default function ResourcesPage() {
             onClick={() => router.push('/tools/create')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center group-hover:opacity-80 transition-transform">
                 <WrenchScrewdriverIcon className="h-5 w-5 text-[#FFD700]" />
               </div>
               <div>
@@ -119,7 +119,7 @@ export default function ResourcesPage() {
             onClick={() => router.push('/spaces')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:opacity-80 transition-transform">
                 <UsersIcon className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -134,7 +134,7 @@ export default function ResourcesPage() {
             onClick={() => router.push('/tools')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:opacity-80 transition-transform">
                 <SparklesIcon className="h-5 w-5 text-white" />
               </div>
               <div>

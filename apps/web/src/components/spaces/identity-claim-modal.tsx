@@ -152,7 +152,7 @@ function SearchResultRow({
     <motion.button
       onClick={onSelect}
       whileHover={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ opacity: 0.8 }}
       className={cn(
         'w-full flex items-center gap-3 px-4 py-3',
         'text-left',

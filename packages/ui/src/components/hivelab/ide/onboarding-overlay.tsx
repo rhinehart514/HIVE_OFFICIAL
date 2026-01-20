@@ -115,8 +115,8 @@ export function OnboardingOverlay({ onDismiss, onOpenAI }: OnboardingOverlayProp
                     : 'bg-[var(--hivelab-bg)] border-[var(--hivelab-border)] hover:border-[var(--hivelab-border-emphasis)]'
                 }`}
                 onClick={() => setStep(i)}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
               >
                 <div className="flex items-start gap-3">
                   <div

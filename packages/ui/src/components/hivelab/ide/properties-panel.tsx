@@ -434,7 +434,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
         <motion.button
           type="button"
           onClick={() => onChange(!currentValue)}
-          whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
+          whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
           role="switch"
           aria-checked={Boolean(currentValue)}
           aria-label={`${schema.label}: ${currentValue ? 'enabled' : 'disabled'}`}
@@ -550,7 +550,7 @@ function Section({
       <motion.button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        whileTap={prefersReducedMotion ? {} : { scale: 0.99 }}
+        whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
         aria-expanded={expanded}
         aria-controls={sectionId}
         className={cn(
@@ -683,8 +683,8 @@ export function PropertiesPanel({
               onClick={() =>
                 onUpdateElement(selectedElement.id, { visible: !selectedElement.visible })
               }
-              whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.9 }}
+              whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
+              whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
               className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
               style={{ color: PANEL_COLORS.textTertiary }}
               onMouseEnter={(e) => {
@@ -727,8 +727,8 @@ export function PropertiesPanel({
               onClick={() =>
                 onUpdateElement(selectedElement.id, { locked: !selectedElement.locked })
               }
-              whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
-              whileTap={prefersReducedMotion ? {} : { scale: 0.9 }}
+              whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
+              whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
               animate={
                 selectedElement.locked && !prefersReducedMotion
                   ? { rotate: [0, -5, 5, 0] }
@@ -907,8 +907,8 @@ export function PropertiesPanel({
         <motion.button
           type="button"
           onClick={() => onDuplicateElement(selectedElement.id)}
-          whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
-          whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+          whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
+          whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
           aria-label={`Duplicate ${displayName}`}
           className={cn(
             'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
@@ -937,8 +937,8 @@ export function PropertiesPanel({
         <motion.button
           type="button"
           onClick={() => onDeleteElement(selectedElement.id)}
-          whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
-          whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+          whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
+          whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
           aria-label={`Delete ${displayName}`}
           className={cn(
             'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
@@ -957,7 +957,7 @@ export function PropertiesPanel({
           }}
         >
           <motion.div
-            whileHover={prefersReducedMotion ? {} : { rotate: -10, scale: 1.1 }}
+            whileHover={prefersReducedMotion ? {} : { rotate: -10, opacity: 0.9 }}
             transition={springPresets.snappy}
           >
             <TrashIcon className="h-4 w-4" />

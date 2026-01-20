@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
+import { ToolLayoutClient } from './tool-layout-client';
 
 interface Props {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ async function fetchToolForMetadata(toolId: string) {
  *
  * Wraps all tool-specific routes: edit, preview, deploy, settings, analytics, run.
  * Provides dynamic OG metadata based on tool data.
+ * Uses LayoutProvider to hide shell (immersion archetype).
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { toolId } = await params;
@@ -70,6 +72,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function ToolLayout({ children }: Props) {
-  // Full bleed layout for studio - each page controls its own chrome
-  return children;
+  return <ToolLayoutClient>{children}</ToolLayoutClient>;
 }

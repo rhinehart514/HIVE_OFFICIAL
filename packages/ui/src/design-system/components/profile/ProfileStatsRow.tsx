@@ -63,8 +63,8 @@ function StatItem({ value, label, onClick, accent = false, delay = 0 }: StatItem
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: delay * 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ scale: onClick ? 1.02 : 1 }}
-      whileTap={{ scale: onClick ? 0.98 : 1 }}
+      whileHover={{ opacity: onClick ? 0.9 : 1 }}
+      whileTap={{ opacity: onClick ? 0.8 : 1 }}
     >
       <span
         className="text-2xl sm:text-3xl font-bold tabular-nums tracking-tight"

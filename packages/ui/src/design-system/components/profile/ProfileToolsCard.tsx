@@ -97,10 +97,9 @@ export function ProfileToolsCard({
                   : undefined,
               }}
               whileHover={{
-                scale: 1.02,
-                y: -2,
+                opacity: 0.9,
               }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ opacity: 0.8 }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05, duration: 0.3 }}

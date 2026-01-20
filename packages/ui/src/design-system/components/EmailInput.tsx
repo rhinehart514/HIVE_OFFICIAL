@@ -184,7 +184,7 @@ export function EmailInput({
         <motion.button
           type="submit"
           disabled={isLoading || disabled || !hasValue}
-          whileTap={{ scale: 0.98 }}
+          whileTap={{ opacity: 0.8 }}
           className="
             group w-full py-3.5 px-6 rounded-xl
             font-medium text-[15px]

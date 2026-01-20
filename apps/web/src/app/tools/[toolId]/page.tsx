@@ -222,6 +222,7 @@ export default function ToolStudioPage({ params }: Props) {
   const showAnalyticsOnMount = searchParams.get('analytics') === 'true';
   const preselectedSpaceId = searchParams.get('spaceId');
   const initialMode = searchParams.get('mode') as PageMode | null;
+  const initialPrompt = searchParams.get('prompt');
 
   // Page mode state - edit (IDE) or use (runtime)
   const [pageMode, setPageMode] = useState<PageMode>(initialMode === 'use' ? 'use' : 'edit');
@@ -415,9 +416,19 @@ export default function ToolStudioPage({ params }: Props) {
 
       await deployToolToTarget(toolId, config);
       setHasUnsavedChanges(false);
-      // Don't auto-navigate - let modal handle with "View in space" button
+
+      // Show success toast with space info
+      const targetSpace = userSpaces.find((s) => s.id === config.targetId);
+      const targetName = config.targetType === 'profile'
+        ? 'your profile'
+        : targetSpace?.name || 'the space';
+      const toolName = composition?.name || 'Your tool';
+
+      toast.success(`${toolName} is live!`, {
+        description: `Deployed to ${targetName}. ${config.targetType === 'space' ? 'Space members can now use it.' : 'Visible on your profile.'}`,
+      });
     },
-    [toolId, hasUnsavedChanges, composition]
+    [toolId, hasUnsavedChanges, composition, userSpaces]
   );
 
   // Handle view in space after deployment
@@ -567,6 +578,7 @@ export default function ToolStudioPage({ params }: Props) {
             onCancel={handleCancel}
             userId={user?.uid || 'anonymous'}
             userContext={userContext}
+            initialPrompt={isNewTool ? initialPrompt : null}
           />
         ) : (
           /* Use Mode: Interactive ToolCanvas */

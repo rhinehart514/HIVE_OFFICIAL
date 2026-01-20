@@ -161,8 +161,8 @@ export function LeaderQuickActions({
       {/* Main FAB */}
       <motion.button
         onClick={() => setIsExpanded(!isExpanded)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
         className={cn(
           'relative w-14 h-14 rounded-full flex items-center justify-center',
           'shadow-lg shadow-black/30',

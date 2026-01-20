@@ -468,7 +468,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
       className={cn(
         'group relative rounded-xl border transition-all duration-200',
         'bg-gradient-to-br',
-        'hover:shadow-lg hover:scale-[1.02]',
+        'hover:shadow-lg hover:opacity-90',
         colorClass
       )}
     >

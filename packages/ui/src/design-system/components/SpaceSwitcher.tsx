@@ -375,8 +375,8 @@ export function SpaceSwitcher({
                       onClose();
                     }}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--life-gold)]/10 text-[var(--life-gold)] text-sm font-medium hover:bg-[var(--life-gold)]/20 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ opacity: 0.9 }}
+                    whileTap={{ opacity: 0.8 }}
                   >
                     <PlusIcon className="w-4 h-4" />
                     Create Space

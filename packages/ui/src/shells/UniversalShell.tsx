@@ -165,7 +165,7 @@ function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavPro
   const navItems = [
     { id: 'feed', icon: <FeedIcon className="w-6 h-6" />, label: 'Feed', path: '/feed', badge: notificationCount },
     { id: 'spaces', icon: <BrowseIcon className="w-6 h-6" />, label: 'Spaces', path: '/spaces' },
-    { id: 'hivelab', icon: <ToolsIcon className="w-6 h-6" />, label: 'Build', path: '/tools' },
+    { id: 'hivelab', icon: <ToolsIcon className="w-6 h-6" />, label: 'HiveLab', path: '/tools' },
     { id: 'settings', icon: <SettingsIcon className="w-6 h-6" />, label: 'Settings', path: '/settings' },
   ];
 

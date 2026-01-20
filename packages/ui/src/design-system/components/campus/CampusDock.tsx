@@ -127,8 +127,8 @@ interface OverflowIndicatorProps {
 function OverflowIndicator({ count, onClick }: OverflowIndicatorProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       onClick={onClick}
       className={cn(
         'w-11 h-11',
@@ -299,8 +299,8 @@ export function CampusDock({
         {/* Add space button (if no spaces) */}
         {visibleSpaces.length === 0 && (
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ opacity: 0.9 }}
+            whileTap={{ opacity: 0.8 }}
             onClick={() => router.push('/spaces/browse')}
             className={cn(
               'flex items-center gap-2 px-4 py-2',
@@ -351,8 +351,8 @@ export function CampusDock({
           {/* Create tool button (if builder with no tools) */}
           {visibleTools.length === 0 && (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               onClick={() => router.push('/tools/create')}
               className={cn(
                 'flex items-center gap-2 px-4 py-2',

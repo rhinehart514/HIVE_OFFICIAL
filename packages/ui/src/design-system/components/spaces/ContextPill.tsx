@@ -86,8 +86,8 @@ export function ContextPill({
           'focus:outline-none focus:ring-2 focus:ring-white/50',
           'shadow-lg shadow-black/20'
         )}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
         title="Back to hub"
       >
         <Home className="w-4 h-4" />
@@ -124,7 +124,7 @@ export function ContextPillMobile({
         'focus:outline-none focus:ring-2 focus:ring-white/50',
         className
       )}
-      whileTap={{ scale: 0.95 }}
+      whileTap={{ opacity: 0.8 }}
     >
       <Home className="w-5 h-5" />
     </motion.button>

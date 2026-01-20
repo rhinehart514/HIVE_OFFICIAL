@@ -102,8 +102,8 @@ function TemplateCard({
       <motion.button
         type="button"
         onClick={isSelected ? onUse : onSelect}
-        whileHover={{ y: -4, scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ y: -4, opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
         transition={springSnappy}
         className={cn(
           'group relative w-full text-left rounded-2xl overflow-hidden',
@@ -221,8 +221,8 @@ function CategoryPill({
     <motion.button
       type="button"
       onClick={onClick}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200',
         isActive
@@ -327,8 +327,8 @@ export function TemplateGallery({ isOpen, onClose, onSelectTemplate }: TemplateG
                 <motion.button
                   type="button"
                   onClick={onClose}
-                  whileHover={{ scale: 1.1, rotate: 90 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileHover={{ opacity: 0.9, rotate: 90 }}
+                  whileTap={{ opacity: 0.8 }}
                   className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

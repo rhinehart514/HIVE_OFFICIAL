@@ -261,8 +261,8 @@ function SpaceSettingsContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
                 onClick={() => router.push(`/spaces/${spaceId}`)}
                 className="p-2 -ml-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
               >
@@ -274,7 +274,7 @@ function SpaceSettingsContent() {
               </div>
             </div>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <motion.div whileHover={{ opacity: 0.9 }} whileTap={{ opacity: 0.8 }}>
               <Button
                 onClick={handleSave}
                 disabled={saving}

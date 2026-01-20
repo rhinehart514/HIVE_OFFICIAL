@@ -207,7 +207,7 @@ export function ProfileActivityHeatmap({
                       }}
                       onMouseEnter={() => setHoveredCell(cell)}
                       onMouseLeave={() => setHoveredCell(null)}
-                      whileHover={{ scale: 1.3 }}
+                      whileHover={{ opacity: 0.8 }}
                       animate={{
                         scale: isActive ? 1.3 : 1,
                         opacity: isActive ? 1 : isHovered ? 0.9 : 1,

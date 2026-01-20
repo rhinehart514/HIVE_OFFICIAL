@@ -166,7 +166,7 @@ export function SchoolState({
               className={cn(
                 'w-full flex items-center gap-4 p-4 rounded-xl text-left transition-all',
                 'border bg-white/[0.02]',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-ground)]',
                 isActive
                   ? 'hover:bg-white/[0.04] cursor-pointer'
                   : 'cursor-pointer hover:bg-white/[0.03]',

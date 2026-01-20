@@ -220,8 +220,8 @@ export function ConnectionConfig({
         style={{ borderColor: PANEL_COLORS.border }}
       >
         <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          whileHover={{ opacity: 0.9 }}
+          whileTap={{ opacity: 0.8 }}
           onClick={onDelete}
           className={cn(
             'w-full px-4 py-2.5 rounded-lg',

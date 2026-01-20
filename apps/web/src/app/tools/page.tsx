@@ -3,52 +3,51 @@
 export const dynamic = 'force-dynamic';
 
 /**
- * HiveLab Tools Page - IDE-First Experience
+ * HiveLab Landing Page — ChatGPT-style
  *
- * Users land directly in the full IDE with StartZone for empty state.
- * URL params: ?id=, ?template=, ?prompt=
+ * Centered AI input as hero. Suggestion chips below.
+ * Your tools in a subtle grid. Clean, minimal, AI-first.
  */
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from '@hive/auth-logic';
 import { apiClient } from '@/lib/api-client';
 import {
-  HiveLabIDE,
-  HeaderBar,
-  Skeleton,
-  ToolDeployModal,
-  getQuickTemplate,
-  createToolFromTemplate,
-  type HiveLabComposition,
-  type IDECanvasElement,
-  type IDEConnection,
-  type UserContext,
-  type ToolDeploymentTarget as DeploymentTarget,
-  type ToolDeploymentConfig as DeploymentConfig,
-} from '@hive/ui';
+  Sparkles,
+  ArrowRight,
+  Plus,
+  Clock,
+  BarChart3,
+  Vote,
+  Users,
+  Calendar,
+  FileText,
+  Zap,
+} from 'lucide-react';
 
 // Premium easing
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-// Tool type for user's tools list
+// Suggestion chips
+const SUGGESTIONS = [
+  { label: 'Poll', icon: Vote, prompt: 'Create a poll to gather opinions' },
+  { label: 'RSVP', icon: Users, prompt: 'Create an RSVP for an event' },
+  { label: 'Countdown', icon: Clock, prompt: 'Create a countdown timer' },
+  { label: 'Survey', icon: FileText, prompt: 'Create a feedback survey' },
+  { label: 'Leaderboard', icon: BarChart3, prompt: 'Create a leaderboard' },
+  { label: 'Signup', icon: Calendar, prompt: 'Create a signup form' },
+];
+
 interface UserTool {
   id: string;
   name: string;
   description?: string;
   status: 'draft' | 'published' | 'deployed';
   updatedAt: Date | string;
-  usageCount?: number;
-}
-
-interface Space {
-  id: string;
-  name: string;
-  memberCount?: number;
-  description?: string;
 }
 
 // Fetch user's tools
@@ -59,316 +58,14 @@ async function fetchUserTools(): Promise<UserTool[]> {
   return (data.tools || []) as UserTool[];
 }
 
-// Fetch user's spaces for deployment
-async function fetchUserSpaces(): Promise<Space[]> {
-  const response = await fetch('/api/profile/my-spaces?limit=50', {
-    credentials: 'include',
-  });
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data.spaces || [];
-}
-
-// Create a new tool
-async function createTool(
-  composition: HiveLabComposition
-): Promise<{ id: string }> {
-  const response = await apiClient.post('/api/tools', {
-    name: composition.name || 'Untitled Tool',
-    description: composition.description,
-    type: 'ai-generated',
-    status: 'draft',
-    config: { composition },
-    elements: composition.elements.map((el) => ({
-      elementId: el.elementId,
-      instanceId: el.instanceId,
-      config: el.config,
-      position: el.position,
-      size: el.size,
-    })),
-    connections: composition.connections.map((conn) => ({
-      from: conn.from,
-      to: conn.to,
-    })),
-    layout: composition.layout,
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to create tool');
-  }
-
-  const data = await response.json();
-  return { id: data.tool?.id || data.toolId };
-}
-
-// Save existing tool
-async function saveTool(
-  toolId: string,
-  composition: HiveLabComposition
-): Promise<void> {
-  const response = await fetch(`/api/tools/${toolId}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      name: composition.name,
-      description: composition.description,
-      elements: composition.elements.map((el) => ({
-        elementId: el.elementId,
-        instanceId: el.instanceId,
-        config: el.config,
-        position: el.position,
-        size: el.size,
-      })),
-      connections: composition.connections.map((conn) => ({
-        from: conn.from,
-        to: conn.to,
-      })),
-      layout: composition.layout,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to save tool');
-  }
-}
-
-// Fetch a specific tool
-async function fetchTool(toolId: string): Promise<{
-  id: string;
-  name: string;
-  description: string;
-  status: string;
-  elements?: Array<{
-    id?: string;
-    elementId: string;
-    instanceId?: string;
-    config?: Record<string, unknown>;
-    position?: { x: number; y: number };
-    size?: { width: number; height: number };
-  }>;
-  connections?: Array<{
-    from: { instanceId: string; port?: string; output?: string };
-    to: { instanceId: string; port?: string; input?: string };
-  }>;
-  config?: {
-    composition?: {
-      elements?: Array<{
-        id?: string;
-        elementId: string;
-        instanceId?: string;
-        config?: Record<string, unknown>;
-        position?: { x: number; y: number };
-        size?: { width: number; height: number };
-      }>;
-      connections?: Array<{
-        from: { instanceId: string; port?: string; output?: string };
-        to: { instanceId: string; port?: string; input?: string };
-      }>;
-    };
-  };
-}> {
-  const response = await fetch(`/api/tools/${toolId}`, {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    if (response.status === 404) throw new Error('Tool not found');
-    throw new Error('Failed to load tool');
-  }
-  const data = await response.json();
-  return data.tool || data;
-}
-
-// Deploy tool
-async function deployToolToTarget(
-  toolId: string,
-  config: DeploymentConfig
-): Promise<void> {
-  const response = await fetch(`/api/tools/${toolId}/deploy`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({
-      targetType: config.targetType,
-      targetId: config.targetId,
-      surface: config.surface,
-      permissions: config.permissions,
-      settings: config.settings,
-      privacy: config.privacy,
-    }),
-  });
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to deploy tool');
-  }
-}
-
-// Transform API tool data to IDE canvas elements
-function transformToCanvasElements(tool: {
-  elements?: Array<{
-    id?: string;
-    elementId: string;
-    instanceId?: string;
-    config?: Record<string, unknown>;
-    position?: { x: number; y: number };
-    size?: { width: number; height: number };
-  }>;
-  connections?: Array<{
-    from: { instanceId: string; port?: string; output?: string };
-    to: { instanceId: string; port?: string; input?: string };
-  }>;
-  config?: {
-    composition?: {
-      elements?: Array<{
-        id?: string;
-        elementId: string;
-        instanceId?: string;
-        config?: Record<string, unknown>;
-        position?: { x: number; y: number };
-        size?: { width: number; height: number };
-      }>;
-      connections?: Array<{
-        from: { instanceId: string; port?: string; output?: string };
-        to: { instanceId: string; port?: string; input?: string };
-      }>;
-    };
-  };
-}): { elements: IDECanvasElement[]; connections: IDEConnection[] } {
-  const rawElements =
-    tool.config?.composition?.elements || tool.elements || [];
-  const rawConnections =
-    tool.config?.composition?.connections || tool.connections || [];
-
-  const elements: IDECanvasElement[] = rawElements.map((el, index) => ({
-    id: el.id || `element_${index}`,
-    elementId: el.elementId,
-    instanceId: el.instanceId || `${el.elementId}_${index}`,
-    position: el.position || { x: 100 + index * 50, y: 100 + index * 50 },
-    size: el.size || { width: 240, height: 120 },
-    config: el.config || {},
-    zIndex: index + 1,
-    locked: false,
-    visible: true,
-  }));
-
-  const connections: IDEConnection[] = rawConnections.map((conn, index) => ({
-    id: `conn_${index}`,
-    from: {
-      instanceId: conn.from.instanceId,
-      port: conn.from.port || conn.from.output || 'output',
-    },
-    to: {
-      instanceId: conn.to.instanceId,
-      port: conn.to.port || conn.to.input || 'input',
-    },
-  }));
-
-  return { elements, connections };
-}
-
-// Guest preview - redirect to signup
-function GuestPreview({ onSignUp }: { onSignUp: () => void }) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6" style={{ backgroundColor: 'var(--bg-void, #050504)' }}>
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse 80% 50% at 50% 40%, rgba(255,255,255,0.02) 0%, transparent 50%),
-            radial-gradient(ellipse 60% 40% at 50% 60%, rgba(255,215,0,0.015) 0%, transparent 50%)
-          `,
-        }}
-      />
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: EASE }}
-        className="relative z-10 w-full max-w-4xl text-center"
-      >
-        <motion.h1
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
-          className="text-[clamp(2.5rem,6vw,4.5rem)] font-semibold text-white tracking-[-0.03em] mb-8"
-        >
-          What will you build?
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="text-lg text-white/40 mb-12"
-        >
-          Sign up to start building tools for your campus
-        </motion.p>
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.5, ease: EASE }}
-          onClick={onSignUp}
-          className="inline-flex items-center gap-2.5 px-6 py-3
-            text-black text-sm font-medium rounded-full
-            bg-white transition-all duration-200
-            hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]
-            active:scale-[0.98]"
-        >
-          Sign up to start building
-        </motion.button>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.9 }}
-        className="absolute bottom-8 text-xs text-white/10 tracking-widest uppercase"
-      >
-        HiveLab
-      </motion.div>
-    </div>
-  );
-}
-
-// Loading spinner
-function Loading() {
-  return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-void, #050504)' }}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="w-5 h-5 border-2 border-white/10 border-t-white/50 rounded-full animate-spin"
-      />
-    </div>
-  );
-}
-
-// Main content component (uses searchParams)
-function ToolsPageContent() {
+export default function HiveLabLanding() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // URL params
-  const toolIdParam = searchParams.get('id');
-  const templateParam = searchParams.get('template');
-  const promptParam = searchParams.get('prompt');
-
-  // State
-  const [currentToolId, setCurrentToolId] = useState<string | null>(toolIdParam);
-  const [composition, setComposition] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    elements: IDECanvasElement[];
-    connections: IDEConnection[];
-  } | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [deployModalOpen, setDeployModalOpen] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Queries
+  // Fetch user's tools
   const { data: userTools = [], isLoading: toolsLoading } = useQuery({
     queryKey: ['personal-tools', user?.uid],
     queryFn: fetchUserTools,
@@ -376,382 +73,292 @@ function ToolsPageContent() {
     staleTime: 60000,
   });
 
-  const { data: userSpaces = [] } = useQuery({
-    queryKey: ['user-spaces'],
-    queryFn: fetchUserSpaces,
-    enabled: !!user,
-    staleTime: 300000,
-  });
-
-  const { data: existingTool, isLoading: toolLoading } = useQuery({
-    queryKey: ['tool', toolIdParam],
-    queryFn: () => fetchTool(toolIdParam!),
-    enabled: !!user && !!toolIdParam,
-    staleTime: 60000,
-  });
-
-  // User context
-  const isSpaceLeader = userSpaces.length > 0;
-  const leadingSpaceIds = userSpaces.map((s) => s.id);
-  const userContext: UserContext = {
-    userId: user?.uid || 'anonymous',
-    campusId: 'ub-buffalo',
-    isSpaceLeader,
-    leadingSpaceIds,
-  };
-
-  // Deployment targets
-  const deploymentTargets: DeploymentTarget[] = [
-    {
-      id: 'profile',
-      name: 'My Profile',
-      type: 'profile',
-      description: 'Add this tool to your personal profile',
-    },
-    ...userSpaces.map((space) => ({
-      id: space.id,
-      name: space.name,
-      type: 'space' as const,
-      description: space.description || `Deploy to ${space.name}`,
-    })),
-  ];
-
-  // Initialize composition based on URL params
+  // Focus input on mount
   useEffect(() => {
-    if (!user || isInitialized) return;
-
-    // Load existing tool
-    if (toolIdParam && existingTool) {
-      const { elements, connections } = transformToCanvasElements(existingTool);
-      setComposition({
-        id: existingTool.id,
-        name: existingTool.name || 'Untitled Tool',
-        description: existingTool.description || '',
-        elements,
-        connections,
-      });
-      setCurrentToolId(existingTool.id);
-      setIsInitialized(true);
-      return;
+    if (!authLoading && user && inputRef.current) {
+      inputRef.current.focus();
     }
+  }, [authLoading, user]);
 
-    // Load template
-    if (templateParam) {
-      const template = getQuickTemplate(templateParam);
-      if (template) {
-        const toolComposition = createToolFromTemplate(template);
-        const elements: IDECanvasElement[] = toolComposition.elements.map((el, idx) => ({
-          id: `element_${Date.now()}_${idx}`,
-          elementId: el.elementId,
-          instanceId: el.instanceId,
-          position: el.position || { x: 100 + idx * 50, y: 100 + idx * 50 },
-          size: el.size || { width: 240, height: 120 },
-          config: el.config || {},
-          zIndex: idx + 1,
-          locked: false,
-          visible: true,
-        }));
-        const connections: IDEConnection[] = (toolComposition.connections || []).map((conn, idx) => ({
-          id: `conn_${Date.now()}_${idx}`,
-          from: {
-            instanceId: conn.from.instanceId,
-            port: conn.from.output || 'output',
-          },
-          to: {
-            instanceId: conn.to.instanceId,
-            port: conn.to.input || 'input',
-          },
-        }));
-        setComposition({
-          id: `tool_${Date.now()}`,
-          name: toolComposition.name || 'Untitled Tool',
-          description: toolComposition.description || '',
-          elements,
-          connections,
-        });
-        setHasUnsavedChanges(true);
-        setIsInitialized(true);
-        return;
-      }
+  // Handle prompt submission
+  const handleSubmit = useCallback(async () => {
+    if (!prompt.trim() || isGenerating) return;
+
+    setIsGenerating(true);
+
+    try {
+      // Navigate to the IDE with prompt as URL param
+      const encodedPrompt = encodeURIComponent(prompt.trim());
+      router.push(`/tools/new?prompt=${encodedPrompt}`);
+    } catch (error) {
+      toast.error('Failed to start generation');
+      setIsGenerating(false);
     }
+  }, [prompt, isGenerating, router]);
 
-    // Fresh start with empty canvas
-    if (!toolIdParam) {
-      setComposition({
-        id: `tool_${Date.now()}`,
-        name: '',
-        description: '',
-        elements: [],
-        connections: [],
-      });
-      setIsInitialized(true);
+  // Handle suggestion click
+  const handleSuggestion = useCallback((suggestionPrompt: string) => {
+    setPrompt(suggestionPrompt);
+    // Auto-submit after a brief delay
+    setTimeout(() => {
+      const encodedPrompt = encodeURIComponent(suggestionPrompt);
+      router.push(`/tools/new?prompt=${encodedPrompt}`);
+    }, 100);
+  }, [router]);
+
+  // Handle keyboard
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
-  }, [user, toolIdParam, templateParam, existingTool, isInitialized]);
+  }, [handleSubmit]);
 
-  // Handle save - creates new tool on first save, updates on subsequent saves
-  const handleSave = useCallback(
-    async (comp: HiveLabComposition) => {
-      setSaving(true);
-      try {
-        if (!currentToolId) {
-          // First save - create new tool
-          const { id: newId } = await createTool(comp);
-          setCurrentToolId(newId);
+  // Handle tool click
+  const handleToolClick = useCallback((toolId: string) => {
+    router.push(`/tools/${toolId}`);
+  }, [router]);
 
-          // Update URL without page reload
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('template');
-          newUrl.searchParams.delete('prompt');
-          newUrl.searchParams.set('id', newId);
-          window.history.replaceState({}, '', newUrl.toString());
-
-          queryClient.invalidateQueries({ queryKey: ['personal-tools'] });
-          toast.success('Tool created', { description: 'Your tool has been saved.' });
-        } else {
-          // Update existing tool
-          await saveTool(currentToolId, comp);
-          queryClient.invalidateQueries({ queryKey: ['tool', currentToolId] });
-          queryClient.invalidateQueries({ queryKey: ['personal-tools'] });
-          toast.success('Tool saved');
-        }
-        setHasUnsavedChanges(false);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to save tool');
-        throw error;
-      } finally {
-        setSaving(false);
-      }
-    },
-    [currentToolId, queryClient]
-  );
-
-  // Handle preview
-  const handlePreview = useCallback(
-    (comp: HiveLabComposition) => {
-      if (currentToolId) {
-        localStorage.setItem(`hivelab_preview_${currentToolId}`, JSON.stringify(comp));
-        // Add preview=true param so runtime knows to use localStorage
-        router.push(`/tools/${currentToolId}/run?preview=true`);
-      } else {
-        toast.error('Save your tool first to preview it');
-      }
-    },
-    [currentToolId, router]
-  );
-
-  // Handle cancel/back
-  const handleCancel = useCallback(() => {
-    if (hasUnsavedChanges) {
-      const confirmLeave = window.confirm(
-        'You have unsaved changes. Are you sure you want to leave?'
-      );
-      if (!confirmLeave) return;
-    }
-    router.push('/');
-  }, [router, hasUnsavedChanges]);
-
-  // Handle deploy
-  const handleDeploy = useCallback(
-    async (config: DeploymentConfig) => {
-      if (!currentToolId) {
-        toast.error('Save your tool first to deploy it');
-        return;
-      }
-
-      // Save first if there are unsaved changes
-      if (hasUnsavedChanges && composition) {
-        await saveTool(currentToolId, {
-          id: composition.id,
-          name: composition.name,
-          description: composition.description,
-          elements: composition.elements,
-          connections: composition.connections,
-          layout: 'grid',
-        });
-      }
-
-      await deployToolToTarget(currentToolId, config);
-      setHasUnsavedChanges(false);
-
-      // Find target name for toast
-      const target = deploymentTargets.find((t) => t.id === config.targetId);
-      const targetName = target?.name || (config.targetType === 'profile' ? 'your profile' : 'space');
-
-      // Show success toast with action
-      if (config.targetType === 'space' && config.targetId) {
-        toast.success(`Deployed to ${targetName}`, {
-          description: 'Space members can now use this tool.',
-          action: {
-            label: 'View in space',
-            onClick: () => router.push(`/spaces/${config.targetId}`),
-          },
-        });
-      } else {
-        toast.success(`Deployed to ${targetName}`, {
-          description: 'This tool is now visible on your profile.',
-        });
-      }
-    },
-    [currentToolId, hasUnsavedChanges, composition, deploymentTargets, router]
-  );
-
-  // Handle view in space
-  const handleViewInSpace = useCallback(
-    (spaceId: string) => {
-      router.push(`/spaces/${spaceId}`);
-    },
-    [router]
-  );
-
-  // Handle tool selection from "Your Tools" drawer
-  const handleToolSelect = useCallback(
-    (id: string) => {
-      if (hasUnsavedChanges) {
-        const confirmLeave = window.confirm(
-          'You have unsaved changes. Are you sure you want to switch tools?'
-        );
-        if (!confirmLeave) return;
-      }
-
-      // Reset state and navigate
-      setIsInitialized(false);
-      setComposition(null);
-      setCurrentToolId(id);
-      setHasUnsavedChanges(false);
-
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('template');
-      newUrl.searchParams.delete('prompt');
-      newUrl.searchParams.set('id', id);
-      window.history.replaceState({}, '', newUrl.toString());
-
-      // Trigger re-fetch
-      queryClient.invalidateQueries({ queryKey: ['tool', id] });
-    },
-    [hasUnsavedChanges, queryClient]
-  );
-
-  // Handle new tool creation
-  const handleNewTool = useCallback(() => {
-    if (hasUnsavedChanges) {
-      const confirmLeave = window.confirm(
-        'You have unsaved changes. Are you sure you want to start a new tool?'
-      );
-      if (!confirmLeave) return;
-    }
-
-    setIsInitialized(false);
-    setComposition({
-      id: `tool_${Date.now()}`,
-      name: '',
-      description: '',
-      elements: [],
-      connections: [],
-    });
-    setCurrentToolId(null);
-    setHasUnsavedChanges(false);
-
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.delete('id');
-    newUrl.searchParams.delete('template');
-    newUrl.searchParams.delete('prompt');
-    window.history.replaceState({}, '', newUrl.toString());
-
-    setIsInitialized(true);
-  }, [hasUnsavedChanges]);
-
-  // Guest preview
+  // Guest state
   if (!authLoading && !user) {
-    return <GuestPreview onSignUp={() => router.push('/enter?redirect=/tools')} />;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-[var(--bg-ground,#0A0A09)]">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="text-center max-w-lg"
+        >
+          <h1 className="text-3xl font-semibold text-white mb-4">
+            Build tools for your campus
+          </h1>
+          <p className="text-white/50 mb-8">
+            Sign in to create polls, RSVPs, countdowns, and more with AI.
+          </p>
+          <button
+            onClick={() => router.push('/enter?redirect=/tools')}
+            className="px-6 py-3 bg-white text-black rounded-full font-medium
+              hover:bg-white/90 transition-colors"
+          >
+            Sign in to start building
+          </button>
+        </motion.div>
+      </div>
+    );
   }
 
   // Loading state
-  if (authLoading || toolsLoading || (toolIdParam && toolLoading && !composition)) {
-    return <Loading />;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
+        <div className="w-5 h-5 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+      </div>
+    );
   }
-
-  // Waiting for composition initialization
-  if (!composition) {
-    return <Loading />;
-  }
-
-  // Format user tools for the drawer
-  const formattedUserTools = userTools.map((t) => ({
-    id: t.id,
-    name: t.name,
-    status: t.status,
-    updatedAt: typeof t.updatedAt === 'string' ? new Date(t.updatedAt) : t.updatedAt,
-  }));
 
   return (
-    <div className="h-screen flex flex-col bg-[var(--hivelab-bg)]">
-      {/* Header Bar */}
-      <HeaderBar
-        toolName={composition.name || 'Untitled Tool'}
-        onToolNameChange={(name: string) => {
-          setComposition((prev) => (prev ? { ...prev, name } : null));
-          setHasUnsavedChanges(true);
-        }}
-        onPreview={() =>
-          handlePreview({
-            id: composition.id,
-            name: composition.name,
-            description: composition.description,
-            elements: composition.elements,
-            connections: composition.connections,
-            layout: 'grid',
-          })
-        }
-        onSave={() =>
-          handleSave({
-            id: composition.id,
-            name: composition.name,
-            description: composition.description,
-            elements: composition.elements,
-            connections: composition.connections,
-            layout: 'grid',
-          })
-        }
-        saving={saving}
-        onBack={handleCancel}
-        hasUnsavedChanges={hasUnsavedChanges}
-        onDeploy={() => setDeployModalOpen(true)}
-      />
+    <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
+      {/* Hero Section - Centered Input */}
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 pt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="w-full max-w-2xl"
+        >
+          {/* Title */}
+          <h1 className="text-center text-2xl sm:text-3xl font-medium text-white mb-8">
+            What do you want to build?
+          </h1>
 
-      {/* HiveLab IDE */}
-      <div className="flex-1 overflow-hidden">
-        <HiveLabIDE
-          initialComposition={composition}
-          onSave={handleSave}
-          onPreview={handlePreview}
-          onCancel={handleCancel}
-          userId={user?.uid || 'anonymous'}
-          userContext={userContext}
-          userTools={formattedUserTools}
-          onToolSelect={handleToolSelect}
-          onNewTool={handleNewTool}
-          initialPrompt={promptParam}
-        />
+          {/* Input Container */}
+          <div className="relative">
+            <div
+              className="relative rounded-2xl border border-white/10 bg-white/[0.03]
+                focus-within:border-white/20 focus-within:bg-white/[0.05]
+                transition-all duration-200"
+            >
+              <textarea
+                ref={inputRef}
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Describe the tool you need..."
+                rows={3}
+                disabled={isGenerating}
+                className="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-white/30
+                  resize-none outline-none text-base leading-relaxed"
+              />
+
+              {/* Submit Button */}
+              <button
+                onClick={handleSubmit}
+                disabled={!prompt.trim() || isGenerating}
+                className="absolute right-3 bottom-3 p-2.5 rounded-xl
+                  bg-white text-black disabled:bg-white/20 disabled:text-white/40
+                  hover:bg-white/90 transition-all duration-200
+                  disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                ) : (
+                  <ArrowRight className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+
+            {/* Sparkle hint */}
+            <div className="absolute -top-3 left-4 flex items-center gap-1.5 px-2 py-0.5
+              bg-[var(--bg-ground,#0A0A09)] text-white/40 text-xs">
+              <Sparkles className="w-3 h-3" />
+              <span>AI-powered</span>
+            </div>
+          </div>
+
+          {/* Suggestion Chips */}
+          <div className="flex flex-wrap justify-center gap-2 mt-6">
+            {SUGGESTIONS.map((suggestion) => (
+              <button
+                key={suggestion.label}
+                onClick={() => handleSuggestion(suggestion.prompt)}
+                className="flex items-center gap-2 px-4 py-2 rounded-full
+                  border border-white/10 bg-white/[0.02]
+                  hover:border-white/20 hover:bg-white/[0.05]
+                  text-white/60 hover:text-white/80
+                  transition-all duration-200 text-sm"
+              >
+                <suggestion.icon className="w-4 h-4" />
+                {suggestion.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Or start from template */}
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => router.push('/tools/templates')}
+              className="text-white/40 hover:text-white/60 text-sm transition-colors"
+            >
+              Or browse templates →
+            </button>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Deploy Modal */}
-      <ToolDeployModal
-        open={deployModalOpen}
-        onOpenChange={setDeployModalOpen}
-        toolName={composition.name || 'Untitled Tool'}
-        availableTargets={deploymentTargets}
-        onDeploy={handleDeploy}
-        onViewInSpace={handleViewInSpace}
-      />
+      {/* Your Tools Section */}
+      <div className="px-6 pb-12 max-w-4xl mx-auto">
+        <AnimatePresence>
+          {userTools.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+            >
+              {/* Section Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider">
+                  Your Tools
+                </h2>
+                <button
+                  onClick={() => router.push('/tools/new')}
+                  className="flex items-center gap-1.5 text-white/40 hover:text-white/60
+                    text-sm transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  New
+                </button>
+              </div>
+
+              {/* Tools Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {userTools.slice(0, 6).map((tool, index) => (
+                  <motion.button
+                    key={tool.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 + index * 0.05, ease: EASE }}
+                    onClick={() => handleToolClick(tool.id)}
+                    className="flex flex-col items-start p-4 rounded-xl
+                      border border-white/[0.06] bg-white/[0.02]
+                      hover:border-white/10 hover:bg-white/[0.04]
+                      transition-all duration-200 text-left group"
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <span className="text-white font-medium truncate pr-2">
+                        {tool.name || 'Untitled Tool'}
+                      </span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide
+                        ${tool.status === 'deployed'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : tool.status === 'published'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-white/10 text-white/40'
+                        }`}>
+                        {tool.status}
+                      </span>
+                    </div>
+                    {tool.description && (
+                      <p className="text-white/40 text-sm line-clamp-2">
+                        {tool.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-1.5 mt-auto pt-3 text-white/30 text-xs">
+                      <Clock className="w-3 h-3" />
+                      {formatRelativeTime(tool.updatedAt)}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* View All */}
+              {userTools.length > 6 && (
+                <button
+                  onClick={() => router.push('/tools/library')}
+                  className="w-full mt-3 py-3 text-white/40 hover:text-white/60
+                    text-sm transition-colors border border-white/[0.06] rounded-xl
+                    hover:border-white/10"
+                >
+                  View all {userTools.length} tools →
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Empty state for new users */}
+        {!toolsLoading && userTools.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-center py-12"
+          >
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/[0.05]
+              flex items-center justify-center">
+              <Zap className="w-6 h-6 text-white/30" />
+            </div>
+            <p className="text-white/30 text-sm">
+              Tools you create will appear here
+            </p>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
 
-// Main export with Suspense boundary for useSearchParams
-export default function ToolsPage() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <ToolsPageContent />
-    </Suspense>
-  );
+// Helper function for relative time
+function formatRelativeTime(date: Date | string): string {
+  const now = new Date();
+  const then = typeof date === 'string' ? new Date(date) : date;
+  const diffMs = now.getTime() - then.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }

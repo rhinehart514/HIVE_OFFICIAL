@@ -186,8 +186,8 @@ export function ImageCropper({
           type="button"
           onClick={handleConfirm}
           disabled={isProcessing}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          whileHover={{ opacity: 0.9 }}
+          whileTap={{ opacity: 0.8 }}
           transition={transitionSpring}
           className="w-full h-12 bg-white text-black font-semibold rounded-lg hover:bg-neutral-200 transition-colors disabled:opacity-50"
         >

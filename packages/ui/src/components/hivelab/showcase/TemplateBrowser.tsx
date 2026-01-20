@@ -146,13 +146,13 @@ function TemplateCard({ template, onSelect, compact }: TemplateCardProps) {
       className={cn(
         'group relative w-full text-left rounded-lg border',
         'bg-gradient-to-br transition-all duration-200',
-        'hover:scale-[1.02] hover:shadow-lg',
+        'hover:opacity-90 hover:shadow-lg',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         colorClass,
         compact ? 'p-3' : 'p-4'
       )}
       whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ opacity: 0.8 }}
     >
       {/* Icon */}
       <div className="flex items-start gap-3">

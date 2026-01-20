@@ -1055,6 +1055,7 @@ export function HiveLabIDE({
         aiStreamingText={aiState.currentStatus}
         selectedCount={selectedIds.length}
         onAICancel={cancelGeneration}
+        initialPrompt={initialPrompt}
       />
 
       {/* Template Gallery Modal */}

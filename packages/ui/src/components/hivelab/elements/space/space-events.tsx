@@ -141,8 +141,8 @@ export function SpaceEventsElement({ config, data, context, onChange, onAction }
                     selectedEvent === event.id ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
                   }`}
                   onClick={() => handleEventClick(event)}
-                  whileHover={{ scale: 1.01, x: 2 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={{ opacity: 0.9, x: 2 }}
+                  whileTap={{ opacity: 0.8 }}
                 >
                   <div className="font-medium text-sm">{event.title}</div>
                   <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">

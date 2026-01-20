@@ -1,500 +1,682 @@
 "use client";
 
+/**
+ * Proto-Feed (Home)
+ *
+ * Per locked IA spec (INFORMATION_ARCHITECTURE.md):
+ * - Structured sections: Today, Your Spaces, This Week, Your Creations, Discover
+ * - Anticipatory, not reactive
+ * - "This page is evolving" box at bottom
+ *
+ * This is NOT an Activity Stream. It's a dashboard that evolves into Feed.
+ */
+
 import * as React from "react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button, Card, Tabs, TabsList, TabsTrigger, Badge } from "@hive/ui";
+import { motion } from "framer-motion";
+import { Button, Card, Badge } from "@hive/ui";
 import {
-  SparklesIcon,
-  ClockIcon,
   CalendarIcon,
+  ChatBubbleLeftRightIcon,
   WrenchScrewdriverIcon,
-  UsersIcon,
-  FireIcon,
-  ArrowTopRightOnSquareIcon,
+  SparklesIcon,
+  ArrowRightIcon,
   PlusIcon,
-  ChevronDownIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@hive/auth-logic";
-import { useToast } from "@/hooks/use-toast";
 
-// Type definitions matching the API response
-interface FeedPost {
+// ============================================
+// TYPES
+// ============================================
+
+interface SpaceData {
   id: string;
-  spaceId?: string;
-  authorId: string;
-  createdAt: string;
-  contentType: 'user_post' | 'tool_generated' | 'tool_enhanced' | 'space_event' | 'builder_announcement' | 'rss_import';
-  toolId?: string;
-  content?: string;
-  title?: string;
-  hasMetadata?: boolean;
-  engagement: {
-    likes: number;
-    comments: number;
-    shares: number;
-    views: number;
-  };
-  authorRole?: string;
-  relevanceScore?: number;
-  qualityScore?: number;
-  factors?: {
-    spaceEngagement: number;
-    contentRecency: number;
-    contentQuality: number;
-    toolInteractionValue: number;
-    socialSignals: number;
-    creatorInfluence: number;
-    diversityFactor: number;
-    temporalRelevance: number;
-  };
-  // Extended data from joins
-  author?: {
-    id: string;
-    name: string;
-    handle: string;
-    avatar?: string;
-    role?: string;
-  };
-  space?: {
-    id: string;
-    name: string;
-    slug?: string;
-  };
-  tool?: {
-    id: string;
-    name: string;
-  };
-  // Client state
-  isLiked?: boolean;
-  isBookmarked?: boolean;
+  name: string;
+  description?: string;
+  bannerUrl?: string;
+  metrics?: { memberCount?: number };
+  membership?: { role: string };
 }
 
-interface FeedResponse {
-  success: boolean;
-  posts: FeedPost[];
-  pagination: {
-    limit: number;
-    offset?: number;
-    nextOffset?: number;
-    hasMore: boolean;
-    totalCount?: number;
-    cursor?: string;
-    nextCursor?: string;
-  };
-  metadata?: {
-    sortBy: string;
-    algorithm: string;
-    quality?: {
-      averageRelevanceScore: number;
-      diversityScore: number;
-      toolContentPercentage: number;
-    };
-  };
+interface EventData {
+  id: string;
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  spaceId: string;
+  spaceName: string;
+  rsvpCount?: number;
+  isGoing?: boolean;
 }
 
-// Activity Stream: No 'posts' filter - we only show space activity
-type FeedFilter = 'all' | 'spaces' | 'events' | 'tools';
-type SortMode = 'algorithm' | 'recent';
-
-// Helpers
-function formatRelativeTime(date: string | Date): string {
-  const now = new Date();
-  const then = typeof date === 'string' ? new Date(date) : date;
-  const diffMs = now.getTime() - then.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return 'now';
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
-
-  return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+interface ToolData {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  responseCount?: number;
+  updatedAt?: string;
 }
 
-function formatCount(count: number): string {
-  if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
-  if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
-  return count.toString();
+interface RecommendedSpace {
+  id: string;
+  name: string;
+  reason: string;
+  memberCount: number;
 }
 
-function getContentTypeIcon(type: FeedPost['contentType']) {
-  switch (type) {
-    case 'space_event':
-      return <CalendarIcon className="h-4 w-4" />;
-    case 'tool_generated':
-    case 'tool_enhanced':
-      return <WrenchScrewdriverIcon className="h-4 w-4" />;
-    case 'builder_announcement':
-      return <SparklesIcon className="h-4 w-4" />;
-    default:
-      return null;
-  }
-}
+// ============================================
+// HELPERS
+// ============================================
 
-function getContentTypeBadge(type: FeedPost['contentType']) {
-  switch (type) {
-    case 'space_event':
-      return <Badge variant="secondary" className="text-xs">Event</Badge>;
-    case 'tool_generated':
-      return <Badge variant="secondary" className="text-xs bg-[#FFD700]/10 text-[#FFD700]/80">Tool</Badge>;
-    case 'tool_enhanced':
-      return <Badge variant="secondary" className="text-xs">AI Enhanced</Badge>;
-    case 'builder_announcement':
-      return <Badge variant="secondary" className="text-xs">Announcement</Badge>;
-    default:
-      return null;
-  }
-}
-
-// Activity Card Component - Simplified for Activity Stream (no social interactions)
-function ActivityCard({
-  post,
-}: {
-  post: FeedPost;
-}) {
-  const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
-
-  // Derive info
-  const spaceName = post.space?.name;
-  const spaceSlug = post.space?.slug || post.spaceId;
-
-  // Check if content should be truncated
-  const content = post.content || post.title || '';
-  const shouldTruncate = content.length > 280 && !expanded;
-  const displayContent = shouldTruncate ? content.slice(0, 280) + '...' : content;
-
-  // Navigate to source (space or event)
-  const handleNavigate = () => {
-    if (post.contentType === 'space_event' && post.spaceId) {
-      router.push(`/spaces/${post.spaceId}/events`);
-    } else if (post.spaceId) {
-      router.push(`/spaces/${post.spaceId}`);
-    }
-  };
-
+function isToday(dateString: string): boolean {
+  const date = new Date(dateString);
+  const today = new Date();
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
-      transition={{ duration: 0.15 }}
-      className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 cursor-pointer hover:border-white/[0.1] hover:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-150"
-      onClick={handleNavigate}
-    >
-      {/* Header */}
-      <div className="flex items-start gap-3 mb-3">
-        {/* Content type icon */}
-        <div className="w-10 h-10 rounded-xl bg-white/[0.04] flex items-center justify-center flex-shrink-0">
-          {post.contentType === 'space_event' && <CalendarIcon className="h-5 w-5 text-life-gold" />}
-          {(post.contentType === 'tool_generated' || post.contentType === 'tool_enhanced') && <WrenchScrewdriverIcon className="h-5 w-5 text-life-gold" />}
-          {post.contentType === 'builder_announcement' && <SparklesIcon className="h-5 w-5 text-life-gold" />}
-          {post.contentType === 'rss_import' && <ArrowTopRightOnSquareIcon className="h-5 w-5 text-life-gold" />}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            {spaceName && (
-              <span className="text-sm font-medium text-white">{spaceName}</span>
-            )}
-            <span className="text-sm text-white/40">·</span>
-            <span className="text-sm text-white/40">{formatRelativeTime(post.createdAt)}</span>
-          </div>
-
-          {/* Content type label */}
-          <span className="text-xs text-white/50">
-            {post.contentType === 'space_event' && 'New event'}
-            {post.contentType === 'tool_generated' && 'Tool output'}
-            {post.contentType === 'tool_enhanced' && 'AI-enhanced content'}
-            {post.contentType === 'builder_announcement' && 'Announcement'}
-            {post.contentType === 'rss_import' && 'Shared link'}
-          </span>
-        </div>
-
-        {/* Content type badge */}
-        <div className="flex items-center gap-2">
-          {getContentTypeBadge(post.contentType)}
-        </div>
-      </div>
-
-      {/* Title (if present) */}
-      {post.title && (
-        <h3 className="text-lg font-semibold text-white mb-2">{post.title}</h3>
-      )}
-
-      {/* Content */}
-      {displayContent && (
-        <div className="mb-4">
-          <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">
-            {displayContent}
-          </p>
-          {shouldTruncate && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(true);
-              }}
-              className="text-life-gold text-sm hover:underline mt-1"
-            >
-              Show more
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Tool reference */}
-      {post.tool && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/tools/${post.toolId}`);
-          }}
-          className="flex items-center gap-2 p-3 bg-white/[0.04] rounded-xl border border-white/[0.06] hover:bg-white/[0.06] transition-colors"
-        >
-          <WrenchScrewdriverIcon className="h-5 w-5 text-life-gold" />
-          <span className="text-sm text-white/70">Built with <span className="text-white font-medium">{post.tool.name}</span></span>
-        </div>
-      )}
-
-    </motion.article>
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
   );
 }
 
-// Sidebar Components
-function TrendingSpaces({ spaces }: { spaces: { id: string; name: string; members: number }[] }) {
+function isThisWeek(dateString: string): boolean {
+  const date = new Date(dateString);
+  const now = new Date();
+  const weekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  return date > now && date <= weekFromNow;
+}
+
+function formatEventTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffHours < 0) return "Past";
+  if (diffHours < 1) return "Starting soon";
+  if (diffHours < 24) return `In ${diffHours}h`;
+  if (diffDays === 1) return "Tomorrow";
+  if (diffDays < 7) {
+    return date.toLocaleDateString("en-US", { weekday: "short" }) + " " +
+      date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  }
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// ============================================
+// SECTION COMPONENTS
+// ============================================
+
+function SectionHeader({
+  title,
+  action,
+  actionHref,
+}: {
+  title: string;
+  action?: string;
+  actionHref?: string;
+}) {
   return (
-    <Card className="p-5 bg-white/[0.02] border-white/[0.06]">
-      <h3 className="text-sm font-semibold text-white mb-4">Trending Spaces</h3>
+    <div className="flex items-center justify-between mb-4">
+      <h2 className="text-sm font-medium text-white/60 uppercase tracking-wide">
+        {title}
+      </h2>
+      {action && actionHref && (
+        <Link
+          href={actionHref}
+          className="text-sm text-white/40 hover:text-white/60 transition-colors"
+        >
+          {action} →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// TODAY Section — Events happening today + unread messages
+function TodaySection({
+  events,
+  unreadSpaces,
+  loading,
+}: {
+  events: EventData[];
+  unreadSpaces: { id: string; name: string; unreadCount: number }[];
+  loading: boolean;
+}) {
+  const router = useRouter();
+
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="Today" />
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse"
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-3/4 bg-white/[0.06] rounded" />
+                  <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  const hasContent = events.length > 0 || unreadSpaces.length > 0;
+
+  if (!hasContent) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="Today" />
+        <Card className="p-6 bg-white/[0.02] border-white/[0.06] text-center">
+          <CalendarIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
+          <p className="text-sm text-white/50 mb-4">
+            Nothing scheduled today. Check what&apos;s coming up this week.
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/events">Browse events</Link>
+          </Button>
+        </Card>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-8">
+      <SectionHeader title="Today" />
       <div className="space-y-3">
-        {spaces.map((space) => (
+        {/* Today's events */}
+        {events.map((event) => (
+          <motion.div
+            key={event.id}
+            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
+            whileHover={{ opacity: 0.9 }}
+            onClick={() => router.push(`/spaces/${event.spaceId}/events`)}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                <CalendarIcon className="h-5 w-5 text-white/60" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white truncate">
+                    {event.title}
+                  </span>
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {formatEventTime(event.startDate)}
+                  </Badge>
+                </div>
+                <p className="text-xs text-white/50 mt-1">
+                  {event.spaceName}
+                  {event.isGoing && " · You're going"}
+                  {event.rsvpCount && event.rsvpCount > 0 && ` · ${event.rsvpCount} going`}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+
+        {/* Unread messages */}
+        {unreadSpaces.map((space) => (
+          <motion.div
+            key={space.id}
+            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
+            whileHover={{ opacity: 0.9 }}
+            onClick={() => router.push(`/spaces/${space.id}`)}
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                <ChatBubbleLeftRightIcon className="h-5 w-5 text-white/60" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-white truncate">
+                    {space.unreadCount} new messages in {space.name}
+                  </span>
+                </div>
+                <p className="text-xs text-white/50 mt-1">Jump back in →</p>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// YOUR SPACES Section — Navigation tiles with activity dots
+function YourSpacesSection({
+  spaces,
+  loading,
+}: {
+  spaces: SpaceData[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="Your Spaces" action="Browse" actionHref="/spaces" />
+        <div className="grid grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-8">
+      <SectionHeader title="Your Spaces" action="Browse" actionHref="/spaces" />
+      <div className="grid grid-cols-4 gap-3">
+        {spaces.slice(0, 3).map((space) => (
           <Link
             key={space.id}
             href={`/spaces/${space.id}`}
-            className="flex items-center justify-between p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
+            className="group aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 flex flex-col justify-between hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
           >
-            <span className="text-sm text-white/80">{space.name}</span>
-            <span className="text-xs text-white/40">{formatCount(space.members)} members</span>
+            <div className="text-xs font-medium text-white/80 truncate">
+              {space.name}
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+            </div>
+          </Link>
+        ))}
+
+        {/* Browse tile */}
+        <Link
+          href="/spaces"
+          className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] border-dashed p-3 flex flex-col items-center justify-center hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
+        >
+          <PlusIcon className="h-5 w-5 text-white/40 mb-1" />
+          <span className="text-xs text-white/40">Browse</span>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+// THIS WEEK Section — Upcoming events
+function ThisWeekSection({
+  events,
+  loading,
+}: {
+  events: EventData[];
+  loading: boolean;
+}) {
+  const router = useRouter();
+
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="This Week" action="All events" actionHref="/events" />
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div
+              key={i}
+              className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse"
+            >
+              <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
+              <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="This Week" action="All events" actionHref="/events" />
+        <Card className="p-6 bg-white/[0.02] border-white/[0.06] text-center">
+          <CalendarIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
+          <p className="text-sm text-white/50 mb-4">
+            Nothing scheduled yet. Create an event or browse what&apos;s happening campus-wide.
+          </p>
+          <div className="flex justify-center gap-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/events">Browse events</Link>
+            </Button>
+          </div>
+        </Card>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-8">
+      <SectionHeader title="This Week" action="All events" actionHref="/events" />
+      <div className="space-y-3">
+        {events.map((event) => (
+          <motion.div
+            key={event.id}
+            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
+            whileHover={{ opacity: 0.9 }}
+            onClick={() => router.push(`/spaces/${event.spaceId}/events`)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4 text-white/40 shrink-0" />
+                  <span className="text-sm font-medium text-white truncate">
+                    {event.title}
+                  </span>
+                </div>
+                <p className="text-xs text-white/50 mt-1 ml-6">
+                  {event.spaceName} · {formatEventTime(event.startDate)}
+                  {event.rsvpCount && event.rsvpCount > 0 && ` · ${event.rsvpCount} going`}
+                </p>
+              </div>
+              <ArrowRightIcon className="h-4 w-4 text-white/20 shrink-0" />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// YOUR CREATIONS Section — HiveLab tools with response counts
+function YourCreationsSection({
+  tools,
+  loading,
+}: {
+  tools: ToolData[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="Your Creations" action="HiveLab" actionHref="/tools" />
+        <div className="grid grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-8">
+      <SectionHeader title="Your Creations" action="HiveLab" actionHref="/tools" />
+      <div className="grid grid-cols-4 gap-3">
+        {tools.slice(0, 3).map((tool) => (
+          <Link
+            key={tool.id}
+            href={`/tools/${tool.id}`}
+            className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 flex flex-col justify-between hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
+          >
+            <WrenchScrewdriverIcon className="h-5 w-5 text-white/40" />
+            <div>
+              <div className="text-xs font-medium text-white/80 truncate">
+                {tool.name}
+              </div>
+              {tool.responseCount !== undefined && tool.responseCount > 0 && (
+                <div className="text-[10px] text-white/40 mt-0.5">
+                  {tool.responseCount} responses
+                </div>
+              )}
+            </div>
+          </Link>
+        ))}
+
+        {/* Create tile */}
+        <Link
+          href="/tools/new"
+          className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] border-dashed p-3 flex flex-col items-center justify-center hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
+        >
+          <PlusIcon className="h-5 w-5 text-white/40 mb-1" />
+          <span className="text-xs text-white/40">Create</span>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+// DISCOVER Section — 1-2 discovery items
+function DiscoverSection({
+  recommendations,
+  loading,
+}: {
+  recommendations: RecommendedSpace[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <section className="mb-8">
+        <SectionHeader title="Discover" />
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse">
+          <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
+          <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+        </div>
+      </section>
+    );
+  }
+
+  if (recommendations.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mb-8">
+      <SectionHeader title="Discover" action="Browse all" actionHref="/spaces" />
+      <div className="space-y-3">
+        {recommendations.slice(0, 2).map((space) => (
+          <Link
+            key={space.id}
+            href={`/spaces/${space.id}`}
+            className="block bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
+                <SparklesIcon className="h-5 w-5 text-white/40" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-white truncate">
+                  {space.name}
+                </div>
+                <p className="text-xs text-white/50 mt-0.5">
+                  {space.reason} · {space.memberCount} members
+                </p>
+              </div>
+            </div>
           </Link>
         ))}
       </div>
-      <Link href="/spaces" className="block mt-4 text-sm text-life-gold hover:underline">
-        See all spaces →
-      </Link>
-    </Card>
+    </section>
   );
 }
 
-function QuickActions() {
-  const [open, setOpen] = React.useState(false);
+// ANTICIPATION BOX — "This page is evolving"
+function EvolvingBox() {
+  return (
+    <section className="mt-12 mb-8">
+      <Card className="p-6 bg-white/[0.01] border-white/[0.08] border-dashed">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
+            <SparklesIcon className="h-5 w-5 text-white/40" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium text-white/70 mb-2">
+              This page is evolving.
+            </h3>
+            <p className="text-sm text-white/40 leading-relaxed">
+              Soon: A feed of everything happening across your spaces. Activity.
+              Events. What friends are doing. All in one stream.
+            </p>
+            <p className="text-xs text-white/30 mt-3">
+              You&apos;ll know when it drops.
+            </p>
+          </div>
+        </div>
+      </Card>
+    </section>
+  );
+}
 
+// ============================================
+// SIDEBAR COMPONENTS
+// ============================================
+
+function QuickActions() {
   return (
     <Card className="p-5 bg-white/[0.02] border-white/[0.06]">
       <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
-      <div className="relative">
-        <button
-          onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
+      <div className="space-y-2">
+        <Link
+          href="/tools/new"
+          className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <PlusIcon className="h-5 w-5 text-life-gold" />
-            <span className="text-sm text-white/80">Create something</span>
-          </div>
-          <ChevronDownIcon className={cn("h-4 w-4 text-white/40 transition-transform", open && "rotate-180")} />
-        </button>
-
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-[#0A0A09] border border-white/[0.08] rounded-lg overflow-hidden z-10"
-            >
-              <Link href="/tools/create" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
-                <WrenchScrewdriverIcon className="h-4 w-4 text-white/60" />
-                <span className="text-sm text-white/70">Build a Tool</span>
-              </Link>
-              <Link href="/spaces/create" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
-                <UsersIcon className="h-4 w-4 text-white/60" />
-                <span className="text-sm text-white/70">Create a Space</span>
-              </Link>
-              <Link href="/events" className="flex items-center gap-3 p-3 hover:bg-white/[0.04] transition-colors">
-                <CalendarIcon className="h-4 w-4 text-white/60" />
-                <span className="text-sm text-white/70">Browse Events</span>
-              </Link>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <WrenchScrewdriverIcon className="h-4 w-4 text-white/60" />
+          <span className="text-sm text-white/70">Build a Tool</span>
+        </Link>
+        <Link
+          href="/spaces/create"
+          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
+        >
+          <UsersIcon className="h-4 w-4 text-white/60" />
+          <span className="text-sm text-white/70">Create a Space</span>
+        </Link>
+        <Link
+          href="/events"
+          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
+        >
+          <CalendarIcon className="h-4 w-4 text-white/60" />
+          <span className="text-sm text-white/70">Browse Events</span>
+        </Link>
       </div>
     </Card>
   );
 }
 
+// ============================================
+// MAIN PAGE
+// ============================================
 
-// Main Activity Stream Page
-export default function FeedPage() {
+export default function ProtoFeedPage() {
   const { user, isLoading: authLoading } = useAuth();
-  const { toast } = useToast();
 
-  // Feed state
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [offset, setOffset] = useState(0);
+  // Data states
+  const [spaces, setSpaces] = useState<SpaceData[]>([]);
+  const [todayEvents, setTodayEvents] = useState<EventData[]>([]);
+  const [weekEvents, setWeekEvents] = useState<EventData[]>([]);
+  const [tools, setTools] = useState<ToolData[]>([]);
+  const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter state
-  const [filter, setFilter] = useState<FeedFilter>('all');
-  const [sortMode, setSortMode] = useState<SortMode>('algorithm');
-
-  // Trending spaces state (fetched from API)
-  const [trendingSpaces, setTrendingSpaces] = useState<{ id: string; name: string; members: number }[]>([]);
-  const [trendingLoading, setTrendingLoading] = useState(true);
-
-  // Fetch trending spaces
+  // Fetch all proto-feed data
   useEffect(() => {
-    async function fetchTrending() {
+    if (authLoading || !user) return;
+
+    async function fetchProtoFeedData() {
+      setLoading(true);
+
       try {
-        const response = await fetch('/api/spaces/browse-v2?limit=5&sortBy=member_count', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.spaces) {
-            setTrendingSpaces(
-              data.spaces.slice(0, 5).map((s: { id: string; name: string; memberCount?: number }) => ({
-                id: s.id,
-                name: s.name,
-                members: s.memberCount || 0,
-              }))
-            );
+        // Parallel fetch all data sources
+        const [spacesRes, dashboardRes, toolsRes] = await Promise.all([
+          fetch("/api/profile/my-spaces", { credentials: "include" }),
+          fetch("/api/profile/dashboard?includeRecommendations=true", {
+            credentials: "include",
+          }),
+          fetch("/api/tools?limit=10", { credentials: "include" }),
+        ]);
+
+        // Process spaces
+        if (spacesRes.ok) {
+          const spacesData = await spacesRes.json();
+          setSpaces(spacesData.spaces || []);
+        }
+
+        // Process dashboard (events + recommendations)
+        if (dashboardRes.ok) {
+          const dashboardData = await dashboardRes.json();
+          const dashboard = dashboardData.dashboard || {};
+
+          // Split events into today and this week
+          const allEvents: EventData[] = (dashboard.upcomingEvents || []).map(
+            (e: {
+              id: string;
+              title: string;
+              description?: string;
+              startDate: string;
+              endDate?: string;
+              spaceId: string;
+              spaceName: string;
+            }) => ({
+              id: e.id,
+              title: e.title,
+              description: e.description,
+              startDate: e.startDate,
+              endDate: e.endDate,
+              spaceId: e.spaceId,
+              spaceName: e.spaceName,
+            })
+          );
+
+          setTodayEvents(allEvents.filter((e) => isToday(e.startDate)));
+          setWeekEvents(
+            allEvents.filter((e) => !isToday(e.startDate) && isThisWeek(e.startDate))
+          );
+
+          // Recommendations
+          if (dashboard.recommendations?.spaces) {
+            setRecommendations(dashboard.recommendations.spaces);
           }
         }
-      } catch {
-        // Silently fail - trending is non-critical
-      } finally {
-        setTrendingLoading(false);
-      }
-    }
-    fetchTrending();
-  }, []);
 
-  // Fetch feed
-  const fetchFeed = useCallback(async (reset = false) => {
-    if (reset) {
-      setIsLoading(true);
-      setOffset(0);
-    } else {
-      setIsLoadingMore(true);
-    }
-    setError(null);
-
-    try {
-      const currentOffset = reset ? 0 : offset;
-      const params = new URLSearchParams({
-        limit: '20',
-        offset: currentOffset.toString(),
-        type: filter,
-        sortBy: sortMode,
-      });
-
-      const response = await fetch(`/api/feed?${params}`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch feed');
-      }
-
-      const data: FeedResponse = await response.json();
-
-      if (reset) {
-        setPosts(data.posts);
-      } else {
-        setPosts((prev) => [...prev, ...data.posts]);
-      }
-
-      setHasMore(data.pagination.hasMore);
-      setOffset(data.pagination.nextOffset || currentOffset + data.posts.length);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load feed';
-      setError(message);
-      toast.error('Feed Error', message);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  }, [filter, sortMode, offset, toast]);
-
-  // Initial fetch
-  useEffect(() => {
-    if (!authLoading) {
-      fetchFeed(true);
-    }
-  }, [authLoading, filter, sortMode]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Infinite scroll
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const loadMoreRef = useCallback(
-    (node: HTMLDivElement | null) => {
-      if (isLoadingMore) return;
-      if (observerRef.current) observerRef.current.disconnect();
-
-      observerRef.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          fetchFeed(false);
+        // Process tools
+        if (toolsRes.ok) {
+          const toolsData = await toolsRes.json();
+          setTools(toolsData.tools || []);
         }
-      });
+      } catch (error) {
+        console.error("Failed to fetch proto-feed data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-      if (node) observerRef.current.observe(node);
-    },
-    [isLoadingMore, hasMore, isLoading, fetchFeed]
-  );
+    fetchProtoFeedData();
+  }, [authLoading, user]);
 
   // Loading state
-  if (authLoading || isLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-ground">
         <div className="max-w-6xl mx-auto px-6 py-10">
+          <div className="h-8 w-48 bg-white/[0.06] rounded mb-8 animate-pulse" />
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
-                  <div className="flex items-start gap-3 mb-3">
-                    {/* Icon placeholder with subtle pulse */}
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] animate-pulse" />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-28 bg-white/[0.06] rounded animate-pulse" />
-                        <div className="h-3 w-1 bg-white/[0.04] rounded" />
-                        <div className="h-3 w-12 bg-white/[0.04] rounded animate-pulse" />
-                      </div>
-                      <div className="h-3 w-20 bg-white/[0.04] rounded animate-pulse" />
-                    </div>
-                    {/* Badge placeholder */}
-                    <div className="h-5 w-14 bg-white/[0.04] rounded-full animate-pulse" />
-                  </div>
-                  {/* Content lines */}
-                  <div className="space-y-2 mt-4">
-                    <div className="h-4 w-full bg-white/[0.05] rounded animate-pulse" />
-                    <div className="h-4 w-[85%] bg-white/[0.04] rounded animate-pulse" />
-                    <div className="h-4 w-[60%] bg-white/[0.03] rounded animate-pulse" />
-                  </div>
+            <div className="space-y-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="space-y-3">
+                  <div className="h-4 w-24 bg-white/[0.04] rounded" />
+                  <div className="h-32 bg-white/[0.02] border border-white/[0.06] rounded-xl animate-pulse" />
                 </div>
               ))}
             </div>
-            <div className="hidden lg:block space-y-4">
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 h-48 animate-pulse" />
-              <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 h-48 animate-pulse" />
+            <div className="hidden lg:block">
+              <div className="h-48 bg-white/[0.02] border border-white/[0.06] rounded-xl animate-pulse" />
             </div>
           </div>
         </div>
@@ -504,142 +686,43 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-ground">
-      {/* Header - Compact, content-first */}
+      {/* Header */}
       <div className="border-b border-white/[0.06] bg-white/[0.02]">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-medium text-white">Activity</h1>
-            <div className="flex items-center gap-2">
-              {/* Sort toggle */}
-              <div className="flex items-center bg-white/[0.04] rounded-lg p-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortMode('algorithm')}
-                  className={`text-xs gap-1.5 transition-all ${
-                    sortMode === 'algorithm'
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/50 hover:text-white/70'
-                  }`}
-                >
-                  <SparklesIcon className="h-3.5 w-3.5" />
-                  For You
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSortMode('recent')}
-                  className={`text-xs gap-1.5 transition-all ${
-                    sortMode === 'recent'
-                      ? 'bg-white/10 text-white'
-                      : 'text-white/50 hover:text-white/70'
-                  }`}
-                >
-                  <ClockIcon className="h-3.5 w-3.5" />
-                  Recent
-                </Button>
-              </div>
-            </div>
-          </div>
+          <h1 className="text-lg font-medium text-white">What&apos;s Happening</h1>
         </div>
       </div>
 
       {/* Main content */}
       <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
-          {/* Feed column */}
-          <div className="space-y-6">
-            {/* Filter tabs - Activity Stream only (no Posts) */}
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as FeedFilter)} className="w-full">
-              <TabsList className="bg-white/[0.04]">
-                <TabsTrigger value="all">All Activity</TabsTrigger>
-                <TabsTrigger value="events">Events</TabsTrigger>
-                <TabsTrigger value="tools">Tools</TabsTrigger>
-                <TabsTrigger value="spaces">Spaces</TabsTrigger>
-              </TabsList>
-            </Tabs>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+          {/* Main column */}
+          <div>
+            <TodaySection
+              events={todayEvents}
+              unreadSpaces={[]} // TODO: Add unread messages when available
+              loading={loading}
+            />
 
-            {/* Error state */}
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-center">
-                <p className="text-sm text-red-400 mb-2">{error}</p>
-                <Button variant="outline" size="sm" onClick={() => fetchFeed(true)}>
-                  Try again
-                </Button>
-              </div>
-            )}
+            <YourSpacesSection spaces={spaces} loading={loading} />
 
-            {/* Activity Cards */}
-            <AnimatePresence mode="popLayout">
-              {posts.length > 0 ? (
-                posts.map((post) => (
-                  <ActivityCard
-                    key={post.id}
-                    post={post}
-                  />
-                ))
-              ) : !error ? (
-                <div className="text-center py-12">
-                  <FireIcon className="h-12 w-12 text-white/20 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-white mb-2">No activity yet</h3>
-                  <p className="text-sm text-white/50 mb-6">
-                    {filter === 'all'
-                      ? 'Join some spaces to see activity in your stream'
-                      : `No ${filter} activity to show right now`}
-                  </p>
-                  <Button asChild className="bg-life-gold text-ground hover:bg-life-gold/90">
-                    <Link href="/spaces">Browse Spaces</Link>
-                  </Button>
-                </div>
-              ) : null}
-            </AnimatePresence>
+            <ThisWeekSection events={weekEvents} loading={loading} />
 
-            {/* Load more indicator */}
-            {hasMore && posts.length > 0 && (
-              <div ref={loadMoreRef} className="py-8 text-center">
-                {isLoadingMore ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-                    <span className="text-sm text-white/40">Loading more...</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-white/30">Scroll for more</span>
-                )}
-              </div>
-            )}
+            <YourCreationsSection tools={tools} loading={loading} />
 
-            {/* End of feed */}
-            {!hasMore && posts.length > 0 && (
-              <div className="py-8 text-center border-t border-white/[0.06]">
-                <p className="text-sm text-white/40">You're all caught up!</p>
-              </div>
-            )}
+            <DiscoverSection recommendations={recommendations} loading={loading} />
+
+            <EvolvingBox />
           </div>
 
           {/* Sidebar */}
-          <aside className="hidden lg:block space-y-4">
-            <QuickActions />
-            {trendingLoading ? (
-              <Card className="p-5 bg-white/[0.02] border-white/[0.06] animate-pulse">
-                <div className="h-4 w-24 bg-white/[0.06] rounded mb-4" />
-                <div className="space-y-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-10 bg-white/[0.06] rounded" />
-                  ))}
-                </div>
-              </Card>
-            ) : trendingSpaces.length > 0 ? (
-              <TrendingSpaces spaces={trendingSpaces} />
-            ) : (
-              <Card className="p-5 bg-white/[0.02] border-white/[0.06]">
-                <h3 className="text-sm font-semibold text-white mb-2">Trending Spaces</h3>
-                <p className="text-xs text-white/40">No trending spaces yet</p>
-              </Card>
-            )}
+          <aside className="hidden lg:block">
+            <div className="sticky top-24">
+              <QuickActions />
+            </div>
           </aside>
         </div>
       </main>
-
     </div>
   );
 }

@@ -92,7 +92,7 @@ export function ProfileBentoCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
-      whileHover={{ y: -3, scale: 1.01 }}
+      whileHover={{ opacity: 0.9 }}
       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
     >
       {/* Subtle gradient overlay for depth */}

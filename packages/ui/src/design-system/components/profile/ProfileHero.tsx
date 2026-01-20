@@ -294,9 +294,9 @@ export function ProfileHero({
                 }}
                 whileHover={{
                   backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                  scale: 1.02,
+                  opacity: 0.9,
                 }}
-                whileTap={{ scale: 0.98 }}
+                whileTap={{ opacity: 0.8 }}
               >
                 Edit Profile
               </motion.button>
@@ -315,9 +315,9 @@ export function ProfileHero({
                   whileHover={{
                     backgroundColor: 'rgba(255, 215, 0, 0.15)',
                     boxShadow: '0 0 30px rgba(255, 215, 0, 0.25)',
-                    scale: 1.02,
+                    opacity: 0.9,
                   }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ opacity: 0.8 }}
                 >
                   Connect
                 </motion.button>
@@ -333,9 +333,9 @@ export function ProfileHero({
                   }}
                   whileHover={{
                     backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    scale: 1.02,
+                    opacity: 0.9,
                   }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ opacity: 0.8 }}
                 >
                   Message
                 </motion.button>
@@ -353,7 +353,7 @@ export function ProfileHero({
               whileHover={{
                 backgroundColor: 'rgba(255, 255, 255, 0.06)',
               }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ opacity: 0.8 }}
               aria-label="More options"
             >
               <svg

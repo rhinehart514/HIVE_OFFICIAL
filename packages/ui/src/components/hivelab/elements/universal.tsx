@@ -347,8 +347,8 @@ export function FilterSelectorElement({ config, onChange }: ElementProps) {
             >
               <motion.button
                 onClick={() => handleFilterToggle(value)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={{ opacity: 0.9 }}
+                whileTap={{ opacity: 0.8 }}
                 animate={wasJustSelected && !prefersReducedMotion ? { scale: [1, 1.1, 1] } : {}}
                 transition={springPresets.snappy}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -560,7 +560,7 @@ export function TagCloudElement({ config, data }: ElementProps) {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.03, ...springPresets.snappy }}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ opacity: 0.9 }}
             >
               <Badge
                 variant="outline"
@@ -1102,8 +1102,8 @@ export function FormBuilderElement({ id, config, data, onChange, onAction, share
 
         {/* Submit button with loading state */}
         <motion.div
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          whileHover={{ opacity: 0.9 }}
+          whileTap={{ opacity: 0.8 }}
         >
           <Button
             onClick={handleSubmit}
@@ -1449,7 +1449,7 @@ export function MapViewElement({ config, data, onChange, onAction }: ElementProp
             {markers.map((marker) => (
               <g
                 key={marker.id}
-                className="cursor-pointer transition-transform hover:scale-110"
+                className="cursor-pointer transition-opacity hover:opacity-80"
                 onClick={() => handleMarkerClick(marker)}
                 style={{ transformOrigin: `${marker.x}px ${marker.y}px` }}
               >

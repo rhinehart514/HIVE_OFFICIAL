@@ -234,11 +234,11 @@ export function SpaceListRow({
         {/* Secondary info */}
         <div className="flex items-center gap-2 mt-0.5">
           <Text size="xs" className="text-white/40">
-            {space.memberCount.toLocaleString()} members
+            {space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}
           </Text>
 
           {/* Mutual friends */}
-          {space.mutualCount && space.mutualCount > 0 && (
+          {space.mutualCount != null && space.mutualCount > 0 && (
             <>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <div className="flex items-center gap-1.5">
@@ -260,7 +260,7 @@ export function SpaceListRow({
           )}
 
           {/* Upcoming events */}
-          {space.upcomingEventCount && space.upcomingEventCount > 0 && !space.mutualCount && (
+          {space.upcomingEventCount != null && space.upcomingEventCount > 0 && !(space.mutualCount && space.mutualCount > 0) && (
             <>
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <Text size="xs" className="text-white/50">

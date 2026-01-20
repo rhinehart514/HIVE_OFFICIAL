@@ -120,13 +120,13 @@ function IdentityCard({
     return (
       <motion.button
         onClick={onClaimClick}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
         className={cn(
           'group flex items-center gap-2 px-3 py-2',
           'rounded-lg',
           'bg-white/[0.02] hover:bg-white/[0.04]',
-          'border border-dashed border-white/[0.08] hover:border-white/[0.12]',
+          'border border-white/[0.06] hover:border-white/[0.10]',
           'transition-all duration-200',
           'h-[48px]'
         )}
@@ -144,13 +144,13 @@ function IdentityCard({
     return (
       <motion.button
         onClick={onClaimClick}
-        whileHover={{ y: -2 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ opacity: 0.9 }}
+        whileTap={{ opacity: 0.8 }}
         className={cn(
           'group relative flex flex-col items-start p-4',
           'rounded-xl',
           'bg-white/[0.02] hover:bg-white/[0.04]',
-          'border border-dashed border-white/[0.08] hover:border-white/[0.12]',
+          'border border-white/[0.06] hover:border-white/[0.10]',
           'transition-all duration-200',
           'text-left w-full h-full min-h-[100px]'
         )}
@@ -185,8 +185,8 @@ function IdentityCard({
   // Filled state - clickable to view space
   return (
     <motion.div
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       className="w-full h-full"
     >
       <Link
@@ -233,7 +233,7 @@ function IdentityCard({
         {/* Member count */}
         <div className="relative z-10 mt-auto pt-2">
           <Text size="xs" className="text-white/30">
-            {claim.memberCount.toLocaleString()} members
+            {claim.memberCount.toLocaleString()} {claim.memberCount === 1 ? 'member' : 'members'}
           </Text>
         </div>
       </Link>

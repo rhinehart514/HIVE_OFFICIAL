@@ -90,6 +90,29 @@ function getInitials(name: string): string {
     .join('');
 }
 
+/**
+ * Generate Google Calendar URL for an event
+ */
+function generateGoogleCalendarUrl(event: SpaceEventDetails): string {
+  const startDate = typeof event.startDate === 'string' ? new Date(event.startDate) : event.startDate;
+  const endDate = event.endDate
+    ? (typeof event.endDate === 'string' ? new Date(event.endDate) : event.endDate)
+    : new Date(startDate.getTime() + 60 * 60 * 1000); // Default 1 hour
+
+  // Format dates for Google Calendar (YYYYMMDDTHHmmssZ)
+  const formatForGCal = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${formatForGCal(startDate)}/${formatForGCal(endDate)}`,
+    details: event.description || '',
+    location: event.location || event.virtualLink || '',
+  });
+
+  return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+
 const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   open = false,
   onClose,
@@ -292,7 +315,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                   onClick={() => handleRSVP(status)}
                   disabled={isUpdating}
                   className={cn(
-                    'p-2 rounded-lg border text-center transition-all',
+                    'p-2 rounded-lg border text-center transition-all active:scale-95',
                     'focus:outline-none focus:ring-2 focus:ring-white/50',
                     'disabled:opacity-50',
                     currentRSVP === status
@@ -304,13 +327,37 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                       : 'border-[var(--color-border)] bg-[var(--color-bg-elevated)] hover:bg-[var(--color-bg-muted)]'
                   )}
                 >
-                  <span className="text-lg">{icon}</span>
+                  {isUpdating && currentRSVP !== status ? (
+                    <span className="text-lg opacity-50">{icon}</span>
+                  ) : (
+                    <span className="text-lg">{icon}</span>
+                  )}
                   <Text size="xs" className="block mt-1">
                     {label}
                   </Text>
                 </button>
               ))}
             </div>
+
+            {/* Add to Calendar - shows when RSVP'd as going */}
+            {currentRSVP === 'going' && (
+              <a
+                href={generateGoogleCalendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  'mt-3 w-full p-2.5 rounded-lg border border-[var(--color-border)]',
+                  'bg-[var(--color-bg-elevated)] hover:bg-[var(--color-bg-muted)]',
+                  'flex items-center justify-center gap-2 transition-all active:scale-[0.98]',
+                  'text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                )}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Add to Google Calendar
+              </a>
+            )}
           </div>
 
           {/* Linked Board */}

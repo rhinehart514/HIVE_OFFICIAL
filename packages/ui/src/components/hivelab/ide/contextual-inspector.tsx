@@ -311,8 +311,8 @@ export function ContextualInspector({
         <div className="flex items-center gap-1 flex-shrink-0">
           {onTogglePin && (
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               onClick={onTogglePin}
               className={cn(
                 'p-1.5 rounded-md',
@@ -328,8 +328,8 @@ export function ContextualInspector({
 
           {onClose && (
             <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               onClick={onClose}
               className={cn(
                 'p-1.5 rounded-md',
@@ -373,8 +373,8 @@ export function ContextualInspector({
         >
           {onDuplicate && (
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               onClick={onDuplicate}
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg',
@@ -390,8 +390,8 @@ export function ContextualInspector({
 
           {onDelete && (
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               onClick={onDelete}
               className={cn(
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg',

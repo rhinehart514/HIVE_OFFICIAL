@@ -56,13 +56,13 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
     >
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-life-gold/10 to-transparent rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gold-500/10 to-transparent rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
       </div>
 
       <div className="relative z-10">
         {/* Badge */}
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] mb-4">
-          <SparklesIcon className="w-3.5 h-3.5 text-life-gold" />
+          <SparklesIcon className="w-3.5 h-3.5 text-gold-500" />
           <Text size="xs" className="text-white/60">
             400+ communities
           </Text>

@@ -42,6 +42,10 @@ export interface ToolsModeProps {
   tools: SpaceTool[];
   /** Loading state */
   isLoading?: boolean;
+  /** Error message */
+  error?: string | null;
+  /** Retry callback */
+  onRetry?: () => void;
   /** Can user add tools */
   canAddTools?: boolean;
   /** Run tool callback */
@@ -50,6 +54,8 @@ export interface ToolsModeProps {
   onViewTool?: (toolId: string) => void;
   /** Add tool to space */
   onAddTool?: () => void;
+  /** Build new tool in HiveLab */
+  onBuildTool?: () => void;
   /** Remove tool from space */
   onRemoveTool?: (placementId: string) => void;
   /** Additional className */
@@ -223,10 +229,13 @@ export function ToolsMode({
   spaceId,
   tools,
   isLoading = false,
+  error,
+  onRetry,
   canAddTools = false,
   onRunTool,
   onViewTool,
   onAddTool,
+  onBuildTool,
   onRemoveTool,
   className,
 }: ToolsModeProps) {
@@ -261,20 +270,65 @@ export function ToolsMode({
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className={cn('flex-1 flex items-center justify-center', className)}>
+        <div className="text-center px-6">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-[#A3A19E] text-base mb-2">Something went wrong</p>
+          <p className="text-[#6B6B70] text-sm mb-4">{error}</p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 rounded-lg bg-white/[0.06] text-white text-sm font-medium
+                hover:bg-white/[0.10] active:scale-95 transition-all"
+            >
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex-1 overflow-y-auto', className)}>
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-3 md:px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold text-white">Tools</h1>
-          {canAddTools && onAddTool && (
-            <button
-              className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
-                hover:bg-[#FFD700]/90 transition-colors"
-              onClick={onAddTool}
-            >
-              Add Tool
-            </button>
+          {canAddTools && (
+            <div className="flex items-center gap-2">
+              {/* Build new tool in HiveLab */}
+              {onBuildTool && (
+                <button
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg
+                    bg-[#FFD700] text-black font-medium
+                    hover:bg-[#FFD700]/90 active:scale-95 transition-all"
+                  onClick={onBuildTool}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Build Tool
+                </button>
+              )}
+              {/* Add existing tool */}
+              {onAddTool && (
+                <button
+                  className="px-4 py-2 rounded-lg bg-white/[0.06] text-white font-medium
+                    hover:bg-white/[0.10] active:scale-95 transition-all"
+                  onClick={onAddTool}
+                >
+                  Add Existing
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -362,16 +416,32 @@ export function ToolsMode({
             </div>
             <p className="text-[#A3A19E] text-lg mb-2">No tools yet</p>
             <p className="text-[#6B6B70] text-sm mb-6">
-              {canAddTools ? 'Add tools from HiveLab to this space' : 'Check back later for available tools'}
+              {canAddTools ? 'Build custom tools for your space or add existing ones' : 'Check back later for available tools'}
             </p>
-            {canAddTools && onAddTool && (
-              <button
-                className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
-                  hover:bg-[#FFD700]/90 transition-colors"
-                onClick={onAddTool}
-              >
-                Add Tool
-              </button>
+            {canAddTools && (
+              <div className="flex items-center justify-center gap-3">
+                {onBuildTool && (
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
+                      hover:bg-[#FFD700]/90 active:scale-95 transition-all"
+                    onClick={onBuildTool}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Build Tool
+                  </button>
+                )}
+                {onAddTool && (
+                  <button
+                    className="px-4 py-2 rounded-lg bg-white/[0.06] text-white font-medium
+                      hover:bg-white/[0.10] active:scale-95 transition-all"
+                    onClick={onAddTool}
+                  >
+                    Add Existing
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )}

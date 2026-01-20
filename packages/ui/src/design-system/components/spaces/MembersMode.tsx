@@ -40,6 +40,10 @@ export interface MembersModeProps {
   members: SpaceMember[];
   /** Loading state */
   isLoading?: boolean;
+  /** Error message */
+  error?: string | null;
+  /** Retry callback */
+  onRetry?: () => void;
   /** Can user invite */
   canInvite?: boolean;
   /** Current user ID */
@@ -116,8 +120,8 @@ function MemberCard({
 
   return (
     <motion.button
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       className={cn(
         'relative w-full text-left rounded-2xl overflow-hidden',
         'bg-[#141312] border border-white/[0.06]',
@@ -251,6 +255,8 @@ export function MembersMode({
   spaceId,
   members,
   isLoading = false,
+  error,
+  onRetry,
   canInvite = false,
   currentUserId,
   onViewProfile,
@@ -317,9 +323,35 @@ export function MembersMode({
     );
   }
 
+  // Error state
+  if (error) {
+    return (
+      <div className={cn('flex-1 flex items-center justify-center', className)}>
+        <div className="text-center px-6">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <p className="text-[#A3A19E] text-base mb-2">Something went wrong</p>
+          <p className="text-[#6B6B70] text-sm mb-4">{error}</p>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="px-4 py-2 rounded-lg bg-white/[0.06] text-white text-sm font-medium
+                hover:bg-white/[0.10] active:scale-95 transition-all"
+            >
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex-1 overflow-y-auto', className)}>
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-3 md:px-6 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -331,7 +363,7 @@ export function MembersMode({
           {canInvite && onInvite && (
             <button
               className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
-                hover:bg-[#FFD700]/90 transition-colors"
+                hover:bg-[#FFD700]/90 active:scale-95 transition-all"
               onClick={onInvite}
             >
               Invite
@@ -504,12 +536,26 @@ export function MembersMode({
         {/* Empty state */}
         {filter !== 'requests' && filteredMembers.length === 0 && (
           <div className="text-center py-16">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/[0.03] flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#6B6B70]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
             <p className="text-[#A3A19E] text-lg mb-2">
-              {search ? 'No members found' : 'No members'}
+              {search ? 'No members found' : 'No members yet'}
             </p>
-            <p className="text-[#6B6B70] text-sm">
-              {search ? 'Try a different search' : 'Invite people to join this space'}
+            <p className="text-[#6B6B70] text-sm mb-6">
+              {search ? 'Try a different search term' : 'Invite people to join this space'}
             </p>
+            {!search && canInvite && onInvite && (
+              <button
+                onClick={onInvite}
+                className="px-4 py-2 rounded-lg bg-[#FFD700] text-black font-medium
+                  hover:bg-[#FFD700]/90 active:scale-95 transition-all"
+              >
+                Invite Members
+              </button>
+            )}
           </div>
         )}
       </div>

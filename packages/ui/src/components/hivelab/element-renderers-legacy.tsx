@@ -688,7 +688,7 @@ export function MapViewElement({ config, data, onChange, onAction }: ElementProp
             {markers.map((marker) => (
               <g
                 key={marker.id}
-                className="cursor-pointer transition-transform hover:scale-110"
+                className="cursor-pointer transition-opacity hover:opacity-80"
                 onClick={() => handleMarkerClick(marker)}
                 style={{ transformOrigin: `${marker.x}px ${marker.y}px` }}
               >
@@ -1394,8 +1394,8 @@ export function PollElement({ id, config, data, sharedState, userState, onChange
                 disabled={(hasVoted && !config.allowChangeVote) || isSubmitting}
                 initial={false}
                 animate={wasJustVoted ? { scale: [1, 0.98, 1.02, 1] } : { scale: 1 }}
-                whileHover={!hasVoted || config.allowChangeVote ? { scale: 1.01 } : {}}
-                whileTap={!hasVoted || config.allowChangeVote ? { scale: 0.99 } : {}}
+                whileHover={!hasVoted || config.allowChangeVote ? { opacity: 0.9 } : {}}
+                whileTap={!hasVoted || config.allowChangeVote ? { opacity: 0.8 } : {}}
                 transition={springPresets.snappy}
                 className={`w-full text-left p-3 rounded-lg border transition-colors relative overflow-hidden ${
                   isSelected
@@ -1881,8 +1881,8 @@ export function RsvpButtonElement({ id, config, data, sharedState, userState, on
             </div>
 
             <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ opacity: 0.9 }}
+              whileTap={{ opacity: 0.8 }}
               transition={springPresets.snappy}
             >
               <Button
@@ -2046,8 +2046,8 @@ export function RsvpButtonElement({ id, config, data, sharedState, userState, on
                       ? 'bg-amber-500/15 text-amber-500 border-amber-500/30 hover:bg-amber-500/20'
                       : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 hover:bg-amber-500/15'
                   }`}
-                  whileHover={!isWaitlistLoading ? { scale: 1.01 } : {}}
-                  whileTap={!isWaitlistLoading ? { scale: 0.99 } : {}}
+                  whileHover={!isWaitlistLoading ? { opacity: 0.9 } : {}}
+                  whileTap={!isWaitlistLoading ? { opacity: 0.8 } : {}}
                   animate={justJoinedWaitlist && !prefersReducedMotion ? { scale: [1, 1.02, 1] } : {}}
                   aria-label={isOnWaitlist ? 'Leave waitlist' : 'Join waitlist'}
                 >

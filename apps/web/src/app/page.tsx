@@ -143,7 +143,7 @@ function Navigation() {
               Spaces
             </a>
             <a
-              href="/build"
+              href="/tools"
               className="text-sm text-white/50 hover:text-white transition-colors rounded-md px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               HiveLab

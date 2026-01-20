@@ -87,7 +87,7 @@ export function DeployDropdown({
           text-[var(--hive-gold)] font-medium text-sm
           transition-all duration-200
           hover:bg-white/[0.10] hover:border-[var(--hive-gold)]/50
-          active:scale-[0.98]
+          active:opacity-80
           focus:outline-none focus:ring-2 focus:ring-white/50
           disabled:opacity-40 disabled:cursor-not-allowed"
       >

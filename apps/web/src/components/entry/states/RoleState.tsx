@@ -114,7 +114,7 @@ export function RoleState({
               className={cn(
                 'w-full flex items-start gap-4 p-4 rounded-xl text-left transition-all',
                 'border bg-white/[0.02] hover:bg-white/[0.04]',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A09]',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-ground)]',
                 isSelected
                   ? 'border-white/20 bg-white/[0.06]'
                   : 'border-white/[0.06]'

@@ -104,7 +104,7 @@ export function AIInputBar({
                 flex items-center justify-center
                 transition-all duration-150
                 hover:bg-[var(--life-glow)]
-                active:scale-95
+                active:opacity-80
                 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ArrowUpIcon className="w-4 h-4" />

@@ -343,7 +343,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
         delay: prefersReducedMotion ? 0 : index * staggerPresets.fast,
       }}
       whileHover={isComingSoon ? {} : {
-        scale: 1.02,
+        opacity: 0.9,
         y: -2,
         boxShadow: isPremiumTier
           ? '0 4px 20px rgba(168, 85, 247, 0.2)'
@@ -351,7 +351,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
             ? '0 4px 16px rgba(59, 130, 246, 0.15)'
             : '0 4px 12px rgba(0,0,0,0.3)',
       }}
-      whileTap={isComingSoon ? {} : { scale: 0.98 }}
+      whileTap={isComingSoon ? {} : { opacity: 0.8 }}
       role="button"
       aria-label={`${element.name}: ${element.description}. ${isComingSoon ? 'Coming soon.' : 'Drag to canvas to add.'}`}
       aria-roledescription={isComingSoon ? 'coming soon element' : 'draggable element'}
@@ -373,7 +373,7 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
             category?.color,
             isComingSoon && 'opacity-50'
           )}
-          whileHover={isComingSoon ? {} : { scale: 1.05 }}
+          whileHover={isComingSoon ? {} : { opacity: 0.9 }}
           transition={springPresets.bouncy}
         >
           {element.icon}

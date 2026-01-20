@@ -54,12 +54,12 @@ export function ModeCard({
         // Hover state
         'hover:border-white/[0.12] hover:-translate-y-1',
         // Focus state (white, not gold)
-        'focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-[#0A0A09]',
+        'focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-[var(--bg-ground,#0A0A09)]',
         // Activity state (gold edge warmth)
         hasActivity && 'shadow-[inset_0_0_0_1px_rgba(255,215,0,0.15)]',
         className
       )}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ opacity: 0.8 }}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">

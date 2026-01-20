@@ -174,8 +174,8 @@ function EventCard({
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
         isUrgent && 'ring-1 ring-[var(--life-gold)]/30'
       )}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
     >
       <div className="flex items-start gap-3">
         {/* Date Column */}

@@ -285,6 +285,19 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
     const target = availableTargets.find(t => t.id === deploymentConfig.targetId);
     return (
       <div className="space-y-4">
+        {/* Error display - prominent at top */}
+        {error && (
+          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-red-400 text-xs font-bold">!</span>
+            </div>
+            <div>
+              <p className="text-red-400 text-sm font-medium">Deployment failed</p>
+              <p className="text-red-400/80 text-sm mt-1">{error}</p>
+            </div>
+          </div>
+        )}
+
         <Card className="p-4">
           <h4 className="font-semibold text-[var(--hive-text-primary)] mb-2">Deployment Summary</h4>
           <div className="space-y-2 text-sm">
@@ -293,9 +306,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
             <div className="flex justify-between"><span className="text-[var(--hive-text-secondary)]">Visibility:</span><span className="text-[var(--hive-text-primary)] font-medium">{deploymentConfig.targetType === 'profile' ? (deploymentConfig.privacy?.inheritFromProfile ? 'Inherits from profile' : (deploymentConfig.privacy?.visibility || 'Public')) : (deploymentConfig.settings.showInDirectory ? 'Public' : 'Private')}</span></div>
           </div>
         </Card>
-        {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-sm">{error}</div>
-        )}
+
         <div className="flex gap-2 justify-between">
           <Button variant="secondary" onClick={() => setStep('config')}>Back</Button>
           <Button onClick={handleDeploy} disabled={isLoading} className="bg-[var(--hive-brand-primary)] text-hive-brand-on-gold hover:bg-hive-brand-hover flex items-center gap-2">
@@ -307,7 +318,7 @@ export function ToolDeployModal({ open, onOpenChange, toolName, availableTargets
             ) : (
               <>
                 <RocketLaunchIcon className="h-4 w-4" />
-                Deploy Tool
+                {error ? 'Try Again' : 'Deploy Tool'}
               </>
             )}
           </Button>

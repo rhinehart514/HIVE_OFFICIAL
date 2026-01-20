@@ -338,8 +338,8 @@ function CollapsedBundleButton({
     <motion.button
       className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
       onClick={onClick}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ opacity: 0.9 }}
+      whileTap={{ opacity: 0.8 }}
       title={bundle.name}
     >
       <BundleIcon className="h-5 w-5" />

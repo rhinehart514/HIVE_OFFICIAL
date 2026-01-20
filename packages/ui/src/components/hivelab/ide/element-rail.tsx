@@ -598,7 +598,7 @@ function ToolsPanel({
         className={cn(
           'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
           'text-sm font-medium transition-all duration-200',
-          'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]',
+          'hover:shadow-md hover:opacity-90 active:opacity-80',
           focusRing
         )}
         style={{
@@ -642,7 +642,7 @@ function ToolsPanel({
             className={cn(
               'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg',
               'text-sm font-medium transition-all duration-200',
-              'hover:shadow-md active:scale-[0.98]',
+              'hover:shadow-md hover:opacity-90 active:opacity-80',
               focusRing
             )}
             style={{
