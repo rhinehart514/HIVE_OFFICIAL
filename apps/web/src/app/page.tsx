@@ -151,7 +151,7 @@ function Navigation() {
           </div>
 
           <Button variant="ghost" size="sm" asChild>
-            <a href="/enter">Sign in</a>
+            <a href="/login">Sign in</a>
           </Button>
         </GlassCard>
       </nav>
