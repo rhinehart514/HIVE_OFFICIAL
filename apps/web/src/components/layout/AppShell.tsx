@@ -99,7 +99,7 @@ interface SidebarProps {
 function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   const isActive = (item: NavItem) => {
     if (item.matchPattern) {
@@ -114,7 +114,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
     router.push('/');
   };
 
