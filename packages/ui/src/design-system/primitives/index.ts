@@ -516,6 +516,18 @@ export {
   type FooterLinkGroupProps,
 } from './landing/Footer';
 
+export {
+  SpacePreviewCard,
+  spacePreviewCardVariants,
+  type SpacePreviewCardProps,
+} from './landing/SpacePreviewCard';
+
+export {
+  LandingWindow,
+  type LandingWindowSpace,
+  type LandingWindowProps,
+} from './landing/LandingWindow';
+
 // ============================================
 // MOBILE NAVIGATION PRIMITIVES (Phase 12)
 // ============================================

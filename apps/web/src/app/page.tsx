@@ -1,74 +1,79 @@
 'use client';
 
 /**
- * HIVE Landing Page
+ * HIVE Landing Page — "The Window"
  *
- * One screen. One action. Nothing else.
+ * Show, don't tell. The landing page is a window into campus activity.
+ * FOMO through visibility, not explanation.
  */
 
+import { useState } from 'react';
 import {
   Button,
   motion,
   NoiseOverlay,
-  Logo,
-  LogoMark,
+  DisplayText,
+  Text,
+  LandingNav,
+  Footer,
+  LandingWindow,
+  type LandingWindowSpace,
 } from '@hive/ui/design-system/primitives';
 
+// Mock data for initial render (replaced by API in production)
+const FEATURED_SPACES: LandingWindowSpace[] = [
+  { id: '1', name: 'UB Esports', shortName: 'ESP', memberCount: 47, isLive: true },
+  { id: '2', name: 'CS Club', shortName: 'CS', memberCount: 23, isLive: true },
+  { id: '3', name: 'Pre-Med Society', shortName: 'PMS', memberCount: 89, isLive: true },
+  { id: '4', name: 'UB Hacks', shortName: 'UBH', memberCount: 156, isLive: true },
+  { id: '5', name: 'Acupuncture Club', shortName: 'ACU', memberCount: 12, isLive: false },
+  { id: '6', name: 'Photography', shortName: 'PHO', memberCount: 34, isLive: true },
+  { id: '7', name: 'Dance Marathon', shortName: 'DM', memberCount: 67, isLive: false },
+  { id: '8', name: 'Debate Team', shortName: 'DBT', memberCount: 28, isLive: true },
+];
+
 export default function LandingPage() {
+  const [spaces] = useState<LandingWindowSpace[]>(FEATURED_SPACES);
+  const [studentCount] = useState(3247);
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-void)] text-[var(--color-text-primary)] flex flex-col">
       <NoiseOverlay />
 
-      {/* Hero */}
-      <main className="flex-1 flex items-center justify-center px-6">
-        <div className="text-center">
-          {/* Mark */}
-          <motion.div
-            className="relative mb-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div className="absolute inset-0 w-24 h-24 mx-auto blur-[60px] bg-[var(--color-gold)]/20" />
-            <Logo variant="mark" size="lg" color="gold" className="relative mx-auto" />
-          </motion.div>
+      {/* Nav */}
+      <LandingNav fixed={false}>
+        <LandingNav.Logo />
+        <LandingNav.Actions>
+          <Button variant="cta" size="sm" asChild>
+            <a href="/enter">Enter with .edu</a>
+          </Button>
+        </LandingNav.Actions>
+      </LandingNav>
 
-          {/* Statement */}
-          <motion.h1
-            className="text-[clamp(2rem,8vw,4rem)] font-semibold tracking-tight leading-[1.1] mb-16"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-          >
-            Your campus.
-            <br />
-            <span className="text-[var(--color-text-dim)]">One place.</span>
-          </motion.h1>
+      {/* Main */}
+      <main className="flex-1 flex flex-col items-center justify-center">
+        {/* Headline */}
+        <motion.div
+          className="text-center mb-12 px-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <DisplayText>Your campus is already here.</DisplayText>
+        </motion.div>
 
-          {/* CTA */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            <Button variant="cta" size="lg" asChild>
-              <a href="/enter">Enter</a>
-            </Button>
-          </motion.div>
-        </div>
+        {/* The Window */}
+        <LandingWindow spaces={spaces} featuredIndex={3} />
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-6">
-        <div className="max-w-md mx-auto flex items-center justify-between text-[13px] text-[var(--color-text-dim)]">
-          <LogoMark markSize={14} markColor="var(--color-text-dim)" />
-          <div className="flex gap-4">
-            <a href="/legal/terms" className="hover:text-[var(--color-text-muted)] transition-colors">Terms</a>
-            <a href="/legal/privacy" className="hover:text-[var(--color-text-muted)] transition-colors">Privacy</a>
-          </div>
-          <a href="/login" className="hover:text-[var(--color-text-muted)] transition-colors">Sign in</a>
-        </div>
-      </footer>
+      <Footer variant="minimal">
+        <Footer.Brand />
+        <Text size="sm" tone="muted">
+          {studentCount.toLocaleString()} students building at UB
+        </Text>
+        <Footer.Copyright />
+      </Footer>
     </div>
   );
 }
