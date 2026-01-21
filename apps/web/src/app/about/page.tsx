@@ -15,8 +15,19 @@ import {
 // Premium easing
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-// Helpers who contributed along the way
-const HELPERS = ['Jacob'];
+// Early contributors (alphabetical)
+interface Contributor {
+  name: string;
+  role: string;
+  linkedin?: string;
+}
+
+const CONTRIBUTORS: Contributor[] = [
+  { name: 'Gavin', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/malecgavin/' },
+  { name: 'Mirka', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/mirka-arevalo/' },
+  { name: 'Noah', role: 'Operations', linkedin: 'https://www.linkedin.com/in/noahowsh/' },
+  { name: 'Samarth', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/samarth-yaralakatte-mallappa/' },
+];
 
 // Animated line that draws in
 function AnimatedLine({ className, delay = 0 }: { className?: string; delay?: number }) {
@@ -363,33 +374,58 @@ export default function AboutPage() {
           </div>
         </RevealSection>
 
-        {/* The Helpers */}
-        {HELPERS.length > 0 && (
-          <RevealSection className="px-6 py-20">
+        {/* Contributors */}
+        {CONTRIBUTORS.length > 0 && (
+          <RevealSection className="px-6 py-24 relative">
+            <AnimatedLine className="absolute top-0 left-6 right-6" />
             <div className="mx-auto max-w-3xl">
-              <motion.p
-                className="mb-6 text-[12px] uppercase tracking-wider text-white/25"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: EASE }}
-              >
-                With help from
-              </motion.p>
-              <div className="flex flex-wrap gap-6">
-                {HELPERS.map((name, i) => (
-                  <motion.span
-                    key={name}
-                    className="text-[18px] text-white/40"
-                    initial={{ opacity: 0, y: 15 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: i * 0.15, ease: EASE }}
-                  >
-                    {name}
-                  </motion.span>
-                ))}
-              </div>
+              <ParallaxText speed={0.05}>
+                <motion.p
+                  className="mb-10 text-[11px] uppercase tracking-[0.2em] text-white/20"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: EASE }}
+                >
+                  Contributors
+                </motion.p>
+                <div className="flex flex-wrap gap-x-12 gap-y-4">
+                  {CONTRIBUTORS.map((contributor, i) => (
+                    <motion.div
+                      key={contributor.name}
+                      initial={{ opacity: 0, y: 8 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: EASE }}
+                    >
+                      {contributor.linkedin ? (
+                        <a
+                          href={contributor.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group flex items-baseline gap-2"
+                        >
+                          <span className="text-[15px] text-white/30 group-hover:text-white/50 transition-colors duration-300">
+                            {contributor.name}
+                          </span>
+                          <span className="text-[12px] text-white/15 group-hover:text-white/25 transition-colors duration-300">
+                            {contributor.role}
+                          </span>
+                        </a>
+                      ) : (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-[15px] text-white/30">
+                            {contributor.name}
+                          </span>
+                          <span className="text-[12px] text-white/15">
+                            {contributor.role}
+                          </span>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </ParallaxText>
             </div>
           </RevealSection>
         )}

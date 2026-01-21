@@ -61,6 +61,7 @@ const NO_SHELL_ROUTES = [
   '/waitlist',           // Waitlist signup
   '/schools',            // School selection
   '/legal',              // Legal pages (privacy, terms, guidelines)
+  '/about',              // About page (standalone narrative)
   '/debug-auth',         // Debug only
   '/hivelab/demo',       // Demo mode
   // Note: /tools landing page now shows shell (ChatGPT-style)
