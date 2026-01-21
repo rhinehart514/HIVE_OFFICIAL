@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Logo,
@@ -23,11 +23,102 @@ interface Contributor {
 }
 
 const CONTRIBUTORS: Contributor[] = [
+  { name: 'Brunda', role: 'Development', linkedin: 'https://www.linkedin.com/in/brunda-venkatesh/' },
+  { name: 'Daniel', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/danielohebshalom/' },
   { name: 'Gavin', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/malecgavin/' },
   { name: 'Mirka', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/mirka-arevalo/' },
   { name: 'Noah', role: 'Operations', linkedin: 'https://www.linkedin.com/in/noahowsh/' },
+  { name: 'Rachana', role: 'Development', linkedin: 'https://www.linkedin.com/in/rachana-ramesh-0414a6164/' },
   { name: 'Samarth', role: 'Marketing', linkedin: 'https://www.linkedin.com/in/samarth-yaralakatte-mallappa/' },
 ];
+
+// Section IDs for upvoting
+type SectionId =
+  | 'what-hive-is'
+  | 'the-journey'
+  | 'spaces'
+  | 'feed'
+  | 'events'
+  | 'resources'
+  | 'roles'
+  | 'analytics'
+  | 'hivelab';
+
+// Upvote hook
+function useUpvotes() {
+  const [votes, setVotes] = useState<Record<SectionId, number>>({} as any);
+  const [userVotes, setUserVotes] = useState<Set<SectionId>>(new Set());
+
+  useEffect(() => {
+    // Load votes from localStorage
+    const savedVotes = localStorage.getItem('hive-about-votes');
+    const savedUserVotes = localStorage.getItem('hive-about-user-votes');
+    if (savedVotes) setVotes(JSON.parse(savedVotes));
+    if (savedUserVotes) setUserVotes(new Set(JSON.parse(savedUserVotes)));
+  }, []);
+
+  const upvote = (sectionId: SectionId) => {
+    const hasVoted = userVotes.has(sectionId);
+    const newUserVotes = new Set(userVotes);
+    const newVotes = { ...votes };
+
+    if (hasVoted) {
+      newUserVotes.delete(sectionId);
+      newVotes[sectionId] = (newVotes[sectionId] || 0) - 1;
+    } else {
+      newUserVotes.add(sectionId);
+      newVotes[sectionId] = (newVotes[sectionId] || 0) + 1;
+    }
+
+    setUserVotes(newUserVotes);
+    setVotes(newVotes);
+    localStorage.setItem('hive-about-votes', JSON.stringify(newVotes));
+    localStorage.setItem('hive-about-user-votes', JSON.stringify([...newUserVotes]));
+  };
+
+  return { votes, userVotes, upvote };
+}
+
+// Upvote button component
+function UpvoteButton({
+  sectionId,
+  votes,
+  hasVoted,
+  onUpvote
+}: {
+  sectionId: SectionId;
+  votes: number;
+  hasVoted: boolean;
+  onUpvote: () => void;
+}) {
+  return (
+    <motion.button
+      onClick={onUpvote}
+      className="group flex flex-col items-center gap-1 px-3 py-2 rounded-lg border border-white/10 bg-black/20 backdrop-blur-sm transition-all hover:border-[var(--color-gold)]/30 hover:bg-[var(--color-gold)]/5"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        className={`transition-colors ${hasVoted ? 'text-[var(--color-gold)]' : 'text-white/40 group-hover:text-white/60'}`}
+      >
+        <path
+          d="M8 2L10.5 7H15L11 10.5L12.5 15L8 11.5L3.5 15L5 10.5L1 7H5.5L8 2Z"
+          fill="currentColor"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className={`text-[11px] font-medium transition-colors ${hasVoted ? 'text-[var(--color-gold)]' : 'text-white/30 group-hover:text-white/50'}`}>
+        {votes || 0}
+      </span>
+    </motion.button>
+  );
+}
 
 // Animated line that draws in
 function AnimatedLine({ className, delay = 0 }: { className?: string; delay?: number }) {
@@ -158,13 +249,21 @@ function NarrativeReveal({
   );
 }
 
-// Section with scroll-triggered reveal
+// Section with scroll-triggered reveal + upvote
 function RevealSection({
   children,
   className,
+  sectionId,
+  upvoteProps,
 }: {
   children: React.ReactNode;
   className?: string;
+  sectionId?: SectionId;
+  upvoteProps?: {
+    votes: Record<SectionId, number>;
+    userVotes: Set<SectionId>;
+    upvote: (id: SectionId) => void;
+  };
 }) {
   const ref = useRef<HTMLElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-150px' });
@@ -172,11 +271,21 @@ function RevealSection({
   return (
     <motion.section
       ref={ref}
-      className={className}
+      className={`relative ${className}`}
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 1.2, ease: EASE }}
     >
+      {sectionId && upvoteProps && (
+        <div className="absolute top-8 right-8 z-10">
+          <UpvoteButton
+            sectionId={sectionId}
+            votes={upvoteProps.votes[sectionId] || 0}
+            hasVoted={upvoteProps.userVotes.has(sectionId)}
+            onUpvote={() => upvoteProps.upvote(sectionId)}
+          />
+        </div>
+      )}
       {children}
     </motion.section>
   );
@@ -188,16 +297,46 @@ export default function AboutPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
 
+  const [activeTab, setActiveTab] = useState<'story' | 'app'>('story');
+  const { votes, userVotes, upvote } = useUpvotes();
+
+  const upvoteProps = { votes, userVotes, upvote };
+
   return (
     <div ref={containerRef} className="min-h-screen bg-[var(--color-bg-void)] text-white">
       <NoiseOverlay />
 
-      {/* Minimal header */}
-      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
+      {/* Minimal header with tabs */}
+      <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6 backdrop-blur-xl bg-[var(--color-bg-void)]/80 border-b border-white/[0.04]">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
           <Link href="/" className="transition-opacity hover:opacity-70">
             <Logo variant="mark" size="sm" color="gold" />
           </Link>
+
+          {/* Tab switcher */}
+          <div className="flex items-center gap-2 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+            <button
+              onClick={() => setActiveTab('story')}
+              className={`px-4 py-2 text-[11px] font-medium uppercase tracking-wider rounded-md transition-all ${
+                activeTab === 'story'
+                  ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              My Story
+            </button>
+            <button
+              onClick={() => setActiveTab('app')}
+              className={`px-4 py-2 text-[11px] font-medium uppercase tracking-wider rounded-md transition-all ${
+                activeTab === 'app'
+                  ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
+                  : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              What's in the App
+            </button>
+          </div>
+
           <Link
             href="/"
             className="text-[13px] text-white/40 hover:text-white/60 transition-colors"
@@ -208,7 +347,7 @@ export default function AboutPage() {
       </header>
 
       {/* Content */}
-      <main className="relative">
+      <main className="relative pt-24">
         {/* Hero - parallax fade */}
         <motion.section
           className="min-h-screen flex flex-col justify-center px-6 py-24 sticky top-0"
@@ -242,7 +381,7 @@ export default function AboutPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3, ease: EASE }}
             >
-              So we built the infrastructure ourselves.
+              So we built the infrastructure students were missing.
             </motion.p>
 
             {/* Scroll indicator */}
@@ -267,296 +406,616 @@ export default function AboutPage() {
         {/* Spacer for parallax */}
         <div className="h-[50vh]" />
 
-        {/* ============================================ */}
-        {/* SECTION 1: WHAT IS HIVE */}
-        {/* ============================================ */}
+        {/* TAB: MY STORY */}
+        {activeTab === 'story' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            {/* SECTION 1: WHAT IS HIVE */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="what-hive-is"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    What HIVE is
+                  </motion.h2>
+                </ParallaxText>
 
-        <RevealSection className="px-6 py-32 relative">
-          <AnimatedLine className="absolute top-0 left-6 right-6" />
-          <div className="mx-auto max-w-3xl">
-            <ParallaxText speed={0.15}>
-              <motion.h2
-                className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
-                style={{ fontFamily: 'var(--font-display)' }}
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease: EASE }}
-              >
-                What I'm building
-              </motion.h2>
-            </ParallaxText>
+                <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        HIVE isn't a social app you check. It's not a feed designed to keep you scrolling, and it's not another layer of noise on campus. HIVE is a system: a permanent, structured home for student communities to exist, organize, and persist over time.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-            <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
-              <ParallaxText speed={0.1}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    I've been in student orgs since freshman year. Consulting club, a few others. And the thing that always frustrated me was how broken the infrastructure was. Not the people — the people were great. The tools.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        Universities have hundreds of student groups, but no shared operating layer. Information is scattered across GroupMe threads that die, Drive folders no one inherits, Instagram accounts optimized for attention instead of coordination, and legacy platforms built for administration—not students.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.09}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    We used GroupMe for everything, but every semester the chat would die when people graduated. Google Drive for files, but nothing was organized and half the links were broken. Instagram for recruiting, but that's not community — that's performance. And CampusLabs for official stuff, which everyone hated because it felt like filing taxes.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                  <ParallaxText speed={0.08}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        The result isn't a lack of activity. It's a lack of continuity.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.08}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    The worst part was the handoff. Every fall, new e-boards would start from scratch. The previous leadership's knowledge was just... gone. Scattered across personal accounts, dead group chats, someone's laptop who graduated. I watched new presidents spend their entire first semester just figuring out how things worked. Then they'd graduate and it would happen again.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                  <ParallaxText speed={0.07}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        Every year, leadership resets. Knowledge disappears. Momentum collapses. Groups rebuild from scratch—not because students fail, but because the system does.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.07}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    I kept thinking — why doesn't something exist that just... persists? A place that belongs to the org, not to whoever happens to be president this year. Where the knowledge stays. Where the next generation inherits something instead of nothing.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                  <ParallaxText speed={0.06}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        HIVE was built to fix that.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.06}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    That's what HIVE is supposed to be. A permanent home for student organizations. Not owned by the university, not controlled by admins, not dependent on any one person staying. Just infrastructure that's there when you need it.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                  <ParallaxText speed={0.055}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        Each organization gets a Space: a durable environment for posts, events, membership, and internal tools that don't vanish when officers graduate. The feed isn't the product. The Space is. The goal isn't engagement for its own sake—it's legibility, memory, and ownership.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.055}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    I mapped out 400+ orgs at UB — clubs, Greek life, residential communities, all of it. Each one has a space waiting. Whether it actually works the way I think it should... that's a different question. That's the part I can't know until people start using it.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-            </div>
-          </div>
-        </RevealSection>
+                  <ParallaxText speed={0.05}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        This didn't come from a consulting project or an institutional mandate. It came from mapping the actual campus reality—hundreds of orgs, overlapping missions, fragmented tools—and realizing there was no shared substrate underneath any of it.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-        {/* The Belief - animated container */}
-        <RevealSection className="px-6 py-32">
-          <div className="mx-auto max-w-3xl">
-            <AnimatedContainer className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
-              <ParallaxText speed={0.1}>
-                <p
-                  className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  "Students will build
-                  <br />
-                  what institutions can't.
-                </p>
-                <p
-                  className="mt-4 text-[28px] md:text-[36px] font-medium leading-[1.2] text-white/30"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  I'm just building the infrastructure."
-                </p>
-              </ParallaxText>
-            </AnimatedContainer>
-          </div>
-        </RevealSection>
+                  <ParallaxText speed={0.045}>
+                    <p className="text-white/60">
+                      <NarrativeReveal stagger={0.03}>
+                        HIVE is that substrate. It's built for students who want their work to outlast a semester. For orgs that want to compound, not reset. For campuses that need infrastructure, not another app.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
 
-        {/* ============================================ */}
-        {/* SECTION 2: WHY IT TOOK 2 YEARS */}
-        {/* ============================================ */}
+            {/* The Belief - animated container */}
+            <RevealSection className="px-6 py-32">
+              <div className="mx-auto max-w-3xl">
+                <AnimatedContainer className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
+                  <ParallaxText speed={0.1}>
+                    <p
+                      className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      "The feed isn't the product.
+                      <br />
+                      The Space is.
+                    </p>
+                    <p
+                      className="mt-4 text-[28px] md:text-[36px] font-medium leading-[1.2] text-white/30"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      Engagement for its own sake isn't the goal—
+                      <br />
+                      legibility, memory, and ownership are."
+                    </p>
+                  </ParallaxText>
+                </AnimatedContainer>
+              </div>
+            </RevealSection>
 
-        <RevealSection className="px-6 py-32 relative">
-          <AnimatedLine className="absolute top-0 left-6 right-6" />
-          <div className="mx-auto max-w-3xl">
-            <ParallaxText speed={0.15}>
-              <motion.h2
-                className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
-                style={{ fontFamily: 'var(--font-display)' }}
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1, ease: EASE }}
-              >
-                Why it took two years
-              </motion.h2>
-            </ParallaxText>
+            {/* SECTION 2: THE JOURNEY */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="the-journey"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Why it took two years
+                  </motion.h2>
+                </ParallaxText>
 
-            <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
-              <ParallaxText speed={0.1}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    I didn't start this alone. Two years ago I had a team. Good people who saw the same problem and wanted to fix it. We'd sit in O'Brian basement, in empty classrooms after hours, trying to figure this thing out.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
+                <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        I didn't start this alone. Two years ago I had a team. Good people who saw the same problem and wanted to fix it. We'd sit in O'Brian basement, in empty classrooms after hours, trying to figure this thing out.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
 
-              <ParallaxText speed={0.09}>
-                <motion.p
-                  className="text-white/50"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                >
-                  Honestly? <span className="text-[var(--color-gold)]">We bullshitted a lot.</span> We thought we were trying our best — and we were — but we spent more time planning than building. More time in meetings than shipping. I kept thinking if we just got the strategy right, everything would fall into place.
-                </motion.p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.08}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    It didn't. I couldn't lead. I didn't know how to turn planning into building, how to create momentum when there was no money, no traction, no proof it would work. The thing just... fell apart. That's on me.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.07}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    So I decided to build it myself. Not because I thought I could do it better alone — I couldn't. But because someone had to actually ship something. No more meetings. No more strategy sessions. Just building.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.065}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    Two years of nights and weekends. Stretches where I didn't touch it for weeks. Other times up until 3am because I was close to figuring something out. Mostly slow. Invisible progress. The kind where you're not sure if you're getting anywhere.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.06}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    But here's the thing — I need to talk about what these people actually did. Because it wasn't nothing.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.055}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    Gavin and Noah made marketing videos. Real ones. Samarth did the editing and filming — and honestly, he's one of the nicest people you'll ever meet. Buffalo is lucky to have him. Mirka put real resources into marketing when there was no reason to expect anything back. That level of belief made this possible.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.05}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    That's not "helping out." That's belief. That's putting real skin in when there was no reason to expect anything back.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.045}>
-                <motion.p
-                  className="text-white/60"
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                >
-                  So this project is dedicated to them. <span className="text-[var(--color-gold)]">Whether they like it or not.</span>
-                </motion.p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.055}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    The thing is finally at a point where other people can use it. Which is both exciting and terrifying. I know it's not perfect. I know there are bugs. I know there are features that seemed like good ideas at 2am that probably aren't. Building something in isolation means blind spots are inevitable.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.05}>
-                <p className="text-white/50">
-                  <NarrativeReveal stagger={0.03}>
-                    But that's kind of the point now. I can't know what's broken until you tell me. I can't know what's missing until you need it. The foundation is here — or at least I think it is. Now I need people to actually use it and tell me where I was wrong.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.045}>
-                <p className="text-white/60">
-                  <NarrativeReveal stagger={0.03}>
-                    So that's the ask. Not "use my app." Just: if you do use it, tell me what sucks. Tell me what you wish existed. Tell me what doesn't make sense. I've been building this in isolation for too long. I need the feedback loop. I need to know what you actually need, not what I assumed you needed.
-                  </NarrativeReveal>
-                </p>
-              </ParallaxText>
-
-              <ParallaxText speed={0.03}>
-                <motion.p
-                  className="text-white/25 text-[16px] pt-8"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 1, delay: 0.5, ease: EASE }}
-                >
-                  — Jacob
-                </motion.p>
-              </ParallaxText>
-            </div>
-          </div>
-        </RevealSection>
-
-        {/* Contributors */}
-        {CONTRIBUTORS.length > 0 && (
-          <RevealSection className="px-6 py-24 relative">
-            <AnimatedLine className="absolute top-0 left-6 right-6" />
-            <div className="mx-auto max-w-3xl">
-              <ParallaxText speed={0.05}>
-                <motion.p
-                  className="mb-10 text-[11px] uppercase tracking-[0.2em] text-white/20"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: EASE }}
-                >
-                  Contributors
-                </motion.p>
-                <div className="flex flex-wrap gap-x-12 gap-y-4">
-                  {CONTRIBUTORS.map((contributor, i) => (
-                    <motion.div
-                      key={contributor.name}
-                      initial={{ opacity: 0, y: 8 }}
+                  <ParallaxText speed={0.09}>
+                    <motion.p
+                      className="text-white/50"
+                      initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: EASE }}
+                      transition={{ duration: 0.8, ease: EASE }}
                     >
-                      {contributor.linkedin ? (
-                        <a
-                          href={contributor.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex items-baseline gap-2"
-                        >
-                          <span className="text-[15px] text-white/30 group-hover:text-white/50 transition-colors duration-300">
-                            {contributor.name}
-                          </span>
-                          <span className="text-[12px] text-white/15 group-hover:text-white/25 transition-colors duration-300">
-                            {contributor.role}
-                          </span>
-                        </a>
-                      ) : (
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-[15px] text-white/30">
-                            {contributor.name}
-                          </span>
-                          <span className="text-[12px] text-white/15">
-                            {contributor.role}
-                          </span>
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
+                      Honestly? <span className="text-[var(--color-gold)]">We bullshitted a lot.</span> We thought we were trying our best — and we were — but we spent more time planning than building. More time in meetings than shipping. I kept thinking if we just got the strategy right, everything would fall into place.
+                    </motion.p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.08}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        It didn't. I couldn't lead. I didn't know how to turn planning into building, how to create momentum when there was no money, no traction, no proof it would work. The thing just... fell apart. That's on me.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.07}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        So I decided to build it myself. Not because I thought I could do it better alone — I couldn't. But because someone had to actually ship something. No more meetings. No more strategy sessions. Just building.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.065}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        Two years of nights and weekends. Stretches where I didn't touch it for weeks. Other times up until 3am because I was close to figuring something out. Mostly slow. Invisible progress. The kind where you're not sure if you're getting anywhere.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.06}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        But here's the thing — I need to talk about what these people actually did. Because it wasn't nothing.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.055}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        Gavin and Noah made marketing videos. Real ones. Samarth did the editing and filming — and honestly, he's one of the nicest people you'll ever meet. Buffalo is lucky to have him. Mirka put real resources into marketing when there was no reason to expect anything back. That level of belief made this possible.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.05}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        That's not "helping out." That's belief. That's putting real skin in when there was no reason to expect anything back.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.045}>
+                    <motion.p
+                      className="text-white/60"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
+                      So this project is dedicated to them. <span className="text-[var(--color-gold)]">Whether they like it or not.</span>
+                    </motion.p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.055}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        The thing is finally at a point where other people can use it. Which is both exciting and terrifying. I know it's not perfect. I know there are bugs. I know there are features that seemed like good ideas at 2am that probably aren't. Building something in isolation means blind spots are inevitable.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.05}>
+                    <p className="text-white/50">
+                      <NarrativeReveal stagger={0.03}>
+                        But that's kind of the point now. I can't know what's broken until you tell me. I can't know what's missing until you need it. The foundation is here — or at least I think it is. Now I need people to actually use it and tell me where I was wrong.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.045}>
+                    <p className="text-white/60">
+                      <NarrativeReveal stagger={0.03}>
+                        So that's the ask. Not "use my app." Just: if you do use it, tell me what sucks. Tell me what you wish existed. Tell me what doesn't make sense. I've been building this in isolation for too long. I need the feedback loop. I need to know what you actually need, not what I assumed you needed.
+                      </NarrativeReveal>
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.03}>
+                    <motion.p
+                      className="text-white/25 text-[16px] pt-8"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                    >
+                      — Jacob
+                    </motion.p>
+                  </ParallaxText>
                 </div>
-              </ParallaxText>
-            </div>
-          </RevealSection>
+              </div>
+            </RevealSection>
+
+            {/* Contributors */}
+            {CONTRIBUTORS.length > 0 && (
+              <RevealSection className="px-6 py-24 relative">
+                <AnimatedLine className="absolute top-0 left-6 right-6" />
+                <div className="mx-auto max-w-3xl">
+                  <ParallaxText speed={0.05}>
+                    <motion.p
+                      className="mb-10 text-[11px] uppercase tracking-[0.2em] text-white/20"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
+                      Contributors
+                    </motion.p>
+                    <div className="flex flex-wrap gap-x-12 gap-y-4">
+                      {CONTRIBUTORS.map((contributor, i) => (
+                        <motion.div
+                          key={contributor.name}
+                          initial={{ opacity: 0, y: 8 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: EASE }}
+                        >
+                          {contributor.linkedin ? (
+                            <a
+                              href={contributor.linkedin}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group flex items-baseline gap-2"
+                            >
+                              <span className="text-[15px] text-white/30 group-hover:text-white/50 transition-colors duration-300">
+                                {contributor.name}
+                              </span>
+                              <span className="text-[12px] text-white/15 group-hover:text-white/25 transition-colors duration-300">
+                                {contributor.role}
+                              </span>
+                            </a>
+                          ) : (
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-[15px] text-white/30">
+                                {contributor.name}
+                              </span>
+                              <span className="text-[12px] text-white/15">
+                                {contributor.role}
+                              </span>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </ParallaxText>
+                </div>
+              </RevealSection>
+            )}
+          </motion.div>
+        )}
+
+        {/* TAB: WHAT'S IN THE APP */}
+        {activeTab === 'app' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            {/* SPACES */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="spaces"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Spaces
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Permanent homes for organizations
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Every org gets a Space: a persistent environment that outlasts leadership changes. Posts, events, files, and members all live here. When officers graduate, the Space stays. Knowledge compounds instead of resetting every semester.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Built-in tools for posts, event management, file storage, member directories, role assignments, and analytics. No more scattered tooling. Everything an org needs in one durable place.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* FEED */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="feed"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Feed
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Campus pulse, not engagement bait
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      See what's happening across campus. Posts from orgs you follow, events coming up, opportunities to join. The feed surfaces signal, not noise. It's designed for coordination, not infinite scroll.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Filter by org, event type, or date. Save posts for later. Share opportunities with your network. The feed is a utility, not a dopamine slot machine.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* EVENTS & CALENDAR */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="events"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Events & Calendar
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    See what's happening, RSVP, track attendance
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Orgs post events. Members RSVP. Leaders track attendance. Simple. Events auto-populate in calendars, sync with your schedule, and send reminders so nothing falls through the cracks.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      View by week, month, or list. Filter by org or event type. Export to Google Calendar or iCal. Your campus schedule, centralized.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* RESOURCES & FILES */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="resources"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Resources & Files
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Shared knowledge that persists
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Upload files, create docs, organize resources by folder. No more broken Google Drive links or files scattered across personal accounts. Everything stays with the Space, accessible to current and future leadership.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Version control built in. See who uploaded what and when. Roll back if needed. Knowledge becomes institutional memory instead of personal property.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* ROLES & PERMISSIONS */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="roles"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Roles & Permissions
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Structure without bureaucracy
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Define roles: President, VP, Member, Advisor, whatever you need. Assign permissions: who can post, who can manage events, who can edit files. Handoffs become seamless—just reassign the role.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      No more "who has access?" confusion. Permissions are tied to roles, not people. Leadership transitions don't require resetting credentials or re-sharing links.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* ANALYTICS */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="analytics"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    Analytics
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    See what's working, what's not
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Track engagement: post views, event RSVPs, member activity. See trends over time. Understand what resonates with your community. Make decisions based on data, not guesses.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Export reports for end-of-semester reviews or university requirements. Analytics designed for student leaders, not data scientists.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+
+            {/* HIVELAB */}
+            <RevealSection
+              className="px-6 py-32 relative"
+              sectionId="hivelab"
+              upvoteProps={upvoteProps}
+            >
+              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: EASE }}
+                  >
+                    HiveLab
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Build custom tools for your org
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Need a custom form? Membership tracker? Event check-in system? Build it in HiveLab. No-code tool builder that creates apps specific to your org's needs. Deploy directly to your Space.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      AI-assisted design. Just describe what you need, and HiveLab scaffolds the tool. Customize from there. Your org's unique workflows, formalized into actual software.
+                    </p>
+                  </ParallaxText>
+                </div>
+              </div>
+            </RevealSection>
+          </motion.div>
         )}
 
         {/* The Future - CTA */}
