@@ -29,6 +29,7 @@ import {
   NewUserLayout,
   ReturningUserLayout,
   TerritoryHeader,
+  OnboardingOverlay,
   type IdentityType,
   type IdentityClaim,
   type YourSpace,
@@ -278,6 +279,19 @@ export default function SpacesHubPage() {
   // Modal state
   const [claimModalType, setClaimModalType] = React.useState<IdentityType | null>(null);
 
+  // Onboarding state
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
+
+  // Check if user has seen onboarding
+  React.useEffect(() => {
+    if (!authLoading && isAuthenticated && mySpaces.length === 0) {
+      const hasSeenOnboarding =
+        typeof window !== 'undefined' &&
+        localStorage.getItem('hive_spaces_onboarding_seen') === 'true';
+      setShowOnboarding(!hasSeenOnboarding);
+    }
+  }, [authLoading, isAuthenticated, mySpaces.length]);
+
   // Loading state - only show loading for authenticated users fetching data
   const isLoading = authLoading || (isAuthenticated && (claimsLoading && spacesLoading));
 
@@ -290,8 +304,11 @@ export default function SpacesHubPage() {
 
   // Handle navigation to space
   const handleNavigateToSpace = React.useCallback(
-    (spaceId: string) => {
-      router.push(`/spaces/${spaceId}`);
+    (spaceId: string, handle?: string) => {
+      // Navigate to /s/[handle] for unified space view
+      // Fall back to ID if handle not available
+      const destination = handle ? `/s/${handle}` : `/s/${spaceId}`;
+      router.push(destination);
     },
     [router]
   );
@@ -341,8 +358,9 @@ export default function SpacesHubPage() {
       // Refetch spaces to update the list
       await refetchSpaces();
 
-      // Navigate to the space
-      router.push(`/spaces/${spaceId}`);
+      // Navigate to the space (use handle if available)
+      // For now, use ID as fallback since we don't have handle in the response
+      router.push(`/s/${spaceId}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to join';
       toast.error('Join failed', message);
@@ -457,6 +475,24 @@ export default function SpacesHubPage() {
         isOpen={!!claimModalType}
         onClose={() => setClaimModalType(null)}
         onClaim={handleClaimIdentity}
+      />
+
+      {/* Onboarding Overlay (first-time users) */}
+      <OnboardingOverlay
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        onClaimIdentity={(type) => {
+          setShowOnboarding(false);
+          setClaimModalType(type);
+        }}
+        onContinue={() => {
+          setShowOnboarding(false);
+          // Scroll to discover section
+          const discoverSection = document.getElementById('discover-section');
+          if (discoverSection) {
+            discoverSection.scrollIntoView({ behavior: 'smooth' });
+          }
+        }}
       />
     </div>
   );

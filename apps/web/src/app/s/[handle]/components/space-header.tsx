@@ -33,6 +33,7 @@ interface SpaceHeaderProps {
   isLeader?: boolean;
   isMember?: boolean;
   onSettingsClick?: () => void;
+  onMembersClick?: () => void;
   onSpaceInfoClick?: () => void;
   className?: string;
 }
@@ -42,6 +43,7 @@ export function SpaceHeader({
   isLeader = false,
   isMember = true,
   onSettingsClick,
+  onMembersClick,
   onSpaceInfoClick,
   className,
 }: SpaceHeaderProps) {
@@ -134,18 +136,23 @@ export function SpaceHeader({
         animate={{ opacity: 1 }}
         transition={{ duration: durationSeconds.smooth, delay: 0.25, ease: MOTION.ease.premium }}
       >
-        {/* Member count pill */}
-        <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">
-          <Text size="xs" tone="muted">
-            {space.memberCount.toLocaleString()}
-          </Text>
-          <Text size="xs" tone="muted" className="opacity-50">
-            members
-          </Text>
-        </div>
+        {/* Members button */}
+        {onMembersClick && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onMembersClick}
+            className="text-white/50 hover:text-white/70"
+          >
+            <span className="hidden sm:inline">Members</span>
+            <span className="text-xs ml-1.5 opacity-60">
+              {space.memberCount}
+            </span>
+          </Button>
+        )}
 
         {/* Settings (leader only) */}
-        {isLeader && (
+        {isLeader && onSettingsClick && (
           <Button
             variant="ghost"
             size="sm"

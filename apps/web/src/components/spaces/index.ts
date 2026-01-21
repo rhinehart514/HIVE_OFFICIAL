@@ -41,3 +41,31 @@ export type { SpacePreviewData, SpacePreviewModalProps } from './space-preview-m
 // Territory header (premium discovery)
 export { TerritoryHeader } from './territory-header';
 export type { TerritoryHeaderProps } from './territory-header';
+
+// Onboarding overlay (first-time users)
+export { OnboardingOverlay } from './onboarding-overlay';
+export type { OnboardingOverlayProps } from './onboarding-overlay';
+
+// Homebase activity feed (cross-space updates)
+export { HomebaseActivityFeed } from './homebase-activity-feed';
+export type { ActivityItem, ActivityType, HomebaseActivityFeedProps } from './homebase-activity-feed';
+
+// Space quick actions (homebase cards)
+export { SpaceQuickActions } from './space-quick-actions';
+export type { SpaceQuickActionsProps } from './space-quick-actions';
+
+// Boards sidebar (unified space view)
+export { BoardsSidebar } from './boards-sidebar';
+export type { Board, BoardsSidebarProps } from './boards-sidebar';
+
+// Unified activity feed (space residence)
+export { UnifiedActivityFeed } from './unified-activity-feed';
+export type {
+  FeedItem,
+  FeedItemType,
+  MessageItem,
+  PostItem,
+  EventItem,
+  ToolItem,
+  UnifiedActivityFeedProps,
+} from './unified-activity-feed';

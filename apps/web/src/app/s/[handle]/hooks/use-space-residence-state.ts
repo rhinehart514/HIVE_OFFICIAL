@@ -49,6 +49,16 @@ export interface ChatMessage {
   replyCount?: number;
 }
 
+export interface SpaceMember {
+  id: string;
+  name: string;
+  handle: string;
+  avatarUrl?: string;
+  role?: 'leader' | 'moderator' | 'member';
+  isOnline?: boolean;
+  joinedAt?: string;
+}
+
 interface UseSpaceResidenceStateReturn {
   // Space data
   space: SpaceResidenceData | null;
@@ -71,6 +81,10 @@ interface UseSpaceResidenceStateReturn {
   onlineMembers: OnlineMember[];
   upcomingEvents: UpcomingEvent[];
   pinnedItems: PinnedItem[];
+
+  // Members
+  allMembers: SpaceMember[];
+  isLoadingMembers: boolean;
 
   // Panel state
   panelCollapsed: boolean;
@@ -122,6 +136,8 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   const [onlineMembers, setOnlineMembers] = React.useState<OnlineMember[]>([]);
   const [upcomingEvents, setUpcomingEvents] = React.useState<UpcomingEvent[]>([]);
   const [pinnedItems, setPinnedItems] = React.useState<PinnedItem[]>([]);
+  const [allMembers, setAllMembers] = React.useState<SpaceMember[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
 
   const [panelCollapsed, setPanelCollapsed] = React.useState(false);
 
@@ -210,6 +226,31 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     loadMessages();
   }, [activeBoard, space?.id]);
 
+  // Load all members when space loads
+  React.useEffect(() => {
+    async function loadMembers() {
+      if (!space?.id || !space.isMember) return;
+
+      setIsLoadingMembers(true);
+
+      try {
+        const response = await fetch(`/api/spaces/${space.id}/members`);
+        if (response.ok) {
+          const data = await response.json();
+          setAllMembers(data.members || []);
+        } else {
+          setAllMembers([]);
+        }
+      } catch {
+        setAllMembers([]);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    }
+
+    loadMembers();
+  }, [space?.id, space?.isMember]);
+
   // Update URL when board changes
   const setActiveBoard = React.useCallback(
     (boardId: string) => {
@@ -289,6 +330,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     onlineMembers,
     upcomingEvents,
     pinnedItems,
+
+    // Members
+    allMembers,
+    isLoadingMembers,
 
     // Panel state
     panelCollapsed,

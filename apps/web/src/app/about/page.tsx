@@ -38,10 +38,7 @@ type SectionId =
   | 'the-journey'
   | 'spaces'
   | 'feed'
-  | 'events'
   | 'resources'
-  | 'roles'
-  | 'analytics'
   | 'hivelab';
 
 // Upvote hook
@@ -768,15 +765,50 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      Built-in tools for posts, event management, file storage, member directories, role assignments, and analytics. No more scattered tooling. Everything an org needs in one durable place.
+                    <p className="text-white/60 font-medium text-[16px] uppercase tracking-wider mb-4">
+                      Core Systems
                     </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.08}>
+                    <div className="space-y-6 text-[16px] md:text-[18px]">
+                      <div>
+                        <p className="text-white/60 font-medium mb-2">Feed & Posts</p>
+                        <p className="text-white/40">
+                          Announcements, updates, discussions. Threaded conversations that stay organized. Media-rich posts with files, images, and embeds. Everything archived and searchable.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/60 font-medium mb-2">Events & Calendar</p>
+                        <p className="text-white/40">
+                          Schedule meetings, track RSVPs, manage attendance. Events sync with personal calendars. Recurring events, reminders, and attendance analytics built in.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/60 font-medium mb-2">Resources & Files</p>
+                        <p className="text-white/40">
+                          Upload docs, create wikis, organize by folder. Version history tracked automatically. No more broken Drive links or lost files. Knowledge becomes institutional memory.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/60 font-medium mb-2">Members & Roles</p>
+                        <p className="text-white/40">
+                          Directory of all members. Custom roles with granular permissions. Leadership handoffs become seamless—just reassign the role. No credential resets needed.
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-white/60 font-medium mb-2">Analytics & Insights</p>
+                        <p className="text-white/40">
+                          Track engagement, event attendance, member activity. See what's working. Export reports for end-of-semester reviews. Data that helps you lead better.
+                        </p>
+                      </div>
+                    </div>
                   </ParallaxText>
                 </div>
               </div>
             </RevealSection>
 
-            {/* FEED */}
+            {/* FEED & RITUALS */}
             <RevealSection
               className="px-6 py-32 relative"
               sectionId="feed"
@@ -793,7 +825,7 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 1, ease: EASE }}
                   >
-                    Feed
+                    Feed & Rituals
                   </motion.h2>
                   <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
                     Campus pulse, not engagement bait
@@ -812,51 +844,17 @@ export default function AboutPage() {
                       Filter by org, event type, or date. Save posts for later. Share opportunities with your network. The feed is a utility, not a dopamine slot machine.
                     </p>
                   </ParallaxText>
-                </div>
-              </div>
-            </RevealSection>
 
-            {/* EVENTS & CALENDAR */}
-            <RevealSection
-              className="px-6 py-32 relative"
-              sectionId="events"
-              upvoteProps={upvoteProps}
-            >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
-              <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
-                  >
-                    Events & Calendar
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    See what's happening, RSVP, track attendance
-                  </p>
-                </ParallaxText>
-
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
-                  <ParallaxText speed={0.1}>
-                    <p className="text-white/50">
-                      Orgs post events. Members RSVP. Leaders track attendance. Simple. Events auto-populate in calendars, sync with your schedule, and send reminders so nothing falls through the cracks.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      View by week, month, or list. Filter by org or event type. Export to Google Calendar or iCal. Your campus schedule, centralized.
+                  <ParallaxText speed={0.08}>
+                    <p className="text-white/30 text-[16px] italic border-l-2 border-[var(--color-gold)]/20 pl-4 mt-8">
+                      Coming soon: Rituals — recurring community patterns (weekly check-ins, monthly showcases, semester handoffs) formalized into actual system behaviors. Coordination that compounds.
                     </p>
                   </ParallaxText>
                 </div>
               </div>
             </RevealSection>
 
-            {/* RESOURCES & FILES */}
+            {/* PROFILE */}
             <RevealSection
               className="px-6 py-32 relative"
               sectionId="resources"
@@ -873,110 +871,36 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 1, ease: EASE }}
                   >
-                    Resources & Files
+                    Profile
                   </motion.h2>
                   <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    Shared knowledge that persists
+                    Your autonomy layer
                   </p>
                 </ParallaxText>
 
                 <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/50">
-                      Upload files, create docs, organize resources by folder. No more broken Google Drive links or files scattered across personal accounts. Everything stays with the Space, accessible to current and future leadership.
+                      Your profile isn't a resume. It's your operating system on campus. Track your involvement, contributions, and growth across all the spaces you're part of. See your trajectory, not just your bio.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
                     <p className="text-white/40">
-                      Version control built in. See who uploaded what and when. Roll back if needed. Knowledge becomes institutional memory instead of personal property.
+                      The vision: students own their data. Your profile becomes a verified record of actual work—events attended, projects shipped, communities built. Portable credentials that belong to you, not locked in a university database.
                     </p>
                   </ParallaxText>
-                </div>
-              </div>
-            </RevealSection>
 
-            {/* ROLES & PERMISSIONS */}
-            <RevealSection
-              className="px-6 py-32 relative"
-              sectionId="roles"
-              upvoteProps={upvoteProps}
-            >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
-              <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
-                  >
-                    Roles & Permissions
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    Structure without bureaucracy
-                  </p>
-                </ParallaxText>
-
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
-                  <ParallaxText speed={0.1}>
+                  <ParallaxText speed={0.08}>
                     <p className="text-white/50">
-                      Define roles: President, VP, Member, Advisor, whatever you need. Assign permissions: who can post, who can manage events, who can edit files. Handoffs become seamless—just reassign the role.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      No more "who has access?" confusion. Permissions are tied to roles, not people. Leadership transitions don't require resetting credentials or re-sharing links.
+                      This is infrastructure for student autonomy. You're not a user of campus systems—you're a builder with agency. Your profile reflects that reality.
                     </p>
                   </ParallaxText>
                 </div>
               </div>
             </RevealSection>
 
-            {/* ANALYTICS */}
-            <RevealSection
-              className="px-6 py-32 relative"
-              sectionId="analytics"
-              upvoteProps={upvoteProps}
-            >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
-              <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
-                  >
-                    Analytics
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    See what's working, what's not
-                  </p>
-                </ParallaxText>
-
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
-                  <ParallaxText speed={0.1}>
-                    <p className="text-white/50">
-                      Track engagement: post views, event RSVPs, member activity. See trends over time. Understand what resonates with your community. Make decisions based on data, not guesses.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      Export reports for end-of-semester reviews or university requirements. Analytics designed for student leaders, not data scientists.
-                    </p>
-                  </ParallaxText>
-                </div>
-              </div>
-            </RevealSection>
-
-            {/* HIVELAB */}
+            {/* HIVELAB - CENTERPIECE */}
             <RevealSection
               className="px-6 py-32 relative"
               sectionId="hivelab"
@@ -984,32 +908,106 @@ export default function AboutPage() {
             >
               <AnimatedLine className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
-                  >
-                    HiveLab
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    Build custom tools for your org
-                  </p>
-                </ParallaxText>
+                {/* Large emphasis container */}
+                <AnimatedContainer className="rounded-2xl bg-gradient-to-br from-[var(--color-gold)]/[0.08] to-[var(--color-gold)]/[0.02] p-12 md:p-16 mb-16">
+                  <ParallaxText speed={0.15}>
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 1, ease: EASE }}
+                    >
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-gold)]/60 mb-4">
+                        The Tool That Builds Tools
+                      </p>
+                      <h2
+                        className="text-[48px] md:text-[64px] font-semibold text-white leading-[1.0] mb-6"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                      >
+                        HiveLab
+                      </h2>
+                      <p className="text-[20px] md:text-[24px] text-white/40 leading-relaxed">
+                        Where HIVE becomes programmable infrastructure
+                      </p>
+                    </motion.div>
+                  </ParallaxText>
+                </AnimatedContainer>
 
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                <div className="space-y-10 text-[18px] md:text-[20px] leading-relaxed">
                   <ParallaxText speed={0.1}>
-                    <p className="text-white/50">
-                      Need a custom form? Membership tracker? Event check-in system? Build it in HiveLab. No-code tool builder that creates apps specific to your org's needs. Deploy directly to your Space.
+                    <p className="text-white/60 font-medium">
+                      This is the part that matters most.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
+                    <p className="text-white/50">
+                      HiveLab is a no-code builder that lets students create custom tools for their orgs—membership trackers, event check-in systems, application portals, voting interfaces, whatever you need. Describe it in plain language, and the system scaffolds the tool. Deploy it directly into your Space.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.08}>
                     <p className="text-white/40">
-                      AI-assisted design. Just describe what you need, and HiveLab scaffolds the tool. Customize from there. Your org's unique workflows, formalized into actual software.
+                      This isn't drag-and-drop widgets. It's AI-assisted software creation. You're not configuring a form builder—you're authoring actual applications. The tools you build become part of your org's infrastructure, just like posts or events.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.07}>
+                    <p className="text-white/50">
+                      The vision: every org has unique needs that generic platforms can't serve. HiveLab makes HIVE extensible. Instead of waiting for features or hacking together Google Sheets, you build what you need. Student-run organizations stop being constrained by off-the-shelf software.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.06}>
+                    <p className="text-white/60 font-medium">
+                      Examples of tools students are already building:
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.055}>
+                    <div className="space-y-4 text-[16px] md:text-[18px]">
+                      <div className="flex items-start gap-3">
+                        <span className="text-[var(--color-gold)]/40">→</span>
+                        <p className="text-white/40">
+                          <span className="text-white/60">Membership application system</span> with custom questions, file uploads, and review workflows
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-[var(--color-gold)]/40">→</span>
+                        <p className="text-white/40">
+                          <span className="text-white/60">Event check-in with QR codes</span> that syncs with attendance records automatically
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-[var(--color-gold)]/40">→</span>
+                        <p className="text-white/40">
+                          <span className="text-white/60">Project showcase portal</span> where members upload work for end-of-semester reviews
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-[var(--color-gold)]/40">→</span>
+                        <p className="text-white/40">
+                          <span className="text-white/60">Budget request form</span> tied to org financials and approval workflows
+                        </p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-[var(--color-gold)]/40">→</span>
+                        <p className="text-white/40">
+                          <span className="text-white/60">Anonymous feedback system</span> for leadership to gather honest input
+                        </p>
+                      </div>
+                    </div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.05}>
+                    <p className="text-white/50">
+                      HiveLab is where HIVE stops being a platform and becomes infrastructure. You're not just using software—you're building it. This is what student autonomy actually looks like: the capability to create what institutions can't or won't provide.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.045}>
+                    <p className="text-white/30 text-[16px] italic border-l-2 border-[var(--color-gold)]/40 pl-4 mt-8">
+                      The long-term vision: HiveLab becomes a marketplace where orgs share tools they've built. A consulting club's interview scheduler becomes available to every consulting club on HIVE. Student-built infrastructure that compounds across campuses.
                     </p>
                   </ParallaxText>
                 </div>

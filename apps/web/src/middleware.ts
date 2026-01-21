@@ -345,6 +345,7 @@ export const config = {
     '/feed/:path*',
     '/profile/:path*',
     '/spaces/:path*',
+    '/s/:path*', // Short space URLs
     '/tools/:path*',
     '/events/:path*',
     '/settings/:path*',

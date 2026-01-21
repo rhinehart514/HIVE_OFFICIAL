@@ -31,13 +31,7 @@ const nextConfig = {
         destination: '/enter?state=identity',
         permanent: true,
       },
-      // Phase 2: Keep /spaces/* routes for vertical slice
-      // /s/:slug is a shortcut for /spaces/[spaceId]
-      {
-        source: '/s/:slug',
-        destination: '/spaces/s/:slug',
-        permanent: false,
-      },
+      // /s/:handle routes are now handled by app/s/[handle] (Jan 2026 redesign)
     ];
   },
   webpack: (config) => {

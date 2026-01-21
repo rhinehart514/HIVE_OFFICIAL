@@ -72,6 +72,7 @@ const NO_SHELL_ROUTES = [
 // Mode: compact
 // Pattern: User is DOING something but may need quick nav access
 const COMPACT_SHELL_ROUTES = [
+  '/s/*',                     // Space residence (unified view)
   '/spaces/*/chat',           // Space chat (real-time messaging)
   '/spaces/*/boards/*',       // Board view within space
   '/tools/*/edit',            // Tool IDE (code editing)
