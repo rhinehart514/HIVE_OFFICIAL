@@ -29,6 +29,7 @@ import {
   type SurfaceModes,
   type AppConfig,
 } from "@hive/core";
+import { validateToolElements } from "@hive/core/domain/creation/validate-tool-elements";
 
 const SurfaceSchema = z.enum([
   "pinned",
@@ -171,6 +172,13 @@ type DeploymentRecord = {
     lineage: string[];
     createdAt: string;
     trustTier: TrustTier;
+  };
+  // Context Gatekeeping: Placement context (where tool is actually deployed)
+  placementContext: {
+    type: 'space' | 'profile';
+    id: string;
+    name: string;
+    placedAt: string;
   };
 };
 
@@ -550,27 +558,47 @@ export const POST = withAuthValidationAndErrors(
       });
     }
 
-    // Validate composition - block tools with elements that have no backend APIs
-    const blockedElements = getBlockedElements(toolResult.toolData);
-    if (blockedElements.length > 0) {
+    // Context Gatekeeping: Validate tool elements are compatible with target context
+    const toolElements = toolResult.toolData.composition?.elements || toolResult.toolData.elements || [];
+
+    const elementValidation = await validateToolElements(
+      toolElements,
+      { type: payload.deployTo, id: payload.targetId },
+      dbAdmin
+    );
+
+    if (!elementValidation.valid) {
+      logger.warn('Element validation failed', {
+        toolId: payload.toolId,
+        deployTo: payload.deployTo,
+        errors: elementValidation.errors,
+      });
+
+      const errorMessage = elementValidation.errors.length > 0
+        ? elementValidation.errors.join(' ')
+        : 'Tool elements are not compatible with target context';
+
       return respond.error(
-        `This tool cannot be deployed: it contains elements that are not yet ready (${blockedElements.join(', ')}). Please remove these elements and try again.`,
+        errorMessage,
         "FORBIDDEN",
-        { status: 400 },
+        {
+          status: 400,
+          details: {
+            blockedElements: elementValidation.blockedElements,
+            missingCapabilities: elementValidation.missingCapabilities,
+            incompatibleElements: elementValidation.incompatibleElements,
+            suggestedFixes: elementValidation.suggestedFixes,
+          },
+        }
       );
     }
 
-    // Validate composition - space-tier elements require space deployment
-    const hasSpaceElements = compositionHasSpaceElements(toolResult.toolData);
-    if (hasSpaceElements) {
-      if (payload.deployTo === "profile") {
-        return respond.error(
-          "This tool contains space-tier elements and can only be deployed to spaces",
-          "FORBIDDEN",
-          { status: 403 },
-        );
-      }
-      // For space deployment, we'll verify user is leader/admin in ensureSpaceDeploymentAllowed
+    // Log warnings if present (e.g., power capabilities)
+    if (elementValidation.warnings.length > 0) {
+      logger.warn('Tool deployment warnings', {
+        toolId: payload.toolId,
+        warnings: elementValidation.warnings,
+      });
     }
 
     if (payload.deployTo === "profile" && payload.targetId !== userId) {
@@ -580,6 +608,9 @@ export const POST = withAuthValidationAndErrors(
         { status: 403 },
       );
     }
+
+    // Track target name for placementContext
+    let targetName = 'My Profile'; // Default for profile deployments
 
     if (payload.deployTo === "space") {
       const spaceValidation = await ensureSpaceDeploymentAllowed(
@@ -591,6 +622,9 @@ export const POST = withAuthValidationAndErrors(
           status: spaceValidation.status,
         });
       }
+
+      // Capture space name for placementContext
+      targetName = spaceValidation.spaceData?.name || 'Unknown Space';
 
       if (payload.surface && !SurfaceSchema.options.includes(payload.surface)) {
         return respond.error("Invalid surface", "INVALID_INPUT", {
@@ -723,6 +757,13 @@ export const POST = withAuthValidationAndErrors(
       appConfig,
       toolVersion,
       provenance,
+      // Context Gatekeeping: Track actual placement context
+      placementContext: {
+        type: placementTargetType,
+        id: payload.targetId,
+        name: targetName,
+        placedAt: timestamp.toISOString(),
+      },
     };
 
     // Execute all writes in a single transaction for atomicity

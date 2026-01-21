@@ -25,6 +25,11 @@ export default function ToolEditorPage({ params }: Props) {
   const searchParams = useSearchParams();
   const isNewTool = searchParams.get('new') === 'true';
 
+  // Extract context from URL params
+  const context = searchParams.get('context'); // 'space' or 'profile'
+  const spaceId = searchParams.get('spaceId');
+  const spaceName = searchParams.get('spaceName');
+
   const [isClient, setIsClient] = useState(false);
   const [userId, setUserId] = useState<string | undefined>();
   const [composition, setComposition] = useState<{
@@ -37,6 +42,16 @@ export default function ToolEditorPage({ params }: Props) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Context validation - redirect if missing
+  useEffect(() => {
+    if (!isClient) return;
+
+    // For new tools, enforce context requirement
+    if (isNewTool && (!context || (context === 'space' && !spaceId))) {
+      router.replace('/select-context');
+    }
+  }, [isClient, isNewTool, context, spaceId, router]);
 
   useEffect(() => {
     setIsClient(true);
@@ -272,14 +287,38 @@ export default function ToolEditorPage({ params }: Props) {
     );
   }
 
+  // Build context metadata to display in IDE
+  const contextMeta = {
+    type: context as 'space' | 'profile' | undefined,
+    spaceId,
+    spaceName: spaceName || (context === 'space' ? 'Unknown Space' : undefined),
+    displayName: context === 'profile'
+      ? 'My Profile'
+      : spaceName || (context === 'space' ? 'Space' : undefined),
+  };
+
   return (
-    <HiveLabIDE
-      initialComposition={composition}
-      showOnboarding={showOnboarding}
-      onSave={handleSave}
-      onPreview={handlePreview}
-      onCancel={handleCancel}
-      userId={userId || 'anonymous'}
-    />
+    <div className="h-screen flex flex-col bg-[#0a0a0a]">
+      {/* Context indicator - subtle but present */}
+      {contextMeta.displayName && (
+        <div className="h-8 bg-[#0f0f0f] border-b border-[#333] flex items-center justify-center px-4">
+          <p className="text-xs text-[#888]">
+            Building for: <span className="text-[var(--hive-brand-primary)] font-medium">{contextMeta.displayName}</span>
+          </p>
+        </div>
+      )}
+
+      {/* IDE */}
+      <div className="flex-1 overflow-hidden">
+        <HiveLabIDE
+          initialComposition={composition}
+          showOnboarding={showOnboarding}
+          onSave={handleSave}
+          onPreview={handlePreview}
+          onCancel={handleCancel}
+          userId={userId || 'anonymous'}
+        />
+      </div>
+    </div>
   );
 }

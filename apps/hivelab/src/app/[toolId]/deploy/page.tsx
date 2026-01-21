@@ -46,9 +46,16 @@ type Space = {
 export default function ToolDeployPage({ params }: Props) {
   const { toolId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Extract context from query params (carried over from creation)
+  const contextType = searchParams.get('context'); // 'space' or 'profile'
+  const contextSpaceId = searchParams.get('spaceId');
+
   const [isClient, setIsClient] = useState(false);
   const [tool, setTool] = useState<Tool | null>(null);
   const [targets, setTargets] = useState<ToolDeploymentTarget[]>([]);
+  const [preselectedTargetId, setPreselectedTargetId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -116,6 +123,13 @@ export default function ToolDeployPage({ params }: Props) {
         }
 
         setTargets(deploymentTargets);
+
+        // Pre-select target based on context from creation
+        if (contextType === 'profile') {
+          setPreselectedTargetId('profile');
+        } else if (contextType === 'space' && contextSpaceId) {
+          setPreselectedTargetId(contextSpaceId);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
@@ -124,7 +138,7 @@ export default function ToolDeployPage({ params }: Props) {
     };
 
     fetchData();
-  }, [isClient, toolId]);
+  }, [isClient, toolId, contextType, contextSpaceId]);
 
   // Handle deployment
   const handleDeploy = async (config: ToolDeploymentConfig) => {
@@ -241,6 +255,14 @@ export default function ToolDeployPage({ params }: Props) {
           toolName={tool.name}
           availableTargets={targets}
           onDeploy={handleDeploy}
+          initialConfig={
+            preselectedTargetId
+              ? {
+                  targetId: preselectedTargetId,
+                  targetType: contextType === 'profile' ? 'profile' : 'space',
+                }
+              : undefined
+          }
         />
       </div>
     </div>

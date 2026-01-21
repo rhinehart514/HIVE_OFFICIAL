@@ -6,6 +6,8 @@ import { ToolSchema, createToolDefaults as coreCreateToolDefaults, type Placemen
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { rateLimit } from "@/lib/rate-limit";
+import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
+import * as admin from "firebase-admin";
 
 // Define tool schemas locally (not in core package)
 const CreateToolSchema = z.object({
@@ -129,6 +131,10 @@ const EnhancedCreateToolSchema = CreateToolSchema.extend({
     targetInput: z.string(),
     transform: z.string().optional(),
   })).optional(),
+  // Context Gatekeeping: Original context fields
+  contextType: z.enum(['space', 'profile', 'feed']).optional(),
+  contextId: z.string().optional(),
+  contextName: z.string().optional(),
 });
 
 // POST /api/tools - Create new tool (supports templates)
@@ -146,7 +152,38 @@ export const POST = withAuthValidationAndErrors(
 
     logger.info('🔨 Creating tool for user', { userUid: userId, endpoint: '/api/tools'  });
 
-    // If creating a space tool, verify user has builder permissions
+    // Context Gatekeeping: Validate tool context if provided
+    let validatedContext: { type: 'space' | 'profile' | 'feed'; id: string; name: string } | undefined;
+
+    if (validatedData.contextType) {
+      const contextValidation = await validateToolContext(
+        validatedData.contextType as string,
+        validatedData.contextId as string | undefined,
+        userId,
+        adminDb
+      );
+
+      if (!contextValidation.valid) {
+        logger.warn('Context validation failed', {
+          userId,
+          contextType: validatedData.contextType,
+          error: contextValidation.error,
+        });
+        return respond.error(
+          contextValidation.error || 'Invalid context',
+          "FORBIDDEN",
+          { status: contextValidation.error?.includes('Not authorized') ? 403 : 400 }
+        );
+      }
+
+      validatedContext = contextValidation.context;
+      logger.info('Context validated successfully', {
+        userId,
+        context: validatedContext,
+      });
+    }
+
+    // Legacy: If creating a space tool (old system), verify user has builder permissions
     const spaceIdStr = typeof validatedData.spaceId === 'string' ? validatedData.spaceId : null;
     if (validatedData.isSpaceTool && spaceIdStr) {
       const spaceDoc = await adminDb
@@ -235,6 +272,13 @@ export const POST = withAuthValidationAndErrors(
         write_own_state: true as const,
         write_shared_state: true,
       },
+      // Context Gatekeeping: Store original context
+      originalContext: validatedContext ? {
+        type: validatedContext.type,
+        id: validatedContext.id,
+        name: validatedContext.name,
+        createdAt: now,
+      } : null,
     };
 
     // Validate the complete tool object
@@ -441,10 +485,17 @@ export const PUT = withAuthValidationAndErrors(
     }
 
     const now = new Date();
+
+    // Context Gatekeeping: Preserve originalContext (cannot be changed after creation)
+    // Remove context fields from updateData to prevent modification
+    const { contextType, contextId, contextName, ...safeUpdateData } = updateData;
+
     const updatedTool = {
       ...existingTool,
-      ...updateData,
+      ...safeUpdateData,
       updatedAt: now,
+      // Explicitly preserve originalContext from existing tool
+      originalContext: existingTool?.originalContext || null,
     };
 
     // Update the tool

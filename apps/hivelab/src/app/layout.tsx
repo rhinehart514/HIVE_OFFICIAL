@@ -66,7 +66,7 @@ export default function RootLayout({
                     My Tools
                   </Link>
                   <Link
-                    href="/create"
+                    href="/select-context"
                     className="text-sm px-4 py-2 rounded-lg bg-[var(--hive-brand-primary)] text-black font-medium hover:bg-[var(--hive-brand-hover)] transition-colors"
                   >
                     Create New

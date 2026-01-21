@@ -1,26 +1,48 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Skeleton } from '@hive/ui';
 
 /**
- * HiveLab Create Page - Redirect to Canvas-First IDE
+ * HiveLab Create Page - Context-Aware Tool Creation
  *
- * Following the Cursor model: users start on a blank canvas and invoke AI (Cmd+K) when needed.
- * This page generates a new tool ID and redirects to the IDE with ?new=true.
+ * Requires context parameters (space or profile) to proceed.
+ * Redirects to context selection if no context is provided.
  */
 
 export default function CreateToolPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
+    const context = searchParams.get('context'); // 'space' or 'profile'
+    const spaceId = searchParams.get('spaceId');
+    const spaceName = searchParams.get('spaceName');
+
+    // Enforce context requirement - redirect to selection if missing
+    if (!context || (context === 'space' && !spaceId)) {
+      router.replace('/select-context');
+      return;
+    }
+
     // Generate a unique tool ID for the new tool
     const newToolId = `tool_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // Redirect to IDE with blank canvas
-    router.replace(`/${newToolId}?new=true`);
-  }, [router]);
+    // Build URL with context preserved
+    const params = new URLSearchParams({
+      new: 'true',
+      context,
+    });
+
+    if (context === 'space' && spaceId) {
+      params.set('spaceId', spaceId);
+      if (spaceName) params.set('spaceName', spaceName);
+    }
+
+    // Redirect to IDE with blank canvas and context
+    router.replace(`/${newToolId}?${params.toString()}`);
+  }, [router, searchParams]);
 
   // Show loading skeleton while redirecting
   return (
