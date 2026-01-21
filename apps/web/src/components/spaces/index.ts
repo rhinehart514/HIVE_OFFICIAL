@@ -37,3 +37,7 @@ export type { ReturningUserLayoutProps } from './returning-user-layout';
 // Space preview modal
 export { SpacePreviewModal } from './space-preview-modal';
 export type { SpacePreviewData, SpacePreviewModalProps } from './space-preview-modal';
+
+// Territory header (premium discovery)
+export { TerritoryHeader } from './territory-header';
+export type { TerritoryHeaderProps } from './territory-header';

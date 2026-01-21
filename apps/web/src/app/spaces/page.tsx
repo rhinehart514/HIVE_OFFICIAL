@@ -28,6 +28,7 @@ import {
   DiscoverSection,
   NewUserLayout,
   ReturningUserLayout,
+  TerritoryHeader,
   type IdentityType,
   type IdentityClaim,
   type YourSpace,
@@ -346,22 +347,14 @@ export default function SpacesHubPage() {
   return (
     <div className="min-h-screen w-full">
       <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Header - different styles based on user state */}
-        <motion.header
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="mb-8"
-        >
-          <h1 className="text-2xl font-semibold text-white tracking-tight mb-1">
-            Spaces
-          </h1>
-          {userState === 'returning_user' && (
-            <Text className="text-white/40">
-              Welcome back
-            </Text>
-          )}
-        </motion.header>
+        {/* Header - Territory narrative with premium motion */}
+        <TerritoryHeader
+          totalSpaces={423}
+          claimedSpaces={67}
+          yourSpaceCount={mySpaces.length}
+          isAuthenticated={isAuthenticated}
+          className="mb-10"
+        />
 
         {/* Loading state */}
         {isLoading ? (
