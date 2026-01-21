@@ -1,33 +1,170 @@
 'use client';
 
+import { useRef } from 'react';
 import Link from 'next/link';
-import { Logo, motion, NoiseOverlay, Button } from '@hive/ui/design-system/primitives';
+import {
+  Logo,
+  motion,
+  NoiseOverlay,
+  Button,
+  useScroll,
+  useTransform,
+  useInView,
+} from '@hive/ui/design-system/primitives';
 
 // Premium easing
-const EASE = [0.22, 1, 0.36, 1];
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Helpers who contributed along the way
-const HELPERS = [
-  'Jacob',
-];
+const HELPERS = ['Jacob'];
 
-// Scroll-reveal section component
-function RevealSection({
+// Animated line that draws in
+function AnimatedLine({ className, delay = 0 }: { className?: string; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+
+  return (
+    <div ref={ref} className={className}>
+      <motion.div
+        className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+        initial={{ scaleX: 0, opacity: 0 }}
+        animate={isInView ? { scaleX: 1, opacity: 1 } : {}}
+        transition={{ duration: 1.5, delay, ease: EASE }}
+      />
+    </div>
+  );
+}
+
+// Container with animated border reveal
+function AnimatedContainer({
   children,
   className,
-  delay = 0,
 }: {
   children: React.ReactNode;
   className?: string;
-  delay?: number;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+
+  return (
+    <div ref={ref} className={`relative ${className}`}>
+      {/* Top border */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
+        initial={{ scaleX: 0 }}
+        animate={isInView ? { scaleX: 1 } : {}}
+        transition={{ duration: 1.2, ease: EASE }}
+        style={{ transformOrigin: 'left' }}
+      />
+      {/* Bottom border */}
+      <motion.div
+        className="absolute bottom-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
+        initial={{ scaleX: 0 }}
+        animate={isInView ? { scaleX: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.1, ease: EASE }}
+        style={{ transformOrigin: 'right' }}
+      />
+      {/* Left border */}
+      <motion.div
+        className="absolute top-0 bottom-0 left-0 w-px bg-[var(--color-gold)]/20"
+        initial={{ scaleY: 0 }}
+        animate={isInView ? { scaleY: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
+        style={{ transformOrigin: 'top' }}
+      />
+      {/* Right border */}
+      <motion.div
+        className="absolute top-0 bottom-0 right-0 w-px bg-[var(--color-gold)]/20"
+        initial={{ scaleY: 0 }}
+        animate={isInView ? { scaleY: 1 } : {}}
+        transition={{ duration: 1.2, delay: 0.3, ease: EASE }}
+        style={{ transformOrigin: 'bottom' }}
+      />
+      {/* Content */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={isInView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+}
+
+// Parallax text that moves at different speeds
+function ParallaxText({
+  children,
+  speed = 0.5,
+  className,
+}: {
+  children: React.ReactNode;
+  speed?: number;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [100 * speed, -100 * speed]);
+
+  return (
+    <motion.div ref={ref} style={{ y }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+// Narrative reveal - text fades in word by word or line by line
+function NarrativeReveal({
+  children,
+  className,
+  stagger = 0.1,
+}: {
+  children: string;
+  className?: string;
+  stagger?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
+  const words = children.split(' ');
+
+  return (
+    <span ref={ref} className={className}>
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          className="inline-block mr-[0.25em]"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: i * stagger, ease: EASE }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
+// Section with scroll-triggered reveal
+function RevealSection({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-150px' });
+
   return (
     <motion.section
+      ref={ref}
       className={className}
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-100px' }}
-      transition={{ duration: 0.9, delay, ease: EASE }}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      transition={{ duration: 1.2, ease: EASE }}
     >
       {children}
     </motion.section>
@@ -35,11 +172,16 @@ function RevealSection({
 }
 
 export default function AboutPage() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: containerRef });
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg-void)] text-white">
+    <div ref={containerRef} className="min-h-screen bg-[var(--color-bg-void)] text-white">
       <NoiseOverlay />
 
-      {/* Minimal header - just logo and CTA */}
+      {/* Minimal header */}
       <header className="fixed top-0 left-0 right-0 z-50 px-6 py-6">
         <div className="mx-auto max-w-3xl flex items-center justify-between">
           <Link href="/" className="transition-opacity hover:opacity-70">
@@ -56,135 +198,193 @@ export default function AboutPage() {
 
       {/* Content */}
       <main className="relative">
-        {/* Hero - full viewport */}
-        <section className="min-h-screen flex flex-col justify-center px-6 py-24">
+        {/* Hero - parallax fade */}
+        <motion.section
+          className="min-h-screen flex flex-col justify-center px-6 py-24 sticky top-0"
+          style={{ opacity: heroOpacity, scale: heroScale }}
+        >
           <div className="mx-auto max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
+            <motion.p
+              className="mb-4 text-[13px] font-medium uppercase tracking-wider text-[var(--color-gold)]/60"
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: EASE }}
             >
-              <p className="mb-4 text-[13px] font-medium uppercase tracking-wider text-[var(--color-gold)]/60">
-                About
-              </p>
-              <h1
-                className="mb-6 text-[44px] md:text-[64px] font-semibold leading-[1.05] tracking-tight text-white"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                We stopped waiting
-                <br />
-                <span className="text-white/40">for institutions.</span>
-              </h1>
-            </motion.div>
+              About
+            </motion.p>
+
+            <motion.h1
+              className="mb-6 text-[44px] md:text-[72px] font-semibold leading-[1.0] tracking-tight"
+              style={{ fontFamily: 'var(--font-display)' }}
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.2, delay: 0.1, ease: EASE }}
+            >
+              <span className="text-white">We stopped waiting</span>
+              <br />
+              <span className="text-white/30">for institutions.</span>
+            </motion.h1>
 
             <motion.p
-              className="text-[20px] leading-relaxed text-white/50 max-w-[480px]"
+              className="text-[20px] md:text-[24px] leading-relaxed text-white/40 max-w-[500px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.2, ease: EASE }}
+              transition={{ duration: 1, delay: 0.3, ease: EASE }}
             >
               So we built the infrastructure ourselves.
             </motion.p>
 
             {/* Scroll indicator */}
             <motion.div
-              className="mt-20"
+              className="mt-24 flex items-center gap-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.8, ease: EASE }}
+              transition={{ duration: 1, delay: 1, ease: EASE }}
             >
-              <span className="text-[12px] text-white/20">Scroll</span>
+              <motion.div
+                className="w-px h-8 bg-white/20"
+                animate={{ scaleY: [1, 0.5, 1] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <span className="text-[11px] uppercase tracking-wider text-white/20">
+                Scroll
+              </span>
             </motion.div>
           </div>
-        </section>
+        </motion.section>
 
-        {/* The Break */}
-        <RevealSection className="px-6 py-24">
+        {/* Spacer for parallax */}
+        <div className="h-[50vh]" />
+
+        {/* The Break - narrative text */}
+        <RevealSection className="px-6 py-32 relative">
+          <AnimatedLine className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
-            <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed text-white/50">
-              <p>
-                The systems we were promised aren't working.
-              </p>
-              <p>
-                Credentials collapse under AI. Platforms extract, they don't build.
-                Loneliness is an epidemic wearing social media's mask.
-              </p>
-              <p>
-                College has 400+ clubs with no real home. Group chats that die every semester.
-                LinkedIn for your resume, Instagram for performance, nothing for actually
-                building together.
-              </p>
-            </div>
+            <ParallaxText speed={0.2}>
+              <div className="space-y-12 text-[20px] md:text-[24px] leading-relaxed">
+                <p className="text-white/60">
+                  <NarrativeReveal stagger={0.05}>
+                    The systems we were promised aren't working.
+                  </NarrativeReveal>
+                </p>
+                <p className="text-white/40">
+                  <NarrativeReveal stagger={0.03}>
+                    Credentials collapse under AI. Platforms extract, they don't build. Loneliness is an epidemic wearing social media's mask.
+                  </NarrativeReveal>
+                </p>
+                <p className="text-white/40">
+                  <NarrativeReveal stagger={0.03}>
+                    College has 400+ clubs with no real home. Group chats that die every semester. LinkedIn for your resume, Instagram for performance, nothing for actually building together.
+                  </NarrativeReveal>
+                </p>
+              </div>
+            </ParallaxText>
           </div>
         </RevealSection>
 
-        {/* The Belief - highlighted */}
-        <RevealSection className="px-6 py-24">
+        {/* The Belief - animated container */}
+        <RevealSection className="px-6 py-32">
           <div className="mx-auto max-w-3xl">
-            <div className="rounded-3xl border border-[var(--color-gold)]/10 bg-[var(--color-gold)]/[0.02] p-10 md:p-14">
-              <p
-                className="text-[26px] md:text-[32px] font-medium leading-[1.25] text-white"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                "Students will build what institutions can't.
-              </p>
-              <p
-                className="mt-2 text-[26px] md:text-[32px] font-medium leading-[1.25] text-white/40"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                We're just the infrastructure."
-              </p>
-            </div>
+            <AnimatedContainer className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
+              <ParallaxText speed={0.1}>
+                <p
+                  className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  "Students will build
+                  <br />
+                  what institutions can't.
+                </p>
+                <p
+                  className="mt-4 text-[28px] md:text-[36px] font-medium leading-[1.2] text-white/30"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  We're just the infrastructure."
+                </p>
+              </ParallaxText>
+            </AnimatedContainer>
           </div>
         </RevealSection>
 
         {/* The Story */}
-        <RevealSection className="px-6 py-24">
+        <RevealSection className="px-6 py-32 relative">
+          <AnimatedLine className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
-            <h2
-              className="mb-10 text-[28px] md:text-[32px] font-semibold text-white"
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              The story
-            </h2>
-            <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed text-white/50">
-              <p>
-                I started building HIVE because I saw the gap — between what students need
-                and what institutions provide. Between the tools that exist and the ones
-                that should.
-              </p>
-              <p>
-                It took two years. I failed a few times. People helped along the way.
-                But the vision stayed the same: infrastructure that serves students,
-                not extracts from them.
-              </p>
-              <p>
-                Now it's here. Not finished — it never will be. But ready.
-                Ready for students to build on.
-              </p>
+            <ParallaxText speed={0.15}>
+              <motion.h2
+                className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                style={{ fontFamily: 'var(--font-display)' }}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, ease: EASE }}
+              >
+                The story
+              </motion.h2>
+            </ParallaxText>
+
+            <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+              <ParallaxText speed={0.1}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    I started building HIVE because I saw the gap — between what students need and what institutions provide. Between the tools that exist and the ones that should.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.08}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    It took two years. I failed a few times. People helped along the way. But the vision stayed the same: infrastructure that serves students, not extracts from them.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.05}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    Now it's here. Not finished — it never will be. But ready. Ready for students to build on.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.03}>
+                <motion.p
+                  className="text-white/25 text-[16px] pt-6"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                >
+                  — Laney
+                </motion.p>
+              </ParallaxText>
             </div>
-            <p className="mt-10 text-white/30 text-[16px]">
-              — Laney
-            </p>
           </div>
         </RevealSection>
 
         {/* The Helpers */}
         {HELPERS.length > 0 && (
-          <RevealSection className="px-6 py-16">
+          <RevealSection className="px-6 py-20">
             <div className="mx-auto max-w-3xl">
-              <p className="mb-4 text-[13px] uppercase tracking-wider text-white/30">
+              <motion.p
+                className="mb-6 text-[12px] uppercase tracking-wider text-white/25"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, ease: EASE }}
+              >
                 With help from
-              </p>
-              <div className="flex flex-wrap gap-4">
+              </motion.p>
+              <div className="flex flex-wrap gap-6">
                 {HELPERS.map((name, i) => (
                   <motion.span
                     key={name}
-                    className="text-[17px] text-white/50"
-                    initial={{ opacity: 0, y: 10 }}
+                    className="text-[18px] text-white/40"
+                    initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: i * 0.1, ease: EASE }}
+                    transition={{ duration: 0.8, delay: i * 0.15, ease: EASE }}
                   >
                     {name}
                   </motion.span>
@@ -195,28 +395,43 @@ export default function AboutPage() {
         )}
 
         {/* The Future - CTA */}
-        <RevealSection className="px-6 py-32">
+        <RevealSection className="px-6 py-40 relative">
+          <AnimatedLine className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl text-center">
-            <p
-              className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white mb-10"
-              style={{ fontFamily: 'var(--font-display)' }}
+            <ParallaxText speed={0.1}>
+              <motion.p
+                className="text-[32px] md:text-[44px] font-medium leading-[1.1] mb-12"
+                style={{ fontFamily: 'var(--font-display)' }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, ease: EASE }}
+              >
+                <span className="text-white">The builders inherit</span>
+                <br />
+                <span className="text-white/30">what comes next.</span>
+              </motion.p>
+            </ParallaxText>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
             >
-              The builders inherit
-              <br />
-              <span className="text-white/40">what comes next.</span>
-            </p>
-            <Button variant="cta" size="lg" asChild>
-              <a href="/enter">Enter with .edu</a>
-            </Button>
+              <Button variant="cta" size="lg" asChild>
+                <a href="/enter">Enter with .edu</a>
+              </Button>
+            </motion.div>
           </div>
         </RevealSection>
       </main>
 
       {/* Minimal footer */}
-      <footer className="px-6 py-8">
-        <div className="mx-auto max-w-3xl flex items-center justify-between text-[12px] text-white/25">
+      <footer className="px-6 py-12 border-t border-white/[0.04]">
+        <div className="mx-auto max-w-3xl flex items-center justify-between text-[12px] text-white/20">
           <span>&copy; {new Date().getFullYear()} HIVE</span>
-          <div className="flex gap-4">
+          <div className="flex gap-6">
             <Link href="/legal/terms" className="hover:text-white/40 transition-colors">
               Terms
             </Link>
