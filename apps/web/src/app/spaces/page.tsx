@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { Text, Button, Input, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
+import { TerritoryMap } from '@/components/spaces/TerritoryMap';
 
 // ============================================================
 // Types
@@ -130,6 +131,39 @@ function useAllSpaces() {
   return { spaces, loading };
 }
 
+function useUserIdentity() {
+  const [identity, setIdentity] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    secureApiFetch('/api/profile/identity', { method: 'GET' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.identity) {
+          setIdentity({
+            major: data.identity.major,
+            majorSpaceId: data.identity.majorSpace?.id,
+            majorSpaceUnlocked: data.identity.majorSpace?.isUnlocked,
+            homeSpaceId: data.identity.homeSpace?.id,
+            residenceType: data.identity.residenceType,
+            interests: data.identity.interests || [],
+            communitySpaceIds: (data.identity.communitySpaces || []).map((s: any) => s.id),
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  return { identity, loading };
+}
+
 // ============================================================
 // Main Component
 // ============================================================
@@ -139,9 +173,23 @@ export default function SpacesPage() {
   const { user } = useAuth();
   const { spaces: mySpaces, loading: loadingMySpaces } = useMySpaces();
   const { spaces: allSpaces, loading: loadingAllSpaces } = useAllSpaces();
+  const { identity: userIdentity, loading: loadingIdentity } = useUserIdentity();
   const [searchQuery, setSearchQuery] = React.useState('');
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('list');
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
+
+  const handleQuadrantClick = React.useCallback((type: 'major' | 'interests' | 'home' | 'community') => {
+    // Map identity types to category filters
+    const categoryMap: Record<string, string> = {
+      major: 'university',
+      interests: 'student',
+      home: 'residential',
+      community: 'student',
+    };
+    setSelectedCategory(categoryMap[type]);
+    // Scroll to All Spaces section
+    document.getElementById('all-spaces')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   // Categories with real counts
   const categories: Category[] = React.useMemo(() => {
@@ -211,24 +259,38 @@ export default function SpacesPage() {
           <YourSpacesSection spaces={mySpaces} router={router} />
         )}
 
-        {/* Category Reveal - 4 Core Territories */}
-        <CategoryRevealSection
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
+        {/* Territory Map - Personalized Identity Quadrants */}
+        {!loadingIdentity && userIdentity && user && (
+          <div className="mb-20">
+            <TerritoryMap
+              userIdentity={userIdentity}
+              onQuadrantClick={handleQuadrantClick}
+            />
+          </div>
+        )}
+
+        {/* Category Reveal - 4 Core Territories (for users without identity or fallback) */}
+        {(!user || !userIdentity) && (
+          <CategoryRevealSection
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+        )}
 
         {/* All Spaces Directory */}
-        <AllSpacesSection
-          spaces={filteredSpaces}
-          loading={loadingAllSpaces}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          selectedCategory={selectedCategory}
-          router={router}
-        />
+        <div id="all-spaces">
+          <AllSpacesSection
+            spaces={filteredSpaces}
+            loading={loadingAllSpaces}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            selectedCategory={selectedCategory}
+            router={router}
+          />
+        </div>
 
         {/* Request Space CTA */}
         <RequestSpaceSection searchQuery={searchQuery} />

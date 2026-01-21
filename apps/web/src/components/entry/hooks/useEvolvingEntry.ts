@@ -71,7 +71,17 @@ export interface EntryData {
   handle: string;
   major: string;
   graduationYear: number | null;
+  residenceType: 'on-campus' | 'off-campus' | 'commuter' | '';
   residentialSpaceId: string;
+  interests: string[];
+  communityIdentities: {
+    international?: boolean;
+    transfer?: boolean;
+    firstGen?: boolean;
+    commuter?: boolean;
+    graduate?: boolean;
+    veteran?: boolean;
+  };
 }
 
 export interface UseEvolvingEntryOptions {
@@ -119,7 +129,10 @@ export interface UseEvolvingEntryReturn {
   selectSuggestion: (handle: string) => void;
   setMajor: (major: string) => void;
   setGraduationYear: (year: number | null) => void;
+  setResidenceType: (type: 'on-campus' | 'off-campus' | 'commuter') => void;
   setResidentialSpaceId: (spaceId: string) => void;
+  setInterests: (interests: string[]) => void;
+  setCommunityIdentities: (identities: { international?: boolean; transfer?: boolean; firstGen?: boolean; commuter?: boolean; graduate?: boolean; veteran?: boolean }) => void;
 
   // Section actions
   confirmSchool: () => void;
@@ -235,7 +248,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     handle: '',
     major: '',
     graduationYear: null,
+    residenceType: '',
     residentialSpaceId: '',
+    interests: [],
+    communityIdentities: {},
   });
 
   // User state
@@ -485,8 +501,20 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     setData((prev) => ({ ...prev, graduationYear }));
   }, []);
 
+  const setResidenceType = useCallback((residenceType: 'on-campus' | 'off-campus' | 'commuter') => {
+    setData((prev) => ({ ...prev, residenceType }));
+  }, []);
+
   const setResidentialSpaceId = useCallback((residentialSpaceId: string) => {
     setData((prev) => ({ ...prev, residentialSpaceId }));
+  }, []);
+
+  const setInterests = useCallback((interests: string[]) => {
+    setData((prev) => ({ ...prev, interests }));
+  }, []);
+
+  const setCommunityIdentities = useCallback((communityIdentities: { international?: boolean; transfer?: boolean; firstGen?: boolean; commuter?: boolean; graduate?: boolean; veteran?: boolean }) => {
+    setData((prev) => ({ ...prev, communityIdentities }));
   }, []);
 
   // ============================================
@@ -755,7 +783,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
           role: data.role || 'student',
           major: data.major || null,
           graduationYear: data.graduationYear || null,
+          residenceType: data.residenceType || 'off-campus',
           residentialSpaceId: data.residentialSpaceId === 'off-campus' ? null : (data.residentialSpaceId || null),
+          interests: data.interests || [],
+          communityIdentities: data.communityIdentities || {},
         }),
       });
 
@@ -927,7 +958,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     selectSuggestion,
     setMajor,
     setGraduationYear,
+    setResidenceType,
     setResidentialSpaceId,
+    setInterests,
+    setCommunityIdentities,
 
     // Section actions
     confirmSchool,

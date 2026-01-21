@@ -35,9 +35,21 @@ const schema = z.object({
   lastName: z.string().min(1, 'Last name is required').max(50),
   handle: SecureSchemas.handle,
   // Identity fields
-  major: z.string().min(1).max(100).optional().nullable(),
+  major: z.string().min(1).max(100),
   graduationYear: z.number().min(2015).max(2035).optional().nullable(),
+  residenceType: z.enum(['on-campus', 'off-campus', 'commuter']),
   residentialSpaceId: z.string().max(100).optional().nullable(),
+  // Interests (2-3 required)
+  interests: z.array(z.string()).min(2).max(3),
+  // Community identities (all optional)
+  communityIdentities: z.object({
+    international: z.boolean().optional(),
+    transfer: z.boolean().optional(),
+    firstGen: z.boolean().optional(),
+    commuter: z.boolean().optional(),
+    graduate: z.boolean().optional(),
+    veteran: z.boolean().optional(),
+  }).optional(),
 });
 
 type EntryBody = z.infer<typeof schema>;
@@ -158,9 +170,12 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         handle: normalizedHandle,
         email: email || '',
         // Decision-reducing identity fields
-        major: body.major || null,
+        major: body.major,
         graduationYear: body.graduationYear || null,
+        residenceType: body.residenceType,
         residentialSpaceId: body.residentialSpaceId || null,
+        interests: body.interests || [],
+        communityIdentities: body.communityIdentities || {},
         // Campus isolation
         campusId,
         schoolId: campusId,
@@ -178,8 +193,127 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
       }, { merge: true });
 
-      // Auto-join residential space if selected
-      if (body.residentialSpaceId) {
+      // Auto-join: 1. Major space (find by majorName, join or waitlist)
+      // Find major space for this major
+      const majorSpacesSnapshot = await transaction.get(
+        dbAdmin.collection('spaces')
+          .where('campusId', '==', campusId)
+          .where('identityType', '==', 'major')
+          .where('majorName', '==', body.major)
+          .limit(1)
+      );
+
+      let majorSpaceId: string | null = null;
+      if (!majorSpacesSnapshot.empty) {
+        const majorSpace = majorSpacesSnapshot.docs[0];
+        majorSpaceId = majorSpace?.id || null;
+        const majorSpaceData = majorSpace?.data();
+
+        if (majorSpaceId && majorSpaceData) {
+          const isUnlocked = majorSpaceData.isUnlocked || false;
+
+          if (isUnlocked) {
+            // Join the space
+            const memberRef = dbAdmin.collection('spaceMembers').doc(`${majorSpaceId}_${userId}`);
+            transaction.set(memberRef, {
+              spaceId: majorSpaceId,
+              userId: userId,
+              role: 'member',
+              joinedAt: new Date().toISOString(),
+              campusId: campusId,
+              isActive: true,
+              userName: fullName,
+              userHandle: normalizedHandle,
+            });
+
+            // Increment member count
+            const spaceRef = dbAdmin.collection('spaces').doc(majorSpaceId);
+            transaction.update(spaceRef, {
+              memberCount: FieldValue.increment(1),
+              'metrics.memberCount': FieldValue.increment(1),
+            });
+
+            // Save majorSpaceId to user profile
+            transaction.update(userRef, { majorSpaceId });
+          } else {
+            // Add to waitlist
+            const waitlistRef = dbAdmin.collection('spaceWaitlists').doc(`${majorSpaceId}_${userId}`);
+            transaction.set(waitlistRef, {
+              id: `${majorSpaceId}_${userId}`,
+              spaceId: majorSpaceId,
+              userId: userId,
+              majorName: body.major,
+              joinedAt: new Date().toISOString(),
+              notified: false,
+              campusId: campusId,
+            });
+          }
+        }
+      }
+
+      // Auto-join: 2. Community spaces based on identity checkboxes
+      const communitySpaceIds: string[] = [];
+      if (body.communityIdentities) {
+        const communityMappings = {
+          international: 'international',
+          transfer: 'transfer',
+          firstGen: 'firstgen',
+          commuter: 'commuter',
+          graduate: 'graduate',
+          veteran: 'veteran',
+        } as const;
+
+        for (const [key, communityType] of Object.entries(communityMappings)) {
+          if (body.communityIdentities[key as keyof typeof body.communityIdentities]) {
+            // Find universal community space for this type
+            const communitySpacesSnapshot = await transaction.get(
+              dbAdmin.collection('spaces')
+                .where('campusId', '==', campusId)
+                .where('identityType', '==', 'community')
+                .where('communityType', '==', communityType)
+                .where('isUniversal', '==', true)
+                .limit(1)
+            );
+
+            if (!communitySpacesSnapshot.empty) {
+              const communitySpace = communitySpacesSnapshot.docs[0];
+              const communitySpaceId = communitySpace?.id;
+
+              if (communitySpaceId) {
+                communitySpaceIds.push(communitySpaceId);
+
+                // Join the space
+                const memberRef = dbAdmin.collection('spaceMembers').doc(`${communitySpaceId}_${userId}`);
+                transaction.set(memberRef, {
+                  spaceId: communitySpaceId,
+                  userId: userId,
+                  role: 'member',
+                  joinedAt: new Date().toISOString(),
+                  campusId: campusId,
+                  isActive: true,
+                  userName: fullName,
+                  userHandle: normalizedHandle,
+                });
+
+                // Increment member count
+                const spaceRef = dbAdmin.collection('spaces').doc(communitySpaceId);
+                transaction.update(spaceRef, {
+                  memberCount: FieldValue.increment(1),
+                  'metrics.memberCount': FieldValue.increment(1),
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Save community space IDs to user profile
+      if (communitySpaceIds.length > 0) {
+        transaction.update(userRef, { communitySpaceIds });
+      }
+
+      // Auto-join: 3. Residential space (home space)
+      if (body.residentialSpaceId && body.residenceType === 'on-campus') {
         const memberRef = dbAdmin.collection('spaceMembers').doc(`${body.residentialSpaceId}_${userId}`);
         transaction.set(memberRef, {
           spaceId: body.residentialSpaceId,
@@ -188,7 +322,6 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
           joinedAt: new Date().toISOString(),
           campusId: campusId,
           isActive: true,
-          // Denormalized user data for fast display
           userName: fullName,
           userHandle: normalizedHandle,
         });
@@ -199,6 +332,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
           memberCount: FieldValue.increment(1),
           'metrics.memberCount': FieldValue.increment(1),
         });
+
+        // Save as homeSpaceId
+        transaction.update(userRef, { homeSpaceId: body.residentialSpaceId });
       }
     });
 

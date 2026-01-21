@@ -58,6 +58,16 @@ export default defineConfig({
       workers: 1, // Sequential execution for accurate metrics
       timeout: 600000, // 10 minute timeout per test
     },
+
+    // Accessibility tests - axe-core audits
+    {
+      name: 'accessibility',
+      testDir: './src/test/e2e/accessibility',
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      retries: 0,
+    },
   ],
   webServer: {
     command: 'pnpm dev',

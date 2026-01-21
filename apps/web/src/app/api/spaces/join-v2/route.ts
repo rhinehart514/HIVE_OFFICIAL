@@ -16,6 +16,7 @@ import {
   incrementMemberCount,
   isShardedMemberCountEnabled
 } from "@/lib/services/sharded-member-counter.service";
+import { checkMajorSpaceUnlock } from "@/lib/services/space-unlock.service";
 
 /**
  * Space Join API v2
@@ -251,6 +252,43 @@ export const POST = withAuthValidationAndErrors(
       endpoint: '/api/spaces/join-v2'
     });
 
+    // Check if this join triggers a major space unlock
+    let unlockResult = null;
+    if (!result.isReactivation) {
+      try {
+        // Check if space should unlock (only for major spaces)
+        const unlockCheck = await checkMajorSpaceUnlock(spaceId);
+
+        if (unlockCheck.unlocked) {
+          logger.info('🎉 Major space unlocked!', {
+            spaceId,
+            majorName: space.name,
+            newMemberCount: unlockCheck.newMemberCount,
+            notifiedCount: unlockCheck.notifiedCount,
+            unlockedBy: userId,
+          });
+
+          unlockResult = {
+            unlocked: true,
+            majorName: space.name,
+            spaceId,
+          };
+        } else if (unlockCheck.error) {
+          logger.warn('Unlock check failed (non-critical)', {
+            spaceId,
+            error: unlockCheck.error,
+          });
+        }
+      } catch (unlockError) {
+        // Don't fail the join if unlock check fails
+        logger.error('Failed to check major space unlock', {
+          error: unlockError instanceof Error ? unlockError.message : String(unlockError),
+          spaceId,
+          userId,
+        });
+      }
+    }
+
     // Notify space leaders about new member (only for new joins, not reactivations)
     if (!result.isReactivation) {
       try {
@@ -362,7 +400,8 @@ export const POST = withAuthValidationAndErrors(
 
     return respond.success({
       space: { id: spaceId, name: space.name, type: space.type, description: space.description },
-      membership: { userId, role: result.role, isActive: true, joinMethod }
+      membership: { userId, role: result.role, isActive: true, joinMethod },
+      unlock: unlockResult // Include unlock data if space was unlocked
     }, { message: 'Successfully joined the space' });
   }
 );

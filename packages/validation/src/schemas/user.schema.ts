@@ -9,7 +9,7 @@ export const userSchema = z.object({
   ),
   fullName: z.string().min(1, 'Full name is required').max(40, 'Full name must be 40 characters or less'),
   preferredName: z.string().max(20, 'Preferred name must be 20 characters or less').optional(),
-  
+
   major: z.string().min(1, 'Major is required'),
   graduationYear: z.number().min(currentYear).max(currentYear + 7, 'Invalid graduation year'),
 
@@ -24,15 +24,33 @@ export const userSchema = z.object({
   }).optional(),
 
   onboardingCompleted: z.boolean().default(false),
-  
+
   isBuilder: z.boolean().default(false),
+
+  // Identity system fields
+  residenceType: z.enum(['on-campus', 'off-campus', 'commuter']).optional(),
+  residentialSpaceId: z.string().optional(), // For on-campus students
+  interests: z.array(z.string()).min(0).max(20).default([]),
+  communityIdentities: z.object({
+    international: z.boolean().optional(),
+    transfer: z.boolean().optional(),
+    firstGen: z.boolean().optional(),
+    commuter: z.boolean().optional(),
+    graduate: z.boolean().optional(),
+    veteran: z.boolean().optional(),
+  }).optional(),
+
+  // Space associations (populated after auto-join)
+  majorSpaceId: z.string().optional(),
+  homeSpaceId: z.string().optional(),
+  communitySpaceIds: z.array(z.string()).default([]),
 
   legal: z.object({
     termsOfServiceAcceptedVersion: z.string(),
     privacyPolicyAcceptedVersion: z.string(),
     acceptedAt: z.date(),
   }),
-  
+
   createdAt: z.date().default(() => new Date()),
   updatedAt: z.date().default(() => new Date()),
 });

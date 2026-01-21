@@ -42,20 +42,49 @@ interface IdentitySectionProps {
   handleSuggestions: string[];
   major: string;
   graduationYear: number | null;
+  residenceType: 'on-campus' | 'off-campus' | 'commuter' | '';
   residentialSpaceId: string;
+  interests: string[];
+  communityIdentities: {
+    international?: boolean;
+    transfer?: boolean;
+    firstGen?: boolean;
+    commuter?: boolean;
+    graduate?: boolean;
+    veteran?: boolean;
+  };
   onFirstNameChange: (name: string) => void;
   onLastNameChange: (name: string) => void;
   onHandleChange: (handle: string) => void;
   onSuggestionClick: (handle: string) => void;
   onMajorChange: (major: string) => void;
   onGraduationYearChange: (year: number | null) => void;
+  onResidenceTypeChange: (type: 'on-campus' | 'off-campus' | 'commuter') => void;
   onResidentialChange: (spaceId: string) => void;
+  onInterestsChange: (interests: string[]) => void;
+  onCommunityIdentitiesChange: (identities: Record<string, boolean>) => void;
   onSubmit: () => void;
   isLoading: boolean;
   majors: string[];
   graduationYears: number[];
   residentialSpaces: Array<{ id: string; name: string }>;
 }
+
+// Common interests for selection
+const COMMON_INTERESTS = [
+  'Gaming',
+  'Photography',
+  'Sports',
+  'Music',
+  'Tech',
+  'Art',
+  'Politics',
+  'Fitness',
+  'Cooking',
+  'Reading',
+  'Film',
+  'Travel',
+];
 
 export function IdentitySection({
   section,
@@ -66,14 +95,20 @@ export function IdentitySection({
   handleSuggestions,
   major,
   graduationYear,
+  residenceType,
   residentialSpaceId,
+  interests,
+  communityIdentities,
   onFirstNameChange,
   onLastNameChange,
   onHandleChange,
   onSuggestionClick,
   onMajorChange,
   onGraduationYearChange,
+  onResidenceTypeChange,
   onResidentialChange,
+  onInterestsChange,
+  onCommunityIdentitiesChange,
   onSubmit,
   isLoading,
   majors,
@@ -83,8 +118,8 @@ export function IdentitySection({
   const isActive = section.status === 'active';
   const hasError = !!section.error;
 
-  // Required: name, handle available, major, graduation year
-  // Optional: residentialSpaceId
+  // Required: name, handle available, major, graduation year, residenceType, 2-3 interests
+  // Optional: residential space ID (if on-campus), community identities
   const canSubmit =
     firstName.trim() &&
     lastName.trim() &&
@@ -92,6 +127,9 @@ export function IdentitySection({
     handleStatus === 'available' &&
     major &&
     graduationYear &&
+    residenceType &&
+    interests.length >= 2 &&
+    interests.length <= 3 &&
     !isLoading;
 
   const handleKeyDown = React.useCallback(
@@ -255,11 +293,38 @@ export function IdentitySection({
               </SelectContent>
             </Select>
           </div>
+        </motion.div>
 
-          {/* Residential (optional) */}
-          <div className="space-y-1.5">
+        {/* Residence type */}
+        <motion.div variants={sectionChildVariants} className="space-y-1.5">
+          <label className="text-[12px] text-white/40">Where do you live?</label>
+          <Select
+            value={residenceType}
+            onValueChange={(v) => onResidenceTypeChange(v as 'on-campus' | 'off-campus' | 'commuter')}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select residence type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="on-campus">On Campus</SelectItem>
+              <SelectItem value="off-campus">Off Campus</SelectItem>
+              <SelectItem value="commuter">Commuter</SelectItem>
+            </SelectContent>
+          </Select>
+        </motion.div>
+
+        {/* Residential space - show only if on-campus */}
+        {residenceType === 'on-campus' && (
+          <motion.div
+            variants={sectionChildVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="space-y-1.5"
+          >
             <label className="text-[12px] text-white/40">
-              Residence <span className="text-white/20">(optional)</span>
+              Residence hall <span className="text-white/20">(optional)</span>
             </label>
             <Select
               value={residentialSpaceId}
@@ -270,7 +335,6 @@ export function IdentitySection({
                 <SelectValue placeholder="Select residence hall" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="off-campus">Off campus</SelectItem>
                 {residentialSpaces.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
@@ -278,6 +342,99 @@ export function IdentitySection({
                 ))}
               </SelectContent>
             </Select>
+          </motion.div>
+        )}
+
+        {/* Interests multi-select */}
+        <motion.div variants={sectionChildVariants} className="space-y-2">
+          <label className="text-[12px] text-white/40">
+            What are you interested in? <span className="text-white/60">(pick 2-3)</span>
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {COMMON_INTERESTS.map((interest) => {
+              const isSelected = interests.includes(interest);
+              const canSelect = !isSelected && interests.length < 3;
+              const canDeselect = isSelected;
+
+              return (
+                <button
+                  key={interest}
+                  type="button"
+                  onClick={() => {
+                    if (isSelected) {
+                      onInterestsChange(interests.filter((i) => i !== interest));
+                    } else if (canSelect) {
+                      onInterestsChange([...interests, interest]);
+                    }
+                  }}
+                  disabled={isLoading || (!canSelect && !canDeselect)}
+                  className={cn(
+                    'h-10 px-3 rounded-xl text-[13px] font-medium transition-all duration-200',
+                    'border',
+                    isSelected
+                      ? 'bg-white/10 border-white/30 text-white'
+                      : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:bg-white/[0.05] hover:border-white/15',
+                    (!canSelect && !canDeselect) && 'opacity-30 cursor-not-allowed',
+                    'disabled:opacity-50'
+                  )}
+                >
+                  {interest}
+                </button>
+              );
+            })}
+          </div>
+          {interests.length > 0 && (
+            <p className="text-[11px] text-white/30">
+              {interests.length}/3 selected
+            </p>
+          )}
+        </motion.div>
+
+        {/* Community identities */}
+        <motion.div variants={sectionChildVariants} className="space-y-2">
+          <label className="text-[12px] text-white/40">
+            Do any of these describe you? <span className="text-white/20">(optional)</span>
+          </label>
+          <div className="space-y-2">
+            {[
+              { key: 'international', label: 'International Student' },
+              { key: 'transfer', label: 'Transfer Student' },
+              { key: 'firstGen', label: 'First-Generation College Student' },
+              { key: 'commuter', label: 'Commuter Student' },
+              { key: 'graduate', label: 'Graduate Student' },
+              { key: 'veteran', label: 'Veteran' },
+            ].map(({ key, label }) => (
+              <label
+                key={key}
+                className={cn(
+                  'flex items-center gap-3 h-11 px-4 rounded-xl transition-all duration-200 cursor-pointer',
+                  'border',
+                  communityIdentities[key as keyof typeof communityIdentities]
+                    ? 'bg-white/[0.05] border-white/15'
+                    : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.03] hover:border-white/10'
+                )}
+              >
+                <input
+                  type="checkbox"
+                  checked={communityIdentities[key as keyof typeof communityIdentities] || false}
+                  onChange={(e) => {
+                    onCommunityIdentitiesChange({
+                      ...communityIdentities,
+                      [key]: e.target.checked,
+                    });
+                  }}
+                  disabled={isLoading}
+                  className={cn(
+                    'w-4 h-4 rounded border-2 transition-all',
+                    'border-white/20 bg-transparent',
+                    'checked:bg-white checked:border-white',
+                    'focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-0',
+                    'disabled:opacity-50'
+                  )}
+                />
+                <span className="text-[13px] text-white/70">{label}</span>
+              </label>
+            ))}
           </div>
         </motion.div>
 

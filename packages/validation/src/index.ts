@@ -10,4 +10,5 @@ export * from "./space.schema";
 export * from "./tool.schema";
 export * from "./chat.schema";
 export * from "./event.schema";
-export * from "./settings.schema"; 
+export * from "./settings.schema";
+export * from "./schemas/waitlist.schema"; 

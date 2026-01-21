@@ -243,6 +243,37 @@ interface EnhancedSpaceProps {
    * Tracks leader onboarding completion
    */
   setupProgress?: SetupProgress;
+  /**
+   * Identity classification - determines how the space appears in Territory Map
+   * - major: Academic major spaces (Computer Science, Biology, etc.)
+   * - residence: Housing/residential spaces (dorms, floors)
+   * - interest: Interest-based spaces (clubs, hobbies)
+   * - community: Identity-based community spaces (international, transfer, etc.)
+   */
+  identityType: 'major' | 'residence' | 'interest' | 'community';
+  /**
+   * For major spaces - the official major name
+   */
+  majorName?: string;
+  /**
+   * Whether this major space is unlocked (has reached threshold)
+   * Server-side only - never expose the exact threshold to clients
+   */
+  isUnlocked: boolean;
+  /**
+   * Number of members required to unlock a major space
+   * Default: 10. Server-side only - never exposed to clients
+   */
+  unlockThreshold: number;
+  /**
+   * Community subtype for community identity spaces
+   */
+  communityType?: 'international' | 'transfer' | 'firstgen' | 'commuter' | 'graduate' | 'veteran' | 'greek' | 'cultural' | 'other';
+  /**
+   * Whether this is a universal community space (always unlocked)
+   * Universal spaces are auto-joined based on user identity checkboxes
+   */
+  isUniversal?: boolean;
 }
 
 export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
@@ -514,6 +545,53 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.members.length;
   }
 
+  // ============================================
+  // IDENTITY SYSTEM GETTERS
+  // ============================================
+
+  /**
+   * Identity type classification (major, residence, interest, community)
+   */
+  get identityType(): 'major' | 'residence' | 'interest' | 'community' {
+    return this.props.identityType;
+  }
+
+  /**
+   * Official major name (for major spaces)
+   */
+  get majorName(): string | undefined {
+    return this.props.majorName;
+  }
+
+  /**
+   * Whether this major space is unlocked
+   * NOTE: This is server-side state - client never sees unlock threshold
+   */
+  get isUnlocked(): boolean {
+    return this.props.isUnlocked;
+  }
+
+  /**
+   * Unlock threshold for major spaces (server-side only)
+   */
+  get unlockThreshold(): number {
+    return this.props.unlockThreshold;
+  }
+
+  /**
+   * Community subtype for identity-based community spaces
+   */
+  get communityType(): 'international' | 'transfer' | 'firstgen' | 'commuter' | 'graduate' | 'veteran' | 'greek' | 'cultural' | 'other' | undefined {
+    return this.props.communityType;
+  }
+
+  /**
+   * Whether this is a universal community space (always unlocked)
+   */
+  get isUniversal(): boolean {
+    return this.props.isUniversal ?? false;
+  }
+
 
   private constructor(props: EnhancedSpaceProps, id?: string) {
     // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
@@ -561,6 +639,33 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
        * - 'live': Space is immediately visible (for pre-seeded/imported spaces)
        */
       publishStatus?: SpacePublishStatus;
+      /**
+       * Identity type - major, residence, interest, or community
+       * Defaults to 'interest' for backwards compatibility
+       */
+      identityType?: 'major' | 'residence' | 'interest' | 'community';
+      /**
+       * Major name (for major spaces)
+       */
+      majorName?: string;
+      /**
+       * Initial unlock status (for major spaces)
+       * Defaults to false - major spaces start locked
+       */
+      isUnlocked?: boolean;
+      /**
+       * Unlock threshold (for major spaces)
+       * Defaults to 10 members
+       */
+      unlockThreshold?: number;
+      /**
+       * Community subtype (for community identity spaces)
+       */
+      communityType?: 'international' | 'transfer' | 'firstgen' | 'commuter' | 'graduate' | 'veteran' | 'greek' | 'cultural' | 'other';
+      /**
+       * Whether this is a universal community space (always unlocked)
+       */
+      isUniversal?: boolean;
     },
     id?: string
   ): Result<EnhancedSpace> {
@@ -599,6 +704,13 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     // Pre-seeded unclaimed spaces should be 'live' (visible in directory)
     const publishStatus = props.publishStatus ?? (isUnclaimed ? 'live' : 'stealth');
 
+    // Determine identity type - default to 'interest'
+    const identityType = props.identityType ?? 'interest';
+
+    // For major spaces, set unlock status and threshold
+    const isUnlocked = identityType === 'major' ? (props.isUnlocked ?? false) : true;
+    const unlockThreshold = identityType === 'major' ? (props.unlockThreshold ?? 10) : 0;
+
     const spaceProps: EnhancedSpaceProps = {
       spaceId: props.spaceId,
       name: props.name,
@@ -633,7 +745,14 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       createdAt: new Date(),
       updatedAt: new Date(),
       lastActivityAt: new Date(),
-      postCount: 0
+      postCount: 0,
+      // Identity system fields
+      identityType,
+      majorName: props.majorName,
+      isUnlocked,
+      unlockThreshold,
+      communityType: props.communityType,
+      isUniversal: props.isUniversal ?? false,
     };
 
     const space = new EnhancedSpace(spaceProps, id);
@@ -1970,6 +2089,77 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   // ============================================================
+  // Identity System Methods (Major Space Unlock)
+  // ============================================================
+
+  /**
+   * Check if this major space should unlock based on member count
+   * Returns true if:
+   * - Space is identityType 'major'
+   * - Not already unlocked
+   * - Member count >= unlock threshold
+   */
+  public shouldUnlock(): boolean {
+    if (this.props.identityType !== 'major') return false;
+    if (this.props.isUnlocked) return false;
+    return this.memberCount >= this.props.unlockThreshold;
+  }
+
+  /**
+   * Unlock this major space
+   * Should only be called after shouldUnlock() returns true
+   * This is typically triggered server-side when the threshold is reached
+   */
+  public unlock(): Result<void> {
+    if (this.props.identityType !== 'major') {
+      return Result.fail<void>('Only major spaces can be unlocked');
+    }
+
+    if (this.props.isUnlocked) {
+      return Result.ok<void>(); // Already unlocked, no-op
+    }
+
+    if (!this.shouldUnlock()) {
+      return Result.fail<void>(`Space has not reached unlock threshold (${this.memberCount}/${this.props.unlockThreshold})`);
+    }
+
+    this.props.isUnlocked = true;
+    this.updateLastActivity();
+
+    // Could emit an unlock event here if needed
+    // this.addDomainEvent(new SpaceUnlockedEvent(this.id, this.majorName));
+
+    return Result.ok<void>();
+  }
+
+  /**
+   * Set identity fields from external data (repository layer)
+   */
+  public setIdentityType(identityType: 'major' | 'residence' | 'interest' | 'community'): void {
+    (this.props as any).identityType = identityType;
+  }
+
+  public setMajorName(majorName: string | undefined): void {
+    (this.props as any).majorName = majorName;
+  }
+
+  public setIsUnlocked(isUnlocked: boolean): void {
+    (this.props as any).isUnlocked = isUnlocked;
+  }
+
+  public setUnlockThreshold(threshold: number): void {
+    (this.props as any).unlockThreshold = threshold;
+  }
+
+  public setCommunityType(communityType: 'international' | 'transfer' | 'firstgen' | 'commuter' | 'graduate' | 'veteran' | 'greek' | 'cultural' | 'other' | undefined): void {
+    (this.props as any).communityType = communityType;
+  }
+
+  public setIsUniversal(isUniversal: boolean): void {
+    (this.props as any).isUniversal = isUniversal;
+  }
+
+  // ============================================================
   // Basic Info Update (Phase 1 - DDD Foundation)
   // ============================================================
 
@@ -2171,7 +2361,14 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       postCount: this.props.postCount,
       createdAt: this.props.createdAt,
       updatedAt: this.props.updatedAt,
-      lastActivityAt: this.props.lastActivityAt
+      lastActivityAt: this.props.lastActivityAt,
+      // Identity system fields
+      identityType: this.props.identityType,
+      majorName: this.props.majorName,
+      isUnlocked: this.props.isUnlocked,
+      unlockThreshold: this.props.unlockThreshold,
+      communityType: this.props.communityType,
+      isUniversal: this.props.isUniversal,
     };
   }
 }

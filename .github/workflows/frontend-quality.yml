@@ -1,0 +1,221 @@
+name: Frontend Quality Gates
+
+on:
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - 'packages/ui/**'
+      - 'packages/hooks/**'
+      - 'packages/tokens/**'
+  push:
+    branches:
+      - main
+
+jobs:
+  bundle-size:
+    name: Bundle Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        run: pnpm --filter=@hive/web build
+        env:
+          ANALYZE: 'false'
+
+      - name: Analyze bundle size
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          skip_step: install
+          build_script: build
+          directory: apps/web
+
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build app
+        run: pnpm --filter=@hive/web build
+        env:
+          NODE_ENV: production
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          urls: |
+            http://localhost:3000
+            http://localhost:3000/about
+            http://localhost:3000/feed
+            http://localhost:3000/spaces
+          budgetPath: ./apps/web/lighthouse-budget.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+          runs: 3
+
+  accessibility:
+    name: Accessibility Audit (axe-core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter=@hive/web exec playwright install chromium
+
+      - name: Build app
+        run: pnpm --filter=@hive/web build
+
+      - name: Start server
+        run: pnpm --filter=@hive/web start &
+        env:
+          PORT: 3000
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+
+      - name: Run axe accessibility tests
+        run: pnpm --filter=@hive/web test:e2e --project=accessibility
+
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: accessibility-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+  eslint-design-system:
+    name: Design System Compliance (ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint (design system rules)
+        run: pnpm --filter=@hive/web lint
+        continue-on-error: true
+
+      - name: Generate violations report
+        run: |
+          echo "## Design System Violations" > violations.md
+          echo "" >> violations.md
+          pnpm --filter=@hive/web lint --format=json > lint-results.json || true
+          node scripts/parse-lint-violations.js >> violations.md
+
+      - name: Comment PR with violations
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const violations = fs.readFileSync('violations.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: violations
+            });
+
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run typecheck
+        run: pnpm --filter=@hive/web typecheck
+
+  quality-summary:
+    name: Quality Summary
+    runs-on: ubuntu-latest
+    needs: [bundle-size, lighthouse, accessibility, eslint-design-system, typecheck]
+    if: always()
+    steps:
+      - name: Check all quality gates passed
+        run: |
+          if [[ "${{ needs.bundle-size.result }}" == "success" ]] && \
+             [[ "${{ needs.lighthouse.result }}" == "success" ]] && \
+             [[ "${{ needs.accessibility.result }}" == "success" ]] && \
+             [[ "${{ needs.typecheck.result }}" == "success" ]]; then
+            echo "✅ All quality gates passed!"
+            exit 0
+          else
+            echo "❌ Some quality gates failed"
+            echo "Bundle Size: ${{ needs.bundle-size.result }}"
+            echo "Lighthouse: ${{ needs.lighthouse.result }}"
+            echo "Accessibility: ${{ needs.accessibility.result }}"
+            echo "ESLint: ${{ needs.eslint-design-system.result }}"
+            echo "TypeCheck: ${{ needs.typecheck.result }}"
+            exit 1
+          fi
