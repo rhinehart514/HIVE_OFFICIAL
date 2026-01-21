@@ -1,24 +1,27 @@
 'use client';
 
 /**
- * EmailSection - Email input with domain suffix
+ * EmailSection - Premium email input
+ * REDESIGNED: Jan 21, 2026
  *
- * Second section in the evolving entry flow.
- * - Shows email input with school domain suffix when active
- * - Collapses to chip when locked (code sent)
+ * Apple/OpenAI inspired input design:
+ * - Clean, minimal borders
+ * - Large touch targets
+ * - Subtle focus states
+ * - Gold CTA button
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@hive/ui/design-system/primitives';
 import {
   sectionEnterVariants,
   sectionChildVariants,
   shakeVariants,
   errorInlineVariants,
 } from '../motion/section-motion';
-import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
 import { LockedFieldChip } from '../primitives/LockedFieldChip';
 import type { SectionState } from '../hooks/useEvolvingEntry';
 
@@ -72,7 +75,7 @@ export function EmailSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40">Email</p>
+        <p className="text-[13px] text-white/40 font-medium">Email</p>
         <LockedFieldChip
           value={fullEmail}
           allowChange={true}
@@ -94,10 +97,12 @@ export function EmailSection({
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-4"
+      className="space-y-5"
     >
-      <motion.div variants={sectionChildVariants} className="space-y-2">
-        <p className="text-[13px] text-white/40">Email</p>
+      <motion.div variants={sectionChildVariants} className="space-y-3">
+        <label className="text-[13px] text-white/40 font-medium">
+          Your .edu email
+        </label>
 
         <motion.div
           variants={shakeVariants}
@@ -105,10 +110,12 @@ export function EmailSection({
         >
           <div
             className={cn(
-              'flex items-center h-14 rounded-xl border transition-all',
-              'bg-white/[0.04]',
-              'focus-within:border-white/20',
-              hasError ? 'border-red-400/50' : 'border-white/[0.08]'
+              'flex items-center h-14 rounded-2xl border transition-all duration-200',
+              'bg-white/[0.03]',
+              'focus-within:bg-white/[0.05] focus-within:border-white/20',
+              hasError
+                ? 'border-red-500/50 bg-red-500/[0.03]'
+                : 'border-white/[0.08]'
             )}
           >
             <input
@@ -123,13 +130,13 @@ export function EmailSection({
               autoCapitalize="none"
               autoCorrect="off"
               className={cn(
-                'flex-1 h-full px-4 bg-transparent text-[15px] text-white',
-                'placeholder:text-white/30',
+                'flex-1 h-full px-5 bg-transparent text-[16px] text-white',
+                'placeholder:text-white/25',
                 'focus:outline-none',
                 'disabled:opacity-50'
               )}
             />
-            <span className="pr-4 text-[15px] text-white/40 select-none">
+            <span className="pr-5 text-[16px] text-white/30 select-none">
               @{domain}
             </span>
           </div>
@@ -144,49 +151,38 @@ export function EmailSection({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="text-[13px] text-red-400/90"
+            className="text-[13px] text-red-400"
           >
             {section.error}
           </motion.p>
         )}
       </AnimatePresence>
 
-      {/* Submit button */}
-      <motion.button
-        variants={sectionChildVariants}
-        type="button"
-        onClick={onSubmit}
-        disabled={isLoading || !email.trim()}
-        className={cn(
-          'w-full h-12 rounded-xl font-medium text-[15px] transition-all',
-          'flex items-center justify-center gap-2',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-          email.trim() && !isLoading
-            ? 'bg-white text-black hover:bg-white/90'
-            : 'bg-white/10 text-white/30 cursor-not-allowed'
-        )}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Sending code...</span>
-          </>
-        ) : (
-          <span>Continue</span>
-        )}
-      </motion.button>
+      {/* Submit button - Gold CTA */}
+      <motion.div variants={sectionChildVariants}>
+        <Button
+          variant="cta"
+          size="lg"
+          onClick={onSubmit}
+          disabled={isLoading || !email.trim()}
+          loading={isLoading}
+          className="w-full"
+        >
+          {isLoading ? 'Sending code...' : 'Continue'}
+        </Button>
+      </motion.div>
 
-      {/* Footer links */}
+      {/* Footer */}
       <motion.p
         variants={sectionChildVariants}
-        className="text-[12px] text-white/30 text-center"
+        className="text-[12px] text-white/25 text-center"
       >
         By continuing, you agree to our{' '}
-        <a href="/terms" className="text-white/50 hover:text-white/70 underline">
+        <a href="/legal/terms" className="text-white/40 hover:text-white/60 transition-colors">
           Terms
         </a>{' '}
         and{' '}
-        <a href="/privacy" className="text-white/50 hover:text-white/70 underline">
+        <a href="/legal/privacy" className="text-white/40 hover:text-white/60 transition-colors">
           Privacy Policy
         </a>
       </motion.p>

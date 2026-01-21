@@ -1,19 +1,18 @@
 'use client';
 
 /**
- * IdentitySection - Profile setup section (students only)
+ * IdentitySection - Profile setup
+ * REDESIGNED: Jan 21, 2026
  *
- * Fifth section in the evolving entry flow.
- * - Shows name, handle, and identity fields when active
- * - Only appears for new students (faculty skip this)
+ * Premium form design:
+ * - Apple-style inputs (h-14, rounded-2xl)
+ * - Clash Display for headers
  * - Gold CTA button (earned moment - final step)
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Loader2 } from 'lucide-react';
 import {
-  Input,
   HandleInput,
   HandleStatusBadge,
   Select,
@@ -21,6 +20,7 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
+  Button,
   type HandleStatus,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ import {
   shakeVariants,
   errorInlineVariants,
 } from '../motion/section-motion';
-import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
 import type { SectionState } from '../hooks/useEvolvingEntry';
 
 interface IdentitySectionProps {
@@ -121,42 +121,71 @@ export function IdentitySection({
       initial="initial"
       animate="animate"
       exit="exit"
-      className="space-y-6"
+      className="space-y-5"
     >
       {/* Header */}
       <motion.div variants={sectionChildVariants} className="space-y-1">
-        <p className="text-[15px] text-white/70">
-          Almost there
-        </p>
-        <p className="text-[13px] text-white/40">
+        <h2
+          className="text-[20px] font-semibold text-white"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          Set up your profile
+        </h2>
+        <p className="text-[14px] text-white/40">
           How you'll appear to other students
         </p>
       </motion.div>
 
       {/* Form */}
       <div className="space-y-4">
-        {/* Name row */}
+        {/* Name row - Apple-style inputs */}
         <motion.div
           variants={sectionChildVariants}
           className="grid grid-cols-2 gap-3"
         >
-          <Input
-            value={firstName}
-            onChange={(e) => onFirstNameChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="First name"
-            disabled={isLoading}
-            autoFocus
-            size="default"
-          />
-          <Input
-            value={lastName}
-            onChange={(e) => onLastNameChange(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Last name"
-            disabled={isLoading}
-            size="default"
-          />
+          <div
+            className={cn(
+              'flex items-center h-14 rounded-2xl border transition-all duration-200',
+              'bg-white/[0.03] border-white/[0.08]',
+              'focus-within:bg-white/[0.05] focus-within:border-white/20'
+            )}
+          >
+            <input
+              value={firstName}
+              onChange={(e) => onFirstNameChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="First name"
+              disabled={isLoading}
+              autoFocus
+              className={cn(
+                'w-full h-full px-4 bg-transparent text-[16px] text-white',
+                'placeholder:text-white/25',
+                'focus:outline-none',
+                'disabled:opacity-50'
+              )}
+            />
+          </div>
+          <div
+            className={cn(
+              'flex items-center h-14 rounded-2xl border transition-all duration-200',
+              'bg-white/[0.03] border-white/[0.08]',
+              'focus-within:bg-white/[0.05] focus-within:border-white/20'
+            )}
+          >
+            <input
+              value={lastName}
+              onChange={(e) => onLastNameChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Last name"
+              disabled={isLoading}
+              className={cn(
+                'w-full h-full px-4 bg-transparent text-[16px] text-white',
+                'placeholder:text-white/25',
+                'focus:outline-none',
+                'disabled:opacity-50'
+              )}
+            />
+          </div>
         </motion.div>
 
         {/* Handle */}
@@ -268,40 +297,23 @@ export function IdentitySection({
         </AnimatePresence>
 
         {/* CTA Button - Gold (earned moment) */}
-        <motion.button
-          variants={sectionChildVariants}
-          type="button"
-          onClick={onSubmit}
-          disabled={!canSubmit}
-          className={cn(
-            'w-full h-12 rounded-xl font-medium text-[15px] transition-all',
-            'flex items-center justify-center gap-2',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD700]/50',
-            canSubmit
-              ? 'text-black hover:brightness-110'
-              : 'bg-white/10 text-white/30 cursor-not-allowed'
-          )}
-          style={canSubmit ? {
-            background: `linear-gradient(135deg, ${GOLD.light} 0%, ${GOLD.primary} 50%, ${GOLD.dark} 100%)`,
-          } : undefined}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Setting up...</span>
-            </>
-          ) : (
-            <>
-              <span>Enter HIVE</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-        </motion.button>
+        <motion.div variants={sectionChildVariants}>
+          <Button
+            variant="cta"
+            size="lg"
+            onClick={onSubmit}
+            disabled={!canSubmit}
+            loading={isLoading}
+            className="w-full"
+          >
+            {isLoading ? 'Setting up...' : 'Enter HIVE'}
+          </Button>
+        </motion.div>
 
         {/* Subtext */}
         <motion.p
           variants={sectionChildVariants}
-          className="text-[11px] text-white/30 text-center"
+          className="text-[12px] text-white/25 text-center"
         >
           You can change your handle later
         </motion.p>

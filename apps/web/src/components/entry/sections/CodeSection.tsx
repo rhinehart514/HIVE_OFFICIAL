@@ -1,11 +1,13 @@
 'use client';
 
 /**
- * CodeSection - OTP verification section
+ * CodeSection - OTP verification
+ * REDESIGNED: Jan 21, 2026
  *
- * Third section in the evolving entry flow.
- * - Shows 6-digit OTP input when active
- * - Collapses when verified (role section appears)
+ * Clean verification flow:
+ * - Clear messaging about where code was sent
+ * - Premium OTP input styling
+ * - Subtle loading states
  */
 
 import * as React from 'react';
@@ -18,7 +20,7 @@ import {
   shakeVariants,
   errorInlineVariants,
 } from '../motion/section-motion';
-import { DURATION, EASE_PREMIUM, GOLD } from '../motion/entry-motion';
+import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
 import { LockedFieldChip } from '../primitives/LockedFieldChip';
 import type { SectionState } from '../hooks/useEvolvingEntry';
 
@@ -48,10 +50,9 @@ export function CodeSection({
   const shouldReduceMotion = useReducedMotion();
 
   const isLocked = section.status === 'locked' || section.status === 'complete';
-  const isActive = section.status === 'active';
   const hasError = !!section.error;
 
-  // Locked state - show verified indicator (minimal)
+  // Locked state - minimal verified indicator
   if (isLocked) {
     return (
       <motion.div
@@ -60,11 +61,8 @@ export function CodeSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40">Verification</p>
-        <LockedFieldChip
-          value="Code verified"
-          allowChange={false}
-        />
+        <p className="text-[13px] text-white/40 font-medium">Verification</p>
+        <LockedFieldChip value="Verified" allowChange={false} />
       </motion.div>
     );
   }
@@ -74,7 +72,7 @@ export function CodeSection({
     return null;
   }
 
-  // Active state - show OTP input
+  // Active state
   return (
     <motion.div
       variants={sectionEnterVariants}
@@ -85,19 +83,19 @@ export function CodeSection({
     >
       {/* Header */}
       <motion.div variants={sectionChildVariants} className="space-y-2">
-        <p className="text-[15px] text-white/70">
+        <h2
+          className="text-[20px] font-semibold text-white"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
           Check your email
-        </p>
-        <p className="text-[13px] text-white/40">
-          Code sent to <span className="text-white/60">{email}</span>
+        </h2>
+        <p className="text-[14px] text-white/50">
+          We sent a code to <span className="text-white/70">{email}</span>
         </p>
       </motion.div>
 
       {/* OTP Input */}
-      <motion.div
-        variants={sectionChildVariants}
-        className="space-y-4"
-      >
+      <motion.div variants={sectionChildVariants} className="space-y-4">
         <motion.div
           variants={shakeVariants}
           animate={hasError ? 'shake' : 'idle'}
@@ -113,7 +111,7 @@ export function CodeSection({
           />
         </motion.div>
 
-        {/* Error or verifying state */}
+        {/* Error or loading */}
         <AnimatePresence mode="wait">
           {hasError && (
             <motion.p
@@ -121,7 +119,7 @@ export function CodeSection({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="text-[13px] text-red-400/90"
+              className="text-[13px] text-red-400"
             >
               {section.error}
             </motion.p>
@@ -133,39 +131,40 @@ export function CodeSection({
               exit={{ opacity: 0 }}
               className="flex items-center gap-2"
             >
-              <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-              <span className="text-[13px] text-white/50">Verifying</span>
+              <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
+              <span className="text-[13px] text-white/50">Verifying...</span>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
 
       {/* Actions */}
-      <motion.div variants={sectionChildVariants}>
-        <div className="flex items-center gap-4 text-[13px]">
-          <CountdownTimer
-            seconds={resendCooldown}
-            prefix="Resend in "
-            format={resendCooldown >= 60 ? 'mm:ss' : 'ss'}
-            completedContent={
-              <button
-                onClick={onResend}
-                disabled={isLoading}
-                className="text-white/50 hover:text-white focus:text-white focus:outline-none transition-colors disabled:opacity-50"
-              >
-                Resend code
-              </button>
-            }
-          />
-          <span className="text-white/20 select-none">·</span>
-          <button
-            onClick={onChangeEmail}
-            disabled={isLoading}
-            className="text-white/50 hover:text-white focus:text-white focus:outline-none transition-colors disabled:opacity-50"
-          >
-            Change email
-          </button>
-        </div>
+      <motion.div
+        variants={sectionChildVariants}
+        className="flex items-center gap-4 text-[13px]"
+      >
+        <CountdownTimer
+          seconds={resendCooldown}
+          prefix="Resend in "
+          format={resendCooldown >= 60 ? 'mm:ss' : 'ss'}
+          completedContent={
+            <button
+              onClick={onResend}
+              disabled={isLoading}
+              className="text-white/50 hover:text-white transition-colors disabled:opacity-50"
+            >
+              Resend code
+            </button>
+          }
+        />
+        <span className="text-white/20">·</span>
+        <button
+          onClick={onChangeEmail}
+          disabled={isLoading}
+          className="text-white/50 hover:text-white transition-colors disabled:opacity-50"
+        >
+          Change email
+        </button>
       </motion.div>
     </motion.div>
   );

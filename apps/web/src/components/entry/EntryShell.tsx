@@ -1,214 +1,152 @@
 'use client';
 
 /**
- * EntryShell - Split-Screen Immersive Layout
- * REDESIGNED: Jan 18, 2026
+ * EntryShell - Void Aesthetic Entry Layout
+ * REDESIGNED: Jan 21, 2026
  *
- * Split-screen entry layout:
- * - Left (40%): Ambient brand panel with logo, glow, particles
- * - Right (60%): Content panel with form inputs
- * - Mobile: Stacked vertically
+ * Full-screen void layout inspired by OpenAI/Apple:
+ * - Centered content on dark void background
+ * - Logo at top, minimal chrome
+ * - Content vertically centered
+ * - Mobile: Same layout, responsive sizing
  *
- * Philosophy: Entry is the first impression. Make it feel like home.
+ * Philosophy: Entry is confidence. Minimal, premium, focused.
  */
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { HiveLogo } from '@hive/ui';
+import Link from 'next/link';
+import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
-import { AmbientGlow } from './motion/AmbientGlow';
-import { EntryProgress } from './EntryProgress';
 import { type EmotionalState, EASE_PREMIUM, DURATION } from './motion/entry-motion';
 
 export type EntryStep = 'school' | 'email' | 'code' | 'role' | 'identity' | 'arrival' | 'alumni-waitlist';
 
 export interface EntryShellProps {
   children: React.ReactNode;
-  /** Current emotional state for ambient glow */
+  /** Current emotional state for ambient effects */
   emotionalState?: EmotionalState;
-  /** Current step for progress indicator */
+  /** Current step (unused in void design but kept for compatibility) */
   currentStep?: EntryStep;
-  /** Whether to show progress indicator */
+  /** Whether to show progress indicator (unused in void design) */
   showProgress?: boolean;
   /** Additional class names for content container */
   className?: string;
-  /** Enable scroll for evolving entry (sections stack) */
+  /** Enable scroll for evolving entry */
   scrollable?: boolean;
 }
-
-const STEP_LABELS: Record<EntryStep, string> = {
-  school: 'Campus',
-  email: 'Email',
-  role: 'Role',
-  code: 'Verify',
-  identity: 'Profile',
-  arrival: 'Done',
-  'alumni-waitlist': 'Done',
-};
 
 export function EntryShell({
   children,
   emotionalState = 'neutral',
   currentStep = 'school',
-  showProgress = true,
+  showProgress = false,
   className,
   scrollable = false,
 }: EntryShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
-  // Hide progress on arrival/waitlist (celebration/confirmation takes full focus)
-  const displayProgress = showProgress && currentStep !== 'arrival' && currentStep !== 'alumni-waitlist';
+  // Celebration state gets subtle gold glow
+  const isCelebration = emotionalState === 'celebration';
 
   return (
     <div
       className={cn(
-        'min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative',
+        'min-h-screen min-h-[100dvh] flex flex-col bg-[var(--color-bg-void)] text-white relative',
         scrollable ? 'overflow-auto' : 'overflow-hidden'
       )}
-      style={{ backgroundColor: 'var(--bg-ground)' }}
-      suppressHydrationWarning
     >
-      {/* LEFT PANEL - Ambient Brand (40% desktop, header on mobile) */}
-      <div className={cn(
-        'relative w-full lg:w-[40%] flex flex-col items-center justify-center overflow-hidden',
-        scrollable ? 'h-[20vh] lg:h-screen lg:sticky lg:top-0' : 'h-[30vh] lg:h-screen'
-      )}>
-        {/* Background glow - extends beyond panel */}
-        <AmbientGlow state={emotionalState} height="100%" />
+      <NoiseOverlay />
 
-        {/* Gradient overlay for depth */}
-        <div
+      {/* Ambient glow for celebration state */}
+      {isCelebration && (
+        <motion.div
           className="absolute inset-0 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, ease: EASE_PREMIUM }}
           style={{
-            background: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(10,10,9,0.6) 100%)',
+            background: 'radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,215,0,0.08) 0%, transparent 70%)',
           }}
         />
+      )}
 
-        {/* Logo centered */}
-        <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0 }
-              : { duration: DURATION.gentle, ease: EASE_PREMIUM }
-          }
-          className="relative z-10 flex flex-col items-center gap-4"
+      {/* Header */}
+      <header className="relative z-10 px-6 py-6 flex items-center justify-between">
+        <Link href="/" className="transition-opacity hover:opacity-70">
+          <Logo variant="mark" size="sm" color="gold" />
+        </Link>
+        <Link
+          href="/"
+          className="text-[13px] text-white/40 hover:text-white/60 transition-colors"
         >
-          <HiveLogo className={cn(
-            'text-white',
-            scrollable ? 'w-10 h-10 lg:w-14 lg:h-14' : 'w-12 h-12 lg:w-16 lg:h-16'
-          )} />
-          <motion.span
-            initial={shouldReduceMotion ? { opacity: 0.8 } : { opacity: 0 }}
-            animate={{ opacity: 0.8 }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0 }
-                : { duration: DURATION.slow, delay: 0.2, ease: EASE_PREMIUM }
-            }
-            className="text-sm lg:text-base font-medium tracking-[0.2em] text-white uppercase"
-          >
-            HIVE
-          </motion.span>
-        </motion.div>
+          Back
+        </Link>
+      </header>
 
-        {/* Subtle tagline on desktop */}
-        <motion.p
-          initial={shouldReduceMotion ? { opacity: 0.3 } : { opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0 }
-              : { duration: DURATION.slow, delay: 0.4, ease: EASE_PREMIUM }
-          }
-          className="hidden lg:block absolute bottom-8 text-xs text-white/30 tracking-wide"
-        >
-          Your campus. Your people. Your tools.
-        </motion.p>
-      </div>
-
-      {/* RIGHT PANEL - Content (60% desktop, main on mobile) */}
-      <div className={cn(
-        'relative flex-1 lg:w-[60%] flex flex-col px-6',
-        scrollable
-          ? 'items-center py-8 lg:py-12'
-          : 'items-center justify-center py-12 lg:py-0'
-      )}>
-        {/* Progress indicator */}
-        {displayProgress && (
-          <motion.div
-            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={
-              shouldReduceMotion
-                ? { duration: 0 }
-                : { duration: DURATION.smooth, delay: 0.1, ease: EASE_PREMIUM }
-            }
-            className={cn(
-              scrollable
-                ? 'w-full max-w-[400px] mb-6'
-                : 'absolute top-6 lg:top-8 left-6 right-6 lg:left-auto lg:right-auto lg:w-full lg:max-w-[400px]'
-            )}
-          >
-            <EntryProgress currentStep={currentStep} />
-          </motion.div>
+      {/* Main content - centered */}
+      <main
+        className={cn(
+          'flex-1 flex flex-col px-6 relative z-10',
+          scrollable ? 'py-8' : 'justify-center py-12'
         )}
-
-        {/* Content container */}
+      >
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={
             shouldReduceMotion
               ? { duration: 0 }
               : { duration: DURATION.smooth, ease: EASE_PREMIUM }
           }
-          className={cn('w-full max-w-[400px] relative z-10', className)}
+          className={cn(
+            'w-full max-w-[400px] mx-auto',
+            className
+          )}
         >
           {children}
         </motion.div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30">
+        <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
+          Terms
+        </Link>
+        <span className="text-white/20">·</span>
+        <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
+          Privacy
+        </Link>
+      </footer>
     </div>
   );
 }
 
 /**
  * Static fallback shell for Suspense boundaries
- * Matches EntryShell layout without animations
  */
 export function EntryShellStatic({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden"
-      style={{ backgroundColor: 'var(--bg-ground)' }}
-      suppressHydrationWarning
-    >
-      {/* LEFT PANEL - Static */}
-      <div className="relative w-full lg:w-[40%] h-[30vh] lg:h-screen flex flex-col items-center justify-center overflow-hidden">
-        {/* Static glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              'radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255,255,255,0.015) 0%, transparent 70%)',
-          }}
-        />
+    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-[var(--color-bg-void)] text-white relative">
+      {/* Header */}
+      <header className="px-6 py-6 flex items-center justify-between">
+        <Logo variant="mark" size="sm" color="gold" />
+        <span className="text-[13px] text-white/40">Back</span>
+      </header>
 
-        <div className="relative z-10 flex flex-col items-center gap-4">
-          <HiveLogo className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
-          <span className="text-sm lg:text-base font-medium tracking-[0.2em] text-white/80 uppercase">
-            HIVE
-          </span>
-        </div>
-      </div>
-
-      {/* RIGHT PANEL - Content */}
-      <div className="relative flex-1 lg:w-[60%] flex flex-col items-center justify-center px-6 py-12 lg:py-0">
-        <div className="w-full max-w-[400px] relative z-10">
+      {/* Main content */}
+      <main className="flex-1 flex flex-col justify-center px-6 py-12">
+        <div className="w-full max-w-[400px] mx-auto">
           {children}
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30">
+        <span>Terms</span>
+        <span className="text-white/20">·</span>
+        <span>Privacy</span>
+      </footer>
     </div>
   );
 }

@@ -2,17 +2,14 @@
 
 /**
  * EvolvingEntry - Single-page evolving entry flow orchestrator
+ * REDESIGNED: Jan 21, 2026
  *
  * Coordinates all sections in a single scrollable page that evolves
  * as the user progresses through entry.
  *
  * Flow: school → email → code → role → identity → arrival
  *
- * Sections:
- * - Completed sections collapse to locked chips (remain visible)
- * - Active section expands with full input
- * - Hidden sections don't render
- * - Terminal sections (arrival, alumni-waitlist) take over
+ * Void aesthetic: Clean, minimal, confident. Premium feeling throughout.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -117,23 +114,29 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
   const activeDomain = entry.data.school?.domain || CAMPUS_CONFIG.domain;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header - only show when not in terminal state */}
       {!isTerminal && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
-          className="mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
+          className="mb-8"
         >
-          <h1 className="text-[24px] font-semibold tracking-tight text-white">
-            Get in
+          <h1
+            className="text-[32px] md:text-[40px] font-semibold tracking-tight text-white leading-[1.1]"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            Enter HIVE
           </h1>
+          <p className="mt-2 text-[15px] text-white/40">
+            Your campus is waiting.
+          </p>
         </motion.div>
       )}
 
-      {/* Sections stack - no AnimatePresence to prevent remounts */}
-      <div className="space-y-4">
+      {/* Sections stack */}
+      <div className="space-y-5">
         {/* School section */}
         {!isTerminal && (
           <SchoolSection
@@ -214,7 +217,7 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
           />
         )}
 
-        {/* Terminal states - these can use AnimatePresence */}
+        {/* Terminal states */}
         <AnimatePresence>
           {entry.sections.arrival.status === 'active' && (
             <ArrivalSection
