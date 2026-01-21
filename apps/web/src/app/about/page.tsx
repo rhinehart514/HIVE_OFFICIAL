@@ -346,7 +346,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.08}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    It took two years. I failed a few times. People helped along the way. But the vision stayed the same: infrastructure that serves students, not extracts from them.
+                    Two years ago, I had a team. We tried to make this work. It didn't — not the way we planned. That's on me, not them.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.06}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    But what they built, what they challenged, what they taught me — that's still here. The vision sharpened because of them. HIVE wouldn't exist without that foundation.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -354,7 +362,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.05}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Now it's here. Not finished — it never will be. But ready. Ready for students to build on.
+                    Today it's just me. Building the infrastructure we always talked about. Not finished — it never will be. But ready. Ready for students to build on.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
