@@ -242,7 +242,7 @@ export function IdentityState({
                 <SelectValue placeholder="Select your residence hall" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Off campus / Not listed</SelectItem>
+                <SelectItem value="off-campus">Off campus / Not listed</SelectItem>
                 {residentialSpaces.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}

@@ -9,3 +9,14 @@ export {
   type UseEntryMachineOptions,
   type UseEntryMachineReturn,
 } from './useEntryMachine';
+
+export {
+  useEvolvingEntry,
+  type SectionId,
+  type SectionState,
+  type SectionStatus,
+  type School,
+  type UserRole,
+  type UseEvolvingEntryOptions,
+  type UseEvolvingEntryReturn,
+} from './useEvolvingEntry';

@@ -6,6 +6,7 @@
 
 // Motion utilities and variants
 export * from './entry-motion';
+export * from './section-motion';
 
 // Motion components
 export { AmbientGlow, type AmbientGlowProps } from './AmbientGlow';

@@ -32,6 +32,8 @@ export interface EntryShellProps {
   showProgress?: boolean;
   /** Additional class names for content container */
   className?: string;
+  /** Enable scroll for evolving entry (sections stack) */
+  scrollable?: boolean;
 }
 
 const STEP_LABELS: Record<EntryStep, string> = {
@@ -50,6 +52,7 @@ export function EntryShell({
   currentStep = 'school',
   showProgress = true,
   className,
+  scrollable = false,
 }: EntryShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -58,12 +61,18 @@ export function EntryShell({
 
   return (
     <div
-      className="min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative overflow-hidden"
+      className={cn(
+        'min-h-screen min-h-[100dvh] flex flex-col lg:flex-row relative',
+        scrollable ? 'overflow-auto' : 'overflow-hidden'
+      )}
       style={{ backgroundColor: 'var(--bg-ground)' }}
       suppressHydrationWarning
     >
       {/* LEFT PANEL - Ambient Brand (40% desktop, header on mobile) */}
-      <div className="relative w-full lg:w-[40%] h-[30vh] lg:h-screen flex flex-col items-center justify-center overflow-hidden">
+      <div className={cn(
+        'relative w-full lg:w-[40%] flex flex-col items-center justify-center overflow-hidden',
+        scrollable ? 'h-[20vh] lg:h-screen lg:sticky lg:top-0' : 'h-[30vh] lg:h-screen'
+      )}>
         {/* Background glow - extends beyond panel */}
         <AmbientGlow state={emotionalState} height="100%" />
 
@@ -86,7 +95,10 @@ export function EntryShell({
           }
           className="relative z-10 flex flex-col items-center gap-4"
         >
-          <HiveLogo className="w-12 h-12 lg:w-16 lg:h-16 text-white" />
+          <HiveLogo className={cn(
+            'text-white',
+            scrollable ? 'w-10 h-10 lg:w-14 lg:h-14' : 'w-12 h-12 lg:w-16 lg:h-16'
+          )} />
           <motion.span
             initial={shouldReduceMotion ? { opacity: 0.8 } : { opacity: 0 }}
             animate={{ opacity: 0.8 }}
@@ -117,7 +129,12 @@ export function EntryShell({
       </div>
 
       {/* RIGHT PANEL - Content (60% desktop, main on mobile) */}
-      <div className="relative flex-1 lg:w-[60%] flex flex-col items-center justify-center px-6 py-12 lg:py-0">
+      <div className={cn(
+        'relative flex-1 lg:w-[60%] flex flex-col px-6',
+        scrollable
+          ? 'items-center py-8 lg:py-12'
+          : 'items-center justify-center py-12 lg:py-0'
+      )}>
         {/* Progress indicator */}
         {displayProgress && (
           <motion.div
@@ -128,7 +145,11 @@ export function EntryShell({
                 ? { duration: 0 }
                 : { duration: DURATION.smooth, delay: 0.1, ease: EASE_PREMIUM }
             }
-            className="absolute top-6 lg:top-8 left-6 right-6 lg:left-auto lg:right-auto lg:w-full lg:max-w-[400px]"
+            className={cn(
+              scrollable
+                ? 'w-full max-w-[400px] mb-6'
+                : 'absolute top-6 lg:top-8 left-6 right-6 lg:left-auto lg:right-auto lg:w-full lg:max-w-[400px]'
+            )}
           >
             <EntryProgress currentStep={currentStep} />
           </motion.div>
