@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import { useEvolvingEntry } from './hooks/useEvolvingEntry';
 import {
@@ -117,153 +117,128 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
   const activeDomain = entry.data.school?.domain || CAMPUS_CONFIG.domain;
 
   return (
-    <LayoutGroup>
-      <motion.div
-        className="space-y-4"
-        layout
-        transition={{
-          layout: {
-            duration: DURATION.smooth,
-            ease: EASE_PREMIUM,
-          },
-        }}
-      >
-        {/* Header - only show when not in terminal state */}
-        <AnimatePresence mode="wait">
-          {!isTerminal && (
-            <motion.div
-              key="header"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
-              className="mb-6"
-            >
-              <h1 className="text-[24px] font-semibold tracking-tight text-white">
-                Get in
-              </h1>
-            </motion.div>
+    <div className="space-y-4">
+      {/* Header - only show when not in terminal state */}
+      {!isTerminal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
+          className="mb-6"
+        >
+          <h1 className="text-[24px] font-semibold tracking-tight text-white">
+            Get in
+          </h1>
+        </motion.div>
+      )}
+
+      {/* Sections stack - no AnimatePresence to prevent remounts */}
+      <div className="space-y-4">
+        {/* School section */}
+        {!isTerminal && (
+          <SchoolSection
+            section={entry.sections.school}
+            school={entry.data.school}
+            onSchoolSelect={entry.setSchool}
+            onConfirm={entry.confirmSchool}
+            onEdit={entry.editSchool}
+          />
+        )}
+
+        {/* Email section */}
+        {!isTerminal && entry.sections.email.status !== 'hidden' && (
+          <EmailSection
+            section={entry.sections.email}
+            email={entry.data.email}
+            fullEmail={entry.fullEmail}
+            domain={activeDomain}
+            onEmailChange={entry.setEmail}
+            onSubmit={entry.submitEmail}
+            onEdit={entry.editEmail}
+            isLoading={entry.isSendingCode}
+          />
+        )}
+
+        {/* Code section */}
+        {!isTerminal && entry.sections.code.status !== 'hidden' && (
+          <CodeSection
+            section={entry.sections.code}
+            email={entry.fullEmail}
+            code={entry.data.code}
+            onCodeChange={entry.setCode}
+            onVerify={entry.verifyCode}
+            onResend={entry.resendCode}
+            onChangeEmail={entry.editEmail}
+            isLoading={entry.isVerifyingCode}
+            resendCooldown={entry.resendCooldown}
+          />
+        )}
+
+        {/* Role section */}
+        {!isTerminal && entry.sections.role.status !== 'hidden' && (
+          <RoleSection
+            section={entry.sections.role}
+            role={entry.data.role}
+            alumniSpace={entry.data.alumniSpace}
+            onRoleChange={entry.setRole}
+            onAlumniSpaceChange={entry.setAlumniSpace}
+            onSubmit={entry.submitRole}
+            isLoading={entry.isSubmittingRole}
+          />
+        )}
+
+        {/* Identity section (students only) */}
+        {!isTerminal && entry.sections.identity.status !== 'hidden' && (
+          <IdentitySection
+            section={entry.sections.identity}
+            firstName={entry.data.firstName}
+            lastName={entry.data.lastName}
+            handle={entry.data.handle}
+            handleStatus={entry.handleStatus}
+            handleSuggestions={entry.handleSuggestions}
+            major={entry.data.major}
+            graduationYear={entry.data.graduationYear}
+            residentialSpaceId={entry.data.residentialSpaceId}
+            onFirstNameChange={entry.setFirstName}
+            onLastNameChange={entry.setLastName}
+            onHandleChange={entry.setHandle}
+            onSuggestionClick={entry.selectSuggestion}
+            onMajorChange={entry.setMajor}
+            onGraduationYearChange={entry.setGraduationYear}
+            onResidentialChange={entry.setResidentialSpaceId}
+            onSubmit={entry.completeIdentity}
+            isLoading={entry.isSubmittingIdentity}
+            majors={majors}
+            graduationYears={graduationYears}
+            residentialSpaces={residentialSpaces}
+          />
+        )}
+
+        {/* Terminal states - these can use AnimatePresence */}
+        <AnimatePresence>
+          {entry.sections.arrival.status === 'active' && (
+            <ArrivalSection
+              section={entry.sections.arrival}
+              firstName={entry.data.firstName || 'there'}
+              handle={entry.data.handle}
+              isNewUser={entry.isNewUser}
+              isReturningUser={entry.isReturningUser}
+              onComplete={entry.handleArrivalComplete}
+            />
           )}
         </AnimatePresence>
 
-        {/* Sections stack */}
-        <div className="space-y-4">
-          {/* School section */}
-          <AnimatePresence mode="wait">
-            {!isTerminal && (
-              <SchoolSection
-                section={entry.sections.school}
-                school={entry.data.school}
-                onSchoolSelect={entry.setSchool}
-                onConfirm={entry.confirmSchool}
-                onEdit={entry.editSchool}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Email section */}
-          <AnimatePresence mode="wait">
-            {!isTerminal && entry.sections.email.status !== 'hidden' && (
-              <EmailSection
-                section={entry.sections.email}
-                email={entry.data.email}
-                fullEmail={entry.fullEmail}
-                domain={activeDomain}
-                onEmailChange={entry.setEmail}
-                onSubmit={entry.submitEmail}
-                onEdit={entry.editEmail}
-                isLoading={entry.isSendingCode}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Code section */}
-          <AnimatePresence mode="wait">
-            {!isTerminal && entry.sections.code.status !== 'hidden' && (
-              <CodeSection
-                section={entry.sections.code}
-                email={entry.fullEmail}
-                code={entry.data.code}
-                onCodeChange={entry.setCode}
-                onVerify={entry.verifyCode}
-                onResend={entry.resendCode}
-                onChangeEmail={entry.editEmail}
-                isLoading={entry.isVerifyingCode}
-                resendCooldown={entry.resendCooldown}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Role section */}
-          <AnimatePresence mode="wait">
-            {!isTerminal && entry.sections.role.status !== 'hidden' && (
-              <RoleSection
-                section={entry.sections.role}
-                role={entry.data.role}
-                alumniSpace={entry.data.alumniSpace}
-                onRoleChange={entry.setRole}
-                onAlumniSpaceChange={entry.setAlumniSpace}
-                onSubmit={entry.submitRole}
-                isLoading={entry.isSubmittingRole}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Identity section (students only) */}
-          <AnimatePresence mode="wait">
-            {!isTerminal && entry.sections.identity.status !== 'hidden' && (
-              <IdentitySection
-                section={entry.sections.identity}
-                firstName={entry.data.firstName}
-                lastName={entry.data.lastName}
-                handle={entry.data.handle}
-                handleStatus={entry.handleStatus}
-                handleSuggestions={entry.handleSuggestions}
-                major={entry.data.major}
-                graduationYear={entry.data.graduationYear}
-                residentialSpaceId={entry.data.residentialSpaceId}
-                onFirstNameChange={entry.setFirstName}
-                onLastNameChange={entry.setLastName}
-                onHandleChange={entry.setHandle}
-                onSuggestionClick={entry.selectSuggestion}
-                onMajorChange={entry.setMajor}
-                onGraduationYearChange={entry.setGraduationYear}
-                onResidentialChange={entry.setResidentialSpaceId}
-                onSubmit={entry.completeIdentity}
-                isLoading={entry.isSubmittingIdentity}
-                majors={majors}
-                graduationYears={graduationYears}
-                residentialSpaces={residentialSpaces}
-              />
-            )}
-          </AnimatePresence>
-
-          {/* Terminal states */}
-          <AnimatePresence mode="wait">
-            {entry.sections.arrival.status === 'active' && (
-              <ArrivalSection
-                section={entry.sections.arrival}
-                firstName={entry.data.firstName || 'there'}
-                handle={entry.data.handle}
-                isNewUser={entry.isNewUser}
-                isReturningUser={entry.isReturningUser}
-                onComplete={entry.handleArrivalComplete}
-              />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            {entry.sections['alumni-waitlist'].status === 'active' && (
-              <AlumniWaitlistSection
-                section={entry.sections['alumni-waitlist']}
-                spaces={entry.data.alumniSpace}
-                onComplete={entry.handleArrivalComplete}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-    </LayoutGroup>
+        <AnimatePresence>
+          {entry.sections['alumni-waitlist'].status === 'active' && (
+            <AlumniWaitlistSection
+              section={entry.sections['alumni-waitlist']}
+              spaces={entry.data.alumniSpace}
+              onComplete={entry.handleArrivalComplete}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
