@@ -28,6 +28,9 @@ const ALLOW_DEV_BYPASS =
   SESSION_CONFIG.isDevelopment &&
   process.env.DEV_AUTH_BYPASS === 'true';
 
+// Access gate feature flag - enable limited access mode
+const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
+
 // Firebase config for Client SDK fallback
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -119,6 +122,53 @@ async function checkEmailRateLimit(email: string): Promise<boolean> {
     .get();
 
   return recentCodes.size < MAX_CODES_PER_EMAIL_PER_HOUR;
+}
+
+/**
+ * Check if email is whitelisted for access during gated launch
+ */
+async function checkAccessWhitelist(email: string): Promise<boolean> {
+  // If gate is disabled, allow all
+  if (!ACCESS_GATE_ENABLED) {
+    return true;
+  }
+
+  // Always allow in development
+  if (currentEnvironment === 'development') {
+    return true;
+  }
+
+  if (!isFirebaseConfigured) {
+    return true;
+  }
+
+  try {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check Firestore whitelist collection
+    const whitelistDoc = await dbAdmin
+      .collection('access_whitelist')
+      .doc(normalizedEmail)
+      .get();
+
+    if (whitelistDoc.exists && whitelistDoc.data()?.active === true) {
+      logger.info('Access whitelist: Email allowed', {
+        email: email.replace(/(.{3}).*@/, '$1***@'),
+      });
+      return true;
+    }
+
+    logger.info('Access whitelist: Email not whitelisted', {
+      email: email.replace(/(.{3}).*@/, '$1***@'),
+    });
+    return false;
+  } catch (error) {
+    logger.error('Access whitelist check failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Fail open in case of errors
+    return true;
+  }
 }
 
 /**
@@ -487,6 +537,22 @@ export const POST = withValidation(
 
       const campusEmail = campusEmailResult.getValue();
       const normalizedEmail = email.toLowerCase().trim();
+
+      // Check access whitelist (gated launch)
+      const whitelisted = await checkAccessWhitelist(normalizedEmail);
+      if (!whitelisted) {
+        await auditAuthEvent('forbidden', request as unknown as NextRequest, {
+          operation: 'send_code',
+          error: 'not_whitelisted'
+        });
+        return NextResponse.json(
+          ApiResponseHelper.error(
+            "HIVE is currently in limited access mode. We're opening to select student leaders first. Check back soon!",
+            "ACCESS_RESTRICTED"
+          ),
+          { status: HttpStatus.FORBIDDEN }
+        );
+      }
 
       // Check email-specific rate limit
       const emailAllowed = await checkEmailRateLimit(normalizedEmail);

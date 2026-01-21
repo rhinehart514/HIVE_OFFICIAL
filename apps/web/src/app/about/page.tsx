@@ -439,7 +439,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.055}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Gavin and Noah made marketing videos. Real ones. Samarth did the editing and filming — and honestly, he's one of the nicest people you'll ever meet. Buffalo is lucky to have him. Mirka basically became the day-to-day CEO. She paid thousands of her own money into marketing. Thousands. Out of pocket. And here we are.
+                    Gavin and Noah made marketing videos. Real ones. Samarth did the editing and filming — and honestly, he's one of the nicest people you'll ever meet. Buffalo is lucky to have him. Mirka put real resources into marketing when there was no reason to expect anything back. That level of belief made this possible.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -467,7 +467,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.055}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Now it's just me, and the thing is finally at a point where other people can use it. Which is terrifying. Because I know it's not perfect. I know there are bugs. I know there are features that seemed like good ideas at 2am that probably aren't. Two years of building alone means two years of blind spots.
+                    The thing is finally at a point where other people can use it. Which is both exciting and terrifying. I know it's not perfect. I know there are bugs. I know there are features that seemed like good ideas at 2am that probably aren't. Building something in isolation means blind spots are inevitable.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
