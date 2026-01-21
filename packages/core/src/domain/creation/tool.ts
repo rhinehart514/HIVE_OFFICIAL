@@ -9,6 +9,13 @@ export const ToolVersionSchema = z.string().default('0.1.0');
 export const ToolConfigSchema = z.any();
 export const ToolMetadataSchema = z.record(z.any()).default({});
 
+export const ToolOriginalContextSchema = z.object({
+  type: z.enum(['space', 'profile', 'feed']).nullable(),
+  id: z.string().nullable(),
+  name: z.string().nullable(),
+  createdAt: z.date().nullable(),
+}).nullable().optional();
+
 export const ToolSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -16,6 +23,7 @@ export const ToolSchema = z.object({
   status: ToolStatus.default('draft'),
   config: ToolConfigSchema.optional(),
   metadata: ToolMetadataSchema.optional(),
+  originalContext: ToolOriginalContextSchema,
 });
 
 export type Tool = z.infer<typeof ToolSchema>;

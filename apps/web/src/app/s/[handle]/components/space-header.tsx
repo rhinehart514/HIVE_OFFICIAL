@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Settings, ChevronDown, Crown } from 'lucide-react';
+import { Settings, ChevronDown, Crown, Hammer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
@@ -35,6 +35,7 @@ interface SpaceHeaderProps {
   onSettingsClick?: () => void;
   onMembersClick?: () => void;
   onSpaceInfoClick?: () => void;
+  onBuildToolClick?: () => void;
   className?: string;
 }
 
@@ -45,6 +46,7 @@ export function SpaceHeader({
   onSettingsClick,
   onMembersClick,
   onSpaceInfoClick,
+  onBuildToolClick,
   className,
 }: SpaceHeaderProps) {
   return (
@@ -148,6 +150,20 @@ export function SpaceHeader({
             <span className="text-xs ml-1.5 opacity-60">
               {space.memberCount}
             </span>
+          </Button>
+        )}
+
+        {/* Build Tool (leader/builder only) */}
+        {isLeader && onBuildToolClick && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBuildToolClick}
+            className="text-[var(--hive-brand-primary)]/60 hover:text-[var(--hive-brand-primary)]"
+            title="Build a tool for this space"
+          >
+            <Hammer className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2 text-xs">Build</span>
           </Button>
         )}
 

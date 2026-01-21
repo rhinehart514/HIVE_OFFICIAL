@@ -268,6 +268,16 @@ export default function SpacePageUnified() {
             isMember={space.isMember}
             onMembersClick={() => setShowMembersPanel(true)}
             onSettingsClick={() => setShowSettingsModal(true)}
+            onBuildToolClick={() => {
+              // Redirect to HiveLab with space context
+              const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL || 'http://localhost:3002';
+              const params = new URLSearchParams({
+                context: 'space',
+                spaceId: space.id,
+                spaceName: space.name,
+              });
+              window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
+            }}
           />
         </div>
 
