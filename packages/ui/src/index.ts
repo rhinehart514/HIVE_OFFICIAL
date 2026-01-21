@@ -568,8 +568,17 @@ export type { CommandPaletteProps, CommandPaletteItem } from "./design-system/co
 export { Focus, FocusStatic, useFocus, useFocusOptional, FocusHiveLogo, FocusProgressIndicator, FocusBackground } from "./design-system/templates/Focus";
 export type { FocusProps, FocusMode, FocusContextValue, FocusProgressProps, FocusLogoProps } from "./design-system/templates/Focus";
 
-// HiveLogo Component (standalone logo for use anywhere)
-export { HiveLogo } from "./shells/shell-icons";
+// HiveLogo Component and Shell Icons (standalone for use anywhere)
+export {
+  HiveLogo,
+  HomeIcon,
+  UsersIcon,
+  UserIcon,
+  BeakerIcon,
+  BellIcon,
+  CalendarIcon,
+  SettingsIcon,
+} from "./shells/shell-icons";
 
 // Page Transition (Jan 2026 - Route animations)
 export { PageTransition as RouteTransition, PageTransitionProvider, usePageTransition } from "./design-system/templates/PageTransition";

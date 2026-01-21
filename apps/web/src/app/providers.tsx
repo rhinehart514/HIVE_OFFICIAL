@@ -4,7 +4,6 @@ import { type ReactNode, useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AtmosphereProvider, PageTransitionProvider, Toaster, useToast } from "@hive/ui";
-import { UniversalShellProvider } from "./universal-shell-provider";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -74,9 +73,7 @@ export function Providers({ children }: ProvidersProps) {
       >
         <AtmosphereProvider defaultAtmosphere="spaces">
           <PageTransitionProvider defaultMode="fade">
-            <UniversalShellProvider>
-              {children}
-            </UniversalShellProvider>
+            {children}
             <Toaster />
             <ToastBridge />
           </PageTransitionProvider>

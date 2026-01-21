@@ -1,9 +1,23 @@
 import type { Metadata, Viewport } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
+import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
-import { PageTransitionWrapper } from '@/components/layout';
+import { AppShell } from '@/components/layout';
+
+// Load custom fonts
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -83,12 +97,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable}`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head />
       <body style={{ backgroundColor: '#0A0A09', color: '#FAFAFA', minHeight: '100vh' }}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
       </body>
     </html>
   );
