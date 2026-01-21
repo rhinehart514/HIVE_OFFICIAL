@@ -606,3 +606,76 @@ function AllSpacesSection({
     </motion.div>
   );
 }
+
+// ============================================================
+// Request Space Section
+// ============================================================
+
+function RequestSpaceSection({ searchQuery }: { searchQuery: string }) {
+  const [isRequesting, setIsRequesting] = React.useState(false);
+  const [requested, setRequested] = React.useState(false);
+
+  const handleRequest = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsRequesting(true);
+
+    try {
+      await secureApiFetch('/api/spaces/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requestedName: searchQuery,
+          message: `User is looking for: ${searchQuery}`,
+        }),
+      });
+
+      setRequested(true);
+      setTimeout(() => setRequested(false), 3000);
+    } catch (error) {
+      console.error('Failed to request space:', error);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  if (!searchQuery) return null;
+
+  return (
+    <motion.div
+      className="mt-12 text-center"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DURATION.smooth, ease: EASE }}
+    >
+      <div className="max-w-md mx-auto p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+        <p className="text-[15px] text-white/60 mb-4">
+          Can't find "{searchQuery}"?
+        </p>
+
+        {requested ? (
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-[14px] text-[var(--color-gold)]"
+          >
+            ✓ Request submitted. We'll notify you when it's available.
+          </motion.div>
+        ) : (
+          <Button
+            onClick={handleRequest}
+            disabled={isRequesting}
+            variant="secondary"
+            size="sm"
+          >
+            {isRequesting ? 'Requesting...' : 'Request this space'}
+          </Button>
+        )}
+
+        <p className="text-xs text-white/30 mt-3">
+          Your campus map evolves. New spaces appear as organizations form and students organize.
+        </p>
+      </div>
+    </motion.div>
+  );
+}
