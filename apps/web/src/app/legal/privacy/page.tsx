@@ -43,8 +43,7 @@ export default function PrivacyPage() {
             The short version
           </p>
           <p className="text-[15px] leading-relaxed text-white/70">
-            We collect minimal data to make HIVE work. Analytics are anonymized by default.
-            We never sell your personal information. You control your data.
+            I will not sell your data. I'm not going to. There are no ads. There's no secret business model where you're the product. I built this for students, not to harvest information from them. The stuff below explains exactly what we collect and why — no legal gymnastics.
           </p>
         </div>
 
@@ -72,136 +71,147 @@ export default function PrivacyPage() {
         <article className="space-y-12">
           <Section id="overview" number="01" title="Overview">
             <p>
-              This Privacy Policy explains how HIVE collects, uses, and protects your
-              personal information. We believe in transparency and giving you control
-              over your data.
+              This is what we do with your information. I'm going to be straightforward
+              because I hate reading privacy policies that are designed to confuse you.
             </p>
             <p>
-              By using HIVE, you agree to the collection and use of information in
-              accordance with this policy.
+              HIVE is built on Firebase (Google Cloud). That's where your data lives.
+              It's encrypted, it's secure, and I picked it because it's reliable — not
+              because I wanted to hand your data to Google. They're a processor, not
+              the owner. I am. And I'm telling you exactly what happens with it.
             </p>
           </Section>
 
           <Section id="collect" number="02" title="What We Collect">
             <p>
-              <strong>Account information</strong> — When you create an account, we collect
-              your email address, name, chosen handle, and academic information (major,
-              graduation year). Your school affiliation is derived from your email domain.
+              <strong>Your .edu email</strong> — This is how we verify you're actually a student.
+              We check the domain to figure out your school. That's it. We don't read your emails
+              or access your inbox.
             </p>
             <p>
-              <strong>Profile information</strong> — You may optionally add a profile photo,
-              bio, and other details. This information is visible to other users as you configure.
+              <strong>Basic profile stuff</strong> — Name, handle, major, graduation year.
+              Whatever you choose to add. Profile photo if you want one. All optional
+              except the handle (we need something to call you).
             </p>
             <p>
-              <strong>Usage data</strong> — We collect anonymized analytics about how you use
-              HIVE, including pages visited, features used, and interactions. This helps us
-              improve the platform.
+              <strong>What you post</strong> — Messages, posts, events, whatever you create
+              on HIVE. Obviously we store this — that's how the app works. Your content
+              lives in your Spaces and is visible to members of those Spaces.
             </p>
             <p>
-              <strong>Content</strong> — Posts, comments, and other content you create are
-              stored to provide the service.
+              <strong>Basic analytics</strong> — Page views, what features get used, crash reports.
+              This is anonymized. I use it to figure out what's broken and what people actually
+              use. I don't track you as an individual — I track patterns.
+            </p>
+            <p>
+              <strong>What we don't collect</strong> — Your location (unless you explicitly share it
+              for an event). Your contacts. Your browsing history outside HIVE. Your messages
+              on other platforms. None of that.
             </p>
           </Section>
 
           <Section id="use" number="03" title="How We Use It">
-            <p>We use your information to:</p>
+            <p>Pretty simple:</p>
             <ul>
-              <li>Provide, maintain, and improve HIVE's features</li>
-              <li>Personalize your experience based on your interests and connections</li>
-              <li>Communicate important updates about the service</li>
-              <li>Ensure safety, security, and enforce our terms</li>
-              <li>Analyze usage patterns to improve the platform (anonymized)</li>
+              <li>To make HIVE work (showing your posts, letting you join Spaces, etc.)</li>
+              <li>To verify you're a student at the school you claim</li>
+              <li>To send you important stuff (verification codes, security alerts)</li>
+              <li>To fix bugs and improve features based on what people actually use</li>
+              <li>To keep the platform safe (removing spam, handling reports)</li>
             </ul>
+            <p>
+              That's it. No "personalized advertising." No "sharing with partners for marketing
+              purposes." No selling lists of college students to recruiters. None of that garbage.
+            </p>
           </Section>
 
           <Section id="sharing" number="04" title="Sharing">
             <p>
-              <strong>We never sell your personal information.</strong>
+              <strong>I will not sell your data.</strong> Not to advertisers. Not to recruiters.
+              Not to your school. Not to anyone. This isn't a negotiable thing that might
+              change when we need money. It's a core principle.
             </p>
-            <p>We may share information with:</p>
+            <p>Here's who can see your stuff:</p>
             <ul>
-              <li><strong>Service providers</strong> — Third parties that help us operate (hosting, analytics, email). They're bound by confidentiality agreements.</li>
-              <li><strong>Legal requirements</strong> — When required by law, subpoena, or to protect rights and safety.</li>
-              <li><strong>Your consent</strong> — When you explicitly agree to sharing.</li>
+              <li><strong>Other HIVE users</strong> — Based on your privacy settings and what Spaces you're in. You control this.</li>
+              <li><strong>Service providers</strong> — Firebase (hosting/database), Resend (email delivery), Vercel (website hosting). They process data to make things work. They don't own it or use it for their own purposes.</li>
+              <li><strong>Law enforcement</strong> — If I get a valid legal order, I have to comply. I'll tell you if I legally can. I'm not going to fight the FBI for your meme posts, but I'm also not handing things over without proper legal process.</li>
             </ul>
-            <p>
-              Content you post publicly is visible to other users according to your privacy settings.
-            </p>
           </Section>
 
           <Section id="security" number="05" title="Security">
-            <p>We protect your information through:</p>
+            <p>Your data is protected by:</p>
             <ul>
-              <li>Encryption in transit (TLS) and at rest</li>
-              <li>Secure authentication with email verification</li>
-              <li>Regular security reviews and monitoring</li>
-              <li>Access controls limiting who can view your data</li>
+              <li>Encryption in transit (HTTPS/TLS everywhere)</li>
+              <li>Encryption at rest (Firebase handles this)</li>
+              <li>Email verification for authentication (no passwords to steal)</li>
+              <li>Security rules that prevent users from accessing each other's private data</li>
             </ul>
             <p>
-              No system is perfectly secure. We encourage you to use a strong,
-              unique password and enable any additional security features we offer.
+              Is it perfect? No. Nothing is. But I take this seriously. If there's ever a
+              breach, I'll tell you directly — not bury it in a press release six months later.
             </p>
           </Section>
 
           <Section id="rights" number="06" title="Your Rights">
-            <p>You have the right to:</p>
+            <p>You can:</p>
             <ul>
-              <li><strong>Access</strong> — Request a copy of your personal data</li>
-              <li><strong>Correct</strong> — Update inaccurate information</li>
-              <li><strong>Delete</strong> — Request deletion of your account and data</li>
-              <li><strong>Export</strong> — Download your data in a portable format</li>
-              <li><strong>Control</strong> — Manage privacy settings for your profile and content</li>
+              <li><strong>See your data</strong> — Ask me and I'll send you everything we have on you</li>
+              <li><strong>Fix it</strong> — Update anything that's wrong in your profile</li>
+              <li><strong>Delete it</strong> — Nuke your account and we'll remove your data within 30 days</li>
+              <li><strong>Export it</strong> — Get a copy of your stuff if you want to leave</li>
             </ul>
             <p>
-              EU residents have additional rights under GDPR. California residents have
-              rights under CCPA. Contact us to exercise these rights.
+              If you're in the EU (GDPR) or California (CCPA), you have additional legal rights.
+              Email me and I'll help you exercise them. I'm not going to make you jump through hoops.
             </p>
           </Section>
 
           <Section id="retention" number="07" title="Retention">
             <p>
-              We retain your data for as long as your account is active or as needed to
-              provide services. When you delete your account, we remove your personal
-              data within 30 days, except where retention is required by law.
+              Your data exists as long as your account exists. Delete your account, and I
+              delete your data within 30 days. Some stuff might stick around longer if
+              the law requires it (financial records, legal disputes, etc.), but that's rare.
             </p>
             <p>
-              Anonymized analytics data may be retained indefinitely as it cannot be
-              linked back to you.
+              Anonymized analytics stick around because they can't be traced back to you anyway.
             </p>
           </Section>
 
           <Section id="children" number="08" title="Children">
             <p>
-              HIVE is designed for college students. Users must be at least 13 years old.
-              We do not knowingly collect information from children under 13. If we learn
-              we have collected such information, we will delete it promptly.
+              HIVE is for college students. You need a .edu email. If you're under 13,
+              you shouldn't be here, and if I find out you are, I'll delete your account.
+              This isn't because I don't like kids — it's because COPPA (the children's
+              privacy law) has specific requirements I'm not set up to handle.
             </p>
           </Section>
 
           <Section id="changes" number="09" title="Changes">
             <p>
-              We may update this policy from time to time. Material changes will be
-              communicated through the service or via email at least 30 days before
-              taking effect.
+              If I change this policy in any meaningful way, I'll tell you. Email, in-app
+              notification, something obvious. I won't just quietly update the page and
+              hope you don't notice.
             </p>
             <p>
-              We encourage you to review this policy periodically.
+              Minor wording changes or clarifications might happen without notice, but
+              nothing that affects your actual privacy.
             </p>
           </Section>
 
           <Section id="contact" number="10" title="Contact">
             <p>
-              Questions about your privacy? Contact us at{' '}
+              Questions? Concerns? Want your data? Email me:{' '}
               <a
-                href="mailto:privacy@hive.college"
+                href="mailto:hiveconnects@gmail.com"
                 className="text-[var(--color-gold)]/80 hover:text-[var(--color-gold)]"
               >
-                privacy@hive.college
+                hiveconnects@gmail.com
               </a>
             </p>
             <p className="text-[14px] text-white/40">
               HIVE<br />
-              Buffalo, NY
+              Built in Buffalo, NY
             </p>
           </Section>
         </article>

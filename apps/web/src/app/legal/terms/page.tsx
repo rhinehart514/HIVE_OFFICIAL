@@ -2,21 +2,21 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of Service for HIVE — the social platform for college students.',
+  description: 'Terms of Service for HIVE — the rules, but explained like a human.',
 };
 
 export const dynamic = 'force-dynamic';
 
 const SECTIONS = [
-  { id: 'acceptance', title: 'Acceptance of Terms' },
-  { id: 'service', title: 'The Service' },
-  { id: 'eligibility', title: 'Eligibility' },
-  { id: 'content', title: 'Your Content' },
-  { id: 'conduct', title: 'Conduct' },
-  { id: 'tools', title: 'Tools' },
+  { id: 'deal', title: 'The Deal' },
+  { id: 'what-hive-is', title: 'What HIVE Is' },
+  { id: 'who-can-use', title: 'Who Can Use This' },
+  { id: 'your-stuff', title: 'Your Stuff' },
+  { id: 'dont-be-an-ass', title: "Don't Be an Ass" },
+  { id: 'tools', title: 'HiveLab Tools' },
   { id: 'privacy', title: 'Privacy' },
-  { id: 'termination', title: 'Termination' },
-  { id: 'liability', title: 'Liability' },
+  { id: 'kicking-you-out', title: 'Kicking You Out' },
+  { id: 'if-things-break', title: 'If Things Break' },
   { id: 'changes', title: 'Changes' },
   { id: 'contact', title: 'Contact' },
 ];
@@ -37,6 +37,16 @@ export default function TermsPage() {
             Effective January 15, 2025 · Version 1.0
           </p>
         </header>
+
+        {/* Summary card */}
+        <div className="mb-16 rounded-2xl border border-[var(--color-gold)]/10 bg-[var(--color-gold)]/[0.03] p-6">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-gold)]/60">
+            The short version
+          </p>
+          <p className="text-[15px] leading-relaxed text-white/70">
+            Be a decent human. Don't break things on purpose. Your stuff is yours. I'm building this for students, not lawyers. But lawyers exist, so here's the real terms below.
+          </p>
+        </div>
 
         {/* Table of Contents */}
         <nav className="mb-16 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
@@ -60,155 +70,169 @@ export default function TermsPage() {
 
         {/* Content */}
         <article className="space-y-12">
-          <Section id="acceptance" number="01" title="Acceptance of Terms">
+          <Section id="deal" number="01" title="The Deal">
             <p>
-              By accessing or using HIVE, you agree to be bound by these Terms of Service.
-              If you disagree with any part of these terms, you may not access the service.
+              By using HIVE, you're agreeing to these terms. I know you're not going to
+              read all of this — nobody does — but I wrote it in plain English so you
+              actually could if you wanted to.
             </p>
             <p>
-              These terms constitute a legally binding agreement between you and HIVE.
-              We recommend reading them carefully before using the platform.
+              If you disagree with something here, you shouldn't use HIVE. That's not
+              me being a jerk — that's just how legal agreements work.
             </p>
           </Section>
 
-          <Section id="service" number="02" title="The Service">
+          <Section id="what-hive-is" number="02" title="What HIVE Is">
             <p>
-              HIVE is a social platform designed for college students. We provide:
+              HIVE is a platform for college students. Here's what you get:
             </p>
             <ul>
-              <li><strong>Spaces</strong> — Communities organized around majors, interests, and residential areas</li>
-              <li><strong>Feed</strong> — Social posting and interaction within your communities</li>
-              <li><strong>Profiles</strong> — Personal identity and connection management</li>
-              <li><strong>Tools</strong> — Interactive experiences created by users</li>
+              <li><strong>Spaces</strong> — Your orgs, clubs, and communities. You run them, not me.</li>
+              <li><strong>Feed</strong> — What's happening on campus. No algorithm deciding what you see.</li>
+              <li><strong>Profiles</strong> — Your identity on HIVE. Keep it real or keep it anonymous — your call.</li>
+              <li><strong>HiveLab</strong> — Build tools for your campus. Polls, forms, whatever you need.</li>
             </ul>
             <p>
-              We continuously improve the service. Features may change, and new features
-              will be announced through the platform.
+              Things will change. I'm actively building this. New features will show up,
+              old ones might get better. I'll try to give you a heads up when big changes
+              happen.
             </p>
           </Section>
 
-          <Section id="eligibility" number="03" title="Eligibility">
-            <p>To use HIVE, you must:</p>
+          <Section id="who-can-use" number="03" title="Who Can Use This">
+            <p>You need:</p>
             <ul>
-              <li>Be at least 13 years of age</li>
-              <li>Have a valid educational institution email address</li>
-              <li>Provide accurate and complete registration information</li>
-              <li>Maintain the security of your account credentials</li>
+              <li>A .edu email address (that's how I verify you're a student)</li>
+              <li>To be at least 13 years old (COPPA rules, not mine)</li>
+              <li>To not lie about who you are during signup</li>
             </ul>
             <p>
-              You are responsible for all activity that occurs under your account.
-              Notify us immediately if you suspect unauthorized access.
+              Your account is yours. If someone else uses it and does something dumb,
+              that's on you. Keep your login secure.
             </p>
           </Section>
 
-          <Section id="content" number="04" title="Your Content">
+          <Section id="your-stuff" number="04" title="Your Stuff">
             <p>
-              You retain ownership of all content you create on HIVE, including posts,
-              comments, images, videos, and Tools.
+              <strong>Everything you create on HIVE is yours.</strong> Your posts, your
+              events, your Tools, your memes — all yours.
             </p>
             <p>
-              By posting content, you grant us a non-exclusive, worldwide, royalty-free
-              license to display, distribute, and promote your content within the service.
-              This license enables the platform to function — we don't claim ownership
-              of your work.
+              But here's the thing: for HIVE to work, I need to be able to show your
+              content to other users. So when you post something, you're giving me
+              permission to display it on the platform. That's it. I'm not going to
+              take your content and sell it or use it for ads. It just needs to show
+              up in the app.
             </p>
             <p>
-              You're responsible for your content. Don't post anything you don't have
-              the right to share.
+              Don't post stuff that isn't yours. Don't upload copyrighted content you
+              don't have rights to. Common sense.
             </p>
           </Section>
 
-          <Section id="conduct" number="05" title="Conduct">
+          <Section id="dont-be-an-ass" number="05" title="Don't Be an Ass">
             <p>
-              HIVE is built on mutual respect. We maintain community standards through
-              Space-level moderation and platform oversight.
+              HIVE is for students to build together. That only works if people aren't
+              being terrible to each other.
             </p>
-            <p>Prohibited activities include:</p>
+            <p>Things that will get you removed:</p>
             <ul>
-              <li>Harassment, bullying, or hate speech</li>
-              <li>Spam or misleading content</li>
-              <li>Impersonation or fraud</li>
-              <li>Illegal activities</li>
-              <li>Violating others' intellectual property rights</li>
+              <li>Harassment, bullying, hate speech (zero tolerance)</li>
+              <li>Spam or scams</li>
+              <li>Pretending to be someone you're not</li>
+              <li>Anything illegal</li>
+              <li>Trying to break the platform</li>
             </ul>
             <p>
-              Space leaders serve as first-line moderators. HIVE reserves the right
-              to review and remove content that violates these terms.
+              Space leaders moderate their own Spaces. They're the first line. If
+              something gets past them and it's bad, I'll handle it. But I'd rather
+              Space leaders handle their own communities.
             </p>
           </Section>
 
-          <Section id="tools" number="06" title="Tools">
+          <Section id="tools" number="06" title="HiveLab Tools">
             <p>
-              Tools are interactive experiences you can create and share. When building Tools:
+              You can build Tools on HIVE — interactive things for your campus. Cool.
+              But don't:
             </p>
             <ul>
-              <li>Don't include malicious code or security vulnerabilities</li>
-              <li>Don't collect unauthorized data from users</li>
-              <li>Ensure your Tools function as described</li>
+              <li>Build anything malicious (malware, phishing, etc.)</li>
+              <li>Secretly collect data from people using your Tools</li>
+              <li>Make Tools that break or slow down the platform</li>
             </ul>
             <p>
-              We may sandbox, restrict, or remove Tools that pose security or
-              performance risks to the platform.
+              If your Tool is sketchy, I'll restrict or remove it. If it's actually
+              dangerous, your whole account is gone.
             </p>
           </Section>
 
           <Section id="privacy" number="07" title="Privacy">
             <p>
-              We collect minimal data to make HIVE work well. Analytics are anonymized
-              by default, and we never sell your personal information.
+              Short version: I'm not selling your data. I'm not showing you ads. I
+              collect what I need to make HIVE work and nothing more.
             </p>
             <p>
-              For complete details on data collection, usage, and your rights, see our{' '}
+              Read the full{' '}
               <a href="/legal/privacy" className="text-[var(--color-gold)]/80 hover:text-[var(--color-gold)]">
                 Privacy Policy
-              </a>.
+              </a>{' '}
+              — I wrote that one in plain English too.
             </p>
           </Section>
 
-          <Section id="termination" number="08" title="Termination">
+          <Section id="kicking-you-out" number="08" title="Kicking You Out">
             <p>
-              We may suspend or terminate accounts for violations of these terms,
-              illegal activities, or security threats. Serious violations may result
-              in immediate termination without warning.
+              If you violate these terms, I can suspend or delete your account. If you
+              do something really bad, it'll happen immediately without warning.
             </p>
             <p>
-              You may delete your account at any time through your settings.
-              Some information may be retained as required by law.
+              You can also delete your own account whenever you want. Go to settings,
+              hit delete. Your data will be removed within 30 days. Some stuff might
+              stick around longer if the law requires it, but that's rare.
             </p>
           </Section>
 
-          <Section id="liability" number="09" title="Liability">
+          <Section id="if-things-break" number="09" title="If Things Break">
             <p>
-              HIVE is provided "as is" without warranties of any kind, express or implied.
-              We are not liable for indirect, incidental, or consequential damages
-              arising from your use of the service.
+              I'm one person building this thing. Sometimes it will break. Sometimes
+              features won't work. Sometimes the whole thing might go down.
             </p>
             <p>
-              Our total liability is limited to the amount you paid us in the
-              twelve months preceding any claim — which, for most users, is zero.
+              I can't promise HIVE will be perfect or always available. I can promise
+              I'll fix things as fast as I can when they break.
+            </p>
+            <p>
+              Legally: HIVE is provided "as is." If something goes wrong and you lose
+              something important, I'm sorry, but I can't be liable for that. Don't
+              use HIVE as your only backup for anything critical.
             </p>
           </Section>
 
           <Section id="changes" number="10" title="Changes">
             <p>
-              We may update these terms from time to time. Material changes will be
-              communicated through the service or via email at least 30 days before
-              taking effect.
+              These terms might change. If they change in any way that actually matters,
+              I'll tell you — email, notification, something obvious. Not just a quiet
+              update to this page.
             </p>
             <p>
-              Continued use after changes constitutes acceptance of the new terms.
+              If you keep using HIVE after the terms change, you're agreeing to the
+              new terms. If you don't like the changes, you can delete your account.
             </p>
           </Section>
 
           <Section id="contact" number="11" title="Contact">
             <p>
-              Questions about these terms? Contact us at{' '}
+              Questions? Concerns? Think I got something wrong? Email me:{' '}
               <a
-                href="mailto:legal@hive.college"
+                href="mailto:hiveconnects@gmail.com"
                 className="text-[var(--color-gold)]/80 hover:text-[var(--color-gold)]"
               >
-                legal@hive.college
+                hiveconnects@gmail.com
               </a>
+            </p>
+            <p className="text-[14px] text-white/40">
+              HIVE<br />
+              Built in Buffalo, NY
             </p>
           </Section>
         </article>
