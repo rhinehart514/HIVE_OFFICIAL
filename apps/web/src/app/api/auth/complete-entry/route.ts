@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { createSession, setSessionCookie, getSession, SESSION_CONFIG } from '@/lib/session';
@@ -28,11 +29,15 @@ const ALLOW_DEV_BYPASS =
   !isFirebaseConfigured &&
   process.env.DEV_AUTH_BYPASS === 'true';
 
-// Minimal schema - only required fields
+// Schema with identity fields for decision-reducing onboarding
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
   handle: SecureSchemas.handle,
+  // Identity fields
+  major: z.string().min(1).max(100).optional().nullable(),
+  graduationYear: z.number().min(2015).max(2035).optional().nullable(),
+  residentialSpaceId: z.string().max(100).optional().nullable(),
 });
 
 type EntryBody = z.infer<typeof schema>;
@@ -144,7 +149,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
       // Reserve the handle atomically
       reserveHandleInTransaction(transaction, normalizedHandle, userId, email || '');
 
-      // Update user document with minimal data
+      // Update user document with identity data
       transaction.set(userRef, {
         // Identity (from entry)
         fullName,
@@ -152,6 +157,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName.trim(),
         handle: normalizedHandle,
         email: email || '',
+        // Decision-reducing identity fields
+        major: body.major || null,
+        graduationYear: body.graduationYear || null,
+        residentialSpaceId: body.residentialSpaceId || null,
         // Campus isolation
         campusId,
         schoolId: campusId,
@@ -168,6 +177,29 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         updatedAt: new Date().toISOString(),
         createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
       }, { merge: true });
+
+      // Auto-join residential space if selected
+      if (body.residentialSpaceId) {
+        const memberRef = dbAdmin.collection('spaceMembers').doc(`${body.residentialSpaceId}_${userId}`);
+        transaction.set(memberRef, {
+          spaceId: body.residentialSpaceId,
+          userId: userId,
+          role: 'member',
+          joinedAt: new Date().toISOString(),
+          campusId: campusId,
+          isActive: true,
+          // Denormalized user data for fast display
+          userName: fullName,
+          userHandle: normalizedHandle,
+        });
+
+        // Increment member count on space
+        const spaceRef = dbAdmin.collection('spaces').doc(body.residentialSpaceId);
+        transaction.update(spaceRef, {
+          memberCount: FieldValue.increment(1),
+          'metrics.memberCount': FieldValue.increment(1),
+        });
+      }
     });
 
     logger.info('Entry completed successfully', {

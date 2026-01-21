@@ -17,6 +17,11 @@ import {
   HandleInput,
   HandleStatusBadge,
   Button,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
   type HandleStatus,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
@@ -53,6 +58,26 @@ export interface IdentityStateProps {
   error: string | null;
   /** Loading state */
   isLoading: boolean;
+
+  // Identity fields for decision-reducing onboarding
+  /** Selected major */
+  major: string;
+  /** Graduation year */
+  graduationYear: number | null;
+  /** Selected residential space ID */
+  residentialSpaceId: string;
+  /** Major change handler */
+  onMajorChange: (major: string) => void;
+  /** Graduation year change handler */
+  onGraduationYearChange: (year: number | null) => void;
+  /** Residential space change handler */
+  onResidentialChange: (spaceId: string) => void;
+  /** Available majors list */
+  majors: string[];
+  /** Available graduation years */
+  graduationYears: number[];
+  /** Available residential spaces */
+  residentialSpaces: Array<{ id: string; name: string }>;
 }
 
 export function IdentityState({
@@ -68,13 +93,26 @@ export function IdentityState({
   onSubmit,
   error,
   isLoading,
+  // Identity fields
+  major,
+  graduationYear,
+  residentialSpaceId,
+  onMajorChange,
+  onGraduationYearChange,
+  onResidentialChange,
+  majors,
+  graduationYears,
+  residentialSpaces,
 }: IdentityStateProps) {
-  // Can only submit when handle is available and names are filled
+  // Can only submit when handle is available, names filled, and identity selected
+  // Note: residentialSpaceId is optional (off-campus students)
   const canSubmit =
     firstName.trim() &&
     lastName.trim() &&
     handle.trim() &&
     handleStatus === 'available' &&
+    major &&
+    graduationYear &&
     !isLoading;
 
   const handleKeyDown = React.useCallback(
@@ -144,6 +182,76 @@ export function IdentityState({
           suggestions={handleSuggestions}
           onSuggestionClick={onSuggestionClick}
         />
+
+        {/* Identity dropdowns */}
+        <div className="space-y-3 pt-2">
+          {/* Major dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/50">What's your major?</label>
+            <Select
+              value={major}
+              onValueChange={onMajorChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger size="lg">
+                <SelectValue placeholder="Select your major" />
+              </SelectTrigger>
+              <SelectContent>
+                {majors.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Graduation year dropdown */}
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/50">Graduation year</label>
+            <Select
+              value={graduationYear?.toString() || ''}
+              onValueChange={(v) => onGraduationYearChange(parseInt(v, 10))}
+              disabled={isLoading}
+            >
+              <SelectTrigger size="lg">
+                <SelectValue placeholder="Select year" />
+              </SelectTrigger>
+              <SelectContent>
+                {graduationYears.map((y) => (
+                  <SelectItem key={y} value={y.toString()}>
+                    Class of {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Residential dropdown (optional) */}
+          <div className="space-y-1.5">
+            <label className="text-sm text-white/50">
+              Where do you live?{' '}
+              <span className="text-white/30">(optional)</span>
+            </label>
+            <Select
+              value={residentialSpaceId}
+              onValueChange={onResidentialChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger size="lg">
+                <SelectValue placeholder="Select your residence hall" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Off campus / Not listed</SelectItem>
+                {residentialSpaces.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         {/* Error message */}
         <AnimatePresence mode="wait">

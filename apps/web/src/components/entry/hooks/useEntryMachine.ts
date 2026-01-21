@@ -44,6 +44,10 @@ export interface EntryData {
   firstName: string;
   lastName: string;
   handle: string;
+  // Identity fields for decision-reducing onboarding
+  major: string;
+  graduationYear: number | null;
+  residentialSpaceId: string;
 }
 
 export interface UseEntryMachineOptions {
@@ -77,6 +81,9 @@ export interface UseEntryMachineReturn {
   setCode: (code: string[]) => void;
   setRole: (role: UserRole) => void;
   setAlumniSpace: (space: string) => void;
+  setMajor: (major: string) => void;
+  setGraduationYear: (year: number | null) => void;
+  setResidentialSpaceId: (spaceId: string) => void;
   setFirstName: (name: string) => void;
   setLastName: (name: string) => void;
   setHandle: (handle: string) => void;
@@ -182,6 +189,10 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
     firstName: '',
     lastName: '',
     handle: '',
+    // Identity fields
+    major: '',
+    graduationYear: null,
+    residentialSpaceId: '',
   });
 
   // Handle checking
@@ -315,6 +326,18 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
 
   const setAlumniSpace = useCallback((alumniSpace: string) => {
     setData((prev) => ({ ...prev, alumniSpace }));
+  }, []);
+
+  const setMajor = useCallback((major: string) => {
+    setData((prev) => ({ ...prev, major }));
+  }, []);
+
+  const setGraduationYear = useCallback((graduationYear: number | null) => {
+    setData((prev) => ({ ...prev, graduationYear }));
+  }, []);
+
+  const setResidentialSpaceId = useCallback((residentialSpaceId: string) => {
+    setData((prev) => ({ ...prev, residentialSpaceId }));
   }, []);
 
   const setFirstName = useCallback((firstName: string) => {
@@ -576,6 +599,10 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
           lastName: data.lastName.trim(),
           handle: data.handle.trim(),
           role: data.role || 'student',
+          // Identity fields for decision-reducing onboarding
+          major: data.major || null,
+          graduationYear: data.graduationYear || null,
+          residentialSpaceId: data.residentialSpaceId || null,
         }),
       });
 
@@ -590,7 +617,7 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
       setError(err instanceof Error ? err.message : 'Setup failed');
       setState('identity');
     }
-  }, [data.firstName, data.lastName, data.handle, data.role, handleStatus]);
+  }, [data.firstName, data.lastName, data.handle, data.role, data.major, data.graduationYear, data.residentialSpaceId, handleStatus]);
 
   const goBackToSchool = useCallback(() => {
     setState('school');
@@ -658,6 +685,9 @@ export function useEntryMachine(options: UseEntryMachineOptions): UseEntryMachin
     setCode,
     setRole,
     setAlumniSpace,
+    setMajor,
+    setGraduationYear,
+    setResidentialSpaceId,
     setFirstName,
     setLastName,
     setHandle,

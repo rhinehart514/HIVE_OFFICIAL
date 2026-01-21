@@ -40,6 +40,11 @@
       "types": "./src/hivelab/goose/index.ts",
       "import": "./src/hivelab/goose/index.ts",
       "default": "./src/hivelab/goose/index.ts"
+    },
+    "./domain/profile/value-objects/major": {
+      "types": "./src/domain/profile/value-objects/major.value.ts",
+      "import": "./src/domain/profile/value-objects/major.value.ts",
+      "default": "./src/domain/profile/value-objects/major.value.ts"
     }
   },
   "scripts": {

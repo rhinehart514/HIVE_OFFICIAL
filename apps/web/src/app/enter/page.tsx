@@ -15,8 +15,9 @@
  * - Arrival is a celebration, not a loading screen
  */
 
-import { Suspense } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
+import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import {
   EntryShell,
   EntryShellStatic,
@@ -138,6 +139,9 @@ function EntryContent() {
     setCode,
     setRole,
     setAlumniSpace,
+    setMajor,
+    setGraduationYear,
+    setResidentialSpaceId,
     setFirstName,
     setLastName,
     setHandle,
@@ -165,6 +169,34 @@ function EntryContent() {
 
   // Use selected school domain or fall back to default
   const activeDomain = data.school?.domain || CAMPUS_CONFIG.domain;
+
+  // Compute majors list from catalog
+  const majors = useMemo(() => Object.keys(MAJOR_CATALOG).sort(), []);
+
+  // Compute graduation years (current year + 4 years ahead)
+  const graduationYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return [currentYear, currentYear + 1, currentYear + 2, currentYear + 3, currentYear + 4];
+  }, []);
+
+  // Residential spaces state
+  const [residentialSpaces, setResidentialSpaces] = useState<Array<{ id: string; name: string }>>([]);
+
+  // Fetch residential spaces when school is selected
+  useEffect(() => {
+    const campusId = data.school?.id || CAMPUS_CONFIG.id;
+    fetch(`/api/spaces/residential?campusId=${campusId}`)
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && result.spaces) {
+          setResidentialSpaces(result.spaces);
+        }
+      })
+      .catch(() => {
+        // Fail silently - residential is optional
+        setResidentialSpaces([]);
+      });
+  }, [data.school?.id]);
 
   // Full email for display
   const fullEmail = data.email.includes('@')
@@ -248,6 +280,16 @@ function EntryContent() {
             onSubmit={completeEntry}
             error={error}
             isLoading={state === 'submitting'}
+            // Identity fields for decision-reducing onboarding
+            major={data.major}
+            graduationYear={data.graduationYear}
+            residentialSpaceId={data.residentialSpaceId}
+            onMajorChange={setMajor}
+            onGraduationYearChange={setGraduationYear}
+            onResidentialChange={setResidentialSpaceId}
+            majors={majors}
+            graduationYears={graduationYears}
+            residentialSpaces={residentialSpaces}
           />
         )}
 
