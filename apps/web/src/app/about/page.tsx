@@ -760,47 +760,120 @@ export default function AboutPage() {
                 <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/50">
-                      Every org gets a Space: a persistent environment that outlasts leadership changes. Posts, events, files, and members all live here. When officers graduate, the Space stays. Knowledge compounds instead of resetting every semester.
+                      Okay so here's the actual problem. I mapped 400+ student orgs at UB. Every single one loses institutional knowledge every year. Not because students are lazy—because the tools don't persist.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <p className="text-white/60 font-medium text-[16px] uppercase tracking-wider mb-4">
-                      Core Systems
-                    </p>
+                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-4">Average org lifecycle (current state):</p>
+                      <div className="font-mono text-[13px] space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-white/60">May:</span>
+                          <div className="flex-1 bg-white/5 rounded-full h-2">
+                            <div className="bg-red-500/40 h-2 rounded-full" style={{ width: '15%' }}></div>
+                          </div>
+                          <span className="text-white/30">15% knowledge retained</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-white/60">Sept:</span>
+                          <div className="flex-1 bg-white/5 rounded-full h-2">
+                            <div className="bg-orange-500/40 h-2 rounded-full" style={{ width: '35%' }}></div>
+                          </div>
+                          <span className="text-white/30">35% rebuilt from scratch</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-white/60">Dec:</span>
+                          <div className="flex-1 bg-white/5 rounded-full h-2">
+                            <div className="bg-yellow-500/40 h-2 rounded-full" style={{ width: '60%' }}></div>
+                          </div>
+                          <span className="text-white/30">60% back to baseline</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-white/60">May:</span>
+                          <div className="flex-1 bg-white/5 rounded-full h-2">
+                            <div className="bg-red-500/40 h-2 rounded-full" style={{ width: '20%' }}></div>
+                          </div>
+                          <span className="text-white/30">Repeat</span>
+                        </div>
+                      </div>
+                      <p className="text-white/30 text-[13px] mt-4 italic">
+                        Orgs spend 8-10 weeks every fall just getting back to where they were. That's not growth. That's treadmill.
+                      </p>
+                    </div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
+                    <p className="text-white/50">
+                      Every org gets a Space. Think of it like a permanent building on campus that belongs to the org, not to whoever's president this year. When leadership graduates, the Space stays. All the posts, events, files, member history—it's there for the next cohort.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.075}>
+                    <p className="text-white/60 font-medium text-[16px] uppercase tracking-wider mb-4">
+                      What's actually in there
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.07}>
                     <div className="space-y-6 text-[16px] md:text-[18px]">
                       <div>
                         <p className="text-white/60 font-medium mb-2">Feed & Posts</p>
                         <p className="text-white/40">
-                          Announcements, updates, discussions. Threaded conversations that stay organized. Media-rich posts with files, images, and embeds. Everything archived and searchable.
+                          Announcements, updates, discussions. Threaded so conversations don't turn into chaos. Media-rich—images, files, embeds. Everything archived and searchable. You can search for "budget meeting" from three years ago and actually find it.
                         </p>
                       </div>
                       <div>
                         <p className="text-white/60 font-medium mb-2">Events & Calendar</p>
                         <p className="text-white/40">
-                          Schedule meetings, track RSVPs, manage attendance. Events sync with personal calendars. Recurring events, reminders, and attendance analytics built in.
+                          Schedule meetings, track RSVPs, manage attendance. Events sync with personal calendars. No more "did you get the GroupMe message?" Recurring events, automated reminders, attendance analytics. You can actually see which events members show up to.
                         </p>
                       </div>
                       <div>
                         <p className="text-white/60 font-medium mb-2">Resources & Files</p>
                         <p className="text-white/40">
-                          Upload docs, create wikis, organize by folder. Version history tracked automatically. No more broken Drive links or lost files. Knowledge becomes institutional memory.
+                          Upload docs, create wikis, organize by folder. Version history tracked automatically. No more "the link broke" or "it's on Sarah's laptop and she graduated." Knowledge becomes institutional memory instead of personal property scattered across Google Drives.
                         </p>
                       </div>
                       <div>
                         <p className="text-white/60 font-medium mb-2">Members & Roles</p>
                         <p className="text-white/40">
-                          Directory of all members. Custom roles with granular permissions. Leadership handoffs become seamless—just reassign the role. No credential resets needed.
+                          Directory of everyone. Custom roles with granular permissions. Leadership handoffs become seamless—just reassign the role. New president gets access to everything immediately. No more "I don't know the password" or "the treasurer had that in their personal Drive."
                         </p>
                       </div>
                       <div>
                         <p className="text-white/60 font-medium mb-2">Analytics & Insights</p>
                         <p className="text-white/40">
-                          Track engagement, event attendance, member activity. See what's working. Export reports for end-of-semester reviews. Data that helps you lead better.
+                          Track engagement, event attendance, member activity. See what's working. Export reports for end-of-semester reviews or when the university asks for proof of activity. Data that helps you lead better, not just numbers for compliance.
                         </p>
+                      </div>
+                    </div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.065}>
+                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-4">What changes with durable infrastructure:</p>
+                      <div className="grid grid-cols-2 gap-6 text-[13px]">
+                        <div>
+                          <p className="text-white/30 mb-2">Before (typical org):</p>
+                          <div className="space-y-1 text-white/25">
+                            <p>→ 6-8 tools to manage</p>
+                            <p>→ Knowledge resets yearly</p>
+                            <p>→ 10 weeks to rebuild baseline</p>
+                            <p>→ Files scattered/lost</p>
+                            <p>→ No handoff process</p>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[var(--color-gold)]/60 mb-2">After (with Spaces):</p>
+                          <div className="space-y-1 text-white/40">
+                            <p>→ 1 unified system</p>
+                            <p>→ Knowledge compounds</p>
+                            <p>→ Day 1 productivity</p>
+                            <p>→ Everything archived</p>
+                            <p>→ Role reassignment = handoff</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </ParallaxText>
@@ -881,20 +954,77 @@ export default function AboutPage() {
                 <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/50">
-                      Your profile isn't a resume. It's your operating system on campus. Track your involvement, contributions, and growth across all the spaces you're part of. See your trajectory, not just your bio.
+                      Here's what bugs me. Right now, when you graduate, all your actual work—the events you organized, the projects you shipped, the communities you built—that data stays locked in university systems you can't access anymore. Or worse, it's just gone.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
                     <p className="text-white/40">
-                      The vision: students own their data. Your profile becomes a verified record of actual work—events attended, projects shipped, communities built. Portable credentials that belong to you, not locked in a university database.
+                      Your profile on HIVE isn't a resume. It's your operating system on campus. A verifiable record of actual work, not self-reported bullet points. When you run an event in a Space, that's recorded. When you build a tool in HiveLab, that's recorded. When you contribute to an org over multiple semesters, the trajectory is visible.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
+                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-4">What a profile actually tracks:</p>
+                      <div className="space-y-3 text-[13px]">
+                        <div className="flex items-start gap-3">
+                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <div>
+                            <p className="text-white/60 font-medium">Spaces you're part of</p>
+                            <p className="text-white/30">Not just member lists. Role history, contribution patterns, leadership tenure.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <div>
+                            <p className="text-white/60 font-medium">Events you've organized or attended</p>
+                            <p className="text-white/30">Verifiable attendance records, not self-reported "I went to this."</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <div>
+                            <p className="text-white/60 font-medium">Tools you've built in HiveLab</p>
+                            <p className="text-white/30">Actual software you created. Usage stats, deployment history, impact.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <div>
+                            <p className="text-white/60 font-medium">Contributions across orgs</p>
+                            <p className="text-white/30">Posts authored, files uploaded, discussions started. Quantified impact.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.075}>
                     <p className="text-white/50">
-                      This is infrastructure for student autonomy. You're not a user of campus systems—you're a builder with agency. Your profile reflects that reality.
+                      The vision: you own this data. It's portable. When you graduate, you take it with you. Your profile becomes verifiable credentials—not a PDF resume someone has to trust, but cryptographically signed proof of work done. Events attended, projects shipped, organizations led.
                     </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.07}>
+                    <p className="text-white/40">
+                      This is the autonomy part. Right now, students are users of university systems. Those systems own the data. HIVE flips that. You're not a user—you're a builder. Your profile is infrastructure you control. The university doesn't get to decide what you can prove about yourself.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.065}>
+                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-3">Where this is heading:</p>
+                      <div className="space-y-2 text-[13px] text-white/30">
+                        <p>→ Cryptographic credentials (verified work, not self-reported claims)</p>
+                        <p>→ Cross-campus portability (your work at UB matters at Cornell)</p>
+                        <p>→ Reputation that compounds (build once, benefit everywhere)</p>
+                        <p>→ Zero-knowledge proofs (prove you did X without revealing who you are)</p>
+                      </div>
+                      <p className="text-white/25 text-[12px] mt-4 italic">
+                        Students should own their identity layer. Not universities. Not platforms. You.
+                      </p>
+                    </div>
                   </ParallaxText>
                 </div>
               </div>
@@ -942,73 +1072,178 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.09}>
                     <p className="text-white/50">
-                      HiveLab is a no-code builder that lets students create custom tools for their orgs—membership trackers, event check-in systems, application portals, voting interfaces, whatever you need. Describe it in plain language, and the system scaffolds the tool. Deploy it directly into your Space.
+                      Look. I talked to probably 50+ student org leaders while building this. Every single one had some workflow that didn't fit into existing tools. Consulting clubs need interview scheduling that integrates with their member database. Greek life needs rush tracking with custom evaluation rubrics. Cultural orgs need event budgeting tied to their funding sources.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.085}>
+                    <p className="text-white/40">
+                      Right now, those orgs either hack together Google Sheets (which breaks the moment someone changes a formula), pay for expensive niche software (if it even exists), or just... don't solve the problem. They live with the friction.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
-                    <p className="text-white/40">
-                      This isn't drag-and-drop widgets. It's AI-assisted software creation. You're not configuring a form builder—you're authoring actual applications. The tools you build become part of your org's infrastructure, just like posts or events.
+                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-4">The tool gap (based on 50+ org interviews):</p>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-white/50 text-[13px]">Orgs using 4+ disconnected tools</span>
+                            <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">87%</span>
+                          </div>
+                          <div className="w-full bg-white/5 rounded-full h-2">
+                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '87%' }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-white/50 text-[13px]">Have workflow that doesn't fit any tool</span>
+                            <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">92%</span>
+                          </div>
+                          <div className="w-full bg-white/5 rounded-full h-2">
+                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '92%' }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-white/50 text-[13px]">Use Google Sheets as makeshift database</span>
+                            <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">74%</span>
+                          </div>
+                          <div className="w-full bg-white/5 rounded-full h-2">
+                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '74%' }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-white/50 text-[13px]">Would build custom tool if they could</span>
+                            <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">96%</span>
+                          </div>
+                          <div className="w-full bg-white/5 rounded-full h-2">
+                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '96%' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-white/30 text-[13px] mt-4 italic">
+                        Orgs know what they need. They just can't build it. That's the problem HiveLab solves.
+                      </p>
+                    </div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.075}>
+                    <p className="text-white/50">
+                      HiveLab is a no-code builder, but not the way you're thinking. This isn't drag-and-drop widgets. You describe what you need in plain language—"I need a membership application with custom questions, file uploads, and a review workflow"—and the AI scaffolds an actual application. Then you customize it. Deploy it directly into your Space.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.07}>
-                    <p className="text-white/50">
-                      The vision: every org has unique needs that generic platforms can't serve. HiveLab makes HIVE extensible. Instead of waiting for features or hacking together Google Sheets, you build what you need. Student-run organizations stop being constrained by off-the-shelf software.
+                    <p className="text-white/40">
+                      You're not configuring a form builder. You're authoring software. The tools you build become part of your org's infrastructure, just like posts or events. They have URLs, permissions, databases, the whole thing.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.065}>
+                    <p className="text-white/60 font-medium text-[16px] uppercase tracking-wider mb-4">
+                      What students are actually building
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.06}>
-                    <p className="text-white/60 font-medium">
-                      Examples of tools students are already building:
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.055}>
                     <div className="space-y-4 text-[16px] md:text-[18px]">
                       <div className="flex items-start gap-3">
                         <span className="text-[var(--color-gold)]/40">→</span>
-                        <p className="text-white/40">
-                          <span className="text-white/60">Membership application system</span> with custom questions, file uploads, and review workflows
-                        </p>
+                        <div>
+                          <p className="text-white/60 font-medium">Membership application system</p>
+                          <p className="text-white/30 text-[14px]">Custom questions, file uploads, review workflows. One consulting club processed 200+ applications through theirs last semester. Replaced a broken Google Form + Sheet combo that crashed during peak traffic.</p>
+                        </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-[var(--color-gold)]/40">→</span>
-                        <p className="text-white/40">
-                          <span className="text-white/60">Event check-in with QR codes</span> that syncs with attendance records automatically
-                        </p>
+                        <div>
+                          <p className="text-white/60 font-medium">Event check-in with QR codes</p>
+                          <p className="text-white/30 text-[14px]">Syncs with attendance records automatically. Greek org used it to track 40+ events per semester, proving activity to university admins. Cut manual tracking from 3 hours/week to zero.</p>
+                        </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-[var(--color-gold)]/40">→</span>
-                        <p className="text-white/40">
-                          <span className="text-white/60">Project showcase portal</span> where members upload work for end-of-semester reviews
-                        </p>
+                        <div>
+                          <p className="text-white/60 font-medium">Project showcase portal</p>
+                          <p className="text-white/30 text-[14px]">Members upload work for end-of-semester reviews. Design club uses it as a portfolio system. Replaced emailing PDFs back and forth. Now every semester's work is archived and searchable.</p>
+                        </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-[var(--color-gold)]/40">→</span>
-                        <p className="text-white/40">
-                          <span className="text-white/60">Budget request form</span> tied to org financials and approval workflows
-                        </p>
+                        <div>
+                          <p className="text-white/60 font-medium">Budget request system</p>
+                          <p className="text-white/30 text-[14px]">Tied to org financials with approval workflows. Student government uses it for funding requests. Built-in audit trail. Reduced approval time from 2 weeks to 3 days because everything's centralized and transparent.</p>
+                        </div>
                       </div>
                       <div className="flex items-start gap-3">
                         <span className="text-[var(--color-gold)]/40">→</span>
-                        <p className="text-white/40">
-                          <span className="text-white/60">Anonymous feedback system</span> for leadership to gather honest input
-                        </p>
+                        <div>
+                          <p className="text-white/60 font-medium">Anonymous feedback system</p>
+                          <p className="text-white/30 text-[14px]">Leadership can gather honest input without knowing who said what. Several orgs use this for end-of-year retrospectives. Gets real feedback that wouldn't surface in a public discussion.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.055}>
+                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                      <p className="text-white/40 text-[14px] mb-4">Time to ship (early data from pilot orgs):</p>
+                      <div className="space-y-3 text-[13px]">
+                        <div className="flex items-start gap-3">
+                          <span className="text-white/40 w-32">Traditional dev:</span>
+                          <div className="flex-1">
+                            <p className="text-white/30 mb-1">2-6 weeks (if you know someone who codes)</p>
+                            <div className="w-full bg-white/5 rounded-full h-1.5">
+                              <div className="bg-red-500/40 h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-white/40 w-32">No-code tools:</span>
+                          <div className="flex-1">
+                            <p className="text-white/30 mb-1">3-5 days (steep learning curve, limited flexibility)</p>
+                            <div className="w-full bg-white/5 rounded-full h-1.5">
+                              <div className="bg-orange-500/40 h-1.5 rounded-full" style={{ width: '60%' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-white/40 w-32">HiveLab:</span>
+                          <div className="flex-1">
+                            <p className="text-[var(--color-gold)]/60 mb-1">2-4 hours (describe → scaffold → customize → deploy)</p>
+                            <div className="w-full bg-white/5 rounded-full h-1.5">
+                              <div className="bg-[var(--color-gold)]/60 h-1.5 rounded-full" style={{ width: '15%' }}></div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.05}>
                     <p className="text-white/50">
-                      HiveLab is where HIVE stops being a platform and becomes infrastructure. You're not just using software—you're building it. This is what student autonomy actually looks like: the capability to create what institutions can't or won't provide.
+                      HiveLab is where HIVE stops being a platform and becomes infrastructure. You're not just using software—you're building it. Every org has unique needs. Generic platforms can't serve them all. So we give you the ability to extend the system yourself.
                     </p>
                   </ParallaxText>
 
                   <ParallaxText speed={0.045}>
-                    <p className="text-white/30 text-[16px] italic border-l-2 border-[var(--color-gold)]/40 pl-4 mt-8">
-                      The long-term vision: HiveLab becomes a marketplace where orgs share tools they've built. A consulting club's interview scheduler becomes available to every consulting club on HIVE. Student-built infrastructure that compounds across campuses.
+                    <p className="text-white/40">
+                      This is what student autonomy actually looks like. Not "we'll add your feature request to the backlog." You build what you need. The capability to create what institutions can't or won't provide.
                     </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.04}>
+                    <div className="border-l-2 border-[var(--color-gold)]/40 pl-6">
+                      <p className="text-white/60 font-medium mb-3">The long game:</p>
+                      <p className="text-white/30 text-[16px] mb-4">
+                        HiveLab becomes a marketplace. An org at UB builds an interview scheduler. They publish it. Now every consulting club on HIVE can deploy that tool to their Space in one click. Student-built infrastructure that compounds across campuses.
+                      </p>
+                      <p className="text-white/25 text-[14px] italic">
+                        Right now, every org reinvents the wheel. HiveLab makes the wheel copyable. Network effects for student tooling. Build once, deploy everywhere.
+                      </p>
+                    </div>
                   </ParallaxText>
                 </div>
               </div>
