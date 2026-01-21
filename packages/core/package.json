@@ -45,6 +45,16 @@
       "types": "./src/domain/profile/value-objects/major.value.ts",
       "import": "./src/domain/profile/value-objects/major.value.ts",
       "default": "./src/domain/profile/value-objects/major.value.ts"
+    },
+    "./domain/creation/validate-tool-elements": {
+      "types": "./src/domain/creation/validate-tool-elements.ts",
+      "import": "./src/domain/creation/validate-tool-elements.ts",
+      "default": "./src/domain/creation/validate-tool-elements.ts"
+    },
+    "./infrastructure/api/validate-tool-context": {
+      "types": "./src/infrastructure/api/validate-tool-context.ts",
+      "import": "./src/infrastructure/api/validate-tool-context.ts",
+      "default": "./src/infrastructure/api/validate-tool-context.ts"
     }
   },
   "scripts": {
