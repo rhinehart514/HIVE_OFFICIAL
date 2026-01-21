@@ -270,13 +270,25 @@ export default function SpacePageUnified() {
             onSettingsClick={() => setShowSettingsModal(true)}
             onBuildToolClick={() => {
               // Redirect to HiveLab with space context
-              const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL || 'http://localhost:3002';
-              const params = new URLSearchParams({
-                context: 'space',
-                spaceId: space.id,
-                spaceName: space.name,
-              });
-              window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
+              const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL;
+
+              if (hiveLabUrl) {
+                // Production with configured HiveLab URL
+                const params = new URLSearchParams({
+                  context: 'space',
+                  spaceId: space.id,
+                  spaceName: space.name,
+                });
+                window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
+              } else {
+                // Development - open in new tab
+                const params = new URLSearchParams({
+                  context: 'space',
+                  spaceId: space.id,
+                  spaceName: space.name,
+                });
+                window.open(`http://localhost:3002/select-context?${params.toString()}`, '_blank');
+              }
             }}
           />
         </div>
