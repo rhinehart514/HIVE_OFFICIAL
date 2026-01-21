@@ -304,7 +304,7 @@ interface MobileNavProps {
 function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   const isActive = (item: NavItem) => {
     if (item.matchPattern) {
@@ -319,7 +319,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
     router.push('/');
     onClose();
   };
