@@ -2,15 +2,15 @@
 
 /**
  * EntryShell - Void Aesthetic Entry Layout
- * REDESIGNED: Jan 21, 2026
+ * ENHANCED: Jan 21, 2026
  *
- * Full-screen void layout inspired by OpenAI/Apple:
+ * Full-screen void layout inspired by OpenAI/Apple + About page:
  * - Centered content on dark void background
+ * - Animated line that draws in on load
+ * - Ambient glow that responds to emotional state
  * - Logo at top, minimal chrome
- * - Content vertically centered
- * - Mobile: Same layout, responsive sizing
  *
- * Philosophy: Entry is confidence. Minimal, premium, focused.
+ * Philosophy: Entry is confidence. Luxuriously slow. Premium.
  */
 
 import * as React from 'react';
@@ -18,7 +18,13 @@ import { motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
-import { type EmotionalState, EASE_PREMIUM, DURATION } from './motion/entry-motion';
+import {
+  type EmotionalState,
+  EASE_PREMIUM,
+  DURATION,
+  lineDrawVariants,
+  GOLD,
+} from './motion/entry-motion';
 
 export type EntryStep = 'school' | 'email' | 'code' | 'role' | 'identity' | 'arrival' | 'alumni-waitlist';
 
@@ -46,8 +52,29 @@ export function EntryShell({
 }: EntryShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
-  // Celebration state gets subtle gold glow
+  // Emotional state determines glow intensity
   const isCelebration = emotionalState === 'celebration';
+  const isAnticipation = emotionalState === 'anticipation';
+
+  // Glow configuration based on emotional state
+  const glowConfig = React.useMemo(() => {
+    if (isCelebration) {
+      return {
+        opacity: 1,
+        gradient: `radial-gradient(ellipse 80% 50% at 50% 20%, ${GOLD.glowSubtle}, transparent 70%)`,
+      };
+    }
+    if (isAnticipation) {
+      return {
+        opacity: 0.6,
+        gradient: `radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,215,0,0.04), transparent 60%)`,
+      };
+    }
+    return {
+      opacity: 0,
+      gradient: 'transparent',
+    };
+  }, [isCelebration, isAnticipation]);
 
   return (
     <div
@@ -58,21 +85,30 @@ export function EntryShell({
     >
       <NoiseOverlay />
 
-      {/* Ambient glow for celebration state */}
-      {isCelebration && (
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, ease: EASE_PREMIUM }}
-          style={{
-            background: 'radial-gradient(ellipse 60% 40% at 50% 30%, rgba(255,215,0,0.08) 0%, transparent 70%)',
-          }}
-        />
-      )}
+      {/* Animated line at top (about-page style) */}
+      <motion.div
+        className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        variants={lineDrawVariants}
+        initial="initial"
+        animate="animate"
+      />
+
+      {/* Ambient glow - responds to emotional state */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: glowConfig.opacity }}
+        transition={{ duration: DURATION.slow, ease: EASE_PREMIUM }}
+        style={{ background: glowConfig.gradient }}
+      />
 
       {/* Header */}
-      <header className="relative z-10 px-6 py-6 flex items-center justify-between">
+      <motion.header
+        className="relative z-10 px-6 py-6 flex items-center justify-between"
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: DURATION.slow, ease: EASE_PREMIUM }}
+      >
         <Link href="/" className="transition-opacity hover:opacity-70">
           <Logo variant="mark" size="sm" color="gold" />
         </Link>
@@ -82,7 +118,7 @@ export function EntryShell({
         >
           Back
         </Link>
-      </header>
+      </motion.header>
 
       {/* Main content - centered */}
       <main
@@ -92,12 +128,12 @@ export function EntryShell({
         )}
       >
         <motion.div
-          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 24, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={
             shouldReduceMotion
               ? { duration: 0 }
-              : { duration: DURATION.smooth, ease: EASE_PREMIUM }
+              : { duration: DURATION.dramatic, ease: EASE_PREMIUM }
           }
           className={cn(
             'w-full max-w-[400px] mx-auto',
@@ -109,7 +145,12 @@ export function EntryShell({
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30">
+      <motion.footer
+        className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30"
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: DURATION.gentle, delay: 0.5, ease: EASE_PREMIUM }}
+      >
         <Link href="/legal/terms" className="hover:text-white/50 transition-colors">
           Terms
         </Link>
@@ -117,7 +158,7 @@ export function EntryShell({
         <Link href="/legal/privacy" className="hover:text-white/50 transition-colors">
           Privacy
         </Link>
-      </footer>
+      </motion.footer>
     </div>
   );
 }

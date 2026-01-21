@@ -1,42 +1,52 @@
 /**
  * Section Motion System for Evolving Entry Flow
+ * ENHANCED: Jan 21, 2026
  *
  * Motion variants for inline section transitions where sections
  * appear, lock to chips, and collapse rather than page-swap.
+ *
+ * Timing aligned with about-page: luxuriously slow, premium feel.
  */
 
 import { type Variants, type Transition } from 'framer-motion';
 import { EASE_PREMIUM, EASE_OUT, DURATION, SPRING_SNAPPY, SPRING_GENTLE } from './entry-motion';
 
 // ============================================
-// SECTION ENTER/EXIT VARIANTS
+// SECTION ENTER/EXIT VARIANTS (About-page aligned)
 // ============================================
 
-/** Section appears from below with height expansion */
+/** Section appears from below with height expansion - luxuriously slow */
 export const sectionEnterVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 24,
+    y: 30,
+    scale: 0.98,
+    filter: 'blur(4px)',
     height: 0,
     overflow: 'hidden',
   },
   animate: {
     opacity: 1,
     y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
     height: 'auto',
     overflow: 'visible',
     transition: {
-      opacity: { duration: DURATION.slow, ease: EASE_PREMIUM },
-      y: { duration: DURATION.slow, ease: EASE_PREMIUM },
-      height: { duration: DURATION.gentle, ease: EASE_PREMIUM },
-      overflow: { delay: DURATION.slow },
-      staggerChildren: 0.1,
-      delayChildren: 0.15,
+      opacity: { duration: DURATION.dramatic, ease: EASE_PREMIUM },
+      y: { duration: DURATION.dramatic, ease: EASE_PREMIUM },
+      scale: { duration: DURATION.dramatic, ease: EASE_PREMIUM },
+      filter: { duration: DURATION.slow, ease: EASE_PREMIUM },
+      height: { duration: DURATION.slow, ease: EASE_PREMIUM },
+      overflow: { delay: DURATION.gentle },
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
     },
   },
   exit: {
     opacity: 0,
-    y: -12,
+    y: -16,
+    scale: 0.98,
     transition: {
       duration: DURATION.smooth,
       ease: EASE_OUT,
@@ -44,17 +54,17 @@ export const sectionEnterVariants: Variants = {
   },
 };
 
-/** Section child element stagger variants */
+/** Section child element stagger variants - slower for premium feel */
 export const sectionChildVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 16,
+    y: 20,
   },
   animate: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: DURATION.gentle,
+      duration: DURATION.slow,
       ease: EASE_PREMIUM,
     },
   },
@@ -263,40 +273,42 @@ export const errorInlineVariants: Variants = {
 };
 
 // ============================================
-// ARRIVAL SECTION
+// ARRIVAL SECTION (About-page celebration feel)
 // ============================================
 
-/** Arrival content reveal with scale */
+/** Arrival content reveal with scale - maximum drama */
 export const arrivalRevealVariants: Variants = {
   initial: {
     opacity: 0,
-    scale: 0.94,
-    y: 30,
+    scale: 0.92,
+    y: 40,
+    filter: 'blur(8px)',
   },
   animate: {
     opacity: 1,
     scale: 1,
     y: 0,
+    filter: 'blur(0px)',
     transition: {
-      duration: DURATION.dramatic,
+      duration: DURATION.epic,
       ease: EASE_PREMIUM,
-      staggerChildren: 0.15,
-      delayChildren: 0.4,
+      staggerChildren: 0.2,
+      delayChildren: 0.5,
     },
   },
 };
 
-/** Arrival glow pulse */
+/** Arrival glow pulse - slow, luxurious */
 export const arrivalGlowVariants: Variants = {
   initial: {
     opacity: 0,
-    scale: 0.7,
+    scale: 0.6,
   },
   animate: {
-    opacity: [0, 0.5, 0.25],
-    scale: [0.7, 1.15, 1],
+    opacity: [0, 0.6, 0.3],
+    scale: [0.6, 1.2, 1],
     transition: {
-      duration: 2.5,
+      duration: 3,
       ease: 'easeOut',
     },
   },

@@ -2,14 +2,18 @@
 
 /**
  * EvolvingEntry - Single-page evolving entry flow orchestrator
- * REDESIGNED: Jan 21, 2026
+ * ENHANCED: Jan 21, 2026
  *
  * Coordinates all sections in a single scrollable page that evolves
  * as the user progresses through entry.
  *
  * Flow: school → email → code → role → identity → arrival
  *
- * Void aesthetic: Clean, minimal, confident. Premium feeling throughout.
+ * Motion philosophy (aligned with /about):
+ * - Luxuriously slow hero entrance (1.2s)
+ * - Word-by-word text reveals
+ * - Animated line separators
+ * - Gold glow for emotional moments
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -25,7 +29,16 @@ import {
   ArrivalSection,
   AlumniWaitlistSection,
 } from './sections';
-import { DURATION, EASE_PREMIUM, type EmotionalState } from './motion/entry-motion';
+import {
+  DURATION,
+  EASE_PREMIUM,
+  heroEntranceVariants,
+  subtitleEntranceVariants,
+  lineDrawVariants,
+  wordRevealVariants,
+  createWordReveal,
+  type EmotionalState,
+} from './motion/entry-motion';
 
 // Campus configuration
 const CAMPUS_CONFIG = {
@@ -113,25 +126,67 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
   // Domain for email section
   const activeDomain = entry.data.school?.domain || CAMPUS_CONFIG.domain;
 
+  // Word-by-word reveal for headline
+  const headlineWords = ['Enter', 'HIVE'];
+  const subtitleWords = ['Your', 'campus', 'is', 'waiting.'];
+
   return (
     <div className="space-y-6">
       {/* Header - only show when not in terminal state */}
       {!isTerminal && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
-          className="mb-8"
+          variants={heroEntranceVariants}
+          initial="initial"
+          animate="animate"
+          className="mb-10"
         >
+          {/* Word-by-word headline */}
           <h1
-            className="text-[32px] md:text-[40px] font-semibold tracking-tight text-white leading-[1.1]"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-[36px] md:text-[44px] font-semibold tracking-tight text-white leading-[1.0]"
+            style={{
+              fontFamily: 'var(--font-display)',
+              textShadow: '0 0 80px rgba(255, 215, 0, 0.06)',
+            }}
           >
-            Enter HIVE
+            {headlineWords.map((word, i) => (
+              <motion.span
+                key={i}
+                className="inline-block mr-[0.25em]"
+                variants={wordRevealVariants}
+                initial="initial"
+                animate="animate"
+                transition={createWordReveal(i, 0.12)}
+              >
+                {word}
+              </motion.span>
+            ))}
           </h1>
-          <p className="mt-2 text-[15px] text-white/40">
-            Your campus is waiting.
+
+          {/* Subtitle with word reveal */}
+          <p className="mt-3 text-[16px] text-white/40">
+            {subtitleWords.map((word, i) => (
+              <motion.span
+                key={i}
+                className="inline-block mr-[0.2em]"
+                variants={wordRevealVariants}
+                initial="initial"
+                animate="animate"
+                transition={createWordReveal(i, 0.06)}
+                style={{ transitionDelay: `${0.4 + i * 0.06}s` }}
+              >
+                {word}
+              </motion.span>
+            ))}
           </p>
+
+          {/* Animated separator line */}
+          <motion.div
+            className="mt-8 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent"
+            variants={lineDrawVariants}
+            initial="initial"
+            animate="animate"
+            style={{ transformOrigin: 'left' }}
+          />
         </motion.div>
       )}
 

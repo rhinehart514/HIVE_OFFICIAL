@@ -1,11 +1,18 @@
 /**
- * Entry Flow Motion System - LOCKED 2026-01-14
+ * Entry Flow Motion System - ENHANCED 2026-01-21
  *
  * Centralized motion variants for the /enter flow
- * Maximum craft: Stripe/Linear polish level
+ * Maximum craft: About page level polish
  *
  * All entry components should import motion configs from here
  * to ensure consistency and avoid duplication.
+ *
+ * MOTION PHILOSOPHY:
+ * - Luxuriously slow (1-1.2s for major transitions)
+ * - Word-by-word reveals for headlines
+ * - Animated lines that draw in
+ * - Subtle blur/scale for depth
+ * - Gold glow for emotional moments
  */
 
 import { type Variants, type Transition } from 'framer-motion';
@@ -45,18 +52,19 @@ export const SPRING_GENTLE = {
 };
 
 // ============================================
-// DURATION CONSTANTS
+// DURATION CONSTANTS (About-page aligned)
 // ============================================
 
 export const DURATION = {
   instant: 0,
   snap: 0.2,
-  fast: 0.25,
-  quick: 0.35,
-  smooth: 0.5,      // THE DEFAULT — luxuriously slow
-  gentle: 0.7,
-  slow: 0.9,
-  dramatic: 1.2,
+  fast: 0.3,
+  quick: 0.4,
+  smooth: 0.6,      // Slightly longer for smoothness
+  gentle: 0.8,
+  slow: 1.0,        // Full second for important reveals
+  dramatic: 1.2,    // Hero-level timing
+  epic: 1.5,        // Maximum drama
   breathe: 4,
 } as const;
 
@@ -273,3 +281,123 @@ export const premiumTransition = (duration: number = DURATION.smooth): Transitio
 
 /** Create spring transition */
 export const springTransition = (config = SPRING_SNAPPY): Transition => config;
+
+// ============================================
+// ABOUT-PAGE MOTION PATTERNS
+// ============================================
+
+/** Animated horizontal line variants (draws in from center) */
+export const lineDrawVariants: Variants = {
+  initial: {
+    scaleX: 0,
+    opacity: 0,
+  },
+  animate: {
+    scaleX: 1,
+    opacity: 1,
+    transition: {
+      duration: DURATION.epic,
+      ease: EASE_PREMIUM,
+    },
+  },
+};
+
+/** Word reveal - for animating individual words */
+export const wordRevealVariants: Variants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+  },
+};
+
+/** Create word reveal with custom stagger delay */
+export const createWordReveal = (index: number, stagger: number = 0.08): Transition => ({
+  duration: DURATION.gentle,
+  delay: index * stagger,
+  ease: EASE_PREMIUM,
+});
+
+/** Hero entrance with blur and scale (about-page style) */
+export const heroEntranceVariants: Variants = {
+  initial: {
+    opacity: 0,
+    y: 40,
+    scale: 0.98,
+    filter: 'blur(8px)',
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: {
+      duration: DURATION.dramatic,
+      ease: EASE_PREMIUM,
+    },
+  },
+};
+
+/** Subtitle entrance (delayed, softer) */
+export const subtitleEntranceVariants: Variants = {
+  initial: {
+    opacity: 0,
+    y: 20,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: DURATION.slow,
+      delay: 0.3,
+      ease: EASE_PREMIUM,
+    },
+  },
+};
+
+/** Container border reveal (about-page AnimatedContainer style) */
+export const borderRevealVariants = {
+  top: {
+    initial: { scaleX: 0 },
+    animate: {
+      scaleX: 1,
+      transition: { duration: DURATION.dramatic, ease: EASE_PREMIUM },
+    },
+  },
+  bottom: {
+    initial: { scaleX: 0 },
+    animate: {
+      scaleX: 1,
+      transition: { duration: DURATION.dramatic, delay: 0.1, ease: EASE_PREMIUM },
+    },
+  },
+  left: {
+    initial: { scaleY: 0 },
+    animate: {
+      scaleY: 1,
+      transition: { duration: DURATION.dramatic, delay: 0.2, ease: EASE_PREMIUM },
+    },
+  },
+  right: {
+    initial: { scaleY: 0 },
+    animate: {
+      scaleY: 1,
+      transition: { duration: DURATION.dramatic, delay: 0.3, ease: EASE_PREMIUM },
+    },
+  },
+};
+
+/** Scroll indicator pulse */
+export const scrollIndicatorVariants: Variants = {
+  animate: {
+    scaleY: [1, 0.5, 1],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: 'easeInOut',
+    },
+  },
+};
