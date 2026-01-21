@@ -51,34 +51,27 @@ export const SIDEBAR_TOKENS = {
   collapsedWidth: 64,
   margin: 12,
 
-  // Container — Deep dark with subtle warmth
-  containerRadius: 16,
+  // Container — Deep dark, minimal
+  containerRadius: 14,
   containerBg: 'rgba(10, 10, 10, 0.95)',
-  containerBorder: 'rgba(255, 255, 255, 0.05)',
-  containerShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02) inset',
+  containerBorder: 'rgba(255, 255, 255, 0.04)',
+  containerShadow: '0 4px 24px rgba(0, 0, 0, 0.4)',
 
-  // Items — Refined hover and active states
-  itemRadius: 10,
-  itemHoverBg: 'rgba(255, 255, 255, 0.04)',
-  itemActiveBg: 'rgba(255, 215, 0, 0.06)',
-  itemActiveGlow: '0 0 20px rgba(255, 215, 0, 0.08)',
+  // Items — Subtle, no gold backgrounds
+  itemRadius: 8,
+  itemHoverBg: 'rgba(255, 255, 255, 0.03)',
+  itemActiveBg: 'rgba(255, 255, 255, 0.04)',
 
-  // Text — Refined contrast hierarchy
+  // Text — Clean hierarchy
   textPrimary: '#FAFAFA',
-  textSecondary: '#A3A3A3',
-  textMuted: '#5C5C5C',
+  textSecondary: '#A1A1A1',
+  textMuted: '#666666',
 
-  // Accent — Gold for active/earned states
-  accent: '#FFD700',
-  accentDim: 'rgba(255, 215, 0, 0.4)',
-  accentGlow: 'rgba(255, 215, 0, 0.12)',
-
-  // Gold — Full palette
+  // Gold — Indicator only, NOT backgrounds
   gold: '#FFD700',
-  goldDim: 'rgba(255, 215, 0, 0.4)',
-  goldGlow: 'rgba(255, 215, 0, 0.15)',
+  goldDim: 'rgba(255, 215, 0, 0.5)',
 
-  // Motion — Aligned with premium feel
+  // Motion
   spring: SPRING_SNAPPY,
   springSoft: SPRING_GENTLE,
 } as const;
@@ -89,98 +82,12 @@ const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visibl
 // MOTION VARIANTS
 // ============================================
 
-/** Sidebar container entrance */
-const sidebarEntranceVariants: Variants = {
-  initial: {
-    opacity: 0,
-    x: -20,
-    scale: 0.98,
-  },
-  animate: {
-    opacity: 1,
-    x: 0,
-    scale: 1,
-    transition: {
-      duration: DURATION.gentle,
-      ease: EASE_PREMIUM,
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
-    },
-  },
-};
-
 /** Individual item stagger entrance */
 const itemEntranceVariants: Variants = {
-  initial: {
-    opacity: 0,
-    x: -12,
-  },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    x: 0,
-    transition: {
-      duration: DURATION.smooth,
-      ease: EASE_PREMIUM,
-    },
-  },
-};
-
-/** Label fade for collapse/expand */
-const labelVariants: Variants = {
-  collapsed: {
-    opacity: 0,
-    width: 0,
-    marginLeft: 0,
-    transition: {
-      duration: DURATION.quick,
-      ease: EASE_PREMIUM,
-    },
-  },
-  expanded: {
-    opacity: 1,
-    width: 'auto',
-    marginLeft: 12,
-    transition: {
-      duration: DURATION.smooth,
-      ease: EASE_PREMIUM,
-      delay: 0.1,
-    },
-  },
-};
-
-/** Section header fade */
-const sectionHeaderVariants: Variants = {
-  initial: { opacity: 0, y: -8 },
-  animate: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: DURATION.smooth,
-      ease: EASE_PREMIUM,
-    },
-  },
-  exit: {
-    opacity: 0,
-    y: -8,
-    transition: {
-      duration: DURATION.fast,
-    },
-  },
-};
-
-/** Active indicator glow */
-const activeGlowVariants: Variants = {
-  inactive: {
-    opacity: 0,
-    scale: 0.8,
-  },
-  active: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: DURATION.smooth,
-      ease: EASE_PREMIUM,
-    },
+    transition: { duration: DURATION.smooth, ease: EASE_PREMIUM },
   },
 };
 
@@ -220,7 +127,6 @@ export function GlobalSidebar({
   onCollapsedChange,
 }: GlobalSidebarProps) {
   const [collapsed, setCollapsedState] = React.useState(defaultCollapsed);
-  const [mounted, setMounted] = React.useState(false);
   const reducedMotion = useReducedMotion() ?? false;
 
   const setCollapsed = React.useCallback((value: boolean) => {
@@ -232,51 +138,34 @@ export function GlobalSidebar({
     setCollapsedState(defaultCollapsed);
   }, [defaultCollapsed]);
 
-  // Track mount for entrance animation
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const width = collapsed ? SIDEBAR_TOKENS.collapsedWidth : SIDEBAR_TOKENS.width;
-  const widthTransition = reducedMotion
-    ? { duration: 0 }
-    : { duration: DURATION.smooth, ease: EASE_PREMIUM };
 
   return (
     <SidebarContext.Provider value={{ collapsed, setCollapsed, reducedMotion }}>
       <motion.aside
         className={cn('fixed z-40 flex flex-col', className)}
-        variants={sidebarEntranceVariants}
-        initial={reducedMotion ? 'animate' : 'initial'}
-        animate="animate"
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0, width }}
+        transition={{
+          opacity: { duration: 0.3, ease: EASE_PREMIUM },
+          x: { duration: 0.3, ease: EASE_PREMIUM },
+          width: { duration: 0.2, ease: EASE_PREMIUM },
+        }}
         style={{
           top: SIDEBAR_TOKENS.margin,
           left: SIDEBAR_TOKENS.margin,
           bottom: SIDEBAR_TOKENS.margin,
-          width,
           background: SIDEBAR_TOKENS.containerBg,
           borderRadius: SIDEBAR_TOKENS.containerRadius,
           border: `1px solid ${SIDEBAR_TOKENS.containerBorder}`,
           boxShadow: SIDEBAR_TOKENS.containerShadow,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       >
-        {/* Subtle top edge highlight */}
-        <div
-          className="absolute top-0 left-4 right-4 h-px pointer-events-none"
-          style={{
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
-          }}
-        />
-
-        <motion.div
-          className="flex flex-col h-full overflow-hidden"
-          animate={{ width }}
-          transition={widthTransition}
-        >
+        <div className="flex flex-col h-full overflow-hidden">
           {children}
-        </motion.div>
+        </div>
       </motion.aside>
     </SidebarContext.Provider>
   );
@@ -294,76 +183,61 @@ export interface IdentityCardProps {
 }
 
 export function IdentityCard({ name, handle, avatarUrl, onProfileClick }: IdentityCardProps) {
-  const { collapsed, reducedMotion } = useGlobalSidebar();
+  const { collapsed } = useGlobalSidebar();
 
   return (
     <motion.div
-      className="px-3 pt-3 pb-2"
+      className="px-3 pt-2 pb-1"
       variants={itemEntranceVariants}
     >
       <button
         onClick={onProfileClick}
         className={cn(
-          'w-full flex items-center rounded-xl px-2 py-2',
-          'transition-all duration-300',
-          'hover:bg-white/[0.04]',
+          'w-full flex items-center rounded-lg px-2 py-2',
+          'transition-colors duration-200',
+          'hover:bg-white/[0.03]',
           FOCUS_RING
         )}
         style={{ minHeight: 40 }}
       >
-        {/* Avatar with subtle ring */}
-        <motion.div
-          className="relative flex-shrink-0"
-          whileHover={reducedMotion ? {} : { scale: 1.05 }}
-          transition={{ duration: 0.2, ease: EASE_PREMIUM }}
+        {/* Avatar */}
+        <div
+          className="flex-shrink-0 rounded-lg overflow-hidden flex items-center justify-center"
+          style={{
+            width: 32,
+            height: 32,
+            background: avatarUrl ? undefined : '#1A1A1A',
+            border: '1px solid rgba(255,255,255,0.06)',
+          }}
         >
-          <div
-            className="rounded-lg overflow-hidden flex items-center justify-center"
-            style={{
-              width: 34,
-              height: 34,
-              background: avatarUrl ? undefined : 'linear-gradient(135deg, #1F1F1F 0%, #171717 100%)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-            }}
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={name || 'Profile'} className="w-full h-full object-cover" />
-            ) : (
-              <span style={{ color: SIDEBAR_TOKENS.textSecondary, fontSize: 13, fontWeight: 600 }}>
-                {name?.charAt(0)?.toUpperCase() || '?'}
-              </span>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name || 'Profile'} className="w-full h-full object-cover" />
+          ) : (
+            <span style={{ color: SIDEBAR_TOKENS.textSecondary, fontSize: 13, fontWeight: 600 }}>
+              {name?.charAt(0)?.toUpperCase() || '?'}
+            </span>
+          )}
+        </div>
+
+        {/* Name & Handle */}
+        {!collapsed && (
+          <div className="flex-1 min-w-0 text-left ml-2.5">
+            <div
+              className="text-[13px] font-medium truncate leading-tight"
+              style={{ color: SIDEBAR_TOKENS.textPrimary }}
+            >
+              {name || 'Anonymous'}
+            </div>
+            {handle && (
+              <div
+                className="text-[11px] truncate leading-tight"
+                style={{ color: SIDEBAR_TOKENS.textMuted }}
+              >
+                @{handle}
+              </div>
             )}
           </div>
-        </motion.div>
-
-        {/* Name & Handle - animated collapse */}
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.div
-              className="flex-1 min-w-0 text-left overflow-hidden"
-              variants={labelVariants}
-              initial="collapsed"
-              animate="expanded"
-              exit="collapsed"
-            >
-              <div
-                className="text-[13px] font-medium truncate leading-tight"
-                style={{ color: SIDEBAR_TOKENS.textPrimary }}
-              >
-                {name || 'Anonymous'}
-              </div>
-              {handle && (
-                <div
-                  className="text-[11px] truncate leading-tight mt-0.5"
-                  style={{ color: SIDEBAR_TOKENS.textMuted }}
-                >
-                  @{handle}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        )}
       </button>
     </motion.div>
   );
@@ -375,17 +249,9 @@ export function IdentityCard({ name, handle, avatarUrl, onProfileClick }: Identi
 
 export function SidebarSpacer() {
   return (
-    <motion.div
-      className="mx-4 my-3"
-      variants={itemEntranceVariants}
-    >
-      <div
-        className="h-px"
-        style={{
-          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)',
-        }}
-      />
-    </motion.div>
+    <div className="mx-4 my-2">
+      <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+    </div>
   );
 }
 
@@ -400,12 +266,7 @@ export interface NavCardProps {
 export function NavCard({ children }: NavCardProps) {
   return (
     <nav className="px-3 py-1">
-      <motion.div
-        className="space-y-0.5"
-        variants={itemEntranceVariants}
-      >
-        {children}
-      </motion.div>
+      <div className="space-y-0.5">{children}</div>
     </nav>
   );
 }
@@ -435,99 +296,72 @@ export function NavItem({ icon, label, isActive, badge, onClick }: NavItemProps)
     <motion.button
       onClick={handleClick}
       variants={itemEntranceVariants}
-      whileHover={reducedMotion ? {} : { x: 2 }}
-      transition={{ duration: 0.2, ease: EASE_PREMIUM }}
       className={cn(
-        'relative w-full flex items-center rounded-xl',
-        'transition-all duration-300',
+        'relative w-full flex items-center rounded-lg',
+        'transition-colors duration-200',
+        'hover:bg-white/[0.03]',
         FOCUS_RING
       )}
       style={{
-        padding: collapsed ? '10px' : '10px 12px',
+        padding: collapsed ? '10px' : '9px 12px',
         justifyContent: collapsed ? 'center' : 'flex-start',
         background: isActive ? SIDEBAR_TOKENS.itemActiveBg : 'transparent',
-        boxShadow: isActive ? SIDEBAR_TOKENS.itemActiveGlow : 'none',
       }}
     >
-      {/* Active indicator bar */}
-      <AnimatePresence>
-        {isActive && (
-          <motion.div
-            className="absolute left-0 top-1/2 w-[3px] rounded-full"
-            variants={activeGlowVariants}
-            initial="inactive"
-            animate="active"
-            exit="inactive"
-            style={{
-              height: 16,
-              transform: 'translateY(-50%)',
-              background: SIDEBAR_TOKENS.gold,
-              boxShadow: `0 0 8px ${SIDEBAR_TOKENS.goldGlow}`,
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* Active indicator — small gold bar */}
+      {isActive && (
+        <div
+          className="absolute left-0 top-1/2 w-[2px] rounded-full"
+          style={{
+            height: 14,
+            transform: 'translateY(-50%)',
+            background: SIDEBAR_TOKENS.gold,
+          }}
+        />
+      )}
 
       {/* Icon */}
       <div
-        className="flex items-center justify-center flex-shrink-0 transition-colors duration-300"
+        className="flex items-center justify-center flex-shrink-0 transition-colors duration-200"
         style={{
-          width: 22,
-          height: 22,
+          width: 20,
+          height: 20,
           color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textMuted,
         }}
       >
         <div className="relative">
           {icon}
           {collapsed && showBadge && (
-            <motion.span
-              className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-full"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              style={{
-                background: SIDEBAR_TOKENS.gold,
-                boxShadow: `0 0 6px ${SIDEBAR_TOKENS.goldDim}`,
-              }}
+            <span
+              className="absolute -top-1 -right-1 w-2 h-2 rounded-full"
+              style={{ background: SIDEBAR_TOKENS.gold }}
             />
           )}
         </div>
       </div>
 
-      {/* Label - animated collapse */}
-      <AnimatePresence mode="wait">
-        {!collapsed && (
-          <motion.span
-            className="flex-1 text-[13px] font-medium text-left whitespace-nowrap overflow-hidden"
-            variants={labelVariants}
-            initial="collapsed"
-            animate="expanded"
-            exit="collapsed"
-            style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
-          >
-            {label}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {/* Label */}
+      {!collapsed && (
+        <span
+          className="flex-1 text-[13px] font-medium text-left ml-3"
+          style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
+        >
+          {label}
+        </span>
+      )}
 
-      {/* Badge - only when expanded */}
-      <AnimatePresence>
-        {!collapsed && showBadge && (
-          <motion.span
-            className="text-[10px] font-semibold rounded-md px-1.5 py-0.5 min-w-[20px] text-center"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: DURATION.quick, ease: EASE_PREMIUM }}
-            style={{
-              background: SIDEBAR_TOKENS.goldGlow,
-              color: SIDEBAR_TOKENS.gold,
-              border: `1px solid ${SIDEBAR_TOKENS.goldDim}`,
-            }}
-          >
-            {badge > 99 ? '99+' : badge}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {/* Badge */}
+      {!collapsed && showBadge && (
+        <span
+          className="text-[10px] font-medium rounded px-1.5 py-0.5 min-w-[18px] text-center"
+          style={{
+            background: 'rgba(255, 215, 0, 0.15)',
+            color: SIDEBAR_TOKENS.gold,
+          }}
+        >
+          {badge > 99 ? '99+' : badge}
+        </span>
+      )}
     </motion.button>
   );
 }
@@ -542,7 +376,7 @@ export interface SpacesCardProps {
 }
 
 export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
-  const { collapsed, reducedMotion } = useGlobalSidebar();
+  const { collapsed } = useGlobalSidebar();
   const hasChildren = React.Children.count(children) > 0;
 
   return (
@@ -551,87 +385,47 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
       variants={itemEntranceVariants}
     >
       {/* Header */}
-      <AnimatePresence mode="wait">
-        {!collapsed && (
-          <motion.div
-            className="px-4 py-2.5"
-            variants={sectionHeaderVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
+      {!collapsed && (
+        <div className="px-4 py-2">
+          <span
+            className="text-[10px] font-semibold uppercase tracking-wider"
+            style={{ color: SIDEBAR_TOKENS.textMuted }}
           >
-            <span
-              className="text-[10px] font-semibold uppercase tracking-[0.08em]"
-              style={{ color: SIDEBAR_TOKENS.textMuted }}
-            >
-              Spaces
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Spaces
+          </span>
+        </div>
+      )}
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-0.5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto px-3 space-y-0.5">
         {hasChildren ? children : (
-          <AnimatePresence mode="wait">
-            {!collapsed && (
-              <motion.div
-                className="py-8 text-center"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
-              >
-                <p
-                  className="text-[12px] mb-1"
-                  style={{ color: SIDEBAR_TOKENS.textMuted }}
-                >
-                  Find your people
-                </p>
-                <p
-                  className="text-[11px]"
-                  style={{ color: SIDEBAR_TOKENS.textMuted, opacity: 0.6 }}
-                >
-                  Browse spaces to join
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          !collapsed && (
+            <div className="py-6 text-center">
+              <p className="text-[12px]" style={{ color: SIDEBAR_TOKENS.textMuted }}>
+                No spaces yet
+              </p>
+            </div>
+          )
         )}
       </div>
 
       {/* Browse button */}
       {onBrowseClick && (
-        <div className="p-3 pt-1">
-          <motion.button
+        <div className="p-3">
+          <button
             onClick={onBrowseClick}
-            whileHover={reducedMotion ? {} : { scale: 1.02 }}
-            whileTap={reducedMotion ? {} : { scale: 0.98 }}
-            transition={{ duration: 0.15, ease: EASE_PREMIUM }}
             className={cn(
-              'w-full flex items-center justify-center gap-2 py-2.5 rounded-xl',
+              'w-full flex items-center justify-center gap-2 py-2 rounded-lg',
               'text-[12px] font-medium',
-              'transition-colors duration-300',
-              'hover:bg-white/[0.04]',
-              'border border-white/[0.04]',
+              'transition-colors duration-200',
+              'hover:bg-white/[0.03]',
               FOCUS_RING
             )}
-            style={{ color: SIDEBAR_TOKENS.textSecondary }}
+            style={{ color: SIDEBAR_TOKENS.textMuted }}
           >
-            <span className="text-[14px] opacity-60">+</span>
-            <AnimatePresence mode="wait">
-              {!collapsed && (
-                <motion.span
-                  variants={labelVariants}
-                  initial="collapsed"
-                  animate="expanded"
-                  exit="collapsed"
-                >
-                  Browse
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            <span className="text-[14px]">+</span>
+            {!collapsed && <span>Browse</span>}
+          </button>
         </div>
       )}
     </motion.div>
@@ -652,7 +446,7 @@ export interface SpaceItemProps {
 }
 
 export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick }: SpaceItemProps) {
-  const { collapsed, setCollapsed, reducedMotion } = useGlobalSidebar();
+  const { collapsed, setCollapsed } = useGlobalSidebar();
 
   const handleClick = () => {
     if (collapsed) setCollapsed(false);
@@ -663,49 +457,39 @@ export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick
     <motion.button
       onClick={handleClick}
       variants={itemEntranceVariants}
-      whileHover={reducedMotion ? {} : { x: 2 }}
-      transition={{ duration: 0.2, ease: EASE_PREMIUM }}
       className={cn(
-        'relative w-full flex items-center rounded-xl',
-        'transition-all duration-300',
+        'relative w-full flex items-center rounded-lg',
+        'transition-colors duration-200',
+        'hover:bg-white/[0.03]',
         FOCUS_RING
       )}
       title={collapsed ? name : undefined}
       style={{
-        padding: collapsed ? '8px' : '8px 12px',
+        padding: collapsed ? '8px' : '7px 12px',
         justifyContent: collapsed ? 'center' : 'flex-start',
         background: isActive ? SIDEBAR_TOKENS.itemActiveBg : 'transparent',
-        boxShadow: isActive ? SIDEBAR_TOKENS.itemActiveGlow : 'none',
       }}
     >
       {/* Active indicator */}
-      <AnimatePresence>
-        {isActive && (
-          <motion.div
-            className="absolute left-0 top-1/2 w-[2px] rounded-full"
-            variants={activeGlowVariants}
-            initial="inactive"
-            animate="active"
-            exit="inactive"
-            style={{
-              height: 12,
-              transform: 'translateY(-50%)',
-              background: SIDEBAR_TOKENS.gold,
-              boxShadow: `0 0 6px ${SIDEBAR_TOKENS.goldGlow}`,
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {isActive && (
+        <div
+          className="absolute left-0 top-1/2 w-[2px] rounded-full"
+          style={{
+            height: 12,
+            transform: 'translateY(-50%)',
+            background: SIDEBAR_TOKENS.gold,
+          }}
+        />
+      )}
 
       {/* Avatar */}
       <div
-        className="relative flex-shrink-0 rounded-lg flex items-center justify-center overflow-hidden"
+        className="relative flex-shrink-0 rounded-md flex items-center justify-center overflow-hidden"
         style={{
-          width: 26,
-          height: 26,
-          background: avatarUrl ? undefined : 'linear-gradient(135deg, #1F1F1F 0%, #171717 100%)',
+          width: 24,
+          height: 24,
+          background: avatarUrl ? undefined : '#1A1A1A',
           border: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
         }}
       >
         {avatarUrl ? (
@@ -720,33 +504,22 @@ export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick
 
         {/* Unread indicator */}
         {hasUnread && (
-          <motion.span
-            className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            style={{
-              background: SIDEBAR_TOKENS.gold,
-              boxShadow: `0 0 4px ${SIDEBAR_TOKENS.goldDim}`,
-            }}
+          <span
+            className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full"
+            style={{ background: SIDEBAR_TOKENS.gold }}
           />
         )}
       </div>
 
-      {/* Name - animated collapse */}
-      <AnimatePresence mode="wait">
-        {!collapsed && (
-          <motion.span
-            className="flex-1 text-[12px] font-medium text-left truncate"
-            variants={labelVariants}
-            initial="collapsed"
-            animate="expanded"
-            exit="collapsed"
-            style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
-          >
-            {name}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {/* Name */}
+      {!collapsed && (
+        <span
+          className="flex-1 text-[12px] font-medium text-left truncate ml-2.5"
+          style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
+        >
+          {name}
+        </span>
+      )}
     </motion.button>
   );
 }
@@ -756,49 +529,32 @@ export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick
 // ============================================
 
 export function SidebarCollapseToggle() {
-  const { collapsed, setCollapsed, reducedMotion } = useGlobalSidebar();
+  const { collapsed, setCollapsed } = useGlobalSidebar();
 
   return (
-    <motion.div
-      className="p-3 mt-auto"
-      variants={itemEntranceVariants}
-    >
-      <motion.button
+    <div className="p-3 mt-auto">
+      <button
         onClick={() => setCollapsed(!collapsed)}
-        whileHover={reducedMotion ? {} : { scale: 1.02 }}
-        whileTap={reducedMotion ? {} : { scale: 0.98 }}
-        transition={{ duration: 0.15, ease: EASE_PREMIUM }}
         className={cn(
-          'w-full flex items-center justify-center gap-2 py-2 rounded-xl',
-          'transition-colors duration-300',
-          'hover:bg-white/[0.04]',
+          'w-full flex items-center justify-center gap-2 py-2 rounded-lg',
+          'transition-colors duration-200',
+          'hover:bg-white/[0.03]',
           FOCUS_RING
         )}
         style={{ color: SIDEBAR_TOKENS.textMuted }}
         title={collapsed ? 'Expand sidebar [' : 'Collapse sidebar ['}
       >
-        <motion.div
-          animate={{ rotate: collapsed ? 180 : 0 }}
-          transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
-          className="flex items-center justify-center text-[13px]"
+        <span
+          className="text-[13px] transition-transform duration-200"
+          style={{ transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
         >
           «
-        </motion.div>
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.span
-              className="text-[11px] font-medium"
-              variants={labelVariants}
-              initial="collapsed"
-              animate="expanded"
-              exit="collapsed"
-            >
-              Collapse
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
-    </motion.div>
+        </span>
+        {!collapsed && (
+          <span className="text-[11px] font-medium">Collapse</span>
+        )}
+      </button>
+    </div>
   );
 }
 
