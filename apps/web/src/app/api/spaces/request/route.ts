@@ -1,6 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { authenticationLayer } from '@/lib/middleware-utils';
-import { getFirestore } from '@hive/firebase/server';
+import { NextResponse } from 'next/server';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
+import {
+  withAuthValidationAndErrors,
+  getUserId,
+  getCampusId,
+  type AuthenticatedRequest,
+} from '@/lib/middleware';
 
 /**
  * POST /api/spaces/request
@@ -8,15 +14,9 @@ import { getFirestore } from '@hive/firebase/server';
  * Request a new space that doesn't exist yet.
  * Creates a space request record for admins to review.
  */
-export async function POST(request: NextRequest) {
-  // Authenticate user
-  const authResult = await authenticationLayer(request);
-  if (!authResult.authenticated || !authResult.userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
+export const POST = withAuthValidationAndErrors(async (request: AuthenticatedRequest) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
   try {
     const body = await request.json();
@@ -29,16 +29,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = getFirestore();
-
     // Create space request
-    const requestRef = await db.collection('spaceRequests').add({
+    const requestRef = await dbAdmin.collection('spaceRequests').add({
       requestedName: requestedName.trim(),
       message: message || '',
-      requestedBy: authResult.userId,
+      requestedBy: userId,
       requestedAt: new Date().toISOString(),
       status: 'pending', // pending, approved, rejected
-      campusId: authResult.campusId || 'default',
+      campusId: campusId,
+    });
+
+    logger.info('Space request created', {
+      requestId: requestRef.id,
+      requestedName,
+      userId,
+      campusId,
     });
 
     return NextResponse.json({
@@ -46,10 +51,10 @@ export async function POST(request: NextRequest) {
       requestId: requestRef.id,
     });
   } catch (error) {
-    console.error('Error creating space request:', error);
+    logger.error('Error creating space request', { error, userId, campusId });
     return NextResponse.json(
       { error: 'Failed to create space request' },
       { status: 500 }
     );
   }
-}
+});
