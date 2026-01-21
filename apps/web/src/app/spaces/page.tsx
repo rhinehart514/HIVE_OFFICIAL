@@ -229,6 +229,9 @@ export default function SpacesPage() {
           selectedCategory={selectedCategory}
           router={router}
         />
+
+        {/* Request Space CTA */}
+        <RequestSpaceSection searchQuery={searchQuery} />
       </div>
     </div>
   );
@@ -265,8 +268,8 @@ function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ duration: DURATION.gentle, delay: 0.3, ease: EASE }}
         >
-          Your campus life lives in layers. Official organizations, student clubs, Greek chapters, residential communities.
-          Join the spaces that define you.
+          Your identity evolves through the spaces you inhabit. Choose your residence. Join your orgs. Rush a chapter.
+          Each space you enter becomes part of who you are.
         </motion.p>
       </motion.div>
     </motion.div>
@@ -308,7 +311,6 @@ function YourSpacesSection({ spaces, router }: { spaces: Space[]; router: any })
               <p className="text-[13px] font-medium text-white truncate w-full">
                 {space.name}
               </p>
-              <Text size="xs" tone="muted">{space.memberCount} members</Text>
             </div>
           </motion.button>
         ))}
@@ -342,10 +344,10 @@ function CategoryRevealSection({
         transition={{ duration: DURATION.gentle, ease: EASE }}
       >
         <h2 className="text-[28px] font-semibold text-white mb-2">
-          Four layers of campus life
+          Build your identity in layers
         </h2>
         <p className="text-[15px] text-white/40">
-          Each space you join becomes part of your identity
+          First your dorm. Then your orgs. Maybe Greek life. Your campus identity evolves as you explore.
         </p>
       </motion.div>
 
@@ -431,19 +433,11 @@ function CategoryCard({
           {category.icon}
         </motion.div>
 
-        {/* Title and count */}
-        <div className="flex items-baseline justify-between mb-2">
+        {/* Title */}
+        <div className="mb-2">
           <h3 className="text-[18px] font-semibold text-white">
             {category.name}
           </h3>
-          <motion.span
-            className="text-[13px] font-medium text-white/40"
-            initial={{ opacity: 0, x: -10 }}
-            animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-            transition={{ duration: DURATION.quick, delay: 0.9 + index * 0.15, ease: EASE }}
-          >
-            {category.count}
-          </motion.span>
         </div>
 
         {/* Description */}
@@ -579,8 +573,7 @@ function AllSpacesSection({
                   </Text>
                 )}
               </div>
-              <div className="flex items-center gap-4">
-                <Text size="xs" tone="muted">{space.memberCount} members</Text>
+              <div className="flex items-center">
                 <ChevronRight className="w-4 h-4 text-white/30" />
               </div>
             </motion.button>
@@ -605,7 +598,6 @@ function AllSpacesSection({
                 <p className="text-[13px] font-medium text-white truncate">
                   {space.name}
                 </p>
-                <Text size="xs" tone="muted">{space.memberCount} members</Text>
               </div>
             </motion.button>
           ))}

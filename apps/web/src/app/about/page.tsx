@@ -765,42 +765,102 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.09}>
-                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-4">Average org lifecycle (current state):</p>
                       <div className="font-mono text-[13px] space-y-2">
-                        <div className="flex items-center gap-3">
+                        <motion.div
+                          className="flex items-center gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+                        >
                           <span className="text-white/60">May:</span>
-                          <div className="flex-1 bg-white/5 rounded-full h-2">
-                            <div className="bg-red-500/40 h-2 rounded-full" style={{ width: '15%' }}></div>
+                          <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-red-500/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '15%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 0.2, ease: EASE }}
+                            />
                           </div>
                           <span className="text-white/30">15% knowledge retained</span>
-                        </div>
-                        <div className="flex items-center gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-center gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+                        >
                           <span className="text-white/60">Sept:</span>
-                          <div className="flex-1 bg-white/5 rounded-full h-2">
-                            <div className="bg-orange-500/40 h-2 rounded-full" style={{ width: '35%' }}></div>
+                          <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-orange-500/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '35%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 0.3, ease: EASE }}
+                            />
                           </div>
                           <span className="text-white/30">35% rebuilt from scratch</span>
-                        </div>
-                        <div className="flex items-center gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-center gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+                        >
                           <span className="text-white/60">Dec:</span>
-                          <div className="flex-1 bg-white/5 rounded-full h-2">
-                            <div className="bg-yellow-500/40 h-2 rounded-full" style={{ width: '60%' }}></div>
+                          <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-yellow-500/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '60%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 0.4, ease: EASE }}
+                            />
                           </div>
                           <span className="text-white/30">60% back to baseline</span>
-                        </div>
-                        <div className="flex items-center gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-center gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+                        >
                           <span className="text-white/60">May:</span>
-                          <div className="flex-1 bg-white/5 rounded-full h-2">
-                            <div className="bg-red-500/40 h-2 rounded-full" style={{ width: '20%' }}></div>
+                          <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-red-500/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '20%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                            />
                           </div>
                           <span className="text-white/30">Repeat</span>
-                        </div>
+                        </motion.div>
                       </div>
-                      <p className="text-white/30 text-[13px] mt-4 italic">
+                      <motion.p
+                        className="text-white/30 text-[13px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: EASE }}
+                      >
                         Orgs spend 8-10 weeks every fall just getting back to where they were. That's not growth. That's treadmill.
-                      </p>
-                    </div>
+                      </motion.p>
+                    </motion.div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
@@ -817,65 +877,176 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.07}>
                     <div className="space-y-6 text-[16px] md:text-[18px]">
-                      <div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                      >
                         <p className="text-white/60 font-medium mb-2">Feed & Posts</p>
                         <p className="text-white/40">
                           Announcements, updates, discussions. Threaded so conversations don't turn into chaos. Media-rich—images, files, embeds. Everything archived and searchable. You can search for "budget meeting" from three years ago and actually find it.
                         </p>
-                      </div>
-                      <div>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                      >
                         <p className="text-white/60 font-medium mb-2">Events & Calendar</p>
                         <p className="text-white/40">
                           Schedule meetings, track RSVPs, manage attendance. Events sync with personal calendars. No more "did you get the GroupMe message?" Recurring events, automated reminders, attendance analytics. You can actually see which events members show up to.
                         </p>
-                      </div>
-                      <div>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                      >
                         <p className="text-white/60 font-medium mb-2">Resources & Files</p>
                         <p className="text-white/40">
                           Upload docs, create wikis, organize by folder. Version history tracked automatically. No more "the link broke" or "it's on Sarah's laptop and she graduated." Knowledge becomes institutional memory instead of personal property scattered across Google Drives.
                         </p>
-                      </div>
-                      <div>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                      >
                         <p className="text-white/60 font-medium mb-2">Members & Roles</p>
                         <p className="text-white/40">
                           Directory of everyone. Custom roles with granular permissions. Leadership handoffs become seamless—just reassign the role. New president gets access to everything immediately. No more "I don't know the password" or "the treasurer had that in their personal Drive."
                         </p>
-                      </div>
-                      <div>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+                      >
                         <p className="text-white/60 font-medium mb-2">Analytics & Insights</p>
                         <p className="text-white/40">
                           Track engagement, event attendance, member activity. See what's working. Export reports for end-of-semester reviews or when the university asks for proof of activity. Data that helps you lead better, not just numbers for compliance.
                         </p>
-                      </div>
+                      </motion.div>
                     </div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.065}>
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                    <motion.div
+                      className="bg-black/20 border border-white/5 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-4">What changes with durable infrastructure:</p>
                       <div className="grid grid-cols-2 gap-6 text-[13px]">
-                        <div>
+                        <motion.div
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <p className="text-white/30 mb-2">Before (typical org):</p>
                           <div className="space-y-1 text-white/25">
-                            <p>→ 6-8 tools to manage</p>
-                            <p>→ Knowledge resets yearly</p>
-                            <p>→ 10 weeks to rebuild baseline</p>
-                            <p>→ Files scattered/lost</p>
-                            <p>→ No handoff process</p>
+                            <motion.p
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
+                            >
+                              → 6-8 tools to manage
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.25, ease: EASE }}
+                            >
+                              → Knowledge resets yearly
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+                            >
+                              → 10 weeks to rebuild baseline
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
+                            >
+                              → Files scattered/lost
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+                            >
+                              → No handoff process
+                            </motion.p>
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, x: 15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <p className="text-[var(--color-gold)]/60 mb-2">After (with Spaces):</p>
                           <div className="space-y-1 text-white/40">
-                            <p>→ 1 unified system</p>
-                            <p>→ Knowledge compounds</p>
-                            <p>→ Day 1 productivity</p>
-                            <p>→ Everything archived</p>
-                            <p>→ Role reassignment = handoff</p>
+                            <motion.p
+                              initial={{ opacity: 0, x: 10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
+                            >
+                              → 1 unified system
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: 10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.25, ease: EASE }}
+                            >
+                              → Knowledge compounds
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: 10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+                            >
+                              → Day 1 productivity
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: 10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
+                            >
+                              → Everything archived
+                            </motion.p>
+                            <motion.p
+                              initial={{ opacity: 0, x: 10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+                            >
+                              → Role reassignment = handoff
+                            </motion.p>
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   </ParallaxText>
                 </div>
               </div>
@@ -925,18 +1096,58 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.075}>
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                    <motion.div
+                      className="bg-black/20 border border-white/5 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-3">The pattern we're seeing:</p>
                       <div className="space-y-2 text-[13px] text-white/30">
-                        <p>→ Orgs with documented rituals retain 3x more institutional knowledge</p>
-                        <p>→ New leadership hits productivity baseline 6 weeks faster</p>
-                        <p>→ Member engagement up 40% when expectations are systematized</p>
-                        <p>→ Handoffs stop being crisis moments, become scheduled non-events</p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+                        >
+                          → Orgs with documented rituals retain 3x more institutional knowledge
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+                        >
+                          → New leadership hits productivity baseline 6 weeks faster
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+                        >
+                          → Member engagement up 40% when expectations are systematized
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+                        >
+                          → Handoffs stop being crisis moments, become scheduled non-events
+                        </motion.p>
                       </div>
-                      <p className="text-white/25 text-[12px] mt-4 italic">
+                      <motion.p
+                        className="text-white/25 text-[12px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+                      >
                         We're building the infrastructure to make those patterns native to the system, not dependent on individual effort.
-                      </p>
-                    </div>
+                      </motion.p>
+                    </motion.div>
                   </ParallaxText>
                 </div>
               </div>
@@ -980,44 +1191,74 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
-                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-4">What a profile actually tracks:</p>
                       <div className="space-y-3 text-[13px]">
-                        <div className="flex items-start gap-3">
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
                             <p className="text-white/60 font-medium">Spaces you're part of</p>
                             <p className="text-white/30">Not just member lists. Role history, contribution patterns, leadership tenure.</p>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
                             <p className="text-white/60 font-medium">Events you've organized or attended</p>
                             <p className="text-white/30">Verifiable attendance records, not self-reported "I went to this."</p>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
                             <p className="text-white/60 font-medium">Tools you've built in HiveLab</p>
                             <p className="text-white/30">Actual software you created. Usage stats, deployment history, impact.</p>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
                             <p className="text-white/60 font-medium">Contributions across orgs</p>
                             <p className="text-white/30">Posts authored, files uploaded, discussions started. Quantified impact.</p>
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.075}>
                     <p className="text-white/50">
-                      Here's what changes when students own their data: it becomes portable. When you graduate, you take it with you. Your profile isn't a PDF resume someone has to trust—it's cryptographically signed proof of work. Events you organized. Projects you shipped. Organizations you led. Verifiable, portable, yours.
+                      Here's what changes when students own their data: it becomes portable. When you graduate, you take it with you. Your profile isn't a PDF resume someone has to trust—it's verifiable proof of work. Events you organized. Projects you shipped. Organizations you led. Actually provable, not self-reported.
                     </p>
                   </ParallaxText>
 
@@ -1028,35 +1269,65 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.065}>
-                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
-                      <p className="text-white/40 text-[14px] mb-3">What becomes possible:</p>
-                      <div className="space-y-3 text-[13px]">
-                        <div className="flex items-start gap-3">
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
+                      <p className="text-white/40 text-[14px] mb-4">What becomes possible:</p>
+                      <div className="space-y-4 text-[13px]">
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
-                            <p className="text-white/50 font-medium">Cryptographic credentials</p>
-                            <p className="text-white/30">Verified work, not self-reported claims. If you ran that event, the blockchain knows. Can't fake it, can't lose it.</p>
+                            <p className="text-white/50 font-medium">Verifiable credentials</p>
+                            <p className="text-white/30">Real proof of work, not claims. If you ran that event, the system knows. Can't fake it, can't lose it.</p>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
                             <p className="text-white/50 font-medium">Cross-campus reputation</p>
                             <p className="text-white/30">Your work at UB matters at Cornell. Build once, benefit everywhere. Transfer students don't start from zero.</p>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
-                            <p className="text-white/50 font-medium">Zero-knowledge proofs</p>
-                            <p className="text-white/30">Prove you led a 200-person org without revealing which one. Privacy-preserving credentials for recruiting, grad school, whatever.</p>
+                            <p className="text-white/50 font-medium">Privacy-preserving proof</p>
+                            <p className="text-white/30">Prove you led a 200-person org without revealing which one. Selective disclosure for recruiting, grad school, whatever you need.</p>
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
-                      <p className="text-white/25 text-[12px] mt-4 italic">
-                        The infrastructure exists. We're just the first to point it at student autonomy instead of institutional control.
-                      </p>
-                    </div>
+                      <motion.p
+                        className="text-white/25 text-[12px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+                      >
+                        The tech exists. We're building the first system that points it at student autonomy instead of institutional control.
+                      </motion.p>
+                    </motion.div>
                   </ParallaxText>
                 </div>
               </div>
@@ -1115,50 +1386,106 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.08}>
-                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-4">The tool gap (based on 50+ org interviews):</p>
                       <div className="space-y-4">
-                        <div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Orgs using 4+ disconnected tools</span>
                             <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">87%</span>
                           </div>
-                          <div className="w-full bg-white/5 rounded-full h-2">
-                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '87%' }}></div>
+                          <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-[var(--color-gold)]/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '87%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
+                            />
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Have workflow that doesn't fit any tool</span>
                             <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">92%</span>
                           </div>
-                          <div className="w-full bg-white/5 rounded-full h-2">
-                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '92%' }}></div>
+                          <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-[var(--color-gold)]/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '92%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1.2, delay: 0.3, ease: EASE }}
+                            />
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Use Google Sheets as makeshift database</span>
                             <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">74%</span>
                           </div>
-                          <div className="w-full bg-white/5 rounded-full h-2">
-                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '74%' }}></div>
+                          <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-[var(--color-gold)]/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '74%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1.2, delay: 0.4, ease: EASE }}
+                            />
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Would build custom tool if they could</span>
                             <span className="text-[var(--color-gold)]/60 text-[13px] font-mono">96%</span>
                           </div>
-                          <div className="w-full bg-white/5 rounded-full h-2">
-                            <div className="bg-[var(--color-gold)]/40 h-2 rounded-full" style={{ width: '96%' }}></div>
+                          <div className="w-full bg-white/5 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-[var(--color-gold)]/40 h-2 rounded-full"
+                              initial={{ width: '0%' }}
+                              whileInView={{ width: '96%' }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
+                            />
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
-                      <p className="text-white/30 text-[13px] mt-4 italic">
+                      <motion.p
+                        className="text-white/30 text-[13px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: EASE }}
+                      >
                         Orgs know what they need. They just can't build it. That's the problem HiveLab solves.
-                      </p>
-                    </div>
+                      </motion.p>
+                    </motion.div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.075}>
@@ -1181,77 +1508,149 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.06}>
                     <div className="space-y-4 text-[16px] md:text-[18px]">
-                      <div className="flex items-start gap-3">
+                      <motion.div
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                      >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Membership application system</p>
                           <p className="text-white/30 text-[14px]">Custom questions, file uploads, review workflows. One consulting club processed 200+ applications through theirs last semester. Replaced a broken Google Form + Sheet combo that crashed during peak traffic.</p>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </motion.div>
+                      <motion.div
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                      >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Event check-in with QR codes</p>
                           <p className="text-white/30 text-[14px]">Syncs with attendance records automatically. Greek org used it to track 40+ events per semester, proving activity to university admins. Cut manual tracking from 3 hours/week to zero.</p>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </motion.div>
+                      <motion.div
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                      >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Project showcase portal</p>
                           <p className="text-white/30 text-[14px]">Members upload work for end-of-semester reviews. Design club uses it as a portfolio system. Replaced emailing PDFs back and forth. Now every semester's work is archived and searchable.</p>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </motion.div>
+                      <motion.div
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                      >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Budget request system</p>
                           <p className="text-white/30 text-[14px]">Tied to org financials with approval workflows. Student government uses it for funding requests. Built-in audit trail. Reduced approval time from 2 weeks to 3 days because everything's centralized and transparent.</p>
                         </div>
-                      </div>
-                      <div className="flex items-start gap-3">
+                      </motion.div>
+                      <motion.div
+                        className="flex items-start gap-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+                      >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Anonymous feedback system</p>
                           <p className="text-white/30 text-[14px]">Leadership can gather honest input without knowing who said what. Several orgs use this for end-of-year retrospectives. Gets real feedback that wouldn't surface in a public discussion.</p>
                         </div>
-                      </div>
+                      </motion.div>
                     </div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.055}>
-                    <div className="bg-black/20 border border-white/5 rounded-lg p-6">
+                    <motion.div
+                      className="bg-black/20 border border-white/5 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
                       <p className="text-white/40 text-[14px] mb-4">Time to ship (early data from pilot orgs):</p>
                       <div className="space-y-3 text-[13px]">
-                        <div className="flex items-start gap-3">
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        >
                           <span className="text-white/40 w-32">Traditional dev:</span>
                           <div className="flex-1">
                             <p className="text-white/30 mb-1">2-6 weeks (if you know someone who codes)</p>
-                            <div className="w-full bg-white/5 rounded-full h-1.5">
-                              <div className="bg-red-500/40 h-1.5 rounded-full" style={{ width: '100%' }}></div>
+                            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                              <motion.div
+                                className="bg-red-500/40 h-1.5 rounded-full"
+                                initial={{ width: '0%' }}
+                                whileInView={{ width: '100%' }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 0.2, ease: EASE }}
+                              />
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        >
                           <span className="text-white/40 w-32">No-code tools:</span>
                           <div className="flex-1">
                             <p className="text-white/30 mb-1">3-5 days (steep learning curve, limited flexibility)</p>
-                            <div className="w-full bg-white/5 rounded-full h-1.5">
-                              <div className="bg-orange-500/40 h-1.5 rounded-full" style={{ width: '60%' }}></div>
+                            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                              <motion.div
+                                className="bg-orange-500/40 h-1.5 rounded-full"
+                                initial={{ width: '0%' }}
+                                whileInView={{ width: '60%' }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 0.3, ease: EASE }}
+                              />
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        >
                           <span className="text-white/40 w-32">HiveLab:</span>
                           <div className="flex-1">
                             <p className="text-[var(--color-gold)]/60 mb-1">2-4 hours (describe → scaffold → customize → deploy)</p>
-                            <div className="w-full bg-white/5 rounded-full h-1.5">
-                              <div className="bg-[var(--color-gold)]/60 h-1.5 rounded-full" style={{ width: '15%' }}></div>
+                            <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
+                              <motion.div
+                                className="bg-[var(--color-gold)]/60 h-1.5 rounded-full"
+                                initial={{ width: '0%' }}
+                                whileInView={{ width: '15%' }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1, delay: 0.4, ease: EASE }}
+                              />
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       </div>
-                    </div>
+                    </motion.div>
                   </ParallaxText>
 
                   <ParallaxText speed={0.05}>
@@ -1267,38 +1666,100 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.04}>
-                    <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-8">
-                      <p className="text-white/60 font-medium mb-4 text-[18px]">Here's where this goes:</p>
-                      <p className="text-white/50 text-[16px] mb-4">
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-8"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: EASE }}
+                    >
+                      <motion.p
+                        className="text-white/60 font-medium mb-4 text-[18px]"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                      >
+                        Here's where this goes:
+                      </motion.p>
+                      <motion.p
+                        className="text-white/50 text-[16px] mb-4"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                      >
                         An org at UB builds an interview scheduler in HiveLab. Works perfectly for their use case. They publish it. Now every consulting club on HIVE can deploy that tool to their Space in one click. Student-built infrastructure that compounds across campuses.
-                      </p>
-                      <p className="text-white/40 text-[15px] mb-6">
+                      </motion.p>
+                      <motion.p
+                        className="text-white/40 text-[15px] mb-6"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                      >
                         Right now, every org reinvents the wheel. Same problems, solved separately, knowledge dies with graduation. HiveLab makes the wheel copyable. A Greek org's rush tracker becomes available to every chapter nationwide. A cultural org's event budgeting tool works for any org with similar constraints.
-                      </p>
-                      <div className="bg-black/20 rounded-lg p-5 mb-4">
+                      </motion.p>
+                      <motion.div
+                        className="bg-black/20 rounded-lg p-5 mb-4"
+                        initial={{ opacity: 0, y: 15 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.4, ease: EASE }}
+                      >
                         <p className="text-white/40 text-[13px] mb-3">Network effects math:</p>
                         <div className="space-y-2 text-[12px] font-mono">
-                          <div className="flex items-center justify-between">
+                          <motion.div
+                            className="flex items-center justify-between"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.5, ease: EASE }}
+                          >
                             <span className="text-white/30">1 campus, 400 orgs:</span>
                             <span className="text-white/40">400 unique solutions (isolated)</span>
-                          </div>
-                          <div className="flex items-center justify-between">
+                          </motion.div>
+                          <motion.div
+                            className="flex items-center justify-between"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.6, ease: EASE }}
+                          >
                             <span className="text-white/30">10 campuses, 4,000 orgs:</span>
                             <span className="text-[var(--color-gold)]/60">400 solutions × 10 deployments each</span>
-                          </div>
-                          <div className="flex items-center justify-between">
+                          </motion.div>
+                          <motion.div
+                            className="flex items-center justify-between"
+                            initial={{ opacity: 0, x: -10 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: 0.7, ease: EASE }}
+                          >
                             <span className="text-white/30">100 campuses, 40,000 orgs:</span>
                             <span className="text-[var(--color-gold)]">400 solutions × 100 deployments</span>
-                          </div>
+                          </motion.div>
                         </div>
-                        <p className="text-white/25 text-[11px] mt-3 italic">
+                        <motion.p
+                          className="text-white/25 text-[11px] mt-3 italic"
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.8, delay: 0.8, ease: EASE }}
+                        >
                           Build once, benefit everywhere. That's not a tagline. That's the inevitability of programmable infrastructure.
-                        </p>
-                      </div>
-                      <p className="text-white/30 text-[14px]">
+                        </motion.p>
+                      </motion.div>
+                      <motion.p
+                        className="text-white/30 text-[14px]"
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.9, ease: EASE }}
+                      >
                         The marketplace isn't a feature we're adding. It's what naturally happens when you give students the ability to build and share. We're just building the rails for it to run on.
-                      </p>
-                    </div>
+                      </motion.p>
+                    </motion.div>
                   </ParallaxText>
                 </div>
               </div>
