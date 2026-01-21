@@ -1,499 +1,557 @@
 'use client';
 
 /**
- * /spaces — Unified Spaces Hub
+ * /spaces — Campus Spaces Directory
  *
- * "Your campus, organized."
+ * Clean, confident narrative arc:
+ * 1. Hero: "Your campus, organized"
+ * 2. Your Spaces: Quick access (if joined any)
+ * 3. Categories: Browse by type
+ * 4. All Spaces: Full directory
  *
- * A unified page that serves as the home for campus life:
- * - Identity Cards: Residential, Major, Greek (one-time claims)
- * - Your Spaces: Joined spaces with smart sorting
- * - Discover: Browse and join new spaces by category
- *
- * @version 7.0.0 - Complete redesign per Day 1 Launch spec (Jan 2026)
+ * Design: ChatGPT-style minimal confidence
+ * @version 8.0.0 - Narrative redesign (Jan 2026)
  */
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { toast } from '@hive/ui';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Grid3x3, List, ChevronRight, Users, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Text, Button, Input, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 
-// Components
-import {
-  IdentityCards,
-  IdentityClaimModal,
-  YourSpacesList,
-  DiscoverSection,
-  NewUserLayout,
-  ReturningUserLayout,
-  TerritoryHeader,
-  OnboardingOverlay,
-  type IdentityType,
-  type IdentityClaim,
-  type YourSpace,
-} from '@/components/spaces';
-import { Text, Skeleton, NoiseOverlay } from '@hive/ui/design-system/primitives';
-import { MOTION } from '@hive/tokens';
-
 // ============================================================
-// Hooks
+// Types
 // ============================================================
 
-/**
- * Hook to fetch and manage identity claims
- */
-function useIdentityClaims(isAuthenticated: boolean) {
-  const [claims, setClaims] = React.useState<Record<IdentityType, IdentityClaim | null>>({
-    residential: null,
-    major: null,
-    greek: null,
-  });
-  const [loading, setLoading] = React.useState(true);
-
-  const fetchClaims = React.useCallback(async () => {
-    if (!isAuthenticated) {
-      setLoading(false);
-      return;
-    }
-    try {
-      const res = await secureApiFetch('/api/spaces/identity', {
-        method: 'GET',
-      });
-      const data = await res.json();
-      if (data.success !== false && data.data?.claims) {
-        setClaims(data.data.claims);
-      }
-    } catch {
-      // Silently handle - claims will show as unclaimed
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  React.useEffect(() => {
-    fetchClaims();
-  }, [fetchClaims]);
-
-  const claimIdentity = async (type: IdentityType, spaceId: string) => {
-    const res = await secureApiFetch('/api/spaces/identity', {
-      method: 'POST',
-      body: JSON.stringify({ type, spaceId }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error?.message || 'Failed to claim identity');
-    }
-    // Refetch claims
-    await fetchClaims();
-    return data;
-  };
-
-  return {
-    claims,
-    loading,
-    claimIdentity,
-    refetch: fetchClaims,
-  };
+interface Space {
+  id: string;
+  name: string;
+  handle?: string;
+  description?: string;
+  avatarUrl?: string;
+  category: string;
+  memberCount: number;
+  isVerified?: boolean;
+  isJoined?: boolean;
 }
 
-/**
- * Hook to fetch user's joined spaces
- */
-function useMySpaces(isAuthenticated: boolean) {
-  const [spaces, setSpaces] = React.useState<YourSpace[]>([]);
-  const [loading, setLoading] = React.useState(true);
+interface Category {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  count: number;
+}
 
-  const fetchSpaces = React.useCallback(async () => {
-    if (!isAuthenticated) {
+// ============================================================
+// Premium Motion Config
+// ============================================================
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+const DURATION = {
+  fast: 0.15,
+  quick: 0.25,
+  smooth: 0.4,
+  gentle: 0.6,
+} as const;
+
+// ============================================================
+// Data Hooks
+// ============================================================
+
+function useMySpaces() {
+  const [spaces, setSpaces] = React.useState<Space[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const { user } = useAuth();
+
+  React.useEffect(() => {
+    if (!user) {
       setLoading(false);
       return;
     }
-    try {
-      const res = await secureApiFetch('/api/spaces/my', {
-        method: 'GET',
-      });
-      const data = await res.json();
 
-      // Extract spaces from response
-      const activeSpaces = data.data?.activeSpaces || data.activeSpaces || [];
-
-      // Transform to YourSpace format
-      const transformedSpaces: YourSpace[] = activeSpaces.map(
-        (s: {
-          id: string;
-          name: string;
-          description?: string;
-          avatarUrl?: string;
-          bannerUrl?: string;
-          category?: string;
-          memberCount?: number;
-          isVerified?: boolean;
-          lastActivity?: { timestamp?: string };
-          livePresence?: { onlineCount?: number };
-          membership?: {
-            role?: string;
-            notifications?: number;
-            lastVisited?: string;
-            pinned?: boolean;
-          };
-        }) => ({
+    secureApiFetch('/api/spaces/my', { method: 'GET' })
+      .then(res => res.json())
+      .then(data => {
+        const activeSpaces = data.data?.activeSpaces || data.activeSpaces || [];
+        setSpaces(activeSpaces.map((s: any) => ({
           id: s.id,
           name: s.name,
+          handle: s.handle,
           description: s.description,
           avatarUrl: s.avatarUrl,
-          bannerUrl: s.bannerUrl,
-          category: s.category,
+          category: s.category || 'general',
           memberCount: s.memberCount || 0,
           isVerified: s.isVerified,
           isJoined: true,
-          lastActivityAt: s.lastActivity?.timestamp,
-          membership: {
-            role: s.membership?.role || 'member',
-            notifications: s.membership?.notifications || 0,
-            lastVisited: s.membership?.lastVisited || new Date().toISOString(),
-            pinned: s.membership?.pinned || false,
-          },
-        })
-      );
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [user]);
 
-      setSpaces(transformedSpaces);
-    } catch {
-      // Silently handle - spaces list will show as empty
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  React.useEffect(() => {
-    fetchSpaces();
-  }, [fetchSpaces]);
-
-  const joinedSpaceIds = React.useMemo(
-    () => new Set(spaces.map((s) => s.id)),
-    [spaces]
-  );
-
-  return {
-    spaces,
-    loading,
-    joinedSpaceIds,
-    refetch: fetchSpaces,
-  };
+  return { spaces, loading };
 }
 
-// ============================================================
-// Loading Skeleton
-// ============================================================
+function useAllSpaces() {
+  const [spaces, setSpaces] = React.useState<Space[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-function PageSkeleton() {
-  const EASE = MOTION.ease.premium;
-
-  return (
-    <div className="space-y-10">
-      {/* Header skeleton */}
-      <motion.div
-        className="space-y-2"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, ease: EASE }}
-      >
-        <div className="h-8 w-48 rounded bg-white/[0.06]" />
-        <div className="h-4 w-32 rounded bg-white/[0.06]" />
-      </motion.div>
-
-      {/* Identity cards skeleton */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.1, ease: EASE }}
-      >
-        <div className="h-4 w-32 mb-4 rounded bg-white/[0.06]" />
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3].map((i) => (
-            <motion.div
-              key={i}
-              className="h-[100px] rounded-xl bg-white/[0.06]"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.15 + i * 0.05, ease: EASE }}
-            />
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Your spaces skeleton */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
-      >
-        <div className="h-4 w-28 mb-4 rounded bg-white/[0.06]" />
-        <div className="rounded-xl border border-white/[0.06] overflow-hidden">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <motion.div
-              key={i}
-              className="flex items-center gap-4 px-4 py-3 border-b border-white/[0.04] last:border-b-0"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.35 + i * 0.04, ease: EASE }}
-            >
-              <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-32 rounded bg-white/[0.06]" />
-                <div className="h-3 w-20 rounded bg-white/[0.06]" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-// ============================================================
-// Main Component
-// ============================================================
-
-export default function SpacesHubPage() {
-  const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
-
-  // Check if user is authenticated
-  const isAuthenticated = !!user && !authLoading;
-
-  // State hooks - pass auth status to skip API calls when not authenticated
-  const {
-    claims,
-    loading: claimsLoading,
-    claimIdentity,
-  } = useIdentityClaims(isAuthenticated);
-  const {
-    spaces: mySpaces,
-    loading: spacesLoading,
-    joinedSpaceIds,
-    refetch: refetchSpaces,
-  } = useMySpaces(isAuthenticated);
-
-  // Modal state
-  const [claimModalType, setClaimModalType] = React.useState<IdentityType | null>(null);
-
-  // Onboarding state
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
-
-  // Check if user has seen onboarding
   React.useEffect(() => {
-    if (!authLoading && isAuthenticated && mySpaces.length === 0) {
-      const hasSeenOnboarding =
-        typeof window !== 'undefined' &&
-        localStorage.getItem('hive_spaces_onboarding_seen') === 'true';
-      setShowOnboarding(!hasSeenOnboarding);
-    }
-  }, [authLoading, isAuthenticated, mySpaces.length]);
-
-  // Loading state - only show loading for authenticated users fetching data
-  const isLoading = authLoading || (isAuthenticated && (claimsLoading && spacesLoading));
-
-  // User state detection for conditional layout
-  const userState = React.useMemo(() => {
-    if (!isAuthenticated) return 'unauthenticated';
-    if (mySpaces.length === 0) return 'new_user';
-    return 'returning_user';
-  }, [isAuthenticated, mySpaces.length]);
-
-  // Handle navigation to space
-  const handleNavigateToSpace = React.useCallback(
-    (spaceId: string, handle?: string) => {
-      // Navigate to /s/[handle] for unified space view
-      // Fall back to ID if handle not available
-      const destination = handle ? `/s/${handle}` : `/s/${spaceId}`;
-      router.push(destination);
-    },
-    [router]
-  );
-
-  // Handle browse all
-  const handleBrowseAll = React.useCallback(() => {
-    // Scroll to discover section or navigate
-    const discoverSection = document.getElementById('discover-section');
-    if (discoverSection) {
-      discoverSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    secureApiFetch('/api/spaces/browse', { method: 'GET' })
+      .then(res => res.json())
+      .then(data => {
+        const allSpaces = data.data?.spaces || data.spaces || [];
+        setSpaces(allSpaces.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          handle: s.handle,
+          description: s.description,
+          avatarUrl: s.avatarUrl,
+          category: s.category || 'general',
+          memberCount: s.memberCount || 0,
+          isVerified: s.isVerified,
+          isJoined: s.isJoined || false,
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  // Handle identity claim
-  const handleClaimIdentity = async (type: IdentityType, spaceId: string) => {
-    try {
-      await claimIdentity(type, spaceId);
-      toast.success('Identity claimed!', `Your ${type} identity has been set.`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to claim';
-      toast.error('Claim failed', message);
-      throw error;
-    }
-  };
+  return { spaces, loading };
+}
 
-  // Handle join space
-  const handleJoinSpace = async (spaceId: string) => {
-    // Redirect to login if not authenticated
-    if (!isAuthenticated) {
-      router.push(`/enter?redirect=/spaces/${spaceId}`);
-      return;
-    }
+// ============================================================
+// Hero Section
+// ============================================================
 
-    try {
-      const res = await secureApiFetch('/api/spaces/join-v2', {
-        method: 'POST',
-        body: JSON.stringify({ spaceId }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error?.message || 'Failed to join space');
-      }
-
-      toast.success('Joined!', 'You are now a member of this space.');
-
-      // Refetch spaces to update the list
-      await refetchSpaces();
-
-      // Navigate to the space (use handle if available)
-      // For now, use ID as fallback since we don't have handle in the response
-      router.push(`/s/${spaceId}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to join';
-      toast.error('Join failed', message);
-      throw error;
-    }
-  };
-
-  // ============================================================
-  // Handlers for layouts
-  // ============================================================
-
-  const handleClaimClick = React.useCallback(
-    (type: IdentityType) => {
-      if (!isAuthenticated) {
-        router.push(`/enter?redirect=/spaces&claim=${type}`);
-        return;
-      }
-      setClaimModalType(type);
-    },
-    [isAuthenticated, router]
+function HeroSection() {
+  return (
+    <motion.div
+      className="mb-12"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DURATION.gentle, ease: EASE }}
+    >
+      <h1
+        className="text-[32px] md:text-[40px] font-semibold text-white mb-2 tracking-tight"
+        style={{ fontFamily: 'var(--font-display)' }}
+      >
+        Your campus, organized
+      </h1>
+      <p className="text-[16px] text-white/50 max-w-xl">
+        423 spaces mapped. Join communities, discover orgs, connect with your people.
+      </p>
+    </motion.div>
   );
+}
 
-  // ============================================================
-  // Render
-  // ============================================================
+// ============================================================
+// Your Spaces Section (Quick Access)
+// ============================================================
+
+function YourSpacesSection({ spaces, onNavigate }: { spaces: Space[]; onNavigate: (space: Space) => void }) {
+  if (spaces.length === 0) return null;
 
   return (
-    <div className="min-h-screen w-full relative">
-      <NoiseOverlay />
-      <div className="max-w-3xl mx-auto px-6 py-12 relative z-10">
-        {/* Header - Territory narrative with premium motion */}
-        <TerritoryHeader
-          totalSpaces={423}
-          claimedSpaces={67}
-          yourSpaceCount={mySpaces.length}
-          isAuthenticated={isAuthenticated}
-          className="mb-10"
-        />
-
-        {/* Loading state */}
-        {isLoading ? (
-          <PageSkeleton />
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Unauthenticated or New User: Discovery-first layout */}
-            {(userState === 'unauthenticated' || userState === 'new_user') && (
-              <>
-                <NewUserLayout
-                  claims={claims}
-                  claimsLoading={claimsLoading}
-                  onClaimClick={handleClaimClick}
-                  onViewSpace={handleNavigateToSpace}
-                  onNavigateToSpace={handleNavigateToSpace}
-                  onJoinSpace={handleJoinSpace}
-                  joinedSpaceIds={joinedSpaceIds}
-                />
-
-                {/* Unauthenticated: Sign up CTA */}
-                {userState === 'unauthenticated' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.6, ease: MOTION.ease.premium }}
-                    className="mt-10 p-8 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center"
-                  >
-                    <h3
-                      className="text-[24px] font-semibold text-white mb-3"
-                      style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                      Your campus is already here.
-                    </h3>
-                    <p className="text-[16px] text-white/40 mb-6 max-w-md mx-auto">
-                      400+ spaces mapped. Claim your org, join your dorm, connect with your people.
-                    </p>
-                    <button
-                      onClick={() => router.push('/enter?redirect=/spaces')}
-                      className="px-6 py-2.5 rounded-lg bg-white text-[#0A0A09] font-medium text-sm hover:bg-white/90 transition-colors"
-                    >
-                      Enter with .edu
-                    </button>
-                  </motion.div>
-                )}
-              </>
-            )}
-
-            {/* Returning User: Spaces-first layout */}
-            {userState === 'returning_user' && (
-              <ReturningUserLayout
-                mySpaces={mySpaces}
-                spacesLoading={spacesLoading}
-                onNavigateToSpace={handleNavigateToSpace}
-                onBrowseAll={handleBrowseAll}
-                claims={claims}
-                claimsLoading={claimsLoading}
-                onClaimClick={handleClaimClick}
-                onViewSpace={handleNavigateToSpace}
-                onJoinSpace={handleJoinSpace}
-                joinedSpaceIds={joinedSpaceIds}
-              />
-            )}
-          </motion.div>
-        )}
+    <motion.section
+      className="mb-12"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DURATION.smooth, delay: 0.1, ease: EASE }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[18px] font-semibold text-white">
+          Your Spaces
+        </h2>
+        <Text size="sm" tone="muted">
+          {spaces.length} joined
+        </Text>
       </div>
 
-      {/* Identity Claim Modal */}
-      <IdentityClaimModal
-        type={claimModalType}
-        isOpen={!!claimModalType}
-        onClose={() => setClaimModalType(null)}
-        onClaim={handleClaimIdentity}
-      />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {spaces.slice(0, 6).map((space, i) => (
+          <motion.button
+            key={space.id}
+            onClick={() => onNavigate(space)}
+            className="group relative p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all text-left"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: DURATION.quick, delay: 0.15 + i * 0.03, ease: EASE }}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <Avatar size="sm">
+                {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+                <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[14px] font-medium text-white truncate">
+                    {space.name}
+                  </span>
+                  {space.isVerified && (
+                    <Sparkles className="w-3 h-3 text-[var(--color-gold)] flex-shrink-0" />
+                  )}
+                </div>
+              </div>
+            </div>
+            <Text size="xs" tone="muted" className="line-clamp-1">
+              {space.memberCount.toLocaleString()} members
+            </Text>
 
-      {/* Onboarding Overlay (first-time users) */}
-      <OnboardingOverlay
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onClaimIdentity={(type) => {
-          setShowOnboarding(false);
-          setClaimModalType(type);
-        }}
-        onContinue={() => {
-          setShowOnboarding(false);
-          // Scroll to discover section
-          const discoverSection = document.getElementById('discover-section');
-          if (discoverSection) {
-            discoverSection.scrollIntoView({ behavior: 'smooth' });
-          }
-        }}
-      />
+            {/* Hover indicator */}
+            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.button>
+        ))}
+      </div>
+
+      {spaces.length > 6 && (
+        <motion.button
+          className="mt-4 text-sm text-white/50 hover:text-white/70 transition-colors"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          View all {spaces.length} spaces →
+        </motion.button>
+      )}
+    </motion.section>
+  );
+}
+
+// ============================================================
+// Categories Section
+// ============================================================
+
+function CategoriesSection({ onSelectCategory }: { onSelectCategory: (category: string) => void }) {
+  const categories: Category[] = [
+    {
+      id: 'academic',
+      name: 'Academic',
+      description: 'Study groups, departments, research',
+      icon: '📚',
+      count: 87,
+    },
+    {
+      id: 'social',
+      name: 'Social',
+      description: 'Clubs, hobbies, interests',
+      icon: '🎉',
+      count: 142,
+    },
+    {
+      id: 'residential',
+      name: 'Residential',
+      description: 'Dorms, apartments, housing',
+      icon: '🏠',
+      count: 56,
+    },
+    {
+      id: 'greek',
+      name: 'Greek Life',
+      description: 'Fraternities, sororities',
+      icon: '🏛️',
+      count: 34,
+    },
+    {
+      id: 'sports',
+      name: 'Sports & Rec',
+      description: 'Teams, fitness, athletics',
+      icon: '⚽',
+      count: 48,
+    },
+    {
+      id: 'career',
+      name: 'Career',
+      description: 'Professional orgs, networking',
+      icon: '💼',
+      count: 56,
+    },
+  ];
+
+  return (
+    <motion.section
+      className="mb-12"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DURATION.smooth, delay: 0.2, ease: EASE }}
+    >
+      <h2 className="text-[18px] font-semibold text-white mb-4">
+        Browse by Category
+      </h2>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {categories.map((category, i) => (
+          <motion.button
+            key={category.id}
+            onClick={() => onSelectCategory(category.id)}
+            className="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all text-left"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: DURATION.quick, delay: 0.25 + i * 0.04, ease: EASE }}
+          >
+            <div className="text-[28px] mb-2">{category.icon}</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[14px] font-medium text-white">
+                {category.name}
+              </span>
+              <Text size="xs" tone="muted">
+                {category.count}
+              </Text>
+            </div>
+            <Text size="xs" tone="muted" className="line-clamp-1">
+              {category.description}
+            </Text>
+
+            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.button>
+        ))}
+      </div>
+    </motion.section>
+  );
+}
+
+// ============================================================
+// All Spaces Section (Directory)
+// ============================================================
+
+function AllSpacesSection({
+  spaces,
+  loading,
+  onNavigate
+}: {
+  spaces: Space[];
+  loading: boolean;
+  onNavigate: (space: Space) => void;
+}) {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('list');
+
+  const filteredSpaces = React.useMemo(() => {
+    if (!searchQuery.trim()) return spaces;
+    const query = searchQuery.toLowerCase();
+    return spaces.filter(
+      s => s.name.toLowerCase().includes(query) ||
+           s.description?.toLowerCase().includes(query)
+    );
+  }, [spaces, searchQuery]);
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: DURATION.smooth, delay: 0.3, ease: EASE }}
+    >
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[18px] font-semibold text-white">
+          All Spaces
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              viewMode === 'grid'
+                ? 'bg-white/[0.08] text-white'
+                : 'text-white/40 hover:text-white/60'
+            )}
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              viewMode === 'list'
+                ? 'bg-white/[0.08] text-white'
+                : 'text-white/40 hover:text-white/60'
+            )}
+          >
+            <List className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+        <input
+          type="text"
+          placeholder="Search spaces..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-white placeholder:text-white/30 focus:outline-none focus:border-white/[0.16] transition-colors"
+        />
+      </div>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="h-16 rounded-lg bg-white/[0.04] animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {/* Spaces List */}
+      {!loading && viewMode === 'list' && (
+        <div className="space-y-2">
+          {filteredSpaces.map((space, i) => (
+            <motion.button
+              key={space.id}
+              onClick={() => onNavigate(space)}
+              className="group w-full flex items-center gap-4 p-4 rounded-lg bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all text-left"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: DURATION.quick, delay: i * 0.02, ease: EASE }}
+            >
+              <Avatar size="default">
+                {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+                <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+              </Avatar>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[15px] font-medium text-white truncate">
+                    {space.name}
+                  </span>
+                  {space.isVerified && (
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--color-gold)] flex-shrink-0" />
+                  )}
+                  {space.isJoined && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.08] text-white/60">
+                      Joined
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <Text size="sm" tone="muted" className="line-clamp-1">
+                    {space.description || 'No description'}
+                  </Text>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <div className="flex items-center gap-1.5 text-white/40">
+                  <Users className="w-3.5 h-3.5" />
+                  <Text size="sm">{space.memberCount.toLocaleString()}</Text>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30 group-hover:text-white/50 transition-colors" />
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {/* Spaces Grid */}
+      {!loading && viewMode === 'grid' && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {filteredSpaces.map((space, i) => (
+            <motion.button
+              key={space.id}
+              onClick={() => onNavigate(space)}
+              className="group p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.12] transition-all text-left"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: DURATION.quick, delay: i * 0.02, ease: EASE }}
+            >
+              <Avatar size="lg" className="mb-3">
+                {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+                <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+              </Avatar>
+
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[14px] font-medium text-white truncate">
+                  {space.name}
+                </span>
+                {space.isVerified && (
+                  <Sparkles className="w-3 h-3 text-[var(--color-gold)] flex-shrink-0" />
+                )}
+              </div>
+
+              <Text size="xs" tone="muted" className="line-clamp-2 mb-2">
+                {space.description || 'No description'}
+              </Text>
+
+              <div className="flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-white/40" />
+                <Text size="xs" tone="muted">
+                  {space.memberCount.toLocaleString()}
+                </Text>
+                {space.isJoined && (
+                  <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/[0.08] text-white/60">
+                    Joined
+                  </span>
+                )}
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && filteredSpaces.length === 0 && (
+        <div className="py-12 text-center">
+          <Text tone="muted" className="mb-2">No spaces found</Text>
+          <Text size="sm" tone="muted">Try a different search term</Text>
+        </div>
+      )}
+    </motion.section>
+  );
+}
+
+// ============================================================
+// Main Page Component
+// ============================================================
+
+export default function SpacesPage() {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const { spaces: mySpaces, loading: mySpacesLoading } = useMySpaces();
+  const { spaces: allSpaces, loading: allSpacesLoading } = useAllSpaces();
+
+  const handleNavigateToSpace = (space: Space) => {
+    const destination = space.handle ? `/s/${space.handle}` : `/s/${space.id}`;
+    router.push(destination);
+  };
+
+  const handleSelectCategory = (categoryId: string) => {
+    // Scroll to all spaces and filter by category
+    const allSpacesSection = document.querySelector('section:last-of-type');
+    allSpacesSection?.scrollIntoView({ behavior: 'smooth' });
+    // TODO: Implement category filtering
+  };
+
+  return (
+    <div className="min-h-screen w-full">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Hero */}
+        <HeroSection />
+
+        {/* Your Spaces (if logged in and has spaces) */}
+        {user && !mySpacesLoading && mySpaces.length > 0 && (
+          <YourSpacesSection
+            spaces={mySpaces}
+            onNavigate={handleNavigateToSpace}
+          />
+        )}
+
+        {/* Categories */}
+        <CategoriesSection onSelectCategory={handleSelectCategory} />
+
+        {/* All Spaces */}
+        <AllSpacesSection
+          spaces={allSpaces}
+          loading={allSpacesLoading}
+          onNavigate={handleNavigateToSpace}
+        />
+      </div>
     </div>
   );
 }
