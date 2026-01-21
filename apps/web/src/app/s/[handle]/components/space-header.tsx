@@ -18,17 +18,7 @@ import { motion } from 'framer-motion';
 import { Settings, ChevronDown, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
-
-// Premium easing (from about page)
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-// Duration scale
-const DURATION = {
-  fast: 0.15,
-  quick: 0.25,
-  smooth: 0.4,
-  gentle: 0.6,
-} as const;
+import { MOTION, durationSeconds } from '@hive/tokens';
 
 interface SpaceHeaderProps {
   space: {
@@ -64,7 +54,7 @@ export function SpaceHeader({
       )}
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: DURATION.gentle, ease: EASE }}
+      transition={{ duration: durationSeconds.gentle, ease: MOTION.ease.premium }}
     >
       {/* Left: Identity */}
       <button
@@ -75,7 +65,7 @@ export function SpaceHeader({
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: DURATION.smooth, delay: 0.1, ease: EASE }}
+          transition={{ duration: durationSeconds.smooth, delay: 0.1, ease: MOTION.ease.premium }}
         >
           <Avatar size="default" className="group-hover:ring-2 ring-white/10 transition-all">
             {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
@@ -92,7 +82,7 @@ export function SpaceHeader({
               style={{ fontFamily: 'var(--font-display)' }}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: DURATION.smooth, delay: 0.15, ease: EASE }}
+              transition={{ duration: durationSeconds.smooth, delay: 0.15, ease: MOTION.ease.premium }}
             >
               {space.name}
             </motion.h1>
@@ -102,7 +92,7 @@ export function SpaceHeader({
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ duration: DURATION.quick, delay: 0.3, ease: EASE }}
+                transition={{ duration: durationSeconds.quick, delay: 0.3, ease: MOTION.ease.premium }}
                 title="Verified Organization"
               >
                 <Crown className="h-3.5 w-3.5 text-[var(--color-gold)]" />
@@ -118,7 +108,7 @@ export function SpaceHeader({
             className="flex items-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: DURATION.smooth, delay: 0.2, ease: EASE }}
+            transition={{ duration: durationSeconds.smooth, delay: 0.2, ease: MOTION.ease.premium }}
           >
             <Text size="xs" tone="muted" className="font-mono">
               @{space.handle}
@@ -142,7 +132,7 @@ export function SpaceHeader({
         className="flex items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: DURATION.smooth, delay: 0.25, ease: EASE }}
+        transition={{ duration: durationSeconds.smooth, delay: 0.25, ease: MOTION.ease.premium }}
       >
         {/* Member count pill */}
         <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-white/[0.04] border border-white/[0.06]">

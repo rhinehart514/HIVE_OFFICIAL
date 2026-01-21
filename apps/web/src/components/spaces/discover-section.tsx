@@ -22,6 +22,7 @@ import {
   CategoryScroller,
   type CategoryItem,
 } from '@hive/ui/design-system/primitives';
+import { MOTION } from '@hive/tokens';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { toast } from '@hive/ui';
 import {
@@ -229,14 +230,52 @@ function TabPills({ tabs, selected, onSelect }: TabPillsProps) {
 
 function EmptyState({ isSearch }: { isSearch?: boolean }) {
   return (
-    <div className="py-12 text-center">
-      <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center">
-        <MagnifyingGlassIcon className="w-5 h-5 text-white/30" />
-      </div>
-      <Text className="text-white/40">
-        {isSearch ? 'No spaces found' : 'No spaces in this category'}
-      </Text>
-    </div>
+    <motion.div
+      className="py-24 px-6 text-center"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
+    >
+      {/* Icon with entrance */}
+      <motion.div
+        className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-center"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
+      >
+        <MagnifyingGlassIcon className="w-6 h-6 text-white/20" />
+      </motion.div>
+
+      {/* Narrative headline */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
+      >
+        <h3
+          className="text-[24px] md:text-[28px] font-semibold text-white mb-3"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          {isSearch ? 'Nothing here yet' : 'This category is empty'}
+        </h3>
+        <p className="text-[16px] text-white/40 max-w-sm mx-auto mb-6">
+          {isSearch
+            ? 'Try adjusting your search or explore other categories to find your community.'
+            : 'Check back soon — new spaces are being created every day.'
+          }
+        </p>
+
+        {/* Recovery action */}
+        {isSearch && (
+          <button
+            onClick={() => window.location.reload()}
+            className="text-[13px] text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]/80 transition-colors"
+          >
+            Clear search
+          </button>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -487,12 +526,19 @@ export function DiscoverSection({
             // Loading skeleton
             <div>
               {Array.from({ length: 6 }).map((_, i) => (
-                <div
+                <motion.div
                   key={i}
                   className={cn(i !== 5 && 'border-b border-white/[0.04]')}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: i * 0.05,
+                    ease: MOTION.ease.premium
+                  }}
                 >
                   <SpaceListRowSkeleton />
-                </div>
+                </motion.div>
               ))}
             </div>
           ) : displayedSpaces.length === 0 ? (

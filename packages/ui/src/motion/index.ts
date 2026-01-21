@@ -16,3 +16,6 @@ export * from './interactions'
 
 // Orchestration patterns
 export * from './orchestration'
+
+// Narrative primitives (About-page quality patterns)
+export * from './narrative-primitives'

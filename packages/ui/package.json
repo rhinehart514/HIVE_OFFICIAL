@@ -30,6 +30,11 @@
       "types": "./src/design-system/templates/index.ts",
       "import": "./src/design-system/templates/index.ts",
       "default": "./src/design-system/templates/index.ts"
+    },
+    "./motion": {
+      "types": "./src/motion/index.ts",
+      "import": "./src/motion/index.ts",
+      "default": "./src/motion/index.ts"
     }
   },
   "scripts": {

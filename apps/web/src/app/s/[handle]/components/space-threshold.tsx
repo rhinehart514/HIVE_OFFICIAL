@@ -15,24 +15,12 @@
  */
 
 import * as React from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Users, Calendar, MessageSquare, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
-
-// Premium easing (from about page)
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-// Duration scale
-const DURATION = {
-  fast: 0.15,
-  quick: 0.25,
-  smooth: 0.4,
-  gentle: 0.6,
-  slow: 0.8,
-  dramatic: 1.0,
-  hero: 1.2,
-} as const;
+import { AnimatedLine, WordReveal, GoldBorderContainer } from '@hive/ui/motion';
+import { MOTION, durationSeconds } from '@hive/tokens';
 
 interface SpaceThresholdProps {
   space: {
@@ -61,113 +49,6 @@ interface SpaceThresholdProps {
   isJoining?: boolean;
 }
 
-// Animated line that draws in
-function AnimatedLine({ className, delay = 0 }: { className?: string; delay?: number }) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-
-  return (
-    <div ref={ref} className={className}>
-      <motion.div
-        className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={isInView ? { scaleX: 1, opacity: 1 } : {}}
-        transition={{ duration: DURATION.hero, delay, ease: EASE }}
-      />
-    </div>
-  );
-}
-
-// Word-by-word reveal
-function WordReveal({
-  children,
-  className,
-  stagger = 0.08,
-  delay = 0,
-}: {
-  children: string;
-  className?: string;
-  stagger?: number;
-  delay?: number;
-}) {
-  const words = children.split(' ');
-
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: DURATION.gentle, delay: delay + i * stagger, ease: EASE }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
-
-// Container with animated gold border reveal
-function GoldBorderContainer({
-  children,
-  className,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-
-  return (
-    <div ref={ref} className={cn('relative', className)}>
-      {/* Top border */}
-      <motion.div
-        className="absolute top-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : {}}
-        transition={{ duration: DURATION.dramatic, delay, ease: EASE }}
-        style={{ transformOrigin: 'left' }}
-      />
-      {/* Bottom border */}
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : {}}
-        transition={{ duration: DURATION.dramatic, delay: delay + 0.1, ease: EASE }}
-        style={{ transformOrigin: 'right' }}
-      />
-      {/* Left border */}
-      <motion.div
-        className="absolute top-0 bottom-0 left-0 w-px bg-[var(--color-gold)]/20"
-        initial={{ scaleY: 0 }}
-        animate={isInView ? { scaleY: 1 } : {}}
-        transition={{ duration: DURATION.dramatic, delay: delay + 0.2, ease: EASE }}
-        style={{ transformOrigin: 'top' }}
-      />
-      {/* Right border */}
-      <motion.div
-        className="absolute top-0 bottom-0 right-0 w-px bg-[var(--color-gold)]/20"
-        initial={{ scaleY: 0 }}
-        animate={isInView ? { scaleY: 1 } : {}}
-        transition={{ duration: DURATION.dramatic, delay: delay + 0.3, ease: EASE }}
-        style={{ transformOrigin: 'bottom' }}
-      />
-      {/* Content */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: DURATION.slow, delay: delay + 0.5, ease: EASE }}
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
 export function SpaceThreshold({
   space,
   upcomingEvents = [],
@@ -184,13 +65,13 @@ export function SpaceThreshold({
           className="flex flex-col items-center text-center mb-12"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: DURATION.hero, ease: EASE }}
+          transition={{ duration: durationSeconds.hero, ease: MOTION.ease.premium }}
         >
           {/* Space Avatar */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: DURATION.slow, delay: 0.2, ease: EASE }}
+            transition={{ duration: durationSeconds.slow, delay: 0.2, ease: MOTION.ease.premium }}
           >
             <Avatar size="xl" className="mb-6 ring-2 ring-white/10">
               {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
@@ -211,7 +92,7 @@ export function SpaceThreshold({
             className="text-[14px] font-mono text-white/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: DURATION.gentle, delay: 0.6, ease: EASE }}
+            transition={{ duration: durationSeconds.gentle, delay: 0.6, ease: MOTION.ease.premium }}
           >
             @{space.handle}
           </motion.p>
@@ -225,7 +106,7 @@ export function SpaceThreshold({
           className="flex items-center justify-center gap-8 mb-10"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: DURATION.gentle, delay: 0.8, ease: EASE }}
+          transition={{ duration: durationSeconds.gentle, delay: 0.8, ease: MOTION.ease.premium }}
         >
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-white/30" />
@@ -249,7 +130,7 @@ export function SpaceThreshold({
             className="text-center text-[16px] leading-relaxed text-white/50 mb-10 max-w-md mx-auto"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.gentle, delay: 0.9, ease: EASE }}
+            transition={{ duration: durationSeconds.gentle, delay: 0.9, ease: MOTION.ease.premium }}
           >
             {space.description}
           </motion.p>
@@ -285,7 +166,7 @@ export function SpaceThreshold({
             className="flex items-center justify-center gap-2 mb-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: DURATION.gentle, delay: 1.2, ease: EASE }}
+            transition={{ duration: durationSeconds.gentle, delay: 1.2, ease: MOTION.ease.premium }}
           >
             <MessageSquare className="h-3 w-3 text-white/20" />
             <Text size="xs" tone="muted">
@@ -299,7 +180,7 @@ export function SpaceThreshold({
           className="flex flex-col items-center gap-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: DURATION.gentle, delay: 1.3, ease: EASE }}
+          transition={{ duration: durationSeconds.gentle, delay: 1.3, ease: MOTION.ease.premium }}
         >
           <Button
             variant="cta"
@@ -328,7 +209,7 @@ export function SpaceThreshold({
           className="text-center text-[12px] text-white/20 mt-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: DURATION.gentle, delay: 1.5, ease: EASE }}
+          transition={{ duration: durationSeconds.gentle, delay: 1.5, ease: MOTION.ease.premium }}
         >
           You can leave anytime. Your choice.
         </motion.p>

@@ -24,6 +24,7 @@ import {
   SimpleAvatar,
   Skeleton,
 } from '@hive/ui/design-system/primitives';
+import { MOTION } from '@hive/tokens';
 
 // ============================================================
 // Types
@@ -70,24 +71,24 @@ const IDENTITY_CONFIG: Record<
     emptyLabel: 'Claim your dorm',
     icon: HomeIcon,
     description: 'Your residential community',
-    gradient: 'from-blue-500/10 to-transparent',
-    borderColor: 'border-blue-500/20',
+    gradient: 'from-blue-400/5 to-transparent',
+    borderColor: 'border-blue-400/10',
   },
   major: {
     label: 'Major',
     emptyLabel: 'Claim your major',
     icon: AcademicCapIcon,
     description: 'Your academic department',
-    gradient: 'from-purple-500/10 to-transparent',
-    borderColor: 'border-purple-500/20',
+    gradient: 'from-purple-400/5 to-transparent',
+    borderColor: 'border-purple-400/10',
   },
   greek: {
     label: 'Greek',
     emptyLabel: 'Claim chapter',
     icon: UserGroupIcon,
     description: 'Your Greek organization',
-    gradient: 'from-amber-500/10 to-transparent',
-    borderColor: 'border-amber-500/20',
+    gradient: 'from-[var(--color-gold)]/5 to-transparent',
+    borderColor: 'border-[var(--color-gold)]/10',
   },
 };
 
@@ -356,14 +357,25 @@ export function IdentityCards({
 
       {/* Desktop: Horizontal row */}
       <div className="hidden md:grid md:grid-cols-3 gap-3">
-        {identityTypes.map((type) => (
-          <IdentityCard
+        {identityTypes.map((type, index) => (
+          <motion.div
             key={type}
-            type={type}
-            claim={claims[type]}
-            onClaimClick={() => onClaimClick(type)}
-            onViewSpace={onViewSpace}
-          />
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{
+              duration: 0.6,
+              delay: index * 0.1,
+              ease: MOTION.ease.premium
+            }}
+          >
+            <IdentityCard
+              type={type}
+              claim={claims[type]}
+              onClaimClick={() => onClaimClick(type)}
+              onViewSpace={onViewSpace}
+            />
+          </motion.div>
         ))}
       </div>
 

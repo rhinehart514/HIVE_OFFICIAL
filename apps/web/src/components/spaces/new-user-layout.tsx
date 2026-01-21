@@ -18,6 +18,8 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDownIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { Text } from '@hive/ui/design-system/primitives';
+import { WordReveal, AnimatedLine } from '@hive/ui/motion';
+import { MOTION } from '@hive/tokens';
 import {
   DiscoverSection,
   IdentityCards,
@@ -51,39 +53,59 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
     <motion.section
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="relative mb-8 p-8 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.06] overflow-hidden"
+      transition={{ duration: MOTION.duration.gentle / 1000, ease: MOTION.ease.premium }}
+      className="relative mb-10 p-10 rounded-2xl bg-gradient-to-br from-white/[0.02] to-transparent border border-white/[0.06] overflow-hidden"
     >
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-gold-500/10 to-transparent rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[var(--color-gold)]/8 to-transparent rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
       </div>
 
       <div className="relative z-10">
         {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] mb-4">
-          <SparklesIcon className="w-3.5 h-3.5 text-gold-500" />
+        <motion.div
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] mb-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: MOTION.ease.premium }}
+        >
+          <SparklesIcon className="w-3.5 h-3.5 text-[var(--color-gold)]/60" />
           <Text size="xs" className="text-white/60">
             400+ communities
           </Text>
-        </div>
+        </motion.div>
 
-        {/* Headline */}
-        <h2 className="text-2xl md:text-3xl font-semibold text-white mb-2 tracking-tight">
-          Your campus, organized
+        {/* Headline with word reveal */}
+        <h2
+          className="text-[36px] md:text-[48px] font-semibold text-white mb-4 tracking-tight leading-[1.0]"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          <WordReveal stagger={0.12} delay={0.2}>
+            Your campus, organized
+          </WordReveal>
         </h2>
-        <Text className="text-white/50 mb-6 max-w-md">
-          Find your clubs, connect with your dorm, and discover communities that match your vibe.
-        </Text>
+
+        {/* Subtext */}
+        <motion.p
+          className="text-[18px] md:text-[20px] leading-relaxed text-white/50 mb-8 max-w-md"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
+        >
+          Every club, dorm, and org has a home here. Find yours.
+        </motion.p>
 
         {/* CTA */}
-        <button
+        <motion.button
           onClick={onScrollToDiscover}
           className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-[#0A0A09] font-medium text-sm hover:bg-white/90 transition-all duration-200"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}
         >
           Start exploring
           <ArrowDownIcon className="w-4 h-4 group-hover:translate-y-0.5 transition-transform duration-200" />
-        </button>
+        </motion.button>
       </div>
     </motion.section>
   );
@@ -150,9 +172,12 @@ export function NewUserLayout({
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* Hero - drives discovery action */}
       <DiscoveryHero onScrollToDiscover={handleScrollToDiscover} />
+
+      {/* Animated separator */}
+      <AnimatedLine className="my-10" delay={0.8} />
 
       {/* Discovery - Primary focus for new users */}
       <div ref={discoverRef} id="discover-section">

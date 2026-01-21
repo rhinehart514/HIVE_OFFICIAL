@@ -25,7 +25,10 @@ export const MOTION = {
     standard: 300,    // Most animations (DEFAULT)
     smooth: 400,      // Modals
     flowing: 500,     // Page transitions
+    gentle: 600,      // Word reveals, gentle entrances (About page)
     dramatic: 700,    // Celebrations ONLY
+    slow: 800,        // Container animations (About page)
+    hero: 1200,       // Hero entrances, major reveals (About page)
   },
   ease: {
     default: [0.23, 1, 0.32, 1] as const,      // Smooth, natural
@@ -70,8 +73,11 @@ export const durationSeconds = {
   standard: 0.3,      // 300ms - Default transitions
   smooth: 0.4,        // 400ms - Smooth movements
   flowing: 0.5,       // 500ms - Layout changes
+  gentle: 0.6,        // 600ms - Word reveals, gentle entrances (About page)
   dramatic: 0.7,      // 700ms - Special moments
+  slow: 0.8,          // 800ms - Container animations (About page)
   orchestrated: 1.0,  // 1000ms - Full sequences
+  hero: 1.2,          // 1200ms - Hero entrances, major reveals (About page)
 } as const;
 
 // Spring physics presets
@@ -166,7 +172,9 @@ export const tinderSprings = {
 // Stagger configurations
 export const staggerPresets = {
   fast: 0.03,     // Fast lists
+  word: 0.03,     // Word-by-word reveals (About page)
   default: 0.05,  // Standard stagger
+  section: 0.08,  // Section stagger (About page)
   slow: 0.1,      // Dramatic reveals
 } as const;
 

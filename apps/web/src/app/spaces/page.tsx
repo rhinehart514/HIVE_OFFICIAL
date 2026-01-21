@@ -33,7 +33,8 @@ import {
   type IdentityClaim,
   type YourSpace,
 } from '@/components/spaces';
-import { Text, Skeleton } from '@hive/ui/design-system/primitives';
+import { Text, Skeleton, NoiseOverlay } from '@hive/ui/design-system/primitives';
+import { MOTION } from '@hive/tokens';
 
 // ============================================================
 // Hooks
@@ -186,42 +187,66 @@ function useMySpaces(isAuthenticated: boolean) {
 // ============================================================
 
 function PageSkeleton() {
+  const EASE = MOTION.ease.premium;
+
   return (
-    <div className="space-y-8 animate-pulse">
+    <div className="space-y-10">
       {/* Header skeleton */}
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-32" />
-      </div>
+      <motion.div
+        className="space-y-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, ease: EASE }}
+      >
+        <div className="h-8 w-48 rounded bg-white/[0.06]" />
+        <div className="h-4 w-32 rounded bg-white/[0.06]" />
+      </motion.div>
 
       {/* Identity cards skeleton */}
-      <div>
-        <Skeleton className="h-4 w-32 mb-4" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.1, ease: EASE }}
+      >
+        <div className="h-4 w-32 mb-4 rounded bg-white/[0.06]" />
         <div className="grid grid-cols-3 gap-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[100px] rounded-xl" />
+            <motion.div
+              key={i}
+              className="h-[100px] rounded-xl bg-white/[0.06]"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.15 + i * 0.05, ease: EASE }}
+            />
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Your spaces skeleton */}
-      <div>
-        <Skeleton className="h-4 w-28 mb-4" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+      >
+        <div className="h-4 w-28 mb-4 rounded bg-white/[0.06]" />
         <div className="rounded-xl border border-white/[0.06] overflow-hidden">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div
+            <motion.div
               key={i}
               className="flex items-center gap-4 px-4 py-3 border-b border-white/[0.04] last:border-b-0"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.35 + i * 0.04, ease: EASE }}
             >
-              <Skeleton className="w-10 h-10 rounded-lg" />
+              <div className="w-10 h-10 rounded-lg bg-white/[0.06]" />
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-20" />
+                <div className="h-4 w-32 rounded bg-white/[0.06]" />
+                <div className="h-3 w-20 rounded bg-white/[0.06]" />
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -345,8 +370,9 @@ export default function SpacesHubPage() {
   // ============================================================
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="min-h-screen w-full relative">
+      <NoiseOverlay />
+      <div className="max-w-3xl mx-auto px-6 py-12 relative z-10">
         {/* Header - Territory narrative with premium motion */}
         <TerritoryHeader
           totalSpaces={423}
@@ -383,20 +409,23 @@ export default function SpacesHubPage() {
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="mt-8 p-6 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center"
+                    transition={{ delay: 0.3, duration: 0.6, ease: MOTION.ease.premium }}
+                    className="mt-10 p-8 rounded-xl bg-white/[0.02] border border-white/[0.06] text-center"
                   >
-                    <Text weight="medium" className="text-white mb-2">
-                      Ready to join the community?
-                    </Text>
-                    <Text size="sm" className="text-white/50 mb-4">
-                      Sign in with your .edu email to join spaces and connect with your campus.
-                    </Text>
+                    <h3
+                      className="text-[24px] font-semibold text-white mb-3"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      Your campus is already here.
+                    </h3>
+                    <p className="text-[16px] text-white/40 mb-6 max-w-md mx-auto">
+                      400+ spaces mapped. Claim your org, join your dorm, connect with your people.
+                    </p>
                     <button
                       onClick={() => router.push('/enter?redirect=/spaces')}
                       className="px-6 py-2.5 rounded-lg bg-white text-[#0A0A09] font-medium text-sm hover:bg-white/90 transition-colors"
                     >
-                      Get Started
+                      Enter with .edu
                     </button>
                   </motion.div>
                 )}
