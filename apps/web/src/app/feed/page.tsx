@@ -348,7 +348,7 @@ function ThisWeekSection({
         <Card className="p-6 bg-white/[0.02] border-white/[0.06] text-center">
           <CalendarIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
           <p className="text-sm text-white/50 mb-4">
-            Nothing scheduled yet. Create an event or browse what&apos;s happening campus-wide.
+            Nothing scheduled yet. Explore what&apos;s happening on campus.
           </p>
           <div className="flex justify-center gap-3">
             <Button variant="outline" size="sm" asChild>

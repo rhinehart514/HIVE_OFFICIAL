@@ -20,7 +20,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   residential: '#10B981',
   greek: '#8B5CF6',
 };
-import { Button, Input, Card, toast, HiveConfirmModal, JoinRequestsPanel } from '@hive/ui';
+import { Button, Input, Card, toast, HiveConfirmModal, JoinRequestsPanel, MemberInviteModal, type InviteableUser, type MemberInviteInput } from '@hive/ui';
 import {
   MemberCard,
   MemberList,
@@ -219,6 +219,9 @@ export default function SpaceMembersPage() {
   const [isPrivateSpace, setIsPrivateSpace] = useState(false);
   const [activeTab, setActiveTab] = useState<'members' | 'requests'>('members');
 
+  // Invite modal state
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+
   // Load members
   useEffect(() => {
     const loadMembers = async () => {
@@ -373,6 +376,64 @@ export default function SpaceMembersPage() {
     }
   };
 
+  // Search users for invite modal
+  const handleSearchUsers = async (query: string): Promise<InviteableUser[]> => {
+    try {
+      const res = await secureApiFetch('/api/users/search', {
+        method: 'POST',
+        body: JSON.stringify({ query, limit: 20 }),
+      });
+
+      if (!res.ok) {
+        return [];
+      }
+
+      const data = await res.json();
+      return (data.users || []).map((u: { id: string; fullName?: string; handle?: string; photoURL?: string }) => ({
+        id: u.id,
+        displayName: u.fullName || u.handle || 'Unknown User',
+        photoURL: u.photoURL,
+      }));
+    } catch (error) {
+      logger.error('Failed to search users', { component: 'MembersPage' }, error instanceof Error ? error : undefined);
+      return [];
+    }
+  };
+
+  // Invite member handler
+  const handleInviteMember = async (input: MemberInviteInput) => {
+    if (!spaceId || !input.userId) return;
+
+    try {
+      const res = await secureApiFetch(`/api/spaces/${spaceId}/members`, {
+        method: 'POST',
+        body: JSON.stringify({
+          userId: input.userId,
+          role: input.role || 'member',
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to invite member');
+      }
+
+      toast.success('Invitation sent', 'The member has been added to this space.');
+      setInviteModalOpen(false);
+
+      // Refresh members list
+      const membersRes = await secureApiFetch(`/api/spaces/${spaceId}/members?limit=100`);
+      if (membersRes.ok) {
+        const membersData = await membersRes.json();
+        setMembers(membersData.members || []);
+        setSummary(membersData.summary || null);
+      }
+    } catch (error) {
+      logger.error('Failed to invite member', { component: 'MembersPage' }, error instanceof Error ? error : undefined);
+      toast.error('Failed to invite member', error instanceof Error ? error.message : 'Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-ground)]">
@@ -418,9 +479,7 @@ export default function SpaceMembersPage() {
 
             {canManageMembers && (
               <Button
-                onClick={() => {
-                  toast.info('Coming soon', 'Member invite will be available soon.');
-                }}
+                onClick={() => setInviteModalOpen(true)}
                 aria-label="Invite new members"
                 className="bg-white text-black hover:bg-neutral-100 focus-visible:ring-2 focus-visible:ring-white/50"
               >
@@ -736,6 +795,15 @@ export default function SpaceMembersPage() {
             setMemberToRemove(null);
           }
         }}
+      />
+
+      {/* Invite Member Modal */}
+      <MemberInviteModal
+        open={inviteModalOpen}
+        onOpenChange={setInviteModalOpen}
+        onSearchUsers={handleSearchUsers}
+        onSubmit={handleInviteMember}
+        existingMemberIds={members.map((m) => m.id)}
       />
     </div>
   );

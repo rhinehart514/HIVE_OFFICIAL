@@ -146,8 +146,8 @@ export function useLeaderOnboarding(
       hasChanges = true;
     }
 
-    // Auto-complete inviteMembers if there are 5+ members
-    if (memberCount >= 5 && !newTasks.inviteMembers) {
+    // Auto-complete inviteMembers if there is 1+ members (beyond the leader)
+    if (memberCount >= 1 && !newTasks.inviteMembers) {
       newTasks.inviteMembers = true;
       hasChanges = true;
     }
@@ -178,7 +178,7 @@ export function useLeaderOnboarding(
       },
       {
         id: "inviteMembers",
-        label: "Invite 5 members",
+        label: "Invite a member",
         description: "Share your space link with your community",
         completed: state.tasks.inviteMembers,
         action: 'invite-members' as const,

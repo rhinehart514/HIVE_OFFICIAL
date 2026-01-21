@@ -27,7 +27,7 @@ import { HttpStatus } from "@/lib/api-response-types";
 import {
   getServerSpaceRepository,
 } from '@hive/core/server';
-import { ProfileId, type LeaderProofType } from '@hive/core';
+import { ProfileId, type LeaderProofType, getSystemTemplateForCategory } from '@hive/core';
 
 const claimSpaceSchema = z.object({
   spaceId: z.string().min(1, "Space ID is required"),
@@ -165,6 +165,40 @@ export const POST = withAuthValidationAndErrors(
           joinMethod: 'claim',
           isProvisional: true,
         }),
+      });
+
+      // Auto-deploy template tools to sidebar based on space category
+      // This is the "holy shit" moment - space has tools immediately after claim
+      const template = getSystemTemplateForCategory(space.category?.value);
+      const placedToolsRef = dbAdmin.collection('spaces').doc(spaceId).collection('placed_tools');
+
+      for (const slot of template.slots) {
+        const toolRef = placedToolsRef.doc();
+        await toolRef.set({
+          ...addSecureCampusMetadata({
+            toolId: slot.toolId,
+            spaceId,
+            placement: 'sidebar',
+            order: slot.order,
+            isActive: true,
+            source: 'system',
+            placedBy: userId,
+            placedAt: admin.firestore.FieldValue.serverTimestamp(),
+            configOverrides: slot.config || {},
+            visibility: 'all',
+            titleOverride: slot.name,
+            isEditable: true,
+            state: {},
+            stateUpdatedAt: null,
+          }),
+        });
+      }
+
+      logger.info('[claim] Template auto-deployed', {
+        spaceId,
+        templateId: template.id,
+        toolsDeployed: template.slots.length,
+        endpoint: '/api/spaces/claim',
       });
 
       logger.info('[claim] Space claimed with provisional access', {

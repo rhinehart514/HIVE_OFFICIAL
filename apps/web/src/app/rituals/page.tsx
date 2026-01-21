@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type RitualData } from "@hive/ui";
 import { RitualUnion } from "@hive/core";
-import { Button, Card, Badge } from "@hive/ui";
+import { Button, Card, Badge, toast } from "@hive/ui";
 import {
   StarIcon,
   FireIcon,
@@ -328,8 +328,7 @@ export default function RitualsPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={() => {
-                  // For now, just show a toast - in the future this could add to a waitlist
-                  alert("We'll notify you when Rituals launches!");
+                  toast.success("You're on the list!", "We'll notify you when Rituals launches.");
                 }}
                 className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3.5 text-black font-semibold hover:bg-amber-400 transition-colors"
               >
@@ -361,7 +360,7 @@ export default function RitualsPage() {
             ].map((ritual) => (
               <div
                 key={ritual.name}
-                className="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl opacity-60"
+                className="flex items-center gap-4 p-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl"
               >
                 <span className="text-3xl">{ritual.icon}</span>
                 <div className="flex-1">
