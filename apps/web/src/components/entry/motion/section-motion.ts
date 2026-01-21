@@ -16,7 +16,7 @@ import { EASE_PREMIUM, EASE_OUT, DURATION, SPRING_SNAPPY, SPRING_GENTLE } from '
 export const sectionEnterVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 20,
+    y: 24,
     height: 0,
     overflow: 'hidden',
   },
@@ -26,19 +26,19 @@ export const sectionEnterVariants: Variants = {
     height: 'auto',
     overflow: 'visible',
     transition: {
-      opacity: { duration: DURATION.gentle, ease: EASE_PREMIUM },
-      y: { duration: DURATION.gentle, ease: EASE_PREMIUM },
-      height: { duration: DURATION.smooth, ease: EASE_PREMIUM },
-      overflow: { delay: DURATION.gentle },
-      staggerChildren: 0.06,
-      delayChildren: 0.1,
+      opacity: { duration: DURATION.slow, ease: EASE_PREMIUM },
+      y: { duration: DURATION.slow, ease: EASE_PREMIUM },
+      height: { duration: DURATION.gentle, ease: EASE_PREMIUM },
+      overflow: { delay: DURATION.slow },
+      staggerChildren: 0.1,
+      delayChildren: 0.15,
     },
   },
   exit: {
     opacity: 0,
-    y: -8,
+    y: -12,
     transition: {
-      duration: DURATION.quick,
+      duration: DURATION.smooth,
       ease: EASE_OUT,
     },
   },
@@ -48,20 +48,20 @@ export const sectionEnterVariants: Variants = {
 export const sectionChildVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 12,
+    y: 16,
   },
   animate: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: DURATION.smooth,
+      duration: DURATION.gentle,
       ease: EASE_PREMIUM,
     },
   },
   exit: {
     opacity: 0,
     transition: {
-      duration: DURATION.fast,
+      duration: DURATION.quick,
     },
   },
 };
@@ -270,8 +270,8 @@ export const errorInlineVariants: Variants = {
 export const arrivalRevealVariants: Variants = {
   initial: {
     opacity: 0,
-    scale: 0.95,
-    y: 20,
+    scale: 0.94,
+    y: 30,
   },
   animate: {
     opacity: 1,
@@ -280,8 +280,8 @@ export const arrivalRevealVariants: Variants = {
     transition: {
       duration: DURATION.dramatic,
       ease: EASE_PREMIUM,
-      staggerChildren: 0.1,
-      delayChildren: 0.3,
+      staggerChildren: 0.15,
+      delayChildren: 0.4,
     },
   },
 };
@@ -290,13 +290,13 @@ export const arrivalRevealVariants: Variants = {
 export const arrivalGlowVariants: Variants = {
   initial: {
     opacity: 0,
-    scale: 0.8,
+    scale: 0.7,
   },
   animate: {
-    opacity: [0, 0.6, 0.3],
-    scale: [0.8, 1.2, 1],
+    opacity: [0, 0.5, 0.25],
+    scale: [0.7, 1.15, 1],
     transition: {
-      duration: 1.5,
+      duration: 2.5,
       ease: 'easeOut',
     },
   },
@@ -313,5 +313,5 @@ export const createSectionTransition = (duration = DURATION.gentle): Transition 
 });
 
 /** Create stagger delay for section children */
-export const sectionStagger = (index: number, baseDelay = 0.06): number =>
+export const sectionStagger = (index: number, baseDelay = 0.1): number =>
   index * baseDelay;

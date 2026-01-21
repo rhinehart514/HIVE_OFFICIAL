@@ -23,25 +23,25 @@ export const EASE_OUT = [0, 0, 0.2, 1] as const;
 /** Smooth in-out for looping animations */
 export const EASE_IN_OUT = [0.4, 0, 0.2, 1] as const;
 
-/** Spring config for snappy interactions */
+/** Spring config for snappy interactions — slower, more deliberate */
 export const SPRING_SNAPPY = {
   type: 'spring' as const,
-  stiffness: 400,
-  damping: 30,
+  stiffness: 200,
+  damping: 28,
 };
 
-/** Spring config for bouncy celebrations */
+/** Spring config for bouncy celebrations — gentler bounce */
 export const SPRING_BOUNCY = {
   type: 'spring' as const,
-  stiffness: 300,
-  damping: 20,
+  stiffness: 150,
+  damping: 18,
 };
 
-/** Spring config for gentle movements */
+/** Spring config for gentle movements — slow and smooth */
 export const SPRING_GENTLE = {
   type: 'spring' as const,
-  stiffness: 200,
-  damping: 25,
+  stiffness: 100,
+  damping: 22,
 };
 
 // ============================================
@@ -50,14 +50,14 @@ export const SPRING_GENTLE = {
 
 export const DURATION = {
   instant: 0,
-  snap: 0.1,
-  fast: 0.15,
-  quick: 0.2,
-  smooth: 0.3,      // THE DEFAULT
-  gentle: 0.4,
-  slow: 0.5,
-  dramatic: 0.7,
-  breathe: 3,
+  snap: 0.2,
+  fast: 0.25,
+  quick: 0.35,
+  smooth: 0.5,      // THE DEFAULT — luxuriously slow
+  gentle: 0.7,
+  slow: 0.9,
+  dramatic: 1.2,
+  breathe: 4,
 } as const;
 
 // ============================================
@@ -68,9 +68,9 @@ export const DURATION = {
 export const stateVariants: Variants = {
   initial: {
     opacity: 0,
-    y: 20,
-    scale: 0.98,
-    filter: 'blur(4px)',
+    y: 24,
+    scale: 0.97,
+    filter: 'blur(6px)',
   },
   animate: {
     opacity: 1,
@@ -78,19 +78,19 @@ export const stateVariants: Variants = {
     scale: 1,
     filter: 'blur(0px)',
     transition: {
-      duration: DURATION.dramatic,  // 0.7s - slower, more luxurious
+      duration: DURATION.dramatic,  // 1.2s - luxuriously slow
       ease: EASE_PREMIUM,
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
+      staggerChildren: 0.12,
+      delayChildren: 0.15,
     },
   },
   exit: {
     opacity: 0,
-    y: -8,
-    scale: 0.99,
-    filter: 'blur(2px)',
+    y: -12,
+    scale: 0.98,
+    filter: 'blur(4px)',
     transition: {
-      duration: DURATION.gentle,  // 0.4s - graceful exit
+      duration: DURATION.gentle,  // 0.7s - graceful exit
       ease: EASE_OUT,
     },
   },
@@ -262,7 +262,7 @@ export const GOLD = {
 // ============================================
 
 /** Create stagger delay based on index */
-export const staggerDelay = (index: number, baseDelay: number = 0.08): number =>
+export const staggerDelay = (index: number, baseDelay: number = 0.12): number =>
   index * baseDelay;
 
 /** Create transition with premium easing */
