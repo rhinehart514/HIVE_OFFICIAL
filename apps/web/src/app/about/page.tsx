@@ -267,29 +267,59 @@ export default function AboutPage() {
         {/* Spacer for parallax */}
         <div className="h-[50vh]" />
 
-        {/* The Break - narrative text */}
+        {/* ============================================ */}
+        {/* SECTION 1: WHAT IS HIVE */}
+        {/* ============================================ */}
+
         <RevealSection className="px-6 py-32 relative">
           <AnimatedLine className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
-            <ParallaxText speed={0.2}>
-              <div className="space-y-12 text-[20px] md:text-[24px] leading-relaxed">
-                <p className="text-white/60">
-                  <NarrativeReveal stagger={0.05}>
-                    The systems we were promised aren't working.
-                  </NarrativeReveal>
-                </p>
-                <p className="text-white/40">
-                  <NarrativeReveal stagger={0.03}>
-                    Credentials collapse under AI. Platforms extract, they don't build. Loneliness is an epidemic wearing social media's mask.
-                  </NarrativeReveal>
-                </p>
-                <p className="text-white/40">
-                  <NarrativeReveal stagger={0.03}>
-                    College has 400+ clubs with no real home. Group chats that die every semester. LinkedIn for your resume, Instagram for performance, nothing for actually building together.
-                  </NarrativeReveal>
-                </p>
-              </div>
+            <ParallaxText speed={0.15}>
+              <motion.h2
+                className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                style={{ fontFamily: 'var(--font-display)' }}
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 1, ease: EASE }}
+              >
+                What I'm building
+              </motion.h2>
             </ParallaxText>
+
+            <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+              <ParallaxText speed={0.1}>
+                <p className="text-white/60">
+                  <NarrativeReveal stagger={0.03}>
+                    HIVE is infrastructure for student communities. Not another social app. Not another group chat. Infrastructure.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.08}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    I built it because campus runs on scattered tools that don't talk to each other. Group chats die every semester. Club knowledge disappears when e-boards graduate. There's LinkedIn for your resume, Instagram for performance, and nothing for actually building together.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.06}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    HIVE gives every organization a permanent home. A place that persists across semesters. Where members can coordinate, build tools, and actually own what they create. No admin oversight. No institutional gatekeeping. Student-owned from the start.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.05}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    400+ organizations already mapped. The structure exists. Now it needs students to claim it, build on it, make it theirs.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+            </div>
           </div>
         </RevealSection>
 
@@ -310,14 +340,17 @@ export default function AboutPage() {
                   className="mt-4 text-[28px] md:text-[36px] font-medium leading-[1.2] text-white/30"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  We're just the infrastructure."
+                  I'm just building the infrastructure."
                 </p>
               </ParallaxText>
             </AnimatedContainer>
           </div>
         </RevealSection>
 
-        {/* The Story */}
+        {/* ============================================ */}
+        {/* SECTION 2: WHY IT TOOK 2 YEARS */}
+        {/* ============================================ */}
+
         <RevealSection className="px-6 py-32 relative">
           <AnimatedLine className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
@@ -330,7 +363,7 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 1, ease: EASE }}
               >
-                The story
+                Why it took two years
               </motion.h2>
             </ParallaxText>
 
@@ -338,7 +371,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.1}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    I started building HIVE because I saw the gap — between what students need and what institutions provide. Between the tools that exist and the ones that should.
+                    I didn't start alone. Two years ago, I had a team. Smart people who believed in this. We tried to make it work together.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -346,7 +379,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.08}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Two years ago, I had a team. We tried to make this work. It didn't — not the way we planned. That's on me, not them.
+                    It didn't. Not the way we planned. The startup didn't come together, the timing wasn't right, and eventually the team moved on. That's on me, not them.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.07}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    But I couldn't let it go. The problem was still there. Students still needed this. So I kept building — nights, weekends, between everything else. Slower, but still moving.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -354,7 +395,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.06}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    But what they built, what they challenged, what they taught me — that's still here. The vision sharpened because of them. HIVE wouldn't exist without that foundation.
+                    What the team built, what they challenged, what they taught me — that's still here. The product is sharper because of them. The vision clearer. HIVE wouldn't exist without that foundation.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -362,7 +403,7 @@ export default function AboutPage() {
               <ParallaxText speed={0.05}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Today it's just me. Building the infrastructure we always talked about. Not finished — it never will be. But ready. Ready for students to build on.
+                    Today it's just me. Building the infrastructure we always talked about. Two years later, it's finally ready. Not finished — it never will be. But ready for students to build on.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
