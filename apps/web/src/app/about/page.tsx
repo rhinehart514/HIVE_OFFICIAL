@@ -289,9 +289,17 @@ export default function AboutPage() {
 
             <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
               <ParallaxText speed={0.1}>
-                <p className="text-white/60">
+                <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    HIVE is infrastructure for student communities. Not another social app. Not another group chat. Infrastructure.
+                    I've been in student orgs since freshman year. Consulting club, a few others. And the thing that always frustrated me was how broken the infrastructure was. Not the people — the people were great. The tools.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.09}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    We used GroupMe for everything, but every semester the chat would die when people graduated. Google Drive for files, but nothing was organized and half the links were broken. Instagram for recruiting, but that's not community — that's performance. And CampusLabs for official stuff, which everyone hated because it felt like filing taxes.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -299,7 +307,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.08}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    I built it because campus runs on scattered tools that don't talk to each other. Group chats die every semester. Club knowledge disappears when e-boards graduate. There's LinkedIn for your resume, Instagram for performance, and nothing for actually building together.
+                    The worst part was the handoff. Every fall, new e-boards would start from scratch. The previous leadership's knowledge was just... gone. Scattered across personal accounts, dead group chats, someone's laptop who graduated. I watched new presidents spend their entire first semester just figuring out how things worked. Then they'd graduate and it would happen again.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.07}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    I kept thinking — why doesn't something exist that just... persists? A place that belongs to the org, not to whoever happens to be president this year. Where the knowledge stays. Where the next generation inherits something instead of nothing.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -307,15 +323,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.06}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    HIVE gives every organization a permanent home. A place that persists across semesters. Where members can coordinate, build tools, and actually own what they create. No admin oversight. No institutional gatekeeping. Student-owned from the start.
+                    That's what HIVE is supposed to be. A permanent home for student organizations. Not owned by the university, not controlled by admins, not dependent on any one person staying. Just infrastructure that's there when you need it.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
 
-              <ParallaxText speed={0.05}>
+              <ParallaxText speed={0.055}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    400+ organizations already mapped. The structure exists. Now it needs students to claim it, build on it, make it theirs.
+                    I mapped out 400+ orgs at UB — clubs, Greek life, residential communities, all of it. Each one has a space waiting. Whether it actually works the way I think it should... that's a different question. That's the part I can't know until people start using it.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -371,15 +387,27 @@ export default function AboutPage() {
               <ParallaxText speed={0.1}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    I didn't start alone. Two years ago, I had a team. Smart people who believed in this. We tried to make it work together.
+                    I didn't start this alone. Two years ago I had a team. Good people who saw the same problem and wanted to fix it. We'd sit in O'Brian basement, in empty classrooms after hours, trying to figure this thing out.
                   </NarrativeReveal>
                 </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.09}>
+                <motion.p
+                  className="text-white/50"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: EASE }}
+                >
+                  Honestly? <span className="text-[var(--color-gold)]">We bullshitted a lot.</span> We thought we were trying our best — and we were — but we spent more time planning than building. More time in meetings than shipping. I kept thinking if we just got the strategy right, everything would fall into place.
+                </motion.p>
               </ParallaxText>
 
               <ParallaxText speed={0.08}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    It didn't. Not the way we planned. The startup didn't come together, the timing wasn't right, and eventually the team moved on. That's on me, not them.
+                    It didn't. I couldn't lead. I didn't know how to turn planning into building, how to create momentum when there was no money, no traction, no proof it would work. The thing just... fell apart. That's on me.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -387,7 +415,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.07}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    But I couldn't let it go. The problem was still there. Students still needed this. So I kept building — nights, weekends, between everything else. Slower, but still moving.
+                    So I decided to build it myself. Not because I thought I could do it better alone — I couldn't. But because someone had to actually ship something. No more meetings. No more strategy sessions. Just building.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.065}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    Two years of nights and weekends. Stretches where I didn't touch it for weeks. Other times up until 3am because I was close to figuring something out. Mostly slow. Invisible progress. The kind where you're not sure if you're getting anywhere.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -395,7 +431,15 @@ export default function AboutPage() {
               <ParallaxText speed={0.06}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    What the team built, what they challenged, what they taught me — that's still here. The product is sharper because of them. The vision clearer. HIVE wouldn't exist without that foundation.
+                    But here's the thing — I need to talk about what these people actually did. Because it wasn't nothing.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.055}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    Gavin and Noah made marketing videos. Real ones. Samarth did the editing and filming — and honestly, he's one of the nicest people you'll ever meet. Buffalo is lucky to have him. Mirka basically became the day-to-day CEO. She paid thousands of her own money into marketing. Thousands. Out of pocket. And here we are.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
@@ -403,20 +447,56 @@ export default function AboutPage() {
               <ParallaxText speed={0.05}>
                 <p className="text-white/50">
                   <NarrativeReveal stagger={0.03}>
-                    Today it's just me. Building the infrastructure we always talked about. Two years later, it's finally ready. Not finished — it never will be. But ready for students to build on.
+                    That's not "helping out." That's belief. That's putting real skin in when there was no reason to expect anything back.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.045}>
+                <motion.p
+                  className="text-white/60"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, ease: EASE }}
+                >
+                  So this project is dedicated to them. <span className="text-[var(--color-gold)]">Whether they like it or not.</span>
+                </motion.p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.055}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    Now it's just me, and the thing is finally at a point where other people can use it. Which is terrifying. Because I know it's not perfect. I know there are bugs. I know there are features that seemed like good ideas at 2am that probably aren't. Two years of building alone means two years of blind spots.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.05}>
+                <p className="text-white/50">
+                  <NarrativeReveal stagger={0.03}>
+                    But that's kind of the point now. I can't know what's broken until you tell me. I can't know what's missing until you need it. The foundation is here — or at least I think it is. Now I need people to actually use it and tell me where I was wrong.
+                  </NarrativeReveal>
+                </p>
+              </ParallaxText>
+
+              <ParallaxText speed={0.045}>
+                <p className="text-white/60">
+                  <NarrativeReveal stagger={0.03}>
+                    So that's the ask. Not "use my app." Just: if you do use it, tell me what sucks. Tell me what you wish existed. Tell me what doesn't make sense. I've been building this in isolation for too long. I need the feedback loop. I need to know what you actually need, not what I assumed you needed.
                   </NarrativeReveal>
                 </p>
               </ParallaxText>
 
               <ParallaxText speed={0.03}>
                 <motion.p
-                  className="text-white/25 text-[16px] pt-6"
+                  className="text-white/25 text-[16px] pt-8"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1, delay: 0.5, ease: EASE }}
                 >
-                  — Laney
+                  — Jacob
                 </motion.p>
               </ParallaxText>
             </div>
