@@ -18,8 +18,9 @@ import { useIDEKeyboard } from './use-ide-keyboard';
 import { ElementRail, type RailState, type RailTab, type UserToolItem } from './element-rail';
 import { ContextRail, type AlignmentType } from './context-rail';
 import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-bar';
-import { StartZone } from './start-zone';
+import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
+import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
 import { toast } from 'sonner';
 
 // Mobile detection hook
@@ -225,6 +226,10 @@ export function HiveLabIDE({
 
   // Ref for floating action bar (includes AI input)
   const floatingBarRef = useRef<FloatingActionBarRef>(null);
+  // Ref for AI chat pill
+  const aiChatPillRef = useRef<AIChatPillRef>(null);
+  // AI chat dock position
+  const [aiChatDock, setAIChatDock] = useState<'float' | 'left'>('float');
   const [saving, setSaving] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [showDeploySuccess, setShowDeploySuccess] = useState(false);
@@ -935,8 +940,13 @@ export function HiveLabIDE({
       save,
       toggleGrid: () => setShowGrid((prev) => !prev),
       setZoom,
-      openAIPanel: () => floatingBarRef.current?.focusInput(),
-      closeAIPanel: () => {}, // No-op since chat bar is always visible
+      openAIPanel: () => {
+        floatingBarRef.current?.focusInput();
+        aiChatPillRef.current?.focusInput();
+      },
+      closeAIPanel: () => {
+        aiChatPillRef.current?.collapse();
+      }
     },
     mode,
     setMode,
@@ -983,14 +993,17 @@ export function HiveLabIDE({
 
         {/* Canvas Area */}
         <div className="flex-1 flex flex-col relative">
-          {/* Start Zone - shown when canvas is empty */}
+          {/* Template Overlay - shown when canvas is empty */}
           <AnimatePresence>
             {isCanvasEmpty && !aiState.isGenerating && (
-              <StartZone
-                onOpenAI={() => floatingBarRef.current?.focusInput()}
-                onOpenTemplates={openTemplates}
-                onOpenElements={openElements}
-                onQuickPrompt={handleQuickPrompt}
+              <TemplateOverlay
+                onSelectTemplate={loadTemplateComposition}
+                onStartFromScratch={openElements}
+                onOpenAI={() => {
+                  floatingBarRef.current?.focusInput();
+                  aiChatPillRef.current?.expand();
+                }}
+                onSeeAllTemplates={openTemplates}
               />
             )}
           </AnimatePresence>
@@ -1064,6 +1077,21 @@ export function HiveLabIDE({
         onClose={() => setTemplateGalleryOpen(false)}
         onSelectTemplate={loadTemplateComposition}
       />
+
+      {/* AI Chat Pill - Floating/Dockable */}
+      {!isCanvasEmpty && (
+        <AIChatPill
+          ref={aiChatPillRef}
+          onSubmit={handleAISubmit}
+          isLoading={aiState.isGenerating}
+          streamingStatus={aiState.currentStatus}
+          selectedCount={selectedIds.length}
+          onCancel={cancelGeneration}
+          initialPrompt={initialPrompt}
+          dockPosition={aiChatDock}
+          onDockChange={setAIChatDock}
+        />
+      )}
 
       {/* Deploy Success Celebration */}
       <AnimatePresence>

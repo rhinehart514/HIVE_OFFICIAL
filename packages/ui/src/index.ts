@@ -165,6 +165,31 @@ export {
   GLOW_COLORS,
 } from "./components/motion-primitives";
 
+// Motion Tokens (Jan 2026 - Premium motion design tokens)
+export { MOTION } from "./tokens/motion";
+export type {
+  EaseType,
+  DurationType,
+  StaggerType,
+  ViewportType,
+  SpringType,
+  ParallaxType,
+} from "./tokens/motion";
+
+// Dramatic Reveal Primitives (Jan 2026 - WordReveal, ThresholdReveal)
+export {
+  WordReveal,
+  ThresholdReveal,
+  ArrivalTransition,
+  ArrivalZone,
+} from "./design-system/primitives/motion";
+export type {
+  WordRevealProps,
+  ThresholdRevealProps,
+  ArrivalTransitionProps,
+  ArrivalZoneProps,
+} from "./design-system/primitives/motion";
+
 // Premium Subtle Motion Variants (Dec 2025 - Vercel/Linear style)
 export {
   premiumContainerVariants,
@@ -1640,6 +1665,15 @@ export type {
   IDEActions,
   KeyboardShortcut,
 } from "./components/hivelab/ide";
+
+// HiveLab: Deploy Takeover (Full-screen deployment experience)
+export {
+  DeployTakeover,
+  ToolCard as DeployToolCard,
+  FlightAnimation,
+  SuccessRecap,
+} from "./components/hivelab/deploy";
+export type { DeployPhase } from "./components/hivelab/deploy";
 
 // ============================================
 // ATMOSPHERE SYSTEM (Jan 2026 - Global Context)

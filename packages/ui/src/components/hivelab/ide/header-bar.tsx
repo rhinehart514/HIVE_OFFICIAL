@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronDownIcon,
@@ -39,6 +39,8 @@ interface HeaderBarProps {
   onPreview: () => void;
   onSave: () => void;
   saving?: boolean;
+  /** Indicates save just completed (triggers celebration animation) */
+  justSaved?: boolean;
   originSpaceId?: string;
   onDeploy?: () => void;
   deploying?: boolean;
@@ -70,6 +72,7 @@ export function HeaderBar({
   onPreview,
   onSave,
   saving,
+  justSaved,
   originSpaceId,
   onDeploy,
   deploying,
@@ -84,6 +87,18 @@ export function HeaderBar({
   const [editingName, setEditingName] = useState(false);
   const [localName, setLocalName] = useState(toolName);
   const [showMenu, setShowMenu] = useState(false);
+  const [showSavedIndicator, setShowSavedIndicator] = useState(false);
+
+  // Show "Saved" indicator when justSaved becomes true, then fade after 2s
+  useEffect(() => {
+    if (justSaved) {
+      setShowSavedIndicator(true);
+      const timer = setTimeout(() => {
+        setShowSavedIndicator(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [justSaved]);
 
   const showModeToggle = canEdit && onModeChange;
 
@@ -267,53 +282,109 @@ export function HeaderBar({
             </motion.button>
           )}
         </AnimatePresence>
+
+        {/* Separate "Saved" status indicator - fades after 2s per DRAMA plan */}
+        <AnimatePresence>
+          {showSavedIndicator && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-1.5 ml-3 text-xs font-medium"
+              style={{ color: HEADER_COLORS.accent }}
+            >
+              <CheckIcon className="h-3 w-3" />
+              <span>Saved</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Right: Save + Deploy + Menu */}
       <div className="flex items-center gap-2">
         {/* Save Button - utility action, always visible */}
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
-            saving && 'opacity-50 cursor-not-allowed',
-            focusRing
-          )}
-          style={{
-            color: hasUnsavedChanges ? HEADER_COLORS.text : HEADER_COLORS.textSecondary,
-            backgroundColor: 'transparent',
-            border: `1px solid ${hasUnsavedChanges ? HEADER_COLORS.border : 'transparent'}`,
-          }}
-          onMouseEnter={(e) => {
-            if (!saving) {
-              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
-              e.currentTarget.style.borderColor = HEADER_COLORS.border;
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.borderColor = hasUnsavedChanges ? HEADER_COLORS.border : 'transparent';
-          }}
-          title="Save (⌘S)"
-        >
-          {saving ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            >
-              <BookmarkIcon className="h-3.5 w-3.5" />
-            </motion.div>
-          ) : hasUnsavedChanges ? (
-            <BookmarkIcon className="h-3.5 w-3.5" />
-          ) : (
-            <CheckIcon className="h-3.5 w-3.5" />
-          )}
-          <span className="hidden sm:block">
-            {saving ? 'Saving...' : hasUnsavedChanges ? 'Save' : 'Saved'}
-          </span>
-        </button>
+        <div className="relative">
+          {/* Gold pulse on just saved */}
+          <AnimatePresence>
+            {justSaved && (
+              <motion.div
+                initial={{ opacity: 0.8, scale: 1 }}
+                animate={{ opacity: 0, scale: 1.3 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
+                className="absolute inset-0 rounded-lg pointer-events-none"
+                style={{
+                  border: `2px solid ${HEADER_COLORS.accent}`,
+                  boxShadow: `0 0 12px ${HEADER_COLORS.accent}60`,
+                }}
+              />
+            )}
+          </AnimatePresence>
+
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
+              saving && 'opacity-50 cursor-not-allowed',
+              focusRing
+            )}
+            style={{
+              color: justSaved ? HEADER_COLORS.accent : hasUnsavedChanges ? HEADER_COLORS.text : HEADER_COLORS.textSecondary,
+              backgroundColor: 'transparent',
+              border: `1px solid ${hasUnsavedChanges ? HEADER_COLORS.border : 'transparent'}`,
+            }}
+            onMouseEnter={(e) => {
+              if (!saving) {
+                e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                e.currentTarget.style.borderColor = HEADER_COLORS.border;
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.borderColor = hasUnsavedChanges ? HEADER_COLORS.border : 'transparent';
+            }}
+            title="Save (⌘S)"
+          >
+            <AnimatePresence mode="wait">
+              {saving ? (
+                <motion.div
+                  key="saving"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 360 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ rotate: { duration: 1, repeat: Infinity, ease: 'linear' } }}
+                >
+                  <BookmarkIcon className="h-3.5 w-3.5" />
+                </motion.div>
+              ) : justSaved || !hasUnsavedChanges ? (
+                <motion.div
+                  key="saved"
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                >
+                  <CheckIcon className="h-3.5 w-3.5" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="unsaved"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <BookmarkIcon className="h-3.5 w-3.5" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <span className="hidden sm:block">
+              {saving ? 'Saving...' : hasUnsavedChanges ? 'Save' : 'Saved'}
+            </span>
+          </button>
+        </div>
 
         {/* Deploy Button - primary CTA */}
         {onDeploy && (

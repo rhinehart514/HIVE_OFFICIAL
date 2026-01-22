@@ -237,6 +237,7 @@ export default function ToolStudioPage({ params }: Props) {
   } | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Modal states
@@ -365,7 +366,10 @@ export default function ToolStudioPage({ params }: Props) {
         await saveTool(toolId, comp);
         setHasUnsavedChanges(false);
         queryClient.invalidateQueries({ queryKey: ['tool', toolId] });
-        toast.success('Tool saved');
+        // Show "just saved" animation
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 2000);
+        // No toast - the header shows saved state
       } catch (error) {
         toast.error(
           error instanceof Error ? error.message : 'Failed to save tool'
@@ -557,6 +561,7 @@ export default function ToolStudioPage({ params }: Props) {
           })
         }
         saving={saving}
+        justSaved={justSaved}
         onBack={handleCancel}
         hasUnsavedChanges={hasUnsavedChanges}
         onDeploy={() => setDeployModalOpen(true)}

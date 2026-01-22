@@ -111,6 +111,8 @@ interface IDECanvasProps {
   mode: ToolMode;
   /** Set of connection IDs that are currently flowing data (for visual feedback) */
   flowingConnections?: Set<string>;
+  /** ID of the element currently being dragged (for dimming other elements) */
+  draggingElementIdGlobal?: string | null;
   onSelect: (ids: string[], append?: boolean) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElements: (ids: string[]) => void;
@@ -142,6 +144,8 @@ interface ElementNodeProps {
   gridSize: number;
   /** Called when drag/resize completes (for undo history) */
   onTransformEnd?: () => void;
+  /** Whether another element is currently being dragged (for dimming) */
+  anotherElementDragging?: boolean;
 }
 
 // Minimum element dimensions
@@ -476,6 +480,7 @@ function ElementNode({
   snapToElements,
   gridSize,
   onTransformEnd,
+  anotherElementDragging,
 }: ElementNodeProps) {
   const prefersReducedMotion = useReducedMotion();
   const [isDragging, setIsDragging] = useState(false);
@@ -483,6 +488,7 @@ function ElementNode({
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [isNew, setIsNew] = useState(true);
+  const [justDropped, setJustDropped] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   // Get element spec for port names
@@ -561,6 +567,11 @@ function ElementNode({
     const handleMouseUp = () => {
       setIsDragging(false);
       onDragStateChange(false);
+      // Trigger gold pulse on drop
+      if (!prefersReducedMotion) {
+        setJustDropped(true);
+        setTimeout(() => setJustDropped(false), 400);
+      }
       // Push to undo history when drag completes
       onTransformEnd?.();
     };
@@ -620,14 +631,17 @@ function ElementNode({
   // Get category dot color for the indicator
   const categoryDotColor = getCategoryDotColor(element.elementId);
 
+  // Calculate opacity - dim when another element is being dragged (0.7 per DRAMA plan)
+  const dimOpacity = anotherElementDragging && !isDragging ? 0.7 : 1;
+
   return (
     <motion.div
       ref={nodeRef}
       initial={{ opacity: 0, scale: 0.8, y: 10 }}
       animate={{
-        opacity: 1,
+        opacity: dimOpacity,
         scale: isDragging ? 1.02 : 1,
-        y: 0,
+        y: isSelected && !isDragging ? -2 : 0,
         boxShadow: isSelected
           ? `0 0 0 2px ${HIVELAB_COLORS.nodeBorderSelected}, 0 8px 24px rgba(0,0,0,0.15)`
           : isDragging
@@ -635,8 +649,13 @@ function ElementNode({
             : '0 2px 8px rgba(0,0,0,0.08)',
       }}
       exit={{ opacity: 0, scale: 0.9, y: -10 }}
-      transition={springPresets.snappy}
-      whileHover={!isDragging && !isSelected ? { opacity: 0.9, y: -2 } : {}}
+      transition={{
+        // 150ms + premium easing per DRAMA plan (not spring)
+        duration: 0.15,
+        ease: easingArrays.default,
+        opacity: { duration: 0.15 },
+      }}
+      whileHover={!isDragging && !isSelected ? { y: -2 } : {}}
       className={cn(
         'absolute rounded-2xl',
         isDragging && 'cursor-grabbing z-50',
@@ -672,6 +691,23 @@ function ElementNode({
             }}
             className="absolute -inset-1 rounded-2xl border-2 pointer-events-none"
             style={{ borderColor: HIVELAB_COLORS.connectionLine }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Gold pulse on drop */}
+      <AnimatePresence>
+        {justDropped && !prefersReducedMotion && (
+          <motion.div
+            initial={{ opacity: 0.8, scale: 1 }}
+            animate={{ opacity: 0, scale: 1.15 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="absolute -inset-1 rounded-2xl pointer-events-none"
+            style={{
+              border: `2px solid ${HIVELAB_COLORS.connectionLine}`,
+              boxShadow: `0 0 20px ${HIVELAB_COLORS.connectionLine}60`,
+            }}
           />
         )}
       </AnimatePresence>
@@ -992,7 +1028,8 @@ function ConnectionLine({
           offsetDistance: ['0%', '100%'],
         }}
         transition={{
-          duration: isFlowing ? 0.8 : 1.5,
+          // 600ms connection pulse per DRAMA plan
+          duration: 0.6,
           repeat: showFlowAnimation ? Infinity : 0,
           ease: 'linear',
         }}
@@ -1060,7 +1097,7 @@ function ConnectionLine({
             initial={{ r: 4, opacity: 0.8 }}
             animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: isFlowing ? 0.4 : 0.6, repeat: Infinity }}
+            transition={{ duration: 0.6, repeat: Infinity }} // 600ms per DRAMA plan
             className="pointer-events-none"
           />
         )}
@@ -1603,6 +1640,7 @@ export function IDECanvas({
             snapToElements={snapToElements}
             gridSize={gridSize}
             onTransformEnd={onTransformEnd}
+            anotherElementDragging={draggingElementId !== null && draggingElementId !== element.id}
           />
         ))}
 

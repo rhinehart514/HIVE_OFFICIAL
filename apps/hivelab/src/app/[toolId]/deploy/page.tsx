@@ -1,16 +1,25 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+/**
+ * HiveLab Tool Deploy Page
+ *
+ * Per DRAMA plan Phase 4.6:
+ * Full-screen takeover with:
+ * - Phase 1: Zoom-out
+ * - Phase 2: Target selection
+ * - Phase 3: Flight animation
+ * - Phase 4: Success recap
+ */
+
+import { useState, useEffect, use, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getAuth } from 'firebase/auth';
 import {
-  ToolDeployModal,
+  DeployTakeover,
   Skeleton,
   Button,
   Card,
   CardContent,
-  type ToolDeploymentTarget,
-  type ToolDeploymentConfig,
 } from '@hive/ui';
 import { apiClient } from '@/lib/api-client';
 import { ArrowLeftIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
@@ -18,13 +27,6 @@ import { ArrowLeftIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
 // Aliases for lucide compatibility
 const ArrowLeft = ArrowLeftIcon;
 const Rocket = RocketLaunchIcon;
-
-/**
- * HiveLab Tool Deploy Page
- *
- * Full-page deployment workflow for tools.
- * Fetches available deployment targets and handles deployment.
- */
 
 interface Props {
   params: Promise<{ toolId: string }>;
@@ -34,13 +36,17 @@ type Tool = {
   id: string;
   name: string;
   description?: string;
+  elements?: Array<{ id: string }>;
 };
 
 type Space = {
   id: string;
   name: string;
+  handle: string;
   description?: string;
   role?: string;
+  memberCount: number;
+  avatarUrl?: string;
 };
 
 export default function ToolDeployPage({ params }: Props) {
@@ -54,11 +60,11 @@ export default function ToolDeployPage({ params }: Props) {
 
   const [isClient, setIsClient] = useState(false);
   const [tool, setTool] = useState<Tool | null>(null);
-  const [targets, setTargets] = useState<ToolDeploymentTarget[]>([]);
-  const [preselectedTargetId, setPreselectedTargetId] = useState<string | null>(null);
+  const [spaces, setSpaces] = useState<Space[]>([]);
+  const [spacesLoading, setSpacesLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isTakeoverOpen, setIsTakeoverOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -71,6 +77,7 @@ export default function ToolDeployPage({ params }: Props) {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setSpacesLoading(true);
 
         // Fetch tool info
         const toolResponse = await apiClient.get(`/api/tools/${toolId}`);
@@ -80,60 +87,39 @@ export default function ToolDeployPage({ params }: Props) {
         const toolData = await toolResponse.json();
         setTool(toolData.tool || toolData);
 
-        // Get current user
-        const auth = getAuth();
-        const user = auth.currentUser;
-
-        // Build deployment targets
-        const deploymentTargets: ToolDeploymentTarget[] = [];
-
-        // Add profile as target
-        if (user) {
-          deploymentTargets.push({
-            id: 'profile',
-            name: 'My Profile',
-            type: 'profile',
-            description: 'Add this tool to your personal profile',
-          });
-        }
-
         // Fetch user's spaces where they can deploy
         try {
           const spacesResponse = await apiClient.get('/api/profile/my-spaces');
           if (spacesResponse.ok) {
             const spacesData = await spacesResponse.json();
-            const spaces = (spacesData.spaces || spacesData || []) as Space[];
+            const allSpaces = (spacesData.spaces || spacesData || []) as Space[];
 
             // Filter to spaces where user is leader/admin
-            const leadSpaces = spaces.filter(
+            const leadSpaces = allSpaces.filter(
               (s) => s.role === 'leader' || s.role === 'admin'
             );
 
-            leadSpaces.forEach((space) => {
-              deploymentTargets.push({
-                id: space.id,
-                name: space.name,
-                type: 'space',
-                description: space.description || 'Deploy to this space',
-              });
-            });
+            // Add handle if missing (use id as fallback)
+            const spacesWithHandles = leadSpaces.map((s) => ({
+              ...s,
+              handle: s.handle || s.id,
+              memberCount: s.memberCount || 0,
+            }));
+
+            setSpaces(spacesWithHandles);
           }
         } catch {
-          // Continue with just profile target if spaces fetch fails
+          // Continue with empty spaces if fetch fails
+          setSpaces([]);
         }
 
-        setTargets(deploymentTargets);
-
-        // Pre-select target based on context from creation
-        if (contextType === 'profile') {
-          setPreselectedTargetId('profile');
-        } else if (contextType === 'space' && contextSpaceId) {
-          setPreselectedTargetId(contextSpaceId);
-        }
+        // Open the takeover immediately after data loads
+        setIsTakeoverOpen(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setIsLoading(false);
+        setSpacesLoading(false);
       }
     };
 
@@ -141,12 +127,11 @@ export default function ToolDeployPage({ params }: Props) {
   }, [isClient, toolId, contextType, contextSpaceId]);
 
   // Handle deployment
-  const handleDeploy = async (config: ToolDeploymentConfig) => {
-    // Transform ToolDeploymentConfig to API expected format
+  const handleDeploy = useCallback(async (spaceId: string) => {
     const apiPayload = {
-      spaceId: config.targetId, // The API expects spaceId, not targetId
-      configuration: config.settings || {},
-      permissions: config.permissions || {},
+      spaceId,
+      configuration: {},
+      permissions: {},
     };
 
     const response = await apiClient.post(`/api/tools/${toolId}/deploy`, apiPayload);
@@ -157,20 +142,25 @@ export default function ToolDeployPage({ params }: Props) {
     }
 
     return response.json();
-  };
+  }, [toolId]);
 
-  // Handle modal close - navigate back
-  const handleModalClose = (open: boolean) => {
-    setIsModalOpen(open);
-    if (!open) {
-      router.push(`/${toolId}`);
-    }
-  };
+  // Handle takeover close - navigate back
+  const handleClose = useCallback(() => {
+    setIsTakeoverOpen(false);
+    router.push(`/${toolId}`);
+  }, [router, toolId]);
+
+  // Handle view in space
+  const handleViewInSpace = useCallback((spaceHandle: string) => {
+    // Navigate to the space page in the web app
+    const webUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+    window.open(`${webUrl}/spaces/${spaceHandle}`, '_blank');
+  }, []);
 
   // Handle back navigation
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     router.push(`/${toolId}`);
-  };
+  }, [router, toolId]);
 
   if (!isClient || isLoading) {
     return (
@@ -203,7 +193,7 @@ export default function ToolDeployPage({ params }: Props) {
   }
 
   // If no targets available, show empty state
-  if (targets.length === 0) {
+  if (spaces.length === 0 && !spacesLoading) {
     return (
       <div className="min-h-[calc(100vh-56px)] p-6">
         <div className="max-w-2xl mx-auto space-y-6">
@@ -225,10 +215,19 @@ export default function ToolDeployPage({ params }: Props) {
               <h2 className="text-lg font-semibold text-[var(--hive-text-primary)] mb-2">
                 No Deployment Targets
               </h2>
-              <p className="text-[var(--hive-text-secondary)] max-w-md mx-auto">
-                You need to be a leader of a space to deploy tools there.
-                Sign in or become a space leader to unlock deployment.
+              <p className="text-[var(--hive-text-secondary)] max-w-md mx-auto mb-6">
+                You need to be a leader or admin of a space to deploy tools there.
+                Join or create a space to unlock deployment.
               </p>
+              <Button
+                onClick={() => {
+                  const webUrl = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
+                  window.open(`${webUrl}/spaces`, '_blank');
+                }}
+                className="bg-[var(--hive-brand-primary)] text-black hover:bg-[var(--hive-brand-hover)]"
+              >
+                Browse Spaces
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -237,34 +236,25 @@ export default function ToolDeployPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-[calc(100vh-56px)] p-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={handleBack}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <h1 className="text-xl font-semibold text-[var(--hive-text-primary)]">
-            Deploy {tool.name}
-          </h1>
-        </div>
+    <>
+      {/* Background placeholder while takeover is open */}
+      <div className="min-h-screen bg-[var(--hive-background-primary)]" />
 
-        <ToolDeployModal
-          open={isModalOpen}
-          onOpenChange={handleModalClose}
-          toolName={tool.name}
-          availableTargets={targets}
-          onDeploy={handleDeploy}
-          initialConfig={
-            preselectedTargetId
-              ? {
-                  targetId: preselectedTargetId,
-                  targetType: contextType === 'profile' ? 'profile' : 'space',
-                }
-              : undefined
-          }
-        />
-      </div>
-    </div>
+      {/* Deploy Takeover - Full screen experience */}
+      <DeployTakeover
+        isOpen={isTakeoverOpen}
+        tool={{
+          id: tool.id,
+          name: tool.name,
+          description: tool.description,
+          elementCount: tool.elements?.length || 0,
+        }}
+        spaces={spaces}
+        spacesLoading={spacesLoading}
+        onDeploy={handleDeploy}
+        onClose={handleClose}
+        onViewInSpace={handleViewInSpace}
+      />
+    </>
   );
 }

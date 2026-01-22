@@ -1,7 +1,17 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+/**
+ * HiveLab Tool Preview Page
+ *
+ * Per DRAMA plan Phase 4.4:
+ * 1. "Preview Mode" pill in top-right with pulse animation
+ * 2. Element interaction: Gold ripple on click/input
+ * 3. Cascade visualization: Draw lines between connected elements briefly when data flows
+ */
+
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ToolPreviewPage,
   renderElement,
@@ -11,14 +21,142 @@ import {
   type IDECanvasElement as CanvasElement,
   type IDEConnection as Connection,
 } from '@hive/ui';
+import { MOTION } from '@hive/ui/tokens/motion';
 import { apiClient } from '@/lib/api-client';
 
-/**
- * HiveLab Tool Preview Page
- *
- * Preview and run tools with live/preview mode toggle.
- * Shows tool information, stats, and quick actions.
- */
+const EASE = MOTION.ease.premium;
+
+// Colors matching HiveLab theme
+const COLORS = {
+  gold: '#D4AF37',
+  goldAlpha: 'rgba(212, 175, 55, 0.3)',
+};
+
+// Preview Mode Indicator Pill
+function PreviewModeIndicator() {
+  const shouldReduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{
+        duration: shouldReduceMotion ? 0 : MOTION.duration.base,
+        ease: EASE,
+      }}
+      className="fixed top-4 right-4 z-50"
+    >
+      <motion.div
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+        style={{
+          backgroundColor: 'rgba(212, 175, 55, 0.15)',
+          color: COLORS.gold,
+          border: '1px solid rgba(212, 175, 55, 0.3)',
+        }}
+      >
+        {/* Pulsing dot */}
+        <motion.div
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: COLORS.gold }}
+          animate={shouldReduceMotion ? {} : {
+            scale: [1, 1.3, 1],
+            opacity: [1, 0.7, 1],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        Preview Mode
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Gold ripple effect component
+function GoldRipple({
+  isActive,
+  onComplete,
+}: {
+  isActive: boolean;
+  onComplete: () => void;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (!isActive || shouldReduceMotion) return null;
+
+  return (
+    <motion.div
+      className="absolute inset-0 pointer-events-none rounded-lg overflow-hidden"
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      onAnimationComplete={onComplete}
+      transition={{ duration: 0.6 }}
+    >
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(circle at center, ${COLORS.goldAlpha} 0%, transparent 70%)`,
+        }}
+        initial={{ scale: 0, opacity: 1 }}
+        animate={{ scale: 2, opacity: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      />
+    </motion.div>
+  );
+}
+
+// Connection flow visualization
+function ConnectionFlowLine({
+  from,
+  to,
+  isActive,
+}: {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  isActive: boolean;
+}) {
+  const shouldReduceMotion = useReducedMotion();
+
+  if (!isActive || shouldReduceMotion) return null;
+
+  return (
+    <motion.svg
+      className="absolute inset-0 pointer-events-none z-10"
+      style={{ overflow: 'visible' }}
+    >
+      <motion.line
+        x1={from.x}
+        y1={from.y}
+        x2={from.x}
+        y2={from.y}
+        animate={{ x2: to.x, y2: to.y }}
+        transition={{ duration: 0.3, ease: EASE }}
+        stroke={COLORS.gold}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeDasharray="4 4"
+      />
+      {/* Flow particle */}
+      <motion.circle
+        r={4}
+        fill={COLORS.gold}
+        initial={{ cx: from.x, cy: from.y, opacity: 1 }}
+        animate={{
+          cx: [from.x, to.x],
+          cy: [from.y, to.y],
+          opacity: [1, 0],
+        }}
+        transition={{
+          duration: 0.4,
+          ease: EASE,
+          opacity: { delay: 0.2 },
+        }}
+      />
+    </motion.svg>
+  );
+}
 
 interface Props {
   params: Promise<{ toolId: string }>;
@@ -27,6 +165,7 @@ interface Props {
 export default function ToolPreviewPageRoute({ params }: Props) {
   const { toolId } = use(params);
   const router = useRouter();
+  const shouldReduceMotion = useReducedMotion();
   const [isClient, setIsClient] = useState(false);
   const [composition, setComposition] = useState<ToolComposition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,6 +176,19 @@ export default function ToolPreviewPageRoute({ params }: Props) {
 
   // Track which elements were recently updated for visual feedback
   const [recentlyUpdated, setRecentlyUpdated] = useState<Set<string>>(new Set());
+
+  // Track ripple effects per element
+  const [rippleElements, setRippleElements] = useState<Set<string>>(new Set());
+
+  // Track active cascade connections for visualization
+  const [activeCascades, setActiveCascades] = useState<Array<{
+    id: string;
+    fromId: string;
+    toId: string;
+  }>>([]);
+
+  // Element position refs for connection lines
+  const elementRefs = useRef<Map<string, DOMRect>>(new Map());
 
   useEffect(() => {
     setIsClient(true);
@@ -81,14 +233,46 @@ export default function ToolPreviewPageRoute({ params }: Props) {
     };
   });
 
-  // Initialize cascade hook
-  const { handleElementAction } = useConnectionCascade({
+  // Custom cascade handler to visualize connections
+  const handleCascadeVisualization = useCallback((fromId: string, toId: string) => {
+    if (shouldReduceMotion) return;
+
+    const cascadeId = `${fromId}-${toId}-${Date.now()}`;
+    setActiveCascades((prev) => [...prev, { id: cascadeId, fromId, toId }]);
+
+    // Remove after animation
+    setTimeout(() => {
+      setActiveCascades((prev) => prev.filter((c) => c.id !== cascadeId));
+    }, 500);
+  }, [shouldReduceMotion]);
+
+  // Initialize cascade hook with visualization
+  const { handleElementAction: baseHandleElementAction } = useConnectionCascade({
     elements: cascadeElements,
     connections: cascadeConnections,
     elementStates,
     onStateUpdate: handleStateUpdate,
     onCascadeComplete: handleCascadeComplete,
   });
+
+  // Wrap with visualization
+  const handleElementAction = useCallback(
+    (instanceId: string, elementId: string, action: string, state: Record<string, unknown>) => {
+      // Add ripple effect to source element
+      setRippleElements((prev) => new Set([...prev, instanceId]));
+
+      // Find connected elements and visualize cascade
+      cascadeConnections.forEach((conn) => {
+        if (conn.from.instanceId === instanceId) {
+          handleCascadeVisualization(instanceId, conn.to.instanceId);
+        }
+      });
+
+      // Call original handler
+      baseHandleElementAction(instanceId, elementId, action, state);
+    },
+    [baseHandleElementAction, cascadeConnections, handleCascadeVisualization]
+  );
 
   // Fetch tool data
   useEffect(() => {
@@ -158,27 +342,81 @@ export default function ToolPreviewPageRoute({ params }: Props) {
     router.push(`/${toolId}/deploy`);
   };
 
+  // Clear ripple effect
+  const clearRipple = useCallback((instanceId: string) => {
+    setRippleElements((prev) => {
+      const next = new Set(prev);
+      next.delete(instanceId);
+      return next;
+    });
+  }, []);
+
   // Render tool runtime (elements with interactivity)
   const renderRuntime = (comp: ToolComposition, _mode: 'preview' | 'live') => {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 relative">
+        {/* Connection flow visualizations */}
+        <AnimatePresence>
+          {activeCascades.map((cascade) => {
+            const fromRect = elementRefs.current.get(cascade.fromId);
+            const toRect = elementRefs.current.get(cascade.toId);
+
+            if (!fromRect || !toRect) return null;
+
+            return (
+              <ConnectionFlowLine
+                key={cascade.id}
+                from={{
+                  x: fromRect.right - fromRect.left,
+                  y: (fromRect.top + fromRect.bottom) / 2 - fromRect.top,
+                }}
+                to={{
+                  x: toRect.left - fromRect.left,
+                  y: (toRect.top + toRect.bottom) / 2 - fromRect.top,
+                }}
+                isActive={true}
+              />
+            );
+          })}
+        </AnimatePresence>
+
         {comp.elements.map((element, index) => {
           const instanceId = element.instanceId || `${element.elementId}_${index}`;
           const currentState = elementStates[instanceId] || {};
           const isUpdated = recentlyUpdated.has(instanceId);
+          const hasRipple = rippleElements.has(instanceId);
 
           return (
-            <div
+            <motion.div
               key={instanceId}
-              className={`transition-all duration-300 ${
+              ref={(el) => {
+                if (el) {
+                  elementRefs.current.set(instanceId, el.getBoundingClientRect());
+                }
+              }}
+              className={`relative transition-all duration-300 ${
                 isUpdated ? 'ring-2 ring-[var(--hive-brand-primary)] ring-opacity-50' : ''
               }`}
+              animate={isUpdated ? {
+                scale: [1, 1.02, 1],
+              } : {}}
+              transition={{ duration: 0.3 }}
             >
+              {/* Gold ripple effect on interaction */}
+              <GoldRipple
+                isActive={hasRipple}
+                onComplete={() => clearRipple(instanceId)}
+              />
+
               {renderElement(element.elementId, {
                 id: instanceId,
                 config: element.config,
                 data: currentState,
                 onChange: (data) => {
+                  // Add ripple on change
+                  if (!shouldReduceMotion) {
+                    setRippleElements((prev) => new Set([...prev, instanceId]));
+                  }
                   // Update local state
                   handleStateUpdate(instanceId, data);
                 },
@@ -196,7 +434,7 @@ export default function ToolPreviewPageRoute({ params }: Props) {
                   handleElementAction(instanceId, element.elementId, action, newState);
                 },
               })}
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -228,7 +466,11 @@ export default function ToolPreviewPageRoute({ params }: Props) {
   if (error || !composition) {
     return (
       <div className="min-h-[calc(100vh-56px)] flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center space-y-4"
+        >
           <p className="text-[var(--hive-status-error)]">{error || 'Tool not found'}</p>
           <button
             onClick={() => router.push('/')}
@@ -236,20 +478,25 @@ export default function ToolPreviewPageRoute({ params }: Props) {
           >
             Back to Dashboard
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <ToolPreviewPage
-      composition={composition}
-      initialMode="preview"
-      onBack={handleBack}
-      onEdit={handleEdit}
-      onRun={handleRun}
-      onOpenSettings={handleOpenSettings}
-      renderRuntime={renderRuntime}
-    />
+    <>
+      {/* Preview Mode Indicator */}
+      <PreviewModeIndicator />
+
+      <ToolPreviewPage
+        composition={composition}
+        initialMode="preview"
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onRun={handleRun}
+        onOpenSettings={handleOpenSettings}
+        renderRuntime={renderRuntime}
+      />
+    </>
   );
 }

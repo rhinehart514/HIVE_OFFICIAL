@@ -35,6 +35,11 @@
       "types": "./src/motion/index.ts",
       "import": "./src/motion/index.ts",
       "default": "./src/motion/index.ts"
+    },
+    "./tokens/motion": {
+      "types": "./src/tokens/motion.ts",
+      "import": "./src/tokens/motion.ts",
+      "default": "./src/tokens/motion.ts"
     }
   },
   "scripts": {
