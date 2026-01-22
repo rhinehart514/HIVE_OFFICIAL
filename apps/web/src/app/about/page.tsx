@@ -917,7 +917,7 @@ export default function AboutPage() {
               </div>
             </UpvotableSection>
 
-            {/* HOW IT WORKS (VISUAL) */}
+            {/* THE SHIFT — Student-focused visual story */}
             <section className="px-6 py-32 relative">
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-4xl">
@@ -930,157 +930,79 @@ export default function AboutPage() {
                     viewport={{ once: true }}
                     transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
-                    How It Works
+                    The shift
                   </motion.h2>
                   <p className="text-[16px] text-[var(--color-gold)]/60 mb-16">
-                    Visual overview for how the pieces connect
+                    What actually changes when you have real infrastructure
                   </p>
                 </ParallaxText>
 
-                {/* System Architecture Diagram */}
+                {/* BEFORE: The Chaos */}
                 <motion.div
-                  className="mb-20"
+                  className="mb-16"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                 >
-                  <p className="text-white/40 text-[13px] uppercase tracking-wider mb-6">System Architecture</p>
-                  <div className="bg-black/30 border border-white/10 rounded-xl p-8 overflow-x-auto">
-                    <svg viewBox="0 0 600 280" className="w-full min-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* HIVE container */}
-                      <motion.rect
-                        x="20" y="20" width="560" height="240" rx="12"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: 0.2, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="50" y="55" fill="rgba(255,255,255,0.6)" fontSize="18" fontWeight="600"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
-                      >
-                        HIVE
-                      </motion.text>
-
-                      {/* Four main modules */}
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="40" y="80" width="120" height="70" rx="8" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.3)" strokeWidth="1" />
-                        <text x="100" y="108" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="500" textAnchor="middle">Spaces</text>
-                        <text x="100" y="128" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">Your org's home</text>
-                      </motion.g>
-
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.6, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="175" y="80" width="120" height="70" rx="8" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.3)" strokeWidth="1" />
-                        <text x="235" y="108" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="500" textAnchor="middle">Feed</text>
-                        <text x="235" y="128" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">Campus activity</text>
-                      </motion.g>
-
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.7, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="310" y="80" width="120" height="70" rx="8" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.3)" strokeWidth="1" />
-                        <text x="370" y="108" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="500" textAnchor="middle">HiveLab</text>
-                        <text x="370" y="128" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">Custom tools</text>
-                      </motion.g>
-
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.8, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="445" y="80" width="120" height="70" rx="8" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.3)" strokeWidth="1" />
-                        <text x="505" y="108" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="500" textAnchor="middle">Profile</text>
-                        <text x="505" y="128" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">Your identity</text>
-                      </motion.g>
-
-                      {/* Connecting layer */}
-                      <motion.rect
-                        x="40" y="175" width="525" height="60" rx="8"
-                        fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" strokeWidth="1"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.9, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="300" y="200" fill="rgba(255,255,255,0.5)" fontSize="12" fontWeight="500" textAnchor="middle"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 1, ease: MOTION.ease.premium }}
-                      >
-                        Events + Posts + Files + Members
-                      </motion.text>
-                      <motion.text
-                        x="300" y="220" fill="rgba(255,255,255,0.3)" fontSize="10" textAnchor="middle"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 1.1, ease: MOTION.ease.premium }}
-                      >
-                        Everything that happens in your space
-                      </motion.text>
-
-                      {/* Connector lines */}
-                      <motion.line
-                        x1="100" y1="150" x2="100" y2="175"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 1, ease: MOTION.ease.premium }}
-                      />
-                      <motion.line
-                        x1="235" y1="150" x2="235" y2="175"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 1.1, ease: MOTION.ease.premium }}
-                      />
-                      <motion.line
-                        x1="370" y1="150" x2="370" y2="175"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 1.2, ease: MOTION.ease.premium }}
-                      />
-                      <motion.line
-                        x1="505" y1="150" x2="505" y2="175"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 1.3, ease: MOTION.ease.premium }}
-                      />
-                    </svg>
+                  <p className="text-red-400/60 text-[13px] uppercase tracking-wider mb-6">Right now</p>
+                  <div className="bg-red-500/[0.03] border border-red-500/20 rounded-xl p-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                      {[
+                        { tool: 'GroupMe', status: 'Dies every semester', icon: '💬' },
+                        { tool: 'Google Drive', status: 'Scattered across accounts', icon: '📁' },
+                        { tool: 'Instagram', status: 'For clout, not coordination', icon: '📸' },
+                        { tool: 'Email chains', status: 'Nobody reads them', icon: '📧' },
+                      ].map((item, i) => (
+                        <motion.div
+                          key={item.tool}
+                          className="text-center p-4"
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.1 * i, ease: MOTION.ease.premium }}
+                        >
+                          <span className="text-2xl mb-2 block">{item.icon}</span>
+                          <p className="text-white/60 text-[14px] font-medium">{item.tool}</p>
+                          <p className="text-white/30 text-[12px]">{item.status}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                    <motion.div
+                      className="text-center py-6 border-t border-red-500/10"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
+                    >
+                      <p className="text-white/40 text-[15px] mb-2">Every May:</p>
+                      <p className="text-white/60 text-[18px] font-medium">
+                        "Where's the budget doc?" → "Sarah had it" → "She graduated" → <span className="text-red-400/80">Start over</span>
+                      </p>
+                    </motion.div>
                   </div>
-                  <p className="text-white/30 text-[12px] mt-4 text-center italic">
-                    Four surfaces, one unified system. Everything connects through shared data.
-                  </p>
                 </motion.div>
 
-                {/* User Journey Flowchart */}
+                {/* THE ARROW */}
+                <motion.div
+                  className="flex justify-center mb-16"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, ease: MOTION.ease.premium }}
+                >
+                  <div className="flex flex-col items-center">
+                    <div className="w-px h-12 bg-gradient-to-b from-red-500/20 to-[var(--color-gold)]/40" />
+                    <div className="w-8 h-8 rounded-full bg-[var(--color-gold)]/10 border border-[var(--color-gold)]/30 flex items-center justify-center">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M6 2L6 10M6 10L2 6M6 10L10 6" stroke="rgba(212,175,55,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <div className="w-px h-12 bg-gradient-to-b from-[var(--color-gold)]/40 to-[var(--color-gold)]/20" />
+                  </div>
+                </motion.div>
+
+                {/* AFTER: With HIVE */}
                 <motion.div
                   className="mb-20"
                   initial={{ opacity: 0, y: 30 }}
@@ -1088,331 +1010,132 @@ export default function AboutPage() {
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, delay: 0.2, ease: MOTION.ease.premium }}
                 >
-                  <p className="text-white/40 text-[13px] uppercase tracking-wider mb-6">Your Journey</p>
-                  <div className="bg-black/30 border border-white/10 rounded-xl p-8 overflow-x-auto">
-                    <svg viewBox="0 0 600 260" className="w-full min-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* Top row - main flow */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.3, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="20" y="30" width="100" height="45" rx="6" fill="rgba(212,175,55,0.1)" stroke="rgba(212,175,55,0.4)" strokeWidth="1" />
-                        <text x="70" y="57" fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight="500" textAnchor="middle">Sign up</text>
-                      </motion.g>
-
-                      <motion.line
-                        x1="120" y1="52" x2="145" y2="52"
-                        stroke="rgba(255,255,255,0.3)" strokeWidth="1" markerEnd="url(#arrowhead)"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: 0.5, ease: MOTION.ease.premium }}
-                      />
-
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.4, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="150" y="30" width="120" height="45" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                        <text x="210" y="57" fill="rgba(255,255,255,0.6)" fontSize="12" textAnchor="middle">Pick your campus</text>
-                      </motion.g>
-
-                      <motion.line
-                        x1="270" y1="52" x2="295" y2="52"
-                        stroke="rgba(255,255,255,0.3)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: 0.6, ease: MOTION.ease.premium }}
-                      />
-
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.5, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="300" y="30" width="100" height="45" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                        <text x="350" y="57" fill="rgba(255,255,255,0.6)" fontSize="12" textAnchor="middle">Join spaces</text>
-                      </motion.g>
-
-                      <motion.line
-                        x1="400" y1="52" x2="425" y2="52"
-                        stroke="rgba(255,255,255,0.3)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: 0.7, ease: MOTION.ease.premium }}
-                      />
-
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.6, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="430" y="30" width="150" height="45" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                        <text x="505" y="57" fill="rgba(255,255,255,0.6)" fontSize="12" textAnchor="middle">Create & consume</text>
-                      </motion.g>
-
-                      {/* Branch down from Join spaces */}
-                      <motion.line
-                        x1="350" y1="75" x2="350" y2="105"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: 0.8, ease: MOTION.ease.premium }}
-                      />
-
-                      {/* Space types */}
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.9, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="150" y="110" width="100" height="40" rx="6" fill="rgba(212,175,55,0.05)" stroke="rgba(212,175,55,0.2)" strokeWidth="1" />
-                        <text x="200" y="134" fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle">Your Major</text>
-                      </motion.g>
-
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 1, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="265" y="110" width="100" height="40" rx="6" fill="rgba(212,175,55,0.05)" stroke="rgba(212,175,55,0.2)" strokeWidth="1" />
-                        <text x="315" y="134" fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle">Your Dorm</text>
-                      </motion.g>
-
-                      <motion.g
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 1.1, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="380" y="110" width="100" height="40" rx="6" fill="rgba(212,175,55,0.05)" stroke="rgba(212,175,55,0.2)" strokeWidth="1" />
-                        <text x="430" y="134" fill="rgba(255,255,255,0.5)" fontSize="11" textAnchor="middle">Your Clubs</text>
-                      </motion.g>
-
-                      {/* Connecting lines to space types */}
-                      <motion.path
-                        d="M 350 105 L 350 95 L 200 95 L 200 110"
-                        stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 0.9, ease: MOTION.ease.premium }}
-                      />
-                      <motion.path
-                        d="M 350 105 L 350 95 L 315 95 L 315 110"
-                        stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 1, ease: MOTION.ease.premium }}
-                      />
-                      <motion.path
-                        d="M 350 105 L 350 95 L 430 95 L 430 110"
-                        stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5, delay: 1.1, ease: MOTION.ease.premium }}
-                      />
-
-                      {/* Lines converging down */}
-                      <motion.path
-                        d="M 200 150 L 200 175 L 315 175 M 315 150 L 315 175 M 430 150 L 430 175 L 315 175"
-                        stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 1.2, ease: MOTION.ease.premium }}
-                      />
-                      <motion.line
-                        x1="315" y1="175" x2="315" y2="195"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.3, delay: 1.3, ease: MOTION.ease.premium }}
-                      />
-
-                      {/* Personalized feed result */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 1.4, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="215" y="200" width="200" height="45" rx="6" fill="rgba(212,175,55,0.1)" stroke="rgba(212,175,55,0.4)" strokeWidth="1" />
-                        <text x="315" y="227" fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight="500" textAnchor="middle">Your personalized feed</text>
-                      </motion.g>
-
-                      {/* Arrow marker definition */}
-                      <defs>
-                        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-                          <polygon points="0 0, 8 3, 0 6" fill="rgba(255,255,255,0.3)" />
-                        </marker>
-                      </defs>
-                    </svg>
+                  <p className="text-[var(--color-gold)]/60 text-[13px] uppercase tracking-wider mb-6">With HIVE</p>
+                  <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/20 rounded-xl p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                      {[
+                        {
+                          title: 'Your org has a home',
+                          desc: 'Posts, events, files, members — one place that outlasts any president',
+                          highlight: 'Spaces'
+                        },
+                        {
+                          title: 'Knowledge compounds',
+                          desc: 'Every event, every doc, every decision — searchable forever',
+                          highlight: 'Archive'
+                        },
+                        {
+                          title: 'Handoffs just work',
+                          desc: 'New president? Reassign the role. They get everything. Day one.',
+                          highlight: 'Continuity'
+                        },
+                      ].map((item, i) => (
+                        <motion.div
+                          key={item.title}
+                          className="p-5 rounded-lg bg-black/20"
+                          initial={{ opacity: 0, y: 15 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.15 * i, ease: MOTION.ease.premium }}
+                        >
+                          <span className="text-[11px] uppercase tracking-wider text-[var(--color-gold)]/50 mb-2 block">{item.highlight}</span>
+                          <p className="text-white/80 text-[16px] font-medium mb-2">{item.title}</p>
+                          <p className="text-white/40 text-[14px]">{item.desc}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                    <motion.div
+                      className="text-center py-6 border-t border-[var(--color-gold)]/10"
+                      initial={{ opacity: 0 }}
+                      whileInView={{ opacity: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
+                    >
+                      <p className="text-white/40 text-[15px] mb-2">Every May:</p>
+                      <p className="text-white/60 text-[18px] font-medium">
+                        New leadership logs in → <span className="text-[var(--color-gold)]">Everything's already there</span> → Build on what came before
+                      </p>
+                    </motion.div>
                   </div>
-                  <p className="text-white/30 text-[12px] mt-4 text-center italic">
-                    Start with your campus, find your communities, get a feed that actually matters.
-                  </p>
                 </motion.div>
 
-                {/* Data Relationships Diagram */}
+                {/* WHAT YOU BUILD */}
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.8, delay: 0.2, ease: MOTION.ease.premium }}
                 >
-                  <p className="text-white/40 text-[13px] uppercase tracking-wider mb-6">Data Relationships</p>
-                  <div className="bg-black/30 border border-white/10 rounded-xl p-8 overflow-x-auto">
-                    <svg viewBox="0 0 600 200" className="w-full min-w-[500px]" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {/* Student entity */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="40" y="60" width="100" height="80" rx="8" fill="rgba(212,175,55,0.1)" stroke="rgba(212,175,55,0.4)" strokeWidth="1" />
-                        <text x="90" y="85" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="600" textAnchor="middle">Student</text>
-                        <line x1="55" y1="95" x2="125" y2="95" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                        <text x="90" y="112" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">name</text>
-                        <text x="90" y="127" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">email</text>
-                      </motion.g>
+                  <p className="text-white/40 text-[13px] uppercase tracking-wider mb-6">What you actually build</p>
+                  <div className="bg-black/30 border border-white/10 rounded-xl p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      {/* Left: The trajectory */}
+                      <div>
+                        <p className="text-white/60 text-[14px] font-medium mb-6">Your four years →</p>
+                        <div className="space-y-4">
+                          {[
+                            { year: 'Freshman', action: 'Join spaces. Find your people.', opacity: 0.4 },
+                            { year: 'Sophomore', action: 'Lead projects. Start contributing.', opacity: 0.5 },
+                            { year: 'Junior', action: 'Run things. Build tools your org needs.', opacity: 0.7 },
+                            { year: 'Senior', action: 'Hand off gracefully. Your work lives on.', opacity: 0.9 },
+                          ].map((item, i) => (
+                            <motion.div
+                              key={item.year}
+                              className="flex items-start gap-4"
+                              initial={{ opacity: 0, x: -20 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.5, delay: 0.1 * i, ease: MOTION.ease.premium }}
+                            >
+                              <div
+                                className="w-2 h-2 rounded-full bg-[var(--color-gold)] mt-2 flex-shrink-0"
+                                style={{ opacity: item.opacity }}
+                              />
+                              <div>
+                                <span className="text-white/50 text-[13px]">{item.year}:</span>
+                                <p className="text-white/70 text-[15px]">{item.action}</p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
 
-                      {/* Connection to Campus */}
-                      <motion.line
-                        x1="140" y1="80" x2="240" y2="45"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.5, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="190" y="55" fill="rgba(255,255,255,0.3)" fontSize="9"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.6, ease: MOTION.ease.premium }}
-                      >
-                        belongs to
-                      </motion.text>
-
-                      {/* Campus entity */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="250" y="15" width="100" height="60" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                        <text x="300" y="40" fill="rgba(255,255,255,0.6)" fontSize="13" fontWeight="500" textAnchor="middle">Campus</text>
-                        <text x="300" y="58" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">name, domain</text>
-                      </motion.g>
-
-                      {/* Connection to Space */}
-                      <motion.line
-                        x1="140" y1="100" x2="240" y2="110"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.6, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="190" y="98" fill="rgba(255,255,255,0.3)" fontSize="9"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}
-                      >
-                        joins
-                      </motion.text>
-
-                      {/* Space entity */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="250" y="90" width="100" height="70" rx="8" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.3)" strokeWidth="1" />
-                        <text x="300" y="115" fill="rgba(255,255,255,0.7)" fontSize="13" fontWeight="500" textAnchor="middle">Space</text>
-                        <text x="300" y="133" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">name, type</text>
-                        <text x="300" y="148" fill="rgba(255,255,255,0.35)" fontSize="10" textAnchor="middle">members</text>
-                      </motion.g>
-
-                      {/* Connection to Content */}
-                      <motion.line
-                        x1="350" y1="125" x2="420" y2="125"
-                        stroke="rgba(255,255,255,0.2)" strokeWidth="1"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.7, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="385" y="118" fill="rgba(255,255,255,0.3)" fontSize="9"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 0.8, ease: MOTION.ease.premium }}
-                      >
-                        contains
-                      </motion.text>
-
-                      {/* Content entity */}
-                      <motion.g
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.6, ease: MOTION.ease.premium }}
-                      >
-                        <rect x="430" y="60" width="130" height="130" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
-                        <text x="495" y="90" fill="rgba(255,255,255,0.6)" fontSize="12" fontWeight="500" textAnchor="middle">Content</text>
-                        <line x1="445" y1="100" x2="545" y2="100" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                        <text x="495" y="120" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">Posts</text>
-                        <text x="495" y="138" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">Events</text>
-                        <text x="495" y="156" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">Files</text>
-                        <text x="495" y="174" fill="rgba(255,255,255,0.4)" fontSize="10" textAnchor="middle">Tools</text>
-                      </motion.g>
-
-                      {/* Student creates content line */}
-                      <motion.path
-                        d="M 90 140 L 90 170 L 430 170"
-                        stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none" strokeDasharray="4 2"
-                        initial={{ pathLength: 0 }}
-                        whileInView={{ pathLength: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.9, ease: MOTION.ease.premium }}
-                      />
-                      <motion.text
-                        x="260" y="165" fill="rgba(255,255,255,0.25)" fontSize="9"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.4, delay: 1, ease: MOTION.ease.premium }}
-                      >
-                        creates
-                      </motion.text>
-                    </svg>
+                      {/* Right: What you take with you */}
+                      <div>
+                        <p className="text-white/60 text-[14px] font-medium mb-6">What you leave with →</p>
+                        <div className="space-y-3">
+                          {[
+                            'Verifiable record of events you organized',
+                            'Tools you built that others still use',
+                            'Leadership history across multiple orgs',
+                            'Contributions that compound your reputation',
+                            'Proof of work — not self-reported bullet points',
+                          ].map((item, i) => (
+                            <motion.div
+                              key={i}
+                              className="flex items-center gap-3"
+                              initial={{ opacity: 0, x: 20 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.5, delay: 0.1 * i, ease: MOTION.ease.premium }}
+                            >
+                              <span className="text-[var(--color-gold)]/50">→</span>
+                              <p className="text-white/50 text-[14px]">{item}</p>
+                            </motion.div>
+                          ))}
+                        </div>
+                        <motion.p
+                          className="text-white/30 text-[13px] mt-6 italic"
+                          initial={{ opacity: 0 }}
+                          whileInView={{ opacity: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.6, ease: MOTION.ease.premium }}
+                        >
+                          Your profile isn't a resume. It's your operating system — portable, verifiable, yours.
+                        </motion.p>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-white/30 text-[12px] mt-4 text-center italic">
-                    Simple relationships: students belong to campuses, join spaces, and create content within them.
-                  </p>
                 </motion.div>
               </div>
             </section>
