@@ -48,15 +48,13 @@ export default function LandingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Access code state
-  const [accessCodePassed, setAccessCodePassed] = useState(() => {
-    if (typeof window === 'undefined') return !ACCESS_GATE_ENABLED;
-    return !ACCESS_GATE_ENABLED || localStorage.getItem(ACCESS_GATE_PASSED_KEY) === 'true';
-  });
+  // Access code state - start with gate active, check localStorage on mount
+  const [accessCodePassed, setAccessCodePassed] = useState(!ACCESS_GATE_ENABLED);
   const [accessCode, setAccessCode] = useState<string[]>(['', '', '', '', '', '']);
   const [accessCodeError, setAccessCodeError] = useState('');
   const [isVerifyingAccessCode, setIsVerifyingAccessCode] = useState(false);
   const [accessCodeLockout, setAccessCodeLockout] = useState<AccessCodeLockout | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   // Waitlist state
   const [showWaitlist, setShowWaitlist] = useState(false);
@@ -66,9 +64,10 @@ export default function LandingPage() {
   const [waitlistError, setWaitlistError] = useState('');
   const waitlistInputRef = useRef<HTMLInputElement>(null);
 
-  // Check localStorage on mount (in case SSR hydration missed it)
+  // Check localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined' && ACCESS_GATE_ENABLED) {
+    setMounted(true);
+    if (ACCESS_GATE_ENABLED) {
       const passed = localStorage.getItem(ACCESS_GATE_PASSED_KEY) === 'true';
       setAccessCodePassed(passed);
     }
@@ -273,7 +272,7 @@ export default function LandingPage() {
         </h1>
 
         {/* Access Code Input - shown when gate enabled and not passed */}
-        {!accessCodePassed && (
+        {mounted && !accessCodePassed && (
           <motion.div
             className="w-full max-w-[400px] space-y-6"
             initial={{ opacity: 0, y: 20 }}
@@ -431,7 +430,7 @@ export default function LandingPage() {
         )}
 
         {/* Email input form - shown after access code passed */}
-        {accessCodePassed && (
+        {mounted && accessCodePassed && (
           <motion.form
             onSubmit={handleSubmit}
             className="w-full max-w-[400px]"
@@ -506,7 +505,7 @@ export default function LandingPage() {
         )}
 
         {/* Different school link - only show after access code */}
-        {accessCodePassed && (
+        {mounted && accessCodePassed && (
           <motion.p
             className="mt-6 text-[14px] text-white/40"
             initial={{ opacity: 0 }}
