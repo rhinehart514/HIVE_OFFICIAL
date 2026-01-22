@@ -842,3 +842,43 @@ export {
   type StrengthLevel,
   type ConnectionStrengthIndicatorProps,
 } from './ConnectionStrengthIndicator';
+
+// ============================================
+// FEEDBACK PRIMITIVES (Canvas)
+// ============================================
+
+export {
+  EmptyCanvas,
+  type EmptyCanvasProps,
+} from './feedback/EmptyCanvas';
+
+// ============================================
+// INPUT HOOKS
+// ============================================
+
+export {
+  useDramaticHandleCheck,
+  type UseDramaticHandleCheckOptions,
+  type DramaticHandleCheckResult,
+} from './input/useDramaticHandleCheck';
+
+// ============================================
+// MOTION PRIMITIVES (DRAMA.md)
+// ============================================
+
+export {
+  WordReveal,
+  type WordRevealProps,
+} from './motion/WordReveal';
+
+export {
+  ThresholdReveal,
+  type ThresholdRevealProps,
+} from './motion/ThresholdReveal';
+
+export {
+  ArrivalTransition,
+  ArrivalZone,
+  type ArrivalTransitionProps,
+  type ArrivalZoneProps,
+} from './motion/ArrivalTransition';

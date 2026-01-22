@@ -376,6 +376,27 @@ export {
 } from './Reveal';
 
 // ============================================
+// DRAMATIC REVEAL PRIMITIVES
+// ============================================
+
+export {
+  WordReveal,
+  type WordRevealProps,
+} from './WordReveal';
+
+export {
+  ThresholdReveal,
+  type ThresholdRevealProps,
+} from './ThresholdReveal';
+
+export {
+  ArrivalTransition,
+  ArrivalZone,
+  type ArrivalTransitionProps,
+  type ArrivalZoneProps,
+} from './ArrivalTransition';
+
+// ============================================
 // SCROLL PRIMITIVES
 // ============================================
 

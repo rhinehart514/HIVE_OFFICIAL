@@ -2,23 +2,33 @@
 
 /**
  * Space Residence Page - /s/[handle]
- * UNIFIED VIEW REDESIGN: Jan 21, 2026
+ * UNIFIED VIEW REDESIGN: Jan 22, 2026
  *
  * Homebase-first architecture with unified activity feed.
  * No mode switching - everything lives in one view.
+ *
+ * Layout: 60/40 split (feed LEFT, boards RIGHT)
+ * Entry: ArrivalTransition for first-time members
  *
  * Flow:
  * - Non-member → SpaceThreshold (join gate)
  * - Member → Unified View (boards sidebar + activity feed)
  *
- * @version 3.0.0 - MOTION tokens, premium animations (Jan 2026)
+ * @version 3.1.0 - 60/40 split, boards right, ArrivalTransition (Jan 2026)
  */
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Text, Button, MOTION } from '@hive/ui/design-system/primitives';
+import {
+  Text,
+  Button,
+  MOTION,
+  EmptyCanvas,
+  ArrivalTransition,
+  ArrivalZone,
+} from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import { useSpaceResidenceState } from './hooks';
 import {
@@ -46,6 +56,14 @@ export default function SpacePageUnified() {
   const [showBoardModal, setShowBoardModal] = React.useState(false);
   const [showMembersPanel, setShowMembersPanel] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+  const [isFirstEntry, setIsFirstEntry] = React.useState(true);
+
+  // Detect first entry to this space for ArrivalTransition
+  React.useEffect(() => {
+    const visited = sessionStorage.getItem(`visited-${handle}`);
+    setIsFirstEntry(!visited);
+    sessionStorage.setItem(`visited-${handle}`, 'true');
+  }, [handle]);
 
   const {
     space,
@@ -241,7 +259,7 @@ export default function SpacePageUnified() {
     );
   }
 
-  // Member: Show unified view
+  // Member: Show unified view with ArrivalTransition
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -252,110 +270,123 @@ export default function SpacePageUnified() {
         exit={{ opacity: 0 }}
         transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       >
-        {/* Space Header */}
-        <div className="px-6">
-          <SpaceHeader
-            space={{
-              id: space.id,
-              handle: space.handle,
-              name: space.name,
-              avatarUrl: space.avatarUrl,
-              onlineCount: space.onlineCount,
-              memberCount: space.memberCount,
-              isVerified: space.isVerified,
-            }}
-            isLeader={space.isLeader}
-            isMember={space.isMember}
-            onMembersClick={() => setShowMembersPanel(true)}
-            onSettingsClick={() => setShowSettingsModal(true)}
-            onBuildToolClick={() => {
-              // Redirect to HiveLab with space context
-              const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL;
+        <ArrivalTransition skipAnimation={!isFirstEntry}>
+          {/* Space Header */}
+          <ArrivalZone zone="header" className="px-6">
+            <SpaceHeader
+              space={{
+                id: space.id,
+                handle: space.handle,
+                name: space.name,
+                avatarUrl: space.avatarUrl,
+                onlineCount: space.onlineCount,
+                memberCount: space.memberCount,
+                isVerified: space.isVerified,
+              }}
+              isLeader={space.isLeader}
+              isMember={space.isMember}
+              onMembersClick={() => setShowMembersPanel(true)}
+              onSettingsClick={() => setShowSettingsModal(true)}
+              onBuildToolClick={() => {
+                // Redirect to HiveLab with space context
+                const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL;
 
-              if (hiveLabUrl) {
-                // Production with configured HiveLab URL
-                const params = new URLSearchParams({
-                  context: 'space',
-                  spaceId: space.id,
-                  spaceName: space.name,
-                });
-                window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
-              } else {
-                // Development - open in new tab
-                const params = new URLSearchParams({
-                  context: 'space',
-                  spaceId: space.id,
-                  spaceName: space.name,
-                });
-                window.open(`http://localhost:3002/select-context?${params.toString()}`, '_blank');
-              }
-            }}
-          />
-        </div>
-
-        {/* Main Content - Always shows boards + feed */}
-        <div className="flex-1 flex">
-          {/* Boards Sidebar - Always visible */}
-          <BoardsSidebar
-            boards={sidebarBoards}
-            activeBoard={activeBoard || boards[0]?.id || 'general'}
-            onBoardChange={(boardId) => setActiveBoard(boardId)}
-            onCreateBoard={space.isLeader ? handleCreateBoard : undefined}
-            onReorderBoards={space.isLeader ? handleReorderBoards : undefined}
-          />
-
-          {/* Content Area - Always shows unified feed */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Feed */}
-            <div className="flex-1 overflow-y-auto">
-              <UnifiedActivityFeed
-                items={feedItems}
-                loading={isLoadingMessages}
-                currentUserId={user?.id}
-                onEventRsvp={async (eventId, status) => {
-                  try {
-                    await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
-                  } catch (error) {
-                    console.error('RSVP failed:', error);
-                  }
-                }}
-                onRunTool={(toolId, placementId) => {
-                  // Open tool in modal or navigate to HiveLab
+                if (hiveLabUrl) {
+                  // Production with configured HiveLab URL
                   const params = new URLSearchParams({
-                    toolId,
-                    ...(placementId && { placementId }),
-                    spaceId: space?.id || '',
+                    context: 'space',
+                    spaceId: space.id,
+                    spaceName: space.name,
                   });
-                  router.push(`/tools/${toolId}?${params.toString()}`);
-                }}
-                onReact={async (messageId, emoji) => {
-                  if (!space?.id) return;
-                  try {
-                    await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ emoji }),
-                    });
-                  } catch (error) {
-                    console.error('React failed:', error);
-                  }
-                }}
-                onOpenThread={(messageId) => {
-                  // Navigate to thread view
-                  router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
-                }}
-              />
-            </div>
+                  window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
+                } else {
+                  // Development - open in new tab
+                  const params = new URLSearchParams({
+                    context: 'space',
+                    spaceId: space.id,
+                    spaceName: space.name,
+                  });
+                  window.open(`http://localhost:3002/select-context?${params.toString()}`, '_blank');
+                }
+              }}
+            />
+          </ArrivalZone>
 
-            {/* Chat Input - Fixed at bottom */}
-            <div className="border-t border-white/[0.06] bg-[#0A0A09]">
-              <ChatInput
-                onSend={sendMessage}
-                placeholder={`Message #${boards.find(b => b.id === activeBoard)?.name || 'general'}`}
+          {/* Main Content - 60/40 split with boards on RIGHT */}
+          <div className="flex-1 flex px-6 gap-4">
+            {/* Content Area (60%) - Feed on LEFT */}
+            <ArrivalZone zone="content" className="flex-1 flex flex-col min-w-0">
+              {/* Feed */}
+              <div className="flex-1 overflow-y-auto">
+                {feedItems.length === 0 && !isLoadingMessages ? (
+                  <EmptyCanvas
+                    message="Start the conversation"
+                    hint="Be the first to say something"
+                    size="lg"
+                  />
+                ) : (
+                  <UnifiedActivityFeed
+                    items={feedItems}
+                    loading={isLoadingMessages}
+                    currentUserId={user?.id}
+                    onEventRsvp={async (eventId, status) => {
+                      try {
+                        await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
+                      } catch (error) {
+                        console.error('RSVP failed:', error);
+                      }
+                    }}
+                    onRunTool={(toolId, placementId) => {
+                      // Open tool in modal or navigate to HiveLab
+                      const params = new URLSearchParams({
+                        toolId,
+                        ...(placementId && { placementId }),
+                        spaceId: space?.id || '',
+                      });
+                      router.push(`/tools/${toolId}?${params.toString()}`);
+                    }}
+                    onReact={async (messageId, emoji) => {
+                      if (!space?.id) return;
+                      try {
+                        await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ emoji }),
+                        });
+                      } catch (error) {
+                        console.error('React failed:', error);
+                      }
+                    }}
+                    onOpenThread={(messageId) => {
+                      // Navigate to thread view
+                      router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Chat Input - Fixed at bottom */}
+              <div className="border-t border-white/[0.06] bg-[#0A0A09] py-4">
+                <ChatInput
+                  onSend={sendMessage}
+                  placeholder={`Message #${boards.find(b => b.id === activeBoard)?.name || 'general'}`}
+                />
+              </div>
+            </ArrivalZone>
+
+            {/* Boards Sidebar (40%) - on RIGHT */}
+            <ArrivalZone zone="sidebar">
+              <BoardsSidebar
+                boards={sidebarBoards}
+                activeBoard={activeBoard || boards[0]?.id || 'general'}
+                onBoardChange={(boardId) => setActiveBoard(boardId)}
+                onCreateBoard={space.isLeader ? handleCreateBoard : undefined}
+                onReorderBoards={space.isLeader ? handleReorderBoards : undefined}
+                position="right"
               />
-            </div>
+            </ArrivalZone>
           </div>
-        </div>
+        </ArrivalTransition>
 
         {/* Board Creation Modal */}
         <AnimatePresence>
@@ -512,7 +543,7 @@ export default function SpacePageUnified() {
   );
 }
 
-// Loading skeleton with premium animation
+// Loading skeleton with premium animation (60/40 split, boards right)
 function SpacePageSkeleton() {
   return (
     <div className="min-h-screen space-y-4 py-6 px-6">
@@ -529,21 +560,14 @@ function SpacePageSkeleton() {
         </div>
       </motion.div>
 
-      {/* Skeleton content */}
+      {/* Skeleton content - 60/40 split with boards on RIGHT */}
       <motion.div
         className="flex gap-4 mt-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
       >
-        {/* Sidebar skeleton */}
-        <div className="w-56 space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-8 rounded-lg bg-white/[0.04] animate-pulse" />
-          ))}
-        </div>
-
-        {/* Feed skeleton */}
+        {/* Feed skeleton (left, 60%) */}
         <div className="flex-1 space-y-4">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -551,6 +575,13 @@ function SpacePageSkeleton() {
               className="h-20 rounded-xl bg-white/[0.04] animate-pulse"
               style={{ animationDelay: `${i * 100}ms` }}
             />
+          ))}
+        </div>
+
+        {/* Sidebar skeleton (right, 40%) */}
+        <div className="w-56 space-y-2 border-l border-white/[0.06] pl-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-8 rounded-lg bg-white/[0.04] animate-pulse" />
           ))}
         </div>
       </motion.div>

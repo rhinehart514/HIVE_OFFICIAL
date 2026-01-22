@@ -3,18 +3,17 @@
 /**
  * /spaces/claim — Claim Institutional Space
  *
- * Archetype: Focus Flow (Shell ON, centered form)
- * Pattern: Search + Confirm flow with premium motion
- * Shell: ON
+ * DRAMA.md: Territory claim is a defining moment.
+ * Peak: "It's yours." with gold reveal after 600ms anticipation.
  *
  * For claiming pre-seeded institutional spaces:
  * - University spaces (blue accent)
  * - Residential spaces (green accent) - LOCKED, RA-only
  * - Greek spaces (purple accent)
  *
- * Student orgs should use /spaces/create instead.
+ * Student orgs should use /spaces (modal) instead.
  *
- * @version 8.0.0 - Premium motion, no decorative icons (Jan 2026)
+ * @version 9.0.0 - DRAMA.md patterns (Jan 2026)
  */
 
 import * as React from 'react';
@@ -22,9 +21,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Text, Button, Input, MOTION } from '@hive/ui/design-system/primitives';
+import {
+  Text,
+  Button,
+  Input,
+  MOTION,
+  ThresholdReveal,
+  WordReveal,
+} from '@hive/ui/design-system/primitives';
 import { toast } from '@hive/ui';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 // Category colors - used for accent bars and borders
 const CATEGORY_COLORS: Record<string, { accent: string; text: string; bg: string; border: string }> = {
@@ -71,6 +77,7 @@ const ROLE_OPTIONS = [
 interface Space {
   id: string;
   name: string;
+  slug?: string;
   category: string;
   memberCount: number;
   isClaimed: boolean;
@@ -179,10 +186,7 @@ export default function ClaimSpacePage() {
         // Ignore storage errors
       }
 
-      // Redirect after brief delay
-      setTimeout(() => {
-        router.push(`/spaces/${selectedSpace.id}`);
-      }, 1500);
+      // Note: Redirect handled by success state's button now
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to claim space');
     } finally {
@@ -190,76 +194,97 @@ export default function ClaimSpacePage() {
     }
   };
 
-  // Success state - Premium celebration
+  // Success state - DRAMA.md: ThresholdReveal with gold "It's yours." moment
   if (step === 'success' && selectedSpace) {
-    const colors = CATEGORY_COLORS[selectedSpace.category] || CATEGORY_COLORS.university;
-
     return (
       <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-        {/* Ambient glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 0.3, scale: 1.2 }}
-            transition={{ duration: MOTION.duration.slower, ease: MOTION.ease.premium }}
+        {/* Ambient gold glow */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: MOTION.duration.slow }}
+        >
+          <div
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]"
             style={{
-              background: `radial-gradient(ellipse at center, var(--color-gold) 0%, transparent 70%)`,
+              background: `radial-gradient(ellipse at center, rgba(255,215,0,0.2) 0%, transparent 70%)`,
               filter: 'blur(80px)',
             }}
           />
-        </div>
+        </motion.div>
 
-        <motion.div
-          className="relative text-center space-y-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+        <ThresholdReveal
+          isReady={true}
+          preparingMessage="Claiming your territory..."
+          pauseDuration={600}
         >
-          {/* Gold accent line instead of checkmark */}
-          <motion.div
-            className="mx-auto w-16 h-1 rounded-full bg-[var(--color-gold)]"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{
-              duration: MOTION.duration.base,
-              delay: 0.2,
-              ease: MOTION.ease.premium,
-            }}
-          />
-
-          <div className="space-y-3">
+          <div className="relative text-center">
+            {/* Gold checkmark - earned */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: MOTION.duration.base }}
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8"
+              style={{
+                background: 'linear-gradient(135deg, #FFD700, #B8860B)',
+                boxShadow: '0 0 40px rgba(255,215,0,0.3)',
+              }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             >
-              <Text weight="semibold" className="text-[var(--color-gold)] text-xl">
-                Your space is live!
-              </Text>
+              <CheckIcon className="w-10 h-10 text-black" strokeWidth={3} />
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4, duration: MOTION.duration.base }}
+            {/* Word-by-word reveal: "It's yours." */}
+            <h2
+              className="text-[32px] font-semibold mb-4"
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              <Text className="text-white/60">
-                <strong className="text-white">{selectedSpace.name}</strong> is now yours to lead.
-              </Text>
-            </motion.div>
+              <WordReveal
+                text="It's yours."
+                variant="gold"
+                delay={0.2}
+              />
+            </h2>
 
-            <motion.div
+            {/* Space name */}
+            <motion.p
+              className="text-white/60 text-lg mb-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: MOTION.duration.base }}
+              transition={{ delay: 0.6 }}
             >
-              <Text size="sm" className="text-white/40">
-                Taking you there now...
-              </Text>
+              <strong className="text-white">{selectedSpace.name}</strong> is now yours to lead.
+            </motion.p>
+
+            {/* Waitlist notification */}
+            {selectedSpace.memberCount > 0 && (
+              <motion.p
+                className="text-white/40 text-sm mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+              >
+                {selectedSpace.memberCount} members notified
+              </motion.p>
+            )}
+
+            {/* Enter button */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0 }}
+            >
+              <Button
+                variant="cta"
+                size="lg"
+                onClick={() => router.push(`/s/${selectedSpace.slug || selectedSpace.id}`)}
+                className="px-12"
+              >
+                Enter Your Territory
+              </Button>
             </motion.div>
           </div>
-        </motion.div>
+        </ThresholdReveal>
       </div>
     );
   }
@@ -329,11 +354,11 @@ export default function ClaimSpacePage() {
             <Text size="sm" className="text-white/60 pl-5">
               {selectedSpace.memberCount > 0 ? (
                 <>
-                  <strong className="text-white">{selectedSpace.memberCount}</strong> members already here.
-                  They need an admin.
+                  <strong className="text-[#FFD700]">{selectedSpace.memberCount}</strong>{' '}
+                  student{selectedSpace.memberCount !== 1 ? 's' : ''} waiting for a leader.
                 </>
               ) : (
-                'This space is waiting for its first admin.'
+                'Unclaimed territory. Be the first.'
               )}
             </Text>
           </motion.div>
@@ -404,9 +429,9 @@ export default function ClaimSpacePage() {
               </motion.div>
             )}
 
-            {/* Submit */}
+            {/* Submit - Gold CTA for claim moment */}
             <Button
-              variant="default"
+              variant="cta"
               size="lg"
               onClick={handleClaim}
               disabled={isSubmitting}
@@ -415,7 +440,7 @@ export default function ClaimSpacePage() {
               {isSubmitting ? (
                 <ArrowPathIcon className="h-4 w-4 animate-spin" />
               ) : (
-                'Take Ownership'
+                'Claim Territory'
               )}
             </Button>
 
@@ -465,7 +490,7 @@ export default function ClaimSpacePage() {
           </Link>
         </motion.div>
 
-        {/* Header */}
+        {/* Header - DRAMA.md: Territory language */}
         <motion.div
           className="mb-8"
           initial={{ opacity: 0, y: 8 }}
@@ -473,10 +498,10 @@ export default function ClaimSpacePage() {
           transition={{ duration: MOTION.duration.fast, delay: 0.04, ease: MOTION.ease.premium }}
         >
           <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">
-            Claim Your Space
+            Claim Your Territory
           </h1>
           <Text className="text-white/50">
-            Find your university, residential, or Greek space and become the admin.
+            Your org exists. It just needs a leader.
           </Text>
         </motion.div>
 
@@ -563,9 +588,13 @@ export default function ClaimSpacePage() {
                         {space.name}
                       </Text>
                       <Text size="xs" className="text-white/40">
-                        {space.memberCount > 0
-                          ? `${space.memberCount} members · No admin`
-                          : CATEGORY_LABELS[space.category] || space.category}
+                        {space.memberCount > 0 ? (
+                          <span className="text-[#FFD700]/70">
+                            {space.memberCount} student{space.memberCount !== 1 ? 's' : ''} waiting
+                          </span>
+                        ) : (
+                          CATEGORY_LABELS[space.category] || space.category
+                        )}
                       </Text>
                     </div>
                     {isLocked ? (

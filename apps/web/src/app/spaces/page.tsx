@@ -4,21 +4,23 @@
  * /spaces — Your Campus Territory
  *
  * Premium spaces discovery with:
- * - Narrative scroll experience (like /about)
+ * - First visit: Narrative intro presentation
+ * - Subsequent: Territory map (narrative scroll + bento)
  * - Premium motion primitives from design system
  * - No decorative icons — color and typography only
  * - Personalized when logged in
  *
- * @version 12.0.0 - No decorative icons (Jan 2026)
+ * @version 13.0.0 - First visit intro, WordReveal (Jan 2026)
  */
 
 import * as React from 'react';
 import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { Search, ArrowRight } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Search, ArrowRight, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Text,
+  Button,
   Avatar,
   AvatarImage,
   AvatarFallback,
@@ -33,9 +35,13 @@ import {
   AnimatedBorder,
   ScrollIndicator,
   ScrollSpacer,
+  WordReveal,
 } from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
+import { SpaceCreationModal } from '@/components/spaces/SpaceCreationModal';
+
+const STORAGE_KEY = 'hive-spaces-intro-seen';
 
 // ============================================================
 // Types
@@ -174,11 +180,34 @@ function useUserIdentity() {
 
 export default function SpacesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const { spaces: mySpaces, loading: loadingMySpaces } = useMySpaces();
   const { spaces: allSpaces, loading: loadingAllSpaces } = useAllSpaces();
   const { identity: userIdentity, loading: loadingIdentity } = useUserIdentity();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [hasSeenIntro, setHasSeenIntro] = React.useState<boolean | null>(null);
+  const [showCreateModal, setShowCreateModal] = React.useState(false);
+
+  // Check if intro has been seen (client-side only)
+  React.useEffect(() => {
+    const seen = localStorage.getItem(STORAGE_KEY);
+    setHasSeenIntro(seen === 'true');
+  }, []);
+
+  // Auto-open modal if ?create=true (from /spaces/new redirect)
+  React.useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setShowCreateModal(true);
+      // Clean up URL
+      router.replace('/spaces', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  const completeIntro = () => {
+    localStorage.setItem(STORAGE_KEY, 'true');
+    setHasSeenIntro(true);
+  };
 
   const filteredSpaces = React.useMemo(() => {
     return allSpaces.filter((space) => {
@@ -193,9 +222,20 @@ export default function SpacesPage() {
   const hasIdentity = !loadingIdentity && userIdentity && user;
   const hasSpaces = !loadingMySpaces && mySpaces.length > 0;
 
+  // Still checking localStorage
+  if (hasSeenIntro === null) {
+    return null;
+  }
+
+  // First visit: Show narrative intro presentation
+  if (!hasSeenIntro) {
+    return <NarrativePresentation onComplete={completeIntro} />;
+  }
+
+  // Subsequent visits: Territory map with optional Create Space modal
   return (
     <div className="min-h-screen bg-[#0A0A09]">
-      <Hero hasIdentity={!!hasIdentity} />
+      <Hero hasIdentity={!!hasIdentity} onCreateSpace={() => setShowCreateModal(true)} />
       <ScrollSpacer height={30} />
       {hasSpaces && <YourSpaces spaces={mySpaces} router={router} />}
       {hasIdentity && (
@@ -214,6 +254,12 @@ export default function SpacesPage() {
         onSearchChange={setSearchQuery}
         router={router}
       />
+
+      {/* Create Space Modal */}
+      <SpaceCreationModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
     </div>
   );
 }
@@ -222,7 +268,7 @@ export default function SpacesPage() {
 // Hero Section
 // ============================================================
 
-function Hero({ hasIdentity }: { hasIdentity: boolean }) {
+function Hero({ hasIdentity, onCreateSpace }: { hasIdentity: boolean; onCreateSpace?: () => void }) {
   return (
     <section className="min-h-[85vh] flex flex-col justify-center px-6 py-24">
       <div className="max-w-4xl mx-auto">
@@ -278,13 +324,19 @@ function Hero({ hasIdentity }: { hasIdentity: boolean }) {
           </motion.div>
         </ParallaxText>
 
-        {/* Scroll indicator */}
+        {/* Create Space CTA + Scroll indicator */}
         <motion.div
-          className="mt-20"
+          className="mt-20 flex items-center gap-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: MOTION.duration.slow, delay: 1.2 }}
         >
+          {onCreateSpace && (
+            <Button variant="default" size="sm" onClick={onCreateSpace}>
+              <Plus size={16} className="mr-2" />
+              Create Space
+            </Button>
+          )}
           <ScrollIndicator text="Scroll to explore" />
         </motion.div>
       </div>
@@ -714,5 +766,104 @@ function BrowseSection({
         )}
       </div>
     </RevealSection>
+  );
+}
+
+// ============================================================
+// Narrative Presentation (First Visit)
+// ============================================================
+
+const INTRO_SECTIONS = [
+  { title: 'Your campus has a shape', subtitle: 'Territory waiting to be claimed' },
+  { title: 'Four dimensions define you', subtitle: 'Major · Interests · Home · Community' },
+  { title: 'Territory waiting', subtitle: '400+ spaces mapped. Yours is waiting.' },
+  { title: 'Find your people', subtitle: null },
+];
+
+function NarrativePresentation({ onComplete }: { onComplete: () => void }) {
+  const [section, setSection] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setSection((prev) => {
+        if (prev >= INTRO_SECTIONS.length - 1) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentSection = INTRO_SECTIONS[section];
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#0A0A09]">
+      {/* Main content */}
+      <motion.div
+        key={section}
+        className="text-center max-w-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+      >
+        <h1
+          className="text-[40px] md:text-[56px] font-semibold text-white tracking-tight leading-[1.1] mb-6"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          <WordReveal text={currentSection.title} delay={0.1} />
+        </h1>
+        {currentSection.subtitle && (
+          <motion.p
+            className="text-white/50 text-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+          >
+            {currentSection.subtitle}
+          </motion.p>
+        )}
+      </motion.div>
+
+      {/* CTA on last section */}
+      {section >= INTRO_SECTIONS.length - 1 && (
+        <motion.div
+          className="mt-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Button variant="cta" size="lg" onClick={onComplete}>
+            Explore Territory
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Skip button */}
+      <button
+        onClick={onComplete}
+        className="absolute bottom-8 right-8 text-white/30 hover:text-white/50 text-sm transition-colors"
+      >
+        Skip
+      </button>
+
+      {/* Progress dots */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+        {INTRO_SECTIONS.map((_, i) => (
+          <motion.div
+            key={i}
+            className={cn(
+              'w-2 h-2 rounded-full transition-colors duration-300',
+              i <= section ? 'bg-white/60' : 'bg-white/20'
+            )}
+            initial={i <= section ? { scale: 1.2 } : {}}
+            animate={{ scale: 1 }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

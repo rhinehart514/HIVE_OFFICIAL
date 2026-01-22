@@ -58,6 +58,8 @@ export interface BoardsSidebarProps {
   isCollapsed?: boolean;
   /** Toggle collapse */
   onToggleCollapse?: () => void;
+  /** Position of sidebar - affects border and flex order */
+  position?: 'left' | 'right';
 }
 
 // ============================================================
@@ -164,6 +166,7 @@ export function BoardsSidebar({
   isMobile = false,
   isCollapsed = false,
   onToggleCollapse,
+  position = 'left',
 }: BoardsSidebarProps) {
   const canReorder = !!onReorderBoards;
   const [localBoards, setLocalBoards] = React.useState(boards);
@@ -258,14 +261,26 @@ export function BoardsSidebar({
   }
 
   // Desktop: Vertical sidebar
+  // Position determines border side and animation direction
+  const positionStyles = {
+    left: {
+      border: 'border-r border-white/[0.06] pr-4',
+      initialX: -12,
+    },
+    right: {
+      border: 'border-l border-white/[0.06] pl-4 order-last',
+      initialX: 40,
+    },
+  };
+
   return (
     <motion.aside
-      initial={{ opacity: 0, x: -12 }}
+      initial={{ opacity: 0, x: positionStyles[position].initialX }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.3, ease: MOTION.ease.premium }}
       className={cn(
         'flex flex-col w-56 flex-shrink-0 h-full',
-        'border-r border-white/[0.06] pr-4'
+        positionStyles[position].border
       )}
     >
       {/* Header */}

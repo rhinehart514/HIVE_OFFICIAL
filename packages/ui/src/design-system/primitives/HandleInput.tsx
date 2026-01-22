@@ -11,6 +11,7 @@
  */
 
 import * as React from 'react';
+import { motion } from 'framer-motion';
 import { Check, X, Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -20,6 +21,7 @@ const shadowRecipes = {
   focused: '0 6px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12)',
   error: '0 0 20px rgba(239,68,68,0.15), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
   success: '0 0 20px rgba(34,197,94,0.15), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
+  gold: '0 0 20px rgba(255,215,0,0.2), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)',
 };
 
 const backgroundRecipes = {
@@ -27,6 +29,7 @@ const backgroundRecipes = {
   focused: 'linear-gradient(180deg, rgba(56,56,56,1) 0%, rgba(44,44,44,1) 100%)',
   error: 'linear-gradient(180deg, rgba(55,40,42,1) 0%, rgba(42,32,34,1) 100%)',
   success: 'linear-gradient(180deg, rgba(40,55,42,1) 0%, rgba(32,42,34,1) 100%)',
+  gold: 'linear-gradient(180deg, rgba(50,48,38,1) 0%, rgba(40,38,30,1) 100%)',
 };
 
 export type HandleStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
@@ -87,6 +90,7 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
     const isSuccess = status === 'available';
 
     // LOCKED: Pure Float style with shadow-based focus
+    // Gold styling for available state (DRAMA.md: "It's yours." gold reveal)
     const containerStyles = React.useMemo(() => {
       if (isError) {
         return {
@@ -96,8 +100,8 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
       }
       if (isSuccess) {
         return {
-          background: backgroundRecipes.success,
-          boxShadow: shadowRecipes.success,
+          background: backgroundRecipes.gold,
+          boxShadow: shadowRecipes.gold,
         };
       }
       return {
@@ -158,7 +162,7 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
               <Loader2 className="w-4 h-4 text-white/40 animate-spin" />
             )}
             {status === 'available' && (
-              <Check className="w-4 h-4 text-green-500" />
+              <Check className="w-4 h-4 text-[#FFD700]" />
             )}
             {(status === 'taken' || status === 'invalid') && (
               <X className="w-4 h-4 text-red-500" />
@@ -166,16 +170,23 @@ const HandleInput = React.forwardRef<HTMLInputElement, HandleInputProps>(
           </div>
         </div>
 
-        {/* Status message */}
+        {/* Status message with dramatic "It's yours." gold reveal */}
         {displayMessage && (
-          <p
+          <motion.p
             className={cn(
               'text-sm text-center',
-              isError ? 'text-red-400' : 'text-white/50'
+              isError ? 'text-red-400' : '',
+              status === 'available' ? 'text-[#FFD700] font-medium' : 'text-white/50'
             )}
+            initial={status === 'available' ? { opacity: 0, y: 8 } : {}}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: status === 'available' ? 0.4 : 0.2,
+              ease: [0.22, 1, 0.36, 1],
+            }}
           >
             {displayMessage}
-          </p>
+          </motion.p>
         )}
       </div>
     );
