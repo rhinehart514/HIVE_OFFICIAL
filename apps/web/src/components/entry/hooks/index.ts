@@ -17,6 +17,7 @@ export {
   type SectionStatus,
   type School,
   type UserRole,
+  type AccessCodeLockout,
   type UseEvolvingEntryOptions,
   type UseEvolvingEntryReturn,
 } from './useEvolvingEntry';

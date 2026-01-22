@@ -195,8 +195,8 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
 
       {/* Sections stack */}
       <div className="space-y-5">
-        {/* Access Code section (gated launch) */}
-        {ACCESS_GATE_ENABLED && !isTerminal && entry.sections.accessCode?.status !== 'hidden' && entry.sections.accessCode?.status !== 'complete' && (
+        {/* Access Code section (gated launch) - only shows active state, hides once complete */}
+        {ACCESS_GATE_ENABLED && !isTerminal && entry.sections.accessCode?.status === 'active' && (
           <AccessCodeSection
             section={entry.sections.accessCode}
             onVerify={entry.verifyAccessCode}

@@ -33,6 +33,7 @@ export {
 
 // Section components (new evolving flow)
 export {
+  AccessCodeSection,
   SchoolSection,
   AVAILABLE_SCHOOLS,
   EmailSection,
@@ -62,6 +63,7 @@ export {
   type SectionStatus,
   type School,
   type UserRole,
+  type AccessCodeLockout,
   type UseEvolvingEntryOptions,
   type UseEvolvingEntryReturn,
 } from './hooks';

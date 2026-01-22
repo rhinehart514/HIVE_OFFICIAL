@@ -7,14 +7,16 @@
  * One page that evolves as the user progresses through entry.
  * No navigation, no page swaps — sections appear and lock to chips.
  *
- * Flow: school → email → code → role → identity → arrival
+ * Flow (gate enabled):  accessCode → school → email → code → role → identity → arrival
+ * Flow (gate disabled): school → email → code → role → identity → arrival
  *
  * Key changes from previous:
  * - All sections on one page that transforms
  * - Completed sections collapse to locked chips
  * - Role selection is an "earned moment" after code verification
  * - No progress indicator (visual progress through locked chips)
- * - Gated by access code if ACCESS_GATE_ENABLED
+ * - Gated by access code if NEXT_PUBLIC_ACCESS_GATE_ENABLED=true
+ * - Access code state persists in localStorage (hive_access_gate_passed)
  */
 
 import { Suspense, useState, useCallback } from 'react';
