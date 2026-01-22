@@ -1,302 +1,266 @@
-"use client";
+'use client';
 
-// Force dynamic rendering to avoid SSG issues
+/**
+ * /schools — Campus Selection
+ * REDESIGNED: Jan 2026
+ *
+ * Minimal, confident cards:
+ * - School logo + name + status badge
+ * - Enter or Join waitlist button
+ * - No stats, progress bars, or locations
+ */
+
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect } from 'react';
-// import { useRouter } from 'next/navigation';
-import { MagnifyingGlassIcon, UsersIcon, ArrowRightIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
-import { Button } from '@hive/ui';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Logo,
+  Button,
+  Input,
+  Badge,
+  Heading,
+  MOTION,
+  NoiseOverlay,
+  GlassSurface,
+  GradientText,
+  Tilt,
+  Skeleton,
+} from '@hive/ui/design-system/primitives';
+import { ArrowRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { logger } from '@/lib/logger';
+import { cn } from '@/lib/utils';
 
-// Inline SchoolsPageHeader to replace deleted temp-stubs
-function SchoolsPageHeader({ onComingSoonClick }: { onComingSoonClick: () => void }) {
-  return (
-    <header className="relative z-10 max-w-6xl mx-auto p-6 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span className="text-2xl font-bold text-[var(--hive-brand-primary)]">HIVE</span>
-      </div>
-      <nav className="flex items-center gap-4">
-        <button
-          onClick={onComingSoonClick}
-          className="text-sm text-white/60 hover:text-white transition-colors"
-        >
-          Coming Soon
-        </button>
-      </nav>
-    </header>
-  );
-}
+// Premium easing
+const EASE = MOTION.ease.premium;
 
+// ============================================
+// TYPES
+// ============================================
 
 interface School {
   id: string;
   name: string;
   domain: string;
-  location: string;
-  signupCount?: number;
-  activationThreshold?: number;
+  logoUrl?: string;
   isActive?: boolean;
-  isComingSoon?: boolean;
   status?: 'active' | 'waitlist' | 'inactive';
 }
 
-// Fallback for development only
+// ============================================
+// FALLBACK DATA
+// ============================================
+
 const fallbackSchools: School[] = [
-  // Development Test School - Always first for easy access
   {
     id: 'test-university',
     name: 'Test University (Development)',
     domain: 'test.edu',
-    location: 'Development, NY',
-    signupCount: 999,
-    activationThreshold: 350,
     isActive: true,
   },
-  // SUNY Schools - Major Campuses
   {
     id: 'ub',
     name: 'University at Buffalo',
     domain: 'buffalo.edu',
-    location: 'Buffalo, NY',
-    signupCount: 350,
-    activationThreshold: 350,
     isActive: true,
   },
   {
     id: 'stonybrook',
     name: 'Stony Brook University',
     domain: 'stonybrook.edu',
-    location: 'Stony Brook, NY',
-    signupCount: 312,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'binghamton',
     name: 'Binghamton University',
     domain: 'binghamton.edu',
-    location: 'Binghamton, NY',
-    signupCount: 298,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'albany',
     name: 'University at Albany',
     domain: 'albany.edu',
-    location: 'Albany, NY',
-    signupCount: 267,
-    activationThreshold: 350,
     isActive: false,
   },
-  {
-    id: 'newpaltz',
-    name: 'SUNY New Paltz',
-    domain: 'newpaltz.edu',
-    location: 'New Paltz, NY',
-    signupCount: 189,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'geneseo',
-    name: 'SUNY Geneseo',
-    domain: 'geneseo.edu',
-    location: 'Geneseo, NY',
-    signupCount: 156,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'oswego',
-    name: 'SUNY Oswego',
-    domain: 'oswego.edu',
-    location: 'Oswego, NY',
-    signupCount: 134,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'brockport',
-    name: 'SUNY Brockport',
-    domain: 'brockport.edu',
-    location: 'Brockport, NY',
-    signupCount: 112,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'cortland',
-    name: 'SUNY Cortland',
-    domain: 'cortland.edu',
-    location: 'Cortland, NY',
-    signupCount: 98,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'plattsburgh',
-    name: 'SUNY Plattsburgh',
-    domain: 'plattsburgh.edu',
-    location: 'Plattsburgh, NY',
-    signupCount: 87,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'oneonta',
-    name: 'SUNY Oneonta',
-    domain: 'oneonta.edu',
-    location: 'Oneonta, NY',
-    signupCount: 76,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'potsdam',
-    name: 'SUNY Potsdam',
-    domain: 'potsdam.edu',
-    location: 'Potsdam, NY',
-    signupCount: 65,
-    activationThreshold: 350,
-    isActive: false,
-  },
-
-  // Private Universities in NY
   {
     id: 'nyu',
     name: 'New York University',
     domain: 'nyu.edu',
-    location: 'New York, NY',
-    signupCount: 289,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'cornell',
     name: 'Cornell University',
     domain: 'cornell.edu',
-    location: 'Ithaca, NY',
-    signupCount: 234,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'columbia',
     name: 'Columbia University',
     domain: 'columbia.edu',
-    location: 'New York, NY',
-    signupCount: 187,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'syracuse',
     name: 'Syracuse University',
     domain: 'syr.edu',
-    location: 'Syracuse, NY',
-    signupCount: 176,
-    activationThreshold: 350,
     isActive: false,
   },
   {
     id: 'rochester',
     name: 'University of Rochester',
     domain: 'rochester.edu',
-    location: 'Rochester, NY',
-    signupCount: 145,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'fordham',
-    name: 'Fordham University',
-    domain: 'fordham.edu',
-    location: 'Bronx, NY',
-    signupCount: 123,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'hofstra',
-    name: 'Hofstra University',
-    domain: 'hofstra.edu',
-    location: 'Hempstead, NY',
-    signupCount: 98,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'pace',
-    name: 'Pace University',
-    domain: 'pace.edu',
-    location: 'New York, NY',
-    signupCount: 87,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'rpi',
-    name: 'Rensselaer Polytechnic Institute',
-    domain: 'rpi.edu',
-    location: 'Troy, NY',
-    signupCount: 76,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'stjohns',
-    name: "St. John's University",
-    domain: 'stjohns.edu',
-    location: 'Queens, NY',
-    signupCount: 65,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'adelphi',
-    name: 'Adelphi University',
-    domain: 'adelphi.edu',
-    location: 'Garden City, NY',
-    signupCount: 54,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'marist',
-    name: 'Marist College',
-    domain: 'marist.edu',
-    location: 'Poughkeepsie, NY',
-    signupCount: 43,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'iona',
-    name: 'Iona University',
-    domain: 'iona.edu',
-    location: 'New Rochelle, NY',
-    signupCount: 32,
-    activationThreshold: 350,
-    isActive: false,
-  },
-  {
-    id: 'manhattan',
-    name: 'Manhattan College',
-    domain: 'manhattan.edu',
-    location: 'Riverdale, NY',
-    signupCount: 21,
-    activationThreshold: 350,
     isActive: false,
   },
 ];
 
+// ============================================
+// SCHOOL CARD — MINIMAL
+// ============================================
+
+interface SchoolCardProps {
+  school: School;
+  index: number;
+  onSelect: (school: School) => void;
+}
+
+function SchoolCard({ school, index, onSelect }: SchoolCardProps) {
+  const isActive = school.isActive;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.5,
+        delay: index * 0.05,
+        ease: EASE,
+      }}
+    >
+      <Tilt intensity={isActive ? 6 : 3}>
+        <button
+          type="button"
+          onClick={() => onSelect(school)}
+          className="w-full text-left"
+          data-testid={`school-${school.id}`}
+        >
+          <GlassSurface
+            intensity={isActive ? 'standard' : 'subtle'}
+            interactive
+            className={cn(
+              'p-5 rounded-2xl relative overflow-hidden',
+              isActive && 'ring-1 ring-[var(--color-gold)]/20'
+            )}
+          >
+            {/* Gold glow for active */}
+            {isActive && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,215,0,0.08) 0%, transparent 60%)',
+                }}
+              />
+            )}
+
+            <div className="relative flex items-center gap-4">
+              {/* School logo */}
+              <div className="flex-shrink-0">
+                {school.logoUrl ? (
+                  <img
+                    src={school.logoUrl}
+                    alt={school.name}
+                    className="w-12 h-12 rounded-xl object-contain bg-white/5"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center">
+                    <span className="text-[18px] font-semibold text-white/40">
+                      {school.name.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* School info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-[16px] font-medium text-white truncate">
+                    {school.name}
+                  </h3>
+                  {isActive ? (
+                    <Badge variant="gold" className="text-[10px] uppercase tracking-wider flex-shrink-0">
+                      Live
+                    </Badge>
+                  ) : (
+                    <Badge variant="neutral" className="text-[10px] uppercase tracking-wider flex-shrink-0">
+                      Coming Soon
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Action */}
+              <div className="flex-shrink-0">
+                {isActive ? (
+                  <motion.div
+                    className="flex items-center gap-2 text-[var(--color-gold)]"
+                    whileHover={{ x: 4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className="text-[14px] font-medium">Enter</span>
+                    <ArrowRightIcon className="w-4 h-4" />
+                  </motion.div>
+                ) : (
+                  <span className="text-[13px] text-white/40">
+                    Join waitlist
+                  </span>
+                )}
+              </div>
+            </div>
+          </GlassSurface>
+        </button>
+      </Tilt>
+    </motion.div>
+  );
+}
+
+// ============================================
+// SEARCH INPUT
+// ============================================
+
+interface SearchInputProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function SearchInput({ value, onChange }: SearchInputProps) {
+  return (
+    <motion.div
+      className="relative max-w-md mx-auto"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+    >
+      <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none z-10" />
+      <Input
+        type="search"
+        placeholder="Search universities..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-12 h-12 text-[15px]"
+      />
+    </motion.div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
 export default function SchoolsPage() {
-  // const router = useRouter();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -305,7 +269,7 @@ export default function SchoolsPage() {
     setIsMounted(true);
   }, []);
 
-  // Fetch schools from API
+  // Fetch schools
   useEffect(() => {
     async function fetchSchools() {
       try {
@@ -313,33 +277,33 @@ export default function SchoolsPage() {
         if (response.ok) {
           const schoolsData = await response.json();
           const formattedSchools = schoolsData
-            .filter((school: { name?: string; location?: unknown }) => school && school.name && school.location)
-            .map((school: { name: string; location: unknown; status?: string; signupCount?: number; activationThreshold?: number; [key: string]: unknown }) => {
-              // Handle location field - convert object to string if needed
-              let locationString = school.location;
-              if (typeof school.location === 'object' && school.location !== null) {
-                // Convert {city, state, country} object to string
-                const { city, state, country } = school.location as { city?: string; state?: string; country?: string };
-                locationString = [city, state, country].filter(Boolean).join(', ');
-              }
-              
-              return {
+            .filter(
+              (school: { name?: string }) => school && school.name
+            )
+            .map(
+              (school: {
+                name: string;
+                status?: string;
+                logoUrl?: string;
+                [key: string]: unknown;
+              }) => ({
                 ...school,
-                location: locationString,
                 isActive: school.status === 'active',
-                isComingSoon: school.status === 'waitlist',
-                signupCount: school.signupCount || 0,
-                activationThreshold: school.activationThreshold || 350
-              };
-            });
+              })
+            );
           setSchools(formattedSchools);
         } else {
-          // Fallback to hardcoded data only in development
-          logger.warn('Failed to fetch schools from API, using fallback', { component: 'SchoolsPage' });
+          logger.warn('Failed to fetch schools from API, using fallback', {
+            component: 'SchoolsPage',
+          });
           setSchools(fallbackSchools);
         }
       } catch (error) {
-        logger.error('Error fetching schools', { component: 'SchoolsPage' }, error instanceof Error ? error : undefined);
+        logger.error(
+          'Error fetching schools',
+          { component: 'SchoolsPage' },
+          error instanceof Error ? error : undefined
+        );
         setSchools(fallbackSchools);
       } finally {
         setLoading(false);
@@ -349,11 +313,21 @@ export default function SchoolsPage() {
     fetchSchools();
   }, []);
 
-  const filteredSchools = schools.filter(school => {
-    if (!school || !school.name || !school.location) return false;
-    return school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           school.location.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  // Filter schools
+  const filteredSchools = useMemo(() => {
+    if (!searchTerm.trim()) return schools;
+    const q = searchTerm.toLowerCase();
+    return schools.filter((s) => s.name.toLowerCase().includes(q));
+  }, [schools, searchTerm]);
+
+  // Sort: active first, then alphabetically
+  const sortedSchools = useMemo(() => {
+    return [...filteredSchools].sort((a, b) => {
+      if (a.isActive && !b.isActive) return -1;
+      if (!a.isActive && b.isActive) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredSchools]);
 
   const handleSchoolSelect = (school: School) => {
     if (school.isActive) {
@@ -362,217 +336,157 @@ export default function SchoolsPage() {
         schoolName: school.name,
         domain: school.domain,
       });
-      // Use window.location for more reliable navigation in E2E tests
-      window.location.href = `/enter?${params.toString()}`;
+      router.push(`/enter?${params.toString()}`);
     }
+    // TODO: Handle waitlist for inactive schools
   };
 
   if (!isMounted) {
     return (
-      <div className="relative min-h-screen overflow-hidden hive-font-sans bg-hive-background-primary text-hive-text-primary">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-        </div>
+      <div className="min-h-screen bg-[#0A0A09] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <React.Fragment>
-      <motion.div 
-        className="relative min-h-screen overflow-hidden hive-font-sans bg-hive-background-primary text-hive-text-primary"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
-      >
-      {/* Enhanced Glassy Background */}
-      <div className="absolute inset-0" style={{ 
-        background: 'radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(255, 191, 0, 0.03) 0%, transparent 50%)',
-        backdropFilter: 'blur(40px)'
-      }} />
-      
+    <div className="relative min-h-screen bg-[#0A0A09] overflow-hidden">
+      {/* Noise texture */}
+      <NoiseOverlay opacity={0.02} />
+
+      {/* Background gradient */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,215,0,0.04) 0%, transparent 50%)',
+        }}
+      />
+
       {/* Header */}
-      <SchoolsPageHeader onComingSoonClick={() => setIsComingSoonOpen(true)} />
+      <header className="relative z-10 max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <Logo variant="wordmark" size="sm" />
+        <Button variant="ghost" size="sm" asChild>
+          <a href="/about">About</a>
+        </Button>
+      </header>
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-6xl mx-auto p-6 py-12">
-        <div className="text-center mb-16">
-          <h1 className="hive-font-sans text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6 text-hive-text-primary">
-            Find your campus
-          </h1>
-          <p className="hive-font-sans text-lg md:text-xl leading-relaxed max-w-3xl mx-auto mb-8 text-hive-text-tertiary">
-            Join the students building the future of campus life at your university
-          </p>
-
-          {/* Search Bar */}
-          <div className="max-w-md mx-auto">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input
-                type="text"
-                placeholder="Search universities..."
-                value={searchTerm}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
-            </div>
-            <p className="hive-font-sans text-sm text-hive-text-tertiary">
-              Loading universities...
-            </p>
-          </div>
-        )}
-
-        {/* Schools Grid */}
-        {!loading && (
-          <div className="grid gap-4 hive-animate-liquid-reveal mb-16">
-            {filteredSchools.map((school) => {
-              const isUB = school.id === 'ub' || school.id === 'test-university';
-              const isBlurred = !isUB;
-
-              return (
-            <div
-              key={school.id}
-              data-testid={`school-${school.id}`}
-              className={`group relative overflow-hidden rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-500 cursor-pointer hive-interactive ${
-                isBlurred ? 'opacity-40 blur-sm hover:opacity-60 hover:blur-none' : ''
-              }`}
-              onClick={() => handleSchoolSelect(school)}
-              style={{
-                background: 'rgba(255, 255, 255, 0.02)',
-                backdropFilter: 'blur(20px)',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-              }}
+      {/* Hero Section */}
+      <div className="relative z-10 pt-12 pb-16">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            <Heading
+              level={1}
+              className="text-[48px] md:text-[64px] lg:text-[72px] font-bold tracking-tight mb-6"
             >
-              {/* Glass reflection effect */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-50" />
-              <div className="absolute inset-0 bg-gradient-to-tl from-yellow-500/5 via-transparent to-transparent" />
+              Find your{' '}
+              <GradientText variant="gold">campus</GradientText>
+            </Heading>
+          </motion.div>
 
-              {/* Coming Soon Overlay for blurred schools */}
-              {isBlurred && (
-                <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="text-center">
-                    <span className="text-[var(--hive-brand-primary)] font-semibold text-lg">Coming Soon</span>
-                    <p className="text-white/70 text-sm mt-1">Join the waitlist!</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="relative p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center hive-gap-md mb-3">
-                      <h3 className="hive-font-sans text-lg font-semibold tracking-tight text-hive-text-primary">
-                        {school.name}
-                      </h3>
-                      {school.isActive && (
-                        <div className="px-3 py-1 bg-white/10 backdrop-blur-sm text-white text-xs rounded-full border border-white/20 font-medium">
-                          LIVE
-                        </div>
-                      )}
-                      {school.isComingSoon && (
-                        <div className="px-3 py-1 bg-yellow-500/10 backdrop-blur-sm text-yellow-300 text-xs rounded-full border border-yellow-500/20 font-medium">
-                          SOON
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center hive-gap-md hive-font-sans text-sm text-hive-text-tertiary">
-                      <div className="flex items-center hive-gap-xs">
-                        <MapPinIcon className="w-4 h-4" />
-                        <span className="font-medium">{school.location}</span>
-                      </div>
-                      <div className="flex items-center hive-gap-xs">
-                        <UsersIcon className="w-4 h-4" />
-                        <span className="font-mono text-xs">@{school.domain}</span>
-                      </div>
-                    </div>
-                  </div>
+          <motion.p
+            className="text-[18px] md:text-[20px] text-white/50 max-w-2xl mx-auto mb-12 leading-relaxed"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
+          >
+            Join students building the future of campus life.
+          </motion.p>
 
-                  <div className="ml-6 opacity-60 group-hover:opacity-100 transition-opacity">
-                    {school.isActive ? (
-                      <div className="flex items-center hive-gap-sm text-white">
-                        <span className="hive-font-sans font-medium text-sm">Enter HIVE</span>
-                        <ArrowRightIcon className="w-4 h-4" />
-                      </div>
-                    ) : (
-                      <div className="text-center">
-                        <div className="hive-font-sans text-sm font-medium text-hive-text-secondary">
-                          {isBlurred ? 'Coming Soon' : (school.isComingSoon ? 'Coming Soon' : 'Join Waitlist')}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              
-              {/* Hover glow effect */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-              </div>
-            </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {filteredSchools.length === 0 && (
-          <div className="text-center py-12 hive-animate-silk-emerge">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MagnifyingGlassIcon className="w-6 h-6 text-white/40" />
-            </div>
-            <h3 className="hive-font-sans text-lg font-semibold mb-2 text-hive-text-primary">
-              No universities found
-            </h3>
-            <p className="hive-font-sans text-sm leading-relaxed text-hive-text-tertiary">
-              Try adjusting your search or check back later for more campuses
-            </p>
-          </div>
-        )}
-
-        {/* Call to Action */}
-        <div className="text-center">
-          <div className="hive-glass-strong p-8 rounded-xl max-w-2xl mx-auto" style={{ border: '1px solid rgba(255, 191, 0, 0.3)' }}>
-            <h3 className="hive-font-sans text-xl md:text-2xl font-bold mb-4 tracking-tight text-hive-text-primary">
-              Don&apos;t see your university?
-            </h3>
-            <p className="hive-font-sans text-base mb-6 leading-relaxed text-hive-text-tertiary">
-              We&apos;re expanding to more campuses every month. Join our general waitlist to be notified when HIVE arrives at your school.
-            </p>
-            <Button variant="default" size="lg" className="px-8 py-3">
-              Join General Waitlist
-            </Button>
-          </div>
+          {/* Search */}
+          <SearchInput value={searchTerm} onChange={setSearchTerm} />
         </div>
       </div>
-      </motion.div>
 
-      {/* Coming Soon Modal */}
-      {isComingSoonOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-black/90 border border-white/10 rounded-2xl p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-white mb-4">What&apos;s Coming to HIVE</h2>
-            <p className="text-white/70 mb-6">
-              We&apos;re building the future of campus collaboration. Check back soon for new features and campus expansions.
+      {/* Schools Grid */}
+      <section className="relative z-10 max-w-2xl mx-auto px-6 pb-24">
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-[80px] rounded-2xl" />
+            ))}
+          </div>
+        ) : sortedSchools.length === 0 ? (
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="w-16 h-16 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
+              <MagnifyingGlassIcon className="w-6 h-6 text-white/30" />
+            </div>
+            <p className="text-[16px] text-white/60 mb-2">No universities found</p>
+            <p className="text-[14px] text-white/40">Try a different search term</p>
+          </motion.div>
+        ) : (
+          <div className="space-y-3">
+            <AnimatePresence mode="popLayout">
+              {sortedSchools.map((school, index) => (
+                <SchoolCard
+                  key={school.id}
+                  school={school}
+                  index={index}
+                  onSelect={handleSchoolSelect}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* CTA for missing schools */}
+        <motion.div
+          className="mt-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+        >
+          <GlassSurface intensity="subtle" className="p-8 rounded-2xl text-center">
+            <Heading level={3} className="text-[20px] mb-3">
+              Don&apos;t see your university?
+            </Heading>
+            <p className="text-[15px] text-white/50 mb-6 max-w-md mx-auto">
+              We&apos;re expanding to more campuses. Join the waitlist to bring HIVE to your school.
             </p>
-            <button
-              onClick={() => setIsComingSoonOpen(false)}
-              className="w-full bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl transition-all"
+            <Button variant="cta" size="lg">
+              Join General Waitlist
+            </Button>
+          </GlassSurface>
+        </motion.div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/[0.06] py-8">
+        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+          <span className="text-[12px] text-white/30">
+            © 2026 HIVE. Built by students, for students.
+          </span>
+          <div className="flex items-center gap-6">
+            <a
+              href="/about"
+              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
             >
-              Close
-            </button>
+              About
+            </a>
+            <a
+              href="/legal/privacy"
+              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+            >
+              Privacy
+            </a>
+            <a
+              href="/legal/terms"
+              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+            >
+              Terms
+            </a>
           </div>
         </div>
-      )}
-    </React.Fragment>
+      </footer>
+    </div>
   );
-} 
+}
