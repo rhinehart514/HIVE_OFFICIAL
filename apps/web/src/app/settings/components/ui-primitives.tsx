@@ -76,7 +76,8 @@ export function ConfirmModal({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className={`relative w-full max-w-md mx-4 rounded-xl bg-neutral-950 border p-6 shadow-2xl ${
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className={`relative w-full max-w-md mx-4 rounded-xl bg-[var(--bg-ground)] border p-6 shadow-2xl ${
           variant === 'danger' ? 'border-red-500/30' : 'border-white/[0.08]'
         }`}
       >

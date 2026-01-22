@@ -139,8 +139,8 @@ export default function JoinSpacePage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center space-y-4"
             >
-              <div className="h-16 w-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto">
-                <span className="text-2xl">🔐</span>
+              <div className="h-16 w-16 rounded-2xl bg-white/[0.04] flex items-center justify-center mx-auto border border-white/[0.06]">
+                <div className="w-6 h-px bg-white/40" />
               </div>
               <div>
                 <h1 className="text-xl font-semibold mb-2">Sign in to join</h1>

@@ -11,14 +11,14 @@
  * - Non-member → SpaceThreshold (join gate)
  * - Member → Unified View (boards sidebar + activity feed)
  *
- * @version 2.0.0 - Homebase Redesign
+ * @version 3.0.0 - MOTION tokens, premium animations (Jan 2026)
  */
 
 import * as React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Text, Button } from '@hive/ui';
+import { Text, Button, MOTION } from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import { useSpaceResidenceState } from './hooks';
 import {
@@ -36,16 +36,6 @@ import {
   type Board,
   type FeedItem,
 } from '@/components/spaces';
-
-// Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-const DURATION = {
-  fast: 0.15,
-  quick: 0.25,
-  smooth: 0.4,
-  gentle: 0.6,
-} as const;
 
 export default function SpacePageUnified() {
   const params = useParams();
@@ -69,6 +59,8 @@ export default function SpacePageUnified() {
     isLoadingMessages,
     sendMessage,
     joinSpace,
+    leaveSpace,
+    rsvpToEvent,
     onlineMembers,
     upcomingEvents,
     navigateBack,
@@ -172,9 +164,17 @@ export default function SpacePageUnified() {
   };
 
   // Handle board reorder
-  const handleReorderBoards = (boardIds: string[]) => {
-    // TODO: Implement board reordering
-    console.log('Reorder boards', boardIds);
+  const handleReorderBoards = async (boardIds: string[]) => {
+    if (!space?.id) return;
+    try {
+      await fetch(`/api/spaces/${space.id}/boards/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ boardIds }),
+      });
+    } catch (error) {
+      console.error('Failed to reorder boards:', error);
+    }
   };
 
   // Loading state
@@ -189,7 +189,7 @@ export default function SpacePageUnified() {
         className="min-h-screen flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: DURATION.gentle, ease: EASE }}
+        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
         <div className="max-w-md mx-auto text-center p-8">
           <h2
@@ -250,7 +250,7 @@ export default function SpacePageUnified() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: DURATION.smooth, ease: EASE }}
+        transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
       >
         {/* Space Header */}
         <div className="px-6">
@@ -312,17 +312,37 @@ export default function SpacePageUnified() {
                 items={feedItems}
                 loading={isLoadingMessages}
                 currentUserId={user?.id}
-                onEventRsvp={(eventId, status) => {
-                  console.log('RSVP', eventId, status);
+                onEventRsvp={async (eventId, status) => {
+                  try {
+                    await rsvpToEvent(eventId, status as 'going' | 'maybe' | 'not_going');
+                  } catch (error) {
+                    console.error('RSVP failed:', error);
+                  }
                 }}
                 onRunTool={(toolId, placementId) => {
-                  console.log('Run tool', toolId, placementId);
+                  // Open tool in modal or navigate to HiveLab
+                  const params = new URLSearchParams({
+                    toolId,
+                    ...(placementId && { placementId }),
+                    spaceId: space?.id || '',
+                  });
+                  router.push(`/tools/${toolId}?${params.toString()}`);
                 }}
-                onReact={(messageId, emoji) => {
-                  console.log('React', messageId, emoji);
+                onReact={async (messageId, emoji) => {
+                  if (!space?.id) return;
+                  try {
+                    await fetch(`/api/spaces/${space.id}/chat/${messageId}/react`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ emoji }),
+                    });
+                  } catch (error) {
+                    console.error('React failed:', error);
+                  }
                 }}
                 onOpenThread={(messageId) => {
-                  console.log('Open thread', messageId);
+                  // Navigate to thread view
+                  router.push(`/s/${handle}?board=${activeBoard}&thread=${messageId}`);
                 }}
               />
             </div>
@@ -357,7 +377,7 @@ export default function SpacePageUnified() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: DURATION.fast }}
+              transition={{ duration: MOTION.duration.fast }}
             >
               {/* Backdrop */}
               <div
@@ -371,7 +391,7 @@ export default function SpacePageUnified() {
                 initial={{ x: '100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '100%' }}
-                transition={{ duration: DURATION.smooth, ease: EASE }}
+                transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               >
                 <div className="flex flex-col h-full">
                   <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
@@ -393,7 +413,8 @@ export default function SpacePageUnified() {
                       isLoading={isLoadingMembers}
                       currentUserId={user?.id}
                       onMemberClick={(memberId) => {
-                        console.log('View member profile', memberId);
+                        setShowMembersPanel(false);
+                        router.push(`/profile/${memberId}`);
                       }}
                     />
                   </div>
@@ -411,7 +432,7 @@ export default function SpacePageUnified() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: DURATION.fast }}
+              transition={{ duration: MOTION.duration.fast }}
             >
               {/* Backdrop */}
               <div
@@ -425,7 +446,7 @@ export default function SpacePageUnified() {
                 initial={{ scale: 0.95, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 exit={{ scale: 0.95, y: 20 }}
-                transition={{ duration: DURATION.smooth, ease: EASE }}
+                transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
               >
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
                   <h2 className="text-lg font-semibold text-white">
@@ -448,17 +469,37 @@ export default function SpacePageUnified() {
                       handle: space.handle,
                       description: space.description,
                       avatarUrl: space.avatarUrl,
-                      isPublic: true, // TODO: Get from space data
+                      isPublic: true,
                     }}
                     onUpdate={async (updates) => {
-                      console.log('Update space', updates);
-                      // TODO: Implement space update API call
-                      setShowSettingsModal(false);
+                      try {
+                        const response = await fetch(`/api/spaces/${space.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(updates),
+                        });
+                        if (!response.ok) throw new Error('Failed to update space');
+                        setShowSettingsModal(false);
+                        // Trigger a refresh of space data
+                        window.location.reload();
+                      } catch (error) {
+                        console.error('Failed to update space:', error);
+                      }
                     }}
                     onDelete={async () => {
-                      console.log('Delete space');
-                      // TODO: Implement space deletion
-                      setShowSettingsModal(false);
+                      const confirmed = window.confirm(
+                        'Are you sure you want to delete this space? This cannot be undone.'
+                      );
+                      if (!confirmed) return;
+                      try {
+                        const response = await fetch(`/api/spaces/${space.id}`, {
+                          method: 'DELETE',
+                        });
+                        if (!response.ok) throw new Error('Failed to delete space');
+                        router.push('/spaces');
+                      } catch (error) {
+                        console.error('Failed to delete space:', error);
+                      }
                     }}
                   />
                 </div>
@@ -471,20 +512,46 @@ export default function SpacePageUnified() {
   );
 }
 
-// Loading skeleton
+// Loading skeleton with premium animation
 function SpacePageSkeleton() {
   return (
-    <div className="min-h-screen space-y-4 py-6">
+    <div className="min-h-screen space-y-4 py-6 px-6">
       <motion.div
         className="flex items-center gap-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: DURATION.smooth, ease: EASE }}
+        transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
         <div className="h-10 w-10 rounded-lg bg-white/[0.06] animate-pulse" />
         <div className="space-y-2">
           <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
           <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse" />
+        </div>
+      </motion.div>
+
+      {/* Skeleton content */}
+      <motion.div
+        className="flex gap-4 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
+      >
+        {/* Sidebar skeleton */}
+        <div className="w-56 space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-8 rounded-lg bg-white/[0.04] animate-pulse" />
+          ))}
+        </div>
+
+        {/* Feed skeleton */}
+        <div className="flex-1 space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-20 rounded-xl bg-white/[0.04] animate-pulse"
+              style={{ animationDelay: `${i * 100}ms` }}
+            />
+          ))}
         </div>
       </motion.div>
     </div>

@@ -17,7 +17,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LogOut } from 'lucide-react';
-import { Logo } from '@hive/ui/design-system/primitives';
+import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import {
   HomeIcon,
   UsersIcon,
@@ -118,176 +118,146 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
     router.push('/');
   };
 
+  // ChatGPT aesthetic: Always 260px, no collapse
+  const railWidth = 260;
+
   return (
     <motion.aside
-      className="fixed left-0 top-0 h-screen bg-[#0A0A09] border-r border-white/[0.06] flex flex-col z-50"
-      initial={false}
-      animate={{
-        width: isExpanded ? 240 : 64,
-      }}
-      transition={{
-        duration: 0.2,
-        ease: EASE,
-      }}
+      className="fixed left-0 top-0 h-screen bg-[#0A0A09] border-r border-white/[0.06] flex flex-col z-50 overflow-hidden"
+      style={{ width: railWidth }}
     >
-      {/* Logo + Toggle */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-white/[0.06]">
-        <AnimatePresence mode="wait">
-          {isExpanded ? (
-            <motion.div
-              key="logo-full"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Logo variant="wordmark" size="sm" color="gold" />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="logo-mark"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Logo variant="mark" size="sm" color="gold" />
-            </motion.div>
-          )}
-        </AnimatePresence>
+      {/* Noise texture for depth */}
+      <NoiseOverlay opacity={0.03} />
 
-        {isExpanded && (
-          <button
-            onClick={onToggle}
-            className="p-1 rounded-lg hover:bg-white/[0.04] transition-colors"
-            aria-label="Collapse sidebar"
+      {/* Gold edge glow when expanded */}
+      <motion.div
+        className="absolute right-0 top-0 bottom-0 w-[1px] pointer-events-none"
+        style={{
+          background: 'linear-gradient(180deg, transparent 0%, var(--color-gold)/20 50%, transparent 100%)',
+        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isExpanded ? 1 : 0 }}
+        transition={{ duration: 0.6, ease: EASE }}
+      />
+      {/* Header - ChatGPT style: 56px, centered */}
+      <div className="h-14 flex items-center px-4 border-b border-white/[0.06] relative z-10">
+        <motion.div
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.2 }}
+        >
+          {/* Breathing animation */}
+          <motion.div
+            animate={{ opacity: [1, 0.85, 1] }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
           >
-            <X size={18} className="text-white/40" />
-          </button>
-        )}
+            <Logo variant="wordmark" size="sm" color="gold" />
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Main Navigation */}
-      <nav className="flex-1 py-4 px-2 space-y-1">
+      {/* Main Navigation - ChatGPT style: generous spacing, always labeled */}
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto relative z-10">
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(item);
 
           return (
-            <button
+            <motion.button
               key={item.id}
               onClick={() => handleNavClick(item.href)}
               className={cn(
-                'relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
-                active
-                  ? 'text-white bg-white/[0.04]'
-                  : 'text-white/40 hover:text-white/70 hover:bg-white/[0.02]'
+                'group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-medium transition-colors duration-200',
+                active ? 'text-white/90' : 'text-white/60 hover:text-white/90'
               )}
+              whileHover={{ x: 2 }}
+              transition={{ duration: 0.2 }}
             >
-              {/* Active indicator */}
+              {/* Soft background on hover */}
+              <motion.div
+                className="absolute inset-0 rounded-xl bg-white/[0.04]"
+                initial={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              />
+
+              {/* Active indicator - soft gold line */}
               {active && (
                 <motion.div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-gold)] rounded-r"
+                  className="absolute left-0 top-2 bottom-2 w-0.5 rounded-r-full bg-[var(--color-gold)]"
                   layoutId="active-indicator"
+                  style={{
+                    boxShadow: '0 0 8px 2px rgba(255,215,0,0.3)',
+                  }}
                   transition={{ duration: 0.2, ease: EASE }}
                 />
               )}
 
-              <Icon className="flex-shrink-0" size={20} />
+              <Icon className="w-5 h-5 flex-shrink-0 relative z-10" />
 
-              <AnimatePresence mode="wait">
-                {isExpanded && (
-                  <motion.span
-                    key={`label-${item.id}`}
-                    className="text-[14px] font-medium whitespace-nowrap"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {item.label}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
+              <span className="relative z-10 tracking-[-0.01em]">
+                {item.label}
+              </span>
+            </motion.button>
           );
         })}
       </nav>
 
-      {/* Bottom Section */}
-      <div className="py-4 px-2 space-y-1 border-t border-white/[0.06]">
-        {BOTTOM_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item);
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.href)}
-              className={cn(
-                'relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors',
-                active
-                  ? 'text-white bg-white/[0.04]'
-                  : 'text-white/40 hover:text-white/70 hover:bg-white/[0.02]'
+      {/* Profile Footer - ChatGPT style */}
+      <div className="p-3 border-t border-white/[0.06] relative z-10">
+        {user && (
+          <motion.button
+            className="group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/[0.04] transition-colors"
+            whileHover={{ x: 2 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Avatar */}
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/[0.08] flex-shrink-0 bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center">
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[13px] font-semibold text-white/60">
+                  {user.displayName?.charAt(0) || user.fullName?.charAt(0) || 'U'}
+                </span>
               )}
-            >
-              {active && (
-                <motion.div
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-gold)] rounded-r"
-                  layoutId="active-indicator"
-                  transition={{ duration: 0.2, ease: EASE }}
-                />
-              )}
+            </div>
 
-              <Icon className="flex-shrink-0" size={20} />
+            {/* Name + handle */}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[13px] font-medium text-white/90 truncate tracking-[-0.01em]">
+                {user.displayName || user.fullName || 'User'}
+              </p>
+              <p className="text-[11px] text-white/40 truncate">
+                @{user.handle || 'username'}
+              </p>
+            </div>
 
-              {isExpanded && (
-                <motion.span
-                  className="text-[14px] font-medium whitespace-nowrap"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  {item.label}
-                </motion.span>
-              )}
-            </button>
-          );
-        })}
+            {/* Settings icon appears on hover */}
+            <SettingsIcon className="w-4 h-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.button>
+        )}
 
         {/* Sign Out */}
         {user && (
-          <button
+          <motion.button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-white/40 hover:text-white/70 hover:bg-white/[0.02] transition-colors"
+            className="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/60 hover:text-white/90 text-[13px] font-medium mt-1 transition-colors"
+            whileHover={{ x: 2 }}
           >
-            <LogOut size={20} className="flex-shrink-0" />
-            {isExpanded && (
-              <motion.span
-                className="text-[14px] font-medium whitespace-nowrap"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.15 }}
-              >
-                Sign Out
-              </motion.span>
-            )}
-          </button>
+            <motion.div
+              className="absolute inset-0 rounded-xl bg-white/[0.02]"
+              initial={{ opacity: 0 }}
+              whileHover={{ opacity: 1 }}
+            />
+            <LogOut size={16} className="relative z-10" />
+            <span className="relative z-10 tracking-[-0.01em]">Sign Out</span>
+          </motion.button>
         )}
       </div>
-
-      {/* Expand Button (when collapsed) */}
-      {!isExpanded && (
-        <button
-          onClick={onToggle}
-          className="mx-2 mb-4 p-2.5 rounded-xl hover:bg-white/[0.04] transition-colors"
-          aria-label="Expand sidebar"
-        >
-          <Menu size={20} className="text-white/40" />
-        </button>
-      )}
     </motion.aside>
   );
 }
@@ -441,6 +411,7 @@ export function AppShell({ children }: AppShellProps) {
     pathname === '/' ||
     pathname === '/enter' ||
     pathname === '/about' ||
+    pathname === '/schools' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/legal/');
 
@@ -448,29 +419,30 @@ export function AppShell({ children }: AppShellProps) {
     return <>{children}</>;
   }
 
+  // ChatGPT aesthetic: Fixed 260px rail, generous content padding
   return (
     <div className="flex h-screen bg-[#0A0A09] overflow-hidden">
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - Always 260px */}
       <div className="hidden lg:block">
         <Sidebar
-          isExpanded={sidebarExpanded}
-          onToggle={() => setSidebarExpanded(!sidebarExpanded)}
+          isExpanded={true}
+          onToggle={() => {}}
+          onNavigate={undefined}
         />
       </div>
 
       {/* Mobile Nav */}
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
-      {/* Main Content */}
+      {/* Main Content - ChatGPT style: 260px offset, generous padding */}
       <main
         className="flex-1 overflow-y-auto"
         style={{
-          marginLeft: sidebarExpanded ? '240px' : '64px',
-          transition: 'margin-left 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+          marginLeft: '260px',
         }}
       >
         {/* Mobile Header */}
-        <div className="lg:hidden sticky top-0 z-30 h-16 px-4 bg-[#0A0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between">
+        <div className="lg:hidden sticky top-0 z-30 h-14 px-4 bg-[#0A0A09]/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-between">
           <button
             onClick={() => setMobileNavOpen(true)}
             className="p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
@@ -481,9 +453,9 @@ export function AppShell({ children }: AppShellProps) {
           <div className="w-9" /> {/* Spacer for centering */}
         </div>
 
-        {/* Page Content */}
+        {/* Page Content - ChatGPT style: max-w-3xl, px-8 py-6 */}
         <div className="min-h-screen">
-          <div className="max-w-4xl mx-auto px-6 py-12">
+          <div className="max-w-3xl mx-auto px-8 py-6">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}

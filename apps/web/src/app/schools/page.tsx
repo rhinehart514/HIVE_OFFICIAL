@@ -12,9 +12,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import {
   Logo,
   Button,
@@ -123,10 +124,19 @@ interface SchoolCardProps {
   school: School;
   index: number;
   onSelect: (school: School) => void;
+  onRequest: (school: School) => void;
 }
 
-function SchoolCard({ school, index, onSelect }: SchoolCardProps) {
+function SchoolCard({ school, index, onSelect, onRequest }: SchoolCardProps) {
   const isActive = school.isActive;
+
+  const handleClick = () => {
+    if (isActive) {
+      onSelect(school);
+    } else {
+      onRequest(school);
+    }
+  };
 
   return (
     <motion.div
@@ -141,29 +151,15 @@ function SchoolCard({ school, index, onSelect }: SchoolCardProps) {
       <Tilt intensity={isActive ? 6 : 3}>
         <button
           type="button"
-          onClick={() => onSelect(school)}
+          onClick={handleClick}
           className="w-full text-left"
           data-testid={`school-${school.id}`}
         >
           <GlassSurface
             intensity={isActive ? 'standard' : 'subtle'}
             interactive
-            className={cn(
-              'p-5 rounded-2xl relative overflow-hidden',
-              isActive && 'ring-1 ring-[var(--color-gold)]/20'
-            )}
+            className="p-5 rounded-2xl relative overflow-hidden"
           >
-            {/* Gold glow for active */}
-            {isActive && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,215,0,0.08) 0%, transparent 60%)',
-                }}
-              />
-            )}
-
             <div className="relative flex items-center gap-4">
               {/* School logo */}
               <div className="flex-shrink-0">
@@ -204,7 +200,7 @@ function SchoolCard({ school, index, onSelect }: SchoolCardProps) {
               <div className="flex-shrink-0">
                 {isActive ? (
                   <motion.div
-                    className="flex items-center gap-2 text-[var(--color-gold)]"
+                    className="flex items-center gap-2 text-white"
                     whileHover={{ x: 4 }}
                     transition={{ duration: 0.2 }}
                   >
@@ -212,8 +208,8 @@ function SchoolCard({ school, index, onSelect }: SchoolCardProps) {
                     <ArrowRightIcon className="w-4 h-4" />
                   </motion.div>
                 ) : (
-                  <span className="text-[13px] text-white/40">
-                    Join waitlist
+                  <span className="text-[13px] text-white/50 hover:text-white/70 transition-colors">
+                    Request access
                   </span>
                 )}
               </div>
@@ -258,12 +254,128 @@ function SearchInput({ value, onChange }: SearchInputProps) {
 // MAIN PAGE
 // ============================================
 
+// ============================================
+// REQUEST MODAL
+// ============================================
+
+interface RequestModalProps {
+  school: School | null;
+  onClose: () => void;
+  onSubmit: (email: string) => void;
+}
+
+function RequestModal({ school, onClose, onSubmit }: RequestModalProps) {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  if (!school) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+
+    setIsSubmitting(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setIsSubmitting(false);
+    setSubmitted(true);
+    onSubmit(email);
+  };
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Backdrop */}
+      <motion.div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      />
+
+      {/* Modal */}
+      <motion.div
+        className="relative w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.3, ease: EASE }}
+      >
+        <GlassSurface intensity="standard" className="p-6 rounded-2xl">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/[0.06] transition-colors"
+          >
+            <X className="w-5 h-5 text-white/40" />
+          </button>
+
+          {submitted ? (
+            <div className="text-center py-4">
+              <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
+                <span className="text-[20px]">✓</span>
+              </div>
+              <Heading level={3} className="text-[20px] mb-2">
+                You're on the list
+              </Heading>
+              <p className="text-[15px] text-white/50">
+                We'll notify you when {school.name} goes live.
+              </p>
+            </div>
+          ) : (
+            <>
+              <Heading level={3} className="text-[20px] mb-2 pr-8">
+                Request access to {school.name}
+              </Heading>
+              <p className="text-[15px] text-white/50 mb-6">
+                Enter your email and we'll let you know when it's available.
+              </p>
+
+              <form onSubmit={handleSubmit}>
+                <Input
+                  type="email"
+                  placeholder="your@email.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mb-4"
+                  autoFocus
+                />
+                <Button
+                  type="submit"
+                  variant="default"
+                  size="lg"
+                  className="w-full"
+                  disabled={!email.trim() || isSubmitting}
+                  loading={isSubmitting}
+                >
+                  {isSubmitting ? 'Requesting...' : 'Request Access'}
+                </Button>
+              </form>
+            </>
+          )}
+        </GlassSurface>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
 export default function SchoolsPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [requestSchool, setRequestSchool] = useState<School | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -329,17 +441,29 @@ export default function SchoolsPage() {
     });
   }, [filteredSchools]);
 
-  const handleSchoolSelect = (school: School) => {
-    if (school.isActive) {
-      const params = new URLSearchParams({
-        schoolId: school.id,
-        schoolName: school.name,
-        domain: school.domain,
-      });
-      router.push(`/enter?${params.toString()}`);
-    }
-    // TODO: Handle waitlist for inactive schools
-  };
+  const handleSchoolSelect = useCallback((school: School) => {
+    const params = new URLSearchParams({
+      schoolId: school.id,
+      schoolName: school.name,
+      domain: school.domain,
+    });
+    router.push(`/enter?${params.toString()}`);
+  }, [router]);
+
+  const handleRequestSchool = useCallback((school: School) => {
+    setRequestSchool(school);
+  }, []);
+
+  const handleRequestSubmit = useCallback((email: string) => {
+    // TODO: Send to API
+    logger.info('School access requested', {
+      component: 'SchoolsPage',
+      schoolId: requestSchool?.id,
+      email,
+    });
+    // Close modal after brief delay to show success
+    setTimeout(() => setRequestSchool(null), 2000);
+  }, [requestSchool]);
 
   if (!isMounted) {
     return (
@@ -432,6 +556,7 @@ export default function SchoolsPage() {
                   school={school}
                   index={index}
                   onSelect={handleSchoolSelect}
+                  onRequest={handleRequestSchool}
                 />
               ))}
             </AnimatePresence>
@@ -450,14 +575,25 @@ export default function SchoolsPage() {
               Don&apos;t see your university?
             </Heading>
             <p className="text-[15px] text-white/50 mb-6 max-w-md mx-auto">
-              We&apos;re expanding to more campuses. Join the waitlist to bring HIVE to your school.
+              We&apos;re expanding to more campuses. Request access to bring HIVE to your school.
             </p>
-            <Button variant="cta" size="lg">
-              Join General Waitlist
+            <Button variant="default" size="lg">
+              Request Your School
             </Button>
           </GlassSurface>
         </motion.div>
       </section>
+
+      {/* Request Modal */}
+      <AnimatePresence>
+        {requestSchool && (
+          <RequestModal
+            school={requestSchool}
+            onClose={() => setRequestSchool(null)}
+            onSubmit={handleRequestSubmit}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.06] py-8">

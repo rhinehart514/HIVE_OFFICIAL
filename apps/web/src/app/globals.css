@@ -99,10 +99,10 @@
   /* ===================================
    * TYPOGRAPHY
    * =================================== */
-  --hive-font-sans: 'Geist Sans', system-ui, -apple-system, sans-serif;
-  --hive-font-display: 'Space Grotesk', 'Geist Sans', system-ui, sans-serif;
-  --hive-font-mono: 'JetBrains Mono', 'Geist Mono', ui-monospace, monospace;
-  --hive-font-manifesto: 'Clash Display', 'Space Grotesk', system-ui, sans-serif;
+  --hive-font-sans: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  --hive-font-display: var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif;
+  --hive-font-mono: var(--font-jetbrains-mono), var(--font-geist-mono), ui-monospace, monospace;
+  --hive-font-manifesto: var(--font-space-grotesk), system-ui, sans-serif; /* Using Space Grotesk as Clash Display fallback */
 
   /* Font Sizes */
   --hive-text-xs: 0.75rem;    /* 12px */

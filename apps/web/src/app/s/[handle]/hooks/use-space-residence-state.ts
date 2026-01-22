@@ -93,7 +93,7 @@ interface UseSpaceResidenceStateReturn {
   // Actions
   joinSpace: () => Promise<void>;
   leaveSpace: () => Promise<void>;
-  rsvpToEvent: (eventId: string) => Promise<void>;
+  rsvpToEvent: (eventId: string, status?: 'going' | 'maybe' | 'not_going') => Promise<void>;
 
   // Navigation
   navigateBack: () => void;
@@ -185,8 +185,35 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         if (boardsResponse.ok) {
           const boardsData = await boardsResponse.json();
           if (boardsData.boards && boardsData.boards.length > 0) {
-            setBoards(boardsData.boards);
+            // Set boards with unread counts from API
+            // The API returns unread counts directly; if not available, use 0
+            const boardsWithUnread = boardsData.boards.map((board: Board) => ({
+              ...board,
+              unreadCount: board.unreadCount ?? 0,
+            }));
+
+            setBoards(boardsWithUnread);
           }
+        }
+
+        // Fetch upcoming events for this space
+        const eventsResponse = await fetch(`/api/events?spaceId=${spaceId}&upcoming=true&limit=5`);
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json();
+          const events = eventsData.data?.events || eventsData.events || [];
+          setUpcomingEvents(events.map((e: {
+            id: string;
+            title: string;
+            startTime?: string;
+            locationName?: string;
+            goingCount?: number;
+          }) => ({
+            id: e.id,
+            title: e.title,
+            startTime: e.startTime,
+            location: e.locationName || 'TBD',
+            goingCount: e.goingCount || 0,
+          })));
         }
       } catch {
         setError('Failed to load space');
@@ -212,6 +239,31 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
         if (response.ok) {
           const data = await response.json();
           setMessages(data.messages || []);
+
+          // Mark messages as read for this board
+          if (data.messages && data.messages.length > 0) {
+            const latestMessage = data.messages[data.messages.length - 1];
+            const lastReadTimestamp = latestMessage.timestamp || Date.now();
+
+            // Update read receipt (fire and forget - don't block UI)
+            fetch(`/api/spaces/${space.id}/chat/read`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                boardId: activeBoard,
+                lastReadTimestamp,
+              }),
+            }).catch(() => {
+              // Silent fail - unread count will update on next load
+            });
+
+            // Optimistically clear unread count for this board
+            setBoards((prev) =>
+              prev.map((board) =>
+                board.id === activeBoard ? { ...board, unreadCount: 0 } : board
+              )
+            );
+          }
         } else {
           // No messages yet - that's okay
           setMessages([]);
@@ -269,9 +321,12 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
 
   // Actions
   const sendMessage = React.useCallback(async (content: string) => {
-    // TODO: Implement real message sending
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
+    if (!space?.id) return;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
       boardId: activeBoard,
       authorId: 'current-user',
       authorName: 'You',
@@ -279,25 +334,141 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       content,
       timestamp: Date.now(),
     };
-    setMessages((prev) => [...prev, newMessage]);
-  }, [activeBoard]);
+    setMessages((prev) => [...prev, optimisticMessage]);
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boardId: activeBoard,
+          content,
+        }),
+      });
+
+      if (!response.ok) {
+        // Revert optimistic update on failure
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to send message');
+      }
+
+      const data = await response.json();
+      // Update temp message with real ID
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId ? { ...m, id: data.messageId, timestamp: data.timestamp } : m
+        )
+      );
+    } catch (error) {
+      // Revert optimistic update
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      console.error('Failed to send message:', error);
+      throw error;
+    }
+  }, [activeBoard, space?.id]);
 
   const joinSpace = React.useCallback(async () => {
-    // TODO: Implement real join
+    if (!space?.id) return;
+
+    // Optimistic update
     setSpace((prev) => (prev ? { ...prev, isMember: true, memberCount: prev.memberCount + 1 } : null));
-  }, []);
+
+    try {
+      const response = await fetch('/api/spaces/join-v2', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spaceId: space.id,
+          joinMethod: 'manual',
+        }),
+      });
+
+      if (!response.ok) {
+        // Revert optimistic update
+        setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to join space');
+      }
+
+      // Reload members after joining
+      const membersResponse = await fetch(`/api/spaces/${space.id}/members`);
+      if (membersResponse.ok) {
+        const data = await membersResponse.json();
+        setAllMembers(data.members || []);
+      }
+    } catch (error) {
+      // Revert optimistic update
+      setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
+      console.error('Failed to join space:', error);
+      throw error;
+    }
+  }, [space?.id]);
 
   const leaveSpace = React.useCallback(async () => {
-    // TODO: Implement real leave
-    setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
-  }, []);
+    if (!space?.id) return;
 
-  const rsvpToEvent = React.useCallback(async (eventId: string) => {
-    // TODO: Implement real RSVP
+    // Optimistic update
+    setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
+
+    try {
+      const response = await fetch('/api/spaces/leave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          spaceId: space.id,
+        }),
+      });
+
+      if (!response.ok) {
+        // Revert optimistic update
+        setSpace((prev) => (prev ? { ...prev, isMember: true, memberCount: prev.memberCount + 1 } : null));
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to leave space');
+      }
+    } catch (error) {
+      // Revert optimistic update
+      setSpace((prev) => (prev ? { ...prev, isMember: true, memberCount: prev.memberCount + 1 } : null));
+      console.error('Failed to leave space:', error);
+      throw error;
+    }
+  }, [space?.id]);
+
+  const rsvpToEvent = React.useCallback(async (eventId: string, status: 'going' | 'maybe' | 'not_going' = 'going') => {
+    if (!space?.id) return;
+
+    // Optimistic update
+    const previousEvents = [...upcomingEvents];
     setUpcomingEvents((prev) =>
       prev.map((e) => (e.id === eventId ? { ...e, goingCount: e.goingCount + 1 } : e))
     );
-  }, []);
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/events/${eventId}/rsvp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        // Revert optimistic update
+        setUpcomingEvents(previousEvents);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to RSVP');
+      }
+
+      const data = await response.json();
+      // Update with actual attendee count from server
+      setUpcomingEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, goingCount: data.currentAttendees } : e))
+      );
+    } catch (error) {
+      // Revert optimistic update
+      setUpcomingEvents(previousEvents);
+      console.error('Failed to RSVP:', error);
+      throw error;
+    }
+  }, [space?.id, upcomingEvents]);
 
   // Navigation
   const navigateBack = React.useCallback(() => {

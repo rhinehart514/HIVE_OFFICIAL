@@ -16,7 +16,7 @@ import { enforceRateLimit } from '@/lib/secure-rate-limiter';
  * - Home space (if exists)
  * - Community spaces
  *
- * Used by TerritoryMap component to display personalized identity quadrants
+ * Used by /spaces TerritorySection to display personalized identity quadrants
  */
 
 export async function GET(request: NextRequest) {

@@ -1,30 +1,41 @@
 'use client';
 
 /**
- * /spaces — Build Your Campus Identity
+ * /spaces — Your Campus Territory
  *
- * Narrative: Your campus identity lives in layers.
- * Categories reveal progressively with compelling motion.
+ * Premium spaces discovery with:
+ * - Narrative scroll experience (like /about)
+ * - Premium motion primitives from design system
+ * - No decorative icons — color and typography only
+ * - Personalized when logged in
  *
- * 4 Core Territories:
- * - University Organizations (official, institutional)
- * - Student Organizations (clubs, interests, passion)
- * - Greek Life (chapters, councils)
- * - Residential (dorms, buildings, housing)
- *
- * Design: Dramatic reveal, identity-first messaging
- * @version 9.0.0 - Identity-first redesign (Jan 2026)
+ * @version 12.0.0 - No decorative icons (Jan 2026)
  */
 
 import * as React from 'react';
+import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, useInView } from 'framer-motion';
-import { Search, Grid3x3, List, ChevronRight, Building2, Users, GraduationCap, Home } from 'lucide-react';
+import { Search, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Text, Button, Input, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
+import {
+  Text,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  getInitials,
+  // Motion primitives
+  motion,
+  useInView,
+  MOTION,
+  RevealSection,
+  ParallaxText,
+  NarrativeReveal,
+  AnimatedBorder,
+  ScrollIndicator,
+  ScrollSpacer,
+} from '@hive/ui/design-system/primitives';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
-import { TerritoryMap } from '@/components/spaces/TerritoryMap';
 
 // ============================================================
 // Types
@@ -42,28 +53,15 @@ interface Space {
   isJoined?: boolean;
 }
 
-interface Category {
-  id: 'university' | 'student' | 'greek' | 'residential';
-  name: string;
-  description: string;
-  icon: string;
-  count: number;
-  gradient: string;
+interface UserIdentity {
+  major?: string;
+  majorSpaceId?: string;
+  majorSpaceUnlocked?: boolean;
+  homeSpaceId?: string;
+  residenceType?: 'on-campus' | 'off-campus' | 'commuter';
+  interests: string[];
+  communitySpaceIds: string[];
 }
-
-// ============================================================
-// Premium Motion Config
-// ============================================================
-
-const EASE = [0.22, 1, 0.36, 1] as const;
-
-const DURATION = {
-  fast: 0.15,
-  quick: 0.25,
-  smooth: 0.4,
-  gentle: 0.6,
-  dramatic: 0.8,
-} as const;
 
 // ============================================================
 // Data Hooks
@@ -81,20 +79,22 @@ function useMySpaces() {
     }
 
     secureApiFetch('/api/spaces/my', { method: 'GET' })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const activeSpaces = data.data?.activeSpaces || data.activeSpaces || [];
-        setSpaces(activeSpaces.map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          handle: s.handle,
-          description: s.description,
-          avatarUrl: s.avatarUrl,
-          category: s.category || 'general',
-          memberCount: s.memberCount || 0,
-          isVerified: s.isVerified,
-          isJoined: true,
-        })));
+        setSpaces(
+          activeSpaces.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            handle: s.handle,
+            description: s.description,
+            avatarUrl: s.avatarUrl,
+            category: s.category || 'general',
+            memberCount: s.memberCount || 0,
+            isVerified: s.isVerified,
+            isJoined: true,
+          }))
+        );
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -109,20 +109,22 @@ function useAllSpaces() {
 
   React.useEffect(() => {
     secureApiFetch('/api/spaces', { method: 'GET' })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         const allSpaces = data.data?.spaces || data.spaces || [];
-        setSpaces(allSpaces.map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          handle: s.handle,
-          description: s.description,
-          avatarUrl: s.avatarUrl,
-          category: s.category || 'general',
-          memberCount: s.memberCount || 0,
-          isVerified: s.isVerified,
-          isJoined: s.isJoined || false,
-        })));
+        setSpaces(
+          allSpaces.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            handle: s.handle,
+            description: s.description,
+            avatarUrl: s.avatarUrl,
+            category: s.category || 'general',
+            memberCount: s.memberCount || 0,
+            isVerified: s.isVerified,
+            isJoined: s.isJoined || false,
+          }))
+        );
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -132,7 +134,7 @@ function useAllSpaces() {
 }
 
 function useUserIdentity() {
-  const [identity, setIdentity] = React.useState<any>(null);
+  const [identity, setIdentity] = React.useState<UserIdentity | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { user } = useAuth();
 
@@ -143,8 +145,8 @@ function useUserIdentity() {
     }
 
     secureApiFetch('/api/profile/identity', { method: 'GET' })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (data.success && data.identity) {
           setIdentity({
             major: data.identity.major,
@@ -153,7 +155,9 @@ function useUserIdentity() {
             homeSpaceId: data.identity.homeSpace?.id,
             residenceType: data.identity.residenceType,
             interests: data.identity.interests || [],
-            communitySpaceIds: (data.identity.communitySpaces || []).map((s: any) => s.id),
+            communitySpaceIds: (data.identity.communitySpaces || []).map(
+              (s: any) => s.id
+            ),
           });
         }
       })
@@ -175,569 +179,540 @@ export default function SpacesPage() {
   const { spaces: allSpaces, loading: loadingAllSpaces } = useAllSpaces();
   const { identity: userIdentity, loading: loadingIdentity } = useUserIdentity();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('list');
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
-  const handleQuadrantClick = React.useCallback((type: 'major' | 'interests' | 'home' | 'community') => {
-    // Map identity types to category filters
-    const categoryMap: Record<string, string> = {
-      major: 'university',
-      interests: 'student',
-      home: 'residential',
-      community: 'student',
-    };
-    setSelectedCategory(categoryMap[type]);
-    // Scroll to All Spaces section
-    document.getElementById('all-spaces')?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
-
-  // Categories with real counts
-  const categories: Category[] = React.useMemo(() => {
-    const counts = allSpaces.reduce((acc, space) => {
-      const cat = space.category || 'student';
-      acc[cat] = (acc[cat] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    return [
-      {
-        id: 'university',
-        name: 'University Organizations',
-        description: 'Official departments, programs, and institutional spaces',
-        icon: '🏛️',
-        count: counts.university || counts.academic || 87,
-        gradient: 'from-blue-500/20 to-purple-500/20',
-      },
-      {
-        id: 'student',
-        name: 'Student Organizations',
-        description: 'Clubs, societies, and student-led communities',
-        icon: '✨',
-        count: counts.student || counts.social || 142,
-        gradient: 'from-purple-500/20 to-pink-500/20',
-      },
-      {
-        id: 'greek',
-        name: 'Greek Life',
-        description: 'Fraternities, sororities, and Greek councils',
-        icon: '🏛️',
-        count: counts.greek || 34,
-        gradient: 'from-amber-500/20 to-orange-500/20',
-      },
-      {
-        id: 'residential',
-        name: 'Residential',
-        description: 'Dorms, apartments, and housing communities',
-        icon: '🏠',
-        count: counts.residential || 56,
-        gradient: 'from-green-500/20 to-teal-500/20',
-      },
-    ];
-  }, [allSpaces]);
-
-  // Filter spaces by search and category
   const filteredSpaces = React.useMemo(() => {
-    return allSpaces.filter(space => {
-      const matchesSearch = !searchQuery ||
+    return allSpaces.filter((space) => {
+      const matchesSearch =
+        !searchQuery ||
         space.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         space.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesCategory = !selectedCategory || space.category === selectedCategory;
-
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
-  }, [allSpaces, searchQuery, selectedCategory]);
+  }, [allSpaces, searchQuery]);
+
+  const hasIdentity = !loadingIdentity && userIdentity && user;
+  const hasSpaces = !loadingMySpaces && mySpaces.length > 0;
 
   return (
     <div className="min-h-screen bg-[#0A0A09]">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Hero - Identity First */}
-        <HeroSection />
-
-        {/* Your Spaces - Progressive Disclosure */}
-        {!loadingMySpaces && mySpaces.length > 0 && (
-          <YourSpacesSection spaces={mySpaces} router={router} />
-        )}
-
-        {/* Territory Map - Personalized Identity Quadrants */}
-        {!loadingIdentity && userIdentity && user && (
-          <div className="mb-20">
-            <TerritoryMap
-              userIdentity={userIdentity}
-              onQuadrantClick={handleQuadrantClick}
-            />
-          </div>
-        )}
-
-        {/* Category Reveal - 4 Core Territories (for users without identity or fallback) */}
-        {(!user || !userIdentity) && (
-          <CategoryRevealSection
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
-          />
-        )}
-
-        {/* All Spaces Directory */}
-        <div id="all-spaces">
-          <AllSpacesSection
-            spaces={filteredSpaces}
-            loading={loadingAllSpaces}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            selectedCategory={selectedCategory}
-            router={router}
-          />
-        </div>
-
-        {/* Request Space CTA */}
-        <RequestSpaceSection searchQuery={searchQuery} />
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// Hero Section - Identity First
-// ============================================================
-
-function HeroSection() {
-  return (
-    <motion.div
-      className="mb-16"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: DURATION.gentle, ease: EASE }}
-    >
-      <motion.div
-        className="space-y-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: DURATION.dramatic, delay: 0.1, ease: EASE }}
-      >
-        <h1
-          className="text-[48px] md:text-[64px] font-semibold text-white tracking-tight leading-[1.1]"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          Build your campus identity
-        </h1>
-
-        <motion.p
-          className="text-[18px] md:text-[20px] text-white/50 max-w-2xl leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: DURATION.gentle, delay: 0.3, ease: EASE }}
-        >
-          Your identity evolves through the spaces you inhabit. Choose your residence. Join your orgs. Rush a chapter.
-          Each space you enter becomes part of who you are.
-        </motion.p>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ============================================================
-// Your Spaces - Quick Access
-// ============================================================
-
-function YourSpacesSection({ spaces, router }: { spaces: Space[]; router: any }) {
-  return (
-    <motion.div
-      className="mb-16"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: DURATION.smooth, delay: 0.4, ease: EASE }}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[20px] font-semibold text-white">Your Spaces</h2>
-        <Text size="sm" tone="muted">{spaces.length}</Text>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {spaces.slice(0, 8).map((space, i) => (
-          <motion.button
-            key={space.id}
-            onClick={() => router.push(`/s/${space.handle}`)}
-            className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.quick, delay: 0.5 + i * 0.03, ease: EASE }}
-          >
-            <Avatar size="lg">
-              {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-              <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
-            </Avatar>
-            <div className="text-center">
-              <p className="text-[13px] font-medium text-white truncate w-full">
-                {space.name}
-              </p>
-            </div>
-          </motion.button>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ============================================================
-// Category Reveal - 4 Core Territories
-// ============================================================
-
-function CategoryRevealSection({
-  categories,
-  selectedCategory,
-  onSelectCategory
-}: {
-  categories: Category[];
-  selectedCategory: string | null;
-  onSelectCategory: (id: string | null) => void;
-}) {
-  const ref = React.useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
-
-  return (
-    <div ref={ref} className="mb-20">
-      <motion.div
-        className="mb-8"
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: DURATION.gentle, ease: EASE }}
-      >
-        <h2 className="text-[28px] font-semibold text-white mb-2">
-          Build your identity in layers
-        </h2>
-        <p className="text-[15px] text-white/40">
-          First your dorm. Then your orgs. Maybe Greek life. Your campus identity evolves as you explore.
-        </p>
-      </motion.div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {categories.map((category, i) => (
-          <CategoryCard
-            key={category.id}
-            category={category}
-            index={i}
-            isSelected={selectedCategory === category.id}
-            isInView={isInView}
-            onSelect={() => onSelectCategory(
-              selectedCategory === category.id ? null : category.id
-            )}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CategoryCard({
-  category,
-  index,
-  isSelected,
-  isInView,
-  onSelect
-}: {
-  category: Category;
-  index: number;
-  isSelected: boolean;
-  isInView: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <motion.button
-      onClick={onSelect}
-      className={cn(
-        'relative group text-left p-6 rounded-2xl border overflow-hidden',
-        'transition-all duration-300',
-        isSelected
-          ? 'bg-white/[0.06] border-white/[0.12] ring-2 ring-white/[0.08]'
-          : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.08]'
-      )}
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      animate={isInView ? {
-        opacity: 1,
-        y: 0,
-        scale: 1
-      } : {
-        opacity: 0,
-        y: 40,
-        scale: 0.95
-      }}
-      transition={{
-        duration: DURATION.dramatic,
-        delay: 0.6 + index * 0.15,
-        ease: EASE
-      }}
-    >
-      {/* Gradient Background */}
-      <div className={cn(
-        'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-        category.gradient
-      )} />
-
-      {/* Content */}
-      <div className="relative z-10">
-        {/* Icon */}
-        <motion.div
-          className="text-[48px] mb-4"
-          initial={{ scale: 0, rotate: -180 }}
-          animate={isInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
-          transition={{
-            duration: DURATION.dramatic,
-            delay: 0.7 + index * 0.15,
-            ease: EASE,
-            type: 'spring',
-            stiffness: 200,
-            damping: 15
+      <Hero hasIdentity={!!hasIdentity} />
+      <ScrollSpacer height={30} />
+      {hasSpaces && <YourSpaces spaces={mySpaces} router={router} />}
+      {hasIdentity && (
+        <TerritorySection
+          userIdentity={userIdentity}
+          onQuadrantClick={() => {
+            document.getElementById('browse')?.scrollIntoView({ behavior: 'smooth' });
           }}
+        />
+      )}
+      {(!user || !userIdentity) && <DiscoverySection />}
+      <BrowseSection
+        spaces={filteredSpaces}
+        loading={loadingAllSpaces}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        router={router}
+      />
+    </div>
+  );
+}
+
+// ============================================================
+// Hero Section
+// ============================================================
+
+function Hero({ hasIdentity }: { hasIdentity: boolean }) {
+  return (
+    <section className="min-h-[85vh] flex flex-col justify-center px-6 py-24">
+      <div className="max-w-4xl mx-auto">
+        {/* Eyebrow — no icon, just a gold accent */}
+        <motion.div
+          className="inline-flex items-center gap-3 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.slow, ease: MOTION.ease.premium }}
         >
-          {category.icon}
+          <div className="w-6 h-px bg-[var(--color-gold)]/60" />
+          <span className="text-[12px] text-white/50 uppercase tracking-wider">
+            {hasIdentity ? 'Your territory' : 'Campus ecosystem'}
+          </span>
         </motion.div>
 
         {/* Title */}
-        <div className="mb-2">
-          <h3 className="text-[18px] font-semibold text-white">
-            {category.name}
-          </h3>
-        </div>
+        <ParallaxText speed="subtle">
+          <motion.h1
+            className="text-[48px] md:text-[72px] font-semibold text-white tracking-tight leading-[0.95] mb-8"
+            style={{ fontFamily: 'var(--font-display)' }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: MOTION.duration.slower,
+              delay: 0.1,
+              ease: MOTION.ease.premium,
+            }}
+          >
+            {hasIdentity ? 'Your territory' : 'Your campus has a shape'}
+          </motion.h1>
+        </ParallaxText>
 
-        {/* Description */}
-        <motion.p
-          className="text-[13px] text-white/50 leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: DURATION.gentle, delay: 1.0 + index * 0.15, ease: EASE }}
-        >
-          {category.description}
-        </motion.p>
+        {/* Narrative description */}
+        <ParallaxText speed="base">
+          <motion.div
+            className="max-w-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{
+              duration: MOTION.duration.slow,
+              delay: 0.4,
+              ease: MOTION.ease.premium,
+            }}
+          >
+            <p className="text-[18px] md:text-[20px] text-white/40 leading-relaxed">
+              <NarrativeReveal stagger="words">
+                {hasIdentity
+                  ? 'Spaces tailored to who you are. Your major. Your interests. Your home. Your community.'
+                  : 'Every space you join shapes who you become. Find the ones that fit.'}
+              </NarrativeReveal>
+            </p>
+          </motion.div>
+        </ParallaxText>
 
-        {/* Arrow */}
+        {/* Scroll indicator */}
         <motion.div
-          className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity"
-          initial={{ x: -10 }}
-          whileHover={{ x: 0 }}
+          className="mt-20"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: MOTION.duration.slow, delay: 1.2 }}
         >
-          <ChevronRight className="w-5 h-5 text-white/40" />
+          <ScrollIndicator text="Scroll to explore" />
         </motion.div>
       </div>
-    </motion.button>
+    </section>
   );
 }
 
 // ============================================================
-// All Spaces Section
+// Your Spaces Section
 // ============================================================
 
-function AllSpacesSection({
+function YourSpaces({ spaces, router }: { spaces: Space[]; router: any }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: MOTION.viewport.far });
+
+  return (
+    <RevealSection className="px-6 py-24" margin="far">
+      <div className="max-w-7xl mx-auto">
+        <AnimatedBorder variant="horizontal" className="mb-12" />
+
+        <div className="flex items-center justify-between mb-10">
+          <ParallaxText speed="subtle">
+            <h2 className="text-[24px] font-medium text-white/90">Your spaces</h2>
+          </ParallaxText>
+          <Text size="sm" tone="muted">
+            {spaces.length}
+          </Text>
+        </div>
+
+        <div ref={ref} className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {spaces.slice(0, 12).map((space, i) => (
+            <motion.button
+              key={space.id}
+              onClick={() => router.push(`/s/${space.handle}`)}
+              className="group flex flex-col items-center gap-3 p-5 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{
+                duration: MOTION.duration.base,
+                delay: i * MOTION.stagger.tight,
+                ease: MOTION.ease.premium,
+              }}
+            >
+              <div className="relative">
+                <Avatar size="lg">
+                  {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+                  <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+                </Avatar>
+                {space.isVerified && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center border-2 border-[#0A0A09]">
+                    <span className="text-[10px]">✓</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-[13px] font-medium text-white/60 group-hover:text-white/90 truncate w-full text-center transition-colors">
+                {space.name}
+              </p>
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
+// ============================================================
+// Territory Section (Identity-based navigation)
+// ============================================================
+
+const TERRITORY_QUADRANTS = [
+  {
+    id: 'major' as const,
+    title: 'Your Major',
+    description: 'Academic identity and classmates',
+    accent: 'bg-blue-500',
+    gradient: 'from-blue-500/8 to-purple-500/8',
+    borderColor: 'border-blue-500/10',
+    hoverBorder: 'hover:border-blue-500/30',
+  },
+  {
+    id: 'interests' as const,
+    title: 'Your Interests',
+    description: 'Clubs, hobbies, and passions',
+    accent: 'bg-amber-500',
+    gradient: 'from-amber-500/8 to-orange-500/8',
+    borderColor: 'border-amber-500/10',
+    hoverBorder: 'hover:border-amber-500/30',
+  },
+  {
+    id: 'home' as const,
+    title: 'Your Home',
+    description: 'Dorms and residential life',
+    accent: 'bg-green-500',
+    gradient: 'from-green-500/8 to-emerald-500/8',
+    borderColor: 'border-green-500/10',
+    hoverBorder: 'hover:border-green-500/30',
+  },
+  {
+    id: 'community' as const,
+    title: 'Your Community',
+    description: 'Greek life and cultural groups',
+    accent: 'bg-pink-500',
+    gradient: 'from-pink-500/8 to-rose-500/8',
+    borderColor: 'border-pink-500/10',
+    hoverBorder: 'hover:border-pink-500/30',
+  },
+];
+
+function TerritorySection({
+  userIdentity,
+  onQuadrantClick,
+}: {
+  userIdentity: UserIdentity;
+  onQuadrantClick: (type: 'major' | 'interests' | 'home' | 'community') => void;
+}) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: MOTION.viewport.far });
+
+  return (
+    <RevealSection className="px-6 py-32" margin="far">
+      <div className="max-w-5xl mx-auto">
+        <AnimatedBorder variant="horizontal" className="mb-16" />
+
+        <div className="mb-12">
+          <ParallaxText speed="subtle">
+            <h2
+              className="text-[32px] md:text-[40px] font-semibold text-white tracking-tight mb-4"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Your territory
+            </h2>
+          </ParallaxText>
+          <ParallaxText speed="base">
+            <p className="text-[16px] text-white/40 max-w-md">
+              <NarrativeReveal stagger="words">
+                Four dimensions define your campus identity. Explore each to find your people.
+              </NarrativeReveal>
+            </p>
+          </ParallaxText>
+        </div>
+
+        <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {TERRITORY_QUADRANTS.map((quadrant, index) => {
+            const content = getQuadrantContent(quadrant.id, userIdentity);
+
+            return (
+              <motion.button
+                key={quadrant.id}
+                onClick={() => onQuadrantClick(quadrant.id)}
+                className={cn(
+                  'group relative overflow-hidden text-left',
+                  'p-8 rounded-3xl border transition-all duration-300',
+                  'bg-gradient-to-br',
+                  quadrant.gradient,
+                  quadrant.borderColor,
+                  quadrant.hoverBorder
+                )}
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{
+                  duration: MOTION.duration.base,
+                  delay: index * MOTION.stagger.relaxed,
+                  ease: MOTION.ease.premium,
+                }}
+              >
+                <div className="relative z-10">
+                  {/* Accent bar instead of icon */}
+                  <div className={cn('w-8 h-1 rounded-full mb-6', quadrant.accent, 'opacity-60')} />
+
+                  <h3 className="text-[20px] font-medium text-white mb-2">
+                    {quadrant.title}
+                  </h3>
+
+                  <div className="mb-4">
+                    {content ? (
+                      <p className="text-[14px] text-white/60">{content}</p>
+                    ) : (
+                      <p className="text-[14px] text-white/30">{quadrant.description}</p>
+                    )}
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 text-[13px] text-white/40 group-hover:text-white/70 transition-colors">
+                    <span>Explore</span>
+                    <ArrowRight
+                      size={14}
+                      className="group-hover:translate-x-1 transition-transform"
+                    />
+                  </div>
+                </div>
+
+                <div className="absolute inset-0 bg-gradient-to-br from-white/0 to-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+    </RevealSection>
+  );
+}
+
+function getQuadrantContent(
+  quadrantId: 'major' | 'interests' | 'home' | 'community',
+  identity: UserIdentity
+): string | null {
+  switch (quadrantId) {
+    case 'major':
+      return identity.major || null;
+    case 'interests':
+      return identity.interests.length > 0 ? identity.interests.slice(0, 3).join(', ') : null;
+    case 'home':
+      if (!identity.homeSpaceId) return null;
+      return identity.residenceType === 'on-campus'
+        ? 'On Campus'
+        : identity.residenceType === 'off-campus'
+          ? 'Off Campus'
+          : 'Commuter';
+    case 'community':
+      return identity.communitySpaceIds.length > 0
+        ? `${identity.communitySpaceIds.length} communities`
+        : null;
+    default:
+      return null;
+  }
+}
+
+// ============================================================
+// Discovery Section (For guests/users without identity)
+// ============================================================
+
+const DIMENSIONS = [
+  {
+    title: 'Major',
+    description: 'Your academic path shapes your perspective',
+    accent: 'bg-blue-400',
+  },
+  {
+    title: 'Interests',
+    description: 'What you care about finds others who care too',
+    accent: 'bg-amber-400',
+  },
+  {
+    title: 'Home',
+    description: 'Where you live becomes who you know',
+    accent: 'bg-green-400',
+  },
+  {
+    title: 'Community',
+    description: 'The groups that claim you, claim your growth',
+    accent: 'bg-pink-400',
+  },
+];
+
+function DiscoverySection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: MOTION.viewport.far });
+
+  return (
+    <RevealSection className="px-6 py-32" margin="far">
+      <div className="max-w-4xl mx-auto">
+        <AnimatedBorder variant="horizontal" className="mb-16" />
+
+        <div className="mb-16">
+          <ParallaxText speed="subtle">
+            <h2
+              className="text-[32px] md:text-[40px] font-semibold text-white tracking-tight mb-6"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              Four dimensions
+            </h2>
+          </ParallaxText>
+          <ParallaxText speed="base">
+            <p className="text-[18px] text-white/40 max-w-lg leading-relaxed">
+              <NarrativeReveal stagger="words">
+                Your campus identity lives in four places. Each dimension connects you to different people, different possibilities.
+              </NarrativeReveal>
+            </p>
+          </ParallaxText>
+        </div>
+
+        <div ref={ref} className="space-y-6">
+          {DIMENSIONS.map((dimension, index) => (
+            <motion.div
+              key={dimension.title}
+              className="flex items-start gap-5"
+              initial={{ opacity: 0, x: -20 }}
+              animate={isInView ? { opacity: 1, x: 0 } : {}}
+              transition={{
+                duration: MOTION.duration.base,
+                delay: index * MOTION.stagger.base,
+                ease: MOTION.ease.premium,
+              }}
+            >
+              {/* Colored dot instead of icon */}
+              <div className={cn('w-2 h-2 rounded-full mt-2', dimension.accent, 'opacity-60')} />
+              <div>
+                <h3 className="text-[16px] font-medium text-white/80 mb-1">
+                  {dimension.title}
+                </h3>
+                <p className="text-[14px] text-white/40">{dimension.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <AnimatedBorder variant="container" className="mt-20 rounded-2xl p-10">
+          <div className="text-center">
+            <p className="text-[20px] font-medium text-white/80 mb-4">
+              Sign in to discover your territory
+            </p>
+            <p className="text-[14px] text-white/40">
+              See spaces tailored to your major, interests, and community.
+            </p>
+          </div>
+        </AnimatedBorder>
+      </div>
+    </RevealSection>
+  );
+}
+
+// ============================================================
+// Browse Section
+// ============================================================
+
+function BrowseSection({
   spaces,
   loading,
   searchQuery,
   onSearchChange,
-  viewMode,
-  onViewModeChange,
-  selectedCategory,
   router,
 }: {
   spaces: Space[];
   loading: boolean;
   searchQuery: string;
-  onSearchChange: (q: string) => void;
-  viewMode: 'grid' | 'list';
-  onViewModeChange: (mode: 'grid' | 'list') => void;
-  selectedCategory: string | null;
+  onSearchChange: (query: string) => void;
   router: any;
 }) {
-  return (
-    <motion.div
-      className="mb-16"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: DURATION.gentle, delay: 1.2, ease: EASE }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-[20px] font-semibold text-white">
-          {selectedCategory ? 'Filtered Spaces' : 'All Spaces'}
-        </h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onViewModeChange('list')}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'list'
-                ? 'bg-white/[0.08] text-white'
-                : 'text-white/40 hover:text-white/60'
-            )}
-          >
-            <List className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onViewModeChange('grid')}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'grid'
-                ? 'bg-white/[0.08] text-white'
-                : 'text-white/40 hover:text-white/60'
-            )}
-          >
-            <Grid3x3 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-        <Input
-          type="text"
-          placeholder="Search spaces..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-11 bg-white/[0.02] border-white/[0.06] text-white placeholder:text-white/30"
-        />
-      </div>
-
-      {/* Spaces List/Grid */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin mx-auto" />
-        </div>
-      ) : spaces.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-white/40 mb-2">No spaces found</p>
-          <Text size="sm" tone="muted">
-            {searchQuery ? 'Try a different search term' : 'Check back later'}
-          </Text>
-        </div>
-      ) : viewMode === 'list' ? (
-        <div className="space-y-2">
-          {spaces.map((space, i) => (
-            <motion.button
-              key={space.id}
-              onClick={() => router.push(`/s/${space.handle}`)}
-              className="w-full flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all text-left"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: DURATION.quick, delay: i * 0.02, ease: EASE }}
-            >
-              <Avatar size="default">
-                {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-                <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-medium text-white truncate">
-                  {space.name}
-                </p>
-                {space.description && (
-                  <Text size="xs" tone="muted" className="truncate">
-                    {space.description}
-                  </Text>
-                )}
-              </div>
-              <div className="flex items-center">
-                <ChevronRight className="w-4 h-4 text-white/30" />
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {spaces.map((space, i) => (
-            <motion.button
-              key={space.id}
-              onClick={() => router.push(`/s/${space.handle}`)}
-              className="flex flex-col items-center gap-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: DURATION.quick, delay: i * 0.02, ease: EASE }}
-            >
-              <Avatar size="lg">
-                {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-                <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
-              </Avatar>
-              <div className="text-center w-full">
-                <p className="text-[13px] font-medium text-white truncate">
-                  {space.name}
-                </p>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      )}
-    </motion.div>
-  );
-}
-
-// ============================================================
-// Request Space Section
-// ============================================================
-
-function RequestSpaceSection({ searchQuery }: { searchQuery: string }) {
-  const [isRequesting, setIsRequesting] = React.useState(false);
-  const [requested, setRequested] = React.useState(false);
-
-  const handleRequest = async () => {
-    if (!searchQuery.trim()) return;
-
-    setIsRequesting(true);
-
-    try {
-      await secureApiFetch('/api/spaces/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestedName: searchQuery,
-          message: `User is looking for: ${searchQuery}`,
-        }),
-      });
-
-      setRequested(true);
-      setTimeout(() => setRequested(false), 3000);
-    } catch (error) {
-      console.error('Failed to request space:', error);
-    } finally {
-      setIsRequesting(false);
-    }
-  };
-
-  if (!searchQuery) return null;
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: MOTION.viewport.medium });
 
   return (
-    <motion.div
-      className="mt-12 text-center"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: DURATION.smooth, ease: EASE }}
-    >
-      <div className="max-w-md mx-auto p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-        <p className="text-[15px] text-white/60 mb-4">
-          Can't find "{searchQuery}"?
-        </p>
+    <RevealSection id="browse" className="px-6 py-32" margin="far">
+      <div className="max-w-7xl mx-auto">
+        <AnimatedBorder variant="horizontal" className="mb-16" />
 
-        {requested ? (
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="text-[14px] text-[var(--color-gold)]"
-          >
-            ✓ Request submitted. We'll notify you when it's available.
-          </motion.div>
+        <div className="mb-12">
+          <ParallaxText speed="subtle">
+            <h2
+              className="text-[32px] font-semibold text-white tracking-tight mb-4"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              All spaces
+            </h2>
+          </ParallaxText>
+
+          <div className="relative max-w-md mt-8">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <input
+              type="text"
+              placeholder="Search spaces..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/[0.03] border border-white/[0.06] text-[14px] text-white placeholder:text-white/30 focus:bg-white/[0.04] focus:border-white/[0.12] transition-all outline-none"
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="h-36 rounded-2xl bg-white/[0.02] border border-white/[0.04] animate-pulse"
+              />
+            ))}
+          </div>
+        ) : spaces.length === 0 ? (
+          <div className="text-center py-24">
+            <p className="text-[15px] text-white/40">No spaces found</p>
+          </div>
         ) : (
-          <Button
-            onClick={handleRequest}
-            disabled={isRequesting}
-            variant="secondary"
-            size="sm"
-          >
-            {isRequesting ? 'Requesting...' : 'Request this space'}
-          </Button>
+          <div ref={ref} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {spaces.map((space, i) => (
+              <motion.button
+                key={space.id}
+                onClick={() => router.push(`/s/${space.handle}`)}
+                className="group text-left p-6 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{
+                  duration: MOTION.duration.base,
+                  delay: Math.min(i * MOTION.stagger.tight, 0.4),
+                  ease: MOTION.ease.premium,
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <Avatar size="default">
+                    {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+                    <AvatarFallback>{getInitials(space.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-[15px] font-medium text-white truncate">
+                        {space.name}
+                      </h3>
+                      {space.isVerified && (
+                        <span className="text-[10px] text-blue-400">✓</span>
+                      )}
+                    </div>
+                    {space.description && (
+                      <p className="text-[13px] text-white/40 line-clamp-2 leading-relaxed">
+                        {space.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex items-center gap-3">
+                      <span className="text-[12px] text-white/30">
+                        {space.memberCount} members
+                      </span>
+                      {space.isJoined && (
+                        <span className="text-[12px] text-green-400/70">Joined</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
+          </div>
         )}
-
-        <p className="text-xs text-white/30 mt-3">
-          Your campus map evolves. New spaces appear as organizations form and students organize.
-        </p>
       </div>
-    </motion.div>
+    </RevealSection>
   );
 }

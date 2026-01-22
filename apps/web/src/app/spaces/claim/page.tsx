@@ -4,7 +4,7 @@
  * /spaces/claim — Claim Institutional Space
  *
  * Archetype: Focus Flow (Shell ON, centered form)
- * Pattern: Search + Confirm flow
+ * Pattern: Search + Confirm flow with premium motion
  * Shell: ON
  *
  * For claiming pre-seeded institutional spaces:
@@ -14,50 +14,38 @@
  *
  * Student orgs should use /spaces/create instead.
  *
- * @version 7.0.0 - Institutional verification (Jan 2026)
+ * @version 8.0.0 - Premium motion, no decorative icons (Jan 2026)
  */
 
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Search, Check, Loader2, Building2, Home, Crown, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Text, Button, Input } from '@hive/ui/design-system/primitives';
+import { Text, Button, Input, MOTION } from '@hive/ui/design-system/primitives';
 import { toast } from '@hive/ui';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
-// Category helper functions (use CSS classes defined in globals.css)
-function getCategoryAccentClass(category: string): string {
-  const map: Record<string, string> = {
-    university: 'category-accent-university',
-    residential: 'category-accent-residential',
-    greek: 'category-accent-greek',
-  };
-  return map[category] || 'category-accent-university';
-}
-
-function getCategoryTextClass(category: string): string {
-  const map: Record<string, string> = {
-    university: 'category-text-university',
-    residential: 'category-text-residential',
-    greek: 'category-text-greek',
-  };
-  return map[category] || 'category-text-university';
-}
-
-function getCategoryBgClass(category: string): string {
-  const map: Record<string, string> = {
-    university: 'category-bg-university',
-    residential: 'category-bg-residential',
-    greek: 'category-bg-greek',
-  };
-  return map[category] || 'category-bg-university';
-}
-
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  university: Building2,
-  residential: Home,
-  greek: Crown,
+// Category colors - used for accent bars and borders
+const CATEGORY_COLORS: Record<string, { accent: string; text: string; bg: string; border: string }> = {
+  university: {
+    accent: 'bg-blue-500',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/20',
+  },
+  residential: {
+    accent: 'bg-emerald-500',
+    text: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    border: 'border-emerald-500/20',
+  },
+  greek: {
+    accent: 'bg-purple-500',
+    text: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/20',
+  },
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -79,14 +67,6 @@ const ROLE_OPTIONS = [
   { value: 'advisor', label: 'Advisor' },
   { value: 'other', label: 'Other Role' },
 ];
-
-// Animation
-const EASE = [0.22, 1, 0.36, 1] as const;
-const fadeIn = (delay: number) => ({
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, delay, ease: EASE },
-});
 
 interface Space {
   id: string;
@@ -210,19 +190,21 @@ export default function ClaimSpacePage() {
     }
   };
 
-  // Success state - Celebration moment
+  // Success state - Premium celebration
   if (step === 'success' && selectedSpace) {
+    const colors = CATEGORY_COLORS[selectedSpace.category] || CATEGORY_COLORS.university;
+
     return (
       <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden">
-        {/* Ambient celebration glow */}
+        {/* Ambient glow */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 0.4, scale: 1.2 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
+            animate={{ opacity: 0.3, scale: 1.2 }}
+            transition={{ duration: MOTION.duration.slower, ease: MOTION.ease.premium }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]"
             style={{
-              background: `radial-gradient(ellipse at center, var(--life-gold) 0%, transparent 70%)`,
+              background: `radial-gradient(ellipse at center, var(--color-gold) 0%, transparent 70%)`,
               filter: 'blur(80px)',
             }}
           />
@@ -230,37 +212,29 @@ export default function ClaimSpacePage() {
 
         <motion.div
           className="relative text-center space-y-6"
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         >
-          {/* Success icon with animation */}
+          {/* Gold accent line instead of checkmark */}
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-            className={cn(
-              'w-20 h-20 rounded-2xl flex items-center justify-center mx-auto',
-              getCategoryBgClass(selectedSpace.category)
-            )}
-          >
-            <motion.div
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-            >
-              <Check className={cn('h-10 w-10', getCategoryTextClass(selectedSpace.category))} />
-            </motion.div>
-          </motion.div>
+            className="mx-auto w-16 h-1 rounded-full bg-[var(--color-gold)]"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{
+              duration: MOTION.duration.base,
+              delay: 0.2,
+              ease: MOTION.ease.premium,
+            }}
+          />
 
-          {/* Text content */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: MOTION.duration.base }}
             >
-              <Text weight="semibold" size="lg" className="text-white text-xl">
+              <Text weight="semibold" className="text-[var(--color-gold)] text-xl">
                 Your space is live!
               </Text>
             </motion.div>
@@ -268,7 +242,7 @@ export default function ClaimSpacePage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.4, duration: MOTION.duration.base }}
             >
               <Text className="text-white/60">
                 <strong className="text-white">{selectedSpace.name}</strong> is now yours to lead.
@@ -278,8 +252,7 @@ export default function ClaimSpacePage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="pt-2"
+              transition={{ delay: 0.5, duration: MOTION.duration.base }}
             >
               <Text size="sm" className="text-white/40">
                 Taking you there now...
@@ -293,57 +266,67 @@ export default function ClaimSpacePage() {
 
   // Confirm state
   if (step === 'confirm' && selectedSpace) {
-    const CategoryIcon = CATEGORY_ICONS[selectedSpace.category] || Building2;
+    const colors = CATEGORY_COLORS[selectedSpace.category] || CATEGORY_COLORS.university;
 
     return (
       <div className="min-h-screen w-full relative">
         {/* Category accent line */}
-        <div
-          className={cn(
-            'absolute top-0 left-0 right-0 h-1',
-            getCategoryAccentClass(selectedSpace.category)
-          )}
+        <motion.div
+          className={cn('absolute top-0 left-0 right-0 h-px', colors.accent, 'opacity-40')}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: MOTION.duration.slower, ease: MOTION.ease.premium }}
+          style={{ transformOrigin: 'left' }}
         />
 
         <div className="max-w-lg mx-auto px-6 py-12">
           {/* Back */}
-          <motion.div className="mb-8" {...fadeIn(0)}>
+          <motion.div
+            className="mb-8"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+          >
             <button
               onClick={() => {
                 setStep('search');
                 setError(null);
               }}
-              className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M10 12L6 8L10 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               Back to search
             </button>
           </motion.div>
 
-          {/* Selected space */}
+          {/* Selected space - colored accent bar instead of icon */}
           <motion.div
             className="p-5 rounded-xl bg-white/[0.02] border border-white/[0.06] mb-8"
-            {...fadeIn(0.04)}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: MOTION.duration.fast, delay: 0.04, ease: MOTION.ease.premium }}
           >
             <div className="flex items-center gap-4 mb-4">
-              <div
-                className={cn(
-                  'w-14 h-14 rounded-xl flex items-center justify-center',
-                  getCategoryBgClass(selectedSpace.category)
-                )}
-              >
-                <CategoryIcon className={cn('h-7 w-7', getCategoryTextClass(selectedSpace.category))} />
-              </div>
+              {/* Colored accent bar instead of category icon */}
+              <div className={cn('w-1 h-14 rounded-full', colors.accent)} />
               <div>
                 <Text weight="semibold" size="lg" className="text-white">
                   {selectedSpace.name}
                 </Text>
-                <Text size="sm" className="text-white/50">
+                <Text size="sm" className={colors.text}>
                   {CATEGORY_LABELS[selectedSpace.category] || selectedSpace.category}
                 </Text>
               </div>
             </div>
-            <Text size="sm" className="text-white/60">
+            <Text size="sm" className="text-white/60 pl-5">
               {selectedSpace.memberCount > 0 ? (
                 <>
                   <strong className="text-white">{selectedSpace.memberCount}</strong> members already here.
@@ -356,7 +339,12 @@ export default function ClaimSpacePage() {
           </motion.div>
 
           {/* Role selection */}
-          <motion.div className="space-y-6" {...fadeIn(0.08)}>
+          <motion.div
+            className="space-y-6"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: MOTION.duration.fast, delay: 0.08, ease: MOTION.ease.premium }}
+          >
             <div>
               <label className="block text-sm font-medium text-white/70 mb-2">
                 Your role <span className="text-white/40">(optional)</span>
@@ -388,15 +376,15 @@ export default function ClaimSpacePage() {
               )}
             </div>
 
-            {/* Admin benefits */}
+            {/* Admin benefits - dots instead of check icons */}
             <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.04]">
               <Text size="xs" weight="medium" className="text-white/50 mb-3">
                 As admin, you&apos;ll be able to:
               </Text>
               <ul className="space-y-2">
                 {['Create official events', 'Pin announcements', 'Deploy tools', 'Manage members'].map((benefit) => (
-                  <li key={benefit} className="flex items-center gap-2">
-                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <li key={benefit} className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <Text size="sm" className="text-white/60">{benefit}</Text>
                   </li>
                 ))}
@@ -405,9 +393,15 @@ export default function ClaimSpacePage() {
 
             {/* Error */}
             {error && (
-              <Text size="sm" className="text-red-400">
-                {error}
-              </Text>
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: MOTION.duration.fast }}
+              >
+                <Text size="sm" className="text-red-400">
+                  {error}
+                </Text>
+              </motion.div>
             )}
 
             {/* Submit */}
@@ -419,7 +413,7 @@ export default function ClaimSpacePage() {
               className="w-full"
             >
               {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
               ) : (
                 'Take Ownership'
               )}
@@ -437,23 +431,47 @@ export default function ClaimSpacePage() {
   // Search state (default)
   return (
     <div className="min-h-screen w-full relative">
-      {/* Default accent line (university blue) */}
-      <div className="absolute top-0 left-0 right-0 h-1 category-accent-university" />
+      {/* Default accent line (blue for university) */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 h-px bg-blue-500/40"
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ duration: MOTION.duration.slower, ease: MOTION.ease.premium }}
+        style={{ transformOrigin: 'left' }}
+      />
 
       <div className="max-w-lg mx-auto px-6 py-12">
         {/* Back */}
-        <motion.div className="mb-8" {...fadeIn(0)}>
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
+        >
           <Link
             href="/spaces"
-            className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/60 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white/60 transition-colors"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M10 12L6 8L10 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             Back to browse
           </Link>
         </motion.div>
 
         {/* Header */}
-        <motion.div className="mb-8" {...fadeIn(0.04)}>
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.fast, delay: 0.04, ease: MOTION.ease.premium }}
+        >
           <h1 className="text-2xl font-semibold text-white mb-2 tracking-tight">
             Claim Your Space
           </h1>
@@ -465,10 +483,32 @@ export default function ClaimSpacePage() {
         {/* Search */}
         <motion.div
           className="space-y-4 p-6 rounded-xl bg-white/[0.02] border border-white/[0.06]"
-          {...fadeIn(0.08)}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: MOTION.duration.fast, delay: 0.08, ease: MOTION.ease.premium }}
         >
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+            {/* Search icon - functional, not decorative */}
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
+              <path
+                d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M14 14L10.5 10.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             <input
               type="text"
               value={query}
@@ -485,11 +525,11 @@ export default function ClaimSpacePage() {
             />
           </div>
 
-          {/* Results - responsive height for mobile */}
+          {/* Results */}
           <div className="space-y-2 max-h-[40vh] sm:max-h-[300px] overflow-y-auto">
             {isSearching && (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+                <ArrowPathIcon className="h-4 w-4 animate-spin text-white/40" />
               </div>
             )}
 
@@ -497,7 +537,7 @@ export default function ClaimSpacePage() {
               {!isSearching && spaces.map((space) => {
                 const isLocked = LOCKED_CATEGORIES.has(space.category);
                 const isClaimed = space.isClaimed || space.status === 'claimed' || space.status === 'verified';
-                const Icon = CATEGORY_ICONS[space.category] || Building2;
+                const colors = CATEGORY_COLORS[space.category] || CATEGORY_COLORS.university;
 
                 return (
                   <motion.button
@@ -505,24 +545,19 @@ export default function ClaimSpacePage() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
+                    transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
                     onClick={() => handleSelectSpace(space)}
                     disabled={isLocked || isClaimed}
                     className={cn(
                       'w-full flex items-center gap-3 p-3 rounded-lg text-left',
-                      'border transition-all duration-150',
+                      'border transition-all',
                       isLocked || isClaimed
                         ? 'border-white/[0.04] opacity-50 cursor-not-allowed'
                         : 'border-white/[0.06] hover:border-white/[0.12] hover:bg-white/[0.02]'
                     )}
                   >
-                    <div
-                      className={cn(
-                        'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
-                        getCategoryBgClass(space.category)
-                      )}
-                    >
-                      <Icon className={cn('h-5 w-5', getCategoryTextClass(space.category))} />
-                    </div>
+                    {/* Colored accent bar instead of category icon */}
+                    <div className={cn('w-1 h-10 rounded-full flex-shrink-0', colors.accent)} />
                     <div className="flex-1 min-w-0">
                       <Text weight="medium" className="text-white/90 truncate">
                         {space.name}
@@ -534,14 +569,13 @@ export default function ClaimSpacePage() {
                       </Text>
                     </div>
                     {isLocked ? (
-                      <div className="flex items-center gap-1 text-xs text-white/40">
-                        <Lock className="h-3 w-3" />
-                        <span>RA only</span>
-                      </div>
+                      <Text size="xs" className="text-white/40 whitespace-nowrap">
+                        RA only
+                      </Text>
                     ) : isClaimed ? (
                       <Text size="xs" className="text-white/40">Has admin</Text>
                     ) : (
-                      <Text size="xs" className="text-white/50">Claim →</Text>
+                      <Text size="xs" className="text-white/50">Claim</Text>
                     )}
                   </motion.button>
                 );
@@ -564,9 +598,7 @@ export default function ClaimSpacePage() {
               href="/spaces/create"
               className="flex items-center gap-3 p-3 rounded-lg border border-dashed border-white/[0.08] hover:border-white/[0.15] transition-colors"
             >
-              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                <Text className="text-white/40">+</Text>
-              </div>
+              <div className="w-1 h-10 rounded-full bg-teal-500/40 flex-shrink-0" />
               <div>
                 <Text weight="medium" className="text-white/70">
                   Can&apos;t find your org?

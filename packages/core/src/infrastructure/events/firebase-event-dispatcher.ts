@@ -4,13 +4,23 @@
  */
 
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-// import { db } from '@hive/firebase'; // Temporarily disabled - package needs to be fixed
+import { db } from '@hive/firebase';
 import { IEventDispatcher } from '../repositories/interfaces';
-// import { logger } from '../../lib/logger'; // File doesn't exist
 
-// Temporary db and logger
-const db = null as any;
-const logger = { info: console.log, error: console.error, warn: console.warn };
+// Structured logger for event dispatcher
+const logger = {
+  info: (message: string, data?: Record<string, unknown>) => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[EventDispatcher] ${message}`, data || '');
+    }
+  },
+  error: (message: string, data?: Record<string, unknown>) => {
+    console.error(`[EventDispatcher] ${message}`, data || '');
+  },
+  warn: (message: string, data?: Record<string, unknown>) => {
+    console.warn(`[EventDispatcher] ${message}`, data || '');
+  }
+};
 
 export class FirebaseEventDispatcher implements IEventDispatcher {
   private handlers: Map<string, Set<(event: any) => Promise<void>>> = new Map();
@@ -18,6 +28,12 @@ export class FirebaseEventDispatcher implements IEventDispatcher {
 
   async dispatch(events: any[]): Promise<void> {
     if (!events || events.length === 0) return;
+
+    // SECURITY: Fail-fast if db is not initialized
+    if (!db) {
+      logger.error('Firebase db not initialized', { eventCount: events.length });
+      throw new Error('Firebase db not initialized - cannot dispatch events');
+    }
 
     try {
       // Batch write events to Firestore

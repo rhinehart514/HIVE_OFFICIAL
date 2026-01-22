@@ -10,10 +10,13 @@ import {
   useScroll,
   useTransform,
   useInView,
+  MOTION,
+  RevealSection,
+  NarrativeReveal,
+  AnimatedBorder,
+  ParallaxText,
+  ScrollSpacer,
 } from '@hive/ui/design-system/primitives';
-
-// Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Early contributors (alphabetical)
 interface Contributor {
@@ -117,137 +120,8 @@ function UpvoteButton({
   );
 }
 
-// Animated line that draws in
-function AnimatedLine({ className, delay = 0 }: { className?: string; delay?: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-
-  return (
-    <div ref={ref} className={className}>
-      <motion.div
-        className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
-        initial={{ scaleX: 0, opacity: 0 }}
-        animate={isInView ? { scaleX: 1, opacity: 1 } : {}}
-        transition={{ duration: 1.5, delay, ease: EASE }}
-      />
-    </div>
-  );
-}
-
-// Container with animated border reveal
-function AnimatedContainer({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-100px' });
-
-  return (
-    <div ref={ref} className={`relative ${className}`}>
-      {/* Top border */}
-      <motion.div
-        className="absolute top-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : {}}
-        transition={{ duration: 1.2, ease: EASE }}
-        style={{ transformOrigin: 'left' }}
-      />
-      {/* Bottom border */}
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-px bg-[var(--color-gold)]/20"
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : {}}
-        transition={{ duration: 1.2, delay: 0.1, ease: EASE }}
-        style={{ transformOrigin: 'right' }}
-      />
-      {/* Left border */}
-      <motion.div
-        className="absolute top-0 bottom-0 left-0 w-px bg-[var(--color-gold)]/20"
-        initial={{ scaleY: 0 }}
-        animate={isInView ? { scaleY: 1 } : {}}
-        transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
-        style={{ transformOrigin: 'top' }}
-      />
-      {/* Right border */}
-      <motion.div
-        className="absolute top-0 bottom-0 right-0 w-px bg-[var(--color-gold)]/20"
-        initial={{ scaleY: 0 }}
-        animate={isInView ? { scaleY: 1 } : {}}
-        transition={{ duration: 1.2, delay: 0.3, ease: EASE }}
-        style={{ transformOrigin: 'bottom' }}
-      />
-      {/* Content */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={isInView ? { opacity: 1 } : {}}
-        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
-}
-
-// Parallax text that moves at different speeds
-function ParallaxText({
-  children,
-  speed = 0.5,
-  className,
-}: {
-  children: React.ReactNode;
-  speed?: number;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-  const y = useTransform(scrollYProgress, [0, 1], [100 * speed, -100 * speed]);
-
-  return (
-    <motion.div ref={ref} style={{ y }} className={className}>
-      {children}
-    </motion.div>
-  );
-}
-
-// Narrative reveal - text fades in word by word or line by line
-function NarrativeReveal({
-  children,
-  className,
-  stagger = 0.1,
-}: {
-  children: string;
-  className?: string;
-  stagger?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-50px' });
-  const words = children.split(' ');
-
-  return (
-    <span ref={ref} className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: i * stagger, ease: EASE }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
-
-// Section with scroll-triggered reveal + upvote
-function RevealSection({
+// Upvotable section - wraps RevealSection with upvote functionality
+function UpvotableSection({
   children,
   className,
   sectionId,
@@ -262,17 +136,8 @@ function RevealSection({
     upvote: (id: SectionId) => void;
   };
 }) {
-  const ref = useRef<HTMLElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-150px' });
-
   return (
-    <motion.section
-      ref={ref}
-      className={`relative ${className}`}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : {}}
-      transition={{ duration: 1.2, ease: EASE }}
-    >
+    <UpvotableSection className={className}>
       {sectionId && upvoteProps && (
         <div className="absolute top-8 right-8 z-10">
           <UpvoteButton
@@ -284,7 +149,7 @@ function RevealSection({
         </div>
       )}
       {children}
-    </motion.section>
+    </UpvotableSection>
   );
 }
 
@@ -355,7 +220,7 @@ export default function AboutPage() {
               className="mb-4 text-[13px] font-medium uppercase tracking-wider text-[var(--color-gold)]/60"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, ease: EASE }}
+              transition={{ duration: 1, ease: MOTION.ease.premium }}
             >
               About
             </motion.p>
@@ -365,7 +230,7 @@ export default function AboutPage() {
               style={{ fontFamily: 'var(--font-display)' }}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, delay: 0.1, ease: EASE }}
+              transition={{ duration: 1.2, delay: 0.1, ease: MOTION.ease.premium }}
             >
               <span className="text-white">We stopped waiting</span>
               <br />
@@ -376,7 +241,7 @@ export default function AboutPage() {
               className="text-[20px] md:text-[24px] leading-relaxed text-white/40 max-w-[500px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.3, ease: EASE }}
+              transition={{ duration: 1, delay: 0.3, ease: MOTION.ease.premium }}
             >
               So we built the infrastructure students were missing.
             </motion.p>
@@ -386,7 +251,7 @@ export default function AboutPage() {
               className="mt-24 flex items-center gap-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 1, ease: EASE }}
+              transition={{ duration: 1, delay: 1, ease: MOTION.ease.premium }}
             >
               <motion.div
                 className="w-px h-8 bg-white/20"
@@ -401,7 +266,7 @@ export default function AboutPage() {
         </motion.section>
 
         {/* Spacer for parallax */}
-        <div className="h-[50vh]" />
+        <ScrollSpacer height={50} />
 
         {/* TAB: MY STORY */}
         {activeTab === 'story' && (
@@ -409,15 +274,15 @@ export default function AboutPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, ease: EASE }}
+            transition={{ duration: 0.6, ease: MOTION.ease.premium }}
           >
             {/* SECTION 1: WHAT IS HIVE */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="what-hive-is"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
@@ -426,7 +291,7 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
                     What HIVE is
                   </motion.h2>
@@ -498,12 +363,12 @@ export default function AboutPage() {
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* The Belief - animated container */}
-            <RevealSection className="px-6 py-32">
+            <UpvotableSection className="px-6 py-32">
               <div className="mx-auto max-w-3xl">
-                <AnimatedContainer className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
+                <AnimatedBorder variant="container" className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
                   <ParallaxText speed={0.1}>
                     <p
                       className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white"
@@ -522,17 +387,17 @@ export default function AboutPage() {
                       legibility, memory, and ownership are."
                     </p>
                   </ParallaxText>
-                </AnimatedContainer>
+                </AnimatedBorder>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* SECTION 2: THE JOURNEY */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="the-journey"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
@@ -541,7 +406,7 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
                     Why it took two years
                   </motion.h2>
@@ -562,7 +427,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       Honestly? <span className="text-[var(--color-gold)]">We bullshitted a lot.</span> We thought we were trying our best — and we were — but we spent more time planning than building. More time in meetings than shipping. I kept thinking if we just got the strategy right, everything would fall into place.
                     </motion.p>
@@ -622,7 +487,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       So this project is dedicated to them. <span className="text-[var(--color-gold)]">Whether they like it or not.</span>
                     </motion.p>
@@ -658,19 +523,19 @@ export default function AboutPage() {
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                      transition={{ duration: 1, delay: 0.5, ease: MOTION.ease.premium }}
                     >
                       — Jacob
                     </motion.p>
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* Contributors */}
             {CONTRIBUTORS.length > 0 && (
-              <RevealSection className="px-6 py-24 relative">
-                <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <UpvotableSection className="px-6 py-24 relative">
+                <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
                 <div className="mx-auto max-w-3xl">
                   <ParallaxText speed={0.05}>
                     <motion.p
@@ -678,7 +543,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       Contributors
                     </motion.p>
@@ -689,7 +554,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, y: 8 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.2 + i * 0.08, ease: MOTION.ease.premium }}
                         >
                           {contributor.linkedin ? (
                             <a
@@ -720,7 +585,7 @@ export default function AboutPage() {
                     </div>
                   </ParallaxText>
                 </div>
-              </RevealSection>
+              </UpvotableSection>
             )}
           </motion.div>
         )}
@@ -731,15 +596,15 @@ export default function AboutPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, ease: EASE }}
+            transition={{ duration: 0.6, ease: MOTION.ease.premium }}
           >
             {/* SPACES */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="spaces"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
@@ -748,7 +613,7 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
                     Spaces
                   </motion.h2>
@@ -770,7 +635,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">Average org lifecycle (current state):</p>
                       <div className="font-mono text-[13px] space-y-2">
@@ -779,7 +644,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/60">May:</span>
                           <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
@@ -788,7 +653,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '15%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1, delay: 0.2, ease: EASE }}
+                              transition={{ duration: 1, delay: 0.2, ease: MOTION.ease.premium }}
                             />
                           </div>
                           <span className="text-white/30">15% knowledge retained</span>
@@ -798,7 +663,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/60">Sept:</span>
                           <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
@@ -807,7 +672,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '35%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1, delay: 0.3, ease: EASE }}
+                              transition={{ duration: 1, delay: 0.3, ease: MOTION.ease.premium }}
                             />
                           </div>
                           <span className="text-white/30">35% rebuilt from scratch</span>
@@ -817,7 +682,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/60">Dec:</span>
                           <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
@@ -826,7 +691,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '60%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1, delay: 0.4, ease: EASE }}
+                              transition={{ duration: 1, delay: 0.4, ease: MOTION.ease.premium }}
                             />
                           </div>
                           <span className="text-white/30">60% back to baseline</span>
@@ -836,7 +701,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.4, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/60">May:</span>
                           <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">
@@ -845,7 +710,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '20%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1, delay: 0.5, ease: EASE }}
+                              transition={{ duration: 1, delay: 0.5, ease: MOTION.ease.premium }}
                             />
                           </div>
                           <span className="text-white/30">Repeat</span>
@@ -856,7 +721,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.6, ease: EASE }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: MOTION.ease.premium }}
                       >
                         Orgs spend 8-10 weeks every fall just getting back to where they were. That's not growth. That's treadmill.
                       </motion.p>
@@ -881,7 +746,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/60 font-medium mb-2">Feed & Posts</p>
                         <p className="text-white/40">
@@ -892,7 +757,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/60 font-medium mb-2">Events & Calendar</p>
                         <p className="text-white/40">
@@ -903,7 +768,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/60 font-medium mb-2">Resources & Files</p>
                         <p className="text-white/40">
@@ -914,7 +779,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/60 font-medium mb-2">Members & Roles</p>
                         <p className="text-white/40">
@@ -925,7 +790,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/60 font-medium mb-2">Analytics & Insights</p>
                         <p className="text-white/40">
@@ -941,7 +806,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">What changes with durable infrastructure:</p>
                       <div className="grid grid-cols-2 gap-6 text-[13px]">
@@ -949,7 +814,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <p className="text-white/30 mb-2">Before (typical org):</p>
                           <div className="space-y-1 text-white/25">
@@ -957,7 +822,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: -10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.2, ease: MOTION.ease.premium }}
                             >
                               → 6-8 tools to manage
                             </motion.p>
@@ -965,7 +830,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: -10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.25, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.25, ease: MOTION.ease.premium }}
                             >
                               → Knowledge resets yearly
                             </motion.p>
@@ -973,7 +838,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: -10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.3, ease: MOTION.ease.premium }}
                             >
                               → 10 weeks to rebuild baseline
                             </motion.p>
@@ -981,7 +846,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: -10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.35, ease: MOTION.ease.premium }}
                             >
                               → Files scattered/lost
                             </motion.p>
@@ -989,7 +854,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: -10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.4, ease: MOTION.ease.premium }}
                             >
                               → No handoff process
                             </motion.p>
@@ -999,7 +864,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: 15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <p className="text-[var(--color-gold)]/60 mb-2">After (with Spaces):</p>
                           <div className="space-y-1 text-white/40">
@@ -1007,7 +872,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: 10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.2, ease: MOTION.ease.premium }}
                             >
                               → 1 unified system
                             </motion.p>
@@ -1015,7 +880,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: 10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.25, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.25, ease: MOTION.ease.premium }}
                             >
                               → Knowledge compounds
                             </motion.p>
@@ -1023,7 +888,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: 10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.3, ease: MOTION.ease.premium }}
                             >
                               → Day 1 productivity
                             </motion.p>
@@ -1031,7 +896,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: 10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.35, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.35, ease: MOTION.ease.premium }}
                             >
                               → Everything archived
                             </motion.p>
@@ -1039,7 +904,7 @@ export default function AboutPage() {
                               initial={{ opacity: 0, x: 10 }}
                               whileInView={{ opacity: 1, x: 0 }}
                               viewport={{ once: true }}
-                              transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+                              transition={{ duration: 0.4, delay: 0.4, ease: MOTION.ease.premium }}
                             >
                               → Role reassignment = handoff
                             </motion.p>
@@ -1050,15 +915,15 @@ export default function AboutPage() {
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* FEED & RITUALS */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="feed"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
@@ -1067,7 +932,7 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
                     Feed & Rituals
                   </motion.h2>
@@ -1101,7 +966,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-3">The pattern we're seeing:</p>
                       <div className="space-y-2 text-[13px] text-white/30">
@@ -1109,7 +974,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           → Orgs with documented rituals retain 3x more institutional knowledge
                         </motion.p>
@@ -1117,7 +982,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           → New leadership hits productivity baseline 6 weeks faster
                         </motion.p>
@@ -1125,7 +990,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           → Member engagement up 40% when expectations are systematized
                         </motion.p>
@@ -1133,7 +998,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.4, ease: EASE }}
+                          transition={{ duration: 0.5, delay: 0.4, ease: MOTION.ease.premium }}
                         >
                           → Handoffs stop being crisis moments, become scheduled non-events
                         </motion.p>
@@ -1143,7 +1008,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
                       >
                         We're building the infrastructure to make those patterns native to the system, not dependent on individual effort.
                       </motion.p>
@@ -1151,15 +1016,15 @@ export default function AboutPage() {
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* PROFILE */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="resources"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
@@ -1168,7 +1033,7 @@ export default function AboutPage() {
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 1, ease: EASE }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
                   >
                     Profile
                   </motion.h2>
@@ -1196,7 +1061,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">What a profile actually tracks:</p>
                       <div className="space-y-3 text-[13px]">
@@ -1205,7 +1070,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
@@ -1218,7 +1083,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
@@ -1231,7 +1096,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
@@ -1244,7 +1109,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60 mt-1">●</span>
                           <div>
@@ -1274,7 +1139,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">What becomes possible:</p>
                       <div className="space-y-4 text-[13px]">
@@ -1283,7 +1148,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
@@ -1296,7 +1161,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
@@ -1309,7 +1174,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -20 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           <span className="text-[var(--color-gold)]/60">●</span>
                           <div>
@@ -1323,7 +1188,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
                       >
                         The tech exists. We're building the first system that points it at student autonomy instead of institutional control.
                       </motion.p>
@@ -1331,24 +1196,24 @@ export default function AboutPage() {
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
 
             {/* HIVELAB - CENTERPIECE */}
-            <RevealSection
+            <UpvotableSection
               className="px-6 py-32 relative"
               sectionId="hivelab"
               upvoteProps={upvoteProps}
             >
-              <AnimatedLine className="absolute top-0 left-6 right-6" />
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
                 {/* Large emphasis container */}
-                <AnimatedContainer className="rounded-2xl bg-gradient-to-br from-[var(--color-gold)]/[0.08] to-[var(--color-gold)]/[0.02] p-12 md:p-16 mb-16">
+                <AnimatedBorder variant="container" className="rounded-2xl bg-gradient-to-br from-[var(--color-gold)]/[0.08] to-[var(--color-gold)]/[0.02] p-12 md:p-16 mb-16">
                   <ParallaxText speed={0.15}>
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
-                      transition={{ duration: 1, ease: EASE }}
+                      transition={{ duration: 1, ease: MOTION.ease.premium }}
                     >
                       <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-gold)]/60 mb-4">
                         The Tool That Builds Tools
@@ -1364,7 +1229,7 @@ export default function AboutPage() {
                       </p>
                     </motion.div>
                   </ParallaxText>
-                </AnimatedContainer>
+                </AnimatedBorder>
 
                 <div className="space-y-10 text-[18px] md:text-[20px] leading-relaxed">
                   <ParallaxText speed={0.1}>
@@ -1391,7 +1256,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">The tool gap (based on 50+ org interviews):</p>
                       <div className="space-y-4">
@@ -1399,7 +1264,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Orgs using 4+ disconnected tools</span>
@@ -1411,7 +1276,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '87%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
+                              transition={{ duration: 1.2, delay: 0.2, ease: MOTION.ease.premium }}
                             />
                           </div>
                         </motion.div>
@@ -1419,7 +1284,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Have workflow that doesn't fit any tool</span>
@@ -1431,7 +1296,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '92%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1.2, delay: 0.3, ease: EASE }}
+                              transition={{ duration: 1.2, delay: 0.3, ease: MOTION.ease.premium }}
                             />
                           </div>
                         </motion.div>
@@ -1439,7 +1304,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Use Google Sheets as makeshift database</span>
@@ -1451,7 +1316,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '74%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1.2, delay: 0.4, ease: EASE }}
+                              transition={{ duration: 1.2, delay: 0.4, ease: MOTION.ease.premium }}
                             />
                           </div>
                         </motion.div>
@@ -1459,7 +1324,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, y: 10 }}
                           whileInView={{ opacity: 1, y: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
                         >
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-white/50 text-[13px]">Would build custom tool if they could</span>
@@ -1471,7 +1336,7 @@ export default function AboutPage() {
                               initial={{ width: '0%' }}
                               whileInView={{ width: '96%' }}
                               viewport={{ once: true }}
-                              transition={{ duration: 1.2, delay: 0.5, ease: EASE }}
+                              transition={{ duration: 1.2, delay: 0.5, ease: MOTION.ease.premium }}
                             />
                           </div>
                         </motion.div>
@@ -1481,7 +1346,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.6, ease: EASE }}
+                        transition={{ duration: 0.8, delay: 0.6, ease: MOTION.ease.premium }}
                       >
                         Orgs know what they need. They just can't build it. That's the problem HiveLab solves.
                       </motion.p>
@@ -1513,7 +1378,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                       >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
@@ -1526,7 +1391,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                       >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
@@ -1539,7 +1404,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                       >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
@@ -1552,7 +1417,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.4, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
                       >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
@@ -1565,7 +1430,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}
                       >
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
@@ -1582,7 +1447,7 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <p className="text-white/40 text-[14px] mb-4">Time to ship (early data from pilot orgs):</p>
                       <div className="space-y-3 text-[13px]">
@@ -1591,7 +1456,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/40 w-32">Traditional dev:</span>
                           <div className="flex-1">
@@ -1602,7 +1467,7 @@ export default function AboutPage() {
                                 initial={{ width: '0%' }}
                                 whileInView={{ width: '100%' }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 0.2, ease: EASE }}
+                                transition={{ duration: 1, delay: 0.2, ease: MOTION.ease.premium }}
                               />
                             </div>
                           </div>
@@ -1612,7 +1477,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/40 w-32">No-code tools:</span>
                           <div className="flex-1">
@@ -1623,7 +1488,7 @@ export default function AboutPage() {
                                 initial={{ width: '0%' }}
                                 whileInView={{ width: '60%' }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 0.3, ease: EASE }}
+                                transition={{ duration: 1, delay: 0.3, ease: MOTION.ease.premium }}
                               />
                             </div>
                           </div>
@@ -1633,7 +1498,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0, x: -15 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
                           <span className="text-white/40 w-32">HiveLab:</span>
                           <div className="flex-1">
@@ -1644,7 +1509,7 @@ export default function AboutPage() {
                                 initial={{ width: '0%' }}
                                 whileInView={{ width: '15%' }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 1, delay: 0.4, ease: EASE }}
+                                transition={{ duration: 1, delay: 0.4, ease: MOTION.ease.premium }}
                               />
                             </div>
                           </div>
@@ -1671,14 +1536,14 @@ export default function AboutPage() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: EASE }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
                       <motion.p
                         className="text-white/60 font-medium mb-4 text-[18px]"
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.1, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                       >
                         Here's where this goes:
                       </motion.p>
@@ -1687,7 +1552,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.2, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                       >
                         An org at UB builds an interview scheduler in HiveLab. Works perfectly for their use case. They publish it. Now every consulting club on HIVE can deploy that tool to their Space in one click. Student-built infrastructure that compounds across campuses.
                       </motion.p>
@@ -1696,7 +1561,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.3, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                       >
                         Right now, every org reinvents the wheel. Same problems, solved separately, knowledge dies with graduation. HiveLab makes the wheel copyable. A Greek org's rush tracker becomes available to every chapter nationwide. A cultural org's event budgeting tool works for any org with similar constraints.
                       </motion.p>
@@ -1705,7 +1570,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 15 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.4, ease: EASE }}
+                        transition={{ duration: 0.8, delay: 0.4, ease: MOTION.ease.premium }}
                       >
                         <p className="text-white/40 text-[13px] mb-3">Network effects math:</p>
                         <div className="space-y-2 text-[12px] font-mono">
@@ -1714,7 +1579,7 @@ export default function AboutPage() {
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.5, ease: EASE }}
+                            transition={{ duration: 0.5, delay: 0.5, ease: MOTION.ease.premium }}
                           >
                             <span className="text-white/30">1 campus, 400 orgs:</span>
                             <span className="text-white/40">400 unique solutions (isolated)</span>
@@ -1724,7 +1589,7 @@ export default function AboutPage() {
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.6, ease: EASE }}
+                            transition={{ duration: 0.5, delay: 0.6, ease: MOTION.ease.premium }}
                           >
                             <span className="text-white/30">10 campuses, 4,000 orgs:</span>
                             <span className="text-[var(--color-gold)]/60">400 solutions × 10 deployments each</span>
@@ -1734,7 +1599,7 @@ export default function AboutPage() {
                             initial={{ opacity: 0, x: -10 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.7, ease: EASE }}
+                            transition={{ duration: 0.5, delay: 0.7, ease: MOTION.ease.premium }}
                           >
                             <span className="text-white/30">100 campuses, 40,000 orgs:</span>
                             <span className="text-[var(--color-gold)]">400 solutions × 100 deployments</span>
@@ -1745,7 +1610,7 @@ export default function AboutPage() {
                           initial={{ opacity: 0 }}
                           whileInView={{ opacity: 1 }}
                           viewport={{ once: true }}
-                          transition={{ duration: 0.8, delay: 0.8, ease: EASE }}
+                          transition={{ duration: 0.8, delay: 0.8, ease: MOTION.ease.premium }}
                         >
                           Build once, benefit everywhere. That's not a tagline. That's the inevitability of programmable infrastructure.
                         </motion.p>
@@ -1755,7 +1620,7 @@ export default function AboutPage() {
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 0.6, delay: 0.9, ease: EASE }}
+                        transition={{ duration: 0.6, delay: 0.9, ease: MOTION.ease.premium }}
                       >
                         The marketplace isn't a feature we're adding. It's what naturally happens when you give students the ability to build and share. We're just building the rails for it to run on.
                       </motion.p>
@@ -1763,13 +1628,13 @@ export default function AboutPage() {
                   </ParallaxText>
                 </div>
               </div>
-            </RevealSection>
+            </UpvotableSection>
           </motion.div>
         )}
 
         {/* The Future - CTA */}
-        <RevealSection className="px-6 py-40 relative">
-          <AnimatedLine className="absolute top-0 left-6 right-6" />
+        <UpvotableSection className="px-6 py-40 relative">
+          <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
             <ParallaxText speed={0.1}>
               <motion.div
@@ -1777,7 +1642,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, ease: EASE }}
+                transition={{ duration: 0.8, ease: MOTION.ease.premium }}
               >
                 <p className="text-white/40 text-[16px] mb-8 max-w-[600px] mx-auto">
                   Spaces are being claimed. Tools are being built. The infrastructure is live. What happens next isn't up to us—it's up to the students who show up and build.
@@ -1793,7 +1658,7 @@ export default function AboutPage() {
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 1, ease: EASE }}
+                  transition={{ duration: 1, ease: MOTION.ease.premium }}
                 >
                   <span className="text-white">The builders inherit</span>
                   <br />
@@ -1805,7 +1670,7 @@ export default function AboutPage() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.3, ease: EASE }}
+                transition={{ duration: 0.8, delay: 0.3, ease: MOTION.ease.premium }}
               >
                 <Button variant="cta" size="lg" asChild>
                   <a href="/enter">Enter with .edu</a>
@@ -1817,13 +1682,13 @@ export default function AboutPage() {
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.5, ease: EASE }}
+                transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
               >
                 Infrastructure-grade. Student-owned. Already shipping.
               </motion.p>
             </div>
           </div>
-        </RevealSection>
+        </UpvotableSection>
       </main>
 
       {/* Minimal footer */}

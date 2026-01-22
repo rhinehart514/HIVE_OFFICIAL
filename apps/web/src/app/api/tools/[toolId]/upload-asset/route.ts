@@ -23,7 +23,9 @@ import { HttpStatus } from '@/lib/api-response-types';
 import { mlContentAnalyzer } from '@/lib/ml-content-analyzer';
 
 // Allowed image types for tool assets
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+// SECURITY: SVG removed due to XSS risk - SVGs can contain JavaScript
+// If SVG support is needed in the future, add isomorphic-dompurify sanitization
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export const POST = withAuthAndErrors(async (
@@ -70,7 +72,7 @@ export const POST = withAuthAndErrors(async (
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return respond.error(
-        'Invalid file type. Only JPEG, PNG, WebP, GIF, and SVG are allowed.',
+        'Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.',
         'INVALID_INPUT',
         { status: HttpStatus.BAD_REQUEST }
       );
@@ -89,8 +91,8 @@ export const POST = withAuthAndErrors(async (
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // ML Image Moderation Check (skip for SVG - can't analyze vector graphics)
-    const canModerate = mlContentAnalyzer.isImageModerationAvailable() && file.type !== 'image/svg+xml';
+    // ML Image Moderation Check
+    const canModerate = mlContentAnalyzer.isImageModerationAvailable();
     if (canModerate) {
       try {
         const base64Image = fileBuffer.toString('base64');
@@ -131,13 +133,18 @@ export const POST = withAuthAndErrors(async (
           });
         }
       } catch (error) {
-        // Don't block upload if moderation fails - log and continue
-        logger.warn('Image moderation check failed, proceeding with upload', {
+        // SECURITY: Fail-closed - block upload if moderation check fails
+        logger.error('Image moderation check failed, blocking upload', {
           toolId,
           userId,
           error: error instanceof Error ? error.message : String(error),
           endpoint: '/api/tools/[toolId]/upload-asset',
         });
+        return respond.error(
+          'Unable to verify image content. Please try again.',
+          'MODERATION_UNAVAILABLE',
+          { status: HttpStatus.SERVICE_UNAVAILABLE }
+        );
       }
     }
 
@@ -304,8 +311,6 @@ function getExtension(mimeType: string): string {
       return '.webp';
     case 'image/gif':
       return '.gif';
-    case 'image/svg+xml':
-      return '.svg';
     default:
       return '';
   }

@@ -91,9 +91,11 @@ This is HIVE's design system — a 10-level hierarchy from beliefs to pixels. Ev
 |-------------|------|
 | Understand why HIVE exists | WORLDVIEW.md |
 | Know how it should feel | PHILOSOPHY.md |
+| **Design for emotion & motivation** | **DRAMA.md** |
 | Make a design decision | PRINCIPLES.md |
 | Find a color/spacing/font value | LANGUAGE.md |
 | Understand surface/motion systems | SYSTEMS.md |
+| **Add premium motion/animations** | **MOTION.md** |
 | Build a basic element | PRIMITIVES.md |
 | Build a complex component | COMPONENTS.md |
 | Design a user flow | PATTERNS.md |

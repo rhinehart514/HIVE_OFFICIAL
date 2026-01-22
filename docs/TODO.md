@@ -1,169 +1,86 @@
-# HIVE Launch TODO
+# HIVE Development Tracking
 
-**Last Updated:** January 20, 2026
-**Focus:** Core flows must work end-to-end. Polish comes after.
-
----
-
-## Launch Flows
-
-These are the paths users will take. Each must feel complete.
-
-### 1. Entry Flow
-**Path:** Landing → School → Email → Role → Code → Identity → Arrival → Spaces
-
-| Step | Status | Notes |
-|------|--------|-------|
-| School selection | Ready | Single campus (UB) |
-| Email validation | Ready | Domain check works |
-| Role selection | Ready | Student/Faculty/Alumni |
-| Code verification | Ready | Magic link flow |
-| Identity (name, handle) | Ready | Handle checking works |
-| Identity (major, year, residential) | **NEW** | Just shipped — verify in QA |
-| Auto-join residential space | **NEW** | Just shipped — verify membership created |
-| Arrival celebration | Ready | Redirects to /spaces |
-
-**QA Checklist:**
-- [ ] New user can complete full flow
-- [ ] Major/year required, residential optional
-- [ ] Residential auto-join creates membership
-- [ ] Existing user bypasses identity step
+**Superseded:** January 21, 2026
 
 ---
 
-### 2. Browse & Join Flow
-**Path:** /spaces → Browse → Preview → Join → Space
+## Active Roadmap
 
-| Step | Status | Notes |
-|------|--------|-------|
-| Space discovery grid | Ready | Categories, search |
-| Space preview modal | Ready | Description, members |
-| Join space | Ready | Membership created |
-| Redirect to space | Ready | Goes to chat |
+All development is now tracked in:
 
-**QA Checklist:**
-- [ ] Can browse without being member
-- [ ] Join button works
-- [ ] Redirects to space after join
-- [ ] "Your Spaces" shows joined space
+### [LAUNCH_ROADMAP.md](./LAUNCH_ROADMAP.md)
+
+The roadmap uses the Drama + Octalysis framework to systematically work through each vertical slice with motivation and emotional architecture.
 
 ---
 
-### 3. Space & Chat Flow
-**Path:** Space → Chat → Send Message → See Message
+## Framework Reference
 
-| Step | Status | Blockers |
-|------|--------|----------|
-| Space landing (hub) | Ready | — |
-| Chat board | Ready | — |
-| Send message | Ready | — |
-| See own message | Ready | — |
-| See others' messages | Ready | Real-time works |
-| Loading state | **BLOCKED** | No skeleton, feels broken |
-| Empty state | **BLOCKED** | No "first message" prompt |
+### [design-system/DRAMA.md](./design-system/DRAMA.md)
 
-**QA Checklist:**
-- [ ] Chat loads with skeleton (not blank)
-- [ ] Empty chat shows prompt
-- [ ] Can send and see message
-- [ ] Real-time updates work
+Defines:
+- 8 core motivation drives (Octalysis)
+- Emotional architecture principles
+- Drive hierarchy and guardrails
+- Feature spec template
 
 ---
 
-### 4. HiveLab Flow
-**Path:** /hivelab → Create Tool → Build → Deploy → Use
+## Current State
 
-| Step | Status | Blockers |
-|------|--------|----------|
-| Tool creation | Ready | — |
-| Canvas editing | Ready | — |
-| Deploy to space | Ready | — |
-| Deploy error handling | **BLOCKED** | Error not shown to user |
-| Tool execution | Ready | — |
+### [CURRENT_STATE.md](./CURRENT_STATE.md)
 
-**QA Checklist:**
-- [ ] Can create new tool
-- [ ] Can add elements
-- [ ] Deploy shows error if fails
-- [ ] Deployed tool appears in space
+Single source of truth for what exists, organized by vertical slice.
 
 ---
 
-### 5. Feed Flow
-**Path:** /feed → See Activity → Navigate to Space/Post
+## Slice Progress
 
-| Step | Status | Blockers |
-|------|--------|----------|
-| Today section | Ready | — |
-| Your spaces section | Ready | — |
-| Activity cards | Ready | — |
-| Unread indicators | **BLOCKED** | Not implemented |
-| Navigation to content | Ready | — |
-
-**QA Checklist:**
-- [ ] Feed loads with content
-- [ ] Can navigate to space from card
-- [ ] Activity reflects recent actions
+| # | Slice | Status | Primary Drives |
+|---|-------|--------|----------------|
+| 1 | Entry | `[ ] Not Started` | Epic Meaning, Scarcity |
+| 2 | Onboarding | `[ ] Not Started` | Ownership, Accomplishment |
+| 3 | Spaces | `[ ] Not Started` | Social Influence, Ownership |
+| 4 | Discovery | `[ ] Not Started` | Scarcity, Social Influence |
+| 5 | Feed | `[ ] Not Started` | Unpredictability, Social Influence |
+| 6 | HiveLab | `[ ] Not Started` | Creativity, Accomplishment |
+| 7 | Profiles | `[ ] Not Started` | Ownership, Creativity |
+| 8 | Events | `[ ] Not Started` | Social Influence, Scarcity |
+| 9 | Settings | `[ ] Not Started` | Ownership |
 
 ---
 
-### 6. Profile Flow
-**Path:** /profile → View → (Edit)
+## The Process
 
-| Step | Status | Notes |
-|------|--------|-------|
-| Profile view | Ready | Shows user data |
-| Stats display | Ready | Connections, spaces |
-| Edit profile | Post-launch | Not critical for GTM |
+For each slice:
 
-**QA Checklist:**
-- [ ] Profile shows name, handle, avatar
-- [ ] Shows joined spaces
-- [ ] Shows connections count
-
----
-
-## Blockers Summary
-
-| Blocker | Flow | Fix |
-|---------|------|-----|
-| Chat loading skeleton | Space & Chat | Add 3-5 message skeletons |
-| Chat empty state | Space & Chat | Add "Send the first message" |
-| Deploy error display | HiveLab | Show error in modal |
-| Unread indicators | Feed | Implement or defer |
-
-**Minimum viable:** Fix chat states. Deploy error and unread can ship as-is with degraded experience.
+```
+1. AUDIT      → Read current code, map against drives
+2. DESIGN     → Find peaks, design dramatic arc
+3. SPEC       → Specific changes, primitives, timing
+4. BUILD      → Implement
+5. VALIDATE   → Did the drama land?
+```
 
 ---
 
 ## Quality Gates
 
-Before launch:
+Per slice:
+- [ ] Motivation drives clearly firing
+- [ ] At least one unforgettable moment
+- [ ] No accidental dark patterns
+- [ ] Primitives used consistently
+
+Overall:
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm build` succeeds
-- [ ] Manual QA on all 6 flows above
+- [ ] First 60 seconds create "I need this"
 
 ---
 
-## What We're NOT Fixing for Launch
+## The Bar
 
-- Design token inconsistencies (cosmetic)
-- Focus ring variations (minor a11y)
-- Profile heatmap/activity (unused)
-- Loading state inconsistencies (functional)
-- Mobile responsiveness gaps (desktop-first launch)
+> "Would we be proud to explain exactly how this works to our users?"
 
-These become Sprint 2 priorities.
-
----
-
-## Flow Priority Order
-
-1. **Entry** — Gate to everything
-2. **Browse & Join** — Discovery
-3. **Space & Chat** — Core value
-4. **HiveLab** — Builder experience
-5. **Feed** — Engagement loop
-6. **Profile** — Identity
-
-Ship in this order. If time runs out, Entry through Chat must work.
+If no, don't ship it.

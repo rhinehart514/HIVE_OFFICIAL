@@ -1,32 +1,34 @@
-"use client";
+'use client';
 
 /**
- * Proto-Feed (Home)
+ * /feed - The Pulse
  *
- * Per locked IA spec (INFORMATION_ARCHITECTURE.md):
- * - Structured sections: Today, Your Spaces, This Week, Your Creations, Discover
- * - Anticipatory, not reactive
- * - "This page is evolving" box at bottom
+ * Dynamic dashboard that anticipates needs.
+ * Premium motion, presence indicators, activity signals.
  *
- * This is NOT an Activity Stream. It's a dashboard that evolves into Feed.
+ * Sections:
+ * - Today (events + unread messages)
+ * - Your Spaces (navigation tiles with activity dots)
+ * - This Week (upcoming events)
+ * - Your Creations (HiveLab tools)
+ * - Discover (recommendations)
  */
 
-import * as React from "react";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Button, Card, Badge } from "@hive/ui";
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { useAuth } from '@hive/auth-logic';
 import {
-  CalendarIcon,
-  ChatBubbleLeftRightIcon,
-  WrenchScrewdriverIcon,
-  SparklesIcon,
-  ArrowRightIcon,
-  PlusIcon,
-  UsersIcon,
-} from "@heroicons/react/24/outline";
-import { useAuth } from "@hive/auth-logic";
+  Tilt,
+  GlassSurface,
+  GradientText,
+  Badge,
+  Button,
+  MOTION,
+} from '@hive/ui/design-system/primitives';
+import { cn } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -35,10 +37,12 @@ import { useAuth } from "@hive/auth-logic";
 interface SpaceData {
   id: string;
   name: string;
+  handle?: string;
   description?: string;
-  bannerUrl?: string;
-  metrics?: { memberCount?: number };
-  membership?: { role: string };
+  memberCount?: number;
+  onlineCount?: number;
+  unreadCount?: number;
+  role?: string;
 }
 
 interface EventData {
@@ -49,24 +53,29 @@ interface EventData {
   endDate?: string;
   spaceId: string;
   spaceName: string;
+  spaceHandle?: string;
   rsvpCount?: number;
   isGoing?: boolean;
+  isLive?: boolean;
 }
 
 interface ToolData {
   id: string;
   name: string;
   description?: string;
+  icon?: string;
   status: string;
   responseCount?: number;
-  updatedAt?: string;
+  deployCount?: number;
 }
 
 interface RecommendedSpace {
   id: string;
   name: string;
+  handle: string;
   reason: string;
   memberCount: number;
+  category?: string;
 }
 
 // ============================================
@@ -97,68 +106,89 @@ function formatEventTime(dateString: string): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffHours < 0) return "Past";
-  if (diffHours < 1) return "Starting soon";
+  if (diffHours < 0) return 'Past';
+  if (diffHours < 1) return 'Starting soon';
   if (diffHours < 24) return `In ${diffHours}h`;
-  if (diffDays === 1) return "Tomorrow";
+  if (diffDays === 1) return 'Tomorrow';
   if (diffDays < 7) {
-    return date.toLocaleDateString("en-US", { weekday: "short" }) + " " +
-      date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    return (
+      date.toLocaleDateString('en-US', { weekday: 'short' }) +
+      ' ' +
+      date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    );
   }
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
 }
 
 // ============================================
 // SECTION COMPONENTS
 // ============================================
 
-function SectionHeader({
-  title,
-  action,
-  actionHref,
-}: {
+interface SectionProps {
   title: string;
   action?: string;
   actionHref?: string;
-}) {
+  children: React.ReactNode;
+  delay?: number;
+}
+
+function Section({ title, action, actionHref, children, delay = 0 }: SectionProps) {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-sm font-medium text-white/60 uppercase tracking-wide">
-        {title}
-      </h2>
-      {action && actionHref && (
-        <Link
-          href={actionHref}
-          className="text-sm text-white/40 hover:text-white/60 transition-colors"
-        >
-          {action} →
-        </Link>
-      )}
-    </div>
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: MOTION.duration.base,
+        delay,
+        ease: MOTION.ease.premium,
+      }}
+      className="mb-10"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[12px] font-medium text-white/40 uppercase tracking-wider">
+          {title}
+        </h2>
+        {action && actionHref && (
+          <Link
+            href={actionHref}
+            className="text-[12px] text-white/30 hover:text-white/50 transition-colors"
+          >
+            {action} →
+          </Link>
+        )}
+      </div>
+      {children}
+    </motion.section>
   );
 }
 
-// TODAY Section — Events happening today + unread messages
+// TODAY Section
 function TodaySection({
   events,
   unreadSpaces,
   loading,
 }: {
   events: EventData[];
-  unreadSpaces: { id: string; name: string; unreadCount: number }[];
+  unreadSpaces: SpaceData[];
   loading: boolean;
 }) {
   const router = useRouter();
 
   if (loading) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="Today" />
+      <Section title="Today" delay={0.1}>
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse"
+              className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
             >
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
@@ -170,7 +200,7 @@ function TodaySection({
             </div>
           ))}
         </div>
-      </section>
+      </Section>
     );
   }
 
@@ -178,85 +208,129 @@ function TodaySection({
 
   if (!hasContent) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="Today" />
-        <Card className="p-6 bg-white/[0.02] border-white/[0.06] text-center">
-          <CalendarIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
-          <p className="text-sm text-white/50 mb-4">
-            Nothing scheduled today. Check what&apos;s coming up this week.
+      <Section title="Today" delay={0.1}>
+        <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
+          <p className="text-[14px] text-white/50 mb-4">
+            Nothing on your plate today. Enjoy the calm.
           </p>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/events">Browse events</Link>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/explore?tab=events">Browse events</Link>
           </Button>
-        </Card>
-      </section>
+        </GlassSurface>
+      </Section>
     );
   }
 
   return (
-    <section className="mb-8">
-      <SectionHeader title="Today" />
+    <Section title="Today" delay={0.1}>
       <div className="space-y-3">
+        {/* Live events first */}
+        {events
+          .filter((e) => e.isLive)
+          .map((event) => (
+            <Tilt key={event.id} intensity={4}>
+              <button
+                type="button"
+                onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
+                className="w-full text-left"
+              >
+                <GlassSurface
+                  intensity="subtle"
+                  className="p-4 rounded-xl border border-[var(--life-gold)]/20"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
+                      <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px] font-medium text-white truncate">
+                          {event.title}
+                        </span>
+                        <Badge variant="gold" size="sm">
+                          Live
+                        </Badge>
+                      </div>
+                      <p className="text-[12px] text-white/50 mt-0.5">
+                        {event.spaceName}
+                        {event.rsvpCount ? ` · ${event.rsvpCount} attending` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </GlassSurface>
+              </button>
+            </Tilt>
+          ))}
+
         {/* Today's events */}
-        {events.map((event) => (
-          <motion.div
-            key={event.id}
-            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
-            whileHover={{ opacity: 0.9 }}
-            onClick={() => router.push(`/spaces/${event.spaceId}/events`)}
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                <CalendarIcon className="h-5 w-5 text-white/60" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white truncate">
-                    {event.title}
-                  </span>
-                  <Badge variant="outline" className="text-xs shrink-0">
-                    {formatEventTime(event.startDate)}
-                  </Badge>
-                </div>
-                <p className="text-xs text-white/50 mt-1">
-                  {event.spaceName}
-                  {event.isGoing && " · You're going"}
-                  {event.rsvpCount && event.rsvpCount > 0 && ` · ${event.rsvpCount} going`}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+        {events
+          .filter((e) => !e.isLive)
+          .map((event) => (
+            <Tilt key={event.id} intensity={4}>
+              <button
+                type="button"
+                onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
+                className="w-full text-left"
+              >
+                <GlassSurface intensity="subtle" className="p-4 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                      📅
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[14px] font-medium text-white truncate">
+                          {event.title}
+                        </span>
+                        <span className="text-[11px] text-white/40">
+                          {formatEventTime(event.startDate)}
+                        </span>
+                      </div>
+                      <p className="text-[12px] text-white/50 mt-0.5">
+                        {event.spaceName}
+                        {event.isGoing && ' · You\'re going'}
+                        {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </GlassSurface>
+              </button>
+            </Tilt>
+          ))}
 
         {/* Unread messages */}
         {unreadSpaces.map((space) => (
-          <motion.div
-            key={space.id}
-            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
-            whileHover={{ opacity: 0.9 }}
-            onClick={() => router.push(`/spaces/${space.id}`)}
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                <ChatBubbleLeftRightIcon className="h-5 w-5 text-white/60" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white truncate">
-                    {space.unreadCount} new messages in {space.name}
-                  </span>
+          <Tilt key={space.id} intensity={4}>
+            <button
+              type="button"
+              onClick={() => router.push(`/s/${space.handle || space.id}`)}
+              className="w-full text-left"
+            >
+              <GlassSurface intensity="subtle" className="p-4 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                    💬
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[14px] font-medium text-white truncate">
+                        {space.unreadCount} new in {space.name}
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
+                    </div>
+                    <p className="text-[12px] text-white/50 mt-0.5">Jump back in →</p>
+                  </div>
                 </div>
-                <p className="text-xs text-white/50 mt-1">Jump back in →</p>
-              </div>
-            </div>
-          </motion.div>
+              </GlassSurface>
+            </button>
+          </Tilt>
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
-// YOUR SPACES Section — Navigation tiles with activity dots
+// YOUR SPACES Section
 function YourSpacesSection({
   spaces,
   loading,
@@ -266,9 +340,8 @@ function YourSpacesSection({
 }) {
   if (loading) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="Your Spaces" action="Browse" actionHref="/spaces" />
-        <div className="grid grid-cols-4 gap-3">
+      <Section title="Your Spaces" action="Browse" actionHref="/spaces" delay={0.2}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -276,43 +349,61 @@ function YourSpacesSection({
             />
           ))}
         </div>
-      </section>
+      </Section>
     );
   }
 
   return (
-    <section className="mb-8">
-      <SectionHeader title="Your Spaces" action="Browse" actionHref="/spaces" />
-      <div className="grid grid-cols-4 gap-3">
-        {spaces.slice(0, 3).map((space) => (
-          <Link
-            key={space.id}
-            href={`/spaces/${space.id}`}
-            className="group aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 flex flex-col justify-between hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
-          >
-            <div className="text-xs font-medium text-white/80 truncate">
-              {space.name}
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
-            </div>
-          </Link>
+    <Section title="Your Spaces" action="Browse" actionHref="/spaces" delay={0.2}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {spaces.slice(0, 3).map((space, i) => (
+          <Tilt key={space.id} intensity={6}>
+            <Link href={`/s/${space.handle || space.id}`}>
+              <GlassSurface
+                intensity="subtle"
+                interactive
+                className="aspect-square rounded-xl p-4 flex flex-col justify-between"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] font-medium text-white truncate flex-1">
+                    {space.name}
+                  </span>
+                  {(space.onlineCount ?? 0) > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-white/40">
+                  {space.memberCount && <span>{space.memberCount} members</span>}
+                  {(space.unreadCount ?? 0) > 0 && (
+                    <Badge variant="gold" size="sm">
+                      {space.unreadCount}
+                    </Badge>
+                  )}
+                </div>
+              </GlassSurface>
+            </Link>
+          </Tilt>
         ))}
 
         {/* Browse tile */}
-        <Link
-          href="/spaces"
-          className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] border-dashed p-3 flex flex-col items-center justify-center hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
-        >
-          <PlusIcon className="h-5 w-5 text-white/40 mb-1" />
-          <span className="text-xs text-white/40">Browse</span>
-        </Link>
+        <Tilt intensity={6}>
+          <Link href="/spaces">
+            <GlassSurface
+              intensity="subtle"
+              interactive
+              className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
+            >
+              <span className="text-[24px] mb-2">+</span>
+              <span className="text-[12px] text-white/40">Browse All</span>
+            </GlassSurface>
+          </Link>
+        </Tilt>
       </div>
-    </section>
+    </Section>
   );
 }
 
-// THIS WEEK Section — Upcoming events
+// THIS WEEK Section
 function ThisWeekSection({
   events,
   loading,
@@ -324,88 +415,90 @@ function ThisWeekSection({
 
   if (loading) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="This Week" action="All events" actionHref="/events" />
+      <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
         <div className="space-y-3">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse"
+              className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
             >
               <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
               <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
             </div>
           ))}
         </div>
-      </section>
+      </Section>
     );
   }
 
   if (events.length === 0) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="This Week" action="All events" actionHref="/events" />
-        <Card className="p-6 bg-white/[0.02] border-white/[0.06] text-center">
-          <CalendarIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
-          <p className="text-sm text-white/50 mb-4">
-            Nothing scheduled yet. Explore what&apos;s happening on campus.
+      <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
+        <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
+          <p className="text-[14px] text-white/50 mb-4">
+            Nothing scheduled yet. Explore what's happening.
           </p>
-          <div className="flex justify-center gap-3">
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/events">Browse events</Link>
-            </Button>
-          </div>
-        </Card>
-      </section>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/explore?tab=events">Browse events</Link>
+          </Button>
+        </GlassSurface>
+      </Section>
     );
   }
 
   return (
-    <section className="mb-8">
-      <SectionHeader title="This Week" action="All events" actionHref="/events" />
-      <div className="space-y-3">
-        {events.map((event) => (
-          <motion.div
+    <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
+      <div className="space-y-2">
+        {events.slice(0, 4).map((event) => (
+          <button
             key={event.id}
-            className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
-            whileHover={{ opacity: 0.9 }}
-            onClick={() => router.push(`/spaces/${event.spaceId}/events`)}
+            type="button"
+            onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
+            className="w-full text-left"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-4 w-4 text-white/40 shrink-0" />
-                  <span className="text-sm font-medium text-white truncate">
-                    {event.title}
-                  </span>
+            <GlassSurface
+              intensity="subtle"
+              interactive
+              className="p-3 rounded-lg"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-white truncate">
+                      {event.title}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-white/40 mt-0.5">
+                    {event.spaceName} · {formatEventTime(event.startDate)}
+                    {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
+                  </p>
                 </div>
-                <p className="text-xs text-white/50 mt-1 ml-6">
-                  {event.spaceName} · {formatEventTime(event.startDate)}
-                  {event.rsvpCount && event.rsvpCount > 0 && ` · ${event.rsvpCount} going`}
-                </p>
+                <span className="text-white/20">→</span>
               </div>
-              <ArrowRightIcon className="h-4 w-4 text-white/20 shrink-0" />
-            </div>
-          </motion.div>
+            </GlassSurface>
+          </button>
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
-// YOUR CREATIONS Section — HiveLab tools with response counts
+// YOUR CREATIONS Section
 function YourCreationsSection({
   tools,
   loading,
+  isBuilder,
 }: {
   tools: ToolData[];
   loading: boolean;
+  isBuilder: boolean;
 }) {
+  if (!isBuilder) return null;
+
   if (loading) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="Your Creations" action="HiveLab" actionHref="/tools" />
-        <div className="grid grid-cols-4 gap-3">
+      <Section title="Your Creations" action="HiveLab" actionHref="/hivelab" delay={0.4}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -413,48 +506,56 @@ function YourCreationsSection({
             />
           ))}
         </div>
-      </section>
+      </Section>
     );
   }
 
   return (
-    <section className="mb-8">
-      <SectionHeader title="Your Creations" action="HiveLab" actionHref="/tools" />
-      <div className="grid grid-cols-4 gap-3">
+    <Section title="Your Creations" action="HiveLab" actionHref="/hivelab" delay={0.4}>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {tools.slice(0, 3).map((tool) => (
-          <Link
-            key={tool.id}
-            href={`/tools/${tool.id}`}
-            className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] p-3 flex flex-col justify-between hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
-          >
-            <WrenchScrewdriverIcon className="h-5 w-5 text-white/40" />
-            <div>
-              <div className="text-xs font-medium text-white/80 truncate">
-                {tool.name}
-              </div>
-              {tool.responseCount !== undefined && tool.responseCount > 0 && (
-                <div className="text-[10px] text-white/40 mt-0.5">
-                  {tool.responseCount} responses
+          <Tilt key={tool.id} intensity={6}>
+            <Link href={`/tools/${tool.id}`}>
+              <GlassSurface
+                intensity="subtle"
+                interactive
+                className="aspect-square rounded-xl p-4 flex flex-col justify-between"
+              >
+                <span className="text-[20px]">{tool.icon || '🛠️'}</span>
+                <div>
+                  <p className="text-[13px] font-medium text-white truncate">
+                    {tool.name}
+                  </p>
+                  {tool.responseCount !== undefined && tool.responseCount > 0 && (
+                    <p className="text-[11px] text-white/40 mt-0.5">
+                      {tool.responseCount} responses
+                    </p>
+                  )}
                 </div>
-              )}
-            </div>
-          </Link>
+              </GlassSurface>
+            </Link>
+          </Tilt>
         ))}
 
         {/* Create tile */}
-        <Link
-          href="/tools/new"
-          className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] border-dashed p-3 flex flex-col items-center justify-center hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
-        >
-          <PlusIcon className="h-5 w-5 text-white/40 mb-1" />
-          <span className="text-xs text-white/40">Create</span>
-        </Link>
+        <Tilt intensity={6}>
+          <Link href="/tools/new">
+            <GlassSurface
+              intensity="subtle"
+              interactive
+              className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
+            >
+              <span className="text-[24px] mb-2">+</span>
+              <span className="text-[12px] text-white/40">Create Tool</span>
+            </GlassSurface>
+          </Link>
+        </Tilt>
       </div>
-    </section>
+    </Section>
   );
 }
 
-// DISCOVER Section — 1-2 discovery items
+// DISCOVER Section
 function DiscoverSection({
   recommendations,
   loading,
@@ -464,13 +565,14 @@ function DiscoverSection({
 }) {
   if (loading) {
     return (
-      <section className="mb-8">
-        <SectionHeader title="Discover" />
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 animate-pulse">
-          <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
-          <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+      <Section title="Discover" delay={0.5}>
+        <div className="space-y-3">
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+            <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
+            <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
+          </div>
         </div>
-      </section>
+      </Section>
     );
   }
 
@@ -479,94 +581,65 @@ function DiscoverSection({
   }
 
   return (
-    <section className="mb-8">
-      <SectionHeader title="Discover" action="Browse all" actionHref="/spaces" />
+    <Section title="Discover" action="Explore" actionHref="/explore" delay={0.5}>
       <div className="space-y-3">
         {recommendations.slice(0, 2).map((space) => (
-          <Link
-            key={space.id}
-            href={`/spaces/${space.id}`}
-            className="block bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 hover:bg-white/[0.04] hover:border-white/[0.1] transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center">
-                <SparklesIcon className="h-5 w-5 text-white/40" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">
-                  {space.name}
+          <Tilt key={space.id} intensity={4}>
+            <Link href={`/s/${space.handle}`}>
+              <GlassSurface intensity="subtle" interactive className="p-4 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                    ✨
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-medium text-white truncate">
+                      {space.name}
+                    </p>
+                    <p className="text-[12px] text-white/50 mt-0.5">
+                      {space.reason} · {space.memberCount} members
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-white/50 mt-0.5">
-                  {space.reason} · {space.memberCount} members
-                </p>
-              </div>
-            </div>
-          </Link>
+              </GlassSurface>
+            </Link>
+          </Tilt>
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
-// ANTICIPATION BOX — "This page is evolving"
-function EvolvingBox() {
-  return (
-    <section className="mt-12 mb-8">
-      <Card className="p-6 bg-white/[0.01] border-white/[0.08] border-dashed">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center shrink-0">
-            <SparklesIcon className="h-5 w-5 text-white/40" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-white/70 mb-2">
-              This page is evolving.
-            </h3>
-            <p className="text-sm text-white/40 leading-relaxed">
-              Soon: A feed of everything happening across your spaces. Activity.
-              Events. What friends are doing. All in one stream.
-            </p>
-            <p className="text-xs text-white/30 mt-3">
-              You&apos;ll know when it drops.
-            </p>
-          </div>
-        </div>
-      </Card>
-    </section>
-  );
-}
-
-// ============================================
-// SIDEBAR COMPONENTS
-// ============================================
-
+// QUICK ACTIONS Sidebar
 function QuickActions() {
   return (
-    <Card className="p-5 bg-white/[0.02] border-white/[0.06]">
-      <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
+    <GlassSurface intensity="subtle" className="p-5 rounded-xl">
+      <h3 className="text-[12px] font-medium text-white/40 uppercase tracking-wider mb-4">
+        Quick Actions
+      </h3>
       <div className="space-y-2">
         <Link
           href="/tools/new"
-          className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] transition-colors"
-        >
-          <WrenchScrewdriverIcon className="h-4 w-4 text-white/60" />
-          <span className="text-sm text-white/70">Build a Tool</span>
-        </Link>
-        <Link
-          href="/spaces/create"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <UsersIcon className="h-4 w-4 text-white/60" />
-          <span className="text-sm text-white/70">Create a Space</span>
+          <span className="text-[16px]">🛠️</span>
+          <span className="text-[13px] text-white/70">Build a Tool</span>
         </Link>
         <Link
-          href="/events"
+          href="/spaces/new"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <CalendarIcon className="h-4 w-4 text-white/60" />
-          <span className="text-sm text-white/70">Browse Events</span>
+          <span className="text-[16px]">🏠</span>
+          <span className="text-[13px] text-white/70">Start a Space</span>
+        </Link>
+        <Link
+          href="/explore?tab=events"
+          className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
+        >
+          <span className="text-[16px]">📅</span>
+          <span className="text-[13px] text-white/70">Browse Events</span>
         </Link>
       </div>
-    </Card>
+    </GlassSurface>
   );
 }
 
@@ -574,8 +647,9 @@ function QuickActions() {
 // MAIN PAGE
 // ============================================
 
-export default function ProtoFeedPage() {
+export default function FeedPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
 
   // Data states
   const [spaces, setSpaces] = useState<SpaceData[]>([]);
@@ -583,29 +657,36 @@ export default function ProtoFeedPage() {
   const [weekEvents, setWeekEvents] = useState<EventData[]>([]);
   const [tools, setTools] = useState<ToolData[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
+  const [unreadSpaces, setUnreadSpaces] = useState<SpaceData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all proto-feed data
+  // Fetch all feed data
   useEffect(() => {
     if (authLoading || !user) return;
 
-    async function fetchProtoFeedData() {
+    async function fetchFeedData() {
       setLoading(true);
 
       try {
         // Parallel fetch all data sources
         const [spacesRes, dashboardRes, toolsRes] = await Promise.all([
-          fetch("/api/profile/my-spaces", { credentials: "include" }),
-          fetch("/api/profile/dashboard?includeRecommendations=true", {
-            credentials: "include",
+          fetch('/api/profile/my-spaces', { credentials: 'include' }),
+          fetch('/api/profile/dashboard?includeRecommendations=true', {
+            credentials: 'include',
           }),
-          fetch("/api/tools?limit=10", { credentials: "include" }),
+          fetch('/api/tools?limit=10', { credentials: 'include' }),
         ]);
 
         // Process spaces
         if (spacesRes.ok) {
           const spacesData = await spacesRes.json();
-          setSpaces(spacesData.spaces || []);
+          const allSpaces = (spacesData.spaces || []) as SpaceData[];
+          setSpaces(allSpaces);
+
+          // Extract spaces with unread messages
+          setUnreadSpaces(
+            allSpaces.filter((s: SpaceData) => (s.unreadCount ?? 0) > 0)
+          );
         }
 
         // Process dashboard (events + recommendations)
@@ -615,22 +696,17 @@ export default function ProtoFeedPage() {
 
           // Split events into today and this week
           const allEvents: EventData[] = (dashboard.upcomingEvents || []).map(
-            (e: {
-              id: string;
-              title: string;
-              description?: string;
-              startDate: string;
-              endDate?: string;
-              spaceId: string;
-              spaceName: string;
-            }) => ({
-              id: e.id,
-              title: e.title,
-              description: e.description,
-              startDate: e.startDate,
-              endDate: e.endDate,
-              spaceId: e.spaceId,
-              spaceName: e.spaceName,
+            (e: Record<string, unknown>) => ({
+              id: e.id as string,
+              title: e.title as string,
+              description: e.description as string | undefined,
+              startDate: e.startDate as string,
+              endDate: e.endDate as string | undefined,
+              spaceId: e.spaceId as string,
+              spaceName: e.spaceName as string,
+              spaceHandle: e.spaceHandle as string | undefined,
+              rsvpCount: e.rsvpCount as number | undefined,
+              isGoing: e.isGoing as boolean | undefined,
             })
           );
 
@@ -651,24 +727,24 @@ export default function ProtoFeedPage() {
           setTools(toolsData.tools || []);
         }
       } catch (error) {
-        console.error("Failed to fetch proto-feed data:", error);
+        console.error('Failed to fetch feed data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchProtoFeedData();
+    fetchFeedData();
   }, [authLoading, user]);
 
   // Loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-ground">
-        <div className="max-w-6xl mx-auto px-6 py-10">
-          <div className="h-8 w-48 bg-white/[0.06] rounded mb-8 animate-pulse" />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+      <div className="min-h-screen bg-[var(--bg-ground)]">
+        <div className="max-w-5xl mx-auto px-6 py-10">
+          <div className="h-10 w-64 bg-white/[0.06] rounded mb-8 animate-pulse" />
+          <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
             <div className="space-y-8">
-              {[1, 2, 3, 4].map((i) => (
+              {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-3">
                   <div className="h-4 w-24 bg-white/[0.04] rounded" />
                   <div className="h-32 bg-white/[0.02] border border-white/[0.06] rounded-xl animate-pulse" />
@@ -684,23 +760,41 @@ export default function ProtoFeedPage() {
     );
   }
 
+  const firstName = user?.displayName?.split(' ')[0] || user?.fullName?.split(' ')[0] || '';
+
   return (
-    <div className="min-h-screen bg-ground">
+    <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header */}
-      <div className="border-b border-white/[0.06] bg-white/[0.02]">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <h1 className="text-lg font-medium text-white">What&apos;s Happening</h1>
+      <div className="border-b border-white/[0.06]">
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+          >
+            <h1 className="text-[24px] font-semibold text-white">
+              {getGreeting()}
+              {firstName && (
+                <>
+                  , <GradientText variant="gold">{firstName}</GradientText>
+                </>
+              )}
+            </h1>
+            <p className="text-[14px] text-white/50 mt-1">
+              Here's what's happening in your world
+            </p>
+          </motion.div>
         </div>
       </div>
 
       {/* Main content */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]">
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
           {/* Main column */}
           <div>
             <TodaySection
               events={todayEvents}
-              unreadSpaces={[]} // TODO: Add unread messages when available
+              unreadSpaces={unreadSpaces}
               loading={loading}
             />
 
@@ -708,18 +802,29 @@ export default function ProtoFeedPage() {
 
             <ThisWeekSection events={weekEvents} loading={loading} />
 
-            <YourCreationsSection tools={tools} loading={loading} />
+            <YourCreationsSection
+              tools={tools}
+              loading={loading}
+              isBuilder={user?.isBuilder ?? false}
+            />
 
             <DiscoverSection recommendations={recommendations} loading={loading} />
-
-            <EvolvingBox />
           </div>
 
           {/* Sidebar */}
           <aside className="hidden lg:block">
-            <div className="sticky top-24">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                duration: MOTION.duration.base,
+                delay: 0.3,
+                ease: MOTION.ease.premium,
+              }}
+              className="sticky top-24"
+            >
               <QuickActions />
-            </div>
+            </motion.div>
           </aside>
         </div>
       </main>

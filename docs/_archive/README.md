@@ -1,6 +1,6 @@
 # Archived Documentation
 
-**Archived:** January 16, 2026
+**Last Updated:** January 21, 2026
 
 This directory contains documentation that is no longer actively maintained but preserved for historical reference.
 
@@ -8,38 +8,40 @@ This directory contains documentation that is no longer actively maintained but 
 
 ```
 _archive/
-├── audits/           # Completed audit reports
-├── plans/            # Completed rebuild/redesign plans
-└── old-state/        # Outdated state snapshots
+├── audits/                   # Completed audit reports
+├── plans/                    # Completed rebuild/redesign plans
+├── old-state/                # Outdated state snapshots
+└── jan-2026-consolidation/   # Major consolidation (34 files)
 ```
 
-## Archived Files
+## Archive History
 
-### Audits (Completed)
-- `FRONTEND_AUDIT.md` - Frontend code audit (complete)
-- `UI_UX_AUDIT.md` - UI/UX audit findings (addressed)
-- `UX_AUDIT.md` - Comprehensive UX audit (addressed)
-- `UI_AUDIT_CLEANUP.md` - UI cleanup actions (complete)
-- `UI_UX_SYSTEM_AUDIT.md` - System-wide audit (complete)
-- `PLATFORM_AUDIT.md` - Platform audit (superseded)
-- `RUTHLESS_PRODUCTION_AUDIT.md` - Production audit (complete)
-- `AUDIT_ISSUES_2026_01_15.md` - Issues list (resolved)
-- `SPACES_HOOKS_AUDIT_REPORT.md` - Hooks audit (stable)
-- `TEST_COVERAGE_AUDIT.md` - Test coverage analysis
+### January 21, 2026 — Major Consolidation
+Archived 34 files/folders as part of documentation consolidation:
+- All vertical slice docs (superseded by `CURRENT_STATE.md`)
+- Wireframe and design iteration docs
+- Ideation and planning docs
+- Old specs and layer docs
 
-### Plans (Completed)
-- `FRONTEND_REBUILD_PLAN.md` - Rebuild complete
-- `PAGE_REBUILD_PLAN.md` - Pages rebuilt
-- `PAGE_REDESIGN_TRACKER.md` - Redesign complete
+See `jan-2026-consolidation/README.md` for details.
 
-### Old State
-- `currentstate.md` - Outdated state from Dec 2024
+### January 16, 2026 — Initial Archive
+- Audit reports
+- Rebuild plans
+- Old state snapshots
 
 ## Current Documentation
 
-For current documentation, see:
-- `/CLAUDE.md` - Project instructions
-- `/docs/TODO.md` - Active development tracking
-- `/docs/DATABASE_SCHEMA.md` - Current database schema
-- `/docs/VERTICAL_SLICES.md` - Feature specifications
-- `/docs/design-system/` - Design system documentation
+**Single Source of Truth:**
+- `docs/CURRENT_STATE.md` — Platform state by vertical slice
+
+**Active References:**
+- `docs/VISION.md`, `docs/VALUE.md`, `docs/STRATEGY.md` — Vision/strategy
+- `docs/DESIGN_PRINCIPLES.md` — Design philosophy
+- `docs/DATABASE_SCHEMA.md`, `docs/ERD.md` — Data architecture
+- `docs/INFORMATION_ARCHITECTURE.md` — IA principles
+- `docs/HIVELAB_ARCHITECTURE.md`, `docs/SPACES_ARCHITECTURE.md` — Architecture
+- `docs/design-system/` — Complete design system (10 levels)
+
+**Project Config:**
+- `/CLAUDE.md` — Project instructions
