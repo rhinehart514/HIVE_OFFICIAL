@@ -1769,6 +1769,8 @@ export {
   ProfileConnectionsCard,
   ProfileInterestsCard,
   ProfileActivityHeatmap,
+  ProfileStatsWidget,
+  ProfileFeaturedToolCard,
 } from "./design-system/components/profile";
 
 export type {
@@ -1788,6 +1790,9 @@ export type {
   ProfileInterestsCardProps,
   ProfileActivityHeatmapProps,
   ActivityContribution,
+  ProfileStatsWidgetProps,
+  ProfileFeaturedToolCardProps,
+  FeaturedTool,
 } from "./design-system/components/profile";
 
 // ============================================

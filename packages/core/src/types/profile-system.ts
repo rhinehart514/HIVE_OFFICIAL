@@ -112,14 +112,41 @@ export interface PresenceState {
 
 export type GridSize = '1x1' | '2x1' | '2x2' | '1x2';
 
+export type WidgetType =
+  | 'identity'
+  | 'heatmap'
+  | 'spaces'
+  | 'tools'
+  | 'connections'
+  | 'interests'
+  | 'stats'
+  | 'featuredTool'
+  // Legacy types for backward compatibility
+  | 'spaces_hub'
+  | 'friends_network'
+  | 'schedule_overlap'
+  | 'active_now'
+  | 'discovery'
+  | 'vibe_check'
+  | 'custom';
+
+export type WidgetSize = '1x1' | '2x1' | '2x2' | '1x2' | '4x1';
+
 export interface BentoCard {
   id: string;
-  type: 'spaces_hub' | 'friends_network' | 'schedule_overlap' |
-        'active_now' | 'discovery' | 'vibe_check' | 'custom';
+  type: WidgetType;
   position: { x: number; y: number };
-  size: GridSize;
+  size: GridSize | WidgetSize;
   visible: boolean;
-  config?: Record<string, any>;
+  config?: Record<string, unknown>;
+}
+
+export interface WidgetConfig {
+  id: string;
+  type: WidgetType;
+  size: WidgetSize;
+  visible: boolean;
+  order: number;
 }
 
 export interface BentoGridLayout {

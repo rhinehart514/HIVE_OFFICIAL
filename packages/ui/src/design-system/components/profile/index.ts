@@ -73,3 +73,18 @@ export {
   type ProfileActivityHeatmapProps,
   type ActivityContribution,
 } from './ProfileActivityHeatmap';
+
+// ============================================
+// BENTO GRID WIDGETS (New - Phase 2)
+// ============================================
+
+export {
+  ProfileStatsWidget,
+  type ProfileStatsWidgetProps,
+} from './ProfileStatsWidget';
+
+export {
+  ProfileFeaturedToolCard,
+  type ProfileFeaturedToolCardProps,
+  type FeaturedTool,
+} from './ProfileFeaturedToolCard';

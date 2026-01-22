@@ -607,7 +607,7 @@ export type { FirebaseApp, Auth, Firestore, FirebaseStorage, Analytics } from "@
 // export * from "./server";
 
 // Types and Interfaces - Specific exports to avoid conflicts
-export type { ProfileSystem, HiveProfile, UnifiedHiveProfile, GridSize, BentoGridLayout, Friend } from "./types/profile-system";
+export type { ProfileSystem, HiveProfile, UnifiedHiveProfile, GridSize, BentoGridLayout, Friend, WidgetType, WidgetSize, WidgetConfig, BentoCard } from "./types/profile-system";
 // Re-export with aliases to avoid conflicts with domain aggregates
 export type { Connection as ProfileSystemConnection, Badge as ProfileBadge } from "./types/profile-system";
 export { ConnectionType as ProfileSystemConnectionType } from "./types/profile-system";

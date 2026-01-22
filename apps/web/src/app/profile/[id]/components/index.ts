@@ -2,6 +2,13 @@
  * Profile Page Components
  */
 
+// Bento Grid System
+export { BentoProfileGrid } from './BentoProfileGrid';
+export { BentoWidget } from './BentoWidget';
+export { BentoEditToolbar } from './BentoEditToolbar';
+export { WidgetPicker } from './WidgetPicker';
+
+// Legacy components
 export { ProfileStat } from './ProfileStat';
 export { ProfileHeader } from './ProfileHeader';
 export { ProfileActions } from './ProfileActions';
