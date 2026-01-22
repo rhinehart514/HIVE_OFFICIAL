@@ -288,26 +288,12 @@ export default function SpacePageUnified() {
               onMembersClick={() => setShowMembersPanel(true)}
               onSettingsClick={() => setShowSettingsModal(true)}
               onBuildToolClick={() => {
-                // Redirect to HiveLab with space context
-                const hiveLabUrl = process.env.NEXT_PUBLIC_HIVELAB_URL;
-
-                if (hiveLabUrl) {
-                  // Production with configured HiveLab URL
-                  const params = new URLSearchParams({
-                    context: 'space',
-                    spaceId: space.id,
-                    spaceName: space.name,
-                  });
-                  window.location.href = `${hiveLabUrl}/select-context?${params.toString()}`;
-                } else {
-                  // Development - open in new tab
-                  const params = new URLSearchParams({
-                    context: 'space',
-                    spaceId: space.id,
-                    spaceName: space.name,
-                  });
-                  window.open(`http://localhost:3002/select-context?${params.toString()}`, '_blank');
-                }
+                // Navigate to integrated tool creation with space context
+                // After tool creation, deploy modal will pre-select this space
+                const params = new URLSearchParams({
+                  spaceId: space.id,
+                });
+                router.push(`/tools?${params.toString()}`);
               }}
             />
           </ArrivalZone>
