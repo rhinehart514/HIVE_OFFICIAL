@@ -362,6 +362,102 @@ export function NoiseOverlay({ className, opacity = 0.015 }: NoiseOverlayProps) 
   );
 }
 
+// ============================================
+// REVEAL PRIMITIVES
+// ============================================
+
+export {
+  RevealSection,
+  NarrativeReveal,
+  AnimatedBorder,
+  type RevealSectionProps,
+  type NarrativeRevealProps,
+  type AnimatedBorderProps,
+} from './Reveal';
+
+// ============================================
+// SCROLL PRIMITIVES
+// ============================================
+
+export {
+  ParallaxText,
+  ScrollIndicator,
+  HeroParallax,
+  ScrollProgress,
+  ScrollSpacer,
+  type ParallaxTextProps,
+  type ScrollIndicatorProps,
+  type HeroParallaxProps,
+  type ScrollProgressProps,
+  type ScrollSpacerProps,
+} from './Scroll';
+
+// ============================================
+// GRADIENT PRIMITIVES
+// ============================================
+
+export {
+  GradientBackground,
+  GradientText,
+  GradientOrb,
+  type GradientBackgroundProps,
+  type GradientTextProps,
+  type GradientOrbProps,
+} from './Gradient';
+
+// ============================================
+// GLASS PRIMITIVES
+// ============================================
+
+export {
+  GlassSurface,
+  GlassPanel,
+  GlassOverlay,
+  GlassPill,
+  FrostedEdge,
+  type GlassSurfaceProps,
+  type GlassPanelProps,
+  type GlassOverlayProps,
+  type GlassPillProps,
+  type FrostedEdgeProps,
+} from './Glass';
+
+// ============================================
+// BORDER GLOW PRIMITIVES
+// ============================================
+
+export {
+  GlowBorder,
+  PulseBorder,
+  TrailBorder,
+  BreatheBorder,
+  CursorTrailBorder,
+  type GlowBorderProps,
+  type PulseBorderProps,
+  type TrailBorderProps,
+  type BreatheBorderProps,
+  type CursorTrailBorderProps,
+} from './BorderGlow';
+
+// ============================================
+// SCROLL TRANSFORM PRIMITIVES
+// ============================================
+
+export {
+  ScrollTransform,
+  ScrollFade,
+  ScrollSticky,
+  ScrollCounter,
+  ScrollProgressBar,
+  useScrollTransform,
+  type ScrollTransformProps,
+  type ScrollFadeProps,
+  type ScrollStickyProps,
+  type ScrollCounterProps,
+  type ScrollProgressBarProps,
+  type UseScrollTransformOptions,
+} from './ScrollTransform';
+
 // Re-export framer-motion for convenience
 export { motion, useScroll, useTransform, useSpring, useMotionValue, useInView };
 export type { MotionProps };

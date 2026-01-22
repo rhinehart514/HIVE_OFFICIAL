@@ -7,6 +7,20 @@
  */
 
 // ============================================
+// TOKENS
+// ============================================
+
+export { MOTION } from '../../tokens';
+export type {
+  EaseType,
+  DurationType,
+  StaggerType,
+  ViewportType,
+  SpringType,
+  ParallaxType,
+} from '../../tokens';
+
+// ============================================
 // TYPOGRAPHY PRIMITIVES
 // ============================================
 
@@ -474,6 +488,15 @@ export {
   type SpacerProps,
 } from './layout/Spacer';
 
+export {
+  LandingSection,
+  LandingContainer,
+  LandingHero,
+  type LandingSectionProps,
+  type LandingContainerProps,
+  type LandingHeroProps,
+} from './layout/LandingSection';
+
 // ============================================
 // BRAND PRIMITIVES
 // ============================================
@@ -682,6 +705,7 @@ export {
   // Hooks
   useMouse,
   useScrollProgress,
+  useScrollTransform,
   // Components
   Tilt,
   Magnetic,
@@ -691,6 +715,38 @@ export {
   Parallax,
   CursorGlow,
   NoiseOverlay,
+  // Reveal Primitives (from /about)
+  RevealSection,
+  NarrativeReveal,
+  AnimatedBorder,
+  // Scroll Primitives (from /about)
+  ParallaxText,
+  ScrollIndicator,
+  HeroParallax,
+  ScrollProgress,
+  ScrollSpacer,
+  // Gradient Primitives
+  GradientBackground,
+  GradientText,
+  GradientOrb,
+  // Glass Primitives
+  GlassSurface,
+  GlassPanel,
+  GlassOverlay,
+  GlassPill,
+  FrostedEdge,
+  // Border Glow Primitives
+  GlowBorder,
+  PulseBorder,
+  TrailBorder,
+  BreatheBorder,
+  CursorTrailBorder,
+  // Scroll Transform Primitives
+  ScrollTransform,
+  ScrollFade,
+  ScrollSticky,
+  ScrollCounter,
+  ScrollProgressBar,
   // Re-exports from framer-motion
   motion,
   useScroll,
@@ -708,6 +764,39 @@ export {
   type CursorGlowProps,
   type NoiseOverlayProps,
   type MotionProps,
+  // Reveal Types
+  type RevealSectionProps,
+  type NarrativeRevealProps,
+  type AnimatedBorderProps,
+  // Scroll Types
+  type ParallaxTextProps,
+  type ScrollIndicatorProps,
+  type HeroParallaxProps,
+  type ScrollProgressProps,
+  type ScrollSpacerProps,
+  // Gradient Types
+  type GradientBackgroundProps,
+  type GradientTextProps,
+  type GradientOrbProps,
+  // Glass Types
+  type GlassSurfaceProps,
+  type GlassPanelProps,
+  type GlassOverlayProps,
+  type GlassPillProps,
+  type FrostedEdgeProps,
+  // Border Glow Types
+  type GlowBorderProps,
+  type PulseBorderProps,
+  type TrailBorderProps,
+  type BreatheBorderProps,
+  type CursorTrailBorderProps,
+  // Scroll Transform Types
+  type ScrollTransformProps,
+  type ScrollFadeProps,
+  type ScrollStickyProps,
+  type ScrollCounterProps,
+  type ScrollProgressBarProps,
+  type UseScrollTransformOptions,
 } from './motion';
 
 // ============================================
