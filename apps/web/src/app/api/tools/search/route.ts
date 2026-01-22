@@ -4,10 +4,10 @@ import type * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -96,6 +96,7 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const {
       query,
       limit = 20,
@@ -109,7 +110,7 @@ export const POST = withAuthValidationAndErrors(
 
     try {
       let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> =
-        adminDb.collection("tools").where("campusId", "==", CURRENT_CAMPUS_ID);
+        adminDb.collection("tools").where("campusId", "==", campusId);
 
       if (category) {
         toolsQuery = toolsQuery.where("category", "==", category);
@@ -235,7 +236,7 @@ export const POST = withAuthValidationAndErrors(
             .collection("deployments")
             .where("toolId", "==", doc.id)
             .where("userId", "==", userId)
-            .where("campusId", "==", CURRENT_CAMPUS_ID)
+            .where("campusId", "==", campusId)
             .where("status", "==", "active")
             .limit(1)
             .get();

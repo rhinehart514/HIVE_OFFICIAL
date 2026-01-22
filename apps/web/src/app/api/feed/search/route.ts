@@ -1,12 +1,8 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import type * as admin from 'firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
-import { getAuthTokenFromRequest } from '@/lib/auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { withAuthValidationAndErrors, getUserId, getCampusId, RATE_LIMIT_PRESETS } from "@/lib/middleware";
 
 const SearchFeedSchema = z.object({
   query: z.string().min(1).max(100),
@@ -16,43 +12,47 @@ const SearchFeedSchema = z.object({
   spaceId: z.string().optional(),
   timeRange: z.enum(['day', 'week', 'month', 'all']).default('all'),
   sortBy: z.enum(['relevance', 'recent', 'engagement']).default('relevance'),
-  includeUserContent: z.coerce.boolean().default(true) });
+  includeUserContent: z.coerce.boolean().default(true)
+});
+
+type SearchFeedParams = z.infer<typeof SearchFeedSchema>;
 
 const db = dbAdmin;
 
-export async function POST(request: NextRequest) {
-  try {
-    // Get and validate auth token
-    const token = getAuthTokenFromRequest(request);
-    if (!token) {
-      return NextResponse.json(ApiResponseHelper.error("Authentication required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthValidationAndErrors(
+  SearchFeedSchema,
+  async (request, _context, body, respond) => {
+    const userId = getUserId(request);
+    const campusId = getCampusId(request); // Now guaranteed by middleware
 
-    const auth = getAuth();
-    const decodedToken = await auth.verifyIdToken(token);
-
-    const body = await request.json();
-    const searchParams = SearchFeedSchema.parse(body);
-    const { query, limit, offset, type, spaceId, timeRange, sortBy, includeUserContent: _includeUserContent } = searchParams;
+    // Destructure with explicit defaults to satisfy TypeScript
+    // (Zod provides defaults but TS inference doesn't carry them through)
+    const query = body.query;
+    const limit = body.limit ?? 20;
+    const offset = body.offset ?? 0;
+    const type = body.type;
+    const spaceId = body.spaceId;
+    const timeRange = body.timeRange ?? 'all';
+    const sortBy = body.sortBy ?? 'relevance';
 
     // Calculate time filter
-    let timeFilter = null;
-    if (timeRange !== 'all') {
+    let timeFilter: Date | null = null;
+    if (timeRange === 'day' || timeRange === 'week' || timeRange === 'month') {
       const now = new Date();
       const timeMap = {
         day: 24 * 60 * 60 * 1000,
         week: 7 * 24 * 60 * 60 * 1000,
         month: 30 * 24 * 60 * 60 * 1000,
-      };
+      } as const;
       timeFilter = new Date(now.getTime() - timeMap[timeRange]);
     }
 
     // Get user's spaces for filtering relevant content
     const userSpacesSnapshot = await db
       .collection('spaceMembers')
-      .where('userId', '==', decodedToken.uid)
+      .where('userId', '==', userId)
       .where('isActive', '==', true)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(200)
       .get();
     const userSpaceIds = userSpacesSnapshot.docs
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     // Search posts
     if (!type || type === 'post') {
       let postsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('posts')
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
       
       if (spaceId) {
         postsQuery = postsQuery.where('spaceId', '==', spaceId);
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
         if (spaceId) {
           try {
             const spaceDoc = await dbAdmin.collection('spaces').doc(currentSpaceId).get();
-            if (!spaceDoc.exists || (spaceDoc.data()?.campusId && spaceDoc.data()?.campusId !== CURRENT_CAMPUS_ID)) {
+            if (!spaceDoc.exists || (spaceDoc.data()?.campusId && spaceDoc.data()?.campusId !== campusId)) {
               continue;
             }
           } catch {
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
     // Search tools
     if (!type || type === 'tool') {
       let toolsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('tools')
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
       
       if (timeFilter) {
         toolsQuery = toolsQuery.where('createdAt', '>=', timeFilter);
@@ -297,7 +297,7 @@ export async function POST(request: NextRequest) {
         const toolData = doc.data();
         
         // Skip private tools unless they belong to the user
-        if (toolData.isPrivate && toolData.creatorId !== decodedToken.uid) continue;
+        if (toolData.isPrivate && toolData.creatorId !== userId) continue;
         
         // Text matching
         const name = (toolData.name || '').toLowerCase();
@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
     // Apply pagination
     const paginatedItems = feedItems.slice(offset, offset + limit);
 
-    return NextResponse.json({
+    return respond.success({
       items: paginatedItems,
       total: feedItems.length,
       hasMore: feedItems.length > offset + limit,
@@ -392,26 +392,10 @@ export async function POST(request: NextRequest) {
         nextOffset: feedItems.length > offset + limit ? offset + limit : null,
       },
       query: {
-        ...searchParams,
+        ...body,
         executedAt: new Date().toISOString(),
       }
     });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Invalid search parameters',
-          details: error.errors,
-        },
-        { status: HttpStatus.BAD_REQUEST }
-      );
-    }
-
-    logger.error(
-      `Error searching feed at /api/feed/search`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to search feed", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.search }
+);

@@ -9,9 +9,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const RetentionQuerySchema = z.object({
@@ -48,6 +47,7 @@ interface RetentionData {
  * Fetch user retention cohort analysis
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = RetentionQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -68,7 +68,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Fetch all profiles created in the time period
     const profilesSnapshot = await dbAdmin
       .collection('profiles')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('createdAt', '>=', startDate)
       .get();
 

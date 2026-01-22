@@ -2,9 +2,8 @@ import { getFirestore as _getFirestore, FieldValue as _FieldValue } from "fireba
 import * as admin from "firebase-admin";
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Schema for tool state update requests
 const ToolStateSchema = z.object({
@@ -19,6 +18,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const authenticatedUserId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
@@ -32,7 +32,7 @@ export const GET = withAuthAndErrors(async (
     // Enforce campus isolation: verify space and tool belong to campus
     const toolDoc = await db.collection('tools').doc(toolId).get();
     const spaceDoc = await db.collection('spaces').doc(spaceId).get();
-    if (!toolDoc.exists || !spaceDoc.exists || (toolDoc.data()?.campusId !== CURRENT_CAMPUS_ID) || (spaceDoc.data()?.campusId !== CURRENT_CAMPUS_ID)) {
+    if (!toolDoc.exists || !spaceDoc.exists || (toolDoc.data()?.campusId !== campusId) || (spaceDoc.data()?.campusId !== campusId)) {
       return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
     
@@ -63,6 +63,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     const { spaceId, userId: requestUserId, state } = body;
     const authenticatedUserId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
     // Ensure user can only update their own state
@@ -79,7 +80,7 @@ export const POST = withAuthValidationAndErrors(
       .where("userId", "==", userId)
       .where("spaceId", "==", spaceId)
       .where("status", "==", "active")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .limit(1)
       .get();
 
@@ -107,7 +108,7 @@ export const POST = withAuthValidationAndErrors(
       .collection("tool_deployments")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("isActive", "==", true)
       .limit(1)
       .get();
@@ -123,7 +124,7 @@ export const POST = withAuthValidationAndErrors(
       toolId,
       spaceId,
       userId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
       metadata: {
         ...state.metadata,
         updatedAt: new Date().toISOString(),
@@ -145,7 +146,7 @@ export const POST = withAuthValidationAndErrors(
     await analyticsDoc.set({
       toolId,
       spaceId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
       lastUsed: admin.firestore.FieldValue.serverTimestamp(),
       usageCount: admin.firestore.FieldValue.increment(1),
       activeUsers: admin.firestore.FieldValue.arrayUnion(userId),
@@ -164,6 +165,7 @@ export const DELETE = withAuthAndErrors(async (
   respond
 ) => {
   const authenticatedUserId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
@@ -182,7 +184,7 @@ export const DELETE = withAuthAndErrors(async (
     // Enforce campus isolation: verify space and tool belong to campus
     const toolDoc = await db.collection('tools').doc(toolId).get();
     const spaceDoc = await db.collection('spaces').doc(spaceId).get();
-    if (!toolDoc.exists || !spaceDoc.exists || (toolDoc.data()?.campusId !== CURRENT_CAMPUS_ID) || (spaceDoc.data()?.campusId !== CURRENT_CAMPUS_ID)) {
+    if (!toolDoc.exists || !spaceDoc.exists || (toolDoc.data()?.campusId !== campusId) || (spaceDoc.data()?.campusId !== campusId)) {
       return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
     

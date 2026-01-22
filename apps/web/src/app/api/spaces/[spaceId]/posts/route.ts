@@ -7,12 +7,12 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { postCreationRateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import { sseRealtimeService } from "@/lib/sse-realtime-service";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
@@ -35,7 +35,7 @@ const CreatePostSchema = z.object({
   toolId: z.string().optional(),
 });
 
-async function ensureSpaceAndMembership(spaceId: string, userId: string) {
+async function ensureSpaceAndMembership(spaceId: string, userId: string, userCampusId: string) {
   const membership = await requireSpaceMembership(spaceId, userId);
   if (!membership.ok) {
     return {
@@ -46,7 +46,7 @@ async function ensureSpaceAndMembership(spaceId: string, userId: string) {
   }
 
   const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData.campusId && spaceData.campusId !== userCampusId) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -69,11 +69,12 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId } = await params;
     const userId = getUserId(request);
+    const campusId = getCampusId(request);
     const queryParams = GetPostsSchema.parse(
       Object.fromEntries(request.nextUrl.searchParams.entries()),
     );
 
-    const membership = await ensureSpaceAndMembership(spaceId, userId);
+    const membership = await ensureSpaceAndMembership(spaceId, userId, campusId);
     if (!membership.ok) {
       const code =
         membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -135,7 +136,7 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of pinnedSnapshot.docs) {
       const data = doc.data();
-      if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+      if (data.campusId && data.campusId !== campusId) {
         continue;
       }
       pinnedPosts.push({
@@ -148,7 +149,7 @@ export const GET = withAuthAndErrors(async (
     for (const doc of postsSnapshot.docs) {
       const data = doc.data();
       if (data.isPinned) continue;
-      if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+      if (data.campusId && data.campusId !== campusId) {
         continue;
       }
       posts.push({
@@ -187,12 +188,14 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     let spaceId = "";
     let userId = "";
+    let campusId = "";
     try {
       const resolved = await params;
       spaceId = resolved.spaceId;
       userId = getUserId(request);
+      campusId = getCampusId(request);
 
-      const membership = await ensureSpaceAndMembership(spaceId, userId);
+      const membership = await ensureSpaceAndMembership(spaceId, userId, campusId);
       if (!membership.ok) {
         const code =
           membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
@@ -224,7 +227,7 @@ export const POST = withAuthValidationAndErrors(
         lastActivity: now,
         isPinned: false,
         isDeleted: false,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
       };
 
       const postRef = await dbAdmin

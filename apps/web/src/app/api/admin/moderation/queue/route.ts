@@ -8,10 +8,10 @@ import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const QueueQuerySchema = z.object({
@@ -47,6 +47,7 @@ interface ReportDocument {
  * Fetch pending reports requiring review
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = QueueQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -63,7 +64,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Build Firestore query for pending reports
     let reportsQuery = dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', 'pending')
       .orderBy('priority', 'asc') // high priority first (alphabetically 'high' < 'low' < 'medium')
       .orderBy('createdAt', 'desc');
@@ -121,7 +122,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Get summary stats
     const allPendingSnapshot = await dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', 'pending')
       .get();
 

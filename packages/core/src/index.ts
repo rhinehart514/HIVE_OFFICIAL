@@ -267,6 +267,27 @@ export type {
   CounterMigrationStatus,
 } from "./domain/hivelab/tool-composition.types";
 
+// Sprint 2: Tool Runtime Context Types
+export type {
+  SpaceContext,
+  MemberContext,
+  MemberRole,
+  TemporalContext,
+  CapabilityContext,
+  ToolRuntimeContext,
+  VisibilityCondition,
+  ConditionGroup,
+  ConditionOperator,
+  ContextRequirements,
+  ContextFieldPath,
+} from "./domain/hivelab/tool-context.types";
+export {
+  evaluateCondition,
+  evaluateConditionGroup,
+  createTemporalContext,
+  createDefaultCapabilities,
+} from "./domain/hivelab/tool-context.types";
+
 // HiveLab Capabilities & Governance (Hackability Layer)
 export {
   CAPABILITY_PRESETS,

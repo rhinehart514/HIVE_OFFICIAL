@@ -8,9 +8,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const HealthQuerySchema = z.object({
@@ -161,6 +160,7 @@ function getAttentionReasons(metrics: {
  * Fetch all spaces with health metrics for launch readiness
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = HealthQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -177,7 +177,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Fetch all spaces
     let spacesQuery = dbAdmin
       .collection('spaces')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     if (query.category) {
@@ -226,7 +226,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
       const newMembersSnapshot = await dbAdmin
         .collection('spaceMembers')
         .where('spaceId', '==', spaceId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('joinedAt', '>=', sevenDaysAgo)
         .where('isActive', '==', true)
         .count()

@@ -1,29 +1,49 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { getAuth } from "firebase-admin/auth";
-import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { enforceRateLimit } from "@/lib/secure-rate-limiter";
-import { getEncodedSessionSecret } from "@/lib/session";
+/**
+ * Session Endpoint
+ * GET: Validates token and returns user session info
+ * POST: Creates session from Firebase ID token
+ *
+ * @deprecated Use /api/auth/me instead. This endpoint validates Bearer tokens
+ * while /api/auth/me uses the httpOnly session cookie (preferred pattern).
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { logger } from '@/lib/logger';
+import { HttpStatus } from '@/lib/api-response-types';
+import { getEncodedSessionSecret } from '@/lib/session';
+import {
+  withErrors,
+  RATE_LIMIT_PRESETS,
+  type ResponseFormatter,
+} from '@/lib/middleware';
 
 /**
- * Session validation endpoint - verifies token and returns user session info
- * GET /api/auth/session
+ * GET /api/auth/session - Validate session (with rate limiting)
+ *
+ * @deprecated Use /api/auth/me instead.
  */
-async function handleSessionRequest(request: NextRequest) {
-  try {
+export const GET = withErrors(
+  async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
+    // DEPRECATION WARNING
+    logger.warn('Deprecated endpoint called: GET /api/auth/session - use /api/auth/me instead', {
+      endpoint: '/api/auth/session',
+      deprecatedSince: '2024-12-09',
+      replacement: '/api/auth/me',
+    });
+
     // Get the authorization header
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(ApiResponseHelper.error("Missing or invalid authorization header", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return respond.error(
+        'Missing or invalid authorization header',
+        'UNAUTHORIZED',
+        { status: HttpStatus.UNAUTHORIZED }
+      );
     }
 
     const idToken = authHeader.substring(7);
-    
-    // SECURITY: Development token bypass removed for production safety
-    // All tokens must be validated through Firebase Auth
-
     const auth = getAuth();
 
     // Verify the ID token
@@ -31,16 +51,12 @@ async function handleSessionRequest(request: NextRequest) {
     try {
       decodedToken = await auth.verifyIdToken(idToken);
     } catch (error) {
-      logger.error(
-      `Invalid ID token at /api/auth/session`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-      return NextResponse.json(
-        { 
-          valid: false,
-          error: "Invalid or expired token",
-          code: "TOKEN_INVALID"
-        },
+      logger.error('Invalid ID token at /api/auth/session', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return respond.error(
+        'Invalid or expired token',
+        'TOKEN_INVALID',
         { status: HttpStatus.UNAUTHORIZED }
       );
     }
@@ -51,17 +67,17 @@ async function handleSessionRequest(request: NextRequest) {
     // Get user profile from Firestore
     let userProfile = null;
     try {
-      const userDoc = await dbAdmin.collection("users").doc(userId).get();
+      const userDoc = await dbAdmin.collection('users').doc(userId).get();
       if (userDoc.exists) {
         const userData = userDoc.data();
         userProfile = {
           id: userId,
           email: userEmail,
-          fullName: userData?.fullName || "",
-          handle: userData?.handle || "",
-          major: userData?.major || "",
-          avatarUrl: userData?.avatarUrl || "",
-          schoolId: userData?.schoolId || "",
+          fullName: userData?.fullName || '',
+          handle: userData?.handle || '',
+          major: userData?.major || '',
+          avatarUrl: userData?.avatarUrl || '',
+          schoolId: userData?.schoolId || '',
           emailVerified: userData?.emailVerified || false,
           builderOptIn: userData?.builderOptIn || false,
           onboardingCompleted: !!(
@@ -75,15 +91,14 @@ async function handleSessionRequest(request: NextRequest) {
         };
       }
     } catch (firestoreError) {
-      logger.error(
-        `Error fetching user profile at /api/auth/session`,
-        { error: { error: firestoreError instanceof Error ? firestoreError.message : String(firestoreError) } }
-      );
+      logger.error('Error fetching user profile at /api/auth/session', {
+        error: firestoreError instanceof Error ? firestoreError.message : String(firestoreError),
+      });
       // Continue without profile data
     }
 
     // Return session information
-    return NextResponse.json({
+    return respond.success({
       valid: true,
       user: userProfile || {
         id: userId,
@@ -99,76 +114,26 @@ async function handleSessionRequest(request: NextRequest) {
         audience: decodedToken.aud,
       },
       token: {
-        algorithm: decodedToken.alg || "RS256",
-        type: "JWT",
+        algorithm: decodedToken.alg || 'RS256',
+        type: 'JWT',
         firebase: true,
-      } });
-
-  } catch (error) {
-    logger.error(
-      `Error validating session at /api/auth/session`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      { 
-        valid: false,
-        error: "Failed to validate session",
-        code: "VALIDATION_ERROR"
       },
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
-  }
-}
+    });
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.auth }
+);
 
 /**
- * GET /api/auth/session - with rate limiting
- *
- * @deprecated Use /api/auth/me instead. This endpoint validates Bearer tokens
- * while /api/auth/me uses the httpOnly session cookie (preferred pattern).
- */
-export async function GET(request: NextRequest) {
-  // DEPRECATION WARNING: Use /api/auth/me for session validation
-  logger.warn('Deprecated endpoint called: GET /api/auth/session - use /api/auth/me instead', {
-    endpoint: '/api/auth/session',
-    deprecatedSince: '2024-12-09',
-    replacement: '/api/auth/me'
-  });
-
-  // Rate limit: 100 requests per minute for session checks
-  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { valid: false, error: rateLimitResult.error },
-      { status: rateLimitResult.status, headers: rateLimitResult.headers }
-    );
-  }
-  return handleSessionRequest(request);
-}
-
-/**
- * Create session from Firebase ID token
- * POST /api/auth/session
+ * POST /api/auth/session - Create session from Firebase ID token
  * Body: { idToken, email, schoolId }
  */
-export async function POST(request: NextRequest) {
-  // Rate limit
-  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { success: false, error: rateLimitResult.error },
-      { status: rateLimitResult.status, headers: rateLimitResult.headers }
-    );
-  }
-
-  try {
+export const POST = withErrors(
+  async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
     const body = await request.json();
     const { idToken, email, schoolId } = body;
 
     if (!idToken) {
-      return NextResponse.json(
-        { success: false, error: "ID token is required" },
-        { status: HttpStatus.BAD_REQUEST }
-      );
+      return respond.error('ID token is required', 'MISSING_TOKEN', { status: HttpStatus.BAD_REQUEST });
     }
 
     const auth = getAuth();
@@ -178,12 +143,12 @@ export async function POST(request: NextRequest) {
     try {
       decodedToken = await auth.verifyIdToken(idToken);
     } catch (error) {
-      logger.error(
-        `Invalid ID token at /api/auth/session POST`,
-        { error: error instanceof Error ? error.message : String(error) }
-      );
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token" },
+      logger.error('Invalid ID token at /api/auth/session POST', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return respond.error(
+        'Invalid or expired token',
+        'TOKEN_INVALID',
         { status: HttpStatus.UNAUTHORIZED }
       );
     }
@@ -193,7 +158,7 @@ export async function POST(request: NextRequest) {
     const campusId = schoolId || 'ub-buffalo';
 
     // Get or create user profile
-    const userRef = dbAdmin.collection("users").doc(userId);
+    const userRef = dbAdmin.collection('users').doc(userId);
     const userDoc = await userRef.get();
 
     let needsOnboarding = true;
@@ -238,7 +203,7 @@ export async function POST(request: NextRequest) {
       email: userEmail,
       campusId,
       isAdmin: userData?.isAdmin || false,
-      onboardingCompleted: !needsOnboarding, // CRITICAL: Include onboarding status in JWT
+      onboardingCompleted: !needsOnboarding,
       verifiedAt: new Date().toISOString(),
       sessionId: `session-${Date.now()}`,
     })
@@ -251,13 +216,16 @@ export async function POST(request: NextRequest) {
     // Set session cookie
     const response = NextResponse.json({
       success: true,
-      needsOnboarding,
-      user: {
-        id: userId,
-        email: userEmail,
-        campusId,
-        onboardingCompleted: !needsOnboarding,
+      data: {
+        needsOnboarding,
+        user: {
+          id: userId,
+          email: userEmail,
+          campusId,
+          onboardingCompleted: !needsOnboarding,
+        },
       },
+      meta: { timestamp: new Date().toISOString() },
     });
 
     response.cookies.set('hive_session', sessionToken, {
@@ -275,15 +243,6 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-
-  } catch (error) {
-    logger.error(
-      `Error creating session at /api/auth/session POST`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(
-      { success: false, error: "Failed to create session" },
-      { status: HttpStatus.INTERNAL_SERVER_ERROR }
-    );
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.auth }
+);

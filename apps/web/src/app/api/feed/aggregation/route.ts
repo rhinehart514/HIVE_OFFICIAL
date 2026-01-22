@@ -1,10 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
-// Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
+import { withAuthAndErrors, getUserId, getCampusId } from "@/lib/middleware";
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 // Content aggregation interfaces
 interface ContentSource {
@@ -59,132 +55,112 @@ interface AggregationConfig {
 }
 
 // POST - Aggregate content from all sources
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const body = await request.json();
-    const {
-      spaceIds = [], // Empty = all accessible spaces
-      config = getDefaultAggregationConfig(),
-      forceRefresh = false,
-      includeAnalytics = true
-    } = body;
+  const body = await request.json();
+  const {
+    spaceIds = [], // Empty = all accessible spaces
+    config = getDefaultAggregationConfig(),
+    forceRefresh = false,
+    includeAnalytics = true
+  } = body;
 
-    const startTime = Date.now();
+  const startTime = Date.now();
 
-    // Get user's accessible spaces if not specified
-    const targetSpaceIds = spaceIds.length > 0 ? spaceIds : await getUserAccessibleSpaces(user.uid);
+  // Get user's accessible spaces if not specified
+  const targetSpaceIds = spaceIds.length > 0 ? spaceIds : await getUserAccessibleSpaces(userId, campusId);
 
-    // Get active content sources
-    const contentSources = await getActiveContentSources(targetSpaceIds);
+  // Get active content sources
+  const contentSources = await getActiveContentSources(targetSpaceIds);
 
-    // Aggregate content from all sources
-    const aggregatedContent = await aggregateFromAllSources({
-      userId: user.uid,
-      sources: contentSources,
-      config,
-      forceRefresh
-    });
+  // Aggregate content from all sources
+  const aggregatedContent = await aggregateFromAllSources({
+    userId,
+    sources: contentSources,
+    config,
+    forceRefresh,
+    campusId
+  });
 
-    // Apply quality filtering and ranking
-    const processedContent = await processAggregatedContent(aggregatedContent, config);
+  // Apply quality filtering and ranking
+  const processedContent = await processAggregatedContent(aggregatedContent, config);
 
-    // Generate analytics if requested
-    let analytics = null;
-    if (includeAnalytics) {
-      analytics = generateAggregationAnalytics(contentSources, aggregatedContent, processedContent);
-    }
-
-    const processingTime = Date.now() - startTime;
-
-    // Log aggregation metrics
-    await logAggregationMetrics(user.uid, {
-      sourcesProcessed: contentSources.length,
-      itemsAggregated: aggregatedContent.length,
-      itemsProcessed: processedContent.length,
-      processingTime,
-      quality: analytics?.averageQuality || 0
-    });
-
-    return NextResponse.json({
-      success: true,
-      content: processedContent,
-      analytics,
-      metadata: {
-        sourcesProcessed: contentSources.length,
-        totalItems: aggregatedContent.length,
-        filteredItems: processedContent.length,
-        processingTime,
-        generatedAt: new Date().toISOString()
-      }
-    });
-  } catch (error) {
-    logger.error(
-      `Error aggregating content at /api/feed/aggregation`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to aggregate content", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  // Generate analytics if requested
+  let analytics = null;
+  if (includeAnalytics) {
+    analytics = generateAggregationAnalytics(contentSources, aggregatedContent, processedContent);
   }
-}
+
+  const processingTime = Date.now() - startTime;
+
+  // Log aggregation metrics
+  await logAggregationMetrics(userId, {
+    sourcesProcessed: contentSources.length,
+    itemsAggregated: aggregatedContent.length,
+    itemsProcessed: processedContent.length,
+    processingTime,
+    quality: analytics?.averageQuality || 0
+  });
+
+  return respond.success({
+    content: processedContent,
+    analytics,
+    metadata: {
+      sourcesProcessed: contentSources.length,
+      totalItems: aggregatedContent.length,
+      filteredItems: processedContent.length,
+      processingTime,
+      generatedAt: new Date().toISOString()
+    }
+  });
+});
 
 // GET - Get aggregation status and source information
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
+
+  const { searchParams } = new URL(request.url);
+  const spaceId = searchParams.get('spaceId');
+  const includeMetrics = searchParams.get('includeMetrics') === 'true';
+
+  if (spaceId) {
+    // Get sources for specific space
+    const spaceSources = await getActiveContentSources([spaceId]);
+    const sourceMetrics = includeMetrics ? await getSourceMetrics(spaceId) : null;
+
+    return respond.success({
+      spaceId,
+      sources: spaceSources,
+      metrics: sourceMetrics
+    });
+  } else {
+    // Get all accessible sources
+    const accessibleSpaces = await getUserAccessibleSpaces(userId, campusId);
+    const allSources = await getActiveContentSources(accessibleSpaces);
+
+    const sourcesBySpace = allSources.reduce((acc, source) => {
+      const key = source.spaceId || 'system';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(source);
+      return acc;
+    }, {} as Record<string, ContentSource[]>);
+
+    let metrics = null;
+    if (includeMetrics) {
+      metrics = await getAggregationMetrics(userId);
     }
 
-    const { searchParams } = new URL(request.url);
-    const spaceId = searchParams.get('spaceId');
-    const includeMetrics = searchParams.get('includeMetrics') === 'true';
-
-    if (spaceId) {
-      // Get sources for specific space
-      const spaceSources = await getActiveContentSources([spaceId]);
-      const sourceMetrics = includeMetrics ? await getSourceMetrics(spaceId) : null;
-
-      return NextResponse.json({
-        spaceId,
-        sources: spaceSources,
-        metrics: sourceMetrics
-      });
-    } else {
-      // Get all accessible sources
-      const accessibleSpaces = await getUserAccessibleSpaces(user.uid);
-      const allSources = await getActiveContentSources(accessibleSpaces);
-      
-      const sourcesBySpace = allSources.reduce((acc, source) => {
-        const key = source.spaceId || 'system';
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(source);
-        return acc;
-      }, {} as Record<string, ContentSource[]>);
-
-      let metrics = null;
-      if (includeMetrics) {
-        metrics = await getAggregationMetrics(user.uid);
-      }
-
-      return NextResponse.json({
-        sourcesBySpace,
-        totalSources: allSources.length,
-        accessibleSpaces: accessibleSpaces.length,
-        metrics
-      });
-    }
-  } catch (error) {
-    logger.error(
-      `Error getting aggregation info at /api/feed/aggregation`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to get aggregation info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+    return respond.success({
+      sourcesBySpace,
+      totalSources: allSources.length,
+      accessibleSpaces: accessibleSpaces.length,
+      metrics
+    });
   }
-}
+});
 
 // Helper function to get default aggregation config
 function getDefaultAggregationConfig(): AggregationConfig {
@@ -200,12 +176,12 @@ function getDefaultAggregationConfig(): AggregationConfig {
 }
 
 // Helper function to get user's accessible spaces
-async function getUserAccessibleSpaces(userId: string): Promise<string[]> {
+async function getUserAccessibleSpaces(userId: string, campusId: string): Promise<string[]> {
   try {
     const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
     return membershipsSnapshot.docs.map(doc => doc.data().spaceId);
   } catch (error) {
@@ -323,8 +299,9 @@ async function aggregateFromAllSources(params: {
   sources: ContentSource[];
   config: AggregationConfig;
   forceRefresh: boolean;
+  campusId: string;
 }): Promise<AggregatedContentItem[]> {
-  const { userId: _userId, sources, config, forceRefresh } = params;
+  const { userId: _userId, sources, config, forceRefresh, campusId } = params;
   const aggregatedItems: AggregatedContentItem[] = [];
 
   const timeWindow = new Date();
@@ -332,8 +309,8 @@ async function aggregateFromAllSources(params: {
 
   for (const source of sources) {
     try {
-      const sourceContent = await aggregateFromSource(source, config, timeWindow, forceRefresh);
-      
+      const sourceContent = await aggregateFromSource(source, config, timeWindow, forceRefresh, campusId);
+
       // Add source metadata to each item
       const enhancedContent = sourceContent.map(item => ({
         ...item,
@@ -361,30 +338,31 @@ async function aggregateFromSource(
   source: ContentSource,
   config: AggregationConfig,
   timeWindow: Date,
-  _forceRefresh: boolean
+  _forceRefresh: boolean,
+  campusId: string
 ): Promise<AggregatedContentItem[]> {
   const _items: AggregatedContentItem[] = [];
 
   try {
     switch (source.type) {
       case 'tool_interactions':
-        return await aggregateToolInteractions(source, config, timeWindow);
-      
+        return await aggregateToolInteractions(source, config, timeWindow, campusId);
+
       case 'space_events':
-        return await aggregateSpaceEvents(source, config, timeWindow);
-      
+        return await aggregateSpaceEvents(source, config, timeWindow, campusId);
+
       case 'user_posts':
-        return await aggregateUserPosts(source, config, timeWindow);
-      
+        return await aggregateUserPosts(source, config, timeWindow, campusId);
+
       case 'builder_announcements':
         return await aggregateBuilderAnnouncements(source, config, timeWindow);
-      
+
       case 'system_notifications':
         return await aggregateSystemNotifications(source, config, timeWindow);
-      
+
       case 'ritual_updates':
         return await aggregateRitualUpdates(source, config, timeWindow);
-      
+
       default:
         return [];
     }
@@ -398,12 +376,13 @@ async function aggregateFromSource(
 async function aggregateToolInteractions(
   source: ContentSource,
   config: AggregationConfig,
-  timeWindow: Date
+  timeWindow: Date,
+  campusId: string
 ): Promise<AggregatedContentItem[]> {
   try {
     const postsSnapshot = await dbAdmin.collection('posts')
       .where('spaceId', '==', source.spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('type', '==', 'tool_generated')
       .where('createdAt', '>=', timeWindow.toISOString())
       .orderBy('createdAt', 'desc')
@@ -413,7 +392,7 @@ async function aggregateToolInteractions(
 
     for (const postDoc of postsSnapshot.docs) {
       const post = { id: postDoc.id, ...(postDoc.data() as Record<string, unknown>) } as unknown as PostLike;
-      
+
       // Calculate quality and relevance scores
       const qualityScore = calculateContentQuality(post, 'tool_generated');
       const relevanceScore = calculateRelevanceScore(post, source);
@@ -462,12 +441,13 @@ interface SpaceEventLike {
 async function aggregateSpaceEvents(
   source: ContentSource,
   config: AggregationConfig,
-  timeWindow: Date
+  timeWindow: Date,
+  campusId: string
 ): Promise<AggregatedContentItem[]> {
   try {
     const eventsSnapshot = await dbAdmin.collection('events')
       .where('spaceId', '==', source.spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('state', '==', 'published')
       .where('createdAt', '>=', timeWindow.toISOString())
       .orderBy('startDate', 'asc')
@@ -477,7 +457,7 @@ async function aggregateSpaceEvents(
 
     for (const eventDoc of eventsSnapshot.docs) {
       const event = { id: eventDoc.id, ...(eventDoc.data() as Record<string, unknown>) } as unknown as SpaceEventLike;
-      
+
       const qualityScore = calculateContentQuality(event, 'space_event');
       const relevanceScore = calculateRelevanceScore(event, source);
 
@@ -525,12 +505,13 @@ interface PostLike {
 async function aggregateUserPosts(
   source: ContentSource,
   config: AggregationConfig,
-  timeWindow: Date
+  timeWindow: Date,
+  campusId: string
 ): Promise<AggregatedContentItem[]> {
   try {
     const postsSnapshot = await dbAdmin.collection('posts')
       .where('spaceId', '==', source.spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('type', 'in', ['tool_enhanced', 'user_post'])
       .where('createdAt', '>=', timeWindow.toISOString())
       .orderBy('createdAt', 'desc')
@@ -540,7 +521,7 @@ async function aggregateUserPosts(
 
     for (const postDoc of postsSnapshot.docs) {
       const post = { id: postDoc.id, ...(postDoc.data() as Record<string, unknown>) } as unknown as PostLike;
-      
+
       const contentType = post.type === 'tool_enhanced' ? 'tool_enhanced' : 'tool_generated';
       const qualityScore = calculateContentQuality(post, contentType);
       const relevanceScore = calculateRelevanceScore(post, source);
@@ -596,7 +577,7 @@ async function aggregateBuilderAnnouncements(
 
     for (const announcementDoc of announcementsSnapshot.docs) {
       const announcement = { id: announcementDoc.id, ...(announcementDoc.data() as Record<string, unknown>) } as unknown as PostLike;
-      
+
       const qualityScore = calculateContentQuality(announcement, 'builder_announcement');
       const relevanceScore = calculateRelevanceScore(announcement, source);
 
@@ -759,18 +740,18 @@ function calculateContentQuality(content: QualityContent, contentType: string): 
       if (typeof elementCount === 'number' && elementCount > 3) quality += 10;
       break;
     }
-    
+
     case 'tool_enhanced':
       quality += 20;
       if (content.metadata?.enhancedByTool) quality += 10;
       break;
-    
+
     case 'space_event':
       quality += 15;
       if (content.startDate && content.endDate) quality += 10;
       if (content.location) quality += 5;
       break;
-    
+
     case 'builder_announcement':
       quality += 25;
       if (content.isPinned) quality += 10;
@@ -856,8 +837,8 @@ function removeDuplicates(content: AggregatedContentItem[]): AggregatedContentIt
 async function applyCrossReferencing(content: AggregatedContentItem[]): Promise<AggregatedContentItem[]> {
   // Simplified cross-referencing - find related content
   return content.map(item => {
-    const relatedItems = content.filter(other => 
-      other.id !== item.id && 
+    const relatedItems = content.filter(other =>
+      other.id !== item.id &&
       other.spaceId === item.spaceId &&
       other.contentType === item.contentType
     ).slice(0, 3);
@@ -873,16 +854,16 @@ function applyPrioritization(content: AggregatedContentItem[], config: Aggregati
     switch (config.prioritizationStrategy) {
       case 'quality':
         return b.qualityScore - a.qualityScore;
-      
+
       case 'engagement': {
         const aEng = a.engagement.likes + a.engagement.comments * 2 + a.engagement.shares * 3;
         const bEng = b.engagement.likes + b.engagement.comments * 2 + b.engagement.shares * 3;
         return bEng - aEng;
       }
-      
+
       case 'recency':
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-      
+
       case 'balanced':
       default: {
         const aScore = (a.qualityScore * 0.4) + (a.relevanceScore * 0.4) + (a.priority * 0.2);
@@ -896,15 +877,15 @@ function applyPrioritization(content: AggregatedContentItem[], config: Aggregati
 // Helper function to apply diversity weighting
 function applyDiversityWeighting(content: AggregatedContentItem[], diversityWeight: number): AggregatedContentItem[] {
   const contentTypeCounts = new Map<string, number>();
-  
+
   return content.map(item => {
     const count = contentTypeCounts.get(item.contentType) || 0;
     contentTypeCounts.set(item.contentType, count + 1);
-    
+
     // Apply diversity bonus (decreases with repeated content types)
     const diversityBonus = diversityWeight * (1 - count * 0.1);
     item.relevanceScore += diversityBonus * 10;
-    
+
     return item;
   });
 }
@@ -990,7 +971,7 @@ async function getAggregationMetrics(userId: string): Promise<{ totalAggregation
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const metricsSnapshot = await dbAdmin.collection('aggregationMetrics')
       .where('userId', '==', userId)
       .where('date', '>=', sevenDaysAgo.toISOString().split('T')[0])

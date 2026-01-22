@@ -38,6 +38,13 @@ export {
   getUserId,
   getUserEmail,
   getCampusId,
+  // Type-safe user attachment (Phase 1.1)
+  getUser,
+  attachUser,
+  // Campus isolation helpers (Phase 1.2)
+  deriveCampusFromEmail,
+  requireCampusMatch,
+  type UserContext,
   type AuthenticatedRequest,
   type AuthenticatedHandler,
   type NextRouteHandler
@@ -64,7 +71,7 @@ export {
 // Admin middleware removed for HiveLab-only launch
 
 // Combined middleware wrappers
-import { withAuth, withAdminAuth, type AuthenticatedHandler, type AuthenticatedRequest } from './auth';
+import { withAuth, withAdminAuth, getUser, attachUser, deriveCampusFromEmail, type AuthenticatedHandler, type AuthenticatedRequest, type UserContext } from './auth';
 import { withErrorHandling, type ApiHandler } from './error-handler';
 import { withResponse, type ResponseFormatter } from './response';
 import { type z } from 'zod';
@@ -177,11 +184,12 @@ const DEFAULT_LIMITS = {
 
 /**
  * Extract client identifier for rate limiting
+ * Uses type-safe getUser accessor instead of property mutation
  */
 function getClientId(request: Request): string {
-  // Try to get user ID from auth (set by withAuth)
-  const userId = (request as any).user?.uid;
-  if (userId) return `user:${userId}`;
+  // Try to get user ID from auth (set by withAuth via symbol)
+  const user = getUser(request as import('next/server').NextRequest);
+  if (user?.uid) return `user:${user.uid}`;
 
   // Fall back to IP address
   const forwarded = request.headers.get('x-forwarded-for');
@@ -346,6 +354,7 @@ export function withErrors<T>(
  * Includes rate limiting (200 requests/min as public rate)
  *
  * Usage: Request will have auth info attached if available, but won't 401 if missing
+ * Use getUser(request) to check if auth succeeded
  */
 export function withOptionalAuth<T = RouteParams>(
   handler: (
@@ -364,12 +373,25 @@ export function withOptionalAuth<T = RouteParams>(
         const { authAdmin } = await import('@/lib/firebase-admin');
         const decodedToken = await authAdmin.verifyIdToken(token);
 
-        // Attach auth info to request
-        (request as any).user = {
+        // Derive campus from email
+        const campusId = decodedToken.email
+          ? deriveCampusFromEmail(decodedToken.email) || 'ub-buffalo'
+          : 'ub-buffalo';
+
+        // Create user context
+        const userContext: UserContext = {
           uid: decodedToken.uid,
-          email: decodedToken.email,
-          campusId: (decodedToken as any).campusId || 'ub-buffalo'
+          email: decodedToken.email || '',
+          campusId,
+          decodedToken
         };
+
+        // Attach via symbol for type-safe access
+        attachUser(request as import('next/server').NextRequest, userContext);
+
+        // Also attach to .user for backward compatibility
+        const reqWithUser = request as AuthenticatedRequest;
+        reqWithUser.user = userContext;
       }
     } catch {
       // Auth failed or missing - continue without auth
@@ -442,3 +464,31 @@ export function withAuthValidationAndErrors<TSchema, TContext>(
 
 // Export rate limit utilities for routes that need custom limits
 export { withRateLimit, DEFAULT_LIMITS, type RateLimitConfig, type MiddlewareOptions };
+
+/**
+ * Rate limit presets for common route patterns
+ * Use these in route configurations for consistency
+ *
+ * @example
+ * export const POST = withAuthAndErrors(handler, {
+ *   rateLimit: RATE_LIMIT_PRESETS.strict
+ * });
+ */
+export const RATE_LIMIT_PRESETS = {
+  /** Standard authenticated routes: 100 requests/min */
+  standard: { maxRequests: 100, windowMs: 60000 },
+  /** Sensitive operations: 10 requests/min */
+  strict: { maxRequests: 10, windowMs: 60000 },
+  /** Authentication endpoints: 5 requests/min */
+  auth: { maxRequests: 5, windowMs: 60000 },
+  /** AI/LLM operations: 5 requests/min */
+  ai: { maxRequests: 5, windowMs: 60000 },
+  /** Search operations: 30 requests/min */
+  search: { maxRequests: 30, windowMs: 60000 },
+  /** Public routes: 200 requests/min */
+  public: { maxRequests: 200, windowMs: 60000 },
+  /** Admin routes: 50 requests/min */
+  admin: { maxRequests: 50, windowMs: 60000 },
+} as const;
+
+export type RateLimitPreset = keyof typeof RATE_LIMIT_PRESETS;

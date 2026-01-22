@@ -1,9 +1,23 @@
-import { type NextRequest, NextResponse } from 'next/server';
+/**
+ * Sessions Management Endpoint
+ * GET: List all active sessions for the current user
+ * DELETE: Revoke all sessions (logout everywhere)
+ *
+ * Note: This is a privacy-sensitive endpoint, only returns current user's sessions
+ */
+
+import { type NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
 import { getUserActiveSessions, revokeAllUserSessionsAsync } from '@/lib/session-revocation';
 import { logger } from '@/lib/logger';
-import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 import { auditAuthEvent } from '@/lib/production-auth';
+import {
+  withAuthAndErrors,
+  getUserId,
+  RATE_LIMIT_PRESETS,
+  type AuthenticatedRequest,
+  type ResponseFormatter,
+} from '@/lib/middleware';
 
 /**
  * GET /api/auth/sessions
@@ -11,31 +25,18 @@ import { auditAuthEvent } from '@/lib/production-auth';
  *
  * Returns:
  * - sessions: Array of active session info (id, createdAt, lastActiveAt, userAgent)
- *
- * Note: This is a privacy-sensitive endpoint, only returns current user's sessions
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  try {
-    // Rate limit
-    const rateLimitResult = await enforceRateLimit('api', request);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: rateLimitResult.error || 'Rate limit exceeded' },
-        { status: rateLimitResult.status }
-      );
-    }
+export const GET = withAuthAndErrors(
+  async (request: AuthenticatedRequest, _context: unknown, respond: typeof ResponseFormatter) => {
+    const userId = getUserId(request);
+    const session = await getSession(request as NextRequest);
 
-    // Verify session
-    const session = await getSession(request);
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
-      );
+      return respond.error('Unauthorized', 'UNAUTHORIZED', { status: 401 });
     }
 
     // Get active sessions for this user
-    const sessions = await getUserActiveSessions(session.userId);
+    const sessions = await getUserActiveSessions(userId);
 
     // Mask the session IDs for security (only show first 8 chars)
     const maskedSessions = sessions.map((s) => ({
@@ -44,23 +45,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       isCurrent: s.sessionId === session.sessionId,
     }));
 
-    return NextResponse.json({
-      success: true,
+    return respond.success({
       sessions: maskedSessions,
       currentSessionId: session.sessionId.substring(0, 8) + '...',
     });
-  } catch (error) {
-    logger.error('Failed to list sessions', {
-      component: 'sessions-api',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to list sessions', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.standard }
+);
 
 /**
  * DELETE /api/auth/sessions
@@ -71,58 +62,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * - Force re-authentication on all devices
  * - Current session remains valid until page reload
  */
-export async function DELETE(request: NextRequest): Promise<NextResponse> {
-  try {
-    // Rate limit (strict - sensitive operation)
-    const rateLimitResult = await enforceRateLimit('authStrict', request);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: rateLimitResult.error || 'Rate limit exceeded' },
-        { status: rateLimitResult.status }
-      );
-    }
+export const DELETE = withAuthAndErrors(
+  async (request: AuthenticatedRequest, _context: unknown, respond: typeof ResponseFormatter) => {
+    const userId = getUserId(request);
+    const session = await getSession(request as NextRequest);
 
-    // Verify session
-    const session = await getSession(request);
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
-      );
+      return respond.error('Unauthorized', 'UNAUTHORIZED', { status: 401 });
     }
 
     // Revoke all sessions for this user
-    await revokeAllUserSessionsAsync(session.userId);
+    await revokeAllUserSessionsAsync(userId);
 
     // Audit the operation
-    await auditAuthEvent('success', request, {
+    await auditAuthEvent('success', request as NextRequest, {
       operation: 'revoke_all_sessions',
-      userId: session.userId,
+      userId,
     });
 
     logger.info('All user sessions revoked', {
       component: 'sessions-api',
-      userId: session.userId,
+      userId,
     });
 
-    return NextResponse.json({
-      success: true,
+    return respond.success({
       message: 'All sessions have been revoked. Please log in again on other devices.',
     });
-  } catch (error) {
-    logger.error('Failed to revoke all sessions', {
-      component: 'sessions-api',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    await auditAuthEvent('failure', request, {
-      operation: 'revoke_all_sessions',
-      error: error instanceof Error ? error.message : 'unknown',
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to revoke sessions', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.strict }
+);

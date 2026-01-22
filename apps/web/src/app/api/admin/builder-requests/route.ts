@@ -6,9 +6,10 @@ import {
   withAdminAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
+import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 // SECURITY: Use centralized admin auth for POST (extra check needed for mutations)
 import { isAdmin } from '@/lib/admin-auth';
@@ -26,6 +27,7 @@ const ReviewRequestSchema = z.object({
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || 'pending';
@@ -34,7 +36,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
   try {
     const requestsSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', status)
       .orderBy('submittedAt', 'desc')
       .limit(limit)
@@ -66,7 +68,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     const pendingCount = (
       await dbAdmin
         .collection('builderRequests')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('status', '==', 'pending')
         .count()
         .get()
@@ -100,6 +102,7 @@ export const POST = withAuthValidationAndErrors(
     respond
   ) => {
     const adminId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Check admin permission
     if (!(await isAdmin(adminId))) {
@@ -145,7 +148,7 @@ export const POST = withAuthValidationAndErrors(
           .collection('spaceMembers')
           .where('spaceId', '==', requestData.spaceId)
           .where('userId', '==', requestData.userId)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .limit(1)
           .get();
 

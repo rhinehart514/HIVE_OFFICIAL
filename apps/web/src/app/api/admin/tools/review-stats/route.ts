@@ -12,9 +12,9 @@ import { logger } from "@/lib/structured-logger";
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 /**
  * GET /api/admin/tools/review-stats
@@ -31,6 +31,7 @@ import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   const { searchParams } = new URL(request.url);
   const days = parseInt(searchParams.get("days") || "30", 10);
@@ -50,28 +51,28 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Count by status
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "pending")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "approved")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "rejected")
       .count()
       .get(),
 
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "changes_requested")
       .count()
       .get(),
@@ -79,7 +80,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Recent review activity
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("reviewedAt", ">=", startDateStr)
       .orderBy("reviewedAt", "desc")
       .limit(100)
@@ -88,7 +89,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // All requests in time period (for metrics)
     dbAdmin
       .collection("toolPublishRequests")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("createdAt", ">=", startDateStr)
       .get(),
   ]);

@@ -4,11 +4,11 @@ import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import * as admin from "firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import {
@@ -363,7 +363,7 @@ function getBlockedElements(toolData: FirebaseFirestore.DocumentData): string[] 
   return blockedFound;
 }
 
-async function ensureToolIsDeployable(toolId: string, userId: string) {
+async function ensureToolIsDeployable(toolId: string, userId: string, campusId: string) {
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
   if (!toolDoc.exists) {
     return {
@@ -382,7 +382,7 @@ async function ensureToolIsDeployable(toolId: string, userId: string) {
     };
   }
 
-  if (toolData.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData.campusId && toolData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -401,7 +401,7 @@ async function ensureToolIsDeployable(toolId: string, userId: string) {
   return { ok: true as const, toolDoc, toolData };
 }
 
-async function ensureSpaceDeploymentAllowed(spaceId: string, userId: string) {
+async function ensureSpaceDeploymentAllowed(spaceId: string, userId: string, campusId: string) {
   const spaceDoc = await dbAdmin.collection("spaces").doc(spaceId).get();
   if (!spaceDoc.exists) {
     return {
@@ -412,7 +412,7 @@ async function ensureSpaceDeploymentAllowed(spaceId: string, userId: string) {
   }
 
   const spaceData = spaceDoc.data();
-  if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData?.campusId && spaceData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -434,13 +434,14 @@ async function ensureSpaceDeploymentAllowed(spaceId: string, userId: string) {
 
 async function ensureNoExistingDeployment(
   input: DeployToolInput,
+  campusId: string,
 ): Promise<boolean> {
   const existingSnapshot = await dbAdmin
     .collection("deployedTools")
     .where("toolId", "==", input.toolId)
     .where("deployedTo", "==", input.deployTo)
     .where("targetId", "==", input.targetId)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .where("status", "in", ["active", "paused"])
     .limit(1)
     .get();
@@ -448,12 +449,12 @@ async function ensureNoExistingDeployment(
   return existingSnapshot.empty;
 }
 
-async function enforceSpaceLimit(spaceId: string) {
+async function enforceSpaceLimit(spaceId: string, campusId: string) {
   const snapshot = await dbAdmin
     .collection("deployedTools")
     .where("deployedTo", "==", "space")
     .where("targetId", "==", spaceId)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .where("status", "==", "active")
     .get();
 
@@ -471,6 +472,7 @@ async function enforceSpaceLimit(spaceId: string) {
 async function getNextPosition(
   deployedTo: "profile" | "space",
   targetId: string,
+  campusId: string,
   surface?: string,
 ) {
   try {
@@ -478,7 +480,7 @@ async function getNextPosition(
       .collection("deployedTools")
       .where("deployedTo", "==", deployedTo)
       .where("targetId", "==", targetId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "active");
 
     if (surface) {
@@ -499,8 +501,9 @@ async function getNextPosition(
 async function canUserAccessDeployment(
   userId: string,
   deployment: FirebaseFirestore.DocumentData,
+  campusId: string,
 ) {
-  if (deployment.campusId && deployment.campusId !== CURRENT_CAMPUS_ID) {
+  if (deployment.campusId && deployment.campusId !== campusId) {
     return false;
   }
 
@@ -524,7 +527,7 @@ async function canUserAccessDeployment(
       return false;
     }
     const spaceData = spaceDoc.data();
-    if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+    if (spaceData?.campusId && spaceData.campusId !== campusId) {
       return false;
     }
     const userRole = spaceData?.members?.[userId]?.role;
@@ -543,6 +546,7 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     logger.info("Deploying tool", {
       toolId: payload.toolId,
@@ -551,7 +555,7 @@ export const POST = withAuthValidationAndErrors(
       userUid: userId,
     });
 
-    const toolResult = await ensureToolIsDeployable(payload.toolId, userId);
+    const toolResult = await ensureToolIsDeployable(payload.toolId, userId, campusId);
     if (!toolResult.ok) {
       return respond.error(toolResult.message, "FORBIDDEN", {
         status: toolResult.status,
@@ -616,6 +620,7 @@ export const POST = withAuthValidationAndErrors(
       const spaceValidation = await ensureSpaceDeploymentAllowed(
         payload.targetId,
         userId,
+        campusId,
       );
       if (!spaceValidation.ok) {
         return respond.error(spaceValidation.message, "FORBIDDEN", {
@@ -632,7 +637,7 @@ export const POST = withAuthValidationAndErrors(
         });
       }
 
-      const limitCheck = await enforceSpaceLimit(payload.targetId);
+      const limitCheck = await enforceSpaceLimit(payload.targetId, campusId);
       if (!limitCheck.ok) {
         return respond.error(limitCheck.message, "CONFLICT", {
           status: limitCheck.status,
@@ -640,7 +645,7 @@ export const POST = withAuthValidationAndErrors(
       }
     }
 
-    const uniqueDeployment = await ensureNoExistingDeployment(payload);
+    const uniqueDeployment = await ensureNoExistingDeployment(payload, campusId);
     if (!uniqueDeployment) {
       return respond.error(
         "Tool already deployed to this target",
@@ -699,6 +704,7 @@ export const POST = withAuthValidationAndErrors(
     const position = await getNextPosition(
       payload.deployTo,
       payload.targetId,
+      campusId,
       resolvedSurface,
     );
 
@@ -745,7 +751,7 @@ export const POST = withAuthValidationAndErrors(
       creatorId: userId,
       spaceId: placementTargetType === "space" ? payload.targetId : null,
       profileId: placementTargetType === "profile" ? payload.targetId : null,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       // Hackability Governance Layer
       capabilities,
       budgets,
@@ -783,7 +789,7 @@ export const POST = withAuthValidationAndErrors(
         isEditable: true,
         state: {},
         stateUpdatedAt: null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         deploymentId: deploymentId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -806,7 +812,7 @@ export const POST = withAuthValidationAndErrors(
       eventType: "tool_deployed",
       userId,
       toolId: payload.toolId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       spaceId: payload.deployTo === "space" ? payload.targetId : null,
       timestamp: timestamp.toISOString(),
       metadata: {
@@ -831,7 +837,7 @@ export const POST = withAuthValidationAndErrors(
         // Get active space members
         const membersSnapshot = await dbAdmin.collection("spaceMembers")
           .where("spaceId", "==", payload.targetId)
-          .where("campusId", "==", CURRENT_CAMPUS_ID)
+          .where("campusId", "==", campusId)
           .where("isActive", "==", true)
           .get();
 
@@ -875,6 +881,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const searchParams = new URL(request.url).searchParams;
     const deployedTo = searchParams.get("deployedTo");
     const targetId = searchParams.get("targetId");
@@ -883,7 +890,7 @@ export const GET = withAuthAndErrors(async (
 
     let deploymentsQuery = dbAdmin
       .collection("deployedTools")
-      .where("campusId", "==", CURRENT_CAMPUS_ID);
+      .where("campusId", "==", campusId);
 
     if (deployedTo) {
       deploymentsQuery = deploymentsQuery.where("deployedTo", "==", deployedTo);
@@ -901,7 +908,7 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of snapshot.docs) {
       const deploymentData = doc.data();
-      if (!(await canUserAccessDeployment(userId, deploymentData))) {
+      if (!(await canUserAccessDeployment(userId, deploymentData, campusId))) {
         continue;
       }
 
@@ -912,7 +919,7 @@ export const GET = withAuthAndErrors(async (
       if (!toolDoc.exists) continue;
 
       const toolData = toolDoc.data();
-      if (toolData?.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+      if (toolData?.campusId && toolData.campusId !== campusId) {
         continue;
       }
 

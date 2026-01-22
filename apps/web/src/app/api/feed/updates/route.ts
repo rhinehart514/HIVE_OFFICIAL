@@ -1,12 +1,7 @@
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import * as _admin from 'firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAuthAndErrors, getUserId, getCampusId } from "@/lib/middleware";
 
 // =============================================================================
 // Inlined Feed Functions (previously from @/lib/real-time-feed)
@@ -22,14 +17,14 @@ interface FeedUpdate {
 /**
  * Get feed updates for a user
  */
-async function getFeedUpdates(userId: string): Promise<FeedUpdate | null> {
+async function getFeedUpdates(userId: string, campusId: string): Promise<FeedUpdate | null> {
   try {
     // Get user's spaces
     const membershipsSnapshot = await dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
 
     if (membershipsSnapshot.empty) {
@@ -91,48 +86,43 @@ async function getFeedUpdates(userId: string): Promise<FeedUpdate | null> {
  * Mark feed items as viewed
  */
 async function markFeedAsViewed(userId: string, itemIds: string[]): Promise<void> {
-  try {
-    const batch = dbAdmin.batch();
+  const batch = dbAdmin.batch();
 
-    // Update user's last viewed timestamp
-    const userFeedStateRef = dbAdmin.collection('userFeedState').doc(userId);
-    batch.set(
-      userFeedStateRef,
-      {
-        lastViewedAt: new Date().toISOString(),
-        lastViewedItemIds: itemIds.slice(0, 20), // Keep last 20
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true }
-    );
+  // Update user's last viewed timestamp
+  const userFeedStateRef = dbAdmin.collection('userFeedState').doc(userId);
+  batch.set(
+    userFeedStateRef,
+    {
+      lastViewedAt: new Date().toISOString(),
+      lastViewedItemIds: itemIds.slice(0, 20), // Keep last 20
+      updatedAt: new Date().toISOString(),
+    },
+    { merge: true }
+  );
 
-    // Mark individual items as viewed
-    for (const itemId of itemIds.slice(0, 50)) {
-      const viewedRef = dbAdmin
-        .collection('userFeedViews')
-        .doc(`${userId}_${itemId}`);
-      batch.set(viewedRef, {
-        userId,
-        itemId,
-        viewedAt: new Date().toISOString(),
-      });
-    }
-
-    await batch.commit();
-  } catch (error) {
-    logger.error('Error marking feed as viewed', { userId, itemIds, error });
-    throw error;
+  // Mark individual items as viewed
+  for (const itemId of itemIds.slice(0, 50)) {
+    const viewedRef = dbAdmin
+      .collection('userFeedViews')
+      .doc(`${userId}_${itemId}`);
+    batch.set(viewedRef, {
+      userId,
+      itemId,
+      viewedAt: new Date().toISOString(),
+    });
   }
+
+  await batch.commit();
 }
 
 /**
  * Force refresh feed cache for a user
  */
-async function refreshFeedCache(userId: string): Promise<FeedUpdate | null> {
+async function refreshFeedCache(userId: string, campusId: string): Promise<FeedUpdate | null> {
   try {
     // Clear any cached state and re-fetch
     await dbAdmin.collection('userFeedState').doc(userId).delete();
-    return await getFeedUpdates(userId);
+    return await getFeedUpdates(userId, campusId);
   } catch (error) {
     logger.error('Error refreshing feed cache', { userId, error });
     return null;
@@ -147,157 +137,92 @@ const FeedUpdateQuerySchema = z.object({
 
 /**
  * Real-time Feed Updates API
- * 
+ *
  * GET ?action=check - Check for new feed updates
+ * GET ?action=force_refresh - Force refresh feed cache
+ */
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
+
+  const url = new URL(request.url);
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const { action } = FeedUpdateQuerySchema.parse(queryParams);
+
+  logger.info('Feed update request', { action, userId, endpoint: '/api/feed/updates' });
+
+  switch (action) {
+    case 'check': {
+      const updates = await getFeedUpdates(userId, campusId);
+
+      return respond.success({
+        hasUpdates: updates !== null,
+        update: updates,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    case 'force_refresh': {
+      const refreshResult = await refreshFeedCache(userId, campusId);
+
+      return respond.success({
+        update: refreshResult,
+        message: 'Feed cache refreshed',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    default:
+      return respond.error("Invalid action for GET request", "INVALID_INPUT", { status: 400 });
+  }
+});
+
+/**
  * POST ?action=mark_viewed - Mark items as viewed
  * POST ?action=force_refresh - Force refresh feed cache
  */
-export async function GET(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const queryParams = Object.fromEntries(url.searchParams.entries());
-    const { action } = FeedUpdateQuerySchema.parse(queryParams);
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    // Verify authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(ApiResponseHelper.error("Authorization header required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+  const url = new URL(request.url);
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const { action, itemIds } = FeedUpdateQuerySchema.parse(queryParams);
 
-    const token = authHeader.substring(7);
-    let userId: string;
+  logger.info('Feed POST request', { action, userId, endpoint: '/api/feed/updates' });
 
-    // SECURITY: Always verify token with Firebase Admin
-    try {
-      const auth = getAuth();
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken.uid;
-    } catch {
-      return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
-
-    logger.info('🔄 Feed update request:for user', { action, userId, endpoint: '/api/feed/updates' });
-
-    switch (action) {
-      case 'check': {
-        const updates = await getFeedUpdates(userId);
-        
-        return NextResponse.json({
-          success: true,
-          hasUpdates: updates !== null,
-          update: updates,
-          timestamp: new Date().toISOString()
-        });
+  switch (action) {
+    case 'mark_viewed': {
+      if (!itemIds) {
+        return respond.error("itemIds parameter required for mark_viewed action", "INVALID_INPUT", { status: 400 });
       }
 
-      case 'force_refresh': {
-        const refreshResult = await refreshFeedCache(userId);
-        
-        return NextResponse.json({
-          success: true,
-          update: refreshResult,
-          message: 'Feed cache refreshed',
-          timestamp: new Date().toISOString()
-        });
+      const itemIdArray = itemIds.split(',').map(id => id.trim()).filter(Boolean);
+
+      if (itemIdArray.length === 0) {
+        return respond.error("At least one valid itemId required", "INVALID_INPUT", { status: 400 });
       }
 
-      default:
-        return NextResponse.json(ApiResponseHelper.error("Invalid action for GET request", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+      await markFeedAsViewed(userId, itemIdArray);
+
+      return respond.success({
+        message: `Marked ${itemIdArray.length} items as viewed`,
+        itemIds: itemIdArray,
+        timestamp: new Date().toISOString()
+      });
     }
 
-  } catch (error: unknown) {
-    logger.error(
-      `Feed updates API error at /api/feed/updates`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
+    case 'force_refresh': {
+      const refreshResult = await refreshFeedCache(userId, campusId);
 
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters', details: error.errors },
-        { status: HttpStatus.BAD_REQUEST }
-      );
+      return respond.success({
+        update: refreshResult,
+        message: 'Feed cache refreshed',
+        timestamp: new Date().toISOString()
+      });
     }
 
-    return NextResponse.json(ApiResponseHelper.error("Internal server error", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+    default:
+      return respond.error("Invalid action for POST request", "INVALID_INPUT", { status: 400 });
   }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const queryParams = Object.fromEntries(url.searchParams.entries());
-    const { action, itemIds } = FeedUpdateQuerySchema.parse(queryParams);
-
-    // Verify authentication
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json(ApiResponseHelper.error("Authorization header required", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
-
-    const token = authHeader.substring(7);
-    let userId: string;
-
-    // SECURITY: Always verify token with Firebase Admin
-    try {
-      const auth = getAuth();
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken.uid;
-    } catch {
-      return NextResponse.json(ApiResponseHelper.error("Invalid or expired token", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
-
-    logger.info('🔄 Feed POST request:for user', { action, userId, endpoint: '/api/feed/updates' });
-
-    switch (action) {
-      case 'mark_viewed': {
-        if (!itemIds) {
-          return NextResponse.json(ApiResponseHelper.error("itemIds parameter required for mark_viewed action", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-        }
-
-        const itemIdArray = itemIds.split(',').map(id => id.trim()).filter(Boolean);
-        
-        if (itemIdArray.length === 0) {
-          return NextResponse.json(ApiResponseHelper.error("At least one valid itemId required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-        }
-
-        await markFeedAsViewed(userId, itemIdArray);
-
-        return NextResponse.json({
-          success: true,
-          message: `Marked ${itemIdArray.length} items as viewed`,
-          itemIds: itemIdArray,
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      case 'force_refresh': {
-        const refreshResult = await refreshFeedCache(userId);
-        
-        return NextResponse.json({
-          success: true,
-          update: refreshResult,
-          message: 'Feed cache refreshed',
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      default:
-        return NextResponse.json(ApiResponseHelper.error("Invalid action for POST request", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-  } catch (error: unknown) {
-    logger.error(
-      `Feed updates POST API error at /api/feed/updates`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid parameters', details: error.errors },
-        { status: HttpStatus.BAD_REQUEST }
-      );
-    }
-
-    return NextResponse.json(ApiResponseHelper.error("Internal server error", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+});

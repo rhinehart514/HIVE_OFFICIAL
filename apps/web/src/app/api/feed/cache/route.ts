@@ -1,14 +1,12 @@
-import { type NextRequest, NextResponse } from 'next/server';
-// Use admin SDK methods since we're in an API route
-import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { dbAdmin } from '@/lib/firebase-admin';
+import { withAuthAndErrors, getUserId, getCampusId } from "@/lib/middleware";
 
 // Feed caching interfaces
 interface FeedCache {
   id: string;
   userId: string;
+  campusId: string;
   cacheKey: string;
   feedType: 'personal' | 'campus' | 'trending' | 'space_specific';
   content: unknown[];
@@ -52,202 +50,174 @@ interface _CacheConfig {
 }
 
 // POST - Get cached feed or generate new cache
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const body = await request.json();
-    const {
-      feedType = 'personal',
-      spaceIds = [],
-      contentTypes = ['tool_generated', 'tool_enhanced'],
-      timeRange = '24h',
-      qualityThreshold = 70,
-      forceRefresh = false,
-      enableCaching = true
-    } = body;
+  const body = await request.json();
+  const {
+    feedType = 'personal',
+    spaceIds = [],
+    contentTypes = ['tool_generated', 'tool_enhanced'],
+    timeRange = '24h',
+    qualityThreshold = 70,
+    forceRefresh = false,
+    enableCaching = true
+  } = body;
 
-    // Generate cache key
-    const cacheKey = generateCacheKey({
-      userId: user.uid,
-      feedType,
-      spaceIds,
-      contentTypes,
-      timeRange,
-      qualityThreshold
-    });
+  // Generate cache key
+  const cacheKey = generateCacheKey({
+    userId,
+    campusId,
+    feedType,
+    spaceIds,
+    contentTypes,
+    timeRange,
+    qualityThreshold
+  });
 
-    const startTime = Date.now();
+  const startTime = Date.now();
 
-    // Try to get cached feed if not forcing refresh
-    if (!forceRefresh && enableCaching) {
-      const cachedFeed = await getCachedFeed(cacheKey, user.uid);
-      if (cachedFeed) {
-        // Update access stats
-        await updateCacheAccess(cachedFeed.id);
-        
-        return NextResponse.json({
-          success: true,
-          content: cachedFeed.content,
-          metadata: {
-            ...cachedFeed.metadata,
-            cached: true,
-            cacheAge: Date.now() - new Date(cachedFeed.createdAt).getTime(),
-            accessCount: cachedFeed.accessCount + 1
-          }
-        });
-      }
-    }
+  // Try to get cached feed if not forcing refresh
+  if (!forceRefresh && enableCaching) {
+    const cachedFeed = await getCachedFeed(cacheKey, userId, campusId);
+    if (cachedFeed) {
+      // Update access stats
+      await updateCacheAccess(cachedFeed.id);
 
-    // Generate new feed content (this would call the aggregation and algorithm APIs)
-    const feedContent = await generateFeedContent({
-      userId: user.uid,
-      feedType,
-      spaceIds,
-      contentTypes,
-      timeRange,
-      qualityThreshold
-    });
-
-    const generationTime = Date.now() - startTime;
-
-    // Cache the result if caching is enabled
-    if (enableCaching) {
-      await cacheFeedContent({
-        userId: user.uid,
-        cacheKey,
-        feedType,
-        content: feedContent.items,
+      return respond.success({
+        content: cachedFeed.content,
         metadata: {
-          ...feedContent.metadata,
-          generationTime,
-          algorithmVersion: '2.0'
-        },
-        parameters: {
-          spaceIds,
-          contentTypes,
-          timeRange,
-          qualityThreshold
+          ...cachedFeed.metadata,
+          cached: true,
+          cacheAge: Date.now() - new Date(cachedFeed.createdAt).getTime(),
+          accessCount: cachedFeed.accessCount + 1
         }
       });
     }
+  }
 
-    return NextResponse.json({
-      success: true,
+  // Generate new feed content (this would call the aggregation and algorithm APIs)
+  const feedContent = await generateFeedContent({
+    userId,
+    campusId,
+    feedType,
+    spaceIds,
+    contentTypes,
+    timeRange,
+    qualityThreshold
+  });
+
+  const generationTime = Date.now() - startTime;
+
+  // Cache the result if caching is enabled
+  if (enableCaching) {
+    await cacheFeedContent({
+      userId,
+      campusId,
+      cacheKey,
+      feedType,
       content: feedContent.items,
       metadata: {
         ...feedContent.metadata,
-        cached: false,
         generationTime,
-        cacheKey: enableCaching ? cacheKey : null
+        algorithmVersion: '2.0'
+      },
+      parameters: {
+        spaceIds,
+        contentTypes,
+        timeRange,
+        qualityThreshold
       }
     });
-  } catch (error) {
-    logger.error(
-      `Error handling feed cache request at /api/feed/cache`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to process feed request", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
+
+  return respond.success({
+    content: feedContent.items,
+    metadata: {
+      ...feedContent.metadata,
+      cached: false,
+      generationTime,
+      cacheKey: enableCaching ? cacheKey : null
+    }
+  });
+});
 
 // GET - Get cache statistics and management info
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
+
+  const { searchParams } = new URL(request.url);
+  const action = searchParams.get('action') || 'stats';
+  const cacheKey = searchParams.get('cacheKey');
+
+  switch (action) {
+    case 'stats': {
+      const stats = await getCacheStats(userId, campusId);
+      return respond.success({ stats });
     }
 
-    const { searchParams } = new URL(request.url);
-    const action = searchParams.get('action') || 'stats';
-    const cacheKey = searchParams.get('cacheKey');
-
-    switch (action) {
-      case 'stats': {
-        const stats = await getCacheStats(user.uid);
-        return NextResponse.json({ stats });
-      }
-
-      case 'list': {
-        const userCaches = await getUserCaches(user.uid);
-        return NextResponse.json({ caches: userCaches });
-      }
-
-      case 'get': {
-        if (!cacheKey) {
-          return NextResponse.json(ApiResponseHelper.error("Cache key required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-        }
-        const cache = await getCachedFeed(cacheKey, user.uid);
-        return NextResponse.json({ cache });
-      }
-
-      default:
-        return NextResponse.json(ApiResponseHelper.error("Invalid action", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+    case 'list': {
+      const userCaches = await getUserCaches(userId, campusId);
+      return respond.success({ caches: userCaches });
     }
-  } catch (error) {
-    logger.error(
-      `Error handling cache GET request at /api/feed/cache`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to get cache info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+
+    case 'get': {
+      if (!cacheKey) {
+        return respond.error("Cache key required", "INVALID_INPUT", { status: 400 });
+      }
+      const cache = await getCachedFeed(cacheKey, userId, campusId);
+      return respond.success({ cache });
+    }
+
+    default:
+      return respond.error("Invalid action", "INVALID_INPUT", { status: 400 });
   }
-}
+});
 
 // DELETE - Clear cache or specific cached items
-export async function DELETE(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const DELETE = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const { searchParams } = new URL(request.url);
-    const cacheKey = searchParams.get('cacheKey');
-    const clearAll = searchParams.get('clearAll') === 'true';
+  const { searchParams } = new URL(request.url);
+  const cacheKey = searchParams.get('cacheKey');
+  const clearAll = searchParams.get('clearAll') === 'true';
 
-    if (clearAll) {
-      // Clear all caches for user
-      const cleared = await clearUserCaches(user.uid);
-      return NextResponse.json({ 
-        success: true, 
-        message: `Cleared ${cleared} cache entries`
-      });
-    } else if (cacheKey) {
-      // Clear specific cache
-      const success = await clearSpecificCache(cacheKey, user.uid);
-      return NextResponse.json({ 
-        success, 
-        message: success ? 'Cache cleared' : 'Cache not found or not owned by user'
-      });
-    } else {
-      return NextResponse.json(ApiResponseHelper.error("Cache key or clearAll parameter required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-  } catch (error) {
-    logger.error(
-      `Error clearing cache at /api/feed/cache`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to clear cache", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  if (clearAll) {
+    // Clear all caches for user
+    const cleared = await clearUserCaches(userId, campusId);
+    return respond.success({
+      message: `Cleared ${cleared} cache entries`
+    });
+  } else if (cacheKey) {
+    // Clear specific cache
+    const success = await clearSpecificCache(cacheKey, userId, campusId);
+    return respond.success({
+      cleared: success,
+      message: success ? 'Cache cleared' : 'Cache not found or not owned by user'
+    });
+  } else {
+    return respond.error("Cache key or clearAll parameter required", "INVALID_INPUT", { status: 400 });
   }
-}
+});
 
 // Helper function to generate cache key
 function generateCacheKey(params: {
   userId: string;
+  campusId: string;
   feedType: string;
   spaceIds: string[];
   contentTypes: string[];
   timeRange: string;
   qualityThreshold: number;
 }): string {
-  const { userId, feedType, spaceIds, contentTypes, timeRange, qualityThreshold } = params;
-  
+  const { userId, campusId, feedType, spaceIds, contentTypes, timeRange, qualityThreshold } = params;
+
   const keyData = {
     userId,
+    campusId,
     feedType,
     spaceIds: spaceIds.sort(), // Sort for consistent cache keys
     contentTypes: contentTypes.sort(),
@@ -266,25 +236,25 @@ function generateCacheKey(params: {
 }
 
 // Helper function to get cached feed
-async function getCachedFeed(cacheKey: string, userId: string): Promise<FeedCache | null> {
+async function getCachedFeed(cacheKey: string, userId: string, campusId: string): Promise<FeedCache | null> {
   try {
     const cacheDoc = await dbAdmin.collection('feedCaches').doc(cacheKey).get();
-    
+
     if (!cacheDoc.exists) {
       return null;
     }
 
     const cache = { id: cacheDoc.id, ...cacheDoc.data() } as FeedCache;
-    
-    // Check if cache belongs to user
-    if (cache.userId !== userId) {
+
+    // Check if cache belongs to user and campus
+    if (cache.userId !== userId || cache.campusId !== campusId) {
       return null;
     }
 
     // Check if cache is expired
     const now = new Date();
     const expiresAt = new Date(cache.expiresAt);
-    
+
     if (now > expiresAt || !cache.isValid) {
       // Remove expired cache
       await dbAdmin.collection('feedCaches').doc(cacheKey).delete();
@@ -304,6 +274,7 @@ async function getCachedFeed(cacheKey: string, userId: string): Promise<FeedCach
 // Helper function to cache feed content
 async function cacheFeedContent(params: {
   userId: string;
+  campusId: string;
   cacheKey: string;
   feedType: string;
   content: unknown[];
@@ -311,14 +282,15 @@ async function cacheFeedContent(params: {
   parameters: Record<string, unknown>;
 }): Promise<void> {
   try {
-    const { userId, cacheKey, feedType, content, metadata, parameters } = params;
-    
+    const { userId, campusId, cacheKey, feedType, content, metadata, parameters } = params;
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + (15 * 60 * 1000)); // 15 minutes TTL
 
     const cache: FeedCache = {
       id: cacheKey,
       userId,
+      campusId,
       cacheKey,
       feedType: feedType as FeedCache['feedType'],
       content,
@@ -359,6 +331,7 @@ async function updateCacheAccess(cacheId: string): Promise<void> {
 // TODO: Wire up FeedAggregationEngine from @/lib/feed-aggregation when feed system is prioritized
 async function generateFeedContent(_params: {
   userId: string;
+  campusId: string;
   feedType: string;
   spaceIds: string[];
   contentTypes: string[];
@@ -382,18 +355,19 @@ async function generateFeedContent(_params: {
 }
 
 // Helper function to get cache statistics
-async function getCacheStats(userId: string): Promise<CacheStats> {
+async function getCacheStats(userId: string, campusId: string): Promise<CacheStats> {
   try {
     const userCachesSnapshot = await dbAdmin.collection('feedCaches')
       .where('userId', '==', userId)
+      .where('campusId', '==', campusId)
       .get();
     const userCaches = userCachesSnapshot.docs.map(doc => doc.data() as FeedCache);
 
     const now = new Date();
-    const activeCaches = userCaches.filter(cache => 
+    const activeCaches = userCaches.filter(cache =>
       new Date(cache.expiresAt) > now && cache.isValid
     );
-    const expiredCaches = userCaches.filter(cache => 
+    const expiredCaches = userCaches.filter(cache =>
       new Date(cache.expiresAt) <= now || !cache.isValid
     );
 
@@ -402,12 +376,12 @@ async function getCacheStats(userId: string): Promise<CacheStats> {
     const hitRate = userCaches.length > 0 ? (totalAccesses / userCaches.length) : 0;
 
     // Calculate average generation time
-    const avgGenerationTime = userCaches.reduce((sum, cache) => 
+    const avgGenerationTime = userCaches.reduce((sum, cache) =>
       sum + (cache.metadata.generationTime || 0), 0
     ) / (userCaches.length || 1);
 
     // Calculate total cache size
-    const totalCacheSize = userCaches.reduce((sum, cache) => 
+    const totalCacheSize = userCaches.reduce((sum, cache) =>
       sum + cache.content.length, 0
     );
 
@@ -436,10 +410,11 @@ async function getCacheStats(userId: string): Promise<CacheStats> {
 }
 
 // Helper function to get user caches
-async function getUserCaches(userId: string): Promise<FeedCache[]> {
+async function getUserCaches(userId: string, campusId: string): Promise<FeedCache[]> {
   try {
     const userCachesSnapshot = await dbAdmin.collection('feedCaches')
       .where('userId', '==', userId)
+      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc')
       .limit(20)
       .get();
@@ -457,10 +432,11 @@ async function getUserCaches(userId: string): Promise<FeedCache[]> {
 }
 
 // Helper function to clear user caches
-async function clearUserCaches(userId: string): Promise<number> {
+async function clearUserCaches(userId: string, campusId: string): Promise<number> {
   try {
     const userCachesSnapshot = await dbAdmin.collection('feedCaches')
       .where('userId', '==', userId)
+      .where('campusId', '==', campusId)
       .get();
     let cleared = 0;
 
@@ -480,18 +456,18 @@ async function clearUserCaches(userId: string): Promise<number> {
 }
 
 // Helper function to clear specific cache
-async function clearSpecificCache(cacheKey: string, userId: string): Promise<boolean> {
+async function clearSpecificCache(cacheKey: string, userId: string, campusId: string): Promise<boolean> {
   try {
     const cacheDoc = await dbAdmin.collection('feedCaches').doc(cacheKey).get();
-    
+
     if (!cacheDoc.exists) {
       return false;
     }
 
     const cache = cacheDoc.data() as FeedCache;
-    
-    // Check ownership
-    if (cache.userId !== userId) {
+
+    // Check ownership and campus isolation
+    if (cache.userId !== userId || cache.campusId !== campusId) {
       return false;
     }
 

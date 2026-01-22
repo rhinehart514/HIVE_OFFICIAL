@@ -10,12 +10,12 @@
  * @version 1.0.0
  */
 
-import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getSession } from '@/lib/session';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { checkSpacePermission } from '@/lib/space-permission-middleware';
 import { getUserAvailability, ensureUserSynced, type UserAvailability } from '@/lib/calendar/calendar-sync';
 import { logger } from '@/lib/structured-logger';
+import { ResponseFormatter } from '@/lib/middleware/response';
 
 /**
  * Heatmap cell with aggregated availability
@@ -44,108 +44,97 @@ interface TimeSuggestion {
   label: string;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ spaceId: string }> }
-) {
-  const { spaceId } = await params;
+export const GET = withAuthAndErrors(async (
+  request: AuthenticatedRequest,
+  context: { params: Promise<{ spaceId: string }> },
+  respond: typeof ResponseFormatter
+) => {
+  const { spaceId } = await context.params;
+  const userId = getUserId(request);
 
-  try {
-    // Verify user is authenticated
-    const session = await getSession(request);
-    if (!session?.userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Verify user has leader+ permission
-    const permCheck = await checkSpacePermission(spaceId, session.userId, 'leader');
-    if (!permCheck.hasPermission) {
-      return NextResponse.json(
-        { error: 'Only space leaders can view availability' },
-        { status: 403 }
-      );
-    }
-
-    // Get space members
-    const membersSnapshot = await dbAdmin
-      .collection('spaces')
-      .doc(spaceId)
-      .collection('members')
-      .get();
-
-    const memberIds = membersSnapshot.docs.map((doc) => doc.id);
-
-    if (memberIds.length === 0) {
-      return NextResponse.json({
-        heatmap: [],
-        memberCount: 0,
-        connectedCount: 0,
-        suggestions: [],
-      });
-    }
-
-    // Get calendar connections for members who share with this space
-    const connectionsSnapshot = await dbAdmin
-      .collection('calendar_connections')
-      .where('userId', 'in', memberIds.slice(0, 30)) // Firestore limit
-      .where('isActive', '==', true)
-      .get();
-
-    // Filter to members who share with this space
-    const sharingMemberIds: string[] = [];
-    for (const doc of connectionsSnapshot.docs) {
-      const data = doc.data();
-      if (data.sharing?.enabled) {
-        // Empty spaceIds means share with all
-        if (
-          data.sharing.spaceIds.length === 0 ||
-          data.sharing.spaceIds.includes(spaceId)
-        ) {
-          sharingMemberIds.push(data.userId);
-        }
-      }
-    }
-
-    // Ensure all sharing members have synced availability
-    await Promise.all(sharingMemberIds.map(ensureUserSynced));
-
-    // Get availability data for sharing members
-    const availabilities: UserAvailability[] = [];
-    for (const memberId of sharingMemberIds) {
-      const availability = await getUserAvailability(memberId);
-      if (availability) {
-        availabilities.push(availability);
-      }
-    }
-
-    // Generate heatmap
-    const heatmap = generateHeatmap(availabilities);
-
-    // Generate time suggestions
-    const suggestions = generateTimeSuggestions(heatmap);
-
-    logger.info('Availability data retrieved', {
-      spaceId,
-      userId: session.userId,
-      memberCount: memberIds.length,
-      connectedCount: availabilities.length,
-      component: 'space-availability',
-    });
-
-    return NextResponse.json({
-      heatmap,
-      memberCount: memberIds.length,
-      connectedCount: availabilities.length,
-      suggestions,
-    });
-  } catch (error) {
-    logger.error('Availability endpoint error', { spaceId, component: 'space-availability' }, error instanceof Error ? error : undefined);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+  // Verify user has leader+ permission
+  const permCheck = await checkSpacePermission(spaceId, userId, 'leader');
+  if (!permCheck.hasPermission) {
+    return respond.error(
+      'Only space leaders can view availability',
+      'FORBIDDEN',
+      { status: 403 }
     );
   }
-}
+
+  // Get space members
+  const membersSnapshot = await dbAdmin
+    .collection('spaces')
+    .doc(spaceId)
+    .collection('members')
+    .get();
+
+  const memberIds = membersSnapshot.docs.map((doc) => doc.id);
+
+  if (memberIds.length === 0) {
+    return respond.success({
+      heatmap: [],
+      memberCount: 0,
+      connectedCount: 0,
+      suggestions: [],
+    });
+  }
+
+  // Get calendar connections for members who share with this space
+  const connectionsSnapshot = await dbAdmin
+    .collection('calendar_connections')
+    .where('userId', 'in', memberIds.slice(0, 30)) // Firestore limit
+    .where('isActive', '==', true)
+    .get();
+
+  // Filter to members who share with this space
+  const sharingMemberIds: string[] = [];
+  for (const doc of connectionsSnapshot.docs) {
+    const data = doc.data();
+    if (data.sharing?.enabled) {
+      // Empty spaceIds means share with all
+      if (
+        data.sharing.spaceIds.length === 0 ||
+        data.sharing.spaceIds.includes(spaceId)
+      ) {
+        sharingMemberIds.push(data.userId);
+      }
+    }
+  }
+
+  // Ensure all sharing members have synced availability
+  await Promise.all(sharingMemberIds.map(ensureUserSynced));
+
+  // Get availability data for sharing members
+  const availabilities: UserAvailability[] = [];
+  for (const memberId of sharingMemberIds) {
+    const availability = await getUserAvailability(memberId);
+    if (availability) {
+      availabilities.push(availability);
+    }
+  }
+
+  // Generate heatmap
+  const heatmap = generateHeatmap(availabilities);
+
+  // Generate time suggestions
+  const suggestions = generateTimeSuggestions(heatmap);
+
+  logger.info('Availability data retrieved', {
+    spaceId,
+    userId,
+    memberCount: memberIds.length,
+    connectedCount: availabilities.length,
+    component: 'space-availability',
+  });
+
+  return respond.success({
+    heatmap,
+    memberCount: memberIds.length,
+    connectedCount: availabilities.length,
+    suggestions,
+  });
+});
 
 /**
  * Generate a 7x24 heatmap from member availability data

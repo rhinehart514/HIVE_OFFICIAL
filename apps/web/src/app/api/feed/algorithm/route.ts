@@ -1,10 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
-// Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
-import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { withAuthAndErrors, getUserId, getCampusId } from "@/lib/middleware";
 
 // Enhanced feed algorithm interfaces
 interface RelevanceFactors {
@@ -64,131 +60,105 @@ interface EnhancedFeedItem {
 }
 
 // POST - Get personalized feed with enhanced algorithm
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const body = await request.json();
-    const { 
-      limit = 20, 
-      offset = 0, 
-      feedType = 'personal',
-      includeTrending = false,
-      diversityMode = 'balanced', // 'strict', 'balanced', 'relaxed'
-      timeRange = '24h' // '6h', '24h', '7d', 'all'
-    } = body;
+  const body = await request.json();
+  const {
+    limit = 20,
+    offset = 0,
+    feedType = 'personal',
+    includeTrending = false,
+    diversityMode = 'balanced', // 'strict', 'balanced', 'relaxed'
+    timeRange = '24h' // '6h', '24h', '7d', 'all'
+  } = body;
 
-    // Get user's algorithm configuration
-    const algorithmConfig = await getUserAlgorithmConfig(user.uid);
+  // Get user's algorithm configuration
+  const algorithmConfig = await getUserAlgorithmConfig(userId);
 
-    // Get campus ID from user's email
-    const campusId = user.email ? getCampusFromEmail(user.email) : getDefaultCampusId();
+  // Get user's space memberships with engagement data
+  const userMemberships = await getUserSpaceMemberships(userId, campusId);
 
-    // Get user's space memberships with engagement data
-    const userMemberships = await getUserSpaceMemberships(user.uid, campusId);
-    
-    if (userMemberships.length === 0) {
-      return NextResponse.json({
-        success: true,
-        items: [],
-        metadata: {
-          totalItems: 0,
-          algorithmVersion: '2.0',
-          personalizedFactors: null,
-          message: 'No space memberships found'
-        }
-      });
-    }
-
-    // Get feed content using enhanced algorithm
-    const feedItems = await getEnhancedFeedContent({
-      userId: user.uid,
-      memberships: userMemberships,
-      config: algorithmConfig,
-      limit,
-      offset,
-      feedType,
-      includeTrending,
-      diversityMode,
-      timeRange,
-      campusId
-    });
-
-    // Apply final ranking and filtering
-    const rankedItems = await applyFinalRanking(feedItems, algorithmConfig, user.uid);
-    
-    // Log algorithm metrics for optimization
-    await logAlgorithmMetrics(user.uid, {
-      feedType,
-      totalCandidates: feedItems.length,
-      finalItems: rankedItems.length,
-      averageRelevance: rankedItems.reduce((sum, item) => sum + item.relevanceScore, 0) / rankedItems.length,
-      diversityScore: calculateDiversityScore(rankedItems),
-      toolContentPercentage: calculateToolContentPercentage(rankedItems)
-    });
-
-    return NextResponse.json({
-      success: true,
-      items: rankedItems.slice(0, limit),
+  if (userMemberships.length === 0) {
+    return respond.success({
+      items: [],
       metadata: {
-        totalItems: rankedItems.length,
+        totalItems: 0,
         algorithmVersion: '2.0',
-        personalizedFactors: generatePersonalizationSummary(algorithmConfig),
-        qualityMetrics: generateQualityMetrics(rankedItems),
-        diversityScore: calculateDiversityScore(rankedItems),
-        toolContentPercentage: calculateToolContentPercentage(rankedItems)
+        personalizedFactors: null,
+        message: 'No space memberships found'
       }
     });
-  } catch (error) {
-    logger.error(
-      `Error in enhanced feed algorithm at /api/feed/algorithm`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to generate feed", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
+
+  // Get feed content using enhanced algorithm
+  const feedItems = await getEnhancedFeedContent({
+    userId,
+    memberships: userMemberships,
+    config: algorithmConfig,
+    limit,
+    offset,
+    feedType,
+    includeTrending,
+    diversityMode,
+    timeRange,
+    campusId
+  });
+
+  // Apply final ranking and filtering
+  const rankedItems = await applyFinalRanking(feedItems, algorithmConfig, userId);
+
+  // Log algorithm metrics for optimization
+  await logAlgorithmMetrics(userId, {
+    feedType,
+    totalCandidates: feedItems.length,
+    finalItems: rankedItems.length,
+    averageRelevance: rankedItems.reduce((sum, item) => sum + item.relevanceScore, 0) / rankedItems.length,
+    diversityScore: calculateDiversityScore(rankedItems),
+    toolContentPercentage: calculateToolContentPercentage(rankedItems)
+  });
+
+  return respond.success({
+    items: rankedItems.slice(0, limit),
+    metadata: {
+      totalItems: rankedItems.length,
+      algorithmVersion: '2.0',
+      personalizedFactors: generatePersonalizationSummary(algorithmConfig),
+      qualityMetrics: generateQualityMetrics(rankedItems),
+      diversityScore: calculateDiversityScore(rankedItems),
+      toolContentPercentage: calculateToolContentPercentage(rankedItems)
+    }
+  });
+});
 
 // GET - Get algorithm configuration and metrics
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
 
-    const { searchParams } = new URL(request.url);
-    const includeMetrics = searchParams.get('includeMetrics') === 'true';
+  const { searchParams } = new URL(request.url);
+  const includeMetrics = searchParams.get('includeMetrics') === 'true';
 
-    // Get user's algorithm configuration
-    const config = await getUserAlgorithmConfig(user.uid);
-    
-    let metrics = null;
-    if (includeMetrics) {
-      metrics = await getAlgorithmMetrics(user.uid);
-    }
+  // Get user's algorithm configuration
+  const config = await getUserAlgorithmConfig(userId);
 
-    return NextResponse.json({
-      config,
-      metrics,
-      algorithmVersion: '2.0'
-    });
-  } catch (error) {
-    logger.error(
-      `Error fetching algorithm config at /api/feed/algorithm`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to fetch algorithm config", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  let metrics = null;
+  if (includeMetrics) {
+    metrics = await getAlgorithmMetrics(userId);
   }
-}
+
+  return respond.success({
+    config,
+    metrics,
+    algorithmVersion: '2.0'
+  });
+});
 
 // Helper function to get user's algorithm configuration
 async function getUserAlgorithmConfig(userId: string): Promise<FeedAlgorithmConfig> {
   try {
     const configDoc = await dbAdmin.collection('userFeedConfigs').doc(userId).get();
-    
+
     if (configDoc.exists) {
       return configDoc.data() as FeedAlgorithmConfig;
     }
@@ -246,7 +216,7 @@ async function getUserSpaceMemberships(userId: string, campusId: string): Promis
 
     for (const memberDoc of membershipsSnapshot.docs) {
       const memberData = memberDoc.data();
-      
+
       // Get space details
       const spaceDoc = await dbAdmin.collection('spaces').doc(memberData.spaceId).get();
       const spaceData = spaceDoc.exists ? spaceDoc.data() || {} : {};
@@ -335,11 +305,11 @@ async function getEnhancedFeedContent(params: {
   campusId: string;
 }): Promise<EnhancedFeedItem[]> {
   const { userId, memberships, config, limit, feedType: _feedType, timeRange, campusId } = params;
-  
+
   try {
     const feedItems: EnhancedFeedItem[] = [];
     const _spaceIds = memberships.map(m => m.spaceId);
-    
+
     // Calculate time range
     const timeRangeHours = timeRange === '6h' ? 6 : timeRange === '24h' ? 24 : timeRange === '7d' ? 168 : 720;
     const cutoffTime = new Date();
@@ -357,10 +327,10 @@ async function getEnhancedFeedContent(params: {
       for (const post of spacePosts) {
         // Calculate relevance factors
         const factors = await calculateRelevanceFactors(post, membership, config, userId, campusId);
-        
+
         // Calculate overall relevance score
         const relevanceScore = calculateOverallRelevance(factors, config);
-        
+
         // Only include if meets minimum threshold
         if (relevanceScore >= config.minRelevanceThreshold) {
           const enhancedItem: EnhancedFeedItem = {
@@ -528,7 +498,7 @@ function calculateContentQuality(post: MinimalPost): number {
   // Tool-generated content gets higher quality score
   if (post.type === 'tool_generated') quality += 30;
   if (post.toolId) quality += 10;
-  
+
   // Content completeness
   if (post.content && post.content.length > 50) quality += 10;
   if (post.title) quality += 5;
@@ -546,7 +516,7 @@ async function getToolInteractionValue(toolId: string, campusId: string): Promis
     if (!tool) return 50;
     // Enforce campus isolation
     if (tool.campusId && tool.campusId !== campusId) return 50;
-    
+
     let value = 50;
 
     // More complex tools have higher value
@@ -621,11 +591,11 @@ async function applyFinalRanking(items: EnhancedFeedItem[], config: FeedAlgorith
   const rankedItems = items.map(item => {
     const count = contentTypeCounts.get(item.contentType) || 0;
     contentTypeCounts.set(item.contentType, count + 1);
-    
+
     // Diversity bonus decreases with repeated content types
     const diversityBonus = Math.max(0, config.diversityBonus * (1 - count * 0.1));
     item.relevanceScore += diversityBonus;
-    
+
     return item;
   });
 
@@ -651,7 +621,7 @@ function enforceToolContentThreshold(items: EnhancedFeedItem[], threshold: numbe
     // Need to prioritize tool content
     const selectedToolItems = toolItems.slice(0, actualToolCount);
     const selectedNonToolItems = nonToolItems.slice(0, items.length - actualToolCount);
-    
+
     return [...selectedToolItems, ...selectedNonToolItems]
       .sort((a, b) => b.relevanceScore - a.relevanceScore);
   }
@@ -660,18 +630,18 @@ function enforceToolContentThreshold(items: EnhancedFeedItem[], threshold: numbe
 // Helper functions for metrics
 function calculateDiversityScore(items: EnhancedFeedItem[]): number {
   if (items.length === 0) return 0;
-  
+
   const contentTypes = new Set(items.map(item => item.contentType));
   return (contentTypes.size / 5) * 100; // 5 possible content types
 }
 
 function calculateToolContentPercentage(items: EnhancedFeedItem[]): number {
   if (items.length === 0) return 0;
-  
-  const toolItems = items.filter(item => 
+
+  const toolItems = items.filter(item =>
     item.contentType === 'tool_generated' || item.contentType === 'tool_enhanced'
   );
-  
+
   return (toolItems.length / items.length) * 100;
 }
 
@@ -686,10 +656,10 @@ function generatePersonalizationSummary(config: FeedAlgorithmConfig): { toolCont
 
 function generateQualityMetrics(items: EnhancedFeedItem[]): { averageQuality: number; averageRelevance: number; highQualityPercentage: number } {
   if (items.length === 0) return { averageQuality: 0, averageRelevance: 0, highQualityPercentage: 0 };
-  
+
   const avgQuality = items.reduce((sum, item) => sum + item.qualityScore, 0) / items.length;
   const avgRelevance = items.reduce((sum, item) => sum + item.relevanceScore, 0) / items.length;
-  
+
   return {
     averageQuality: Math.round(avgQuality),
     averageRelevance: Math.round(avgRelevance),
@@ -719,7 +689,7 @@ async function getAlgorithmMetrics(userId: string): Promise<{ weeklyAverages: { 
   try {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    
+
     const metricsSnapshot = await dbAdmin.collection('algorithmMetrics')
       .where('userId', '==', userId)
       .where('date', '>=', sevenDaysAgo.toISOString().split('T')[0])

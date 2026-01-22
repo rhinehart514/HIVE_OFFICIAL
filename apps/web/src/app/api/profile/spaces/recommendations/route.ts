@@ -1,17 +1,13 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import {
-  withProfileSecurity,
-  enforceCompusIsolation,
   getPrivacySettings,
   getConnectionType,
   ConnectionType
 } from '@/lib/profile-security';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { getServerProfileRepository } from '@hive/core/server';
 
 // Space recommendation interface
@@ -40,180 +36,163 @@ function getSpaceMemberCount(space: Record<string, unknown>): number {
   );
 }
 
-// GET - Get space recommendations for user with security
-export const GET = withProfileSecurity(async (request: NextRequest) => {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+// GET - Get space recommendations for user
+export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
-    // Enforce campus isolation
-    const campusId = await enforceCompusIsolation(user.uid);
+  // Check if user has opted out of discovery
+  const privacySettings = await getPrivacySettings(userId);
+  if (!privacySettings.discoveryParticipation) {
+    return respond.success({
+      recommendations: [],
+      totalAvailable: 0,
+      currentMemberships: 0,
+      recommendationType: 'opted_out',
+      message: 'Discovery recommendations disabled in privacy settings'
+    });
+  }
 
-    // Check if user has opted out of discovery
-    const privacySettings = await getPrivacySettings(user.uid);
-    if (!privacySettings.discoveryParticipation) {
-      return NextResponse.json({
-        recommendations: [],
-        totalAvailable: 0,
-        currentMemberships: 0,
-        recommendationType: 'opted_out',
-        message: 'Discovery recommendations disabled in privacy settings'
-      });
-    }
+  const { searchParams } = new URL(request.url);
+  const limit_param = parseInt(searchParams.get('limit') || '10');
+  const type = searchParams.get('type') || 'all'; // all, similar_interests, trending, new_spaces
 
-    const { searchParams } = new URL(request.url);
-    const limit_param = parseInt(searchParams.get('limit') || '10');
-    const type = searchParams.get('type') || 'all'; // all, similar_interests, trending, new_spaces
+  // Get user's current memberships
+  const currentMembershipsQuery = dbAdmin
+    .collection('spaceMembers')
+    .where('userId', '==', userId)
+    .where('campusId', '==', campusId)
+    .where('isActive', '==', true);
 
-    // Get user's current memberships
-    const currentMembershipsQuery = dbAdmin
-      .collection('spaceMembers')
-      .where('userId', '==', user.uid)
-      .where('campusId', '==', campusId)
-      .where('isActive', '==', true);
+  const currentMembershipsSnapshot = await currentMembershipsQuery.get();
+  const currentSpaceIds = currentMembershipsSnapshot.docs
+    .map((doc) => doc.data().spaceId)
+    .filter(Boolean);
 
-    const currentMembershipsSnapshot = await currentMembershipsQuery.get();
-    const currentSpaceIds = currentMembershipsSnapshot.docs
-      .map((doc) => doc.data().spaceId)
-      .filter(Boolean);
+  // Try DDD repository for profile data (interests, connections)
+  const profileRepository = getServerProfileRepository();
+  const profileResult = await profileRepository.findById(userId);
 
-    // Try DDD repository for profile data (interests, connections)
-    const profileRepository = getServerProfileRepository();
-    const profileResult = await profileRepository.findById(user.uid);
+  let dddProfileData: {
+    interests: string[];
+    major: string | undefined;
+    connectionCount: number;
+    spaceCount: number;
+  } | null = null;
 
-    let dddProfileData: {
-      interests: string[];
-      major: string | undefined;
-      connectionCount: number;
-      spaceCount: number;
-    } | null = null;
+  if (profileResult.isSuccess) {
+    const profile = profileResult.getValue();
+    dddProfileData = {
+      interests: profile.interests,
+      major: profile.major,
+      connectionCount: profile.connectionCount,
+      spaceCount: profile.spaces.length,
+    };
+    logger.debug('Using DDD profile for recommendations', { userId, interestCount: profile.interests.length });
+  }
 
-    if (profileResult.isSuccess) {
-      const profile = profileResult.getValue();
-      dddProfileData = {
-        interests: profile.interests,
-        major: profile.major,
-        connectionCount: profile.connectionCount,
-        spaceCount: profile.spaces.length,
-      };
-      logger.debug('Using DDD profile for recommendations', { userId: user.uid, interestCount: profile.interests.length });
-    }
+  // Get user profile for interest matching (fallback/supplement)
+  const userDoc = await dbAdmin.collection('users').doc(userId).get();
+  const userData = userDoc.exists ? (userDoc.data() ?? null) : null;
 
-    // Get user profile for interest matching (fallback/supplement)
-    const userDoc = await dbAdmin.collection('users').doc(user.uid).get();
-    const userData = userDoc.exists ? (userDoc.data() ?? null) : null;
+  // Merge DDD interests with Firestore interests for better matching
+  if (dddProfileData?.interests.length && userData) {
+    const mergedInterests = [...new Set([
+      ...(dddProfileData.interests || []),
+      ...((userData.interests as string[]) || [])
+    ])];
+    (userData as Record<string, unknown>).interests = mergedInterests;
+  }
 
-    // Merge DDD interests with Firestore interests for better matching
-    if (dddProfileData?.interests.length && userData) {
-      const mergedInterests = [...new Set([
-        ...(dddProfileData.interests || []),
-        ...((userData.interests as string[]) || [])
-      ])];
-      (userData as Record<string, unknown>).interests = mergedInterests;
-    }
+  // Get all available spaces (excluding current memberships) with campus isolation
+  const allSpacesQuery = dbAdmin.collection('spaces')
+    .where('campusId', '==', campusId)
+    .where('status', '==', 'active')
+    .orderBy('metrics.memberCount', 'desc')
+    .limit(100); // Limit for performance
 
-    // Get all available spaces (excluding current memberships) with campus isolation
-    const allSpacesQuery = dbAdmin.collection('spaces')
-      .where('campusId', '==', campusId)
-      .where('status', '==', 'active')
-      .orderBy('metrics.memberCount', 'desc')
-      .limit(100); // Limit for performance
+  const allSpacesSnapshot = await allSpacesQuery.get();
+  const availableSpaces = allSpacesSnapshot.docs
+    .filter(doc => !currentSpaceIds.includes(doc.id))
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-    const allSpacesSnapshot = await allSpacesQuery.get();
-    const availableSpaces = allSpacesSnapshot.docs
-      .filter(doc => !currentSpaceIds.includes(doc.id))
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+  // Generate recommendations based on type
+  const recommendations: SpaceRecommendation[] = [];
 
-    // Generate recommendations based on type
-    const recommendations: SpaceRecommendation[] = [];
-
-    if (type === 'all' || type === 'similar_interests') {
-      const interestRecommendations = await generateInterestBasedRecommendations(
-        availableSpaces,
-        userData,
-        currentSpaceIds
-      );
-      recommendations.push(...interestRecommendations);
-    }
-
-    if (type === 'all' || type === 'trending') {
-      const trendingRecommendations = await generateTrendingRecommendations(
-        availableSpaces,
-        currentSpaceIds
-      );
-      recommendations.push(...trendingRecommendations);
-    }
-
-    if (type === 'all' || type === 'new_spaces') {
-      const newSpaceRecommendations = await generateNewSpaceRecommendations(
-        availableSpaces,
-        currentSpaceIds
-      );
-      recommendations.push(...newSpaceRecommendations);
-    }
-
-    // Add friend activity recommendations
-    const friendActivityRecommendations = await generateFriendActivityRecommendations(
-      availableSpaces,
-      user.uid,
-      currentSpaceIds
-    );
-    recommendations.push(...friendActivityRecommendations);
-
-    // Add academic match recommendations
-    const academicRecommendations = await generateAcademicRecommendations(
+  if (type === 'all' || type === 'similar_interests') {
+    const interestRecommendations = await generateInterestBasedRecommendations(
       availableSpaces,
       userData,
       currentSpaceIds
     );
-    recommendations.push(...academicRecommendations);
-
-    // Remove duplicates and sort by match score
-    const uniqueRecommendations = recommendations
-      .reduce((acc, current) => {
-        const existingIndex = acc.findIndex(item => item.spaceId === current.spaceId);
-        if (existingIndex >= 0) {
-          // Keep the one with higher match score
-          if (current.matchScore > acc[existingIndex].matchScore) {
-            acc[existingIndex] = current;
-          }
-        } else {
-          acc.push(current);
-        }
-        return acc;
-      }, [] as SpaceRecommendation[])
-      .sort((a, b) => b.matchScore - a.matchScore)
-      .slice(0, limit_param);
-
-    return NextResponse.json({
-      recommendations: uniqueRecommendations,
-      totalAvailable: availableSpaces.length,
-      currentMemberships: currentSpaceIds.length,
-      recommendationType: type,
-      // Include DDD profile context for recommendations
-      profile: dddProfileData ? {
-        interestCount: dddProfileData.interests.length,
-        connectionCount: dddProfileData.connectionCount,
-        currentSpaceCount: dddProfileData.spaceCount,
-      } : null
-    });
-  } catch (error) {
-    logger.error(
-      `Error generating space recommendations at /api/profile/spaces/recommendations`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to generate space recommendations", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+    recommendations.push(...interestRecommendations);
   }
-}, {
-  requireAuth: true,
-  checkGhostMode: true,
-  auditOperation: 'view_recommendations',
-  rateLimit: { limit: 30, window: 60000 } // 30 requests per minute
+
+  if (type === 'all' || type === 'trending') {
+    const trendingRecommendations = await generateTrendingRecommendations(
+      availableSpaces,
+      currentSpaceIds
+    );
+    recommendations.push(...trendingRecommendations);
+  }
+
+  if (type === 'all' || type === 'new_spaces') {
+    const newSpaceRecommendations = await generateNewSpaceRecommendations(
+      availableSpaces,
+      currentSpaceIds
+    );
+    recommendations.push(...newSpaceRecommendations);
+  }
+
+  // Add friend activity recommendations
+  const friendActivityRecommendations = await generateFriendActivityRecommendations(
+    availableSpaces,
+    userId,
+    campusId,
+    currentSpaceIds
+  );
+  recommendations.push(...friendActivityRecommendations);
+
+  // Add academic match recommendations
+  const academicRecommendations = await generateAcademicRecommendations(
+    availableSpaces,
+    userData,
+    currentSpaceIds
+  );
+  recommendations.push(...academicRecommendations);
+
+  // Remove duplicates and sort by match score
+  const uniqueRecommendations = recommendations
+    .reduce((acc, current) => {
+      const existingIndex = acc.findIndex(item => item.spaceId === current.spaceId);
+      if (existingIndex >= 0) {
+        // Keep the one with higher match score
+        if (current.matchScore > acc[existingIndex].matchScore) {
+          acc[existingIndex] = current;
+        }
+      } else {
+        acc.push(current);
+      }
+      return acc;
+    }, [] as SpaceRecommendation[])
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, limit_param);
+
+  return respond.success({
+    recommendations: uniqueRecommendations,
+    totalAvailable: availableSpaces.length,
+    currentMemberships: currentSpaceIds.length,
+    recommendationType: type,
+    // Include DDD profile context for recommendations
+    profile: dddProfileData ? {
+      interestCount: dddProfileData.interests.length,
+      connectionCount: dddProfileData.connectionCount,
+      currentSpaceCount: dddProfileData.spaceCount,
+    } : null
+  });
 });
 
 // Helper function to generate interest-based recommendations
@@ -228,25 +207,25 @@ async function generateInterestBasedRecommendations(
   }
 
   const userInterests = interests.map((interest: string) => interest.toLowerCase());
-  
+
   return availableSpaces
     .map(space => {
       const spaceTags = ((space.tags as string[]) || []).map((tag: string) => tag.toLowerCase());
       const spaceKeywords = ((space.name as string || '') + ' ' + (space.description as string || '')).toLowerCase().split(/\s+/);
-      
+
       // Calculate interest match score
       const tagMatches = spaceTags.filter((tag: string) => userInterests.includes(tag)).length;
-      const keywordMatches = spaceKeywords.filter((keyword: string) => 
+      const keywordMatches = spaceKeywords.filter((keyword: string) =>
         userInterests.some((interest: string) => interest.includes(keyword) || keyword.includes(interest))
       ).length;
-      
+
       const matchScore = (tagMatches * 2) + keywordMatches;
-      
+
       if (matchScore > 0) {
         const matchReasons = [];
         if (tagMatches > 0) matchReasons.push(`${tagMatches} matching interests`);
         if (keywordMatches > 0) matchReasons.push(`Related to your interests`);
-        
+
         return {
           spaceId: space.id,
           spaceName: space.name,
@@ -262,7 +241,7 @@ async function generateInterestBasedRecommendations(
           recommendationType: 'similar_interests' as const
         };
       }
-      
+
       return null;
     })
     .filter(Boolean) as SpaceRecommendation[];
@@ -344,6 +323,7 @@ async function generateNewSpaceRecommendations(
 async function generateFriendActivityRecommendations(
   availableSpaces: Record<string, unknown>[],
   userId: string,
+  campusId: string,
   currentSpaceIds: string[]
 ): Promise<SpaceRecommendation[]> {
   try {
@@ -351,7 +331,7 @@ async function generateFriendActivityRecommendations(
     const currentMembershipsQuery = dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     const currentMembershipsSnapshot = await currentMembershipsQuery.get();
@@ -361,7 +341,7 @@ async function generateFriendActivityRecommendations(
     const friendsQuery = dbAdmin
       .collection('spaceMembers')
       .where('spaceId', 'in', userSpaceIds.slice(0, 10)) // Limit for performance
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     const friendsSnapshot = await friendsQuery.get();
@@ -386,7 +366,7 @@ async function generateFriendActivityRecommendations(
     const friendMembershipsQuery = dbAdmin
       .collection('spaceMembers')
       .where('userId', 'in', friendIds.slice(0, 10)) // Limit for performance
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isActive', '==', true);
 
     const friendMembershipsSnapshot = await friendMembershipsQuery.get();

@@ -27,6 +27,8 @@ import {
 import { cn } from '@/lib/utils';
 import { Text } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
+import { SidebarToolSection } from './sidebar-tool-section';
+import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
 // ============================================================
 // Types
@@ -60,6 +62,25 @@ export interface BoardsSidebarProps {
   onToggleCollapse?: () => void;
   /** Position of sidebar - affects border and flex order */
   position?: 'left' | 'right';
+  // ============================================================
+  // Tool Integration (HiveLab Sprint 1)
+  // ============================================================
+  /** Tools placed in sidebar */
+  sidebarTools?: PlacedToolDTO[];
+  /** Whether tools are loading */
+  isLoadingTools?: boolean;
+  /** Whether user is a leader (can add tools) */
+  isLeader?: boolean;
+  /** Currently active tool ID */
+  activeToolId?: string;
+  /** Handler when a tool is clicked */
+  onToolClick?: (tool: PlacedToolDTO) => void;
+  /** Handler for "Run" tool action */
+  onToolRun?: (tool: PlacedToolDTO) => void;
+  /** Handler for "View Full" tool action */
+  onToolViewFull?: (tool: PlacedToolDTO) => void;
+  /** Handler for "Add Tool" action */
+  onAddTool?: () => void;
 }
 
 // ============================================================
@@ -167,6 +188,15 @@ export function BoardsSidebar({
   isCollapsed = false,
   onToggleCollapse,
   position = 'left',
+  // Tool props (HiveLab Sprint 1)
+  sidebarTools = [],
+  isLoadingTools = false,
+  isLeader = false,
+  activeToolId,
+  onToolClick,
+  onToolRun,
+  onToolViewFull,
+  onAddTool,
 }: BoardsSidebarProps) {
   const canReorder = !!onReorderBoards;
   const [localBoards, setLocalBoards] = React.useState(boards);
@@ -253,6 +283,19 @@ export function BoardsSidebar({
                   <Text size="sm">Add board</Text>
                 </button>
               )}
+
+              {/* Pinned Tools Section (Mobile) */}
+              <SidebarToolSection
+                tools={sidebarTools}
+                isLoading={isLoadingTools}
+                isLeader={isLeader}
+                activeToolId={activeToolId}
+                onToolClick={onToolClick}
+                onToolRun={onToolRun}
+                onToolViewFull={onToolViewFull}
+                onAddTool={onAddTool}
+                defaultCollapsed={true}
+              />
             </motion.div>
           )}
         </AnimatePresence>
@@ -344,6 +387,18 @@ export function BoardsSidebar({
             ))}
           </>
         )}
+
+        {/* Pinned Tools Section (HiveLab Sprint 1) */}
+        <SidebarToolSection
+          tools={sidebarTools}
+          isLoading={isLoadingTools}
+          isLeader={isLeader}
+          activeToolId={activeToolId}
+          onToolClick={onToolClick}
+          onToolRun={onToolRun}
+          onToolViewFull={onToolViewFull}
+          onAddTool={onAddTool}
+        />
       </div>
 
       {/* Add Board Button (desktop footer) */}

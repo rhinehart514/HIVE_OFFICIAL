@@ -1,10 +1,3 @@
-import { type NextRequest } from 'next/server';
-import { dbAdmin } from '@/lib/firebase-admin';
-import { checkSpacePermission } from '@/lib/space-permission-middleware';
-import { logger, logSecurityEvent } from '@/lib/structured-logger';
-import { verifySession, type SessionData } from '@/lib/session';
-import { sseConnectionRateLimit } from '@/lib/rate-limit-simple';
-
 /**
  * SSE endpoint for real-time chat message streaming
  *
@@ -13,9 +6,22 @@ import { sseConnectionRateLimit } from '@/lib/rate-limit-simple';
  * Replaces polling with Server-Sent Events for chat messages.
  * Uses Firestore onSnapshot internally and pushes to SSE stream.
  *
- * IMPORTANT: EventSource doesn't support custom headers, so we must use
- * cookie-based authentication here instead of Bearer tokens.
+ * IMPORTANT: This route CANNOT use withAuthAndErrors middleware because:
+ * 1. SSE requires text/event-stream content type, not JSON
+ * 2. EventSource API doesn't support custom headers (Bearer tokens)
+ * 3. Must use cookie-based authentication
+ * 4. Returns a ReadableStream, not a standard Response
+ *
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/EventSource
  */
+
+import { type NextRequest } from 'next/server';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { checkSpacePermission } from '@/lib/space-permission-middleware';
+import { logger, logSecurityEvent } from '@/lib/structured-logger';
+import { verifySession, type SessionData } from '@/lib/session';
+import { sseConnectionRateLimit } from '@/lib/rate-limit-simple';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ spaceId: string }> }
@@ -46,7 +52,7 @@ export async function GET(
     return new Response('Unauthorized - session expired', { status: 401 });
   }
 
-  // Create user object compatible with existing code
+  // Create user object for permission checks and logging
   const user = {
     uid: session.userId,
     email: session.email,
@@ -107,7 +113,6 @@ export async function GET(
   let unsubscribe: (() => void) | null = null;
   let unsubscribeComponents: (() => void) | null = null;
   let isStreamClosed = false;
-  // SCALING FIX: Track heartbeat interval at outer scope for proper cleanup
   let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
 
   const stream = new ReadableStream({
@@ -281,7 +286,6 @@ export async function GET(
       );
 
       // Send heartbeat every 30 seconds to keep connection alive
-      // SCALING FIX: Use outer-scoped variable for proper cleanup in cancel()
       heartbeatInterval = setInterval(() => {
         if (isStreamClosed) {
           if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -301,7 +305,6 @@ export async function GET(
 
     cancel() {
       isStreamClosed = true;
-      // SCALING FIX: Clear heartbeat immediately on cancel (not after 30s delay)
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval);
         heartbeatInterval = null;

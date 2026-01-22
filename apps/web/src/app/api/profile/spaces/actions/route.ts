@@ -1,10 +1,9 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID, addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
+import { addSecureCampusMetadata } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository } from '@hive/core/server';
 
 // Space quick actions for profile
@@ -16,77 +15,69 @@ interface SpaceQuickAction {
 }
 
 // POST - Perform quick action on space
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const body = await request.json();
-    const { type, spaceId, value, metadata } = body;
+  const body = await request.json();
+  const { type, spaceId, value, metadata } = body;
 
-    if (!type || !spaceId) {
-      return NextResponse.json(ApiResponseHelper.error("Missing required fields", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    // Validate action type
-    const validActions = ['favorite', 'mute', 'pin', 'archive', 'leave', 'request_builder'];
-    if (!validActions.includes(type)) {
-      return NextResponse.json(ApiResponseHelper.error("Invalid action type", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    // Verify user is a member of the space
-    const membershipSnapshot = await dbAdmin
-      .collection('spaceMembers')
-      .where('userId', '==', user.uid)
-      .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1)
-      .get();
-    if (membershipSnapshot.empty) {
-      return NextResponse.json(ApiResponseHelper.error("Not a member of this space", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
-    }
-
-    const membershipDoc = membershipSnapshot.docs[0];
-    const membershipData = membershipDoc.data();
-
-    // Enforce campus isolation for space actions
-    const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
-    if (!spaceDoc.exists || (spaceDoc.data()?.campusId !== CURRENT_CAMPUS_ID)) {
-      return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
-    }
-
-    // Perform the action
-    const result = await performSpaceAction(
-      user.uid,
-      spaceId,
-      type as SpaceQuickAction['type'],
-      value,
-      metadata,
-      membershipDoc.ref,
-      membershipData
-    );
-
-    return NextResponse.json({
-      success: true,
-      action: type,
-      spaceId,
-      result
-    });
-  } catch (error) {
-    logger.error(
-      `Error performing space action at /api/profile/spaces/actions`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to perform space action", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  if (!type || !spaceId) {
+    return respond.error("Missing required fields", "INVALID_INPUT", { status: 400 });
   }
-}
+
+  // Validate action type
+  const validActions = ['favorite', 'mute', 'pin', 'archive', 'leave', 'request_builder'];
+  if (!validActions.includes(type)) {
+    return respond.error("Invalid action type", "INVALID_INPUT", { status: 400 });
+  }
+
+  // Verify user is a member of the space
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('userId', '==', userId)
+    .where('spaceId', '==', spaceId)
+    .where('campusId', '==', campusId)
+    .limit(1)
+    .get();
+  if (membershipSnapshot.empty) {
+    return respond.error("Not a member of this space", "FORBIDDEN", { status: 403 });
+  }
+
+  const membershipDoc = membershipSnapshot.docs[0];
+  const membershipData = membershipDoc.data();
+
+  // Enforce campus isolation for space actions
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  if (!spaceDoc.exists || (spaceDoc.data()?.campusId !== campusId)) {
+    return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
+  }
+
+  // Perform the action
+  const result = await performSpaceAction(
+    userId,
+    spaceId,
+    campusId,
+    type as SpaceQuickAction['type'],
+    value,
+    metadata,
+    membershipDoc.ref,
+    membershipData
+  );
+
+  return respond.success({
+    success: true,
+    action: type,
+    spaceId,
+    result
+  });
+});
 
 // Helper function to perform space actions
 async function performSpaceAction(
   userId: string,
   spaceId: string,
+  campusId: string,
   type: SpaceQuickAction['type'],
   value: unknown,
   metadata: Record<string, unknown> | undefined,
@@ -104,10 +95,10 @@ async function performSpaceAction(
         isFavorite,
         updatedAt: firestoreNow
       });
-      
+
       // Update user's profile preferences
       await updateUserSpacePreferences(userId, spaceId, 'favorite', isFavorite);
-      
+
       return { isFavorite };
     }
 
@@ -139,7 +130,7 @@ async function performSpaceAction(
         pinnedAt: isPinned ? isoNow : null,
         updatedAt: firestoreNow
       });
-      
+
       return { isPinned };
     }
 
@@ -152,7 +143,7 @@ async function performSpaceAction(
         status: isArchived ? 'archived' : 'active',
         updatedAt: firestoreNow
       });
-      
+
       return { isArchived };
     }
 
@@ -195,28 +186,28 @@ async function performSpaceAction(
       const requestData = {
         userId,
         spaceId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         requestType: 'builder',
         reason: metadata?.reason || '',
         experience: metadata?.experience || '',
         status: 'pending',
         requestedAt: isoNow
       };
-      
+
       const requestRef = await dbAdmin
         .collection('builderRequests')
         .add(addSecureCampusMetadata(requestData));
-      
+
       // Update membership with pending request
       await membershipRef.update({
         hasBuilderRequest: true,
         builderRequestId: requestRef.id,
         updatedAt: firestoreNow
       });
-      
-      return { 
+
+      return {
         requestId: requestRef.id,
-        requestStatus: 'pending' 
+        requestStatus: 'pending'
       };
     }
 
@@ -236,11 +227,11 @@ async function updateUserSpacePreferences(userId: string, spaceId: string, prefe
       throw new Error('User data not found');
     }
     const spacePreferences = userData.spacePreferences || {};
-    
+
     if (!spacePreferences[spaceId]) {
       spacePreferences[spaceId] = {};
     }
-    
+
     spacePreferences[spaceId][preferenceType] = value;
     spacePreferences[spaceId].updatedAt = new Date().toISOString();
 
@@ -273,103 +264,93 @@ async function updateSpaceMemberCount(spaceId: string, change: number) {
 }
 
 // GET - Get space action status
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const { searchParams } = new URL(request.url);
-    const spaceId = searchParams.get('spaceId');
+  const { searchParams } = new URL(request.url);
+  const spaceId = searchParams.get('spaceId');
 
-    if (!spaceId) {
-      return NextResponse.json(ApiResponseHelper.error("Space ID is required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    // Get membership data
-    const membershipSnapshot = await dbAdmin
-      .collection('spaceMembers')
-      .where('userId', '==', user.uid)
-      .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .limit(1)
-      .get();
-    if (membershipSnapshot.empty) {
-      return NextResponse.json(ApiResponseHelper.error("Not a member of this space", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
-    }
-
-    const membershipData = membershipSnapshot.docs[0].data();
-    if (!membershipData) {
-      return NextResponse.json(ApiResponseHelper.error("Membership data not found", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-    }
-
-    // Enforce campus isolation for space
-    const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
-    if (!spaceDoc.exists || (spaceDoc.data()?.campusId !== CURRENT_CAMPUS_ID)) {
-      return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
-    }
-
-    // Get builder request status if exists
-    let builderRequestStatus = null;
-    if (membershipData.hasBuilderRequest) {
-      const requestDoc = await dbAdmin.collection('builderRequests').doc(membershipData.builderRequestId).get();
-      if (requestDoc.exists) {
-        const requestData = requestDoc.data();
-        builderRequestStatus = requestData?.status || null;
-      }
-    }
-
-    // Get DDD profile data for space context
-    let dddProfileData: {
-      totalSpaces: number;
-      isSpaceInProfile: boolean;
-    } | null = null;
-
-    try {
-      const profileRepository = getServerProfileRepository();
-      const profileResult = await profileRepository.findById(user.uid);
-      if (profileResult.isSuccess) {
-        const profile = profileResult.getValue();
-        dddProfileData = {
-          totalSpaces: profile.spaces.length,
-          isSpaceInProfile: profile.spaces.includes(spaceId),
-        };
-      }
-    } catch {
-      // Non-fatal: continue without DDD data
-    }
-
-    return NextResponse.json({
-      spaceId,
-      actions: {
-        isFavorite: membershipData.isFavorite || false,
-        isMuted: membershipData.isMuted || false,
-        isPinned: membershipData.isPinned || false,
-        isArchived: membershipData.isArchived || false,
-        hasBuilderRequest: membershipData.hasBuilderRequest || false,
-        builderRequestStatus,
-        muteUntil: membershipData.muteUntil || null,
-      },
-      membership: {
-        role: membershipData.role,
-        status: membershipData.isActive === false ? 'inactive' : 'active',
-        joinedAt:
-          membershipData.joinedAt?.toDate?.()?.toISOString() ||
-          membershipData.joinedAt ||
-          null,
-        lastActivity:
-          membershipData.lastActive?.toDate?.()?.toISOString() ||
-          membershipData.lastActive ||
-          null,
-      },
-      profile: dddProfileData,
-    });
-  } catch (error) {
-    logger.error(
-      `Error getting space action status at /api/profile/spaces/actions`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to get space action status", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  if (!spaceId) {
+    return respond.error("Space ID is required", "INVALID_INPUT", { status: 400 });
   }
-}
+
+  // Get membership data
+  const membershipSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('userId', '==', userId)
+    .where('spaceId', '==', spaceId)
+    .where('campusId', '==', campusId)
+    .limit(1)
+    .get();
+  if (membershipSnapshot.empty) {
+    return respond.error("Not a member of this space", "FORBIDDEN", { status: 403 });
+  }
+
+  const membershipData = membershipSnapshot.docs[0].data();
+  if (!membershipData) {
+    return respond.error("Membership data not found", "INTERNAL_ERROR", { status: 500 });
+  }
+
+  // Enforce campus isolation for space
+  const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+  if (!spaceDoc.exists || (spaceDoc.data()?.campusId !== campusId)) {
+    return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
+  }
+
+  // Get builder request status if exists
+  let builderRequestStatus = null;
+  if (membershipData.hasBuilderRequest) {
+    const requestDoc = await dbAdmin.collection('builderRequests').doc(membershipData.builderRequestId).get();
+    if (requestDoc.exists) {
+      const requestData = requestDoc.data();
+      builderRequestStatus = requestData?.status || null;
+    }
+  }
+
+  // Get DDD profile data for space context
+  let dddProfileData: {
+    totalSpaces: number;
+    isSpaceInProfile: boolean;
+  } | null = null;
+
+  try {
+    const profileRepository = getServerProfileRepository();
+    const profileResult = await profileRepository.findById(userId);
+    if (profileResult.isSuccess) {
+      const profile = profileResult.getValue();
+      dddProfileData = {
+        totalSpaces: profile.spaces.length,
+        isSpaceInProfile: profile.spaces.includes(spaceId),
+      };
+    }
+  } catch {
+    // Non-fatal: continue without DDD data
+  }
+
+  return respond.success({
+    spaceId,
+    actions: {
+      isFavorite: membershipData.isFavorite || false,
+      isMuted: membershipData.isMuted || false,
+      isPinned: membershipData.isPinned || false,
+      isArchived: membershipData.isArchived || false,
+      hasBuilderRequest: membershipData.hasBuilderRequest || false,
+      builderRequestStatus,
+      muteUntil: membershipData.muteUntil || null,
+    },
+    membership: {
+      role: membershipData.role,
+      status: membershipData.isActive === false ? 'inactive' : 'active',
+      joinedAt:
+        membershipData.joinedAt?.toDate?.()?.toISOString() ||
+        membershipData.joinedAt ||
+        null,
+      lastActivity:
+        membershipData.lastActive?.toDate?.()?.toISOString() ||
+        membershipData.lastActive ||
+        null,
+    },
+    profile: dddProfileData,
+  });
+});

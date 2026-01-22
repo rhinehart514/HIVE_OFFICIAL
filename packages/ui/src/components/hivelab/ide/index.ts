@@ -42,5 +42,9 @@ export * from './element-rail';
 export * from './port-picker';
 export * from './connection-config';
 
+// Sprint 2: Context & Visibility Components
+export * from './context-picker';
+export * from './condition-builder';
+
 // IDE component primitives
 export * from './components';

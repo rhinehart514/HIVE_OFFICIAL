@@ -13,10 +13,10 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 interface RealTimeMetrics {
   onlineUsers: number;
@@ -35,6 +35,7 @@ interface RealTimeMetrics {
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const startTime = Date.now();
 
   logger.info('admin_analytics_realtime_fetch', { adminId });
@@ -54,22 +55,22 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     ] = await Promise.all([
       // Recent activity (last 5 min)
       dbAdmin.collection('activityEvents')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('timestamp', '>=', fiveMinutesAgo)
         .get(),
       // Presence data (last hour for online users estimate)
       dbAdmin.collection('presence')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('lastActive', '>=', oneHourAgo)
         .get(),
       // Live events (happening now or soon)
       dbAdmin.collection('events')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('startDate', '<=', now)
         .get(),
       // Active tool deployments
       dbAdmin.collection('deployedTools')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .get(),
     ]);

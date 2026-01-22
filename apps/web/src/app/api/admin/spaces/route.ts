@@ -11,10 +11,10 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { SpaceManagementService, toSpaceBrowseDTO } from '@hive/core';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -53,9 +53,10 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
 
   try {
     // Create service with admin context
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const spaceRepo = getServerSpaceRepository();
     const service = new SpaceManagementService(
-      { campusId: CURRENT_CAMPUS_ID, userId: adminId },
+      { campusId, userId: adminId },
       spaceRepo
     );
 

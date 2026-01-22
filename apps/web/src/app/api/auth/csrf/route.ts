@@ -1,34 +1,42 @@
 /**
  * CSRF Token Endpoint
  * Returns the CSRF token for the current session
+ *
+ * GET /api/auth/csrf
  */
 
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
-import { enforceRateLimit } from "@/lib/secure-rate-limiter";
+import {
+  withAuthAndErrors,
+  RATE_LIMIT_PRESETS,
+  type AuthenticatedRequest,
+  type ResponseFormatter,
+} from '@/lib/middleware';
 
-export async function GET(request: NextRequest) {
-  // Rate limit: 100 requests per minute for CSRF token requests
-  const rateLimitResult = await enforceRateLimit('apiGeneral', request);
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { error: rateLimitResult.error },
-      { status: rateLimitResult.status, headers: rateLimitResult.headers }
-    );
-  }
+/**
+ * GET handler - returns CSRF token for admin sessions
+ * Uses auth middleware for session validation + stricter rate limiting
+ */
+export const GET = withAuthAndErrors(
+  async (request: AuthenticatedRequest, _context: unknown, respond: typeof ResponseFormatter) => {
+    // Get session data for CSRF token
+    const session = await getSession(request as NextRequest);
 
-  const session = await getSession(request);
+    if (!session) {
+      return respond.error('Not authenticated', 'UNAUTHORIZED', { status: 401 });
+    }
 
-  if (!session) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
+    // Build response with CSRF token in header for admin sessions
+    const responseData = { success: true };
 
-  // Return CSRF token in header for admin sessions
-  const response = NextResponse.json({ success: true });
+    if (session.isAdmin && session.csrf) {
+      return respond.success(responseData, {
+        headers: { 'X-CSRF-Token': session.csrf },
+      });
+    }
 
-  if (session.isAdmin && session.csrf) {
-    response.headers.set('X-CSRF-Token', session.csrf);
-  }
-
-  return response;
-}
+    return respond.success(responseData);
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.auth, skipCSRF: true }
+);

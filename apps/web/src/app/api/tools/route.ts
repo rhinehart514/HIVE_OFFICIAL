@@ -1,10 +1,9 @@
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ToolSchema, createToolDefaults as coreCreateToolDefaults, type PlacementTargetType } from "@hive/core";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
 import * as admin from "firebase-admin";
@@ -34,6 +33,7 @@ const createToolLimiter = rateLimit({
 // GET /api/tools - List user's tools
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   logger.info('[tools] GET request received', {
     userId,
@@ -50,7 +50,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     // Build query
     let query = adminDb
       .collection("tools")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)  // campusId first to match index
+      .where("campusId", "==", campusId)  // campusId first to match index
       .where("ownerId", "==", userId)
       .orderBy("updatedAt", "desc");
 
@@ -75,7 +75,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
 
     // Get total count for pagination
     const countQuery = adminDb.collection("tools")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("ownerId", "==", userId);
     const countSnapshot = await countQuery.count().get();
     const total = countSnapshot.data().count;
@@ -142,6 +142,7 @@ export const POST = withAuthValidationAndErrors(
   EnhancedCreateToolSchema,
   async (request, context, validatedData: Record<string, unknown>, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Rate limiting
     try {
@@ -233,7 +234,7 @@ export const POST = withAuthValidationAndErrors(
 
     const tool = {
       ...toolData,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       // Use client-provided elements when present; otherwise fall back to template
       elements: validatedData.elements && Array.isArray(validatedData.elements)
         ? validatedData.elements
@@ -335,7 +336,7 @@ export const POST = withAuthValidationAndErrors(
           toolId: toolRef.id,
           deploymentId: `tool_${Date.now()}`,
           placedBy: userId,
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
           placement: 'sidebar',
           visibility: 'all',
           configOverrides: placementRecord.config,
@@ -359,7 +360,7 @@ export const POST = withAuthValidationAndErrors(
           creatorId: userId,
           spaceId: spaceIdStr,
           profileId: null,
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
           // P0: Capabilities (default safe lane)
           capabilities: {
             read_own_state: true,

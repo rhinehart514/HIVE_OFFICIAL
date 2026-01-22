@@ -1,10 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
-// Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { withAuthAndErrors, getUserId, getCampusId } from "@/lib/middleware";
 import type * as admin from 'firebase-admin';
 
 // Space-aware filtering interfaces
@@ -58,135 +54,114 @@ interface FilteredFeedResult {
 }
 
 // POST - Get space-filtered feed content
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const body = await request.json();
-    const { 
-      targetSpaces = [], // Specific spaces to filter, empty = all accessible spaces
-      contentTypes = ['tool_generated', 'tool_enhanced', 'space_event'],
-      includePreview = false, // Include preview content from non-member spaces
-      maxContentPerSpace = 10,
-      sortBy = 'relevance', // 'relevance', 'recency', 'engagement'
-      timeRange = '24h'
-    } = body;
+  const body = await request.json();
+  const {
+    targetSpaces = [], // Specific spaces to filter, empty = all accessible spaces
+    contentTypes = ['tool_generated', 'tool_enhanced', 'space_event'],
+    includePreview = false, // Include preview content from non-member spaces
+    maxContentPerSpace = 10,
+    sortBy = 'relevance', // 'relevance', 'recency', 'engagement'
+    timeRange = '24h'
+  } = body;
 
-    // Get user's space contexts
-    const userSpaceContexts = await getUserSpaceContexts(user.uid);
-    
-    if (userSpaceContexts.length === 0 && !includePreview) {
-      return NextResponse.json({
-        success: true,
-        results: [],
-        metadata: {
-          accessibleSpaces: 0,
-          totalContent: 0,
-          filteringApplied: false
-        }
-      });
-    }
+  // Get user's space contexts
+  const userSpaceContexts = await getUserSpaceContexts(userId, campusId);
 
-    // Get space visibility rules for accessible spaces
-    const spaceIds = targetSpaces.length > 0 
-      ? targetSpaces.filter((id: string) => userSpaceContexts.some(ctx => ctx.spaceId === id))
-      : userSpaceContexts.map(ctx => ctx.spaceId);
-
-    const visibilityRules = await getSpaceVisibilityRules(spaceIds);
-
-    // Apply space-aware filtering
-    const filteredResults = await applySpaceAwareFiltering({
-      userId: user.uid,
-      userSpaceContexts,
-      visibilityRules,
-      contentTypes,
-      includePreview,
-      maxContentPerSpace,
-      sortBy,
-      timeRange
-    });
-
-    // Calculate filtering statistics
-    const totalContent = filteredResults.reduce((sum, result) => sum + result.contentCount, 0);
-    const filteredContent = filteredResults.reduce((sum, result) => sum + result.filteredCount, 0);
-
-    return NextResponse.json({
-      success: true,
-      results: filteredResults,
+  if (userSpaceContexts.length === 0 && !includePreview) {
+    return respond.success({
+      results: [],
       metadata: {
-        accessibleSpaces: userSpaceContexts.length,
-        totalContent,
-        filteredContent,
-        filteringApplied: filteredContent < totalContent,
-        filterEfficiency: totalContent > 0 ? ((totalContent - filteredContent) / totalContent) * 100 : 0
+        accessibleSpaces: 0,
+        totalContent: 0,
+        filteringApplied: false
       }
     });
-  } catch (error) {
-    logger.error(
-      `Error applying space-aware filtering at /api/feed/space-filtering`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to apply space filtering", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
   }
-}
+
+  // Get space visibility rules for accessible spaces
+  const spaceIds = targetSpaces.length > 0
+    ? targetSpaces.filter((id: string) => userSpaceContexts.some(ctx => ctx.spaceId === id))
+    : userSpaceContexts.map(ctx => ctx.spaceId);
+
+  const visibilityRules = await getSpaceVisibilityRules(spaceIds, campusId);
+
+  // Apply space-aware filtering
+  const filteredResults = await applySpaceAwareFiltering({
+    userId,
+    userSpaceContexts,
+    visibilityRules,
+    contentTypes,
+    includePreview,
+    maxContentPerSpace,
+    sortBy,
+    timeRange,
+    campusId
+  });
+
+  // Calculate filtering statistics
+  const totalContent = filteredResults.reduce((sum, result) => sum + result.contentCount, 0);
+  const filteredContent = filteredResults.reduce((sum, result) => sum + result.filteredCount, 0);
+
+  return respond.success({
+    results: filteredResults,
+    metadata: {
+      accessibleSpaces: userSpaceContexts.length,
+      totalContent,
+      filteredContent,
+      filteringApplied: filteredContent < totalContent,
+      filterEfficiency: totalContent > 0 ? ((totalContent - filteredContent) / totalContent) * 100 : 0
+    }
+  });
+});
 
 // GET - Get user's space access information
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const GET = withAuthAndErrors(async (request, _context, respond) => {
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
 
-    const { searchParams } = new URL(request.url);
-    const includePreview = searchParams.get('includePreview') === 'true';
-    const spaceId = searchParams.get('spaceId');
+  const { searchParams } = new URL(request.url);
+  const includePreview = searchParams.get('includePreview') === 'true';
+  const spaceId = searchParams.get('spaceId');
 
-    if (spaceId) {
-      // Get specific space access info
-      const spaceAccess = await getSpaceAccessInfo(user.uid, spaceId, includePreview);
-      return NextResponse.json(spaceAccess);
-    } else {
-      // Get all accessible spaces
-      const userSpaceContexts = await getUserSpaceContexts(user.uid);
-      const accessibleSpaces = await Promise.all(
-        userSpaceContexts.map(ctx => getSpaceAccessInfo(user.uid, ctx.spaceId, includePreview))
-      );
-
-      return NextResponse.json({
-        accessibleSpaces,
-        totalCount: accessibleSpaces.length
-      });
-    }
-  } catch (error) {
-    logger.error(
-      `Error getting space access info at /api/feed/space-filtering`,
-      { error: error instanceof Error ? error.message : String(error) }
+  if (spaceId) {
+    // Get specific space access info
+    const spaceAccess = await getSpaceAccessInfo(userId, spaceId, includePreview, campusId);
+    return respond.success(spaceAccess);
+  } else {
+    // Get all accessible spaces
+    const userSpaceContexts = await getUserSpaceContexts(userId, campusId);
+    const accessibleSpaces = await Promise.all(
+      userSpaceContexts.map(ctx => getSpaceAccessInfo(userId, ctx.spaceId, includePreview, campusId))
     );
-    return NextResponse.json(ApiResponseHelper.error("Failed to get space access info", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+
+    return respond.success({
+      accessibleSpaces,
+      totalCount: accessibleSpaces.length
+    });
   }
-}
+});
 
 // Helper function to get user's space contexts
-async function getUserSpaceContexts(userId: string): Promise<UserSpaceContext[]> {
+async function getUserSpaceContexts(userId: string, campusId: string): Promise<UserSpaceContext[]> {
   try {
     const membershipsSnapshot = await dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', 'in', ['active', 'inactive'])
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
     const contexts: UserSpaceContext[] = [];
 
     for (const memberDoc of membershipsSnapshot.docs) {
       const memberData = memberDoc.data();
-      
+
       // Calculate engagement level
-      const engagementLevel = await calculateUserEngagementInSpace(userId, memberData.spaceId);
-      
+      const engagementLevel = await calculateUserEngagementInSpace(userId, memberData.spaceId, campusId);
+
       // Determine permissions based on role and status
       const permissions = determineUserPermissions(memberData.role, memberData.status, engagementLevel);
 
@@ -213,7 +188,7 @@ async function getUserSpaceContexts(userId: string): Promise<UserSpaceContext[]>
 }
 
 // Helper function to get space visibility rules
-async function getSpaceVisibilityRules(spaceIds: string[]): Promise<Map<string, SpaceVisibilityRules>> {
+async function getSpaceVisibilityRules(spaceIds: string[], campusId: string): Promise<Map<string, SpaceVisibilityRules>> {
   const rulesMap = new Map<string, SpaceVisibilityRules>();
 
   try {
@@ -226,10 +201,10 @@ async function getSpaceVisibilityRules(spaceIds: string[]): Promise<Map<string, 
         continue;
       }
       // Enforce campus isolation: skip spaces from other campuses
-      if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+      if (spaceData.campusId && spaceData.campusId !== campusId) {
         continue;
       }
-      
+
       // Get or create visibility rules
       const visibilityRulesDoc = await dbAdmin.collection('spaceVisibilityRules').doc(spaceId).get();
       let visibilityRules: SpaceVisibilityRules;
@@ -292,9 +267,10 @@ async function applySpaceAwareFiltering(params: {
   maxContentPerSpace: number;
   sortBy: string;
   timeRange: string;
+  campusId: string;
 }): Promise<FilteredFeedResult[]> {
-  const { userId: _userId, userSpaceContexts, visibilityRules, contentTypes, maxContentPerSpace, sortBy, timeRange } = params;
-  
+  const { userId: _userId, userSpaceContexts, visibilityRules, contentTypes, maxContentPerSpace, sortBy, timeRange, campusId } = params;
+
   const results: FilteredFeedResult[] = [];
 
   // Calculate time range
@@ -317,7 +293,8 @@ async function applySpaceAwareFiltering(params: {
       spaceContext.spaceId,
       contentTypes,
       maxContentPerSpace * 2, // Get more for filtering
-      cutoffTime
+      cutoffTime,
+      campusId
     );
 
     // Apply content filtering
@@ -357,7 +334,7 @@ function checkMembershipRequirements(context: UserSpaceContext, rules: SpaceVisi
   const roleHierarchy = { member: 1, builder: 2, moderator: 3, admin: 4 };
   const userRoleLevel = roleHierarchy[context.role] || 0;
   const requiredRoleLevel = roleHierarchy[rules.membershipRequirements.minimumRole] || 1;
-  
+
   if (userRoleLevel < requiredRoleLevel) {
     return false;
   }
@@ -370,7 +347,7 @@ function checkMembershipRequirements(context: UserSpaceContext, rules: SpaceVisi
   // Check minimum duration
   const joinedDate = new Date(context.joinedAt);
   const daysSinceJoined = (Date.now() - joinedDate.getTime()) / (1000 * 60 * 60 * 24);
-  
+
   if (daysSinceJoined < rules.membershipRequirements.minimumDuration) {
     return false;
   }
@@ -383,18 +360,19 @@ async function getSpaceContent(
   spaceId: string,
   contentTypes: string[],
   limit: number,
-  cutoffTime: Date
+  cutoffTime: Date,
+  campusId: string
 ): Promise<Array<Record<string, unknown>>> {
   try {
     const postsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin
       .collection('posts')
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', 'published')
       .where('createdAt', '>=', cutoffTime.toISOString())
       .orderBy('createdAt', 'desc')
       .limit(limit);
-    
+
     const postsSnapshot = await postsQuery.get();
     return postsSnapshot.docs.map(doc => ({
       id: doc.id,
@@ -531,7 +509,7 @@ function determineUserPermissions(role: string, status: string, engagementLevel:
 }
 
 // Helper function to calculate user engagement in space
-async function calculateUserEngagementInSpace(userId: string, spaceId: string): Promise<number> {
+async function calculateUserEngagementInSpace(userId: string, spaceId: string, campusId: string): Promise<number> {
   try {
     // Get recent activity in this space
     const thirtyDaysAgo = new Date();
@@ -541,10 +519,10 @@ async function calculateUserEngagementInSpace(userId: string, spaceId: string): 
       .collection('activityEvents')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('date', '>=', thirtyDaysAgo.toISOString().split('T')[0])
       .limit(100);
-    
+
     const activitySnapshot = await activityQuery.get();
     const activities = activitySnapshot.docs.map(doc => doc.data());
 
@@ -576,11 +554,11 @@ async function calculateUserEngagementInSpace(userId: string, spaceId: string): 
 // Helper function to determine visibility level
 function determineVisibilityLevel(context: UserSpaceContext, rules: SpaceVisibilityRules): 'full' | 'limited' | 'preview' {
   if (!context.permissions.canViewContent) return 'preview';
-  
+
   if (checkMembershipRequirements(context, rules) && context.status === 'active') {
     return 'full';
   }
-  
+
   return 'limited';
 }
 
@@ -593,7 +571,7 @@ function generateAccessReason(context: UserSpaceContext, rules: SpaceVisibilityR
 }
 
 // Helper function to get space access info
-async function getSpaceAccessInfo(userId: string, spaceId: string, includePreview: boolean): Promise<Record<string, unknown>> {
+async function getSpaceAccessInfo(userId: string, spaceId: string, includePreview: boolean, campusId: string): Promise<Record<string, unknown>> {
   try {
     const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
     if (!spaceDoc.exists) {
@@ -605,19 +583,19 @@ async function getSpaceAccessInfo(userId: string, spaceId: string, includePrevie
       return { spaceId, accessible: false, reason: 'Space data not found' };
     }
     // Enforce campus isolation strictly
-    if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+    if (spaceData.campusId && spaceData.campusId !== campusId) {
       return { spaceId, accessible: false, reason: 'Access denied - campus mismatch' };
     }
-    
+
     // Check membership
     const memberQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
-    
+      .where('campusId', '==', campusId);
+
     const memberSnapshot = await memberQuery.get();
-    
+
     if (memberSnapshot.empty) {
       return {
         spaceId,
@@ -629,7 +607,7 @@ async function getSpaceAccessInfo(userId: string, spaceId: string, includePrevie
     }
 
     const memberData = memberSnapshot.docs[0].data();
-    const engagementLevel = await calculateUserEngagementInSpace(userId, spaceId);
+    const engagementLevel = await calculateUserEngagementInSpace(userId, spaceId, campusId);
     const permissions = determineUserPermissions(memberData.role, memberData.status, engagementLevel);
 
     return {

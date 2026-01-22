@@ -4,6 +4,12 @@
  * Core types for the IDE-like tool builder experience.
  */
 
+import type {
+  ContextRequirements,
+  VisibilityCondition,
+  ConditionGroup,
+} from '@hive/core';
+
 export type ToolMode = 'select' | 'pan' | 'connect';
 
 export interface CanvasElement {
@@ -16,6 +22,12 @@ export interface CanvasElement {
   zIndex: number;
   locked: boolean;
   visible: boolean;
+
+  // Sprint 2: Context & Visibility (HiveLab Sprint 2)
+  /** Context fields this element requires at runtime */
+  contextRequirements?: ContextRequirements;
+  /** Conditions that determine when this element is visible */
+  visibilityConditions?: VisibilityCondition[] | ConditionGroup;
 }
 
 export interface Connection {

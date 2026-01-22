@@ -1,12 +1,11 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import {
   UpdateToolSchema,
   getNextVersion,
   validateToolStructure,
 } from "@hive/core";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 const db = getFirestore();
 
@@ -17,6 +16,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -34,7 +34,7 @@ export const GET = withAuthAndErrors(async (
     isPublic?: boolean;
     visibility?: string;
   };
-  if (toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData.campusId !== campusId) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
@@ -84,6 +84,7 @@ export const PUT = withAuthAndErrors(async (
   respond
 ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
     const body = await request.json();
     // Best-effort validation using core's lightweight schema helpers
@@ -113,7 +114,7 @@ export const PUT = withAuthAndErrors(async (
       elements?: Array<unknown>;
       spaceId?: string;
     };
-    if (currentTool.campusId !== CURRENT_CAMPUS_ID) {
+    if (currentTool.campusId !== campusId) {
       return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
@@ -192,6 +193,7 @@ export const DELETE = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const toolDoc = await dbAdmin.collection("tools").doc(toolId).get();
 
@@ -209,7 +211,7 @@ export const DELETE = withAuthAndErrors(async (
     elements?: Array<unknown>;
     useCount?: number;
   };
-  if (tool.campusId !== CURRENT_CAMPUS_ID) {
+  if (tool.campusId !== campusId) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 

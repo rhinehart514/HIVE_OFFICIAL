@@ -1,11 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { Timestamp } from 'firebase-admin/firestore';
-import { getSession } from '@/lib/session';
+import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin as db } from '@/lib/firebase-admin';
-
-interface RouteParams {
-  params: { userId: string };
-}
 
 /**
  * Weights for connection strength calculation
@@ -35,86 +30,74 @@ function getTier(score: number): string {
  * GET /api/profile/[userId]/connection-strength
  * Calculate connection strength between current user and target user
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const session = await getSession(request);
-    if (!session?.userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const GET = withAuthAndErrors(async (
+  request,
+  { params }: { params: Promise<{ userId: string }> },
+  respond
+) => {
+  const currentUserId = getUserId(request as AuthenticatedRequest);
+  const { userId: targetUserId } = await params;
 
-    const targetUserId = params.userId;
-    const currentUserId = session.userId;
-
-    // Can't calculate strength with yourself
-    if (targetUserId === currentUserId) {
-      return NextResponse.json({
-        success: true,
-        isSelf: true,
-        score: 100,
-        tier: 'self',
-        factors: null,
-      });
-    }
-
-    // Get the connection between users
-    const [id1, id2] = [currentUserId, targetUserId].sort();
-    const connectionId = `conn_${id1}_${id2}`;
-    const connectionDoc = await db.collection('connections').doc(connectionId).get();
-
-    // No connection exists
-    if (!connectionDoc.exists) {
-      return NextResponse.json({
-        success: true,
-        isConnected: false,
-        score: 0,
-        tier: 'none',
-        factors: null,
-      });
-    }
-
-    const connectionData = connectionDoc.data();
-
-    // Only calculate for active connections
-    if (!connectionData?.isActive || connectionData.type === 'blocked') {
-      return NextResponse.json({
-        success: true,
-        isConnected: false,
-        score: 0,
-        tier: 'none',
-        factors: null,
-      });
-    }
-
-    // Gather factors for calculation
-    const factors = await calculateConnectionFactors(currentUserId, targetUserId, connectionData);
-
-    // Calculate score using weighted factors
-    const score = calculateScore(factors);
-    const tier = getTier(score);
-
-    // Optionally update the connection document with the calculated strength
-    await db.collection('connections').doc(connectionId).update({
-      strength: score,
-      strengthTier: tier,
-      strengthCalculatedAt: Timestamp.now(),
+  // Can't calculate strength with yourself
+  if (targetUserId === currentUserId) {
+    return respond.success({
+      isSelf: true,
+      score: 100,
+      tier: 'self',
+      factors: null,
     });
-
-    return NextResponse.json({
-      success: true,
-      isConnected: true,
-      connectionType: connectionData.type,
-      score,
-      tier,
-      factors,
-      tierLabel: getTierLabel(tier),
-    });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to calculate connection strength' },
-      { status: 500 }
-    );
   }
-}
+
+  // Get the connection between users
+  const [id1, id2] = [currentUserId, targetUserId].sort();
+  const connectionId = `conn_${id1}_${id2}`;
+  const connectionDoc = await db.collection('connections').doc(connectionId).get();
+
+  // No connection exists
+  if (!connectionDoc.exists) {
+    return respond.success({
+      isConnected: false,
+      score: 0,
+      tier: 'none',
+      factors: null,
+    });
+  }
+
+  const connectionData = connectionDoc.data();
+
+  // Only calculate for active connections
+  if (!connectionData?.isActive || connectionData.type === 'blocked') {
+    return respond.success({
+      isConnected: false,
+      score: 0,
+      tier: 'none',
+      factors: null,
+    });
+  }
+
+  // Gather factors for calculation
+  const factors = await calculateConnectionFactors(currentUserId, targetUserId, connectionData);
+
+  // Calculate score using weighted factors
+  const score = calculateScore(factors);
+  const tier = getTier(score);
+
+  // Optionally update the connection document with the calculated strength
+  await db.collection('connections').doc(connectionId).update({
+    strength: score,
+    strengthTier: tier,
+    strengthCalculatedAt: Timestamp.now(),
+  });
+
+  return respond.success({
+    isConnected: true,
+    connectionType: connectionData.type,
+    score,
+    tier,
+    factors,
+    tierLabel: getTierLabel(tier),
+  });
+});
 
 /**
  * Calculate all factors for connection strength

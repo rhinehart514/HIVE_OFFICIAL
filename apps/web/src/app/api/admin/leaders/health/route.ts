@@ -14,8 +14,7 @@
 
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 
 interface LeaderHealthMetrics {
   totalVerified: number;
@@ -43,10 +42,12 @@ interface AtRiskLeader {
   };
 }
 
-export const GET = withAdminAuthAndErrors(async (_request, _context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   if (!isFirebaseConfigured) {
     return respond.error('Database not configured', 'SERVICE_UNAVAILABLE', { status: 503 });
   }
+
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   try {
     const now = new Date();
@@ -55,7 +56,7 @@ export const GET = withAdminAuthAndErrors(async (_request, _context, respond) =>
     // Fetch all verified leader claims
     const claimsSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('type', '==', 'claim')
       .where('status', '==', 'approved')
       .get();

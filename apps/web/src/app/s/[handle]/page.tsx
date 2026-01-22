@@ -85,6 +85,9 @@ export default function SpacePageUnified() {
     navigateToSettings,
     allMembers,
     isLoadingMembers,
+    // Tools (HiveLab Sprint 1)
+    sidebarTools,
+    isLoadingTools,
   } = useSpaceResidenceState(handle);
 
   // Transform boards for sidebar
@@ -369,6 +372,36 @@ export default function SpacePageUnified() {
                 onCreateBoard={space.isLeader ? handleCreateBoard : undefined}
                 onReorderBoards={space.isLeader ? handleReorderBoards : undefined}
                 position="right"
+                // Tools (HiveLab Sprint 1)
+                sidebarTools={sidebarTools}
+                isLoadingTools={isLoadingTools}
+                isLeader={space.isLeader}
+                onToolRun={(tool) => {
+                  // Open tool in modal (TODO: implement tool modal)
+                  // For now, navigate to the tool page
+                  const params = new URLSearchParams({
+                    placementId: tool.placementId,
+                    spaceId: space?.id || '',
+                  });
+                  router.push(`/tools/${tool.toolId}?${params.toString()}`);
+                }}
+                onToolViewFull={(tool) => {
+                  // Navigate to full app view
+                  const params = new URLSearchParams({
+                    deploymentId: tool.deploymentId,
+                    spaceId: space?.id || '',
+                    mode: 'app',
+                  });
+                  router.push(`/tools/${tool.toolId}?${params.toString()}`);
+                }}
+                onAddTool={() => {
+                  // Navigate to HiveLab with space context
+                  const params = new URLSearchParams({
+                    spaceId: space?.id || '',
+                    deploy: 'sidebar',
+                  });
+                  router.push(`/tools?${params.toString()}`);
+                }}
               />
             </ArrivalZone>
           </div>

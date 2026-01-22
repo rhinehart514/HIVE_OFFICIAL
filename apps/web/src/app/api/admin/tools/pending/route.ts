@@ -8,9 +8,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const PendingQuerySchema = z.object({
@@ -46,6 +45,7 @@ interface PendingTool {
  * Fetch tools awaiting review
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = PendingQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -62,7 +62,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Fetch pending publish requests
     const requestsQuery = dbAdmin
       .collection('toolPublishRequests')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', 'in', ['pending', 'in_review'])
       .orderBy('createdAt', 'desc');
 

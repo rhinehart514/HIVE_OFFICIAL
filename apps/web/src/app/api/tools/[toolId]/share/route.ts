@@ -6,9 +6,9 @@ import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   ToolSchema,
   canUserViewTool,
@@ -35,7 +35,7 @@ const ShareActionSchema = z.discriminatedUnion("action", [
 
 type ShareAction = z.infer<typeof ShareActionSchema>;
 
-async function loadTool(toolId: string) {
+async function loadTool(toolId: string, campusId: string) {
   const toolDoc = await adminDb.collection("tools").doc(toolId).get();
   if (!toolDoc.exists) {
     return { ok: false as const, status: 404, message: "Tool not found" };
@@ -44,7 +44,7 @@ async function loadTool(toolId: string) {
   const tool = ToolSchema.parse({ id: toolDoc.id, ...toolDoc.data() });
 
   const toolData = tool as unknown as { campusId?: string };
-  if (toolData?.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData?.campusId && toolData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -55,14 +55,14 @@ async function loadTool(toolId: string) {
   return { ok: true as const, tool, toolRef: toolDoc.ref };
 }
 
-async function validateSpaceAccess(spaceId: string, userId: string) {
+async function validateSpaceAccess(spaceId: string, userId: string, campusId: string) {
   const spaceDoc = await adminDb.collection("spaces").doc(spaceId).get();
   if (!spaceDoc.exists) {
     return { ok: false as const, message: "Space not found", status: 404 };
   }
 
   const spaceData = spaceDoc.data();
-  if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData?.campusId && spaceData.campusId !== campusId) {
     return { ok: false as const, message: "Access denied for this campus", status: 403 };
   }
 
@@ -87,9 +87,10 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
-    const toolResult = await loadTool(toolId);
+    const toolResult = await loadTool(toolId, campusId);
     if (!toolResult.ok) {
       return respond.error(toolResult.message, "RESOURCE_NOT_FOUND", {
         status: toolResult.status,
@@ -119,7 +120,7 @@ export const POST = withAuthValidationAndErrors(
         userId,
         toolId,
         spaceId: toolWithSpace.spaceId || null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         timestamp: now.toISOString(),
         metadata: {
           shareType: "link",
@@ -137,7 +138,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     if (payload.spaceId) {
-      const spaceAccess = await validateSpaceAccess(payload.spaceId, userId);
+      const spaceAccess = await validateSpaceAccess(payload.spaceId, userId, campusId);
       if (!spaceAccess.ok) {
         return respond.error(spaceAccess.message, "FORBIDDEN", {
           status: spaceAccess.status,
@@ -171,7 +172,7 @@ export const POST = withAuthValidationAndErrors(
       originalToolId: toolId,
       createdAt: now,
       updatedAt: now,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
     };
 
     const forkedToolRef = await adminDb.collection("tools").add(forkedTool);
@@ -196,7 +197,7 @@ export const POST = withAuthValidationAndErrors(
         userId,
         toolId: forkedToolRef.id,
         spaceId: payload.spaceId || null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         timestamp: now.toISOString(),
         metadata: {
           originalToolId: toolId,
@@ -209,7 +210,7 @@ export const POST = withAuthValidationAndErrors(
         userId: toolWithOwner.ownerId || '',
         toolId,
         spaceId: toolWithOwner.spaceId || null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         timestamp: now.toISOString(),
         metadata: {
           forkedBy: userId,

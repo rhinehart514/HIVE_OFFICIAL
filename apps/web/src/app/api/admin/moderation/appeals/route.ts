@@ -10,10 +10,10 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
 
@@ -53,6 +53,7 @@ interface Appeal {
  * Fetch user appeals
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = AppealsQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -69,7 +70,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Build query
     let appealsQuery = dbAdmin
       .collection('appeals')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc');
 
     if (query.status !== 'all') {
@@ -109,7 +110,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Get summary stats
     const allAppealsSnapshot = await dbAdmin
       .collection('appeals')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
 
     const allAppeals = allAppealsSnapshot.docs.map(d => d.data());

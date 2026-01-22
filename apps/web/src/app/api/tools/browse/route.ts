@@ -2,10 +2,10 @@
 
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -31,6 +31,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const viewerId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const searchParams = new URL(request.url).searchParams;
 
     const requestedUserId = searchParams.get("userId") ?? undefined;
@@ -47,7 +48,7 @@ export const GET = withAuthAndErrors(async (
 
     let query = dbAdmin
       .collection("tools")
-      .where("campusId", "==", CURRENT_CAMPUS_ID);
+      .where("campusId", "==", campusId);
 
     if (requestedUserId) {
       if (requestedUserId === viewerId) {
@@ -179,7 +180,7 @@ export const GET = withAuthAndErrors(async (
       try {
         let countQuery = dbAdmin
           .collection("tools")
-          .where("campusId", "==", CURRENT_CAMPUS_ID);
+          .where("campusId", "==", campusId);
 
         if (requestedUserId) {
           if (requestedUserId === viewerId) {

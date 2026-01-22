@@ -1,11 +1,11 @@
 import { dbAdmin as adminDb } from '@/lib/firebase-admin';
 import { z } from 'zod';
 import { logger } from "@/lib/logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthValidationAndErrors,
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -31,6 +31,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const reviewerId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Check if user is admin/reviewer
     const userDoc = await adminDb.collection('users').doc(reviewerId).get();
@@ -110,7 +111,7 @@ export const POST = withAuthValidationAndErrors(
             reviews: 0,
             favorites: 0
           },
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
           publishedAt: now.toISOString(),
           featured: false,
           verified: true
@@ -148,7 +149,7 @@ export const POST = withAuthValidationAndErrors(
       recipients: [requestData?.requestedBy],
       createdAt: now.toISOString(),
       read: false,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
     });
 
     // Log activity
@@ -164,7 +165,7 @@ export const POST = withAuthValidationAndErrors(
         hasNotes: !!validatedData.notes,
         changesRequested: validatedData.changes?.length || 0
       },
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
     });
 
       return respond.success({
@@ -191,11 +192,12 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const reviewerId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Check if user is admin/reviewer
     const userDoc = await adminDb.collection('users').doc(reviewerId).get();
     const userData = userDoc.data();
-    
+
     if (!userData?.roles?.includes('admin') && !userData?.roles?.includes('tool_reviewer')) {
       return respond.error("Insufficient permissions", "FORBIDDEN", { status: 403 });
     }
@@ -208,7 +210,7 @@ export const GET = withAuthAndErrors(async (
     const requestsSnapshot = await adminDb
       .collection('publishRequests')
       .where('status', '==', status)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('requestedAt', 'desc')
       .limit(limitParam)
       .get();
@@ -216,13 +218,13 @@ export const GET = withAuthAndErrors(async (
     const requests = [];
     for (const doc of requestsSnapshot.docs) {
       const requestData = { id: doc.id, ...doc.data() } as { id: string; toolId?: string; requestedBy?: string; [key: string]: unknown };
-      
+
       // Skip if missing required fields
       if (!requestData.toolId || !requestData.requestedBy) continue;
-      
+
       // Get tool details
       const toolDoc = await adminDb.collection('tools').doc(requestData.toolId).get();
-      const toolData = toolDoc.exists && toolDoc.data()?.campusId === CURRENT_CAMPUS_ID ? toolDoc.data() : null;
+      const toolData = toolDoc.exists && toolDoc.data()?.campusId === campusId ? toolDoc.data() : null;
 
       // Get requester details
       const userDoc = await adminDb.collection('users').doc(requestData.requestedBy).get();

@@ -7,20 +7,89 @@ import { logger } from "@/lib/structured-logger";
 import { verifySession, type SessionData } from "@/lib/session";
 
 /**
+ * Type-safe user attachment using Symbol to avoid property mutation issues
+ * This eliminates the need for `(request as any).user` casts throughout the codebase
+ */
+const USER_SYMBOL = Symbol.for('hive.authenticated.user');
+
+export interface UserContext {
+  uid: string;
+  email: string;
+  campusId: string; // Required - enforced at auth boundary
+  decodedToken: DecodedIdToken;
+}
+
+/**
+ * Attach user context to a request (internal use only)
+ */
+export function attachUser(request: NextRequest, user: UserContext): void {
+  (request as unknown as { [USER_SYMBOL]: UserContext })[USER_SYMBOL] = user;
+}
+
+/**
+ * Get user context from an authenticated request
+ * Returns undefined if no user is attached (use getUserId/getCampusId for guaranteed access)
+ */
+export function getUser(request: NextRequest): UserContext | undefined {
+  return (request as unknown as { [USER_SYMBOL]?: UserContext })[USER_SYMBOL];
+}
+
+/**
  * Authenticated Request Handler Type
  * Handlers receive verified user info instead of raw request
+ * Note: campusId is now REQUIRED - enforced by middleware in production
  */
 export interface AuthenticatedRequest extends NextRequest {
   user: {
     uid: string;
     email: string;
-    campusId?: string;
+    campusId: string; // Required - no longer optional
     decodedToken: DecodedIdToken;
   };
 }
 
 export interface RouteParams {
   params?: Record<string, string>;
+}
+
+/**
+ * Derive campus ID from email domain
+ * Add new campus domains here as they onboard
+ */
+export function deriveCampusFromEmail(email: string): string | undefined {
+  const domain = email.split('@')[1]?.toLowerCase();
+
+  // UB Buffalo domains
+  if (domain === 'buffalo.edu' || domain === 'ub.edu') {
+    return 'ub-buffalo';
+  }
+
+  // Add more campus domains here as they onboard:
+  // if (domain === 'example.edu') return 'example-campus';
+
+  return undefined;
+}
+
+/**
+ * Enforce that user's campus matches the resource's campus
+ * Throws a structured error if mismatch - catches cross-campus data access attempts
+ *
+ * Usage:
+ *   requireCampusMatch(request, space.campusId);
+ */
+export function requireCampusMatch(request: AuthenticatedRequest, resourceCampusId: string): void {
+  const userCampusId = getCampusId(request);
+  if (userCampusId !== resourceCampusId) {
+    logger.warn('Campus mismatch attempt', {
+      userId: getUserId(request),
+      userCampus: userCampusId,
+      resourceCampus: resourceCampusId,
+    });
+    const error = new Error('Campus mismatch - you do not have access to this resource');
+    (error as Error & { status: number; code: string }).status = 403;
+    (error as Error & { status: number; code: string }).code = 'CAMPUS_MISMATCH';
+    throw error;
+  }
 }
 
 export type AuthenticatedHandler<T extends RouteParams = object> = (
@@ -55,11 +124,65 @@ function sessionToDecodedToken(session: SessionData): DecodedIdToken {
 }
 
 /**
+ * Resolve campus ID with enforcement
+ * In production: rejects if no campus can be determined
+ * In development: warns and falls back to 'ub-buffalo'
+ */
+function resolveCampusId(
+  sessionCampusId: string | undefined,
+  email: string,
+  userId: string
+): { campusId: string | null; error?: Response } {
+  // 1. Use session campusId if available
+  if (sessionCampusId) {
+    return { campusId: sessionCampusId };
+  }
+
+  // 2. Try deriving from email
+  const derivedCampus = deriveCampusFromEmail(email);
+  if (derivedCampus) {
+    return { campusId: derivedCampus };
+  }
+
+  // 3. No campus could be determined
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    logger.error('SECURITY: No campus context for authenticated user', {
+      userId,
+      email,
+      reason: 'email_domain_not_recognized'
+    });
+    return {
+      campusId: null,
+      error: NextResponse.json(
+        ApiResponseHelper.error(
+          "Campus identification required. Your email domain is not associated with a registered campus.",
+          "CAMPUS_REQUIRED"
+        ),
+        { status: HttpStatus.FORBIDDEN }
+      )
+    };
+  }
+
+  // Development fallback with warning
+  logger.warn('DEV: Using fallback campus for user without recognized domain', {
+    userId,
+    email,
+  });
+  return { campusId: 'ub-buffalo' };
+}
+
+/**
  * Auth Middleware - Secure Authentication for API Routes
  *
  * SECURITY: All authentication paths use cryptographic verification
  * - Session cookies: Verified with jose jwtVerify
  * - Bearer tokens: Verified with Firebase Admin SDK
+ *
+ * CAMPUS ISOLATION: Campus ID is now REQUIRED
+ * - Production: Rejects users without determinable campus
+ * - Development: Warns and falls back to 'ub-buffalo'
  *
  * NO DEVELOPMENT BYPASSES - Use real Firebase Auth with test accounts
  */
@@ -76,14 +199,31 @@ export function withAuth<T extends RouteParams>(
         const session = await verifySession(sessionCookie.value);
 
         if (session && session.userId && session.email) {
-          // Create authenticated request with verified session info
-          const authenticatedRequest = request as AuthenticatedRequest;
-          authenticatedRequest.user = {
+          // Resolve campus with enforcement
+          const { campusId, error } = resolveCampusId(
+            session.campusId,
+            session.email,
+            session.userId
+          );
+
+          if (error) {
+            return error;
+          }
+
+          // Create user context
+          const userContext: UserContext = {
             uid: session.userId,
             email: session.email,
-            campusId: session.campusId,
+            campusId: campusId!, // Safe - checked above
             decodedToken: sessionToDecodedToken(session)
           };
+
+          // Attach via symbol for type-safe access
+          attachUser(request, userContext);
+
+          // Also attach to .user for backward compatibility
+          const authenticatedRequest = request as AuthenticatedRequest;
+          authenticatedRequest.user = userContext;
 
           return await handler(authenticatedRequest, context);
         }
@@ -132,25 +272,31 @@ export function withAuth<T extends RouteParams>(
         );
       }
 
-      // Create authenticated request with user info
-      const authenticatedRequest = request as AuthenticatedRequest;
+      // Resolve campus with enforcement
+      const { campusId, error } = resolveCampusId(
+        undefined, // Bearer token doesn't have session campusId
+        decodedToken.email,
+        decodedToken.uid
+      );
 
-      // Derive campusId from email for Bearer token auth
-      let campusId: string | undefined;
-      if (decodedToken.email) {
-        const domain = decodedToken.email.split('@')[1]?.toLowerCase();
-        if (domain === 'buffalo.edu' || domain === 'ub.edu') {
-          campusId = 'ub-buffalo';
-        }
-        // Add more domains here as campuses are added
+      if (error) {
+        return error;
       }
 
-      authenticatedRequest.user = {
+      // Create user context
+      const userContext: UserContext = {
         uid: decodedToken.uid,
         email: decodedToken.email,
-        campusId,
+        campusId: campusId!, // Safe - checked above
         decodedToken
       };
+
+      // Attach via symbol for type-safe access
+      attachUser(request, userContext);
+
+      // Also attach to .user for backward compatibility
+      const authenticatedRequest = request as AuthenticatedRequest;
+      authenticatedRequest.user = userContext;
 
       // Call the actual handler with authenticated request
       return await handler(authenticatedRequest, context);
@@ -231,24 +377,9 @@ export function getUserEmail(request: AuthenticatedRequest): string {
 
 /**
  * Utility function to get campus ID from authenticated request
- * Falls back to deriving from email or default campus
+ * Campus ID is now GUARANTEED by the auth middleware - no fallback needed
  */
 export function getCampusId(request: AuthenticatedRequest): string {
-  // Return from session if available
-  if (request.user.campusId) {
-    return request.user.campusId;
-  }
-
-  // Fallback: derive from email domain
-  const email = request.user.email;
-  if (email) {
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (domain === 'buffalo.edu' || domain === 'ub.edu') {
-      return 'ub-buffalo';
-    }
-    // Add more domains here as campuses are added
-  }
-
-  // Ultimate fallback for existing users
-  return 'ub-buffalo';
+  // Campus is guaranteed by middleware enforcement
+  return request.user.campusId;
 }

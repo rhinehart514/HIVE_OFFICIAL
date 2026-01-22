@@ -29,21 +29,35 @@ export class ProfileMapper extends Mapper<Profile, ProfileDTO> {
     };
   }
 
+  /**
+   * @deprecated Use toDomainSafe() for proper error handling
+   */
   toDomain(dto: ProfileDTO): Profile {
+    const result = this.toDomainSafe(dto);
+    if (result.isFailure) {
+      throw new Error(result.error ?? 'Unknown error converting DTO to domain');
+    }
+    return result.getValue();
+  }
+
+  /**
+   * Safely converts DTO to domain Profile with Result-based error handling
+   */
+  override toDomainSafe(dto: ProfileDTO): Result<Profile> {
     // Create value objects
     const emailResult = UBEmail.create(dto.email);
     if (emailResult.isFailure) {
-      throw new Error(`Invalid email: ${emailResult.error}`);
+      return Result.fail(`Invalid email: ${emailResult.error}`);
     }
 
     const handleResult = Handle.create(dto.handle);
     if (handleResult.isFailure) {
-      throw new Error(`Invalid handle: ${handleResult.error}`);
+      return Result.fail(`Invalid handle: ${handleResult.error}`);
     }
 
     const profileIdResult = ProfileId.create(dto.id);
     if (profileIdResult.isFailure) {
-      throw new Error(`Invalid profile ID: ${profileIdResult.error}`);
+      return Result.fail(`Invalid profile ID: ${profileIdResult.error}`);
     }
 
     // Create profile with new signature
@@ -62,7 +76,7 @@ export class ProfileMapper extends Mapper<Profile, ProfileDTO> {
     });
 
     if (profileResult.isFailure) {
-      throw new Error(`Failed to create profile: ${profileResult.error}`);
+      return Result.fail(`Failed to create profile: ${profileResult.error}`);
     }
 
     const profile = profileResult.getValue();
@@ -83,6 +97,6 @@ export class ProfileMapper extends Mapper<Profile, ProfileDTO> {
       }
     }
 
-    return profile;
+    return Result.ok(profile);
   }
 }

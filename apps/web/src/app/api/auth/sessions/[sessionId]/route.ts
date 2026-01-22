@@ -1,9 +1,24 @@
-import { type NextRequest, NextResponse } from 'next/server';
+/**
+ * Single Session Management Endpoint
+ * DELETE: Revoke a specific session
+ *
+ * Note: Users can only revoke their own sessions.
+ * The sessionId in the URL should be the masked ID (first 8 chars + '...')
+ * but we'll accept both masked and full IDs for flexibility.
+ */
+
+import { type NextRequest } from 'next/server';
 import { getSession } from '@/lib/session';
 import { revokeSessionAsync } from '@/lib/session-revocation';
 import { logger } from '@/lib/logger';
-import { enforceRateLimit } from '@/lib/secure-rate-limiter';
 import { auditAuthEvent } from '@/lib/production-auth';
+import {
+  withAuthAndErrors,
+  getUserId,
+  RATE_LIMIT_PRESETS,
+  type AuthenticatedRequest,
+  type ResponseFormatter,
+} from '@/lib/middleware';
 
 interface RouteContext {
   params: Promise<{ sessionId: string }>;
@@ -12,47 +27,21 @@ interface RouteContext {
 /**
  * DELETE /api/auth/sessions/[sessionId]
  * Revoke a specific session
- *
- * Note: Users can only revoke their own sessions.
- * The sessionId in the URL should be the masked ID (first 8 chars + '...')
- * but we'll accept both masked and full IDs for flexibility.
  */
-export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-): Promise<NextResponse> {
-  try {
-    // Rate limit (strict - sensitive operation)
-    const rateLimitResult = await enforceRateLimit('authStrict', request);
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        { error: rateLimitResult.error || 'Rate limit exceeded' },
-        { status: rateLimitResult.status }
-      );
-    }
+export const DELETE = withAuthAndErrors(
+  async (request: AuthenticatedRequest, context: RouteContext, respond: typeof ResponseFormatter) => {
+    const userId = getUserId(request);
+    const session = await getSession(request as NextRequest);
 
-    // Verify session
-    const session = await getSession(request);
     if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
-      );
+      return respond.error('Unauthorized', 'UNAUTHORIZED', { status: 401 });
     }
 
     const { sessionId: targetSessionId } = await context.params;
 
     if (!targetSessionId) {
-      return NextResponse.json(
-        { error: 'Session ID required', code: 'INVALID_INPUT' },
-        { status: 400 }
-      );
+      return respond.error('Session ID required', 'INVALID_INPUT', { status: 400 });
     }
-
-    // For security, we don't reveal if the session exists or not
-    // We just mark it as revoked if it belongs to this user
-    // Note: In a full implementation, you'd verify the session belongs to this user
-    // by checking the userSessions collection
 
     // Check if trying to revoke current session
     const isCurrentSession =
@@ -60,11 +49,9 @@ export async function DELETE(
       session.sessionId.startsWith(targetSessionId.replace('...', ''));
 
     if (isCurrentSession) {
-      return NextResponse.json(
-        {
-          error: 'Cannot revoke current session. Use logout instead.',
-          code: 'INVALID_OPERATION',
-        },
+      return respond.error(
+        'Cannot revoke current session. Use logout instead.',
+        'INVALID_OPERATION',
         { status: 400 }
       );
     }
@@ -75,36 +62,21 @@ export async function DELETE(
     await revokeSessionAsync(targetSessionId);
 
     // Audit the operation
-    await auditAuthEvent('success', request, {
+    await auditAuthEvent('success', request as NextRequest, {
       operation: 'revoke_session',
-      userId: session.userId,
+      userId,
       targetSession: targetSessionId.substring(0, 8) + '...',
     });
 
     logger.info('Session revoked', {
       component: 'sessions-api',
-      userId: session.userId,
+      userId,
       targetSession: targetSessionId.substring(0, 8) + '...',
     });
 
-    return NextResponse.json({
-      success: true,
+    return respond.success({
       message: 'Session has been revoked.',
     });
-  } catch (error) {
-    logger.error('Failed to revoke session', {
-      component: 'sessions-api',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    await auditAuthEvent('failure', request, {
-      operation: 'revoke_session',
-      error: error instanceof Error ? error.message : 'unknown',
-    });
-
-    return NextResponse.json(
-      { error: 'Failed to revoke session', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    );
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.strict }
+);

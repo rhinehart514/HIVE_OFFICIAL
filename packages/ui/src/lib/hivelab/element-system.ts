@@ -9,6 +9,17 @@
 import * as React from 'react';
 import { renderElement } from '../../components/hivelab/element-renderers';
 
+// Import context types for Sprint 2
+import type {
+  SpaceContext,
+  MemberContext,
+  TemporalContext,
+  CapabilityContext,
+  VisibilityCondition,
+  ConditionGroup,
+  ContextRequirements,
+} from '@hive/core';
+
 // Element access tiers - determines what DATA an element can access
 export type ElementTier =
   | 'universal'   // Everyone - no HIVE data needed
@@ -70,13 +81,37 @@ export interface ElementProps {
   data?: any;
   onChange?: (data: any) => void;
   onAction?: (action: string, payload: any) => void;
-  // New: context for data access
+
+  // ============================================================================
+  // Sprint 2: Runtime Context (Contextual Intelligence)
+  // ============================================================================
+
+  /**
+   * Runtime context for data access and personalization
+   * Provides space, member, and temporal information for conditional rendering
+   */
   context?: {
     userId?: string;
     campusId?: string;
     spaceId?: string;      // Only set if user is a leader of this space
     isSpaceLeader?: boolean;
+    // Sprint 2: Full context objects
+    temporal?: TemporalContext;
+    space?: SpaceContext;
+    member?: MemberContext;
+    capabilities?: CapabilityContext;
   };
+
+  /**
+   * Visibility conditions for conditional rendering (Sprint 2)
+   * If conditions evaluate to false, the element is hidden
+   */
+  visibilityConditions?: VisibilityCondition[] | ConditionGroup;
+
+  /**
+   * Context requirements declaring what context fields this element needs
+   */
+  contextRequirements?: ContextRequirements;
 
   // ============================================================================
   // Phase 1: Shared State Architecture

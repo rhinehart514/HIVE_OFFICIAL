@@ -6,9 +6,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const ViolationsQuerySchema = z.object({
@@ -40,6 +39,7 @@ interface Violation {
  * Fetch violation history
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = ViolationsQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -87,7 +87,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     if (query.type === 'all' || query.type === 'suspension' || query.type === 'ban') {
       let profilesQuery = dbAdmin
         .collection('profiles')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('status', 'in', ['suspended', 'banned']);
 
       if (query.userId) {
@@ -135,7 +135,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     if (query.type === 'all' || query.type === 'content_removal') {
       let removalsQuery = dbAdmin
         .collection('contentReports')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('actionTaken', '==', 'remove_content')
         .orderBy('resolvedAt', 'desc');
 

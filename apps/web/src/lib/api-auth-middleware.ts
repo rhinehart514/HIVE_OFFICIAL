@@ -13,7 +13,23 @@ export interface AuthContext {
   token: string;
   isAdmin?: boolean;
   email?: string;
-  campusId?: string;
+  campusId: string; // Required - enforced at auth boundary
+}
+
+/**
+ * Derive campus ID from email domain
+ * Add new campus domains here as they onboard
+ */
+function deriveCampusFromEmail(email: string): string | undefined {
+  const domain = email.split('@')[1]?.toLowerCase();
+
+  // UB Buffalo domains
+  if (domain === 'buffalo.edu' || domain === 'ub.edu') {
+    return 'ub-buffalo';
+  }
+
+  // Add more campus domains here as they onboard
+  return undefined;
 }
 
 export interface AuthOptions {
@@ -58,12 +74,39 @@ export async function validateApiAuth(
         }
       }
 
+      // Resolve campus ID
+      let campusId = session.campusId;
+      if (!campusId && session.email) {
+        campusId = deriveCampusFromEmail(session.email);
+      }
+
+      // Enforce campus in production
+      if (!campusId) {
+        if (process.env.NODE_ENV === 'production') {
+          logger.error('SECURITY: No campus context for authenticated user', {
+            component: 'api-auth-middleware',
+            userId: session.userId,
+            email: session.email,
+          });
+          throw new Response(
+            JSON.stringify({ error: 'Campus identification required' }),
+            { status: 403, headers: { 'content-type': 'application/json' } }
+          );
+        }
+        // Development fallback
+        logger.warn('DEV: Using fallback campus for user without recognized domain', {
+          component: 'api-auth-middleware',
+          userId: session.userId,
+        });
+        campusId = 'ub-buffalo';
+      }
+
       return {
         userId: session.userId,
         token: sessionCookie.value,
         isAdmin: session.isAdmin || await isAdminUser(session.userId, session.email),
         email: session.email,
-        campusId: session.campusId
+        campusId
       };
     }
   }
@@ -114,11 +157,36 @@ export async function validateApiAuth(
       }
     }
 
+    // Resolve campus ID from email
+    let campusId = decodedToken.email ? deriveCampusFromEmail(decodedToken.email) : undefined;
+
+    // Enforce campus in production
+    if (!campusId) {
+      if (process.env.NODE_ENV === 'production') {
+        logger.error('SECURITY: No campus context for authenticated user', {
+          component: 'api-auth-middleware',
+          userId: decodedToken.uid,
+          email: decodedToken.email,
+        });
+        throw new Response(
+          JSON.stringify({ error: 'Campus identification required' }),
+          { status: 403, headers: { 'content-type': 'application/json' } }
+        );
+      }
+      // Development fallback
+      logger.warn('DEV: Using fallback campus for user without recognized domain', {
+        component: 'api-auth-middleware',
+        userId: decodedToken.uid,
+      });
+      campusId = 'ub-buffalo';
+    }
+
     return {
       userId: decodedToken.uid,
       token,
       isAdmin: await isAdminUser(decodedToken.uid, decodedToken.email),
-      email: decodedToken.email
+      email: decodedToken.email,
+      campusId
     };
   } catch (error) {
     await logSecurityEvent('invalid_token', {

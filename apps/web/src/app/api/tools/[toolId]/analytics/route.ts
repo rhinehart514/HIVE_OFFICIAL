@@ -1,6 +1,5 @@
-import { withAuthAndErrors, type AuthenticatedRequest, getUserId } from '@/lib/middleware';
+import { withAuthAndErrors, type AuthenticatedRequest, getUserId, getCampusId } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 // GET /api/tools/[toolId]/analytics
 export const GET = withAuthAndErrors(async (
@@ -9,6 +8,7 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
 
   // Ensure tool exists and campus matches
@@ -17,7 +17,7 @@ export const GET = withAuthAndErrors(async (
     return respond.error('Tool not found', 'RESOURCE_NOT_FOUND', { status: 404 });
   }
   const tool = toolDoc.data();
-  if (tool?.campusId && tool.campusId !== CURRENT_CAMPUS_ID) {
+  if (tool?.campusId && tool.campusId !== campusId) {
     return respond.error('Access denied for this campus', 'FORBIDDEN', { status: 403 });
   }
 
@@ -163,7 +163,7 @@ export const GET = withAuthAndErrors(async (
   const reviewsSnapshot = await dbAdmin
     .collection('toolReviews')
     .where('toolId', '==', toolId)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .where('status', '==', 'published')
     .get();
 

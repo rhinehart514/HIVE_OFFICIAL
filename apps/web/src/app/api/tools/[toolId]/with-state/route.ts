@@ -1,11 +1,11 @@
 "use server";
 
 import { dbAdmin } from "@/lib/firebase-admin";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import type { ToolSharedState, ToolSharedEntity } from "@hive/core";
@@ -36,6 +36,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const url = new URL(request.url);
   const deploymentId = url.searchParams.get("deploymentId");
@@ -62,7 +63,7 @@ export const GET = withAuthAndErrors(async (
     elements?: Array<unknown>;
   };
 
-  if (toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData.campusId !== campusId) {
     return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 
@@ -159,7 +160,7 @@ export const GET = withAuthAndErrors(async (
       if (deploymentDoc.exists) {
         const deploymentData = deploymentDoc.data();
 
-        if (deploymentData && deploymentData.campusId === CURRENT_CAMPUS_ID) {
+        if (deploymentData && deploymentData.campusId === campusId) {
           // Check access
           let hasAccess = false;
 
@@ -171,7 +172,7 @@ export const GET = withAuthAndErrors(async (
               .where("userId", "==", userId)
               .where("spaceId", "==", deploymentData.targetId)
               .where("status", "==", "active")
-              .where("campusId", "==", CURRENT_CAMPUS_ID)
+              .where("campusId", "==", campusId)
               .limit(1)
               .get();
             hasAccess = !membershipSnapshot.empty;

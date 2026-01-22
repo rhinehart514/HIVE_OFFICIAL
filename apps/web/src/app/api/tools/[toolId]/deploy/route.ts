@@ -3,9 +3,8 @@ import { getFirestore as _getFirestore, FieldValue as _FieldValue } from "fireba
 import * as admin from 'firebase-admin';
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthValidationAndErrors, withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 
 // Schema for tool deployment requests
@@ -24,6 +23,7 @@ export const POST = withAuthValidationAndErrors(
     respond
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
     const db = dbAdmin;
 
@@ -33,7 +33,7 @@ export const POST = withAuthValidationAndErrors(
       .where("userId", "==", userId)
       .where("spaceId", "==", spaceId)
       .where("status", "==", "active")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .limit(1)
       .get();
 
@@ -57,7 +57,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const toolData = toolDoc.data();
-    if (toolData?.campusId !== CURRENT_CAMPUS_ID) {
+    if (toolData?.campusId !== campusId) {
       return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
     if (toolData?.status !== "published") {
@@ -69,7 +69,7 @@ export const POST = withAuthValidationAndErrors(
       .collection("tool_deployments")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("isActive", "==", true)
       .limit(1)
       .get();
@@ -85,7 +85,7 @@ export const POST = withAuthValidationAndErrors(
       .get();
 
     const spaceData = spaceDoc.data();
-    if (spaceData?.campusId !== CURRENT_CAMPUS_ID) {
+    if (spaceData?.campusId !== campusId) {
       return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
     const maxTools = spaceData?.limits?.maxTools || 20;
@@ -109,7 +109,7 @@ export const POST = withAuthValidationAndErrors(
       id: deploymentId,
       toolId,
       spaceId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
       deployedBy: userId,
       deployedAt: admin.firestore.FieldValue.serverTimestamp(),
       isActive: true,
@@ -154,7 +154,7 @@ export const POST = withAuthValidationAndErrors(
       toolId,
       deploymentId,
       placedBy: userId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
       placement: 'sidebar',
       visibility: 'all',
       configOverrides: configuration,
@@ -210,6 +210,7 @@ export const DELETE = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
@@ -226,7 +227,7 @@ export const DELETE = withAuthAndErrors(async (
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
@@ -291,7 +292,7 @@ export const DELETE = withAuthAndErrors(async (
       .collection("tool_states")
       .where("toolId", "==", toolId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .get();
 
     const batch = dbAdmin.batch();
@@ -324,6 +325,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { toolId } = await params;
   const searchParams = new URL(request.url).searchParams;
   const spaceId = searchParams.get("spaceId");
@@ -340,7 +342,7 @@ export const GET = withAuthAndErrors(async (
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 

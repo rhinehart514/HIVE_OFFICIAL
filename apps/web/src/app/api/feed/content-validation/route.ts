@@ -1,8 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
+import { withAuthAndErrors, getUserId } from "@/lib/middleware";
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 
 // Content validation interfaces
 interface ContentValidationResult {
@@ -45,98 +43,72 @@ interface FeedContentAnalytics {
 }
 
 // POST - Validate content for feed inclusion
-export async function POST(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const POST = withAuthAndErrors(async (request, _context, respondHelper) => {
+  const userId = getUserId(request);
+  const body = await request.json();
+  const { contentItems, spaceId, enforcementLevel = 'moderate' } = body;
 
-    const body = await request.json();
-    const { contentItems, spaceId, enforcementLevel = 'moderate' } = body;
-
-    if (!contentItems || !Array.isArray(contentItems)) {
-      return NextResponse.json(ApiResponseHelper.error("Content items array required", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
-    }
-
-    // Get content enforcement policy
-    const policy = await getContentEnforcementPolicy(spaceId, enforcementLevel);
-    
-    // Validate each content item
-    const validationResults = await Promise.all(
-      contentItems.map(item => validateContentItem(item, policy, spaceId))
-    );
-
-    // Apply enforcement actions
-    const enforcedResults = await applyEnforcementActions(validationResults, policy);
-
-    // Generate analytics
-    const analytics = generateContentAnalytics(validationResults);
-
-    // Log validation metrics
-    await logValidationMetrics(user.uid, spaceId, {
-      totalItems: contentItems.length,
-      validItems: enforcedResults.filter(r => r.enforcementAction === 'allow').length,
-      analytics
-    });
-
-    return NextResponse.json({
-      success: true,
-      validationResults: enforcedResults,
-      analytics,
-      policy: {
-        toolContentMinimum: policy.toolContentMinimum,
-        qualityThreshold: policy.qualityThreshold,
-        enforcementLevel: policy.enforcementLevel
-      }
-    });
-  } catch (error) {
-    logger.error(
-      `Error validating content at /api/feed/content-validation`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to validate content", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
+  if (!contentItems || !Array.isArray(contentItems)) {
+    return respondHelper.error("Content items array required", "INVALID_INPUT", { status: 400 });
   }
-}
+
+  // Get content enforcement policy
+  const policy = await getContentEnforcementPolicy(spaceId, enforcementLevel);
+
+  // Validate each content item
+  const validationResults = await Promise.all(
+    contentItems.map(item => validateContentItem(item, policy, spaceId))
+  );
+
+  // Apply enforcement actions
+  const enforcedResults = await applyEnforcementActions(validationResults, policy);
+
+  // Generate analytics
+  const analytics = generateContentAnalytics(validationResults);
+
+  // Log validation metrics
+  await logValidationMetrics(userId, spaceId, {
+    totalItems: contentItems.length,
+    validItems: enforcedResults.filter(r => r.enforcementAction === 'allow').length,
+    analytics
+  });
+
+  return respondHelper.success({
+    validationResults: enforcedResults,
+    analytics,
+    policy: {
+      toolContentMinimum: policy.toolContentMinimum,
+      qualityThreshold: policy.qualityThreshold,
+      enforcementLevel: policy.enforcementLevel
+    }
+  });
+});
 
 // GET - Get content validation analytics
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const GET = withAuthAndErrors(async (request, _context, respondHelper) => {
+  const { searchParams } = new URL(request.url);
+  const spaceId = searchParams.get('spaceId');
+  const timeRange = searchParams.get('timeRange') || '7d'; // 1d, 7d, 30d
+  const includeDetails = searchParams.get('includeDetails') === 'true';
 
-    const { searchParams } = new URL(request.url);
-    const spaceId = searchParams.get('spaceId');
-    const timeRange = searchParams.get('timeRange') || '7d'; // 1d, 7d, 30d
-    const includeDetails = searchParams.get('includeDetails') === 'true';
+  // Calculate date range
+  const days = timeRange === '1d' ? 1 : timeRange === '7d' ? 7 : 30;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
 
-    // Calculate date range
-    const days = timeRange === '1d' ? 1 : timeRange === '7d' ? 7 : 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  // Get validation metrics
+  const analytics = await getContentValidationAnalytics(spaceId || undefined, startDate, includeDetails);
 
-    // Get validation metrics
-    const analytics = await getContentValidationAnalytics(spaceId || undefined, startDate, includeDetails);
+  // Get current enforcement policy
+  const policy = await getContentEnforcementPolicy(spaceId || undefined);
 
-    // Get current enforcement policy
-    const policy = await getContentEnforcementPolicy(spaceId || undefined);
-
-    return NextResponse.json({
-      analytics,
-      policy,
-      timeRange,
-      generatedAt: new Date().toISOString()
-    });
-  } catch (error) {
-    logger.error(
-      `Error fetching validation analytics at /api/feed/content-validation`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to fetch analytics", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+  return respondHelper.success({
+    analytics,
+    policy,
+    timeRange,
+    generatedAt: new Date().toISOString()
+  });
+});
 
 // Default policies by enforcement level
 const DEFAULT_POLICIES: Record<string, ContentEnforcementPolicy> = {
@@ -221,7 +193,7 @@ async function validateContentItem(
               elementIds: (contentItem.elementIds as string[]) || [],
               interactionType: (contentItem.metadata as Record<string, unknown> | undefined)?.action as string || 'unknown'
             };
-            
+
             // Quality bonus for sophisticated tools
             const elementCount = tool.elements?.length || 0;
             qualityScore += Math.min(20, elementCount * 3);
@@ -290,7 +262,7 @@ async function validateContentItem(
     // Validation against policy
     const isAllowedType = policy.allowedContentTypes.includes(contentType);
     const meetsQualityThreshold = qualityScore >= policy.qualityThreshold;
-    
+
     if (!isAllowedType) {
       validationReasons.push(`Content type ${contentType} not allowed by policy`);
       confidence -= 30;
@@ -303,7 +275,7 @@ async function validateContentItem(
 
     // Determine enforcement action
     let enforcementAction: ContentValidationResult['enforcementAction'] = 'allow';
-    
+
     if (!isAllowedType || !meetsQualityThreshold) {
       switch (policy.enforcementLevel) {
         case 'strict':
@@ -352,19 +324,19 @@ async function applyEnforcementActions(
   policy: ContentEnforcementPolicy
 ): Promise<ContentValidationResult[]> {
   // Calculate tool content percentage
-  const toolContentCount = validationResults.filter(r => 
+  const toolContentCount = validationResults.filter(r =>
     r.contentType === 'tool_generated' || r.contentType === 'tool_enhanced'
   ).length;
-  
+
   const toolContentPercentage = (toolContentCount / validationResults.length) * 100;
 
   // If tool content percentage is below minimum, prioritize tool content
   if (toolContentPercentage < policy.toolContentMinimum) {
-    const _toolContent = validationResults.filter(r => 
+    const _toolContent = validationResults.filter(r =>
       r.contentType === 'tool_generated' || r.contentType === 'tool_enhanced'
     );
-    
-    const nonToolContent = validationResults.filter(r => 
+
+    const nonToolContent = validationResults.filter(r =>
       r.contentType !== 'tool_generated' && r.contentType !== 'tool_enhanced'
     );
 
@@ -374,7 +346,7 @@ async function applyEnforcementActions(
 
     // Mark excess non-tool content for rejection, starting with lowest quality
     const sortedNonToolContent = nonToolContent.sort((a, b) => a.qualityScore - b.qualityScore);
-    
+
     for (let i = 0; i < excessNonToolCount; i++) {
       if (sortedNonToolContent[i]) {
         sortedNonToolContent[i].enforcementAction = 'reject';
@@ -390,14 +362,14 @@ async function applyEnforcementActions(
 // Helper function to generate content analytics
 function generateContentAnalytics(validationResults: ContentValidationResult[]): FeedContentAnalytics {
   const totalPosts = validationResults.length;
-  const toolGeneratedCount = validationResults.filter(r => 
+  const toolGeneratedCount = validationResults.filter(r =>
     r.contentType === 'tool_generated' || r.contentType === 'tool_enhanced'
   ).length;
-  
+
   const toolGeneratedPercentage = totalPosts > 0 ? (toolGeneratedCount / totalPosts) * 100 : 0;
-  
-  const averageQualityScore = totalPosts > 0 
-    ? validationResults.reduce((sum, r) => sum + r.qualityScore, 0) / totalPosts 
+
+  const averageQualityScore = totalPosts > 0
+    ? validationResults.reduce((sum, r) => sum + r.qualityScore, 0) / totalPosts
     : 0;
 
   // Content type distribution
@@ -457,8 +429,8 @@ async function logValidationMetrics(userId: string, spaceId: string | undefined,
 
 // Helper function to get content validation analytics
 async function getContentValidationAnalytics(
-  spaceId: string | undefined, 
-  startDate: Date, 
+  spaceId: string | undefined,
+  startDate: Date,
   _includeDetails: boolean
 ): Promise<FeedContentAnalytics> {
   try {

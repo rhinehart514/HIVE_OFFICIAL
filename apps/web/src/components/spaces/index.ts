@@ -69,3 +69,9 @@ export type {
   ToolItem,
   UnifiedActivityFeedProps,
 } from './unified-activity-feed';
+
+// Sidebar tool components (HiveLab Sprint 1)
+export { SidebarToolCard } from './sidebar-tool-card';
+export type { SidebarToolCardProps } from './sidebar-tool-card';
+export { SidebarToolSection } from './sidebar-tool-section';
+export type { SidebarToolSectionProps } from './sidebar-tool-section';

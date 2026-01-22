@@ -1,14 +1,7 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { getAuth } from "firebase-admin/auth";
-import { logger } from "@/lib/logger";
-import { clearAllSessionCookies, getSession } from '@/lib/session';
-import { enforceRateLimit } from "@/lib/secure-rate-limiter";
-import { auditAuthEvent } from "@/lib/production-auth";
-import { revokeSession } from '@/lib/session-revocation';
-
 /**
- * Logout endpoint - revokes user session and clears all auth cookies
+ * Logout Endpoint
+ * Revokes user session and clears all auth cookies
+ *
  * POST /api/auth/logout
  *
  * Clears:
@@ -16,21 +9,31 @@ import { revokeSession } from '@/lib/session-revocation';
  * - Refresh token cookie (hive_refresh)
  * - Revokes Firebase refresh tokens (if possible)
  */
-export async function POST(request: NextRequest) {
-  // Rate limit: 10 requests per minute for logout (strict - prevent abuse)
-  const rateLimitResult = await enforceRateLimit('authentication', request);
-  if (!rateLimitResult.allowed) {
-    return NextResponse.json(
-      { success: false, error: rateLimitResult.error },
-      { status: rateLimitResult.status, headers: rateLimitResult.headers }
-    );
-  }
 
-  let userId: string | null = null;
+import { type NextRequest, NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
+import { logger } from '@/lib/logger';
+import { clearAllSessionCookies, getSession } from '@/lib/session';
+import { auditAuthEvent } from '@/lib/production-auth';
+import { revokeSession } from '@/lib/session-revocation';
+import {
+  withErrors,
+  RATE_LIMIT_PRESETS,
+  type ResponseFormatter,
+} from '@/lib/middleware';
 
-  try {
+/**
+ * POST handler - logout and clear all sessions
+ * Uses withErrors (not withAuthAndErrors) because logout should work
+ * even with expired/invalid tokens - fail-safe logout
+ */
+export const POST = withErrors(
+  async (request: Request, _context: unknown, respond: typeof ResponseFormatter) => {
+    const nextRequest = request as NextRequest;
+    let userId: string | null = null;
+
     // Try to get session info for logging and revocation
-    const session = await getSession(request);
+    const session = await getSession(nextRequest);
     userId = session?.userId || null;
 
     // Revoke the JWT session so it can't be reused even if cookie isn't cleared
@@ -46,7 +49,8 @@ export async function POST(request: NextRequest) {
     // Create base response
     const baseResponse = NextResponse.json({
       success: true,
-      message: 'Logged out successfully'
+      data: { message: 'Logged out successfully' },
+      meta: { timestamp: new Date().toISOString() },
     });
 
     // Best-effort: revoke Firebase refresh tokens when a valid Bearer token is provided
@@ -80,26 +84,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Audit the logout event
-    await auditAuthEvent('success', request, {
+    await auditAuthEvent('success', nextRequest, {
       operation: 'logout',
       userId: userId || 'unknown',
     });
 
     // Clear all session cookies (both access and refresh tokens)
     return clearAllSessionCookies(baseResponse);
-
-  } catch (error) {
-    logger.error('Error during logout', {
-      component: 'auth-logout',
-      userId: userId || 'unknown',
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    // Return success and clear cookies even on error (fail-safe logout)
-    const response = NextResponse.json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-    return clearAllSessionCookies(response);
-  }
-}
+  },
+  { rateLimit: RATE_LIMIT_PRESETS.auth }
+);

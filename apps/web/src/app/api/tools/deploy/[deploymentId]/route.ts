@@ -3,16 +3,16 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger as _logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
-async function loadDeployment(deploymentId: string) {
+async function loadDeployment(deploymentId: string, campusId: string) {
   const doc = await dbAdmin.collection("deployedTools").doc(deploymentId).get();
   if (!doc.exists) {
     return { ok: false as const, status: 404, message: "Deployment not found" };
@@ -23,7 +23,7 @@ async function loadDeployment(deploymentId: string) {
     return { ok: false as const, status: 400, message: "Invalid deployment data" };
   }
 
-  if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+  if (data.campusId && data.campusId !== campusId) {
     return { ok: false as const, status: 403, message: "Access denied for this campus" };
   }
 
@@ -33,6 +33,7 @@ async function loadDeployment(deploymentId: string) {
 async function canUserManageDeployment(
   userId: string,
   deployment: FirebaseFirestore.DocumentData,
+  campusId: string,
 ) {
   if (deployment.deployedBy === userId) {
     return true;
@@ -53,7 +54,7 @@ async function canUserManageDeployment(
       return false;
     }
 
-    if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+    if (spaceData.campusId && spaceData.campusId !== campusId) {
       return false;
     }
 
@@ -66,7 +67,7 @@ async function canUserManageDeployment(
       .where("userId", "==", userId)
       .where("spaceId", "==", deployment.targetId)
       .where("status", "==", "active")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .limit(1)
       .get();
 
@@ -152,9 +153,10 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
-  const deploymentResult = await loadDeployment(deploymentId);
+  const deploymentResult = await loadDeployment(deploymentId, campusId);
   if (!deploymentResult.ok) {
     return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
       status: deploymentResult.status,
@@ -163,7 +165,7 @@ export const GET = withAuthAndErrors(async (
 
   const { doc, data } = deploymentResult;
 
-  if (!(await canUserManageDeployment(userId, data))) {
+  if (!(await canUserManageDeployment(userId, data, campusId))) {
     return respond.error("Access denied", "FORBIDDEN", { status: 403 });
   }
 
@@ -171,7 +173,7 @@ export const GET = withAuthAndErrors(async (
 
   const toolDoc = await dbAdmin.collection("tools").doc(data.toolId).get();
   const toolData = toolDoc.exists ? toolDoc.data() : null;
-  if (toolData?.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData?.campusId && toolData.campusId !== campusId) {
     return respond.error("Access denied", "FORBIDDEN", { status: 403 });
   }
 
@@ -195,9 +197,10 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
-    const deploymentResult = await loadDeployment(deploymentId);
+    const deploymentResult = await loadDeployment(deploymentId, campusId);
     if (!deploymentResult.ok) {
       return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
         status: deploymentResult.status,
@@ -206,7 +209,7 @@ export const PUT = withAuthValidationAndErrors(
 
     const { doc, data } = deploymentResult;
 
-    if (!(await canUserManageDeployment(userId, data))) {
+    if (!(await canUserManageDeployment(userId, data, campusId))) {
       return respond.error("Access denied", "FORBIDDEN", { status: 403 });
     }
 
@@ -248,7 +251,7 @@ export const PUT = withAuthValidationAndErrors(
       // Log kill switch activation
       await dbAdmin.collection('activityEvents').add({
         userId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         type: 'tool_kill_switch',
         toolId: data.toolId,
         spaceId: data.deployedTo === 'space' ? data.targetId : undefined,
@@ -298,7 +301,7 @@ export const PUT = withAuthValidationAndErrors(
 
     await dbAdmin.collection("activityEvents").add({
       userId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       type: "tool_interaction",
       toolId: data.toolId,
       spaceId: data.deployedTo === "space" ? data.targetId : undefined,
@@ -325,9 +328,10 @@ export const DELETE = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
-  const deploymentResult = await loadDeployment(deploymentId);
+  const deploymentResult = await loadDeployment(deploymentId, campusId);
   if (!deploymentResult.ok) {
     return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
       status: deploymentResult.status,
@@ -337,7 +341,7 @@ export const DELETE = withAuthAndErrors(async (
   const { doc, data } = deploymentResult;
 
   const ownsDeployment = data.deployedBy === userId;
-  const canManage = await canUserManageDeployment(userId, data);
+  const canManage = await canUserManageDeployment(userId, data, campusId);
 
   if (!ownsDeployment && !canManage) {
     return respond.error("Access denied", "FORBIDDEN", { status: 403 });
@@ -363,7 +367,7 @@ export const DELETE = withAuthAndErrors(async (
   const timestamp = new Date().toISOString();
   await dbAdmin.collection("activityEvents").add({
     userId,
-    campusId: CURRENT_CAMPUS_ID,
+    campusId,
     type: "tool_interaction",
     toolId: data.toolId,
     spaceId: data.deployedTo === "space" ? data.targetId : undefined,

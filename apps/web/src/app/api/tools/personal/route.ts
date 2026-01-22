@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
 
 // Schema for tool installation requests
@@ -23,7 +22,7 @@ interface PersonalTool {
 }
 
 // Fetch user's actual personal tools from database
-async function fetchPersonalTools(userId: string): Promise<PersonalTool[]> {
+async function fetchPersonalTools(userId: string, campusId: string): Promise<PersonalTool[]> {
   try {
     const { dbAdmin } = await import('@/lib/firebase-admin');
 
@@ -31,7 +30,7 @@ async function fetchPersonalTools(userId: string): Promise<PersonalTool[]> {
     const userToolsSnapshot = await dbAdmin
       .collection('user_tools')
       .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('isInstalled', '==', true)
       .get();
 
@@ -66,7 +65,8 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
-  const tools = await fetchPersonalTools(userId);
+  const campusId = getCampusId(request as AuthenticatedRequest);
+  const tools = await fetchPersonalTools(userId, campusId);
 
   return respond.success({
     tools,
@@ -90,11 +90,12 @@ export const POST = withAuthValidationAndErrors(
     respond
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Implement actual tool installation/uninstallation in database
     try {
       const { dbAdmin } = await import('@/lib/firebase-admin');
-      
+
       if (action === 'install') {
         // Get tool details from marketplace or create basic entry
         const toolRef = dbAdmin.collection('user_tools').doc();
@@ -107,7 +108,7 @@ export const POST = withAuthValidationAndErrors(
           usageCount: 0,
           quickLaunch: false,
           settings: {},
-          campusId: CURRENT_CAMPUS_ID
+          campusId
         });
       } else if (action === 'uninstall') {
         // Remove tool from user's collection

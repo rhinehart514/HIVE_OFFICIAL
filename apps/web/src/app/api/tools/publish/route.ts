@@ -1,11 +1,11 @@
 import { dbAdmin as adminDb } from '@/lib/firebase-admin';
 import { z } from 'zod';
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -69,6 +69,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
     // Get tool details
     const toolDoc = await adminDb.collection('tools').doc(validatedData.toolId).get();
@@ -77,13 +78,13 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const toolData = toolDoc.data();
-    
+
     // Check ownership
     if (toolData?.ownerId !== userId) {
         return respond.error("Not authorized to publish this tool", "FORBIDDEN", { status: 403 });
     }
 
-    if (toolData?.campusId && toolData.campusId !== CURRENT_CAMPUS_ID) {
+    if (toolData?.campusId && toolData.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
@@ -126,7 +127,7 @@ export const POST = withAuthValidationAndErrors(
     };
 
     // Create publish request
-    const requestRef = await adminDb.collection('publishRequests').add({ ...publishRequest, campusId: CURRENT_CAMPUS_ID });
+    const requestRef = await adminDb.collection('publishRequests').add({ ...publishRequest, campusId });
 
     // Update tool status to pending_review
     await adminDb.collection('tools').doc(validatedData.toolId).update({

@@ -6,7 +6,10 @@ import { motion, AnimatePresence, useReducedMotion, useSpring, useTransform } fr
 import { springPresets, durationSeconds } from '@hive/tokens';
 import { cn } from '../../../lib/utils';
 import { ArrayEditor } from './field-primitives';
+import { ContextPicker } from './context-picker';
+import { ConditionBuilder } from './condition-builder';
 import type { CanvasElement } from './types';
+import type { ContextRequirements, VisibilityCondition, ConditionGroup } from '@hive/core';
 
 // HiveLab Dark Panel Colors (consistent with context-rail.tsx)
 const PANEL_COLORS = {
@@ -893,6 +896,32 @@ export function PropertiesPanel({
               }}
             />
           </div>
+        </Section>
+
+        {/* Sprint 2: Context Requirements */}
+        <Section title="Context" defaultExpanded={false}>
+          <ContextPicker
+            requirements={selectedElement.contextRequirements as ContextRequirements | undefined}
+            onChange={(requirements) =>
+              onUpdateElement(selectedElement.id, {
+                contextRequirements: requirements,
+              })
+            }
+            compact
+          />
+        </Section>
+
+        {/* Sprint 2: Visibility Conditions */}
+        <Section title="Visibility" defaultExpanded={false}>
+          <ConditionBuilder
+            conditions={selectedElement.visibilityConditions as VisibilityCondition[] | ConditionGroup | undefined}
+            onChange={(conditions) =>
+              onUpdateElement(selectedElement.id, {
+                visibilityConditions: conditions,
+              })
+            }
+            compact
+          />
         </Section>
       </div>
 

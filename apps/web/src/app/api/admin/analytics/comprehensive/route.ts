@@ -15,10 +15,10 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 const QuerySchema = z.object({
   timeRange: z.enum(['1h', '24h', '7d', '30d', '90d', 'all']).default('30d'),
@@ -169,6 +169,7 @@ function mapCategoryToDashboard(category: string): ValidSpaceCategory {
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
 
   const queryResult = QuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -203,38 +204,38 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     ] = await Promise.all([
       // Total users
       dbAdmin.collection('profiles')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       // All spaces
       dbAdmin.collection('spaces')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       // Posts in time range
       dbAdmin.collection('posts')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('createdAt', '>=', startDate)
         .where('createdAt', '<=', endDate)
         .get(),
       // Events
       dbAdmin.collection('events')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       // Tools
       dbAdmin.collection('tools')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       // Deployed tools
       dbAdmin.collection('deployedTools')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       // Space members
       dbAdmin.collection('spaceMembers')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .get(),
       // Activity events in time range
       dbAdmin.collection('activityEvents')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('timestamp', '>=', startDate)
         .where('timestamp', '<=', endDate)
         .limit(10000)

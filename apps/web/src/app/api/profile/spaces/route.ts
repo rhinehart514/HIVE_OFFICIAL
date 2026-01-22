@@ -1,10 +1,8 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
 // Use admin SDK methods since we're in an API route
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/auth-server';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { logger } from "@/lib/logger";
-import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
-import { getDefaultCampusId, getCampusFromEmail } from "@/lib/campus-context";
 import { getServerProfileRepository } from '@hive/core/server';
 
 // Internal membership data structure
@@ -70,164 +68,144 @@ interface SpaceActivitySummary {
 }
 
 // GET - Fetch user's space memberships for profile
-export async function GET(request: NextRequest) {
-  try {
-    const user = await getCurrentUser(request);
-    if (!user) {
-      return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
-    }
+export const GET = withAuthAndErrors(async (request: NextRequest, _context, respond) => {
+  const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
-    const { searchParams } = new URL(request.url);
-    const includeActivity = searchParams.get('includeActivity') !== 'false';
-    const timeRange = searchParams.get('timeRange') || 'week'; // week, month, all
+  const { searchParams } = new URL(request.url);
+  const includeActivity = searchParams.get('includeActivity') !== 'false';
+  const timeRange = searchParams.get('timeRange') || 'week'; // week, month, all
 
-    // Derive campus from user's email
-    let campusId = getDefaultCampusId();
-    if (user.email) {
+  // Try DDD repository for profile data
+  const profileRepository = getServerProfileRepository();
+  const profileResult = await profileRepository.findById(userId);
+
+  let dddProfileData: {
+    spaceIds: string[];
+    connectionCount: number;
+    activityScore: number;
+  } | null = null;
+
+  if (profileResult.isSuccess) {
+    const profile = profileResult.getValue();
+    dddProfileData = {
+      spaceIds: profile.spaces,
+      connectionCount: profile.connectionCount,
+      activityScore: profile.activityScore,
+    };
+    logger.debug('Using DDD profile for spaces endpoint', { userId, spaceCount: profile.spaces.length });
+  }
+
+  // Fetch user's memberships
+  const membershipsSnapshot = await dbAdmin
+    .collection('spaceMembers')
+    .where('userId', '==', userId)
+    .where('campusId', '==', campusId)
+    .orderBy('joinedAt', 'desc')
+    .get();
+  const memberships: MembershipData[] = membershipsSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    const joinedAt =
+      data.joinedAt?.toDate?.()?.toISOString() ||
+      (typeof data.joinedAt === 'string' ? data.joinedAt : new Date().toISOString());
+    const lastActivity =
+      data.lastActive?.toDate?.()?.toISOString() ||
+      (typeof data.lastActive === 'string' ? data.lastActive : joinedAt);
+    return {
+      id: data.spaceId || doc.id,
+      role: data.role || 'member',
+      status: data.isActive === false ? 'inactive' : 'active',
+      joinedAt,
+      lastActivity,
+      ...data,
+    };
+  });
+
+  // Fetch space details for each membership
+  const spaceMemberships: (ProfileSpaceMembership | null)[] = await Promise.all(
+    memberships.map(async (membership) => {
       try {
-        campusId = getCampusFromEmail(user.email);
-      } catch {
-        // Fall back to default if email domain is not supported
-      }
-    }
-
-    // Try DDD repository for profile data
-    const profileRepository = getServerProfileRepository();
-    const profileResult = await profileRepository.findById(user.uid);
-
-    let dddProfileData: {
-      spaceIds: string[];
-      connectionCount: number;
-      activityScore: number;
-    } | null = null;
-
-    if (profileResult.isSuccess) {
-      const profile = profileResult.getValue();
-      dddProfileData = {
-        spaceIds: profile.spaces,
-        connectionCount: profile.connectionCount,
-        activityScore: profile.activityScore,
-      };
-      logger.debug('Using DDD profile for spaces endpoint', { userId: user.uid, spaceCount: profile.spaces.length });
-    }
-
-    // Fetch user's memberships
-    const membershipsSnapshot = await dbAdmin
-      .collection('spaceMembers')
-      .where('userId', '==', user.uid)
-      .where('campusId', '==', campusId)
-      .orderBy('joinedAt', 'desc')
-      .get();
-    const memberships: MembershipData[] = membershipsSnapshot.docs.map((doc) => {
-      const data = doc.data();
-      const joinedAt =
-        data.joinedAt?.toDate?.()?.toISOString() ||
-        (typeof data.joinedAt === 'string' ? data.joinedAt : new Date().toISOString());
-      const lastActivity =
-        data.lastActive?.toDate?.()?.toISOString() ||
-        (typeof data.lastActive === 'string' ? data.lastActive : joinedAt);
-      return {
-        id: data.spaceId || doc.id,
-        role: data.role || 'member',
-        status: data.isActive === false ? 'inactive' : 'active',
-        joinedAt,
-        lastActivity,
-        ...data,
-      };
-    });
-
-    // Fetch space details for each membership
-    const spaceMemberships: (ProfileSpaceMembership | null)[] = await Promise.all(
-      memberships.map(async (membership) => {
-        try {
-          const spaceDoc = await dbAdmin.collection('spaces').doc(membership.id).get();
-          if (!spaceDoc.exists) {
-            return null;
-          }
-
-          const spaceData = spaceDoc.data();
-          if (!spaceData) {
-            return null;
-          }
-          // Enforce campus isolation
-          if (spaceData.campusId && spaceData.campusId !== campusId) {
-            return null;
-          }
-          
-          // Calculate activity level and recent activity
-          const recentActivity = includeActivity ? 
-            await getSpaceActivityForUser(user.uid, membership.id, timeRange, campusId) : 
-            { posts: 0, interactions: 0, toolUsage: 0, timeSpent: 0 };
-
-          const activityLevel = calculateActivityLevel(recentActivity);
-
-          // Notifications and quick stats - return defaults until systems are built
-          const notifications = { unreadCount: 0, hasImportantUpdates: false };
-          const quickStats = { myPosts: 0, myTools: 0, myInteractions: 0 };
-
-          return {
-            spaceId: membership.id,
-            spaceName: spaceData.name || 'Unknown Space',
-            spaceDescription: spaceData.description || '',
-            spaceType: spaceData.type || spaceData.category || 'general',
-            memberCount:
-              spaceData.metrics?.memberCount ??
-              spaceData.memberCount ??
-              spaceData.metrics?.activeMembers ??
-              0,
-            role: (membership.role || 'member') as 'member' | 'moderator' | 'admin' | 'builder',
-            status: (membership.status || 'active') as 'active' | 'inactive' | 'pending',
-            joinedAt: membership.joinedAt || new Date().toISOString(),
-            lastActivity: membership.lastActivity || new Date().toISOString(),
-            activityLevel,
-            recentActivity,
-            notifications,
-            quickStats
-          };
-        } catch (error) {
-          logger.error('Error fetching space data for', { spaceId: membership.id, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/profile/spaces' });
+        const spaceDoc = await dbAdmin.collection('spaces').doc(membership.id).get();
+        if (!spaceDoc.exists) {
           return null;
         }
-      })
-    );
 
-    // Filter out null results - ensure type safety
-    const validSpaceMemberships = spaceMemberships.filter((membership): membership is ProfileSpaceMembership => membership !== null);
+        const spaceData = spaceDoc.data();
+        if (!spaceData) {
+          return null;
+        }
+        // Enforce campus isolation
+        if (spaceData.campusId && spaceData.campusId !== campusId) {
+          return null;
+        }
 
-    // Generate activity summary
-    const activitySummary = includeActivity ? 
-      generateSpaceActivitySummary(validSpaceMemberships, timeRange) : 
-      null;
+        // Calculate activity level and recent activity
+        const recentActivity = includeActivity ?
+          await getSpaceActivityForUser(userId, membership.id, timeRange, campusId) :
+          { posts: 0, interactions: 0, toolUsage: 0, timeSpent: 0 };
 
-    return NextResponse.json({
-      memberships: validSpaceMemberships,
-      activitySummary,
-      totalCount: validSpaceMemberships.length,
-      activeCount: validSpaceMemberships.filter(m => m.status === 'active').length,
-      timeRange,
-      // Include DDD profile data if available
-      profile: dddProfileData ? {
-        dddSpaceCount: dddProfileData.spaceIds.length,
-        connectionCount: dddProfileData.connectionCount,
-        activityScore: dddProfileData.activityScore,
-        syncStatus: dddProfileData.spaceIds.length === validSpaceMemberships.length ? 'synced' : 'needs_sync'
-      } : null
-    });
-  } catch (error) {
-    logger.error(
-      `Error fetching space memberships at /api/profile/spaces`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-    return NextResponse.json(ApiResponseHelper.error("Failed to fetch space memberships", "INTERNAL_ERROR"), { status: HttpStatus.INTERNAL_SERVER_ERROR });
-  }
-}
+        const activityLevel = calculateActivityLevel(recentActivity);
+
+        // Notifications and quick stats - return defaults until systems are built
+        const notifications = { unreadCount: 0, hasImportantUpdates: false };
+        const quickStats = { myPosts: 0, myTools: 0, myInteractions: 0 };
+
+        return {
+          spaceId: membership.id,
+          spaceName: spaceData.name || 'Unknown Space',
+          spaceDescription: spaceData.description || '',
+          spaceType: spaceData.type || spaceData.category || 'general',
+          memberCount:
+            spaceData.metrics?.memberCount ??
+            spaceData.memberCount ??
+            spaceData.metrics?.activeMembers ??
+            0,
+          role: (membership.role || 'member') as 'member' | 'moderator' | 'admin' | 'builder',
+          status: (membership.status || 'active') as 'active' | 'inactive' | 'pending',
+          joinedAt: membership.joinedAt || new Date().toISOString(),
+          lastActivity: membership.lastActivity || new Date().toISOString(),
+          activityLevel,
+          recentActivity,
+          notifications,
+          quickStats
+        };
+      } catch (error) {
+        logger.error('Error fetching space data for', { spaceId: membership.id, error: { error: error instanceof Error ? error.message : String(error) }, endpoint: '/api/profile/spaces' });
+        return null;
+      }
+    })
+  );
+
+  // Filter out null results - ensure type safety
+  const validSpaceMemberships = spaceMemberships.filter((membership): membership is ProfileSpaceMembership => membership !== null);
+
+  // Generate activity summary
+  const activitySummary = includeActivity ?
+    generateSpaceActivitySummary(validSpaceMemberships, timeRange) :
+    null;
+
+  return respond.success({
+    memberships: validSpaceMemberships,
+    activitySummary,
+    totalCount: validSpaceMemberships.length,
+    activeCount: validSpaceMemberships.filter(m => m.status === 'active').length,
+    timeRange,
+    // Include DDD profile data if available
+    profile: dddProfileData ? {
+      dddSpaceCount: dddProfileData.spaceIds.length,
+      connectionCount: dddProfileData.connectionCount,
+      activityScore: dddProfileData.activityScore,
+      syncStatus: dddProfileData.spaceIds.length === validSpaceMemberships.length ? 'synced' : 'needs_sync'
+    } : null
+  });
+});
 
 // Helper function to get space activity for user
 async function getSpaceActivityForUser(userId: string, spaceId: string, timeRange: string, campusId: string) {
   try {
     const endDate = new Date();
     const startDate = new Date();
-    
+
     switch (timeRange) {
       case 'week':
         startDate.setDate(endDate.getDate() - 7);
@@ -292,8 +270,8 @@ function generateSpaceActivitySummary(memberships: ProfileSpaceMembership[], tim
   const totalTimeSpent = memberships.reduce((sum, m) => sum + m.recentActivity.timeSpent, 0);
 
   // Find favorite space (most time spent)
-  const favoriteSpace = memberships.length > 0 ? 
-    memberships.reduce((max, current) => 
+  const favoriteSpace = memberships.length > 0 ?
+    memberships.reduce((max, current) =>
       current.recentActivity.timeSpent > max.recentActivity.timeSpent ? current : max
     ) : null;
 
@@ -330,18 +308,17 @@ function generateWeeklyTrend(memberships: ProfileSpaceMembership[], timeRange: s
   // This is a simplified version - in reality, you'd query historical data
   const weeks = [];
   const weeksToShow = timeRange === 'month' ? 4 : timeRange === 'week' ? 1 : 12;
-  
+
   for (let i = weeksToShow - 1; i >= 0; i--) {
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - (i * 7));
-    
+
     weeks.push({
       week: weekStart.toISOString().split('T')[0],
       activeSpaces: Math.max(1, memberships.filter(m => m.activityLevel !== 'low').length - i),
       totalTime: Math.max(0, memberships.reduce((sum, m) => sum + m.recentActivity.timeSpent, 0) - (i * 10))
     });
   }
-  
+
   return weeks;
 }
-

@@ -8,9 +8,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 type RouteContext = { params: Promise<{ spaceId: string }> };
@@ -48,6 +47,7 @@ interface SpaceModerationItem {
  * Fetch moderation queue for a specific space
  */
 export const GET = withAdminAuthAndErrors(async (request, context: RouteContext, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await context.params;
   const { searchParams } = new URL(request.url);
   const queryResult = ModerationQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -75,7 +75,7 @@ export const GET = withAdminAuthAndErrors(async (request, context: RouteContext,
     // Build query for reports in this space
     let reportsQuery = dbAdmin
       .collection('contentReports')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('spaceId', '==', spaceId)
       .orderBy('createdAt', 'desc');
 

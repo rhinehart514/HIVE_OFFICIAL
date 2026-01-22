@@ -5,7 +5,6 @@ import { getCurrentUser as _getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { withAuth, ApiResponse as _ApiResponse, type AuthContext } from '@/lib/api-auth-middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import type { QueryDocumentSnapshot, QuerySnapshot } from 'firebase-admin/firestore';
 
 // Personal event type for calendar tool
@@ -42,7 +41,7 @@ interface CalendarEvent {
 }
 
 // Fetch user's calendar events from Firebase
-async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]> {
+async function fetchUserCalendarEvents(userId: string, campusId: string): Promise<CalendarEvent[]> {
   try {
     // Get user's personal events from flat /personalEvents collection
     const personalEventsSnapshot = await dbAdmin
@@ -55,7 +54,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
     const membershipSnapshot = await dbAdmin
       .collection('spaceMembers')
       .where('userId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
 
     const spaceIds = membershipSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data().spaceId);
@@ -70,7 +69,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
           dbAdmin
             .collection('events')
             .where('spaceId', 'in', batch)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('campusId', '==', campusId)
             .where('state', '==', 'published')
             .get()
         );
@@ -128,6 +127,7 @@ async function fetchUserCalendarEvents(userId: string): Promise<CalendarEvent[]>
 export const GET = withAuth(async (request, authContext: AuthContext) => {
   try {
     const userId = authContext.userId;
+    const campusId = authContext.campusId;
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
@@ -160,7 +160,7 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
       const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get();
       const userSpaceIds = membershipsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data().spaceId);
 
@@ -168,7 +168,7 @@ export const GET = withAuth(async (request, authContext: AuthContext) => {
         // Fetch space events from user's spaces
         let spaceEventsQuery = dbAdmin.collection('events')
           .where('spaceId', 'in', userSpaceIds)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .where('state', '==', 'published');
         
         if (startDate) {

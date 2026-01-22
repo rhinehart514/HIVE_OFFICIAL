@@ -13,11 +13,11 @@ import {
   withAdminAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getAdminRecord, hasAdminRole } from '@/lib/admin-auth';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { SpaceManagementService, toSpaceDetailDTO } from '@hive/core';
 import { getServerSpaceRepository } from '@hive/core/server';
 
@@ -41,13 +41,14 @@ export const GET = withAdminAuthAndErrors(async (
   respond
 ) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { spaceId } = await context.params;
 
   try {
     // Create service with admin context
     const spaceRepo = getServerSpaceRepository();
     const service = new SpaceManagementService(
-      { campusId: CURRENT_CAMPUS_ID, userId: adminId },
+      { campusId, userId: adminId },
       spaceRepo
     );
 
@@ -103,6 +104,7 @@ export const PATCH = withAuthValidationAndErrors(
     respond
   ) => {
     const adminId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { spaceId } = await context.params;
 
     // Check admin permission (moderator level required for actions)
@@ -119,7 +121,7 @@ export const PATCH = withAuthValidationAndErrors(
       // Create service with admin context
       const spaceRepo = getServerSpaceRepository();
       const service = new SpaceManagementService(
-        { campusId: CURRENT_CAMPUS_ID, userId: adminId },
+        { campusId, userId: adminId },
         spaceRepo
       );
 

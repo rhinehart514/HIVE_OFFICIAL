@@ -244,9 +244,44 @@ async function enrichToolsWithMetadata(tools: PlacedToolData[], spaceId: string)
     });
   }
 
+  // Sprint 1: Batch fetch activity metrics from tool analytics
+  const activityDataMap = new Map<string, { activityCount: number; lastActivityAt: string | null }>();
+  for (const placedTool of tools) {
+    const deploymentId = deploymentDataMap.get(placedTool.toolId)?.id || `${placedTool.toolId}_${spaceId}`;
+    try {
+      // Check for activity in sharedState (interactions like votes, RSVPs)
+      const sharedStateDoc = await dbAdmin
+        .collection("deployedTools")
+        .doc(deploymentId)
+        .collection("sharedState")
+        .doc("current")
+        .get();
+
+      if (sharedStateDoc.exists) {
+        const sharedState = sharedStateDoc.data();
+        // Count timeline events as activity
+        const timelineLength = sharedState?.timeline?.length || 0;
+        // Sum all counter values as additional activity metric
+        const countersTotal = Object.values(sharedState?.counters || {}).reduce(
+          (sum: number, val) => sum + (typeof val === 'number' ? val : 0),
+          0
+        );
+        const activityCount = timelineLength + countersTotal;
+        const lastActivityAt = sharedState?.lastModified || null;
+        activityDataMap.set(placedTool.toolId, { activityCount, lastActivityAt });
+      } else {
+        activityDataMap.set(placedTool.toolId, { activityCount: 0, lastActivityAt: null });
+      }
+    } catch {
+      // Silent fail - activity metrics are non-critical
+      activityDataMap.set(placedTool.toolId, { activityCount: 0, lastActivityAt: null });
+    }
+  }
+
   return tools.map((placedTool) => {
     const toolData = toolDataMap.get(placedTool.toolId);
     const deploymentData = deploymentDataMap.get(placedTool.toolId);
+    const activityData = activityDataMap.get(placedTool.toolId) || { activityCount: 0, lastActivityAt: null };
 
     // P0: Get surfaceModes from deployment or tool, default to widget-only
     const surfaceModes = deploymentData?.surfaceModes
@@ -279,6 +314,10 @@ async function enrichToolsWithMetadata(tools: PlacedToolData[], spaceId: string)
       // P0: Surface modes for "View Full" link in sidebar
       surfaceModes,
       deploymentId: deploymentData?.id || placedTool.id,
+
+      // Sprint 1: Activity metrics for sidebar badges
+      activityCount: activityData.activityCount,
+      lastActivityAt: activityData.lastActivityAt,
 
       // Tool stats
       originalTool: toolData

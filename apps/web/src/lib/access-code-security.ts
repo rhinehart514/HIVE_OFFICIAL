@@ -272,8 +272,9 @@ export async function verifyAccessCode(code: string): Promise<{
   useCount?: number;
 }> {
   if (!isFirebaseConfigured) {
-    // Development mode - always allow
-    return { valid: true };
+    // No Firebase = no valid codes
+    logger.warn('Access code verification attempted without Firebase configured');
+    return { valid: false };
   }
 
   const codeHash = hashAccessCode(code);

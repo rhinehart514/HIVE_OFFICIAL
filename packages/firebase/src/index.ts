@@ -130,14 +130,40 @@ export const validateCampusAccess = (userCampusId: string, requestedCampusId: st
   return userCampusId === requestedCampusId;
 };
 
-// Rate limiting helper (in-memory for now, use Redis in production)
+/**
+ * @deprecated Client-side rate limiting provides no security guarantee.
+ * Rate limiting must be enforced server-side using the middleware wrappers:
+ *
+ * @example
+ * // Server-side rate limiting (correct approach)
+ * import { withAuthAndErrors, RATE_LIMIT_PRESETS } from '@/lib/middleware';
+ *
+ * export const POST = withAuthAndErrors(handler, {
+ *   rateLimit: RATE_LIMIT_PRESETS.strict
+ * });
+ *
+ * This client-side implementation will be removed in a future version.
+ * Do not use for security-critical rate limiting.
+ */
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
+/**
+ * @deprecated Client-side rate limiting provides no security.
+ * Use server-side middleware (withAuthAndErrors) for real rate limiting.
+ * This function will be removed in a future version.
+ */
 export const checkRateLimit = (
   identifier: string,
   maxRequests: number = 10,
   windowMs: number = 60000
 ): boolean => {
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '[DEPRECATED] checkRateLimit: Client-side rate limiting provides no security. ' +
+      'Use server-side middleware (withAuthAndErrors) instead.'
+    );
+  }
+
   const now = Date.now();
   const limit = rateLimitMap.get(identifier);
 
@@ -158,6 +184,7 @@ export const checkRateLimit = (
 };
 
 // Clean up old rate limit entries periodically
+// NOTE: This is deprecated and will be removed
 if (typeof window !== 'undefined') {
   setInterval(() => {
     const now = Date.now();

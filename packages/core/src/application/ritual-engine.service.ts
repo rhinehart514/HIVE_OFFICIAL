@@ -17,6 +17,7 @@ import {
   RitualPhase,
   RitualUnion,
 } from '../domain/rituals/archetypes';
+import { Result } from '../domain/shared/base/Result';
 
 export interface PhaseTransitionEvent {
   ritualId: string;
@@ -143,20 +144,20 @@ export class RitualEngineService {
 
   /**
    * Transition ritual to next phase
-   * Returns updated ritual object with new phase
+   * Returns Result with updated ritual object or error
    */
   public async transitionPhase(
     ritual: RitualUnion,
     targetPhase: RitualPhase,
     triggeredBy: 'auto' | 'manual' | 'threshold' = 'manual',
     metadata?: Record<string, unknown>
-  ): Promise<RitualUnion> {
+  ): Promise<Result<RitualUnion>> {
     const fromPhase = ritual.phase;
 
     // Validate phase transition
     const validationResult = this.validatePhaseTransition(fromPhase, targetPhase);
     if (!validationResult.valid) {
-      throw new Error(
+      return Result.fail(
         `Invalid phase transition: ${fromPhase} → ${targetPhase}. ${validationResult.reason}`
       );
     }
@@ -181,7 +182,7 @@ export class RitualEngineService {
 
     await this.emitPhaseTransition(event);
 
-    return updatedRitual;
+    return Result.ok(updatedRitual);
   }
 
   /**
@@ -250,41 +251,44 @@ export class RitualEngineService {
   public async processAutoTransitions(
     ritual: RitualUnion,
     config: RitualLifecycleConfig
-  ): Promise<RitualUnion | null> {
+  ): Promise<Result<RitualUnion | null>> {
     // Check if auto-start is enabled and conditions met
     if (config.autoStartEnabled && this.shouldAutoStart(ritual)) {
-      return await this.transitionPhase(ritual, 'active', 'auto', {
+      const result = await this.transitionPhase(ritual, 'active', 'auto', {
         reason: 'auto_start_time_reached',
       });
+      return result.isSuccess ? Result.ok(result.getValue()) : result;
     }
 
     // Check if auto-end is enabled and conditions met
     if (config.autoEndEnabled && this.shouldAutoEnd(ritual)) {
-      return await this.transitionPhase(ritual, 'ended', 'auto', {
+      const result = await this.transitionPhase(ritual, 'ended', 'auto', {
         reason: 'auto_end_time_reached',
       });
+      return result.isSuccess ? Result.ok(result.getValue()) : result;
     }
 
     // Check if threshold triggers are met
     if (this.checkThresholdTriggers(ritual, config)) {
       // Determine target phase based on current phase
       if (ritual.phase === 'announced') {
-        return await this.transitionPhase(ritual, 'active', 'threshold', {
+        const result = await this.transitionPhase(ritual, 'active', 'threshold', {
           reason: 'participant_threshold_met',
         });
+        return result.isSuccess ? Result.ok(result.getValue()) : result;
       }
     }
 
     // No transitions needed
-    return null;
+    return Result.ok(null);
   }
 
   /**
    * Manually pause a ritual (admin action)
    */
-  public async pauseRitual(ritual: RitualUnion): Promise<RitualUnion> {
+  public async pauseRitual(ritual: RitualUnion): Promise<Result<RitualUnion>> {
     if (ritual.phase !== 'active') {
-      throw new Error('Can only pause active rituals');
+      return Result.fail('Can only pause active rituals');
     }
 
     return await this.transitionPhase(ritual, 'cooldown', 'manual', {
@@ -295,9 +299,9 @@ export class RitualEngineService {
   /**
    * Manually resume a paused ritual (admin action)
    */
-  public async resumeRitual(ritual: RitualUnion): Promise<RitualUnion> {
+  public async resumeRitual(ritual: RitualUnion): Promise<Result<RitualUnion>> {
     if (ritual.phase !== 'cooldown') {
-      throw new Error('Can only resume paused (cooldown) rituals');
+      return Result.fail('Can only resume paused (cooldown) rituals');
     }
 
     return await this.transitionPhase(ritual, 'active', 'manual', {
@@ -308,9 +312,9 @@ export class RitualEngineService {
   /**
    * Manually end a ritual early (admin action)
    */
-  public async endRitualEarly(ritual: RitualUnion): Promise<RitualUnion> {
+  public async endRitualEarly(ritual: RitualUnion): Promise<Result<RitualUnion>> {
     if (ritual.phase === 'ended') {
-      throw new Error('Ritual is already ended');
+      return Result.fail('Ritual is already ended');
     }
 
     return await this.transitionPhase(ritual, 'ended', 'manual', {
@@ -321,9 +325,9 @@ export class RitualEngineService {
   /**
    * Launch a ritual (announced → active)
    */
-  public async launchRitual(ritual: RitualUnion): Promise<RitualUnion> {
+  public async launchRitual(ritual: RitualUnion): Promise<Result<RitualUnion>> {
     if (ritual.phase !== 'announced') {
-      throw new Error(
+      return Result.fail(
         `Cannot launch ritual in phase: ${ritual.phase}. Must be announced.`
       );
     }

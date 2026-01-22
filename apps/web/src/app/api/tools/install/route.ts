@@ -5,13 +5,11 @@ import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { z } from "zod";
 import { logger } from "@/lib/structured-logger";
 import { createPlacementDocument } from "@/lib/tool-placement";
-import {
-  CURRENT_CAMPUS_ID,
-  validateSecureSpaceAccess,
-} from "@/lib/secure-firebase-queries";
+import { validateSecureSpaceAccess } from "@/lib/secure-firebase-queries";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -45,7 +43,7 @@ function ensureActivePermissions(input: InstallRequest["permissions"]) {
   };
 }
 
-async function validateSpaceMembership(userId: string, spaceId: string) {
+async function validateSpaceMembership(userId: string, spaceId: string, campusId: string) {
   const { isValid, space, error } = await validateSecureSpaceAccess(
     spaceId,
     userId,
@@ -59,7 +57,7 @@ async function validateSpaceMembership(userId: string, spaceId: string) {
     .where("userId", "==", userId)
     .where("spaceId", "==", spaceId)
     .where("status", "==", "active")
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
@@ -88,12 +86,13 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
       // Ensure marketplace entry exists within campus
       const marketplaceSnapshot = await adminDb
         .collection("marketplace")
         .where("toolId", "==", validatedData.toolId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
+        .where("campusId", "==", campusId)
         .limit(1)
         .get();
 
@@ -116,7 +115,7 @@ export const POST = withAuthValidationAndErrors(
         return respond.error("Tool data not found", "RESOURCE_NOT_FOUND", { status: 404 });
       }
 
-      if (toolData.campusId !== CURRENT_CAMPUS_ID) {
+      if (toolData.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
       }
 
@@ -139,6 +138,7 @@ export const POST = withAuthValidationAndErrors(
         const membershipResult = await validateSpaceMembership(
           userId,
           validatedData.targetId,
+          campusId,
         );
         if (!membershipResult.ok) {
           return respond.error(membershipResult.error, "FORBIDDEN", {
@@ -152,7 +152,7 @@ export const POST = withAuthValidationAndErrors(
         .where("toolId", "==", validatedData.toolId)
         .where("installTo", "==", validatedData.installTo)
         .where("targetId", "==", validatedData.targetId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
+        .where("campusId", "==", campusId)
         .where("status", "!=", "disabled")
         .limit(1)
         .get();
@@ -174,7 +174,7 @@ export const POST = withAuthValidationAndErrors(
           .collection("toolInstallations")
           .where("installTo", "==", "space")
           .where("targetId", "==", validatedData.targetId)
-          .where("campusId", "==", CURRENT_CAMPUS_ID)
+          .where("campusId", "==", campusId)
           .where("status", "==", "active")
           .get();
 
@@ -209,7 +209,7 @@ export const POST = withAuthValidationAndErrors(
           collectAnalytics: true,
           notifyOnInteraction: false,
         },
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       };
 
       const placementDocument = await createPlacementDocument({
@@ -218,7 +218,7 @@ export const POST = withAuthValidationAndErrors(
         toolId: validatedData.toolId,
         deploymentId: `install_${Date.now()}`,
         placedBy: userId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         placement: 'sidebar',
         visibility: 'all',
         configOverrides: installation.config,
@@ -234,7 +234,7 @@ export const POST = withAuthValidationAndErrors(
       const placementRef = adminDb.collection("toolPlacements").doc(placementId);
       batch.set(placementRef, {
         ...placementDocument,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       });
 
       const toolRef = adminDb.collection("tools").doc(validatedData.toolId);
@@ -250,7 +250,7 @@ export const POST = withAuthValidationAndErrors(
         targetId: validatedData.targetId,
         installTo: validatedData.installTo,
         userId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         timestamp: now.toISOString(),
       });
 

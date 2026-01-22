@@ -13,6 +13,7 @@
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
+import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
 // Re-export types locally for convenience
 type OnlineMember = SpacePanelOnlineMember;
@@ -98,6 +99,11 @@ interface UseSpaceResidenceStateReturn {
   // Navigation
   navigateBack: () => void;
   navigateToSettings: () => void;
+
+  // Tools (HiveLab Sprint 1)
+  sidebarTools: PlacedToolDTO[];
+  isLoadingTools: boolean;
+  refreshTools: () => Promise<void>;
 }
 
 // ============================================
@@ -140,6 +146,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
 
   const [panelCollapsed, setPanelCollapsed] = React.useState(false);
+
+  // Tools state (HiveLab Sprint 1)
+  const [sidebarTools, setSidebarTools] = React.useState<PlacedToolDTO[]>([]);
+  const [isLoadingTools, setIsLoadingTools] = React.useState(false);
 
   // Load space data from API
   React.useEffect(() => {
@@ -214,6 +224,18 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
             location: e.locationName || 'TBD',
             goingCount: e.goingCount || 0,
           })));
+        }
+
+        // Fetch sidebar tools for this space (HiveLab Sprint 1)
+        setIsLoadingTools(true);
+        try {
+          const toolsResponse = await fetch(`/api/spaces/${spaceId}/tools?placement=sidebar&status=active`);
+          if (toolsResponse.ok) {
+            const toolsData = await toolsResponse.json();
+            setSidebarTools(toolsData.tools || []);
+          }
+        } finally {
+          setIsLoadingTools(false);
         }
       } catch {
         setError('Failed to load space');
@@ -479,6 +501,24 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     router.push(`/s/${handle}/settings`);
   }, [router, handle]);
 
+  // Refresh tools (HiveLab Sprint 1)
+  const refreshTools = React.useCallback(async () => {
+    if (!space?.id) return;
+
+    setIsLoadingTools(true);
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/tools?placement=sidebar&status=active`);
+      if (response.ok) {
+        const data = await response.json();
+        setSidebarTools(data.tools || []);
+      }
+    } catch (error) {
+      console.error('Failed to refresh tools:', error);
+    } finally {
+      setIsLoadingTools(false);
+    }
+  }, [space?.id]);
+
   return {
     // Space data
     space,
@@ -518,6 +558,11 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     // Navigation
     navigateBack,
     navigateToSettings,
+
+    // Tools (HiveLab Sprint 1)
+    sidebarTools,
+    isLoadingTools,
+    refreshTools,
   };
 }
 

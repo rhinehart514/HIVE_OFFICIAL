@@ -9,10 +9,10 @@ import { logger } from '@/lib/structured-logger';
 import {
   withAdminAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logAdminActivity } from '@/lib/admin-activity';
 
@@ -29,6 +29,7 @@ const ExportQuerySchema = z.object({
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   const { searchParams } = new URL(request.url);
   const queryResult = ExportQuerySchema.safeParse(Object.fromEntries(searchParams));
@@ -46,7 +47,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Build Firestore query
     let usersQuery = dbAdmin
       .collection('profiles')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     if (query.status !== 'all') {
       usersQuery = usersQuery.where('status', '==', query.status);

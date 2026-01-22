@@ -16,7 +16,6 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
 import { withAuth, type AuthContext } from '@/lib/api-auth-middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
 // Request schema
@@ -144,7 +143,7 @@ async function handler(
   request: NextRequest,
   context: AuthContext
 ): Promise<NextResponse> {
-  const { userId } = context;
+  const { userId, campusId } = context;
 
   try {
     // Parse query params
@@ -167,7 +166,7 @@ async function handler(
         .get(),
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
     ]);
 
@@ -178,7 +177,7 @@ async function handler(
 
     // Step 2: Fetch events in time range
     let eventsQuery = dbAdmin.collection('events')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('state', '==', 'published')
       .where('startDate', '>=', start.toISOString())
       .where('startDate', '<=', end.toISOString())

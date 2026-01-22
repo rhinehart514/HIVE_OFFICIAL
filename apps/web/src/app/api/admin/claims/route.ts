@@ -17,9 +17,9 @@ import {
   withAdminAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { isAdmin } from '@/lib/admin-auth';
 import { getServerSpaceRepository } from '@hive/core/server';
@@ -37,6 +37,7 @@ const ReviewClaimSchema = z.object({
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || 'pending';
   const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
@@ -45,7 +46,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Query claim requests specifically (type: 'claim')
     const claimsSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('type', '==', 'claim')
       .where('status', '==', status)
       .orderBy('submittedAt', 'desc')
@@ -80,7 +81,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     const pendingCount = (
       await dbAdmin
         .collection('builderRequests')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('type', '==', 'claim')
         .where('status', '==', 'pending')
         .count()
@@ -90,7 +91,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Calculate average verification time for approved claims
     const approvedSnapshot = await dbAdmin
       .collection('builderRequests')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('type', '==', 'claim')
       .where('status', '==', 'approved')
       .orderBy('reviewedAt', 'desc')

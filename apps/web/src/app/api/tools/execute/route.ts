@@ -4,10 +4,10 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from "@/lib/logger";
 import { getPlacementFromDeploymentDoc } from '@/lib/tool-placement';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { z } from "zod";
@@ -1272,6 +1272,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
 
       // SECURITY: Verify App Check token (logs violations, doesn't block yet for gradual rollout)
       const appCheckResult = await verifyRequestAppCheck(request as Request);
@@ -1325,7 +1326,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Enforce campus isolation
-    if ((deployment as Record<string, unknown>)?.campusId && (deployment as Record<string, unknown>).campusId !== CURRENT_CAMPUS_ID) {
+    if ((deployment as Record<string, unknown>)?.campusId && (deployment as Record<string, unknown>).campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
@@ -1354,7 +1355,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Check user permissions
-    const permissionCheck = await canUserExecuteTool(userId, deployment, placementData);
+    const permissionCheck = await canUserExecuteTool(userId, deployment, campusId, placementData);
     if (!permissionCheck.allowed) {
         return respond.error(permissionCheck.reason, permissionCheck.code, { status: 403 });
     }
@@ -1369,7 +1370,7 @@ export const POST = withAuthValidationAndErrors(
     }
 
     const tool = toolDoc.data() as ToolData;
-    if ((tool as Record<string, unknown>)?.campusId && (tool as Record<string, unknown>).campusId !== CURRENT_CAMPUS_ID) {
+    if ((tool as Record<string, unknown>)?.campusId && (tool as Record<string, unknown>).campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
     if (!tool) {
@@ -1385,7 +1386,8 @@ export const POST = withAuthValidationAndErrors(
       elementId,
       data: sanitizedData || {},
       context: sanitizedContext || {},
-      placementContext
+      placementContext,
+      campusId,
     });
 
     // Update deployment usage stats
@@ -1426,7 +1428,7 @@ export const POST = withAuthValidationAndErrors(
       },
       timestamp: new Date().toISOString(),
       date: new Date().toISOString().split('T')[0],
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
     };
     // Only add optional fields if they have values
     if (deployment.deployedTo === 'space' && deployment.targetId) {
@@ -1462,7 +1464,7 @@ export const POST = withAuthValidationAndErrors(
         elementType, // Resolved from tool composition or request data
         feature: action, // Track action as feature for feature usage breakdown
         timestamp: new Date(),
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         spaceId: deployment.deployedTo === 'space' ? deployment.targetId : null,
         metadata: {
           elementType,
@@ -1592,6 +1594,7 @@ type PermissionResult =
 async function canUserExecuteTool(
   userId: string,
   deployment: DeploymentData,
+  campusId: string,
   placement?: Record<string, unknown>
 ): Promise<PermissionResult> {
   try {
@@ -1623,7 +1626,7 @@ async function canUserExecuteTool(
       const membershipQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', targetId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
       const membershipSnapshot = await membershipQuery.get();
 
       // Find an active membership (check both isActive and status fields)
@@ -1702,8 +1705,9 @@ async function executeToolAction(params: {
   data: Record<string, unknown>;
   context: Record<string, unknown>;
   placementContext?: Awaited<ReturnType<typeof getPlacementFromDeploymentDoc>> | null;
+  campusId: string;
 }): Promise<ToolExecutionResult> {
-  const { deployment, tool, user, action, elementId, data, placementContext } = params;
+  const { deployment, tool, user, action, elementId, data, placementContext, campusId } = params;
 
   try {
     // =========================================================================
@@ -1899,7 +1903,7 @@ async function executeToolAction(params: {
                   counters: updatedCounters,
                   version: ((existingData?.version as number) || 0) + 1,
                   lastModified: new Date().toISOString(),
-                  campusId: CURRENT_CAMPUS_ID,
+                  campusId: campusId,
                 }, { merge: true });
               });
             }
@@ -1977,7 +1981,7 @@ async function executeToolAction(params: {
                 collections: updatedCollections,
                 version: existingVersion + 1,
                 lastModified: new Date().toISOString(),
-                campusId: CURRENT_CAMPUS_ID,
+                campusId: campusId,
               }, { merge: true });
             }
           }
@@ -2013,7 +2017,7 @@ async function executeToolAction(params: {
               computed: updatedComputed,
               version: existingVersion + 1,
               lastModified: new Date().toISOString(),
-              campusId: CURRENT_CAMPUS_ID,
+              campusId: campusId,
               // Only include counters/collections if NOT using extracted services
               ...(USE_SHARDED_COUNTERS ? {} : { counters: existingData?.counters || {} }),
               ...(USE_EXTRACTED_COLLECTIONS ? {} : { collections: existingData?.collections || {} }),
@@ -2082,7 +2086,7 @@ async function executeToolAction(params: {
             userId: user.uid,
             state: finalUserState,
             updatedAt: new Date().toISOString(),
-            campusId: CURRENT_CAMPUS_ID,
+            campusId: campusId,
           };
 
           if (placementStateRef) {
@@ -2223,13 +2227,13 @@ async function executeToolAction(params: {
 }
 
 // Helper function to generate feed content
-async function generateFeedContent(deployment: DeploymentData, tool: ToolData, userId: string, feedContent: ToolExecutionResult['feedContent']) {
+async function generateFeedContent(deployment: DeploymentData, tool: ToolData, userId: string, feedContent: ToolExecutionResult['feedContent'], campusId: string) {
   try {
     if (deployment.deployedTo === 'space' && deployment.settings?.collectAnalytics && feedContent) {
       await dbAdmin.collection('posts').add({
         authorId: userId,
         spaceId: deployment.targetId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         type: 'tool_generated',
         toolId: deployment.toolId,
         content: feedContent.content,
@@ -2253,7 +2257,7 @@ async function generateFeedContent(deployment: DeploymentData, tool: ToolData, u
 }
 
 // Helper function to process notifications
-async function processNotifications(deployment: DeploymentData, notifications: ToolExecutionResult['notifications']) {
+async function processNotifications(deployment: DeploymentData, notifications: ToolExecutionResult['notifications'], campusId: string) {
   try {
     if (!notifications) return;
     for (const notification of notifications) {
@@ -2264,7 +2268,7 @@ async function processNotifications(deployment: DeploymentData, notifications: T
         deploymentId: deployment.id,
         toolId: deployment.toolId,
         spaceId: deployment.deployedTo === 'space' ? deployment.targetId : undefined,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         createdAt: new Date().toISOString(),
         read: false
       });
@@ -2285,9 +2289,10 @@ async function processNotifications(deployment: DeploymentData, notifications: T
  *
  * @param spaceId - The space ID
  * @param userId - The user executing the tool (for privacy filtering)
+ * @param campusId - The campus ID for isolation
  * @returns Space context with events, members, and space info
  */
-async function fetchSpaceContext(spaceId: string, userId: string): Promise<Record<string, unknown>> {
+async function fetchSpaceContext(spaceId: string, userId: string, campusId: string): Promise<Record<string, unknown>> {
   try {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -2301,7 +2306,7 @@ async function fetchSpaceContext(spaceId: string, userId: string): Promise<Recor
       // Upcoming and recent events (limited to 20)
       dbAdmin.collection('events')
         .where('spaceId', '==', spaceId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('startDate', '>=', thirtyDaysAgo.toISOString())
         .where('startDate', '<=', sixtyDaysFromNow.toISOString())
         .orderBy('startDate', 'asc')
@@ -2311,7 +2316,7 @@ async function fetchSpaceContext(spaceId: string, userId: string): Promise<Recor
       // Active members (limited to 50)
       dbAdmin.collection('spaceMembers')
         .where('spaceId', '==', spaceId)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .limit(50)
         .get(),

@@ -2,10 +2,10 @@
 
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -21,7 +21,7 @@ const ReviewSchema = z.object({
 
 type ReviewPayload = z.infer<typeof ReviewSchema>;
 
-async function ensureToolIsReviewable(toolId: string) {
+async function ensureToolIsReviewable(toolId: string, campusId: string) {
   const toolDoc = await adminDb.collection("tools").doc(toolId).get();
   if (!toolDoc.exists) {
     return { ok: false as const, status: 404, message: "Tool not found" };
@@ -32,7 +32,7 @@ async function ensureToolIsReviewable(toolId: string) {
     return { ok: false as const, status: 404, message: "Tool data not found" };
   }
 
-  if (toolData.campusId !== CURRENT_CAMPUS_ID) {
+  if (toolData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -51,25 +51,25 @@ async function ensureToolIsReviewable(toolId: string) {
   return { ok: true as const, toolData, toolDoc };
 }
 
-async function userHasExistingReview(toolId: string, userId: string) {
+async function userHasExistingReview(toolId: string, userId: string, campusId: string) {
   const existingReviewSnapshot = await adminDb
     .collection("toolReviews")
     .where("toolId", "==", toolId)
     .where("userId", "==", userId)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
   return !existingReviewSnapshot.empty;
 }
 
-async function userHasUsedTool(toolId: string, userId: string) {
+async function userHasUsedTool(toolId: string, userId: string, campusId: string) {
   const usageSnapshot = await adminDb
     .collection("analytics_events")
     .where("eventType", "==", "tool_interaction")
     .where("userId", "==", userId)
     .where("toolId", "==", toolId)
-    .where("campusId", "==", CURRENT_CAMPUS_ID)
+    .where("campusId", "==", campusId)
     .limit(1)
     .get();
 
@@ -85,22 +85,23 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { toolId } = await params;
 
-    const toolValidation = await ensureToolIsReviewable(toolId);
+    const toolValidation = await ensureToolIsReviewable(toolId, campusId);
     if (!toolValidation.ok) {
       return respond.error(toolValidation.message, toolValidation.status === 404 ? "RESOURCE_NOT_FOUND" : "FORBIDDEN", {
         status: toolValidation.status,
       });
     }
 
-    if (await userHasExistingReview(toolId, userId)) {
+    if (await userHasExistingReview(toolId, userId, campusId)) {
       return respond.error("You have already reviewed this tool", "CONFLICT", {
         status: 409,
       });
     }
 
-    const hasUsedTool = await userHasUsedTool(toolId, userId);
+    const hasUsedTool = await userHasUsedTool(toolId, userId, campusId);
     const now = new Date().toISOString();
     const reviewRef = adminDb.collection("toolReviews").doc();
 
@@ -120,7 +121,7 @@ export const POST = withAuthValidationAndErrors(
       createdAt: now,
       updatedAt: now,
       version: toolValidation.toolData?.currentVersion,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
     });
 
     await adminDb.collection("analytics_events").add({
@@ -129,7 +130,7 @@ export const POST = withAuthValidationAndErrors(
       toolId,
       rating: body.rating,
       timestamp: now,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: campusId,
       metadata: {
         reviewId: reviewRef.id,
         verified: hasUsedTool,
@@ -153,7 +154,7 @@ export const POST = withAuthValidationAndErrors(
         recipients: [ownerId],
         createdAt: now,
         read: false,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       });
     }
 
