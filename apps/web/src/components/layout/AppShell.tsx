@@ -415,6 +415,12 @@ export function AppShell({ children }: AppShellProps) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/legal/');
 
+  // Pages that need full-width content (escape max-w-3xl constraint)
+  const isWideContentPage =
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/spaces') ||
+    pathname.startsWith('/tools');
+
   if (isStandalonePage) {
     return <>{children}</>;
   }
@@ -453,9 +459,9 @@ export function AppShell({ children }: AppShellProps) {
           <div className="w-9" /> {/* Spacer for centering */}
         </div>
 
-        {/* Page Content - ChatGPT style: max-w-3xl, px-8 py-6 */}
+        {/* Page Content - ChatGPT style for standard pages, full-width for wide pages */}
         <div className="min-h-screen">
-          <div className="max-w-3xl mx-auto px-8 py-6">
+          <div className={isWideContentPage ? 'h-full' : 'max-w-3xl mx-auto px-8 py-6'}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={pathname}
@@ -463,6 +469,7 @@ export function AppShell({ children }: AppShellProps) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15, ease: EASE }}
+                className={isWideContentPage ? 'h-full' : undefined}
               >
                 {children}
               </motion.div>

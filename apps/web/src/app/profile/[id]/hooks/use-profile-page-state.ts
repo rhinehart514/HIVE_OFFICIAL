@@ -154,7 +154,9 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   const params = useParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
-  const profileId = params.id as string;
+  const rawProfileId = params.id as string;
+  // Handle "me" route by substituting current user's ID
+  const profileId = rawProfileId === 'me' && currentUser?.id ? currentUser.id : rawProfileId;
 
   // Core state
   const [profileData, setProfileData] = React.useState<ProfileV2ApiResponse | null>(null);
@@ -182,7 +184,8 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   React.useEffect(() => {
     let cancelled = false;
     const loadProfile = async () => {
-      if (!profileId) return;
+      // Wait for profileId to resolve - if "me" we need currentUser
+      if (!profileId || (rawProfileId === 'me' && !currentUser?.id)) return;
 
       try {
         setIsLoading(true);
@@ -225,7 +228,7 @@ export function useProfilePageState(): UseProfilePageStateReturn {
 
     loadProfile();
     return () => { cancelled = true; };
-  }, [profileId]);
+  }, [profileId, rawProfileId, currentUser?.id]);
 
   // Subscribe to presence updates
   React.useEffect(() => {

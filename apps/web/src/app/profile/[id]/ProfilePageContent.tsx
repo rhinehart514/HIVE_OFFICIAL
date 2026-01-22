@@ -191,8 +191,8 @@ export default function ProfilePageContent() {
   };
 
   return (
-    <div className="min-h-screen w-full overflow-y-auto">
-      <div className="max-w-[1200px] mx-auto py-8 md:py-12">
+    <div className="h-full w-full overflow-y-auto bg-[#0A0A09]">
+      <div className="py-8 md:py-12">
         <BentoProfileGrid
           isOwnProfile={isOwnProfile}
           renderWidget={renderWidget}
