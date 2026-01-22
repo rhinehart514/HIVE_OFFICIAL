@@ -4,7 +4,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { getCampusId } from '@/lib/campus-context';
 
 // Privacy settings interface
 interface PrivacySettings {
@@ -129,6 +129,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    const campusId = await getCampusId(request);
+
     const body = await request.json();
     const { ghostMode, profileVisibility, activitySharing, notifications, dataRetention } = body;
 
@@ -160,7 +162,7 @@ export async function PUT(request: NextRequest) {
     await dbAdmin.collection('privacySettings').doc(user.uid).set(updatedSettings);
 
     // Apply privacy changes immediately
-    await applyPrivacyChanges(user.uid, updatedSettings);
+    await applyPrivacyChanges(user.uid, updatedSettings, campusId);
 
     return NextResponse.json({ 
       settings: updatedSettings,
@@ -176,11 +178,11 @@ export async function PUT(request: NextRequest) {
 }
 
 // Helper function to apply privacy changes
-async function applyPrivacyChanges(userId: string, settings: PrivacySettings) {
+async function applyPrivacyChanges(userId: string, settings: PrivacySettings, campusId: string) {
   try {
     // Update user's visibility in spaces
     if (settings.ghostMode.enabled) {
-      await updateSpaceVisibility(userId, settings);
+      await updateSpaceVisibility(userId, settings, campusId);
     }
 
     // Handle activity data retention
@@ -200,12 +202,12 @@ async function applyPrivacyChanges(userId: string, settings: PrivacySettings) {
 }
 
 // Helper function to update space visibility
-async function updateSpaceVisibility(userId: string, settings: PrivacySettings) {
+async function updateSpaceVisibility(userId: string, settings: PrivacySettings, campusId: string) {
   try {
     const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
     
     // Update visibility in each space membership

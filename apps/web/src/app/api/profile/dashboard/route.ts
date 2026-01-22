@@ -1,7 +1,6 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware/index";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware/index";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
 
@@ -15,6 +14,7 @@ import { isTestUserId } from "@/lib/security-service";
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const timeRange = searchParams.get('timeRange') || 'week';
   const includeRecommendations = searchParams.get('includeRecommendations') === 'true';
@@ -278,7 +278,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       // Get spaces the user is not a member of for recommendations
       const allSpacesSnapshot = await dbAdmin
         .collection('spaces')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('isActive', '==', true)
         .orderBy('memberCount', 'desc') // Order by popularity
         .limit(10) // Reduced from 20 to improve performance

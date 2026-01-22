@@ -1,9 +1,8 @@
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware/index";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware/index";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
@@ -41,6 +40,7 @@ const updateEventSchema = z.object({
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
@@ -111,7 +111,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
           ...data,
         } as Record<string, unknown>;
       })
-      .filter(event => !event.campusId || event.campusId === CURRENT_CAMPUS_ID);
+      .filter(event => !event.campusId || event.campusId === campusId);
 
     // Get DDD profile data for context (user's spaces for event relevance)
     let profileContext: {
@@ -155,6 +155,7 @@ export const POST = withAuthValidationAndErrors(
   createEventSchema,
   async (request, context, eventData: z.infer<typeof createEventSchema>, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     try {
       // Development mode
@@ -187,7 +188,7 @@ export const POST = withAuthValidationAndErrors(
 
       const event = {
         ...eventData,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
         status: 'confirmed',
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -227,6 +228,7 @@ export const PUT = withAuthValidationAndErrors(
   updateEventSchema,
   async (request, context, updateData: z.infer<typeof updateEventSchema>, respond) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { id, ...updates } = updateData;
 
     try {
@@ -262,7 +264,7 @@ export const PUT = withAuthValidationAndErrors(
       }
 
       const eventData = eventDoc.data();
-      if (eventData?.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+      if (eventData?.campusId && eventData.campusId !== campusId) {
         return respond.error('Access denied for this campus', 'FORBIDDEN', {
           status: HttpStatus.FORBIDDEN,
         });
@@ -271,7 +273,7 @@ export const PUT = withAuthValidationAndErrors(
       await eventRef.update({
         ...updates,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        campusId: CURRENT_CAMPUS_ID,
+        campusId: campusId,
       });
 
       return respond.success({ message: 'Event updated successfully' });
@@ -299,6 +301,7 @@ export const PUT = withAuthValidationAndErrors(
  */
 export const DELETE = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const eventId = searchParams.get('id');
 
@@ -330,7 +333,7 @@ export const DELETE = withAuthAndErrors(async (request, context, respond) => {
     }
 
     const eventData = eventDoc.data();
-    if (eventData?.campusId && eventData.campusId !== CURRENT_CAMPUS_ID) {
+    if (eventData?.campusId && eventData.campusId !== campusId) {
       return respond.error('Access denied for this campus', 'FORBIDDEN', {
         status: HttpStatus.FORBIDDEN,
       });

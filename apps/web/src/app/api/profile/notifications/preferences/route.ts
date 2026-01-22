@@ -1,7 +1,6 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository } from '@hive/core/server';
 
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
@@ -35,6 +34,7 @@ const defaultPreferences: NotificationPreferences = {
 // GET /api/profile/notifications/preferences?userId=... -> returns raw preferences object
 export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const currentUserId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const targetUserId = searchParams.get('userId') || currentUserId;
 
@@ -46,7 +46,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
 
     const ref = dbAdmin.collection('notificationPreferences').doc(targetUserId);
     const userDoc = await dbAdmin.collection('users').doc(targetUserId).get();
-    const userCampus = (userDoc.exists ? userDoc.data()?.campusId : null) || CURRENT_CAMPUS_ID;
+    const userCampus = (userDoc.exists ? userDoc.data()?.campusId : null) || campusId;
     const snap = await ref.get();
     if (!snap.exists) {
       const prefs = { ...defaultPreferences, campusId: userCampus };
@@ -96,6 +96,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
 // PUT /api/profile/notifications/preferences -> updates own preferences (partial)
 export const PUT = withAuthAndErrors(async (request, _ctx, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   try {
     const body = await request.json();
     const { preferences } = body || {};
@@ -104,7 +105,7 @@ export const PUT = withAuthAndErrors(async (request, _ctx, respond) => {
     const ref = dbAdmin.collection('notificationPreferences').doc(userId);
     const snap = await ref.get();
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
-    const userCampus = (userDoc.exists ? userDoc.data()?.campusId : null) || CURRENT_CAMPUS_ID;
+    const userCampus = (userDoc.exists ? userDoc.data()?.campusId : null) || campusId;
     if (!snap.exists) {
       const merged = { ...defaultPreferences, ...updates, campusId: userCampus };
       await ref.set(merged);

@@ -1,7 +1,6 @@
-import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware/index";
+import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware/index";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { z } from 'zod';
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
@@ -48,6 +47,7 @@ interface CalendarConflict {
  */
 export const GET = withAuthAndErrors(async (request, context, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const includeNewEventStr = searchParams.get('includeNewEvent');
   const suggestTimes = searchParams.get('suggestTimes') === 'true';
@@ -130,7 +130,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       .collection('users')
       .doc(userId)
       .collection('calendar_events')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '!=', 'cancelled')
       .orderBy('status')
       .orderBy('startDate')

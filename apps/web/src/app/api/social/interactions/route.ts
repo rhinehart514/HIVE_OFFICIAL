@@ -4,7 +4,6 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { withAuth } from '@/lib/api-auth-middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { isContentHidden } from '@/lib/content-moderation';
 
 // Interaction schema
@@ -77,7 +76,7 @@ export const POST = withAuth(async (request, authContext) => {
             postId,
             userId,
             createdAt: new Date(),
-            campusId: CURRENT_CAMPUS_ID
+            campusId: authContext.campusId
           });
 
           // Update post engagement
@@ -129,7 +128,7 @@ export const POST = withAuth(async (request, authContext) => {
           createdAt: new Date(),
           updatedAt: new Date(),
           isDeleted: false,
-          campusId: CURRENT_CAMPUS_ID,
+          campusId: authContext.campusId,
           likes: 0,
           replies: 0
         });
@@ -159,7 +158,7 @@ export const POST = withAuth(async (request, authContext) => {
             postId,
             userId,
             createdAt: new Date(),
-            campusId: CURRENT_CAMPUS_ID,
+            campusId: authContext.campusId,
             metadata: metadata || {}
           });
 
@@ -189,7 +188,7 @@ export const POST = withAuth(async (request, authContext) => {
             postId,
             userId,
             createdAt: new Date(),
-            campusId: CURRENT_CAMPUS_ID
+            campusId: authContext.campusId
           });
 
           // Update post engagement

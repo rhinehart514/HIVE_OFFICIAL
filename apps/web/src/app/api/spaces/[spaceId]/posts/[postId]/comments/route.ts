@@ -8,9 +8,9 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
@@ -19,7 +19,7 @@ const CreateCommentSchema = z.object({
   parentCommentId: z.string().optional(),
 });
 
-async function ensureSpaceMembership(spaceId: string, userId: string) {
+async function ensureSpaceMembership(spaceId: string, userId: string, campusId: string) {
   const membership = await requireSpaceMembership(spaceId, userId);
   if (!membership.ok) {
     return {
@@ -30,7 +30,7 @@ async function ensureSpaceMembership(spaceId: string, userId: string) {
   }
 
   const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData.campusId && spaceData.campusId !== campusId) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -41,7 +41,7 @@ async function ensureSpaceMembership(spaceId: string, userId: string) {
   return { ok: true as const };
 }
 
-async function ensurePostExists(spaceId: string, postId: string) {
+async function ensurePostExists(spaceId: string, postId: string, campusId: string) {
   const postDoc = await dbAdmin
     .collection("spaces")
     .doc(spaceId)
@@ -56,7 +56,7 @@ async function ensurePostExists(spaceId: string, postId: string) {
   if (!postData) {
     return { ok: false as const, status: 404, message: "Post data missing" };
   }
-  if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+  if (postData.campusId && postData.campusId !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied for this campus" };
   }
 
@@ -71,15 +71,16 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId, postId } = await params;
     const userId = getUserId(request);
+    const campusId = getCampusId(request);
 
-    const membership = await ensureSpaceMembership(spaceId, userId);
+    const membership = await ensureSpaceMembership(spaceId, userId, campusId);
     if (!membership.ok) {
       const code =
         membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(membership.message, code, { status: membership.status });
     }
 
-    const post = await ensurePostExists(spaceId, postId);
+    const post = await ensurePostExists(spaceId, postId, campusId);
     if (!post.ok) {
       return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
     }
@@ -100,7 +101,7 @@ export const GET = withAuthAndErrors(async (
 
     for (const doc of commentsSnapshot.docs) {
       const data = doc.data();
-      if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+      if (data.campusId && data.campusId !== campusId) {
         continue;
       }
       const authorDoc = await dbAdmin.collection("users").doc(data.authorId).get();
@@ -172,15 +173,16 @@ export const POST = withAuthValidationAndErrors(
     try {
       const { spaceId, postId } = await params;
       const userId = getUserId(request);
+      const campusId = getCampusId(request);
 
-      const membership = await ensureSpaceMembership(spaceId, userId);
+      const membership = await ensureSpaceMembership(spaceId, userId, campusId);
       if (!membership.ok) {
         const code =
           membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(membership.message, code, { status: membership.status });
       }
 
-      const post = await ensurePostExists(spaceId, postId);
+      const post = await ensurePostExists(spaceId, postId, campusId);
       if (!post.ok) {
         return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
       }
@@ -215,7 +217,7 @@ export const POST = withAuthValidationAndErrors(
         reactedUsers: { heart: [] as string[] },
         isEdited: false,
         isDeleted: false,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
       };
 
       const commentRef = await dbAdmin

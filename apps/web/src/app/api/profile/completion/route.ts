@@ -1,7 +1,6 @@
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository } from '@hive/core/server';
 
 interface ProfileCompletionCheck {
@@ -51,6 +50,7 @@ export const GET = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   // Try DDD repository first for accurate completion percentage
   const profileRepository = getServerProfileRepository();
@@ -60,7 +60,7 @@ export const GET = withAuthAndErrors(async (
     const profile = profileResult.getValue();
 
     // Campus isolation check
-    if (profile.campusId.id !== CURRENT_CAMPUS_ID) {
+    if (profile.campusId.id !== campusId) {
       return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
 
@@ -127,7 +127,7 @@ export const GET = withAuthAndErrors(async (
   }
 
   const userData = userDoc.data();
-  if (userData?.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
+  if (userData?.campusId && userData.campusId !== campusId) {
     return respond.error("User profile not found", "RESOURCE_NOT_FOUND", { status: 404 });
   }
 

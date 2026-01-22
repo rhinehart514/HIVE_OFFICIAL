@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth-server';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { sseRealtimeService as _sseRealtimeService } from '@/lib/sse-realtime-service';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { deriveCampusFromEmail } from '@/lib/middleware';
 
 // Presence indicator interfaces
 interface UserPresence {

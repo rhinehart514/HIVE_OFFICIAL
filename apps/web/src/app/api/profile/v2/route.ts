@@ -9,8 +9,7 @@
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { getServerProfileRepository, PrivacyLevel, ProfilePrivacy } from '@hive/core/server';
 import { NextResponse } from 'next/server';
 
@@ -213,6 +212,7 @@ const toDddPrivacyLevel = (level: string | undefined): PrivacyLevel => {
 export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
   try {
     const viewerId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const handle = searchParams.get('handle');
@@ -223,7 +223,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
       const byHandle = await dbAdmin
         .collection('users')
         .where('handle', '==', handle)
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .limit(1)
         .get();
 
@@ -261,7 +261,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
       profilePrivacy = profile.privacy;
 
       // Check campus isolation
-      if (profile.campusId.id !== CURRENT_CAMPUS_ID) {
+      if (profile.campusId.id !== campusId) {
         return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
       }
 
@@ -316,7 +316,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
       }
 
       userData = userSnap.data() || {};
-      if (userData.campusId && userData.campusId !== CURRENT_CAMPUS_ID) {
+      if (userData.campusId && userData.campusId !== campusId) {
         return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
       }
 
@@ -384,7 +384,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
     const [spacesSnap, connectionsListSnap, suggestionSnap] = await Promise.all([
       dbAdmin
         .collection('spaces')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('members', 'array-contains', targetUserId)
         .limit(8)
         .get()
@@ -397,7 +397,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         .catch(() => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)),
       dbAdmin
         .collection('spaces')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .orderBy('memberCount', 'desc')
         .limit(6)
         .get()
@@ -479,7 +479,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
       fullName: userData.fullName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Student',
       firstName: userData.firstName || '',
       lastName: userData.lastName || '',
-      campusId: userData.campusId || CURRENT_CAMPUS_ID,
+      campusId: userData.campusId || campusId,
       avatarUrl: userData.avatarUrl || userData.profileImageUrl || null,
       pronouns: userData.pronouns || null,
       bio: userData.bio || '',
@@ -543,6 +543,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
 export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const payload = await request.json();
     const parsed = UpdateSchema.parse(payload);
 
@@ -611,7 +612,7 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
           ...parsed.privacy,
           userId,
           updatedAt: now,
-          campusId: existing.data()?.campusId || CURRENT_CAMPUS_ID,
+          campusId: existing.data()?.campusId || campusId,
         };
         if (!existing.exists) merged.createdAt = now;
 

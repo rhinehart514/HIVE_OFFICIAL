@@ -1,7 +1,6 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger } from "@/lib/logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getServerProfileRepository, ProfilePrivacy, PrivacyLevel } from '@hive/core/server';
 
 // Shared privacy settings shape (kept compatible with /api/privacy)
@@ -90,6 +89,7 @@ const defaultPrivacy: Omit<PrivacySettings, 'userId' | 'createdAt' | 'updatedAt'
  */
 export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   try {
     // Try to get DDD profile privacy first
     const profileRepository = getServerProfileRepository();
@@ -129,7 +129,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         createdAt: now,
         updatedAt: now,
       };
-      await ref.set({ ...settings, campusId: CURRENT_CAMPUS_ID } as Record<string, unknown>);
+      await ref.set({ ...settings, campusId: campusId } as Record<string, unknown>);
 
       return respond.success({
         privacy: settings,
@@ -145,7 +145,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
     }
 
     const settings = snap.data() as (PrivacySettings & { campusId?: string });
-    if (settings?.campusId && settings.campusId !== CURRENT_CAMPUS_ID) {
+    if (settings?.campusId && settings.campusId !== campusId) {
       return respond.error('Access denied for this campus', 'FORBIDDEN', { status: 403 });
     }
 
@@ -172,6 +172,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
  */
 export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   try {
     const updates = await request.json();
     const ref = dbAdmin.collection('privacySettings').doc(userId);
@@ -252,7 +253,7 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
       };
     } else {
       const existing = snap.data() as (PrivacySettings & { campusId?: string });
-      if (existing?.campusId && existing.campusId !== CURRENT_CAMPUS_ID) {
+      if (existing?.campusId && existing.campusId !== campusId) {
         return respond.error('Access denied for this campus', 'FORBIDDEN', { status: 403 });
       }
       merged = {
@@ -266,7 +267,7 @@ export const PATCH = withAuthAndErrors(async (request, _ctx, respond) => {
       };
     }
 
-    await ref.set({ ...merged, campusId: (snap.data() as Record<string, unknown>)?.campusId || CURRENT_CAMPUS_ID } as Record<string, unknown>);
+    await ref.set({ ...merged, campusId: (snap.data() as Record<string, unknown>)?.campusId || campusId } as Record<string, unknown>);
     return respond.success({ privacy: merged, message: 'Privacy settings updated' });
   } catch (error) {
     logger.error('Failed to update privacy via /api/profile/privacy', { error: error instanceof Error ? error.message : String(error) });

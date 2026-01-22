@@ -9,7 +9,7 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
-import { addSecureCampusMetadata, CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
 
 /**

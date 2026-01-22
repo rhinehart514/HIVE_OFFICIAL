@@ -1,8 +1,7 @@
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from "@/lib/middleware";
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { sseRealtimeService } from '@/lib/sse-realtime-service';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { FieldValue } from 'firebase-admin/firestore';
 import { requireSpaceAccess, requireSpaceMembership } from '@/lib/space-security';
 import { HttpStatus } from '@/lib/api-response-types';
@@ -36,6 +35,7 @@ export const POST = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request);
+  const campusId = getCampusId(request);
   const { spaceId } = await params;
 
   try {
@@ -73,7 +73,7 @@ export const POST = withAuthAndErrors(async (
       spaceData = access.space;
     }
 
-    if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+    if (spaceData?.campusId && spaceData.campusId !== campusId) {
       return respond.error("Access denied for this campus", "FORBIDDEN", {
         status: HttpStatus.FORBIDDEN,
       });
@@ -94,7 +94,7 @@ export const POST = withAuthAndErrors(async (
     }
 
     const postData = postDoc.data()!;
-    if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+    if (postData.campusId && postData.campusId !== campusId) {
       return respond.error("Access denied for this campus", "FORBIDDEN", {
         status: HttpStatus.FORBIDDEN,
       });
@@ -105,7 +105,7 @@ export const POST = withAuthAndErrors(async (
       .collection('feed')
       .where('sourcePostId', '==', postId)
       .where('sourceSpaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .limit(1)
       .get();
 
@@ -153,7 +153,7 @@ export const POST = withAuthAndErrors(async (
       },
 
       // Campus isolation
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       isActive: true,
 
       // Timestamps

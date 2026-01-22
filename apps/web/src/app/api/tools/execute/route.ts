@@ -1523,7 +1523,7 @@ export const POST = withAuthValidationAndErrors(
           });
           // Silently skip - don't fail the execution
         } else {
-          await generateFeedContent(deployment, tool, userId, executionResult.feedContent);
+          await generateFeedContent(deployment, tool, userId, executionResult.feedContent, campusId);
           // Increment budget usage
           await budgetRef.set({
             deploymentId: deployment.id,
@@ -1559,7 +1559,7 @@ export const POST = withAuthValidationAndErrors(
           });
           // Silently skip - don't fail the execution
         } else {
-          await processNotifications(deployment, executionResult.notifications);
+          await processNotifications(deployment, executionResult.notifications, campusId);
           // Increment budget usage
           await budgetRef.set({
             deploymentId: deployment.id,
@@ -1776,7 +1776,7 @@ async function executeToolAction(params: {
     const targetId = (placementContext?.snapshot?.data() as Record<string, unknown> | undefined)?.targetId || deployment.targetId;
 
     if (targetType === 'space' && targetId) {
-      spaceContext = await fetchSpaceContext(targetId as string, user.uid);
+      spaceContext = await fetchSpaceContext(targetId as string, user.uid, campusId);
     }
 
     // Build action context for the extensible handler system

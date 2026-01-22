@@ -4,7 +4,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { getCampusId } from '@/lib/campus-context';
 
 // Visibility check interface
 interface VisibilityCheck {
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
+
+    const campusId = await getCampusId(request);
 
     const body = await request.json();
     const { targetUserId, context } = body;
@@ -58,8 +60,8 @@ export async function POST(request: NextRequest) {
     const viewerPrivacy = viewerPrivacyDoc.exists ? viewerPrivacyDoc.data() ?? null : null;
 
     // Determine relationship and shared spaces
-    const relationship = await determineRelationship(user.uid, targetUserId);
-    const sharedSpaces = await getSharedSpaces(user.uid, targetUserId);
+    const relationship = await determineRelationship(user.uid, targetUserId, campusId);
+    const sharedSpaces = await getSharedSpaces(user.uid, targetUserId, campusId);
 
     // Calculate visibility permissions
     const visibility = calculateVisibility(
@@ -93,6 +95,8 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
+
+    const campusId = await getCampusId(request);
 
     const { searchParams } = new URL(request.url);
     const userIds = searchParams.get('userIds')?.split(',') || [];
@@ -136,8 +140,8 @@ export async function GET(request: NextRequest) {
           const targetPrivacy = targetPrivacyDoc.exists ? targetPrivacyDoc.data() ?? null : null;
 
           // Determine relationship and shared spaces
-          const relationship = await determineRelationship(user.uid, targetUserId);
-          const sharedSpaces = await getSharedSpaces(user.uid, targetUserId);
+          const relationship = await determineRelationship(user.uid, targetUserId, campusId);
+          const sharedSpaces = await getSharedSpaces(user.uid, targetUserId, campusId);
 
           // Calculate visibility
           const visibility = calculateVisibility(

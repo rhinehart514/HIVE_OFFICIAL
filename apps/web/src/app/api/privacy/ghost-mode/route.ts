@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/server-auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import type * as admin from 'firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getCampusId } from '@/lib/campus-context';
 
 // Ghost Mode quick toggle and status
 export async function GET(request: NextRequest) {
@@ -15,20 +15,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    const campusId = await getCampusId(request);
+
     const { searchParams } = new URL(request.url);
     const checkUserId = searchParams.get('userId');
 
     let targetUserId = user.uid;
-    
+
     // If checking another user's ghost mode status (for visibility checks)
     if (checkUserId && checkUserId !== user.uid) {
       targetUserId = checkUserId;
     }
 
     const privacyDoc = await dbAdmin.collection('privacySettings').doc(targetUserId).get();
-    
+
     if (!privacyDoc.exists) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         ghostMode: {
           enabled: false,
           level: 'normal',
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     const settings = privacyDoc.data();
     if (!settings) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         ghostMode: {
           enabled: false,
           level: 'normal',
@@ -58,11 +60,11 @@ export async function GET(request: NextRequest) {
       });
     }
     const ghostMode = settings.ghostMode;
-    
-    // Determine visibility based on ghost mode settings
-    const isVisible = await checkUserVisibility(targetUserId, user.uid, ghostMode);
 
-    return NextResponse.json({ 
+    // Determine visibility based on ghost mode settings
+    const isVisible = await checkUserVisibility(targetUserId, user.uid, ghostMode, campusId);
+
+    return NextResponse.json({
       ghostMode,
       isVisible,
       canView: targetUserId === user.uid ? true : isVisible
@@ -83,6 +85,8 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
+
+    const campusId = await getCampusId(request);
 
     const body = await request.json();
     const { enabled, level, duration } = body;
@@ -161,7 +165,7 @@ export async function POST(request: NextRequest) {
     await dbAdmin.collection('privacySettings').doc(user.uid).update(updatedSettings);
 
     // Apply changes immediately
-    await applyGhostModeChanges(user.uid, updatedGhostMode);
+    await applyGhostModeChanges(user.uid, updatedGhostMode, campusId);
 
     // Schedule automatic disable if temporary
     if (ghostModeExpiry) {
@@ -183,7 +187,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to check user visibility
-async function checkUserVisibility(targetUserId: string, viewerUserId: string, ghostMode: { enabled: boolean; level: string }): Promise<boolean> {
+async function checkUserVisibility(targetUserId: string, viewerUserId: string, ghostMode: { enabled: boolean; level: string }, campusId: string): Promise<boolean> {
   if (!ghostMode.enabled) {
     return true;
   }
@@ -196,12 +200,12 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
   const targetMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', targetUserId)
     .where('status', '==', 'active')
-    .where('campusId', '==', CURRENT_CAMPUS_ID);
+    .where('campusId', '==', campusId);
 
   const viewerMembershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
     .where('userId', '==', viewerUserId)
     .where('status', '==', 'active')
-    .where('campusId', '==', CURRENT_CAMPUS_ID);
+    .where('campusId', '==', campusId);
 
   const [targetMemberships, viewerMemberships] = await Promise.all([
     targetMembershipsQuery.get(),
@@ -234,13 +238,13 @@ async function checkUserVisibility(targetUserId: string, viewerUserId: string, g
 }
 
 // Helper function to apply ghost mode changes
-async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boolean; level: string; hideFromDirectory: boolean; hideActivity: boolean; hideOnlineStatus: boolean; hideLastSeen: boolean }) {
+async function applyGhostModeChanges(userId: string, ghostMode: { enabled: boolean; level: string; hideFromDirectory: boolean; hideActivity: boolean; hideOnlineStatus: boolean; hideLastSeen: boolean }, campusId: string) {
   try {
     // Update user's visibility in spaces
   const membershipsQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const membershipsSnapshot = await membershipsQuery.get();
     

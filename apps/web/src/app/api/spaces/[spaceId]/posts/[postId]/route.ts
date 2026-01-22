@@ -7,9 +7,9 @@ import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
 
@@ -21,7 +21,7 @@ const ReactionSchema = z.object({
   reaction: z.enum(["heart", "thumbsUp", "laugh", "wow", "sad", "angry"]),
 });
 
-async function loadSpaceMembership(spaceId: string, userId: string) {
+async function loadSpaceMembership(spaceId: string, userId: string, campusId: string) {
   const membership = await requireSpaceMembership(spaceId, userId);
   if (!membership.ok) {
     return {
@@ -32,7 +32,7 @@ async function loadSpaceMembership(spaceId: string, userId: string) {
   }
 
   const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData.campusId && spaceData.campusId !== campusId) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -47,7 +47,7 @@ async function loadSpaceMembership(spaceId: string, userId: string) {
   };
 }
 
-async function loadPost(spaceId: string, postId: string) {
+async function loadPost(spaceId: string, postId: string, campusId: string) {
   const postDoc = await dbAdmin
     .collection("spaces")
     .doc(spaceId)
@@ -61,7 +61,7 @@ async function loadPost(spaceId: string, postId: string) {
   if (!postData) {
     return { ok: false as const, status: 404, message: "Post data missing" };
   }
-  if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+  if (postData.campusId && postData.campusId !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied for this campus" };
   }
   return { ok: true as const, postDoc, postData };
@@ -75,15 +75,16 @@ export const GET = withAuthAndErrors(async (
   try {
     const { spaceId, postId } = await params;
     const userId = getUserId(request);
+    const campusId = getCampusId(request);
 
-    const membership = await loadSpaceMembership(spaceId, userId);
+    const membership = await loadSpaceMembership(spaceId, userId, campusId);
     if (!membership.ok) {
       const code =
         membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(membership.message, code, { status: membership.status });
     }
 
-    const post = await loadPost(spaceId, postId);
+    const post = await loadPost(spaceId, postId, campusId);
     if (!post.ok) {
       return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
     }
@@ -127,15 +128,16 @@ export const PATCH = withAuthValidationAndErrors(
     try {
       const { spaceId, postId } = await params;
       const userId = getUserId(request);
+      const campusId = getCampusId(request);
 
-      const membership = await loadSpaceMembership(spaceId, userId);
+      const membership = await loadSpaceMembership(spaceId, userId, campusId);
       if (!membership.ok) {
         const code =
           membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(membership.message, code, { status: membership.status });
       }
 
-      const post = await loadPost(spaceId, postId);
+      const post = await loadPost(spaceId, postId, campusId);
       if (!post.ok) {
         return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
       }
@@ -207,15 +209,16 @@ export const DELETE = withAuthAndErrors(async (
   try {
     const { spaceId, postId } = await params;
     const userId = getUserId(request);
+    const campusId = getCampusId(request);
 
-    const membership = await loadSpaceMembership(spaceId, userId);
+    const membership = await loadSpaceMembership(spaceId, userId, campusId);
     if (!membership.ok) {
       const code =
         membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(membership.message, code, { status: membership.status });
     }
 
-    const post = await loadPost(spaceId, postId);
+    const post = await loadPost(spaceId, postId, campusId);
     if (!post.ok) {
       return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
     }
@@ -259,15 +262,16 @@ export const POST = withAuthValidationAndErrors(
     try {
       const { spaceId, postId } = await params;
       const userId = getUserId(request);
+      const campusId = getCampusId(request);
 
-      const membership = await loadSpaceMembership(spaceId, userId);
+      const membership = await loadSpaceMembership(spaceId, userId, campusId);
     if (!membership.ok) {
       const code =
         membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
       return respond.error(membership.message, code, { status: membership.status });
     }
 
-      const post = await loadPost(spaceId, postId);
+      const post = await loadPost(spaceId, postId, campusId);
       if (!post.ok) {
         return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
       }

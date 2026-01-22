@@ -3,8 +3,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper as _ApiResponseHelper, HttpStatus as _HttpStatus } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
-import { withAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { isTestUserId } from "@/lib/security-service";
 import { mlContentAnalyzer } from "@/lib/ml-content-analyzer";
 
@@ -17,6 +16,7 @@ export const POST = withAuthAndErrors(async (
   respond
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
     const formData = await request.formData();
     const file = formData.get('photo') as File;
@@ -131,7 +131,7 @@ export const POST = withAuthAndErrors(async (
     // Update user document with new avatar URL
     const userRef = dbAdmin.collection('users').doc(userId);
     const currentUserDoc = await userRef.get();
-    const currentCampus = (currentUserDoc.exists ? currentUserDoc.data()?.campusId : null) || CURRENT_CAMPUS_ID;
+    const currentCampus = (currentUserDoc.exists ? currentUserDoc.data()?.campusId : null) || campusId;
     await userRef.update({
       avatarUrl: downloadURL,
       profilePhoto: downloadURL, // For compatibility

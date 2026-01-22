@@ -4,7 +4,7 @@ import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import { verifySession } from '@/lib/session';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { deriveCampusFromEmail } from "@/lib/middleware";
 
 // Auth helper that checks both session cookies and Bearer tokens
 // Required because EventSource doesn't support custom headers, only cookies
@@ -105,6 +105,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       toolId,
@@ -123,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has permission to update this tool
-    const hasPermission = await verifyToolUpdatePermission(user.uid, toolId, deploymentId, spaceId);
+    const hasPermission = await verifyToolUpdatePermission(user.uid, toolId, deploymentId, spaceId, campusId);
     if (!hasPermission) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to update this tool", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -141,7 +144,7 @@ export async function POST(request: NextRequest) {
     // Determine affected users
     let affectedUsers = targetUsers;
     if (affectedUsers.length === 0) {
-      affectedUsers = await getToolUsers(toolId, deploymentId, spaceId);
+      affectedUsers = await getToolUsers(toolId, deploymentId, spaceId, campusId);
     }
 
     // Get current tool state for conflict detection
@@ -221,6 +224,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const deploymentId = searchParams.get('deploymentId');
     const spaceId = searchParams.get('spaceId');
@@ -245,7 +251,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user has access to this tool
-    const hasAccess = await verifyToolAccess(user.uid, toolId, deploymentId ?? undefined, spaceId ?? undefined);
+    const hasAccess = await verifyToolAccess(user.uid, toolId, deploymentId ?? undefined, spaceId ?? undefined, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to this tool", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -310,6 +316,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       toolId,
@@ -325,7 +334,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify access
-    const hasAccess = await verifyToolAccess(user.uid, toolId, deploymentId ?? undefined);
+    const hasAccess = await verifyToolAccess(user.uid, toolId, deploymentId ?? undefined, undefined, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to this tool", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -481,7 +490,8 @@ async function verifyToolUpdatePermission(
   userId: string,
   toolId: string,
   deploymentId?: string,
-  spaceId?: string
+  spaceId?: string,
+  campusId?: string
 ): Promise<boolean> {
   try {
     // Check if user owns the tool
@@ -507,12 +517,12 @@ async function verifyToolUpdatePermission(
     }
 
     // Check space permissions if spaceId provided
-    if (spaceId) {
+    if (spaceId && campusId) {
       const memberQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', spaceId)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
 
       const memberSnapshot = await memberQuery.get();
       if (!memberSnapshot.empty) {
@@ -536,7 +546,8 @@ async function verifyToolAccess(
   userId: string,
   toolId: string,
   deploymentId?: string,
-  spaceId?: string
+  spaceId?: string,
+  campusId?: string
 ): Promise<boolean> {
   try {
     // Tool owners always have access
@@ -546,22 +557,22 @@ async function verifyToolAccess(
     }
 
     // Check deployment access
-    if (deploymentId) {
+    if (deploymentId && campusId) {
       const deploymentDoc = await dbAdmin.collection('toolDeployments').doc(deploymentId).get();
       if (deploymentDoc.exists) {
         const deployment = deploymentDoc.data();
-        
+
         // Check if user deployed this tool or is in the space
         if (deployment?.deployedBy === userId) {
           return true;
         }
-        
+
         if (deployment?.spaceId) {
           const memberQuery = dbAdmin.collection('spaceMembers')
             .where('userId', '==', userId)
             .where('spaceId', '==', deployment.spaceId)
             .where('status', '==', 'active')
-            .where('campusId', '==', CURRENT_CAMPUS_ID);
+            .where('campusId', '==', campusId);
 
           const memberSnapshot = await memberQuery.get();
           return !memberSnapshot.empty;
@@ -570,12 +581,12 @@ async function verifyToolAccess(
     }
 
     // Check space access
-    if (spaceId) {
+    if (spaceId && campusId) {
       const memberQuery = dbAdmin.collection('spaceMembers')
         .where('userId', '==', userId)
         .where('spaceId', '==', spaceId)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
 
       const memberSnapshot = await memberQuery.get();
       return !memberSnapshot.empty;
@@ -639,12 +650,16 @@ async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: str
 }
 
 // Helper function to get space members
-async function getSpaceMembers(spaceId: string): Promise<string[]> {
+async function getSpaceMembers(spaceId: string, campusId?: string): Promise<string[]> {
   try {
+    // If no campusId provided, return empty (multi-campus safety)
+    if (!campusId) {
+      return [];
+    }
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return memberSnapshot.docs.map(doc => doc.data().userId);

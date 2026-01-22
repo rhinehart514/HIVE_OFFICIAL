@@ -6,9 +6,9 @@ import { logger } from "@/lib/logger";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { sseRealtimeService } from "@/lib/sse-realtime-service";
 import { requireSpaceMembership } from "@/lib/space-security";
 import { HttpStatus } from "@/lib/api-response-types";
@@ -18,7 +18,7 @@ const ReactionSchema = z.object({
   action: z.enum(["add", "remove", "toggle"]).default("toggle"),
 });
 
-async function ensureMembership(spaceId: string, userId: string) {
+async function ensureMembership(spaceId: string, userId: string, campusId: string) {
   const membership = await requireSpaceMembership(spaceId, userId);
   if (!membership.ok) {
     return {
@@ -29,7 +29,7 @@ async function ensureMembership(spaceId: string, userId: string) {
   }
 
   const spaceData = membership.space;
-  if (spaceData.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData.campusId && spaceData.campusId !== campusId) {
     return {
       ok: false as const,
       status: HttpStatus.FORBIDDEN,
@@ -40,7 +40,7 @@ async function ensureMembership(spaceId: string, userId: string) {
   return { ok: true as const };
 }
 
-async function ensurePostExists(spaceId: string, postId: string) {
+async function ensurePostExists(spaceId: string, postId: string, campusId: string) {
   const postDoc = await dbAdmin
     .collection("spaces")
     .doc(spaceId)
@@ -54,7 +54,7 @@ async function ensurePostExists(spaceId: string, postId: string) {
   if (!postData) {
     return { ok: false as const, status: 404, message: "Post data missing" };
   }
-  if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+  if (postData.campusId && postData.campusId !== campusId) {
     return { ok: false as const, status: HttpStatus.FORBIDDEN, message: "Access denied for this campus" };
   }
   return { ok: true as const, postRef: postDoc.ref };
@@ -71,15 +71,16 @@ export const POST = withAuthValidationAndErrors(
     try {
       const { spaceId, postId } = await params;
       const userId = getUserId(request);
+      const campusId = getCampusId(request);
 
-      const membership = await ensureMembership(spaceId, userId);
+      const membership = await ensureMembership(spaceId, userId, campusId);
       if (!membership.ok) {
         const code =
           membership.status === HttpStatus.NOT_FOUND ? "RESOURCE_NOT_FOUND" : "FORBIDDEN";
         return respond.error(membership.message, code, { status: membership.status });
       }
 
-      const post = await ensurePostExists(spaceId, postId);
+      const post = await ensurePostExists(spaceId, postId, campusId);
       if (!post.ok) {
         return respond.error(post.message, "RESOURCE_NOT_FOUND", { status: post.status });
       }
