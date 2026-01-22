@@ -137,7 +137,7 @@ function UpvotableSection({
   };
 }) {
   return (
-    <UpvotableSection className={className}>
+    <RevealSection className={className}>
       {sectionId && upvoteProps && (
         <div className="absolute top-8 right-8 z-10">
           <UpvoteButton
@@ -149,7 +149,7 @@ function UpvotableSection({
         </div>
       )}
       {children}
-    </UpvotableSection>
+    </RevealSection>
   );
 }
 
