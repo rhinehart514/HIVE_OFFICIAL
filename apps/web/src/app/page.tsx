@@ -31,11 +31,8 @@ const CAMPUS_CONFIG = {
   domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
 };
 
-const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
+const ACCESS_GATE_ENABLED = (process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED || '').toLowerCase().trim() === 'true';
 const ACCESS_GATE_PASSED_KEY = 'hive_access_gate_passed';
-
-// Debug - remove after confirming
-console.log('[HIVE] ACCESS_GATE_ENABLED:', ACCESS_GATE_ENABLED, '| raw:', process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED);
 
 interface AccessCodeLockout {
   locked: boolean;
