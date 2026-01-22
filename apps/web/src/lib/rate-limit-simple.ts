@@ -29,6 +29,12 @@ const RATE_LIMITS = {
     maxRequests: parseInt(process.env.RATE_LIMIT_STRICT_REQUESTS || '10', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_STRICT_WINDOW_MS || '60000', 10),
   },
+  // SECURITY: Very strict limit for access code attempts - prevents brute force
+  // 3 attempts per 5 minutes = ~36 attempts per hour = would take ~27,778 hours to brute force
+  accessCode: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_REQUESTS || '3', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_WINDOW_MS || '300000', 10), // 5 minutes
+  },
   aiGeneration: {
     maxRequests: parseInt(process.env.RATE_LIMIT_AI_REQUESTS || '5', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_AI_WINDOW_MS || '60000', 10),
@@ -405,6 +411,20 @@ export const sseConnectionRateLimit = rateLimit({
 });
 
 /**
+ * Access code rate limiter - VERY strict (default 3 attempts per 5 minutes)
+ * SECURITY: Prevents brute force attacks on 6-digit access codes.
+ * At 3 attempts per 5 minutes, brute forcing 1M codes would take ~27,778 hours.
+ * Combined with IP lockouts after failures, effectively prevents enumeration.
+ * Override: RATE_LIMIT_ACCESS_CODE_REQUESTS, RATE_LIMIT_ACCESS_CODE_WINDOW_MS
+ */
+export const accessCodeRateLimit = rateLimit({
+  maxRequests: RATE_LIMITS.accessCode.maxRequests,
+  windowMs: RATE_LIMITS.accessCode.windowMs,
+  identifier: 'access_code',
+  blockOnError: true
+});
+
+/**
  * Get overall rate limiter health
  */
 export function getRateLimiterHealth(): {
@@ -417,7 +437,7 @@ export function getRateLimiterHealth(): {
     healthy: boolean;
   }>;
 } {
-  const limiters = [authRateLimit, apiRateLimit, strictRateLimit, aiGenerationRateLimit, searchRateLimit, chatRateLimit, sseConnectionRateLimit];
+  const limiters = [authRateLimit, apiRateLimit, strictRateLimit, aiGenerationRateLimit, searchRateLimit, chatRateLimit, sseConnectionRateLimit, accessCodeRateLimit];
 
   return {
     totalClients: clients.size,

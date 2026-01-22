@@ -1,19 +1,25 @@
 #!/usr/bin/env tsx
 
 /**
- * Access Code Management - Add Codes
+ * Access Code Management - Add Codes (SECURE VERSION)
+ *
+ * SECURITY: Codes are hashed with SHA256 before storage.
+ * The plaintext codes are displayed ONCE during generation - save them!
  *
  * Usage:
  *   pnpm tsx scripts/access-codes-add.ts --count 5
  *   pnpm tsx scripts/access-codes-add.ts --specific 123456 789012
  */
 
+import { createHash, randomInt } from 'crypto';
 import { initializeApp, getApps } from 'firebase/app';
 import {
   getFirestore,
-  doc,
-  setDoc,
-  getDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
   Timestamp,
 } from 'firebase/firestore';
 import * as readline from 'readline';
@@ -34,21 +40,19 @@ if (getApps().length === 0) {
 }
 const db = getFirestore();
 
-interface AccessCode {
-  code: string;
-  active: boolean;
-  createdAt: Timestamp;
-  createdBy: string;
-  notes: string;
-  useCount: number;
-  lastUsed: Timestamp | null;
+/**
+ * Hash an access code using SHA256
+ * SECURITY: Never store plaintext codes
+ */
+function hashCode(code: string): string {
+  return createHash('sha256').update(code.trim()).digest('hex');
 }
 
 /**
- * Generate random 6-digit code
+ * Generate cryptographically secure random 6-digit code
  */
 function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return String(randomInt(100000, 999999));
 }
 
 /**
@@ -69,38 +73,50 @@ function prompt(question: string): Promise<string> {
 }
 
 /**
- * Add access code to Firestore
+ * Check if a code hash already exists
+ */
+async function codeHashExists(codeHash: string): Promise<boolean> {
+  const q = query(
+    collection(db, 'access_codes'),
+    where('codeHash', '==', codeHash)
+  );
+  const snapshot = await getDocs(q);
+  return !snapshot.empty;
+}
+
+/**
+ * Add access code to Firestore (HASHED)
  */
 async function addCode(
   code: string,
   createdBy: string,
   notes: string
-): Promise<boolean> {
+): Promise<{ success: boolean; id?: string }> {
   try {
-    // Check if already exists
-    const docRef = doc(db, 'access_codes', code);
-    const docSnap = await getDoc(docRef);
+    const codeHash = hashCode(code);
 
-    if (docSnap.exists()) {
-      console.log(`⚠️  Code already exists: ${code}`);
-      return false;
+    // Check if hash already exists
+    if (await codeHashExists(codeHash)) {
+      console.log(`⚠️  Code already exists (hash collision)`);
+      return { success: false };
     }
 
-    // Add to Firestore
-    await setDoc(docRef, {
+    // Add to Firestore with hash, NOT the plaintext code
+    const docRef = await addDoc(collection(db, 'access_codes'), {
+      codeHash, // SECURITY: Only store the hash
       active: true,
       createdAt: Timestamp.now(),
       createdBy,
       notes,
       useCount: 0,
       lastUsed: null,
-    } satisfies Omit<AccessCode, 'code'>);
+    });
 
-    console.log(`✓ Added code: ${code}`);
-    return true;
+    console.log(`✓ Added code: ${code} (ID: ${docRef.id.substring(0, 8)}...)`);
+    return { success: true, id: docRef.id };
   } catch (error) {
-    console.error(`❌ Failed to add code ${code}:`, error);
-    return false;
+    console.error(`❌ Failed to add code:`, error);
+    return { success: false };
   }
 }
 
@@ -108,7 +124,10 @@ async function addCode(
  * Main
  */
 async function main() {
-  console.log('🔑 HIVE Access Code Manager\n');
+  console.log('🔐 HIVE Access Code Manager (Secure Version)\n');
+  console.log('⚠️  IMPORTANT: Codes are hashed before storage.');
+  console.log('⚠️  The plaintext codes shown below are displayed ONCE.');
+  console.log('⚠️  Save them securely - they cannot be recovered!\n');
 
   const args = process.argv.slice(2);
 
@@ -133,12 +152,12 @@ async function main() {
       process.exit(1);
     }
 
-    // Generate random codes
+    // Generate cryptographically secure random codes
     for (let i = 0; i < count; i++) {
       codes.push(generateCode());
     }
 
-    console.log(`Generated ${count} random codes\n`);
+    console.log(`Generated ${count} cryptographically secure codes\n`);
   } else if (args[0] === '--specific') {
     codes = args.slice(1);
 
@@ -161,8 +180,7 @@ async function main() {
   const notes = await prompt('Notes (e.g., "LinkedIn test - Jan 2026"): ');
 
   console.log('');
-  console.log(`About to add ${codes.length} access code(s):`);
-  codes.forEach((code) => console.log(`  ${code}`));
+  console.log(`About to add ${codes.length} access code(s)`);
   console.log('');
 
   const confirm = await prompt('Continue? (y/n): ');
@@ -175,17 +193,36 @@ async function main() {
 
   // Add codes
   let added = 0;
+  const addedCodes: Array<{ code: string; id: string }> = [];
+
   for (const code of codes) {
-    const success = await addCode(code, createdBy, notes);
-    if (success) added++;
+    const result = await addCode(code, createdBy, notes);
+    if (result.success && result.id) {
+      added++;
+      addedCodes.push({ code, id: result.id });
+    }
   }
 
   console.log('');
-  console.log(`✅ Done! Added ${added}/${codes.length} codes`);
+  console.log('═'.repeat(50));
+  console.log(`✅ Successfully added ${added}/${codes.length} codes`);
+  console.log('═'.repeat(50));
   console.log('');
+  console.log('🔐 SAVE THESE CODES - THEY CANNOT BE RECOVERED:');
+  console.log('');
+
+  addedCodes.forEach(({ code, id }) => {
+    console.log(`   ${code}  (ID: ${id.substring(0, 8)}...)`);
+  });
+
+  console.log('');
+  console.log('─'.repeat(50));
   console.log('💡 Share these codes with your test users');
   console.log('💡 To enable access gate, set in .env:');
   console.log('   NEXT_PUBLIC_ACCESS_GATE_ENABLED=true');
+  console.log('');
+  console.log('🔒 Security: Codes are stored as SHA256 hashes');
+  console.log('   They cannot be retrieved from the database');
 }
 
 main().catch((error) => {

@@ -13,6 +13,7 @@ import {
   aiGenerationRateLimit,
   searchRateLimit,
   chatRateLimit,
+  accessCodeRateLimit,
 } from './rate-limit-simple';
 
 // Rate limit presets mapped to simple rate limiters
@@ -25,6 +26,8 @@ const RATE_LIMIT_PRESETS = {
   aiGeneration: aiGenerationRateLimit,
   search: searchRateLimit,
   chat: chatRateLimit,
+  // SECURITY: Very strict for access codes - 3 attempts per 5 minutes
+  accessCode: accessCodeRateLimit,
 } as const;
 
 type RateLimitPreset = keyof typeof RATE_LIMIT_PRESETS;
