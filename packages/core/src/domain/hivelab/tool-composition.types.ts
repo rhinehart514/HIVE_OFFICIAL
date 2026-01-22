@@ -5,6 +5,19 @@
  */
 
 /**
+ * Data source configuration for element inputs.
+ * Sprint 3: Tool-to-Tool Connections
+ */
+export interface ElementDataSource {
+  /** Source type - static value or connected to another tool */
+  type: 'static' | 'connection';
+  /** Reference to ToolConnection if type is 'connection' */
+  connectionId?: string;
+  /** Static value if type is 'static' */
+  staticValue?: unknown;
+}
+
+/**
  * Element instance on the canvas
  */
 export interface CanvasElement {
@@ -22,6 +35,13 @@ export interface CanvasElement {
 
   /** Size of element */
   size: { width: number; height: number };
+
+  /**
+   * Data source configuration for connected inputs.
+   * Sprint 3: Tool-to-Tool Connections
+   * Maps input path to data source config.
+   */
+  dataSources?: Record<string, ElementDataSource>;
 }
 
 /**

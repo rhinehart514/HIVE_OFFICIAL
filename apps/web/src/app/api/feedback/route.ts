@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
+import { getDefaultCampusId } from '@/lib/campus-context';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       ip: ip,
       userAgent: realUserAgent,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId: getDefaultCampusId(),
       submitted: timestamp || new Date().toISOString()
     };
 

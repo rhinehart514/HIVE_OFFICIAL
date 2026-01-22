@@ -6,7 +6,8 @@ import type * as admin from 'firebase-admin';
 import { getAuthTokenFromRequest } from '@/lib/auth';
 import { logger } from "@/lib/logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
-import { validateSecureSpaceAccess, CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
+import { validateSecureSpaceAccess } from "@/lib/secure-firebase-queries";
+import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
 
 // Helper function to safely convert Firestore timestamp to Date
 function toDateSafe(timestamp: unknown): Date | null {
@@ -42,6 +43,14 @@ export async function POST(request: NextRequest) {
 
     const auth = getAuth();
     const decodedToken = await auth.verifyIdToken(token);
+
+    // Derive campusId from user's email
+    let campusId: string;
+    try {
+      campusId = decodedToken.email ? getCampusFromEmail(decodedToken.email) : getDefaultCampusId();
+    } catch {
+      campusId = getDefaultCampusId();
+    }
 
     const body = await request.json();
     const searchParams = SearchUsersSchema.parse(body);
@@ -91,7 +100,7 @@ export async function POST(request: NextRequest) {
           .collection('spaceMembers')
           .where('spaceId', '==', spaceId)
           .where('isActive', '==', true)
-          .where('campusId', '==', CURRENT_CAMPUS_ID)
+          .where('campusId', '==', campusId)
           .limit(200)
           .get();
         
@@ -122,7 +131,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Search all users with basic filters
-      let usersQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('users').where('campusId', '==', CURRENT_CAMPUS_ID);
+      let usersQuery: admin.firestore.Query<admin.firestore.DocumentData> = dbAdmin.collection('users').where('campusId', '==', campusId);
       
       if (userType) {
         usersQuery = usersQuery.where('userType', '==', userType);
@@ -230,7 +239,7 @@ export async function POST(request: NextRequest) {
             .collection('spaceMembers')
             .where('userId', '==', decodedToken.uid)
             .where('isActive', '==', true)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('campusId', '==', campusId)
             .limit(200)
             .get();
           const currentUserSpaceIds = currentUserSpacesSnapshot.docs
@@ -241,7 +250,7 @@ export async function POST(request: NextRequest) {
             .collection('spaceMembers')
             .where('userId', '==', userData.id)
             .where('isActive', '==', true)
-            .where('campusId', '==', CURRENT_CAMPUS_ID)
+            .where('campusId', '==', campusId)
             .limit(200)
             .get();
           const otherUserSpaceIds = otherUserSpacesSnapshot.docs

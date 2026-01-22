@@ -248,6 +248,7 @@ export type {
   ElementConnection,
   ElementDefinition,
   ElementCategory,
+  ElementDataSource,
   // Tool State Types (Phase 1 State Architecture)
   ToolSharedState,
   ToolSharedStateUpdate,
@@ -266,6 +267,53 @@ export type {
   ToolCounterConfig,
   CounterMigrationStatus,
 } from "./domain/hivelab/tool-composition.types";
+
+// Sprint 3: Tool-to-Tool Connection Types
+export type {
+  DataTransform,
+  TransformMetadata,
+  ConnectionDataType,
+  ToolOutput,
+  ToolOutputManifest,
+  ConnectionSource,
+  ConnectionTarget,
+  ToolConnection,
+  CreateConnectionDTO,
+  UpdateConnectionDTO,
+  ConnectionStatus,
+  ResolvedConnection,
+  ResolvedConnections,
+  ConnectionValidationResult,
+  ConnectionValidationError,
+  ConnectionValidationWarning,
+  ConnectionErrorCode,
+  ConnectionWarningCode,
+} from "./domain/hivelab/tool-connection.types";
+export {
+  DATA_TRANSFORMS,
+  MAX_CONNECTIONS_PER_TOOL,
+  CONNECTION_CACHE_TTL_MS,
+  CONNECTIONS_COLLECTION,
+  getConnectionCacheKey,
+  parseConnectionCacheKey,
+  isTransformCompatible,
+  applyTransform,
+  getValueAtPath,
+  setValueAtPath,
+} from "./domain/hivelab/tool-connection.types";
+
+// Sprint 3: Connection Resolver Service
+export {
+  ConnectionResolverService,
+  getConnectionResolver,
+  initializeConnectionResolver,
+  createConnectionResolver,
+  resetConnectionResolver,
+} from "./application/hivelab/connection-resolver.service";
+export type {
+  ConnectionRepository,
+  ResolveOptions,
+} from "./application/hivelab/connection-resolver.service";
 
 // Sprint 2: Tool Runtime Context Types
 export type {

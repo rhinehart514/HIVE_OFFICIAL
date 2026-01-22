@@ -424,13 +424,13 @@ function getDefaultChannelSettings() {
 }
 
 // Helper function to verify channel creation permission
-async function verifyChannelCreatePermission(userId: string, spaceId: string): Promise<boolean> {
+async function verifyChannelCreatePermission(userId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     if (memberSnapshot.empty) {
@@ -468,12 +468,12 @@ async function checkChannelNameExists(spaceId: string, name: string): Promise<bo
 }
 
 // Helper function to get space members
-async function getSpaceMembers(spaceId: string): Promise<string[]> {
+async function getSpaceMembers(spaceId: string, campusId: string): Promise<string[]> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return memberSnapshot.docs.map(doc => doc.data().userId);

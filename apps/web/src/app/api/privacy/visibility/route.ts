@@ -190,13 +190,13 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to determine relationship between users
-async function determineRelationship(viewerId: string, targetId: string): Promise<'self' | 'space_member' | 'follower' | 'stranger'> {
+async function determineRelationship(viewerId: string, targetId: string, campusId: string): Promise<'self' | 'space_member' | 'follower' | 'stranger'> {
   if (viewerId === targetId) {
     return 'self';
   }
 
   // Check if they're in the same spaces
-  const sharedSpaces = await getSharedSpaces(viewerId, targetId);
+  const sharedSpaces = await getSharedSpaces(viewerId, targetId, campusId);
   if (sharedSpaces.length > 0) {
     return 'space_member';
   }
@@ -208,18 +208,18 @@ async function determineRelationship(viewerId: string, targetId: string): Promis
 }
 
 // Helper function to get shared spaces between users
-async function getSharedSpaces(viewerId: string, targetId: string): Promise<string[]> {
+async function getSharedSpaces(viewerId: string, targetId: string, campusId: string): Promise<string[]> {
   try {
     const [viewerMemberships, targetMemberships] = await Promise.all([
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', viewerId)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get(),
       dbAdmin.collection('spaceMembers')
         .where('userId', '==', targetId)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .get()
     ]);
 
