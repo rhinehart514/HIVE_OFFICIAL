@@ -117,6 +117,15 @@ interface Space extends BaseDocument {
   postCount: number;
   eventCount: number;
   toolCount: number;
+
+  // Governance (new)
+  governance: GovernanceModel;
+  source: SpaceSource;
+  status: SpaceStatus;
+  publishStatus: PublishStatus;
+  externalId?: string;       // CampusLabs ID for imported spaces
+  claimedAt?: Timestamp;     // When space was claimed by a user
+  wentLiveAt?: Timestamp;    // When space went from stealth to live
 }
 
 enum SpaceType {
@@ -126,7 +135,39 @@ enum SpaceType {
   CAMPUS_LIVING = 'campus_living',
   HIVE_EXCLUSIVE = 'hive_exclusive'
 }
+
+enum GovernanceModel {
+  FLAT = 'flat',             // No hierarchy, all members equal
+  EMERGENT = 'emergent',     // Roles emerge from activity
+  HYBRID = 'hybrid',         // Mix of assigned and earned roles (default)
+  HIERARCHICAL = 'hierarchical' // Traditional org chart
+}
+
+enum SpaceSource {
+  UBLINKED = 'ublinked',     // Imported from CampusLabs
+  USER_CREATED = 'user-created' // Created natively on HIVE
+}
+
+enum SpaceStatus {
+  UNCLAIMED = 'unclaimed',   // Seeded but no owner yet
+  CLAIMED = 'claimed',       // Has an owner
+  ACTIVE = 'active',         // Actively used
+  VERIFIED = 'verified'      // Officially verified
+}
+
+enum PublishStatus {
+  STEALTH = 'stealth',       // Visible only to members
+  LIVE = 'live',             // Publicly discoverable
+  REJECTED = 'rejected'      // Failed moderation
+}
 ```
+
+**CampusLabs Integration:**
+Spaces with `source: 'ublinked'` are imported from UB's CampusLabs system. The `externalId` field stores the CampusLabs organization ID for reference. Branch ID mapping:
+- `1419` → student_organizations (Student Organizations)
+- `360210` → university_organizations (University Departments)
+- `360211` → greek_life (Fraternity & Sorority Life)
+- `360212` → campus_living (Campus Living Branch)
 
 ### spaceMembers
 Top-level membership collection (NOT a subcollection).
@@ -141,7 +182,7 @@ interface SpaceMember extends BaseDocument {
   userPhotoURL?: string;
 
   // Role
-  role: 'owner' | 'leader' | 'moderator' | 'member';
+  role: MemberRole;
   joinedAt: Timestamp;
 
   // Activity
@@ -152,6 +193,15 @@ interface SpaceMember extends BaseDocument {
   canPost: boolean;
   canModerate: boolean;
   canManageTools: boolean;
+}
+
+enum MemberRole {
+  OWNER = 'owner',           // Space creator, full control
+  ADMIN = 'admin',           // Administrative access
+  LEADER = 'leader',         // Legacy role, treated as admin
+  MODERATOR = 'moderator',   // Content moderation
+  MEMBER = 'member',         // Standard membership
+  GUEST = 'guest'            // Limited access
 }
 ```
 

@@ -31,14 +31,15 @@ const CONFIG = {
   CAMPUSLABS_API: 'https://buffalo.campuslabs.com/engage/api/discovery/search/organizations',
   CAMPUSLABS_BASE_URL: 'https://buffalo.campuslabs.com/engage',
 
+  // Canonical HIVE space types mapped from CampusLabs branch IDs
   BRANCH_MAP: {
-    1419: 'student_org',
-    360210: 'university_org',
+    1419: 'student_organizations',
+    360210: 'university_organizations',
     360211: 'greek_life',
-    360212: 'residential',
+    360212: 'campus_living',
   },
 
-  DEFAULT_CATEGORY: 'student_org',
+  DEFAULT_CATEGORY: 'student_organizations',
 };
 
 // =============================================================================
@@ -395,14 +396,9 @@ function stripHtml(html) {
     .trim();
 }
 
+// Category and type are now unified - no transformation needed
 function categoryToType(category) {
-  const map = {
-    'student_org': 'student_organization',
-    'university_org': 'university_organization',
-    'greek_life': 'greek_life',
-    'residential': 'residential',
-  };
-  return map[category] || 'student_organization';
+  return category;
 }
 
 // =============================================================================

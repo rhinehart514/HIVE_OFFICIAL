@@ -366,24 +366,24 @@ function calculateInterestScore(space: EnhancedSpace, interests: string[]): numb
 /**
  * Calculate anxiety relief score based on space characteristics
  * Higher scores for spaces that address common student anxieties
- * Uses canonical categories: student_org, university_org, greek_life, residential
+ * Uses canonical categories: student_organizations, university_organizations, greek_life, campus_living, hive_exclusive
  */
 function calculateAnxietyReliefScore(space: EnhancedSpace, user: Record<string, unknown>): number {
   let score = 0;
   const category = space.category.value;
 
   // Study stress relief - student orgs are the primary academic support
-  if (category === 'student_org') {
+  if (category === 'student_organizations' || category === 'hive_exclusive') {
     score += 0.3;
   }
 
   // University resources for official support
-  if (category === 'university_org') {
+  if (category === 'university_organizations') {
     score += 0.25;
   }
 
-  // Community building - residential and greek life
-  if (category === 'residential' || category === 'greek_life') {
+  // Community building - campus living and greek life
+  if (category === 'campus_living' || category === 'greek_life') {
     score += 0.2;
   }
 
@@ -436,7 +436,7 @@ function calculateSocialProofScore(
 
 /**
  * Calculate insider access score based on exclusivity
- * Uses canonical categories: student_org, university_org, greek_life, residential
+ * Uses canonical categories: student_organizations, university_organizations, greek_life, campus_living, hive_exclusive
  */
 function calculateInsiderAccessScore(space: EnhancedSpace): number {
   let score = 0;
@@ -453,8 +453,8 @@ function calculateInsiderAccessScore(space: EnhancedSpace): number {
     score += 0.3;
   }
 
-  // Residential spaces have natural exclusivity (dorm residents only)
-  if (space.category.value === 'residential') {
+  // Campus living spaces have natural exclusivity (dorm residents only)
+  if (space.category.value === 'campus_living') {
     score += 0.2;
   }
 

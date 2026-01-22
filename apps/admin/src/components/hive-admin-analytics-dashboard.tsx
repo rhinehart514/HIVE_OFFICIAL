@@ -13,7 +13,7 @@ import { ChartBarIcon, UsersIcon, BoltIcon, ChatBubbleLeftIcon, ShieldCheckIcon,
 // ANALYTICS TYPES WITH SPACE SYSTEM COMPLIANCE
 type TimeRange = '1h' | '24h' | '7d' | '30d' | '90d' | 'all';
 type MetricTrend = 'up' | 'down' | 'stable';
-type ValidSpaceCategory = 'university_spaces' | 'residential_spaces' | 'greek_life_spaces' | 'student_spaces';
+type ValidSpaceCategory = 'student_organizations' | 'university_organizations' | 'greek_life' | 'campus_living' | 'hive_exclusive';
 
 interface PlatformMetrics {
   totalUsers: number;
@@ -195,20 +195,22 @@ const SpaceCategoryCard: React.FC<{
 }> = ({ category, onViewDetails }) => {
   const getCategoryIcon = (cat: ValidSpaceCategory) => {
     switch (cat) {
-      case 'university_spaces': return <AcademicCapIcon className="w-5 h-5" />;
-      case 'residential_spaces': return <HomeIcon className="w-5 h-5" />;
-      case 'greek_life_spaces': return <UsersIcon className="w-5 h-5" />;
-      case 'student_spaces': return <HeartIcon className="w-5 h-5" />;
+      case 'student_organizations': return <HeartIcon className="w-5 h-5" />;
+      case 'university_organizations': return <AcademicCapIcon className="w-5 h-5" />;
+      case 'greek_life': return <UsersIcon className="w-5 h-5" />;
+      case 'campus_living': return <HomeIcon className="w-5 h-5" />;
+      case 'hive_exclusive': return <GlobeAltIcon className="w-5 h-5" />;
       default: return <GlobeAltIcon className="w-5 h-5" />;
     }
   };
 
   const getCategoryColor = (cat: ValidSpaceCategory) => {
     switch (cat) {
-      case 'university_spaces': return 'text-blue-400';
-      case 'residential_spaces': return 'text-orange-400';
-      case 'greek_life_spaces': return 'text-purple-400';
-      case 'student_spaces': return 'text-pink-400';
+      case 'student_organizations': return 'text-green-400';
+      case 'university_organizations': return 'text-blue-400';
+      case 'greek_life': return 'text-purple-400';
+      case 'campus_living': return 'text-orange-400';
+      case 'hive_exclusive': return 'text-amber-400';
       default: return 'text-gray-400';
     }
   };

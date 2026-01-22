@@ -112,7 +112,7 @@ const SPACE_TYPE_PERMISSION_MODIFIERS: Record<SpaceType, {
     }
   },
 
-  greek_life_spaces: {
+  greek_life: {
     restrictions: ['members:view'], // Member info is more restricted
     additions: {
       owner: [],
@@ -123,13 +123,24 @@ const SPACE_TYPE_PERMISSION_MODIFIERS: Record<SpaceType, {
     }
   },
 
-  residential_spaces: {
+  campus_living: {
     restrictions: ['space:delete', 'space:transfer'], // Housing managed spaces
     additions: {
       owner: [],
       admin: ['tools:install'], // RAs can install maintenance tools
       moderator: [],
       member: ['tools:view'], // Residents can use booking tools
+      guest: []
+    }
+  },
+
+  hive_exclusive: {
+    restrictions: [],
+    additions: {
+      owner: ['data:export', 'analytics:view'], // Full access for creators
+      admin: ['data:export'],
+      moderator: [],
+      member: ['events:create'],
       guest: []
     }
   }
@@ -307,7 +318,7 @@ export const TOOL_PERMISSION_PRESETS: Record<string, ToolPermissions> = {
   resource_booking: {
     toolId: 'generic_resource_booking',
     requiredRole: 'member',
-    restrictedInSpaceTypes: ['greek_life_spaces'] // May not be relevant for Greek life
+    restrictedInSpaceTypes: ['greek_life'] // May not be relevant for Greek life
   },
 
   // Member development tools

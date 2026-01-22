@@ -21,6 +21,7 @@ import { FloatingActionBar, type FloatingActionBarRef } from './floating-action-
 import { TemplateOverlay } from './template-overlay';
 import { TemplateGallery } from './template-gallery';
 import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
+import { CanvasMinimap } from './canvas-minimap';
 import { toast } from 'sonner';
 
 // Mobile detection hook
@@ -265,6 +266,29 @@ export function HiveLabIDE({
 
   // Refs
   const draggingElementId = useRef<string | null>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 1000, height: 800 });
+
+  // Track canvas container size for minimap
+  useEffect(() => {
+    if (!canvasContainerRef.current) return;
+
+    const updateSize = () => {
+      if (canvasContainerRef.current) {
+        const { width, height } = canvasContainerRef.current.getBoundingClientRect();
+        setCanvasSize({ width, height });
+      }
+    };
+
+    // Initial size
+    updateSize();
+
+    // ResizeObserver for dynamic updates
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(canvasContainerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Derived state
   const selectedElements = elements.filter((el) => selectedIds.includes(el.id));
@@ -565,6 +589,88 @@ export function HiveLabIDE({
       );
 
       pushHistory(`Align ${selected.length} elements (${alignment})`);
+    },
+    [selectedIds, elements, snapToGrid, gridSize, pushHistory]
+  );
+
+  // Distribute elements evenly
+  const distributeElements = useCallback(
+    (direction: 'horizontal' | 'vertical') => {
+      if (selectedIds.length < 3) return; // Need at least 3 elements to distribute
+
+      const selected = elements.filter((el) => selectedIds.includes(el.id));
+      if (selected.length < 3) return;
+
+      // Sort elements by position
+      const sorted = [...selected].sort((a, b) =>
+        direction === 'horizontal'
+          ? a.position.x - b.position.x
+          : a.position.y - b.position.y
+      );
+
+      // Calculate total span
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+
+      if (direction === 'horizontal') {
+        const startX = first.position.x;
+        const endX = last.position.x;
+        const totalWidth = sorted.reduce((sum, el) => sum + el.size.width, 0);
+        const availableSpace = endX + last.size.width - startX - totalWidth;
+        const gap = availableSpace / (sorted.length - 1);
+
+        let currentX = startX;
+
+        setElements((prev) =>
+          prev.map((el) => {
+            const sortIndex = sorted.findIndex((s) => s.id === el.id);
+            if (sortIndex === -1) return el;
+
+            let newX = currentX;
+            currentX += el.size.width + gap;
+
+            // Snap to grid if enabled
+            if (snapToGrid) {
+              newX = Math.round(newX / gridSize) * gridSize;
+            }
+
+            return {
+              ...el,
+              position: { ...el.position, x: newX },
+            };
+          })
+        );
+      } else {
+        const startY = first.position.y;
+        const endY = last.position.y;
+        const totalHeight = sorted.reduce((sum, el) => sum + el.size.height, 0);
+        const availableSpace = endY + last.size.height - startY - totalHeight;
+        const gap = availableSpace / (sorted.length - 1);
+
+        let currentY = startY;
+
+        setElements((prev) =>
+          prev.map((el) => {
+            const sortIndex = sorted.findIndex((s) => s.id === el.id);
+            if (sortIndex === -1) return el;
+
+            let newY = currentY;
+            currentY += el.size.height + gap;
+
+            // Snap to grid if enabled
+            if (snapToGrid) {
+              newY = Math.round(newY / gridSize) * gridSize;
+            }
+
+            return {
+              ...el,
+              position: { ...el.position, y: newY },
+            };
+          })
+        );
+      }
+
+      pushHistory(`Distribute ${selected.length} elements (${direction})`);
     },
     [selectedIds, elements, snapToGrid, gridSize, pushHistory]
   );
@@ -992,7 +1098,7 @@ export function HiveLabIDE({
         />
 
         {/* Canvas Area */}
-        <div className="flex-1 flex flex-col relative">
+        <div ref={canvasContainerRef} className="flex-1 flex flex-col relative">
           {/* Template Overlay - shown when canvas is empty */}
           <AnimatePresence>
             {isCanvasEmpty && !aiState.isGenerating && (
@@ -1033,6 +1139,20 @@ export function HiveLabIDE({
             onDrop={addElement}
             onTransformEnd={() => pushHistory('Transform element')}
           />
+
+          {/* Minimap - shows overview of canvas for large tools */}
+          {!isCanvasEmpty && (
+            <CanvasMinimap
+              elements={elements}
+              connections={connections}
+              selectedIds={selectedIds}
+              zoom={zoom}
+              pan={pan}
+              containerWidth={canvasSize.width}
+              containerHeight={canvasSize.height}
+              onPanChange={setPan}
+            />
+          )}
         </div>
 
         {/* Context Rail (Right) - auto-show on selection */}
@@ -1045,6 +1165,7 @@ export function HiveLabIDE({
           onDeleteElements={deleteElements}
           onDuplicateElements={duplicateElements}
           onAlignElements={alignElements}
+          onDistributeElements={distributeElements}
           onUpdateConnection={updateConnection}
           onDeleteConnection={deleteConnection}
         />

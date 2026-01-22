@@ -2,8 +2,15 @@ import { z } from 'zod';
 
 /**
  * Space type enum - determines templates and AI context
+ * Uses canonical values from DATABASE_SCHEMA.md
  */
-export const spaceTypeSchema = z.enum(['uni', 'student', 'greek', 'residential']);
+export const spaceTypeSchema = z.enum([
+  'student_organizations',
+  'university_organizations',
+  'greek_life',
+  'campus_living',
+  'hive_exclusive'
+]);
 export type SpaceType = z.infer<typeof spaceTypeSchema>;
 
 /**
@@ -40,7 +47,7 @@ export const spaceSchema = z.object({
   visibility: z.enum(['public', 'private']).default('public'),
 
   // New fields
-  spaceType: spaceTypeSchema.default('student'),
+  spaceType: spaceTypeSchema.default('student_organizations'),
   governance: governanceSchema.default('hybrid'),
   status: spaceStatusSchema.default('claimed'),
   source: spaceSourceSchema.default('user-created'),

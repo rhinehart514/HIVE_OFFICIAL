@@ -83,6 +83,7 @@ export {
   // Types
   type SetupCategory,
   type SetupDeploymentStatus,
+  type OrchestrationRule,
 } from './domain/hivelab/setup';
 
 // Inline Component Domain Entity

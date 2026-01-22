@@ -2,55 +2,59 @@
  * SpaceCategory Value Object
  * Represents the category/type of a space
  *
- * HIVE uses exactly 4 categories that map 1:1 with CampusLabs branches:
- * - student_org (Branch 1419): Student clubs & organizations
- * - university_org (Branch 360210): University services & departments
+ * HIVE uses exactly 5 categories that map 1:1 with CampusLabs branches + HIVE-native:
+ * - student_organizations (Branch 1419): Student clubs & organizations
+ * - university_organizations (Branch 360210): University services & departments
  * - greek_life (Branch 360211): Fraternities & sororities
- * - residential (Branch 360212): Residence halls & quads
+ * - campus_living (Branch 360212): Residence halls & quads
+ * - hive_exclusive: User-created spaces native to HIVE
  */
 
 import { Result } from '../../shared/base/Result';
 import { ValueObject } from '../../shared/base/ValueObject.base';
 
 /**
- * The 4 official HIVE space categories
+ * The 5 official HIVE space categories
  * These map directly to CampusLabs branch IDs for imports
  */
 export enum SpaceCategoryEnum {
-  STUDENT_ORG = 'student_org',
-  UNIVERSITY_ORG = 'university_org',
+  STUDENT_ORGANIZATIONS = 'student_organizations',
+  UNIVERSITY_ORGANIZATIONS = 'university_organizations',
   GREEK_LIFE = 'greek_life',
-  RESIDENTIAL = 'residential'
+  CAMPUS_LIVING = 'campus_living',
+  HIVE_EXCLUSIVE = 'hive_exclusive',
 }
 
 /**
  * CampusLabs branch ID to HIVE category mapping
  */
 export const CAMPUSLABS_BRANCH_MAP: Record<number, SpaceCategoryEnum> = {
-  1419: SpaceCategoryEnum.STUDENT_ORG,
-  360210: SpaceCategoryEnum.UNIVERSITY_ORG,
+  1419: SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+  360210: SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
   360211: SpaceCategoryEnum.GREEK_LIFE,
-  360212: SpaceCategoryEnum.RESIDENTIAL,
+  360212: SpaceCategoryEnum.CAMPUS_LIVING,
 };
 
 /**
  * Human-readable labels for each category
  */
 export const CATEGORY_LABELS: Record<SpaceCategoryEnum, string> = {
-  [SpaceCategoryEnum.STUDENT_ORG]: 'Student Organization',
-  [SpaceCategoryEnum.UNIVERSITY_ORG]: 'University Organization',
+  [SpaceCategoryEnum.STUDENT_ORGANIZATIONS]: 'Student Organization',
+  [SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS]: 'University Organization',
   [SpaceCategoryEnum.GREEK_LIFE]: 'Greek Life',
-  [SpaceCategoryEnum.RESIDENTIAL]: 'Residential',
+  [SpaceCategoryEnum.CAMPUS_LIVING]: 'Campus Living',
+  [SpaceCategoryEnum.HIVE_EXCLUSIVE]: 'HIVE Exclusive',
 };
 
 /**
  * Icons for each category (emoji shorthand)
  */
 export const CATEGORY_ICONS: Record<SpaceCategoryEnum, string> = {
-  [SpaceCategoryEnum.STUDENT_ORG]: '👥',
-  [SpaceCategoryEnum.UNIVERSITY_ORG]: '🎓',
+  [SpaceCategoryEnum.STUDENT_ORGANIZATIONS]: '👥',
+  [SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS]: '🎓',
   [SpaceCategoryEnum.GREEK_LIFE]: '🏛️',
-  [SpaceCategoryEnum.RESIDENTIAL]: '🏠',
+  [SpaceCategoryEnum.CAMPUS_LIVING]: '🏠',
+  [SpaceCategoryEnum.HIVE_EXCLUSIVE]: '🐝',
 };
 
 interface SpaceCategoryProps {
@@ -87,26 +91,31 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
 
     // Legacy mapping for backwards compatibility
     const legacyMap: Record<string, SpaceCategoryEnum> = {
+      // Old DDD value object names (short form)
+      'student_org': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'university_org': SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
+      'residential': SpaceCategoryEnum.CAMPUS_LIVING,
       // Old admin component names
-      'university_spaces': SpaceCategoryEnum.UNIVERSITY_ORG,
-      'residential_spaces': SpaceCategoryEnum.RESIDENTIAL,
+      'university_spaces': SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
+      'residential_spaces': SpaceCategoryEnum.CAMPUS_LIVING,
       'greek_life_spaces': SpaceCategoryEnum.GREEK_LIFE,
-      'student_spaces': SpaceCategoryEnum.STUDENT_ORG,
+      'student_spaces': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
       // Old seed route names
-      'student_organizations': SpaceCategoryEnum.STUDENT_ORG,
-      'university_organizations': SpaceCategoryEnum.UNIVERSITY_ORG,
-      'campus_living': SpaceCategoryEnum.RESIDENTIAL,
       'fraternity_and_sorority': SpaceCategoryEnum.GREEK_LIFE,
       // Old domain categories
-      'club': SpaceCategoryEnum.STUDENT_ORG,
-      'dorm': SpaceCategoryEnum.RESIDENTIAL,
-      'academic': SpaceCategoryEnum.UNIVERSITY_ORG,
-      'social': SpaceCategoryEnum.STUDENT_ORG,
-      'general': SpaceCategoryEnum.STUDENT_ORG,
-      'study-group': SpaceCategoryEnum.STUDENT_ORG,
-      'event': SpaceCategoryEnum.STUDENT_ORG,
-      'resource': SpaceCategoryEnum.UNIVERSITY_ORG,
-      'sports': SpaceCategoryEnum.STUDENT_ORG,
+      'club': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'dorm': SpaceCategoryEnum.CAMPUS_LIVING,
+      'academic': SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
+      'social': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'general': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'study-group': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'event': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'resource': SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
+      'sports': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      // Short form aliases (validation schema)
+      'uni': SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS,
+      'student': SpaceCategoryEnum.STUDENT_ORGANIZATIONS,
+      'greek': SpaceCategoryEnum.GREEK_LIFE,
     };
 
     if (category in legacyMap) {
@@ -124,29 +133,29 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
   public static createFromBranchId(branchId: number): Result<SpaceCategory> {
     const category = CAMPUSLABS_BRANCH_MAP[branchId];
     if (!category) {
-      // Default to student_org for unknown branches
+      // Default to student_organizations for unknown branches
       return Result.ok<SpaceCategory>(
-        new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORG })
+        new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORGANIZATIONS })
       );
     }
     return Result.ok<SpaceCategory>(new SpaceCategory({ value: category }));
   }
 
-  public static createStudentOrg(): Result<SpaceCategory> {
+  public static createStudentOrganizations(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORG })
+      new SpaceCategory({ value: SpaceCategoryEnum.STUDENT_ORGANIZATIONS })
     );
   }
 
-  public static createResidential(): Result<SpaceCategory> {
+  public static createCampusLiving(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.RESIDENTIAL })
+      new SpaceCategory({ value: SpaceCategoryEnum.CAMPUS_LIVING })
     );
   }
 
-  public static createUniversityOrg(): Result<SpaceCategory> {
+  public static createUniversityOrganizations(): Result<SpaceCategory> {
     return Result.ok<SpaceCategory>(
-      new SpaceCategory({ value: SpaceCategoryEnum.UNIVERSITY_ORG })
+      new SpaceCategory({ value: SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS })
     );
   }
 
@@ -156,26 +165,46 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
     );
   }
 
+  public static createHiveExclusive(): Result<SpaceCategory> {
+    return Result.ok<SpaceCategory>(
+      new SpaceCategory({ value: SpaceCategoryEnum.HIVE_EXCLUSIVE })
+    );
+  }
+
+  // Legacy aliases for backwards compatibility
+  public static createStudentOrg(): Result<SpaceCategory> {
+    return SpaceCategory.createStudentOrganizations();
+  }
+
+  public static createResidential(): Result<SpaceCategory> {
+    return SpaceCategory.createCampusLiving();
+  }
+
+  public static createUniversityOrg(): Result<SpaceCategory> {
+    return SpaceCategory.createUniversityOrganizations();
+  }
+
   /**
    * Check if this is a student-managed space
    */
   public isStudentManaged(): boolean {
-    return this.props.value === SpaceCategoryEnum.STUDENT_ORG ||
-           this.props.value === SpaceCategoryEnum.GREEK_LIFE;
+    return this.props.value === SpaceCategoryEnum.STUDENT_ORGANIZATIONS ||
+           this.props.value === SpaceCategoryEnum.GREEK_LIFE ||
+           this.props.value === SpaceCategoryEnum.HIVE_EXCLUSIVE;
   }
 
   /**
    * Check if this is a university-managed space
    */
   public isUniversityManaged(): boolean {
-    return this.props.value === SpaceCategoryEnum.UNIVERSITY_ORG;
+    return this.props.value === SpaceCategoryEnum.UNIVERSITY_ORGANIZATIONS;
   }
 
   /**
    * Check if this is a residential space
    */
   public isResidential(): boolean {
-    return this.props.value === SpaceCategoryEnum.RESIDENTIAL;
+    return this.props.value === SpaceCategoryEnum.CAMPUS_LIVING;
   }
 
   /**
@@ -183,6 +212,13 @@ export class SpaceCategory extends ValueObject<SpaceCategoryProps> {
    */
   public isGreekLife(): boolean {
     return this.props.value === SpaceCategoryEnum.GREEK_LIFE;
+  }
+
+  /**
+   * Check if this is a HIVE exclusive space
+   */
+  public isHiveExclusive(): boolean {
+    return this.props.value === SpaceCategoryEnum.HIVE_EXCLUSIVE;
   }
 
   public toString(): string {

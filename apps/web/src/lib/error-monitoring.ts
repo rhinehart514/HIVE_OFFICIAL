@@ -73,9 +73,12 @@ async function getSentryClient(): Promise<SentryLike | null> {
   if (!initializationPromise) {
     initializationPromise = (async () => {
       try {
-        // Dynamic import to avoid build errors if package not installed
-        // @ts-expect-error - Module might not be installed, handled at runtime
-        const Sentry = await import('@sentry/nextjs');
+        // Use eval to completely hide the import from webpack static analysis
+        // This prevents build errors when @sentry/nextjs is not installed
+        const moduleName = '@sentry/nextjs';
+        // eslint-disable-next-line no-eval
+        const dynamicImport = new Function('moduleName', 'return import(moduleName)');
+        const Sentry = await dynamicImport(moduleName);
         sentryClient = Sentry as unknown as SentryLike;
       } catch {
         console.warn('[Error Monitoring] @sentry/nextjs not installed, using console fallback');

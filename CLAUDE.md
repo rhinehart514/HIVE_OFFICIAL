@@ -109,6 +109,32 @@ pnpm build && pnpm typecheck  # Quality gate
 
 ---
 
+## Development Philosophy
+
+### Code Decisions: No Options
+Always take the highest-quality path. Don't ask how to implement — just do it right.
+- Sophisticated over naive
+- Clever over verbose
+- Minimal code over maximal
+- Correct DDD over shortcuts
+
+### Questions: Direction Only
+Only ask when product intent is unclear or multiple valid business directions exist. Never ask about implementation — that's solved by taking the best path.
+
+**Worth asking:** "Is this for the Browse slice, or are we hardening infrastructure across all space routes?"
+
+**Not worth asking:** "Should I use a Map or Object?" (Just use the right one.)
+
+### Full-Stack Vertical Slices
+Every slice is complete when:
+1. **Domain** — Entities, value objects, invariants are correct
+2. **API** — Routes work, validation at boundaries, permissions enforced
+3. **Frontend** — Meets `/about` quality bar, all states handled
+
+Don't treat these as separate tracks. They're one thing.
+
+---
+
 ## Current Mode: GTM Sprint
 
 **Focus:** Ship the first campus-ready release. Every surface polished to infrastructure-grade.

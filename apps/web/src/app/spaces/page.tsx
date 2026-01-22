@@ -75,9 +75,9 @@ const QUADRANTS = [
     glow: 'group-hover:shadow-[0_0_40px_rgba(16,185,129,0.15)]',
   },
   {
-    id: 'community',
-    label: 'Community',
-    description: 'Greek & cultural',
+    id: 'greek',
+    label: 'Greek',
+    description: 'Letters that last',
     gradient: 'from-rose-500/10 via-rose-500/5 to-transparent',
     glow: 'group-hover:shadow-[0_0_40px_rgba(244,63,94,0.15)]',
   },

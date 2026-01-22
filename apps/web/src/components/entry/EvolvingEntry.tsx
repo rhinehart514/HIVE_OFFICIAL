@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import { useEvolvingEntry } from './hooks/useEvolvingEntry';
 import {
+  AccessCodeSection,
   SchoolSection,
   EmailSection,
   CodeSection,
@@ -46,6 +47,8 @@ const CAMPUS_CONFIG = {
   domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
   schoolId: process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub-buffalo',
 };
+
+const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
 
 interface EvolvingEntryProps {
   /** Callback to report emotional state for ambient glow */
@@ -101,8 +104,8 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
       return;
     }
 
-    // Code verification gets anticipation
-    if (activeSection === 'code' || activeSection === 'role') {
+    // Code verification gets anticipation (access code too for that gated feel)
+    if (activeSection === 'accessCode' || activeSection === 'code' || activeSection === 'role') {
       onEmotionalStateChange('anticipation');
       return;
     }
@@ -192,8 +195,18 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
 
       {/* Sections stack */}
       <div className="space-y-5">
+        {/* Access Code section (gated launch) */}
+        {ACCESS_GATE_ENABLED && !isTerminal && entry.sections.accessCode?.status !== 'hidden' && entry.sections.accessCode?.status !== 'complete' && (
+          <AccessCodeSection
+            section={entry.sections.accessCode}
+            onVerify={entry.verifyAccessCode}
+            isLoading={entry.isVerifyingAccessCode}
+            lockout={entry.accessCodeLockout}
+          />
+        )}
+
         {/* School section */}
-        {!isTerminal && (
+        {!isTerminal && entry.sections.school.status !== 'hidden' && (
           <SchoolSection
             section={entry.sections.school}
             school={entry.data.school}

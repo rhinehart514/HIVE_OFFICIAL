@@ -44,6 +44,7 @@ export interface School {
 }
 
 export type SectionId =
+  | 'accessCode'
   | 'school'
   | 'email'
   | 'code'
@@ -61,6 +62,7 @@ export interface SectionState {
 }
 
 export interface EntryData {
+  accessCodePassed: boolean;
   school: School | null;
   email: string;
   code: string[];
@@ -91,6 +93,12 @@ export interface UseEvolvingEntryOptions {
   defaultRedirect?: string;
 }
 
+export interface AccessCodeLockout {
+  locked: boolean;
+  remainingMinutes: number;
+  attemptsRemaining?: number;
+}
+
 export interface UseEvolvingEntryReturn {
   // Section visibility
   sections: Record<SectionId, SectionState>;
@@ -104,8 +112,13 @@ export interface UseEvolvingEntryReturn {
   // Loading states
   isSendingCode: boolean;
   isVerifyingCode: boolean;
+  isVerifyingAccessCode: boolean;
   isSubmittingRole: boolean;
   isSubmittingIdentity: boolean;
+
+  // Access code gate
+  accessCodeLockout: AccessCodeLockout | null;
+  verifyAccessCode: (code: string) => Promise<void>;
 
   // Handle checking
   handleStatus: HandleStatus;
@@ -163,6 +176,8 @@ const HANDLE_REGEX = /^[a-z0-9_]{3,20}$/;
 const HANDLE_CHECK_DEBOUNCE = 300;
 const RESEND_COOLDOWNS = [30, 60, 120, 300];
 const PENDING_EMAIL_KEY = 'hive_pending_email';
+const ACCESS_GATE_PASSED_KEY = 'hive_access_gate_passed';
+const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
 
 // ============================================
 // UTILITIES
@@ -208,15 +223,25 @@ function generateHandleSuggestions(
 // INITIAL SECTION STATES
 // ============================================
 
-const createInitialSections = (): Record<SectionId, SectionState> => ({
-  school: { id: 'school', status: 'active' },
-  email: { id: 'email', status: 'hidden' },
-  code: { id: 'code', status: 'hidden' },
-  role: { id: 'role', status: 'hidden' },
-  identity: { id: 'identity', status: 'hidden' },
-  arrival: { id: 'arrival', status: 'hidden' },
-  'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
-});
+const createInitialSections = (accessGatePassed: boolean): Record<SectionId, SectionState> => {
+  // If gate is enabled and not passed, start at accessCode
+  // If gate is disabled or already passed, start at school
+  const needsAccessCode = ACCESS_GATE_ENABLED && !accessGatePassed;
+
+  return {
+    accessCode: {
+      id: 'accessCode',
+      status: needsAccessCode ? 'active' : 'complete',
+    },
+    school: { id: 'school', status: needsAccessCode ? 'hidden' : 'active' },
+    email: { id: 'email', status: 'hidden' },
+    code: { id: 'code', status: 'hidden' },
+    role: { id: 'role', status: 'hidden' },
+    identity: { id: 'identity', status: 'hidden' },
+    arrival: { id: 'arrival', status: 'hidden' },
+    'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
+  };
+};
 
 // ============================================
 // HOOK
@@ -233,11 +258,18 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // STATE
   // ============================================
 
-  const [sections, setSections] = useState<Record<SectionId, SectionState>>(
-    createInitialSections
+  // Check localStorage for access gate status (only runs on client)
+  const [accessGatePassed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(ACCESS_GATE_PASSED_KEY) === 'true';
+  });
+
+  const [sections, setSections] = useState<Record<SectionId, SectionState>>(() =>
+    createInitialSections(accessGatePassed)
   );
 
   const [data, setData] = useState<EntryData>({
+    accessCodePassed: accessGatePassed,
     school: null,
     email: '',
     code: ['', '', '', '', '', ''],
@@ -261,8 +293,12 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // Loading states
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [isVerifyingAccessCode, setIsVerifyingAccessCode] = useState(false);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
   const [isSubmittingIdentity, setIsSubmittingIdentity] = useState(false);
+
+  // Access code lockout state
+  const [accessCodeLockout, setAccessCodeLockout] = useState<AccessCodeLockout | null>(null);
 
   // Handle checking
   const [handleStatus, setHandleStatus] = useState<HandleStatus>('idle');
@@ -294,6 +330,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
   const activeSection = useMemo(() => {
     const sectionOrder: SectionId[] = [
+      'accessCode',
       'school',
       'email',
       'code',
@@ -520,6 +557,74 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // ============================================
   // SECTION ACTIONS
   // ============================================
+
+  // Access Code: Verify and proceed to school
+  const verifyAccessCode = useCallback(
+    async (codeString: string) => {
+      // Skip if gate is not enabled
+      if (!ACCESS_GATE_ENABLED) {
+        completeSection('accessCode');
+        activateSection('school');
+        return;
+      }
+
+      setIsVerifyingAccessCode(true);
+      clearSectionError('accessCode');
+
+      try {
+        const response = await fetch('/api/auth/verify-access-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: codeString }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          // Handle lockout
+          if (result.code === 'LOCKED_OUT') {
+            const remainingMinutes = parseInt(
+              response.headers.get('Retry-After') || '0',
+              10
+            ) / 60;
+            setAccessCodeLockout({
+              locked: true,
+              remainingMinutes: Math.ceil(remainingMinutes) || 15,
+            });
+            setSectionError('accessCode', result.error || 'Too many attempts');
+            return;
+          }
+
+          // Extract attempts remaining from error message
+          const attemptsMatch = result.error?.match(/(\d+) attempt/);
+          const attemptsRemaining = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
+
+          if (attemptsRemaining !== undefined) {
+            setAccessCodeLockout({
+              locked: false,
+              remainingMinutes: 0,
+              attemptsRemaining,
+            });
+          }
+
+          setSectionError('accessCode', result.error || 'Invalid code');
+          return;
+        }
+
+        // Success - persist to localStorage and transition
+        localStorage.setItem(ACCESS_GATE_PASSED_KEY, 'true');
+        setAccessCodeLockout(null);
+        setData((prev) => ({ ...prev, accessCodePassed: true }));
+        completeSection('accessCode');
+        activateSection('school');
+      } catch {
+        setSectionError('accessCode', 'Unable to verify code');
+      } finally {
+        setIsVerifyingAccessCode(false);
+      }
+    },
+    [activateSection, completeSection, setSectionError, clearSectionError]
+  );
 
   // School: Confirm selection and proceed to email
   const confirmSchool = useCallback(() => {
@@ -933,8 +1038,13 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     // Loading states
     isSendingCode,
     isVerifyingCode,
+    isVerifyingAccessCode,
     isSubmittingRole,
     isSubmittingIdentity,
+
+    // Access code gate
+    accessCodeLockout,
+    verifyAccessCode,
 
     // Handle checking
     handleStatus,

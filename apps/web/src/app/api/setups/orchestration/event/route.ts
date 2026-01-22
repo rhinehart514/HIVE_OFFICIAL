@@ -12,11 +12,7 @@ import {
   toSetupDeploymentDetailDTO,
   dbAdmin,
 } from '@hive/core/server';
-import type {
-  OrchestrationRule,
-  ToolEventTriggerConfig,
-  OrchestrationLogEntry,
-} from '@hive/core';
+import { getOrchestrationExecutor } from '@hive/core';
 
 // ============================================================================
 // Request Validation
@@ -92,76 +88,91 @@ export async function POST(request: NextRequest) {
       return errorResponse('Deployment is not active', 400);
     }
 
-    // Find matching rules
-    const matchingRules = deployment.orchestrationRules.filter(rule => {
-      if (!rule.enabled) return false;
-      if (rule.trigger.type !== 'tool_event') return false;
+    // Create executor with callbacks for persistence
+    const executor = getOrchestrationExecutor({
+      updateToolVisibility: async (spaceId, deploymentId, visible) => {
+        await dbAdmin
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('placed_tools')
+          .doc(deploymentId)
+          .update({
+            isActive: visible,
+            updatedAt: new Date().toISOString(),
+          });
+      },
+      updateToolConfig: async (spaceId, deploymentId, config) => {
+        const configUpdates: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(config)) {
+          configUpdates[`config.${key}`] = value;
+        }
+        configUpdates.updatedAt = new Date().toISOString();
 
-      const config = rule.trigger as ToolEventTriggerConfig;
-      return config.sourceSlotId === slotId && config.eventType === eventType;
+        await dbAdmin
+          .collection('spaces')
+          .doc(spaceId)
+          .collection('placed_tools')
+          .doc(deploymentId)
+          .update(configUpdates);
+      },
     });
 
-    if (matchingRules.length === 0) {
+    // Execute matching rules via the executor service
+    const result = executor.executeOnToolEvent(
+      deployment,
+      slotId,
+      eventType,
+      payload || {},
+      userId,
+    );
+
+    if (result.totalRulesEvaluated === 0) {
       return jsonResponse({
         executed: [],
         message: 'No matching rules found',
       });
     }
 
-    // Execute matching rules
-    const executedRules: string[] = [];
-    const logEntries: OrchestrationLogEntry[] = [];
+    // Persist visibility and config changes to placed_tools
+    for (const ruleResult of result.executedRules) {
+      if (ruleResult.skipped) continue;
 
-    for (const rule of matchingRules) {
-      // Check if runOnce rule has already been executed
-      if (rule.runOnce && deployment.hasRuleExecuted(rule.id)) {
-        continue;
-      }
+      for (const actionResult of ruleResult.actionsExecuted) {
+        if (!actionResult.success) continue;
 
-      // Execute actions
-      const actionsExecuted: Array<{
-        actionType: string;
-        targetSlotId?: string;
-        success: boolean;
-        error?: string;
-      }> = [];
+        if (actionResult.actionType === 'visibility' && actionResult.targetSlotId) {
+          const tool = deployment.getTool(actionResult.targetSlotId);
+          if (tool) {
+            await dbAdmin
+              .collection('spaces')
+              .doc(deployment.spaceId)
+              .collection('placed_tools')
+              .doc(tool.deploymentId)
+              .update({
+                isActive: actionResult.updates?.visible,
+                updatedAt: new Date().toISOString(),
+              });
+          }
+        }
 
-      for (const action of rule.actions) {
-        try {
-          await executeAction(deployment, action, payload);
-          actionsExecuted.push({
-            actionType: action.type,
-            targetSlotId: 'targetSlotId' in action ? action.targetSlotId : undefined,
-            success: true,
-          });
-        } catch (error) {
-          actionsExecuted.push({
-            actionType: action.type,
-            targetSlotId: 'targetSlotId' in action ? action.targetSlotId : undefined,
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
+        if (actionResult.actionType === 'config' && actionResult.targetSlotId && actionResult.updates) {
+          const tool = deployment.getTool(actionResult.targetSlotId);
+          if (tool) {
+            const configUpdates: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(actionResult.updates)) {
+              configUpdates[`config.${key}`] = value;
+            }
+            configUpdates.updatedAt = new Date().toISOString();
+
+            await dbAdmin
+              .collection('spaces')
+              .doc(deployment.spaceId)
+              .collection('placed_tools')
+              .doc(tool.deploymentId)
+              .update(configUpdates);
+          }
         }
       }
-
-      // Log the execution
-      const logEntry: Omit<OrchestrationLogEntry, 'id'> = {
-        ruleId: rule.id,
-        ruleName: rule.name,
-        triggeredAt: new Date(),
-        triggerType: 'tool_event',
-        triggerDetails: { slotId, eventType, payload },
-        actionsExecuted,
-        triggeredBy: userId,
-        success: actionsExecuted.every(a => a.success),
-      };
-
-      logEntries.push({ ...logEntry, id: `log_${Date.now()}` });
-      deployment.addLogEntry(logEntry);
-
-      // Mark rule as executed
-      deployment.markRuleExecuted(rule.id);
-      executedRules.push(rule.id);
     }
 
     // Save updated deployment
@@ -169,133 +180,22 @@ export async function POST(request: NextRequest) {
 
     // Return results
     const dto = toSetupDeploymentDetailDTO(deployment);
+    const executedRuleIds = result.executedRules
+      .filter(r => !r.skipped)
+      .map(r => r.ruleId);
 
     return jsonResponse({
-      executed: executedRules,
-      logs: logEntries,
+      executed: executedRuleIds,
+      logs: result.logEntries,
       deployment: dto,
+      meta: {
+        totalRulesEvaluated: result.totalRulesEvaluated,
+        totalActionsExecuted: result.totalActionsExecuted,
+        overallSuccess: result.overallSuccess,
+      },
     });
   } catch {
     return errorResponse('Failed to handle orchestration event', 500);
   }
 }
 
-// ============================================================================
-// Action Executor
-// ============================================================================
-
-async function executeAction(
-  deployment: ReturnType<typeof import('@hive/core').SetupDeployment.reconstitute>,
-  action: OrchestrationRule['actions'][0],
-  eventPayload?: Record<string, unknown>,
-): Promise<void> {
-  switch (action.type) {
-    case 'visibility': {
-      const { targetSlotId, visible } = action;
-      deployment.setToolVisibility(targetSlotId, visible);
-
-      // Also update the placed_tool document
-      const tool = deployment.getTool(targetSlotId);
-      if (tool) {
-        await dbAdmin
-          .collection('spaces')
-          .doc(deployment.spaceId)
-          .collection('placed_tools')
-          .doc(tool.deploymentId)
-          .update({
-            isActive: visible,
-            updatedAt: new Date().toISOString(),
-          });
-      }
-      break;
-    }
-
-    case 'config': {
-      const { targetSlotId, updates } = action;
-      deployment.updateToolConfig(targetSlotId, updates);
-
-      // Also update the placed_tool document
-      const tool = deployment.getTool(targetSlotId);
-      if (tool) {
-        const configUpdates: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(updates)) {
-          configUpdates[`config.${key}`] = value;
-        }
-        configUpdates.updatedAt = new Date().toISOString();
-
-        await dbAdmin
-          .collection('spaces')
-          .doc(deployment.spaceId)
-          .collection('placed_tools')
-          .doc(tool.deploymentId)
-          .update(configUpdates);
-      }
-      break;
-    }
-
-    case 'data_flow': {
-      const { sourceSlotId, sourceOutput, targetSlotId, targetInput } = action;
-
-      // Get data from event payload or shared state
-      let sourceData: unknown;
-
-      if (eventPayload && sourceOutput in eventPayload) {
-        sourceData = eventPayload[sourceOutput];
-      } else {
-        sourceData = deployment.getSharedDataValue(`${sourceSlotId}.${sourceOutput}`);
-      }
-
-      // Update target
-      if (targetSlotId === '_shared') {
-        deployment.setSharedDataValue(targetInput, sourceData);
-      } else {
-        deployment.setSharedDataValue(`${targetSlotId}.${targetInput}`, sourceData);
-
-        // Also update the placed_tool config
-        const tool = deployment.getTool(targetSlotId);
-        if (tool) {
-          await dbAdmin
-            .collection('spaces')
-            .doc(deployment.spaceId)
-            .collection('placed_tools')
-            .doc(tool.deploymentId)
-            .update({
-              [`config.${targetInput}`]: sourceData,
-              updatedAt: new Date().toISOString(),
-            });
-        }
-      }
-      break;
-    }
-
-    case 'state': {
-      const { targetSlotId, updates, merge } = action;
-
-      if (targetSlotId === '_shared') {
-        if (merge) {
-          deployment.updateSharedData(updates);
-        } else {
-          // Replace (not typically recommended)
-          for (const [key, value] of Object.entries(updates)) {
-            deployment.setSharedDataValue(key, value);
-          }
-        }
-      } else {
-        for (const [key, value] of Object.entries(updates)) {
-          deployment.setSharedDataValue(`${targetSlotId}.${key}`, value);
-        }
-      }
-      break;
-    }
-
-    case 'notification': {
-      // TODO: Integrate with notification system
-      // Notification would be sent to recipients with title, body, actionUrl
-      break;
-    }
-
-    default:
-      // Unknown action type - ignored
-      break;
-  }
-}

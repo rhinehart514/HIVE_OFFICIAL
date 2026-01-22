@@ -39,7 +39,7 @@ const createSpaceSchema = z.object({
       const scan = SecurityScanner.scanInput(desc, 'space_description');
       return scan.level !== 'dangerous';
     }, 'Description contains invalid content'),
-  category: z.enum(['student_org', 'residential', 'university_org', 'greek_life']),
+  category: z.enum(['student_organizations', 'university_organizations', 'greek_life', 'campus_living', 'hive_exclusive']),
   joinPolicy: z.enum(['open', 'approval', 'invite_only']),
   tags: z.array(z.string().max(50)).max(20),
   agreedToGuidelines: z.boolean(),
@@ -188,7 +188,7 @@ export const POST = withAuthValidationAndErrors(
   }
 
   // CHECK 6: Category restrictions
-  if (category === 'university_org' && !isAdmin) {
+  if (category === 'university_organizations' && !isAdmin) {
     return respond.error("University organizations require admin approval", "PERMISSION_DENIED", { status: 403 });
   }
 
@@ -308,14 +308,7 @@ export const POST = withAuthValidationAndErrors(
     });
   });
 
-  // Map category to type for backward compatibility in response
-  const typeMapping: Record<string, string> = {
-    'student_org': 'student_organizations',
-    'residential': 'residential_spaces',
-    'university_org': 'university_organizations',
-    'greek_life': 'greek_life_spaces'
-  };
-
+  // Category and type are now unified - no mapping needed
   return respond.success({
     space: {
       id: spaceId,
@@ -324,7 +317,7 @@ export const POST = withAuthValidationAndErrors(
       slug,
       description,
       category,
-      type: typeMapping[category] || 'student_organizations',
+      type: category, // Canonical values are the same
       campusId,
       visibility: visibility || 'public',
       joinPolicy,
@@ -339,7 +332,7 @@ export const POST = withAuthValidationAndErrors(
 
 /**
  * Development helper to ensure sample spaces exist
- * Uses canonical category values: student_org, residential, university_org, greek_life
+ * Uses canonical category values: student_organizations, campus_living, university_organizations, greek_life, hive_exclusive
  * @param campusId - Campus to create sample spaces for
  */
 async function ensureSampleSpaces(campusId: string) {
@@ -348,7 +341,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'ub-computer-science',
       name: 'UB Computer Science',
       description: 'Connect with CS majors, share projects, get study tips, and network with fellow programmers at UB. From algorithms to internships, we cover it all.',
-      category: 'student_org',
+      category: 'student_organizations',
       isPrivate: false,
       tags: ['cs', 'programming', 'study-group']
     },
@@ -356,7 +349,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'ub-engineering-hub',
       name: 'UB Engineering Hub',
       description: 'All engineering disciplines unite! Share resources, discuss projects, find lab partners, and get career advice from fellow UB engineers.',
-      category: 'student_org',
+      category: 'student_organizations',
       isPrivate: false,
       tags: ['engineering', 'stem', 'projects']
     },
@@ -364,7 +357,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'governors-residence-hall',
       name: 'Governors Residence Hall',
       description: 'For residents of Governors! Plan floor events, coordinate study sessions, share dining hall reviews, and stay connected with your neighbors.',
-      category: 'residential',
+      category: 'campus_living',
       isPrivate: false,
       tags: ['dorms', 'governors', 'residence-life']
     },
@@ -372,7 +365,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'ub-pre-med-society',
       name: 'UB Pre-Med Society',
       description: 'Future doctors assemble! Study together for the MCAT, share volunteer opportunities, discuss med school applications, and support each other.',
-      category: 'student_org',
+      category: 'student_organizations',
       isPrivate: false,
       tags: ['pre-med', 'mcat', 'healthcare']
     },
@@ -380,7 +373,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'ub-business-network',
       name: 'UB Business Network',
       description: 'Business majors and entrepreneurs unite! Share internship opportunities, discuss case studies, network for future careers, and collaborate on ventures.',
-      category: 'student_org',
+      category: 'student_organizations',
       isPrivate: false,
       tags: ['business', 'networking', 'internships']
     },
@@ -388,7 +381,7 @@ async function ensureSampleSpaces(campusId: string) {
       id: 'ub-gaming-community',
       name: 'UB Gaming Community',
       description: 'Gamers of UB unite! Organize tournaments, find teammates, discuss new releases, and plan LAN parties. All games and skill levels welcome.',
-      category: 'student_org',
+      category: 'student_organizations',
       isPrivate: false,
       tags: ['gaming', 'esports', 'tournaments']
     }
@@ -407,8 +400,8 @@ async function ensureSampleSpaces(campusId: string) {
         name_lowercase: space.name.toLowerCase(),
         description: space.description,
         category: space.category,
-        // Keep type for backwards compatibility
-        type: space.category === 'residential' ? 'residential' : 'student_organization',
+        // Category and type are now unified
+        type: space.category,
         subType: null,
         status: 'active',
         isActive: true,
@@ -457,10 +450,11 @@ async function autoDeployTemplate(
 ): Promise<void> {
   // Map API categories to template suggestedFor values
   const categoryToTemplateSuggestion: Record<string, string> = {
-    'student_org': 'student_org',
-    'residential': 'residential',
-    'university_org': 'university_org',
+    'student_organizations': 'student_org',
+    'university_organizations': 'university_org',
     'greek_life': 'greek_life',
+    'campus_living': 'residential',
+    'hive_exclusive': 'student_org', // User-created spaces use student org templates
   };
 
   const templateSuggestion = categoryToTemplateSuggestion[category];

@@ -55,8 +55,8 @@ interface ToolSlot {
 interface HiveSpace {
   id: string;
   name: string;
-  type: 'university_spaces' | 'residential_spaces' | 'greek_life_spaces' | 'student_spaces';
-  subType: 'academic_major' | 'class_year' | 'university_organization' | 'dorm_building' | 'off_campus_area' | 'greek_chapter' | 'greek_council' | 'student_club' | 'interest_community';
+  type: 'student_organizations' | 'university_organizations' | 'greek_life' | 'campus_living' | 'hive_exclusive';
+  subType: 'academic_major' | 'class_year' | 'university_organization' | 'dorm_building' | 'off_campus_area' | 'greek_chapter' | 'greek_council' | 'student_club' | 'interest_community' | 'user_created';
   surfaces: SpaceSurface[];
   toolSlots: ToolSlot[];
   maxToolSlots: number;
@@ -217,23 +217,27 @@ const ToolSlotCard: React.FC<{
 
   const getRecommendedTools = (spaceType: HiveSpace['type'], spaceSubType: HiveSpace['subType']) => {
     const baseTools = ['Event Planner', 'Quick Poll', 'Resource Sharing', 'Announcement System'];
-    
-    if (spaceType === 'university_spaces' && spaceSubType === 'academic_major') {
+
+    if (spaceType === 'university_organizations' && spaceSubType === 'academic_major') {
       return [...baseTools, 'Study Group Matcher', 'Project Team Builder', 'Course Coordination', 'Career Planning'];
     }
-    
-    if (spaceType === 'residential_spaces') {
+
+    if (spaceType === 'campus_living') {
       return [...baseTools, 'Floor Coordination', 'Maintenance Requests', 'Package Tracking', 'Community Guidelines'];
     }
-    
-    if (spaceType === 'greek_life_spaces') {
+
+    if (spaceType === 'greek_life') {
       return [...baseTools, 'Recruitment Tools', 'Chapter Management', 'Event RSVP', 'Brotherhood/Sisterhood'];
     }
-    
-    if (spaceType === 'student_spaces') {
+
+    if (spaceType === 'student_organizations') {
       return [...baseTools, 'Member Directory', 'Project Collaboration', 'Meeting Scheduler', 'Interest Matching'];
     }
-    
+
+    if (spaceType === 'hive_exclusive') {
+      return [...baseTools, 'Member Directory', 'Custom Branding', 'Meeting Scheduler', 'Goal Tracking'];
+    }
+
     return baseTools;
   };
 
@@ -334,18 +338,20 @@ export const HiveSpaceSurfaceManager: React.FC<HiveSpaceSurfaceManagerProps> = (
   }, [onRemoveTool]);
 
   const getSpaceTypeInfo = () => {
-    const typeColors = {
-      university_spaces: 'text-blue-400',
-      residential_spaces: 'text-orange-400',
-      greek_life_spaces: 'text-purple-400',
-      student_spaces: 'text-pink-400',
+    const typeColors: Record<HiveSpace['type'], string> = {
+      student_organizations: 'text-green-400',
+      university_organizations: 'text-blue-400',
+      greek_life: 'text-purple-400',
+      campus_living: 'text-orange-400',
+      hive_exclusive: 'text-amber-400',
     };
 
-    const typeIcons = {
-      university_spaces: AcademicCapIcon,
-      residential_spaces: HomeIcon,
-      greek_life_spaces: UsersIcon,
-      student_spaces: HeartIcon,
+    const typeIcons: Record<HiveSpace['type'], typeof AcademicCapIcon> = {
+      student_organizations: HeartIcon,
+      university_organizations: AcademicCapIcon,
+      greek_life: UsersIcon,
+      campus_living: HomeIcon,
+      hive_exclusive: HeartIcon,
     };
 
     const TypeIcon = typeIcons[space.type];

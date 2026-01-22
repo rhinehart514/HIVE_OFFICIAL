@@ -90,6 +90,24 @@ export type {
 //   - resetSetupRepositories
 
 // ============================================================================
+// Orchestration Executor
+// ============================================================================
+
+export {
+  // Service
+  OrchestrationExecutorService,
+  getOrchestrationExecutor,
+  resetOrchestrationExecutor,
+
+  // Types
+  type ExecutionContext,
+  type ActionExecutionResult,
+  type RuleExecutionResult,
+  type OrchestrationExecutionResult,
+  type ExecutorCallbacks,
+} from './orchestration-executor';
+
+// ============================================================================
 // System-defined Setup Templates
 // ============================================================================
 

@@ -46,6 +46,11 @@
       "import": "./src/domain/profile/value-objects/major.value.ts",
       "default": "./src/domain/profile/value-objects/major.value.ts"
     },
+    "./domain/spaces/constants/space-categories": {
+      "types": "./src/domain/spaces/constants/space-categories.ts",
+      "import": "./src/domain/spaces/constants/space-categories.ts",
+      "default": "./src/domain/spaces/constants/space-categories.ts"
+    },
     "./domain/creation/validate-tool-elements": {
       "types": "./src/domain/creation/validate-tool-elements.ts",
       "import": "./src/domain/creation/validate-tool-elements.ts",

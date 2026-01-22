@@ -32,16 +32,16 @@ const CONFIG = {
   CAMPUSLABS_API: 'https://buffalo.campuslabs.com/engage/api/discovery/search/organizations',
   CAMPUSLABS_BASE_URL: 'https://buffalo.campuslabs.com/engage',
 
-  // Branch ID to HIVE category mapping
+  // Canonical HIVE space types mapped from CampusLabs branch IDs
   BRANCH_MAP: {
-    1419: 'student_org',      // Student Organizations
-    360210: 'university_org', // University Services
-    360211: 'greek_life',     // Greek Life
-    360212: 'residential',    // Residential
+    1419: 'student_organizations',      // Student Organizations
+    360210: 'university_organizations', // University Services
+    360211: 'greek_life',               // Greek Life
+    360212: 'campus_living',            // Residential / Campus Living
   },
 
   // Default for unknown branches
-  DEFAULT_CATEGORY: 'student_org',
+  DEFAULT_CATEGORY: 'student_organizations',
 
   // Batch size for Firestore writes
   BATCH_SIZE: 400,
@@ -250,10 +250,10 @@ async function importToFirestore(db, spaces, dryRun = false) {
     skipped: 0,
     errors: 0,
     byCategory: {
-      student_org: 0,
-      university_org: 0,
+      student_organizations: 0,
+      university_organizations: 0,
       greek_life: 0,
-      residential: 0,
+      campus_living: 0,
     }
   };
 

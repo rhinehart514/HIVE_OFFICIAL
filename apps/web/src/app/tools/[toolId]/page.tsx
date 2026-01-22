@@ -21,6 +21,7 @@ import {
 } from '@hive/ui';
 import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
+import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
 
 /**
  * Tool Studio Page - Full HiveLabIDE Experience
@@ -243,6 +244,7 @@ export default function ToolStudioPage({ params }: Props) {
   // Modal states
   const [deployModalOpen, setDeployModalOpen] = useState(showDeployOnMount);
   const [analyticsOpen, setAnalyticsOpen] = useState(showAnalyticsOnMount);
+  const [automationsOpen, setAutomationsOpen] = useState(false);
 
   // Queries
   const {
@@ -685,6 +687,16 @@ export default function ToolStudioPage({ params }: Props) {
           toolId={toolId}
           toolName={composition.name || 'Untitled Tool'}
           onClose={() => setAnalyticsOpen(false)}
+        />
+      )}
+
+      {/* Automation Awareness Panel */}
+      {automationsOpen && (
+        <AutomationAwarenessPanel
+          toolId={toolId}
+          toolName={composition.name || 'Untitled Tool'}
+          elementIds={composition.elements.map((el) => el.instanceId)}
+          onClose={() => setAutomationsOpen(false)}
         />
       )}
     </div>

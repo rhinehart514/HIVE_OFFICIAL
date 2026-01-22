@@ -355,6 +355,10 @@ export {
   ELEMENT_COUNT,
   ELEMENT_IDS,
   CATEGORY_COUNTS,
+  TIER_COUNTS,
+  CONNECTED_ELEMENTS,
+  SPACE_ELEMENTS,
+  ADDITIONAL_UNIVERSAL_ELEMENTS,
 } from "./domain/hivelab/element-registry";
 export type { ElementSpec } from "./domain/hivelab/element-registry";
 
@@ -378,11 +382,12 @@ export {
   type AutomatedInsight,
   type InsightType,
   type ValidationMetadata,
-  // Schemas (not validateElementConfig - already exported elsewhere)
+  // Schemas (validateElementConfig exported as validateHiveLabElementConfig to avoid conflict)
   ELEMENT_CONFIG_SCHEMAS,
   getElementConfigSchema,
   getRequiredFields,
   isFieldRequired,
+  validateElementConfig as validateHiveLabElementConfig,
   ToolCompositionSchema,
   CanvasElementBaseSchema,
   ElementConnectionSchema,
@@ -562,6 +567,15 @@ export {
   SYSTEM_SETUP_TEMPLATES,
   getSystemSetupTemplate,
   getSystemSetupTemplatesByCategory,
+  // Orchestration Executor
+  OrchestrationExecutorService,
+  getOrchestrationExecutor,
+  resetOrchestrationExecutor,
+  type ExecutionContext,
+  type ActionExecutionResult,
+  type RuleExecutionResult,
+  type OrchestrationExecutionResult,
+  type ExecutorCallbacks,
 } from "./domain/hivelab/setup";
 
 // Application Services - Use Case Orchestration

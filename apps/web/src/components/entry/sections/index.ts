@@ -1,3 +1,4 @@
+export { AccessCodeSection } from './AccessCodeSection';
 export { SchoolSection, AVAILABLE_SCHOOLS } from './SchoolSection';
 export { EmailSection } from './EmailSection';
 export { CodeSection } from './CodeSection';

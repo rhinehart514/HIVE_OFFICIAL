@@ -8,8 +8,9 @@
 export type SpaceType =
   | 'student_organizations'    // Student clubs, academic groups, interests
   | 'university_organizations' // Official university entities
-  | 'greek_life_spaces'       // Fraternities, sororities, honor societies
-  | 'residential_spaces';     // Dorms, floors, off-campus housing
+  | 'greek_life'              // Fraternities, sororities, honor societies
+  | 'campus_living'           // Dorms, floors, off-campus housing
+  | 'hive_exclusive';         // User-created spaces native to HIVE
 
 export type MembershipRule = {
   maxSpaces: number | 'unlimited';
@@ -106,7 +107,7 @@ export const SPACE_TYPE_RULES: Record<SpaceType, SpaceTypeRules> = {
     compliance: ['ferpa', 'accessibility', 'university_policies']
   },
 
-  greek_life_spaces: {
+  greek_life: {
     membership: {
       maxSpaces: 'unlimited', // Can be in multiple Greek orgs
       joinMethod: 'invitation_only',
@@ -135,7 +136,7 @@ export const SPACE_TYPE_RULES: Record<SpaceType, SpaceTypeRules> = {
     specialFeatures: ['alumni_connections', 'traditions', 'philanthropy', 'recruitment']
   },
 
-  residential_spaces: {
+  campus_living: {
     membership: {
       maxSpaces: 1, // Can only be in one residential space
       joinMethod: 'automatic', // Based on housing assignment
@@ -161,6 +162,36 @@ export const SPACE_TYPE_RULES: Record<SpaceType, SpaceTypeRules> = {
       maxTools: 6
     },
     specialFeatures: ['housing_integration', 'maintenance_systems', 'community_resources']
+  },
+
+  hive_exclusive: {
+    membership: {
+      maxSpaces: 'unlimited',
+      joinMethod: 'approval', // Creator decides join policy
+      leaveRestriction: 'none',
+      approvalProcess: 'simple',
+      specialRoles: ['creator', 'admin', 'moderator']
+    },
+    visibility: {
+      memberProfiles: 'public',
+      posts: 'campus_visible',
+      events: 'public_calendar',
+      spaceDiscoverable: true
+    },
+    tools: {
+      allowedTypes: [
+        'project_management',
+        'skill_matching',
+        'analytics',
+        'event_coordination',
+        'member_onboarding',
+        'goal_tracking',
+        'social_planning'
+      ],
+      defaultPosition: 'leader_choice',
+      maxTools: 10
+    },
+    specialFeatures: ['custom_branding', 'flexible_governance', 'user_created']
   }
 };
 

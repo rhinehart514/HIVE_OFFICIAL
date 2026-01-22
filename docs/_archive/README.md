@@ -1,6 +1,6 @@
 # Archived Documentation
 
-**Last Updated:** January 21, 2026
+**Last Updated:** January 22, 2026
 
 This directory contains documentation that is no longer actively maintained but preserved for historical reference.
 
@@ -11,10 +11,27 @@ _archive/
 ├── audits/                   # Completed audit reports
 ├── plans/                    # Completed rebuild/redesign plans
 ├── old-state/                # Outdated state snapshots
-└── jan-2026-consolidation/   # Major consolidation (34 files)
+├── jan-2026-consolidation/   # Major consolidation (34 files)
+└── transactional/            # One-time documents
+    ├── jan-2026-root-cleanup/   # Root clutter cleanup
+    └── ui-audit-reports/        # UI package audit reports
 ```
 
 ## Archive History
+
+### January 22, 2026 — Root & UI Cleanup
+Archived 20 files to clean up project root and `packages/ui/`:
+
+**Root (9 files):**
+- Audit reports, deployment notes, shell design exploration
+- Launch setup documents, context audits
+- See `transactional/jan-2026-root-cleanup/README.md` for details
+
+**UI Package (11 files):**
+- Storybook coverage and organization reports
+- Component audit and completion reports
+- Session summaries from 2024
+- See `transactional/ui-audit-reports/README.md` for details
 
 ### January 21, 2026 — Major Consolidation
 Archived 34 files/folders as part of documentation consolidation:
