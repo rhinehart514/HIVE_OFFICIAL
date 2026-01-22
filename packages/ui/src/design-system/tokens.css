@@ -233,6 +233,34 @@
     transparent 50%
   );
 
+  /* Background Gradients (for GradientBackground primitive) */
+  --gradient-void: radial-gradient(ellipse at center, var(--bg-void) 0%, #000000 100%);
+  --gradient-gold-glow: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,215,0,0.08) 0%, transparent 60%);
+  --gradient-warm-glow: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 245, 235, 0.03) 0%, transparent 60%);
+  --gradient-soft-glow: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+
+  /* Input Gradients (premium focus states) */
+  --input-bg-resting: linear-gradient(
+    180deg,
+    rgba(20, 19, 18, 0.8) 0%,
+    rgba(26, 25, 23, 0.6) 100%
+  );
+  --input-bg-focused: linear-gradient(
+    180deg,
+    rgba(26, 25, 23, 0.9) 0%,
+    rgba(30, 29, 27, 0.7) 100%
+  );
+  --input-bg-error: linear-gradient(
+    180deg,
+    rgba(239, 68, 68, 0.08) 0%,
+    rgba(20, 19, 18, 0.8) 100%
+  );
+
+  /* Text Gradients (for GradientText primitive) */
+  --text-gradient-gold: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
+  --text-gradient-silver: linear-gradient(135deg, #F5F5F5 0%, #A0A0A0 50%, #F5F5F5 100%);
+  --text-gradient-warm: linear-gradient(135deg, #FAF9F7 0%, #E5E5E0 50%, #FAF9F7 100%);
+
   /* Grain Texture Opacity */
   --grain-opacity-subtle: 0.02;
   --grain-opacity-texture: 0.05;
