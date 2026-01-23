@@ -109,30 +109,58 @@ export const GET = withAuthAndErrors(async (
       }
     }
 
-    const postsSnapshot = await query.get();
+    // COST OPTIMIZATION: Fetch posts and pinned posts in parallel
+    const [postsSnapshot, pinnedSnapshot] = await Promise.all([
+      query.get(),
+      dbAdmin
+        .collection("spaces")
+        .doc(spaceId)
+        .collection("posts")
+        .where("isPinned", "==", true)
+        .get(),
+    ]);
 
-    const pinnedSnapshot = await dbAdmin
-      .collection("spaces")
-      .doc(spaceId)
-      .collection("posts")
-      .where("isPinned", "==", true)
-      .get();
+    // COST OPTIMIZATION: Batch fetch all authors at once (N+1 → 1 query)
+    // Collect all unique author IDs from both queries
+    const authorIds = new Set<string>();
+    for (const doc of pinnedSnapshot.docs) {
+      const data = doc.data();
+      if (data.authorId && (!data.campusId || data.campusId === campusId)) {
+        authorIds.add(data.authorId);
+      }
+    }
+    for (const doc of postsSnapshot.docs) {
+      const data = doc.data();
+      if (data.authorId && !data.isPinned && (!data.campusId || data.campusId === campusId)) {
+        authorIds.add(data.authorId);
+      }
+    }
+
+    // Batch fetch all authors in a single query
+    const authorMap = new Map<string, { id: string; fullName?: string; handle?: string; photoURL?: string } | null>();
+    if (authorIds.size > 0) {
+      const authorRefs = Array.from(authorIds).map(id => dbAdmin.collection("users").doc(id));
+      const authorDocs = await dbAdmin.getAll(...authorRefs);
+      for (const doc of authorDocs) {
+        if (doc.exists) {
+          const data = doc.data();
+          authorMap.set(doc.id, {
+            id: doc.id,
+            fullName: data?.fullName,
+            handle: data?.handle,
+            photoURL: data?.photoURL,
+          });
+        } else {
+          authorMap.set(doc.id, null);
+        }
+      }
+    }
+
+    // Helper to get author from pre-fetched map (O(1) lookup)
+    const getAuthor = (authorId: string) => authorMap.get(authorId) || null;
 
     const posts: Record<string, unknown>[] = [];
     const pinnedPosts: Record<string, unknown>[] = [];
-
-    const attachAuthor = async (authorId: string) => {
-      const authorDoc = await dbAdmin.collection("users").doc(authorId).get();
-      const authorData = authorDoc.exists ? authorDoc.data() : null;
-      return authorData
-        ? {
-            id: authorDoc.id,
-            fullName: authorData.fullName,
-            handle: authorData.handle,
-            photoURL: authorData.photoURL,
-          }
-        : null;
-    };
 
     for (const doc of pinnedSnapshot.docs) {
       const data = doc.data();
@@ -142,7 +170,7 @@ export const GET = withAuthAndErrors(async (
       pinnedPosts.push({
         id: doc.id,
         ...data,
-        author: await attachAuthor(data.authorId),
+        author: getAuthor(data.authorId),
       });
     }
 
@@ -155,7 +183,7 @@ export const GET = withAuthAndErrors(async (
       posts.push({
         id: doc.id,
         ...data,
-        author: await attachAuthor(data.authorId),
+        author: getAuthor(data.authorId),
       });
     }
 

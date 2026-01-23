@@ -9,6 +9,22 @@ import { GhostModeService, type GhostModeUser } from '@hive/core/domain/profile/
 import { ViewerContext } from '@hive/core/domain/shared/value-objects/viewer-context.value';
 import { isContentHidden } from '@/lib/content-moderation';
 
+// COST OPTIMIZATION: Pre-fetched user data for ghost mode + display
+interface UserCacheEntry {
+  id: string;
+  fullName?: string;
+  photoURL?: string;
+  handle?: string;
+  ghostMode?: unknown;
+  visibility?: unknown;
+}
+
+// COST OPTIMIZATION: Pre-fetched tool data
+interface ToolCacheEntry {
+  id: string;
+  name: string;
+}
+
 const GetActivityFeedSchema = z.object({
   limit: z.coerce.number().min(1).max(50).default(20),
   offset: z.coerce.number().min(0).default(0),
@@ -100,294 +116,298 @@ export const GET = withAuthAndErrors(async (
       memberOfSpaceIds: [spaceId]
     });
 
-    /**
-     * Check if a user's activity should be hidden based on ghost mode settings
-     */
-    async function shouldHideUserActivity(targetUserId: string): Promise<boolean> {
-      try {
-        const userDoc = await dbAdmin.collection('users').doc(targetUserId).get();
-        if (!userDoc.exists) return false;
-        const userData = userDoc.data();
-        const ghostUser: GhostModeUser = {
-          id: targetUserId,
-          ghostMode: userData?.ghostMode,
-          visibility: userData?.visibility
-        };
-        // Both viewer and target user are in this space
-        return GhostModeService.shouldHideActivity(ghostUser, viewerContext, [spaceId]);
-      } catch {
-        return false; // Fail open if we can't check
+    // ============================================================================
+    // COST OPTIMIZATION: Fetch all activity snapshots in parallel
+    // ============================================================================
+    const [postsSnapshot, eventsSnapshot, membersSnapshot, deploymentsSnapshot] = await Promise.all([
+      activityTypes.includes('post')
+        ? dbAdmin
+            .collection("spaces")
+            .doc(spaceId)
+            .collection("posts")
+            .where("createdAt", ">=", sinceDate)
+            .orderBy("createdAt", "desc")
+            .limit(limit)
+            .get()
+        : Promise.resolve(null),
+      activityTypes.includes('event')
+        ? dbAdmin
+            .collection("spaces")
+            .doc(spaceId)
+            .collection("events")
+            .where("createdAt", ">=", sinceDate)
+            .orderBy("createdAt", "desc")
+            .limit(limit)
+            .get()
+        : Promise.resolve(null),
+      activityTypes.includes('member_join')
+        ? dbAdmin
+            .collection("spaceMembers")
+            .where("spaceId", "==", spaceId)
+            .where("isActive", "==", true)
+            .where("joinedAt", ">=", sinceDate)
+            .orderBy("joinedAt", "desc")
+            .limit(limit)
+            .get()
+        : Promise.resolve(null),
+      activityTypes.includes('tool_deploy')
+        ? dbAdmin
+            .collection("deployments")
+            .where("spaceId", "==", spaceId)
+            .where("deployedAt", ">=", sinceDate)
+            .orderBy("deployedAt", "desc")
+            .limit(limit)
+            .get()
+        : Promise.resolve(null),
+    ]);
+
+    // ============================================================================
+    // COST OPTIMIZATION: Collect ALL user IDs upfront, batch fetch once
+    // This eliminates N+1 queries for ghost mode + user info (was 2N reads per activity)
+    // ============================================================================
+    const allUserIds = new Set<string>();
+    const allToolIds = new Set<string>();
+
+    // Collect user IDs from posts
+    if (postsSnapshot) {
+      for (const doc of postsSnapshot.docs) {
+        const data = doc.data();
+        if (data.authorId && (!data.campusId || data.campusId === campusId) && !isContentHidden(data)) {
+          allUserIds.add(data.authorId);
+        }
       }
     }
 
+    // Collect user IDs from events
+    if (eventsSnapshot) {
+      for (const doc of eventsSnapshot.docs) {
+        const data = doc.data();
+        if (data.organizerId && (!data.campusId || data.campusId === campusId) && !isContentHidden(data)) {
+          allUserIds.add(data.organizerId);
+        }
+      }
+    }
+
+    // Collect user IDs from member joins
+    if (membersSnapshot) {
+      for (const doc of membersSnapshot.docs) {
+        const data = doc.data();
+        if (data.userId && (!data.campusId || data.campusId === campusId)) {
+          allUserIds.add(data.userId);
+        }
+      }
+    }
+
+    // Collect user IDs and tool IDs from deployments
+    if (deploymentsSnapshot) {
+      for (const doc of deploymentsSnapshot.docs) {
+        const data = doc.data();
+        if (data.userId) allUserIds.add(data.userId);
+        if (data.toolId) allToolIds.add(data.toolId);
+      }
+    }
+
+    // ============================================================================
+    // COST OPTIMIZATION: Batch fetch ALL users in one query (N+1 → 1)
+    // ============================================================================
+    const userCache = new Map<string, UserCacheEntry | null>();
+    const ghostModeCache = new Map<string, boolean>(); // userId → shouldHide
+
+    if (allUserIds.size > 0) {
+      const userRefs = Array.from(allUserIds).map(id => dbAdmin.collection('users').doc(id));
+      const userDocs = await dbAdmin.getAll(...userRefs);
+
+      for (const doc of userDocs) {
+        if (doc.exists) {
+          const data = doc.data();
+          userCache.set(doc.id, {
+            id: doc.id,
+            fullName: data?.fullName,
+            photoURL: data?.photoURL,
+            handle: data?.handle,
+            ghostMode: data?.ghostMode,
+            visibility: data?.visibility,
+          });
+
+          // Pre-compute ghost mode check for each user
+          const ghostUser: GhostModeUser = {
+            id: doc.id,
+            ghostMode: data?.ghostMode,
+            visibility: data?.visibility,
+          };
+          ghostModeCache.set(doc.id, GhostModeService.shouldHideActivity(ghostUser, viewerContext, [spaceId]));
+        } else {
+          userCache.set(doc.id, null);
+          ghostModeCache.set(doc.id, false); // User not found, don't hide
+        }
+      }
+    }
+
+    // ============================================================================
+    // COST OPTIMIZATION: Batch fetch ALL tools in one query (N+1 → 1)
+    // ============================================================================
+    const toolCache = new Map<string, ToolCacheEntry | null>();
+
+    if (allToolIds.size > 0) {
+      const toolRefs = Array.from(allToolIds).map(id => dbAdmin.collection('tools').doc(id));
+      const toolDocs = await dbAdmin.getAll(...toolRefs);
+
+      for (const doc of toolDocs) {
+        if (doc.exists) {
+          const data = doc.data();
+          toolCache.set(doc.id, {
+            id: doc.id,
+            name: data?.name || 'Unknown Tool',
+          });
+        } else {
+          toolCache.set(doc.id, null);
+        }
+      }
+    }
+
+    // ============================================================================
+    // Helper functions using pre-fetched caches (O(1) lookups)
+    // ============================================================================
+    const shouldHideUserActivity = (targetUserId: string): boolean => {
+      return ghostModeCache.get(targetUserId) || false;
+    };
+
+    const getUserInfo = (targetUserId: string) => {
+      const cached = userCache.get(targetUserId);
+      if (!cached) {
+        return { id: targetUserId, name: 'Unknown User', avatar: undefined, handle: undefined };
+      }
+      return {
+        id: cached.id,
+        name: cached.fullName || 'Unknown User',
+        avatar: cached.photoURL,
+        handle: cached.handle,
+      };
+    };
+
+    const getToolName = (toolId: string): string => {
+      return toolCache.get(toolId)?.name || 'Unknown Tool';
+    };
+
+    // ============================================================================
+    // Process activities using cached data (no more per-item fetches)
+    // ============================================================================
     const activities: ActivityItem[] = [];
 
-    // Fetch Posts
-    if (activityTypes.includes('post')) {
-      try {
-        const postsSnapshot = await dbAdmin
-          .collection("spaces")
-          .doc(spaceId)
-          .collection("posts")
-          .where("createdAt", ">=", sinceDate)
-          .orderBy("createdAt", "desc")
-          .limit(limit)
-          .get();
+    // Process Posts
+    if (postsSnapshot) {
+      for (const postDoc of postsSnapshot.docs) {
+        const postData = postDoc.data();
+        // SECURITY: Skip posts from other campuses
+        if (postData.campusId && postData.campusId !== campusId) continue;
+        // SECURITY: Skip hidden/moderated/removed content
+        if (isContentHidden(postData)) continue;
+        // GHOST MODE: Check using pre-computed cache
+        if (shouldHideUserActivity(postData.authorId)) continue;
 
-        for (const postDoc of postsSnapshot.docs) {
-          const postData = postDoc.data();
-          // SECURITY: Skip posts from other campuses
-          if (postData.campusId && postData.campusId !== campusId) {
-            continue;
+        activities.push({
+          id: `post_${postDoc.id}`,
+          type: 'post',
+          spaceId,
+          timestamp: postData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          user: getUserInfo(postData.authorId),
+          content: {
+            id: postDoc.id,
+            title: postData.title,
+            content: postData.content,
+            type: postData.type,
+            likesCount: postData.likesCount || 0,
+            repliesCount: postData.repliesCount || 0,
+            isPinned: postData.isPinned || false,
+          },
+          metadata: {
+            isPinned: postData.isPinned || false,
+            isHighlighted: postData.type === 'announcement',
           }
-          // SECURITY: Skip hidden/moderated/removed content
-          if (isContentHidden(postData)) {
-            continue;
-          }
-
-          // GHOST MODE: Check if author's activity should be hidden
-          if (await shouldHideUserActivity(postData.authorId)) {
-            continue;
-          }
-
-          // Get author info
-          let author = { id: postData.authorId, name: 'Unknown User', avatar: undefined, handle: undefined };
-          try {
-            const authorDoc = await dbAdmin.collection('users').doc(postData.authorId).get();
-            if (authorDoc.exists) {
-              const authorData = authorDoc.data();
-              author = {
-                id: postData.authorId,
-                name: authorData?.fullName || 'Unknown User',
-                avatar: authorData?.photoURL,
-                handle: authorData?.handle,
-              };
-            }
-          } catch {
-            logger.warn('Failed to fetch post author', { postId: postDoc.id, authorId: postData.authorId });
-          }
-
-          activities.push({
-            id: `post_${postDoc.id}`,
-            type: 'post',
-            spaceId,
-            timestamp: postData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            user: author,
-            content: {
-              id: postDoc.id,
-              title: postData.title,
-              content: postData.content,
-              type: postData.type,
-              likesCount: postData.likesCount || 0,
-              repliesCount: postData.repliesCount || 0,
-              isPinned: postData.isPinned || false,
-            },
-            metadata: {
-              isPinned: postData.isPinned || false,
-              isHighlighted: postData.type === 'announcement',
-            }
-          });
-        }
-      } catch (error) {
-        logger.warn('Failed to fetch posts for activity feed', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId });
+        });
       }
     }
 
-    // Fetch Events
-    if (activityTypes.includes('event')) {
-      try {
-        const eventsSnapshot = await dbAdmin
-          .collection("spaces")
-          .doc(spaceId)
-          .collection("events")
-          .where("createdAt", ">=", sinceDate)
-          .orderBy("createdAt", "desc")
-          .limit(limit)
-          .get();
+    // Process Events
+    if (eventsSnapshot) {
+      for (const eventDoc of eventsSnapshot.docs) {
+        const eventData = eventDoc.data();
+        // SECURITY: Skip events from other campuses
+        if (eventData.campusId && eventData.campusId !== campusId) continue;
+        // SECURITY: Skip hidden/moderated/removed content
+        if (isContentHidden(eventData)) continue;
+        // GHOST MODE: Check using pre-computed cache
+        if (shouldHideUserActivity(eventData.organizerId)) continue;
 
-        for (const eventDoc of eventsSnapshot.docs) {
-          const eventData = eventDoc.data();
-          // SECURITY: Skip events from other campuses
-          if (eventData.campusId && eventData.campusId !== campusId) {
-            continue;
+        activities.push({
+          id: `event_${eventDoc.id}`,
+          type: 'event',
+          spaceId,
+          timestamp: eventData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          user: getUserInfo(eventData.organizerId),
+          content: {
+            id: eventDoc.id,
+            title: eventData.title,
+            description: eventData.description,
+            startDate: eventData.startDate?.toDate?.()?.toISOString(),
+            location: eventData.location,
+            currentAttendees: eventData.currentAttendees || 0,
+            maxAttendees: eventData.maxAttendees,
+            type: eventData.type,
+            isFeatured: eventData.isFeatured || false,
+          },
+          metadata: {
+            isHighlighted: eventData.isFeatured || false,
           }
-          // SECURITY: Skip hidden/moderated/removed content
-          if (isContentHidden(eventData)) {
-            continue;
-          }
-
-          // GHOST MODE: Check if organizer's activity should be hidden
-          if (await shouldHideUserActivity(eventData.organizerId)) {
-            continue;
-          }
-
-          // Get organizer info
-          let organizer = { id: eventData.organizerId, name: 'Unknown User', avatar: undefined, handle: undefined };
-          try {
-            const organizerDoc = await dbAdmin.collection('users').doc(eventData.organizerId).get();
-            if (organizerDoc.exists) {
-              const organizerData = organizerDoc.data();
-              organizer = {
-                id: eventData.organizerId,
-                name: organizerData?.fullName || 'Unknown User',
-                avatar: organizerData?.photoURL,
-                handle: organizerData?.handle,
-              };
-            }
-          } catch {
-            logger.warn('Failed to fetch event organizer', { eventId: eventDoc.id, organizerId: eventData.organizerId });
-          }
-
-          activities.push({
-            id: `event_${eventDoc.id}`,
-            type: 'event',
-            spaceId,
-            timestamp: eventData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            user: organizer,
-            content: {
-              id: eventDoc.id,
-              title: eventData.title,
-              description: eventData.description,
-              startDate: eventData.startDate?.toDate?.()?.toISOString(),
-              location: eventData.location,
-              currentAttendees: eventData.currentAttendees || 0,
-              maxAttendees: eventData.maxAttendees,
-              type: eventData.type,
-              isFeatured: eventData.isFeatured || false,
-            },
-            metadata: {
-              isHighlighted: eventData.isFeatured || false,
-            }
-          });
-        }
-      } catch (error) {
-        logger.warn('Failed to fetch events for activity feed', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId });
+        });
       }
     }
 
-    // Fetch Member Activities (joins)
-    if (activityTypes.includes('member_join')) {
-      try {
-        const membersSnapshot = await dbAdmin
-          .collection("spaceMembers")
-          .where("spaceId", "==", spaceId)
-          .where("isActive", "==", true)
-          .where("joinedAt", ">=", sinceDate)
-          .orderBy("joinedAt", "desc")
-          .limit(limit)
-          .get();
+    // Process Member Joins
+    if (membersSnapshot) {
+      for (const memberDoc of membersSnapshot.docs) {
+        const memberData = memberDoc.data();
+        if (memberData.campusId && memberData.campusId !== campusId) continue;
 
-        for (const memberDoc of membersSnapshot.docs) {
-          const memberData = memberDoc.data();
-          if (memberData.campusId && memberData.campusId !== campusId) {
-            continue;
+        const memberId = memberData.userId;
+        // GHOST MODE: Check using pre-computed cache
+        if (shouldHideUserActivity(memberId)) continue;
+
+        activities.push({
+          id: `member_join_${memberId}`,
+          type: 'member_join',
+          spaceId,
+          timestamp: memberData.joinedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          user: getUserInfo(memberId),
+          content: {
+            role: memberData.role || 'member',
+            isNewMember: true,
           }
-
-          const memberId = memberData.userId;
-
-          // GHOST MODE: Check if member's activity should be hidden
-          if (await shouldHideUserActivity(memberId)) {
-            continue;
-          }
-
-          // Get member info
-          let member = { id: memberId, name: 'Unknown User', avatar: undefined, handle: undefined };
-          try {
-            const userDoc = await dbAdmin.collection('users').doc(memberId).get();
-            if (userDoc.exists) {
-              const userData = userDoc.data();
-              member = {
-                id: memberId,
-                name: userData?.fullName || 'Unknown User',
-                avatar: userData?.photoURL,
-                handle: userData?.handle,
-              };
-            }
-          } catch {
-            logger.warn('Failed to fetch member info', { memberId });
-          }
-
-          activities.push({
-            id: `member_join_${memberId}`,
-            type: 'member_join',
-            spaceId,
-            timestamp: memberData.joinedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            user: member,
-            content: {
-              role: memberData.role || 'member',
-              isNewMember: true,
-            }
-          });
-        }
-      } catch (error) {
-        logger.warn('Failed to fetch member joins for activity feed', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId });
+        });
       }
     }
 
-    // Fetch Tool Deployments
-    if (activityTypes.includes('tool_deploy')) {
-      try {
-        const deploymentsSnapshot = await dbAdmin
-          .collection("deployments")
-          .where("spaceId", "==", spaceId)
-          .where("deployedAt", ">=", sinceDate)
-          .orderBy("deployedAt", "desc")
-          .limit(limit)
-          .get();
+    // Process Tool Deployments
+    if (deploymentsSnapshot) {
+      for (const deploymentDoc of deploymentsSnapshot.docs) {
+        const deploymentData = deploymentDoc.data();
+        // GHOST MODE: Check using pre-computed cache
+        if (shouldHideUserActivity(deploymentData.userId)) continue;
 
-        for (const deploymentDoc of deploymentsSnapshot.docs) {
-          const deploymentData = deploymentDoc.data();
-
-          // GHOST MODE: Check if deployer's activity should be hidden
-          if (await shouldHideUserActivity(deploymentData.userId)) {
-            continue;
+        activities.push({
+          id: `tool_deploy_${deploymentDoc.id}`,
+          type: 'tool_deploy',
+          spaceId,
+          timestamp: deploymentData.deployedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          user: getUserInfo(deploymentData.userId),
+          content: {
+            toolId: deploymentData.toolId,
+            toolName: getToolName(deploymentData.toolId),
+            deploymentId: deploymentDoc.id,
+            status: deploymentData.status,
+            configuration: deploymentData.configuration,
           }
-
-          // Get deployer info
-          let deployer = { id: deploymentData.userId, name: 'Unknown User', avatar: undefined, handle: undefined };
-          try {
-            const userDoc = await dbAdmin.collection('users').doc(deploymentData.userId).get();
-            if (userDoc.exists) {
-              const userData = userDoc.data();
-              deployer = {
-                id: deploymentData.userId,
-                name: userData?.fullName || 'Unknown User',
-                avatar: userData?.photoURL,
-                handle: userData?.handle,
-              };
-            }
-          } catch {
-            logger.warn('Failed to fetch deployer info', { deploymentId: deploymentDoc.id, userId: deploymentData.userId });
-          }
-
-          // Get tool info
-          let toolName = 'Unknown Tool';
-          try {
-            const toolDoc = await dbAdmin.collection('tools').doc(deploymentData.toolId).get();
-            if (toolDoc.exists) {
-              toolName = toolDoc.data()?.name || 'Unknown Tool';
-            }
-          } catch {
-            logger.warn('Failed to fetch tool info', { toolId: deploymentData.toolId });
-          }
-
-          activities.push({
-            id: `tool_deploy_${deploymentDoc.id}`,
-            type: 'tool_deploy',
-            spaceId,
-            timestamp: deploymentData.deployedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-            user: deployer,
-            content: {
-              toolId: deploymentData.toolId,
-              toolName,
-              deploymentId: deploymentDoc.id,
-              status: deploymentData.status,
-              configuration: deploymentData.configuration,
-            }
-          });
-        }
-      } catch (error) {
-        logger.warn('Failed to fetch tool deployments for activity feed', { error: { error: error instanceof Error ? error.message : String(error) }, spaceId });
+        });
       }
     }
 

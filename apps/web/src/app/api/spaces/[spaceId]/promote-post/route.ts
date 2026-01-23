@@ -364,7 +364,8 @@ export const GET = withAuthAndErrors(async (
     }
 
     const postData = postDoc.data()!;
-    if (postData.campusId && postData.campusId !== CURRENT_CAMPUS_ID) {
+    const campusId = getCampusId(request);
+    if (postData.campusId && postData.campusId !== campusId) {
       return respond.error("Access denied for this campus", "FORBIDDEN", {
         status: HttpStatus.FORBIDDEN,
       });

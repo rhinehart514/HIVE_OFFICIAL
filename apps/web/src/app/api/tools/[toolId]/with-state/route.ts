@@ -8,13 +8,16 @@ import {
   getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import type { ToolSharedState, ToolSharedEntity } from "@hive/core";
+import type { ToolSharedState, ToolSharedEntity, ToolTimelineEvent } from "@hive/core";
 import { shardedCounterService } from "@/lib/services/sharded-counter.service";
 import { extractedCollectionService } from "@/lib/services/extracted-collection.service";
+import { extractedTimelineService } from "@/lib/services/extracted-timeline.service";
 
 // Feature flags for Phase 1 Scaling Architecture (matches execute/route.ts)
 const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === "true";
 const USE_EXTRACTED_COLLECTIONS = process.env.USE_EXTRACTED_COLLECTIONS === "true";
+// COST OPTIMIZATION: Extract timeline to subcollection for reduced document size
+const USE_EXTRACTED_TIMELINE = process.env.USE_EXTRACTED_TIMELINE === "true";
 
 /**
  * GET /api/tools/[toolId]/with-state
@@ -261,10 +264,26 @@ export const GET = withAuthAndErrors(async (
                 }
               }
 
+              // Get timeline - from subcollection if extraction enabled, otherwise from document
+              let timeline: ToolTimelineEvent[] = [];
+              if (USE_EXTRACTED_TIMELINE) {
+                // COST OPTIMIZATION: Read recent events from subcollection
+                // This reduces main document size and read costs
+                try {
+                  timeline = await extractedTimelineService.getRecentEvents(deploymentId, 50);
+                } catch {
+                  // Fallback to document timeline if subcollection read fails
+                  timeline = (data?.timeline as ToolSharedState["timeline"]) || [];
+                }
+              } else {
+                // Legacy path: read timeline from document
+                timeline = (data?.timeline as ToolSharedState["timeline"]) || [];
+              }
+
               sharedState = {
                 counters,
                 collections,
-                timeline: (data?.timeline as ToolSharedState["timeline"]) || [],
+                timeline,
                 computed: (data?.computed as Record<string, unknown>) || {},
                 version: (data?.version as number) || 0,
                 lastModified: (data?.lastModified as string) || new Date().toISOString(),

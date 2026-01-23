@@ -24,6 +24,11 @@ import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
 import { CanvasMinimap } from './canvas-minimap';
 import { toast } from 'sonner';
 
+// Sprint 4: Automations
+import type { AutomationSummary } from './automations-panel';
+import { AutomationBuilderModal, type AutomationData } from './automation-builder-modal';
+import { AutomationLogsViewer, type AutomationRun } from './automation-logs-viewer';
+
 // Mobile detection hook
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -224,6 +229,16 @@ export function HiveLabIDE({
   const [elementRailState, setElementRailState] = useState<RailState>('collapsed');
   const [elementRailTab, setElementRailTab] = useState<RailTab>('elements');
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
+
+  // Sprint 4: Automations state
+  const [automations, setAutomations] = useState<AutomationSummary[]>([]);
+  const [automationsLoading, setAutomationsLoading] = useState(false);
+  const [automationBuilderOpen, setAutomationBuilderOpen] = useState(false);
+  const [automationLogsOpen, setAutomationLogsOpen] = useState(false);
+  const [editingAutomation, setEditingAutomation] = useState<AutomationData | null>(null);
+  const [viewingAutomationId, setViewingAutomationId] = useState<string | null>(null);
+  const [automationRuns, setAutomationRuns] = useState<AutomationRun[]>([]);
+  const [automationRunsLoading, setAutomationRunsLoading] = useState(false);
 
   // Ref for floating action bar (includes AI input)
   const floatingBarRef = useRef<FloatingActionBarRef>(null);
@@ -1031,6 +1046,118 @@ export function HiveLabIDE({
     [pushHistory]
   );
 
+  // ============================================================================
+  // Sprint 4: Automation Handlers
+  // ============================================================================
+
+  // Open automation builder for creating a new automation
+  const handleCreateAutomation = useCallback(() => {
+    setEditingAutomation(null);
+    setAutomationBuilderOpen(true);
+  }, []);
+
+  // Open automation builder for editing an existing automation
+  const handleEditAutomation = useCallback((id: string) => {
+    const automation = automations.find(a => a.id === id);
+    if (automation) {
+      // Convert AutomationSummary to AutomationData for editing
+      setEditingAutomation({
+        id: automation.id,
+        name: automation.name,
+        enabled: automation.enabled,
+        trigger: {
+          type: automation.triggerType,
+          // These would be fetched from the full automation data in a real implementation
+        } as AutomationData['trigger'],
+        conditions: [],
+        actions: [],
+        limits: { maxRunsPerDay: 100, cooldownSeconds: 60 },
+      });
+      setAutomationBuilderOpen(true);
+    }
+  }, [automations]);
+
+  // Delete an automation
+  const handleDeleteAutomation = useCallback(async (id: string) => {
+    // In a real implementation, this would call the API
+    setAutomations(prev => prev.filter(a => a.id !== id));
+    toast.success('Automation deleted');
+  }, []);
+
+  // Toggle automation enabled state
+  const handleToggleAutomation = useCallback(async (id: string, enabled: boolean) => {
+    // In a real implementation, this would call the API
+    setAutomations(prev =>
+      prev.map(a => a.id === id ? { ...a, enabled } : a)
+    );
+    toast.success(enabled ? 'Automation enabled' : 'Automation paused');
+  }, []);
+
+  // View automation logs
+  const handleViewAutomationLogs = useCallback((id: string) => {
+    setViewingAutomationId(id);
+    setAutomationLogsOpen(true);
+    // In a real implementation, this would fetch logs from the API
+    setAutomationRunsLoading(true);
+    // Simulate loading logs
+    setTimeout(() => {
+      setAutomationRuns([]);
+      setAutomationRunsLoading(false);
+    }, 500);
+  }, []);
+
+  // Run automation immediately
+  const handleRunAutomationNow = useCallback(async (id: string) => {
+    // In a real implementation, this would call the API
+    toast.success('Automation triggered');
+  }, []);
+
+  // Save automation from builder
+  const handleSaveAutomation = useCallback(async (data: AutomationData) => {
+    if (data.id) {
+      // Update existing
+      setAutomations(prev =>
+        prev.map(a => a.id === data.id ? {
+          ...a,
+          name: data.name,
+          enabled: data.enabled,
+          triggerType: data.trigger.type,
+          triggerSummary: getTriggerSummary(data.trigger),
+        } : a)
+      );
+      toast.success('Automation updated');
+    } else {
+      // Create new
+      const newAutomation: AutomationSummary = {
+        id: `auto_${Date.now()}`,
+        name: data.name,
+        enabled: data.enabled,
+        triggerType: data.trigger.type,
+        triggerSummary: getTriggerSummary(data.trigger),
+        runCount: 0,
+        errorCount: 0,
+      };
+      setAutomations(prev => [...prev, newAutomation]);
+      toast.success('Automation created');
+    }
+    setAutomationBuilderOpen(false);
+    setEditingAutomation(null);
+  }, []);
+
+  // Helper to generate trigger summary text
+  function getTriggerSummary(trigger: AutomationData['trigger']): string {
+    switch (trigger.type) {
+      case 'event':
+        return `When ${trigger.event || 'event'} occurs`;
+      case 'schedule':
+        return `Every ${trigger.cron || 'day'}`;
+      case 'threshold':
+        return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
+      default:
+        return 'Manual trigger';
+    }
+  }
+
   // Keyboard shortcuts
   useIDEKeyboard({
     actions: {
@@ -1095,6 +1222,15 @@ export function HiveLabIDE({
           userTools={userTools}
           onToolSelect={onToolSelect}
           onNewTool={onNewTool}
+          // Sprint 4: Automations
+          automations={automations}
+          automationsLoading={automationsLoading}
+          onCreateAutomation={handleCreateAutomation}
+          onEditAutomation={handleEditAutomation}
+          onDeleteAutomation={handleDeleteAutomation}
+          onToggleAutomation={handleToggleAutomation}
+          onViewAutomationLogs={handleViewAutomationLogs}
+          onRunAutomationNow={handleRunAutomationNow}
         />
 
         {/* Canvas Area */}
@@ -1197,6 +1333,37 @@ export function HiveLabIDE({
         isOpen={templateGalleryOpen}
         onClose={() => setTemplateGalleryOpen(false)}
         onSelectTemplate={loadTemplateComposition}
+      />
+
+      {/* Sprint 4: Automation Builder Modal */}
+      <AutomationBuilderModal
+        isOpen={automationBuilderOpen}
+        onClose={() => {
+          setAutomationBuilderOpen(false);
+          setEditingAutomation(null);
+        }}
+        onSave={handleSaveAutomation}
+        initialData={editingAutomation || undefined}
+        elements={elements}
+        mode={editingAutomation ? 'edit' : 'create'}
+      />
+
+      {/* Sprint 4: Automation Logs Viewer */}
+      <AutomationLogsViewer
+        isOpen={automationLogsOpen}
+        onClose={() => {
+          setAutomationLogsOpen(false);
+          setViewingAutomationId(null);
+        }}
+        automationName={automations.find(a => a.id === viewingAutomationId)?.name || 'Automation'}
+        runs={automationRuns}
+        loading={automationRunsLoading}
+        onRefresh={() => {
+          setAutomationRunsLoading(true);
+          setTimeout(() => setAutomationRunsLoading(false), 500);
+        }}
+        onLoadMore={() => {}}
+        hasMore={false}
       />
 
       {/* AI Chat Pill - Floating/Dockable */}

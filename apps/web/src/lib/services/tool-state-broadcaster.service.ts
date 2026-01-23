@@ -226,6 +226,7 @@ export class ToolStateBroadcasterService {
 
   /**
    * Broadcast a timeline event (for activity feeds)
+   * COST OPTIMIZATION: Uses atomic push for concurrent-safe event insertion
    *
    * @param deploymentId - The deployment ID
    * @param event - The timeline event to broadcast
@@ -236,15 +237,128 @@ export class ToolStateBroadcasterService {
   ): Promise<void> {
     if (!this.enabled) return;
 
-    const timelinePath = `${this.getStatePath(deploymentId)}/timeline`;
-    const timelineRef = this.rtdb.ref(timelinePath);
+    // Use atomic push to avoid race conditions
+    // The timeline_events path uses push keys for ordering and atomic insertion
+    const timelineEventsPath = `${this.getStatePath(deploymentId)}/timeline_events`;
+    const timelineEventsRef = this.rtdb.ref(timelineEventsPath);
 
-    // Get current timeline, append event, trim to limit
-    const snapshot = await timelineRef.once('value');
-    const currentTimeline = snapshot.val() || [];
-    const updatedTimeline = [...currentTimeline, event].slice(-BROADCAST_TIMELINE_LIMIT);
+    // Atomic push - concurrent-safe, no read required
+    const eventRef = await timelineEventsRef.push({
+      ...event,
+      _serverTime: admin.database.ServerValue.TIMESTAMP,
+    });
 
-    await timelineRef.set(updatedTimeline);
+    // Fire-and-forget cleanup of old events (keep last BROADCAST_TIMELINE_LIMIT)
+    this.pruneTimelineEvents(deploymentId).catch(() => {
+      // Ignore pruning errors - don't fail the main operation
+    });
+  }
+
+  /**
+   * Broadcast multiple timeline events atomically
+   * COST OPTIMIZATION: Single RTDB operation for batch events
+   *
+   * @param deploymentId - The deployment ID
+   * @param events - Array of timeline events to broadcast
+   */
+  async broadcastTimelineEventsBatch(
+    deploymentId: string,
+    events: BroadcastTimelineEvent[]
+  ): Promise<void> {
+    if (!this.enabled || events.length === 0) return;
+
+    const timelineEventsPath = `${this.getStatePath(deploymentId)}/timeline_events`;
+    const timelineEventsRef = this.rtdb.ref(timelineEventsPath);
+
+    // Multi-path update for atomic batch insertion
+    const updates: Record<string, unknown> = {};
+    for (const event of events) {
+      const pushKey = timelineEventsRef.push().key;
+      if (pushKey) {
+        updates[`${timelineEventsPath}/${pushKey}`] = {
+          ...event,
+          _serverTime: admin.database.ServerValue.TIMESTAMP,
+        };
+      }
+    }
+
+    await this.rtdb.ref().update(updates);
+
+    // Fire-and-forget cleanup
+    this.pruneTimelineEvents(deploymentId).catch(() => {});
+  }
+
+  /**
+   * Prune old timeline events to keep RTDB lean
+   * Called after push operations to maintain the limit
+   */
+  private async pruneTimelineEvents(deploymentId: string): Promise<void> {
+    if (!this.enabled) return;
+
+    const timelineEventsPath = `${this.getStatePath(deploymentId)}/timeline_events`;
+    const timelineEventsRef = this.rtdb.ref(timelineEventsPath);
+
+    // Get count of events
+    const snapshot = await timelineEventsRef.once('value');
+    const events = snapshot.val();
+    if (!events) return;
+
+    const eventKeys = Object.keys(events);
+    if (eventKeys.length <= BROADCAST_TIMELINE_LIMIT * 2) {
+      // Only prune if we have more than 2x the limit (reduces prune frequency)
+      return;
+    }
+
+    // Sort by push key (chronological) and remove old ones
+    eventKeys.sort();
+    const keysToRemove = eventKeys.slice(0, eventKeys.length - BROADCAST_TIMELINE_LIMIT);
+
+    // Batch delete old events
+    const updates: Record<string, null> = {};
+    for (const key of keysToRemove) {
+      updates[`${timelineEventsPath}/${key}`] = null;
+    }
+
+    await this.rtdb.ref().update(updates);
+  }
+
+  /**
+   * Get recent timeline events from RTDB (for clients)
+   *
+   * @param deploymentId - The deployment ID
+   * @param limit - Maximum events to return (default: BROADCAST_TIMELINE_LIMIT)
+   */
+  async getRecentTimelineEvents(
+    deploymentId: string,
+    limit: number = BROADCAST_TIMELINE_LIMIT
+  ): Promise<BroadcastTimelineEvent[]> {
+    if (!this.enabled) return [];
+
+    const timelineEventsPath = `${this.getStatePath(deploymentId)}/timeline_events`;
+    const timelineEventsRef = this.rtdb.ref(timelineEventsPath);
+
+    // Query last N events by push key order (chronological)
+    const snapshot = await timelineEventsRef
+      .orderByKey()
+      .limitToLast(limit)
+      .once('value');
+
+    const events: BroadcastTimelineEvent[] = [];
+    snapshot.forEach((childSnapshot) => {
+      const data = childSnapshot.val();
+      if (data) {
+        events.push({
+          id: data.id,
+          type: data.type,
+          userId: data.userId,
+          action: data.action,
+          timestamp: data.timestamp,
+        });
+      }
+      return false;
+    });
+
+    return events;
   }
 
   /**

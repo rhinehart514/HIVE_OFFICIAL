@@ -82,6 +82,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       connectionType = 'notifications',
@@ -117,11 +120,11 @@ export async function POST(request: NextRequest) {
     await dbAdmin.collection('realtimeConnections').doc(connectionId).set(connection);
 
     // Subscribe to default channels based on connection type
-    const defaultChannels = await getDefaultChannels(user.uid, connectionType, spaceId);
-    await subscribeToChannels(connectionId, user.uid, defaultChannels);
+    const defaultChannels = await getDefaultChannels(user.uid, connectionType, campusId, spaceId);
+    await subscribeToChannels(connectionId, user.uid, defaultChannels, campusId);
 
     // Update user presence in Firestore (for persistence)
-    await updateUserPresence(user.uid, 'online', connectionId);
+    await updateUserPresence(user.uid, 'online', campusId, connectionId);
 
     // Start connection monitoring
     startConnectionMonitoring(connectionId);
@@ -223,6 +226,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const { connectionId, settings, channels, action = 'update' } = body;
 
@@ -247,13 +253,13 @@ export async function PUT(request: NextRequest) {
     if (channels) {
       switch (action) {
         case 'subscribe':
-          await subscribeToChannels(connectionId, user.uid, channels);
+          await subscribeToChannels(connectionId, user.uid, channels, campusId);
           break;
         case 'unsubscribe':
           await unsubscribeFromChannels(connectionId, user.uid, channels);
           break;
         case 'replace':
-          await replaceChannelSubscriptions(connectionId, user.uid, channels);
+          await replaceChannelSubscriptions(connectionId, user.uid, channels, campusId);
           break;
       }
     }
@@ -284,6 +290,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get('connectionId');
     const closeAll = searchParams.get('closeAll') === 'true';
@@ -302,7 +311,7 @@ export async function DELETE(request: NextRequest) {
       }
 
       // Update user presence to offline
-      await updateUserPresence(user.uid, 'offline');
+      await updateUserPresence(user.uid, 'offline', campusId);
 
       return NextResponse.json({
         success: true,
@@ -312,7 +321,7 @@ export async function DELETE(request: NextRequest) {
     } else if (connectionId) {
       // Close specific connection
       const success = await closeConnection(connectionId, user.uid);
-      
+
       if (!success) {
         return NextResponse.json(ApiResponseHelper.error("Connection not found or not owned", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
       }
@@ -323,9 +332,9 @@ export async function DELETE(request: NextRequest) {
         .where('status', '==', 'connected');
 
       const remainingSnapshot = await remainingConnectionsQuery.get();
-      
+
       if (remainingSnapshot.empty) {
-        await updateUserPresence(user.uid, 'offline');
+        await updateUserPresence(user.uid, 'offline', campusId);
       }
 
       return NextResponse.json({
@@ -360,7 +369,7 @@ function getDefaultConnectionSettings(): WebSocketConnection['settings'] {
 }
 
 // Helper function to get default channels for connection type
-async function getDefaultChannels(userId: string, connectionType: string, spaceId?: string): Promise<string[]> {
+async function getDefaultChannels(userId: string, connectionType: string, campusId: string, spaceId?: string): Promise<string[]> {
   const channels: string[] = [];
 
   // Always subscribe to user-specific channels
@@ -378,7 +387,7 @@ async function getDefaultChannels(userId: string, connectionType: string, spaceI
     case 'notifications': {
       channels.push('system:announcements');
       // Add space notification channels for user's spaces
-      const userSpaces = await getUserSpaces(userId);
+      const userSpaces = await getUserSpaces(userId, campusId);
       userSpaces.forEach(space => {
         channels.push(`space:${space}:notifications`);
       });
@@ -407,12 +416,12 @@ async function getDefaultChannels(userId: string, connectionType: string, spaceI
 }
 
 // Helper function to get user's spaces
-async function getUserSpaces(userId: string): Promise<string[]> {
+async function getUserSpaces(userId: string, campusId: string): Promise<string[]> {
   try {
     const membershipsQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const membershipsSnapshot = await membershipsQuery.get();
     return membershipsSnapshot.docs.map(doc => doc.data().spaceId);
@@ -426,13 +435,13 @@ async function getUserSpaces(userId: string): Promise<string[]> {
 }
 
 // Helper function to subscribe to channels
-async function subscribeToChannels(connectionId: string, userId: string, channels: string[]): Promise<void> {
+async function subscribeToChannels(connectionId: string, userId: string, channels: string[], campusId: string): Promise<void> {
   try {
     for (const channel of channels) {
       const subscription: ChannelSubscription = {
         userId,
         channel,
-        permissions: await getChannelPermissions(userId, channel),
+        permissions: await getChannelPermissions(userId, channel, campusId),
         filters: {
           messageTypes: ['all'],
           senderFilters: [],
@@ -468,7 +477,7 @@ async function subscribeToChannels(connectionId: string, userId: string, channel
 }
 
 // Helper function to get channel permissions
-async function getChannelPermissions(userId: string, channel: string): Promise<ChannelSubscription['permissions']> {
+async function getChannelPermissions(userId: string, channel: string, campusId: string): Promise<ChannelSubscription['permissions']> {
   // Parse channel format: type:id:subtype
   const [type, id, subtype] = channel.split(':');
 
@@ -486,7 +495,7 @@ async function getChannelPermissions(userId: string, channel: string): Promise<C
         .where('userId', '==', userId)
         .where('spaceId', '==', id)
         .where('status', '==', 'active')
-        .where('campusId', '==', CURRENT_CAMPUS_ID);
+        .where('campusId', '==', campusId);
 
       const membershipSnapshot = await membershipQuery.get();
       if (membershipSnapshot.empty) {
@@ -542,21 +551,21 @@ async function unsubscribeFromChannels(connectionId: string, userId: string, cha
 }
 
 // Helper function to replace channel subscriptions
-async function replaceChannelSubscriptions(connectionId: string, userId: string, channels: string[]): Promise<void> {
+async function replaceChannelSubscriptions(connectionId: string, userId: string, channels: string[], campusId: string): Promise<void> {
   try {
     // Get current subscriptions
     const currentSubscriptionsQuery = dbAdmin.collection('channelSubscriptions')
       .where('connectionId', '==', connectionId);
 
     const currentSubscriptionsSnapshot = await currentSubscriptionsQuery.get();
-    
+
     // Remove all current subscriptions
     for (const subDoc of currentSubscriptionsSnapshot.docs) {
       await subDoc.ref.delete();
     }
 
     // Add new subscriptions
-    await subscribeToChannels(connectionId, userId, channels);
+    await subscribeToChannels(connectionId, userId, channels, campusId);
   } catch (error) {
     logger.error(
       `Error replacing channel subscriptions at /api/realtime/websocket`,
@@ -586,7 +595,7 @@ async function getUserChannelSubscriptions(userId: string): Promise<Array<Record
 }
 
 // Helper function to update user presence
-async function updateUserPresence(userId: string, status: 'online' | 'offline' | 'away', connectionId?: string): Promise<void> {
+async function updateUserPresence(userId: string, status: 'online' | 'offline' | 'away', campusId: string, connectionId?: string): Promise<void> {
   try {
     const presenceData = {
       userId,
@@ -599,7 +608,7 @@ async function updateUserPresence(userId: string, status: 'online' | 'offline' |
     await dbAdmin.collection('userPresence').doc(userId).set(presenceData);
 
     // Broadcast presence update to relevant channels
-    const userSpaces = await getUserSpaces(userId);
+    const userSpaces = await getUserSpaces(userId, campusId);
     for (const spaceId of userSpaces) {
       await broadcastPresenceUpdate(spaceId, userId, status);
     }

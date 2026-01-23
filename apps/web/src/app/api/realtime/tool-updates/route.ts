@@ -603,7 +603,7 @@ async function verifyToolAccess(
 }
 
 // Helper function to get tool users
-async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: string): Promise<string[]> {
+async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: string, campusId?: string): Promise<string[]> {
   try {
     const users = new Set<string>();
 
@@ -624,10 +624,10 @@ async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: str
         if (deployment?.deployedBy) {
           users.add(deployment.deployedBy);
         }
-        
+
         // Add space members if deployed to space
         if (deployment?.spaceId) {
-          const spaceMembers = await getSpaceMembers(deployment.spaceId);
+          const spaceMembers = await getSpaceMembers(deployment.spaceId, campusId);
           spaceMembers.forEach(member => users.add(member));
         }
       }
@@ -635,7 +635,7 @@ async function getToolUsers(toolId: string, deploymentId?: string, spaceId?: str
 
     // Add space members if spaceId provided
     if (spaceId) {
-      const spaceMembers = await getSpaceMembers(spaceId);
+      const spaceMembers = await getSpaceMembers(spaceId, campusId);
       spaceMembers.forEach(member => users.add(member));
     }
 

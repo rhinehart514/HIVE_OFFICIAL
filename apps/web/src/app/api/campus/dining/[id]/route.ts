@@ -8,6 +8,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { getDefaultCampusId } from '@/lib/campus-context';
 import {
   type DiningLocation,
   isDiningLocationOpen,
@@ -15,8 +16,6 @@ import {
   getCurrentMealPeriod,
   getDiningLocationStatus,
 } from '@hive/core';
-
-const CURRENT_CAMPUS_ID = 'ub-buffalo';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -28,6 +27,10 @@ export async function GET(
 ): Promise<NextResponse> {
   try {
     const { id } = await context.params;
+    const { searchParams } = new URL(request.url);
+
+    // Support campusId query param for multi-campus
+    const campusId = searchParams.get('campusId') || getDefaultCampusId();
 
     if (!id) {
       return NextResponse.json(
@@ -37,7 +40,7 @@ export async function GET(
     }
 
     // Fetch the dining location
-    const docRef = dbAdmin.doc(`campusData/${CURRENT_CAMPUS_ID}/dining/${id}`);
+    const docRef = dbAdmin.doc(`campusData/${campusId}/dining/${id}`);
     const doc = await docRef.get();
 
     if (!doc.exists) {

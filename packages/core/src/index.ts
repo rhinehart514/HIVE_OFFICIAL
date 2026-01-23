@@ -275,8 +275,8 @@ export type {
   ConnectionDataType,
   ToolOutput,
   ToolOutputManifest,
-  ConnectionSource,
-  ConnectionTarget,
+  ToolConnectionSource,
+  ToolConnectionTarget,
   ToolConnection,
   CreateConnectionDTO,
   UpdateConnectionDTO,
@@ -314,6 +314,57 @@ export type {
   ConnectionRepository,
   ResolveOptions,
 } from "./application/hivelab/connection-resolver.service";
+
+// Sprint 4: Tool Automation Types
+export type {
+  ToolEventTrigger,
+  ToolScheduleTrigger,
+  ToolThresholdTrigger,
+  ToolAutomationTrigger,
+  ConditionOperator as AutomationConditionOperator,
+  ToolAutomationCondition,
+  NotifyEmailAction,
+  NotifyPushAction,
+  MutateAction,
+  TriggerToolAction,
+  ToolAutomationAction,
+  ToolAutomationLimits,
+  ToolAutomation,
+  CreateToolAutomationDTO,
+  UpdateToolAutomationDTO,
+  ToolAutomationRunStatus,
+  ToolAutomationRun,
+} from "./domain/hivelab/tool-automation.types";
+export {
+  DEFAULT_AUTOMATION_LIMITS,
+  MAX_AUTOMATIONS_PER_TOOL,
+  MAX_ACTIONS_PER_AUTOMATION,
+  MAX_CONDITIONS_PER_AUTOMATION,
+  MAX_AUTOMATION_RUNS_HISTORY,
+  AUTOMATIONS_COLLECTION,
+  AUTOMATION_RUNS_COLLECTION,
+  isValidCron,
+  getNextRunTime,
+  evaluateCondition as evaluateAutomationCondition,
+  evaluateAllConditions,
+  canRunAutomation,
+} from "./domain/hivelab/tool-automation.types";
+
+// Sprint 4: Automation Runner Service
+export {
+  AutomationRunnerService,
+  getAutomationRunner,
+  initializeAutomationRunner,
+  createAutomationRunner,
+  resetAutomationRunner,
+} from "./application/hivelab/automation-runner.service";
+export type {
+  AutomationRunnerRepository,
+  ActionExecutorCallbacks,
+  AutomationExecutionContext,
+  AutomationActionResult,
+  AutomationExecutionResult,
+} from "./application/hivelab/automation-runner.service";
 
 // Sprint 2: Tool Runtime Context Types
 export type {
@@ -641,11 +692,68 @@ export {
   getOrchestrationExecutor,
   resetOrchestrationExecutor,
   type ExecutionContext,
-  type ActionExecutionResult,
+  type OrchestrationActionResult,
   type RuleExecutionResult,
   type OrchestrationExecutionResult,
   type ExecutorCallbacks,
 } from "./domain/hivelab/setup";
+
+// Sprint 5: Tool Theme Inheritance
+export type {
+  ToolThemeSource,
+  HSLColor,
+  ToolThemePalette,
+  ToolThemeConfig,
+  ResolvedToolTheme,
+  SpaceBrand,
+} from "./domain/hivelab/tool-theme.types";
+export {
+  HIVE_DEFAULT_PALETTE,
+  MINIMAL_PALETTE,
+  hexToHSL,
+  hslToHex,
+  getLuminance,
+  getContrastColor,
+  generatePalette,
+  resolveToolTheme,
+  DEFAULT_TOOL_THEME,
+} from "./domain/hivelab/tool-theme.types";
+
+// Sprint 5: Structured Error Types
+export type {
+  ToolErrorCode,
+  ToolError,
+  ErrorRecoveryAction,
+} from "./domain/hivelab/tool-error.types";
+export {
+  ERROR_MESSAGES,
+  createToolError,
+  isRecoverableError,
+  getRecoveryActions,
+  parseError,
+  isToolError,
+} from "./domain/hivelab/tool-error.types";
+
+// Sprint 5: Audit Trail
+export type {
+  AuditEventType,
+  AuditActor,
+  AuditChanges,
+  AuditEntry,
+  AuditLogQuery,
+  AuditLogResponse,
+  AuditSummary,
+} from "./domain/hivelab/tool-audit.types";
+export {
+  AUDIT_COLLECTION,
+  MAX_AUDIT_ENTRIES,
+  AUDIT_RETENTION_DAYS,
+  generateAuditId,
+  createAuditEntry,
+  createSystemActor,
+  createUserActor,
+  getEventDescription,
+} from "./domain/hivelab/tool-audit.types";
 
 // Application Services - Use Case Orchestration
 export * from "./application";

@@ -8,8 +8,9 @@ import { cn } from '../../../lib/utils';
 import { ArrayEditor } from './field-primitives';
 import { ContextPicker } from './context-picker';
 import { ConditionBuilder } from './condition-builder';
+import { ConnectionsPanel, type ConnectionWithMetadata } from './connections-panel';
 import type { CanvasElement } from './types';
-import type { ContextRequirements, VisibilityCondition, ConditionGroup } from '@hive/core';
+import type { ContextRequirements, VisibilityCondition, ConditionGroup, ToolConnection } from '@hive/core';
 
 // HiveLab Dark Panel Colors (consistent with context-rail.tsx)
 const PANEL_COLORS = {
@@ -57,6 +58,22 @@ interface PropertiesPanelProps {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElement: (id: string) => void;
   onDuplicateElement: (id: string) => void;
+  /** Sprint 3: Connections targeting this element */
+  elementConnections?: ConnectionWithMetadata[];
+  /** Sprint 3: Loading state for connections */
+  connectionsLoading?: boolean;
+  /** Sprint 3: Callback to edit a connection */
+  onEditConnection?: (connection: ToolConnection) => void;
+  /** Sprint 3: Callback to delete a connection */
+  onDeleteConnection?: (connectionId: string) => void;
+  /** Sprint 3: Callback to toggle connection enabled/disabled */
+  onToggleConnection?: (connectionId: string, enabled: boolean) => void;
+  /** Sprint 3: Callback to test a connection */
+  onTestConnection?: (connectionId: string) => void;
+  /** Sprint 3: Callback to add a new connection */
+  onAddConnection?: () => void;
+  /** Sprint 3: Callback to refresh connections */
+  onRefreshConnections?: () => void;
 }
 
 // Element config schemas - defines what properties each element type has
@@ -615,6 +632,14 @@ export function PropertiesPanel({
   onUpdateElement,
   onDeleteElement,
   onDuplicateElement,
+  elementConnections,
+  connectionsLoading,
+  onEditConnection,
+  onDeleteConnection,
+  onToggleConnection,
+  onTestConnection,
+  onAddConnection,
+  onRefreshConnections,
 }: PropertiesPanelProps) {
   const prefersReducedMotion = useReducedMotion();
 
@@ -921,6 +946,20 @@ export function PropertiesPanel({
               })
             }
             compact
+          />
+        </Section>
+
+        {/* Sprint 3: Connections */}
+        <Section title="Connections" defaultExpanded={false}>
+          <ConnectionsPanel
+            incomingConnections={elementConnections || []}
+            loading={connectionsLoading}
+            onEdit={onEditConnection}
+            onDelete={onDeleteConnection}
+            onToggleEnabled={onToggleConnection}
+            onTest={onTestConnection}
+            onAddConnection={onAddConnection}
+            onRefresh={onRefreshConnections}
           />
         </Section>
       </div>

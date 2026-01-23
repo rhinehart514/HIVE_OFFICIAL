@@ -9,6 +9,8 @@ const BoxSelect = ViewfinderCircleIcon;
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import type { ElementProps, ElementSharedState, ElementUserState } from '../../lib/hivelab/element-system';
+import type { ResolvedToolTheme, ToolThemePalette, ToolError } from '@hive/core';
+import { isToolError, isRecoverableError } from '@hive/core';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -77,8 +79,10 @@ export interface ToolCanvasProps {
   className?: string;
   /** Whether the tool is loading */
   isLoading?: boolean;
-  /** Error message to display */
-  error?: string | null;
+  /** Error to display (string for legacy, ToolError for structured) */
+  error?: string | ToolError | null;
+  /** Callback when user clicks retry on recoverable errors */
+  onRetry?: () => void;
   /** Context for space/deployment-aware elements */
   context?: ToolCanvasContext;
 
@@ -97,6 +101,16 @@ export interface ToolCanvasProps {
    * Read from: toolStates/{deploymentId}_{userId}
    */
   userState?: ElementUserState;
+
+  // ============================================================================
+  // Sprint 5: Theme Inheritance
+  // ============================================================================
+
+  /**
+   * Resolved theme from space brand
+   * Applied as CSS custom properties for consistent styling
+   */
+  theme?: ResolvedToolTheme;
 }
 
 // ============================================================================
@@ -356,8 +370,25 @@ function CanvasSkeleton() {
   );
 }
 
-function CanvasError({ message }: { message: string }) {
+interface CanvasErrorProps {
+  error: string | ToolError;
+  onRetry?: () => void;
+}
+
+function CanvasError({ error, onRetry }: CanvasErrorProps) {
   const prefersReducedMotion = useReducedMotion();
+
+  // Normalize error to structured format
+  const errorObj: { message: string; recoverable: boolean; code?: string } =
+    typeof error === 'string'
+      ? { message: error, recoverable: true }
+      : {
+          message: error.message,
+          recoverable: error.recoverable,
+          code: error.code,
+        };
+
+  const showRetry = errorObj.recoverable && onRetry;
 
   return (
     <motion.div
@@ -365,6 +396,8 @@ function CanvasError({ message }: { message: string }) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 280, damping: 24 }}
       className={cn("rounded-xl p-8 text-center", glass.error)}
+      role="alert"
+      aria-live="polite"
     >
       <motion.div
         className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4"
@@ -381,8 +414,21 @@ function CanvasError({ message }: { message: string }) {
       >
         <ExclamationTriangleIcon className="h-7 w-7 text-red-400" />
       </motion.div>
-      <p className="text-red-400 font-medium mb-1">Failed to load tool</p>
-      <p className="text-sm text-red-400/60">{message}</p>
+      <p className="text-red-400 font-medium mb-1">
+        {errorObj.recoverable ? 'Something went wrong' : 'Unable to load tool'}
+      </p>
+      <p className="text-sm text-red-400/60 mb-4">{errorObj.message}</p>
+      {showRetry && (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onRetry}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-medium"
+        >
+          <ArrowPathIcon className="w-4 h-4" />
+          Try again
+        </motion.button>
+      )}
     </motion.div>
   );
 }
@@ -444,16 +490,24 @@ export function ToolCanvas({
   className,
   isLoading,
   error,
+  onRetry,
   context,
   sharedState,
   userState,
+  theme,
 }: ToolCanvasProps) {
+  // Build CSS variable style object from theme
+  const themeStyle = React.useMemo(() => {
+    if (!theme?.cssVariables) return undefined;
+    return theme.cssVariables as React.CSSProperties;
+  }, [theme]);
+
   if (isLoading) {
     return <CanvasSkeleton />;
   }
 
   if (error) {
-    return <CanvasError message={error} />;
+    return <CanvasError error={error} onRetry={onRetry} />;
   }
 
   if (!elements || elements.length === 0) {
@@ -472,7 +526,11 @@ export function ToolCanvas({
   };
 
   return (
-    <div className={cn('tool-canvas', className)}>
+    <div
+      className={cn('tool-canvas', className)}
+      style={themeStyle}
+      data-theme-source={theme?.source}
+    >
       {layout === 'grid' && <GridLayout {...layoutProps} />}
       {layout === 'flow' && <FlowLayout {...layoutProps} />}
       {layout === 'stack' && <StackLayout {...layoutProps} />}

@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth-server';
+import { deriveCampusFromEmail } from '@/lib/middleware';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 
@@ -173,8 +173,11 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const includeConfig = searchParams.get('includeConfig') === 'true';
 
+    // Derive campusId from user's email
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     // Build user context
-    const userContext = await buildUserContext(user.uid);
+    const userContext = await buildUserContext(user.uid, campusId);
 
     let results: Record<string, FlagResult> = {};
 
@@ -241,13 +244,16 @@ export async function POST(request: NextRequest) {
 
     if (!flagIds || !Array.isArray(flagIds)) {
       return NextResponse.json(
-        ApiResponseHelper.error('Flag IDs array is required', 'INVALID_INPUT'), 
+        ApiResponseHelper.error('Flag IDs array is required', 'INVALID_INPUT'),
         { status: HttpStatus.BAD_REQUEST }
       );
     }
 
+    // Derive campusId from user's email
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     // Build user context with custom overrides
-    const baseUserContext = await buildUserContext(user.uid);
+    const baseUserContext = await buildUserContext(user.uid, campusId);
     const userContext: UserFeatureContext = {
       ...baseUserContext,
       ...customContext,
@@ -280,7 +286,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to build user context from database
-async function buildUserContext(userId: string): Promise<UserFeatureContext> {
+async function buildUserContext(userId: string, campusId: string): Promise<UserFeatureContext> {
   try {
     // Get user profile
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
@@ -290,7 +296,7 @@ async function buildUserContext(userId: string): Promise<UserFeatureContext> {
     const membershipsQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
     
     const membershipsSnapshot = await membershipsQuery.get();
     const spaceIds = membershipsSnapshot.docs.map((doc: QueryDocumentSnapshot) => doc.data().spaceId);

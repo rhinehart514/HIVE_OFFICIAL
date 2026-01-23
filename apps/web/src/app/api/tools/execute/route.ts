@@ -19,7 +19,9 @@ import { rateLimit } from '@/lib/rate-limit-simple';
 import { verifyRequestAppCheck } from '@/lib/app-check-server';
 import { shardedCounterService } from '@/lib/services/sharded-counter.service';
 import { extractedCollectionService } from '@/lib/services/extracted-collection.service';
+import { extractedTimelineService } from '@/lib/services/extracted-timeline.service';
 import { toolStateBroadcaster } from '@/lib/services/tool-state-broadcaster.service';
+import { getFirebaseConnectionRepository } from '@/lib/services/connection-repository.firebase';
 import type {
   ToolSharedState,
   ToolSharedEntity,
@@ -28,6 +30,7 @@ import type {
   ToolCapabilities,
   ToolBudgets,
   BudgetUsage,
+  ResolvedConnections,
 } from '@hive/core';
 import {
   hasCapability,
@@ -35,13 +38,18 @@ import {
   checkBudget,
   CAPABILITY_PRESETS,
   DEFAULT_BUDGETS,
+  createConnectionResolver,
 } from '@hive/core';
 
 // Feature flags for Phase 1 Scaling Architecture (enable after migration)
 const USE_SHARDED_COUNTERS = process.env.USE_SHARDED_COUNTERS === 'true';
 const USE_EXTRACTED_COLLECTIONS = process.env.USE_EXTRACTED_COLLECTIONS === 'true';
+// COST OPTIMIZATION: Extract timeline to subcollection for reduced document size
+const USE_EXTRACTED_TIMELINE = process.env.USE_EXTRACTED_TIMELINE === 'true';
 // P0: Enable RTDB broadcast by default for real-time updates (can disable with env var)
 const USE_RTDB_BROADCAST = process.env.USE_RTDB_BROADCAST !== 'false';
+// Sprint 3: Tool-to-Tool Connections (enable by default, can disable with env var)
+const USE_TOOL_CONNECTIONS = process.env.USE_TOOL_CONNECTIONS !== 'false';
 
 // Rate limiter for tool executions: 60 requests per minute per user
 const toolExecuteRateLimiter = rateLimit({
@@ -1274,20 +1282,22 @@ export const POST = withAuthValidationAndErrors(
       const userId = getUserId(request as AuthenticatedRequest);
       const campusId = getCampusId(request as AuthenticatedRequest);
 
-      // SECURITY: Verify App Check token (logs violations, doesn't block yet for gradual rollout)
+      // SECURITY: Verify App Check token
+      // Sprint 5: App Check enforcement enabled
       const appCheckResult = await verifyRequestAppCheck(request as Request);
       if (!appCheckResult.valid) {
-        // Log App Check failures for monitoring (gradual rollout - don't block yet)
         logger.warn('App Check verification failed for tool execution', {
           userId,
           error: appCheckResult.error,
           url: (request as Request).url,
         });
-        // TODO: Once App Check is fully deployed, uncomment to enforce:
-        // return NextResponse.json(
-        //   { error: 'App Check verification failed', code: 'APP_CHECK_FAILED' },
-        //   { status: 401 }
-        // );
+        // Enforce App Check in production (env var controlled)
+        if (process.env.NEXT_PUBLIC_ENABLE_APP_CHECK === 'true') {
+          return NextResponse.json(
+            { error: 'App Check verification failed', code: 'APP_CHECK_FAILED' },
+            { status: 401 }
+          );
+        }
       }
 
       // SECURITY: Rate limit tool executions per user
@@ -1722,8 +1732,19 @@ async function executeToolAction(params: {
     const deploymentRef = dbAdmin.collection('deployedTools').doc(deployment.id);
     const sharedStateRef = deploymentRef.collection('sharedState').doc('current');
 
-    // Load shared state (aggregate data visible to all users)
-    const sharedStateDoc = await sharedStateRef.get();
+    // COST OPTIMIZATION: Load shared state and user state in parallel
+    // This reduces latency by ~50% and improves throughput
+    let placementStateRef: admin.firestore.DocumentReference<admin.firestore.DocumentData> | null = null;
+    const userStateRef = placementContext
+      ? (placementStateRef = placementContext.ref.collection('state').doc(user.uid), placementStateRef)
+      : dbAdmin.collection('toolStates').doc(userStateId);
+
+    const [sharedStateDoc, userStateDoc] = await Promise.all([
+      sharedStateRef.get(),
+      userStateRef.get(),
+    ]);
+
+    // Parse shared state (aggregate data visible to all users)
     if (sharedStateDoc.exists) {
       const data = sharedStateDoc.data();
       currentSharedState = {
@@ -1736,17 +1757,12 @@ async function executeToolAction(params: {
       };
     }
 
-    // Load user state (per-user personal data)
-    let placementStateRef: admin.firestore.DocumentReference<admin.firestore.DocumentData> | null = null;
-    if (placementContext) {
-      placementStateRef = placementContext.ref.collection('state').doc(user.uid);
-      const stateSnapshot = await placementStateRef.get();
-      if (stateSnapshot.exists) {
-        currentUserState = (stateSnapshot.data()?.state as Record<string, unknown>) || {};
-      }
-    } else {
-      const stateDoc = await dbAdmin.collection('toolStates').doc(userStateId).get();
-      currentUserState = stateDoc.exists ? (stateDoc.data() as { state?: Record<string, unknown> })?.state || {} : {};
+    // Parse user state (per-user personal data)
+    if (userStateDoc.exists) {
+      const data = userStateDoc.data();
+      currentUserState = placementContext
+        ? (data?.state as Record<string, unknown>) || {}
+        : (data as { state?: Record<string, unknown> })?.state || {};
     }
 
     // Legacy: Keep currentState for backward compatibility
@@ -1777,6 +1793,65 @@ async function executeToolAction(params: {
 
     if (targetType === 'space' && targetId) {
       spaceContext = await fetchSpaceContext(targetId as string, user.uid, campusId);
+    }
+
+    // =========================================================================
+    // Sprint 3: Tool-to-Tool Connection Resolution
+    // Resolve incoming connections from other tools in the same space
+    // =========================================================================
+    let resolvedConnections: ResolvedConnections | undefined;
+    if (USE_TOOL_CONNECTIONS && targetType === 'space' && targetId) {
+      try {
+        const spaceId = targetId as string;
+        const connectionRepository = getFirebaseConnectionRepository();
+        const connectionResolver = createConnectionResolver(connectionRepository);
+
+        // Resolve all incoming connections for this tool
+        resolvedConnections = await connectionResolver.resolveConnections(
+          deployment.id,
+          spaceId
+        );
+
+        // Inject resolved values into element configs
+        if (resolvedConnections.count > 0 && tool.elements) {
+          // Map tool.elements to CanvasElement format for injection
+          const canvasElements = tool.elements.map((el: ToolElement) => ({
+            instanceId: el.id,
+            elementId: el.type,
+            config: { ...el.config },
+            position: { x: 0, y: 0 },
+            size: { width: 200, height: 100 },
+          }));
+
+          const injectedElements = connectionResolver.injectIntoElements(
+            canvasElements,
+            resolvedConnections
+          );
+
+          // Update tool.elements with injected values
+          for (const injectedEl of injectedElements) {
+            const originalEl = tool.elements.find(
+              (el: ToolElement) => el.id === injectedEl.instanceId
+            );
+            if (originalEl && injectedEl.config) {
+              originalEl.config = injectedEl.config;
+            }
+          }
+
+          logger.info('[execute] Resolved tool-to-tool connections', {
+            deploymentId: deployment.id,
+            spaceId,
+            resolvedCount: resolvedConnections.count,
+            errorCount: resolvedConnections.errorCount,
+          });
+        }
+      } catch (connectionError) {
+        // Log but don't fail the action if connection resolution fails
+        logger.warn('[execute] Failed to resolve tool connections', {
+          deploymentId: deployment.id,
+          error: connectionError instanceof Error ? connectionError.message : String(connectionError),
+        });
+      }
     }
 
     // Build action context for the extensible handler system
@@ -1918,42 +1993,57 @@ async function executeToolAction(params: {
             result.sharedStateUpdate.computedUpdates;
 
           // Handle collection updates (extracted or inline based on feature flag)
-          if (hasCollectionUpdates) {
-            if (USE_EXTRACTED_COLLECTIONS) {
-              // New path: Use subcollections for unlimited scale
-              const upserts: Array<{ collectionKey: string; entityId: string; entity: ToolSharedEntity }> = [];
-              const deletes: Array<{ collectionKey: string; entityId: string }> = [];
+          if (hasCollectionUpdates && USE_EXTRACTED_COLLECTIONS) {
+            // New path: Use subcollections for unlimited scale
+            const upserts: Array<{ collectionKey: string; entityId: string; entity: ToolSharedEntity }> = [];
+            const deletes: Array<{ collectionKey: string; entityId: string }> = [];
 
-              // Collect upserts
-              if (result.sharedStateUpdate.collectionUpserts) {
-                for (const [collectionKey, entities] of Object.entries(result.sharedStateUpdate.collectionUpserts)) {
-                  for (const [entityId, entity] of Object.entries(entities)) {
-                    upserts.push({ collectionKey, entityId, entity });
-                  }
+            // Collect upserts
+            if (result.sharedStateUpdate.collectionUpserts) {
+              for (const [collectionKey, entities] of Object.entries(result.sharedStateUpdate.collectionUpserts)) {
+                for (const [entityId, entity] of Object.entries(entities)) {
+                  upserts.push({ collectionKey, entityId, entity });
                 }
               }
+            }
 
-              // Collect deletes
-              if (result.sharedStateUpdate.collectionDeletes) {
-                for (const [collectionKey, idsToDelete] of Object.entries(result.sharedStateUpdate.collectionDeletes)) {
-                  for (const entityId of idsToDelete) {
-                    deletes.push({ collectionKey, entityId });
-                  }
+            // Collect deletes
+            if (result.sharedStateUpdate.collectionDeletes) {
+              for (const [collectionKey, idsToDelete] of Object.entries(result.sharedStateUpdate.collectionDeletes)) {
+                for (const entityId of idsToDelete) {
+                  deletes.push({ collectionKey, entityId });
                 }
               }
+            }
 
-              // Execute in parallel
-              await Promise.all([
-                upserts.length > 0 ? extractedCollectionService.upsertBatch(deployment.id, upserts) : Promise.resolve(),
-                deletes.length > 0 ? extractedCollectionService.deleteBatch(deployment.id, deletes) : Promise.resolve(),
-              ]);
-            } else {
-              // Legacy path: Update inline collections in main document
-              const sharedDoc = await sharedStateRef.get();
-              const existingData = sharedDoc.exists ? sharedDoc.data() : {};
+            // Execute in parallel
+            await Promise.all([
+              upserts.length > 0 ? extractedCollectionService.upsertBatch(deployment.id, upserts) : Promise.resolve(),
+              deletes.length > 0 ? extractedCollectionService.deleteBatch(deployment.id, deletes) : Promise.resolve(),
+            ]);
+          }
+
+          // COST OPTIMIZATION: Combine legacy collection + timeline/computed into single read/write
+          // This eliminates duplicate Firestore reads when both updates are needed
+          const needsLegacyCollectionUpdate = hasCollectionUpdates && !USE_EXTRACTED_COLLECTIONS;
+          const needsTimelineOrComputedUpdate = hasTimelineOrComputedUpdates;
+
+          if (needsLegacyCollectionUpdate || needsTimelineOrComputedUpdate) {
+            // Single read for all legacy updates
+            const sharedDoc = await sharedStateRef.get();
+            const existingData = sharedDoc.exists ? sharedDoc.data() : {};
+            const existingVersion = (existingData?.version as number) || 0;
+
+            // Prepare update payload
+            const updatePayload: Record<string, unknown> = {
+              version: existingVersion + 1,
+              lastModified: new Date().toISOString(),
+              campusId: campusId,
+            };
+
+            // Apply legacy collection updates if needed
+            if (needsLegacyCollectionUpdate) {
               const existingCollections = (existingData?.collections as Record<string, Record<string, ToolSharedEntity>>) || {};
-              const existingVersion = (existingData?.version as number) || 0;
-
               const updatedCollections = { ...existingCollections };
 
               // Apply upserts
@@ -1977,51 +2067,59 @@ async function executeToolAction(params: {
                 }
               }
 
-              await sharedStateRef.set({
-                collections: updatedCollections,
-                version: existingVersion + 1,
-                lastModified: new Date().toISOString(),
-                campusId: campusId,
-              }, { merge: true });
-            }
-          }
-
-          // Handle timeline and computed updates (always in main document)
-          if (hasTimelineOrComputedUpdates) {
-            const sharedDoc = await sharedStateRef.get();
-            const existingData = sharedDoc.exists ? sharedDoc.data() : {};
-            const existingTimeline = (existingData?.timeline as ToolSharedState['timeline']) || [];
-            const existingComputed = (existingData?.computed as Record<string, unknown>) || {};
-            const existingVersion = (existingData?.version as number) || 0;
-
-            // Append to timeline (limit to last 100 events)
-            let updatedTimeline = [...existingTimeline];
-            if (result.sharedStateUpdate.timelineAppend) {
-              const newEvents = result.sharedStateUpdate.timelineAppend.map((event) => ({
-                ...event,
-                id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                timestamp: new Date().toISOString(),
-              }));
-              updatedTimeline = [...updatedTimeline, ...newEvents].slice(-100);
+              updatePayload.collections = updatedCollections;
             }
 
-            // Apply computed updates
-            const updatedComputed = {
-              ...existingComputed,
-              ...(result.sharedStateUpdate.computedUpdates || {}),
-            };
+            // Apply timeline and computed updates if needed
+            if (needsTimelineOrComputedUpdate) {
+              const existingComputed = (existingData?.computed as Record<string, unknown>) || {};
 
-            // Write updated shared state (merge to preserve other fields)
-            await sharedStateRef.set({
-              timeline: updatedTimeline,
-              computed: updatedComputed,
-              version: existingVersion + 1,
-              lastModified: new Date().toISOString(),
-              campusId: campusId,
-              // Only include counters/collections if NOT using extracted services
-              ...(USE_SHARDED_COUNTERS ? {} : { counters: existingData?.counters || {} }),
-              ...(USE_EXTRACTED_COLLECTIONS ? {} : { collections: existingData?.collections || {} }),
-            }, { merge: true });
+              // Handle timeline updates
+              if (result.sharedStateUpdate.timelineAppend && result.sharedStateUpdate.timelineAppend.length > 0) {
+                if (USE_EXTRACTED_TIMELINE) {
+                  // COST OPTIMIZATION: Store timeline in subcollection for unlimited scale
+                  // This avoids bloating the main document and reduces read costs
+                  await extractedTimelineService.appendBatch(
+                    deployment.id,
+                    result.sharedStateUpdate.timelineAppend
+                  );
+                  // Note: extractedTimelineService automatically updates recentTimeline in main doc
+                } else {
+                  // Legacy path: append to timeline array in main document
+                  const existingTimeline = (existingData?.timeline as ToolSharedState['timeline']) || [];
+                  const newEvents = result.sharedStateUpdate.timelineAppend.map((event) => ({
+                    ...event,
+                    id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    timestamp: new Date().toISOString(),
+                  }));
+                  updatePayload.timeline = [...existingTimeline, ...newEvents].slice(-100);
+                }
+              }
+
+              // Apply computed updates
+              const updatedComputed = {
+                ...existingComputed,
+                ...(result.sharedStateUpdate.computedUpdates || {}),
+              };
+
+              updatePayload.computed = updatedComputed;
+
+              // Preserve counters/collections if NOT using extracted services
+              if (!USE_SHARDED_COUNTERS) {
+                updatePayload.counters = existingData?.counters || {};
+              }
+              if (!USE_EXTRACTED_COLLECTIONS && !needsLegacyCollectionUpdate) {
+                updatePayload.collections = existingData?.collections || {};
+              }
+              // Preserve timeline if using extracted timeline (don't overwrite with empty)
+              if (USE_EXTRACTED_TIMELINE && !updatePayload.timeline) {
+                // Keep existing timeline in document (will be managed by extractedTimelineService)
+                updatePayload.timeline = existingData?.timeline || [];
+              }
+            }
+
+            // Single write for all updates
+            await sharedStateRef.set(updatePayload, { merge: true });
           }
         }
 
@@ -2156,16 +2254,16 @@ async function executeToolAction(params: {
             }
 
             // Broadcast timeline events for activity feeds
-            if (result.sharedStateUpdate.timelineAppend) {
-              for (const event of result.sharedStateUpdate.timelineAppend) {
-                await toolStateBroadcaster.broadcastTimelineEvent(deployment.id, {
-                  id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                  type: event.type,
-                  userId: event.userId,
-                  action: event.action,
-                  timestamp: new Date().toISOString(),
-                });
-              }
+            // COST OPTIMIZATION: Use batch method for atomic multi-event insertion
+            if (result.sharedStateUpdate.timelineAppend && result.sharedStateUpdate.timelineAppend.length > 0) {
+              const broadcastEvents = result.sharedStateUpdate.timelineAppend.map((event) => ({
+                id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                type: event.type,
+                userId: event.userId,
+                action: event.action,
+                timestamp: new Date().toISOString(),
+              }));
+              await toolStateBroadcaster.broadcastTimelineEventsBatch(deployment.id, broadcastEvents);
             }
 
             // Broadcast collection count updates for RSVP displays

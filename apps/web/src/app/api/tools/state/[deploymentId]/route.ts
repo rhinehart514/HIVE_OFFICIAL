@@ -3,12 +3,12 @@
 import { z } from "zod";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { logger as _logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { getPlacementFromDeploymentDoc } from "@/lib/tool-placement";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -52,7 +52,7 @@ interface ToolStateDocument {
   campusId?: string;
 }
 
-async function loadDeployment(deploymentId: string) {
+async function loadDeployment(deploymentId: string, campusId: string) {
   const doc = await dbAdmin.collection("deployedTools").doc(deploymentId).get();
   if (!doc.exists) {
     return {
@@ -71,7 +71,7 @@ async function loadDeployment(deploymentId: string) {
     };
   }
 
-  if (data.campusId && data.campusId !== CURRENT_CAMPUS_ID) {
+  if (data.campusId && data.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -85,6 +85,7 @@ async function loadDeployment(deploymentId: string) {
 async function canUserAccessDeploymentState(
   userId: string,
   deployment: FirebaseFirestore.DocumentData,
+  campusId: string,
 ) {
   if (deployment.deployedTo === "profile") {
     return deployment.targetId === userId;
@@ -96,7 +97,7 @@ async function canUserAccessDeploymentState(
       .where("userId", "==", userId)
       .where("spaceId", "==", deployment.targetId)
       .where("status", "==", "active")
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .limit(1)
       .get();
     return !membershipSnapshot.empty;
@@ -108,6 +109,7 @@ async function canUserAccessDeploymentState(
 async function ensureStateAccess(
   userId: string,
   deploymentDoc: DeploymentDoc,
+  campusId: string,
 ) {
   const deploymentData = deploymentDoc.data();
   if (!deploymentData) {
@@ -118,7 +120,7 @@ async function ensureStateAccess(
     };
   }
 
-  if (deploymentData.campusId && deploymentData.campusId !== CURRENT_CAMPUS_ID) {
+  if (deploymentData.campusId && deploymentData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -126,7 +128,7 @@ async function ensureStateAccess(
     };
   }
 
-  const hasAccess = await canUserAccessDeploymentState(userId, deploymentData);
+  const hasAccess = await canUserAccessDeploymentState(userId, deploymentData, campusId);
   if (!hasAccess) {
     return {
       ok: false as const,
@@ -251,6 +253,7 @@ function createStatePayload(
   userId: string,
   state: Record<string, unknown>,
   size: number,
+  campusId: string,
   metadata?: { version?: string; autoSave?: boolean },
   createdAt?: string,
 ): ToolStateDocument {
@@ -268,7 +271,7 @@ function createStatePayload(
     },
     createdAt: createdAt ?? timestamp,
     updatedAt: timestamp,
-    campusId: CURRENT_CAMPUS_ID,
+    campusId,
   };
 }
 
@@ -278,16 +281,17 @@ export const GET = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
-  const deploymentResult = await loadDeployment(deploymentId);
+  const deploymentResult = await loadDeployment(deploymentId, campusId);
   if (!deploymentResult.ok) {
     return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
       status: deploymentResult.status,
     });
   }
 
-  const accessResult = await ensureStateAccess(userId, deploymentResult.doc);
+  const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
   if (!accessResult.ok) {
     return respond.error(accessResult.message, "FORBIDDEN", {
       status: accessResult.status,
@@ -336,9 +340,10 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
-    const deploymentResult = await loadDeployment(deploymentId);
+    const deploymentResult = await loadDeployment(deploymentId, campusId);
     if (!deploymentResult.ok) {
       return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
         status: deploymentResult.status,
@@ -347,7 +352,7 @@ export const PUT = withAuthValidationAndErrors(
 
     const { data: deploymentData } = deploymentResult;
 
-    const accessResult = await ensureStateAccess(userId, deploymentResult.doc);
+    const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
     if (!accessResult.ok) {
       return respond.error(accessResult.message, "FORBIDDEN", {
         status: accessResult.status,
@@ -381,6 +386,7 @@ export const PUT = withAuthValidationAndErrors(
       userId,
       mergedState,
       sizeCheck.size,
+      campusId,
       body.metadata,
       existingCreatedAt,
     );
@@ -417,16 +423,17 @@ export const PATCH = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { deploymentId } = await params;
 
-    const deploymentResult = await loadDeployment(deploymentId);
+    const deploymentResult = await loadDeployment(deploymentId, campusId);
     if (!deploymentResult.ok) {
       return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
         status: deploymentResult.status,
       });
     }
 
-    const accessResult = await ensureStateAccess(userId, deploymentResult.doc);
+    const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
     if (!accessResult.ok) {
       return respond.error(accessResult.message, "FORBIDDEN", {
         status: accessResult.status,
@@ -507,16 +514,17 @@ export const DELETE = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { deploymentId } = await params;
 
-  const deploymentResult = await loadDeployment(deploymentId);
+  const deploymentResult = await loadDeployment(deploymentId, campusId);
   if (!deploymentResult.ok) {
     return respond.error(deploymentResult.message, "RESOURCE_NOT_FOUND", {
       status: deploymentResult.status,
     });
   }
 
-  const accessResult = await ensureStateAccess(userId, deploymentResult.doc);
+  const accessResult = await ensureStateAccess(userId, deploymentResult.doc, campusId);
   if (!accessResult.ok) {
     return respond.error(accessResult.message, "FORBIDDEN", {
       status: accessResult.status,

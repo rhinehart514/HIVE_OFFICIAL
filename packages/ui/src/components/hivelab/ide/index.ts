@@ -46,5 +46,15 @@ export * from './connection-config';
 export * from './context-picker';
 export * from './condition-builder';
 
+// Sprint 3: Tool-to-Tool Connection Components
+export * from './other-tools-panel';
+export * from './connections-panel';
+export * from './tool-reference-picker';
+
+// Sprint 4: Automation Components
+export * from './automations-panel';
+export * from './automation-builder-modal';
+export * from './automation-logs-viewer';
+
 // IDE component primitives
 export * from './components';

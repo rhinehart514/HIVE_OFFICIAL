@@ -3,10 +3,29 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { getCurrentUser } from '@/lib/server-auth';
+import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const campusId = (new URL(request.url).searchParams.get('campusId') || CURRENT_CAMPUS_ID).toLowerCase();
+  const searchParams = new URL(request.url).searchParams;
+  let campusId = searchParams.get('campusId');
+
+  // Get campusId from query param, user auth, or default
+  if (!campusId) {
+    const user = await getCurrentUser(request);
+    if (user?.email) {
+      try {
+        campusId = getCampusFromEmail(user.email);
+      } catch {
+        campusId = getDefaultCampusId();
+      }
+    } else {
+      campusId = getDefaultCampusId();
+    }
+  }
+
+  campusId = campusId.toLowerCase();
+
   return NextResponse.json(
     { error: 'Search API v2 is not yet implemented', campusId },
     { status: 501 }

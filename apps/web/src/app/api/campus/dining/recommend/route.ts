@@ -25,6 +25,7 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { getDefaultCampusId } from '@/lib/campus-context';
 import {
   type DiningLocation,
   type DiningLocationStatus,
@@ -36,10 +37,9 @@ import {
   estimateWalkingTime,
 } from '@hive/core';
 
-const CURRENT_CAMPUS_ID = 'ub-buffalo';
-
 // Query param schema
 const RecommendQuerySchema = z.object({
+  campusId: z.string().optional(), // For multi-campus support
   dietary: z.string().optional(),
   lat: z.coerce.number().optional(),
   lng: z.coerce.number().optional(),
@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
 
     const params = RecommendQuerySchema.parse({
+      campusId: searchParams.get('campusId') || undefined,
       dietary: searchParams.get('dietary') || undefined,
       lat: searchParams.get('lat') || undefined,
       lng: searchParams.get('lng') || undefined,
@@ -86,9 +87,12 @@ export async function GET(request: NextRequest) {
       mood: searchParams.get('mood') || undefined,
     });
 
+    // Use provided campusId or default
+    const campusId = params.campusId || getDefaultCampusId();
+
     // Fetch all active dining locations
     const snapshot = await dbAdmin
-      .collection(`campusData/${CURRENT_CAMPUS_ID}/dining`)
+      .collection(`campusData/${campusId}/dining`)
       .where('isActive', '==', true)
       .get();
 

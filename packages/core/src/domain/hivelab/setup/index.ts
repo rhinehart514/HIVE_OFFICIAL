@@ -101,7 +101,7 @@ export {
 
   // Types
   type ExecutionContext,
-  type ActionExecutionResult,
+  type OrchestrationActionResult,
   type RuleExecutionResult,
   type OrchestrationExecutionResult,
   type ExecutorCallbacks,

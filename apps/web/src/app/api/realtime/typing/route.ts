@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const { channelId, spaceId } = body;
 
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify access to channel
-    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId);
+    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -186,6 +189,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
     const spaceId = searchParams.get('spaceId');
@@ -195,7 +201,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify access
-    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId);
+    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -234,14 +240,14 @@ export async function GET(request: NextRequest) {
 }
 
 // Helper function to verify channel access
-async function verifyChannelAccess(userId: string, channelId: string, spaceId: string): Promise<boolean> {
+async function verifyChannelAccess(userId: string, channelId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
     // Check space membership
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     if (memberSnapshot.empty) {

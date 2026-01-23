@@ -13,7 +13,6 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { logger } from '@/lib/structured-logger';
 import { HttpStatus } from '@/lib/api-response-types';
 import {
@@ -24,6 +23,7 @@ import {
 import type { GhostModeUser } from '@hive/core';
 import { getCurrentUser } from '@/lib/server-auth';
 import { searchRateLimit } from '@/lib/rate-limit-simple';
+import { getCampusFromEmail, getDefaultCampusId } from '@/lib/campus-context';
 
 interface SearchResult {
   id: string;
@@ -429,7 +429,21 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get('q')?.trim();
     const category = (searchParams.get('category') || 'all') as SearchCategory;
     const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
-    const campusId = searchParams.get('campusId') || CURRENT_CAMPUS_ID;
+
+    // Get campusId from query param, user auth, or default
+    const user = await getCurrentUser(request);
+    let campusId = searchParams.get('campusId');
+    if (!campusId) {
+      if (user?.email) {
+        try {
+          campusId = getCampusFromEmail(user.email);
+        } catch {
+          campusId = getDefaultCampusId();
+        }
+      } else {
+        campusId = getDefaultCampusId();
+      }
+    }
 
     if (!query || query.length < 2) {
       return NextResponse.json({
@@ -442,8 +456,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Get current user for viewer context (ghost mode filtering)
-    const user = await getCurrentUser(request);
+    // Build viewer context for ghost mode filtering
     const viewerContext = user
       ? ViewerContext.authenticated({
           userId: user.uid,

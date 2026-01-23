@@ -10,6 +10,8 @@ const Layers = Square3Stack3DIcon;
 import { cn } from '../../../lib/utils';
 import { ElementPalette } from './element-palette';
 import { LayersPanel } from './layers-panel';
+import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
+import { AutomationsPanel, type AutomationSummary } from './automations-panel';
 import type { CanvasElement, Connection } from './types';
 
 // HiveLab Dark Sidebar Colors
@@ -32,7 +34,7 @@ const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible
 const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
 
 export type RailState = 'expanded' | 'collapsed' | 'hidden';
-export type RailTab = 'start' | 'elements' | 'layers' | 'tools';
+export type RailTab = 'start' | 'elements' | 'layers' | 'tools' | 'spaceTools' | 'automations';
 
 const EXPANDED_WIDTH = 260;
 const COLLAPSED_WIDTH = 64;
@@ -74,6 +76,34 @@ interface ElementRailProps {
   onToolSelect?: (id: string) => void;
   /** Callback when user clicks "New Tool" */
   onNewTool?: () => void;
+  /** Sprint 3: Other tools deployed to the same space */
+  spaceTools?: OtherToolData[];
+  /** Sprint 3: Loading state for space tools */
+  spaceToolsLoading?: boolean;
+  /** Sprint 3: Error state for space tools */
+  spaceToolsError?: string;
+  /** Sprint 3: Current deployment ID (to exclude from space tools list) */
+  currentDeploymentId?: string;
+  /** Sprint 3: Callback to create a connection from a space tool output */
+  onCreateConnection?: (sourceDeploymentId: string, outputPath: string, outputType: string) => void;
+  /** Sprint 3: Callback to refresh space tools list */
+  onRefreshSpaceTools?: () => void;
+  /** Sprint 4: Automations for the current tool */
+  automations?: AutomationSummary[];
+  /** Sprint 4: Loading state for automations */
+  automationsLoading?: boolean;
+  /** Sprint 4: Callback to create a new automation */
+  onCreateAutomation?: () => void;
+  /** Sprint 4: Callback to edit an automation */
+  onEditAutomation?: (id: string) => void;
+  /** Sprint 4: Callback to delete an automation */
+  onDeleteAutomation?: (id: string) => void;
+  /** Sprint 4: Callback to toggle automation enabled state */
+  onToggleAutomation?: (id: string, enabled: boolean) => void;
+  /** Sprint 4: Callback to view automation logs */
+  onViewAutomationLogs?: (id: string) => void;
+  /** Sprint 4: Callback to run an automation immediately */
+  onRunAutomationNow?: (id: string) => void;
 }
 
 // Make.com style app icons for sidebar
@@ -230,6 +260,28 @@ function CollapsedRail({
       {/* Elements Tab */}
       <TabButton icon={<Shapes className="h-5 w-5" />} label="Elements" active={activeTab === 'elements'} onClick={() => { onTabChange('elements'); onExpand(); }} />
       <TabButton icon={<Layers className="h-5 w-5" />} label="Layers" active={activeTab === 'layers'} onClick={() => { onTabChange('layers'); onExpand(); }} />
+      {/* Space Tools Tab - Sprint 3 */}
+      <TabButton
+        icon={
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+          </svg>
+        }
+        label="Space Tools"
+        active={activeTab === 'spaceTools'}
+        onClick={() => { onTabChange('spaceTools'); onExpand(); }}
+      />
+      {/* Automations Tab - Sprint 4 */}
+      <TabButton
+        icon={
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+          </svg>
+        }
+        label="Automations"
+        active={activeTab === 'automations'}
+        onClick={() => { onTabChange('automations'); onExpand(); }}
+      />
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -325,6 +377,20 @@ function ExpandedRail({
   userTools,
   onToolSelect,
   onNewTool,
+  spaceTools,
+  spaceToolsLoading,
+  spaceToolsError,
+  currentDeploymentId,
+  onCreateConnection,
+  onRefreshSpaceTools,
+  automations,
+  automationsLoading,
+  onCreateAutomation,
+  onEditAutomation,
+  onDeleteAutomation,
+  onToggleAutomation,
+  onViewAutomationLogs,
+  onRunAutomationNow,
 }: {
   activeTab: RailTab;
   onTabChange: (tab: RailTab) => void;
@@ -349,7 +415,21 @@ function ExpandedRail({
   };
   userTools?: UserToolItem[];
   onToolSelect?: (id: string) => void;
+  automations?: AutomationSummary[];
+  automationsLoading?: boolean;
+  onCreateAutomation?: () => void;
+  onEditAutomation?: (id: string) => void;
+  onDeleteAutomation?: (id: string) => void;
+  onToggleAutomation?: (id: string, enabled: boolean) => void;
+  onViewAutomationLogs?: (id: string) => void;
+  onRunAutomationNow?: (id: string) => void;
   onNewTool?: () => void;
+  spaceTools?: OtherToolData[];
+  spaceToolsLoading?: boolean;
+  spaceToolsError?: string;
+  currentDeploymentId?: string;
+  onCreateConnection?: (sourceDeploymentId: string, outputPath: string, outputType: string) => void;
+  onRefreshSpaceTools?: () => void;
 }) {
   return (
     <div
@@ -416,6 +496,40 @@ function ExpandedRail({
             }}
           >
             Tools
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange('spaceTools')}
+            className={cn(
+              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+              'transition-all duration-200',
+              activeTab === 'spaceTools'
+                ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                : 'hover:bg-[var(--hivelab-surface-hover)]',
+              focusRing
+            )}
+            style={{
+              color: activeTab === 'spaceTools' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+            }}
+          >
+            Space
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange('automations')}
+            className={cn(
+              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+              'transition-all duration-200',
+              activeTab === 'automations'
+                ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                : 'hover:bg-[var(--hivelab-surface-hover)]',
+              focusRing
+            )}
+            style={{
+              color: activeTab === 'automations' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+            }}
+          >
+            Auto
           </button>
         </div>
         <button
@@ -534,6 +648,44 @@ function ExpandedRail({
                 onDeleteElement={onDeleteElement}
                 onDuplicateElement={onDuplicateElement}
                 onReorder={onReorder}
+              />
+            </motion.div>
+          ) : activeTab === 'spaceTools' ? (
+            <motion.div
+              key="spaceTools"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-y-auto"
+            >
+              <OtherToolsPanel
+                tools={spaceTools || []}
+                loading={spaceToolsLoading}
+                error={spaceToolsError}
+                currentDeploymentId={currentDeploymentId}
+                onCreateConnection={onCreateConnection}
+                onRefresh={onRefreshSpaceTools}
+              />
+            </motion.div>
+          ) : activeTab === 'automations' ? (
+            <motion.div
+              key="automations"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+              className="h-full overflow-y-auto"
+            >
+              <AutomationsPanel
+                automations={automations || []}
+                loading={automationsLoading}
+                onCreateAutomation={onCreateAutomation || (() => {})}
+                onEditAutomation={onEditAutomation || (() => {})}
+                onDeleteAutomation={onDeleteAutomation || (() => {})}
+                onToggleAutomation={onToggleAutomation || (() => {})}
+                onViewLogs={onViewAutomationLogs || (() => {})}
+                onRunNow={onRunAutomationNow}
               />
             </motion.div>
           ) : (
@@ -736,6 +888,20 @@ export function ElementRail({
   userTools,
   onToolSelect,
   onNewTool,
+  spaceTools,
+  spaceToolsLoading,
+  spaceToolsError,
+  currentDeploymentId,
+  onCreateConnection,
+  onRefreshSpaceTools,
+  automations,
+  automationsLoading,
+  onCreateAutomation,
+  onEditAutomation,
+  onDeleteAutomation,
+  onToggleAutomation,
+  onViewAutomationLogs,
+  onRunAutomationNow,
 }: ElementRailProps) {
   const handleExpand = useCallback(() => {
     onStateChange('expanded');
@@ -790,6 +956,20 @@ export function ElementRail({
             userTools={userTools}
             onToolSelect={onToolSelect}
             onNewTool={onNewTool}
+            spaceTools={spaceTools}
+            spaceToolsLoading={spaceToolsLoading}
+            spaceToolsError={spaceToolsError}
+            currentDeploymentId={currentDeploymentId}
+            onCreateConnection={onCreateConnection}
+            onRefreshSpaceTools={onRefreshSpaceTools}
+            automations={automations}
+            automationsLoading={automationsLoading}
+            onCreateAutomation={onCreateAutomation}
+            onEditAutomation={onEditAutomation}
+            onDeleteAutomation={onDeleteAutomation}
+            onToggleAutomation={onToggleAutomation}
+            onViewAutomationLogs={onViewAutomationLogs}
+            onRunAutomationNow={onRunAutomationNow}
           />
         </motion.div>
       )}

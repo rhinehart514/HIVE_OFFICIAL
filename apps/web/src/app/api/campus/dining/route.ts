@@ -4,6 +4,7 @@
  * GET /api/campus/dining - List all dining locations with status
  *
  * Query params:
+ * - campusId: Campus ID for multi-campus support (defaults to ub-buffalo)
  * - type: Filter by location type (dining-hall, cafe, etc.)
  * - dietary: Filter by dietary options (vegetarian, vegan, halal, etc.)
  * - openNow: If true, only return currently open locations
@@ -16,6 +17,7 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
+import { getDefaultCampusId } from '@/lib/campus-context';
 import {
   type DiningLocation,
   type DiningLocationStatus,
@@ -26,10 +28,9 @@ import {
   estimateWalkingTime,
 } from '@hive/core';
 
-const CURRENT_CAMPUS_ID = 'ub-buffalo';
-
 // Query param schema
 const DiningQuerySchema = z.object({
+  campusId: z.string().optional(), // For multi-campus support
   type: z.enum(['dining-hall', 'food-court', 'cafe', 'restaurant', 'convenience', 'food-truck']).optional(),
   dietary: z.string().optional(), // Comma-separated list
   openNow: z.enum(['true', 'false']).optional(),
@@ -49,6 +50,7 @@ export async function GET(request: NextRequest) {
 
     // Parse and validate query params
     const params = DiningQuerySchema.parse({
+      campusId: searchParams.get('campusId') || undefined,
       type: searchParams.get('type') || undefined,
       dietary: searchParams.get('dietary') || undefined,
       openNow: searchParams.get('openNow') || undefined,
@@ -57,8 +59,11 @@ export async function GET(request: NextRequest) {
       lng: searchParams.get('lng') || undefined,
     });
 
+    // Use provided campusId or default
+    const campusId = params.campusId || getDefaultCampusId();
+
     // Fetch all dining locations for campus
-    const diningRef = dbAdmin.collection(`campusData/${CURRENT_CAMPUS_ID}/dining`);
+    const diningRef = dbAdmin.collection(`campusData/${campusId}/dining`);
     let query = diningRef.where('isActive', '==', true);
 
     // Apply type filter at query level if specified

@@ -42,11 +42,12 @@ export const GET = withAuthAndErrors(
     });
 
     // 1. Verify space membership
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const membershipQuery = await dbAdmin
       .collection("spaceMembers")
       .where("userId", "==", userId)
       .where("spaceId", "==", spaceId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("isActive", "==", true)
       .limit(1)
       .get();

@@ -161,7 +161,7 @@ export interface ToolOutputManifest {
 /**
  * Source endpoint for a connection - where data comes FROM
  */
-export interface ConnectionSource {
+export interface ToolConnectionSource {
   /** Deployment ID of the source tool */
   deploymentId: string;
   /** Path to the data in source tool (e.g., "sharedState.collections.paidMembers") */
@@ -171,7 +171,7 @@ export interface ConnectionSource {
 /**
  * Target endpoint for a connection - where data goes TO
  */
-export interface ConnectionTarget {
+export interface ToolConnectionTarget {
   /** Deployment ID of the target tool */
   deploymentId: string;
   /** Element instance ID that receives the data */
@@ -196,10 +196,10 @@ export interface ToolConnection {
   spaceId: string;
 
   /** Source tool and data path */
-  source: ConnectionSource;
+  source: ToolConnectionSource;
 
   /** Target tool, element, and input path */
-  target: ConnectionTarget;
+  target: ToolConnectionTarget;
 
   /** Optional transform to apply to source data */
   transform?: DataTransform;
@@ -224,8 +224,8 @@ export interface ToolConnection {
  * DTO for creating a new connection
  */
 export interface CreateConnectionDTO {
-  source: ConnectionSource;
-  target: ConnectionTarget;
+  source: ToolConnectionSource;
+  target: ToolConnectionTarget;
   transform?: DataTransform;
   label?: string;
 }
@@ -328,8 +328,39 @@ export type ConnectionWarningCode =
 /** Maximum connections a single tool can have */
 export const MAX_CONNECTIONS_PER_TOOL = 20;
 
-/** Cache TTL for resolved connections (30 seconds) */
-export const CONNECTION_CACHE_TTL_MS = 30_000;
+/**
+ * COST OPTIMIZATION: Cache TTL for resolved connections
+ *
+ * Default: 5 minutes (up from 30 seconds)
+ * Counters and static data rarely need real-time updates.
+ * For tools that need fresher data, use bypassCache option.
+ */
+export const CONNECTION_CACHE_TTL_MS = 300_000; // 5 minutes
+
+/**
+ * Type-specific cache TTLs for different data patterns
+ * - counters: 5 min (aggregates change slowly)
+ * - collections: 2 min (member lists change moderately)
+ * - timeline: 30 sec (events need fresher data)
+ */
+export const CONNECTION_CACHE_TTL_BY_TYPE: Record<string, number> = {
+  counter: 300_000,    // 5 minutes
+  collection: 120_000, // 2 minutes
+  timeline: 30_000,    // 30 seconds (real-time feel)
+  computed: 300_000,   // 5 minutes
+  default: 300_000,    // 5 minutes default
+};
+
+/**
+ * Get cache TTL based on source path type
+ */
+export function getConnectionCacheTTL(sourcePath: string): number {
+  if (sourcePath.includes('counter')) return CONNECTION_CACHE_TTL_BY_TYPE.counter;
+  if (sourcePath.includes('collection')) return CONNECTION_CACHE_TTL_BY_TYPE.collection;
+  if (sourcePath.includes('timeline')) return CONNECTION_CACHE_TTL_BY_TYPE.timeline;
+  if (sourcePath.includes('computed')) return CONNECTION_CACHE_TTL_BY_TYPE.computed;
+  return CONNECTION_CACHE_TTL_BY_TYPE.default;
+}
 
 /** Firestore collection path for connections */
 export const CONNECTIONS_COLLECTION = 'toolConnections';
@@ -451,9 +482,9 @@ export function applyTransform(value: unknown, transform?: DataTransform): unkno
 
     case 'unique':
       if (!Array.isArray(value)) return value;
-      return [...new Set(value.map((v) =>
+      return Array.from(new Set(value.map((v) =>
         typeof v === 'object' ? JSON.stringify(v) : v
-      ))].map((v) => {
+      ))).map((v) => {
         try {
           return JSON.parse(v as string);
         } catch {

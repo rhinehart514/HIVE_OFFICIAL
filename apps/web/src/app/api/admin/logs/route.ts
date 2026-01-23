@@ -6,9 +6,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 const LogQuerySchema = z.object({
@@ -38,6 +37,7 @@ interface ActivityLog {
  * Fetch admin activity logs
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const { searchParams } = new URL(request.url);
   const queryResult = LogQuerySchema.safeParse(Object.fromEntries(searchParams));
 
@@ -53,7 +53,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
   try {
     let logsQuery = dbAdmin
       .collection('adminActivityLogs')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('timestamp', 'desc');
 
     if (query.action) {
@@ -90,7 +90,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
     // Get unique actions for filter dropdown
     const actionsSnapshot = await dbAdmin
       .collection('adminActivityLogs')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .select('action')
       .limit(100)
       .get();

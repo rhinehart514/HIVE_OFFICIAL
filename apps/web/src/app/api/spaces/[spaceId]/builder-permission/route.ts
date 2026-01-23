@@ -40,7 +40,8 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     const spaceData = spaceDoc.data();
 
     // Validate campus access
-    if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+    const campusId = getCampusId(request as AuthenticatedRequest);
+    if (spaceData?.campusId && spaceData.campusId !== campusId) {
       return respond.error('Access denied for this campus', 'FORBIDDEN', { status: 403 });
     }
 
@@ -50,7 +51,7 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
       .collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('status', '==', 'active')
       .where('role', 'in', ['owner', 'admin', 'leader', 'builder'])
       .limit(1)

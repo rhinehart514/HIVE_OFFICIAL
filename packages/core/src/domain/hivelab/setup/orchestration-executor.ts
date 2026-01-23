@@ -40,9 +40,10 @@ export interface ExecutionContext {
 }
 
 /**
- * Result of a single action execution
+ * Result of a single action execution within orchestration
+ * Note: Named OrchestrationActionResult to distinguish from automation-runner's ActionExecutionResult
  */
-export interface ActionExecutionResult {
+export interface OrchestrationActionResult {
   actionType: string;
   targetSlotId?: string;
   success: boolean;
@@ -57,7 +58,7 @@ export interface RuleExecutionResult {
   ruleId: string;
   ruleName: string;
   success: boolean;
-  actionsExecuted: ActionExecutionResult[];
+  actionsExecuted: OrchestrationActionResult[];
   skipped?: boolean;
   skipReason?: string;
 }
@@ -185,7 +186,7 @@ function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
 function executeDataFlowAction(
   action: DataFlowActionConfig,
   context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   try {
     const { deployment, triggerPayload } = context;
 
@@ -227,7 +228,7 @@ function executeDataFlowAction(
 function executeVisibilityAction(
   action: VisibilityActionConfig,
   context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   try {
     const { deployment } = context;
     deployment.setToolVisibility(action.targetSlotId, action.visible);
@@ -254,7 +255,7 @@ function executeVisibilityAction(
 function executeConfigAction(
   action: ConfigActionConfig,
   context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   try {
     const { deployment } = context;
     deployment.updateToolConfig(action.targetSlotId, action.updates);
@@ -281,7 +282,7 @@ function executeConfigAction(
 function executeNotificationAction(
   action: NotificationActionConfig,
   _context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   // Notification sending would be handled by callbacks in real implementation
   return {
     actionType: 'notification',
@@ -300,7 +301,7 @@ function executeNotificationAction(
 function executeStateAction(
   action: StateActionConfig,
   context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   try {
     const { deployment } = context;
 
@@ -340,7 +341,7 @@ function executeStateAction(
 function executeAction(
   action: OrchestrationActionConfig,
   context: ExecutionContext,
-): ActionExecutionResult {
+): OrchestrationActionResult {
   switch (action.type) {
     case 'data_flow':
       return executeDataFlowAction(action, context);
@@ -535,7 +536,7 @@ export class OrchestrationExecutorService {
     }
 
     // Execute all actions
-    const actionsExecuted: ActionExecutionResult[] = [];
+    const actionsExecuted: OrchestrationActionResult[] = [];
 
     for (const action of rule.actions) {
       const result = executeAction(action, context);

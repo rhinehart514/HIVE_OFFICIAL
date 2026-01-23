@@ -99,6 +99,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       channelId,
@@ -116,13 +119,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has access to channel and space
-    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId);
+    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
 
     // Get user's space context for role information
-    const userContext = await getUserSpaceContext(user.uid, spaceId);
+    const userContext = await getUserSpaceContext(user.uid, spaceId, campusId);
     if (!userContext) {
       return NextResponse.json(ApiResponseHelper.error("User not a member of this space", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -215,6 +218,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
     const spaceId = searchParams.get('spaceId');
@@ -227,7 +233,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify access
-    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId);
+    const hasAccess = await verifyChannelAccess(user.uid, channelId, spaceId, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -298,6 +304,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       messageId,
@@ -320,7 +329,7 @@ export async function PUT(request: NextRequest) {
     const message = { id: messageDoc.id, ...messageDoc.data() } as ChatMessage;
 
     // Verify permissions
-    const canPerformAction = await verifyMessageAction(user.uid, message, action, spaceId);
+    const canPerformAction = await verifyMessageAction(user.uid, message, action, spaceId, campusId);
     if (!canPerformAction) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to perform this action", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -380,7 +389,7 @@ export async function PUT(request: NextRequest) {
       case 'delete':
         if (message.senderId !== user.uid) {
           // Check if user is admin/moderator
-          const userContext = await getUserSpaceContext(user.uid, message.spaceId);
+          const userContext = await getUserSpaceContext(user.uid, message.spaceId, campusId);
           if (!userContext || !['admin', 'moderator'].includes(userContext.role as string)) {
             return NextResponse.json(ApiResponseHelper.error("Not authorized to delete this message", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
           }
@@ -426,6 +435,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const messageId = searchParams.get('messageId');
 
@@ -442,8 +454,8 @@ export async function DELETE(request: NextRequest) {
     const message = { id: messageDoc.id, ...messageDoc.data() } as ChatMessage;
 
     // Check permissions
-    const canDelete = message.senderId === user.uid || 
-      await hasModeratorPermissions(user.uid, message.spaceId);
+    const canDelete = message.senderId === user.uid ||
+      await hasModeratorPermissions(user.uid, message.spaceId, campusId);
     
     if (!canDelete) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to delete this message", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
@@ -473,14 +485,14 @@ export async function DELETE(request: NextRequest) {
 }
 
 // Helper function to verify channel access
-async function verifyChannelAccess(userId: string, channelId: string, spaceId: string): Promise<boolean> {
+async function verifyChannelAccess(userId: string, channelId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
     // Check space membership
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     if (memberSnapshot.empty) {
@@ -526,13 +538,13 @@ async function getChannel(channelId: string): Promise<ChatChannel | null> {
 }
 
 // Helper function to get user's space context
-async function getUserSpaceContext(userId: string, spaceId: string): Promise<Record<string, unknown> | null> {
+async function getUserSpaceContext(userId: string, spaceId: string, campusId: string): Promise<Record<string, unknown> | null> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     if (memberSnapshot.empty) {
@@ -664,7 +676,7 @@ async function handleMessageMentions(message: ChatMessage, mentions: string[]): 
 }
 
 // Helper function to verify message action permissions
-async function verifyMessageAction(userId: string, message: ChatMessage, action: string, spaceId?: string): Promise<boolean> {
+async function verifyMessageAction(userId: string, message: ChatMessage, action: string, spaceId?: string, campusId?: string): Promise<boolean> {
   // User can always react to messages they can see
   if (action === 'react' || action === 'unreact') {
     return true;
@@ -676,17 +688,17 @@ async function verifyMessageAction(userId: string, message: ChatMessage, action:
   }
 
   // Moderators/admins can delete any message
-  if (action === 'delete' && spaceId) {
-    return await hasModeratorPermissions(userId, spaceId);
+  if (action === 'delete' && spaceId && campusId) {
+    return await hasModeratorPermissions(userId, spaceId, campusId);
   }
 
   return false;
 }
 
 // Helper function to check moderator permissions
-async function hasModeratorPermissions(userId: string, spaceId: string): Promise<boolean> {
+async function hasModeratorPermissions(userId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
-    const userContext = await getUserSpaceContext(userId, spaceId);
+    const userContext = await getUserSpaceContext(userId, spaceId, campusId);
     return !!userContext && ['admin', 'moderator'].includes(userContext.role as string);
   } catch (error) {
     logger.error(

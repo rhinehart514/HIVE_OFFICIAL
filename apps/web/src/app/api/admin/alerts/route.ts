@@ -10,9 +10,8 @@
 
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 
@@ -72,12 +71,14 @@ interface TriggeredAlert {
  * GET /api/admin/alerts
  * List all alert configurations and triggered alerts
  */
-export const GET = withAdminAuthAndErrors(async (_request, _context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
+
   try {
     // Get alert rules
     const rulesSnapshot = await dbAdmin
       .collection('adminAlertRules')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc')
       .get();
 
@@ -92,7 +93,7 @@ export const GET = withAdminAuthAndErrors(async (_request, _context, respond) =>
 
     const triggeredSnapshot = await dbAdmin
       .collection('adminTriggeredAlerts')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('triggeredAt', '>=', oneDayAgo)
       .orderBy('triggeredAt', 'desc')
       .limit(50)
@@ -151,6 +152,7 @@ export const GET = withAdminAuthAndErrors(async (_request, _context, respond) =>
  */
 export const POST = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const body = await request.json();
   const validationResult = AlertRuleSchema.safeParse(body);
 
@@ -201,7 +203,7 @@ export const POST = withAdminAuthAndErrors(async (request, _context, respond) =>
         window: data.window,
         enabled: data.enabled,
         priority: data.priority,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         createdBy: adminId,
         createdAt: now,
         updatedAt: now,

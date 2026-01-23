@@ -13,8 +13,7 @@
  */
 
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors, getUserId, type AuthenticatedRequest } from '@/lib/middleware';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { withAdminAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 interface AdminEvent {
@@ -29,6 +28,7 @@ interface AdminEvent {
  */
 export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
 
   // Set up SSE headers
   const encoder = new TextEncoder();
@@ -61,25 +61,25 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
           ] = await Promise.all([
             dbAdmin
               .collection('profiles')
-              .where('campusId', '==', CURRENT_CAMPUS_ID)
+              .where('campusId', '==', campusId)
               .where('createdAt', '>=', today)
               .count()
               .get(),
             dbAdmin
               .collection('spaces')
-              .where('campusId', '==', CURRENT_CAMPUS_ID)
+              .where('campusId', '==', campusId)
               .where('createdAt', '>=', today)
               .count()
               .get(),
             dbAdmin
               .collection('contentReports')
-              .where('campusId', '==', CURRENT_CAMPUS_ID)
+              .where('campusId', '==', campusId)
               .where('status', '==', 'pending')
               .count()
               .get(),
             dbAdmin
               .collection('toolPublishRequests')
-              .where('campusId', '==', CURRENT_CAMPUS_ID)
+              .where('campusId', '==', campusId)
               .where('status', '==', 'pending')
               .count()
               .get(),
@@ -116,7 +116,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
       // Listen for new users
       const usersUnsubscribe = dbAdmin
         .collection('profiles')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .orderBy('createdAt', 'desc')
         .limit(1)
         .onSnapshot((snapshot) => {
@@ -142,7 +142,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
       // Listen for new spaces
       const spacesUnsubscribe = dbAdmin
         .collection('spaces')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .orderBy('createdAt', 'desc')
         .limit(1)
         .onSnapshot((snapshot) => {
@@ -168,7 +168,7 @@ export const GET = withAdminAuthAndErrors(async (request, _context, respond) => 
       // Listen for new reports
       const reportsUnsubscribe = dbAdmin
         .collection('contentReports')
-        .where('campusId', '==', CURRENT_CAMPUS_ID)
+        .where('campusId', '==', campusId)
         .where('status', '==', 'pending')
         .orderBy('createdAt', 'desc')
         .limit(1)

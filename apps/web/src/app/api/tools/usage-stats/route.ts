@@ -3,7 +3,6 @@ import { logger } from "@/lib/structured-logger";
 import { ApiResponseHelper, HttpStatus, ErrorCodes as _ErrorCodes } from "@/lib/api-response-types";
 import { withAuth, ApiResponse as _ApiResponse } from '@/lib/api-auth-middleware';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 
 // Usage statistics interface matching the component expectations
 interface ToolUsageStats {
@@ -25,7 +24,7 @@ interface ToolUsageStats {
 }
 
 // Production-ready usage statistics with real database integration
-const fetchUsageStats = async (userId: string): Promise<ToolUsageStats> => {
+const fetchUsageStats = async (userId: string, campusId: string): Promise<ToolUsageStats> => {
   const now = new Date();
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -34,7 +33,7 @@ const fetchUsageStats = async (userId: string): Promise<ToolUsageStats> => {
     const toolsSnapshot = await dbAdmin
       .collection('tools')
       .where('ownerId', '==', userId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .get();
 
     interface ToolDoc {
@@ -176,7 +175,7 @@ const fetchUsageStats = async (userId: string): Promise<ToolUsageStats> => {
  */
 export const GET = withAuth(async (request, authContext) => {
   try {
-    const stats = await fetchUsageStats(authContext.userId);
+    const stats = await fetchUsageStats(authContext.userId, authContext.campusId);
     
     return NextResponse.json({
       success: true,

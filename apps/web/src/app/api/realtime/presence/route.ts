@@ -107,6 +107,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       status,
@@ -191,7 +194,7 @@ export async function POST(request: NextRequest) {
       newStatus: status || currentPresence?.status,
       context,
       timestamp: new Date().toISOString(),
-      broadcastToSpaces: await getUserSpaces(user.uid)
+      broadcastToSpaces: await getUserSpaces(user.uid, campusId)
     };
 
     // Store presence event
@@ -231,6 +234,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const spaceId = searchParams.get('spaceId');
     const userId = searchParams.get('userId');
@@ -246,7 +252,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Check if requesting user has permission to see this presence
-      const canView = await canViewUserPresence(user.uid, userId, spaceId ?? undefined);
+      const canView = await canViewUserPresence(user.uid, userId, campusId, spaceId ?? undefined);
       if (!canView) {
         return NextResponse.json({ 
           presence: getPrivacyFilteredPresence(userPresence) 
@@ -256,8 +262,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ presence: userPresence });
     } else if (spaceId) {
       // Get space presence
-      const spacePresence = await getSpacePresence(spaceId, user.uid, includeOffline);
-      
+      const spacePresence = await getSpacePresence(spaceId, user.uid, campusId, includeOffline);
+
       if (!spacePresence) {
         return NextResponse.json(ApiResponseHelper.error("Space not found or access denied", "RESOURCE_NOT_FOUND"), { status: HttpStatus.NOT_FOUND });
       }
@@ -266,12 +272,12 @@ export async function GET(request: NextRequest) {
     } else {
       // Get user's own presence and active spaces
       const userPresence = await getUserPresence(user.uid);
-      const userSpaces = await getUserSpaces(user.uid);
-      
+      const userSpaces = await getUserSpaces(user.uid, campusId);
+
       // Get presence summary for user's spaces
       const spacePresenceSummaries = await Promise.all(
         userSpaces.map(async spaceId => {
-          const spacePresence = await getSpacePresence(spaceId, user.uid, false);
+          const spacePresence = await getSpacePresence(spaceId, user.uid, campusId, false);
           return {
             spaceId,
             onlineCount: spacePresence?.statistics.totalOnline || 0,
@@ -346,6 +352,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const connectionId = searchParams.get('connectionId');
     const cleanupOld = searchParams.get('cleanupOld') === 'true';
@@ -372,7 +381,7 @@ export async function DELETE(request: NextRequest) {
             previousStatus: currentPresence.status,
             newStatus: 'offline',
             timestamp: new Date().toISOString(),
-            broadcastToSpaces: await getUserSpaces(user.uid)
+            broadcastToSpaces: await getUserSpaces(user.uid, campusId)
           });
         }
       }
@@ -411,7 +420,7 @@ export async function DELETE(request: NextRequest) {
         eventType: 'status_change',
         newStatus: 'offline',
         timestamp: new Date().toISOString(),
-        broadcastToSpaces: await getUserSpaces(user.uid)
+        broadcastToSpaces: await getUserSpaces(user.uid, campusId)
       });
 
       return NextResponse.json({
@@ -448,16 +457,16 @@ async function getUserPresence(userId: string): Promise<UserPresence | null> {
 }
 
 // Helper function to get space presence
-async function getSpacePresence(spaceId: string, requestingUserId: string, includeOffline = false): Promise<SpacePresence | null> {
+async function getSpacePresence(spaceId: string, requestingUserId: string, campusId: string, includeOffline = false): Promise<SpacePresence | null> {
   try {
     // Verify user has access to space
-    const hasAccess = await verifySpaceAccess(requestingUserId, spaceId);
+    const hasAccess = await verifySpaceAccess(requestingUserId, spaceId, campusId);
     if (!hasAccess) {
       return null;
     }
 
     // Get space members
-    const spaceMembers = await getSpaceMembers(spaceId);
+    const spaceMembers = await getSpaceMembers(spaceId, campusId);
     
     // Get presence for each member
     const memberPresences: UserPresence[] = [];
@@ -522,12 +531,12 @@ async function getSpacePresence(spaceId: string, requestingUserId: string, inclu
 }
 
 // Helper function to get user spaces
-async function getUserSpaces(userId: string): Promise<string[]> {
+async function getUserSpaces(userId: string, campusId: string): Promise<string[]> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return memberSnapshot.docs.map(doc => doc.data().spaceId);
@@ -541,12 +550,12 @@ async function getUserSpaces(userId: string): Promise<string[]> {
 }
 
 // Helper function to get space members
-async function getSpaceMembers(spaceId: string): Promise<string[]> {
+async function getSpaceMembers(spaceId: string, campusId: string): Promise<string[]> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return memberSnapshot.docs.map(doc => doc.data().userId);
@@ -560,13 +569,13 @@ async function getSpaceMembers(spaceId: string): Promise<string[]> {
 }
 
 // Helper function to verify space access
-async function verifySpaceAccess(userId: string, spaceId: string): Promise<boolean> {
+async function verifySpaceAccess(userId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return !memberSnapshot.empty;
@@ -580,7 +589,7 @@ async function verifySpaceAccess(userId: string, spaceId: string): Promise<boole
 }
 
 // Helper function to check if user can view another user's presence
-async function canViewUserPresence(viewerId: string, targetUserId: string, spaceId?: string): Promise<boolean> {
+async function canViewUserPresence(viewerId: string, targetUserId: string, campusId: string, spaceId?: string): Promise<boolean> {
   // Users can always view their own presence
   if (viewerId === targetUserId) {
     return true;
@@ -594,16 +603,16 @@ async function canViewUserPresence(viewerId: string, targetUserId: string, space
 
   // Check if they're in the same space
   if (spaceId) {
-    const viewerHasAccess = await verifySpaceAccess(viewerId, spaceId);
-    const targetHasAccess = await verifySpaceAccess(targetUserId, spaceId);
+    const viewerHasAccess = await verifySpaceAccess(viewerId, spaceId, campusId);
+    const targetHasAccess = await verifySpaceAccess(targetUserId, spaceId, campusId);
     return viewerHasAccess && targetHasAccess;
   }
 
   // Check if they share any spaces
-  const viewerSpaces = await getUserSpaces(viewerId);
-  const targetSpaces = await getUserSpaces(targetUserId);
+  const viewerSpaces = await getUserSpaces(viewerId, campusId);
+  const targetSpaces = await getUserSpaces(targetUserId, campusId);
   const sharedSpaces = viewerSpaces.filter(space => targetSpaces.includes(space));
-  
+
   return sharedSpaces.length > 0;
 }
 

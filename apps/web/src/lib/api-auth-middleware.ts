@@ -75,7 +75,7 @@ export async function validateApiAuth(
       }
 
       // Resolve campus ID
-      let campusId = session.campusId;
+      let campusId: string | undefined = session.campusId;
       if (!campusId && session.email) {
         campusId = deriveCampusFromEmail(session.email);
       }
@@ -101,12 +101,13 @@ export async function validateApiAuth(
         campusId = 'ub-buffalo';
       }
 
+      // At this point campusId is guaranteed to be a string (either derived or fallback)
       return {
         userId: session.userId,
         token: sessionCookie.value,
         isAdmin: session.isAdmin || await isAdminUser(session.userId, session.email),
         email: session.email,
-        campusId
+        campusId: campusId as string  // Safe assertion: fallback guarantees non-undefined
       };
     }
   }
@@ -158,7 +159,7 @@ export async function validateApiAuth(
     }
 
     // Resolve campus ID from email
-    let campusId = decodedToken.email ? deriveCampusFromEmail(decodedToken.email) : undefined;
+    let campusId: string | undefined = decodedToken.email ? deriveCampusFromEmail(decodedToken.email) : undefined;
 
     // Enforce campus in production
     if (!campusId) {
@@ -181,12 +182,13 @@ export async function validateApiAuth(
       campusId = 'ub-buffalo';
     }
 
+    // At this point campusId is guaranteed to be a string (either derived or fallback)
     return {
       userId: decodedToken.uid,
       token,
       isAdmin: await isAdminUser(decodedToken.uid, decodedToken.email),
       email: decodedToken.email,
-      campusId
+      campusId: campusId as string  // Safe assertion: fallback guarantees non-undefined
     };
   } catch (error) {
     await logSecurityEvent('invalid_token', {

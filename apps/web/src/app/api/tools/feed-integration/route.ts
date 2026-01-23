@@ -2,11 +2,11 @@
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from "@/lib/logger";
 import { getPlacementFromDeploymentDoc } from '@/lib/tool-placement';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import {
   withAuthValidationAndErrors,
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 import { z } from "zod";
@@ -55,6 +55,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
       const { deploymentId, toolId, action, data, elementId, generateContent = true } = body;
 
     // Get deployment details
@@ -67,7 +68,7 @@ export const POST = withAuthValidationAndErrors(
     if (!deployment) {
         return respond.error("Deployment data not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
-    if (deployment?.campusId && deployment.campusId !== CURRENT_CAMPUS_ID) {
+    if (deployment?.campusId && deployment.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
@@ -79,9 +80,9 @@ export const POST = withAuthValidationAndErrors(
 
     // Only generate content for space deployments with analytics enabled
     if (targetType !== 'space' || !collectAnalytics) {
-      return respond.success({ 
-        generated: false, 
-        reason: 'Content generation disabled for this deployment' 
+      return respond.success({
+        generated: false,
+        reason: 'Content generation disabled for this deployment'
       });
     }
 
@@ -95,7 +96,7 @@ export const POST = withAuthValidationAndErrors(
     if (!tool) {
         return respond.error("Tool data not found", "RESOURCE_NOT_FOUND", { status: 404 });
     }
-    if (tool?.campusId && tool.campusId !== CURRENT_CAMPUS_ID) {
+    if (tool?.campusId && tool.campusId !== campusId) {
         return respond.error("Access denied for this campus", "FORBIDDEN", { status: 403 });
     }
 
@@ -110,18 +111,19 @@ export const POST = withAuthValidationAndErrors(
         user: { uid: userId },
       action,
       data,
-      elementId
+      elementId,
+      campusId
     });
 
     if (!feedContent) {
-      return respond.success({ 
-        generated: false, 
-        reason: 'No content template matched this action' 
+      return respond.success({
+        generated: false,
+        reason: 'No content template matched this action'
       });
     }
 
     // Create the feed post
-    const postId = await createFeedPost({ ...deployment, targetId }, tool, userId, feedContent);
+    const postId = await createFeedPost({ ...deployment, targetId }, tool, userId, feedContent, campusId);
 
       return respond.success({
       generated: true,
@@ -147,6 +149,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const toolId = searchParams.get('toolId');
@@ -174,7 +177,7 @@ export const GET = withAuthAndErrors(async (
     let templatesQuery = dbAdmin
       .collection('feedContentTemplates')
       .where('toolId', '==', toolId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .orderBy('createdAt', 'desc');
 
     if (isActive !== null) {
@@ -208,19 +211,20 @@ async function generateFeedContentFromAction(params: {
   action: string;
   data: Record<string, unknown> | undefined;
   elementId?: string;
+  campusId: string;
 }): Promise<Record<string, unknown> | null> {
-  const { deployment, tool, user, action, data, elementId } = params;
+  const { deployment, tool, user, action, data, elementId, campusId } = params;
 
   try {
     // Get feed content templates for this tool
     const templatesSnapshot = await dbAdmin
       .collection('feedContentTemplates')
       .where('toolId', '==', tool.id || deployment.toolId)
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
+      .where('campusId', '==', campusId)
       .where('triggerEvent', '==', action)
       .where('isActive', '==', true)
       .get();
-    
+
     if (templatesSnapshot.empty) {
       // Use default content generation
       return generateDefaultContent(tool, action, data, elementId);
@@ -228,7 +232,7 @@ async function generateFeedContentFromAction(params: {
 
     // Use the first matching template
     const template = templatesSnapshot.docs[0].data();
-    
+
     // Check conditions
     if (template.conditions && !checkConditions(template.conditions, data, user)) {
       return null;
@@ -410,14 +414,15 @@ async function createFeedPost(
   deployment: Record<string, unknown> & { targetId: string; id?: string; toolId?: string; surface?: string },
   tool: Record<string, unknown>,
   userId: string,
-  content: Record<string, unknown>
+  content: Record<string, unknown>,
+  campusId: string
 ): Promise<string> {
   const now = new Date().toISOString();
-  
+
   const post = {
     authorId: userId,
     spaceId: deployment.targetId,
-    campusId: CURRENT_CAMPUS_ID,
+    campusId,
     type: 'tool_generated',
     subType: content.type,
     toolId: deployment.toolId,

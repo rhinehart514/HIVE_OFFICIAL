@@ -17,7 +17,7 @@ import {
   type OrchestrationRule,
 } from '@hive/core/server';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
+import { deriveCampusFromEmail } from '@/lib/middleware';
 
 // ============================================================================
 // Response Helpers
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse session
-    let session: { userId: string };
+    let session: { userId: string; campusId?: string; email?: string };
     try {
       session = JSON.parse(sessionCookie.value);
     } catch {
@@ -227,6 +227,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId } = session;
+
+    // Derive campusId from session or email
+    const campusId = session.campusId || (session.email ? deriveCampusFromEmail(session.email) : null) || 'ub-buffalo';
 
     // Get user profile for creator name
     const userDoc = await dbAdmin.collection('users').doc(userId).get();
@@ -270,7 +273,7 @@ export async function POST(request: NextRequest) {
       isFeatured: false,
       creatorId: userId,
       creatorName,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       thumbnailUrl: data.thumbnailUrl,
     });
 

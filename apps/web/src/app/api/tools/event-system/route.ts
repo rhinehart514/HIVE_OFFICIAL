@@ -3,11 +3,11 @@
 import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -89,7 +89,7 @@ const EventActionSchema = z.discriminatedUnion("action", [
 
 type EventAction = z.infer<typeof EventActionSchema>;
 
-async function ensureSpaceAccess(spaceId: string, userId: string) {
+async function ensureSpaceAccess(spaceId: string, userId: string, campusId: string) {
   const spaceDoc = await adminDb.collection("spaces").doc(spaceId).get();
   if (!spaceDoc.exists) {
     return {
@@ -100,7 +100,7 @@ async function ensureSpaceAccess(spaceId: string, userId: string) {
   }
 
   const spaceData = spaceDoc.data();
-  if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData?.campusId && spaceData.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -123,6 +123,7 @@ async function ensureSpaceAccess(spaceId: string, userId: string) {
 async function loadInstallation(
   installationId: string,
   userId: string,
+  campusId: string,
 ) {
   const installationDoc = await adminDb
     .collection("event_system_installations")
@@ -146,7 +147,7 @@ async function loadInstallation(
     };
   }
 
-  if (installation?.campusId && installation.campusId !== CURRENT_CAMPUS_ID) {
+  if (installation?.campusId && installation.campusId !== campusId) {
     return {
       ok: false as const,
       status: 403,
@@ -168,6 +169,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const searchParams = new URL(request.url).searchParams;
     const spaceId = searchParams.get("spaceId");
     const includeEvents = searchParams.get("includeEvents") === "true";
@@ -175,7 +177,7 @@ export const GET = withAuthAndErrors(async (
     let installationsQuery = adminDb
       .collection("event_system_installations")
       .where("userId", "==", userId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID);
+      .where("campusId", "==", campusId);
 
     if (spaceId) {
       installationsQuery = installationsQuery.where("spaceId", "==", spaceId);
@@ -204,7 +206,7 @@ export const GET = withAuthAndErrors(async (
       const eventsSnapshot = await adminDb
         .collection("events")
         .where("organizerId", "==", userId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
+        .where("campusId", "==", campusId)
         .where("createdVia", "==", "event-system")
         .orderBy("createdAt", "desc")
         .limit(50)
@@ -218,7 +220,7 @@ export const GET = withAuthAndErrors(async (
       const analyticsSnapshot = await adminDb
         .collection("event_analytics")
         .where("organizerId", "==", userId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
+        .where("campusId", "==", campusId)
         .orderBy("date", "desc")
         .limit(30)
         .get();
@@ -270,6 +272,7 @@ export const POST = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const now = new Date();
 
     try {
@@ -278,7 +281,7 @@ export const POST = withAuthValidationAndErrors(
           .collection("event_system_installations")
           .where("userId", "==", userId)
           .where("isPersonal", "==", payload.isPersonal)
-          .where("campusId", "==", CURRENT_CAMPUS_ID);
+          .where("campusId", "==", campusId);
 
         if (payload.spaceId) {
           existingQuery = existingQuery.where("spaceId", "==", payload.spaceId);
@@ -294,7 +297,7 @@ export const POST = withAuthValidationAndErrors(
         }
 
         if (payload.spaceId && !payload.isPersonal) {
-          const spaceAccess = await ensureSpaceAccess(payload.spaceId, userId);
+          const spaceAccess = await ensureSpaceAccess(payload.spaceId, userId, campusId);
           if (!spaceAccess.ok) {
             return respond.error(spaceAccess.message, "FORBIDDEN", {
               status: spaceAccess.status,
@@ -318,7 +321,7 @@ export const POST = withAuthValidationAndErrors(
           createdAt: now,
           updatedAt: now,
           version: "2.1.0",
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
         };
 
         const installationRef = await adminDb
@@ -330,7 +333,7 @@ export const POST = withAuthValidationAndErrors(
           organizerId: userId,
           userId,
           spaceId: payload.spaceId || null,
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
           date: now,
           eventsCreated: 0,
           totalAttendees: 0,
@@ -349,7 +352,7 @@ export const POST = withAuthValidationAndErrors(
           installationId: installationRef.id,
           spaceId: payload.spaceId || null,
           isPersonal: payload.isPersonal,
-          campusId: CURRENT_CAMPUS_ID,
+          campusId,
           timestamp: now.toISOString(),
           metadata: {
             configuration: payload.configuration,
@@ -369,6 +372,7 @@ export const POST = withAuthValidationAndErrors(
       const installationResult = await loadInstallation(
         payload.installationId,
         userId,
+        campusId,
       );
       if (!installationResult.ok) {
         return respond.error(
@@ -389,7 +393,7 @@ export const POST = withAuthValidationAndErrors(
         organizerId: userId,
         installationId: payload.installationId,
         spaceId: installation?.spaceId || null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         createdVia: "event-system",
         status: "active",
         rsvpCount: 0,
@@ -419,7 +423,7 @@ export const POST = withAuthValidationAndErrors(
       const analyticsSnapshot = await adminDb
         .collection("event_analytics")
         .where("installationId", "==", payload.installationId)
-        .where("campusId", "==", CURRENT_CAMPUS_ID)
+        .where("campusId", "==", campusId)
         .orderBy("date", "desc")
         .limit(1)
         .get();
@@ -438,7 +442,7 @@ export const POST = withAuthValidationAndErrors(
         eventId,
         installationId: payload.installationId,
         spaceId: installation?.spaceId || null,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         timestamp: now.toISOString(),
         metadata: {
           eventType: payload.eventData.type,
@@ -475,11 +479,13 @@ export const PUT = withAuthValidationAndErrors(
     respond,
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     try {
       const installationResult = await loadInstallation(
         payload.installationId,
         userId,
+        campusId,
       );
       if (!installationResult.ok) {
         return respond.error(
@@ -505,7 +511,7 @@ export const PUT = withAuthValidationAndErrors(
         eventType: "event_system_configured",
         userId,
         installationId: payload.installationId,
-        campusId: CURRENT_CAMPUS_ID,
+        campusId,
         timestamp: new Date().toISOString(),
         metadata: {
           configuration: validatedConfig,
@@ -536,6 +542,7 @@ export const DELETE = withAuthAndErrors(async (
   respond,
 ) => {
   const userId = getUserId(request as AuthenticatedRequest);
+  const campusId = getCampusId(request as AuthenticatedRequest);
   const installationId = new URL(request.url).searchParams.get("installationId");
 
   if (!installationId) {
@@ -545,7 +552,7 @@ export const DELETE = withAuthAndErrors(async (
   }
 
   try {
-    const installationResult = await loadInstallation(installationId, userId);
+    const installationResult = await loadInstallation(installationId, userId, campusId);
     if (!installationResult.ok) {
       return respond.error(
         installationResult.message,
@@ -559,7 +566,7 @@ export const DELETE = withAuthAndErrors(async (
     const activeEventsSnapshot = await adminDb
       .collection("events")
       .where("installationId", "==", installationId)
-      .where("campusId", "==", CURRENT_CAMPUS_ID)
+      .where("campusId", "==", campusId)
       .where("status", "==", "active")
       .limit(1)
       .get();
@@ -586,7 +593,7 @@ export const DELETE = withAuthAndErrors(async (
       eventType: "event_system_uninstalled",
       userId,
       installationId,
-      campusId: CURRENT_CAMPUS_ID,
+      campusId,
       timestamp: now.toISOString(),
       metadata: {
         reason: "user_initiated",

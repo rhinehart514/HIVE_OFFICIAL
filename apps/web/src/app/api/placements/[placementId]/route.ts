@@ -14,11 +14,11 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { logger } from '@/lib/structured-logger';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import {
   withAuthAndErrors,
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 
@@ -52,6 +52,7 @@ interface RouteContext {
 async function findPlacementWithContext(
   placementId: string,
   userId: string,
+  campusId: string,
 ): Promise<{
   found: boolean;
   placement?: FirebaseFirestore.DocumentSnapshot;
@@ -69,7 +70,7 @@ async function findPlacementWithContext(
   const deploymentSnapshot = await dbAdmin
     .collection('deployedTools')
     .where('placementId', '==', placementId)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .limit(1)
     .get();
 
@@ -101,7 +102,7 @@ async function findPlacementWithContext(
       const spaceDoc = await dbAdmin.collection('spaces').doc(contextId).get();
       if (spaceDoc.exists) {
         const spaceData = spaceDoc.data();
-        if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+        if (spaceData?.campusId && spaceData.campusId !== campusId) {
           return { found: false, error: 'Access denied for this campus' };
         }
         const userRole = spaceData?.members?.[userId]?.role;
@@ -129,9 +130,10 @@ async function findPlacementWithContext(
 export const GET = withAuthAndErrors(async (request, context: RouteContext, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { placementId } = await context.params;
 
-    const result = await findPlacementWithContext(placementId, userId);
+    const result = await findPlacementWithContext(placementId, userId, campusId);
 
     if (!result.found || !result.placementData) {
       return respond.error(result.error || 'Placement not found', 'NOT_FOUND', {
@@ -238,9 +240,10 @@ export const PATCH = withAuthValidationAndErrors(
   async (request, context: RouteContext, payload: UpdatePlacementInput, respond) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
       const { placementId } = await context.params;
 
-      const result = await findPlacementWithContext(placementId, userId);
+      const result = await findPlacementWithContext(placementId, userId, campusId);
 
       if (!result.found || !result.placement) {
         return respond.error(result.error || 'Placement not found', 'NOT_FOUND', {
@@ -340,9 +343,10 @@ export const PATCH = withAuthValidationAndErrors(
 export const DELETE = withAuthAndErrors(async (request, context: RouteContext, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const { placementId } = await context.params;
 
-    const result = await findPlacementWithContext(placementId, userId);
+    const result = await findPlacementWithContext(placementId, userId, campusId);
 
     if (!result.found || !result.placement) {
       return respond.error(result.error || 'Placement not found', 'NOT_FOUND', {

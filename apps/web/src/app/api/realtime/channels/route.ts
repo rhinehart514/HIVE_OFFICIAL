@@ -64,6 +64,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       spaceId,
@@ -81,7 +84,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user has permission to create channels in this space
-    const canCreate = await verifyChannelCreatePermission(user.uid, spaceId);
+    const canCreate = await verifyChannelCreatePermission(user.uid, spaceId, campusId);
     if (!canCreate) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to create channels in this space", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
       initialParticipants = [...new Set([...initialParticipants, ...participants])];
     } else {
       // For public channels, get all space members
-      const spaceMembers = await getSpaceMembers(spaceId);
+      const spaceMembers = await getSpaceMembers(spaceId, campusId);
       initialParticipants = spaceMembers;
     }
 
@@ -164,6 +167,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const spaceId = searchParams.get('spaceId');
     const includeArchived = searchParams.get('includeArchived') === 'true';
@@ -174,7 +180,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user has access to space
-    const hasAccess = await verifySpaceAccess(user.uid, spaceId);
+    const hasAccess = await verifySpaceAccess(user.uid, spaceId, campusId);
     if (!hasAccess) {
       return NextResponse.json(ApiResponseHelper.error("Access denied to space", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -245,6 +251,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const body = await request.json();
     const {
       channelId,
@@ -268,7 +277,7 @@ export async function PUT(request: NextRequest) {
     const channel = { id: channelDoc.id, ...channelDoc.data() } as ChatChannel;
 
     // Verify user has permission to modify channel
-    const canModify = await verifyChannelModifyPermission(user.uid, channel);
+    const canModify = await verifyChannelModifyPermission(user.uid, channel, campusId);
     if (!canModify) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to modify this channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -355,6 +364,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(ApiResponseHelper.error("Unauthorized", "UNAUTHORIZED"), { status: HttpStatus.UNAUTHORIZED });
     }
 
+    // Derive campusId from user email for multi-campus support
+    const campusId = user.email ? deriveCampusFromEmail(user.email) || 'ub-buffalo' : 'ub-buffalo';
+
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId');
 
@@ -371,7 +383,7 @@ export async function DELETE(request: NextRequest) {
     const channel = { id: channelDoc.id, ...channelDoc.data() } as ChatChannel;
 
     // Verify user has permission to delete channel
-    const canDelete = await verifyChannelDeletePermission(user.uid, channel);
+    const canDelete = await verifyChannelDeletePermission(user.uid, channel, campusId);
     if (!canDelete) {
       return NextResponse.json(ApiResponseHelper.error("Not authorized to delete this channel", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
@@ -521,13 +533,13 @@ async function createChannelMemberships(
 }
 
 // Helper function to verify space access
-async function verifySpaceAccess(userId: string, spaceId: string): Promise<boolean> {
+async function verifySpaceAccess(userId: string, spaceId: string, campusId: string): Promise<boolean> {
   try {
     const memberQuery = dbAdmin.collection('spaceMembers')
       .where('userId', '==', userId)
       .where('spaceId', '==', spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     return !memberSnapshot.empty;
@@ -570,7 +582,7 @@ async function getUnreadCount(userId: string, channelId: string): Promise<number
 }
 
 // Helper function to verify channel modify permission
-async function verifyChannelModifyPermission(userId: string, channel: ChatChannel): Promise<boolean> {
+async function verifyChannelModifyPermission(userId: string, channel: ChatChannel, campusId: string): Promise<boolean> {
   try {
     // Channel creator and admins can always modify
     if (channel.createdBy === userId || channel.admins.includes(userId)) {
@@ -582,7 +594,7 @@ async function verifyChannelModifyPermission(userId: string, channel: ChatChanne
       .where('userId', '==', userId)
       .where('spaceId', '==', channel.spaceId)
       .where('status', '==', 'active')
-      .where('campusId', '==', CURRENT_CAMPUS_ID);
+      .where('campusId', '==', campusId);
 
     const memberSnapshot = await memberQuery.get();
     if (memberSnapshot.empty) {
@@ -601,7 +613,7 @@ async function verifyChannelModifyPermission(userId: string, channel: ChatChanne
 }
 
 // Helper function to verify channel delete permission
-async function verifyChannelDeletePermission(userId: string, channel: ChatChannel): Promise<boolean> {
+async function verifyChannelDeletePermission(userId: string, channel: ChatChannel, campusId: string): Promise<boolean> {
   try {
     // Only channel creator and space admins can delete channels
     if (channel.createdBy === userId) {

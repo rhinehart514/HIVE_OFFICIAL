@@ -3,9 +3,9 @@ import { logger } from "@/lib/logger";
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 
 // Free time slot interface
 interface FreeTimeSlot {
@@ -24,6 +24,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate') || new Date().toISOString().split('T')[0];
@@ -44,9 +45,9 @@ export const GET = withAuthAndErrors(async (
     // Iterate through each day
     for (let currentDate = new Date(start); currentDate <= end; currentDate.setDate(currentDate.getDate() + 1)) {
       const dateStr = currentDate.toISOString().split('T')[0];
-      
+
       // Get all events for this day
-      const dayEvents = await getEventsForDate(userId, dateStr);
+      const dayEvents = await getEventsForDate(userId, dateStr, campusId);
       
       // Sort events by start time
       dayEvents.sort((a, b) => new Date(a.startDate as string).getTime() - new Date(b.startDate as string).getTime());
@@ -89,7 +90,7 @@ export const GET = withAuthAndErrors(async (
 });
 
 // Helper function to get events for a specific date
-async function getEventsForDate(userId: string, dateStr: string): Promise<Array<Record<string, unknown>>> {
+async function getEventsForDate(userId: string, dateStr: string, campusId: string): Promise<Array<Record<string, unknown>>> {
   const dayStart = `${dateStr}T00:00:00.000Z`;
   const dayEnd = `${dateStr}T23:59:59.999Z`;
 
@@ -114,7 +115,7 @@ async function getEventsForDate(userId: string, dateStr: string): Promise<Array<
   const membershipsSnapshot = await dbAdmin.collection('spaceMembers')
     .where('userId', '==', userId)
     .where('status', '==', 'active')
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .get();
 
   const userSpaceIds: string[] = [];
@@ -122,7 +123,7 @@ async function getEventsForDate(userId: string, dateStr: string): Promise<Array<
     const spaceId = membership.data().spaceId;
     if (!spaceId) continue;
     const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
-    if (spaceDoc.exists && spaceDoc.data()?.campusId === CURRENT_CAMPUS_ID) {
+    if (spaceDoc.exists && spaceDoc.data()?.campusId === campusId) {
       userSpaceIds.push(spaceId);
     }
   }

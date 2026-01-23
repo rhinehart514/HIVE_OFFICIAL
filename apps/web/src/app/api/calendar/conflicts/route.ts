@@ -5,9 +5,9 @@ import { logger } from "@/lib/logger";
 import {
   withAuthValidationAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
-import { CURRENT_CAMPUS_ID } from "@/lib/secure-firebase-queries";
 import { z } from "zod";
 
 interface ConflictEvent {
@@ -52,7 +52,7 @@ function detectConflict(
   return null;
 }
 
-async function listUserSpaceIds(userId: string) {
+async function listUserSpaceIds(userId: string, campusId: string) {
   const membershipsSnapshot = await dbAdmin
     .collection("spaceMembers")
     .where("userId", "==", userId)
@@ -64,7 +64,7 @@ async function listUserSpaceIds(userId: string) {
     const spaceId = membership.data().spaceId;
     if (!spaceId) continue;
     const spaceDoc = await dbAdmin.collection("spaces").doc(spaceId).get();
-    if (spaceDoc.exists && spaceDoc.data()?.campusId === CURRENT_CAMPUS_ID) {
+    if (spaceDoc.exists && spaceDoc.data()?.campusId === campusId) {
       spaceIds.push(spaceId);
     }
   }
@@ -82,6 +82,7 @@ export const POST = withAuthValidationAndErrors(
   ) => {
     try {
       const userId = getUserId(request as AuthenticatedRequest);
+      const campusId = getCampusId(request as AuthenticatedRequest);
       const { startDate, endDate, excludeEventId } = body;
 
       const proposedStart = new Date(startDate);
@@ -135,7 +136,7 @@ export const POST = withAuthValidationAndErrors(
         }
       }
 
-      const userSpaceIds = await listUserSpaceIds(userId);
+      const userSpaceIds = await listUserSpaceIds(userId, campusId);
 
       if (userSpaceIds.length > 0) {
         const spaceEventsSnapshot = await dbAdmin

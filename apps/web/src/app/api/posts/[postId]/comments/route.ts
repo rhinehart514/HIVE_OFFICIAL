@@ -7,9 +7,8 @@
 
 import * as admin from 'firebase-admin';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { getCurrentUser } from '@/lib/server-auth';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
-import { NextRequest, NextResponse } from 'next/server';
+import { withAuthAndErrors, withOptionalAuth, getUserId, getCampusId, getUser } from '@/lib/middleware';
+import { NextResponse } from 'next/server';
 
 const FieldValue = admin.firestore.FieldValue;
 
@@ -31,138 +30,126 @@ interface Comment {
 /**
  * GET /api/posts/[postId]/comments
  * Returns comments for a post
+ * Uses optional auth - returns comments for anyone but tracks hasLiked for authenticated users
  */
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ postId: string }> }
-) {
-  try {
-    const { postId } = await context.params;
-    const user = await getCurrentUser(request);
+export const GET = withOptionalAuth(async (request, context: { params: Promise<{ postId: string }> }, respond) => {
+  const { postId } = await context.params;
+  const user = getUser(request as import('next/server').NextRequest);
 
-    // Fetch comments from Firestore
-    const commentsSnapshot = await dbAdmin
-      .collection('posts')
-      .doc(postId)
-      .collection('comments')
-      .where('campusId', '==', CURRENT_CAMPUS_ID)
-      .orderBy('createdAt', 'asc')
-      .limit(100)
-      .get();
+  // Use authenticated user's campus or fall back to ub-buffalo for public access
+  const campusId = user?.campusId || 'ub-buffalo';
 
-    const comments: Comment[] = [];
+  // Fetch comments from Firestore
+  const commentsSnapshot = await dbAdmin
+    .collection('posts')
+    .doc(postId)
+    .collection('comments')
+    .where('campusId', '==', campusId)
+    .orderBy('createdAt', 'asc')
+    .limit(100)
+    .get();
 
-    for (const doc of commentsSnapshot.docs) {
-      const data = doc.data();
+  const comments: Comment[] = [];
 
-      // Skip hidden/deleted comments
-      if (data.isHidden || data.isDeleted) continue;
+  for (const doc of commentsSnapshot.docs) {
+    const data = doc.data();
 
-      // Check if current user liked this comment
-      let hasLiked = false;
-      if (user) {
-        const likeDoc = await doc.ref.collection('likes').doc(user.uid).get();
-        hasLiked = likeDoc.exists;
-      }
+    // Skip hidden/deleted comments
+    if (data.isHidden || data.isDeleted) continue;
 
-      comments.push({
-        id: doc.id,
-        author: {
-          id: data.authorId,
-          name: data.authorName || 'Unknown',
-          avatarUrl: data.authorAvatar,
-          role: data.authorRole,
-        },
-        content: data.content,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        likes: data.likeCount || 0,
-        hasLiked,
-        replies: [], // TODO: Fetch nested replies if needed
-      });
+    // Check if current user liked this comment
+    let hasLiked = false;
+    if (user) {
+      const likeDoc = await doc.ref.collection('likes').doc(user.uid).get();
+      hasLiked = likeDoc.exists;
     }
 
-    return NextResponse.json({ comments });
-  } catch {
-    return NextResponse.json({ comments: [] });
+    comments.push({
+      id: doc.id,
+      author: {
+        id: data.authorId,
+        name: data.authorName || 'Unknown',
+        avatarUrl: data.authorAvatar,
+        role: data.authorRole,
+      },
+      content: data.content,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      likes: data.likeCount || 0,
+      hasLiked,
+      replies: [], // TODO: Fetch nested replies if needed
+    });
   }
-}
+
+  return respond.success({ comments });
+});
 
 /**
  * POST /api/posts/[postId]/comments
  * Add a comment to a post
  */
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ postId: string }> }
-) {
-  try {
-    const { postId } = await context.params;
-    const user = await getCurrentUser(request);
+export const POST = withAuthAndErrors(async (request, context: { params: Promise<{ postId: string }> }, respond) => {
+  const { postId } = await context.params;
+  const userId = getUserId(request);
+  const campusId = getCampusId(request);
+  const userEmail = request.user.email;
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  const body = await request.json();
+  const { content } = body;
 
-    const body = await request.json();
-    const { content } = body;
-
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
-    }
-
-    if (content.length > 2000) {
-      return NextResponse.json({ error: 'Comment too long (max 2000 characters)' }, { status: 400 });
-    }
-
-    // Get user profile for author info
-    const profileDoc = await dbAdmin.collection('profiles').doc(user.uid).get();
-    const profileData = profileDoc.exists ? profileDoc.data() : null;
-
-    const commentData = {
-      postId,
-      authorId: user.uid,
-      authorName: profileData?.displayName || user.email?.split('@')[0] || 'Anonymous',
-      authorAvatar: profileData?.avatarUrl || null,
-      authorRole: profileData?.role || null,
-      content: content.trim(),
-      campusId: CURRENT_CAMPUS_ID,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      likeCount: 0,
-      isHidden: false,
-      isDeleted: false,
-    };
-
-    // Add comment to subcollection
-    const commentRef = await dbAdmin
-      .collection('posts')
-      .doc(postId)
-      .collection('comments')
-      .add(commentData);
-
-    // Increment comment count on post (both legacy and new fields)
-    await dbAdmin.collection('posts').doc(postId).update({
-      'reactions.comments': FieldValue.increment(1),
-      'engagement.comments': FieldValue.increment(1),
-      updatedAt: new Date(),
-    });
-
-    // Return the new comment in the expected format
-    return NextResponse.json({
-      id: commentRef.id,
-      author: {
-        id: user.uid,
-        name: commentData.authorName,
-        avatarUrl: commentData.authorAvatar,
-        role: commentData.authorRole,
-      },
-      content: commentData.content,
-      createdAt: commentData.createdAt.toISOString(),
-      likes: 0,
-      hasLiked: false,
-      replies: [],
-    });
-  } catch {
-    return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
+  if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    return respond.error('Comment content is required', 'VALIDATION_ERROR', { status: 400 });
   }
-}
+
+  if (content.length > 2000) {
+    return respond.error('Comment too long (max 2000 characters)', 'VALIDATION_ERROR', { status: 400 });
+  }
+
+  // Get user profile for author info
+  const profileDoc = await dbAdmin.collection('profiles').doc(userId).get();
+  const profileData = profileDoc.exists ? profileDoc.data() : null;
+
+  const commentData = {
+    postId,
+    authorId: userId,
+    authorName: profileData?.displayName || userEmail?.split('@')[0] || 'Anonymous',
+    authorAvatar: profileData?.avatarUrl || null,
+    authorRole: profileData?.role || null,
+    content: content.trim(),
+    campusId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    likeCount: 0,
+    isHidden: false,
+    isDeleted: false,
+  };
+
+  // Add comment to subcollection
+  const commentRef = await dbAdmin
+    .collection('posts')
+    .doc(postId)
+    .collection('comments')
+    .add(commentData);
+
+  // Increment comment count on post (both legacy and new fields)
+  await dbAdmin.collection('posts').doc(postId).update({
+    'reactions.comments': FieldValue.increment(1),
+    'engagement.comments': FieldValue.increment(1),
+    updatedAt: new Date(),
+  });
+
+  // Return the new comment in the expected format
+  return respond.success({
+    id: commentRef.id,
+    author: {
+      id: userId,
+      name: commentData.authorName,
+      avatarUrl: commentData.authorAvatar,
+      role: commentData.authorRole,
+    },
+    content: commentData.content,
+    createdAt: commentData.createdAt.toISOString(),
+    likes: 0,
+    hasLiked: false,
+    replies: [],
+  });
+});

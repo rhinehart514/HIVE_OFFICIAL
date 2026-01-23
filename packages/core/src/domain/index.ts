@@ -559,11 +559,133 @@ export {
   getOrchestrationExecutor,
   resetOrchestrationExecutor,
   type ExecutionContext,
-  type ActionExecutionResult,
+  type OrchestrationActionResult,
   type RuleExecutionResult,
   type OrchestrationExecutionResult,
   type ExecutorCallbacks,
 } from './hivelab/setup';
+
+// Sprint 3: Tool-to-Tool Connections
+export type {
+  ToolConnection,
+  ToolConnectionSource,
+  ToolConnectionTarget,
+  DataTransform,
+  ToolOutput,
+  ToolOutputManifest,
+  ResolvedConnection,
+  ResolvedConnections,
+  ConnectionValidationResult,
+  ConnectionValidationError,
+  ConnectionValidationWarning,
+  ConnectionStatus,
+  CreateConnectionDTO,
+  UpdateConnectionDTO,
+} from './hivelab/tool-connection.types';
+export {
+  DATA_TRANSFORMS,
+  MAX_CONNECTIONS_PER_TOOL,
+  CONNECTION_CACHE_TTL_MS,
+  CONNECTIONS_COLLECTION,
+  getConnectionCacheKey,
+  parseConnectionCacheKey,
+  isTransformCompatible,
+  applyTransform,
+  getValueAtPath,
+  setValueAtPath,
+} from './hivelab/tool-connection.types';
+
+// Sprint 4: Tool Automations
+export type {
+  ToolAutomation,
+  ToolAutomationTrigger,
+  ToolAutomationAction,
+  ToolAutomationCondition,
+  ToolAutomationLimits,
+  ToolAutomationRun,
+  ToolAutomationRunStatus,
+  NotifyEmailAction,
+  NotifyPushAction,
+  MutateAction,
+  TriggerToolAction,
+  ToolEventTrigger,
+  ToolScheduleTrigger,
+  ToolThresholdTrigger,
+  ConditionOperator as AutomationConditionOperator,
+  CreateToolAutomationDTO,
+  UpdateToolAutomationDTO,
+} from './hivelab/tool-automation.types';
+export {
+  evaluateCondition as evaluateAutomationCondition,
+  evaluateAllConditions,
+  canRunAutomation,
+  isValidCron,
+  getNextRunTime,
+  DEFAULT_AUTOMATION_LIMITS,
+  MAX_AUTOMATIONS_PER_TOOL,
+  MAX_ACTIONS_PER_AUTOMATION,
+  MAX_CONDITIONS_PER_AUTOMATION,
+  MAX_AUTOMATION_RUNS_HISTORY,
+  AUTOMATIONS_COLLECTION,
+  AUTOMATION_RUNS_COLLECTION,
+} from './hivelab/tool-automation.types';
+
+// Sprint 5: Theme Inheritance
+export type {
+  ToolThemeSource,
+  HSLColor,
+  ToolThemePalette,
+  ToolThemeConfig,
+  ResolvedToolTheme,
+  SpaceBrand,
+} from './hivelab/tool-theme.types';
+export {
+  HIVE_DEFAULT_PALETTE,
+  MINIMAL_PALETTE,
+  hexToHSL,
+  hslToHex,
+  getLuminance,
+  getContrastColor,
+  generatePalette,
+  resolveToolTheme,
+  DEFAULT_TOOL_THEME,
+} from './hivelab/tool-theme.types';
+
+// Sprint 5: Structured Error Types
+export type {
+  ToolErrorCode,
+  ToolError,
+  ErrorRecoveryAction,
+} from './hivelab/tool-error.types';
+export {
+  ERROR_MESSAGES,
+  createToolError,
+  isRecoverableError,
+  getRecoveryActions,
+  parseError,
+  isToolError,
+} from './hivelab/tool-error.types';
+
+// Sprint 5: Audit Trail
+export type {
+  AuditEventType,
+  AuditActor,
+  AuditChanges,
+  AuditEntry,
+  AuditLogQuery,
+  AuditLogResponse,
+  AuditSummary,
+} from './hivelab/tool-audit.types';
+export {
+  AUDIT_COLLECTION,
+  MAX_AUDIT_ENTRIES,
+  AUDIT_RETENTION_DAYS,
+  generateAuditId,
+  createAuditEntry,
+  createSystemActor,
+  createUserActor,
+  getEventDescription,
+} from './hivelab/tool-audit.types';
 
 // =============================================================================
 // Creation Domain (Tool Validation)

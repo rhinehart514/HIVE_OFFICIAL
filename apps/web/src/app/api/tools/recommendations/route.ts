@@ -1,10 +1,10 @@
 import { dbAdmin as adminDb } from '@/lib/firebase-admin';
 import { logger } from "@/lib/structured-logger";
 import type * as admin from 'firebase-admin';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from "@/lib/middleware";
 
@@ -113,6 +113,7 @@ export const GET = withAuthAndErrors(async (
 ) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') ?? undefined;
@@ -120,10 +121,10 @@ export const GET = withAuthAndErrors(async (
     const includeInstalled = searchParams.get('includeInstalled') === 'true';
 
     // Get user context
-    const context = await buildUserContext(userId);
+    const context = await buildUserContext(userId, campusId);
 
     // Generate recommendations
-    const recommendations = await generateRecommendations(context, {
+    const recommendations = await generateRecommendations(context, campusId, {
       category,
       limit: limit_param,
       includeInstalled
@@ -141,7 +142,7 @@ export const GET = withAuthAndErrors(async (
 });
 
 // Helper function to build user context
-async function buildUserContext(userId: string): Promise<RecommendationContext> {
+async function buildUserContext(userId: string, campusId: string): Promise<RecommendationContext> {
   // Get user profile
   const userDoc = await adminDb.collection('users').doc(userId).get();
   const userData = userDoc.exists ? userDoc.data() : null;
@@ -168,7 +169,7 @@ async function buildUserContext(userId: string): Promise<RecommendationContext> 
   for (const doc of spaceMembershipsSnapshot.docs) {
     const sid = doc.data().spaceId;
     const sDoc = await adminDb.collection('spaces').doc(sid).get();
-    if (sDoc.exists && (sDoc.data()?.campusId === CURRENT_CAMPUS_ID)) {
+    if (sDoc.exists && (sDoc.data()?.campusId === campusId)) {
       spaceIds.push(sid);
     }
   }
@@ -177,7 +178,7 @@ async function buildUserContext(userId: string): Promise<RecommendationContext> 
   const installationsSnapshot = await adminDb
     .collection('toolInstallations')
     .where('installerId', '==', userId)
-    .where('campusId', '==', CURRENT_CAMPUS_ID)
+    .where('campusId', '==', campusId)
     .where('status', '==', 'active')
     .get();
 
@@ -211,13 +212,14 @@ async function buildUserContext(userId: string): Promise<RecommendationContext> 
 // Main recommendation generation function
 async function generateRecommendations(
   context: RecommendationContext,
+  campusId: string,
   options: { category?: string; limit: number; includeInstalled?: boolean }
 ): Promise<RecommendationResponse> {
   const { category, limit, includeInstalled = false } = options;
 
   // Get all marketplace tools
   let marketplaceQuery: admin.firestore.Query<admin.firestore.DocumentData> = adminDb.collection('marketplace');
-  
+
   if (category) {
     marketplaceQuery = marketplaceQuery.where('category', '==', category);
   }
@@ -234,7 +236,7 @@ async function generateRecommendations(
     const toolData = t as ToolData;
     if (!toolData.toolId) continue;
     const tDoc = await adminDb.collection('tools').doc(toolData.toolId).get();
-    if (tDoc.exists && (tDoc.data()?.campusId === CURRENT_CAMPUS_ID)) {
+    if (tDoc.exists && (tDoc.data()?.campusId === campusId)) {
       allTools.push(toolData);
     }
   }

@@ -10,10 +10,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { logger } from '@/lib/structured-logger';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import {
   withAuthAndErrors,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 
@@ -53,12 +53,12 @@ function parseQuery(searchParams: URLSearchParams): PlacementQuery {
 // Permission Checks
 // ============================================================================
 
-async function canViewSpacePlacements(userId: string, spaceId: string): Promise<boolean> {
+async function canViewSpacePlacements(userId: string, spaceId: string, campusId: string): Promise<boolean> {
   const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
   if (!spaceDoc.exists) return false;
 
   const spaceData = spaceDoc.data();
-  if (spaceData?.campusId && spaceData.campusId !== CURRENT_CAMPUS_ID) {
+  if (spaceData?.campusId && spaceData.campusId !== campusId) {
     return false;
   }
 
@@ -73,6 +73,7 @@ async function canViewSpacePlacements(userId: string, spaceId: string): Promise<
 export const GET = withAuthAndErrors(async (request, _context, respond) => {
   try {
     const userId = getUserId(request as AuthenticatedRequest);
+    const campusId = getCampusId(request as AuthenticatedRequest);
     const searchParams = new URL(request.url).searchParams;
     const query = parseQuery(searchParams);
 
@@ -87,7 +88,7 @@ export const GET = withAuthAndErrors(async (request, _context, respond) => {
 
     // Permission check
     if (query.spaceId) {
-      const canView = await canViewSpacePlacements(userId, query.spaceId);
+      const canView = await canViewSpacePlacements(userId, query.spaceId, campusId);
       if (!canView) {
         return respond.error(
           'Access denied to space placements',

@@ -17,7 +17,7 @@ import type {
   ToolConnection,
   ResolvedConnection,
   ResolvedConnections,
-  ConnectionSource,
+  ToolConnectionSource,
   DataTransform,
   ConnectionStatus,
 } from '../../domain/hivelab/tool-connection.types';
@@ -26,6 +26,7 @@ import {
   getValueAtPath,
   CONNECTION_CACHE_TTL_MS,
   getConnectionCacheKey,
+  getConnectionCacheTTL,
 } from '../../domain/hivelab/tool-connection.types';
 import type { CanvasElement, ToolSharedState } from '../../domain/hivelab/tool-composition.types';
 
@@ -142,15 +143,19 @@ export class ConnectionResolverService {
         // Apply transform if specified
         const transformedValue = applyTransform(resolved, connection.transform);
 
+        // COST OPTIMIZATION: Use type-specific TTL based on source path
+        // Counters: 5 min, collections: 2 min, timeline: 30 sec
+        const effectiveTtl = options.ttl ?? getConnectionCacheTTL(connection.source.path);
+
         // Cache the result
-        this.setInCache(cacheKey, transformedValue, ttl);
+        this.setInCache(cacheKey, transformedValue, effectiveTtl);
 
         values[cacheKey] = {
           connectionId: connection.id,
           status: 'connected',
           value: transformedValue,
           resolvedAt: now,
-          ttl,
+          ttl: effectiveTtl,
         };
       } catch (error) {
         errorCount++;
@@ -176,7 +181,7 @@ export class ConnectionResolverService {
   /**
    * Fetch the value at a source path from a source tool's state.
    */
-  async resolveSourceValue(source: ConnectionSource): Promise<unknown> {
+  async resolveSourceValue(source: ToolConnectionSource): Promise<unknown> {
     const state = await this.repository.getToolSharedState(source.deploymentId);
 
     if (!state) {

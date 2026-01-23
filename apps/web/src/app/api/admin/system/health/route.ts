@@ -7,9 +7,8 @@
  */
 
 import { logger } from '@/lib/structured-logger';
-import { withAdminAuthAndErrors } from '@/lib/middleware';
+import { withAdminAuthAndErrors, getCampusId, type AuthenticatedRequest } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
-import { CURRENT_CAMPUS_ID } from '@/lib/secure-firebase-queries';
 import { dbAdmin } from '@/lib/firebase-admin';
 
 interface ServiceHealth {
@@ -61,11 +60,11 @@ async function checkFirestore(): Promise<ServiceHealth> {
   }
 }
 
-async function checkFirestoreWrite(): Promise<ServiceHealth> {
+async function checkFirestoreWrite(campusId: string): Promise<ServiceHealth> {
   const start = Date.now();
   try {
     const testRef = dbAdmin.collection('_healthCheck').doc('test');
-    await testRef.set({ timestamp: new Date(), campus: CURRENT_CAMPUS_ID });
+    await testRef.set({ timestamp: new Date(), campus: campusId });
     await testRef.delete();
     return {
       name: 'Firestore Write',
@@ -166,12 +165,14 @@ async function getSystemMetrics(): Promise<SystemMetrics> {
  * GET /api/admin/system/health
  * Fetch system health status
  */
-export const GET = withAdminAuthAndErrors(async (_request, _context, respond) => {
+export const GET = withAdminAuthAndErrors(async (request, _context, respond) => {
+  const campusId = getCampusId(request as AuthenticatedRequest);
+
   try {
     // Run all health checks in parallel
     const [firestore, firestoreWrite, auth, storage, metrics] = await Promise.all([
       checkFirestore(),
-      checkFirestoreWrite(),
+      checkFirestoreWrite(campusId),
       checkAuthService(),
       checkStorageService(),
       getSystemMetrics(),
