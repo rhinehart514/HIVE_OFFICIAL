@@ -42,14 +42,7 @@ export const metadata: Metadata = {
     title: 'HIVE',
   },
   applicationName: 'HIVE Campus',
-  icons: {
-    icon: [
-      { url: '/assets/hive-logo-gold.svg', type: 'image/svg+xml' },
-    ],
-    apple: [
-      { url: '/assets/hive-logo-gold.svg', type: 'image/svg+xml' },
-    ],
-  },
+  // Icons are auto-detected from app/icon.svg and app/apple-icon.svg
   openGraph: {
     type: 'website',
     locale: 'en_US',
