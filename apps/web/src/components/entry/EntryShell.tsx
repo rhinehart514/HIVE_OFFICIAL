@@ -120,7 +120,7 @@ export function EntryShell({
         </Link>
       </motion.header>
 
-      {/* Main content - centered */}
+      {/* Main content - centered, wider like /about for premium feel */}
       <main
         className={cn(
           'flex-1 flex flex-col px-6 relative z-10',
@@ -136,7 +136,7 @@ export function EntryShell({
               : { duration: DURATION.dramatic, ease: EASE_PREMIUM }
           }
           className={cn(
-            'w-full max-w-[400px] mx-auto',
+            'w-full max-w-[460px] mx-auto',
             className
           )}
         >

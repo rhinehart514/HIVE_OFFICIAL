@@ -126,9 +126,9 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
     entry.sections.arrival.status === 'complete' ||
     entry.sections['alumni-waitlist'].status === 'active';
 
-  // Word-by-word reveal for headline
+  // Word-by-word reveal for headline - premium /about-style typography
   const headlineWords = ['Enter', 'HIVE'];
-  const subtitleWords = ['Your', 'campus', 'is', 'waiting.'];
+  const subtitleWords = ['Infrastructure', 'for', 'what', "you're", 'building.'];
 
   return (
     <div className="space-y-6">
@@ -138,14 +138,14 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
           variants={heroEntranceVariants}
           initial="initial"
           animate="animate"
-          className="mb-10"
+          className="mb-12"
         >
-          {/* Word-by-word headline */}
+          {/* Word-by-word headline - larger, more dramatic */}
           <h1
-            className="text-[36px] md:text-[44px] font-semibold tracking-tight text-white leading-[1.0]"
+            className="text-[40px] md:text-[52px] font-semibold tracking-tight text-white leading-[1.0]"
             style={{
               fontFamily: 'var(--font-display)',
-              textShadow: '0 0 80px rgba(255, 215, 0, 0.06)',
+              textShadow: '0 0 80px rgba(255, 215, 0, 0.08)',
             }}
           >
             {headlineWords.map((word, i) => (
@@ -162,8 +162,8 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
             ))}
           </h1>
 
-          {/* Subtitle with word reveal */}
-          <p className="mt-3 text-[16px] text-white/40">
+          {/* Subtitle with word reveal - more evocative copy */}
+          <p className="mt-4 text-[17px] text-white/40 leading-relaxed">
             {subtitleWords.map((word, i) => (
               <motion.span
                 key={i}
@@ -179,9 +179,9 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
             ))}
           </p>
 
-          {/* Animated separator line */}
+          {/* Animated separator line - more subtle */}
           <motion.div
-            className="mt-8 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent"
+            className="mt-10 h-px bg-gradient-to-r from-white/[0.08] via-white/[0.04] to-transparent"
             variants={lineDrawVariants}
             initial="initial"
             animate="animate"

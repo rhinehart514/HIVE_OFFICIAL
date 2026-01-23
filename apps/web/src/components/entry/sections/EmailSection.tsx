@@ -2,13 +2,16 @@
 
 /**
  * EmailSection - Premium email input
- * REDESIGNED: Jan 21, 2026
+ * REDESIGNED: Jan 23, 2026
  *
  * Apple/OpenAI inspired input design:
- * - Clean, minimal borders
+ * - Clean, minimal borders with integrated domain suffix
  * - Large touch targets
- * - Subtle focus states
- * - Gold CTA button
+ * - Subtle focus states with gold ring
+ * - Gold CTA button for primary action
+ *
+ * FIXED: Domain suffix visual integration - no separate containers
+ * FIXED: Handle browser autocomplete stripping domain from pasted emails
  */
 
 import * as React from 'react';
@@ -47,6 +50,7 @@ export function EmailSection({
   isLoading,
 }: EmailSectionProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = React.useState(false);
 
   const isLocked = section.status === 'locked' || section.status === 'complete';
   const isActive = section.status === 'active';
@@ -59,8 +63,24 @@ export function EmailSection({
     }
   }, [isActive]);
 
+  // Handle email change - strip domain if user pastes full email
+  const handleEmailChange = (value: string) => {
+    // If user pasted full email with domain, strip it
+    let cleanValue = value.toLowerCase().trim();
+
+    // Remove the @domain.edu suffix if present (handles autocomplete/paste)
+    if (cleanValue.includes('@')) {
+      cleanValue = cleanValue.split('@')[0];
+    }
+
+    // Remove any non-alphanumeric characters except . _ -
+    cleanValue = cleanValue.replace(/[^a-z0-9._-]/g, '');
+
+    onEmailChange(cleanValue);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
+    if (e.key === 'Enter' && !isLoading && email.trim()) {
       e.preventDefault();
       onSubmit();
     }
@@ -108,27 +128,33 @@ export function EmailSection({
           variants={shakeVariants}
           animate={hasError ? 'shake' : 'idle'}
         >
+          {/* Unified input container - domain suffix is visually integrated */}
           <div
             className={cn(
-              'flex items-center h-14 rounded-2xl border transition-all duration-200',
+              'relative flex items-center h-14 rounded-2xl border transition-all duration-200',
               'bg-white/[0.03]',
-              'focus-within:bg-white/[0.05] focus-within:border-white/20',
               hasError
                 ? 'border-red-500/50 bg-red-500/[0.03]'
-                : 'border-white/[0.08]'
+                : isFocused
+                  ? 'border-[var(--color-gold)]/30 bg-white/[0.05] shadow-[0_0_0_4px_rgba(255,215,0,0.06)]'
+                  : 'border-white/[0.08]'
             )}
           >
             <input
               ref={inputRef}
               type="text"
               value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
+              onChange={(e) => handleEmailChange(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="you"
               disabled={isLoading}
-              autoComplete="username"
+              autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
+              spellCheck={false}
+              data-form-type="other"
               className={cn(
                 'flex-1 h-full px-5 bg-transparent text-[16px] text-white',
                 'placeholder:text-white/25',
@@ -136,7 +162,11 @@ export function EmailSection({
                 'disabled:opacity-50'
               )}
             />
-            <span className="pr-5 text-[16px] text-white/30 select-none">
+            {/* Domain suffix - seamlessly integrated, no separate container */}
+            <span
+              className="pr-5 text-[16px] select-none pointer-events-none whitespace-nowrap"
+              style={{ color: isFocused ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.30)' }}
+            >
               @{domain}
             </span>
           </div>

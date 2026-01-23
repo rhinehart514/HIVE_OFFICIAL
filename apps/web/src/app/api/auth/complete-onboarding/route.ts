@@ -184,6 +184,10 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
 
   try {
     await dbAdmin.runTransaction(async (transaction) => {
+      // =========================================================================
+      // PHASE 1: ALL READS FIRST (Firebase requires all reads before any writes)
+      // =========================================================================
+
       // Check handle availability atomically
       const handleResult = await checkHandleAvailabilityInTransaction(transaction, normalizedHandle);
 
@@ -202,6 +206,20 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
           throw new Error('Campus mismatch - cannot complete onboarding for different campus');
         }
       }
+
+      // Pre-fetch all space membership docs if joining spaces
+      const membershipReads: { spaceId: string; memberRef: FirebaseFirestore.DocumentReference; snapshot: FirebaseFirestore.DocumentSnapshot }[] = [];
+      if (body.initialSpaceIds && body.initialSpaceIds.length > 0) {
+        for (const spaceId of body.initialSpaceIds) {
+          const memberRef = dbAdmin.collection('spaceMembers').doc(`${spaceId}-${userId}`);
+          const snapshot = await transaction.get(memberRef);
+          membershipReads.push({ spaceId, memberRef, snapshot });
+        }
+      }
+
+      // =========================================================================
+      // PHASE 2: ALL WRITES (after all reads are complete)
+      // =========================================================================
 
       // Reserve the handle atomically
       reserveHandleInTransaction(transaction, normalizedHandle, userId, email || '');
@@ -275,43 +293,36 @@ export const POST = withAuthValidationAndErrors(schema as z.ZodType<OnboardingBo
         }
       }
 
-      // Join initial spaces if provided
-      // Use composite key (spaceId-userId) for idempotency - prevents duplicates on transaction retry
-      if (body.initialSpaceIds && body.initialSpaceIds.length > 0) {
-        for (const spaceId of body.initialSpaceIds) {
-          const memberRef = dbAdmin.collection('spaceMembers').doc(`${spaceId}-${userId}`);
+      // Join initial spaces using pre-fetched membership data
+      for (const { spaceId, memberRef, snapshot } of membershipReads) {
+        const isNewMember = !snapshot.exists;
 
-          // Check if membership already exists to avoid double-incrementing member count
-          const existingMember = await transaction.get(memberRef);
-          const isNewMember = !existingMember.exists;
+        transaction.set(memberRef, {
+          odcId: `${spaceId}-${userId}`, // Document ID for querying
+          odcRefs: { spaceId, userId }, // Reference fields for compound queries
+          userId,
+          spaceId,
+          campusId,
+          role: 'member',
+          joinedAt: snapshot.exists ? snapshot.data()?.joinedAt : new Date().toISOString(),
+          isActive: true,
+          permissions: ['post', 'comment', 'react'],
+          joinMethod: 'onboarding',
+        }, { merge: true }); // merge: true ensures idempotency
 
-          transaction.set(memberRef, {
-            odcId: `${spaceId}-${userId}`, // Document ID for querying
-            odcRefs: { spaceId, userId }, // Reference fields for compound queries
-            userId,
-            spaceId,
-            campusId,
-            role: 'member',
-            joinedAt: existingMember.exists ? existingMember.data()?.joinedAt : new Date().toISOString(),
-            isActive: true,
-            permissions: ['post', 'comment', 'react'],
-            joinMethod: 'onboarding',
-          }, { merge: true }); // merge: true ensures idempotency
+        // Only increment member count for new memberships
+        // SCALING FIX: Use sharded counter when enabled (handled after transaction)
+        if (isNewMember && !isShardedMemberCountEnabled()) {
+          const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
+          transaction.update(spaceRef, {
+            'metrics.memberCount': admin.firestore.FieldValue.increment(1),
+            updatedAt: new Date().toISOString(),
+          });
+        }
 
-          // Only increment member count for new memberships
-          // SCALING FIX: Use sharded counter when enabled (handled after transaction)
-          if (isNewMember && !isShardedMemberCountEnabled()) {
-            const spaceRef = dbAdmin.collection('spaces').doc(spaceId);
-            transaction.update(spaceRef, {
-              'metrics.memberCount': admin.firestore.FieldValue.increment(1),
-              updatedAt: new Date().toISOString(),
-            });
-          }
-
-          // Track new members for post-transaction sharded counter update
-          if (isNewMember) {
-            newMemberSpaceIds.push(spaceId);
-          }
+        // Track new members for post-transaction sharded counter update
+        if (isNewMember) {
+          newMemberSpaceIds.push(spaceId);
         }
       }
     });
