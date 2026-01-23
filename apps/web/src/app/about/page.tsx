@@ -601,8 +601,6 @@ export default function AboutPage() {
             {/* SPACES */}
             <UpvotableSection
               className="px-6 py-32 relative"
-              sectionId="spaces"
-              upvoteProps={upvoteProps}
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
@@ -1143,8 +1141,6 @@ export default function AboutPage() {
             {/* FEED & RITUALS */}
             <UpvotableSection
               className="px-6 py-32 relative"
-              sectionId="feed"
-              upvoteProps={upvoteProps}
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
@@ -1244,8 +1240,6 @@ export default function AboutPage() {
             {/* PROFILE */}
             <UpvotableSection
               className="px-6 py-32 relative"
-              sectionId="resources"
-              upvoteProps={upvoteProps}
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
@@ -1424,8 +1418,6 @@ export default function AboutPage() {
             {/* HIVELAB - CENTERPIECE */}
             <UpvotableSection
               className="px-6 py-32 relative"
-              sectionId="hivelab"
-              upvoteProps={upvoteProps}
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-3xl">
