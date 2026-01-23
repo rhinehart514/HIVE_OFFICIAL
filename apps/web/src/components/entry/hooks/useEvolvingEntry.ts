@@ -88,6 +88,13 @@ export interface UseEvolvingEntryOptions {
 // Resend cooldown duration in seconds
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// Type for access code lockout (used by landing page components)
+export interface AccessCodeLockout {
+  locked: boolean;
+  remainingMinutes: number;
+  attemptsRemaining?: number;
+}
+
 export interface UseEvolvingEntryReturn {
   // Section visibility
   sections: Record<SectionId, SectionState>;
