@@ -291,11 +291,11 @@ export async function middleware(request: NextRequest) {
   // Get session cookie
   const sessionCookie = request.cookies.get('hive_session')?.value;
 
-  // Protected route without session - redirect to entry flow
+  // Protected route without session - redirect to landing page
   if (isProtectedRoute(pathname) && !sessionCookie) {
-    const enterUrl = new URL('/enter', request.url);
-    enterUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(enterUrl);
+    const landingUrl = new URL('/', request.url);
+    landingUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(landingUrl);
   }
 
   // If we have a session, verify it for admin and onboarding routes
