@@ -30,14 +30,15 @@ const ALLOW_DEV_BYPASS =
   process.env.DEV_AUTH_BYPASS === 'true';
 
 // Schema with identity fields for decision-reducing onboarding
+// UPDATED: Jan 23, 2026 - Made major and residenceType optional (deferred to in-platform)
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
   handle: SecureSchemas.handle,
-  // Identity fields
-  major: z.string().min(1).max(100),
+  // Identity fields - now optional for streamlined onboarding
+  major: z.string().max(100).optional().nullable(),
   graduationYear: z.number().min(2015).max(2035).optional().nullable(),
-  residenceType: z.enum(['on-campus', 'off-campus', 'commuter']),
+  residenceType: z.enum(['on-campus', 'off-campus', 'commuter']).optional().nullable(),
   residentialSpaceId: z.string().max(100).optional().nullable(),
   // Interests (2-3 required)
   interests: z.array(z.string()).min(2).max(3),
@@ -140,6 +141,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
 
   try {
     await dbAdmin.runTransaction(async (transaction) => {
+      // =========================================================================
+      // PHASE 1: ALL READS FIRST (Firebase requires all reads before any writes)
+      // =========================================================================
+
       // Check handle availability atomically
       const handleResult = await checkHandleAvailabilityInTransaction(transaction, normalizedHandle);
 
@@ -158,6 +163,54 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         }
       }
 
+      // Pre-fetch major space if major is provided
+      let majorSpaceSnapshot: FirebaseFirestore.QuerySnapshot | null = null;
+      if (body.major) {
+        majorSpaceSnapshot = await transaction.get(
+          dbAdmin.collection('spaces')
+            .where('campusId', '==', campusId)
+            .where('identityType', '==', 'major')
+            .where('majorName', '==', body.major)
+            .limit(1)
+        );
+      }
+
+      // Pre-fetch community spaces based on identity checkboxes
+      const communityMappings = {
+        international: 'international',
+        transfer: 'transfer',
+        firstGen: 'firstgen',
+        commuter: 'commuter',
+        graduate: 'graduate',
+        veteran: 'veteran',
+      } as const;
+
+      const communitySpaceReads: Array<{
+        key: string;
+        communityType: string;
+        snapshot: FirebaseFirestore.QuerySnapshot;
+      }> = [];
+
+      if (body.communityIdentities) {
+        for (const [key, communityType] of Object.entries(communityMappings)) {
+          if (body.communityIdentities[key as keyof typeof body.communityIdentities]) {
+            const snapshot = await transaction.get(
+              dbAdmin.collection('spaces')
+                .where('campusId', '==', campusId)
+                .where('identityType', '==', 'community')
+                .where('communityType', '==', communityType)
+                .where('isUniversal', '==', true)
+                .limit(1)
+            );
+            communitySpaceReads.push({ key, communityType, snapshot });
+          }
+        }
+      }
+
+      // =========================================================================
+      // PHASE 2: ALL WRITES (after all reads are complete)
+      // =========================================================================
+
       // Reserve the handle atomically
       reserveHandleInTransaction(transaction, normalizedHandle, userId, email || '');
 
@@ -169,10 +222,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName.trim(),
         handle: normalizedHandle,
         email: email || '',
-        // Decision-reducing identity fields
-        major: body.major,
+        // Decision-reducing identity fields (now optional)
+        ...(body.major && { major: body.major }),
         graduationYear: body.graduationYear || null,
-        residenceType: body.residenceType,
+        ...(body.residenceType && { residenceType: body.residenceType }),
         residentialSpaceId: body.residentialSpaceId || null,
         interests: body.interests || [],
         communityIdentities: body.communityIdentities || {},
@@ -193,19 +246,10 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
       }, { merge: true });
 
-      // Auto-join: 1. Major space (find by majorName, join or waitlist)
-      // Find major space for this major
-      const majorSpacesSnapshot = await transaction.get(
-        dbAdmin.collection('spaces')
-          .where('campusId', '==', campusId)
-          .where('identityType', '==', 'major')
-          .where('majorName', '==', body.major)
-          .limit(1)
-      );
-
+      // Auto-join: 1. Major space (if major provided and space exists)
       let majorSpaceId: string | null = null;
-      if (!majorSpacesSnapshot.empty) {
-        const majorSpace = majorSpacesSnapshot.docs[0];
+      if (majorSpaceSnapshot && !majorSpaceSnapshot.empty) {
+        const majorSpace = majorSpaceSnapshot.docs[0];
         majorSpaceId = majorSpace?.id || null;
         const majorSpaceData = majorSpace?.data();
 
@@ -251,58 +295,35 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         }
       }
 
-      // Auto-join: 2. Community spaces based on identity checkboxes
+      // Auto-join: 2. Community spaces using pre-fetched data
       const communitySpaceIds: string[] = [];
-      if (body.communityIdentities) {
-        const communityMappings = {
-          international: 'international',
-          transfer: 'transfer',
-          firstGen: 'firstgen',
-          commuter: 'commuter',
-          graduate: 'graduate',
-          veteran: 'veteran',
-        } as const;
+      for (const { snapshot } of communitySpaceReads) {
+        if (!snapshot.empty) {
+          const communitySpace = snapshot.docs[0];
+          const communitySpaceId = communitySpace?.id;
 
-        for (const [key, communityType] of Object.entries(communityMappings)) {
-          if (body.communityIdentities[key as keyof typeof body.communityIdentities]) {
-            // Find universal community space for this type
-            const communitySpacesSnapshot = await transaction.get(
-              dbAdmin.collection('spaces')
-                .where('campusId', '==', campusId)
-                .where('identityType', '==', 'community')
-                .where('communityType', '==', communityType)
-                .where('isUniversal', '==', true)
-                .limit(1)
-            );
+          if (communitySpaceId) {
+            communitySpaceIds.push(communitySpaceId);
 
-            if (!communitySpacesSnapshot.empty) {
-              const communitySpace = communitySpacesSnapshot.docs[0];
-              const communitySpaceId = communitySpace?.id;
+            // Join the space
+            const memberRef = dbAdmin.collection('spaceMembers').doc(`${communitySpaceId}_${userId}`);
+            transaction.set(memberRef, {
+              spaceId: communitySpaceId,
+              userId: userId,
+              role: 'member',
+              joinedAt: new Date().toISOString(),
+              campusId: campusId,
+              isActive: true,
+              userName: fullName,
+              userHandle: normalizedHandle,
+            });
 
-              if (communitySpaceId) {
-                communitySpaceIds.push(communitySpaceId);
-
-                // Join the space
-                const memberRef = dbAdmin.collection('spaceMembers').doc(`${communitySpaceId}_${userId}`);
-                transaction.set(memberRef, {
-                  spaceId: communitySpaceId,
-                  userId: userId,
-                  role: 'member',
-                  joinedAt: new Date().toISOString(),
-                  campusId: campusId,
-                  isActive: true,
-                  userName: fullName,
-                  userHandle: normalizedHandle,
-                });
-
-                // Increment member count
-                const spaceRef = dbAdmin.collection('spaces').doc(communitySpaceId);
-                transaction.update(spaceRef, {
-                  memberCount: FieldValue.increment(1),
-                  'metrics.memberCount': FieldValue.increment(1),
-                });
-              }
-            }
+            // Increment member count
+            const spaceRef = dbAdmin.collection('spaces').doc(communitySpaceId);
+            transaction.update(spaceRef, {
+              memberCount: FieldValue.increment(1),
+              'metrics.memberCount': FieldValue.increment(1),
+            });
           }
         }
       }
