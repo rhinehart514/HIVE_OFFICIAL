@@ -1,18 +1,28 @@
+'use client';
+
 import { type Metadata } from 'next';
+import { LayoutProvider } from '@hive/ui';
 
-export const metadata: Metadata = {
-  title: 'Spaces',
-  description: 'Discover and join communities on campus',
-};
+// Note: metadata can't be exported from client components
+// export const metadata: Metadata = {
+//   title: 'Spaces',
+//   description: 'Your campus headquarters',
+// };
 
+/**
+ * Spaces Layout
+ *
+ * Sets the 'orientation' archetype for the Spaces HQ.
+ * Shell visibility is ON for orientation layouts.
+ */
 export default function SpacesLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-black">
+    <LayoutProvider archetype="orientation">
       {children}
-    </div>
+    </LayoutProvider>
   );
 }
