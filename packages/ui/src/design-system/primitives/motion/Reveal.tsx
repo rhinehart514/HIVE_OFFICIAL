@@ -38,6 +38,10 @@ export interface RevealSectionProps {
   delay?: number;
   /** Render as section or div */
   as?: 'section' | 'div';
+  /** Data attribute for GSAP scroll sections */
+  'data-scroll-section'?: boolean;
+  /** Data attribute for GSAP parallax */
+  'data-parallax'?: number;
 }
 
 /**
@@ -59,6 +63,8 @@ export function RevealSection({
   ease = 'premium',
   delay = 0,
   as = 'section',
+  'data-scroll-section': scrollSection,
+  'data-parallax': parallax,
 }: RevealSectionProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, {
@@ -79,6 +85,8 @@ export function RevealSection({
         ease: MOTION.ease[ease],
       }}
       role={as === 'section' ? 'region' : undefined}
+      data-scroll-section={scrollSection || undefined}
+      data-parallax={parallax !== undefined ? parallax : undefined}
     >
       {children}
     </motion.div>

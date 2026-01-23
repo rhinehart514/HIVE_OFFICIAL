@@ -1,7 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import {
   Logo,
   motion,
@@ -17,6 +20,11 @@ import {
   ParallaxText,
   ScrollSpacer,
 } from '@hive/ui/design-system/primitives';
+
+// Register GSAP plugins
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+}
 
 // Early contributors (alphabetical)
 interface Contributor {
@@ -126,6 +134,8 @@ function UpvotableSection({
   className,
   sectionId,
   upvoteProps,
+  scrollSection = false,
+  parallax,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -135,9 +145,15 @@ function UpvotableSection({
     userVotes: Set<SectionId>;
     upvote: (id: SectionId) => void;
   };
+  scrollSection?: boolean;
+  parallax?: number;
 }) {
   return (
-    <RevealSection className={className}>
+    <RevealSection
+      className={className}
+      {...(scrollSection && { 'data-scroll-section': true })}
+      {...(parallax !== undefined && { 'data-parallax': parallax })}
+    >
       {sectionId && upvoteProps && (
         <div className="absolute top-8 right-8 z-10">
           <UpvoteButton
@@ -161,8 +177,91 @@ export default function AboutPage() {
 
   const [activeTab, setActiveTab] = useState<'story' | 'app'>('story');
   const { votes, userVotes, upvote } = useUpvotes();
+  const [currentSection, setCurrentSection] = useState(0);
 
   const upvoteProps = { votes, userVotes, upvote };
+
+  // GSAP ScrollTrigger setup for snap scrolling
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Get all scroll sections
+    const sections = container.querySelectorAll('[data-scroll-section]');
+    if (sections.length === 0) return;
+
+    // Create snap scrolling
+    const snapTrigger = ScrollTrigger.create({
+      snap: {
+        snapTo: 1 / (sections.length - 1),
+        duration: { min: 0.4, max: 0.8 },
+        delay: 0.1,
+        ease: 'power2.inOut',
+      },
+      onUpdate: (self) => {
+        const newSection = Math.round(self.progress * (sections.length - 1));
+        if (newSection !== currentSection) {
+          setCurrentSection(newSection);
+        }
+      },
+    });
+
+    // Parallax effects for elements with data-parallax
+    const parallaxElements = container.querySelectorAll('[data-parallax]');
+    const parallaxTweens: gsap.core.Tween[] = [];
+
+    parallaxElements.forEach((element) => {
+      const speed = parseFloat(element.getAttribute('data-parallax') || '0.3');
+      const tween = gsap.to(element, {
+        yPercent: -speed * 50,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: element.closest('[data-scroll-section]') || element,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1.5,
+        },
+      });
+      parallaxTweens.push(tween);
+    });
+
+    // Section-based triggers for active state
+    sections.forEach((section, index) => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => setCurrentSection(index),
+        onEnterBack: () => setCurrentSection(index),
+      });
+    });
+
+    // Cleanup
+    return () => {
+      snapTrigger.kill();
+      parallaxTweens.forEach(tween => tween.kill());
+      ScrollTrigger.getAll().forEach(st => st.kill());
+    };
+  }, [activeTab]); // Re-run when tab changes
+
+  // Scroll to section function
+  const scrollToSection = useCallback((index: number) => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const sections = container.querySelectorAll('[data-scroll-section]');
+    const section = sections[index];
+
+    if (section) {
+      gsap.to(window, {
+        scrollTo: { y: section, offsetY: 80 },
+        duration: 0.8,
+        ease: 'power2.inOut',
+      });
+    }
+  }, []);
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[var(--color-bg-void)] text-white">
@@ -278,6 +377,7 @@ export default function AboutPage() {
           >
             {/* SECTION 1: WHAT IS HIVE */}
             <UpvotableSection
+              scrollSection
               className="px-6 py-32 relative"
               sectionId="what-hive-is"
               upvoteProps={upvoteProps}
@@ -366,7 +466,7 @@ export default function AboutPage() {
             </UpvotableSection>
 
             {/* The Belief - animated container */}
-            <UpvotableSection className="px-6 py-32">
+            <UpvotableSection scrollSection className="px-6 py-32">
               <div className="mx-auto max-w-3xl">
                 <AnimatedBorder variant="container" className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
                   <ParallaxText speed={0.1}>
@@ -393,6 +493,7 @@ export default function AboutPage() {
 
             {/* SECTION 2: THE JOURNEY */}
             <UpvotableSection
+              scrollSection
               className="px-6 py-32 relative"
               sectionId="the-journey"
               upvoteProps={upvoteProps}
@@ -534,7 +635,7 @@ export default function AboutPage() {
 
             {/* Contributors */}
             {CONTRIBUTORS.length > 0 && (
-              <UpvotableSection className="px-6 py-24 relative">
+              <UpvotableSection scrollSection className="px-6 py-24 relative">
                 <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
                 <div className="mx-auto max-w-3xl">
                   <ParallaxText speed={0.05}>
@@ -600,6 +701,7 @@ export default function AboutPage() {
           >
             {/* SPACES */}
             <UpvotableSection
+              scrollSection
               className="px-6 py-32 relative"
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
@@ -916,7 +1018,7 @@ export default function AboutPage() {
             </UpvotableSection>
 
             {/* THE SHIFT — Student-focused visual story */}
-            <section className="px-6 py-32 relative">
+            <section data-scroll-section className="px-6 py-32 relative">
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
               <div className="mx-auto max-w-4xl">
                 <ParallaxText speed={0.15}>
@@ -1138,285 +1240,9 @@ export default function AboutPage() {
               </div>
             </section>
 
-            {/* FEED & RITUALS */}
-            <UpvotableSection
-              className="px-6 py-32 relative"
-            >
-              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
-              <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: MOTION.ease.premium }}
-                  >
-                    Feed & Rituals
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    Campus pulse, not engagement bait
-                  </p>
-                </ParallaxText>
-
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
-                  <ParallaxText speed={0.1}>
-                    <p className="text-white/50">
-                      See what's happening across campus. Posts from orgs you follow, events coming up, opportunities to join. The feed surfaces signal, not noise. It's designed for coordination, not infinite scroll.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      Filter by org, event type, or date. Save posts for later. Share opportunities with your network. The feed is a utility, not a dopamine slot machine.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.08}>
-                    <p className="text-white/50">
-                      Think about it: every org has recurring patterns. Weekly check-ins. Monthly showcases. Semester handoffs. Right now, those live in someone's head or a Google Doc that gets lost. What happens when you formalize those patterns into system behaviors? Coordination stops being something you remember to do—it just happens. Rituals that compound automatically.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.075}>
-                    <motion.div
-                      className="bg-black/20 border border-white/5 rounded-lg p-6"
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
-                    >
-                      <p className="text-white/40 text-[14px] mb-3">The pattern we're seeing:</p>
-                      <div className="space-y-2 text-[13px] text-white/30">
-                        <motion.p
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.1, ease: MOTION.ease.premium }}
-                        >
-                          → Orgs with documented rituals retain 3x more institutional knowledge
-                        </motion.p>
-                        <motion.p
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.2, ease: MOTION.ease.premium }}
-                        >
-                          → New leadership hits productivity baseline 6 weeks faster
-                        </motion.p>
-                        <motion.p
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.3, ease: MOTION.ease.premium }}
-                        >
-                          → Member engagement up 40% when expectations are systematized
-                        </motion.p>
-                        <motion.p
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.5, delay: 0.4, ease: MOTION.ease.premium }}
-                        >
-                          → Handoffs stop being crisis moments, become scheduled non-events
-                        </motion.p>
-                      </div>
-                      <motion.p
-                        className="text-white/25 text-[12px] mt-4 italic"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
-                      >
-                        We're building the infrastructure to make those patterns native to the system, not dependent on individual effort.
-                      </motion.p>
-                    </motion.div>
-                  </ParallaxText>
-                </div>
-              </div>
-            </UpvotableSection>
-
-            {/* PROFILE */}
-            <UpvotableSection
-              className="px-6 py-32 relative"
-            >
-              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
-              <div className="mx-auto max-w-3xl">
-                <ParallaxText speed={0.15}>
-                  <motion.h2
-                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                    initial={{ opacity: 0, x: -30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1, ease: MOTION.ease.premium }}
-                  >
-                    Profile
-                  </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
-                    Your autonomy layer
-                  </p>
-                </ParallaxText>
-
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
-                  <ParallaxText speed={0.1}>
-                    <p className="text-white/50">
-                      Here's what bugs me. Right now, when you graduate, all your actual work—the events you organized, the projects you shipped, the communities you built—that data stays locked in university systems you can't access anymore. Or worse, it's just gone.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.09}>
-                    <p className="text-white/40">
-                      Your profile on HIVE isn't a resume. It's your operating system on campus. A verifiable record of actual work, not self-reported bullet points. When you run an event in a Space, that's recorded. When you build a tool in HiveLab, that's recorded. When you contribute to an org over multiple semesters, the trajectory is visible.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.08}>
-                    <motion.div
-                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
-                    >
-                      <p className="text-white/40 text-[14px] mb-4">What a profile actually tracks:</p>
-                      <div className="space-y-3 text-[13px]">
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/60 font-medium">Spaces you're part of</p>
-                            <p className="text-white/30">Not just member lists. Role history, contribution patterns, leadership tenure.</p>
-                          </div>
-                        </motion.div>
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/60 font-medium">Events you've organized or attended</p>
-                            <p className="text-white/30">Verifiable attendance records, not self-reported "I went to this."</p>
-                          </div>
-                        </motion.div>
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/60 font-medium">Tools you've built in HiveLab</p>
-                            <p className="text-white/30">Actual software you created. Usage stats, deployment history, impact.</p>
-                          </div>
-                        </motion.div>
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -15 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/60 font-medium">Contributions across orgs</p>
-                            <p className="text-white/30">Posts authored, files uploaded, discussions started. Quantified impact.</p>
-                          </div>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.075}>
-                    <p className="text-white/50">
-                      Here's what changes when students own their data: it becomes portable. When you graduate, you take it with you. Your profile isn't a PDF resume someone has to trust—it's verifiable proof of work. Events you organized. Projects you shipped. Organizations you led. Actually provable, not self-reported.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.07}>
-                    <p className="text-white/40">
-                      This is the autonomy piece. Right now, students are users of university systems. Those systems own the data. We're building the flip: you're not a user—you're a builder. Your profile is infrastructure you control. The university doesn't get to decide what you can prove about yourself.
-                    </p>
-                  </ParallaxText>
-
-                  <ParallaxText speed={0.065}>
-                    <motion.div
-                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
-                    >
-                      <p className="text-white/40 text-[14px] mb-4">What becomes possible:</p>
-                      <div className="space-y-4 text-[13px]">
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/50 font-medium">Verifiable credentials</p>
-                            <p className="text-white/30">Real proof of work, not claims. If you ran that event, the system knows. Can't fake it, can't lose it.</p>
-                          </div>
-                        </motion.div>
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/50 font-medium">Cross-campus reputation</p>
-                            <p className="text-white/30">Your work at UB matters at Cornell. Build once, benefit everywhere. Transfer students don't start from zero.</p>
-                          </div>
-                        </motion.div>
-                        <motion.div
-                          className="flex items-start gap-3"
-                          initial={{ opacity: 0, x: -20 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
-                          <div>
-                            <p className="text-white/50 font-medium">Privacy-preserving proof</p>
-                            <p className="text-white/30">Prove you led a 200-person org without revealing which one. Selective disclosure for recruiting, grad school, whatever you need.</p>
-                          </div>
-                        </motion.div>
-                      </div>
-                      <motion.p
-                        className="text-white/25 text-[12px] mt-4 italic"
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
-                      >
-                        The tech exists. We're building the first system that points it at student autonomy instead of institutional control.
-                      </motion.p>
-                    </motion.div>
-                  </ParallaxText>
-                </div>
-              </div>
-            </UpvotableSection>
-
             {/* HIVELAB - CENTERPIECE */}
             <UpvotableSection
+              scrollSection
               className="px-6 py-32 relative"
             >
               <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
@@ -1582,7 +1408,7 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.065}>
                     <p className="text-white/60 font-medium text-[16px] uppercase tracking-wider mb-4">
-                      What students are actually building
+                      What students can build
                     </p>
                   </ParallaxText>
 
@@ -1598,7 +1424,7 @@ export default function AboutPage() {
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Membership application system</p>
-                          <p className="text-white/30 text-[14px]">Custom questions, file uploads, review workflows. One consulting club processed 200+ applications through theirs last semester. Replaced a broken Google Form + Sheet combo that crashed during peak traffic.</p>
+                          <p className="text-white/30 text-[14px]">Custom questions, file uploads, review workflows. A consulting club could process 200+ applications through theirs—replacing the broken Google Form + Sheet combo that always crashes during peak traffic.</p>
                         </div>
                       </motion.div>
                       <motion.div
@@ -1611,7 +1437,7 @@ export default function AboutPage() {
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Event check-in with QR codes</p>
-                          <p className="text-white/30 text-[14px]">Syncs with attendance records automatically. Greek org used it to track 40+ events per semester, proving activity to university admins. Cut manual tracking from 3 hours/week to zero.</p>
+                          <p className="text-white/30 text-[14px]">Syncs with attendance records automatically. A Greek org could track 40+ events per semester, proving activity to university admins. Cut manual tracking from 3 hours/week to zero.</p>
                         </div>
                       </motion.div>
                       <motion.div
@@ -1624,7 +1450,7 @@ export default function AboutPage() {
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Project showcase portal</p>
-                          <p className="text-white/30 text-[14px]">Members upload work for end-of-semester reviews. Design club uses it as a portfolio system. Replaced emailing PDFs back and forth. Now every semester's work is archived and searchable.</p>
+                          <p className="text-white/30 text-[14px]">Members upload work for end-of-semester reviews. A design club could use it as a portfolio system—replacing emailing PDFs back and forth. Every semester's work archived and searchable.</p>
                         </div>
                       </motion.div>
                       <motion.div
@@ -1637,7 +1463,7 @@ export default function AboutPage() {
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Budget request system</p>
-                          <p className="text-white/30 text-[14px]">Tied to org financials with approval workflows. Student government uses it for funding requests. Built-in audit trail. Reduced approval time from 2 weeks to 3 days because everything's centralized and transparent.</p>
+                          <p className="text-white/30 text-[14px]">Tied to org financials with approval workflows. Student government could use it for funding requests. Built-in audit trail. Reduce approval time from 2 weeks to 3 days because everything's centralized and transparent.</p>
                         </div>
                       </motion.div>
                       <motion.div
@@ -1650,7 +1476,7 @@ export default function AboutPage() {
                         <span className="text-[var(--color-gold)]/40">→</span>
                         <div>
                           <p className="text-white/60 font-medium">Anonymous feedback system</p>
-                          <p className="text-white/30 text-[14px]">Leadership can gather honest input without knowing who said what. Several orgs use this for end-of-year retrospectives. Gets real feedback that wouldn't surface in a public discussion.</p>
+                          <p className="text-white/30 text-[14px]">Leadership can gather honest input without knowing who said what. Perfect for end-of-year retrospectives. Gets real feedback that wouldn't surface in a public discussion.</p>
                         </div>
                       </motion.div>
                     </div>
@@ -1664,7 +1490,7 @@ export default function AboutPage() {
                       viewport={{ once: true, margin: "-100px" }}
                       transition={{ duration: 0.8, ease: MOTION.ease.premium }}
                     >
-                      <p className="text-white/40 text-[14px] mb-4">Time to ship (early data from pilot orgs):</p>
+                      <p className="text-white/40 text-[14px] mb-4">Time to ship (projected):</p>
                       <div className="space-y-3 text-[13px]">
                         <motion.div
                           className="flex items-start gap-3"
@@ -1844,11 +1670,290 @@ export default function AboutPage() {
                 </div>
               </div>
             </UpvotableSection>
+
+            {/* PROFILE */}
+            <UpvotableSection
+              scrollSection
+              className="px-6 py-32 relative"
+            >
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
+                  >
+                    Profile
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Your autonomy layer
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      Here's what bugs me. Right now, when you graduate, all your actual work—the events you organized, the projects you shipped, the communities you built—that data stays locked in university systems you can't access anymore. Or worse, it's just gone.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Your profile on HIVE isn't a resume. It's your operating system on campus. A verifiable record of actual work, not self-reported bullet points. When you run an event in a Space, that's recorded. When you build a tool in HiveLab, that's recorded. When you contribute to an org over multiple semesters, the trajectory is visible.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.08}>
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
+                    >
+                      <p className="text-white/40 text-[14px] mb-4">What a profile actually tracks:</p>
+                      <div className="space-y-3 text-[13px]">
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/60 font-medium">Spaces you're part of</p>
+                            <p className="text-white/30">Not just member lists. Role history, contribution patterns, leadership tenure.</p>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/60 font-medium">Events you've organized or attended</p>
+                            <p className="text-white/30">Verifiable attendance records, not self-reported "I went to this."</p>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/60 font-medium">Tools you've built in HiveLab</p>
+                            <p className="text-white/30">Actual software you created. Usage stats, deployment history, impact.</p>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/60 font-medium">Contributions across orgs</p>
+                            <p className="text-white/30">Posts authored, files uploaded, discussions started. Quantified impact.</p>
+                          </div>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.075}>
+                    <p className="text-white/50">
+                      Here's what changes when students own their data: it becomes portable. When you graduate, you take it with you. Your profile isn't a PDF resume someone has to trust—it's verifiable proof of work. Events you organized. Projects you shipped. Organizations you led. Actually provable, not self-reported.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.07}>
+                    <p className="text-white/40">
+                      This is the autonomy piece. Right now, students are users of university systems. Those systems own the data. We're building the flip: you're not a user—you're a builder. Your profile is infrastructure you control. The university doesn't get to decide what you can prove about yourself.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.065}>
+                    <motion.div
+                      className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6"
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
+                    >
+                      <p className="text-white/40 text-[14px] mb-4">What becomes possible:</p>
+                      <div className="space-y-4 text-[13px]">
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/50 font-medium">Verifiable credentials</p>
+                            <p className="text-white/30">Real proof of work, not claims. If you ran that event, the system knows. Can't fake it, can't lose it.</p>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/50 font-medium">Cross-campus reputation</p>
+                            <p className="text-white/30">Your work at UB matters at Cornell. Build once, benefit everywhere. Transfer students don't start from zero.</p>
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="flex items-start gap-3"
+                          initial={{ opacity: 0, x: -20 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-white/50 font-medium">Privacy-preserving proof</p>
+                            <p className="text-white/30">Prove you led a 200-person org without revealing which one. Selective disclosure for recruiting, grad school, whatever you need.</p>
+                          </div>
+                        </motion.div>
+                      </div>
+                      <motion.p
+                        className="text-white/25 text-[12px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
+                      >
+                        The tech exists. We're building the first system that points it at student autonomy instead of institutional control.
+                      </motion.p>
+                    </motion.div>
+                  </ParallaxText>
+                </div>
+              </div>
+            </UpvotableSection>
+
+            {/* FEED & RITUALS */}
+            <UpvotableSection
+              scrollSection
+              className="px-6 py-32 relative"
+            >
+              <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
+              <div className="mx-auto max-w-3xl">
+                <ParallaxText speed={0.15}>
+                  <motion.h2
+                    className="mb-6 text-[32px] md:text-[40px] font-semibold text-white"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    initial={{ opacity: 0, x: -30 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, ease: MOTION.ease.premium }}
+                  >
+                    Feed & Rituals
+                  </motion.h2>
+                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-12">
+                    Campus pulse, not engagement bait <span className="text-white/30">(more coming soon)</span>
+                  </p>
+                </ParallaxText>
+
+                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                  <ParallaxText speed={0.1}>
+                    <p className="text-white/50">
+                      See what's happening across campus. Posts from orgs you follow, events coming up, opportunities to join. The feed surfaces signal, not noise. It's designed for coordination, not infinite scroll.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.09}>
+                    <p className="text-white/40">
+                      Filter by org, event type, or date. Save posts for later. Share opportunities with your network. The feed is a utility, not a dopamine slot machine.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.08}>
+                    <p className="text-white/50">
+                      Think about it: every org has recurring patterns. Weekly check-ins. Monthly showcases. Semester handoffs. Right now, those live in someone's head or a Google Doc that gets lost. What happens when you formalize those patterns into system behaviors? Coordination stops being something you remember to do—it just happens. Rituals that compound automatically.
+                    </p>
+                  </ParallaxText>
+
+                  <ParallaxText speed={0.075}>
+                    <motion.div
+                      className="bg-black/20 border border-white/5 rounded-lg p-6"
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ duration: 0.8, ease: MOTION.ease.premium }}
+                    >
+                      <p className="text-white/40 text-[14px] mb-3">What this enables:</p>
+                      <div className="space-y-2 text-[13px] text-white/30">
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.1, ease: MOTION.ease.premium }}
+                        >
+                          → Orgs with documented rituals retain 3x more institutional knowledge
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.2, ease: MOTION.ease.premium }}
+                        >
+                          → New leadership hits productivity baseline 6 weeks faster
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.3, ease: MOTION.ease.premium }}
+                        >
+                          → Member engagement up 40% when expectations are systematized
+                        </motion.p>
+                        <motion.p
+                          initial={{ opacity: 0, x: -15 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ duration: 0.5, delay: 0.4, ease: MOTION.ease.premium }}
+                        >
+                          → Handoffs stop being crisis moments, become scheduled non-events
+                        </motion.p>
+                      </div>
+                      <motion.p
+                        className="text-white/25 text-[12px] mt-4 italic"
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
+                      >
+                        We're building the infrastructure to make those patterns native to the system, not dependent on individual effort.
+                      </motion.p>
+                    </motion.div>
+                  </ParallaxText>
+                </div>
+              </div>
+            </UpvotableSection>
           </motion.div>
         )}
 
         {/* The Future - CTA */}
-        <UpvotableSection className="px-6 py-40 relative">
+        <UpvotableSection scrollSection className="px-6 py-40 relative">
           <AnimatedBorder variant="horizontal" className="absolute top-0 left-6 right-6" />
           <div className="mx-auto max-w-3xl">
             <ParallaxText speed={0.1}>

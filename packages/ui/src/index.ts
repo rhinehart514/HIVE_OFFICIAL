@@ -1899,3 +1899,7 @@ export const toast = Object.assign(
     info: toastLog('info'),
   }
 );
+
+// GSAP Scroll Effects
+export { useGSAPScroll, useGSAPParallax } from "./hooks/useGSAPScroll";
+export type { GSAPScrollConfig } from "./hooks/useGSAPScroll";
