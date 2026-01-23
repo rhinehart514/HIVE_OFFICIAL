@@ -1295,7 +1295,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
                           <div>
                             <p className="text-white/60 font-medium">Spaces you're part of</p>
                             <p className="text-white/30">Not just member lists. Role history, contribution patterns, leadership tenure.</p>
@@ -1308,7 +1308,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
                           <div>
                             <p className="text-white/60 font-medium">Events you've organized or attended</p>
                             <p className="text-white/30">Verifiable attendance records, not self-reported "I went to this."</p>
@@ -1321,7 +1321,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
                           <div>
                             <p className="text-white/60 font-medium">Tools you've built in HiveLab</p>
                             <p className="text-white/30">Actual software you created. Usage stats, deployment history, impact.</p>
@@ -1334,7 +1334,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.4, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60 mt-1">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 flex-shrink-0" />
                           <div>
                             <p className="text-white/60 font-medium">Contributions across orgs</p>
                             <p className="text-white/30">Posts authored, files uploaded, discussions started. Quantified impact.</p>
@@ -1373,7 +1373,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.1, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
                           <div>
                             <p className="text-white/50 font-medium">Verifiable credentials</p>
                             <p className="text-white/30">Real proof of work, not claims. If you ran that event, the system knows. Can't fake it, can't lose it.</p>
@@ -1386,7 +1386,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.2, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
                           <div>
                             <p className="text-white/50 font-medium">Cross-campus reputation</p>
                             <p className="text-white/30">Your work at UB matters at Cornell. Build once, benefit everywhere. Transfer students don't start from zero.</p>
@@ -1399,7 +1399,7 @@ export default function AboutPage() {
                           viewport={{ once: true }}
                           transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
                         >
-                          <span className="text-[var(--color-gold)]/60">●</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
                           <div>
                             <p className="text-white/50 font-medium">Privacy-preserving proof</p>
                             <p className="text-white/30">Prove you led a 200-person org without revealing which one. Selective disclosure for recruiting, grad school, whatever you need.</p>
