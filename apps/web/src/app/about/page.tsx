@@ -1889,17 +1889,6 @@ export default function AboutPage() {
                 </motion.p>
               </ParallaxText>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.3, ease: MOTION.ease.premium }}
-              >
-                <Button variant="cta" size="lg" asChild>
-                  <a href="/enter">Enter with .edu</a>
-                </Button>
-              </motion.div>
-
               <motion.p
                 className="mt-8 text-[13px] text-white/25"
                 initial={{ opacity: 0 }}
