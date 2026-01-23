@@ -1,24 +1,25 @@
 'use client';
 
 /**
- * HIVE Landing Page — Access Gate + Email Hero
- * REDESIGNED: Jan 2026
+ * HIVE Landing Page — 6-Digit Entry Code
+ * UPDATED: Jan 2026
  *
- * Entry point that respects access code gate:
- * - If NEXT_PUBLIC_ACCESS_GATE_ENABLED=true and not passed, show access code
- * - After access code verified (or if disabled), show email input
- * - "Your campus is already here." headline with word reveal
+ * Simple entry: user enters 6-digit code to create session
+ * and proceed to onboarding at /enter
+ *
+ * - "Enter your code" headline
+ * - 6-digit OTP input
+ * - Redirects to /enter on success for role/identity setup
  * - "What is HIVE?" link
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   motion,
   NoiseOverlay,
   Logo,
-  Button,
   OTPInput,
   MOTION,
 } from '@hive/ui/design-system/primitives';
@@ -26,15 +27,7 @@ import { Lock, Clock } from 'lucide-react';
 
 const EASE_PREMIUM = MOTION.ease.premium;
 
-// Campus configuration
-const CAMPUS_CONFIG = {
-  domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
-};
-
-const ACCESS_GATE_ENABLED = (process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED || '').toLowerCase().trim() === 'true';
-const ACCESS_GATE_PASSED_KEY = 'hive_access_gate_passed';
-
-interface AccessCodeLockout {
+interface EntryCodeLockout {
   locked: boolean;
   remainingMinutes: number;
   attemptsRemaining?: number;
@@ -42,89 +35,34 @@ interface AccessCodeLockout {
 
 export default function LandingPage() {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
 
-  // Access code state - start with gate active, check localStorage on mount
-  const [accessCodePassed, setAccessCodePassed] = useState(!ACCESS_GATE_ENABLED);
-  const [accessCode, setAccessCode] = useState<string[]>(['', '', '', '', '', '']);
-  const [accessCodeError, setAccessCodeError] = useState('');
-  const [isVerifyingAccessCode, setIsVerifyingAccessCode] = useState(false);
-  const [accessCodeLockout, setAccessCodeLockout] = useState<AccessCodeLockout | null>(null);
+  // Entry code state
+  const [entryCode, setEntryCode] = useState<string[]>(['', '', '', '', '', '']);
+  const [entryCodeError, setEntryCodeError] = useState('');
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+  const [entryCodeLockout, setEntryCodeLockout] = useState<EntryCodeLockout | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  // Waitlist state
-  const [showWaitlist, setShowWaitlist] = useState(false);
-  const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
-  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
-  const [waitlistError, setWaitlistError] = useState('');
-  const waitlistInputRef = useRef<HTMLInputElement>(null);
-
-  // Check localStorage on mount
+  // Check if already authenticated on mount
   useEffect(() => {
     setMounted(true);
-    if (ACCESS_GATE_ENABLED) {
-      const passed = localStorage.getItem(ACCESS_GATE_PASSED_KEY) === 'true';
-      setAccessCodePassed(passed);
-    }
   }, []);
 
   // Word-by-word reveal for headline
-  const headlineWords = accessCodePassed
-    ? ['Your', 'campus', 'is', 'already', 'here.']
-    : ['Enter', 'access', 'code'];
+  const headlineWords = ['Enter', 'your', 'code'];
 
-  // Handle waitlist signup
-  const handleWaitlistSubmit = useCallback(async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!waitlistEmail.trim() || waitlistSubmitting) return;
+  // Handle entry code verification
+  const handleCodeComplete = useCallback(async (codeString: string) => {
+    if (isVerifyingCode || entryCodeLockout?.locked) return;
 
-    setWaitlistSubmitting(true);
-    setWaitlistError('');
-
-    try {
-      const response = await fetch('/api/waitlist/launch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: waitlistEmail.trim() }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setWaitlistSuccess(true);
-      } else {
-        setWaitlistError(result.error || 'Something went wrong');
-      }
-    } catch {
-      setWaitlistError('Unable to join waitlist');
-    } finally {
-      setWaitlistSubmitting(false);
-    }
-  }, [waitlistEmail, waitlistSubmitting]);
-
-  // Focus waitlist input when shown
-  useEffect(() => {
-    if (showWaitlist && waitlistInputRef.current) {
-      waitlistInputRef.current.focus();
-    }
-  }, [showWaitlist]);
-
-  // Handle access code verification
-  const handleAccessCodeComplete = useCallback(async (codeString: string) => {
-    if (isVerifyingAccessCode || accessCodeLockout?.locked) return;
-
-    setIsVerifyingAccessCode(true);
-    setAccessCodeError('');
+    setIsVerifyingCode(true);
+    setEntryCodeError('');
 
     try {
       const response = await fetch('/api/auth/verify-access-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ code: codeString }),
       });
 
@@ -132,97 +70,53 @@ export default function LandingPage() {
 
       if (!response.ok || !result.success) {
         // Handle lockout
-        if (result.lockout) {
-          setAccessCodeLockout({
+        if (result.code === 'LOCKED_OUT') {
+          const remainingMinutes = parseInt(
+            response.headers.get('Retry-After') || '0',
+            10
+          ) / 60;
+          setEntryCodeLockout({
             locked: true,
-            remainingMinutes: result.lockout.remainingMinutes ?? 15,
+            remainingMinutes: Math.ceil(remainingMinutes) || 15,
           });
-          setAccessCode(['', '', '', '', '', '']);
+          setEntryCode(['', '', '', '', '', '']);
           return;
         }
 
         // Handle attempts remaining
-        const attemptsRemaining = result.attemptsRemaining;
-        if (typeof attemptsRemaining === 'number') {
-          setAccessCodeLockout({
+        const attemptsMatch = result.error?.match(/(\d+) attempt/);
+        const attemptsRemaining = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
+
+        if (attemptsRemaining !== undefined) {
+          setEntryCodeLockout({
             locked: false,
             remainingMinutes: 0,
             attemptsRemaining,
           });
         }
 
-        setAccessCodeError(result.error || 'Invalid code');
-        setAccessCode(['', '', '', '', '', '']);
+        setEntryCodeError(result.error || 'Invalid code');
+        setEntryCode(['', '', '', '', '', '']);
         return;
       }
 
-      // Success - persist and transition
-      localStorage.setItem(ACCESS_GATE_PASSED_KEY, 'true');
-      setAccessCodeLockout(null);
-      setAccessCodePassed(true);
-    } catch {
-      setAccessCodeError('Unable to verify code');
-      setAccessCode(['', '', '', '', '', '']);
-    } finally {
-      setIsVerifyingAccessCode(false);
-    }
-  }, [isVerifyingAccessCode, accessCodeLockout?.locked]);
+      // Success - session created, redirect to complete onboarding
+      setEntryCodeLockout(null);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-
-    if (!email.trim()) {
-      setError('Please enter your email');
-      inputRef.current?.focus();
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError('');
-
-    const fullEmail = `${email.trim()}@${CAMPUS_CONFIG.domain}`;
-
-    try {
-      const response = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: fullEmail }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        // Redirect to /enter with email state
-        const params = new URLSearchParams({
-          email: fullEmail,
-          state: 'code',
-        });
-        router.push(`/enter?${params.toString()}`);
+      // Check if user needs onboarding
+      if (result.needsOnboarding) {
+        router.push('/enter');
       } else {
-        setError(data.error || 'Unable to send verification code');
-        setIsSubmitting(false);
+        // Returning user - go to spaces
+        router.push('/spaces');
       }
     } catch {
-      setError('Something went wrong. Please try again.');
-      setIsSubmitting(false);
+      setEntryCodeError('Unable to verify code');
+      setEntryCode(['', '', '', '', '', '']);
+    } finally {
+      setIsVerifyingCode(false);
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isSubmitting) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
-  // Focus input on mount (after animation) - only for email input
-  useEffect(() => {
-    if (!accessCodePassed) return; // Don't auto-focus if access code needed
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, [accessCodePassed]);
+  }, [isVerifyingCode, entryCodeLockout?.locked, router]);
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-void)] text-[var(--color-text-primary)] flex flex-col overflow-hidden">
@@ -271,8 +165,8 @@ export default function LandingPage() {
           ))}
         </h1>
 
-        {/* Access Code Input - shown when gate enabled and not passed */}
-        {mounted && !accessCodePassed && (
+        {/* Entry Code Input */}
+        {mounted && (
           <motion.div
             className="w-full max-w-[400px] space-y-6"
             initial={{ opacity: 0, y: 20 }}
@@ -280,11 +174,11 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.9, ease: EASE_PREMIUM }}
           >
             <p className="text-[14px] text-white/50 text-center">
-              HIVE is currently invite-only. Enter your 6-digit access code to continue.
+              Enter the 6-digit code you received to continue.
             </p>
 
             {/* Lockout State */}
-            {accessCodeLockout?.locked && (
+            {entryCodeLockout?.locked && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -299,42 +193,42 @@ export default function LandingPage() {
                   </p>
                   <p className="text-[13px] text-white/50 flex items-center gap-1.5 mt-0.5">
                     <Clock size={12} />
-                    Try again in {accessCodeLockout.remainingMinutes} minute
-                    {accessCodeLockout.remainingMinutes !== 1 ? 's' : ''}
+                    Try again in {entryCodeLockout.remainingMinutes} minute
+                    {entryCodeLockout.remainingMinutes !== 1 ? 's' : ''}
                   </p>
                 </div>
               </motion.div>
             )}
 
             {/* OTP Input */}
-            {!accessCodeLockout?.locked && (
+            {!entryCodeLockout?.locked && (
               <div className="space-y-4">
                 <motion.div
-                  animate={accessCodeError ? { x: [-8, 8, -4, 4, 0] } : {}}
+                  animate={entryCodeError ? { x: [-8, 8, -4, 4, 0] } : {}}
                   transition={{ duration: 0.4 }}
                 >
                   <OTPInput
-                    value={accessCode}
-                    onChange={setAccessCode}
-                    onComplete={handleAccessCodeComplete}
-                    error={!!accessCodeError}
-                    disabled={isVerifyingAccessCode}
+                    value={entryCode}
+                    onChange={setEntryCode}
+                    onComplete={handleCodeComplete}
+                    error={!!entryCodeError}
+                    disabled={isVerifyingCode}
                     autoFocus
                     reduceMotion={false}
                   />
                 </motion.div>
 
                 {/* Error or loading */}
-                {accessCodeError && (
+                {entryCodeError && (
                   <motion.p
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-[13px] text-red-400 text-center"
                   >
-                    {accessCodeError}
+                    {entryCodeError}
                   </motion.p>
                 )}
-                {isVerifyingAccessCode && !accessCodeError && (
+                {isVerifyingCode && !entryCodeError && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -346,180 +240,37 @@ export default function LandingPage() {
                 )}
 
                 {/* Attempts remaining indicator */}
-                {accessCodeLockout && !accessCodeLockout.locked && accessCodeLockout.attemptsRemaining !== undefined && (
+                {entryCodeLockout && !entryCodeLockout.locked && entryCodeLockout.attemptsRemaining !== undefined && (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-[13px] text-amber-400/80 text-center"
                   >
-                    {accessCodeLockout.attemptsRemaining} attempt
-                    {accessCodeLockout.attemptsRemaining !== 1 ? 's' : ''} remaining
+                    {entryCodeLockout.attemptsRemaining} attempt
+                    {entryCodeLockout.attemptsRemaining !== 1 ? 's' : ''} remaining
                   </motion.p>
                 )}
               </div>
             )}
 
-            {/* Waitlist section */}
-            <div className="space-y-3">
-              {!showWaitlist && !waitlistSuccess && (
-                <p className="text-[13px] text-white/40 text-center">
-                  Don&apos;t have a code?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setShowWaitlist(true)}
-                    className="text-white/60 hover:text-white transition-colors underline underline-offset-2"
-                  >
-                    Get notified when we open
-                  </button>
-                </p>
-              )}
+            {/* Help text */}
+            <p className="text-[13px] text-white/40 text-center">
+              Don&apos;t have a code? Contact your campus ambassador.
+            </p>
 
-              {/* Waitlist success state */}
-              {waitlistSuccess && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex items-center justify-center gap-2 py-3"
+            {/* Sign in link */}
+            <div className="pt-4 border-t border-white/[0.06]">
+              <p className="text-[13px] text-white/40 text-center">
+                Already have an account?{' '}
+                <Link
+                  href="/signin"
+                  className="text-white/60 hover:text-white transition-colors underline underline-offset-2"
                 >
-                  <span className="text-[14px] text-emerald-400">You&apos;re on the list</span>
-                </motion.div>
-              )}
-
-              {/* Waitlist form */}
-              {showWaitlist && !waitlistSuccess && (
-                <motion.form
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  onSubmit={handleWaitlistSubmit}
-                  className="space-y-3"
-                >
-                  <p className="text-[13px] text-white/50 text-center">
-                    We&apos;ll let you know when HIVE opens up.
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      ref={waitlistInputRef}
-                      type="email"
-                      value={waitlistEmail}
-                      onChange={(e) => {
-                        setWaitlistEmail(e.target.value);
-                        setWaitlistError('');
-                      }}
-                      placeholder="your@email.com"
-                      disabled={waitlistSubmitting}
-                      className="flex-1 h-11 px-4 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 disabled:opacity-50"
-                    />
-                    <Button
-                      type="submit"
-                      variant="secondary"
-                      size="sm"
-                      disabled={waitlistSubmitting || !waitlistEmail.trim()}
-                      loading={waitlistSubmitting}
-                      className="h-11 px-4"
-                    >
-                      Notify me
-                    </Button>
-                  </div>
-                  {waitlistError && (
-                    <p className="text-[12px] text-red-400 text-center">{waitlistError}</p>
-                  )}
-                </motion.form>
-              )}
+                  Sign in
+                </Link>
+              </p>
             </div>
           </motion.div>
-        )}
-
-        {/* Email input form - shown after access code passed */}
-        {mounted && accessCodePassed && (
-          <motion.form
-            onSubmit={handleSubmit}
-            className="w-full max-w-[400px]"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9, ease: EASE_PREMIUM }}
-          >
-            {/* Email input with domain suffix */}
-            <motion.div
-              className={`
-                flex items-center h-14 rounded-2xl border transition-all duration-200
-                ${isFocused ? 'bg-white/[0.06] border-white/20' : 'bg-white/[0.03] border-white/[0.08]'}
-                ${error ? 'border-red-500/50 bg-red-500/[0.03]' : ''}
-              `}
-              animate={error ? { x: [-8, 8, -4, 4, 0] } : {}}
-              transition={{ duration: 0.4 }}
-            >
-              <input
-                ref={inputRef}
-                type="text"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError('');
-                }}
-                onKeyDown={handleKeyDown}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder="you"
-                disabled={isSubmitting}
-                autoComplete="username"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                className="flex-1 h-full px-5 bg-transparent text-[16px] text-white placeholder:text-white/30 focus:outline-none disabled:opacity-50"
-              />
-              <span className="pr-5 text-[16px] text-white/40 select-none">
-                @{CAMPUS_CONFIG.domain}
-              </span>
-            </motion.div>
-
-            {/* Error message */}
-            {error && (
-              <motion.p
-                className="mt-3 text-[13px] text-red-400"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                {error}
-              </motion.p>
-            )}
-
-            {/* Submit button */}
-            <motion.div
-              className="mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 1.0, ease: EASE_PREMIUM }}
-            >
-              <Button
-                type="submit"
-                variant="cta"
-                size="lg"
-                disabled={isSubmitting || !email.trim()}
-                loading={isSubmitting}
-                className="w-full"
-              >
-                {isSubmitting ? 'Sending...' : 'Enter →'}
-              </Button>
-            </motion.div>
-          </motion.form>
-        )}
-
-        {/* Different school link - only show after access code */}
-        {mounted && accessCodePassed && (
-          <motion.p
-            className="mt-6 text-[14px] text-white/40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.1, ease: EASE_PREMIUM }}
-          >
-            Not at {CAMPUS_CONFIG.domain.split('.')[0].toUpperCase()}?{' '}
-            <Link
-              href="/schools"
-              className="text-white/60 hover:text-white/80 transition-colors underline-offset-2 hover:underline"
-            >
-              Find your campus
-            </Link>
-          </motion.p>
         )}
 
         {/* What is HIVE? link */}

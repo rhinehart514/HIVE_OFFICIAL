@@ -14,6 +14,8 @@ import {
   searchRateLimit,
   chatRateLimit,
   accessCodeRateLimit,
+  signinCodeRateLimit,
+  signinVerifyRateLimit,
 } from './rate-limit-simple';
 
 // Rate limit presets mapped to simple rate limiters
@@ -28,6 +30,9 @@ const RATE_LIMIT_PRESETS = {
   chat: chatRateLimit,
   // SECURITY: Very strict for access codes - 3 attempts per 5 minutes
   accessCode: accessCodeRateLimit,
+  // Sign-in code request and verify
+  signinCode: signinCodeRateLimit,
+  signinVerify: signinVerifyRateLimit,
 } as const;
 
 type RateLimitPreset = keyof typeof RATE_LIMIT_PRESETS;

@@ -35,6 +35,16 @@ const RATE_LIMITS = {
     maxRequests: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_REQUESTS || '3', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_ACCESS_CODE_WINDOW_MS || '300000', 10), // 5 minutes
   },
+  // Sign-in code request - 5 requests per 5 minutes
+  signinCode: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_SIGNIN_CODE_REQUESTS || '5', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_SIGNIN_CODE_WINDOW_MS || '300000', 10), // 5 minutes
+  },
+  // Sign-in code verify - 5 attempts per 5 minutes
+  signinVerify: {
+    maxRequests: parseInt(process.env.RATE_LIMIT_SIGNIN_VERIFY_REQUESTS || '5', 10),
+    windowMs: parseInt(process.env.RATE_LIMIT_SIGNIN_VERIFY_WINDOW_MS || '300000', 10), // 5 minutes
+  },
   aiGeneration: {
     maxRequests: parseInt(process.env.RATE_LIMIT_AI_REQUESTS || '5', 10),
     windowMs: parseInt(process.env.RATE_LIMIT_AI_WINDOW_MS || '60000', 10),
@@ -421,6 +431,28 @@ export const accessCodeRateLimit = rateLimit({
   maxRequests: RATE_LIMITS.accessCode.maxRequests,
   windowMs: RATE_LIMITS.accessCode.windowMs,
   identifier: 'access_code',
+  blockOnError: true
+});
+
+/**
+ * Sign-in code request rate limiter (default 5 requests per 5 minutes)
+ * Prevents spam requesting codes
+ */
+export const signinCodeRateLimit = rateLimit({
+  maxRequests: RATE_LIMITS.signinCode.maxRequests,
+  windowMs: RATE_LIMITS.signinCode.windowMs,
+  identifier: 'signin_code',
+  blockOnError: true
+});
+
+/**
+ * Sign-in code verify rate limiter (default 5 attempts per 5 minutes)
+ * Prevents brute force on verification codes
+ */
+export const signinVerifyRateLimit = rateLimit({
+  maxRequests: RATE_LIMITS.signinVerify.maxRequests,
+  windowMs: RATE_LIMITS.signinVerify.windowMs,
+  identifier: 'signin_verify',
   blockOnError: true
 });
 

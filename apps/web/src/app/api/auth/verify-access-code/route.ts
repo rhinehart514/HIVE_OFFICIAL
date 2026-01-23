@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 import { logger } from '@/lib/logger';
 import { validateOrigin } from '@/lib/security-middleware';
 import { ApiResponseHelper, HttpStatus } from '@/lib/api-response-types';
@@ -10,19 +11,29 @@ import {
   recordSuccessfulAccessCode,
   verifyAccessCode,
 } from '@/lib/access-code-security';
-
-const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
+import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
+import { signJwt } from '@/lib/jwt';
+import { nanoid } from 'nanoid';
 
 const verifyCodeSchema = z.object({
   code: z
     .string()
     .length(6, 'Code must be 6 digits')
     .regex(/^\d{6}$/, 'Code must be numeric'),
+  schoolId: z.string().optional(),
+  campusId: z.string().optional(),
 });
+
+// Session config
+const SESSION_DURATION_DAYS = 30;
+const isProduction = process.env.NODE_ENV === 'production';
 
 /**
  * POST /api/auth/verify-access-code
- * Verify 6-digit access code for gated launch
+ * Verify 6-digit entry code and create session
+ *
+ * This is the PRIMARY entry mechanism - users enter a 6-digit code
+ * distributed by admins to gain access and create their account.
  *
  * SECURITY: Multi-layer brute force protection:
  * 1. Rate limiting (3 attempts per 5 minutes per IP)
@@ -34,14 +45,6 @@ export async function POST(request: NextRequest) {
   const clientIp = getSecureClientId(request);
 
   try {
-    // If gate is disabled, allow all
-    if (!ACCESS_GATE_ENABLED) {
-      return NextResponse.json(
-        ApiResponseHelper.success({ valid: true }),
-        { status: HttpStatus.OK }
-      );
-    }
-
     // Origin validation (CSRF protection)
     if (!validateOrigin(request)) {
       return NextResponse.json(
@@ -105,7 +108,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { code } = validation.data;
+    const { code, schoolId, campusId } = validation.data;
+    const effectiveSchoolId = schoolId || process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub-buffalo';
+    const effectiveCampusId = campusId || process.env.NEXT_PUBLIC_CAMPUS_ID || 'ub-buffalo';
 
     // SECURITY: Verify against hashed storage
     const result = await verifyAccessCode(code);
@@ -114,14 +119,115 @@ export async function POST(request: NextRequest) {
       // Success - clear any lockout state
       await recordSuccessfulAccessCode(clientIp);
 
-      logger.info('Access code verified successfully', {
+      logger.info('Entry code verified successfully', {
         ip: clientIp,
         codeId: result.codeId,
         useCount: result.useCount,
       });
 
+      // Create or find user by code
+      // For entry codes, we create a user tied to the code itself
+      // The user will complete their profile in the onboarding flow
+      const userId = `code_${result.codeId}_${nanoid(8)}`;
+      let user: {
+        id: string;
+        entryCodeId?: string;
+        campusId?: string;
+        schoolId?: string;
+        onboardingCompleted?: boolean;
+        firstName?: string;
+        handle?: string;
+        createdAt?: Date;
+        updatedAt?: Date;
+      } | null = null;
+      let needsOnboarding = true;
+
+      if (isFirebaseConfigured) {
+        // Check if there's already a user created from this code
+        const existingUsers = await dbAdmin
+          .collection('users')
+          .where('entryCodeId', '==', result.codeId)
+          .limit(1)
+          .get();
+
+        if (!existingUsers.empty) {
+          // Returning user
+          const existingDoc = existingUsers.docs[0];
+          const userData = existingDoc.data();
+          user = {
+            id: existingDoc.id,
+            entryCodeId: userData.entryCodeId,
+            campusId: userData.campusId,
+            schoolId: userData.schoolId,
+            onboardingCompleted: userData.onboardingCompleted,
+            firstName: userData.firstName,
+            handle: userData.handle,
+          };
+          needsOnboarding = !user.onboardingCompleted && !user.handle;
+        } else {
+          // New user - create with minimal info
+          const newUserId = nanoid(21);
+          const now = new Date();
+
+          const newUserData = {
+            id: newUserId,
+            entryCodeId: result.codeId,
+            campusId: effectiveCampusId,
+            schoolId: effectiveSchoolId,
+            onboardingCompleted: false,
+            createdAt: now,
+            updatedAt: now,
+          };
+
+          await dbAdmin.collection('users').doc(newUserId).set(newUserData);
+          user = newUserData;
+          needsOnboarding = true;
+        }
+      } else {
+        // Development mode without Firebase
+        user = {
+          id: userId,
+          entryCodeId: result.codeId,
+          campusId: effectiveCampusId,
+          schoolId: effectiveSchoolId,
+          onboardingCompleted: false,
+        };
+      }
+
+      // Create session JWT
+      const sessionId = nanoid(21);
+      const sessionPayload = {
+        userId: user.id,
+        campusId: effectiveCampusId,
+        schoolId: effectiveSchoolId,
+        isAdmin: false,
+        onboardingCompleted: user.onboardingCompleted || false,
+        sessionId,
+      };
+
+      const token = await signJwt(sessionPayload, `${SESSION_DURATION_DAYS}d`);
+
+      // Set session cookie
+      const cookieStore = await cookies();
+      cookieStore.set('hive_session', token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_DURATION_DAYS * 24 * 60 * 60,
+      });
+
       return NextResponse.json(
-        ApiResponseHelper.success({ valid: true }),
+        ApiResponseHelper.success({
+          valid: true,
+          user: {
+            id: user.id,
+            firstName: user.firstName || null,
+            handle: user.handle || null,
+            onboardingCompleted: user.onboardingCompleted || false,
+          },
+          needsOnboarding,
+        }),
         { status: HttpStatus.OK }
       );
     }

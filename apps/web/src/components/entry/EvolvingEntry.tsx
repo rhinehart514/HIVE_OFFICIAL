@@ -2,12 +2,15 @@
 
 /**
  * EvolvingEntry - Single-page evolving entry flow orchestrator
- * ENHANCED: Jan 21, 2026
+ * UPDATED: Jan 22, 2026
  *
  * Coordinates all sections in a single scrollable page that evolves
  * as the user progresses through entry.
  *
- * Flow: school → email → code → role → identity → arrival
+ * Flow: school → entryCode → role → identity → arrival
+ *
+ * Entry is via 6-digit code (no email verification).
+ * Codes are pre-generated and distributed by admins.
  *
  * Motion philosophy (aligned with /about):
  * - Luxuriously slow hero entrance (1.2s)
@@ -21,10 +24,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import { useEvolvingEntry } from './hooks/useEvolvingEntry';
 import {
-  AccessCodeSection,
   SchoolSection,
-  EmailSection,
-  CodeSection,
+  EntryCodeSection,
   RoleSection,
   IdentitySection,
   ArrivalSection,
@@ -47,8 +48,6 @@ const CAMPUS_CONFIG = {
   domain: process.env.NEXT_PUBLIC_CAMPUS_EMAIL_DOMAIN || 'buffalo.edu',
   schoolId: process.env.NEXT_PUBLIC_SCHOOL_ID || 'ub-buffalo',
 };
-
-const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
 
 interface EvolvingEntryProps {
   /** Callback to report emotional state for ambient glow */
@@ -104,8 +103,8 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
       return;
     }
 
-    // Code verification gets anticipation (access code too for that gated feel)
-    if (activeSection === 'accessCode' || activeSection === 'code' || activeSection === 'role') {
+    // Entry code verification gets anticipation
+    if (activeSection === 'entryCode' || activeSection === 'role') {
       onEmotionalStateChange('anticipation');
       return;
     }
@@ -125,9 +124,6 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
     entry.sections.arrival.status === 'active' ||
     entry.sections.arrival.status === 'complete' ||
     entry.sections['alumni-waitlist'].status === 'active';
-
-  // Domain for email section
-  const activeDomain = entry.data.school?.domain || CAMPUS_CONFIG.domain;
 
   // Word-by-word reveal for headline
   const headlineWords = ['Enter', 'HIVE'];
@@ -195,16 +191,6 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
 
       {/* Sections stack */}
       <div className="space-y-5">
-        {/* Access Code section (gated launch) - only shows active state, hides once complete */}
-        {ACCESS_GATE_ENABLED && !isTerminal && entry.sections.accessCode?.status === 'active' && (
-          <AccessCodeSection
-            section={entry.sections.accessCode}
-            onVerify={entry.verifyAccessCode}
-            isLoading={entry.isVerifyingAccessCode}
-            lockout={entry.accessCodeLockout}
-          />
-        )}
-
         {/* School section */}
         {!isTerminal && entry.sections.school.status !== 'hidden' && (
           <SchoolSection
@@ -216,32 +202,15 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
           />
         )}
 
-        {/* Email section */}
-        {!isTerminal && entry.sections.email.status !== 'hidden' && (
-          <EmailSection
-            section={entry.sections.email}
-            email={entry.data.email}
-            fullEmail={entry.fullEmail}
-            domain={activeDomain}
-            onEmailChange={entry.setEmail}
-            onSubmit={entry.submitEmail}
-            onEdit={entry.editEmail}
-            isLoading={entry.isSendingCode}
-          />
-        )}
-
-        {/* Code section */}
-        {!isTerminal && entry.sections.code.status !== 'hidden' && (
-          <CodeSection
-            section={entry.sections.code}
-            email={entry.fullEmail}
-            code={entry.data.code}
-            onCodeChange={entry.setCode}
-            onVerify={entry.verifyCode}
-            onResend={entry.resendCode}
-            onChangeEmail={entry.editEmail}
-            isLoading={entry.isVerifyingCode}
-            resendCooldown={entry.resendCooldown}
+        {/* Entry Code section */}
+        {!isTerminal && entry.sections.entryCode.status !== 'hidden' && (
+          <EntryCodeSection
+            section={entry.sections.entryCode}
+            code={entry.data.entryCode}
+            onCodeChange={entry.setEntryCode}
+            onVerify={entry.verifyEntryCode}
+            isLoading={entry.isVerifyingEntryCode}
+            lockout={entry.entryCodeLockout}
           />
         )}
 

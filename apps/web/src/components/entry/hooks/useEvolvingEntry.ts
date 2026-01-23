@@ -4,21 +4,21 @@
  * useEvolvingEntry - State Machine for Single-Page Evolving Entry Flow
  *
  * Adapts the entry flow to work as sections on a single page that evolve:
- * school → email → code → role → identity → arrival
+ * school → entryCode → role → identity → arrival
  *
- * Key differences from useEntryMachine:
- * - Completed sections remain visible as locked chips
+ * Key differences from previous flow:
+ * - Entry is via 6-digit code (no email verification)
+ * - Codes are pre-generated and distributed by admins
  * - Role selection is an "earned moment" AFTER code verification
  * - Alumni path diverges after role selection (no separate page)
  * - All sections animate in place, no page transitions
  *
  * Flow:
  * 1. School: Select campus
- * 2. Email: Enter and submit (sends code)
- * 3. Code: Verify 6-digit OTP
- * 4. Role: Choose student/faculty/alumni (earned moment)
- * 5. Identity: Profile setup (new students only)
- * 6. Arrival: Welcome celebration
+ * 2. Entry Code: Verify 6-digit code (creates session)
+ * 3. Role: Choose student/faculty/alumni (earned moment)
+ * 4. Identity: Profile setup (new students only)
+ * 5. Arrival: Welcome celebration
  *
  * Alumni diverges after role → shows waitlist inline
  */
@@ -44,10 +44,8 @@ export interface School {
 }
 
 export type SectionId =
-  | 'accessCode'
   | 'school'
-  | 'email'
-  | 'code'
+  | 'entryCode'
   | 'role'
   | 'identity'
   | 'arrival'
@@ -62,10 +60,8 @@ export interface SectionState {
 }
 
 export interface EntryData {
-  accessCodePassed: boolean;
   school: School | null;
-  email: string;
-  code: string[];
+  entryCode: string[];
   role: UserRole | null;
   alumniSpace: string;
   firstName: string;
@@ -110,30 +106,20 @@ export interface UseEvolvingEntryReturn {
   isReturningUser: boolean;
 
   // Loading states
-  isSendingCode: boolean;
-  isVerifyingCode: boolean;
-  isVerifyingAccessCode: boolean;
+  isVerifyingEntryCode: boolean;
   isSubmittingRole: boolean;
   isSubmittingIdentity: boolean;
 
-  // Access code gate
-  accessCodeLockout: AccessCodeLockout | null;
-  verifyAccessCode: (code: string) => Promise<void>;
+  // Entry code lockout
+  entryCodeLockout: AccessCodeLockout | null;
 
   // Handle checking
   handleStatus: HandleStatus;
   handleSuggestions: string[];
 
-  // Resend cooldown
-  resendCooldown: number;
-
-  // Computed
-  fullEmail: string;
-
   // Data setters
   setSchool: (school: School) => void;
-  setEmail: (email: string) => void;
-  setCode: (code: string[]) => void;
+  setEntryCode: (code: string[]) => void;
   setRole: (role: UserRole) => void;
   setAlumniSpace: (space: string) => void;
   setFirstName: (name: string) => void;
@@ -149,17 +135,12 @@ export interface UseEvolvingEntryReturn {
 
   // Section actions
   confirmSchool: () => void;
-  submitEmail: () => Promise<void>;
-  verifyCode: (codeString: string) => Promise<void>;
+  verifyEntryCode: (codeString: string) => Promise<void>;
   submitRole: () => Promise<void>;
   completeIdentity: () => Promise<void>;
 
   // Edit actions (go back)
   editSchool: () => void;
-  editEmail: () => void;
-
-  // Resend
-  resendCode: () => Promise<void>;
 
   // Arrival
   handleArrivalComplete: () => void;
@@ -174,10 +155,6 @@ export interface UseEvolvingEntryReturn {
 
 const HANDLE_REGEX = /^[a-z0-9_]{3,20}$/;
 const HANDLE_CHECK_DEBOUNCE = 300;
-const RESEND_COOLDOWNS = [30, 60, 120, 300];
-const PENDING_EMAIL_KEY = 'hive_pending_email';
-const ACCESS_GATE_PASSED_KEY = 'hive_access_gate_passed';
-const ACCESS_GATE_ENABLED = process.env.NEXT_PUBLIC_ACCESS_GATE_ENABLED === 'true';
 
 // ============================================
 // UTILITIES
@@ -223,19 +200,11 @@ function generateHandleSuggestions(
 // INITIAL SECTION STATES
 // ============================================
 
-const createInitialSections = (accessGatePassed: boolean): Record<SectionId, SectionState> => {
-  // If gate is enabled and not passed, start at accessCode
-  // If gate is disabled or already passed, start at school
-  const needsAccessCode = ACCESS_GATE_ENABLED && !accessGatePassed;
-
+const createInitialSections = (): Record<SectionId, SectionState> => {
+  // Flow: school → entryCode → role → identity → arrival
   return {
-    accessCode: {
-      id: 'accessCode',
-      status: needsAccessCode ? 'active' : 'complete',
-    },
-    school: { id: 'school', status: needsAccessCode ? 'hidden' : 'active' },
-    email: { id: 'email', status: 'hidden' },
-    code: { id: 'code', status: 'hidden' },
+    school: { id: 'school', status: 'active' },
+    entryCode: { id: 'entryCode', status: 'hidden' },
     role: { id: 'role', status: 'hidden' },
     identity: { id: 'identity', status: 'hidden' },
     arrival: { id: 'arrival', status: 'hidden' },
@@ -258,21 +227,11 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // STATE
   // ============================================
 
-  // Check localStorage for access gate status (only runs on client)
-  const [accessGatePassed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem(ACCESS_GATE_PASSED_KEY) === 'true';
-  });
-
-  const [sections, setSections] = useState<Record<SectionId, SectionState>>(() =>
-    createInitialSections(accessGatePassed)
-  );
+  const [sections, setSections] = useState<Record<SectionId, SectionState>>(createInitialSections);
 
   const [data, setData] = useState<EntryData>({
-    accessCodePassed: accessGatePassed,
     school: null,
-    email: '',
-    code: ['', '', '', '', '', ''],
+    entryCode: ['', '', '', '', '', ''],
     role: null,
     alumniSpace: '',
     firstName: '',
@@ -291,22 +250,16 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   const [isReturningUser, setIsReturningUser] = useState(false);
 
   // Loading states
-  const [isSendingCode, setIsSendingCode] = useState(false);
-  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
-  const [isVerifyingAccessCode, setIsVerifyingAccessCode] = useState(false);
+  const [isVerifyingEntryCode, setIsVerifyingEntryCode] = useState(false);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
   const [isSubmittingIdentity, setIsSubmittingIdentity] = useState(false);
 
-  // Access code lockout state
-  const [accessCodeLockout, setAccessCodeLockout] = useState<AccessCodeLockout | null>(null);
+  // Entry code lockout state
+  const [entryCodeLockout, setEntryCodeLockout] = useState<AccessCodeLockout | null>(null);
 
   // Handle checking
   const [handleStatus, setHandleStatus] = useState<HandleStatus>('idle');
   const [handleSuggestions, setHandleSuggestions] = useState<string[]>([]);
-
-  // Resend cooldown
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const [resendCount, setResendCount] = useState(0);
 
   // Refs
   const checkHandleAbortRef = useRef<AbortController | null>(null);
@@ -321,19 +274,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // COMPUTED VALUES
   // ============================================
 
-  const activeDomain = data.school?.domain || domain;
-
-  const fullEmail = useMemo(() => {
-    if (data.email.includes('@')) return data.email;
-    return `${data.email}@${activeDomain}`;
-  }, [data.email, activeDomain]);
-
   const activeSection = useMemo(() => {
     const sectionOrder: SectionId[] = [
-      'accessCode',
       'school',
-      'email',
-      'code',
+      'entryCode',
       'role',
       'identity',
       'arrival',
@@ -395,25 +339,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // EFFECTS
   // ============================================
 
-  // Restore pending email from localStorage
-  useEffect(() => {
-    const pending = localStorage.getItem(PENDING_EMAIL_KEY);
-    if (pending && sections.email.status === 'active') {
-      const emailPart = pending.replace(`@${domain}`, '');
-      setData((prev) => ({ ...prev, email: emailPart }));
-    }
-  }, [domain, sections.email.status]);
-
-  // Resend cooldown timer
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => Math.max(0, prev - 1));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [resendCooldown]);
+  // No email-related effects needed - entry is code-based
 
   // ============================================
   // HANDLE CHECKING
@@ -483,14 +409,9 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     clearSectionError('school');
   }, [clearSectionError]);
 
-  const setEmail = useCallback((email: string) => {
-    setData((prev) => ({ ...prev, email }));
-    clearSectionError('email');
-  }, [clearSectionError]);
-
-  const setCode = useCallback((code: string[]) => {
-    setData((prev) => ({ ...prev, code }));
-    clearSectionError('code');
+  const setEntryCode = useCallback((entryCode: string[]) => {
+    setData((prev) => ({ ...prev, entryCode }));
+    clearSectionError('entryCode');
   }, [clearSectionError]);
 
   const setRole = useCallback((role: UserRole) => {
@@ -558,24 +479,36 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // SECTION ACTIONS
   // ============================================
 
-  // Access Code: Verify and proceed to school
-  const verifyAccessCode = useCallback(
-    async (codeString: string) => {
-      // Skip if gate is not enabled
-      if (!ACCESS_GATE_ENABLED) {
-        completeSection('accessCode');
-        activateSection('school');
-        return;
-      }
+  // School: Confirm selection and proceed to entry code
+  const confirmSchool = useCallback(() => {
+    // Use dataRef to get latest value (avoids stale closure issue)
+    if (!dataRef.current.school) {
+      setSectionError('school', 'Select your school');
+      return;
+    }
 
-      setIsVerifyingAccessCode(true);
-      clearSectionError('accessCode');
+    lockSection('school');
+    activateSection('entryCode');
+  }, [lockSection, activateSection, setSectionError]);
+
+  // Entry Code: Verify and create session
+  const verifyEntryCode = useCallback(
+    async (codeString: string) => {
+      setIsVerifyingEntryCode(true);
+      clearSectionError('entryCode');
+
+      const activeSchoolId = data.school?.id || schoolId;
 
       try {
         const response = await fetch('/api/auth/verify-access-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: codeString }),
+          credentials: 'include',
+          body: JSON.stringify({
+            code: codeString,
+            schoolId: activeSchoolId,
+            campusId: campusId,
+          }),
         });
 
         const result = await response.json();
@@ -587,11 +520,11 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
               response.headers.get('Retry-After') || '0',
               10
             ) / 60;
-            setAccessCodeLockout({
+            setEntryCodeLockout({
               locked: true,
               remainingMinutes: Math.ceil(remainingMinutes) || 15,
             });
-            setSectionError('accessCode', result.error || 'Too many attempts');
+            setSectionError('entryCode', result.error || 'Too many attempts');
             return;
           }
 
@@ -600,143 +533,21 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
           const attemptsRemaining = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
 
           if (attemptsRemaining !== undefined) {
-            setAccessCodeLockout({
+            setEntryCodeLockout({
               locked: false,
               remainingMinutes: 0,
               attemptsRemaining,
             });
           }
 
-          setSectionError('accessCode', result.error || 'Invalid code');
-          return;
-        }
-
-        // Success - persist to localStorage and transition
-        localStorage.setItem(ACCESS_GATE_PASSED_KEY, 'true');
-        setAccessCodeLockout(null);
-        setData((prev) => ({ ...prev, accessCodePassed: true }));
-        completeSection('accessCode');
-        activateSection('school');
-      } catch {
-        setSectionError('accessCode', 'Unable to verify code');
-      } finally {
-        setIsVerifyingAccessCode(false);
-      }
-    },
-    [activateSection, completeSection, setSectionError, clearSectionError]
-  );
-
-  // School: Confirm selection and proceed to email
-  const confirmSchool = useCallback(() => {
-    // Use dataRef to get latest value (avoids stale closure issue)
-    if (!dataRef.current.school) {
-      setSectionError('school', 'Select your school');
-      return;
-    }
-
-    lockSection('school');
-    activateSection('email');
-  }, [lockSection, activateSection, setSectionError]);
-
-  // Email: Submit and send verification code
-  const submitEmail = useCallback(async () => {
-    if (!data.email.trim()) {
-      setSectionError('email', 'Enter your email');
-      return;
-    }
-
-    if (!fullEmail.includes('@') || !fullEmail.includes('.')) {
-      setSectionError('email', 'Enter a valid email address');
-      return;
-    }
-
-    const emailDomain = fullEmail.split('@')[1];
-    if (emailDomain !== activeDomain) {
-      setSectionError('email', `Use your ${activeDomain} email`);
-      return;
-    }
-
-    // Store email for session recovery
-    localStorage.setItem(PENDING_EMAIL_KEY, fullEmail);
-
-    setIsSendingCode(true);
-    clearSectionError('email');
-
-    const activeSchoolId = data.school?.id || schoolId;
-
-    try {
-      const response = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: fullEmail,
-          schoolId: activeSchoolId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send code');
-      }
-
-      // Set cooldown
-      const cooldownDuration =
-        RESEND_COOLDOWNS[Math.min(resendCount, RESEND_COOLDOWNS.length - 1)];
-      setResendCooldown(cooldownDuration);
-      setResendCount((prev) => prev + 1);
-
-      // Lock email, activate code
-      lockSection('email');
-      activateSection('code');
-    } catch (err) {
-      setSectionError('email', err instanceof Error ? err.message : 'Unable to send code');
-    } finally {
-      setIsSendingCode(false);
-    }
-  }, [
-    data.email,
-    data.school?.id,
-    fullEmail,
-    activeDomain,
-    schoolId,
-    resendCount,
-    lockSection,
-    activateSection,
-    setSectionError,
-    clearSectionError,
-  ]);
-
-  // Code: Verify OTP
-  const verifyCode = useCallback(
-    async (codeString: string) => {
-      setIsVerifyingCode(true);
-      clearSectionError('code');
-
-      const activeSchoolId = data.school?.id || schoolId;
-
-      try {
-        const response = await fetch('/api/auth/verify-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            email: fullEmail,
-            code: codeString,
-            schoolId: activeSchoolId,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
           // Reset code on error
-          setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
-          setSectionError('code', result.error || 'Invalid code');
+          setData((prev) => ({ ...prev, entryCode: ['', '', '', '', '', ''] }));
+          setSectionError('entryCode', result.error || 'Invalid code');
           return;
         }
 
-        // Check if returning user
+        // Success - clear lockout and check if returning user
+        setEntryCodeLockout(null);
         const needsOnboarding = result.needsOnboarding || !result.user?.handle;
 
         if (!needsOnboarding) {
@@ -745,12 +556,12 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
           setIsNewUser(false);
           setData((prev) => ({
             ...prev,
-            firstName: result.user.firstName || 'there',
-            handle: result.user.handle || '',
-            role: result.user.role || 'student',
+            firstName: result.user?.firstName || 'there',
+            handle: result.user?.handle || '',
+            role: result.user?.role || 'student',
           }));
 
-          lockSection('code');
+          lockSection('entryCode');
           completeSection('arrival');
           activateSection('arrival');
           return;
@@ -759,16 +570,16 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
         // New user - proceed to role selection (earned moment)
         setIsNewUser(true);
         setIsReturningUser(false);
-        lockSection('code');
+        lockSection('entryCode');
         activateSection('role');
       } catch {
-        setData((prev) => ({ ...prev, code: ['', '', '', '', '', ''] }));
-        setSectionError('code', 'Verification failed');
+        setData((prev) => ({ ...prev, entryCode: ['', '', '', '', '', ''] }));
+        setSectionError('entryCode', 'Verification failed');
       } finally {
-        setIsVerifyingCode(false);
+        setIsVerifyingEntryCode(false);
       }
     },
-    [fullEmail, data.school?.id, schoolId, lockSection, activateSection, completeSection, setSectionError, clearSectionError]
+    [data.school?.id, schoolId, campusId, lockSection, activateSection, completeSection, setSectionError, clearSectionError]
   );
 
   // Role: Submit role selection
@@ -797,7 +608,6 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({
-              email: fullEmail,
               spaces: data.alumniSpace,
             }),
           });
@@ -853,7 +663,6 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   }, [
     data.role,
     data.alumniSpace,
-    fullEmail,
     lockSection,
     activateSection,
     completeSection,
@@ -925,88 +734,27 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
   const editSchool = useCallback(() => {
     // Reset everything after school
-    setSections((prev) => ({
-      ...prev,
+    setSections({
       school: { id: 'school', status: 'active' },
-      email: { id: 'email', status: 'hidden' },
-      code: { id: 'code', status: 'hidden' },
+      entryCode: { id: 'entryCode', status: 'hidden' },
       role: { id: 'role', status: 'hidden' },
       identity: { id: 'identity', status: 'hidden' },
       arrival: { id: 'arrival', status: 'hidden' },
       'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
-    }));
+    });
     setData((prev) => ({
       ...prev,
-      email: '',
-      code: ['', '', '', '', '', ''],
+      entryCode: ['', '', '', '', '', ''],
       role: null,
       alumniSpace: '',
     }));
   }, []);
-
-  const editEmail = useCallback(() => {
-    // Reset everything after email
-    setSections((prev) => ({
-      ...prev,
-      email: { id: 'email', status: 'active' },
-      code: { id: 'code', status: 'hidden' },
-      role: { id: 'role', status: 'hidden' },
-      identity: { id: 'identity', status: 'hidden' },
-      arrival: { id: 'arrival', status: 'hidden' },
-      'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
-    }));
-    setData((prev) => ({
-      ...prev,
-      code: ['', '', '', '', '', ''],
-      role: null,
-      alumniSpace: '',
-    }));
-  }, []);
-
-  // ============================================
-  // RESEND
-  // ============================================
-
-  const resendCode = useCallback(async () => {
-    if (resendCooldown > 0) return;
-
-    setIsSendingCode(true);
-    const activeSchoolId = data.school?.id || schoolId;
-
-    try {
-      const response = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: fullEmail,
-          schoolId: activeSchoolId,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send code');
-      }
-
-      const cooldownDuration =
-        RESEND_COOLDOWNS[Math.min(resendCount, RESEND_COOLDOWNS.length - 1)];
-      setResendCooldown(cooldownDuration);
-      setResendCount((prev) => prev + 1);
-    } catch (err) {
-      setSectionError('code', err instanceof Error ? err.message : 'Unable to resend code');
-    } finally {
-      setIsSendingCode(false);
-    }
-  }, [resendCooldown, fullEmail, data.school?.id, schoolId, resendCount, setSectionError]);
 
   // ============================================
   // ARRIVAL
   // ============================================
 
   const handleArrivalComplete = useCallback(() => {
-    localStorage.removeItem(PENDING_EMAIL_KEY);
-
     // Alumni waitlist goes to home
     if (sections['alumni-waitlist'].status === 'active') {
       router.push('/');
@@ -1036,30 +784,20 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     isReturningUser,
 
     // Loading states
-    isSendingCode,
-    isVerifyingCode,
-    isVerifyingAccessCode,
+    isVerifyingEntryCode,
     isSubmittingRole,
     isSubmittingIdentity,
 
-    // Access code gate
-    accessCodeLockout,
-    verifyAccessCode,
+    // Entry code lockout
+    entryCodeLockout,
 
     // Handle checking
     handleStatus,
     handleSuggestions,
 
-    // Resend cooldown
-    resendCooldown,
-
-    // Computed
-    fullEmail,
-
     // Data setters
     setSchool,
-    setEmail,
-    setCode,
+    setEntryCode,
     setRole,
     setAlumniSpace,
     setFirstName,
@@ -1075,17 +813,12 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
     // Section actions
     confirmSchool,
-    submitEmail,
-    verifyCode,
+    verifyEntryCode,
     submitRole,
     completeIdentity,
 
     // Edit actions
     editSchool,
-    editEmail,
-
-    // Resend
-    resendCode,
 
     // Arrival
     handleArrivalComplete,

@@ -1,7 +1,5 @@
-export { AccessCodeSection } from './AccessCodeSection';
 export { SchoolSection, AVAILABLE_SCHOOLS } from './SchoolSection';
-export { EmailSection } from './EmailSection';
-export { CodeSection } from './CodeSection';
+export { EntryCodeSection } from './EntryCodeSection';
 export { RoleSection } from './RoleSection';
 export { IdentitySection } from './IdentitySection';
 export { ArrivalSection } from './ArrivalSection';

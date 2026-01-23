@@ -33,11 +33,9 @@ export {
 
 // Section components (new evolving flow)
 export {
-  AccessCodeSection,
   SchoolSection,
   AVAILABLE_SCHOOLS,
-  EmailSection,
-  CodeSection,
+  EntryCodeSection,
   RoleSection,
   IdentitySection,
   ArrivalSection,

@@ -3,15 +3,15 @@
 export const dynamic = 'force-dynamic';
 
 /**
- * HiveLab Landing Page — Dramatic Arc
+ * HiveLab Landing Page — Templates First
  *
- * "What do you want to build?" with ceremony.
- * WordReveal title, gold border on focus, staggered chips,
- * submit ceremony with status narration.
+ * Reframed hierarchy: Templates above AI prompt.
+ * Student leaders want tools that work, not blank canvas.
+ * IDE is the power-user escape hatch, not the front door.
  */
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -28,9 +28,20 @@ import {
   BarChart3,
   Calendar,
   Zap,
+  Timer,
+  MessageSquare,
+  Trophy,
+  ClipboardList,
+  ChevronRight,
 } from 'lucide-react';
 import { MOTION, staggerPresets, durationSeconds } from '@hive/tokens';
-import { BrandSpinner } from '@hive/ui';
+import {
+  BrandSpinner,
+  getQuickTemplate,
+  getAvailableTemplates,
+  createToolFromTemplate,
+  type QuickTemplate,
+} from '@hive/ui';
 
 // Premium easing
 const EASE = MOTION.ease.premium;
@@ -45,14 +56,35 @@ const DURATION = {
 // Stagger for word reveals
 const STAGGER = staggerPresets;
 
-// Suggestion chips with icons
-const SUGGESTIONS = [
+// Featured template IDs (shown above fold)
+const FEATURED_TEMPLATE_IDS = [
+  'quick-poll',
+  'event-rsvp',
+  'event-countdown',
+  'member-leaderboard',
+  'study-group-signup',
+  'feedback-form',
+];
+
+// Icon mapping from template icon names to Lucide components
+const ICON_MAP: Record<string, React.ElementType> = {
+  'bar-chart-2': BarChart3,
+  'timer': Timer,
+  'users': Users,
+  'calendar': Calendar,
+  'message-square': MessageSquare,
+  'sparkles': Sparkles,
+  'clipboard-list': ClipboardList,
+  'trophy': Trophy,
+  'file-text': FileText,
+};
+
+// AI suggestion chips (secondary, below templates)
+const AI_SUGGESTIONS = [
   { label: 'Poll', icon: Vote, prompt: 'Create a poll to gather opinions' },
   { label: 'RSVP', icon: Users, prompt: 'Create an RSVP for an event' },
   { label: 'Countdown', icon: Clock, prompt: 'Create a countdown timer' },
   { label: 'Survey', icon: FileText, prompt: 'Create a feedback survey' },
-  { label: 'Leaderboard', icon: BarChart3, prompt: 'Create a leaderboard' },
-  { label: 'Signup', icon: Calendar, prompt: 'Create a signup form' },
 ];
 
 interface UserTool {
@@ -100,6 +132,46 @@ async function createTool(name: string, description?: string): Promise<string> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to create tool');
+  }
+
+  const data = await response.json();
+  return data.tool.id;
+}
+
+// Create tool from template via API
+async function createToolFromTemplateApi(template: QuickTemplate): Promise<string> {
+  const composition = createToolFromTemplate(template);
+
+  const response = await fetch('/api/tools', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      name: template.name,
+      description: template.description,
+      status: 'draft',
+      type: 'visual',
+      templateId: template.id,
+      elements: composition.elements.map(el => ({
+        elementId: el.elementId,
+        instanceId: el.instanceId,
+        config: el.config,
+        position: el.position,
+        size: el.size,
+      })),
+      connections: composition.connections?.map(conn => ({
+        id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        sourceElementId: conn.from.instanceId,
+        sourceOutput: conn.from.output || 'output',
+        targetElementId: conn.to.instanceId,
+        targetInput: conn.to.input || 'input',
+      })) || [],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to create tool from template');
   }
 
   const data = await response.json();
@@ -287,14 +359,21 @@ function GoldBorderInput({
 
 export default function HiveLabLanding() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [ceremonyPhase, setCeremonyPhase] = useState<CeremonyPhase>('idle');
   const [statusText, setStatusText] = useState('');
   const [titleRevealed, setTitleRevealed] = useState(false);
+  const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // Get featured templates
+  const featuredTemplates = FEATURED_TEMPLATE_IDS
+    .map(id => getQuickTemplate(id))
+    .filter((t): t is QuickTemplate => t !== undefined);
 
   // Fetch user's tools
   const { data: userTools = [], isLoading: toolsLoading } = useQuery({
@@ -304,16 +383,45 @@ export default function HiveLabLanding() {
     staleTime: 60000,
   });
 
-  // Focus input after title reveals
+  // Handle ?template= query param - auto-create tool from template
   useEffect(() => {
-    if (!authLoading && user && titleRevealed && inputRef.current) {
-      // Small delay to let the user see the title
+    const templateId = searchParams.get('template');
+    if (!templateId || !user || creatingFromTemplate) return;
+
+    const template = getQuickTemplate(templateId);
+    if (!template) {
+      toast.error('Template not found');
+      // Clean URL
+      window.history.replaceState({}, '', '/tools');
+      return;
+    }
+
+    // Create tool from template and redirect to IDE
+    setCreatingFromTemplate(true);
+    setStatusText(`Creating ${template.name}...`);
+    createToolFromTemplateApi(template)
+      .then(toolId => {
+        // Don't use ?new=true - we want to load the tool with its pre-composed elements
+        router.push(`/tools/${toolId}`);
+      })
+      .catch(err => {
+        console.error('Failed to create from template:', err);
+        toast.error('Failed to create tool from template');
+        setCreatingFromTemplate(false);
+        setStatusText('');
+        window.history.replaceState({}, '', '/tools');
+      });
+  }, [searchParams, user, creatingFromTemplate, router]);
+
+  // Focus input after title reveals (only if not creating from template)
+  useEffect(() => {
+    if (!authLoading && user && titleRevealed && inputRef.current && !creatingFromTemplate) {
       const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 200);
       return () => clearTimeout(timer);
     }
-  }, [authLoading, user, titleRevealed]);
+  }, [authLoading, user, titleRevealed, creatingFromTemplate]);
 
   // Handle submit with ceremony
   const handleSubmit = useCallback(async () => {
@@ -360,12 +468,33 @@ export default function HiveLabLanding() {
     }
   }, [prompt, ceremonyPhase, router]);
 
-  // Handle suggestion click
+  // Handle AI suggestion click
   const handleSuggestion = useCallback((suggestionPrompt: string) => {
     setPrompt(suggestionPrompt);
-    // Focus input and let user submit
     inputRef.current?.focus();
   }, []);
+
+  // Handle template click - create tool and redirect to IDE
+  const handleTemplateClick = useCallback(async (template: QuickTemplate) => {
+    if (ceremonyPhase !== 'idle' || creatingFromTemplate) return;
+
+    setCreatingFromTemplate(true);
+    setCeremonyPhase('creating');
+    setStatusText(`Creating ${template.name}...`);
+
+    try {
+      const toolId = await createToolFromTemplateApi(template);
+      setCeremonyPhase('redirecting');
+      setStatusText('Opening in editor...');
+      // Don't use ?new=true - we want to load the tool with its composition
+      router.push(`/tools/${toolId}`);
+    } catch (error) {
+      toast.error('Failed to create tool from template');
+      setCeremonyPhase('idle');
+      setCreatingFromTemplate(false);
+      setStatusText('');
+    }
+  }, [ceremonyPhase, creatingFromTemplate, router]);
 
   // Handle keyboard
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -409,10 +538,19 @@ export default function HiveLabLanding() {
   }
 
   // Loading state
-  if (authLoading) {
+  if (authLoading || creatingFromTemplate) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
-        <BrandSpinner size="md" variant="neutral" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--bg-ground,#0A0A09)]">
+        <BrandSpinner size="md" variant="gold" />
+        {creatingFromTemplate && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-4 text-white/60 text-sm"
+          >
+            {statusText || 'Creating tool...'}
+          </motion.p>
+        )}
       </div>
     );
   }
@@ -422,27 +560,126 @@ export default function HiveLabLanding() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">
-      {/* Hero Section - Centered Input */}
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 pt-8">
+      {/* Hero Section - Templates First */}
+      <div className="max-w-4xl mx-auto px-6 pt-12 pb-8">
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: EASE }}
-          className="w-full max-w-2xl"
+          className="text-center mb-10"
         >
-          {/* Title with WordReveal */}
-          <h1 className="text-center text-2xl sm:text-3xl font-medium text-white mb-8">
+          <h1 className="text-2xl sm:text-3xl font-medium text-white mb-2">
             {shouldReduceMotion ? (
-              'What do you want to build?'
+              'Tools for your space'
             ) : (
               <WordReveal
-                text="What do you want to build?"
-                stagger={0.06} // 60ms per word (DRAMA plan: 50-80ms)
+                text="Tools for your space"
+                stagger={0.06}
                 onComplete={() => setTitleRevealed(true)}
               />
             )}
           </h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: titleRevealed || shouldReduceMotion ? 1 : 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="text-white/50 text-sm"
+          >
+            Start with a template or describe what you need
+          </motion.p>
+        </motion.div>
 
+        {/* Featured Templates Grid - PRIMARY */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.2, ease: EASE }}
+          className="mb-10"
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {featuredTemplates.map((template, index) => {
+              const IconComponent = ICON_MAP[template.icon] || Sparkles;
+              return (
+                <motion.button
+                  key={template.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: DURATION.fast,
+                    delay: shouldReduceMotion ? 0 : 0.3 + (index * 0.08),
+                    ease: EASE,
+                  }}
+                  onClick={() => handleTemplateClick(template)}
+                  disabled={isSubmitting}
+                  className="group relative p-4 rounded-xl border border-white/[0.08] bg-white/[0.02]
+                    hover:border-white/15 hover:bg-white/[0.04]
+                    transition-all duration-200 text-left
+                    disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {/* Icon + Name */}
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-white/[0.04] group-hover:bg-[var(--color-gold,#FFD700)]/10
+                      transition-colors">
+                      <IconComponent className="w-4 h-4 text-white/60 group-hover:text-[var(--color-gold,#FFD700)]
+                        transition-colors" />
+                    </div>
+                    <span className="font-medium text-white text-sm truncate">
+                      {template.name}
+                    </span>
+                  </div>
+                  {/* Description */}
+                  <p className="text-xs text-white/40 line-clamp-2 leading-relaxed">
+                    {template.description}
+                  </p>
+                  {/* Hover arrow */}
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/0
+                    group-hover:text-white/30 transition-colors" />
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* See all templates */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: DURATION.fast, delay: shouldReduceMotion ? 0 : 0.6 }}
+            className="flex justify-center mt-4"
+          >
+            <button
+              onClick={() => router.push('/tools/templates')}
+              disabled={isSubmitting}
+              className="text-white/40 hover:text-white/60 text-sm transition-colors
+                disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              See all templates
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        </motion.div>
+
+        {/* Divider */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: shouldReduceMotion ? 0 : 0.5 }}
+          className="flex items-center gap-4 mb-8"
+        >
+          <div className="flex-1 h-px bg-white/[0.06]" />
+          <span className="text-white/30 text-xs uppercase tracking-wider">
+            Or describe what you need
+          </span>
+          <div className="flex-1 h-px bg-white/[0.06]" />
+        </motion.div>
+
+        {/* AI Prompt Section - SECONDARY */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : 0.6, ease: EASE }}
+          className="max-w-xl mx-auto"
+        >
           {/* Input Container with Gold Border */}
           <div className="relative">
             <GoldBorderInput
@@ -526,49 +763,32 @@ export default function HiveLabLanding() {
             )}
           </AnimatePresence>
 
-          {/* Suggestion Chips - Staggered entrance */}
-          <div className="flex flex-wrap justify-center gap-2 mt-6">
-            {SUGGESTIONS.map((suggestion, index) => (
+          {/* AI Suggestion Chips - Compact */}
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            {AI_SUGGESTIONS.map((suggestion, index) => (
               <motion.button
                 key={suggestion.label}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   duration: DURATION.fast,
-                  delay: shouldReduceMotion ? 0 : 0.6 + (index * 0.1), // First at 600ms, 100ms between
+                  delay: shouldReduceMotion ? 0 : 0.7 + (index * 0.08),
                   ease: EASE,
                 }}
                 onClick={() => handleSuggestion(suggestion.prompt)}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-4 py-2 rounded-full
-                  border border-white/10 bg-white/[0.02]
-                  hover:border-white/20 hover:bg-white/[0.05]
-                  text-white/60 hover:text-white/80
-                  transition-all duration-200 text-sm
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full
+                  border border-white/[0.06] bg-transparent
+                  hover:border-white/15 hover:bg-white/[0.03]
+                  text-white/50 hover:text-white/70
+                  transition-all duration-200 text-xs
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <suggestion.icon className="w-4 h-4" />
+                <suggestion.icon className="w-3 h-3" />
                 {suggestion.label}
               </motion.button>
             ))}
           </div>
-
-          {/* Or start from template */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: DURATION.fast, delay: shouldReduceMotion ? 0 : 1.2 }}
-            className="flex justify-center mt-6"
-          >
-            <button
-              onClick={() => router.push('/tools/templates')}
-              disabled={isSubmitting}
-              className="text-white/40 hover:text-white/60 text-sm transition-colors
-                disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Or browse templates →
-            </button>
-          </motion.div>
         </motion.div>
       </div>
 
