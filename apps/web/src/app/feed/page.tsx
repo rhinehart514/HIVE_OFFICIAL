@@ -515,7 +515,7 @@ function YourCreationsSection({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {tools.slice(0, 3).map((tool) => (
           <Tilt key={tool.id} intensity={6}>
-            <Link href={`/tools/${tool.id}`}>
+            <Link href={`/lab/${tool.id}`}>
               <GlassSurface
                 intensity="subtle"
                 interactive
@@ -539,7 +539,7 @@ function YourCreationsSection({
 
         {/* Create tile */}
         <Tilt intensity={6}>
-          <Link href="/tools/new">
+          <Link href="/lab/new">
             <GlassSurface
               intensity="subtle"
               interactive
@@ -618,7 +618,7 @@ function QuickActions() {
       </h3>
       <div className="space-y-2">
         <Link
-          href="/tools/new"
+          href="/lab/new"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
           <span className="text-[16px]">🛠️</span>

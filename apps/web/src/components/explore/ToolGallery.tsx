@@ -91,7 +91,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
       }}
     >
       <Tilt intensity={4}>
-        <Link href={`/tools/${tool.id}`}>
+        <Link href={`/lab/${tool.id}`}>
           <GlassSurface
             intensity="subtle"
             className={cn(

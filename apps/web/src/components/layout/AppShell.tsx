@@ -59,11 +59,11 @@ const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/s(paces)?(\/|$)/,
   },
   {
-    id: 'tools',
-    label: 'Tools',
-    href: '/tools',
+    id: 'lab',
+    label: 'Lab',
+    href: '/lab',
     icon: BeakerIcon,
-    matchPattern: /^\/tools?(\/|$)/,
+    matchPattern: /^\/lab(\/|$)/,
   },
   {
     id: 'profile',
@@ -419,7 +419,7 @@ export function AppShell({ children }: AppShellProps) {
   const isWideContentPage =
     pathname.startsWith('/profile') ||
     pathname.startsWith('/spaces') ||
-    pathname.startsWith('/tools');
+    pathname.startsWith('/lab');
 
   if (isStandalonePage) {
     return <>{children}</>;

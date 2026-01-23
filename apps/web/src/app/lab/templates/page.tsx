@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * /tools/templates — Tool Templates Gallery (Redesigned)
+ * /lab/templates — Tool Templates Gallery
  *
- * Per DRAMA plan:
+ * Per Builder Dashboard plan:
  * - WordReveal title + search fade-in (300ms delay)
  * - GoldBorderContainer on search focus
  * - Category switch: cards exit left, new cards enter right (200ms)
  * - Card hover: scale 1.02, gold border glow
- * - Card click: zooms to center (300ms), redirect to IDE
+ * - Card click: creates tool directly, redirects to IDE (no query param)
  * - Stagger entrance (80ms between cards)
  */
 
@@ -16,6 +16,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Search,
@@ -44,6 +45,7 @@ import {
   type TemplateCategory,
 } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
+import { createToolFromTemplateApi } from '@/lib/hivelab/create-tool';
 
 // Premium easing
 const EASE = MOTION.ease.premium;
@@ -333,18 +335,28 @@ export default function ToolTemplatesPage() {
   const appTemplates = filteredTemplates.filter(t => t.complexity === 'app');
   const simpleTemplates = filteredTemplates.filter(t => t.complexity === 'simple');
 
-  // Handle template selection with ceremony
+  // Handle template selection: create tool directly, redirect to IDE
   const handleSelectTemplate = React.useCallback(async (template: QuickTemplate) => {
     if (isNavigating) return;
 
     setSelectedTemplate(template);
     setIsNavigating(true);
 
-    // Wait for zoom animation (300ms per DRAMA plan)
-    await new Promise((resolve) => setTimeout(resolve, shouldReduceMotion ? 100 : 300));
+    try {
+      // Create tool from template via API
+      const toolId = await createToolFromTemplateApi(template);
 
-    // Navigate to tools page with template
-    router.push(`/tools?template=${template.id}`);
+      // Brief pause for visual feedback
+      await new Promise((resolve) => setTimeout(resolve, shouldReduceMotion ? 100 : 200));
+
+      // Navigate directly to IDE with the new tool
+      router.push(`/lab/${toolId}`);
+    } catch (error) {
+      console.error('Failed to create tool from template:', error);
+      toast.error('Failed to create tool from template');
+      setIsNavigating(false);
+      setSelectedTemplate(null);
+    }
   }, [isNavigating, router, shouldReduceMotion]);
 
   // Popular templates to suggest when search is empty
@@ -360,7 +372,7 @@ export default function ToolTemplatesPage() {
           transition={{ duration: 0.3, ease: EASE }}
         >
           <Link
-            href="/tools"
+            href="/lab"
             className="inline-flex items-center gap-2 text-sm transition-colors mb-8"
             style={{ color: COLORS.textSecondary }}
             onMouseEnter={(e) => {
@@ -371,7 +383,7 @@ export default function ToolTemplatesPage() {
             }}
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Tools
+            Back to Lab
           </Link>
         </motion.div>
 
@@ -470,7 +482,7 @@ export default function ToolTemplatesPage() {
               <div className="flex flex-col items-center gap-4">
                 <BrandSpinner size="lg" variant="gold" />
                 <span className="text-sm font-medium" style={{ color: COLORS.gold }}>
-                  Loading template...
+                  Creating tool...
                 </span>
               </div>
             </motion.div>
@@ -611,7 +623,7 @@ export default function ToolTemplatesPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/tools')}
+              onClick={() => router.push('/lab')}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
               style={{
                 backgroundColor: COLORS.surface,

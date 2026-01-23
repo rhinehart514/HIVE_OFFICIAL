@@ -17,7 +17,7 @@ export class ToolNavigation {
    * Navigate to tool marketplace
    */
   static toMarketplace() {
-    window.location.href = '/tools';
+    window.location.href = '/lab';
   }
 
   /**
@@ -43,7 +43,7 @@ export class ToolNavigation {
    * Navigate to tool preview
    */
   static toPreview(toolId: string, openInNewTab = false) {
-    const url = `/tools/${toolId}/preview`;
+    const url = `/lab/${toolId}/preview`;
     
     if (openInNewTab) {
       window.open(url, '_blank');
@@ -56,28 +56,28 @@ export class ToolNavigation {
    * Navigate to tool deployment
    */
   static toDeploy(toolId: string) {
-    window.location.href = `/tools/${toolId}/deploy`;
+    window.location.href = `/lab/${toolId}/deploy`;
   }
 
   /**
    * Navigate to tool settings
    */
   static toSettings(toolId: string) {
-    window.location.href = `/tools/${toolId}/settings`;
+    window.location.href = `/lab/${toolId}/settings`;
   }
 
   /**
    * Navigate to tool analytics
    */
   static toAnalytics(toolId: string) {
-    window.location.href = `/tools/${toolId}/analytics`;
+    window.location.href = `/lab/${toolId}/analytics`;
   }
 
   /**
    * Navigate to tool run/use page
    */
   static toRun(toolId: string) {
-    window.location.href = `/tools/${toolId}/run`;
+    window.location.href = `/lab/${toolId}/run`;
   }
 
   /**
@@ -105,7 +105,7 @@ export class ToolNavigation {
    * Share a tool
    */
   static async shareTool(toolId: string, toolName: string) {
-    const shareUrl = `${window.location.origin}/tools/${toolId}`;
+    const shareUrl = `${window.location.origin}/lab/${toolId}`;
     
     if (navigator.share) {
       try {
@@ -142,7 +142,7 @@ export class ToolNavigation {
     const path = window.location.pathname;
     const params = new URLSearchParams(window.location.search);
 
-    if (path === '/tools') {
+    if (path === '/lab') {
       return { page: 'marketplace' };
     }
 
@@ -155,7 +155,7 @@ export class ToolNavigation {
       };
     }
 
-    const toolMatch = path.match(/^\/tools\/([^/]+)\/(\w+)$/);
+    const toolMatch = path.match(/^\/lab\/([^/]+)\/(\w+)$/);
     if (toolMatch) {
       const [, toolId, action] = toolMatch;
       

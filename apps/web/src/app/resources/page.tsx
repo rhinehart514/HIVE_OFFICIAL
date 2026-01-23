@@ -101,7 +101,7 @@ export default function ResourcesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           <Card
             className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
-            onClick={() => router.push('/tools/create')}
+            onClick={() => router.push('/lab/create')}
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-[#FFD700]/10 flex items-center justify-center group-hover:opacity-80 transition-transform">
@@ -131,7 +131,7 @@ export default function ResourcesPage() {
 
           <Card
             className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
-            onClick={() => router.push('/tools')}
+            onClick={() => router.push('/lab')}
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center group-hover:opacity-80 transition-transform">
@@ -154,7 +154,7 @@ export default function ResourcesPage() {
           <div className="space-y-3">
             <Card
               className="p-5 bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.10] transition-all cursor-pointer group"
-              onClick={() => router.push('/tools/create')}
+              onClick={() => router.push('/lab/create')}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -262,7 +262,7 @@ export default function ResourcesPage() {
             ))}
           </div>
           <p className="text-xs text-white/40 mt-4 text-center">
-            27 total elements across 3 tiers. <span className="text-white/60 cursor-pointer hover:text-[#FFD700]" onClick={() => router.push('/tools/create')}>Explore all in HiveLab →</span>
+            27 total elements across 3 tiers. <span className="text-white/60 cursor-pointer hover:text-[#FFD700]" onClick={() => router.push('/lab/create')}>Explore all in HiveLab →</span>
           </p>
         </div>
 

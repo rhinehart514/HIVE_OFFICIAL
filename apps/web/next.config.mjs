@@ -37,6 +37,17 @@ const nextConfig = {
         permanent: true,
       },
       // /s/:handle routes are now handled by app/s/[handle] (Jan 2026 redesign)
+      // HiveLab renamed to Lab (Jan 2026)
+      {
+        source: '/tools',
+        destination: '/lab',
+        permanent: true,
+      },
+      {
+        source: '/tools/:path*',
+        destination: '/lab/:path*',
+        permanent: true,
+      },
     ];
   },
   webpack: (config) => {

@@ -296,7 +296,7 @@ export default function SpacePageUnified() {
                 const params = new URLSearchParams({
                   spaceId: space.id,
                 });
-                router.push(`/tools?${params.toString()}`);
+                router.push(`/lab?${params.toString()}`);
               }}
             />
           </ArrivalZone>
@@ -332,7 +332,7 @@ export default function SpacePageUnified() {
                         ...(placementId && { placementId }),
                         spaceId: space?.id || '',
                       });
-                      router.push(`/tools/${toolId}?${params.toString()}`);
+                      router.push(`/lab/${toolId}?${params.toString()}`);
                     }}
                     onReact={async (messageId, emoji) => {
                       if (!space?.id) return;
@@ -383,7 +383,7 @@ export default function SpacePageUnified() {
                     placementId: tool.placementId,
                     spaceId: space?.id || '',
                   });
-                  router.push(`/tools/${tool.toolId}?${params.toString()}`);
+                  router.push(`/lab/${tool.toolId}?${params.toString()}`);
                 }}
                 onToolViewFull={(tool) => {
                   // Navigate to full app view
@@ -392,15 +392,15 @@ export default function SpacePageUnified() {
                     spaceId: space?.id || '',
                     mode: 'app',
                   });
-                  router.push(`/tools/${tool.toolId}?${params.toString()}`);
+                  router.push(`/lab/${tool.toolId}?${params.toString()}`);
                 }}
                 onAddTool={() => {
-                  // Navigate to HiveLab with space context
+                  // Navigate to Lab with space context
                   const params = new URLSearchParams({
                     spaceId: space?.id || '',
                     deploy: 'sidebar',
                   });
-                  router.push(`/tools?${params.toString()}`);
+                  router.push(`/lab?${params.toString()}`);
                 }}
               />
             </ArrivalZone>

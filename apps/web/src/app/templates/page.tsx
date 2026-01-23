@@ -184,7 +184,7 @@ export default function TemplateGalleryPage() {
       }
 
       const data = await response.json();
-      router.push(data.redirectUrl || `/tools/${data.tool.id}`);
+      router.push(data.redirectUrl || `/lab/${data.tool.id}`);
     } catch (err) {
       logger.error('Use template error', { component: 'TemplatesPage' }, err instanceof Error ? err : undefined);
       toast.error(err instanceof Error ? err.message : 'Failed to use template');
@@ -213,13 +213,13 @@ export default function TemplateGalleryPage() {
                   Elements
                 </Button>
               </Link>
-              <Link href="/tools">
+              <Link href="/lab">
                 <Button variant="ghost" size="sm" className="text-white/60 hover:text-white">
                   <WrenchIcon className="w-4 h-4 mr-2" />
                   My Tools
                 </Button>
               </Link>
-              <Link href="/tools/create">
+              <Link href="/lab/create">
                 <Button size="sm" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                   <PlusIcon className="w-4 h-4 mr-1" />
                   Create Tool
@@ -335,7 +335,7 @@ export default function TemplateGalleryPage() {
                     Clear search
                   </Button>
                 ) : null}
-                <Link href="/tools/create">
+                <Link href="/lab/create">
                   <Button className="bg-white/10 hover:bg-white/20 text-white">
                     <PlusIcon className="w-4 h-4 mr-1" />
                     Build from Scratch
@@ -417,7 +417,7 @@ export default function TemplateGalleryPage() {
             Build your own tool from scratch using our visual builder and 27 building blocks.
           </p>
           <div className="flex items-center justify-center gap-4">
-            <Link href="/tools/create">
+            <Link href="/lab/create">
               <Button size="lg" className="bg-[var(--hive-gold-cta)] text-black hover:brightness-110">
                 <SparklesIcon className="w-4 h-4 mr-2" />
                 Start Building

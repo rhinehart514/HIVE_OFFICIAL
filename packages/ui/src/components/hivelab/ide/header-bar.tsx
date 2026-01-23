@@ -301,89 +301,69 @@ export function HeaderBar({
         </AnimatePresence>
       </div>
 
-      {/* Right: Save + Deploy + Menu */}
+      {/* Right: Auto-save Indicator + Deploy + Menu */}
       <div className="flex items-center gap-2">
-        {/* Save Button - utility action, always visible */}
-        <div className="relative">
-          {/* Gold pulse on just saved */}
-          <AnimatePresence>
-            {justSaved && (
+        {/* Auto-save Status Indicator - non-interactive */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 text-sm">
+          <AnimatePresence mode="wait">
+            {saving ? (
               <motion.div
-                initial={{ opacity: 0.8, scale: 1 }}
-                animate={{ opacity: 0, scale: 1.3 }}
+                key="saving"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="absolute inset-0 rounded-lg pointer-events-none"
-                style={{
-                  border: `2px solid ${HEADER_COLORS.accent}`,
-                  boxShadow: `0 0 12px ${HEADER_COLORS.accent}60`,
-                }}
-              />
+                className="flex items-center gap-1.5"
+                style={{ color: HEADER_COLORS.textSecondary }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                >
+                  <BookmarkIcon className="h-3.5 w-3.5" />
+                </motion.div>
+                <span className="hidden sm:block">Saving...</span>
+              </motion.div>
+            ) : justSaved || showSavedIndicator ? (
+              <motion.div
+                key="saved"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-1.5"
+                style={{ color: HEADER_COLORS.accent }}
+              >
+                <CheckIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:block">Saved</span>
+              </motion.div>
+            ) : hasUnsavedChanges ? (
+              <motion.div
+                key="unsaved"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-1.5"
+                style={{ color: HEADER_COLORS.textTertiary }}
+              >
+                <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: HEADER_COLORS.accent }}
+                />
+                <span className="hidden sm:block">Editing</span>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="synced"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-1.5"
+                style={{ color: HEADER_COLORS.textTertiary }}
+              >
+                <CheckIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:block">Saved</span>
+              </motion.div>
             )}
           </AnimatePresence>
-
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200',
-              saving && 'opacity-50 cursor-not-allowed',
-              focusRing
-            )}
-            style={{
-              color: justSaved ? HEADER_COLORS.accent : hasUnsavedChanges ? HEADER_COLORS.text : HEADER_COLORS.textSecondary,
-              backgroundColor: 'transparent',
-              border: `1px solid ${hasUnsavedChanges ? HEADER_COLORS.border : 'transparent'}`,
-            }}
-            onMouseEnter={(e) => {
-              if (!saving) {
-                e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
-                e.currentTarget.style.borderColor = HEADER_COLORS.border;
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.borderColor = hasUnsavedChanges ? HEADER_COLORS.border : 'transparent';
-            }}
-            title="Save (⌘S)"
-          >
-            <AnimatePresence mode="wait">
-              {saving ? (
-                <motion.div
-                  key="saving"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 360 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ rotate: { duration: 1, repeat: Infinity, ease: 'linear' } }}
-                >
-                  <BookmarkIcon className="h-3.5 w-3.5" />
-                </motion.div>
-              ) : justSaved || !hasUnsavedChanges ? (
-                <motion.div
-                  key="saved"
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                >
-                  <CheckIcon className="h-3.5 w-3.5" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="unsaved"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <BookmarkIcon className="h-3.5 w-3.5" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <span className="hidden sm:block">
-              {saving ? 'Saving...' : hasUnsavedChanges ? 'Save' : 'Saved'}
-            </span>
-          </button>
         </div>
 
         {/* Deploy Button - primary CTA */}
