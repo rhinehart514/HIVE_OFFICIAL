@@ -1900,6 +1900,7 @@ export const toast = Object.assign(
   }
 );
 
-// GSAP Scroll Effects
-export { useGSAPScroll, useGSAPParallax } from "./hooks/useGSAPScroll";
-export type { GSAPScrollConfig } from "./hooks/useGSAPScroll";
+// GSAP Scroll Effects - REMOVED (Jan 2026)
+// NOTE: GSAP scroll hooks have been removed. Use Framer Motion instead:
+// - ParallaxText from design-system/primitives for parallax effects
+// - useScroll + useTransform from framer-motion for custom parallax
