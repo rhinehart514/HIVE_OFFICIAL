@@ -100,16 +100,10 @@ export default function LandingPage() {
         return;
       }
 
-      // Success - session created, redirect to complete onboarding
+      // Success - session created, redirect to onboarding
+      // Always go through onboarding for email verification
       setEntryCodeLockout(null);
-
-      // Check if user needs onboarding
-      if (result.needsOnboarding) {
-        router.push('/enter');
-      } else {
-        // Returning user - go to spaces
-        router.push('/spaces');
-      }
+      router.push('/enter');
     } catch {
       setEntryCodeError('Unable to verify code');
       setEntryCode(['', '', '', '', '', '']);
