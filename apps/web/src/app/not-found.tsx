@@ -2,24 +2,22 @@
 
 import Link from 'next/link';
 import { Button } from '@hive/ui';
-import { HomeIcon, ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 bg-ground">
       <div className="mx-auto max-w-md text-center">
         <div className="mb-6 flex justify-center">
-          <div className="rounded-full bg-neutral-800/50 p-4">
-            <MagnifyingGlassIcon className="h-8 w-8 text-neutral-400" />
-          </div>
+          <span className="text-6xl">404</span>
         </div>
 
         <h2 className="mb-2 text-xl font-semibold text-white">
-          Page not found
+          Did Jacob forget another page?
         </h2>
 
         <p className="mb-6 text-sm text-neutral-400">
-          The page you're looking for doesn't exist or has been moved.
+          Classic. The page you're looking for doesn't exist yet. We'll yell at him.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">

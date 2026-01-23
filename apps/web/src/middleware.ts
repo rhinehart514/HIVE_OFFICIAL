@@ -38,37 +38,19 @@ const SENSITIVE_RATE_LIMIT = {
   windowMs: 60 * 1000,
 };
 
-// Routes that require authentication (page routes)
-const PROTECTED_ROUTES = [
-  '/feed',
-  '/profile',
-  '/spaces',
-  '/tools',
-  '/events',
-  '/settings',
-  '/connections',
-  '/claim',
-  '/create',
-  '/calendar',
-  '/notifications',
-];
-
-// Routes that are always public
+// Routes that are always public (no auth required)
+// SECURITY: Keep this list minimal - everything else requires authentication
 const PUBLIC_ROUTES = [
-  '/',
-  '/enter',         // New unified entry flow
-  '/schools',
-  '/about',
+  '/',              // Landing page (entry code input)
+  '/about',         // Marketing/info page
   '/legal',         // Legal pages (/legal/privacy, /legal/terms, etc.)
-  '/s',             // Short space URLs
-  '/u',             // Short profile URLs
-  '/spaces',        // Unified Spaces Hub (browse without auth)
-  '/tools',         // HiveLab landing (view-only for guests)
 ];
 
-// Routes that are public only as exact matches (not prefix matching)
-// Note: /spaces is now in PUBLIC_ROUTES with prefix matching
-const EXACT_PUBLIC_ROUTES: string[] = [];
+// Routes that require session but NOT completed onboarding
+// (user has entered code but hasn't finished profile)
+const PARTIAL_AUTH_ROUTES = [
+  '/enter',         // Onboarding flow
+];
 
 // Admin-only routes
 const ADMIN_ROUTES = ['/admin'];
@@ -88,15 +70,6 @@ const ROUTE_REDIRECTS: Record<string, string> = {
   '/privacy': '/legal/privacy',
   '/terms': '/legal/terms',
 };
-
-// Routes that require completed onboarding
-const ONBOARDING_REQUIRED_ROUTES = [
-  '/feed',
-  '/profile',
-  '/spaces',
-  '/tools',
-  '/events',
-];
 
 function getClientIdentifier(request: NextRequest): string {
   // Try to get real IP from various headers
@@ -154,25 +127,18 @@ function isSensitiveEndpoint(pathname: string): boolean {
   return SENSITIVE_ENDPOINTS.some(endpoint => pathname.startsWith(endpoint));
 }
 
-function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_ROUTES.some(route => pathname.startsWith(route));
+function isPublicRoute(pathname: string): boolean {
+  // Only exact matches or prefix matches for explicitly public routes
+  return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 }
 
-function isPublicRoute(pathname: string): boolean {
-  // Check exact public routes first
-  if (EXACT_PUBLIC_ROUTES.includes(pathname)) {
-    return true;
-  }
-  // Check prefix-based public routes
-  return PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
+function isPartialAuthRoute(pathname: string): boolean {
+  // Routes that need session but not completed onboarding
+  return PARTIAL_AUTH_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 }
 
 function isAdminRoute(pathname: string): boolean {
   return ADMIN_ROUTES.some(route => pathname.startsWith(route));
-}
-
-function requiresOnboarding(pathname: string): boolean {
-  return ONBOARDING_REQUIRED_ROUTES.some(route => pathname.startsWith(route));
 }
 
 interface SessionPayload {
@@ -291,80 +257,72 @@ export async function middleware(request: NextRequest) {
   // Get session cookie
   const sessionCookie = request.cookies.get('hive_session')?.value;
 
-  // Protected route without session - redirect to landing page
-  if (isProtectedRoute(pathname) && !sessionCookie) {
+  // === NO SESSION: Redirect to landing page ===
+  if (!sessionCookie) {
     const landingUrl = new URL('/', request.url);
     landingUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(landingUrl);
   }
 
-  // If we have a session, verify it for admin and onboarding routes
-  if (sessionCookie) {
-    const session = await verifySessionAtEdge(sessionCookie);
+  // === HAS SESSION: Verify and check permissions ===
+  const session = await verifySessionAtEdge(sessionCookie);
 
-    // Admin routes require admin flag
-    if (isAdminRoute(pathname)) {
-      if (!session || !session.isAdmin) {
-        // Not admin - redirect to home
-        return NextResponse.redirect(new URL('/', request.url));
-      }
+  // Invalid/expired session - redirect to landing
+  if (!session) {
+    const landingUrl = new URL('/', request.url);
+    landingUrl.searchParams.set('redirect', pathname);
+    const response = NextResponse.redirect(landingUrl);
+    // Clear invalid session cookie
+    response.cookies.delete('hive_session');
+    return response;
+  }
+
+  // Admin routes require admin flag
+  if (isAdminRoute(pathname)) {
+    if (!session.isAdmin) {
+      return NextResponse.redirect(new URL('/', request.url));
     }
+  }
 
-    // Check onboarding status for protected routes
-    if (session && requiresOnboarding(pathname) && !session.onboardingCompleted) {
-      // User hasn't completed entry - redirect to /enter?state=identity
-      const enterUrl = new URL('/enter', request.url);
-      enterUrl.searchParams.set('state', 'identity');
-      enterUrl.searchParams.set('redirect', pathname);
-      return NextResponse.redirect(enterUrl);
-    }
-
-    // Reverse guard: if user visits /enter with identity state but already completed, redirect to spaces
-    if (session && pathname === '/enter' && session.onboardingCompleted) {
+  // Partial auth routes (like /enter) - allow even without completed onboarding
+  if (isPartialAuthRoute(pathname)) {
+    // If already completed onboarding and visiting /enter, redirect to spaces
+    if (session.onboardingCompleted && pathname === '/enter') {
       const stateParam = request.nextUrl.searchParams.get('state');
       if (stateParam === 'identity') {
         return NextResponse.redirect(new URL('/spaces', request.url));
       }
     }
+    return NextResponse.next();
+  }
 
-    // Legacy /onboarding redirect (in case URL redirect didn't catch it)
-    if (session && pathname === '/onboarding' && session.onboardingCompleted) {
-      return NextResponse.redirect(new URL('/spaces', request.url));
-    }
+  // All other routes require completed onboarding
+  if (!session.onboardingCompleted) {
+    const enterUrl = new URL('/enter', request.url);
+    enterUrl.searchParams.set('state', 'identity');
+    enterUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(enterUrl);
+  }
+
+  // Legacy /onboarding redirect
+  if (pathname === '/onboarding') {
+    return NextResponse.redirect(new URL('/spaces', request.url));
   }
 
   return NextResponse.next();
 }
 
 // Configure which paths the middleware applies to
+// SECURITY: Match ALL routes except static files
 export const config = {
   matcher: [
-    // API routes - rate limiting
-    '/api/:path*',
-    // Page routes - auth protection
-    '/feed/:path*',
-    '/profile/:path*',
-    '/spaces/:path*',
-    '/s/:path*', // Short space URLs
-    '/tools/:path*',
-    '/events/:path*',
-    '/settings/:path*',
-    '/admin/:path*',
-    '/connections/:path*',
-    '/claim/:path*',
-    '/create/:path*',
-    '/calendar/:path*',
-    '/notifications/:path*',
-    // Entry flow - unified auth
-    '/enter',
-    '/enter/:path*',
-    // Redirects (handled by middleware)
-    '/browse',
-    '/build',
-    '/privacy',
-    '/terms',
-    // Campus routes
-    '/campus',
-    '/campus/:path*',
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files (images, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };
