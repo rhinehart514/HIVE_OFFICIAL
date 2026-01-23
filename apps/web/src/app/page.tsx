@@ -251,19 +251,6 @@ export default function LandingPage() {
             <p className="text-[13px] text-white/40 text-center">
               Don&apos;t have a code? Contact your campus ambassador.
             </p>
-
-            {/* Sign in link */}
-            <div className="pt-4 border-t border-white/[0.06]">
-              <p className="text-[13px] text-white/40 text-center">
-                Already have an account?{' '}
-                <Link
-                  href="/signin"
-                  className="text-white/60 hover:text-white transition-colors underline underline-offset-2"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </div>
           </motion.div>
         )}
 
