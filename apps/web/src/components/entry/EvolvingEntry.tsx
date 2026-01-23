@@ -2,15 +2,15 @@
 
 /**
  * EvolvingEntry - Single-page evolving entry flow orchestrator
- * UPDATED: Jan 22, 2026
+ * UPDATED: Jan 23, 2026
  *
  * Coordinates all sections in a single scrollable page that evolves
  * as the user progresses through entry.
  *
- * Flow: school → entryCode → role → identity → arrival
+ * Flow: school → email → code → role → identity → arrival
  *
- * Entry is via 6-digit code (no email verification).
- * Codes are pre-generated and distributed by admins.
+ * Access granted via 716514 code on landing page.
+ * Email verification happens during onboarding.
  *
  * Motion philosophy (aligned with /about):
  * - Luxuriously slow hero entrance (1.2s)
@@ -25,7 +25,8 @@ import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import { useEvolvingEntry } from './hooks/useEvolvingEntry';
 import {
   SchoolSection,
-  EntryCodeSection,
+  EmailSection,
+  CodeSection,
   RoleSection,
   IdentitySection,
   ArrivalSection,
@@ -103,8 +104,8 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
       return;
     }
 
-    // Entry code verification gets anticipation
-    if (activeSection === 'entryCode' || activeSection === 'role') {
+    // Email verification and code get anticipation
+    if (activeSection === 'email' || activeSection === 'code' || activeSection === 'role') {
       onEmotionalStateChange('anticipation');
       return;
     }
@@ -202,15 +203,32 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
           />
         )}
 
-        {/* Entry Code section */}
-        {!isTerminal && entry.sections.entryCode.status !== 'hidden' && (
-          <EntryCodeSection
-            section={entry.sections.entryCode}
-            code={entry.data.entryCode}
-            onCodeChange={entry.setEntryCode}
-            onVerify={entry.verifyEntryCode}
-            isLoading={entry.isVerifyingEntryCode}
-            lockout={entry.entryCodeLockout}
+        {/* Email section */}
+        {!isTerminal && entry.sections.email.status !== 'hidden' && (
+          <EmailSection
+            section={entry.sections.email}
+            email={entry.data.email}
+            fullEmail={entry.fullEmail}
+            domain={CAMPUS_CONFIG.domain}
+            onEmailChange={entry.setEmail}
+            onSubmit={entry.submitEmail}
+            onEdit={entry.editEmail}
+            isLoading={entry.isSubmittingEmail}
+          />
+        )}
+
+        {/* Code verification section */}
+        {!isTerminal && entry.sections.code.status !== 'hidden' && (
+          <CodeSection
+            section={entry.sections.code}
+            email={entry.fullEmail}
+            code={entry.data.verificationCode}
+            onCodeChange={entry.setVerificationCode}
+            onVerify={entry.verifyEmailCode}
+            onResend={entry.resendCode}
+            onChangeEmail={entry.editEmail}
+            isLoading={entry.isVerifyingCode}
+            resendCooldown={entry.resendCooldown}
           />
         )}
 

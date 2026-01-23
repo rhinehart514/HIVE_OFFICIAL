@@ -4,21 +4,15 @@
  * useEvolvingEntry - State Machine for Single-Page Evolving Entry Flow
  *
  * Adapts the entry flow to work as sections on a single page that evolve:
- * school → entryCode → role → identity → arrival
- *
- * Key differences from previous flow:
- * - Entry is via 6-digit code (no email verification)
- * - Codes are pre-generated and distributed by admins
- * - Role selection is an "earned moment" AFTER code verification
- * - Alumni path diverges after role selection (no separate page)
- * - All sections animate in place, no page transitions
+ * school → email → code → role → identity → arrival
  *
  * Flow:
  * 1. School: Select campus
- * 2. Entry Code: Verify 6-digit code (creates session)
- * 3. Role: Choose student/faculty/alumni (earned moment)
- * 4. Identity: Profile setup (new students only)
- * 5. Arrival: Welcome celebration
+ * 2. Email: Collect .edu email, send verification code
+ * 3. Code: Verify 6-digit email code (creates session)
+ * 4. Role: Choose student/faculty/alumni (earned moment)
+ * 5. Identity: Profile setup (new students only)
+ * 6. Arrival: Welcome celebration
  *
  * Alumni diverges after role → shows waitlist inline
  */
@@ -45,7 +39,8 @@ export interface School {
 
 export type SectionId =
   | 'school'
-  | 'entryCode'
+  | 'email'
+  | 'code'
   | 'role'
   | 'identity'
   | 'arrival'
@@ -61,7 +56,8 @@ export interface SectionState {
 
 export interface EntryData {
   school: School | null;
-  entryCode: string[];
+  email: string;
+  verificationCode: string[];
   role: UserRole | null;
   alumniSpace: string;
   firstName: string;
@@ -89,11 +85,8 @@ export interface UseEvolvingEntryOptions {
   defaultRedirect?: string;
 }
 
-export interface AccessCodeLockout {
-  locked: boolean;
-  remainingMinutes: number;
-  attemptsRemaining?: number;
-}
+// Resend cooldown duration in seconds
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export interface UseEvolvingEntryReturn {
   // Section visibility
@@ -102,16 +95,18 @@ export interface UseEvolvingEntryReturn {
 
   // Data
   data: EntryData;
+  fullEmail: string;
   isNewUser: boolean;
   isReturningUser: boolean;
 
   // Loading states
-  isVerifyingEntryCode: boolean;
+  isSubmittingEmail: boolean;
+  isVerifyingCode: boolean;
   isSubmittingRole: boolean;
   isSubmittingIdentity: boolean;
 
-  // Entry code lockout
-  entryCodeLockout: AccessCodeLockout | null;
+  // Email cooldown
+  resendCooldown: number;
 
   // Handle checking
   handleStatus: HandleStatus;
@@ -119,7 +114,8 @@ export interface UseEvolvingEntryReturn {
 
   // Data setters
   setSchool: (school: School) => void;
-  setEntryCode: (code: string[]) => void;
+  setEmail: (email: string) => void;
+  setVerificationCode: (code: string[]) => void;
   setRole: (role: UserRole) => void;
   setAlumniSpace: (space: string) => void;
   setFirstName: (name: string) => void;
@@ -135,12 +131,15 @@ export interface UseEvolvingEntryReturn {
 
   // Section actions
   confirmSchool: () => void;
-  verifyEntryCode: (codeString: string) => Promise<void>;
+  submitEmail: () => Promise<void>;
+  verifyEmailCode: (codeString: string) => Promise<void>;
+  resendCode: () => Promise<void>;
   submitRole: () => Promise<void>;
   completeIdentity: () => Promise<void>;
 
   // Edit actions (go back)
   editSchool: () => void;
+  editEmail: () => void;
 
   // Arrival
   handleArrivalComplete: () => void;
@@ -201,10 +200,11 @@ function generateHandleSuggestions(
 // ============================================
 
 const createInitialSections = (): Record<SectionId, SectionState> => {
-  // Flow: school → entryCode → role → identity → arrival
+  // Flow: school → email → code → role → identity → arrival
   return {
     school: { id: 'school', status: 'active' },
-    entryCode: { id: 'entryCode', status: 'hidden' },
+    email: { id: 'email', status: 'hidden' },
+    code: { id: 'code', status: 'hidden' },
     role: { id: 'role', status: 'hidden' },
     identity: { id: 'identity', status: 'hidden' },
     arrival: { id: 'arrival', status: 'hidden' },
@@ -231,7 +231,8 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
   const [data, setData] = useState<EntryData>({
     school: null,
-    entryCode: ['', '', '', '', '', ''],
+    email: '',
+    verificationCode: ['', '', '', '', '', ''],
     role: null,
     alumniSpace: '',
     firstName: '',
@@ -250,12 +251,13 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   const [isReturningUser, setIsReturningUser] = useState(false);
 
   // Loading states
-  const [isVerifyingEntryCode, setIsVerifyingEntryCode] = useState(false);
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState(false);
   const [isSubmittingRole, setIsSubmittingRole] = useState(false);
   const [isSubmittingIdentity, setIsSubmittingIdentity] = useState(false);
 
-  // Entry code lockout state
-  const [entryCodeLockout, setEntryCodeLockout] = useState<AccessCodeLockout | null>(null);
+  // Email resend cooldown (seconds remaining)
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Handle checking
   const [handleStatus, setHandleStatus] = useState<HandleStatus>('idle');
@@ -277,7 +279,8 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   const activeSection = useMemo(() => {
     const sectionOrder: SectionId[] = [
       'school',
-      'entryCode',
+      'email',
+      'code',
       'role',
       'identity',
       'arrival',
@@ -285,6 +288,21 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     ];
     return sectionOrder.find((id) => sections[id].status === 'active') || null;
   }, [sections]);
+
+  // Computed: full email with domain
+  const fullEmail = useMemo(() => {
+    if (!data.email || !domain) return '';
+    return `${data.email}@${domain}`;
+  }, [data.email, domain]);
+
+  // Effect: Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   // ============================================
   // SECTION STATE HELPERS
@@ -409,9 +427,14 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     clearSectionError('school');
   }, [clearSectionError]);
 
-  const setEntryCode = useCallback((entryCode: string[]) => {
-    setData((prev) => ({ ...prev, entryCode }));
-    clearSectionError('entryCode');
+  const setEmail = useCallback((email: string) => {
+    setData((prev) => ({ ...prev, email }));
+    clearSectionError('email');
+  }, [clearSectionError]);
+
+  const setVerificationCode = useCallback((verificationCode: string[]) => {
+    setData((prev) => ({ ...prev, verificationCode }));
+    clearSectionError('code');
   }, [clearSectionError]);
 
   const setRole = useCallback((role: UserRole) => {
@@ -479,7 +502,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
   // SECTION ACTIONS
   // ============================================
 
-  // School: Confirm selection and proceed to entry code
+  // School: Confirm selection and proceed to email
   const confirmSchool = useCallback(() => {
     // Use dataRef to get latest value (avoids stale closure issue)
     if (!dataRef.current.school) {
@@ -488,66 +511,83 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     }
 
     lockSection('school');
-    activateSection('entryCode');
+    activateSection('email');
   }, [lockSection, activateSection, setSectionError]);
 
-  // Entry Code: Verify and create session
-  const verifyEntryCode = useCallback(
+  // Email: Submit email and send verification code
+  const submitEmail = useCallback(async () => {
+    const email = dataRef.current.email.trim();
+    if (!email) {
+      setSectionError('email', 'Enter your email');
+      return;
+    }
+
+    setIsSubmittingEmail(true);
+    clearSectionError('email');
+
+    const activeSchoolId = data.school?.id || schoolId;
+    const emailWithDomain = `${email}@${domain}`;
+
+    try {
+      const response = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: emailWithDomain,
+          schoolId: activeSchoolId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setSectionError('email', result.error || 'Failed to send code');
+        return;
+      }
+
+      // Success - move to code section and start cooldown
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      lockSection('email');
+      activateSection('code');
+    } catch {
+      setSectionError('email', 'Failed to send code');
+    } finally {
+      setIsSubmittingEmail(false);
+    }
+  }, [data.school?.id, schoolId, domain, lockSection, activateSection, setSectionError, clearSectionError]);
+
+  // Code: Verify email code and create session
+  const verifyEmailCode = useCallback(
     async (codeString: string) => {
-      setIsVerifyingEntryCode(true);
-      clearSectionError('entryCode');
+      setIsVerifyingCode(true);
+      clearSectionError('code');
 
       const activeSchoolId = data.school?.id || schoolId;
+      const emailWithDomain = `${dataRef.current.email}@${domain}`;
 
       try {
-        const response = await fetch('/api/auth/verify-access-code', {
+        const response = await fetch('/api/auth/verify-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({
+            email: emailWithDomain,
             code: codeString,
             schoolId: activeSchoolId,
-            campusId: campusId,
           }),
         });
 
         const result = await response.json();
 
         if (!response.ok) {
-          // Handle lockout
-          if (result.code === 'LOCKED_OUT') {
-            const remainingMinutes = parseInt(
-              response.headers.get('Retry-After') || '0',
-              10
-            ) / 60;
-            setEntryCodeLockout({
-              locked: true,
-              remainingMinutes: Math.ceil(remainingMinutes) || 15,
-            });
-            setSectionError('entryCode', result.error || 'Too many attempts');
-            return;
-          }
-
-          // Extract attempts remaining from error message
-          const attemptsMatch = result.error?.match(/(\d+) attempt/);
-          const attemptsRemaining = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
-
-          if (attemptsRemaining !== undefined) {
-            setEntryCodeLockout({
-              locked: false,
-              remainingMinutes: 0,
-              attemptsRemaining,
-            });
-          }
-
           // Reset code on error
-          setData((prev) => ({ ...prev, entryCode: ['', '', '', '', '', ''] }));
-          setSectionError('entryCode', result.error || 'Invalid code');
+          setData((prev) => ({ ...prev, verificationCode: ['', '', '', '', '', ''] }));
+          setSectionError('code', result.error || 'Invalid code');
           return;
         }
 
-        // Success - clear lockout and check if returning user
-        setEntryCodeLockout(null);
+        // Success - check if returning user
         const needsOnboarding = result.needsOnboarding || !result.user?.handle;
 
         if (!needsOnboarding) {
@@ -561,7 +601,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
             role: result.user?.role || 'student',
           }));
 
-          lockSection('entryCode');
+          lockSection('code');
           completeSection('arrival');
           activateSection('arrival');
           return;
@@ -570,17 +610,55 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
         // New user - proceed to role selection (earned moment)
         setIsNewUser(true);
         setIsReturningUser(false);
-        lockSection('entryCode');
+        lockSection('code');
         activateSection('role');
       } catch {
-        setData((prev) => ({ ...prev, entryCode: ['', '', '', '', '', ''] }));
-        setSectionError('entryCode', 'Verification failed');
+        setData((prev) => ({ ...prev, verificationCode: ['', '', '', '', '', ''] }));
+        setSectionError('code', 'Verification failed');
       } finally {
-        setIsVerifyingEntryCode(false);
+        setIsVerifyingCode(false);
       }
     },
-    [data.school?.id, schoolId, campusId, lockSection, activateSection, completeSection, setSectionError, clearSectionError]
+    [data.school?.id, schoolId, domain, lockSection, activateSection, completeSection, setSectionError, clearSectionError]
   );
+
+  // Resend: Send a new verification code
+  const resendCode = useCallback(async () => {
+    if (resendCooldown > 0) return;
+
+    setIsSubmittingEmail(true);
+    clearSectionError('code');
+
+    const activeSchoolId = data.school?.id || schoolId;
+    const emailWithDomain = `${dataRef.current.email}@${domain}`;
+
+    try {
+      const response = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email: emailWithDomain,
+          schoolId: activeSchoolId,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setSectionError('code', result.error || 'Failed to resend code');
+        return;
+      }
+
+      // Success - reset code and start cooldown
+      setData((prev) => ({ ...prev, verificationCode: ['', '', '', '', '', ''] }));
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    } catch {
+      setSectionError('code', 'Failed to resend code');
+    } finally {
+      setIsSubmittingEmail(false);
+    }
+  }, [resendCooldown, data.school?.id, schoolId, domain, clearSectionError, setSectionError]);
 
   // Role: Submit role selection
   const submitRole = useCallback(async () => {
@@ -736,7 +814,8 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     // Reset everything after school
     setSections({
       school: { id: 'school', status: 'active' },
-      entryCode: { id: 'entryCode', status: 'hidden' },
+      email: { id: 'email', status: 'hidden' },
+      code: { id: 'code', status: 'hidden' },
       role: { id: 'role', status: 'hidden' },
       identity: { id: 'identity', status: 'hidden' },
       arrival: { id: 'arrival', status: 'hidden' },
@@ -744,10 +823,26 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     });
     setData((prev) => ({
       ...prev,
-      entryCode: ['', '', '', '', '', ''],
+      email: '',
+      verificationCode: ['', '', '', '', '', ''],
       role: null,
       alumniSpace: '',
     }));
+    setResendCooldown(0);
+  }, []);
+
+  const editEmail = useCallback(() => {
+    // Go back to email section
+    setSections((prev) => ({
+      ...prev,
+      email: { id: 'email', status: 'active' },
+      code: { id: 'code', status: 'hidden' },
+    }));
+    setData((prev) => ({
+      ...prev,
+      verificationCode: ['', '', '', '', '', ''],
+    }));
+    setResendCooldown(0);
   }, []);
 
   // ============================================
@@ -780,16 +875,18 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
     // Data
     data,
+    fullEmail,
     isNewUser,
     isReturningUser,
 
     // Loading states
-    isVerifyingEntryCode,
+    isSubmittingEmail,
+    isVerifyingCode,
     isSubmittingRole,
     isSubmittingIdentity,
 
-    // Entry code lockout
-    entryCodeLockout,
+    // Email cooldown
+    resendCooldown,
 
     // Handle checking
     handleStatus,
@@ -797,7 +894,8 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
     // Data setters
     setSchool,
-    setEntryCode,
+    setEmail,
+    setVerificationCode,
     setRole,
     setAlumniSpace,
     setFirstName,
@@ -813,12 +911,15 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
     // Section actions
     confirmSchool,
-    verifyEntryCode,
+    submitEmail,
+    verifyEmailCode,
+    resendCode,
     submitRole,
     completeIdentity,
 
     // Edit actions
     editSchool,
+    editEmail,
 
     // Arrival
     handleArrivalComplete,
