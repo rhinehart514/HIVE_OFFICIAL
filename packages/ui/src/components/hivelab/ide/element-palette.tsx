@@ -43,9 +43,8 @@ interface ElementDefinition {
 
 // Elements that are not yet fully implemented (stub or missing backend APIs)
 // These will be hidden from the palette until ready
-const HIDDEN_ELEMENTS = new Set([
-  'study-spot-finder', // Calls /api/campus/buildings/study-spots - API doesn't exist
-  'dining-picker',     // Calls /api/campus/dining - API doesn't exist
+const HIDDEN_ELEMENTS = new Set<string>([
+  // All campus utility elements now have backend APIs implemented
 ]);
 
 // Elements that are coming soon - show greyed out with badge

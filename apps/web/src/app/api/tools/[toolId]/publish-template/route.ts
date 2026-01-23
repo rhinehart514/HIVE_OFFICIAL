@@ -1,5 +1,3 @@
-// @ts-nocheck
-// TODO: Fix DDD Result pattern - Template.create and repo.save don't match actual implementation
 /**
  * Publish Tool as Template API
  *
