@@ -1,150 +1,317 @@
-# HIVE TODO — Complete Platform Build
+# HIVE TODO — Platform Build + System Health
 
-**Status:** Active Sprint
-**Updated:** January 21, 2026
-**Goal:** Infrastructure-grade platform, every page to /about quality standard
-
----
-
-## Governing Principle
-
-**HIVE doesn't fight chaos. HIVE fights erasure.**
-
-Students aren't lonely because they lack people. They're lonely because they lack stable contexts where contribution matters.
-
-Every page, every feature, every interaction must pass through the four invariants:
-
-| Invariant | The Shift | Enforcement |
-|-----------|-----------|-------------|
-| **1. Witnessed** | Unwitnessed → Witnessed | Recaps, not feeds. "Here's what happened." |
-| **2. Steward** | Perform → Steward | Weight, not celebration. "It's yours." |
-| **3. Action** | Define yourself → Just act | Low narrative burden. "What are you building?" |
-| **4. Memory** | Visibility → Memory | Artifacts, not applause. "Will this work?" |
-
-**Full framework:** `docs/design-system/DRAMA.md`
+**Updated:** January 25, 2026
+**Mode:** GTM Sprint
+**Goal:** Infrastructure-grade platform ready for campus deployment
 
 ---
 
-## Workflow: How We Build
+## Status Dashboard
 
-**Never build without approval.** Every slice follows this process:
+| System | Health | Notes |
+|--------|--------|-------|
+| **Design System** | 7/10 | 96 primitives, 114 components, CSS variable mismatch |
+| **Feed** | C+ | Shell exists, no data binding, hardcoded typography |
+| **Spaces** | B- | Functional, inline gradients, typography issues |
+| **Explore** | B | Good state coverage, typography hardcoded |
+| **Profile** | C | Redirect only, minimal actual UI |
+| **/about** | A | Reference standard |
 
-### Step 1: Audit
-I read the current implementation, map what exists, identify gaps.
-*You receive:* Current state summary
+### Audit Scores by Category
 
-### Step 2: Options (One at a Time)
-For each decision point in the slice, I present:
-- **The decision** (what needs to be chosen)
-- **Option A** (recommended) — what it is, why it's right
-- **Option B** — alternative approach
-- **Option C** (if relevant) — different tradeoff
-- **What failure looks like** for each
-
-*You choose:* A, B, C, or "something else"
-
-### Step 3: Spec
-After all decisions are made, I write a complete spec:
-- Exact changes
-- Copy (word for word)
-- Motion/timing
-- Primitives to use
-
-*You approve:* "Build it" or "Change X"
-
-### Step 4: Build
-Only after spec approval do I write code.
-
-### Step 5: Review
-You see the result. We iterate if needed.
+| Category | Score | Blockers |
+|----------|-------|----------|
+| Token Compliance | 5/10 | CSS vars don't match token defs, 64 hardcoded gold values |
+| Typography | 4/10 | `text-[Npx]` throughout all product pages |
+| State Coverage | 6/10 | Empty states good, loading/error inconsistent |
+| Motion | 8/10 | MOTION tokens used well, consistent easing |
+| Layout | 7/10 | Spacing mostly correct, some drift |
 
 ---
 
-### Decision Types Per Slice
+## P0: Ship Blockers
 
-| Type | Example | Options Format |
-|------|---------|----------------|
-| **Layout** | "How should the feed be structured?" | Wireframe descriptions |
-| **Copy** | "What do we say when they claim a space?" | Exact word choices |
-| **Motion** | "How does the claimed state reveal?" | Timing + effect descriptions |
-| **Flow** | "Where do they go after onboarding?" | Route sequences |
-| **State** | "What does empty look like?" | State descriptions |
-| **Component** | "Card or list for spaces?" | Visual approaches |
+**Must fix before any GTM deployment. These break trust or function.**
 
-### What I Won't Do Without Asking
+### CSS Variable Mismatch
+Primitives reference CSS variables that don't exist in the token definitions.
 
-- Choose layout structure
-- Write copy
-- Decide flow sequences
-- Pick animation approaches
-- Make architectural decisions
-- Add features not in spec
+- [ ] **Audit Text/Heading/Button primitives** — map all `var(--font-size-*)` references
+- [ ] **Create missing CSS variables** or update primitives to use correct tokens
+- [ ] **Verify cascade** — tokens → CSS vars → component usage
+- [ ] **Add token validation test** — CI should catch var mismatches
 
-### What I Will Do Autonomously
+**Files:** `packages/ui/src/design-system/primitives/typography/`
 
-- Fix bugs in approved code
-- Apply consistent spacing (4/8/12/16/24/32)
-- Use correct design system tokens
-- Follow established patterns
-- Fix TypeScript errors
+### Unified Loading State Pattern
+Mix of spinners and skeletons with no standard. Loading states communicate system health.
 
----
+- [ ] **Create LoadingState primitive** — skeleton-first approach
+- [ ] **Define loading state types:** inline, card, page, overlay
+- [ ] **Document pattern** in design system docs
+- [ ] **Audit and replace** all spinner-based loading states
 
-## Quality Bar
+**Decision:** Skeleton > Spinner. Skeleton shows structure, spinner shows activity. Structure builds trust.
 
-Before any page ships:
+### Feed Data Binding
+Feed exists as shell but isn't wired to real data.
 
-### Invariant Check
-- [ ] **Witnessed:** Creates persistent memory, doesn't vanish into feed
-- [ ] **Steward:** Ownership feels like responsibility, not playground
-- [ ] **Action:** Asks for action, not identity
-- [ ] **Memory:** Users ask "Will this work?" not "Will this look good?"
+- [ ] **Wire Feed to Firestore** — posts collection, real-time subscription
+- [ ] **Implement recap aggregation** — group by space/time
+- [ ] **Add "Since you left" logic** — track last visit timestamp
+- [ ] **Handle empty state** — first-time user vs returning with no new content
 
-### Motion
-- [ ] Premium easing (`MOTION.ease.premium`)
-- [ ] Scroll-triggered reveals with proper viewport margins
-- [ ] Parallax for depth (speeds 0.05-0.15)
-- [ ] State transitions feel weighted, not instant
+**Pattern:** Feed should be recap-style, not infinite scroll. Memory, not stream.
 
-### Layout
-- [ ] Generous spacing (py-32 between major sections)
-- [ ] Clamp-based responsive typography
-- [ ] Clear visual hierarchy
-- [ ] Max-width containers for readability
+### Profile UI
+Currently redirects. Profile is how users understand themselves on the platform.
 
-### States
-- [ ] Empty state with clear next action
-- [ ] Loading state (structure, not spinner)
-- [ ] Error state with recovery path
-- [ ] Success state (confirmation, not celebration)
-- [ ] Partial data state
+- [ ] **Build `/profile` page** — own profile view
+- [ ] **Build `/profile/[id]` page** — other user view
+- [ ] **Build `/u/[handle]` page** — public profile
+- [ ] **Show actions over bio** — spaces joined, tools created, events attended
 
-### Interaction
-- [ ] Hover feedback on all interactive elements
-- [ ] Active states (button press feel)
-- [ ] Disabled states (clear why)
-- [ ] Optimistic updates where appropriate
-
-### The Test
-> "Would this page make an institution trust us with their students?"
+**Invariant:** Profile shows what you've done, not what you claim. Bio optional.
 
 ---
 
-## Platform Map (10 Slices, 60+ Routes)
+## P1: Design System Debt
+
+**Token and consistency fixes. These undermine system coherence.**
+
+### Typography Standardization
+All product pages use hardcoded `text-[Npx]` instead of typography tokens.
+
+- [ ] **Create typography token scale:**
+  ```
+  text-label-xs    → 10px (rarely used)
+  text-label-sm    → 11px
+  text-label       → 12px
+  text-body-sm     → 13px
+  text-body        → 14px
+  text-body-lg     → 16px
+  text-title-sm    → 18px
+  text-title       → 20px
+  text-title-lg    → 24px
+  text-heading-sm  → 28px
+  text-heading     → 32px
+  text-heading-lg  → 40px
+  text-display-sm  → 48px
+  text-display     → 56px
+  text-display-lg  → 64px
+  ```
+- [ ] **Add to Tailwind config** as custom utilities
+- [ ] **Audit Feed page** — replace all `text-[Npx]`
+- [ ] **Audit Spaces page** — replace all `text-[Npx]`
+- [ ] **Audit Explore page** — replace all `text-[Npx]`
+- [ ] **Audit Profile page** — replace all `text-[Npx]`
+
+**Enforcement:** Lint rule to flag `text-[` pattern in product pages.
+
+### Gold Value Consolidation
+64 instances of hardcoded `#FFD700`, `rgb(255, 215, 0)`, or Tailwind `yellow-*` instead of life-gold token.
+
+- [ ] **Grep and catalog all gold usages** — build replacement map
+- [ ] **Create gold variants if needed:**
+  ```css
+  --life-gold: #FFD700
+  --life-gold-dim: rgba(255, 215, 0, 0.6)
+  --life-gold-glow: rgba(255, 215, 0, 0.2)
+  ```
+- [ ] **Replace all hardcoded instances**
+- [ ] **Document gold budget** — when to use gold (achievements, claims, important actions)
+
+**Gold budget rule:** Gold marks significance. Overuse destroys meaning.
+
+### Opacity Tokenization
+`white/30`, `white/40`, `white/50` patterns scattered without semantic meaning.
+
+- [ ] **Create opacity scale:**
+  ```css
+  --opacity-ghost: 0.1
+  --opacity-subtle: 0.2
+  --opacity-muted: 0.3
+  --opacity-soft: 0.4
+  --opacity-mid: 0.5
+  --opacity-visible: 0.6
+  --opacity-strong: 0.8
+  --opacity-full: 1.0
+  ```
+- [ ] **Create semantic opacity tokens:**
+  ```css
+  --glass-opacity: var(--opacity-subtle)
+  --hover-opacity: var(--opacity-ghost)
+  --disabled-opacity: var(--opacity-muted)
+  --border-opacity: var(--opacity-subtle)
+  ```
+- [ ] **Audit and replace** all inline opacity values
+
+### Gradient Standardization
+Inline `rgba()` gradients in Spaces and elsewhere instead of glass tokens.
+
+- [ ] **Catalog glass/gradient patterns** in codebase
+- [ ] **Verify glass tokens exist** in design system
+- [ ] **Create missing glass variants** if needed
+- [ ] **Replace inline gradients** with token references
+
+**Files to audit:** `apps/web/src/app/(protected)/spaces/`
+
+### Motion Token Sync
+Motion defined in TypeScript (`MOTION.ease.premium`) and CSS separately. No sync mechanism.
+
+- [ ] **Audit motion token usage** — TypeScript vs CSS
+- [ ] **Create single source of truth** — prefer TypeScript, generate CSS
+- [ ] **Document motion patterns** with examples
+
+---
+
+## P2: Page Compliance
+
+**Bring each page to /about quality standard.**
+
+### Feed (C+ → A)
+
+Current issues:
+- Typography hardcoded (`text-[12px]`, `text-[14px]`)
+- Opacity values inline (`white/30`, `white/40`)
+- No structured loading state
+- Shell without real data
+
+Tasks:
+- [ ] Replace hardcoded typography with tokens
+- [ ] Tokenize opacity values
+- [ ] Implement skeleton loading state
+- [ ] Wire to real data (see P0)
+- [ ] Add "since you left" header
+- [ ] Implement space grouping
+
+### Spaces (B- → A)
+
+Current issues:
+- Inline `rgba()` gradients instead of glass tokens
+- Typography hardcoded
+- Member list styling inconsistent
+
+Tasks:
+- [ ] Replace inline gradients with glass tokens
+- [ ] Replace hardcoded typography
+- [ ] Standardize member list component
+- [ ] Add presence indicators (see P3)
+- [ ] Verify empty state
+
+### Explore (B → A)
+
+Current issues:
+- Typography hardcoded
+- Card spacing slightly inconsistent
+- Search state transitions need polish
+
+Tasks:
+- [ ] Replace hardcoded typography with tokens
+- [ ] Audit card spacing against 4/8/12/16/24/32 scale
+- [ ] Polish search state transitions
+- [ ] Verify all tab states
+
+### Profile (C → A)
+
+Current issues:
+- Essentially just a redirect
+- No actual profile UI built
+- Event type colors hardcoded
+
+Tasks:
+- [ ] Build profile layout (see P0)
+- [ ] Replace hardcoded event type colors with tokens
+- [ ] Add profile completion indicator
+- [ ] Implement mutual context ("X spaces in common")
+- [ ] Create edit profile flow
+
+### Entry/Auth (Polish)
+
+Current issues:
+- Minor typography inconsistencies
+- Loading states need verification
+
+Tasks:
+- [ ] Audit typography against tokens
+- [ ] Verify all loading states use skeleton pattern
+- [ ] Test "You're in" moment motion
+- [ ] Verify OTP input states
+
+### Onboarding (Polish)
+
+Current issues:
+- Territory map performance on large datasets
+- Claimed state motion needs refinement
+
+Tasks:
+- [ ] Optimize territory rendering
+- [ ] Polish claimed reveal motion
+- [ ] Verify skip flow works correctly
+- [ ] Test handle availability UX
+
+---
+
+## P3: Infrastructure Gaps
+
+**Systems that don't exist yet but are needed for full experience.**
+
+### Presence System
+**Priority:** High
+**Dependency:** Firebase Realtime Database
+
+- [ ] **Set up Firebase RTDB** for presence (not Firestore)
+- [ ] **Create presence hook** — `usePresence(spaceId)`
+- [ ] **Implement "X online" display**
+- [ ] **Add typing indicators**
+- [ ] **Handle disconnect gracefully**
+
+**Pattern:** Presence shows life. Dead spaces feel abandoned.
+
+### Unread System
+**Priority:** High
+**Dependency:** Firestore collection
+
+- [ ] **Create `userBoardReads` collection** — track last read timestamps
+- [ ] **Implement unread count hook** — `useUnreadCount(spaceId)`
+- [ ] **Add unread badges** to space cards and navigation
+- [ ] **Implement "mark as read" logic**
+
+### Real-Time Feed Updates
+**Priority:** Medium
+**Dependency:** SSE or Firestore listeners
+
+- [ ] **Implement SSE endpoint** for feed updates
+- [ ] **Create "new content" indicator**
+- [ ] **Handle content insertion animation**
+- [ ] **Implement recap summarization** (AI-assisted grouping)
+
+### Tool Analytics (Real)
+**Priority:** Medium
+**Dependency:** Analytics collection
+
+- [ ] **Replace mock analytics data** with real queries
+- [ ] **Track tool usage events** — runs, responses, errors
+- [ ] **Create analytics aggregation** — hourly/daily/weekly
+- [ ] **Build analytics visualization**
+
+### Post-Event Recaps
+**Priority:** Low
+**Dependency:** Event end detection
+
+- [ ] **Detect event completion**
+- [ ] **Generate recap data** — attendees, duration, photos
+- [ ] **Create recap component**
+- [ ] **Send recap notification**
+
+---
+
+## P4: Feature Decisions
+
+**72 decisions from product definition. Work through these as slices are addressed.**
 
 ### Slice 1: Entry & Auth
-**Routes:** `/`, `/enter`, `/about`, `/schools`
-**Drives:** Epic Meaning, Scarcity, Ownership
-**Peak Moment:** "You're in."
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/` | Polish | Witnessed — show territory, not empty platform |
-| `/enter` | Polish | Action — ask for email, not "tell us about yourself" |
-| `/about` | Done | *(reference standard)* |
-| `/schools` | Rebuild | Memory — show history ("847 students since Sept") |
-
-**Decisions to Make:**
+Routes: `/`, `/enter`, `/about`, `/schools`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -156,25 +323,8 @@ Before any page ships:
 | 1.6 | Schools: card layout vs list | Layout | `[ ]` |
 | 1.7 | Schools: what data per campus | Copy | `[ ]` |
 
-**Copy Rules:**
-- Never: "Sign up", "Create account", "Get started"
-- Always: "Enter", "You're in", "Welcome back"
-
----
-
 ### Slice 2: Onboarding
-**Routes:** `/welcome`, `/welcome/identity`, `/welcome/territory`, `/welcome/claimed`
-**Drives:** Ownership, Accomplishment, Epic Meaning
-**Peak Moment:** "It's yours." (space claimed)
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/welcome` | Done | Witnessed — "We remember you" |
-| `/welcome/identity` | Polish | Action — name + handle only, no bio |
-| `/welcome/territory` | Polish | Steward — show weight of claiming |
-| `/welcome/claimed` | Rebuild | Steward — seriousness, not confetti |
-
-**Decisions to Make:**
+Routes: `/welcome`, `/welcome/identity`, `/welcome/territory`, `/welcome/claimed`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -187,33 +337,8 @@ Before any page ships:
 | 2.7 | Claimed: the reveal moment (copy + motion) | Copy/Motion | `[ ]` |
 | 2.8 | Skip flow: what if they don't claim? | Flow | `[ ]` |
 
-**Copy Rules:**
-- Never: "Great job!", "You're crushing it!", "Congrats!"
-- Always: "It's yours.", "Trusted to you.", "Your responsibility."
-
-**Failure Modes:**
-- RIGHT: Brief pause → "It's yours." in gold → weight of responsibility
-- WRONG: Confetti → "Congrats! You unlocked your space!" → gamification energy
-
----
-
 ### Slice 3: Spaces
-**Routes:** `/spaces`, `/spaces/new/*`, `/spaces/claim`, `/spaces/join/[code]`, `/s/[handle]`
-**Drives:** Social Influence, Ownership, Creativity
-**Peak Moment:** First entry to a space — "People are here"
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/spaces` | Polish | Memory — show history of each space |
-| `/spaces/new` | Done | Steward — building, not launching |
-| `/spaces/new/identity` | Done | Action — handle first, description optional |
-| `/spaces/new/access` | Done | Steward — who can enter |
-| `/spaces/new/launch` | Rebuild | Steward — "Your space exists." not "Space created!" |
-| `/spaces/claim` | Done | Steward — verification = trust |
-| `/spaces/join/[code]` | Done | Witnessed — "X people are here" |
-| `/s/[handle]` | Polish | Memory — persistent chat, not ephemeral |
-
-**Decisions to Make:**
+Routes: `/spaces`, `/spaces/new/*`, `/spaces/claim`, `/s/[handle]`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -227,31 +352,8 @@ Before any page ships:
 | 3.8 | New launch celebration: copy + motion | Copy/Motion | `[ ]` |
 | 3.9 | Join confirmation: inline vs modal | Component | `[ ]` |
 
-**Copy Rules:**
-- Never: "Admin", "Unlock", "Your playground"
-- Always: "Steward", "Trusted", "Your responsibility"
-
-**Infrastructure Needed:**
-- [ ] Online presence system (Firebase RTDB)
-- [ ] Typing indicators
-- [ ] Milestone detection (10 members, 100 messages)
-
----
-
 ### Slice 4: Discovery
-**Routes:** `/explore`, `/explore?tab=spaces`, `/explore?tab=people`, `/explore?tab=events`, `/explore?tab=tools`
-**Drives:** Scarcity, Social Influence, Unpredictability
-**Peak Moment:** Ghost space discovery — "14 waiting. Claim it."
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/explore` | Done | Memory — show what persists, not what trends |
-| `/explore?tab=spaces` | Done | Witnessed — "400+ orgs, yours waiting" |
-| `/explore?tab=people` | Done | Action — connection by shared context |
-| `/explore?tab=events` | Done | Memory — "This happened. This is happening." |
-| `/explore?tab=tools` | Done | Memory — tools that solved problems |
-
-**Decisions to Make:**
+Routes: `/explore`, `/explore?tab=*`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -264,23 +366,8 @@ Before any page ships:
 | 4.7 | Empty search: what to show | State | `[ ]` |
 | 4.8 | Join space from explore: inline or redirect | Flow | `[ ]` |
 
-**Copy Rules:**
-- Never: "Trending", "Popular", "Hot"
-- Always: "Active", "Your campus", "Waiting for you"
-
----
-
 ### Slice 5: Feed
-**Routes:** `/feed`, `/feed/settings`
-**Drives:** Unpredictability, Social Influence, Epic Meaning
-**Peak Moment:** "What's happening now" — life in motion
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/feed` | Rebuild | Memory — recap style, not infinite scroll |
-| `/feed/settings` | Done | Steward — control what you see |
-
-**Decisions to Make:**
+Routes: `/feed`, `/feed/settings`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -292,37 +379,8 @@ Before any page ships:
 | 5.6 | Space grouping: collapsed vs expanded | Layout | `[ ]` |
 | 5.7 | Filters: what options, where placed | Component | `[ ]` |
 
-**Copy Rules:**
-- Never: "You missed X", "Catch up", "Trending now"
-- Always: "Here's what happened", "Your spaces", "Since you left"
-
-**Structural Decision:**
-Feed should feel like a **recap**, not a stream. Group by space, show what matters.
-
-**Infrastructure Needed:**
-- [ ] Real-time updates (SSE)
-- [ ] Unread indicators per space
-- [ ] Recap summarization
-
----
-
-### Slice 6: HiveLab (Tools)
-**Routes:** `/hivelab`, `/tools`, `/tools/new`, `/tools/templates`, `/tools/[toolId]/*`
-**Drives:** Creativity, Accomplishment, Ownership
-**Peak Moment:** "Your tool is live." — creation meets world
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/hivelab` | Polish | Action — "What do you want to make?" |
-| `/tools` | Done | Memory — your creations persist |
-| `/tools/new` | Done | Action — start building immediately |
-| `/tools/templates` | Done | Action — templates as starting points |
-| `/tools/[toolId]` | Done | Memory — tool as artifact |
-| `/tools/[toolId]/edit` | Done | Witnessed — canvas that reflects |
-| `/tools/[toolId]/deploy` | Rebuild | Steward — "Live. 47 members can use this." |
-| `/tools/[toolId]/analytics` | Rebuild | Memory — "Here's what happened" not vanity metrics |
-
-**Decisions to Make:**
+### Slice 6: HiveLab
+Routes: `/hivelab`, `/tools/*`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -336,30 +394,8 @@ Feed should feel like a **recap**, not a stream. Group by space, show what matte
 | 6.8 | First response notification: copy | Copy | `[ ]` |
 | 6.9 | Empty tools state: what to show | State/Copy | `[ ]` |
 
-**Copy Rules:**
-- Never: "Amazing tool!", "You're a creator!"
-- Always: "Live.", "47 responses.", "Here's what happened."
-
-**Infrastructure Needed:**
-- [ ] Real analytics (replace mock data)
-- [ ] First-use notifications
-- [ ] Usage milestones
-
----
-
-### Slice 7: Events & Calendar
-**Routes:** `/events`, `/events/[eventId]`, `/events/[eventId]/attendees`, `/calendar`
-**Drives:** Social Influence, Scarcity, Accomplishment
-**Peak Moment:** RSVP — "You're going"
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/events` | Done | Memory — "This happened. This is happening." |
-| `/events/[eventId]` | Done | Witnessed — attendees visible |
-| `/events/[eventId]/attendees` | Done | Memory — who was there |
-| `/calendar` | Done | Memory — your time, mapped |
-
-**Decisions to Make:**
+### Slice 7: Events
+Routes: `/events`, `/events/[eventId]`, `/calendar`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
@@ -372,98 +408,39 @@ Feed should feel like a **recap**, not a stream. Group by space, show what matte
 | 7.7 | Calendar: month vs week vs list default | Layout | `[ ]` |
 | 7.8 | "Happening now" treatment | Component/Copy | `[ ]` |
 
-**Copy Rules:**
-- Never: "Don't miss out!", "Limited spots!"
-- Always: "12 going", "Happens Tuesday", "Your schedule"
-
-**Post-Event:**
-- [ ] Recap screen: "Here's what happened."
-- [ ] Factual summary: 12 attended, 3 new connections
-- [ ] Never: "Great event! You're crushing it!"
-
----
-
 ### Slice 8: Profiles
-**Routes:** `/profile`, `/profile/[id]`, `/profile/edit`, `/profile/connections`, `/u/[handle]`
-**Drives:** Ownership, Creativity, Social Influence
-**Peak Moment:** "This is you" — identity reflected
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/profile` | Done | Memory — what you've done, not who you claim to be |
-| `/profile/[id]` | Done | Witnessed — mutual context |
-| `/profile/edit` | Polish | Action — minimal required fields |
-| `/profile/connections` | Done | Memory — shared history |
-| `/u/[handle]` | Rebuild | Memory — actions over bio |
-
-**Decisions to Make:**
+Routes: `/profile`, `/profile/[id]`, `/u/[handle]`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
 | 8.1 | Profile layout: hero vs compact header | Layout | `[ ]` |
-| 8.2 | What sections: spaces, creations, events attended | Layout | `[ ]` |
+| 8.2 | What sections: spaces, creations, events | Layout | `[ ]` |
 | 8.3 | Bio: where placed, how prominent | Layout/Copy | `[ ]` |
 | 8.4 | Stats: what to show ("Since Sept", "X spaces") | Copy | `[ ]` |
 | 8.5 | Mutual context: "X spaces in common" treatment | Component | `[ ]` |
 | 8.6 | Edit: what fields required vs optional | Flow | `[ ]` |
 | 8.7 | Avatar: upload UX, cropping | Component | `[ ]` |
-| 8.8 | Public profile `/u/[handle]`: what visible to others | Layout | `[ ]` |
+| 8.8 | Public profile: what visible to others | Layout | `[ ]` |
 
-**Copy Rules:**
-- Never: "Tell us about yourself", "Add a bio", "Complete your profile"
-- Always: "Your spaces", "Your creations", "Since September"
-
-**Structural Decision:**
-Profiles show **what you've done**, not what you claim. Bio optional. Action record primary.
-
----
-
-### Slice 9: Settings & Admin
-**Routes:** `/settings`, `/notifications`, `/notifications/settings`
-**Drives:** Ownership, Loss Avoidance (minimal)
-**Peak Moment:** "You control this."
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/settings` | Done | Steward — your rules |
-| `/notifications` | Done | Memory — not "you missed", but "here's what happened" |
-| `/notifications/settings` | Done | Steward — your boundaries |
-
-**Decisions to Make:**
+### Slice 9: Settings
+Routes: `/settings`, `/notifications/*`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
 | 9.1 | Settings layout: sections vs single page | Layout | `[ ]` |
-| 9.2 | Notification center: list vs grouped by type | Layout | `[ ]` |
+| 9.2 | Notification center: list vs grouped | Layout | `[ ]` |
 | 9.3 | Notification cards: what info, how compact | Component | `[ ]` |
 | 9.4 | "Mark all read" behavior | Flow | `[ ]` |
-| 9.5 | Dangerous actions (delete account): confirmation | Flow/Copy | `[ ]` |
+| 9.5 | Dangerous actions: confirmation style | Flow/Copy | `[ ]` |
 | 9.6 | Privacy controls: what options | Layout | `[ ]` |
 | 9.7 | Save confirmation: toast vs inline | Component | `[ ]` |
 
-**Copy Rules:**
-- Never: "You missed 5 messages", "Don't miss out"
-- Always: "5 new messages", "Since yesterday", "Your preferences"
-
----
-
 ### Slice 10: Support & Legal
-**Routes:** `/legal/terms`, `/legal/privacy`, `/legal/community-guidelines`, `/resources`, `/offline`
-**Drives:** Epic Meaning (trust)
-
-| Route | Status | Invariant Focus |
-|-------|--------|-----------------|
-| `/legal/terms` | Polish | Witnessed — plain language |
-| `/legal/privacy` | Polish | Steward — "Your data, your control" |
-| `/legal/community-guidelines` | Polish | Memory — examples of good/bad |
-| `/resources` | Done | Action — what to do |
-| `/offline` | Done | Memory — "We're still here" |
-
-**Decisions to Make:**
+Routes: `/legal/*`, `/resources`, `/offline`
 
 | # | Decision | Type | Status |
 |---|----------|------|--------|
-| 10.1 | Legal page layout: sticky nav vs single scroll | Layout | `[ ]` |
+| 10.1 | Legal page layout: sticky nav vs scroll | Layout | `[ ]` |
 | 10.2 | Terms: plain language summary at top? | Copy | `[ ]` |
 | 10.3 | Privacy: data export link placement | Layout | `[ ]` |
 | 10.4 | Guidelines: examples format (do/don't) | Copy/Layout | `[ ]` |
@@ -471,264 +448,147 @@ Profiles show **what you've done**, not what you claim. Bio optional. Action rec
 
 ---
 
----
+## Quality Bar Checklist
 
-## Decision Summary
+**Use this template when auditing any page.**
 
-**Total decisions across all slices: 72**
+```markdown
+## Page Audit: [Route]
 
-| Slice | Decisions | Priority |
-|-------|-----------|----------|
-| 1. Entry & Auth | 7 | P0 |
-| 2. Onboarding | 8 | P0 |
-| 3. Spaces | 9 | P0 |
-| 4. Discovery | 8 | P1 |
-| 5. Feed | 7 | P1 |
-| 6. HiveLab | 9 | P1 |
-| 7. Events | 8 | P2 |
-| 8. Profiles | 8 | P2 |
-| 9. Settings | 7 | P2 |
-| 10. Support | 5 | P3 |
+### Token Compliance
+- [ ] No hardcoded colors (no #, rgb(), tailwind color classes)
+- [ ] No hardcoded typography (no text-[Npx])
+- [ ] Spacing on 4/8/12/16/24/32 scale
+- [ ] Motion uses MOTION tokens
+- [ ] Glass/gradient uses glass tokens
 
-### How We Work
+### State Coverage
+- [ ] Empty state with clear CTA
+- [ ] Loading state (skeleton, not spinner)
+- [ ] Error state with recovery action
+- [ ] Partial data state
+- [ ] Success/confirmation state
 
-When starting a slice:
+### Motion
+- [ ] Entrance animations use MOTION.ease.premium
+- [ ] Proper viewport margins for scroll triggers
+- [ ] No instant transitions (minimum 150ms)
+- [ ] Exit animations considered
 
-1. **I audit** — read current code, show you what exists
-2. **You pick first decision** — or I recommend starting point
-3. **I present options** — 2-3 choices with tradeoffs
-4. **You decide** — A, B, C, or "show me something else"
-5. **We move to next decision** — repeat until slice is specced
-6. **I write full spec** — you approve
-7. **I build** — only after approval
-8. **You review** — we iterate
+### Interaction
+- [ ] Hover feedback on all interactive elements
+- [ ] Active/pressed states
+- [ ] Disabled states with clear reason
+- [ ] Focus states for accessibility
 
-**No building without your explicit "Build it."**
+### Invariant Check
+- [ ] Witnessed: Creates memory, not ephemeral
+- [ ] Steward: Ownership feels like responsibility
+- [ ] Action: Asks for action, not identity
+- [ ] Memory: Users ask "will this work?" not "will this look good?"
 
----
-
-## Implementation Phases
-
-### Phase 1: Entry Flow (Critical Path)
-**Routes:** `/`, `/enter`, `/welcome/*`
-**Goal:** First 60 seconds set expectations for everything
-
-- [ ] `/enter` — Action-first, no identity pressure
-- [ ] `/welcome/claimed` — Steward energy, not celebration
-- [ ] `/` landing — Epic Meaning + Memory (show what persists)
-
-**Invariant Check:**
-- Does entry ask for action or demand identity?
-- Does claiming feel like responsibility or reward?
-
----
-
-### Phase 2: Core Platform
-**Routes:** `/s/[handle]`, `/feed`, `/explore`
-**Goal:** Daily experience feels like home
-
-- [ ] `/s/[handle]` — Space entry with arrival feeling
-- [ ] `/feed` — Recap style, not infinite scroll
-- [ ] `/explore` — Discovery of persistent communities
-
-**Infrastructure:**
-- [ ] Presence system
-- [ ] Typing indicators
-- [ ] Unread counts
-
----
-
-### Phase 3: Creation & Events
-**Routes:** `/hivelab`, `/tools/*`, `/events/*`
-**Goal:** Making and gathering
-
-- [ ] `/tools/[toolId]/deploy` — Steward moment, not celebration
-- [ ] `/tools/[toolId]/analytics` — "Here's what happened"
-- [ ] `/events/[eventId]` — Post-event recap
-
----
-
-### Phase 4: Identity & Settings
-**Routes:** `/profile/*`, `/u/[handle]`, `/settings/*`
-**Goal:** Identity through action, not declaration
-
-- [ ] `/profile` — Actions over bio
-- [ ] `/u/[handle]` — Public view shows contribution
-- [ ] `/notifications` — Recap, not guilt
-
----
-
-### Phase 5: Polish Pass
-**Goal:** Every page to /about standard
-
-- [ ] Motion audit (all pages)
-- [ ] State audit (empty, loading, error)
-- [ ] Copy audit (against invariant rules)
-- [ ] Spacing audit (4/8/12/16/24/32 scale)
-
----
-
-## Routes Inventory (60 total)
-
-### Entry & Auth (5)
-- `/` — Landing
-- `/enter` — Sign in/up
-- `/about` — About HIVE
-- `/schools` — Campus selection
-- `/login` — Legacy redirect
-
-### Onboarding (4)
-- `/welcome` — You're in
-- `/welcome/identity` — Name + handle
-- `/welcome/territory` — Find your space
-- `/welcome/claimed` — Celebration
-
-### Spaces (8)
-- `/spaces` — Territory overview
-- `/spaces/new` — Template selection
-- `/spaces/new/identity` — Name + handle
-- `/spaces/new/access` — Privacy settings
-- `/spaces/new/launch` — Celebration
-- `/spaces/claim` — Claim institutional space
-- `/spaces/join/[code]` — Join via invite
-- `/s/[handle]` — Space residence
-
-### Discovery (5)
-- `/explore` — Unified discovery
-- `/explore?tab=spaces` — Space discovery
-- `/explore?tab=people` — People discovery
-- `/explore?tab=events` — Event discovery
-- `/explore?tab=tools` — Tool gallery
-
-### Feed (2)
-- `/feed` — Main dashboard
-- `/feed/settings` — Feed preferences
-
-### HiveLab (13)
-- `/hivelab` — HiveLab landing
-- `/tools` — Tool library
-- `/tools/new` — Create tool
-- `/tools/create` — Legacy create
-- `/tools/templates` — Template gallery
-- `/tools/[toolId]` — Tool view
-- `/tools/[toolId]/edit` — Tool IDE
-- `/tools/[toolId]/preview` — Preview mode
-- `/tools/[toolId]/deploy` — Deploy modal
-- `/tools/[toolId]/settings` — Tool settings
-- `/tools/[toolId]/analytics` — Tool analytics
-- `/tools/[toolId]/run` — Run tool
-- `/tools/[toolId]/runs` — Execution history
-
-### Events (4)
-- `/events` — Campus events
-- `/events/[eventId]` — Event detail
-- `/events/[eventId]/attendees` — Attendee list
-- `/calendar` — Personal calendar
-
-### Profiles (7)
-- `/profile` — Own profile
-- `/profile/[id]` — View profile
-- `/profile/edit` — Edit profile
-- `/profile/connections` — Connections list
-- `/profile/settings` — Profile settings
-- `/profile/calendar` — Calendar settings
-- `/u/[handle]` — Public profile
-
-### Settings (3)
-- `/settings` — Settings hub
-- `/notifications` — Notification center
-- `/notifications/settings` — Notification prefs
-
-### Support (5)
-- `/legal/terms` — Terms of service
-- `/legal/privacy` — Privacy policy
-- `/legal/community-guidelines` — Guidelines
-- `/resources` — Help resources
-- `/offline` — Offline fallback
-
-### Admin (4)
-- `/admin` — Admin dashboard
-- `/admin/moderation` — Moderation queue
-- `/admin/spaces` — Space approvals
-- `/admin/users` — User management
-
----
-
-## Infrastructure Gaps (P0)
-
-| Feature | Slice | Status |
-|---------|-------|--------|
-| Online presence system | Spaces | Needs Firebase RTDB |
-| Typing indicators | Spaces | Needs presence system |
-| Real unread counts | Feed, Spaces | Needs `userBoardReads` collection |
-| Tool analytics (real) | HiveLab | Replace mock data |
-| Recap system | Feed | SSE + summarization |
-| Post-event recaps | Events | New component |
-
----
-
-## Design System Reference
-
-### Motion Tokens
-```typescript
-transition={{ ease: MOTION.ease.premium }}
-transition={{ duration: MOTION.duration.base }}
-transition={{ delay: index * MOTION.stagger.base }}
+### Grade: [A/B/C/D/F]
 ```
 
-### Layout Standards
-```typescript
-py-32  // Major sections
-py-24  // Minor sections
-py-16  // Compact sections
-gap-4  // Internal spacing
-```
+---
 
-### Key Primitives
-```typescript
-import {
-  RevealSection,
-  NarrativeReveal,
-  AnimatedBorder,
-  ParallaxText,
-  Button,
-  Card,
-  Input,
-  Avatar,
-  Badge,
-  Text,
-} from '@hive/ui/design-system/primitives';
-```
+## Storybook Coverage
+
+**Current:** 32 stories / 96 primitives = 36% coverage
+
+### Primitives Needing Stories (Priority)
+
+**Typography (Critical)**
+- [ ] Text variants
+- [ ] Heading variants
+- [ ] Display variants
+
+**Interactive (Critical)**
+- [ ] Button all states
+- [ ] Input all states
+- [ ] Form patterns
+
+**Layout (Medium)**
+- [ ] Card variants
+- [ ] Stack/Flex utilities
+- [ ] Container patterns
+
+**Motion (Medium)**
+- [ ] RevealSection
+- [ ] NarrativeReveal
+- [ ] AnimatedBorder
+- [ ] ParallaxText
+
+**Feedback (Low)**
+- [ ] Badge variants
+- [ ] Tooltip
+- [ ] Toast patterns
+
+---
+
+## Documentation Drift
+
+**Issues to fix:**
+
+- [ ] `PRIMITIVES.md` says "20+ primitives" — actual count is 96
+- [ ] Component count in docs outdated (says ~100, actual is 114)
+- [ ] Motion token documentation incomplete
+- [ ] Glass token patterns undocumented
+
+---
+
+## Governing Principle
+
+**HIVE fights erasure, not chaos.**
+
+Students aren't lonely because they lack people. They're lonely because they lack stable contexts where contribution matters.
+
+Every page, feature, and interaction passes through four invariants:
+
+| Invariant | The Shift | Enforcement |
+|-----------|-----------|-------------|
+| **Witnessed** | Unwitnessed → Witnessed | Recaps, not feeds. "Here's what happened." |
+| **Steward** | Perform → Steward | Weight, not celebration. "It's yours." |
+| **Action** | Define yourself → Just act | Low narrative burden. "What are you building?" |
+| **Memory** | Visibility → Memory | Artifacts, not applause. "Will this work?" |
+
+**Copy rules (enforced everywhere):**
+- Never: "Sign up", "Great job!", "Don't miss out!", "Trending"
+- Always: "Enter", "It's yours.", "Here's what happened", "Your spaces"
+
+**Full framework:** `docs/design-system/DRAMA.md`
 
 ---
 
 ## Success Criteria
 
-The platform is ready when:
+Platform is ready when:
 
-- [ ] Every page meets /about quality bar
-- [ ] Every page passes invariant check
-- [ ] Entry completion rate >90%
-- [ ] First space view <2 min
-- [ ] All pages score >90 Lighthouse
-- [ ] No celebration copy anywhere (confirm, don't applaud)
-- [ ] No identity pressure anywhere (action, not bio)
-- [ ] Dean walkthrough passes
+- [ ] All pages score A on audit checklist
+- [ ] P0 ship blockers resolved
+- [ ] P1 design system debt <10 issues
+- [ ] Token compliance >95% across product pages
+- [ ] Loading states consistent (skeleton-first)
+- [ ] Presence system operational
+- [ ] Unread counts working
+- [ ] Feed wired to real data
+- [ ] Profile pages built
+- [ ] Storybook coverage >60%
 
----
-
-## The Test
-
-> "Could a burned student open this and exhale?"
-
-They don't have to curate identity.
-They don't have to maintain presence.
-They don't have to compete for attention.
-
-They can show up, act, and trust the system not to distort it.
-
-That's the bar.
+**The test:** Would a dean walk through this and see infrastructure, not an experiment?
 
 ---
 
-*This document supersedes all other TODOs. Every change must pass the invariant check.*
+## Priority Sequence
+
+1. **P0 Ship Blockers** — Fix what breaks function or trust
+2. **P1 Design System Debt** — Fix tokens, then pages inherit fixes
+3. **P2 Page Compliance** — Bring each page to /about standard
+4. **P3 Infrastructure** — Add presence, unread, real-time
+5. **P4 Feature Decisions** — Work through 72 decisions by slice
+
+**Do not skip ahead.** Token fixes propagate to all pages. Infrastructure enables features. Decisions are only valuable when the system is coherent.
+
+---
+
+*This document reflects the January 25, 2026 platform audit. All P0 items must be resolved before GTM.*
