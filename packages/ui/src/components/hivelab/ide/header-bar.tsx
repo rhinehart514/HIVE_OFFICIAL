@@ -518,15 +518,15 @@ export function HeaderBar({
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
                         <span>Save</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘S</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘S</kbd>
                       </div>
                       <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
                         <span>AI Prompt</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘K</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘K</kbd>
                       </div>
                       <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
                         <span>Undo</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘Z</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘Z</kbd>
                       </div>
                     </div>
                   </div>

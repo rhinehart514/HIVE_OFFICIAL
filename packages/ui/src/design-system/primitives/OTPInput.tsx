@@ -141,7 +141,7 @@ const OTPInput = React.forwardRef<HTMLDivElement, OTPInputProps>(
             transition={{ delay: index * 0.05, duration: 0.3 }}
             className={cn(
               'w-12 h-12',
-              'text-center text-[22px] font-semibold',
+              'text-center text-title-lg font-semibold',
               'text-white',
               'rounded-lg',
               'border border-white/10',

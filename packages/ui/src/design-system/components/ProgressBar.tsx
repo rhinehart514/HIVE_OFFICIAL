@@ -224,7 +224,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
               style={{ width: `${percentage}%` }}
             >
               {showValue && valuePosition === 'inside' && size === 'lg' && (
-                <span className="flex items-center justify-center h-full text-[10px] font-medium text-black">
+                <span className="flex items-center justify-center h-full text-label-xs font-medium text-black">
                   {Math.round(percentage)}%
                 </span>
               )}

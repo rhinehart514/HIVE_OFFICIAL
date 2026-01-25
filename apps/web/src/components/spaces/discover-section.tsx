@@ -253,12 +253,12 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
         transition={{ duration: 0.6, delay: 0.3, ease: MOTION.ease.premium }}
       >
         <h3
-          className="text-[24px] md:text-[28px] font-semibold text-white mb-3"
+          className="text-title-lg md:text-heading-sm font-semibold text-white mb-3"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           {isSearch ? 'Nothing here yet' : 'This category is empty'}
         </h3>
-        <p className="text-[16px] text-white/40 max-w-sm mx-auto mb-6">
+        <p className="text-body-lg text-white/40 max-w-sm mx-auto mb-6">
           {isSearch
             ? 'Try adjusting your search or explore other categories to find your community.'
             : 'Check back soon — new spaces are being created every day.'
@@ -269,7 +269,7 @@ function EmptyState({ isSearch }: { isSearch?: boolean }) {
         {isSearch && (
           <button
             onClick={() => window.location.reload()}
-            className="text-[13px] text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]/80 transition-colors"
+            className="text-body-sm text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]/80 transition-colors"
           >
             Clear search
           </button>
@@ -488,7 +488,7 @@ export function DiscoverSection({
       {/* Header */}
       <Text
         weight="medium"
-        className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+        className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
       >
         Discover
       </Text>

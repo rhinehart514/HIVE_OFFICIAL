@@ -234,7 +234,7 @@ const BoardTabs = React.forwardRef<HTMLDivElement, BoardTabsProps>(
                             exit={{ opacity: 0, scale: 0.8 }}
                             className={cn(
                               'ml-1 px-1 py-0.5',
-                              'text-[10px] font-mono',
+                              'text-label-xs font-mono',
                               'text-white/30',
                               'bg-white/5 rounded',
                             )}
@@ -277,7 +277,7 @@ const BoardTabs = React.forwardRef<HTMLDivElement, BoardTabsProps>(
             {/* Keyboard shortcut hint (always visible, right side) */}
             {showShortcuts && boards.length > 0 && (
               <div className="ml-auto pl-4 flex-shrink-0">
-                <span className="text-[10px] font-mono text-white/20">
+                <span className="text-label-xs font-mono text-white/20">
                   ⌘1-{Math.min(boards.length, 9)}
                 </span>
               </div>

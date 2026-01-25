@@ -250,7 +250,7 @@ const TabNav: React.FC<TabNavProps> = ({
           <span>{tab.label}</span>
           {tab.badge !== undefined && (
             typeof tab.badge === 'number' ? (
-              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-medium bg-white/10 rounded-full">
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-label-xs font-medium bg-white/10 rounded-full">
                 {tab.badge > 99 ? '99+' : tab.badge}
               </span>
             ) : tab.badge ? (

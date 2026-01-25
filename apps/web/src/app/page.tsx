@@ -167,7 +167,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.9, ease: EASE_PREMIUM }}
           >
-            <p className="text-[14px] text-white/50 text-center">
+            <p className="text-body text-white/50 text-center">
               Enter the 6-digit code you received to continue.
             </p>
 
@@ -182,10 +182,10 @@ export default function LandingPage() {
                   <Lock size={18} className="text-red-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[14px] text-red-400 font-medium">
+                  <p className="text-body text-red-400 font-medium">
                     Too many attempts
                   </p>
-                  <p className="text-[13px] text-white/50 flex items-center gap-1.5 mt-0.5">
+                  <p className="text-body-sm text-white/50 flex items-center gap-1.5 mt-0.5">
                     <Clock size={12} />
                     Try again in {entryCodeLockout.remainingMinutes} minute
                     {entryCodeLockout.remainingMinutes !== 1 ? 's' : ''}
@@ -217,7 +217,7 @@ export default function LandingPage() {
                   <motion.p
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-[13px] text-red-400 text-center"
+                    className="text-body-sm text-red-400 text-center"
                   >
                     {entryCodeError}
                   </motion.p>
@@ -229,7 +229,7 @@ export default function LandingPage() {
                     className="flex items-center justify-center gap-2"
                   >
                     <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-                    <span className="text-[13px] text-white/50">Verifying...</span>
+                    <span className="text-body-sm text-white/50">Verifying...</span>
                   </motion.div>
                 )}
 
@@ -238,7 +238,7 @@ export default function LandingPage() {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-[13px] text-amber-400/80 text-center"
+                    className="text-body-sm text-amber-400/80 text-center"
                   >
                     {entryCodeLockout.attemptsRemaining} attempt
                     {entryCodeLockout.attemptsRemaining !== 1 ? 's' : ''} remaining
@@ -248,7 +248,7 @@ export default function LandingPage() {
             )}
 
             {/* Help text */}
-            <p className="text-[13px] text-white/40 text-center">
+            <p className="text-body-sm text-white/40 text-center">
               Don&apos;t have a code? Contact your campus ambassador.
             </p>
           </motion.div>
@@ -263,7 +263,7 @@ export default function LandingPage() {
         >
           <Link
             href="/about"
-            className="text-[14px] text-white/40 hover:text-white/60 transition-colors"
+            className="text-body text-white/40 hover:text-white/60 transition-colors"
           >
             What is HIVE?
           </Link>
@@ -271,7 +271,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer — minimal */}
-      <footer className="py-6 px-6 flex justify-between items-center text-[12px] text-white/30">
+      <footer className="py-6 px-6 flex justify-between items-center text-label text-white/30">
         <span>HIVE</span>
         <div className="flex gap-4">
           <Link

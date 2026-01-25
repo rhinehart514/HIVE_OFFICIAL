@@ -144,7 +144,7 @@ export function AuthSuccessState({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.4 }}
-          className="text-[15px]"
+          className="text-body"
           style={{ color: 'rgba(255, 255, 255, 0.4)' }}
         >
           {displaySubtext}

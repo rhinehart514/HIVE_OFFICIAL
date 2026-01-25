@@ -95,7 +95,7 @@ export function EmailSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40 font-medium">Email</p>
+        <p className="text-body-sm text-white/40 font-medium">Email</p>
         <LockedFieldChip
           value={fullEmail}
           allowChange={true}
@@ -120,7 +120,7 @@ export function EmailSection({
       className="space-y-5"
     >
       <motion.div variants={sectionChildVariants} className="space-y-3">
-        <label className="text-[13px] text-white/40 font-medium">
+        <label className="text-body-sm text-white/40 font-medium">
           Your .edu email
         </label>
 
@@ -156,7 +156,7 @@ export function EmailSection({
               spellCheck={false}
               data-form-type="other"
               className={cn(
-                'flex-1 h-full px-5 bg-transparent text-[16px] text-white',
+                'flex-1 h-full px-5 bg-transparent text-body-lg text-white',
                 'placeholder:text-white/25',
                 'focus:outline-none',
                 'disabled:opacity-50'
@@ -164,7 +164,7 @@ export function EmailSection({
             />
             {/* Domain suffix - seamlessly integrated, no separate container */}
             <span
-              className="pr-5 text-[16px] select-none pointer-events-none whitespace-nowrap"
+              className="pr-5 text-body-lg select-none pointer-events-none whitespace-nowrap"
               style={{ color: isFocused ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.30)' }}
             >
               @{domain}
@@ -181,7 +181,7 @@ export function EmailSection({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="text-[13px] text-red-400"
+            className="text-body-sm text-red-400"
           >
             {section.error}
           </motion.p>
@@ -205,7 +205,7 @@ export function EmailSection({
       {/* Footer */}
       <motion.p
         variants={sectionChildVariants}
-        className="text-[12px] text-white/25 text-center"
+        className="text-label text-white/25 text-center"
       >
         By continuing, you agree to our{' '}
         <a href="/legal/terms" className="text-white/40 hover:text-white/60 transition-colors">

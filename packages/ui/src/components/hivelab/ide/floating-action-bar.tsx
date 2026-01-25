@@ -301,7 +301,7 @@ export const FloatingActionBar = forwardRef<FloatingActionBarRef, FloatingAction
             }}
           />
           <kbd
-            className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] rounded"
+            className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 text-label-xs rounded"
             style={{ backgroundColor: TOOLBAR_COLORS.bg, color: TOOLBAR_COLORS.textTertiary }}
           >
             ⌘K

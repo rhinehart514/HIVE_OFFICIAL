@@ -84,10 +84,10 @@ export function AlumniWaitlistSection({
           ease: EASE_PREMIUM,
         }}
       >
-        <h2 className="text-[24px] font-semibold tracking-tight text-white mb-2">
+        <h2 className="text-title-lg font-semibold tracking-tight text-white mb-2">
           You're on the list
         </h2>
-        <p className="text-[14px] text-white/50 max-w-[280px] mx-auto">
+        <p className="text-body text-white/50 max-w-[280px] mx-auto">
           We'll notify you when alumni access opens. Your communities will be
           excited to reconnect.
         </p>
@@ -109,10 +109,10 @@ export function AlumniWaitlistSection({
             <div className="flex items-start gap-2">
               <Heart className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
               <div className="text-left">
-                <p className="text-[11px] text-white/40 mb-0.5">
+                <p className="text-label-sm text-white/40 mb-0.5">
                   Spaces you mentioned
                 </p>
-                <p className="text-[13px] text-white/70">{spaces}</p>
+                <p className="text-body-sm text-white/70">{spaces}</p>
               </div>
             </div>
           </div>
@@ -130,7 +130,7 @@ export function AlumniWaitlistSection({
           ease: EASE_PREMIUM,
         }}
       >
-        <p className="text-[12px] text-white/40 leading-relaxed">
+        <p className="text-label text-white/40 leading-relaxed">
           When we launch alumni access, you'll be able to connect with current
           members, share your experience, and stay involved with your campus
           community.
@@ -151,7 +151,7 @@ export function AlumniWaitlistSection({
         <button
           onClick={onComplete}
           className={cn(
-            'w-full h-11 rounded-xl font-medium text-[14px]',
+            'w-full h-11 rounded-xl font-medium text-body',
             'flex items-center justify-center gap-2',
             'bg-white/10 text-white hover:bg-white/15',
             'transition-all',

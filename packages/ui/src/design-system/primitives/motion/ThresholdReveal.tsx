@@ -119,7 +119,7 @@ export function ThresholdReveal({
                 }}
               />
             </motion.div>
-            <p className="text-[16px] text-white/50">{preparingMessage}</p>
+            <p className="text-body-lg text-white/50">{preparingMessage}</p>
           </motion.div>
         )}
 

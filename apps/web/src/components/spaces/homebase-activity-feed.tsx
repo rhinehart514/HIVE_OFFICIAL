@@ -247,12 +247,12 @@ function EmptyState({ message }: { message?: string }) {
         transition={{ duration: 0.4, delay: 0.2 }}
       >
         <h3
-          className="text-[20px] font-semibold text-white mb-2"
+          className="text-title font-semibold text-white mb-2"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           No activity yet
         </h3>
-        <p className="text-[14px] text-white/40 max-w-xs mx-auto">
+        <p className="text-body text-white/40 max-w-xs mx-auto">
           {message ||
             'Join spaces and start conversations. Your activity feed will show up here.'}
         </p>
@@ -283,7 +283,7 @@ export function HomebaseActivityFeed({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
         >
           Activity
         </Text>
@@ -301,7 +301,7 @@ export function HomebaseActivityFeed({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
         >
           Activity
         </Text>
@@ -317,7 +317,7 @@ export function HomebaseActivityFeed({
       {/* Header */}
       <Text
         weight="medium"
-        className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+        className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
       >
         Activity
       </Text>

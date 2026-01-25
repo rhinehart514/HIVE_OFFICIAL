@@ -162,7 +162,7 @@ const MobileActionBar: React.FC<MobileActionBarProps> = ({
                     'absolute -top-1 -right-1',
                     'min-w-[16px] h-[16px] px-1',
                     'flex items-center justify-center',
-                    'text-[10px] font-medium text-white',
+                    'text-label-xs font-medium text-white',
                     'bg-[var(--color-life-gold)] rounded-full'
                   )}
                 >

@@ -54,7 +54,7 @@ function ActivityBadge({ count }: { count: number }) {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       className={cn(
-        'px-1.5 py-0.5 text-[10px] font-medium rounded-full',
+        'px-1.5 py-0.5 text-label-xs font-medium rounded-full',
         'bg-[var(--color-accent-gold,#FFD700)] text-black'
       )}
     >

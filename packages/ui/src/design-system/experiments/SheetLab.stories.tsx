@@ -292,7 +292,7 @@ export const Close_Button = () => (
           }}
         >
           <p className="text-xs text-white/40">Sheet content</p>
-          <p className="text-[10px] text-white/30 mt-2 italic">Click overlay to close</p>
+          <p className="text-label-xs text-white/30 mt-2 italic">Click overlay to close</p>
         </div>
       </CardWrapper>
     </div>

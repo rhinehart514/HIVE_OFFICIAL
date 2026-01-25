@@ -144,7 +144,7 @@ export function ArrivalSection({
               }}
             />
           </motion.div>
-          <p className="text-[16px] text-white/50">Preparing your campus...</p>
+          <p className="text-body-lg text-white/50">Preparing your campus...</p>
         </motion.div>
       )}
 
@@ -192,7 +192,7 @@ export function ArrivalSection({
             }}
           >
             <h1
-              className="text-[40px] md:text-[52px] font-semibold tracking-tight text-white leading-[1.0]"
+              className="text-heading-lg md:text-display font-semibold tracking-tight text-white leading-[1.0]"
               style={{
                 fontFamily: 'var(--font-display)',
                 textShadow: `0 0 80px ${GOLD.glowSubtle}`,
@@ -233,12 +233,12 @@ export function ArrivalSection({
                 }}
               >
                 <span
-                  className="text-[18px] font-medium"
+                  className="text-title-sm font-medium"
                   style={{ color: GOLD.primary }}
                 >
                   @{handle}
                 </span>
-                <span className="text-[14px] text-white/40">is yours</span>
+                <span className="text-body text-white/40">is yours</span>
               </div>
             </motion.div>
           )}
@@ -246,7 +246,7 @@ export function ArrivalSection({
           {/* Returning user message */}
           {isReturningUser && (
             <motion.p
-              className="mb-10 text-[16px] text-white/50 relative z-10"
+              className="mb-10 text-body-lg text-white/50 relative z-10"
               initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{
@@ -276,7 +276,7 @@ export function ArrivalSection({
               onClick={handleComplete}
               disabled={isNavigating}
               loading={isNavigating}
-              className="w-full text-[16px]"
+              className="w-full text-body-lg"
             >
               {isNavigating ? 'Loading...' : 'Enter HIVE'}
             </Button>
@@ -293,7 +293,7 @@ export function ArrivalSection({
               ease: EASE_PREMIUM,
             }}
           >
-            <p className="text-[13px] text-white/30 mb-3">Your campus is waiting</p>
+            <p className="text-body-sm text-white/30 mb-3">Your campus is waiting</p>
             <div className="flex items-center justify-center gap-2">
               {/* Mini space indicators */}
               {[1, 2, 3, 4, 5].map((i) => (
@@ -310,7 +310,7 @@ export function ArrivalSection({
                 />
               ))}
               <motion.span
-                className="text-[12px] text-white/20 ml-1"
+                className="text-label text-white/20 ml-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: 1.6 }}

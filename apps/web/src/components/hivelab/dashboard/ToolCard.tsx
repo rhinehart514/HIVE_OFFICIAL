@@ -70,7 +70,7 @@ export function ToolCard({ tool, onClick, index = 0 }: ToolCardProps) {
         <span className="text-white font-medium text-sm truncate pr-2 flex-1">
           {tool.name || 'Untitled Tool'}
         </span>
-        <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide
+        <span className={`text-label-xs px-2 py-0.5 rounded-full uppercase tracking-wide
           ${status.bg} ${status.text} flex-shrink-0`}>
           {status.label}
         </span>
@@ -84,7 +84,7 @@ export function ToolCard({ tool, onClick, index = 0 }: ToolCardProps) {
       )}
 
       {/* Footer: Stats + Updated */}
-      <div className="flex items-center gap-3 mt-auto pt-2 text-white/30 text-[11px] w-full">
+      <div className="flex items-center gap-3 mt-auto pt-2 text-white/30 text-label-sm w-full">
         {tool.useCount !== undefined && tool.useCount > 0 && (
           <span className="flex items-center gap-1">
             <BarChart3 className="w-3 h-3" />

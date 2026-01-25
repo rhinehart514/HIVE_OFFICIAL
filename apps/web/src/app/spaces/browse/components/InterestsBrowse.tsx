@@ -114,7 +114,7 @@ export function InterestsBrowse({ searchQuery }: InterestsBrowseProps) {
     <div className="space-y-8">
       {/* Count */}
       <div className="flex items-center justify-between">
-        <span className="text-[13px] text-white/30">
+        <span className="text-body-sm text-white/30">
           {data.totalCount} {data.totalCount === 1 ? 'space' : 'spaces'}
           {searchQuery && ` matching "${searchQuery}"`}
         </span>
@@ -145,7 +145,7 @@ export function InterestsBrowse({ searchQuery }: InterestsBrowseProps) {
                 onClick={loadMore}
                 disabled={loadingMore}
                 className={cn(
-                  'px-6 py-2.5 rounded-full text-[14px] font-medium transition-all duration-200',
+                  'px-6 py-2.5 rounded-full text-body font-medium transition-all duration-200',
                   'bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white/80',
                   loadingMore && 'opacity-50 cursor-not-allowed'
                 )}

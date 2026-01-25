@@ -422,7 +422,7 @@ function SearchableToolsPanel({ onDragStart }: { onDragStart?: (elementId: strin
                         <div key={section.name}>
                           {/* Section header */}
                           <div
-                            className="px-6 py-1.5 text-[10px] uppercase tracking-wider font-medium"
+                            className="px-6 py-1.5 text-label-xs uppercase tracking-wider font-medium"
                             style={{ color: PANEL_COLORS.textTertiary }}
                           >
                             {section.name}
@@ -538,7 +538,7 @@ function SearchableToolsPanel({ onDragStart }: { onDragStart?: (elementId: strin
             <span className="text-sm font-medium">Help</span>
           </div>
           <span
-            className="px-2 py-0.5 rounded-full text-[10px] font-medium"
+            className="px-2 py-0.5 rounded-full text-label-xs font-medium"
             style={{
               backgroundColor: '#4CAF50',
               color: 'white',
@@ -557,7 +557,7 @@ function ShortcutHint({ shortcut, label }: { shortcut: string; label: string }) 
     <div className="flex items-center justify-between text-xs">
       <span style={{ color: PANEL_COLORS.textTertiary }}>{label}</span>
       <kbd
-        className="px-1.5 py-0.5 rounded font-mono text-[10px]"
+        className="px-1.5 py-0.5 rounded font-mono text-label-xs"
         style={{
           backgroundColor: PANEL_COLORS.bgHover,
           color: PANEL_COLORS.textSecondary,
@@ -615,7 +615,7 @@ function MultiSelectPanel({
           style={{ borderBottom: `1px solid ${PANEL_COLORS.border}` }}
         >
           <p
-            className="text-[10px] uppercase tracking-wider font-medium mb-3"
+            className="text-label-xs uppercase tracking-wider font-medium mb-3"
             style={{ color: PANEL_COLORS.textTertiary }}
           >
             Alignment
@@ -712,7 +712,7 @@ function MultiSelectPanel({
       {/* Bulk Actions */}
       <div className="px-4 py-4 space-y-2">
         <p
-          className="text-[10px] uppercase tracking-wider font-medium mb-3"
+          className="text-label-xs uppercase tracking-wider font-medium mb-3"
           style={{ color: PANEL_COLORS.textTertiary }}
         >
           Bulk Actions

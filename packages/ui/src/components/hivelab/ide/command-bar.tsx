@@ -65,7 +65,7 @@ function WorkflowButton({ icon, label, shortcut, onClick, active, pulse }: Workf
       )}
       {icon}
       <span className="hidden md:block">{label}</span>
-      <kbd className="hidden lg:block px-1.5 py-0.5 text-[10px] bg-[var(--hivelab-surface)] rounded text-[var(--hivelab-text-tertiary)]">
+      <kbd className="hidden lg:block px-1.5 py-0.5 text-label-xs bg-[var(--hivelab-surface)] rounded text-[var(--hivelab-text-tertiary)]">
         {shortcut}
       </kbd>
     </button>

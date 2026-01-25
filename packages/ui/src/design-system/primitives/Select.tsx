@@ -241,7 +241,7 @@ const SelectLabel = React.forwardRef<
     ref={ref}
     className={cn(
       'px-3 py-1.5',
-      'text-[10px] font-medium text-white/40 uppercase tracking-wider',
+      'text-label-xs font-medium text-white/40 uppercase tracking-wider',
       className
     )}
     {...props}

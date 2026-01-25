@@ -351,7 +351,7 @@ export function CommandBar({
                   className={cn(
                     'flex-1 bg-transparent border-none outline-none',
                     'text-white placeholder:text-white/30',
-                    'text-[15px]'
+                    'text-body'
                   )}
                 />
 

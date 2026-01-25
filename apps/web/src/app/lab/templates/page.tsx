@@ -270,7 +270,7 @@ function TemplateCard({
           <div className="flex items-center gap-2 mt-1">
             {isApp && (
               <span
-                className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                 style={{
                   backgroundColor: `${COLORS.gold}20`,
                   color: COLORS.gold,
@@ -551,7 +551,7 @@ export default function ToolTemplatesPage() {
                       Featured Apps
                     </h2>
                     <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                      className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                       style={{
                         backgroundColor: `${COLORS.gold}20`,
                         color: COLORS.gold,

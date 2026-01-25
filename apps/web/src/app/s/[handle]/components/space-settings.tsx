@@ -105,7 +105,7 @@ export function SpaceSettings({ space, onUpdate, onDelete, className }: SpaceSet
           {activeSection === 'general' && (
             <>
               <h2
-                className="text-[24px] font-semibold text-white mb-2"
+                className="text-title-lg font-semibold text-white mb-2"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 General Settings
@@ -256,7 +256,7 @@ export function SpaceSettings({ space, onUpdate, onDelete, className }: SpaceSet
           {activeSection === 'members' && (
             <>
               <h2
-                className="text-[24px] font-semibold text-white mb-2"
+                className="text-title-lg font-semibold text-white mb-2"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Member Management
@@ -271,7 +271,7 @@ export function SpaceSettings({ space, onUpdate, onDelete, className }: SpaceSet
           {activeSection === 'boards' && (
             <>
               <h2
-                className="text-[24px] font-semibold text-white mb-2"
+                className="text-title-lg font-semibold text-white mb-2"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Board Management
@@ -286,7 +286,7 @@ export function SpaceSettings({ space, onUpdate, onDelete, className }: SpaceSet
           {activeSection === 'danger' && (
             <>
               <h2
-                className="text-[24px] font-semibold text-red-400 mb-2"
+                className="text-title-lg font-semibold text-red-400 mb-2"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Danger Zone

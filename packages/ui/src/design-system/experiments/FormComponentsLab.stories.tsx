@@ -86,7 +86,7 @@ export const TagInputLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               A: Default Variant
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               For general tags
             </span>
           </div>
@@ -107,7 +107,7 @@ export const TagInputLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               B: Gold Variant
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               For featured/premium
             </span>
           </div>
@@ -129,7 +129,7 @@ export const TagInputLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               C: Muted Variant
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               For archived/inactive
             </span>
           </div>
@@ -151,15 +151,15 @@ export const TagInputLab: StoryObj = {
           </span>
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Small</p>
+              <p className="text-label-xs text-white/40 mb-2">Small</p>
               <Tag size="sm">Small</Tag>
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Default</p>
+              <p className="text-label-xs text-white/40 mb-2">Default</p>
               <Tag size="default">Default</Tag>
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Large</p>
+              <p className="text-label-xs text-white/40 mb-2">Large</p>
               <Tag size="lg">Large</Tag>
             </div>
           </div>
@@ -264,11 +264,11 @@ export const NumberInputLab: StoryObj = {
           </span>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Currency Input</p>
+              <p className="text-label-xs text-white/40 mb-2">Currency Input</p>
               <CurrencyInput defaultValue={99.99} />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Percent Input</p>
+              <p className="text-label-xs text-white/40 mb-2">Percent Input</p>
               <PercentInput defaultValue={75} />
             </div>
           </div>
@@ -281,15 +281,15 @@ export const NumberInputLab: StoryObj = {
           </span>
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Small</p>
+              <p className="text-label-xs text-white/40 mb-2">Small</p>
               <NumberInput defaultValue={42} size="sm" />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Medium (Default)</p>
+              <p className="text-label-xs text-white/40 mb-2">Medium (Default)</p>
               <NumberInput defaultValue={42} size="md" />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Large</p>
+              <p className="text-label-xs text-white/40 mb-2">Large</p>
               <NumberInput defaultValue={42} size="lg" />
             </div>
           </div>
@@ -388,15 +388,15 @@ export const SearchInputLab: StoryObj = {
           </span>
           <div className="space-y-3">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Small</p>
+              <p className="text-label-xs text-white/40 mb-2">Small</p>
               <SearchInput size="sm" placeholder="Small search..." />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Default</p>
+              <p className="text-label-xs text-white/40 mb-2">Default</p>
               <SearchInput size="default" placeholder="Default search..." />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Large</p>
+              <p className="text-label-xs text-white/40 mb-2">Large</p>
               <SearchInput size="lg" placeholder="Large search..." />
             </div>
           </div>
@@ -452,7 +452,7 @@ export const RadioGroupLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               A: Basic Radio
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               Gold indicator
             </span>
           </div>
@@ -472,7 +472,7 @@ export const RadioGroupLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               B: Card Style
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               Gold border on select
             </span>
           </div>
@@ -494,7 +494,7 @@ export const RadioGroupLab: StoryObj = {
           </span>
           <div className="flex items-center gap-8">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Small (14px)</p>
+              <p className="text-label-xs text-white/40 mb-2">Small (14px)</p>
               <SimpleRadioGroup
                 options={[{ value: 'a', label: 'Small' }]}
                 value="a"
@@ -502,7 +502,7 @@ export const RadioGroupLab: StoryObj = {
               />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Default (16px)</p>
+              <p className="text-label-xs text-white/40 mb-2">Default (16px)</p>
               <SimpleRadioGroup
                 options={[{ value: 'b', label: 'Default' }]}
                 value="b"
@@ -510,7 +510,7 @@ export const RadioGroupLab: StoryObj = {
               />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Large (20px)</p>
+              <p className="text-label-xs text-white/40 mb-2">Large (20px)</p>
               <SimpleRadioGroup
                 options={[{ value: 'c', label: 'Large' }]}
                 value="c"
@@ -558,7 +558,7 @@ export const OTPInputLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               A: 6-Digit Code
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Standard auth
             </span>
           </div>
@@ -578,7 +578,7 @@ export const OTPInputLab: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               B: 4-Digit Code
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Short codes
             </span>
           </div>
@@ -599,7 +599,7 @@ export const OTPInputLab: StoryObj = {
           </span>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Error State</p>
+              <p className="text-label-xs text-white/40 mb-2">Error State</p>
               <OTPInput
                 value="123"
                 onChange={() => {}}
@@ -608,7 +608,7 @@ export const OTPInputLab: StoryObj = {
               />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Disabled</p>
+              <p className="text-label-xs text-white/40 mb-2">Disabled</p>
               <OTPInput
                 value="123456"
                 onChange={() => {}}
@@ -694,7 +694,7 @@ export const EmailInputLab: StoryObj = {
           </span>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Valid</p>
+              <p className="text-label-xs text-white/40 mb-2">Valid</p>
               <EmailInput
                 value="student"
                 onChange={() => {}}
@@ -702,7 +702,7 @@ export const EmailInputLab: StoryObj = {
               />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Error</p>
+              <p className="text-label-xs text-white/40 mb-2">Error</p>
               <EmailInput
                 value="invalid user"
                 onChange={() => {}}

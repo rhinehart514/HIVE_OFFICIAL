@@ -76,7 +76,7 @@ export const Default: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Enter your code</h1>
-            <p className="text-[14px] text-white/50">Check your inbox for a 6-digit code</p>
+            <p className="text-body text-white/50">Check your inbox for a 6-digit code</p>
           </div>
           <OTPInput
             value={value}
@@ -101,7 +101,7 @@ export const PartiallyFilled: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Half complete</h1>
-            <p className="text-[14px] text-white/50">Gold intensity at 50%</p>
+            <p className="text-body text-white/50">Gold intensity at 50%</p>
           </div>
           <OTPInput
             value={value}
@@ -126,7 +126,7 @@ export const FullyFilled: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Code complete</h1>
-            <p className="text-[14px] text-white/50">Maximum gold intensity</p>
+            <p className="text-body text-white/50">Maximum gold intensity</p>
           </div>
           <OTPInput
             value={value}
@@ -151,7 +151,7 @@ export const ErrorState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Invalid code</h1>
-            <p className="text-[14px] text-white/50">Try again</p>
+            <p className="text-body text-white/50">Try again</p>
           </div>
           <OTPInput
             value={value}
@@ -176,7 +176,7 @@ export const VerifyingState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Checking code</h1>
-            <p className="text-[14px] text-white/50">Please wait...</p>
+            <p className="text-body text-white/50">Please wait...</p>
           </div>
           <OTPInput
             value={value}
@@ -201,7 +201,7 @@ export const DisabledState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Disabled</h1>
-            <p className="text-[14px] text-white/50">Inputs are not interactive</p>
+            <p className="text-body text-white/50">Inputs are not interactive</p>
           </div>
           <OTPInput
             value={value}
@@ -226,7 +226,7 @@ export const WithoutProgressDots: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">No progress dots</h1>
-            <p className="text-[14px] text-white/50">Cleaner appearance</p>
+            <p className="text-body text-white/50">Cleaner appearance</p>
           </div>
           <OTPInput
             value={value}
@@ -251,7 +251,7 @@ export const FourDigitCode: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">4-digit code</h1>
-            <p className="text-[14px] text-white/50">Shorter verification</p>
+            <p className="text-body text-white/50">Shorter verification</p>
           </div>
           <OTPInput
             length={4}
@@ -277,7 +277,7 @@ export const EightDigitCode: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">8-digit code</h1>
-            <p className="text-[14px] text-white/50">Extended verification</p>
+            <p className="text-body text-white/50">Extended verification</p>
           </div>
           <OTPInput
             length={8}
@@ -317,7 +317,7 @@ export const ProgressiveGoldDemo: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Progressive Gold</h1>
-            <p className="text-[14px] text-white/50">
+            <p className="text-body text-white/50">
               Gold intensity: {Math.round((filledCount / 6) * 100)}%
             </p>
           </div>
@@ -382,7 +382,7 @@ export const InFocusTemplate: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Verify your email</h1>
-            <p className="text-[14px] text-white/50">
+            <p className="text-body text-white/50">
               We sent a code to you@buffalo.edu
             </p>
           </div>
@@ -394,7 +394,7 @@ export const InFocusTemplate: Story = {
             error={error}
           />
           <button
-            className="w-full text-[13px] text-white/40 hover:text-white/60"
+            className="w-full text-body-sm text-white/40 hover:text-white/60"
             onClick={() => {
               setValue(['', '', '', '', '', '']);
               setError(undefined);
@@ -420,7 +420,7 @@ export const PasteBehavior: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-xl font-semibold text-white">Paste Support</h1>
-            <p className="text-[14px] text-white/50">Try pasting: 123456</p>
+            <p className="text-body text-white/50">Try pasting: 123456</p>
           </div>
           <OTPInput
             value={value}
@@ -433,7 +433,7 @@ export const PasteBehavior: Story = {
                 navigator.clipboard.writeText('987654');
                 alert('987654 copied to clipboard. Now paste into input!');
               }}
-              className="text-[13px] text-white/40 hover:text-white/60"
+              className="text-body-sm text-white/40 hover:text-white/60"
             >
               Copy test code to clipboard
             </button>

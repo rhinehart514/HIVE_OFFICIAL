@@ -58,7 +58,7 @@ function OrgCarousel() {
         >
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse" />
-            <span className="text-[11px] font-mono text-[#FFD700]/70 uppercase tracking-wider">
+            <span className="text-label-sm font-mono text-[#FFD700]/70 uppercase tracking-wider">
               Unclaimed
             </span>
           </div>
@@ -214,7 +214,7 @@ export default function LeadersPage() {
             className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/[0.03]"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
-            <span className="text-[11px] font-medium text-[#FFD700]/80 tracking-wide uppercase">
+            <span className="text-label-sm font-medium text-[#FFD700]/80 tracking-wide uppercase">
               For Club Leaders
             </span>
           </motion.div>
@@ -263,7 +263,7 @@ export default function LeadersPage() {
               onClick={handleClaimClick}
               className="group inline-flex items-center gap-3 px-8 py-4 bg-[var(--life-gold)] text-black font-semibold rounded-full transition-all duration-300 hover:bg-[var(--life-gold-hover)] hover:shadow-[0_0_60px_var(--life-glow)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-void)]"
             >
-              <span className="text-[15px]">Find Your Organization</span>
+              <span className="text-body">Find Your Organization</span>
               <svg
                 className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5"
                 fill="none"
@@ -278,7 +278,7 @@ export default function LeadersPage() {
                 />
               </svg>
             </button>
-            <p className="mt-4 text-[11px] font-mono text-white/20">
+            <p className="mt-4 text-label-sm font-mono text-white/20">
               You&apos;ll get access immediately while we verify · @buffalo.edu required
             </p>
           </motion.div>
@@ -359,7 +359,7 @@ export default function LeadersPage() {
             transition={{ delay: 1.1, duration: 0.5 }}
             className="mt-16 pt-8 border-t border-white/[0.04]"
           >
-            <div className="flex items-center justify-center gap-6 text-[11px] text-white/20">
+            <div className="flex items-center justify-center gap-6 text-label-sm text-white/20">
               <Link href="/" className="hover:text-white/40 transition-colors">
                 Main Site
               </Link>

@@ -226,7 +226,7 @@ export function SetupDeployWizard({
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-[var(--hive-text-primary)]">{template.name}</span>
                     {template.isFeatured && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--hive-accent-gold)]/10 text-[var(--hive-accent-gold)] rounded">
+                      <span className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--hive-accent-gold)]/10 text-[var(--hive-accent-gold)] rounded">
                         Featured
                       </span>
                     )}

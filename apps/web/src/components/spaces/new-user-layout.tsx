@@ -77,7 +77,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
 
         {/* Headline with word reveal */}
         <h2
-          className="text-[36px] md:text-[48px] font-semibold text-white mb-4 tracking-tight leading-[1.0]"
+          className="text-heading-lg md:text-display-sm font-semibold text-white mb-4 tracking-tight leading-[1.0]"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           <WordReveal stagger={0.12} delay={0.2}>
@@ -87,7 +87,7 @@ function DiscoveryHero({ onScrollToDiscover }: { onScrollToDiscover: () => void 
 
         {/* Subtext */}
         <motion.p
-          className="text-[18px] md:text-[20px] leading-relaxed text-white/50 mb-8 max-w-md"
+          className="text-title-sm md:text-title leading-relaxed text-white/50 mb-8 max-w-md"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.5, ease: MOTION.ease.premium }}

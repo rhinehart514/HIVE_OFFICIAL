@@ -225,7 +225,7 @@ function StatusBadge({ status }: { status: ComponentEntry['status'] }) {
   };
   const c = config[status];
   return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${c.bg} ${c.text}`}>
+    <span className={`px-2 py-0.5 rounded text-label-xs font-medium ${c.bg} ${c.text}`}>
       {c.label}
     </span>
   );

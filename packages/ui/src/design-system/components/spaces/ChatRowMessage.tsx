@@ -218,7 +218,7 @@ export function ChatRowMessage({
             {/* Role badge */}
             {author.role && author.role !== 'member' && (
               <span className={cn(
-                'text-[10px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
+                'text-label-xs px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
                 author.role === 'owner' && 'bg-[#FFD700]/20 text-[#FFD700]',
                 author.role === 'admin' && 'bg-white/10 text-white/70',
                 author.role === 'moderator' && 'bg-white/5 text-white/50',

@@ -516,7 +516,7 @@ function TemplateCard({ template, index, onUse, isUsing }: TemplateCardProps) {
             {template.tags.slice(0, 3).map(tag => (
               <span
                 key={tag}
-                className="px-2 py-0.5 text-[10px] rounded-full bg-white/[0.08] text-white/50"
+                className="px-2 py-0.5 text-label-xs rounded-full bg-white/[0.08] text-white/50"
               >
                 {tag}
               </span>

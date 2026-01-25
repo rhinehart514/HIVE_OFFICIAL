@@ -128,7 +128,7 @@ export const Variable1_IconStyle: Story = {
             <Text size="xs" tone="muted" className="uppercase tracking-wider">D: Corner Badge</Text>
             <Card size="compact" className="w-[200px] relative">
               <div
-                className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold text-white uppercase"
+                className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-md text-label-xs font-semibold text-white uppercase"
                 style={{ backgroundColor: FileType.color }}
               >
                 {FileType.label}
@@ -144,7 +144,7 @@ export const Variable1_IconStyle: Story = {
             <Card size="compact" className="w-[200px]">
               <div className="flex items-center gap-2 mb-2">
                 <span
-                  className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase"
+                  className="px-1.5 py-0.5 rounded text-label-xs font-semibold uppercase"
                   style={{ backgroundColor: `${FileType.color}20`, color: FileType.color }}
                 >
                   {FileType.label}

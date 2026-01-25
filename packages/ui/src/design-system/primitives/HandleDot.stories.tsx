@@ -297,7 +297,7 @@ export const CursorTypes: Story = {
             className="relative w-16 h-16 border border-[var(--color-border)] rounded flex items-center justify-center"
           >
             <HandleDot position={pos as any} />
-            <Text size="[10px]" tone="muted" className="text-[10px]">{cursor}</Text>
+            <Text size="[10px]" tone="muted" className="text-label-xs">{cursor}</Text>
           </div>
         ))}
       </div>

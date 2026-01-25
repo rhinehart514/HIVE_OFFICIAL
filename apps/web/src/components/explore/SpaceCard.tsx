@@ -61,17 +61,17 @@ export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[15px] font-medium text-white truncate">
+                  <h3 className="text-body font-medium text-white truncate">
                     {space.name}
                   </h3>
-                  <p className="text-[13px] text-white/40">@{space.handle}</p>
+                  <p className="text-body-sm text-white/40">@{space.handle}</p>
                 </div>
 
                 {/* Online indicator */}
                 {space.onlineCount > 0 && (
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
-                    <span className="text-[12px] text-white/50">
+                    <span className="text-label text-white/50">
                       {space.onlineCount}
                     </span>
                   </div>
@@ -80,14 +80,14 @@ export function SpaceCard({ space, index = 0 }: SpaceCardProps) {
 
               {/* Description */}
               {space.description && (
-                <p className="text-[13px] text-white/50 line-clamp-2">
+                <p className="text-body-sm text-white/50 line-clamp-2">
                   {space.description}
                 </p>
               )}
 
               {/* Footer */}
               <div className="flex items-center justify-between pt-1">
-                <div className="flex items-center gap-3 text-[12px] text-white/30">
+                <div className="flex items-center gap-3 text-label text-white/30">
                   <span>{space.memberCount} members</span>
                   {lastActiveText && (
                     <>

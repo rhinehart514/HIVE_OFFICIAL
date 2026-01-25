@@ -82,7 +82,7 @@ export function BuilderShell({
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              <span className="text-[13px]">Back</span>
+              <span className="text-body-sm">Back</span>
             </motion.button>
           ) : (
             <LogoMark className="w-8 h-8 text-white/80" />
@@ -91,7 +91,7 @@ export function BuilderShell({
 
         {/* Step Title */}
         {stepTitle && (
-          <span className="text-[12px] text-white/30 uppercase tracking-wider">
+          <span className="text-label text-white/30 uppercase tracking-wider">
             {stepTitle}
           </span>
         )}
@@ -183,7 +183,7 @@ export function BuilderAction({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'w-full h-12 rounded-xl font-medium text-[14px] transition-all',
+        'w-full h-12 rounded-xl font-medium text-body transition-all',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary' &&
           'bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold-hover)]',
@@ -220,7 +220,7 @@ export function BuilderHeading({ title, subtitle, className }: BuilderHeadingPro
   return (
     <div className={cn('space-y-2', className)}>
       <motion.h1
-        className="text-[28px] lg:text-[32px] font-semibold tracking-tight text-white"
+        className="text-heading-sm lg:text-heading font-semibold tracking-tight text-white"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
@@ -229,7 +229,7 @@ export function BuilderHeading({ title, subtitle, className }: BuilderHeadingPro
       </motion.h1>
       {subtitle && (
         <motion.p
-          className="text-[14px] text-white/50"
+          className="text-body text-white/50"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: MOTION.duration.base, delay: 0.2, ease: MOTION.ease.premium }}

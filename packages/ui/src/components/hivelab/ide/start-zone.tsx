@@ -123,7 +123,7 @@ export function StartZone({
           transition={{ delay: 0.1 }}
           className="text-center mb-10"
         >
-          <h2 className="text-[28px] font-semibold text-[var(--hivelab-text-primary)] tracking-[-0.02em] mb-2">
+          <h2 className="text-heading-sm font-semibold text-[var(--hivelab-text-primary)] tracking-[-0.02em] mb-2">
             What would you like to build?
           </h2>
           <p className="text-[var(--hivelab-text-secondary)] text-base">

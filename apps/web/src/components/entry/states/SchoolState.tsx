@@ -141,10 +141,10 @@ export function SchoolState({
     >
       {/* Header */}
       <motion.div variants={childVariants} className="space-y-3">
-        <h1 className="text-[28px] font-semibold tracking-tight text-white">
+        <h1 className="text-heading-sm font-semibold tracking-tight text-white">
           Select your campus
         </h1>
-        <p className="text-[15px] leading-relaxed text-white/50">
+        <p className="text-body leading-relaxed text-white/50">
           Choose where you belong
         </p>
       </motion.div>
@@ -190,14 +190,14 @@ export function SchoolState({
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      'text-[15px] font-medium truncate',
+                      'text-body font-medium truncate',
                       isActive ? 'text-white' : 'text-white/60'
                     )}
                   >
                     {s.name}
                   </span>
                 </div>
-                <p className="text-[13px] text-white/40 mt-0.5">
+                <p className="text-body-sm text-white/40 mt-0.5">
                   {s.location}
                 </p>
               </div>
@@ -206,7 +206,7 @@ export function SchoolState({
               {isActive ? (
                 <ChevronRight className="w-5 h-5 text-white/30 flex-shrink-0" />
               ) : (
-                <span className="px-3 py-1 text-[11px] font-medium rounded-full bg-white/[0.06] text-white/40 flex-shrink-0">
+                <span className="px-3 py-1 text-label-sm font-medium rounded-full bg-white/[0.06] text-white/40 flex-shrink-0">
                   Coming Soon
                 </span>
               )}

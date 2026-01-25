@@ -211,7 +211,7 @@ function RuleCard({
               </span>
               {!rule.isActive && (
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  className="text-label-xs px-1.5 py-0.5 rounded"
                   style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
                 >
                   Disabled
@@ -223,7 +223,7 @@ function RuleCard({
                 {rule.description}
               </p>
             )}
-            <div className="flex items-center gap-3 mt-2 text-[10px]" style={{ color: COLORS.textTertiary }}>
+            <div className="flex items-center gap-3 mt-2 text-label-xs" style={{ color: COLORS.textTertiary }}>
               <span className="capitalize">{rule.trigger.type.replace('_', ' ')}</span>
               <span>{rule.actions.length} action{rule.actions.length !== 1 ? 's' : ''}</span>
             </div>

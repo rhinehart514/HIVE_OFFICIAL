@@ -129,7 +129,7 @@ function SpaceRow({
             <PinIcon className="text-[var(--life-gold)]/60 flex-shrink-0" />
           )}
         </div>
-        <div className="text-[11px] text-white/40">
+        <div className="text-label-sm text-white/40">
           {space.memberCount} members
           {space.lastVisited && ` · ${space.lastVisited}`}
         </div>
@@ -139,7 +139,7 @@ function SpaceRow({
       {space.activeNow && space.activeNow > 0 && (
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 flex-shrink-0">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-[10px] text-emerald-400 font-medium">{space.activeNow}</span>
+          <span className="text-label-xs text-emerald-400 font-medium">{space.activeNow}</span>
         </div>
       )}
 
@@ -286,7 +286,7 @@ export function SpaceSwitcher({
                     placeholder={placeholder}
                     className="w-full pl-11 pr-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
                   />
-                  <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white/[0.05] text-[10px] text-white/30 font-medium">
+                  <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-white/[0.05] text-label-xs text-white/30 font-medium">
                     ESC
                   </kbd>
                 </div>
@@ -297,7 +297,7 @@ export function SpaceSwitcher({
                 {/* Pinned section */}
                 {pinnedSpaces.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-3 py-2 text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                    <div className="px-3 py-2 text-label-xs text-white/30 uppercase tracking-wider font-medium">
                       Pinned
                     </div>
                     {pinnedSpaces.map((space, index) => (
@@ -317,7 +317,7 @@ export function SpaceSwitcher({
                 {/* Recent section */}
                 {recentSpaces.length > 0 && (
                   <div>
-                    <div className="px-3 py-2 text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                    <div className="px-3 py-2 text-label-xs text-white/30 uppercase tracking-wider font-medium">
                       Recent
                     </div>
                     {recentSpaces.map((space, index) => (
@@ -357,7 +357,7 @@ export function SpaceSwitcher({
 
               {/* Footer actions */}
               <div className="p-3 border-t border-white/[0.06] flex items-center justify-between">
-                <div className="flex items-center gap-4 text-[11px] text-white/30">
+                <div className="flex items-center gap-4 text-label-sm text-white/30">
                   <span className="flex items-center gap-1">
                     <kbd className="px-1 py-0.5 rounded bg-white/[0.05]">↑↓</kbd>
                     Navigate

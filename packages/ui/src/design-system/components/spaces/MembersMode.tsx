@@ -194,7 +194,7 @@ function MemberCard({
           {/* Role badge */}
           {isLeader && (
             <span className={cn(
-              'inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide mt-1',
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-medium uppercase tracking-wide mt-1',
               member.role === 'owner'
                 ? 'bg-[#FFD700]/20 text-[#FFD700]'
                 : 'bg-white/[0.08] text-[#A3A19E]',
@@ -444,7 +444,7 @@ export function MembersMode({
               >
                 Requests
                 {pendingRequestsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FFD700] text-black text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#FFD700] text-black text-label-xs font-bold flex items-center justify-center">
                     {pendingRequestsCount > 9 ? '9+' : pendingRequestsCount}
                   </span>
                 )}

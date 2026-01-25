@@ -120,7 +120,7 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
       {data.userMajor && (
         <RevealSection className="mb-16">
           <div className="mb-6">
-            <span className="text-[13px] font-medium text-white/40 uppercase tracking-wider">
+            <span className="text-body-sm font-medium text-white/40 uppercase tracking-wider">
               Your field
             </span>
           </div>
@@ -135,7 +135,7 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
       {filteredSections.length > 0 && (
         <RevealSection delay={0.2}>
           <div className="mb-8">
-            <span className="text-[13px] font-medium text-white/40 uppercase tracking-wider">
+            <span className="text-body-sm font-medium text-white/40 uppercase tracking-wider">
               Every discipline
             </span>
           </div>
@@ -166,10 +166,10 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
                     className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-[15px] font-medium text-white/80">
+                      <span className="text-body font-medium text-white/80">
                         {section.name}
                       </span>
-                      <span className="text-[12px] text-white/30 bg-white/[0.04] px-2 py-0.5 rounded-full">
+                      <span className="text-label text-white/30 bg-white/[0.04] px-2 py-0.5 rounded-full">
                         {section.spaces.length}
                       </span>
                     </div>

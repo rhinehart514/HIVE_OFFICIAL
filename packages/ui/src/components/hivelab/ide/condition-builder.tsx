@@ -547,7 +547,7 @@ export function ConditionBuilder({
                 Visibility Conditions
               </h4>
               <p
-                className="text-[10px] mt-0.5"
+                className="text-label-xs mt-0.5"
                 style={{ color: PANEL_COLORS.textTertiary }}
               >
                 Define when this element should be visible

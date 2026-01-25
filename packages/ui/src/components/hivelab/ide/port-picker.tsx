@@ -161,7 +161,7 @@ export function PortPicker({
 
                 {/* Type hint badge */}
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  className="text-label-xs px-1.5 py-0.5 rounded"
                   style={{
                     backgroundColor: accentBg,
                     color: accentColor,
@@ -181,13 +181,13 @@ export function PortPicker({
         >
           <div className="flex items-center gap-1.5">
             <span
-              className="text-[10px]"
+              className="text-label-xs"
               style={{ color: PICKER_COLORS.textTertiary }}
             >
               From:
             </span>
             <span
-              className="text-[10px] font-medium truncate"
+              className="text-label-xs font-medium truncate"
               style={{ color: PICKER_COLORS.textSecondary }}
             >
               {(element.config?.label as string) || spec?.name || element.elementId}

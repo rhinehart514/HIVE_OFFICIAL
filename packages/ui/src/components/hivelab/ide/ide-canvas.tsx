@@ -231,17 +231,17 @@ function ElementPreview({ element }: { element: CanvasElement }) {
 
       return (
         <div className="space-y-2">
-          <p className="text-[11px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+          <p className="text-label-sm font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
             {question}
           </p>
           <div className="space-y-1.5">
             {options.slice(0, 4).map((opt, i) => (
               <div key={i} className="space-y-0.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] truncate max-w-[70%]" style={{ color: HIVELAB_COLORS.textSecondary }}>
+                  <span className="text-label-xs truncate max-w-[70%]" style={{ color: HIVELAB_COLORS.textSecondary }}>
                     {String(opt)}
                   </span>
-                  <span className="text-[9px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+                  <span className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
                     {normalizedPcts[i]}%
                   </span>
                 </div>
@@ -295,7 +295,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <div className="space-y-1">
           {[1, 2, 3].map(n => (
-            <div key={n} className="flex items-center gap-2 text-[10px]">
+            <div key={n} className="flex items-center gap-2 text-label-xs">
               <span
                 className="w-4 text-center font-bold"
                 style={{ color: n === 1 ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.textTertiary }}
@@ -315,7 +315,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <div className="flex flex-col items-center gap-1.5 py-1">
           <div
-            className="px-4 py-1.5 rounded-lg text-[11px] font-semibold"
+            className="px-4 py-1.5 rounded-lg text-label-sm font-semibold"
             style={{
               backgroundColor: HIVELAB_COLORS.connectionLine,
               color: '#000'
@@ -323,7 +323,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
           >
             RSVP Now
           </div>
-          <span className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+          <span className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
             12 attending
           </span>
         </div>
@@ -359,10 +359,10 @@ function ElementPreview({ element }: { element: CanvasElement }) {
             <span className="text-sm font-bold leading-none" style={{ color: HIVELAB_COLORS.textPrimary }}>21</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-medium truncate" style={{ color: HIVELAB_COLORS.textPrimary }}>
+            <p className="text-label-xs font-medium truncate" style={{ color: HIVELAB_COLORS.textPrimary }}>
               {String(element.config?.title || 'Event Title')}
             </p>
-            <p className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>7:00 PM</p>
+            <p className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>7:00 PM</p>
           </div>
         </div>
       );
@@ -374,7 +374,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
           className="p-2 rounded text-center"
           style={{ backgroundColor: `${HIVELAB_COLORS.connectionLine}15` }}
         >
-          <p className="text-[10px] font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>
+          <p className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>
             📢 {String(element.config?.message || 'Announcement')}
           </p>
         </div>
@@ -392,7 +392,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
 
       return (
         <div className="space-y-2">
-          <p className="text-[10px] font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+          <p className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
             {title}
           </p>
           <div className="space-y-1.5">
@@ -431,7 +431,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
           <svg className="w-3 h-3" style={{ color: HIVELAB_COLORS.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
-          <span className="text-[10px]" style={{ color: HIVELAB_COLORS.textTertiary }}>Search...</span>
+          <span className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>Search...</span>
         </div>
       );
 
@@ -440,7 +440,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <div className="text-center py-1">
           <div className="text-2xl font-bold" style={{ color: HIVELAB_COLORS.connectionLine }}>247</div>
-          <p className="text-[9px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+          <p className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
             {String(element.config?.label || 'Total Count')}
           </p>
         </div>
@@ -1127,7 +1127,7 @@ function ConnectionLine({
               y={(fromY + toY) / 2 + 1}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-[10px] font-bold select-none pointer-events-none"
+              className="text-label-xs font-bold select-none pointer-events-none"
               fill="#ef4444"
             >
               ×

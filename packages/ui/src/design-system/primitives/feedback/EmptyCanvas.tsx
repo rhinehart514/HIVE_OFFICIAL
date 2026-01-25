@@ -30,18 +30,18 @@ export interface EmptyCanvasProps {
 const sizeStyles = {
   sm: {
     container: 'py-8',
-    message: 'text-[14px]',
-    hint: 'text-[12px]',
+    message: 'text-body',
+    hint: 'text-label',
   },
   default: {
     container: 'py-16',
-    message: 'text-[16px]',
-    hint: 'text-[13px]',
+    message: 'text-body-lg',
+    hint: 'text-body-sm',
   },
   lg: {
     container: 'py-24',
-    message: 'text-[20px]',
-    hint: 'text-[14px]',
+    message: 'text-title',
+    hint: 'text-body',
   },
 };
 

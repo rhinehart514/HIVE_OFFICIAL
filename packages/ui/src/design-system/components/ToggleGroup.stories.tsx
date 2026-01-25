@@ -91,7 +91,7 @@ export const LockedDesignShowcase: Story = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Default Selected
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               bg-white/10
             </span>
           </div>
@@ -115,7 +115,7 @@ export const LockedDesignShowcase: Story = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Gold CTA Variant
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               text-[#FFD700]
             </span>
           </div>

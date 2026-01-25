@@ -133,7 +133,7 @@ function SectionHeader({
           Pinned Tools
         </Text>
         {toolCount > 0 && (
-          <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-white/[0.06] text-white/40">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-white/[0.06] text-white/40">
             {toolCount}
           </span>
         )}

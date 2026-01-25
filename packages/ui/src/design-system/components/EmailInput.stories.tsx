@@ -80,7 +80,7 @@ export const Default: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email</p>
+            <p className="text-body text-white/50">Enter your campus email</p>
           </div>
           <EmailInput
             value={value}
@@ -106,7 +106,7 @@ export const WithValue: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email</p>
+            <p className="text-body text-white/50">Enter your campus email</p>
           </div>
           <EmailInput
             value={value}
@@ -132,7 +132,7 @@ export const ErrorState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email</p>
+            <p className="text-body text-white/50">Enter your campus email</p>
           </div>
           <EmailInput
             value={value}
@@ -159,7 +159,7 @@ export const LoadingState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email</p>
+            <p className="text-body text-white/50">Enter your campus email</p>
           </div>
           <EmailInput
             value={value}
@@ -186,7 +186,7 @@ export const DisabledState: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email</p>
+            <p className="text-body text-white/50">Enter your campus email</p>
           </div>
           <EmailInput
             value={value}
@@ -215,14 +215,14 @@ export const DifferentDomains: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Multi-campus</h1>
-            <p className="text-[15px] text-white/50">Select your university</p>
+            <p className="text-body text-white/50">Select your university</p>
           </div>
           <div className="flex flex-wrap gap-2 justify-center mb-4">
             {domains.map((d) => (
               <button
                 key={d}
                 onClick={() => setDomain(d)}
-                className={`px-3 py-1.5 rounded-lg text-[13px] transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-body-sm transition-colors ${
                   domain === d
                     ? 'bg-[var(--color-gold)] text-black'
                     : 'bg-white/10 text-white'
@@ -256,7 +256,7 @@ export const CustomSubmitText: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Sign in</h1>
-            <p className="text-[15px] text-white/50">We'll send you a magic code</p>
+            <p className="text-body text-white/50">We'll send you a magic code</p>
           </div>
           <EmailInput
             value={value}
@@ -283,7 +283,7 @@ export const CustomPlaceholder: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Join HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your student email</p>
+            <p className="text-body text-white/50">Enter your student email</p>
           </div>
           <EmailInput
             value={value}
@@ -332,7 +332,7 @@ export const InFocusTemplate: Story = {
         background="ambient"
         maxWidth="sm"
         footer={
-          <p className="text-[13px] text-white/30">
+          <p className="text-body-sm text-white/30">
             By continuing, you agree to our{' '}
             <a href="#" className="underline hover:text-white/50">Terms</a>
           </p>
@@ -341,7 +341,7 @@ export const InFocusTemplate: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-            <p className="text-[15px] text-white/50">Enter your campus email to continue</p>
+            <p className="text-body text-white/50">Enter your campus email to continue</p>
           </div>
           <EmailInput
             value={value}
@@ -375,7 +375,7 @@ export const InteractiveValidation: Story = {
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h1 className="text-2xl font-semibold text-white">Live Validation</h1>
-            <p className="text-[15px] text-white/50">Try invalid characters</p>
+            <p className="text-body text-white/50">Try invalid characters</p>
           </div>
           <EmailInput
             value={value}
@@ -387,7 +387,7 @@ export const InteractiveValidation: Story = {
             error={error}
             onSubmit={() => alert('Valid!')}
           />
-          <div className="text-center text-[13px] text-white/40">
+          <div className="text-center text-body-sm text-white/40">
             <p>Valid: a-z, A-Z, 0-9, dots, underscores, hyphens</p>
             <p className="mt-1">
               Current: {value || '(empty)'} → {isValid ? '✓ Valid' : '✗ Invalid'}
@@ -419,7 +419,7 @@ export const HelperFunctionsDemo: Story = {
             domainSuffix={domain}
             onSubmit={() => {}}
           />
-          <div className="p-4 rounded-xl bg-white/5 text-[13px] font-mono space-y-2">
+          <div className="p-4 rounded-xl bg-white/5 text-body-sm font-mono space-y-2">
             <p className="text-white/60">
               <span className="text-white/40">getFullEmail({`'${value}', '${domain}'`})</span>
             </p>

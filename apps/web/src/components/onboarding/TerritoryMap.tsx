@@ -106,11 +106,11 @@ export function TerritoryMap({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
-        <p className="text-[14px] text-white/50">
+        <p className="text-body text-white/50">
           {claimedCount} orgs mapped at {campusName}
         </p>
         {unclaimedCount > 0 && (
-          <p className="text-[12px] text-[var(--life-gold)]">
+          <p className="text-label text-[var(--life-gold)]">
             {unclaimedCount} waiting to be claimed
           </p>
         )}
@@ -226,14 +226,14 @@ function TerritorySpaceCard({
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-[14px] font-medium text-white truncate">
+              <h3 className="text-body font-medium text-white truncate">
                 {space.name}
               </h3>
               {space.isActive && (
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--life-gold)] animate-pulse" />
               )}
             </div>
-            <p className="text-[12px] text-white/40 truncate">
+            <p className="text-label text-white/40 truncate">
               @{space.handle} · {space.category}
             </p>
           </div>
@@ -241,11 +241,11 @@ function TerritorySpaceCard({
           <div className="flex items-center gap-3">
             {/* Status Badge */}
             {space.isClaimed ? (
-              <span className="text-[11px] text-white/30">
+              <span className="text-label-sm text-white/30">
                 {space.memberCount} members
               </span>
             ) : (
-              <Badge variant="outline" className="text-[10px] text-[var(--life-gold)] border-[var(--life-gold)]/30">
+              <Badge variant="outline" className="text-label-xs text-[var(--life-gold)] border-[var(--life-gold)]/30">
                 {space.waitlistCount || 0} waiting
               </Badge>
             )}
@@ -255,7 +255,7 @@ function TerritorySpaceCard({
               type="button"
               onClick={handleAction}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors',
+                'px-3 py-1.5 rounded-lg text-label font-medium transition-colors',
                 space.isClaimed
                   ? 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                   : 'bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold-hover)]'
@@ -289,7 +289,7 @@ function FilterPill({ children, active, onClick }: FilterPillProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'px-3 py-1.5 rounded-full text-[12px] font-medium transition-colors',
+        'px-3 py-1.5 rounded-full text-label font-medium transition-colors',
         active
           ? 'bg-white/10 text-white'
           : 'bg-white/[0.04] text-white/50 hover:bg-white/[0.08] hover:text-white/70'
@@ -313,14 +313,14 @@ interface EmptyStateProps {
 function EmptyState({ search, filter }: EmptyStateProps) {
   return (
     <div className="text-center py-8">
-      <p className="text-[14px] text-white/40">
+      <p className="text-body text-white/40">
         {search
           ? `No spaces matching "${search}"`
           : filter !== 'all'
             ? 'No spaces in this category'
             : 'No spaces found'}
       </p>
-      <p className="text-[12px] text-white/20 mt-1">
+      <p className="text-label text-white/20 mt-1">
         Try a different search or filter
       </p>
     </div>

@@ -202,7 +202,7 @@ const TemplateCard: React.FC<{
             )}
           </div>
           {template.featured && (
-            <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#D4AF37]/20 text-[#D4AF37]">
+            <span className="shrink-0 px-1.5 py-0.5 rounded text-label-xs font-medium bg-[#D4AF37]/20 text-[#D4AF37]">
               Featured
             </span>
           )}
@@ -211,12 +211,12 @@ const TemplateCard: React.FC<{
         {/* Meta */}
         <div className="flex items-center gap-2 mt-2">
           {template.category && (
-            <span className="text-[10px] text-white/40">{template.category}</span>
+            <span className="text-label-xs text-white/40">{template.category}</span>
           )}
           {showUsageCount && template.usageCount !== undefined && (
             <>
               {template.category && <span className="text-white/20">·</span>}
-              <span className="text-[10px] text-white/40 tabular-nums">
+              <span className="text-label-xs text-white/40 tabular-nums">
                 {template.usageCount.toLocaleString()} uses
               </span>
             </>

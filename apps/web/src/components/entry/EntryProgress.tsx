@@ -87,7 +87,7 @@ export function EntryProgress({ currentStep, className }: EntryProgressProps) {
                 ) : (
                   <span
                     className={cn(
-                      'text-[11px] font-medium',
+                      'text-label-sm font-medium',
                       isCurrent ? 'text-white' : 'text-white/30'
                     )}
                   >
@@ -107,7 +107,7 @@ export function EntryProgress({ currentStep, className }: EntryProgressProps) {
                     ? { duration: 0 }
                     : { duration: DURATION.smooth, ease: EASE_PREMIUM }
                 }
-                className="hidden sm:block text-[12px] text-white"
+                className="hidden sm:block text-label text-white"
               >
                 {step.label}
               </motion.span>

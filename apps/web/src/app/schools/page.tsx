@@ -171,7 +171,7 @@ function SchoolCard({ school, index, onSelect, onRequest }: SchoolCardProps) {
                   />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-white/[0.06] flex items-center justify-center">
-                    <span className="text-[18px] font-semibold text-white/40">
+                    <span className="text-title-sm font-semibold text-white/40">
                       {school.name.charAt(0)}
                     </span>
                   </div>
@@ -181,15 +181,15 @@ function SchoolCard({ school, index, onSelect, onRequest }: SchoolCardProps) {
               {/* School info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-[16px] font-medium text-white truncate">
+                  <h3 className="text-body-lg font-medium text-white truncate">
                     {school.name}
                   </h3>
                   {isActive ? (
-                    <Badge variant="gold" className="text-[10px] uppercase tracking-wider flex-shrink-0">
+                    <Badge variant="gold" className="text-label-xs uppercase tracking-wider flex-shrink-0">
                       Live
                     </Badge>
                   ) : (
-                    <Badge variant="neutral" className="text-[10px] uppercase tracking-wider flex-shrink-0">
+                    <Badge variant="neutral" className="text-label-xs uppercase tracking-wider flex-shrink-0">
                       Coming Soon
                     </Badge>
                   )}
@@ -204,11 +204,11 @@ function SchoolCard({ school, index, onSelect, onRequest }: SchoolCardProps) {
                     whileHover={{ x: 4 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className="text-[14px] font-medium">Enter</span>
+                    <span className="text-body font-medium">Enter</span>
                     <ArrowRightIcon className="w-4 h-4" />
                   </motion.div>
                 ) : (
-                  <span className="text-[13px] text-white/50 hover:text-white/70 transition-colors">
+                  <span className="text-body-sm text-white/50 hover:text-white/70 transition-colors">
                     Request access
                   </span>
                 )}
@@ -244,7 +244,7 @@ function SearchInput({ value, onChange }: SearchInputProps) {
         placeholder="Search universities..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-12 h-12 text-[15px]"
+        className="pl-12 h-12 text-body"
       />
     </motion.div>
   );
@@ -319,21 +319,21 @@ function RequestModal({ school, onClose, onSubmit }: RequestModalProps) {
           {submitted ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-4">
-                <span className="text-[20px]">✓</span>
+                <span className="text-title">✓</span>
               </div>
-              <Heading level={3} className="text-[20px] mb-2">
+              <Heading level={3} className="text-title mb-2">
                 You're on the list
               </Heading>
-              <p className="text-[15px] text-white/50">
+              <p className="text-body text-white/50">
                 We'll notify you when {school.name} goes live.
               </p>
             </div>
           ) : (
             <>
-              <Heading level={3} className="text-[20px] mb-2 pr-8">
+              <Heading level={3} className="text-title mb-2 pr-8">
                 Request access to {school.name}
               </Heading>
-              <p className="text-[15px] text-white/50 mb-6">
+              <p className="text-body text-white/50 mb-6">
                 Enter your email and we'll let you know when it's available.
               </p>
 
@@ -505,7 +505,7 @@ export default function SchoolsPage() {
           >
             <Heading
               level={1}
-              className="text-[48px] md:text-[64px] lg:text-[72px] font-bold tracking-tight mb-6"
+              className="text-display-sm md:text-display-lg lg:text-display-lg font-bold tracking-tight mb-6"
             >
               Find your{' '}
               <GradientText variant="gold">campus</GradientText>
@@ -513,7 +513,7 @@ export default function SchoolsPage() {
           </motion.div>
 
           <motion.p
-            className="text-[18px] md:text-[20px] text-white/50 max-w-2xl mx-auto mb-12 leading-relaxed"
+            className="text-title-sm md:text-title text-white/50 max-w-2xl mx-auto mb-12 leading-relaxed"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
@@ -544,8 +544,8 @@ export default function SchoolsPage() {
             <div className="w-16 h-16 rounded-full bg-white/[0.04] flex items-center justify-center mx-auto mb-4">
               <MagnifyingGlassIcon className="w-6 h-6 text-white/30" />
             </div>
-            <p className="text-[16px] text-white/60 mb-2">No universities found</p>
-            <p className="text-[14px] text-white/40">Try a different search term</p>
+            <p className="text-body-lg text-white/60 mb-2">No universities found</p>
+            <p className="text-body text-white/40">Try a different search term</p>
           </motion.div>
         ) : (
           <div className="space-y-3">
@@ -571,10 +571,10 @@ export default function SchoolsPage() {
           transition={{ duration: 0.6, delay: 0.5, ease: EASE }}
         >
           <GlassSurface intensity="subtle" className="p-8 rounded-2xl text-center">
-            <Heading level={3} className="text-[20px] mb-3">
+            <Heading level={3} className="text-title mb-3">
               Don&apos;t see your university?
             </Heading>
-            <p className="text-[15px] text-white/50 mb-6 max-w-md mx-auto">
+            <p className="text-body text-white/50 mb-6 max-w-md mx-auto">
               We&apos;re expanding to more campuses. Request access to bring HIVE to your school.
             </p>
             <Button variant="default" size="lg">
@@ -598,25 +598,25 @@ export default function SchoolsPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.06] py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <span className="text-[12px] text-white/30">
+          <span className="text-label text-white/30">
             © 2026 HIVE. Built by students, for students.
           </span>
           <div className="flex items-center gap-6">
             <a
               href="/about"
-              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+              className="text-label text-white/40 hover:text-white/60 transition-colors"
             >
               About
             </a>
             <a
               href="/legal/privacy"
-              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+              className="text-label text-white/40 hover:text-white/60 transition-colors"
             >
               Privacy
             </a>
             <a
               href="/legal/terms"
-              className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+              className="text-label text-white/40 hover:text-white/60 transition-colors"
             >
               Terms
             </a>

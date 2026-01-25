@@ -64,9 +64,9 @@ const liveTextVariants = cva(
   {
     variants: {
       size: {
-        xs: 'text-[9px]',
-        sm: 'text-[10px]',
-        default: 'text-[11px]',
+        xs: 'text-label-xs',
+        sm: 'text-label-xs',
+        default: 'text-label-sm',
         lg: 'text-xs',
       },
     },
@@ -81,8 +81,8 @@ const countTextVariants = cva(
   {
     variants: {
       size: {
-        xs: 'text-[10px]',
-        sm: 'text-[11px]',
+        xs: 'text-label-xs',
+        sm: 'text-label-sm',
         default: 'text-xs',
         lg: 'text-sm',
       },

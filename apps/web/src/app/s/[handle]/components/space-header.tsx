@@ -82,7 +82,7 @@ export function SpaceHeader({
           <div className="flex items-center gap-2">
             {/* Space name - Clash Display */}
             <motion.h1
-              className="text-[18px] md:text-[20px] font-semibold text-white tracking-tight"
+              className="text-title-sm md:text-title font-semibold text-white tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}

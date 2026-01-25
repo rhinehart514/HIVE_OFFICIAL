@@ -65,10 +65,10 @@ export function EmailState({
     >
       {/* Header */}
       <motion.div variants={childVariants} className="space-y-3">
-        <h1 className="text-[32px] font-semibold tracking-tight text-white">
+        <h1 className="text-heading font-semibold tracking-tight text-white">
           Get in
         </h1>
-        <p className="text-[15px] leading-relaxed text-white/50">
+        <p className="text-body leading-relaxed text-white/50">
           Your campus. Your people. Your tools.
         </p>
       </motion.div>

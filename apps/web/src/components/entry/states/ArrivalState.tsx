@@ -97,7 +97,7 @@ export function ArrivalState({
         }}
       >
         <motion.h1
-          className="text-[36px] lg:text-[42px] font-semibold tracking-tight text-white mb-3"
+          className="text-heading-lg lg:text-display-sm font-semibold tracking-tight text-white mb-3"
           style={{
             textShadow: '0 0 40px rgba(255, 215, 0, 0.15)',
           }}
@@ -123,7 +123,7 @@ export function ArrivalState({
             delay: 0.2,
             ease: EASE_PREMIUM,
           }}
-          className="text-[15px] text-white/50"
+          className="text-body text-white/50"
         >
           {subtext}
         </motion.p>

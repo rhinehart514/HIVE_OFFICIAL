@@ -22,7 +22,7 @@ const monoVariants = cva(
       size: {
         default: 'text-[var(--font-size-body-sm)]', // 14px
         sm: 'text-[var(--font-size-body-xs)]',      // 13px
-        xs: 'text-[12px]',                          // 12px
+        xs: 'text-label',                          // 12px
       },
       inline: {
         true: [

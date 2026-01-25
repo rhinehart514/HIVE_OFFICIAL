@@ -250,7 +250,7 @@ export default function ResourcesPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white">{element.name}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                  <span className={`text-label-xs px-2 py-0.5 rounded-full ${
                     element.tier === "Universal" ? "bg-white/[0.06] text-white/50" :
                     element.tier === "Connected" ? "bg-blue-500/20 text-blue-400" :
                     "bg-[#FFD700]/20 text-[#FFD700]"

@@ -49,7 +49,7 @@ export function MajorSpaceCard({
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h3 className="text-[16px] font-semibold text-white mb-1">
+            <h3 className="text-body-lg font-semibold text-white mb-1">
               {majorName}
             </h3>
             <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export function MajorSpaceCard({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-[13px] text-green-400/90 font-medium">
+              <span className="text-body-sm text-green-400/90 font-medium">
                 Active
               </span>
             </div>
@@ -139,15 +139,15 @@ export function MajorSpaceCard({
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-[13px] text-white/50 font-medium">
+          <span className="text-body-sm text-white/50 font-medium">
             Coming Soon
           </span>
         </div>
 
-        <h3 className="text-[16px] font-semibold text-white mb-2">
+        <h3 className="text-body-lg font-semibold text-white mb-2">
           {majorName}
         </h3>
-        <p className="text-[13px] text-white/50 leading-relaxed">
+        <p className="text-body-sm text-white/50 leading-relaxed">
           Will unlock when more students join
         </p>
       </div>
@@ -182,7 +182,7 @@ export function MajorSpaceCard({
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-[12px] text-white/70">
+            <span className="text-label text-white/70">
               On Waitlist
             </span>
           </div>

@@ -196,12 +196,12 @@ function ToolSlotCard({ slot, index }: { slot: SetupToolSlot; index: number }) {
       )}
       <div className="flex items-center gap-2">
         <span
-          className="text-[10px] px-2 py-0.5 rounded-full capitalize"
+          className="text-label-xs px-2 py-0.5 rounded-full capitalize"
           style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textSecondary }}
         >
           {slot.placement}
         </span>
-        <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+        <span className="text-label-xs" style={{ color: COLORS.textTertiary }}>
           {slot.slotId}
         </span>
       </div>
@@ -246,7 +246,7 @@ function OrchestrationRuleCard({ rule, index }: { rule: OrchestrationRule; index
             </span>
             {!rule.enabled && (
               <span
-                className="ml-2 text-[10px] px-1.5 py-0.5 rounded"
+                className="ml-2 text-label-xs px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
               >
                 Disabled
@@ -510,10 +510,10 @@ export default function SetupDetailPage() {
                       {field.label}
                     </span>
                     {field.required && (
-                      <span className="text-[10px] text-red-400">Required</span>
+                      <span className="text-label-xs text-red-400">Required</span>
                     )}
                     <span
-                      className="text-[10px] px-1.5 py-0.5 rounded"
+                      className="text-label-xs px-1.5 py-0.5 rounded"
                       style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
                     >
                       {field.type}

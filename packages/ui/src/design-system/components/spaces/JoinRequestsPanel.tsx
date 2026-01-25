@@ -285,7 +285,7 @@ function FilterTabs({
         >
           {filter.label}
           {filter.value === 'pending' && counts?.pending && counts.pending > 0 && (
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--life-gold)] text-black text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[var(--life-gold)] text-black text-label-xs font-bold flex items-center justify-center">
               {counts.pending > 9 ? '9+' : counts.pending}
             </span>
           )}

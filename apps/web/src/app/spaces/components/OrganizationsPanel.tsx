@@ -68,27 +68,27 @@ function OrganizationRow({
       {/* Avatar */}
       <Avatar size="sm" className="ring-1 ring-white/[0.06] shrink-0">
         {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-        <AvatarFallback className="text-[11px] bg-white/[0.04]">
+        <AvatarFallback className="text-label-sm bg-white/[0.04]">
           {getInitials(space.name)}
         </AvatarFallback>
       </Avatar>
 
       {/* Name */}
-      <span className="flex-1 text-[14px] text-white/70 truncate">
+      <span className="flex-1 text-body text-white/70 truncate">
         {space.name}
       </span>
 
       {/* Online indicator */}
       <div className="flex items-center gap-1.5 shrink-0">
         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
-        <span className="text-[12px] text-white/25 tabular-nums w-6 text-right">
+        <span className="text-label text-white/25 tabular-nums w-6 text-right">
           {onlineCount}
         </span>
       </div>
 
       {/* Unread badge */}
       {space.unreadCount && space.unreadCount > 0 ? (
-        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-medium shrink-0">
+        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-label-sm font-medium shrink-0">
           {space.unreadCount} new
         </span>
       ) : null}
@@ -114,12 +114,12 @@ function EmptyOrganizations() {
 
   return (
     <div className="h-full flex flex-col items-center justify-center p-6">
-      <p className="text-[13px] text-white/30 text-center mb-4">
+      <p className="text-body-sm text-white/30 text-center mb-4">
         No organizations yet
       </p>
       <button
         onClick={() => router.push('/spaces/browse')}
-        className="text-[12px] text-white/50 hover:text-white/70 transition-colors"
+        className="text-label text-white/50 hover:text-white/70 transition-colors"
       >
         Browse spaces →
       </button>
@@ -156,13 +156,13 @@ export function OrganizationsPanel({
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between shrink-0">
-        <span className="text-[13px] font-medium text-white/40 uppercase tracking-wider">
+        <span className="text-body-sm font-medium text-white/40 uppercase tracking-wider">
           Organizations
         </span>
         {spaces.length > 0 && (
           <button
             onClick={() => router.push('/spaces/browse')}
-            className="text-[11px] text-white/20 hover:text-white/40 transition-colors"
+            className="text-label-sm text-white/20 hover:text-white/40 transition-colors"
           >
             Browse all
           </button>
@@ -183,7 +183,7 @@ export function OrganizationsPanel({
             {remainingCount > 0 && (
               <motion.button
                 onClick={() => router.push('/spaces/browse')}
-                className="w-full px-4 py-3 text-[13px] text-white/30 hover:text-white/50 transition-colors text-center"
+                className="w-full px-4 py-3 text-body-sm text-white/30 hover:text-white/50 transition-colors text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}

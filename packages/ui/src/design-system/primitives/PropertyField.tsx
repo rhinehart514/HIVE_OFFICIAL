@@ -240,7 +240,7 @@ const PropertySection: React.FC<PropertySectionProps> = ({ label, className }) =
       )}
     >
       {label && (
-        <span className="text-[10px] font-medium uppercase tracking-wider text-[var(--color-text-muted)] whitespace-nowrap">
+        <span className="text-label-xs font-medium uppercase tracking-wider text-[var(--color-text-muted)] whitespace-nowrap">
           {label}
         </span>
       )}

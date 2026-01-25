@@ -154,7 +154,7 @@ function SetupCard({
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span
-              className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              className="text-label-xs px-2 py-0.5 rounded-full font-medium"
               style={{
                 backgroundColor: `${sourceConfig.color}20`,
                 color: sourceConfig.color,
@@ -368,7 +368,7 @@ export default function SetupsGalleryPage() {
                       Featured Setups
                     </h2>
                     <span
-                      className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                      className="text-label-xs px-2 py-0.5 rounded-full font-medium"
                       style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
                     >
                       Recommended

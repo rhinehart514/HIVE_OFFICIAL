@@ -46,7 +46,7 @@ export function TabNav({ activeTab, onTabChange, className }: TabNavProps) {
             onMouseEnter={() => setHoveredTab(tab.id)}
             onMouseLeave={() => setHoveredTab(null)}
             className={cn(
-              'relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-[14px] font-medium transition-colors',
+              'relative flex items-center gap-2 px-4 py-2.5 rounded-lg text-body font-medium transition-colors',
               isActive ? 'text-white' : 'text-white/50 hover:text-white/70'
             )}
           >

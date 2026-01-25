@@ -141,7 +141,7 @@ function ElementButton({
           )}
         >
           {element.icon}
-          <span className="text-[10px] font-medium">{element.name}</span>
+          <span className="text-label-xs font-medium">{element.name}</span>
 
           {/* Gold pulse for highlighted elements */}
           {isHighlighted && (
@@ -271,7 +271,7 @@ export function ElementBelt({
                 aria-expanded={showFullPalette}
               >
                 <EllipsisHorizontalIcon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">More</span>
+                <span className="text-label-xs font-medium">More</span>
               </motion.button>
             </TooltipTrigger>
             <TooltipContent side="top">
@@ -300,7 +300,7 @@ export function ElementBelt({
                     aria-label="MagnifyingGlassIcon elements"
                   >
                     <MagnifyingGlassIcon className="w-5 h-5" />
-                    <span className="text-[10px] font-medium">MagnifyingGlassIcon</span>
+                    <span className="text-label-xs font-medium">MagnifyingGlassIcon</span>
                   </motion.button>
                 </PopoverTrigger>
                 <PopoverContent side="top" className="w-72 p-3">

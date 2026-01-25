@@ -399,7 +399,7 @@ function MockRailSidebar({ activeSpaceId }: { activeSpaceId?: string }) {
       {mockSpaces.slice(0, 3).map((space) => (
         <button
           key={space.id}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-medium transition-colors ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center text-label-xs font-medium transition-colors ${
             space.id === activeSpaceId
               ? 'bg-neutral-700 text-white'
               : 'bg-neutral-800/50 text-neutral-400 hover:bg-neutral-800 hover:text-white'
@@ -416,7 +416,7 @@ function MockRailSidebar({ activeSpaceId }: { activeSpaceId?: string }) {
       <div className="flex-1" />
 
       {/* Profile */}
-      <button className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-[10px] font-medium text-white">
+      <button className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-label-xs font-medium text-white">
         S
       </button>
     </aside>
@@ -471,7 +471,7 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
         <div className="px-3 py-2">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+            <span className="text-label-sm font-medium text-neutral-400 uppercase tracking-wider">
               {mockOnlineMembers.length} Online
             </span>
           </div>
@@ -479,7 +479,7 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
             {mockOnlineMembers.slice(0, 5).map((member) => (
               <div
                 key={member.id}
-                className="w-7 h-7 rounded-full border-2 border-neutral-900 bg-neutral-800 text-[10px] font-medium text-neutral-300 flex items-center justify-center"
+                className="w-7 h-7 rounded-full border-2 border-neutral-900 bg-neutral-800 text-label-xs font-medium text-neutral-300 flex items-center justify-center"
                 title={member.name}
               >
                 {member.name.charAt(0)}
@@ -492,7 +492,7 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
         <div className="px-3 py-2">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-3 h-3 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-            <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+            <span className="text-label-sm font-medium text-neutral-400 uppercase tracking-wider">
               Recent Chat
             </span>
           </div>
@@ -507,15 +507,15 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
                 />
               ))}
             </div>
-            <span className="text-[11px] text-neutral-500 italic">Alex is typing...</span>
+            <span className="text-label-sm text-neutral-500 italic">Alex is typing...</span>
           </div>
           {/* Latest message */}
           <div className="bg-neutral-900/50 rounded-lg p-2">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-4 h-4 rounded-full bg-neutral-700 text-[8px] font-medium flex items-center justify-center">S</div>
-              <span className="text-[11px] font-medium text-neutral-300">Sarah Chen</span>
+              <span className="text-label-sm font-medium text-neutral-300">Sarah Chen</span>
             </div>
-            <p className="text-[11px] text-neutral-500 line-clamp-2">Just pushed the new feature!</p>
+            <p className="text-label-sm text-neutral-500 line-clamp-2">Just pushed the new feature!</p>
           </div>
         </div>
 
@@ -523,7 +523,7 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
         <div className="px-3 py-2">
           <div className="flex items-center gap-2 mb-2">
             <svg className="w-3 h-3 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
-            <span className="text-[11px] font-medium text-neutral-400 uppercase tracking-wider">
+            <span className="text-label-sm font-medium text-neutral-400 uppercase tracking-wider">
               Space Tools
             </span>
           </div>
@@ -531,12 +531,12 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
             {mockDeployedTools.map((tool) => (
               <button
                 key={tool.id}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-[12px] text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left text-label text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200 transition-colors"
               >
                 <span className="text-base">{tool.icon}</span>
                 <span className="truncate flex-1">{tool.name}</span>
                 {tool.activeUsers > 0 && (
-                  <span className="text-[10px] text-life-gold">{tool.activeUsers}</span>
+                  <span className="text-label-xs text-life-gold">{tool.activeUsers}</span>
                 )}
               </button>
             ))}
@@ -547,10 +547,10 @@ function MockLivingSidebar({ activeSpace }: { activeSpace: typeof mockSpaces[0] 
       {/* Profile Section */}
       <div className="mt-auto border-t border-neutral-800/50 p-3">
         <button className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-neutral-800/50 transition-colors">
-          <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-[10px] font-medium text-white">S</div>
+          <div className="w-8 h-8 rounded-full bg-neutral-700 flex items-center justify-center text-label-xs font-medium text-white">S</div>
           <div className="flex-1 min-w-0 text-left">
             <p className="text-sm font-medium text-white truncate">Sarah Chen</p>
-            <p className="text-[11px] text-neutral-500 truncate">@sarahchen</p>
+            <p className="text-label-sm text-neutral-500 truncate">@sarahchen</p>
           </div>
         </button>
       </div>
@@ -578,12 +578,12 @@ function MockMobileNav({ activePath }: { activePath: string }) {
             }`}
           >
             <div className="relative">
-              <span className="text-[18px]">{item.icon}</span>
+              <span className="text-title-sm">{item.icon}</span>
               {item.path === activePath && (
                 <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-life-gold" />
               )}
             </div>
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <span className="text-label-xs font-medium">{item.label}</span>
           </button>
         ))}
       </div>

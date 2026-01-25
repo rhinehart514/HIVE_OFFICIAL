@@ -50,7 +50,7 @@ export default function WelcomePage() {
             animate={isReady ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: MOTION.duration.slow, ease: MOTION.ease.premium }}
           >
-            <h1 className="text-[40px] lg:text-[48px] font-semibold tracking-tight text-white">
+            <h1 className="text-heading-lg lg:text-display-sm font-semibold tracking-tight text-white">
               Welcome,{' '}
               <GradientText variant="gold">
                 {firstName}
@@ -63,7 +63,7 @@ export default function WelcomePage() {
             animate={isReady ? { opacity: 1 } : {}}
             transition={{ duration: MOTION.duration.base, delay: 0.4, ease: MOTION.ease.premium }}
           >
-            <p className="text-[18px] text-white/60">
+            <p className="text-title-sm text-white/60">
               You&apos;re in.
             </p>
           </motion.div>
@@ -76,7 +76,7 @@ export default function WelcomePage() {
           animate={isReady ? { opacity: 1 } : {}}
           transition={{ duration: MOTION.duration.base, delay: 0.6, ease: MOTION.ease.premium }}
         >
-          <p className="text-[14px] text-white/40 max-w-[280px] mx-auto leading-relaxed">
+          <p className="text-body text-white/40 max-w-[280px] mx-auto leading-relaxed">
             Let&apos;s set up your space. It only takes a minute, and you&apos;ll be ready to connect with your campus.
           </p>
         </motion.div>

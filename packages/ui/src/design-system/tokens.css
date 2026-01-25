@@ -89,6 +89,29 @@
   --border-default: rgba(255, 255, 255, 0.10);
   --border-emphasis: rgba(255, 255, 255, 0.15);
 
+  /* ============================================
+   * OPACITY SCALE
+   * Semantic opacity values for consistent layering
+   * ============================================ */
+
+  /* Numeric scale - raw values */
+  --opacity-ghost: 0.04;
+  --opacity-subtle: 0.06;
+  --opacity-muted: 0.08;
+  --opacity-soft: 0.10;
+  --opacity-medium: 0.12;
+  --opacity-visible: 0.15;
+  --opacity-strong: 0.20;
+  --opacity-prominent: 0.30;
+  --opacity-dominant: 0.50;
+
+  /* Semantic aliases - contextual usage */
+  --opacity-glass-bg: var(--opacity-ghost);
+  --opacity-glass-border: var(--opacity-muted);
+  --opacity-hover-overlay: var(--opacity-soft);
+  --opacity-active-overlay: var(--opacity-visible);
+  --opacity-disabled: var(--opacity-prominent);
+
   /* Life Colors - Gold (1-2% budget only) */
   --life-gold: #FFD700;                    /* Pure gold - CTAs, presence */
   --life-gold-hover: #FFDF33;              /* Slightly lighter on hover */

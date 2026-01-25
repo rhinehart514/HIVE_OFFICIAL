@@ -196,7 +196,7 @@ const BubbleD_Minimal = () => (
   <ConversationWrapper>
     <div className="space-y-1">
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default">
-        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-[10px]">JD</AvatarFallback></Avatar>
+        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-label-xs">JD</AvatarFallback></Avatar>
         <div className="flex-1">
           <div className="flex items-baseline gap-2">
             <Text size="sm" weight="medium">Jane Doe</Text>
@@ -206,7 +206,7 @@ const BubbleD_Minimal = () => (
         </div>
       </div>
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default">
-        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-[10px]">ME</AvatarFallback></Avatar>
+        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-label-xs">ME</AvatarFallback></Avatar>
         <div className="flex-1">
           <div className="flex items-baseline gap-2">
             <Text size="sm" weight="medium" className="text-[var(--color-accent-gold)]">You</Text>
@@ -216,7 +216,7 @@ const BubbleD_Minimal = () => (
         </div>
       </div>
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default">
-        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-[10px]">JS</AvatarFallback></Avatar>
+        <Avatar size="xs" className="mt-0.5"><AvatarFallback className="text-label-xs">JS</AvatarFallback></Avatar>
         <div className="flex-1">
           <div className="flex items-baseline gap-2">
             <Text size="sm" weight="medium">John Smith</Text>
@@ -1031,7 +1031,7 @@ const Combo3_Linear = () => (
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default relative">
         <div className="w-6 flex-shrink-0 flex justify-center">
           <Avatar size="xs" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <AvatarFallback className="text-[10px]">JD</AvatarFallback>
+            <AvatarFallback className="text-label-xs">JD</AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1">
@@ -1049,7 +1049,7 @@ const Combo3_Linear = () => (
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default relative">
         <div className="w-6 flex-shrink-0 flex justify-center">
           <Avatar size="xs" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <AvatarFallback className="text-[10px]">JS</AvatarFallback>
+            <AvatarFallback className="text-label-xs">JS</AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1">
@@ -1067,7 +1067,7 @@ const Combo3_Linear = () => (
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default relative">
         <div className="w-6 flex-shrink-0 flex justify-center">
           <Avatar size="xs" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <AvatarFallback className="text-[10px]">ME</AvatarFallback>
+            <AvatarFallback className="text-label-xs">ME</AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1">
@@ -1085,7 +1085,7 @@ const Combo3_Linear = () => (
       <div className="group flex gap-3 py-1.5 px-3 -mx-3 rounded-lg hover:bg-[var(--color-bg-elevated)]/50 transition-colors cursor-default relative">
         <div className="w-6 flex-shrink-0 flex justify-center">
           <Avatar size="xs" className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <AvatarFallback className="text-[10px]">AJ</AvatarFallback>
+            <AvatarFallback className="text-label-xs">AJ</AvatarFallback>
           </Avatar>
         </div>
         <div className="flex-1">
@@ -1386,7 +1386,7 @@ const HybridV3_DenseApple = () => (
     <div className="space-y-2 -mx-2">
       {/* Other - Compact bubble in Discord-like row */}
       <div className="group flex gap-3 py-1.5 px-2 hover:bg-[var(--color-bg-elevated)]/20 rounded-lg transition-colors relative">
-        <Avatar size="xs"><AvatarFallback className="text-[10px]">JD</AvatarFallback></Avatar>
+        <Avatar size="xs"><AvatarFallback className="text-label-xs">JD</AvatarFallback></Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-0.5">
             <Text size="xs" weight="semibold">Jane Doe</Text>
@@ -1403,7 +1403,7 @@ const HybridV3_DenseApple = () => (
       </div>
       {/* Own - Apple style but compact */}
       <div className="group flex gap-3 py-1.5 px-2 hover:bg-[var(--color-bg-elevated)]/20 rounded-lg transition-colors relative flex-row-reverse">
-        <Avatar size="xs"><AvatarFallback className="text-[10px]">ME</AvatarFallback></Avatar>
+        <Avatar size="xs"><AvatarFallback className="text-label-xs">ME</AvatarFallback></Avatar>
         <div className="flex-1 min-w-0 flex flex-col items-end">
           <div className="flex items-baseline gap-2 mb-0.5 flex-row-reverse">
             <Text size="xs" weight="semibold" className="text-[var(--color-accent-gold)]">You</Text>
@@ -1433,7 +1433,7 @@ const HybridV3_DenseApple = () => (
       </div>
       {/* Another user */}
       <div className="group flex gap-3 py-1.5 px-2 hover:bg-[var(--color-bg-elevated)]/20 rounded-lg transition-colors relative">
-        <Avatar size="xs"><AvatarFallback className="text-[10px]">JS</AvatarFallback></Avatar>
+        <Avatar size="xs"><AvatarFallback className="text-label-xs">JS</AvatarFallback></Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-0.5">
             <Text size="xs" weight="semibold">John Smith</Text>

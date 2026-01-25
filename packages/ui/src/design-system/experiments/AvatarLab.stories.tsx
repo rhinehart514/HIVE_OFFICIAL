@@ -293,7 +293,7 @@ export const Final_Candidates = () => (
           <div className="flex -space-x-2 mb-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 ring-2 ring-[#1c1c1c]" />
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 ring-2 ring-[#1c1c1c]" />
-            <div className="w-8 h-8 rounded-lg bg-white/10 ring-2 ring-[#1c1c1c] flex items-center justify-center text-[10px] font-medium text-white/60">+3</div>
+            <div className="w-8 h-8 rounded-lg bg-white/10 ring-2 ring-[#1c1c1c] flex items-center justify-center text-label-xs font-medium text-white/60">+3</div>
           </div>
           <span className="text-xs text-white/40">group</span>
         </div>

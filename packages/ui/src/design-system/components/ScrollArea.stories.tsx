@@ -86,7 +86,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Default (Thin)
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             w-1.5 (6px)
           </span>
         </div>
@@ -115,7 +115,7 @@ export const LockedDesignShowcase: StoryObj = {
         </div>
         <div className="flex gap-4">
           <div>
-            <p className="text-[10px] text-white/40 mb-2">Default</p>
+            <p className="text-label-xs text-white/40 mb-2">Default</p>
             <ScrollArea
               className="h-32 w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
               thumbVariant="default"
@@ -130,7 +130,7 @@ export const LockedDesignShowcase: StoryObj = {
             </ScrollArea>
           </div>
           <div>
-            <p className="text-[10px] text-white/40 mb-2">Light</p>
+            <p className="text-label-xs text-white/40 mb-2">Light</p>
             <ScrollArea
               className="h-32 w-40 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
               thumbVariant="light"
@@ -154,7 +154,7 @@ export const LockedDesignShowcase: StoryObj = {
         </span>
         <div className="flex gap-4">
           <div>
-            <p className="text-[10px] text-white/40 mb-2">Auto (default)</p>
+            <p className="text-label-xs text-white/40 mb-2">Auto (default)</p>
             <ScrollArea
               className="h-24 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
               scrollbarVisibility="auto"
@@ -169,7 +169,7 @@ export const LockedDesignShowcase: StoryObj = {
             </ScrollArea>
           </div>
           <div>
-            <p className="text-[10px] text-white/40 mb-2">Always</p>
+            <p className="text-label-xs text-white/40 mb-2">Always</p>
             <ScrollArea
               className="h-24 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
               scrollbarVisibility="always"
@@ -184,7 +184,7 @@ export const LockedDesignShowcase: StoryObj = {
             </ScrollArea>
           </div>
           <div>
-            <p className="text-[10px] text-white/40 mb-2">Hover</p>
+            <p className="text-label-xs text-white/40 mb-2">Hover</p>
             <ScrollArea
               className="h-24 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
               scrollbarVisibility="hover"

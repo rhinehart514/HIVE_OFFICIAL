@@ -179,7 +179,7 @@ export function LandingHero({
         {showScrollIndicator && (
           <div className="mt-24 flex items-center gap-3">
             <div className="w-px h-8 bg-white/20" />
-            <span className="text-[11px] uppercase tracking-wider text-white/20">
+            <span className="text-label-sm uppercase tracking-wider text-white/20">
               {scrollText}
             </span>
           </div>

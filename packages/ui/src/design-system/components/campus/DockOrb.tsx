@@ -211,7 +211,7 @@ export function DockOrb({
             'absolute -top-1 -right-1',
             'min-w-[18px] h-[18px] px-1',
             'flex items-center justify-center',
-            'text-[10px] font-semibold',
+            'text-label-xs font-semibold',
             'rounded-full',
             // Gold for presence (allowed by budget)
             'bg-[var(--life-gold)] text-black'

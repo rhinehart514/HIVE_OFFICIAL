@@ -214,10 +214,10 @@ const ProfileCompletionNudge = React.forwardRef<HTMLDivElement, ProfileCompletio
             {/* Header */}
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex-1">
-                <p className="text-[13px] font-semibold text-white mb-0.5">
+                <p className="text-body-sm font-semibold text-white mb-0.5">
                   Complete your profile
                 </p>
-                <p className="text-[11px] text-white/50">
+                <p className="text-label-sm text-white/50">
                   {completion}% complete
                 </p>
               </div>
@@ -262,7 +262,7 @@ const ProfileCompletionNudge = React.forwardRef<HTMLDivElement, ProfileCompletio
                     </div>
                     <span
                       className={cn(
-                        'text-[12px]',
+                        'text-label',
                         item.complete ? 'text-white/50 line-through' : 'text-white/70'
                       )}
                     >
@@ -279,7 +279,7 @@ const ProfileCompletionNudge = React.forwardRef<HTMLDivElement, ProfileCompletio
                 onClick={handleAction}
                 className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-left transition-colors hover:bg-[#D4AF37]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
-                <span className="text-[13px] font-medium text-[#D4AF37]">
+                <span className="text-body-sm font-medium text-[#D4AF37]">
                   Add {nextItem.label.toLowerCase()}
                 </span>
                 <ArrowIcon className="w-4 h-4 text-[#D4AF37]" />

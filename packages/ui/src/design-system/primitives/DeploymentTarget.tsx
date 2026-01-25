@@ -88,7 +88,7 @@ const surfacePillVariants = cva(
     'inline-flex items-center',
     'px-2 py-1',
     'rounded-md',
-    'text-[10px] font-medium',
+    'text-label-xs font-medium',
     'transition-colors duration-150',
   ].join(' '),
   {
@@ -216,7 +216,7 @@ const DeploymentTargetCard: React.FC<{
               {target.name}
             </span>
             {target.isLeader && (
-              <span className="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium bg-[#D4AF37]/20 text-[#D4AF37]">
+              <span className="shrink-0 px-1.5 py-0.5 rounded text-label-xs font-medium bg-[#D4AF37]/20 text-[#D4AF37]">
                 Leader
               </span>
             )}
@@ -229,7 +229,7 @@ const DeploymentTargetCard: React.FC<{
           )}
 
           {target.isDeployed && (
-            <span className="flex items-center gap-1 text-[10px] text-white/50 mt-1">
+            <span className="flex items-center gap-1 text-label-xs text-white/50 mt-1">
               <CheckIcon className="w-3 h-3" />
               Already deployed
             </span>

@@ -69,14 +69,14 @@ export function SpacePreviewCard({
         {avatar ? (
           <img src={avatar} alt={name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-[11px] font-bold text-white/60">
+          <span className="text-label-sm font-bold text-white/60">
             {shortName || name.slice(0, 2).toUpperCase()}
           </span>
         )}
       </div>
 
       {/* Name */}
-      <p className="text-[14px] font-medium text-white truncate">{name}</p>
+      <p className="text-body font-medium text-white truncate">{name}</p>
 
       {/* Activity */}
       <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ export function SpacePreviewCard({
         )}
         <span
           className={cn(
-            'text-[13px]',
+            'text-body-sm',
             isLive ? 'text-[var(--color-gold)]/80' : 'text-white/40'
           )}
         >

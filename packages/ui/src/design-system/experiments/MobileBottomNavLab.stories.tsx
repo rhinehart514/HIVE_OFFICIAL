@@ -115,7 +115,7 @@ export const Variable1_Height: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -140,7 +140,7 @@ export const Variable1_Height: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -165,7 +165,7 @@ export const Variable1_Height: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1.5">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -231,7 +231,7 @@ export const Variable2_ItemStyle: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] font-medium ${isActive ? 'text-white' : 'text-white/40'}`}>
+                    <span className={`text-label-xs font-medium ${isActive ? 'text-white' : 'text-white/40'}`}>
                       {item.label}
                     </span>
                   </button>
@@ -259,7 +259,7 @@ export const Variable2_ItemStyle: Story = {
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
                     {isActive && (
-                      <span className="text-[10px] font-medium text-white">{item.label}</span>
+                      <span className="text-label-xs font-medium text-white">{item.label}</span>
                     )}
                   </button>
                 );
@@ -330,7 +330,7 @@ export const Variable3_ActiveIndicator: Story = {
                       <div className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-[#FFD700]" />
                     )}
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -360,7 +360,7 @@ export const Variable3_ActiveIndicator: Story = {
                     }`}
                   >
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -385,7 +385,7 @@ export const Variable3_ActiveIndicator: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -413,7 +413,7 @@ export const Variable3_ActiveIndicator: Story = {
                       <div className="absolute -top-4 w-8 h-0.5 rounded-full bg-white" />
                     )}
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -441,7 +441,7 @@ export const Variable3_ActiveIndicator: Story = {
                       <div className="absolute inset-0 bg-white/10 blur-xl rounded-full" />
                     )}
                     <Icon className={`w-6 h-6 relative ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] relative ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs relative ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -483,7 +483,7 @@ export const Variable4_Background: Story = {
                 return (
                   <button key={item.label} className="flex flex-col items-center gap-1">
                     <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                    <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                    <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                   </button>
                 );
               })}
@@ -509,7 +509,7 @@ export const Variable4_Background: Story = {
                   return (
                     <button key={item.label} className="flex flex-col items-center gap-1">
                       <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                      <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                      <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                     </button>
                   );
                 })}
@@ -539,7 +539,7 @@ export const Variable4_Background: Story = {
                   return (
                     <button key={item.label} className="flex flex-col items-center gap-1">
                       <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                      <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                      <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                     </button>
                   );
                 })}
@@ -569,7 +569,7 @@ export const Variable4_Background: Story = {
                   return (
                     <button key={item.label} className="flex flex-col items-center gap-1">
                       <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                      <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                      <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                     </button>
                   );
                 })}
@@ -591,7 +591,7 @@ export const FullCompositions: Story = {
       {/* Option 1: iOS-like */}
       <div className="flex flex-col items-center">
         <span className="text-xs text-white/40 mb-2">Option 1: iOS Standard</span>
-        <span className="text-[10px] text-white/30 mb-2">64px, Icon+Label, Solid fill, Glass bg</span>
+        <span className="text-label-xs text-white/30 mb-2">64px, Icon+Label, Solid fill, Glass bg</span>
         <PhoneFrame>
           <div className="h-full flex flex-col relative">
             <div className="flex-1 overflow-auto pb-24">
@@ -605,7 +605,7 @@ export const FullCompositions: Story = {
                   return (
                     <button key={item.label} className="flex flex-col items-center gap-1">
                       <Icon className={`w-6 h-6 ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`} />
-                      <span className={`text-[10px] ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`}>{item.label}</span>
+                      <span className={`text-label-xs ${isActive ? 'text-[#FFD700]' : 'text-white/40'}`}>{item.label}</span>
                     </button>
                   );
                 })}
@@ -619,7 +619,7 @@ export const FullCompositions: Story = {
       {/* Option 2: Minimal */}
       <div className="flex flex-col items-center">
         <span className="text-xs text-white/40 mb-2">Option 2: Minimal</span>
-        <span className="text-[10px] text-white/30 mb-2">56px, Icon only, Dot indicator, Solid</span>
+        <span className="text-label-xs text-white/30 mb-2">56px, Icon only, Dot indicator, Solid</span>
         <PhoneFrame>
           <div className="h-full flex flex-col">
             <div className="flex-1 overflow-auto">
@@ -647,7 +647,7 @@ export const FullCompositions: Story = {
       {/* Option 3: Premium */}
       <div className="flex flex-col items-center">
         <span className="text-xs text-white/40 mb-2">Option 3: Premium Floating</span>
-        <span className="text-[10px] text-white/30 mb-2">64px, Icon+Label, Pill bg, Floating</span>
+        <span className="text-label-xs text-white/30 mb-2">64px, Icon+Label, Pill bg, Floating</span>
         <PhoneFrame>
           <div className="h-full flex flex-col relative">
             <div className="flex-1 overflow-auto pb-28">
@@ -672,7 +672,7 @@ export const FullCompositions: Story = {
                       }`}
                     >
                       <Icon className={`w-6 h-6 ${isActive ? 'text-white' : 'text-white/40'}`} />
-                      <span className={`text-[10px] ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
+                      <span className={`text-label-xs ${isActive ? 'text-white' : 'text-white/40'}`}>{item.label}</span>
                     </button>
                   );
                 })}

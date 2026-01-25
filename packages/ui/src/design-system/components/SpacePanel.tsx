@@ -75,9 +75,9 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
       <ChevronRight className="h-3 w-3 flex-shrink-0" />
     )}
     {icon}
-    <span className="uppercase text-[10px] tracking-wider">{title}</span>
+    <span className="uppercase text-label-xs tracking-wider">{title}</span>
     {count !== undefined && count > 0 && (
-      <span className="text-[10px] tabular-nums text-muted-foreground/60">
+      <span className="text-label-xs tabular-nums text-muted-foreground/60">
         {count}
       </span>
     )}

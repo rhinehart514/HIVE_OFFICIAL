@@ -99,7 +99,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Standard Menu
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Apple Glass Dark surface
           </span>
         </div>
@@ -109,7 +109,7 @@ export const LockedDesignShowcase: StoryObj = {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem>
-              Edit (hover: <code className="text-[10px] text-[#FFD700]">bg-white/[0.08]</code>)
+              Edit (hover: <code className="text-label-xs text-[#FFD700]">bg-white/[0.08]</code>)
             </DropdownMenuItem>
             <DropdownMenuItem>Duplicate</DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -166,7 +166,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Separator Style
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Inset shadow gradient
           </span>
         </div>

@@ -374,7 +374,7 @@ function PostFeedItem({
               {timeAgo}
             </Text>
             {item.isPinned && (
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--color-gold)]/[0.12] text-[var(--color-gold)]/80 rounded">
+              <span className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--color-gold)]/[0.12] text-[var(--color-gold)]/80 rounded">
                 PINNED
               </span>
             )}
@@ -445,12 +445,12 @@ function EmptyState() {
         <MegaphoneIcon className="w-7 h-7 text-white/20" />
       </motion.div>
       <h3
-        className="text-[24px] font-semibold text-white mb-3"
+        className="text-title-lg font-semibold text-white mb-3"
         style={{ fontFamily: 'var(--font-display)' }}
       >
         No activity yet
       </h3>
-      <p className="text-[15px] text-white/40 max-w-sm mx-auto">
+      <p className="text-body text-white/40 max-w-sm mx-auto">
         Start a conversation, create an event, or deploy a tool to get things moving.
       </p>
     </motion.div>

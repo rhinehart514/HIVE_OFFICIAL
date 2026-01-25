@@ -84,21 +84,21 @@ function ActionItem({ item, index }: { item: AttentionItem; index: number }) {
       {/* Space avatar */}
       <Avatar size="xs" className="ring-1 ring-white/[0.06] shrink-0">
         {item.spaceAvatarUrl && <AvatarImage src={item.spaceAvatarUrl} />}
-        <AvatarFallback className="text-[9px]">
+        <AvatarFallback className="text-label-xs">
           {getInitials(item.spaceName)}
         </AvatarFallback>
       </Avatar>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <span className="text-[13px] text-white/60 truncate block">
+        <span className="text-body-sm text-white/60 truncate block">
           {item.title}
         </span>
       </div>
 
       {/* Time */}
       {item.deadline && (
-        <span className={cn('text-[11px] shrink-0', URGENCY_COLORS[item.urgency])}>
+        <span className={cn('text-label-sm shrink-0', URGENCY_COLORS[item.urgency])}>
           {formatUrgency()}
         </span>
       )}
@@ -131,14 +131,14 @@ function LiveSpaceItem({ space, index }: { space: LiveSpace; index: number }) {
       {/* Avatar */}
       <Avatar size="xs" className="ring-1 ring-white/[0.06] shrink-0">
         {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-        <AvatarFallback className="text-[9px]">
+        <AvatarFallback className="text-label-xs">
           {getInitials(space.name)}
         </AvatarFallback>
       </Avatar>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <span className="text-[13px] text-white/60 truncate block">
+        <span className="text-body-sm text-white/60 truncate block">
           {space.eventName || space.name}
         </span>
       </div>
@@ -146,7 +146,7 @@ function LiveSpaceItem({ space, index }: { space: LiveSpace; index: number }) {
       {/* Participant count */}
       <div className="flex items-center gap-1 shrink-0">
         <Users size={12} className="text-white/20" />
-        <span className="text-[11px] text-white/30 tabular-nums">
+        <span className="text-label-sm text-white/30 tabular-nums">
           {space.participantCount}
         </span>
       </div>
@@ -161,7 +161,7 @@ function LiveSpaceItem({ space, index }: { space: LiveSpace; index: number }) {
 function EmptyActions() {
   return (
     <div className="py-4 px-3 text-center">
-      <p className="text-[12px] text-white/20">No pending actions</p>
+      <p className="text-label text-white/20">No pending actions</p>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function EmptyActions() {
 function EmptyLive() {
   return (
     <div className="py-4 px-3 text-center">
-      <p className="text-[12px] text-white/20">No live activity</p>
+      <p className="text-label text-white/20">No live activity</p>
     </div>
   );
 }
@@ -197,7 +197,7 @@ export function AttentionPanel({ actions, liveSpaces }: AttentionPanelProps) {
       {/* Actions Section */}
       <div className="flex-1 flex flex-col min-h-0">
         <div className="px-4 py-3 border-b border-white/[0.04] shrink-0">
-          <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+          <span className="text-label-sm font-medium text-white/40 uppercase tracking-wider">
             Actions
           </span>
         </div>
@@ -218,7 +218,7 @@ export function AttentionPanel({ actions, liveSpaces }: AttentionPanelProps) {
       <div className="flex-1 flex flex-col border-t border-white/[0.04] min-h-0">
         <div className="px-4 py-3 shrink-0 flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-medium text-white/40 uppercase tracking-wider">
+          <span className="text-label-sm font-medium text-white/40 uppercase tracking-wider">
             Live
           </span>
         </div>

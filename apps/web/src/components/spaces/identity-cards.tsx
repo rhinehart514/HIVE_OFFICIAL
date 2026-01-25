@@ -287,7 +287,7 @@ export function IdentityCards({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
         >
           Your Campus Identity
         </Text>
@@ -306,7 +306,7 @@ export function IdentityCards({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
         >
           Your Campus Identity
         </Text>
@@ -350,7 +350,7 @@ export function IdentityCards({
     <section className="mb-8">
       <Text
         weight="medium"
-        className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+        className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
       >
         Your Campus Identity
       </Text>

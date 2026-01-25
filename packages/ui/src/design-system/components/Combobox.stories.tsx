@@ -102,7 +102,7 @@ export const LockedDesignShowcase: Story = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Standard
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Pure Float trigger
             </span>
           </div>
@@ -122,7 +122,7 @@ export const LockedDesignShowcase: Story = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Grouped Options
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Check icon selected
             </span>
           </div>
@@ -153,7 +153,7 @@ export const LockedDesignShowcase: Story = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Creatable
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               Gold text CTA
             </span>
           </div>
@@ -179,15 +179,15 @@ export const LockedDesignShowcase: Story = {
           </span>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-1">Loading</p>
+              <p className="text-label-xs text-white/40 mb-1">Loading</p>
               <Combobox options={[]} placeholder="Loading..." loading />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-1">Error</p>
+              <p className="text-label-xs text-white/40 mb-1">Error</p>
               <Combobox options={basicOptions} placeholder="Required..." error />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-1">Disabled</p>
+              <p className="text-label-xs text-white/40 mb-1">Disabled</p>
               <Combobox options={basicOptions} placeholder="Disabled..." disabled />
             </div>
           </div>

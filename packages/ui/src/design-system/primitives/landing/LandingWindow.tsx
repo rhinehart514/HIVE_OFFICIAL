@@ -57,7 +57,7 @@ export function LandingWindow({
       </div>
 
       {/* Scroll hint */}
-      <p className="text-center text-[12px] text-white/30 mt-2">
+      <p className="text-center text-label text-white/30 mt-2">
         scroll to explore
       </p>
     </div>

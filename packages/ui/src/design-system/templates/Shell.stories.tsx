@@ -87,11 +87,11 @@ const SampleContent = ({ title = 'Page Content' }: { title?: string }) => (
               <h3 className="font-medium text-[var(--color-text-primary)] tracking-[-0.01em] mb-1">
                 Card {i + 1}
               </h3>
-              <p className="text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
+              <p className="text-body-sm text-[var(--color-text-secondary)] leading-relaxed">
                 Premium HIVE component with subtle hover states and refined typography.
               </p>
             </div>
-            <span className="text-[11px] text-[var(--color-text-muted)] font-medium uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-label-sm text-[var(--color-text-muted)] font-medium uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity">
               View
             </span>
           </div>

@@ -113,7 +113,7 @@ function StatusBadge({ status }: { status: 'success' | 'skipped' | 'failed' }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider"
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-label-xs font-medium uppercase tracking-wider"
       style={{ backgroundColor: styles[status].bg, color: styles[status].color }}
     >
       {labels[status]}
@@ -238,11 +238,11 @@ function LogEntry({ run }: { run: AutomationRun }) {
               {/* Trigger Data */}
               {run.triggerData && Object.keys(run.triggerData).length > 0 && (
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <span className="text-label-xs uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
                     Trigger Data
                   </span>
                   <pre
-                    className="mt-1 p-2 rounded text-[10px] font-mono overflow-x-auto"
+                    className="mt-1 p-2 rounded text-label-xs font-mono overflow-x-auto"
                     style={{ backgroundColor: PANEL_COLORS.bg, color: PANEL_COLORS.textSecondary }}
                   >
                     {JSON.stringify(run.triggerData, null, 2)}
@@ -253,7 +253,7 @@ function LogEntry({ run }: { run: AutomationRun }) {
               {/* Condition Results */}
               {run.conditionResults && run.conditionResults.length > 0 && (
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <span className="text-label-xs uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
                     Conditions
                   </span>
                   <div className="mt-1 space-y-1">
@@ -283,14 +283,14 @@ function LogEntry({ run }: { run: AutomationRun }) {
               {/* Actions Executed */}
               {run.actionsExecuted.length > 0 && (
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <span className="text-label-xs uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.textTertiary }}>
                     Actions Executed
                   </span>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {run.actionsExecuted.map((action, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 rounded text-[10px] font-medium"
+                        className="px-2 py-0.5 rounded text-label-xs font-medium"
                         style={{ backgroundColor: PANEL_COLORS.accentLight, color: PANEL_COLORS.accent }}
                       >
                         {action}
@@ -303,7 +303,7 @@ function LogEntry({ run }: { run: AutomationRun }) {
               {/* Error */}
               {run.error && (
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.error }}>
+                  <span className="text-label-xs uppercase tracking-wider font-medium" style={{ color: PANEL_COLORS.error }}>
                     Error
                   </span>
                   <div
@@ -432,7 +432,7 @@ export function AutomationLogsViewer({
                   <div className="text-lg font-semibold" style={{ color: PANEL_COLORS.textPrimary }}>
                     {stats.total}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <div className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Total
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export function AutomationLogsViewer({
                   <div className="text-lg font-semibold" style={{ color: PANEL_COLORS.success }}>
                     {stats.success}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <div className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Success
                   </div>
                 </div>
@@ -448,7 +448,7 @@ export function AutomationLogsViewer({
                   <div className="text-lg font-semibold" style={{ color: PANEL_COLORS.warning }}>
                     {stats.skipped}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <div className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Skipped
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export function AutomationLogsViewer({
                   <div className="text-lg font-semibold" style={{ color: PANEL_COLORS.error }}>
                     {stats.failed}
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <div className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Failed
                   </div>
                 </div>
@@ -465,7 +465,7 @@ export function AutomationLogsViewer({
                     {stats.avgDuration}
                     <span className="text-xs font-normal" style={{ color: PANEL_COLORS.textTertiary }}>ms</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <div className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Avg Time
                   </div>
                 </div>

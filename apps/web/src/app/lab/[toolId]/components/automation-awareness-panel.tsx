@@ -147,7 +147,7 @@ function AutomationCard({ automation }: { automation: Automation }) {
             </span>
             {!automation.isActive && (
               <span
-                className="text-[10px] px-1.5 py-0.5 rounded"
+                className="text-label-xs px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
               >
                 Paused
@@ -159,7 +159,7 @@ function AutomationCard({ automation }: { automation: Automation }) {
               {automation.description}
             </p>
           )}
-          <div className="flex items-center gap-2 mt-1.5 text-[10px]" style={{ color: COLORS.textTertiary }}>
+          <div className="flex items-center gap-2 mt-1.5 text-label-xs" style={{ color: COLORS.textTertiary }}>
             <span className="capitalize">{automation.triggerType.replace('_', ' ')}</span>
             <span>•</span>
             <span>{automation.spaceName}</span>
@@ -181,7 +181,7 @@ function DeploymentSection({ deployment }: { deployment: ToolDeployment }) {
             {deployment.targetName}
           </span>
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded"
+            className="text-label-xs px-1.5 py-0.5 rounded"
             style={{
               backgroundColor: deployment.status === 'active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
               color: deployment.status === 'active' ? '#10B981' : COLORS.textTertiary,

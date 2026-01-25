@@ -85,7 +85,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Semantic Variants
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             10% tint + full border
           </span>
         </div>
@@ -111,7 +111,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Gold (Achievements Only)
           </span>
-          <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
             Reserved for special moments
           </span>
         </div>

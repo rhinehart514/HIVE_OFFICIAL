@@ -220,7 +220,7 @@ export function IDEToolbar({
         >
           <SparklesIcon className="h-4 w-4 text-[var(--hivelab-text-primary)]" />
           <span className="text-sm hidden sm:block">AI</span>
-          <kbd className="hidden sm:block px-1.5 py-0.5 text-[10px] bg-[var(--hivelab-bg)] rounded text-[var(--hivelab-text-tertiary)]">⌘K</kbd>
+          <kbd className="hidden sm:block px-1.5 py-0.5 text-label-xs bg-[var(--hivelab-bg)] rounded text-[var(--hivelab-text-tertiary)]">⌘K</kbd>
         </button>
 
         <Divider />

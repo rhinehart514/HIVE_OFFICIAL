@@ -577,7 +577,7 @@ function ExpandedRail({
             <SparklesIcon className="h-4 w-4" />
             Describe with AI
             <kbd
-              className="ml-auto px-1.5 py-0.5 text-[10px] rounded"
+              className="ml-auto px-1.5 py-0.5 text-label-xs rounded"
               style={{ backgroundColor: `${SIDEBAR_COLORS.accent}20` }}
             >
               ⌘K
@@ -600,7 +600,7 @@ function ExpandedRail({
             <ClockIcon className="h-4 w-4" />
             Browse Templates
             <kbd
-              className="ml-auto px-1.5 py-0.5 text-[10px] rounded"
+              className="ml-auto px-1.5 py-0.5 text-label-xs rounded"
               style={{
                 backgroundColor: SIDEBAR_COLORS.bg,
                 color: SIDEBAR_COLORS.textTertiary,
@@ -843,7 +843,7 @@ function ToolsPanel({
                     {tool.name || 'Untitled Tool'}
                   </span>
                   <span
-                    className="text-[10px] px-1.5 py-0.5 rounded-full shrink-0"
+                    className="text-label-xs px-1.5 py-0.5 rounded-full shrink-0"
                     style={{
                       backgroundColor: `${badge.color}20`,
                       color: badge.color,

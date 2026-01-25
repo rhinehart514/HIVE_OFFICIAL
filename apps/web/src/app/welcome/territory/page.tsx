@@ -171,7 +171,7 @@ export default function TerritoryPage() {
             animate={{ opacity: 1, y: 0 }}
             className="p-3 rounded-lg bg-red-500/10 border border-red-500/20"
           >
-            <p className="text-[13px] text-red-400 text-center">{error}</p>
+            <p className="text-body-sm text-red-400 text-center">{error}</p>
           </motion.div>
         )}
 
@@ -200,7 +200,7 @@ export default function TerritoryPage() {
           <WelcomeAction variant="secondary" onClick={handleSkip} disabled={!!joining}>
             {joining ? 'Joining...' : 'Skip for now'}
           </WelcomeAction>
-          <p className="text-[11px] text-white/30 text-center mt-2">
+          <p className="text-label-sm text-white/30 text-center mt-2">
             You can always explore spaces later
           </p>
         </motion.div>

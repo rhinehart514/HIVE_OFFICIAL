@@ -233,7 +233,7 @@ export const CollapsiblePageHeader = React.forwardRef<
                     {tab.icon}
                     {tab.label}
                     {tab.badge !== undefined && tab.badge > 0 && (
-                      <span className="ml-1 px-1.5 py-0.5 text-[10px] rounded-full bg-white/10">
+                      <span className="ml-1 px-1.5 py-0.5 text-label-xs rounded-full bg-white/10">
                         {tab.badge}
                       </span>
                     )}
@@ -291,7 +291,7 @@ export const CollapsiblePageHeader = React.forwardRef<
                           {tab.icon}
                           {tab.label}
                           {tab.badge !== undefined && tab.badge > 0 && (
-                            <span className="ml-auto text-[10px] text-neutral-500">
+                            <span className="ml-auto text-label-xs text-neutral-500">
                               {tab.badge}
                             </span>
                           )}

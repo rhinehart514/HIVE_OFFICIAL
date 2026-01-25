@@ -332,7 +332,7 @@ export function DiningPickerElement({ config, onChange, onAction }: ElementProps
                           {status.location.name}
                         </h4>
                         {status.isOpen && (
-                          <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-600">
+                          <Badge variant="secondary" className="text-label-xs bg-green-500/10 text-green-600">
                             Open
                           </Badge>
                         )}
@@ -366,12 +366,12 @@ export function DiningPickerElement({ config, onChange, onAction }: ElementProps
                   {status.location.dietaryOptions.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {status.location.dietaryOptions.slice(0, 3).map(opt => (
-                        <Badge key={opt} variant="outline" className="text-[10px] px-1.5 py-0">
+                        <Badge key={opt} variant="outline" className="text-label-xs px-1.5 py-0">
                           {opt}
                         </Badge>
                       ))}
                       {status.location.dietaryOptions.length > 3 && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        <Badge variant="outline" className="text-label-xs px-1.5 py-0">
                           +{status.location.dietaryOptions.length - 3}
                         </Badge>
                       )}
@@ -380,7 +380,7 @@ export function DiningPickerElement({ config, onChange, onAction }: ElementProps
 
                   {/* Current meal period */}
                   {status.currentMealPeriod && (
-                    <div className="mt-2 text-[10px] text-muted-foreground/70">
+                    <div className="mt-2 text-label-xs text-muted-foreground/70">
                       Now serving: {status.currentMealPeriod.type}
                       {status.currentMealPeriod.menuHighlights && status.currentMealPeriod.menuHighlights.length > 0 && (
                         <span> • {status.currentMealPeriod.menuHighlights.slice(0, 2).join(', ')}</span>

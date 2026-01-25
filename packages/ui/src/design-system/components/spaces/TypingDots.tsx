@@ -200,7 +200,7 @@ export function ChatTypingDotsInline({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-[#6B6B70] text-[10px]">
+          <div className="w-full h-full flex items-center justify-center text-[#6B6B70] text-label-xs">
             {firstUser.name[0]}
           </div>
         )}

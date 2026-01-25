@@ -104,7 +104,7 @@ function WelcomeBackState({
         }}
       >
         <motion.h1
-          className="text-[36px] lg:text-[42px] font-semibold tracking-tight text-white mb-3"
+          className="text-heading-lg lg:text-display-sm font-semibold tracking-tight text-white mb-3"
           style={{
             textShadow: '0 0 40px rgba(255, 215, 0, 0.15)',
           }}
@@ -124,7 +124,7 @@ function WelcomeBackState({
             delay: 0.2,
             ease: EASE_PREMIUM,
           }}
-          className="text-[15px] text-white/50"
+          className="text-body text-white/50"
         >
           Good to see you again.
         </motion.p>
@@ -218,12 +218,12 @@ function LoginPageFallback() {
     <EntryShellStatic>
       <div className="space-y-8">
         <div className="space-y-3">
-          <h1 className="text-[32px] font-semibold tracking-tight text-white">
+          <h1 className="text-heading font-semibold tracking-tight text-white">
             Sign in
           </h1>
           <div className="flex items-center gap-2 text-white/50">
             <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            <span className="text-[15px]">Loading</span>
+            <span className="text-body">Loading</span>
           </div>
         </div>
       </div>

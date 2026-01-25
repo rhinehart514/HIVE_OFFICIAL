@@ -381,7 +381,7 @@ function SettingsContent() {
             ============================================ */}
         <motion.section className="mb-20" {...fadeIn(0)}>
           <h1
-            className="text-[28px] md:text-[32px] font-semibold text-white mb-1"
+            className="text-heading-sm md:text-heading font-semibold text-white mb-1"
             style={{ letterSpacing: '-0.02em' }}
           >
             Settings
@@ -409,7 +409,7 @@ function SettingsContent() {
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Profile
                 </span>
                 <span className="text-white/30">→</span>
@@ -428,7 +428,7 @@ function SettingsContent() {
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Notifications
                 </span>
                 <span className="text-white/30">→</span>
@@ -447,7 +447,7 @@ function SettingsContent() {
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Privacy
                 </span>
                 <span className="text-white/30">→</span>
@@ -466,7 +466,7 @@ function SettingsContent() {
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Account
                 </span>
                 <span className="text-white/30">→</span>

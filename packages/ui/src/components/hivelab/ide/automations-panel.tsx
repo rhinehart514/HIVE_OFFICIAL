@@ -119,7 +119,7 @@ function StatusBadge({ enabled, errorCount }: { enabled: boolean; errorCount: nu
   if (!enabled) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-label-xs font-medium"
         style={{ backgroundColor: PANEL_COLORS.bgActive, color: PANEL_COLORS.textTertiary }}
       >
         Disabled
@@ -130,7 +130,7 @@ function StatusBadge({ enabled, errorCount }: { enabled: boolean; errorCount: nu
   if (errorCount > 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-label-xs font-medium"
         style={{ backgroundColor: PANEL_COLORS.warningLight, color: PANEL_COLORS.warning }}
       >
         <ExclamationTriangleIcon className="h-3 w-3" />
@@ -141,7 +141,7 @@ function StatusBadge({ enabled, errorCount }: { enabled: boolean; errorCount: nu
 
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-label-xs font-medium"
       style={{ backgroundColor: PANEL_COLORS.successLight, color: PANEL_COLORS.success }}
     >
       <CheckCircleIcon className="h-3 w-3" />
@@ -296,7 +296,7 @@ function AutomationRow({
               {/* Stats */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <span className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Runs
                   </span>
                   <span className="text-xs font-medium" style={{ color: PANEL_COLORS.textSecondary }}>
@@ -304,7 +304,7 @@ function AutomationRow({
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
+                  <span className="text-label-xs uppercase tracking-wider" style={{ color: PANEL_COLORS.textTertiary }}>
                     Last Run
                   </span>
                   <span className="text-xs font-medium" style={{ color: PANEL_COLORS.textSecondary }}>
@@ -496,7 +496,7 @@ export function AutomationsPanel({
           </h3>
           {automations.length > 0 && (
             <span
-              className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+              className="px-1.5 py-0.5 rounded text-label-xs font-medium"
               style={{ backgroundColor: PANEL_COLORS.bgActive, color: PANEL_COLORS.textSecondary }}
             >
               {automations.length}

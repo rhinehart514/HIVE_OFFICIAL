@@ -88,7 +88,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Default (Separated)
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Individual bordered items
           </span>
         </div>
@@ -117,7 +117,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Bordered (Connected)
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Shared container
           </span>
         </div>
@@ -139,7 +139,7 @@ export const LockedDesignShowcase: StoryObj = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Ghost (Minimal)
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             No background
           </span>
         </div>

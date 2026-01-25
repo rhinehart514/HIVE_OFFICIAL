@@ -99,7 +99,7 @@ function IntroOverlay({ onComplete }: { onComplete: () => void }) {
     >
       <motion.h1
         key={step}
-        className="text-[48px] md:text-[64px] font-medium text-white/90 tracking-tight text-center px-8"
+        className="text-display-sm md:text-display-lg font-medium text-white/90 tracking-tight text-center px-8"
         style={{ fontFamily: 'var(--font-display)' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

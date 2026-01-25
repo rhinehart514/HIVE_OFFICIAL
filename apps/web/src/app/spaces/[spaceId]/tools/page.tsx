@@ -157,7 +157,7 @@ function ToolCard({
           </span>
           {!tool.isActive && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded"
+              className="text-label-xs px-1.5 py-0.5 rounded"
               style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', color: COLORS.textTertiary }}
             >
               Paused
@@ -165,7 +165,7 @@ function ToolCard({
           )}
           {tool.capabilityLane && (
             <span
-              className="text-[10px] px-1.5 py-0.5 rounded capitalize"
+              className="text-label-xs px-1.5 py-0.5 rounded capitalize"
               style={{ backgroundColor: `${laneColor}20`, color: laneColor }}
             >
               {tool.capabilityLane}
@@ -175,7 +175,7 @@ function ToolCard({
         <p className="text-xs truncate" style={{ color: COLORS.textTertiary }}>
           {tool.description}
         </p>
-        <div className="flex items-center gap-3 mt-2 text-[10px]" style={{ color: COLORS.textTertiary }}>
+        <div className="flex items-center gap-3 mt-2 text-label-xs" style={{ color: COLORS.textTertiary }}>
           <span className="capitalize">{tool.placement}</span>
           <span>Order: {tool.order}</span>
           {tool.surfaceModes?.app && (

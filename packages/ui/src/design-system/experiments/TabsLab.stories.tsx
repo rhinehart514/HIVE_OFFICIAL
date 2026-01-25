@@ -592,7 +592,7 @@ export const Special_Variants = () => {
                 {tab.label}
                 {tab.count && (
                   <span
-                    className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                    className="px-1.5 py-0.5 rounded-full text-label-xs font-semibold"
                     style={{
                       background: activeB === i
                         ? 'linear-gradient(135deg, rgba(255,215,0,0.9) 0%, rgba(255,180,0,0.85) 100%)'

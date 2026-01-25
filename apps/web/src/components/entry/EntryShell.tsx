@@ -114,7 +114,7 @@ export function EntryShell({
         </Link>
         <Link
           href="/"
-          className="text-[13px] text-white/40 hover:text-white/60 transition-colors"
+          className="text-body-sm text-white/40 hover:text-white/60 transition-colors"
         >
           Back
         </Link>
@@ -146,7 +146,7 @@ export function EntryShell({
 
       {/* Footer */}
       <motion.footer
-        className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30"
+        className="relative z-10 px-6 py-6 flex items-center justify-center gap-4 text-label text-white/30"
         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: DURATION.gentle, delay: 0.5, ease: EASE_PREMIUM }}
@@ -172,7 +172,7 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="px-6 py-6 flex items-center justify-between">
         <Logo variant="mark" size="sm" color="gold" />
-        <span className="text-[13px] text-white/40">Back</span>
+        <span className="text-body-sm text-white/40">Back</span>
       </header>
 
       {/* Main content */}
@@ -183,7 +183,7 @@ export function EntryShellStatic({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-6 flex items-center justify-center gap-4 text-[12px] text-white/30">
+      <footer className="px-6 py-6 flex items-center justify-center gap-4 text-label text-white/30">
         <span>Terms</span>
         <span className="text-white/20">·</span>
         <span>Privacy</span>

@@ -585,7 +585,7 @@ function Section({
         }}
       >
         <span
-          className="text-[10px] font-medium uppercase tracking-wider"
+          className="text-label-xs font-medium uppercase tracking-wider"
           style={{ color: PANEL_COLORS.textTertiary }}
         >
           {title}

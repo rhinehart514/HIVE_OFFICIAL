@@ -152,13 +152,13 @@ function Section({ title, action, actionHref, children, delay = 0 }: SectionProp
       className="mb-10"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[12px] font-medium text-white/40 uppercase tracking-wider">
+        <h2 className="text-label font-medium text-white/40 uppercase tracking-wider">
           {title}
         </h2>
         {action && actionHref && (
           <Link
             href={actionHref}
-            className="text-[12px] text-white/30 hover:text-white/50 transition-colors"
+            className="text-label text-white/30 hover:text-white/50 transition-colors"
           >
             {action} →
           </Link>
@@ -210,7 +210,7 @@ function TodaySection({
     return (
       <Section title="Today" delay={0.1}>
         <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
-          <p className="text-[14px] text-white/50 mb-4">
+          <p className="text-body text-white/50 mb-4">
             Nothing on your plate today. Enjoy the calm.
           </p>
           <Button variant="ghost" size="sm" asChild>
@@ -244,14 +244,14 @@ function TodaySection({
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[14px] font-medium text-white truncate">
+                        <span className="text-body font-medium text-white truncate">
                           {event.title}
                         </span>
                         <Badge variant="gold" size="sm">
                           Live
                         </Badge>
                       </div>
-                      <p className="text-[12px] text-white/50 mt-0.5">
+                      <p className="text-label text-white/50 mt-0.5">
                         {event.spaceName}
                         {event.rsvpCount ? ` · ${event.rsvpCount} attending` : ''}
                       </p>
@@ -274,19 +274,19 @@ function TodaySection({
               >
                 <GlassSurface intensity="subtle" className="p-4 rounded-xl">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                    <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                       📅
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-[14px] font-medium text-white truncate">
+                        <span className="text-body font-medium text-white truncate">
                           {event.title}
                         </span>
-                        <span className="text-[11px] text-white/40">
+                        <span className="text-label-sm text-white/40">
                           {formatEventTime(event.startDate)}
                         </span>
                       </div>
-                      <p className="text-[12px] text-white/50 mt-0.5">
+                      <p className="text-label text-white/50 mt-0.5">
                         {event.spaceName}
                         {event.isGoing && ' · You\'re going'}
                         {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
@@ -308,17 +308,17 @@ function TodaySection({
             >
               <GlassSurface intensity="subtle" className="p-4 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                     💬
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-medium text-white truncate">
+                      <span className="text-body font-medium text-white truncate">
                         {space.unreadCount} new in {space.name}
                       </span>
                       <span className="w-2 h-2 rounded-full bg-[var(--life-gold)]" />
                     </div>
-                    <p className="text-[12px] text-white/50 mt-0.5">Jump back in →</p>
+                    <p className="text-label text-white/50 mt-0.5">Jump back in →</p>
                   </div>
                 </div>
               </GlassSurface>
@@ -365,14 +365,14 @@ function YourSpacesSection({
                 className="aspect-square rounded-xl p-4 flex flex-col justify-between"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[13px] font-medium text-white truncate flex-1">
+                  <span className="text-body-sm font-medium text-white truncate flex-1">
                     {space.name}
                   </span>
                   {(space.onlineCount ?? 0) > 0 && (
                     <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
                   )}
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-white/40">
+                <div className="flex items-center gap-2 text-label-sm text-white/40">
                   {space.memberCount && <span>{space.memberCount} members</span>}
                   {(space.unreadCount ?? 0) > 0 && (
                     <Badge variant="gold" size="sm">
@@ -393,8 +393,8 @@ function YourSpacesSection({
               interactive
               className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
             >
-              <span className="text-[24px] mb-2">+</span>
-              <span className="text-[12px] text-white/40">Browse All</span>
+              <span className="text-title-lg mb-2">+</span>
+              <span className="text-label text-white/40">Browse All</span>
             </GlassSurface>
           </Link>
         </Tilt>
@@ -435,7 +435,7 @@ function ThisWeekSection({
     return (
       <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
         <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
-          <p className="text-[14px] text-white/50 mb-4">
+          <p className="text-body text-white/50 mb-4">
             Nothing scheduled yet. Explore what's happening.
           </p>
           <Button variant="ghost" size="sm" asChild>
@@ -464,11 +464,11 @@ function ThisWeekSection({
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-white truncate">
+                    <span className="text-body-sm font-medium text-white truncate">
                       {event.title}
                     </span>
                   </div>
-                  <p className="text-[11px] text-white/40 mt-0.5">
+                  <p className="text-label-sm text-white/40 mt-0.5">
                     {event.spaceName} · {formatEventTime(event.startDate)}
                     {event.rsvpCount ? ` · ${event.rsvpCount} going` : ''}
                   </p>
@@ -521,13 +521,13 @@ function YourCreationsSection({
                 interactive
                 className="aspect-square rounded-xl p-4 flex flex-col justify-between"
               >
-                <span className="text-[20px]">{tool.icon || '🛠️'}</span>
+                <span className="text-title">{tool.icon || '🛠️'}</span>
                 <div>
-                  <p className="text-[13px] font-medium text-white truncate">
+                  <p className="text-body-sm font-medium text-white truncate">
                     {tool.name}
                   </p>
                   {tool.responseCount !== undefined && tool.responseCount > 0 && (
-                    <p className="text-[11px] text-white/40 mt-0.5">
+                    <p className="text-label-sm text-white/40 mt-0.5">
                       {tool.responseCount} responses
                     </p>
                   )}
@@ -545,8 +545,8 @@ function YourCreationsSection({
               interactive
               className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
             >
-              <span className="text-[24px] mb-2">+</span>
-              <span className="text-[12px] text-white/40">Create Tool</span>
+              <span className="text-title-lg mb-2">+</span>
+              <span className="text-label text-white/40">Create Tool</span>
             </GlassSurface>
           </Link>
         </Tilt>
@@ -588,14 +588,14 @@ function DiscoverSection({
             <Link href={`/s/${space.handle}`}>
               <GlassSurface intensity="subtle" interactive className="p-4 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-[18px]">
+                  <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                     ✨
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[14px] font-medium text-white truncate">
+                    <p className="text-body font-medium text-white truncate">
                       {space.name}
                     </p>
-                    <p className="text-[12px] text-white/50 mt-0.5">
+                    <p className="text-label text-white/50 mt-0.5">
                       {space.reason} · {space.memberCount} members
                     </p>
                   </div>
@@ -613,7 +613,7 @@ function DiscoverSection({
 function QuickActions() {
   return (
     <GlassSurface intensity="subtle" className="p-5 rounded-xl">
-      <h3 className="text-[12px] font-medium text-white/40 uppercase tracking-wider mb-4">
+      <h3 className="text-label font-medium text-white/40 uppercase tracking-wider mb-4">
         Quick Actions
       </h3>
       <div className="space-y-2">
@@ -621,22 +621,22 @@ function QuickActions() {
           href="/lab/new"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-[16px]">🛠️</span>
-          <span className="text-[13px] text-white/70">Build a Tool</span>
+          <span className="text-body-lg">🛠️</span>
+          <span className="text-body-sm text-white/70">Build a Tool</span>
         </Link>
         <Link
           href="/spaces/new"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-[16px]">🏠</span>
-          <span className="text-[13px] text-white/70">Start a Space</span>
+          <span className="text-body-lg">🏠</span>
+          <span className="text-body-sm text-white/70">Start a Space</span>
         </Link>
         <Link
           href="/explore?tab=events"
           className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/[0.04] transition-colors"
         >
-          <span className="text-[16px]">📅</span>
-          <span className="text-[13px] text-white/70">Browse Events</span>
+          <span className="text-body-lg">📅</span>
+          <span className="text-body-sm text-white/70">Browse Events</span>
         </Link>
       </div>
     </GlassSurface>
@@ -772,7 +772,7 @@ export default function FeedPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
           >
-            <h1 className="text-[24px] font-semibold text-white">
+            <h1 className="text-title-lg font-semibold text-white">
               {getGreeting()}
               {firstName && (
                 <>
@@ -780,7 +780,7 @@ export default function FeedPage() {
                 </>
               )}
             </h1>
-            <p className="text-[14px] text-white/50 mt-1">
+            <p className="text-body text-white/50 mt-1">
               Here's what's happening in your world
             </p>
           </motion.div>

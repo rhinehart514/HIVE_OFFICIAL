@@ -180,7 +180,7 @@ function TriggerSelector({
             >
               {label}
             </span>
-            <span className="text-[10px]" style={{ color: PANEL_COLORS.textTertiary }}>
+            <span className="text-label-xs" style={{ color: PANEL_COLORS.textTertiary }}>
               {desc}
             </span>
           </button>

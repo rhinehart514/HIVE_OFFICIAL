@@ -99,7 +99,7 @@ function OutputTypeBadge({ type }: { type: string }) {
 
   return (
     <span
-      className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+      className="text-label-xs px-1.5 py-0.5 rounded font-medium"
       style={{ backgroundColor: style.bg, color: style.color }}
     >
       {style.label}
@@ -123,7 +123,7 @@ function StepIndicator({
   const currentIndex = steps.findIndex((s) => s.key === current);
 
   return (
-    <div className="flex items-center gap-1 text-[10px]">
+    <div className="flex items-center gap-1 text-label-xs">
       {steps.map((step, idx) => (
         <div key={step.key} className="flex items-center gap-1">
           <span
@@ -265,7 +265,7 @@ export function ToolReferencePicker({
                 </span>
                 {value.transform && (
                   <span
-                    className="text-[9px] px-1.5 py-0.5 rounded shrink-0"
+                    className="text-label-xs px-1.5 py-0.5 rounded shrink-0"
                     style={{
                       backgroundColor: `${COLORS.accent}20`,
                       color: COLORS.accent,
@@ -388,7 +388,7 @@ export function ToolReferencePicker({
                               <div className="text-sm font-medium" style={{ color: COLORS.textPrimary }}>
                                 {tool.name}
                               </div>
-                              <div className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                              <div className="text-label-xs" style={{ color: COLORS.textTertiary }}>
                                 {tool.outputs.length} output{tool.outputs.length !== 1 ? 's' : ''}
                               </div>
                             </div>
@@ -442,7 +442,7 @@ export function ToolReferencePicker({
                               {output.name}
                             </div>
                             {output.description && (
-                              <div className="text-[10px] truncate" style={{ color: COLORS.textTertiary }}>
+                              <div className="text-label-xs truncate" style={{ color: COLORS.textTertiary }}>
                                 {output.description}
                               </div>
                             )}
@@ -489,7 +489,7 @@ export function ToolReferencePicker({
                           <div className="text-sm font-medium" style={{ color: COLORS.textPrimary }}>
                             No transform
                           </div>
-                          <div className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                          <div className="text-label-xs" style={{ color: COLORS.textTertiary }}>
                             Use the data as-is
                           </div>
                         </div>
@@ -498,7 +498,7 @@ export function ToolReferencePicker({
                       {/* Transform options */}
                       {availableTransforms.length > 0 && (
                         <>
-                          <div className="px-3 py-1 text-[10px] uppercase tracking-wide" style={{ color: COLORS.textTertiary }}>
+                          <div className="px-3 py-1 text-label-xs uppercase tracking-wide" style={{ color: COLORS.textTertiary }}>
                             Transform
                           </div>
                           {availableTransforms.map(([key, meta]) => (
@@ -513,7 +513,7 @@ export function ToolReferencePicker({
                               )}
                             >
                               <div
-                                className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-bold"
+                                className="w-4 h-4 rounded flex items-center justify-center text-label-xs font-bold"
                                 style={{
                                   backgroundColor: `${COLORS.accent}20`,
                                   color: COLORS.accent,
@@ -525,12 +525,12 @@ export function ToolReferencePicker({
                                 <div className="text-sm font-medium" style={{ color: COLORS.textPrimary }}>
                                   {meta.label}
                                 </div>
-                                <div className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+                                <div className="text-label-xs" style={{ color: COLORS.textTertiary }}>
                                   {meta.description}
                                 </div>
                               </div>
                               <span
-                                className="text-[9px] px-1.5 py-0.5 rounded"
+                                className="text-label-xs px-1.5 py-0.5 rounded"
                                 style={{ backgroundColor: COLORS.bgActive, color: COLORS.textTertiary }}
                               >
                                 → {meta.outputType}
@@ -550,7 +550,7 @@ export function ToolReferencePicker({
 
       {/* Description */}
       {description && (
-        <p className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+        <p className="text-label-xs" style={{ color: COLORS.textTertiary }}>
           {description}
         </p>
       )}

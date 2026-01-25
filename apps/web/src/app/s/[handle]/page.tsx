@@ -214,7 +214,7 @@ export default function SpacePageUnified() {
       >
         <div className="max-w-md mx-auto text-center p-8">
           <h2
-            className="text-[28px] font-semibold text-white mb-4"
+            className="text-heading-sm font-semibold text-white mb-4"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             Space Not Found

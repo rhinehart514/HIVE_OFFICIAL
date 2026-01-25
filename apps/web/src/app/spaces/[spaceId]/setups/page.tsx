@@ -118,7 +118,7 @@ function SetupDeploymentCard({
               </div>
               <div className="flex items-center gap-2 mt-1">
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded capitalize"
+                  className="text-label-xs px-1.5 py-0.5 rounded capitalize"
                   style={{ backgroundColor: `${statusConfig.color}20`, color: statusConfig.color }}
                 >
                   {statusConfig.label}

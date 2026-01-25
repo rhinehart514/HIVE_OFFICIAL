@@ -88,7 +88,7 @@ export function RoleSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40 font-medium">Role</p>
+        <p className="text-body-sm text-white/40 font-medium">Role</p>
         <RoleChip role={role} allowChange={false} />
       </motion.div>
     );
@@ -111,7 +111,7 @@ export function RoleSection({
       {/* Header */}
       <motion.div variants={sectionChildVariants} className="space-y-1">
         <h2
-          className="text-[20px] font-semibold text-white"
+          className="text-title font-semibold text-white"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           How are you connected?
@@ -161,14 +161,14 @@ export function RoleSection({
                 <div className="space-y-0.5">
                   <span
                     className={cn(
-                      'text-[14px] font-medium block transition-colors',
+                      'text-body font-medium block transition-colors',
                       isSelected ? 'text-white' : 'text-white/70'
                     )}
                   >
                     {option.label}
                   </span>
                   {option.badge && (
-                    <span className="text-[10px] text-white/30">
+                    <span className="text-label-xs text-white/30">
                       {option.badge}
                     </span>
                   )}
@@ -193,7 +193,7 @@ export function RoleSection({
               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
                 <div className="flex items-start gap-3">
                   <Clock className="w-4 h-4 text-white/40 flex-shrink-0 mt-0.5" />
-                  <p className="text-[13px] text-white/50 leading-relaxed">
+                  <p className="text-body-sm text-white/50 leading-relaxed">
                     Alumni access is coming soon. Tell us which spaces you were
                     part of, and we'll notify you when ready.
                   </p>
@@ -223,7 +223,7 @@ export function RoleSection({
             className="overflow-hidden"
           >
             <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
-              <p className="text-[13px] text-white/50 leading-relaxed">
+              <p className="text-body-sm text-white/50 leading-relaxed">
                 Faculty accounts can claim and manage official university
                 organization spaces on HIVE.
               </p>
@@ -240,7 +240,7 @@ export function RoleSection({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="text-[13px] text-red-400"
+            className="text-body-sm text-red-400"
           >
             {section.error}
           </motion.p>

@@ -142,7 +142,7 @@ function PersonCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-[15px] font-medium text-white truncate">
+        <p className="text-body font-medium text-white truncate">
           {person.title}
         </p>
         {handle && (
@@ -298,7 +298,7 @@ export default function PeopleDiscoveryPage() {
               placeholder="Search by name or @handle..."
               className="
                 w-full bg-transparent border-0 outline-none
-                py-4 pl-12 pr-12 text-[15px]
+                py-4 pl-12 pr-12 text-body
                 text-[#FAF9F7] placeholder:text-[#6B6B70]
                 transition-all duration-300
               "
@@ -385,7 +385,7 @@ export default function PeopleDiscoveryPage() {
         {!hasSearched && (
           <motion.div
             {...fadeIn(0.2)}
-            className="mt-12 flex items-center justify-center gap-3 text-[13px] text-white/40"
+            className="mt-12 flex items-center justify-center gap-3 text-body-sm text-white/40"
           >
             <AcademicCapIcon className="w-4 h-4" />
             <span>Try searching for a classmate's name or @handle</span>

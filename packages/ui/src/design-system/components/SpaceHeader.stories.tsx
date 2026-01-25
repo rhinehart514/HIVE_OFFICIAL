@@ -270,7 +270,7 @@ export const Interactive: Story = {
             onLeave={handleLeave}
             onShare={() => alert('Share clicked')}
           />
-          <div className="text-center text-[13px] text-neutral-500">
+          <div className="text-center text-body-sm text-neutral-500">
             Current state: <span className="text-white">{state}</span>
           </div>
         </div>
@@ -317,7 +317,7 @@ export const CompactList: Story = {
   render: () => (
     <DarkWrapper>
       <div className="max-w-xs bg-neutral-900 rounded-xl p-2">
-        <div className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider px-2 py-2">
+        <div className="text-label-sm font-medium text-neutral-500 uppercase tracking-wider px-2 py-2">
           Your Spaces
         </div>
         <SpaceHeaderCompact
@@ -358,7 +358,7 @@ export const AllStates: Story = {
   render: () => (
     <DarkWrapper>
       <div className="space-y-4 max-w-lg">
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider">
+        <div className="text-label text-neutral-500 uppercase tracking-wider">
           not_joined
         </div>
         <SpaceHeader
@@ -368,17 +368,17 @@ export const AllStates: Story = {
           onJoin={() => {}}
         />
 
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider mt-6">
+        <div className="text-label text-neutral-500 uppercase tracking-wider mt-6">
           loading
         </div>
         <SpaceHeader name="Demo Space" memberCount={100} membershipState="loading" />
 
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider mt-6">
+        <div className="text-label text-neutral-500 uppercase tracking-wider mt-6">
           pending
         </div>
         <SpaceHeader name="Demo Space" memberCount={100} membershipState="pending" />
 
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider mt-6">
+        <div className="text-label text-neutral-500 uppercase tracking-wider mt-6">
           joined
         </div>
         <SpaceHeader
@@ -388,7 +388,7 @@ export const AllStates: Story = {
           onLeave={() => {}}
         />
 
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider mt-6">
+        <div className="text-label text-neutral-500 uppercase tracking-wider mt-6">
           admin
         </div>
         <SpaceHeader
@@ -400,7 +400,7 @@ export const AllStates: Story = {
           onSettings={() => {}}
         />
 
-        <div className="text-[12px] text-neutral-500 uppercase tracking-wider mt-6">
+        <div className="text-label text-neutral-500 uppercase tracking-wider mt-6">
           owner
         </div>
         <SpaceHeader

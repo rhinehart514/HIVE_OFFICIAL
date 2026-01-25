@@ -70,7 +70,7 @@ export function AccessCodeSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40 font-medium">Access Code</p>
+        <p className="text-body-sm text-white/40 font-medium">Access Code</p>
         <LockedFieldChip value="Verified" allowChange={false} />
       </motion.div>
     );
@@ -93,12 +93,12 @@ export function AccessCodeSection({
       {/* Header */}
       <motion.div variants={sectionChildVariants} className="space-y-2">
         <h2
-          className="text-[20px] font-semibold text-white"
+          className="text-title font-semibold text-white"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Enter access code
         </h2>
-        <p className="text-[14px] text-white/50">
+        <p className="text-body text-white/50">
           HIVE is currently invite-only. Enter your 6-digit access code to continue.
         </p>
       </motion.div>
@@ -114,10 +114,10 @@ export function AccessCodeSection({
             <Lock size={18} className="text-red-400" />
           </div>
           <div className="flex-1">
-            <p className="text-[14px] text-red-400 font-medium">
+            <p className="text-body text-red-400 font-medium">
               Too many attempts
             </p>
-            <p className="text-[13px] text-white/50 flex items-center gap-1.5 mt-0.5">
+            <p className="text-body-sm text-white/50 flex items-center gap-1.5 mt-0.5">
               <Clock size={12} />
               Try again in {lockout.remainingMinutes} minute
               {lockout.remainingMinutes !== 1 ? 's' : ''}
@@ -152,7 +152,7 @@ export function AccessCodeSection({
                 initial="initial"
                 animate="animate"
                 exit="exit"
-                className="text-[13px] text-red-400"
+                className="text-body-sm text-red-400"
               >
                 {section.error}
               </motion.p>
@@ -165,7 +165,7 @@ export function AccessCodeSection({
                 className="flex items-center gap-2"
               >
                 <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-                <span className="text-[13px] text-white/50">Verifying...</span>
+                <span className="text-body-sm text-white/50">Verifying...</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -175,7 +175,7 @@ export function AccessCodeSection({
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-[13px] text-amber-400/80"
+              className="text-body-sm text-amber-400/80"
             >
               {lockout.attemptsRemaining} attempt
               {lockout.attemptsRemaining !== 1 ? 's' : ''} remaining
@@ -187,7 +187,7 @@ export function AccessCodeSection({
       {/* Help text */}
       <motion.p
         variants={sectionChildVariants}
-        className="text-[13px] text-white/40"
+        className="text-body-sm text-white/40"
       >
         Don&apos;t have a code?{' '}
         <a

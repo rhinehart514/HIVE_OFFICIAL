@@ -65,13 +65,13 @@ export function TemplateCard({ template, selected, onSelect }: TemplateCardProps
             <div className="flex-1 min-w-0">
               <h3
                 className={cn(
-                  'text-[15px] font-medium',
+                  'text-body font-medium',
                   selected ? 'text-[var(--life-gold)]' : 'text-white'
                 )}
               >
                 {template.name}
               </h3>
-              <p className="text-[13px] text-white/40 mt-0.5 line-clamp-2">
+              <p className="text-body-sm text-white/40 mt-0.5 line-clamp-2">
                 {template.description}
               </p>
             </div>

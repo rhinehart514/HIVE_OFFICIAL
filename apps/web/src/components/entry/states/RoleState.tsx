@@ -92,10 +92,10 @@ export function RoleState({
     >
       {/* Header */}
       <motion.div variants={childVariants} className="space-y-3">
-        <h1 className="text-[28px] font-semibold tracking-tight text-white">
+        <h1 className="text-heading-sm font-semibold tracking-tight text-white">
           How are you connected?
         </h1>
-        <p className="text-[15px] leading-relaxed text-white/50">
+        <p className="text-body leading-relaxed text-white/50">
           Select your role at this campus
         </p>
       </motion.div>
@@ -139,19 +139,19 @@ export function RoleState({
                 <div className="flex items-center gap-2">
                   <span
                     className={cn(
-                      'text-[15px] font-medium',
+                      'text-body font-medium',
                       isSelected ? 'text-white' : 'text-white/80'
                     )}
                   >
                     {option.label}
                   </span>
                   {option.badge && (
-                    <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide rounded-full bg-white/[0.06] text-white/40">
+                    <span className="px-2 py-0.5 text-label-xs font-medium uppercase tracking-wide rounded-full bg-white/[0.06] text-white/40">
                       {option.badge}
                     </span>
                   )}
                 </div>
-                <p className="text-[13px] text-white/40 mt-0.5">
+                <p className="text-body-sm text-white/40 mt-0.5">
                   {option.description}
                 </p>
               </div>
@@ -191,10 +191,10 @@ export function RoleState({
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-white/40 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[14px] text-white/70">
+                    <p className="text-body text-white/70">
                       Alumni access is coming soon.
                     </p>
-                    <p className="text-[13px] text-white/40 mt-1">
+                    <p className="text-body-sm text-white/40 mt-1">
                       Tell us which spaces you were part of, and we'll notify you
                       when your communities are ready to welcome you back.
                     </p>
@@ -225,7 +225,7 @@ export function RoleState({
             className="overflow-hidden"
           >
             <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-              <p className="text-[13px] text-white/50">
+              <p className="text-body-sm text-white/50">
                 Faculty accounts have access to official university organization
                 spaces. You'll be able to claim and manage your department's
                 presence on HIVE.

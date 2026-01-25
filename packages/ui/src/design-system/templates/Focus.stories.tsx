@@ -65,7 +65,7 @@ const SimpleCard = ({ title, description }: { title: string; description?: strin
   >
     <h2 className="text-xl font-semibold text-white mb-2">{title}</h2>
     {description && (
-      <p className="text-[15px] text-white/60">{description}</p>
+      <p className="text-body text-white/60">{description}</p>
     )}
   </div>
 );
@@ -74,7 +74,7 @@ const LoginForm = () => (
   <div className="space-y-6">
     <div className="text-center space-y-2">
       <h1 className="text-2xl font-semibold text-white">Welcome back</h1>
-      <p className="text-[15px] text-white/50">Enter your email to sign in</p>
+      <p className="text-body text-white/50">Enter your email to sign in</p>
     </div>
     <div
       className="flex items-center rounded-xl"
@@ -83,12 +83,12 @@ const LoginForm = () => (
       <input
         type="text"
         placeholder="yourname"
-        className="flex-1 bg-transparent px-4 py-3.5 text-[15px] text-white outline-none placeholder:text-white/25"
+        className="flex-1 bg-transparent px-4 py-3.5 text-body text-white outline-none placeholder:text-white/25"
       />
-      <span className="pr-4 text-[15px] text-white/35">@buffalo.edu</span>
+      <span className="pr-4 text-body text-white/35">@buffalo.edu</span>
     </div>
     <button
-      className="w-full py-3.5 px-6 rounded-xl font-medium text-[15px] bg-white/95 text-black flex items-center justify-center gap-2"
+      className="w-full py-3.5 px-6 rounded-xl font-medium text-body bg-white/95 text-black flex items-center justify-center gap-2"
     >
       <span>Continue</span>
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -102,7 +102,7 @@ const OnboardingStep = () => (
   <div className="space-y-8">
     <div className="text-center space-y-3">
       <h1 className="text-2xl font-semibold text-white">What brings you to HIVE?</h1>
-      <p className="text-[15px] text-white/50 max-w-[280px] mx-auto">
+      <p className="text-body text-white/50 max-w-[280px] mx-auto">
         This helps us personalize your experience
       </p>
     </div>
@@ -116,7 +116,7 @@ const OnboardingStep = () => (
             border: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          <span className="text-[15px] text-white">{option}</span>
+          <span className="text-body text-white">{option}</span>
         </button>
       ))}
     </div>
@@ -127,7 +127,7 @@ const OTPForm = () => (
   <div className="space-y-6">
     <div className="text-center space-y-2">
       <h1 className="text-xl font-semibold text-white">Enter your code</h1>
-      <p className="text-[14px] text-white/50">Check your inbox for a 6-digit code</p>
+      <p className="text-body text-white/50">Check your inbox for a 6-digit code</p>
     </div>
     <div className="flex justify-center gap-2.5">
       {Array.from({ length: 6 }).map((_, i) => (
@@ -238,7 +238,7 @@ export const WithProgressDots: Story = {
         <div className="space-y-8">
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-white mb-2">Step {step + 1} of 4</h1>
-            <p className="text-[15px] text-white/50">Progress dots below</p>
+            <p className="text-body text-white/50">Progress dots below</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -281,7 +281,7 @@ export const WithProgressLine: Story = {
         <div className="space-y-8">
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-white mb-2">Step {step + 1} of 5</h1>
-            <p className="text-[15px] text-white/50">Line progress indicator</p>
+            <p className="text-body text-white/50">Line progress indicator</p>
           </div>
           <div className="flex gap-3">
             <button
@@ -440,7 +440,7 @@ export const WithFooter: Story = {
     background: 'ambient',
     maxWidth: 'sm',
     footer: (
-      <p className="text-[13px] text-white/30">
+      <p className="text-body-sm text-white/30">
         By continuing, you agree to our{' '}
         <a href="#" className="underline hover:text-white/50">Terms</a>
         {' and '}
@@ -502,7 +502,7 @@ export const FullAuthFlowDemo: Story = {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h1 className="text-2xl font-semibold text-white">Welcome to HIVE</h1>
-              <p className="text-[15px] text-white/50">Enter your campus email</p>
+              <p className="text-body text-white/50">Enter your campus email</p>
             </div>
             <button
               onClick={() => setStage('otp')}
@@ -516,7 +516,7 @@ export const FullAuthFlowDemo: Story = {
           <div className="space-y-6">
             <div className="text-center space-y-2">
               <h1 className="text-xl font-semibold text-white">Enter your code</h1>
-              <p className="text-[14px] text-white/50">Check your inbox</p>
+              <p className="text-body text-white/50">Check your inbox</p>
             </div>
             <button
               onClick={() => setStage('success')}
@@ -526,7 +526,7 @@ export const FullAuthFlowDemo: Story = {
             </button>
             <button
               onClick={() => setStage('email')}
-              className="w-full text-[14px] text-white/40"
+              className="w-full text-body text-white/40"
             >
               Back to email
             </button>
@@ -547,10 +547,10 @@ export const FullAuthFlowDemo: Story = {
               </svg>
               <h1 className="text-3xl font-semibold text-white">You're in</h1>
             </div>
-            <p className="text-[15px] text-white/40">Taking you home...</p>
+            <p className="text-body text-white/40">Taking you home...</p>
             <button
               onClick={() => setStage('email')}
-              className="text-[14px] text-white/30 hover:text-white/50"
+              className="text-body text-white/30 hover:text-white/50"
             >
               Reset demo
             </button>

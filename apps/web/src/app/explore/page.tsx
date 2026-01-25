@@ -330,10 +330,10 @@ function ExploreContent() {
           transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
           className="text-center mb-8"
         >
-          <h1 className="text-[28px] font-semibold text-white mb-2">
+          <h1 className="text-heading-sm font-semibold text-white mb-2">
             Explore {campusName}
           </h1>
-          <p className="text-[15px] text-white/50">
+          <p className="text-body text-white/50">
             Discover spaces, people, events, and tools
           </p>
         </motion.div>
@@ -360,7 +360,7 @@ function ExploreContent() {
             transition={{ duration: MOTION.duration.fast }}
             className="mb-6 text-center"
           >
-            <p className="text-[13px] text-white/30">
+            <p className="text-body-sm text-white/30">
               {spaces.length + ghostSpaces.length} spaces ·{' '}
               {spaces.reduce((acc, s) => acc + s.memberCount, 0)} students
             </p>
@@ -374,10 +374,10 @@ function ExploreContent() {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <p className="text-[15px] text-white/50 mb-4">{error}</p>
+            <p className="text-body text-white/50 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 text-[13px] font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+              className="px-4 py-2 text-body-sm font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
             >
               Try again
             </button>

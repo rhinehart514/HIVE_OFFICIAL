@@ -448,15 +448,15 @@ export function AICommandPalette({
               <div className="px-4 py-2.5 bg-[var(--hivelab-surface)] border-t border-[var(--hivelab-border)] flex items-center justify-between text-xs text-[var(--hivelab-text-tertiary)]">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">↑↓</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-label-xs">↑↓</kbd>
                     navigate
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">↵</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-label-xs">↵</kbd>
                     select
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-[10px]">esc</kbd>
+                    <kbd className="px-1 py-0.5 bg-[var(--hivelab-bg)] rounded text-label-xs">esc</kbd>
                     close
                   </span>
                 </div>

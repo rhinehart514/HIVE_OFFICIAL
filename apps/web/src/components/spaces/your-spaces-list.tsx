@@ -156,7 +156,7 @@ export function YourSpacesList({
       <section className="mb-8">
         <Text
           weight="medium"
-          className="text-[11px] uppercase tracking-wider text-white/40 mb-4"
+          className="text-label-sm uppercase tracking-wider text-white/40 mb-4"
         >
           Your Spaces
         </Text>
@@ -172,11 +172,11 @@ export function YourSpacesList({
         <div className="flex items-center gap-2">
           <Text
             weight="medium"
-            className="text-[11px] uppercase tracking-wider text-white/40"
+            className="text-label-sm uppercase tracking-wider text-white/40"
           >
             Your Spaces
           </Text>
-          <span className="px-1.5 py-0.5 text-[10px] font-medium text-white/30 bg-white/[0.04] rounded">
+          <span className="px-1.5 py-0.5 text-label-xs font-medium text-white/30 bg-white/[0.04] rounded">
             {spaces.length}
           </span>
         </div>
@@ -223,7 +223,7 @@ export function YourSpacesList({
             {/* Notification badge */}
             {space.membership.notifications > 0 && (
               <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                <span className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--color-accent-gold,#FFD700)] text-black rounded-full">
+                <span className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--color-accent-gold,#FFD700)] text-black rounded-full">
                   {space.membership.notifications}
                 </span>
               </div>

@@ -179,6 +179,17 @@ export {
 } from './Skeleton';
 
 export {
+  LoadingState,
+  SkeletonBox,
+  SkeletonCircle,
+  SkeletonText as LoadingSkeletonText,
+  Spinner,
+  type LoadingStateProps,
+  type LoadingVariant,
+  type LoadingSize,
+} from './LoadingState';
+
+export {
   EmptyState,
   NoResults,
   NoItems,

@@ -46,12 +46,12 @@ export function SpaceGrid({
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
-        <p className="text-white/40 text-[15px] mb-2">
+        <p className="text-white/40 text-body mb-2">
           {searchQuery
             ? `No spaces match "${searchQuery}"`
             : 'No spaces yet'}
         </p>
-        <p className="text-white/25 text-[13px]">
+        <p className="text-white/25 text-body-sm">
           {searchQuery
             ? 'Try a different search'
             : 'Be the first to start a space'}
@@ -65,7 +65,7 @@ export function SpaceGrid({
       {/* Claimed Spaces */}
       {spaces.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-[12px] text-white/40 uppercase tracking-wider">
+          <h3 className="text-label text-white/40 uppercase tracking-wider">
             Active Spaces · {spaces.length}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -79,7 +79,7 @@ export function SpaceGrid({
       {/* Ghost Spaces */}
       {ghostSpaces.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-[12px] text-white/40 uppercase tracking-wider">
+          <h3 className="text-label text-white/40 uppercase tracking-wider">
             Waiting for Leaders · {ghostSpaces.length}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

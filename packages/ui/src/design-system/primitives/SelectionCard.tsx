@@ -105,7 +105,7 @@ const SelectionCard = React.forwardRef<HTMLButtonElement, SelectionCardProps>(
           'flex items-center gap-4',
           sizeClasses[size],
           // Typography
-          'font-medium text-[15px]',
+          'font-medium text-body',
           // LOCKED: Smooth transition
           'transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
           // LOCKED: WHITE focus ring
@@ -152,7 +152,7 @@ const SelectionCard = React.forwardRef<HTMLButtonElement, SelectionCardProps>(
           {description && (
             <span
               className={cn(
-                'block text-[13px] truncate transition-colors duration-300',
+                'block text-body-sm truncate transition-colors duration-300',
                 selected || (isHovered && goldHover)
                   ? 'text-[#FFD700]/50'
                   : 'text-white/40'

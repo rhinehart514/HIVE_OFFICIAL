@@ -153,7 +153,7 @@ export function SchoolSection({
   if (isLocked && school) {
     return (
       <div className="space-y-2">
-        <p className="text-[13px] text-white/40">Campus</p>
+        <p className="text-body-sm text-white/40">Campus</p>
         <SchoolBadgeChip
           schoolName={school.name}
           schoolShortName={school.shortName}
@@ -175,7 +175,7 @@ export function SchoolSection({
       className="space-y-4"
     >
       <motion.div variants={sectionChildVariants}>
-        <p className="text-[13px] text-white/40 mb-2">Campus</p>
+        <p className="text-body-sm text-white/40 mb-2">Campus</p>
 
         {/* Dropdown trigger */}
         <motion.div
@@ -203,16 +203,16 @@ export function SchoolSection({
                   className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: school.color }}
                 >
-                  <span className="text-white font-bold text-[10px]">
+                  <span className="text-white font-bold text-label-xs">
                     {school.shortName}
                   </span>
                 </div>
-                <span className="flex-1 text-white text-[15px] font-medium truncate">
+                <span className="flex-1 text-white text-body font-medium truncate">
                   {school.name}
                 </span>
               </>
             ) : (
-              <span className="flex-1 text-white/40 text-[15px]">
+              <span className="flex-1 text-white/40 text-body">
                 Select your school
               </span>
             )}
@@ -258,7 +258,7 @@ export function SchoolSection({
                         )}
                         style={{ backgroundColor: s.color }}
                       >
-                        <span className="text-white font-bold text-[10px]">
+                        <span className="text-white font-bold text-label-xs">
                           {s.shortName}
                         </span>
                       </div>
@@ -266,13 +266,13 @@ export function SchoolSection({
                       <div className="flex-1 min-w-0">
                         <span
                           className={cn(
-                            'text-[14px] font-medium block truncate',
+                            'text-body font-medium block truncate',
                             isAvailable ? 'text-white' : 'text-white/50'
                           )}
                         >
                           {s.name}
                         </span>
-                        <span className="text-[12px] text-white/40">
+                        <span className="text-label text-white/40">
                           {s.location}
                         </span>
                       </div>
@@ -288,7 +288,7 @@ export function SchoolSection({
                           <ChevronRight className="w-4 h-4 text-white/30 flex-shrink-0" />
                         )
                       ) : (
-                        <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/[0.06] text-white/40 flex-shrink-0">
+                        <span className="px-2 py-0.5 text-label-xs font-medium rounded-full bg-white/[0.06] text-white/40 flex-shrink-0">
                           Soon
                         </span>
                       )}
@@ -309,7 +309,7 @@ export function SchoolSection({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="text-[13px] text-red-400/90"
+            className="text-body-sm text-red-400/90"
           >
             {section.error}
           </motion.p>

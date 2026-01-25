@@ -435,7 +435,7 @@ export const Variable4_LabelDisplay: Story = {
           >
             <Wrench className="w-5 h-5 text-[var(--color-text-secondary)] mb-0.5" />
             <div className="absolute bottom-0 left-0 right-0 bg-black/40 py-0.5">
-              <Text size="xs" tone="secondary" className="text-center text-[10px]">Tools</Text>
+              <Text size="xs" tone="secondary" className="text-center text-label-xs">Tools</Text>
             </div>
           </Card>
         </div>

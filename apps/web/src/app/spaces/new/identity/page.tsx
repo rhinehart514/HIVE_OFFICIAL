@@ -148,7 +148,7 @@ export default function IdentityPage() {
         >
           {/* Name Input */}
           <div className="space-y-2">
-            <label className="text-[12px] text-white/40 uppercase tracking-wider">
+            <label className="text-label text-white/40 uppercase tracking-wider">
               Space Name
             </label>
             <Input
@@ -156,14 +156,14 @@ export default function IdentityPage() {
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="e.g., Computer Science Club"
-              className="w-full text-[16px]"
+              className="w-full text-body-lg"
               maxLength={100}
             />
           </div>
 
           {/* Handle Input - THE OWNERSHIP MOMENT */}
           <div className="space-y-2">
-            <label className="text-[12px] text-white/40 uppercase tracking-wider">
+            <label className="text-label text-white/40 uppercase tracking-wider">
               Handle
             </label>
             <div className="relative">
@@ -176,7 +176,7 @@ export default function IdentityPage() {
                 onChange={(e) => setHandle(slugify(e.target.value))}
                 placeholder="csclub"
                 className={cn(
-                  'w-full pl-8 text-[16px]',
+                  'w-full pl-8 text-body-lg',
                   handleStatus === 'available' &&
                     'border-[var(--life-gold)]/40 focus:border-[var(--life-gold)]'
                 )}
@@ -197,7 +197,7 @@ export default function IdentityPage() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
-                  className="text-[12px]"
+                  className="text-label"
                 >
                   <GradientText variant="gold">It&apos;s yours.</GradientText>{' '}
                   <span className="text-white/30">hive.so/s/{handle}</span>
@@ -209,7 +209,7 @@ export default function IdentityPage() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
-                  className="text-[12px] text-[var(--status-error)]"
+                  className="text-label text-[var(--status-error)]"
                 >
                   This handle is already taken
                 </motion.p>
@@ -220,7 +220,7 @@ export default function IdentityPage() {
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -5 }}
-                  className="text-[12px] text-[var(--status-warning)]"
+                  className="text-label text-[var(--status-warning)]"
                 >
                   Only lowercase letters, numbers, and hyphens
                 </motion.p>
@@ -230,7 +230,7 @@ export default function IdentityPage() {
 
           {/* Description (Optional) */}
           <div className="space-y-2">
-            <label className="text-[12px] text-white/40 uppercase tracking-wider">
+            <label className="text-label text-white/40 uppercase tracking-wider">
               Description <span className="text-white/20">(optional)</span>
             </label>
             <Textarea

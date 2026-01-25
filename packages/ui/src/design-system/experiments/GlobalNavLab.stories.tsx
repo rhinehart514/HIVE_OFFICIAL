@@ -128,7 +128,7 @@ const RightActions = ({ compact = false }: { compact?: boolean }) => (
     <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/10 text-white/60 hover:text-white text-sm transition-all">
       <MagnifyingGlassIcon className="w-4 h-4" />
       {!compact && <span className="hidden md:inline">Search</span>}
-      <kbd className="hidden lg:inline px-1.5 py-0.5 text-[10px] bg-white/10 rounded">⌘K</kbd>
+      <kbd className="hidden lg:inline px-1.5 py-0.5 text-label-xs bg-white/10 rounded">⌘K</kbd>
     </button>
     <button className="relative p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.06] transition-all">
       <BellIcon className="w-5 h-5" />

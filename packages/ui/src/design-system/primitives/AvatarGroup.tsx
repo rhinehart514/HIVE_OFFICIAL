@@ -65,7 +65,7 @@ const overflowIndicatorVariants = cva(
   {
     variants: {
       size: {
-        xs: 'h-6 w-6 text-[10px] rounded-lg ring-1',
+        xs: 'h-6 w-6 text-label-xs rounded-lg ring-1',
         sm: 'h-8 w-8 text-xs rounded-lg ring-2',
         default: 'h-10 w-10 text-sm rounded-xl ring-2',
         lg: 'h-12 w-12 text-base rounded-xl ring-[3px]',

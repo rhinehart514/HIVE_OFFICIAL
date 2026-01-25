@@ -116,7 +116,7 @@ export default function ClaimedPage() {
         {/* Main Message */}
         <div className="space-y-4">
           <motion.h1
-            className="text-[40px] lg:text-[48px] font-semibold tracking-tight text-white"
+            className="text-heading-lg lg:text-display-sm font-semibold tracking-tight text-white"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: MOTION.duration.slow, delay: 0.3, ease: MOTION.ease.premium }}
@@ -134,7 +134,7 @@ export default function ClaimedPage() {
           </motion.h1>
 
           <motion.p
-            className="text-[16px] text-white/50"
+            className="text-body-lg text-white/50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: MOTION.duration.base, delay: 0.5, ease: MOTION.ease.premium }}
@@ -199,7 +199,7 @@ export default function ClaimedPage() {
 // Quick tip component
 function QuickTip({ icon, text }: { icon: string; text: string }) {
   return (
-    <div className="flex items-center gap-3 text-[13px]">
+    <div className="flex items-center gap-3 text-body-sm">
       <span className="text-lg">{icon}</span>
       <span className="text-white/40">{text}</span>
     </div>

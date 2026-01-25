@@ -48,12 +48,12 @@ export function PeopleGrid({ people, loading, searchQuery }: PeopleGridProps) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
-        <p className="text-white/40 text-[15px] mb-2">
+        <p className="text-white/40 text-body mb-2">
           {searchQuery
             ? `No people match "${searchQuery}"`
             : 'No people to show'}
         </p>
-        <p className="text-white/25 text-[13px]">
+        <p className="text-white/25 text-body-sm">
           Join spaces to connect with others
         </p>
       </motion.div>
@@ -110,13 +110,13 @@ function PersonCard({ person, index }: PersonCardProps) {
           </div>
 
           {/* Name */}
-          <h3 className="text-[14px] font-medium text-white truncate">
+          <h3 className="text-body font-medium text-white truncate">
             {person.name}
           </h3>
 
           {/* Role */}
           {person.role && (
-            <p className="text-[12px] text-white/40 truncate mt-0.5">
+            <p className="text-label text-white/40 truncate mt-0.5">
               {person.role}
             </p>
           )}

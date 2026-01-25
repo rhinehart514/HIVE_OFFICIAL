@@ -144,7 +144,7 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
                 {/* Day headers */}
                 <div className="flex gap-0.5 mb-1 pl-10">
                   {dayNames.map((day, i) => (
-                    <div key={i} className="flex-1 text-center text-[10px] text-muted-foreground">
+                    <div key={i} className="flex-1 text-center text-label-xs text-muted-foreground">
                       {day}
                     </div>
                   ))}
@@ -152,7 +152,7 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
                 {/* Hour rows */}
                 {Array.from({ length: endHour - startHour }, (_, i) => startHour + i).map(hour => (
                   <div key={hour} className="flex gap-0.5 mb-0.5">
-                    <div className="w-10 text-right text-[10px] text-muted-foreground pr-1">
+                    <div className="w-10 text-right text-label-xs text-muted-foreground pr-1">
                       {formatHour(hour)}
                     </div>
                     {dayNames.map((_, day) => {
@@ -176,7 +176,7 @@ export function AvailabilityHeatmapElement({ config, context, onChange, onAction
             </div>
 
             {/* Legend */}
-            <div className="flex items-center justify-center gap-4 mt-3 text-[10px] text-muted-foreground">
+            <div className="flex items-center justify-center gap-4 mt-3 text-label-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-sm bg-neutral-800/50" />
                 <span>Busy</span>

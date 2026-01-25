@@ -121,7 +121,7 @@ export function GreekBrowse({ searchQuery }: GreekBrowseProps) {
     <div className="space-y-8">
       {/* Count */}
       <div className="flex items-center justify-between">
-        <span className="text-[13px] text-white/30">
+        <span className="text-body-sm text-white/30">
           {data.totalCount} Greek {data.totalCount === 1 ? 'organization' : 'organizations'}
           {searchQuery && ` matching "${searchQuery}"`}
         </span>
@@ -152,7 +152,7 @@ export function GreekBrowse({ searchQuery }: GreekBrowseProps) {
                 onClick={loadMore}
                 disabled={loadingMore}
                 className={cn(
-                  'px-6 py-2.5 rounded-full text-[14px] font-medium transition-all duration-200',
+                  'px-6 py-2.5 rounded-full text-body font-medium transition-all duration-200',
                   'bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white/80',
                   loadingMore && 'opacity-50 cursor-not-allowed'
                 )}
@@ -171,10 +171,10 @@ export function GreekBrowse({ searchQuery }: GreekBrowseProps) {
             <div className="mb-6">
               <span className="text-4xl">🏛️</span>
             </div>
-            <h3 className="text-[18px] font-medium text-white/80 mb-2">
+            <h3 className="text-title-sm font-medium text-white/80 mb-2">
               {searchQuery ? 'No results' : 'No Greek organizations yet'}
             </h3>
-            <p className="text-[14px] text-white/40 max-w-md mx-auto">
+            <p className="text-body text-white/40 max-w-md mx-auto">
               {searchQuery
                 ? `No Greek organizations found matching "${searchQuery}"`
                 : 'Greek life organizations will appear here when they join HIVE.'}

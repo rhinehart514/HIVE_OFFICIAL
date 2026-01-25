@@ -132,8 +132,8 @@ export default function LaunchPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-[16px] text-white">Creating your space...</p>
-              <p className="text-[13px] text-white/40">@{handle}</p>
+              <p className="text-body-lg text-white">Creating your space...</p>
+              <p className="text-body-sm text-white/40">@{handle}</p>
             </div>
           </motion.div>
         </div>
@@ -156,8 +156,8 @@ export default function LaunchPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-[16px] text-white">Something went wrong</p>
-              <p className="text-[13px] text-white/40">{error}</p>
+              <p className="text-body-lg text-white">Something went wrong</p>
+              <p className="text-body-sm text-white/40">{error}</p>
             </div>
 
             <Button
@@ -211,7 +211,7 @@ export default function LaunchPage() {
           >
             <GradientText
               variant="gold"
-              className="text-[32px] font-semibold"
+              className="text-heading font-semibold"
             >
               It&apos;s yours.
             </GradientText>
@@ -221,7 +221,7 @@ export default function LaunchPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="text-[15px] text-white/60"
+            className="text-body text-white/60"
           >
             {name} is live at
           </motion.p>
@@ -240,7 +240,7 @@ export default function LaunchPage() {
             <div className="flex items-center justify-between gap-4">
               {/* URL */}
               <div className="flex-1 min-w-0">
-                <p className="text-[20px] font-medium text-white truncate">
+                <p className="text-title font-medium text-white truncate">
                   {spaceUrl}
                 </p>
               </div>
@@ -269,16 +269,16 @@ export default function LaunchPage() {
           className="grid grid-cols-3 gap-3 text-center"
         >
           <div className="p-3 rounded-lg bg-white/[0.02]">
-            <p className="text-[11px] text-white/30 uppercase tracking-wider">Privacy</p>
-            <p className="text-[14px] text-white mt-1 capitalize">{privacy}</p>
+            <p className="text-label-sm text-white/30 uppercase tracking-wider">Privacy</p>
+            <p className="text-body text-white mt-1 capitalize">{privacy}</p>
           </div>
           <div className="p-3 rounded-lg bg-white/[0.02]">
-            <p className="text-[11px] text-white/30 uppercase tracking-wider">Template</p>
-            <p className="text-[14px] text-white mt-1 capitalize">{templateId}</p>
+            <p className="text-label-sm text-white/30 uppercase tracking-wider">Template</p>
+            <p className="text-body text-white mt-1 capitalize">{templateId}</p>
           </div>
           <div className="p-3 rounded-lg bg-white/[0.02]">
-            <p className="text-[11px] text-white/30 uppercase tracking-wider">Members</p>
-            <p className="text-[14px] text-white mt-1">1</p>
+            <p className="text-label-sm text-white/30 uppercase tracking-wider">Members</p>
+            <p className="text-body text-white mt-1">1</p>
           </div>
         </motion.div>
 
@@ -318,7 +318,7 @@ export default function LaunchPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
-          className="text-[12px] text-white/30 text-center"
+          className="text-label text-white/30 text-center"
         >
           Share your link on social, text it to your e-board, or paste it in your bio
         </motion.p>

@@ -111,7 +111,7 @@ export function ScrollIndicator({
             : undefined
         }
       />
-      <span className="text-[11px] uppercase tracking-wider text-white/20">{text}</span>
+      <span className="text-label-sm uppercase tracking-wider text-white/20">{text}</span>
     </motion.div>
   );
 }

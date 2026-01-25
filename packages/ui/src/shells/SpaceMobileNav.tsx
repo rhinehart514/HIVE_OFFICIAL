@@ -173,7 +173,7 @@ export function SpaceMobileNav({
                   )}
                 </div>
 
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <span className="text-label-xs font-medium">{item.label}</span>
               </button>
             );
           })}

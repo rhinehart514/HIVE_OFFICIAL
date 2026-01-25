@@ -390,7 +390,7 @@ export const With_Groups = () => {
           {groups.map((group, gi) => (
             <div key={group.label}>
               {gi > 0 && <div className="h-px bg-white/10 mx-2 my-1" />}
-              <div className="px-3 py-1.5 text-[10px] font-medium text-white/40 uppercase tracking-wider">
+              <div className="px-3 py-1.5 text-label-xs font-medium text-white/40 uppercase tracking-wider">
                 {group.label}
               </div>
               {group.items.map((item) => (

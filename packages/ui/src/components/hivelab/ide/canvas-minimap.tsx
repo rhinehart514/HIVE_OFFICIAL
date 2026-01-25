@@ -235,11 +235,11 @@ export function CanvasMinimap({
               style={{ borderBottom: `1px solid ${COLORS.border}` }}
               onClick={() => setIsExpanded(false)}
             >
-              <span className="text-[10px] font-medium" style={{ color: COLORS.text }}>
+              <span className="text-label-xs font-medium" style={{ color: COLORS.text }}>
                 Overview
               </span>
               <div className="flex items-center gap-1">
-                <span className="text-[10px]" style={{ color: COLORS.text }}>
+                <span className="text-label-xs" style={{ color: COLORS.text }}>
                   {elements.length} elements
                 </span>
                 <ChevronDownIcon className="w-3 h-3" style={{ color: COLORS.text }} />

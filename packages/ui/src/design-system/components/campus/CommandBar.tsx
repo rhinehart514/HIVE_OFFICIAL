@@ -340,7 +340,7 @@ export function CommandBar({
       >
         <SearchIcon className="w-4 h-4 flex-shrink-0" />
         <span className="flex-1 text-left truncate">{searchPlaceholder}</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] text-[var(--text-muted)] bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded">
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-label-xs text-[var(--text-muted)] bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
@@ -403,7 +403,7 @@ export function CommandBar({
               'absolute -top-0.5 -right-0.5',
               'min-w-[18px] h-[18px] px-1',
               'flex items-center justify-center',
-              'text-[10px] font-semibold',
+              'text-label-xs font-semibold',
               'bg-[var(--life-gold)] text-black',
               'rounded-full'
             )}

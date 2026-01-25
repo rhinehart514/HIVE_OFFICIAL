@@ -69,7 +69,7 @@ const badgeVariants = cva(
   {
     variants: {
       size: {
-        sm: 'px-2 py-0.5 text-[10px]',
+        sm: 'px-2 py-0.5 text-label-xs',
         default: 'px-2.5 py-1 text-xs',
         lg: 'px-3 py-1.5 text-sm',
       },
@@ -317,7 +317,7 @@ const CountBadge: React.FC<CountBadgeProps> = ({
             'flex items-center justify-center',
             'rounded-full',
             'px-1',
-            'text-[10px] font-semibold',
+            'text-label-xs font-semibold',
             'ring-2 ring-[var(--bg-surface)]',
             countPositionClasses[position],
             variant === 'neutral' && 'text-white/80'
@@ -398,7 +398,7 @@ const TagBadge: React.FC<TagBadgeProps> = ({
   className,
 }) => {
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-[10px]',
+    sm: 'px-2 py-0.5 text-label-xs',
     default: 'px-2.5 py-1 text-xs',
     lg: 'px-3 py-1.5 text-sm',
   };

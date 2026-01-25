@@ -112,8 +112,8 @@ const roleBadgeVariants = cva(
     variants: {
       size: {
         large: 'px-2.5 py-1 text-xs',
-        medium: 'px-2 py-0.5 text-[10px]',
-        compact: 'px-1.5 py-0.5 text-[10px]',
+        medium: 'px-2 py-0.5 text-label-xs',
+        compact: 'px-1.5 py-0.5 text-label-xs',
       },
     },
     defaultVariants: {

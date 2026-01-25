@@ -101,13 +101,13 @@ export function SpaceBrowseCard({
               <h3
                 className={cn(
                   'font-medium text-white/90 truncate',
-                  isFeatured ? 'text-[18px] md:text-[20px]' : 'text-[15px]'
+                  isFeatured ? 'text-title-sm md:text-title' : 'text-body'
                 )}
               >
                 {space.name}
               </h3>
               {space.isVerified && (
-                <span className="text-blue-400 text-[12px]">✓</span>
+                <span className="text-blue-400 text-label">✓</span>
               )}
             </div>
 
@@ -115,7 +115,7 @@ export function SpaceBrowseCard({
               <p
                 className={cn(
                   'text-white/40 line-clamp-2 mt-1',
-                  isFeatured ? 'text-[14px]' : 'text-[13px]'
+                  isFeatured ? 'text-body' : 'text-body-sm'
                 )}
               >
                 {space.description}
@@ -125,7 +125,7 @@ export function SpaceBrowseCard({
         </div>
 
         {/* Meta Row */}
-        <div className="flex items-center gap-4 text-[12px] text-white/30">
+        <div className="flex items-center gap-4 text-label text-white/30">
           {/* Member count */}
           {(space.memberCount ?? 0) > 0 && (
             <div className="flex items-center gap-1.5">
@@ -164,7 +164,7 @@ export function SpaceBrowseCard({
 
         {/* Member badge */}
         {space.isMember && (
-          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/[0.06] text-[10px] text-white/40 font-medium">
+          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/[0.06] text-label-xs text-white/40 font-medium">
             Joined
           </div>
         )}
@@ -243,7 +243,7 @@ export function FeaturedSpaceCard({
         {/* Label */}
         {label && (
           <div className="mb-4">
-            <span className="text-[11px] font-medium text-[var(--color-gold,#C9A227)]/60 uppercase tracking-wider">
+            <span className="text-label-sm font-medium text-[var(--color-gold,#C9A227)]/60 uppercase tracking-wider">
               {label}
             </span>
           </div>
@@ -259,11 +259,11 @@ export function FeaturedSpaceCard({
           </Avatar>
 
           <div className="flex-1 min-w-0">
-            <h3 className="text-[22px] md:text-[26px] font-medium text-white/95 mb-2">
+            <h3 className="text-title-lg md:text-title-lg font-medium text-white/95 mb-2">
               {space.name}
             </h3>
             {space.description && (
-              <p className="text-[14px] text-white/40 line-clamp-2">
+              <p className="text-body text-white/40 line-clamp-2">
                 {space.description}
               </p>
             )}
@@ -271,7 +271,7 @@ export function FeaturedSpaceCard({
         </div>
 
         {/* Meta */}
-        <div className="flex items-center gap-4 text-[13px] text-white/30">
+        <div className="flex items-center gap-4 text-body-sm text-white/30">
           {(space.memberCount ?? 0) > 0 && (
             <div className="flex items-center gap-1.5">
               <Users size={14} />

@@ -386,14 +386,14 @@ function ElementCard({ element, onDragStart, onDragEnd, index = 0 }: ElementCard
               {element.name}
             </p>
             {isComingSoon && (
-              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-zinc-700/50 text-zinc-400 border border-zinc-600/50">
+              <span className="px-1.5 py-0.5 text-label-xs font-medium rounded bg-zinc-700/50 text-zinc-400 border border-zinc-600/50">
                 Soon
               </span>
             )}
             {!isComingSoon && element.tier !== 'universal' && (
               <motion.span
                 className={cn(
-                  'px-1.5 py-0.5 text-[10px] font-medium rounded',
+                  'px-1.5 py-0.5 text-label-xs font-medium rounded',
                   element.tier === 'connected'
                     ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                     : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'

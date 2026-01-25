@@ -257,14 +257,14 @@ export const Special_Badges = () => (
       <CardWrapper label="C: New / Beta">
         <div className="flex flex-wrap gap-2">
           <span
-            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white/90"
+            className="px-2 py-0.5 rounded text-label-xs font-bold uppercase tracking-wider text-white/90"
             style={{
               background: 'linear-gradient(180deg, rgba(80,80,80,1) 0%, rgba(60,60,60,1) 100%)',
               boxShadow: '0 1px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
             }}
           >New</span>
           <span
-            className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-blue-300"
+            className="px-2 py-0.5 rounded text-label-xs font-bold uppercase tracking-wider text-blue-300"
             style={{
               background: 'linear-gradient(180deg, rgba(59,130,246,0.3) 0%, rgba(59,130,246,0.2) 100%)',
               boxShadow: '0 1px 4px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)',
@@ -308,11 +308,11 @@ export const Count_Badges = () => (
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-10 h-10 rounded-lg bg-white/10" />
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">3</span>
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-label-xs font-bold text-white flex items-center justify-center">3</span>
           </div>
           <div className="relative">
             <div className="w-10 h-10 rounded-lg bg-white/10" />
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">99+</span>
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-label-xs font-bold text-white flex items-center justify-center">99+</span>
           </div>
         </div>
       </CardWrapper>
@@ -322,7 +322,7 @@ export const Count_Badges = () => (
           <div className="relative">
             <div className="w-10 h-10 rounded-lg bg-white/10" />
             <span
-              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold text-black flex items-center justify-center"
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-label-xs font-bold text-black flex items-center justify-center"
               style={{
                 background: 'linear-gradient(180deg, #FFD700 0%, #E5C200 100%)',
               }}
@@ -336,7 +336,7 @@ export const Count_Badges = () => (
           <div className="relative">
             <div className="w-10 h-10 rounded-lg bg-white/10" />
             <span
-              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-medium text-white/80 flex items-center justify-center"
+              className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-label-xs font-medium text-white/80 flex items-center justify-center"
               style={{
                 background: 'linear-gradient(180deg, rgba(60,60,60,1) 0%, rgba(45,45,45,1) 100%)',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -422,7 +422,7 @@ export const Final_Candidates = () => (
       <CardWrapper label="RECOMMENDED: Floating pill + tinted status + gold special">
         <div className="space-y-4">
           <div>
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Default</span>
+            <span className="text-label-xs text-white/40 uppercase tracking-wider">Default</span>
             <div className="flex flex-wrap gap-2 mt-2">
               <span
                 className="px-2.5 py-1 rounded-full text-xs font-medium text-white/80"
@@ -442,7 +442,7 @@ export const Final_Candidates = () => (
           </div>
 
           <div>
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Status</span>
+            <span className="text-label-xs text-white/40 uppercase tracking-wider">Status</span>
             <div className="flex flex-wrap gap-2 mt-2">
               <span className="px-2.5 py-1 rounded-full text-xs font-medium text-green-400 bg-green-500/20">Success</span>
               <span className="px-2.5 py-1 rounded-full text-xs font-medium text-red-400 bg-red-500/20">Error</span>
@@ -451,7 +451,7 @@ export const Final_Candidates = () => (
           </div>
 
           <div>
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Special (Gold)</span>
+            <span className="text-label-xs text-white/40 uppercase tracking-wider">Special (Gold)</span>
             <div className="flex flex-wrap gap-2 mt-2">
               <span
                 className="px-2.5 py-1 rounded-full text-xs font-bold text-black"
@@ -471,11 +471,11 @@ export const Final_Candidates = () => (
           </div>
 
           <div>
-            <span className="text-[10px] text-white/40 uppercase tracking-wider">Count</span>
+            <span className="text-label-xs text-white/40 uppercase tracking-wider">Count</span>
             <div className="flex items-center gap-4 mt-2">
               <div className="relative">
                 <div className="w-8 h-8 rounded-lg bg-white/10" />
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-[9px] font-bold text-white flex items-center justify-center">3</span>
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-red-500 text-label-xs font-bold text-white flex items-center justify-center">3</span>
               </div>
             </div>
           </div>

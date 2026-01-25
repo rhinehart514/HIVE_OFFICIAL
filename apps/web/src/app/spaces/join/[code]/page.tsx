@@ -272,7 +272,7 @@ export default function JoinSpacePage() {
 
                 {/* Word-by-word reveal: "You're in." */}
                 <h2
-                  className="text-[32px] font-semibold mb-4"
+                  className="text-heading font-semibold mb-4"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
                   <WordReveal

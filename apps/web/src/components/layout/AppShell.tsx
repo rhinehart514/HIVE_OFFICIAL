@@ -171,7 +171,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
               key={item.id}
               onClick={() => handleNavClick(item.href)}
               className={cn(
-                'group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[14px] font-medium transition-colors duration-200',
+                'group relative w-full flex items-center gap-3 px-4 py-3 rounded-xl text-body font-medium transition-colors duration-200',
                 active ? 'text-white/90' : 'text-white/60 hover:text-white/90'
               )}
               whileHover={{ x: 2 }}
@@ -220,7 +220,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-[13px] font-semibold text-white/60">
+                <span className="text-body-sm font-semibold text-white/60">
                   {user.displayName?.charAt(0) || user.fullName?.charAt(0) || 'U'}
                 </span>
               )}
@@ -228,10 +228,10 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
 
             {/* Name + handle */}
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-medium text-white/90 truncate tracking-[-0.01em]">
+              <p className="text-body-sm font-medium text-white/90 truncate tracking-[-0.01em]">
                 {user.displayName || user.fullName || 'User'}
               </p>
-              <p className="text-[11px] text-white/40 truncate">
+              <p className="text-label-sm text-white/40 truncate">
                 @{user.handle || 'username'}
               </p>
             </div>
@@ -245,7 +245,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
         {user && (
           <motion.button
             onClick={handleSignOut}
-            className="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/60 hover:text-white/90 text-[13px] font-medium mt-1 transition-colors"
+            className="group relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/60 hover:text-white/90 text-body-sm font-medium mt-1 transition-colors"
             whileHover={{ x: 2 }}
           >
             <motion.div
@@ -348,7 +348,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--color-gold)] rounded-r" />
                       )}
                       <Icon size={20} />
-                      <span className="text-[15px] font-medium">{item.label}</span>
+                      <span className="text-body font-medium">{item.label}</span>
                     </button>
                   );
                 })}
@@ -365,7 +365,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
                     >
                       <Icon size={20} />
-                      <span className="text-[15px] font-medium">{item.label}</span>
+                      <span className="text-body font-medium">{item.label}</span>
                     </button>
                   );
                 })}
@@ -376,7 +376,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
                   >
                     <LogOut size={20} />
-                    <span className="text-[15px] font-medium">Sign Out</span>
+                    <span className="text-body font-medium">Sign Out</span>
                   </button>
                 )}
               </div>

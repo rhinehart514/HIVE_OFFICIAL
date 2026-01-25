@@ -170,7 +170,7 @@ const SpaceLogo = ({ space, size = 'sm' }: { space: { name: string; logo: string
   };
 
   const textSizes = {
-    sm: 'text-[10px]',
+    sm: 'text-label-xs',
     md: 'text-xs',
   };
 

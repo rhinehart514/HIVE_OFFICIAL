@@ -94,7 +94,7 @@ export function UnlockCelebration({
                       delay: 0.3,
                       ease: MOTION.ease.premium,
                     }}
-                    className="text-[28px] font-semibold text-white text-center mb-4 leading-tight"
+                    className="text-heading-sm font-semibold text-white text-center mb-4 leading-tight"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
                     Welcome to {majorName}
@@ -109,7 +109,7 @@ export function UnlockCelebration({
                       delay: 0.4,
                       ease: MOTION.ease.premium,
                     }}
-                    className="text-[15px] text-white/60 text-center mb-2 leading-relaxed"
+                    className="text-body text-white/60 text-center mb-2 leading-relaxed"
                   >
                     You unlocked this major space for everyone
                   </motion.p>
@@ -123,7 +123,7 @@ export function UnlockCelebration({
                       delay: 0.5,
                       ease: MOTION.ease.premium,
                     }}
-                    className="text-[13px] text-[var(--color-gold)]/60 text-center mb-10"
+                    className="text-body-sm text-[var(--color-gold)]/60 text-center mb-10"
                   >
                     Your classmates can now join and collaborate
                   </motion.p>
@@ -161,7 +161,7 @@ export function UnlockCelebration({
 
                     <button
                       onClick={onClose}
-                      className="w-full mt-4 py-2 text-[13px] text-white/40 hover:text-white/70 transition-colors"
+                      className="w-full mt-4 py-2 text-body-sm text-white/40 hover:text-white/70 transition-colors"
                     >
                       Close
                     </button>

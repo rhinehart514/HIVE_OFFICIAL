@@ -61,7 +61,7 @@ export function CodeSection({
         transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
         className="space-y-2"
       >
-        <p className="text-[13px] text-white/40 font-medium">Verification</p>
+        <p className="text-body-sm text-white/40 font-medium">Verification</p>
         <LockedFieldChip value="Verified" allowChange={false} />
       </motion.div>
     );
@@ -84,12 +84,12 @@ export function CodeSection({
       {/* Header */}
       <motion.div variants={sectionChildVariants} className="space-y-2">
         <h2
-          className="text-[20px] font-semibold text-white"
+          className="text-title font-semibold text-white"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Check your email
         </h2>
-        <p className="text-[14px] text-white/50">
+        <p className="text-body text-white/50">
           We sent a code to <span className="text-white/70">{email}</span>
         </p>
       </motion.div>
@@ -119,7 +119,7 @@ export function CodeSection({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="text-[13px] text-red-400"
+              className="text-body-sm text-red-400"
             >
               {section.error}
             </motion.p>
@@ -132,7 +132,7 @@ export function CodeSection({
               className="flex items-center gap-2"
             >
               <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-              <span className="text-[13px] text-white/50">Verifying...</span>
+              <span className="text-body-sm text-white/50">Verifying...</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -141,7 +141,7 @@ export function CodeSection({
       {/* Actions */}
       <motion.div
         variants={sectionChildVariants}
-        className="flex items-center gap-4 text-[13px]"
+        className="flex items-center gap-4 text-body-sm"
       >
         <CountdownTimer
           seconds={resendCooldown}

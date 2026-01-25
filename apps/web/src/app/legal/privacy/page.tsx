@@ -26,40 +26,40 @@ export default function PrivacyPage() {
       <div className="mx-auto max-w-3xl px-6">
         {/* Header */}
         <header className="mb-16">
-          <p className="mb-3 text-[13px] font-medium uppercase tracking-wider text-[var(--color-gold)]/70">
+          <p className="mb-3 text-body-sm font-medium uppercase tracking-wider text-[var(--color-gold)]/70">
             Legal
           </p>
-          <h1 className="mb-4 text-[40px] font-semibold leading-[1.1] tracking-tight text-white md:text-[48px]">
+          <h1 className="mb-4 text-heading-lg font-semibold leading-[1.1] tracking-tight text-white md:text-display-sm">
             Privacy Policy
           </h1>
-          <p className="text-[15px] leading-relaxed text-white/50">
+          <p className="text-body leading-relaxed text-white/50">
             Effective January 15, 2025 · Version 1.0
           </p>
         </header>
 
         {/* Summary card */}
         <div className="mb-16 rounded-2xl border border-[var(--color-gold)]/10 bg-[var(--color-gold)]/[0.03] p-6">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-gold)]/60">
+          <p className="mb-2 text-label-sm font-semibold uppercase tracking-wider text-[var(--color-gold)]/60">
             The short version
           </p>
-          <p className="text-[15px] leading-relaxed text-white/70">
+          <p className="text-body leading-relaxed text-white/70">
             I will not sell your data. I'm not going to. There are no ads. There's no secret business model where you're the product. I built this for students, not to harvest information from them. The stuff below explains exactly what we collect and why — no legal gymnastics.
           </p>
         </div>
 
         {/* Table of Contents */}
         <nav className="mb-16 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
-          <p className="mb-4 text-[11px] font-semibold uppercase tracking-wider text-white/30">
+          <p className="mb-4 text-label-sm font-semibold uppercase tracking-wider text-white/30">
             Contents
           </p>
-          <ol className="grid gap-2 text-[14px] md:grid-cols-2">
+          <ol className="grid gap-2 text-body md:grid-cols-2">
             {SECTIONS.map((section, i) => (
               <li key={section.id}>
                 <a
                   href={`#${section.id}`}
                   className="flex items-baseline gap-3 text-white/50 transition-colors hover:text-white"
                 >
-                  <span className="text-[12px] text-white/20">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="text-label text-white/20">{String(i + 1).padStart(2, '0')}</span>
                   {section.title}
                 </a>
               </li>
@@ -209,7 +209,7 @@ export default function PrivacyPage() {
                 hiveconnects@gmail.com
               </a>
             </p>
-            <p className="text-[14px] text-white/40">
+            <p className="text-body text-white/40">
               HIVE<br />
               Built in Buffalo, NY
             </p>
@@ -218,7 +218,7 @@ export default function PrivacyPage() {
 
         {/* Version footer */}
         <footer className="mt-20 border-t border-white/[0.06] pt-8">
-          <p className="text-[12px] text-white/30">
+          <p className="text-label text-white/30">
             Version 1.0 · Effective January 15, 2025
           </p>
         </footer>
@@ -241,10 +241,10 @@ function Section({
   return (
     <section id={id} className="scroll-mt-24">
       <div className="mb-4 flex items-baseline gap-3">
-        <span className="text-[13px] font-medium text-[var(--color-gold)]/50">{number}</span>
-        <h2 className="text-[20px] font-semibold text-white">{title}</h2>
+        <span className="text-body-sm font-medium text-[var(--color-gold)]/50">{number}</span>
+        <h2 className="text-title font-semibold text-white">{title}</h2>
       </div>
-      <div className="space-y-4 text-[15px] leading-relaxed text-white/60 [&_a]:underline [&_a]:underline-offset-2 [&_li]:pl-1 [&_strong]:font-medium [&_strong]:text-white/80 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-2">
+      <div className="space-y-4 text-body leading-relaxed text-white/60 [&_a]:underline [&_a]:underline-offset-2 [&_li]:pl-1 [&_strong]:font-medium [&_strong]:text-white/80 [&_ul]:ml-4 [&_ul]:list-disc [&_ul]:space-y-2">
         {children}
       </div>
     </section>

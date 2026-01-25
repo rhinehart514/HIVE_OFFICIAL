@@ -145,12 +145,12 @@ function TemplateCard({
             {/* Badges */}
             <div className="flex items-center gap-1.5">
               {isApp && (
-                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-[var(--life-gold)] to-amber-500 text-black">
+                <span className="px-2 py-0.5 text-label-xs font-semibold rounded-full bg-gradient-to-r from-[var(--life-gold)] to-amber-500 text-black">
                   APP
                 </span>
               )}
               {isComingSoon && (
-                <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-white/60">
+                <span className="px-2 py-0.5 text-label-xs font-medium rounded-full bg-white/10 text-white/60">
                   Soon
                 </span>
               )}
@@ -159,7 +159,7 @@ function TemplateCard({
 
           {/* Title */}
           <h4 className={cn(
-            'font-semibold text-[15px] mb-1 transition-colors',
+            'font-semibold text-body mb-1 transition-colors',
             isSelected ? 'text-white' : 'text-[var(--hivelab-text-primary)] group-hover:text-white'
           )}>
             {template.name}

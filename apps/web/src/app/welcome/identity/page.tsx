@@ -108,7 +108,7 @@ export default function IdentityPage() {
             animate={{ opacity: 1, y: 0 }}
             className="p-3 rounded-lg bg-red-500/10 border border-red-500/20"
           >
-            <p className="text-[13px] text-red-400 text-center">{error}</p>
+            <p className="text-body-sm text-red-400 text-center">{error}</p>
           </motion.div>
         )}
 
@@ -133,7 +133,7 @@ export default function IdentityPage() {
               className="w-24 h-24"
             />
             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-[12px] text-white font-medium">Change</span>
+              <span className="text-label text-white font-medium">Change</span>
             </div>
           </button>
         </motion.div>
@@ -146,7 +146,7 @@ export default function IdentityPage() {
           transition={{ duration: MOTION.duration.base, delay: 0.2, ease: MOTION.ease.premium }}
         >
           <div className="space-y-2">
-            <label className="text-[12px] text-white/40 uppercase tracking-wider">
+            <label className="text-label text-white/40 uppercase tracking-wider">
               Display Name
             </label>
             <Input
@@ -157,7 +157,7 @@ export default function IdentityPage() {
               className="w-full"
               maxLength={50}
             />
-            <p className="text-[11px] text-white/30">
+            <p className="text-label-sm text-white/30">
               This is how you&apos;ll appear to others
             </p>
           </div>

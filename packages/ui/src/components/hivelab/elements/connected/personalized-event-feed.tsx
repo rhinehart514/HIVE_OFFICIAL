@@ -257,7 +257,7 @@ export function PersonalizedEventFeedElement({ config, onChange, onAction }: Ele
                       {showMatchReasons && event.interestMatch && event.interestMatch.length > 0 && (
                         <div className="flex items-center gap-1">
                           {event.interestMatch.slice(0, 2).map((interest) => (
-                            <Badge key={interest} variant="outline" className="text-[10px] px-1.5 py-0">
+                            <Badge key={interest} variant="outline" className="text-label-xs px-1.5 py-0">
                               {interest}
                             </Badge>
                           ))}
@@ -268,7 +268,7 @@ export function PersonalizedEventFeedElement({ config, onChange, onAction }: Ele
                     {/* RSVP / Relevance indicator */}
                     <div className="flex items-center gap-2 shrink-0">
                       {event.isUserRsvped ? (
-                        <Badge variant="secondary" className="text-[10px]">Going</Badge>
+                        <Badge variant="secondary" className="text-label-xs">Going</Badge>
                       ) : (
                         <Button
                           variant="ghost"
@@ -285,7 +285,7 @@ export function PersonalizedEventFeedElement({ config, onChange, onAction }: Ele
 
                   {/* Match reason tooltip on hover */}
                   {showMatchReasons && event.matchReasons.length > 0 && (
-                    <div className="mt-2 text-[10px] text-muted-foreground/70 line-clamp-1">
+                    <div className="mt-2 text-label-xs text-muted-foreground/70 line-clamp-1">
                       {event.matchReasons[0]}
                     </div>
                   )}

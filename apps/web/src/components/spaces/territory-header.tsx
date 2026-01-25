@@ -43,7 +43,7 @@ export function TerritoryHeader({
     >
       {/* Main headline - Clash Display */}
       <motion.h1
-        className="text-[36px] md:text-[48px] font-semibold leading-[1.0] tracking-tight text-white mb-4"
+        className="text-heading-lg md:text-display-sm font-semibold leading-[1.0] tracking-tight text-white mb-4"
         style={{ fontFamily: 'var(--font-display)' }}
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -54,7 +54,7 @@ export function TerritoryHeader({
 
       {/* Stats line - territory narrative */}
       <motion.div
-        className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[15px] mb-6"
+        className="flex flex-wrap items-center gap-x-6 gap-y-2 text-body mb-6"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: durationSeconds.gentle, delay: 0.4, ease: MOTION.ease.premium }}
@@ -76,7 +76,7 @@ export function TerritoryHeader({
 
       {/* Subtext based on auth state */}
       <motion.p
-        className="text-[16px] text-white/40 max-w-md"
+        className="text-body-lg text-white/40 max-w-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: durationSeconds.gentle, delay: 0.8, ease: MOTION.ease.premium }}

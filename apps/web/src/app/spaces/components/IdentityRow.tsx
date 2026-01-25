@@ -130,7 +130,7 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Top: Category label */}
-        <span className={cn('text-[11px] font-medium uppercase tracking-wider mb-3', config.accent)}>
+        <span className={cn('text-label-sm font-medium uppercase tracking-wider mb-3', config.accent)}>
           {config.label}
         </span>
 
@@ -140,18 +140,18 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
             <>
               <Avatar size="default" className={cn('ring-2', config.ring)}>
                 {claim.spaceAvatarUrl && <AvatarImage src={claim.spaceAvatarUrl} />}
-                <AvatarFallback className="text-[13px] bg-white/[0.06]">
+                <AvatarFallback className="text-body-sm bg-white/[0.06]">
                   {getInitials(claim.spaceName)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-medium text-white/90 truncate">
+                <p className="text-body font-medium text-white/90 truncate">
                   {claim.spaceName}
                 </p>
               </div>
             </>
           ) : (
-            <p className="text-[14px] text-white/40 italic">
+            <p className="text-body text-white/40 italic">
               {config.emptyText}
             </p>
           )}
@@ -163,14 +163,14 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
             {/* Online indicator */}
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[12px] text-white/30">
+              <span className="text-label text-white/30">
                 {onlineCount} online
               </span>
             </div>
 
             {/* Unread badge */}
             {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[11px] font-medium">
+              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-label-sm font-medium">
                 {unreadCount} new
               </span>
             )}

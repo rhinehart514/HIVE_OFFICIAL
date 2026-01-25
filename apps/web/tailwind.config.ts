@@ -81,6 +81,46 @@ const config: Config = {
           error: 'var(--hive-status-error)',
           info: 'var(--hive-status-info)',
         },
+        // Glass surfaces - semi-transparent overlays
+        glass: {
+          bg: 'rgba(255, 255, 255, var(--opacity-ghost, 0.04))',
+          border: 'rgba(255, 255, 255, var(--opacity-muted, 0.08))',
+          hover: 'rgba(255, 255, 255, var(--opacity-soft, 0.10))',
+          active: 'rgba(255, 255, 255, var(--opacity-visible, 0.15))',
+        },
+        // Semantic opacity-based colors
+        overlay: {
+          ghost: 'rgba(255, 255, 255, 0.04)',
+          subtle: 'rgba(255, 255, 255, 0.06)',
+          muted: 'rgba(255, 255, 255, 0.08)',
+          soft: 'rgba(255, 255, 255, 0.10)',
+          medium: 'rgba(255, 255, 255, 0.12)',
+          visible: 'rgba(255, 255, 255, 0.15)',
+          strong: 'rgba(255, 255, 255, 0.20)',
+          prominent: 'rgba(255, 255, 255, 0.30)',
+        },
+      },
+      fontSize: {
+        // Label scale - fine print, timestamps, badges
+        'label-xs': ['10px', { lineHeight: '1.4' }],
+        'label-sm': ['11px', { lineHeight: '1.4' }],
+        'label': ['12px', { lineHeight: '1.4' }],
+        // Body scale - conversation, content
+        'body-sm': ['13px', { lineHeight: '1.5' }],
+        'body': ['14px', { lineHeight: '1.5' }],
+        'body-lg': ['16px', { lineHeight: '1.5' }],
+        // Title scale - section headers, card titles
+        'title-sm': ['18px', { lineHeight: '1.3' }],
+        'title': ['20px', { lineHeight: '1.3' }],
+        'title-lg': ['24px', { lineHeight: '1.2' }],
+        // Heading scale - page titles
+        'heading-sm': ['28px', { lineHeight: '1.2' }],
+        'heading': ['32px', { lineHeight: '1.1' }],
+        'heading-lg': ['40px', { lineHeight: '1.1' }],
+        // Display scale - hero sections
+        'display-sm': ['48px', { lineHeight: '1' }],
+        'display': ['56px', { lineHeight: '1' }],
+        'display-lg': ['64px', { lineHeight: '1' }],
       },
       borderRadius: {
         none: '0',

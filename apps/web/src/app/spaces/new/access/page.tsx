@@ -121,7 +121,7 @@ export default function AccessPage() {
 
         {/* Helper text */}
         <motion.p
-          className="text-[12px] text-white/30 text-center"
+          className="text-label text-white/30 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: MOTION.duration.base, delay: 0.4, ease: MOTION.ease.premium }}

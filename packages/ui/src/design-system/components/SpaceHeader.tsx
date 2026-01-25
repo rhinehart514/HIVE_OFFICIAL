@@ -269,14 +269,14 @@ export function SpaceHeader({
 
         <div className="flex items-center gap-3 mt-0.5">
           {/* Member count */}
-          <span className="flex items-center gap-1 text-[13px] text-neutral-400">
+          <span className="flex items-center gap-1 text-body-sm text-neutral-400">
             <UsersIcon className="w-3.5 h-3.5" />
             <span>{memberCount.toLocaleString()}</span>
           </span>
 
           {/* Online count */}
           {onlineCount !== undefined && onlineCount > 0 && (
-            <span className="flex items-center gap-1 text-[13px] text-[var(--life-gold)]">
+            <span className="flex items-center gap-1 text-body-sm text-[var(--life-gold)]">
               <span className="w-1.5 h-1.5 rounded-full bg-[var(--life-gold)] animate-pulse" />
               <span>{onlineCount} online</span>
             </span>
@@ -324,7 +324,7 @@ export function SpaceHeader({
           disabled={isLoading || isPending || (!canJoin && !canLeave)}
           className={cn(
             'flex items-center gap-1.5 px-4 py-2 rounded-lg',
-            'text-[14px] font-medium',
+            'text-body font-medium',
             'transition-all duration-150',
             // Not joined - gold CTA
             !isJoined && !isLoading && [
@@ -391,9 +391,9 @@ export function SpaceHeaderCompact({
       <SpaceAvatar name={name} iconUrl={iconUrl} isVerified={isVerified} size="sm" />
 
       <div className="flex-1 min-w-0">
-        <p className="text-[14px] font-medium text-white truncate">{name}</p>
+        <p className="text-body font-medium text-white truncate">{name}</p>
         {(memberCount !== undefined || onlineCount !== undefined) && (
-          <div className="flex items-center gap-2 text-[12px] text-neutral-500">
+          <div className="flex items-center gap-2 text-label text-neutral-500">
             {memberCount !== undefined && <span>{memberCount.toLocaleString()} members</span>}
             {onlineCount !== undefined && onlineCount > 0 && (
               <span className="text-[var(--life-gold)]">{onlineCount} online</span>

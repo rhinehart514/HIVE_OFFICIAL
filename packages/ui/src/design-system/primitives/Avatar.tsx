@@ -63,7 +63,7 @@ const avatarFallbackStyles = cn(
 const avatarFallbackSizeVariants = cva('', {
   variants: {
     size: {
-      xs: 'text-[10px]',
+      xs: 'text-label-xs',
       sm: 'text-xs',
       default: 'text-sm',
       lg: 'text-base',

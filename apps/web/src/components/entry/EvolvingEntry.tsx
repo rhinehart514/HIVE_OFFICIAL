@@ -142,7 +142,7 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
         >
           {/* Word-by-word headline - larger, more dramatic */}
           <h1
-            className="text-[40px] md:text-[52px] font-semibold tracking-tight text-white leading-[1.0]"
+            className="text-heading-lg md:text-display font-semibold tracking-tight text-white leading-[1.0]"
             style={{
               fontFamily: 'var(--font-display)',
               textShadow: '0 0 80px rgba(255, 215, 0, 0.08)',
@@ -163,7 +163,7 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
           </h1>
 
           {/* Subtitle with word reveal - more evocative copy */}
-          <p className="mt-4 text-[17px] text-white/40 leading-relaxed">
+          <p className="mt-4 text-body-lg text-white/40 leading-relaxed">
             {subtitleWords.map((word, i) => (
               <motion.span
                 key={i}

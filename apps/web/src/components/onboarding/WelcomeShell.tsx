@@ -67,7 +67,7 @@ export function WelcomeShell({
           <motion.button
             type="button"
             onClick={handleSkip}
-            className="text-[12px] text-white/30 hover:text-white/50 transition-colors"
+            className="text-label text-white/30 hover:text-white/50 transition-colors"
             whileHover={{ opacity: 0.6 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -167,7 +167,7 @@ export function WelcomeAction({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        'w-full h-12 rounded-xl font-medium text-[14px] transition-all',
+        'w-full h-12 rounded-xl font-medium text-body transition-all',
         'disabled:opacity-50 disabled:cursor-not-allowed',
         variant === 'primary' &&
           'bg-[var(--life-gold)] text-[var(--bg-ground)] hover:bg-[var(--life-gold-hover)]',
@@ -204,7 +204,7 @@ export function WelcomeHeading({ title, subtitle, className }: WelcomeHeadingPro
   return (
     <div className={cn('space-y-2 text-center', className)}>
       <motion.h1
-        className="text-[32px] lg:text-[40px] font-semibold tracking-tight text-white"
+        className="text-heading lg:text-heading-lg font-semibold tracking-tight text-white"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: MOTION.duration.base, delay: 0.1, ease: MOTION.ease.premium }}
@@ -213,7 +213,7 @@ export function WelcomeHeading({ title, subtitle, className }: WelcomeHeadingPro
       </motion.h1>
       {subtitle && (
         <motion.p
-          className="text-[14px] text-white/50"
+          className="text-body text-white/50"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: MOTION.duration.base, delay: 0.2, ease: MOTION.ease.premium }}

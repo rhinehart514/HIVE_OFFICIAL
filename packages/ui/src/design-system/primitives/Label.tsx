@@ -23,7 +23,7 @@ const labelVariants = cva(
     variants: {
       size: {
         default: 'text-[var(--font-size-body-xs)]', // 13px
-        sm: 'text-[12px]',                          // 12px
+        sm: 'text-label',                          // 12px
       },
       required: {
         true: "after:content-['*'] after:ml-0.5 after:text-[var(--color-status-error)]",

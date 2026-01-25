@@ -88,7 +88,7 @@ function OutputTypeBadge({ type }: { type: string }) {
 
   return (
     <span
-      className="text-[10px] px-1.5 py-0.5 rounded font-medium"
+      className="text-label-xs px-1.5 py-0.5 rounded font-medium"
       style={{ backgroundColor: style.bg, color: style.color }}
     >
       {style.label}
@@ -131,7 +131,7 @@ function ToolOutputRow({
           {output.name}
         </div>
         {output.description && (
-          <div className="text-[10px] truncate" style={{ color: COLORS.textTertiary }}>
+          <div className="text-label-xs truncate" style={{ color: COLORS.textTertiary }}>
             {output.description}
           </div>
         )}
@@ -224,7 +224,7 @@ function ToolCard({
           <div className="text-sm font-medium truncate" style={{ color: COLORS.textPrimary }}>
             {tool.name}
           </div>
-          <div className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+          <div className="text-label-xs" style={{ color: COLORS.textTertiary }}>
             {tool.outputs.length} output{tool.outputs.length !== 1 ? 's' : ''}
           </div>
         </div>

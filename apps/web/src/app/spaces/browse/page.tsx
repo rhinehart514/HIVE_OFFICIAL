@@ -136,7 +136,7 @@ export default function SpacesBrowsePage() {
                   key={cat.id}
                   onClick={() => handleCategoryChange(cat.id as BrowseCategory)}
                   className={cn(
-                    'px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200',
+                    'px-3 py-1.5 rounded-full text-body-sm font-medium transition-all duration-200',
                     category === cat.id
                       ? 'bg-white/[0.08] text-white/90'
                       : 'text-white/40 hover:text-white/60 hover:bg-white/[0.04]'
@@ -163,7 +163,7 @@ export default function SpacesBrowsePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search spaces..."
                   autoFocus
-                  className="w-48 md:w-64 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[14px] text-white/90 placeholder:text-white/30 focus:outline-none focus:border-white/[0.12]"
+                  className="w-48 md:w-64 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-body text-white/90 placeholder:text-white/30 focus:outline-none focus:border-white/[0.12]"
                 />
                 <Button
                   variant="ghost"
@@ -197,7 +197,7 @@ export default function SpacesBrowsePage() {
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id as BrowseCategory)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap transition-all duration-200',
+                'px-3 py-1.5 rounded-full text-body-sm font-medium whitespace-nowrap transition-all duration-200',
                 category === cat.id
                   ? 'bg-white/[0.08] text-white/90'
                   : 'text-white/40 hover:text-white/60 hover:bg-white/[0.04]'
@@ -229,12 +229,12 @@ export default function SpacesBrowsePage() {
             className="max-w-3xl"
           >
             <h1
-              className="text-[36px] md:text-[56px] font-medium text-white/95 tracking-tight leading-[1.1] mb-6"
+              className="text-heading-lg md:text-display font-medium text-white/95 tracking-tight leading-[1.1] mb-6"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               {categoryConfig.hero}
             </h1>
-            <p className="text-[16px] md:text-[18px] text-white/40 leading-relaxed max-w-xl">
+            <p className="text-body-lg md:text-title-sm text-white/40 leading-relaxed max-w-xl">
               <NarrativeReveal stagger="words" duration="base">
                 {categoryConfig.fragment}
               </NarrativeReveal>

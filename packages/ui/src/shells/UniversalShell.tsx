@@ -195,13 +195,13 @@ function MobileNav({ pathname, onNavigate, notificationCount = 0 }: MobileNavPro
                 >
                   {item.icon}
                   {item.badge && item.badge > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[9px] font-bold rounded-full bg-[#FFD700] text-black">
+                    <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-label-xs font-bold rounded-full bg-[#FFD700] text-black">
                       {item.badge > 9 ? '9+' : item.badge}
                     </span>
                   )}
                 </span>
                 <span
-                  className="text-[10px] font-medium"
+                  className="text-label-xs font-medium"
                   style={{ color: isActive ? '#FAFAFA' : '#71717A' }}
                 >
                   {item.label}

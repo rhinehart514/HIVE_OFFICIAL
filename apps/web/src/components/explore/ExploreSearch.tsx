@@ -71,7 +71,7 @@ export function ExploreSearch({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholder={placeholder}
-        className="w-full h-14 pl-12 pr-4 text-[16px] rounded-2xl"
+        className="w-full h-14 pl-12 pr-4 text-body-lg rounded-2xl"
       />
 
       {/* Clear button */}

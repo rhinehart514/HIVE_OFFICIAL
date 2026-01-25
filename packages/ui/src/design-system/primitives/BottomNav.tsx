@@ -109,7 +109,7 @@ const bottomNavBadgeVariants = cva(
     variants: {
       size: {
         dot: 'w-2 h-2 top-0.5 right-0.5',
-        count: 'min-w-[18px] h-[18px] -top-1 -right-1 text-[10px] font-bold text-[#0A0A09] flex items-center justify-center px-1',
+        count: 'min-w-[18px] h-[18px] -top-1 -right-1 text-label-xs font-bold text-[#0A0A09] flex items-center justify-center px-1',
       },
     },
     defaultVariants: {
@@ -201,7 +201,7 @@ const BottomNavItemComponent = React.forwardRef<
         )}
       </span>
       {showLabels && (
-        <span className="text-[10px] font-medium leading-none truncate max-w-[64px]">
+        <span className="text-label-xs font-medium leading-none truncate max-w-[64px]">
           {item.label}
         </span>
       )}
@@ -271,7 +271,7 @@ const BottomNav = React.forwardRef<HTMLElement, BottomNavProps>(
                   )}
                 </span>
                 {showLabels && (
-                  <span className="text-[10px] font-medium leading-none truncate max-w-[64px]">
+                  <span className="text-label-xs font-medium leading-none truncate max-w-[64px]">
                     {item.label}
                   </span>
                 )}

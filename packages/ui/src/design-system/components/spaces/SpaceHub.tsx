@@ -228,7 +228,7 @@ export function SpaceHub({
             {/* Name - tight tracking, weight contrast */}
             <div className="flex items-center gap-2 mb-1">
               <h1
-                className="text-[28px] md:text-[32px] font-semibold text-white"
+                className="text-heading-sm md:text-heading font-semibold text-white"
                 style={{ letterSpacing: '-0.02em' }}
               >
                 {space.name}
@@ -266,7 +266,7 @@ export function SpaceHub({
 
             {/* Description - readable, secondary */}
             {space.description && (
-              <p className="text-[15px] leading-relaxed text-white/60 max-w-md mb-4">
+              <p className="text-body leading-relaxed text-white/60 max-w-md mb-4">
                 {space.description}
               </p>
             )}
@@ -349,7 +349,7 @@ export function SpaceHub({
             >
               <div className="flex items-center justify-between mb-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                  <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                     Chat
                   </span>
                   {modeData?.chat?.typingCount && modeData.chat.typingCount > 0 && (
@@ -385,7 +385,7 @@ export function SpaceHub({
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Events
                 </span>
                 <span className="text-white/30">→</span>
@@ -418,7 +418,7 @@ export function SpaceHub({
               className="text-left"
             >
               <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                   Tools
                 </span>
                 <span className="text-white/30">→</span>
@@ -459,12 +459,12 @@ export function SpaceHub({
                   <>
                     <div className="flex items-center justify-between mb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+                        <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
                           Members
                         </span>
                         {stage === 'founding' && (
                           <span
-                            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                            className="text-label-xs font-medium px-1.5 py-0.5 rounded-full"
                             style={{
                               backgroundColor: 'rgba(255, 215, 0, 0.12)',
                               color: 'var(--color-accent-gold, #FFD700)',

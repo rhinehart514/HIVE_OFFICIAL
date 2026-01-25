@@ -342,7 +342,7 @@ export default function ConnectionsPage() {
         {/* Header */}
         <motion.div className="mb-10" {...fadeIn(0)}>
           <h1
-            className="text-[28px] font-semibold text-white mb-2 tracking-tight"
+            className="text-heading-sm font-semibold text-white mb-2 tracking-tight"
           >
             Connections
           </h1>

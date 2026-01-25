@@ -77,7 +77,7 @@ function BeforeAfterSplit() {
           }}
           transition={{ duration: 0.3 }}
         >
-          <p className="text-red-400/60 text-[11px] uppercase tracking-wider mb-6">Before</p>
+          <p className="text-red-400/60 text-label-sm uppercase tracking-wider mb-6">Before</p>
           <div className="flex flex-wrap gap-3">
             {fragmentedTools.map((tool, i) => (
               <motion.div
@@ -87,12 +87,12 @@ function BeforeAfterSplit() {
                 animate={isInView ? { opacity: 1, scale: 1, rotate: Math.random() * 6 - 3 } : {}}
                 transition={{ delay: 0.1 * i, duration: 0.5, ease: MOTION.ease.premium }}
               >
-                <span className="text-[13px] text-white/50">{tool.name}</span>
+                <span className="text-body-sm text-white/50">{tool.name}</span>
               </motion.div>
             ))}
           </div>
           <motion.p
-            className="absolute bottom-8 left-8 right-8 text-white/30 text-[13px]"
+            className="absolute bottom-8 left-8 right-8 text-white/30 text-body-sm"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.8, duration: 0.6 }}
@@ -112,7 +112,7 @@ function BeforeAfterSplit() {
           }}
           transition={{ duration: 0.3 }}
         >
-          <p className="text-[var(--color-gold)]/60 text-[11px] uppercase tracking-wider mb-6">After</p>
+          <p className="text-[var(--color-gold)]/60 text-label-sm uppercase tracking-wider mb-6">After</p>
           <motion.div
             className="relative"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -124,9 +124,9 @@ function BeforeAfterSplit() {
                 <div className="w-8 h-8 rounded-lg bg-[var(--color-gold)]/20 flex items-center justify-center">
                   <Logo variant="mark" size="xs" color="gold" />
                 </div>
-                <span className="text-[15px] text-white/70 font-medium">Your Space</span>
+                <span className="text-body text-white/70 font-medium">Your Space</span>
               </div>
-              <div className="flex gap-2 text-[11px] text-white/30">
+              <div className="flex gap-2 text-label-sm text-white/30">
                 <span className="px-2 py-1 rounded bg-white/5">Posts</span>
                 <span className="px-2 py-1 rounded bg-white/5">Events</span>
                 <span className="px-2 py-1 rounded bg-white/5">Files</span>
@@ -135,7 +135,7 @@ function BeforeAfterSplit() {
             </div>
           </motion.div>
           <motion.p
-            className="absolute bottom-8 left-8 right-8 text-white/40 text-[13px]"
+            className="absolute bottom-8 left-8 right-8 text-white/40 text-body-sm"
             initial={{ opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ delay: 1, duration: 0.6 }}
@@ -164,13 +164,13 @@ function TimeCollapseBar() {
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, ease: MOTION.ease.premium }}
     >
-      <p className="text-white/40 text-[13px] mb-6">Time to rebuild momentum each year</p>
+      <p className="text-white/40 text-body-sm mb-6">Time to rebuild momentum each year</p>
 
       {/* Traditional approach */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-white/50 text-[13px]">Without HIVE</span>
-          <span className="text-red-400/60 text-[13px] font-mono">8-10 weeks</span>
+          <span className="text-white/50 text-body-sm">Without HIVE</span>
+          <span className="text-red-400/60 text-body-sm font-mono">8-10 weeks</span>
         </div>
         <div className="h-3 bg-white/5 rounded-full overflow-hidden">
           <motion.div
@@ -185,8 +185,8 @@ function TimeCollapseBar() {
       {/* With HIVE */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-white/50 text-[13px]">With HIVE</span>
-          <span className="text-[var(--color-gold)]/80 text-[13px] font-mono">Day 1</span>
+          <span className="text-white/50 text-body-sm">With HIVE</span>
+          <span className="text-[var(--color-gold)]/80 text-body-sm font-mono">Day 1</span>
         </div>
         <div className="h-3 bg-white/5 rounded-full overflow-hidden">
           <motion.div
@@ -199,7 +199,7 @@ function TimeCollapseBar() {
       </div>
 
       <motion.p
-        className="text-white/25 text-[12px] mt-4 italic"
+        className="text-white/25 text-label mt-4 italic"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ delay: 1, duration: 0.6 }}
@@ -233,7 +233,7 @@ function NetworkRipple() {
       animate={isInView ? { opacity: 1 } : {}}
       transition={{ duration: 0.6 }}
     >
-      <p className="text-white/40 text-[13px] mb-8 text-center">Network effects</p>
+      <p className="text-white/40 text-body-sm mb-8 text-center">Network effects</p>
 
       <div className="relative h-[280px] flex items-center justify-center">
         {/* Ripple rings */}
@@ -277,14 +277,14 @@ function NetworkRipple() {
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: ring.delay + 0.3, duration: 0.5 }}
           >
-            <span className="text-[var(--color-gold)] text-[18px] font-semibold">{ring.value}</span>
-            <p className="text-white/30 text-[11px]">{ring.label}</p>
+            <span className="text-[var(--color-gold)] text-title-sm font-semibold">{ring.value}</span>
+            <p className="text-white/30 text-label-sm">{ring.label}</p>
           </motion.div>
         ))}
       </div>
 
       <motion.p
-        className="text-white/30 text-[13px] text-center mt-4"
+        className="text-white/30 text-body-sm text-center mt-4"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : {}}
         transition={{ delay: 1.2, duration: 0.6 }}
@@ -321,7 +321,7 @@ export default function AboutPage() {
           <div className="flex items-center gap-2 p-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
             <button
               onClick={() => setActiveTab('story')}
-              className={`px-4 py-2 text-[11px] font-medium uppercase tracking-wider rounded-md transition-all ${
+              className={`px-4 py-2 text-label-sm font-medium uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'story'
                   ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
                   : 'text-white/40 hover:text-white/60'
@@ -331,7 +331,7 @@ export default function AboutPage() {
             </button>
             <button
               onClick={() => setActiveTab('app')}
-              className={`px-4 py-2 text-[11px] font-medium uppercase tracking-wider rounded-md transition-all ${
+              className={`px-4 py-2 text-label-sm font-medium uppercase tracking-wider rounded-md transition-all ${
                 activeTab === 'app'
                   ? 'bg-[var(--color-gold)]/10 text-[var(--color-gold)]'
                   : 'text-white/40 hover:text-white/60'
@@ -343,7 +343,7 @@ export default function AboutPage() {
 
           <Link
             href="/"
-            className="text-[13px] text-white/40 hover:text-white/60 transition-colors"
+            className="text-body-sm text-white/40 hover:text-white/60 transition-colors"
           >
             Back
           </Link>
@@ -359,7 +359,7 @@ export default function AboutPage() {
         >
           <div className="mx-auto max-w-3xl">
             <motion.p
-              className="mb-4 text-[13px] font-medium uppercase tracking-wider text-[var(--color-gold)]/60"
+              className="mb-4 text-body-sm font-medium uppercase tracking-wider text-[var(--color-gold)]/60"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: MOTION.ease.premium }}
@@ -368,7 +368,7 @@ export default function AboutPage() {
             </motion.p>
 
             <motion.h1
-              className="mb-6 text-[44px] md:text-[72px] font-semibold leading-[1.0] tracking-tight"
+              className="mb-6 text-display-sm md:text-display-lg font-semibold leading-[1.0] tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -380,7 +380,7 @@ export default function AboutPage() {
             </motion.h1>
 
             <motion.p
-              className="text-[20px] md:text-[24px] leading-relaxed text-white/40 max-w-[500px]"
+              className="text-title md:text-title-lg leading-relaxed text-white/40 max-w-[500px]"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3, ease: MOTION.ease.premium }}
@@ -399,7 +399,7 @@ export default function AboutPage() {
                 animate={{ scaleY: [1, 0.5, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               />
-              <span className="text-[11px] uppercase tracking-wider text-white/20">
+              <span className="text-label-sm uppercase tracking-wider text-white/20">
                 Scroll
               </span>
             </motion.div>
@@ -422,7 +422,7 @@ export default function AboutPage() {
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
-                    className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                    className="mb-12 text-heading md:text-heading-lg font-semibold text-white"
                     style={{ fontFamily: 'var(--font-display)' }}
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -433,7 +433,7 @@ export default function AboutPage() {
                   </motion.h2>
                 </ParallaxText>
 
-                <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+                <div className="space-y-10 text-title-sm md:text-title-lg leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/50">
                       <NarrativeReveal stagger={0.03}>
@@ -475,7 +475,7 @@ export default function AboutPage() {
                 <AnimatedBorder variant="container" className="rounded-2xl bg-[var(--color-gold)]/[0.02] p-12 md:p-16">
                   <ParallaxText speed={0.1}>
                     <p
-                      className="text-[28px] md:text-[36px] font-medium leading-[1.2] text-white"
+                      className="text-heading-sm md:text-heading-lg font-medium leading-[1.2] text-white"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
                       &ldquo;The feed isn&apos;t the product.
@@ -483,7 +483,7 @@ export default function AboutPage() {
                       The Space is.
                     </p>
                     <p
-                      className="mt-4 text-[28px] md:text-[36px] font-medium leading-[1.2] text-white/30"
+                      className="mt-4 text-heading-sm md:text-heading-lg font-medium leading-[1.2] text-white/30"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
                       Legibility, memory, and ownership are.&rdquo;
@@ -499,7 +499,7 @@ export default function AboutPage() {
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
-                    className="mb-12 text-[32px] md:text-[40px] font-semibold text-white"
+                    className="mb-12 text-heading md:text-heading-lg font-semibold text-white"
                     style={{ fontFamily: 'var(--font-display)' }}
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -510,7 +510,7 @@ export default function AboutPage() {
                   </motion.h2>
                 </ParallaxText>
 
-                <div className="space-y-10 text-[18px] md:text-[22px] leading-relaxed">
+                <div className="space-y-10 text-title-sm md:text-title-lg leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/50">
                       <NarrativeReveal stagger={0.03}>
@@ -561,7 +561,7 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.03}>
                     <motion.p
-                      className="text-white/25 text-[16px] pt-8"
+                      className="text-white/25 text-body-lg pt-8"
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
@@ -581,7 +581,7 @@ export default function AboutPage() {
                 <div className="mx-auto max-w-3xl">
                   <ParallaxText speed={0.05}>
                     <motion.p
-                      className="mb-10 text-[11px] uppercase tracking-[0.2em] text-white/20"
+                      className="mb-10 text-label-sm uppercase tracking-[0.2em] text-white/20"
                       initial={{ opacity: 0 }}
                       whileInView={{ opacity: 1 }}
                       viewport={{ once: true }}
@@ -605,17 +605,17 @@ export default function AboutPage() {
                               rel="noopener noreferrer"
                               className="group flex items-baseline gap-2"
                             >
-                              <span className="text-[15px] text-white/30 group-hover:text-white/50 transition-colors duration-300">
+                              <span className="text-body text-white/30 group-hover:text-white/50 transition-colors duration-300">
                                 {contributor.name}
                               </span>
-                              <span className="text-[12px] text-white/15 group-hover:text-white/25 transition-colors duration-300">
+                              <span className="text-label text-white/15 group-hover:text-white/25 transition-colors duration-300">
                                 {contributor.role}
                               </span>
                             </a>
                           ) : (
                             <div className="flex items-baseline gap-2">
-                              <span className="text-[15px] text-white/30">{contributor.name}</span>
-                              <span className="text-[12px] text-white/15">{contributor.role}</span>
+                              <span className="text-body text-white/30">{contributor.name}</span>
+                              <span className="text-label text-white/15">{contributor.role}</span>
                             </div>
                           )}
                         </motion.div>
@@ -642,7 +642,7 @@ export default function AboutPage() {
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
-                    className="mb-3 text-[32px] md:text-[40px] font-semibold text-white"
+                    className="mb-3 text-heading md:text-heading-lg font-semibold text-white"
                     style={{ fontFamily: 'var(--font-display)' }}
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -651,12 +651,12 @@ export default function AboutPage() {
                   >
                     Spaces
                   </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-10">
+                  <p className="text-body-lg text-[var(--color-gold)]/60 mb-10">
                     Permanent homes for organizations
                   </p>
                 </ParallaxText>
 
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/60">
                       Every org gets a Space. Posts, events, files, membership—one place that outlasts any president.
@@ -675,22 +675,22 @@ export default function AboutPage() {
                   </ParallaxText>
 
                   <ParallaxText speed={0.07}>
-                    <div className="grid grid-cols-2 gap-4 text-[15px]">
+                    <div className="grid grid-cols-2 gap-4 text-body">
                       <div className="p-4 rounded-lg bg-black/20 border border-white/5">
                         <p className="text-white/50 font-medium mb-2">Feed & Events</p>
-                        <p className="text-white/30 text-[14px]">Announcements, discussions, calendar. Everything archived and searchable.</p>
+                        <p className="text-white/30 text-body">Announcements, discussions, calendar. Everything archived and searchable.</p>
                       </div>
                       <div className="p-4 rounded-lg bg-black/20 border border-white/5">
                         <p className="text-white/50 font-medium mb-2">Resources</p>
-                        <p className="text-white/30 text-[14px]">Docs, files, wikis. Version history tracked. Knowledge becomes institutional.</p>
+                        <p className="text-white/30 text-body">Docs, files, wikis. Version history tracked. Knowledge becomes institutional.</p>
                       </div>
                       <div className="p-4 rounded-lg bg-black/20 border border-white/5">
                         <p className="text-white/50 font-medium mb-2">Members & Roles</p>
-                        <p className="text-white/30 text-[14px]">Directory with granular permissions. Handoffs = role reassignment. Day 1 productivity.</p>
+                        <p className="text-white/30 text-body">Directory with granular permissions. Handoffs = role reassignment. Day 1 productivity.</p>
                       </div>
                       <div className="p-4 rounded-lg bg-black/20 border border-white/5">
                         <p className="text-white/50 font-medium mb-2">Analytics</p>
-                        <p className="text-white/30 text-[14px]">Engagement, attendance, activity. Data that helps you lead, not just compliance numbers.</p>
+                        <p className="text-white/30 text-body">Engagement, attendance, activity. Data that helps you lead, not just compliance numbers.</p>
                       </div>
                     </div>
                   </ParallaxText>
@@ -716,23 +716,23 @@ export default function AboutPage() {
                       viewport={{ once: true }}
                       transition={{ duration: 1, ease: MOTION.ease.premium }}
                     >
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-gold)]/60 mb-4">
+                      <p className="text-label-sm uppercase tracking-[0.2em] text-[var(--color-gold)]/60 mb-4">
                         The Tool That Builds Tools
                       </p>
                       <h2
-                        className="text-[48px] md:text-[64px] font-semibold text-white leading-[1.0] mb-4"
+                        className="text-display-sm md:text-display-lg font-semibold text-white leading-[1.0] mb-4"
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
                         HiveLab
                       </h2>
-                      <p className="text-[18px] md:text-[22px] text-white/40">
+                      <p className="text-title-sm md:text-title-lg text-white/40">
                         Ship custom tools in hours, not weeks.
                       </p>
                     </motion.div>
                   </ParallaxText>
                 </AnimatedBorder>
 
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/60">
                       Describe what you need in plain language. The AI scaffolds an application. You customize it. Deploy directly to your Space.
@@ -764,7 +764,7 @@ export default function AboutPage() {
                           <span className="text-[var(--color-gold)]/40 mt-1">→</span>
                           <div>
                             <p className="text-white/60 font-medium">{tool.name}</p>
-                            <p className="text-white/30 text-[15px]">{tool.desc}</p>
+                            <p className="text-white/30 text-body">{tool.desc}</p>
                           </div>
                         </motion.div>
                       ))}
@@ -791,7 +791,7 @@ export default function AboutPage() {
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
-                    className="mb-3 text-[32px] md:text-[40px] font-semibold text-white"
+                    className="mb-3 text-heading md:text-heading-lg font-semibold text-white"
                     style={{ fontFamily: 'var(--font-display)' }}
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -800,12 +800,12 @@ export default function AboutPage() {
                   >
                     Profile
                   </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-10">
+                  <p className="text-body-lg text-[var(--color-gold)]/60 mb-10">
                     Identity that compounds
                   </p>
                 </ParallaxText>
 
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/60">
                       Your profile isn&apos;t a resume. It&apos;s a verifiable record of actual work. Events you organized. Tools you shipped. Communities you built.
@@ -820,8 +820,8 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.08}>
                     <div className="bg-[var(--color-gold)]/[0.03] border border-[var(--color-gold)]/10 rounded-lg p-6">
-                      <p className="text-white/40 text-[14px] mb-4">What your profile tracks</p>
-                      <div className="grid grid-cols-2 gap-4 text-[14px]">
+                      <p className="text-white/40 text-body mb-4">What your profile tracks</p>
+                      <div className="grid grid-cols-2 gap-4 text-body">
                         <div className="flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)]/40" />
                           <span className="text-white/50">Spaces you&apos;ve led</span>
@@ -857,7 +857,7 @@ export default function AboutPage() {
               <div className="mx-auto max-w-3xl">
                 <ParallaxText speed={0.15}>
                   <motion.h2
-                    className="mb-3 text-[32px] md:text-[40px] font-semibold text-white"
+                    className="mb-3 text-heading md:text-heading-lg font-semibold text-white"
                     style={{ fontFamily: 'var(--font-display)' }}
                     initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
@@ -866,12 +866,12 @@ export default function AboutPage() {
                   >
                     Feed
                   </motion.h2>
-                  <p className="text-[16px] text-[var(--color-gold)]/60 mb-10">
+                  <p className="text-body-lg text-[var(--color-gold)]/60 mb-10">
                     Campus pulse <span className="text-white/30">(more coming soon)</span>
                   </p>
                 </ParallaxText>
 
-                <div className="space-y-8 text-[18px] md:text-[20px] leading-relaxed">
+                <div className="space-y-8 text-title-sm md:text-title leading-relaxed">
                   <ParallaxText speed={0.1}>
                     <p className="text-white/60">
                       See what&apos;s happening across campus. Posts from orgs you follow. Events coming up. Opportunities to join.
@@ -886,8 +886,8 @@ export default function AboutPage() {
 
                   <ParallaxText speed={0.08}>
                     <div className="bg-black/20 border border-white/5 rounded-lg p-6">
-                      <p className="text-white/30 text-[14px] mb-4">Coming in future updates</p>
-                      <div className="space-y-2 text-[14px] text-white/40">
+                      <p className="text-white/30 text-body mb-4">Coming in future updates</p>
+                      <div className="space-y-2 text-body text-white/40">
                         <p>→ Ritualized coordination patterns (weekly check-ins, semester handoffs)</p>
                         <p>→ Cross-campus discovery</p>
                         <p>→ Smart recommendations based on interests</p>
@@ -912,7 +912,7 @@ export default function AboutPage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease: MOTION.ease.premium }}
               >
-                <p className="text-white/40 text-[16px] mb-8 max-w-[600px] mx-auto">
+                <p className="text-white/40 text-body-lg mb-8 max-w-[600px] mx-auto">
                   Spaces are being claimed. Tools are being built. What happens next is up to the students who show up.
                 </p>
               </motion.div>
@@ -921,7 +921,7 @@ export default function AboutPage() {
             <div className="text-center">
               <ParallaxText speed={0.05}>
                 <motion.p
-                  className="text-[32px] md:text-[44px] font-medium leading-[1.1] mb-12"
+                  className="text-heading md:text-display-sm font-medium leading-[1.1] mb-12"
                   style={{ fontFamily: 'var(--font-display)' }}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -935,7 +935,7 @@ export default function AboutPage() {
               </ParallaxText>
 
               <motion.p
-                className="mt-8 text-[13px] text-white/25"
+                className="mt-8 text-body-sm text-white/25"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
@@ -950,7 +950,7 @@ export default function AboutPage() {
 
       {/* Footer */}
       <footer className="px-6 py-12 border-t border-white/[0.04]">
-        <div className="mx-auto max-w-3xl flex items-center justify-between text-[12px] text-white/20">
+        <div className="mx-auto max-w-3xl flex items-center justify-between text-label text-white/20">
           <span>&copy; {new Date().getFullYear()} HIVE</span>
           <div className="flex gap-6">
             <Link href="/legal/terms" className="hover:text-white/40 transition-colors">

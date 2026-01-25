@@ -36,10 +36,10 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
       transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
     >
       <div className="text-center max-w-md">
-        <h2 className="text-[32px] font-medium text-white/90 tracking-tight mb-4">
+        <h2 className="text-heading font-medium text-white/90 tracking-tight mb-4">
           Your campus awaits
         </h2>
-        <p className="text-[15px] text-white/40 leading-relaxed mb-8">
+        <p className="text-body text-white/40 leading-relaxed mb-8">
           Join spaces to connect with your major, residence, Greek life, and campus organizations.
         </p>
         <div className="flex gap-3 justify-center">
@@ -94,13 +94,13 @@ function OnboardingBanner({ progress }: { progress: number }) {
               />
             ))}
           </div>
-          <span className="text-[13px] text-white/60">
+          <span className="text-body-sm text-white/60">
             {remaining === 0 ? 'Identity complete!' : `${remaining} identity space${remaining === 1 ? '' : 's'} remaining`}
           </span>
         </div>
         <button
           onClick={() => window.location.href = '/spaces/browse'}
-          className="text-[12px] text-white/40 hover:text-white/60 transition-colors"
+          className="text-label text-white/40 hover:text-white/60 transition-colors"
         >
           Complete setup
         </button>
@@ -233,7 +233,7 @@ export function SpacesHQ() {
 function Header({ onCreateSpace }: { onCreateSpace: () => void }) {
   return (
     <header className="px-6 py-5 flex items-center justify-between shrink-0">
-      <h1 className="text-[24px] font-medium text-white/90 tracking-tight">
+      <h1 className="text-title-lg font-medium text-white/90 tracking-tight">
         Spaces
       </h1>
       <Button

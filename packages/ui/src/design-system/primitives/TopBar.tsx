@@ -85,7 +85,7 @@ export function TopBarBrand({ onClick }: TopBarBrandProps) {
       )}
     >
       <HiveLogo className="w-5 h-5" />
-      <span className="text-[15px] font-bold tracking-tight" style={{ color: TOPBAR_TOKENS.textPrimary }}>
+      <span className="text-body font-bold tracking-tight" style={{ color: TOPBAR_TOKENS.textPrimary }}>
         HIVE
       </span>
     </button>
@@ -103,7 +103,7 @@ export interface TopBarTitleProps {
 export function TopBarTitle({ children }: TopBarTitleProps) {
   return (
     <h1
-      className="text-[15px] font-semibold"
+      className="text-body font-semibold"
       style={{ color: TOPBAR_TOKENS.textPrimary }}
     >
       {children}
@@ -133,13 +133,13 @@ export function TopBarBreadcrumbs({ items }: TopBarBreadcrumbsProps) {
       {items.map((item, index) => (
         <React.Fragment key={index}>
           {index > 0 && (
-            <span className="text-[13px]" style={{ color: TOPBAR_TOKENS.textMuted }}>/</span>
+            <span className="text-body-sm" style={{ color: TOPBAR_TOKENS.textMuted }}>/</span>
           )}
           {item.onClick || item.href ? (
             <button
               onClick={item.onClick}
               className={cn(
-                'text-[13px] font-medium transition-colors rounded px-1 -mx-1',
+                'text-body-sm font-medium transition-colors rounded px-1 -mx-1',
                 'hover:text-white',
                 FOCUS_RING
               )}
@@ -153,7 +153,7 @@ export function TopBarBreadcrumbs({ items }: TopBarBreadcrumbsProps) {
             </button>
           ) : (
             <span
-              className="text-[13px] font-medium"
+              className="text-body-sm font-medium"
               style={{
                 color: index === items.length - 1
                   ? TOPBAR_TOKENS.textPrimary
@@ -216,7 +216,7 @@ export function TopBarSearch({ onClick, shortcut = '⌘K' }: TopBarSearchProps) 
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
       </svg>
       <span
-        className="text-[11px] font-medium px-1.5 py-0.5 rounded"
+        className="text-label-sm font-medium px-1.5 py-0.5 rounded"
         style={{
           color: TOPBAR_TOKENS.textMuted,
           background: 'rgba(255, 255, 255, 0.06)',
@@ -260,7 +260,7 @@ export function TopBarNotifications({ count = 0, onClick }: TopBarNotificationsP
       </svg>
       {count > 0 && (
         <span
-          className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-[10px] font-semibold rounded-full px-1"
+          className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center text-label-xs font-semibold rounded-full px-1"
           style={{ background: '#EF4444', color: '#fff' }}
         >
           {count > 99 ? '99+' : count}
@@ -304,7 +304,7 @@ export function TopBarProfile({ name, avatarUrl, onClick }: TopBarProfileProps) 
         <img src={avatarUrl} alt={name} className="w-7 h-7 rounded-lg object-cover" />
       ) : (
         <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[12px] font-semibold"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-label font-semibold"
           style={{ background: 'rgba(255, 255, 255, 0.1)', color: TOPBAR_TOKENS.textSecondary }}
         >
           {initials}

@@ -18,9 +18,9 @@
  * - Navigation container: subtle surface (0.015 opacity)
  *
  * Typography Rules (LOCKED):
- * - Primary heading: text-[28px] md:text-[32px], -0.02em tracking
+ * - Primary heading: text-heading-sm md:text-heading, -0.02em tracking
  * - Secondary: text-base, white/40
- * - Section labels: text-[11px], uppercase, tracking-wider, white/40
+ * - Section labels: text-label-sm, uppercase, tracking-wider, white/40
  *
  * Motion Rules (LOCKED):
  * - Entrance only (fadeIn)
@@ -171,7 +171,7 @@ interface OrientationHeadingProps {
 export function OrientationHeading({ children, className = '' }: OrientationHeadingProps) {
   return (
     <h1
-      className={`text-[28px] md:text-[32px] font-semibold text-white mb-1 ${className}`}
+      className={`text-heading-sm md:text-heading font-semibold text-white mb-1 ${className}`}
       style={{ letterSpacing: '-0.02em' }}
     >
       {children}
@@ -199,7 +199,7 @@ interface SectionLabelProps {
 
 export function SectionLabel({ children, className = '' }: SectionLabelProps) {
   return (
-    <span className={`text-[11px] font-medium uppercase tracking-wider text-white/40 block mb-3 ${className}`}>
+    <span className={`text-label-sm font-medium uppercase tracking-wider text-white/40 block mb-3 ${className}`}>
       {children}
     </span>
   );
@@ -217,7 +217,7 @@ interface NavCardHeaderProps {
 export function NavCardHeader({ label, className = '' }: NavCardHeaderProps) {
   return (
     <div className={`flex items-center justify-between mb-2.5 ${className}`}>
-      <span className="text-[11px] font-medium uppercase tracking-wider text-white/40">
+      <span className="text-label-sm font-medium uppercase tracking-wider text-white/40">
         {label}
       </span>
       <span className="text-white/30">→</span>

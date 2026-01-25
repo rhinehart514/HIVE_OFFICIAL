@@ -147,7 +147,7 @@ export function EmailInput({
               aria-describedby="email-domain"
               aria-invalid={!!error}
               className="
-                flex-1 bg-transparent px-4 py-3.5 text-[15px]
+                flex-1 bg-transparent px-4 py-3.5 text-body
                 outline-none transition-all duration-200
                 disabled:opacity-50
                 placeholder:text-white/25
@@ -156,7 +156,7 @@ export function EmailInput({
             />
             <span
               id="email-domain"
-              className="pr-4 text-[15px] pointer-events-none select-none"
+              className="pr-4 text-body pointer-events-none select-none"
               style={{ color: 'rgba(255, 255, 255, 0.35)' }}
             >
               @{domainSuffix}
@@ -170,7 +170,7 @@ export function EmailInput({
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
-                className="text-[13px] px-1"
+                className="text-body-sm px-1"
                 style={{ color: 'var(--color-status-error)' }}
                 role="alert"
               >
@@ -187,7 +187,7 @@ export function EmailInput({
           whileTap={{ opacity: 0.8 }}
           className="
             group w-full py-3.5 px-6 rounded-xl
-            font-medium text-[15px]
+            font-medium text-body
             transition-all duration-200
             disabled:opacity-40 disabled:cursor-not-allowed
             flex items-center justify-center gap-2

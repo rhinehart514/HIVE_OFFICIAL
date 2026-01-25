@@ -236,7 +236,7 @@ export default function ClaimSpacePage() {
 
             {/* Word-by-word reveal: "It's yours." */}
             <h2
-              className="text-[32px] font-semibold mb-4"
+              className="text-heading font-semibold mb-4"
               style={{ fontFamily: 'var(--font-display)' }}
             >
               <WordReveal

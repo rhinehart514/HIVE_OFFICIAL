@@ -212,7 +212,7 @@ const DefaultEventCard: React.FC<{
           <p className="text-lg font-semibold text-white tabular-nums">
             {event.attendeeCount}
           </p>
-          <p className="text-[10px] text-white/40">going</p>
+          <p className="text-label-xs text-white/40">going</p>
         </div>
       )}
     </div>

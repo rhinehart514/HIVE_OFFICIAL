@@ -37,12 +37,12 @@ function EntryPageFallback() {
     <EntryShellStatic>
       <div className="space-y-6">
         <div className="space-y-2">
-          <h1 className="text-[24px] font-semibold tracking-tight text-white">
+          <h1 className="text-title-lg font-semibold tracking-tight text-white">
             Get in
           </h1>
           <div className="flex items-center gap-2 text-white/50">
             <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-            <span className="text-[14px]">Loading</span>
+            <span className="text-body">Loading</span>
           </div>
         </div>
       </div>

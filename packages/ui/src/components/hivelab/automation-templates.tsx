@@ -141,7 +141,7 @@ function TemplateCard({ template, onApply, isApplying }: TemplateCardProps) {
       <div className="flex items-center justify-between">
         <span
           className={cn(
-            'px-2 py-0.5 rounded text-[10px] uppercase tracking-wider',
+            'px-2 py-0.5 rounded text-label-xs uppercase tracking-wider',
             styles.bg,
             styles.text
           )}

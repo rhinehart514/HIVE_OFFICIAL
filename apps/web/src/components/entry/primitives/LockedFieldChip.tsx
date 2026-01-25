@@ -96,11 +96,11 @@ export function LockedFieldChip({
           exit="exit"
         >
           {label && (
-            <span className="text-white/40 text-[13px] shrink-0">
+            <span className="text-white/40 text-body-sm shrink-0">
               {label}
             </span>
           )}
-          <span className="text-white/90 text-[14px] font-medium truncate">
+          <span className="text-white/90 text-body font-medium truncate">
             {value}
           </span>
         </motion.div>
@@ -113,7 +113,7 @@ export function LockedFieldChip({
           onClick={onChangeClick}
           className="
             shrink-0 text-white/40 hover:text-white/70
-            transition-colors text-[13px] flex items-center gap-1
+            transition-colors text-body-sm flex items-center gap-1
             focus:outline-none focus:text-white/70
           "
         >
@@ -162,7 +162,7 @@ export function SchoolBadgeChip({
       <div
         className="
           shrink-0 w-6 h-6 rounded-md flex items-center justify-center
-          text-[10px] font-bold text-white
+          text-label-xs font-bold text-white
         "
         style={{ backgroundColor: schoolColor }}
       >
@@ -170,7 +170,7 @@ export function SchoolBadgeChip({
       </div>
 
       {/* School name */}
-      <span className="flex-1 text-white/90 text-[14px] font-medium truncate">
+      <span className="flex-1 text-white/90 text-body font-medium truncate">
         {schoolName}
       </span>
 
@@ -194,7 +194,7 @@ export function SchoolBadgeChip({
           onClick={onChangeClick}
           className="
             shrink-0 text-white/40 hover:text-white/70
-            transition-colors text-[13px]
+            transition-colors text-body-sm
             focus:outline-none focus:text-white/70
           "
         >
@@ -251,7 +251,7 @@ export function RoleChip({
         />
       </motion.div>
 
-      <span className="text-white/90 text-[14px] font-medium">
+      <span className="text-white/90 text-body font-medium">
         {roleLabels[role] || role}
       </span>
 
@@ -261,7 +261,7 @@ export function RoleChip({
           onClick={onChangeClick}
           className="
             ml-auto shrink-0 text-white/40 hover:text-white/70
-            transition-colors text-[13px]
+            transition-colors text-body-sm
             focus:outline-none focus:text-white/70
           "
         >

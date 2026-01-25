@@ -78,7 +78,7 @@ export const Variable1_ValueDisplay: Story = {
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
               <div className="flex items-baseline gap-1">
-                <Text className="text-[32px] font-bold">1.2</Text>
+                <Text className="text-heading font-bold">1.2</Text>
                 <Text tone="secondary" size="lg">K</Text>
               </div>
             </Card>
@@ -103,7 +103,7 @@ export const Variable1_ValueDisplay: Story = {
             <Text size="xs" tone="muted" className="uppercase tracking-wider">D: Mono Display</Text>
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
-              <Mono className="text-[28px] font-medium tracking-tight">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-medium tracking-tight">{mockStat.value.toLocaleString()}</Mono>
             </Card>
           </div>
 
@@ -113,7 +113,7 @@ export const Variable1_ValueDisplay: Story = {
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
               <span
-                className="text-[32px] font-bold"
+                className="text-heading font-bold"
                 style={{
                   background: 'linear-gradient(135deg, #FAF9F7 0%, #FFD700 100%)',
                   WebkitBackgroundClip: 'text',
@@ -131,7 +131,7 @@ export const Variable1_ValueDisplay: Story = {
             <Text size="xs" className="uppercase tracking-wider text-[#FFD700] font-semibold">★ Recommended</Text>
             <Card warmth="low" className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
-              <Mono className="text-[28px] font-semibold tracking-tight">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold tracking-tight">{mockStat.value.toLocaleString()}</Mono>
             </Card>
             <Text size="xs" tone="muted" className="max-w-[180px]">
               D: Mono Display — precise, data-forward, minimal
@@ -159,7 +159,7 @@ export const Variable2_TrendIndicator: Story = {
             <Text size="xs" tone="muted" className="uppercase tracking-wider">A: Arrow + Percentage</Text>
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
-              <Mono className="text-[28px] font-semibold mb-2">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold mb-2">{mockStat.value.toLocaleString()}</Mono>
               <div className="flex items-center gap-1 text-green-400">
                 <ArrowUpRight className="w-3.5 h-3.5" />
                 <Text size="xs" weight="medium" className="text-green-400">+{mockStat.change}%</Text>
@@ -175,7 +175,7 @@ export const Variable2_TrendIndicator: Story = {
                 <Text tone="secondary" size="xs">{mockStat.label}</Text>
                 <Badge variant="success" size="sm">+{mockStat.change}%</Badge>
               </div>
-              <Mono className="text-[28px] font-semibold">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold">{mockStat.value.toLocaleString()}</Mono>
             </Card>
           </div>
 
@@ -185,7 +185,7 @@ export const Variable2_TrendIndicator: Story = {
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
               <div className="flex items-baseline gap-2">
-                <Mono className="text-[28px] font-semibold">{mockStat.value.toLocaleString()}</Mono>
+                <Mono className="text-heading-sm font-semibold">{mockStat.value.toLocaleString()}</Mono>
                 <Text size="sm" className="text-green-400">↑{mockStat.change}%</Text>
               </div>
             </Card>
@@ -196,7 +196,7 @@ export const Variable2_TrendIndicator: Story = {
             <Text size="xs" tone="muted" className="uppercase tracking-wider">D: Trend Line</Text>
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
-              <Mono className="text-[28px] font-semibold mb-3">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold mb-3">{mockStat.value.toLocaleString()}</Mono>
               <svg width="140" height="24" viewBox="0 0 140 24">
                 <path
                   d="M0 20 Q35 18, 70 12 T140 4"
@@ -214,7 +214,7 @@ export const Variable2_TrendIndicator: Story = {
             <Text size="xs" tone="muted" className="uppercase tracking-wider">E: Comparison Bar</Text>
             <Card className="w-[180px]">
               <Text tone="secondary" size="xs" className="mb-2">{mockStat.label}</Text>
-              <Mono className="text-[28px] font-semibold mb-3">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold mb-3">{mockStat.value.toLocaleString()}</Mono>
               <div className="flex gap-2 items-center">
                 <div className="flex-1 h-1 rounded-full bg-white/[0.06]">
                   <div className="w-[65%] h-full rounded-full bg-green-500" />
@@ -232,7 +232,7 @@ export const Variable2_TrendIndicator: Story = {
                 <Text tone="secondary" size="xs">{mockStat.label}</Text>
                 <Badge variant="success" size="sm">+{mockStat.change}%</Badge>
               </div>
-              <Mono className="text-[28px] font-semibold">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold">{mockStat.value.toLocaleString()}</Mono>
             </Card>
             <Text size="xs" tone="muted" className="max-w-[180px]">
               B: Chip Badge — compact, scannable, color-coded
@@ -264,7 +264,7 @@ export const Variable3_Layout: Story = {
               <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center mx-auto mb-3">
                 <IconComponent className="w-5 h-5 text-[#A3A19E]" />
               </div>
-              <Mono className="text-[28px] font-semibold">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold">{mockStat.value.toLocaleString()}</Mono>
               <Text tone="secondary" size="xs" className="mt-1">{mockStat.label}</Text>
             </Card>
           </div>
@@ -330,7 +330,7 @@ export const Variable3_Layout: Story = {
                 <Text tone="secondary" size="xs">{mockStat.label}</Text>
                 <Badge variant="success" size="sm">+{mockStat.change}%</Badge>
               </div>
-              <Mono className="text-[28px] font-semibold">{mockStat.value.toLocaleString()}</Mono>
+              <Mono className="text-heading-sm font-semibold">{mockStat.value.toLocaleString()}</Mono>
             </Card>
             <Text size="xs" tone="muted" className="max-w-[180px]">
               Simple vertical — label top, value prominent, badge trend
@@ -366,7 +366,7 @@ export const Variable4_Density: Story = {
               {stats.map((stat, i) => (
                 <Card key={i} noPadding className="w-[180px] px-6 py-6">
                   <Text tone="secondary" size="xs" className="mb-3">{stat.label}</Text>
-                  <Mono className="text-[32px] font-semibold">{stat.value.toLocaleString()}</Mono>
+                  <Mono className="text-heading font-semibold">{stat.value.toLocaleString()}</Mono>
                 </Card>
               ))}
             </div>
@@ -379,7 +379,7 @@ export const Variable4_Density: Story = {
               {stats.map((stat, i) => (
                 <Card key={i} className="w-[160px]">
                   <Text tone="secondary" size="xs" className="mb-2">{stat.label}</Text>
-                  <Mono className="text-[28px] font-semibold">{stat.value.toLocaleString()}</Mono>
+                  <Mono className="text-heading-sm font-semibold">{stat.value.toLocaleString()}</Mono>
                 </Card>
               ))}
             </div>
@@ -436,7 +436,7 @@ export const Variable4_Density: Story = {
                       {stat.trend === 'up' ? '+' : ''}{stat.change}%
                     </Badge>
                   </div>
-                  <Mono className="text-[28px] font-semibold">{stat.value.toLocaleString()}</Mono>
+                  <Mono className="text-heading-sm font-semibold">{stat.value.toLocaleString()}</Mono>
                 </Card>
               ))}
             </div>

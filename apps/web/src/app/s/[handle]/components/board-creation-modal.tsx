@@ -111,7 +111,7 @@ export function BoardCreationModal({
           <div className="flex items-start justify-between mb-6">
             <div>
               <h2
-                className="text-[22px] font-semibold text-white mb-1"
+                className="text-title-lg font-semibold text-white mb-1"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 Create Board

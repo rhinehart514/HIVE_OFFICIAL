@@ -464,7 +464,7 @@ const MobileNav: React.FC<MobileNavProps> = ({
         )}
       >
         <span className="w-5 h-5">{item.icon}</span>
-        <span className="text-[10px] mt-0.5">{item.label}</span>
+        <span className="text-label-xs mt-0.5">{item.label}</span>
       </button>
     ))}
   </motion.nav>

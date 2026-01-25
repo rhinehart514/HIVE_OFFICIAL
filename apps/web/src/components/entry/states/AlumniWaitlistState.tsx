@@ -81,10 +81,10 @@ export function AlumniWaitlistState({
           ease: EASE_PREMIUM,
         }}
       >
-        <h1 className="text-[28px] font-semibold tracking-tight text-white mb-3">
+        <h1 className="text-heading-sm font-semibold tracking-tight text-white mb-3">
           You're on the list
         </h1>
-        <p className="text-[15px] text-white/50 max-w-[320px] mx-auto">
+        <p className="text-body text-white/50 max-w-[320px] mx-auto">
           We'll notify you when alumni access opens. Your communities will be
           excited to reconnect.
         </p>
@@ -107,10 +107,10 @@ export function AlumniWaitlistState({
             <div className="flex items-start gap-3">
               <Heart className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
               <div className="text-left">
-                <p className="text-[12px] text-white/40 mb-1">
+                <p className="text-label text-white/40 mb-1">
                   Spaces you mentioned
                 </p>
-                <p className="text-[14px] text-white/70">{spaces}</p>
+                <p className="text-body text-white/70">{spaces}</p>
               </div>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function AlumniWaitlistState({
           ease: EASE_PREMIUM,
         }}
       >
-        <p className="text-[13px] text-white/40">
+        <p className="text-body-sm text-white/40">
           When we launch alumni access, you'll be able to connect with current
           members, share your experience, and stay involved with your campus
           community.

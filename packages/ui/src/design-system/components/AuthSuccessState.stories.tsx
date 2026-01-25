@@ -122,7 +122,7 @@ export const WithCallback: Story = {
           />
           {triggered && (
             <div className="text-center">
-              <span className="px-3 py-1 rounded-full text-[12px] bg-[var(--color-gold)] text-black">
+              <span className="px-3 py-1 rounded-full text-label bg-[var(--color-gold)] text-black">
                 Callback fired!
               </span>
             </div>
@@ -140,7 +140,7 @@ export const CompactVariant: Story = {
   render: () => (
     <DarkWrapper>
       <div className="space-y-6">
-        <div className="text-center text-white/50 text-[14px]">
+        <div className="text-center text-white/50 text-body">
           Compact variant for inline use
         </div>
         <AuthSuccessStateCompact />
@@ -156,7 +156,7 @@ export const CompactCustomMessage: Story = {
   render: () => (
     <DarkWrapper>
       <div className="space-y-6">
-        <div className="text-center text-white/50 text-[14px]">
+        <div className="text-center text-white/50 text-body">
           Different compact messages
         </div>
         <div className="space-y-4">
@@ -206,7 +206,7 @@ export const InFocusTemplate: Story = {
       >
         <div className="space-y-6 text-center">
           <h1 className="text-xl font-semibold text-white">Demo</h1>
-          <p className="text-[14px] text-white/50">Click to see success state</p>
+          <p className="text-body text-white/50">Click to see success state</p>
           <button
             onClick={() => setShowSuccess(true)}
             className="px-6 py-3 rounded-xl bg-white text-black font-medium"
@@ -229,15 +229,15 @@ export const AnimationSequence: Story = {
     return (
       <DarkWrapper>
         <div className="space-y-6">
-          <div className="text-center text-[14px] text-white/50">
+          <div className="text-center text-body text-white/50">
             <p>Animation sequence:</p>
-            <p className="mt-1 text-[12px]">0ms: Container fade → 200ms: Check spring → 400ms: Subtext → 500ms: Dots</p>
+            <p className="mt-1 text-label">0ms: Container fade → 200ms: Check spring → 400ms: Subtext → 500ms: Dots</p>
           </div>
           <AuthSuccessState key={key} />
           <div className="text-center">
             <button
               onClick={() => setKey(k => k + 1)}
-              className="px-4 py-2 rounded-lg text-[13px] bg-white/10 text-white hover:bg-white/15"
+              className="px-4 py-2 rounded-lg text-body-sm bg-white/10 text-white hover:bg-white/15"
             >
               Replay Animation
             </button>
@@ -265,20 +265,20 @@ export const SideBySideComparison: Story = {
             <h2 className="text-xl font-semibold text-white mb-2">Full vs Compact</h2>
             <button
               onClick={() => setKey(k => k + 1)}
-              className="px-4 py-2 rounded-lg text-[13px] bg-white/10 text-white"
+              className="px-4 py-2 rounded-lg text-body-sm bg-white/10 text-white"
             >
               Replay Both
             </button>
           </div>
           <div className="grid md:grid-cols-2 gap-8" key={key}>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Full Variant
               </div>
               <AuthSuccessState />
             </div>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Compact Variant
               </div>
               <div className="py-8">
@@ -309,32 +309,32 @@ export const DifferentContexts: Story = {
             <h2 className="text-xl font-semibold text-white mb-2">Usage Contexts</h2>
             <button
               onClick={() => setKey(k => k + 1)}
-              className="px-4 py-2 rounded-lg text-[13px] bg-white/10 text-white"
+              className="px-4 py-2 rounded-lg text-body-sm bg-white/10 text-white"
             >
               Replay All
             </button>
           </div>
           <div className="grid gap-6" key={key}>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Login Success
               </div>
               <AuthSuccessState headline="You're in" subtext="Taking you home..." />
             </div>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Registration Complete
               </div>
               <AuthSuccessState headline="Welcome to HIVE" isNewUser={true} />
             </div>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Email Verified
               </div>
               <AuthSuccessState headline="Email verified" subtext="Setting up your account..." />
             </div>
             <div className="p-6 rounded-xl bg-white/5 border border-white/10">
-              <div className="text-[12px] text-white/40 uppercase tracking-wide mb-4">
+              <div className="text-label text-white/40 uppercase tracking-wide mb-4">
                 Password Reset
               </div>
               <AuthSuccessState headline="Password updated" subtext="Signing you in..." />
@@ -355,13 +355,13 @@ export const GoldBudgetDemo: Story = {
       <div className="space-y-8">
         <div className="text-center space-y-2">
           <h2 className="text-lg font-semibold text-white">Gold Budget</h2>
-          <p className="text-[13px] text-white/50 max-w-[280px] mx-auto">
+          <p className="text-body-sm text-white/50 max-w-[280px] mx-auto">
             The check icon is the only gold element. Gold is earned through achievement, not decoration.
           </p>
         </div>
         <AuthSuccessState />
         <div className="text-center">
-          <p className="text-[12px] text-white/30">
+          <p className="text-label text-white/30">
             From LANGUAGE.md: Gold indicates "life" and achievement
           </p>
         </div>

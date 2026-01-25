@@ -173,12 +173,12 @@ export function IdentitySection({
       {/* Header - premium /about-style typography */}
       <motion.div variants={sectionChildVariants} className="space-y-2 mb-2">
         <h2
-          className="text-[24px] font-semibold text-white tracking-tight"
+          className="text-title-lg font-semibold text-white tracking-tight"
           style={{ fontFamily: 'var(--font-display)' }}
         >
           Create your identity
         </h2>
-        <p className="text-[15px] text-white/40 leading-relaxed">
+        <p className="text-body text-white/40 leading-relaxed">
           How you'll show up across campus
         </p>
       </motion.div>
@@ -205,7 +205,7 @@ export function IdentitySection({
               disabled={isLoading}
               autoFocus
               className={cn(
-                'w-full h-full px-4 bg-transparent text-[16px] text-white',
+                'w-full h-full px-4 bg-transparent text-body-lg text-white',
                 'placeholder:text-white/25',
                 'focus:outline-none',
                 'disabled:opacity-50'
@@ -226,7 +226,7 @@ export function IdentitySection({
               placeholder="Last name"
               disabled={isLoading}
               className={cn(
-                'w-full h-full px-4 bg-transparent text-[16px] text-white',
+                'w-full h-full px-4 bg-transparent text-body-lg text-white',
                 'placeholder:text-white/25',
                 'focus:outline-none',
                 'disabled:opacity-50'
@@ -263,7 +263,7 @@ export function IdentitySection({
         <motion.div variants={sectionChildVariants} className="space-y-3">
           {/* Major - Optional */}
           <div className="space-y-1.5">
-            <label className="text-[12px] text-white/40">
+            <label className="text-label text-white/40">
               Major <span className="text-white/20">(optional)</span>
             </label>
             <Select
@@ -286,7 +286,7 @@ export function IdentitySection({
 
           {/* Graduation year - Optional */}
           <div className="space-y-1.5">
-            <label className="text-[12px] text-white/40">
+            <label className="text-label text-white/40">
               Graduation year <span className="text-white/20">(optional)</span>
             </label>
             <Select
@@ -310,7 +310,7 @@ export function IdentitySection({
 
         {/* Interests multi-select - curated campus-authentic options */}
         <motion.div variants={sectionChildVariants} className="space-y-2">
-          <label className="text-[12px] text-white/40">
+          <label className="text-label text-white/40">
             What are you into? <span className="text-white/60">(pick 2-3)</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -332,7 +332,7 @@ export function IdentitySection({
                   }}
                   disabled={isLoading || (!canSelect && !canDeselect)}
                   className={cn(
-                    'h-9 px-3.5 rounded-full text-[13px] font-medium transition-all duration-200',
+                    'h-9 px-3.5 rounded-full text-body-sm font-medium transition-all duration-200',
                     'border',
                     isSelected
                       ? 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/30 text-[var(--color-gold)]'
@@ -347,7 +347,7 @@ export function IdentitySection({
             })}
           </div>
           {interests.length > 0 && (
-            <p className="text-[11px] text-white/30">
+            <p className="text-label-sm text-white/30">
               {interests.length}/3 selected
             </p>
           )}
@@ -355,7 +355,7 @@ export function IdentitySection({
 
         {/* Community identities - compact pills for optional self-identification */}
         <motion.div variants={sectionChildVariants} className="space-y-2">
-          <label className="text-[12px] text-white/40">
+          <label className="text-label text-white/40">
             Describe you? <span className="text-white/20">(optional)</span>
           </label>
           <div className="flex flex-wrap gap-2">
@@ -380,7 +380,7 @@ export function IdentitySection({
                   }}
                   disabled={isLoading}
                   className={cn(
-                    'h-9 px-3.5 rounded-full text-[13px] font-medium transition-all duration-200',
+                    'h-9 px-3.5 rounded-full text-body-sm font-medium transition-all duration-200',
                     'border',
                     isSelected
                       ? 'bg-white/10 border-white/25 text-white'
@@ -403,7 +403,7 @@ export function IdentitySection({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="text-[13px] text-red-400/90"
+              className="text-body-sm text-red-400/90"
             >
               {section.error}
             </motion.p>
@@ -427,7 +427,7 @@ export function IdentitySection({
         {/* Subtext */}
         <motion.p
           variants={sectionChildVariants}
-          className="text-[12px] text-white/25 text-center"
+          className="text-label text-white/25 text-center"
         >
           You can change your handle later
         </motion.p>

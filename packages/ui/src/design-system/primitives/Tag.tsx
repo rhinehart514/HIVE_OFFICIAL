@@ -67,7 +67,7 @@ const tagVariants = cva(
       },
       size: {
         sm: 'px-2.5 py-1 text-xs',
-        default: 'px-3 py-1.5 text-[13px]',
+        default: 'px-3 py-1.5 text-body-sm',
         lg: 'px-4 py-2 text-sm',
       },
     },

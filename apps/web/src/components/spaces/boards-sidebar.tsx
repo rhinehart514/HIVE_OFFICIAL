@@ -148,7 +148,7 @@ function BoardItem({
         <motion.span
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="px-1.5 py-0.5 text-[10px] font-medium bg-[var(--color-accent-gold,#FFD700)] text-black rounded-full"
+          className="px-1.5 py-0.5 text-label-xs font-medium bg-[var(--color-accent-gold,#FFD700)] text-black rounded-full"
         >
           {board.unreadCount > 99 ? '99+' : board.unreadCount}
         </motion.span>

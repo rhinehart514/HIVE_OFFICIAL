@@ -107,7 +107,7 @@ const tierBadgeVariants = cva(
   [
     'inline-flex items-center',
     'px-1.5 py-0.5',
-    'rounded text-[10px] font-medium',
+    'rounded text-label-xs font-medium',
     'border',
   ].join(' ')
 );
@@ -228,7 +228,7 @@ const ElementItemCard: React.FC<{
       <div className="text-2xl mb-1.5 text-white/60">{element.icon}</div>
 
       {/* Name */}
-      <span className="text-[11px] font-medium text-white/70 text-center leading-tight">
+      <span className="text-label-sm font-medium text-white/70 text-center leading-tight">
         {element.name}
       </span>
 

@@ -7,6 +7,9 @@
  * Usage:
  *   pnpm tsx packages/core/src/hivelab/goose/training/generate-dataset.ts
  *
+ * If you encounter "heap out of memory" errors, run with increased heap size:
+ *   node --max-old-space-size=4096 $(which tsx) packages/core/src/hivelab/goose/training/generate-dataset.ts
+ *
  * Output:
  *   packages/core/src/hivelab/goose/training/data/training.jsonl
  */
@@ -887,40 +890,83 @@ function formatForTraining(example: TrainingExample): string {
 }
 
 function generateDataset(): void {
-  const examples = generateAllExamples();
-
   // Create output directory
   const outputDir = path.join(__dirname, 'data');
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // Write training data as JSONL
   const trainingPath = path.join(outputDir, 'training.jsonl');
-  const trainingData = examples.map(formatForTraining).join('\n');
-  fs.writeFileSync(trainingPath, trainingData);
-
-  // Write validation set (10% of data)
-  const validationSize = Math.floor(examples.length * 0.1);
-  const validationExamples = examples.slice(-validationSize);
   const validationPath = path.join(outputDir, 'validation.jsonl');
-  const validationData = validationExamples.map(formatForTraining).join('\n');
-  fs.writeFileSync(validationPath, validationData);
+
+  // Create write streams for memory-efficient writing
+  const trainingStream = fs.createWriteStream(trainingPath, { encoding: 'utf8' });
+  const validationStream = fs.createWriteStream(validationPath, { encoding: 'utf8' });
+
+  // Track statistics while generating
+  let totalExamples = 0;
+  let validationSize = 0;
+  const elementTypesSet = new Set<string>();
+
+  // Generate examples and write them incrementally
+  // Process in batches to reduce memory pressure
+  const batchSize = 50;
+  const examples = generateAllExamples();
+  totalExamples = examples.length;
+  validationSize = Math.floor(totalExamples * 0.1);
+  const validationStartIndex = totalExamples - validationSize;
+
+  // Process and write examples in batches
+  for (let batchStart = 0; batchStart < examples.length; batchStart += batchSize) {
+    const batchEnd = Math.min(batchStart + batchSize, examples.length);
+    
+    for (let i = batchStart; i < batchEnd; i++) {
+      const example = examples[i];
+      const line = formatForTraining(example);
+      
+      // Track element types
+      for (const element of example.output.elements) {
+        elementTypesSet.add(element.type);
+      }
+
+      // Write to appropriate stream
+      if (i >= validationStartIndex) {
+        if (i > validationStartIndex) {
+          validationStream.write('\n');
+        }
+        validationStream.write(line);
+      } else {
+        if (i > 0) {
+          trainingStream.write('\n');
+        }
+        trainingStream.write(line);
+      }
+    }
+    
+    // Allow garbage collection between batches if available
+    if (typeof global.gc === 'function' && batchStart % (batchSize * 2) === 0) {
+      global.gc();
+    }
+  }
+
+  // Close streams synchronously (they'll finish writing in background)
+  trainingStream.end();
+  validationStream.end();
 
   // Write summary
   const summary = {
-    total_examples: examples.length,
-    training_examples: examples.length - validationSize,
+    total_examples: totalExamples,
+    training_examples: totalExamples - validationSize,
     validation_examples: validationSize,
-    element_types_covered: [...new Set(examples.flatMap(e => e.output.elements.map(el => el.type)))],
+    element_types_covered: Array.from(elementTypesSet),
     generated_at: new Date().toISOString(),
   };
 
   const summaryPath = path.join(outputDir, 'summary.json');
   fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
 
-  console.log(`Generated ${examples.length} training examples`);
-  console.log(`Training set: ${examples.length - validationSize} examples`);
+  console.log(`Generated ${totalExamples} training examples`);
+  console.log(`Training set: ${totalExamples - validationSize} examples`);
   console.log(`Validation set: ${validationSize} examples`);
   console.log(`Element types covered: ${summary.element_types_covered.length}`);
   console.log(`\nOutput files:`);
@@ -932,7 +978,12 @@ function generateDataset(): void {
 // Run if executed directly (ESM-compatible)
 const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
-  generateDataset();
+  try {
+    generateDataset();
+  } catch (error) {
+    console.error('Failed to generate dataset:', error);
+    process.exit(1);
+  }
 }
 
 export {

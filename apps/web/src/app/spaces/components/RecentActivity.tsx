@@ -92,7 +92,7 @@ function ActivityItem({
       {/* Avatar */}
       <Avatar size="sm" className="ring-1 ring-white/[0.06] shrink-0">
         {activity.spaceAvatarUrl && <AvatarImage src={activity.spaceAvatarUrl} />}
-        <AvatarFallback className="text-[10px]">
+        <AvatarFallback className="text-label-xs">
           {getInitials(activity.spaceName)}
         </AvatarFallback>
       </Avatar>
@@ -101,11 +101,11 @@ function ActivityItem({
       <div className="flex-1 min-w-0 text-left">
         <div className="flex items-center gap-2 mb-0.5">
           <Icon size={12} className="text-white/30 shrink-0" />
-          <span className="text-[11px] text-white/30">
+          <span className="text-label-sm text-white/30">
             {formatTimeAgo(activity.timestamp)}
           </span>
         </div>
-        <p className="text-[13px] text-white/50 truncate">
+        <p className="text-body-sm text-white/50 truncate">
           {activity.preview}
         </p>
       </div>
@@ -144,7 +144,7 @@ export function RecentActivity({
     >
       {/* Header */}
       <div className="px-5 py-3 border-b border-white/[0.03]">
-        <span className="text-[11px] font-medium text-white/30 uppercase tracking-wider">
+        <span className="text-label-sm font-medium text-white/30 uppercase tracking-wider">
           Recent Activity
         </span>
       </div>

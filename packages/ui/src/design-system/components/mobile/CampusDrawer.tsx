@@ -431,7 +431,7 @@ export function CampusDrawer({
                   </div>
                 ))}
               </div>
-              <span className="text-[10px]">Spaces</span>
+              <span className="text-label-xs">Spaces</span>
             </button>
 
             <button
@@ -442,7 +442,7 @@ export function CampusDrawer({
               )}
             >
               <SearchIcon className="w-6 h-6" />
-              <span className="text-[10px]">Search</span>
+              <span className="text-label-xs">Search</span>
             </button>
 
             {isBuilder && (
@@ -456,7 +456,7 @@ export function CampusDrawer({
                 )}
               >
                 <WrenchIcon className="w-6 h-6" />
-                <span className="text-[10px]">Lab</span>
+                <span className="text-label-xs">Lab</span>
               </button>
             )}
           </motion.div>

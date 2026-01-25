@@ -84,7 +84,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
       >
         <path d={HIVE_LOGO_PATH} />
       </svg>
-      <span className="font-bold tracking-tight text-[17px] hidden sm:block text-[var(--color-text-primary)]">
+      <span className="font-bold tracking-tight text-body-lg hidden sm:block text-[var(--color-text-primary)]">
         HIVE
       </span>
     </button>
@@ -105,9 +105,9 @@ function SearchTrigger({ onClick }: { onClick?: () => void }) {
       )}
     >
       <SearchIcon className="w-4 h-4 flex-shrink-0" />
-      <span className="text-[13px] flex-1 text-left">Search...</span>
+      <span className="text-body-sm flex-1 text-left">Search...</span>
       <kbd className={cn(
-        'hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px]',
+        'hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 rounded text-label-sm',
         'bg-white/[0.06] text-[var(--color-text-muted)]'
       )}>
         ⌘K
@@ -128,7 +128,7 @@ function NavItem({ label, isTeased = false, isActive = false, onClick }: NavItem
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium',
+        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-body-sm font-medium',
         'transition-all duration-150',
         isTeased && 'opacity-70 hover:opacity-100',
         isActive ? 'bg-white/[0.06] text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]'
@@ -167,7 +167,7 @@ function CampusPulse({ campusName, onlineCount }: { campusName?: string; onlineC
           ease: 'easeOut',
         }}
       />
-      <span className="text-[12px] font-medium tabular-nums text-[var(--color-text-secondary)]">
+      <span className="text-label font-medium tabular-nums text-[var(--color-text-secondary)]">
         {onlineCount} at {campusName || 'campus'}
       </span>
     </div>
@@ -190,7 +190,7 @@ function NotificationBell({
       {count > 0 && (
         <span className={cn(
           'absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px]',
-          'flex items-center justify-center px-1 text-[10px] font-bold rounded-full',
+          'flex items-center justify-center px-1 text-label-xs font-bold rounded-full',
           'bg-red-500 text-white'
         )}>
           {count > 99 ? '99+' : count}
@@ -219,7 +219,7 @@ function ProfileButton({
         {user?.avatarUrl ? (
           <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-[12px] font-medium text-[var(--color-text-muted)]">
+          <span className="text-label font-medium text-[var(--color-text-muted)]">
             {(user?.name || 'U').charAt(0).toUpperCase()}
           </span>
         )}

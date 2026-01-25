@@ -81,7 +81,7 @@ export function SpaceThreshold({
 
           {/* Space Name - Clash Display */}
           <h1
-            className="text-[36px] md:text-[48px] font-semibold leading-[1.0] tracking-tight text-white mb-3"
+            className="text-heading-lg md:text-display-sm font-semibold leading-[1.0] tracking-tight text-white mb-3"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             <WordReveal delay={0.3}>{space.name}</WordReveal>
@@ -89,7 +89,7 @@ export function SpaceThreshold({
 
           {/* Handle */}
           <motion.p
-            className="text-[14px] font-mono text-white/40"
+            className="text-body font-mono text-white/40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: durationSeconds.gentle, delay: 0.6, ease: MOTION.ease.premium }}
@@ -127,7 +127,7 @@ export function SpaceThreshold({
         {/* Description */}
         {space.description && (
           <motion.p
-            className="text-center text-[16px] leading-relaxed text-white/50 mb-10 max-w-md mx-auto"
+            className="text-center text-body-lg leading-relaxed text-white/50 mb-10 max-w-md mx-auto"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: durationSeconds.gentle, delay: 0.9, ease: MOTION.ease.premium }}
@@ -197,7 +197,7 @@ export function SpaceThreshold({
           {onPreview && (
             <button
               onClick={onPreview}
-              className="text-[13px] text-white/30 hover:text-white/50 transition-colors"
+              className="text-body-sm text-white/30 hover:text-white/50 transition-colors"
             >
               Preview first
             </button>
@@ -206,7 +206,7 @@ export function SpaceThreshold({
 
         {/* Footer note */}
         <motion.p
-          className="text-center text-[12px] text-white/20 mt-12"
+          className="text-center text-label text-white/20 mt-12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: durationSeconds.gentle, delay: 1.5, ease: MOTION.ease.premium }}

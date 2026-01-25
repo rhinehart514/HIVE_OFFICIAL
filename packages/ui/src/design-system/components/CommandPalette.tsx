@@ -337,10 +337,10 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                     className="flex-1 bg-transparent text-[var(--color-text-primary)] text-sm tracking-[-0.01em] placeholder:text-[var(--color-text-muted)] focus:outline-none"
                   />
                   <div className="flex items-center gap-1">
-                    <kbd className="flex h-5 items-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-[10px] font-medium text-[var(--color-text-muted)]">
+                    <kbd className="flex h-5 items-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-label-xs font-medium text-[var(--color-text-muted)]">
                       <CommandIcon className="h-3 w-3" />
                     </kbd>
-                    <kbd className="flex h-5 items-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-[10px] font-medium text-[var(--color-text-muted)]">
+                    <kbd className="flex h-5 items-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-label-xs font-medium text-[var(--color-text-muted)]">
                       K
                     </kbd>
                   </div>
@@ -368,7 +368,7 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                   ) : (
                     Object.entries(groupedItems).map(([category, categoryItems]) => (
                       <div key={category}>
-                        <div className="px-4 py-2 text-[11px] font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.08em]">
+                        <div className="px-4 py-2 text-label-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-[0.08em]">
                           {category}
                         </div>
                         {categoryItems.map((item) => {
@@ -428,7 +428,7 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                                   {item.shortcut.map((key, i) => (
                                     <kbd
                                       key={i}
-                                      className="flex h-5 min-w-[20px] items-center justify-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-[10px] font-medium text-[var(--color-text-muted)]"
+                                      className="flex h-5 min-w-[20px] items-center justify-center rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1.5 text-label-xs font-medium text-[var(--color-text-muted)]"
                                     >
                                       {key}
                                     </kbd>
@@ -449,15 +449,15 @@ export const CommandPalette = React.forwardRef<HTMLDivElement, CommandPalettePro
                 <div className="flex items-center justify-between border-t border-[var(--color-border)] px-4 py-2 text-xs text-[var(--color-text-muted)]">
                   <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-[10px]">↑↓</kbd>
+                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-label-xs">↑↓</kbd>
                       navigate
                     </span>
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-[10px]">↵</kbd>
+                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-label-xs">↵</kbd>
                       select
                     </span>
                     <span className="flex items-center gap-1">
-                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-[10px]">esc</kbd>
+                      <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-bg-page)] px-1 text-label-xs">esc</kbd>
                       close
                     </span>
                   </div>

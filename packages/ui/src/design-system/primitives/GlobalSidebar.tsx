@@ -223,14 +223,14 @@ export function IdentityCard({ name, handle, avatarUrl, onProfileClick }: Identi
         {!collapsed && (
           <div className="flex-1 min-w-0 text-left ml-2.5">
             <div
-              className="text-[13px] font-medium truncate leading-tight"
+              className="text-body-sm font-medium truncate leading-tight"
               style={{ color: SIDEBAR_TOKENS.textPrimary }}
             >
               {name || 'Anonymous'}
             </div>
             {handle && (
               <div
-                className="text-[11px] truncate leading-tight"
+                className="text-label-sm truncate leading-tight"
                 style={{ color: SIDEBAR_TOKENS.textMuted }}
               >
                 @{handle}
@@ -343,7 +343,7 @@ export function NavItem({ icon, label, isActive, badge, onClick }: NavItemProps)
       {/* Label */}
       {!collapsed && (
         <span
-          className="flex-1 text-[13px] font-medium text-left ml-3"
+          className="flex-1 text-body-sm font-medium text-left ml-3"
           style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
         >
           {label}
@@ -353,7 +353,7 @@ export function NavItem({ icon, label, isActive, badge, onClick }: NavItemProps)
       {/* Badge */}
       {!collapsed && showBadge && (
         <span
-          className="text-[10px] font-medium rounded px-1.5 py-0.5 min-w-[18px] text-center"
+          className="text-label-xs font-medium rounded px-1.5 py-0.5 min-w-[18px] text-center"
           style={{
             background: 'rgba(255, 215, 0, 0.15)',
             color: SIDEBAR_TOKENS.gold,
@@ -388,7 +388,7 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
       {!collapsed && (
         <div className="px-4 py-2">
           <span
-            className="text-[10px] font-semibold uppercase tracking-wider"
+            className="text-label-xs font-semibold uppercase tracking-wider"
             style={{ color: SIDEBAR_TOKENS.textMuted }}
           >
             Spaces
@@ -401,7 +401,7 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
         {hasChildren ? children : (
           !collapsed && (
             <div className="py-6 text-center">
-              <p className="text-[12px]" style={{ color: SIDEBAR_TOKENS.textMuted }}>
+              <p className="text-label" style={{ color: SIDEBAR_TOKENS.textMuted }}>
                 No spaces yet
               </p>
             </div>
@@ -416,14 +416,14 @@ export function SpacesCard({ children, onBrowseClick }: SpacesCardProps) {
             onClick={onBrowseClick}
             className={cn(
               'w-full flex items-center justify-center gap-2 py-2 rounded-lg',
-              'text-[12px] font-medium',
+              'text-label font-medium',
               'transition-colors duration-200',
               'hover:bg-white/[0.03]',
               FOCUS_RING
             )}
             style={{ color: SIDEBAR_TOKENS.textMuted }}
           >
-            <span className="text-[14px]">+</span>
+            <span className="text-body">+</span>
             {!collapsed && <span>Browse</span>}
           </button>
         </div>
@@ -514,7 +514,7 @@ export function SpaceItem({ name, avatarUrl, emoji, isActive, hasUnread, onClick
       {/* Name */}
       {!collapsed && (
         <span
-          className="flex-1 text-[12px] font-medium text-left truncate ml-2.5"
+          className="flex-1 text-label font-medium text-left truncate ml-2.5"
           style={{ color: isActive ? SIDEBAR_TOKENS.textPrimary : SIDEBAR_TOKENS.textSecondary }}
         >
           {name}
@@ -545,13 +545,13 @@ export function SidebarCollapseToggle() {
         title={collapsed ? 'Expand sidebar [' : 'Collapse sidebar ['}
       >
         <span
-          className="text-[13px] transition-transform duration-200"
+          className="text-body-sm transition-transform duration-200"
           style={{ transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)' }}
         >
           «
         </span>
         {!collapsed && (
-          <span className="text-[11px] font-medium">Collapse</span>
+          <span className="text-label-sm font-medium">Collapse</span>
         )}
       </button>
     </div>

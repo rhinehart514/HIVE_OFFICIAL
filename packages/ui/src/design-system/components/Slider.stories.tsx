@@ -100,7 +100,7 @@ export const LockedDesignShowcase: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               Gold Track (CTA)
             </span>
-            <span className="text-[10px] text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-[#FFD700] bg-[#FFD700]/10 px-2 py-0.5 rounded">
               For actions/CTAs
             </span>
           </div>
@@ -116,7 +116,7 @@ export const LockedDesignShowcase: StoryObj = {
             <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
               With Value Tooltip
             </span>
-            <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+            <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
               Glass Dark tooltip
             </span>
           </div>
@@ -146,15 +146,15 @@ export const LockedDesignShowcase: StoryObj = {
           </span>
           <div className="space-y-4">
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Gold (CTA/actions)</p>
+              <p className="text-label-xs text-white/40 mb-2">Gold (CTA/actions)</p>
               <Slider defaultValue={[60]} max={100} color="gold" />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">Primary (informational)</p>
+              <p className="text-label-xs text-white/40 mb-2">Primary (informational)</p>
               <Slider defaultValue={[60]} max={100} color="primary" />
             </div>
             <div>
-              <p className="text-[10px] text-white/40 mb-2">White (neutral)</p>
+              <p className="text-label-xs text-white/40 mb-2">White (neutral)</p>
               <Slider defaultValue={[60]} max={100} color="default" />
             </div>
           </div>

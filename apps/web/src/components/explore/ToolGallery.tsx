@@ -49,12 +49,12 @@ export function ToolGallery({ tools, loading, searchQuery }: ToolGalleryProps) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
-        <p className="text-white/40 text-[15px] mb-2">
+        <p className="text-white/40 text-body mb-2">
           {searchQuery
             ? `No tools match "${searchQuery}"`
             : 'No tools available'}
         </p>
-        <p className="text-white/25 text-[13px]">
+        <p className="text-white/25 text-body-sm">
           Build one in HiveLab
         </p>
       </motion.div>
@@ -109,7 +109,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-medium text-white truncate">
+                    <h3 className="text-body font-medium text-white truncate">
                       {tool.name}
                     </h3>
                     {tool.isOfficial && (
@@ -120,21 +120,21 @@ function ToolCard({ tool, index }: ToolCardProps) {
                   </div>
 
                   {tool.category && (
-                    <p className="text-[12px] text-white/40">{tool.category}</p>
+                    <p className="text-label text-white/40">{tool.category}</p>
                   )}
                 </div>
               </div>
 
               {/* Description */}
               {tool.description && (
-                <p className="text-[13px] text-white/50 line-clamp-2">
+                <p className="text-body-sm text-white/50 line-clamp-2">
                   {tool.description}
                 </p>
               )}
 
               {/* Footer */}
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[12px] text-white/30">
+                <span className="text-label text-white/30">
                   {tool.deployCount} deployments
                 </span>
               </div>

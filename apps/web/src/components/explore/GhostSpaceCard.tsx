@@ -58,20 +58,20 @@ export function GhostSpaceCard({ space, index = 0 }: GhostSpaceCardProps) {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[15px] font-medium text-white/70 truncate">
+                  <h3 className="text-body font-medium text-white/70 truncate">
                     {space.name}
                   </h3>
                   <Badge variant="neutral" size="sm" className="bg-white/[0.04] text-white/40">
                     Unclaimed
                   </Badge>
                 </div>
-                <p className="text-[13px] text-white/30">@{space.handle}</p>
+                <p className="text-body-sm text-white/30">@{space.handle}</p>
               </div>
             </div>
 
             {/* Waitlist count - FOMO */}
             {space.waitlistCount > 0 && (
-              <p className="text-[13px] text-white/50">
+              <p className="text-body-sm text-white/50">
                 <GradientText variant="gold" className="font-medium">
                   {space.waitlistCount} students
                 </GradientText>{' '}

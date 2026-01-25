@@ -72,13 +72,13 @@ export function AccessOption({ option, selected, onSelect }: AccessOptionProps) 
           <div className="flex-1 min-w-0">
             <h3
               className={cn(
-                'text-[14px] font-medium',
+                'text-body font-medium',
                 selected ? 'text-[var(--life-gold)]' : 'text-white'
               )}
             >
               {option.name}
             </h3>
-            <p className="text-[12px] text-white/40 mt-0.5">
+            <p className="text-label text-white/40 mt-0.5">
               {option.description}
             </p>
           </div>

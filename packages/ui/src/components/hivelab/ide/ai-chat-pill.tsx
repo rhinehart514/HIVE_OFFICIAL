@@ -218,7 +218,7 @@ export const AIChatPill = forwardRef<AIChatPillRef, AIChatPillProps>(
               Ask AI
             </span>
             <kbd
-              className="px-1.5 py-0.5 text-[10px] rounded"
+              className="px-1.5 py-0.5 text-label-xs rounded"
               style={{ backgroundColor: COLORS.surface, color: COLORS.textTertiary }}
             >
               ⌘K

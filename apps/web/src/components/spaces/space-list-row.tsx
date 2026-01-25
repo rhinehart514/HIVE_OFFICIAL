@@ -225,7 +225,7 @@ export function SpaceListRow({
             {space.name}
           </Text>
           {space.isVerified && (
-            <Badge variant="outline" size="sm" className="text-[10px]">
+            <Badge variant="outline" size="sm" className="text-label-xs">
               Verified
             </Badge>
           )}

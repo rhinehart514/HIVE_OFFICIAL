@@ -85,7 +85,7 @@ export const LockedDesignShowcase: Story = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Basic Tooltip
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Hover to reveal
           </span>
         </div>
@@ -114,7 +114,7 @@ export const LockedDesignShowcase: Story = {
           <Tooltip content="Left tooltip" side="left">
             <Button variant="ghost" size="sm">Left</Button>
           </Tooltip>
-          <div className="text-[10px] text-white/40">Positions</div>
+          <div className="text-label-xs text-white/40">Positions</div>
           <Tooltip content="Right tooltip" side="right">
             <Button variant="ghost" size="sm">Right</Button>
           </Tooltip>
@@ -136,7 +136,7 @@ export const LockedDesignShowcase: Story = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             With Keyboard Shortcut
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Muted mono font
           </span>
         </div>
@@ -159,7 +159,7 @@ export const LockedDesignShowcase: Story = {
           <span className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
             Rich Tooltip
           </span>
-          <span className="text-[10px] text-white/40 bg-white/5 px-2 py-0.5 rounded">
+          <span className="text-label-xs text-white/40 bg-white/5 px-2 py-0.5 rounded">
             Title + Description
           </span>
         </div>

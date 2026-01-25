@@ -116,7 +116,7 @@ function ConnectionStatusIndicator({ status }: { status: ConnectionStatus }) {
   return (
     <div className="flex items-center gap-1" style={{ color: config.color }}>
       <Icon className="w-3.5 h-3.5" />
-      <span className="text-[10px] font-medium">{config.label}</span>
+      <span className="text-label-xs font-medium">{config.label}</span>
     </div>
   );
 }
@@ -155,7 +155,7 @@ function TransformBadge({ transform }: { transform?: DataTransform }) {
 
   return (
     <span
-      className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+      className="text-label-xs px-1.5 py-0.5 rounded font-medium"
       style={{
         backgroundColor: `${COLORS.accent}20`,
         color: COLORS.accent,
@@ -253,13 +253,13 @@ function ConnectionCard({
           {connection.resolvedValue ? (
             <ConnectionStatusIndicator status={connection.resolvedValue.status} />
           ) : (
-            <span className="text-[10px]" style={{ color: COLORS.textTertiary }}>
+            <span className="text-label-xs" style={{ color: COLORS.textTertiary }}>
               Not resolved
             </span>
           )}
 
           {connection.label && (
-            <span className="text-[10px] truncate max-w-[100px]" style={{ color: COLORS.textSecondary }}>
+            <span className="text-label-xs truncate max-w-[100px]" style={{ color: COLORS.textSecondary }}>
               {connection.label}
             </span>
           )}
@@ -269,7 +269,7 @@ function ConnectionCard({
         {connection.resolvedValue?.status === 'connected' &&
           connection.resolvedValue.value !== undefined && (
             <div
-              className="mt-2 px-2 py-1.5 rounded text-[10px] font-mono overflow-hidden"
+              className="mt-2 px-2 py-1.5 rounded text-label-xs font-mono overflow-hidden"
               style={{ backgroundColor: COLORS.bg, color: COLORS.textTertiary }}
             >
               {formatValue(connection.resolvedValue.value)}
@@ -279,7 +279,7 @@ function ConnectionCard({
         {/* Error message */}
         {connection.resolvedValue?.status === 'error' && connection.resolvedValue.error && (
           <div
-            className="mt-2 px-2 py-1.5 rounded text-[10px]"
+            className="mt-2 px-2 py-1.5 rounded text-label-xs"
             style={{ backgroundColor: `${COLORS.error}10`, color: COLORS.error }}
           >
             {connection.resolvedValue.error}
@@ -305,7 +305,7 @@ function ConnectionCard({
                   type="button"
                   onClick={() => onToggleEnabled(!connection.enabled)}
                   className={cn(
-                    'px-2 py-1 rounded text-[10px] transition-colors',
+                    'px-2 py-1 rounded text-label-xs transition-colors',
                     focusRing
                   )}
                   style={{
@@ -506,7 +506,7 @@ export function ConnectionsPanel({
       {/* Incoming Connections */}
       {incomingConnections.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[10px] uppercase tracking-wide px-1" style={{ color: COLORS.textTertiary }}>
+          <div className="text-label-xs uppercase tracking-wide px-1" style={{ color: COLORS.textTertiary }}>
             Incoming
           </div>
           <AnimatePresence>
@@ -532,7 +532,7 @@ export function ConnectionsPanel({
       {/* Outgoing Connections */}
       {outgoingConnections && outgoingConnections.length > 0 && (
         <div className="space-y-2">
-          <div className="text-[10px] uppercase tracking-wide px-1" style={{ color: COLORS.textTertiary }}>
+          <div className="text-label-xs uppercase tracking-wide px-1" style={{ color: COLORS.textTertiary }}>
             Outgoing
           </div>
           <AnimatePresence>

@@ -401,7 +401,7 @@ function ContextSection({
           </span>
           {category.requiresSpace && (
             <span
-              className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded"
+              className="text-label-xs uppercase tracking-wider px-1.5 py-0.5 rounded"
               style={{
                 backgroundColor: PANEL_COLORS.infoLight,
                 color: PANEL_COLORS.info,
@@ -572,7 +572,7 @@ function ContextFieldRow({
             {field.label}
           </span>
           <span
-            className="text-[10px] font-mono px-1 rounded"
+            className="text-label-xs font-mono px-1 rounded"
             style={{
               backgroundColor: PANEL_COLORS.bgActive,
               color: PANEL_COLORS.textTertiary,
@@ -587,7 +587,7 @@ function ContextFieldRow({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-[10px] font-mono mt-0.5 truncate"
+            className="text-label-xs font-mono mt-0.5 truncate"
             style={{ color: PANEL_COLORS.textTertiary }}
           >
             = {JSON.stringify(previewValue)}
@@ -615,13 +615,13 @@ function ContextFieldRow({
               }}
             >
               <p
-                className="text-[10px] mb-1"
+                className="text-label-xs mb-1"
                 style={{ color: PANEL_COLORS.textSecondary }}
               >
                 {field.description}
               </p>
               <p
-                className="text-[10px] font-mono"
+                className="text-label-xs font-mono"
                 style={{ color: PANEL_COLORS.textTertiary }}
               >
                 Example: {field.example}
@@ -766,7 +766,7 @@ export function ContextPicker({
               Context Requirements
             </h4>
             <p
-              className="text-[10px] mt-0.5"
+              className="text-label-xs mt-0.5"
               style={{ color: PANEL_COLORS.textTertiary }}
             >
               Select data this element needs at runtime

@@ -64,15 +64,15 @@ const featuredBadgeVariants = cva(
     'inline-flex items-center gap-1.5',
     'px-2.5 py-1',
     'rounded-full',
-    'text-[11px] font-semibold',
+    'text-label-sm font-semibold',
     'border',
     'transition-all duration-200',
   ].join(' '),
   {
     variants: {
       size: {
-        sm: 'px-2 py-0.5 text-[10px]',
-        default: 'px-2.5 py-1 text-[11px]',
+        sm: 'px-2 py-0.5 text-label-xs',
+        default: 'px-2.5 py-1 text-label-sm',
         lg: 'px-3 py-1.5 text-xs',
       },
       showGlow: {
@@ -255,7 +255,7 @@ const FeaturedBadgeGroup = React.forwardRef<HTMLDivElement, FeaturedBadgeGroupPr
           />
         ))}
         {hiddenCount > 0 && (
-          <span className="text-[10px] text-white/40 font-medium">
+          <span className="text-label-xs text-white/40 font-medium">
             +{hiddenCount} more
           </span>
         )}

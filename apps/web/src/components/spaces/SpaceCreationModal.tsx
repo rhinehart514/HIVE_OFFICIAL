@@ -170,7 +170,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                   className="space-y-6"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="text-[24px] font-semibold text-white mb-2">
+                    <h2 className="text-title-lg font-semibold text-white mb-2">
                       What are you building?
                     </h2>
                     <p className="text-white/50">Choose a template to get started</p>
@@ -215,7 +215,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                   className="space-y-6"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="text-[24px] font-semibold text-white mb-2">
+                    <h2 className="text-title-lg font-semibold text-white mb-2">
                       Name your space
                     </h2>
                     <p className="text-white/50">Choose wisely — this is your territory</p>
@@ -267,7 +267,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
                   className="space-y-6"
                 >
                   <div className="text-center mb-8">
-                    <h2 className="text-[24px] font-semibold text-white mb-2">
+                    <h2 className="text-title-lg font-semibold text-white mb-2">
                       Who can join?
                     </h2>
                     <p className="text-white/50">You can change this anytime</p>
@@ -340,7 +340,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
 
                       {/* Word-by-word reveal */}
                       <h2
-                        className="text-[32px] font-semibold mb-4"
+                        className="text-heading font-semibold mb-4"
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
                         <WordReveal
@@ -352,7 +352,7 @@ export function SpaceCreationModal({ isOpen, onClose }: SpaceCreationModalProps)
 
                       {/* Handle in gold */}
                       <motion.p
-                        className="text-[18px] text-[#FFD700] font-medium mb-8"
+                        className="text-title-sm text-[#FFD700] font-medium mb-8"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.8 }}

@@ -192,7 +192,7 @@ function SpacePreview({ data, onNavigate }: { data: SpacePreviewData; onNavigate
         <div className="p-2 rounded-lg bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
           <div className="flex items-center gap-1.5 mb-1">
             <ChatBubbleIcon className="w-3 h-3 text-[var(--text-muted)]" />
-            <span className="text-[10px] text-[var(--text-muted)]">Recent</span>
+            <span className="text-label-xs text-[var(--text-muted)]">Recent</span>
           </div>
           <p className="text-xs text-[var(--text-secondary)]">
             <span className="font-medium text-[var(--text-primary)]">
@@ -212,7 +212,7 @@ function SpacePreview({ data, onNavigate }: { data: SpacePreviewData; onNavigate
             <p className="text-xs font-medium text-[var(--text-primary)] truncate">
               {data.upcomingEvent.name}
             </p>
-            <p className="text-[10px] text-[var(--text-muted)]">
+            <p className="text-label-xs text-[var(--text-muted)]">
               {data.upcomingEvent.date} · {data.upcomingEvent.rsvpCount} going
             </p>
           </div>
@@ -223,7 +223,7 @@ function SpacePreview({ data, onNavigate }: { data: SpacePreviewData; onNavigate
       {data.deployedTools && data.deployedTools.length > 0 && (
         <div className="flex items-center gap-2">
           <WrenchIcon className="w-3 h-3 text-[var(--text-muted)]" />
-          <span className="text-[10px] text-[var(--text-muted)]">
+          <span className="text-label-xs text-[var(--text-muted)]">
             {data.deployedTools.length} tool{data.deployedTools.length !== 1 && 's'} deployed
           </span>
         </div>

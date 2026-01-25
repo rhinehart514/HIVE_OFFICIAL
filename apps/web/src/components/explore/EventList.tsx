@@ -52,12 +52,12 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
-        <p className="text-white/40 text-[15px] mb-2">
+        <p className="text-white/40 text-body mb-2">
           {searchQuery
             ? `No events match "${searchQuery}"`
             : 'No upcoming events'}
         </p>
-        <p className="text-white/25 text-[13px]">
+        <p className="text-white/25 text-body-sm">
           Events from your spaces will appear here
         </p>
       </motion.div>
@@ -71,7 +71,7 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
     <div className="space-y-6">
       {Object.entries(groupedEvents).map(([dateKey, dateEvents]) => (
         <div key={dateKey} className="space-y-3">
-          <h3 className="text-[12px] text-white/40 uppercase tracking-wider">
+          <h3 className="text-label text-white/40 uppercase tracking-wider">
             {dateKey}
           </h3>
           <div className="space-y-3">
@@ -118,7 +118,7 @@ function EventCard({ event, index }: EventCardProps) {
         <div className="flex items-start gap-4">
           {/* Time column */}
           <div className="w-16 shrink-0 text-center">
-            <p className="text-[12px] text-white/40">{timeString.time}</p>
+            <p className="text-label text-white/40">{timeString.time}</p>
             {event.isLive && (
               <Badge variant="gold" size="sm" className="mt-1">
                 Live
@@ -128,17 +128,17 @@ function EventCard({ event, index }: EventCardProps) {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h3 className="text-[15px] font-medium text-white truncate">
+            <h3 className="text-body font-medium text-white truncate">
               {event.title}
             </h3>
 
             {event.description && (
-              <p className="text-[13px] text-white/50 line-clamp-1 mt-0.5">
+              <p className="text-body-sm text-white/50 line-clamp-1 mt-0.5">
                 {event.description}
               </p>
             )}
 
-            <div className="flex items-center gap-3 mt-2 text-[12px] text-white/30">
+            <div className="flex items-center gap-3 mt-2 text-label text-white/30">
               {event.location && <span>{event.location}</span>}
               {event.spaceName && (
                 <>
@@ -156,7 +156,7 @@ function EventCard({ event, index }: EventCardProps) {
 
           {/* RSVP */}
           <div className="shrink-0 text-right">
-            <p className="text-[12px] text-white/40">{event.rsvpCount} going</p>
+            <p className="text-label text-white/40">{event.rsvpCount} going</p>
             <Button variant="ghost" size="sm" className="mt-1">
               RSVP
             </Button>

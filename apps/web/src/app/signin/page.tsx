@@ -197,7 +197,7 @@ export default function SignInPage() {
                 >
                   Welcome back
                 </h1>
-                <p className="text-[14px] text-white/50">
+                <p className="text-body text-white/50">
                   Enter your handle to sign in
                 </p>
               </div>
@@ -221,7 +221,7 @@ export default function SignInPage() {
                     disabled={isLoading}
                     autoFocus
                     className={cn(
-                      'w-full h-full px-2 bg-transparent text-[16px] text-white',
+                      'w-full h-full px-2 bg-transparent text-body-lg text-white',
                       'placeholder:text-white/25',
                       'focus:outline-none',
                       'disabled:opacity-50'
@@ -233,7 +233,7 @@ export default function SignInPage() {
                   <motion.p
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-[13px] text-red-400 text-center"
+                    className="text-body-sm text-red-400 text-center"
                   >
                     {error}
                   </motion.p>
@@ -252,13 +252,13 @@ export default function SignInPage() {
               </div>
 
               {/* Help text */}
-              <p className="text-[13px] text-white/40 text-center">
+              <p className="text-body-sm text-white/40 text-center">
                 We&apos;ll send a code to your school email
               </p>
 
               {/* Back to entry */}
               <div className="pt-4 border-t border-white/[0.06]">
-                <p className="text-[13px] text-white/40 text-center">
+                <p className="text-body-sm text-white/40 text-center">
                   New to HIVE?{' '}
                   <Link
                     href="/"
@@ -279,7 +279,7 @@ export default function SignInPage() {
                 >
                   Check your email
                 </h1>
-                <p className="text-[14px] text-white/50">
+                <p className="text-body text-white/50">
                   We sent a code to{' '}
                   <span className="text-white/70">{email}</span>
                 </p>
@@ -288,7 +288,7 @@ export default function SignInPage() {
               {/* Back button */}
               <button
                 onClick={handleBack}
-                className="flex items-center gap-2 text-[13px] text-white/40 hover:text-white/60 transition-colors"
+                className="flex items-center gap-2 text-body-sm text-white/40 hover:text-white/60 transition-colors"
               >
                 <ArrowLeft size={14} />
                 Use a different handle
@@ -305,10 +305,10 @@ export default function SignInPage() {
                     <Lock size={18} className="text-red-400" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[14px] text-red-400 font-medium">
+                    <p className="text-body text-red-400 font-medium">
                       Too many attempts
                     </p>
-                    <p className="text-[13px] text-white/50 flex items-center gap-1.5 mt-0.5">
+                    <p className="text-body-sm text-white/50 flex items-center gap-1.5 mt-0.5">
                       <Clock size={12} />
                       Try again in {lockout.remainingMinutes} minute
                       {lockout.remainingMinutes !== 1 ? 's' : ''}
@@ -339,7 +339,7 @@ export default function SignInPage() {
                     <motion.p
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-[13px] text-red-400 text-center"
+                      className="text-body-sm text-red-400 text-center"
                     >
                       {error}
                     </motion.p>
@@ -351,7 +351,7 @@ export default function SignInPage() {
                       className="flex items-center justify-center gap-2"
                     >
                       <span className="w-4 h-4 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
-                      <span className="text-[13px] text-white/50">Verifying...</span>
+                      <span className="text-body-sm text-white/50">Verifying...</span>
                     </motion.div>
                   )}
 
@@ -360,7 +360,7 @@ export default function SignInPage() {
                     <motion.p
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="text-[13px] text-amber-400/80 text-center"
+                      className="text-body-sm text-amber-400/80 text-center"
                     >
                       {lockout.attemptsRemaining} attempt
                       {lockout.attemptsRemaining !== 1 ? 's' : ''} remaining
@@ -370,7 +370,7 @@ export default function SignInPage() {
               )}
 
               {/* Resend code */}
-              <p className="text-[13px] text-white/40 text-center">
+              <p className="text-body-sm text-white/40 text-center">
                 Didn&apos;t receive it?{' '}
                 <button
                   onClick={handleRequestCode}
@@ -386,7 +386,7 @@ export default function SignInPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-6 px-6 flex justify-between items-center text-[12px] text-white/30">
+      <footer className="py-6 px-6 flex justify-between items-center text-label text-white/30">
         <span>HIVE</span>
         <div className="flex gap-4">
           <Link
