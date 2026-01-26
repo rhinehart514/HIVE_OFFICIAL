@@ -356,6 +356,33 @@ const UNIVERSAL_ELEMENTS: ElementDefinition[] = [
   },
 
   {
+    id: 'progress-indicator',
+    name: 'Progress Indicator',
+    description: 'Visual progress bar or circular indicator for tracking progress',
+    category: 'display',
+    tier: 'universal',
+    dataSource: 'none',
+    icon: 'Loader',
+    configSchema: {
+      value: { type: 'number', default: 0 },
+      max: { type: 'number', default: 100 },
+      showLabel: { type: 'boolean', default: true },
+      variant: { type: 'string', default: 'bar', enum: ['bar', 'circular'] },
+      label: { type: 'string', default: '' },
+      color: { type: 'string', default: 'primary' }
+    },
+    defaultConfig: {
+      value: 0,
+      max: 100,
+      showLabel: true,
+      variant: 'bar',
+      label: '',
+      color: 'primary'
+    },
+    render: (props) => renderElement('progress-indicator', props)
+  },
+
+  {
     id: 'form-builder',
     name: 'Form Builder',
     description: 'Dynamic form creation and validation',

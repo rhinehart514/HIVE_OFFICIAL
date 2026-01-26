@@ -474,4 +474,42 @@ spaces/{spaceId}/tools/{toolId}
 
 ---
 
+## 13. Post-GTM Roadmap (Sprint 3.1+)
+
+### Deferred Features
+
+| Feature | Description | Priority |
+|---------|-------------|----------|
+| **Tool-to-Tool Connections** | Cross-tool cascade (one tool's output triggers another tool) | P1 |
+| **Real-Time Presence** | "3 people using this tool" indicator | P2 |
+| **Execute Route Extraction** | Extract action handlers into services for testability | P2 |
+| **Advanced Analytics** | Per-element engagement metrics, funnel tracking | P3 |
+
+### Technical Debt
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Element ports consolidation | ✅ Done | `packages/core/src/domain/hivelab/element-ports.ts` |
+| Progress indicator element | ✅ Done | Added to element-registry.ts and element-system.ts |
+| Template fallback | ✅ Done | Code-defined templates as Firestore fallback |
+| Tool execution page | ✅ Done | `/s/[handle]/tools/[toolId]` route exists |
+| App Check verification | Production | Set `NEXT_PUBLIC_ENABLE_APP_CHECK=true` |
+
+### Architecture Notes
+
+**Element Ports (Single Source of Truth)**
+- `packages/core/src/domain/hivelab/element-ports.ts` - All output mappings
+- Imported by `use-connection-cascade.ts` and `tool-connection-engine.ts`
+- Functions: `extractOutputValue()`, `getAffectedOutputs()`, `hasOutputPort()`, `getOutputPorts()`
+
+**Visibility Conditions**
+- Already implemented in `tool-canvas.tsx` via `evaluateCondition()` and `evaluateConditionGroup()`
+- Conditions evaluated against `ToolRuntimeContext`
+
+**Space Sidebar Integration**
+- Already implemented in `boards-sidebar.tsx`
+- Activity count badge via `activityCount` field
+
+---
+
 *Last updated: January 2026*

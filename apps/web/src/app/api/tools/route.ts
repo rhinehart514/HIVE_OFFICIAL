@@ -7,6 +7,7 @@ import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-p
 import { rateLimit } from "@/lib/rate-limit";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
 import * as admin from "firebase-admin";
+import { getQuickTemplate } from "@hive/ui";
 
 // Define tool schemas locally (not in core package)
 const CreateToolSchema = z.object({
@@ -204,27 +205,42 @@ export const POST = withAuthValidationAndErrors(
     }
 
     // Handle template-based creation
-    let templateElements = [];
-    let templateConfig = {};
+    let templateElements: unknown[] = [];
+    let templateConfig: Record<string, unknown> = {};
     const templateIdStr = typeof validatedData.templateId === 'string' ? validatedData.templateId : null;
     if (templateIdStr) {
       try {
+        // First try Firestore templates collection
         const templateDoc = await adminDb
           .collection("tool_templates")
           .doc(templateIdStr)
           .get();
-        
+
         if (templateDoc.exists) {
           const templateData = templateDoc.data();
           templateElements = templateData?.elements || [];
           templateConfig = templateData?.config || {};
+        } else {
+          // Fallback: Try code-defined quick templates
+          const codeTemplate = getQuickTemplate(templateIdStr);
+          if (codeTemplate) {
+            templateElements = codeTemplate.composition.elements || [];
+            templateConfig = {};
+            logger.info('Using code-defined template', { templateId: templateIdStr });
+          }
         }
       } catch (error) {
         logger.warn(
-      `Failed to load template at /api/tools`,
-      { error: error instanceof Error ? error.message : String(error) }
-    );
-        // Continue without template
+          `Failed to load template at /api/tools`,
+          { error: error instanceof Error ? error.message : String(error) }
+        );
+        // Fallback: Try code-defined quick templates
+        const codeTemplate = getQuickTemplate(templateIdStr);
+        if (codeTemplate) {
+          templateElements = codeTemplate.composition.elements || [];
+          templateConfig = {};
+          logger.info('Using code-defined template after Firestore error', { templateId: templateIdStr });
+        }
       }
     }
 
@@ -246,7 +262,7 @@ export const POST = withAuthValidationAndErrors(
       config: { ...(toolData.config || {}), ...templateConfig, ...(validatedData.config || {}) }, // Merge configs
       metadata: {
         ...(toolData.metadata as Record<string, unknown> || {}),
-        templateId: validatedData.templateId,
+        ...(validatedData.templateId ? { templateId: validatedData.templateId } : {}),
         toolType: validatedData.type,
       },
       createdAt: now,
@@ -255,7 +271,7 @@ export const POST = withAuthValidationAndErrors(
       provenance: {
         creatorId: userId,
         createdAt: now.toISOString(),
-        forkedFrom: templateIdStr || undefined,
+        ...(templateIdStr ? { forkedFrom: templateIdStr } : {}),
         lineage: templateIdStr ? [templateIdStr] : [],
         forkCount: 0,
         deploymentCount: 0,
@@ -435,7 +451,7 @@ export const POST = withAuthValidationAndErrors(
         toolType: validatedData.type,
         hasDescription: !!validatedData.description,
         hasTemplate: !!validatedData.templateId,
-        templateId: validatedData.templateId,
+        ...(validatedData.templateId ? { templateId: validatedData.templateId } : {}),
       } });
 
     const createdTool = {

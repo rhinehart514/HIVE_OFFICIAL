@@ -387,6 +387,20 @@ export {
   createDefaultCapabilities,
 } from "./domain/hivelab/tool-context.types";
 
+// Sprint 2: Context Interpolation Engine
+export type {
+  InterpolationOptions,
+  InterpolationResult,
+} from "./domain/hivelab/context-interpolation";
+export {
+  interpolateConfig,
+  interpolateConfigWithMeta,
+  interpolateString,
+  hasInterpolation,
+  extractPaths,
+  extractAllPaths,
+} from "./domain/hivelab/context-interpolation";
+
 // HiveLab Capabilities & Governance (Hackability Layer)
 export {
   CAPABILITY_PRESETS,
@@ -481,6 +495,16 @@ export {
   ADDITIONAL_UNIVERSAL_ELEMENTS,
 } from "./domain/hivelab/element-registry";
 export type { ElementSpec } from "./domain/hivelab/element-registry";
+
+// HiveLab Element Ports (Single Source of Truth for Output Mappings)
+export {
+  OUTPUT_MAPPINGS,
+  ACTION_OUTPUT_MAPPINGS,
+  extractOutputValue,
+  getAffectedOutputs,
+  hasOutputPort,
+  getOutputPorts,
+} from "./domain/hivelab/element-ports";
 
 // HiveLab AI Quality Validation
 // Note: Explicit exports to avoid conflicts with element-schemas validateElementConfig

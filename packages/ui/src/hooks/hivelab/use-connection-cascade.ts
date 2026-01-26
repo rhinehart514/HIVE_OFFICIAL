@@ -23,6 +23,10 @@ import {
   analyzeDAG,
   type DAGAnalysis,
 } from '../../lib/hivelab/dag-utils';
+import {
+  extractOutputValue,
+  getAffectedOutputs as coreGetAffectedOutputs,
+} from '@hive/core';
 
 // ═══════════════════════════════════════════════════════════════════
 // TYPES
@@ -70,111 +74,15 @@ export interface ConnectionGraphInfo {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// OUTPUT EXTRACTORS (mirrors backend)
+// OUTPUT EXTRACTORS (imported from @hive/core)
 // ═══════════════════════════════════════════════════════════════════
 
 /**
- * Complete output mappings for all 27 element types
- * Maps output port names to state property names
- */
-const OUTPUT_MAPPINGS: Record<string, Record<string, string>> = {
-  // Universal elements
-  'poll-element': { results: 'responses', votes: 'totalVotes', winner: 'topChoice', data: 'responses' },
-  'form-builder': { submissions: 'submissions', data: 'lastSubmission', count: 'submissionCount' },
-  'leaderboard': { entries: 'entries', data: 'entries', top: 'topEntries', rankings: 'entries' },
-  'counter': { value: 'value', count: 'value', data: 'value' },
-  'timer': { elapsed: 'elapsed', running: 'isRunning', time: 'elapsed', data: 'elapsed' },
-  'countdown-timer': { finished: 'finished', complete: 'finished', timeLeft: 'timeLeft', data: 'timeLeft' },
-  'search-input': { query: 'query', searchTerm: 'query', text: 'query', data: 'query' },
-  'filter-selector': { filters: 'selectedFilters', selectedFilters: 'selectedFilters', data: 'selectedFilters' },
-  'result-list': { items: 'items', selection: 'selectedItem', data: 'items' },
-  'date-picker': { date: 'selectedDate', selectedDate: 'selectedDate', data: 'selectedDate' },
-  'tag-cloud': { tags: 'tags', selected: 'selectedTags', selectedTags: 'selectedTags', data: 'selectedTags' },
-  'map-view': { location: 'selectedLocation', markers: 'markers', data: 'markers' },
-  'chart-display': { chartData: 'chartData', selection: 'selectedPoint', data: 'chartData' },
-  'notification-display': { notifications: 'notifications', count: 'notificationCount', data: 'notifications' },
-
-  // Connected elements
-  'event-picker': { event: 'selectedEvent', eventId: 'selectedEventId', events: 'events', data: 'selectedEvent' },
-  'space-picker': { space: 'selectedSpace', spaceId: 'selectedSpaceId', spaces: 'spaces', data: 'selectedSpace' },
-  'user-selector': { user: 'selectedUser', userId: 'selectedUserId', users: 'users', data: 'selectedUser' },
-  'rsvp-button': { attendees: 'attendees', count: 'count', waitlist: 'waitlist', data: 'attendees' },
-  'connection-list': { connections: 'connections', selected: 'selectedConnection', data: 'connections' },
-
-  // Space elements
-  'member-list': { members: 'members', selected: 'selectedMember', data: 'members' },
-  'member-selector': { member: 'selectedMember', members: 'selectedMembers', data: 'selectedMember' },
-  'space-events': { events: 'events', upcoming: 'upcomingEvents', data: 'events' },
-  'space-feed': { posts: 'posts', feed: 'posts', data: 'posts' },
-  'space-stats': { stats: 'stats', metrics: 'stats', data: 'stats' },
-  'announcement': { sent: 'announcementSent', recipients: 'recipients', data: 'announcementSent' },
-  'role-gate': { allowed: 'isAllowed', role: 'currentRole', isAllowed: 'isAllowed', data: 'isAllowed' },
-};
-
-/**
- * Action to output mappings
- * Maps action names to the output ports they affect
- */
-const ACTION_OUTPUT_MAPPINGS: Record<string, Record<string, string[]>> = {
-  'poll-element': { vote: ['results', 'votes', 'data'], submit: ['results', 'votes', 'data'] },
-  'form-builder': { submit: ['submissions', 'data', 'count'] },
-  'leaderboard': { update_score: ['entries', 'data'], increment: ['entries', 'data'] },
-  'counter': { increment: ['value', 'data'], decrement: ['value', 'data'], update: ['value', 'data'] },
-  'timer': { start: ['running', 'data'], stop: ['elapsed', 'time', 'data'], reset: ['elapsed', 'running', 'data'] },
-  'countdown-timer': { start: ['timeLeft', 'data'], finished: ['finished', 'complete', 'data'] },
-  'search-input': { search: ['query', 'data'], change: ['query', 'data'] },
-  'filter-selector': { select: ['selectedFilters', 'data'], change: ['selectedFilters', 'data'] },
-  'result-list': { select: ['selectedItem', 'data'] },
-  'date-picker': { select: ['selectedDate', 'data'], change: ['selectedDate', 'data'] },
-  'tag-cloud': { select: ['selectedTags', 'data'], toggle: ['selectedTags', 'data'] },
-  'event-picker': { select: ['selectedEvent', 'data'], change: ['selectedEvent', 'data'] },
-  'space-picker': { select: ['selectedSpace', 'data'], change: ['selectedSpace', 'data'] },
-  'user-selector': { select: ['selectedUser', 'data'], change: ['selectedUser', 'data'] },
-  'rsvp-button': { rsvp: ['attendees', 'count', 'data'], cancel_rsvp: ['attendees', 'count', 'data'] },
-  'member-list': { select: ['selectedMember', 'data'] },
-  'member-selector': { select: ['selectedMember', 'data'], change: ['selectedMember', 'data'] },
-  'space-events': { select: ['selectedEvent', 'data'] },
-  'space-feed': { post: ['posts', 'data'] },
-  'announcement': { send: ['sent', 'recipients', 'data'] },
-};
-
-/**
- * Extract output value from element state
- */
-function extractOutputValue(
-  elementState: Record<string, unknown>,
-  outputName: string,
-  elementId: string
-): unknown {
-  // Direct property match
-  if (elementState[outputName] !== undefined) {
-    return elementState[outputName];
-  }
-
-  // Try element-specific mapping
-  const mapping = OUTPUT_MAPPINGS[elementId];
-  if (mapping && mapping[outputName]) {
-    return elementState[mapping[outputName]];
-  }
-
-  // Default: return entire state if 'data' output
-  if (outputName === 'data') {
-    return elementState;
-  }
-
-  return undefined;
-}
-
-/**
- * Get outputs affected by an action
+ * Local wrapper for getAffectedOutputs with reversed parameter order
+ * (matches existing usage pattern in this file)
  */
 function getAffectedOutputs(action: string, elementId: string): string[] {
-  const elementOutputs = ACTION_OUTPUT_MAPPINGS[elementId];
-  if (elementOutputs && elementOutputs[action]) {
-    return elementOutputs[action];
-  }
-  // Default: action name is the output
-  return [action, 'data'];
+  return coreGetAffectedOutputs(elementId, action);
 }
 
 /**

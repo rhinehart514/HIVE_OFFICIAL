@@ -249,6 +249,34 @@ const DISPLAY_ELEMENTS: ElementSpec[] = [
     stateful: false,
     realtime: true,
   },
+  {
+    id: 'progress-indicator',
+    name: 'Progress Indicator',
+    description: 'Visual progress bar or circular indicator. Use for progress tracking, loading states, or goal completion visualization.',
+    category: 'display',
+    icon: '📊',
+    configSchema: {
+      value: { type: 'number', default: 0 },
+      max: { type: 'number', default: 100 },
+      showLabel: { type: 'boolean', default: true },
+      variant: { type: 'string', enum: ['bar', 'circular'], default: 'bar' },
+      label: { type: 'string' },
+      color: { type: 'string', default: 'primary' },
+    },
+    defaultConfig: {
+      value: 0,
+      max: 100,
+      showLabel: true,
+      variant: 'bar',
+    },
+    actions: ['set', 'increment', 'reset'],
+    outputs: ['value', 'percentage', 'isComplete'],
+    inputs: ['value'],
+    useCases: ['progress tracking', 'loading states', 'goal completion', 'fundraising thermometer', 'task progress'],
+    defaultSize: { width: 200, height: 60 },
+    stateful: true,
+    realtime: true,
+  },
 ];
 
 /**
