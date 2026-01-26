@@ -485,21 +485,125 @@ async function resolveRecipientUserIds(
   }
 
   if (to === 'role' && roleName) {
-    // In production, this would query space membership by role
-    return [];
+    // Query space membership by role to get user IDs
+    return resolveRoleMemberIds(roleName, context);
   }
 
   return [];
 }
 
+/**
+ * Resolve user IDs for members with a specific role in the deployment's space.
+ * Used for push notifications where we need user IDs to look up FCM tokens.
+ */
+async function resolveRoleMemberIds(
+  roleName: string,
+  context: ExecutionContext
+): Promise<string[]> {
+  try {
+    // Get the deployment to find the space ID
+    const deploymentDoc = await db.collection('deployedTools').doc(context.deploymentId).get();
+    if (!deploymentDoc.exists) {
+      logger.warn('Deployment not found for role resolution', { deploymentId: context.deploymentId });
+      return [];
+    }
+
+    const deploymentData = deploymentDoc.data();
+    const spaceId = deploymentData?.spaceId ||
+      (deploymentData?.deployedTo === 'space' ? deploymentData?.targetId : null);
+
+    if (!spaceId) {
+      logger.warn('No space ID found for role resolution', { deploymentId: context.deploymentId });
+      return [];
+    }
+
+    // Query space members with the specified role
+    const membersSnapshot = await db
+      .collection('spaceMembers')
+      .where('spaceId', '==', spaceId)
+      .where('role', '==', roleName)
+      .where('isActive', '==', true)
+      .limit(100) // Safety limit
+      .get();
+
+    if (membersSnapshot.empty) {
+      logger.info('No members found with role', { spaceId, roleName });
+      return [];
+    }
+
+    const userIds = membersSnapshot.docs
+      .map(doc => doc.data().userId as string)
+      .filter(Boolean);
+
+    logger.info('Resolved role member IDs', {
+      spaceId,
+      roleName,
+      count: userIds.length,
+    });
+
+    return userIds;
+  } catch (error) {
+    logger.error('Failed to resolve role member IDs', {
+      error: error instanceof Error ? error.message : String(error),
+      roleName,
+      deploymentId: context.deploymentId,
+    });
+    return [];
+  }
+}
+
+/**
+ * Resolve email addresses for members with a specific role in the deployment's space.
+ * Used for email notifications where we need actual email addresses.
+ */
 async function resolveRoleMembers(
   roleName: string,
   context: ExecutionContext
 ): Promise<string[]> {
-  // In production, query the space's membership collection
-  // for members with this role and return their emails
-  logger.info('Resolving role members', { roleName });
-  return [];
+  try {
+    // First get the user IDs for the role
+    const userIds = await resolveRoleMemberIds(roleName, context);
+
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    // Fetch user emails - batch in chunks of 10 (Firestore 'in' limit)
+    const emails: string[] = [];
+    const chunks = [];
+    for (let i = 0; i < userIds.length; i += 10) {
+      chunks.push(userIds.slice(i, i + 10));
+    }
+
+    for (const chunk of chunks) {
+      const usersSnapshot = await db
+        .collection('users')
+        .where(admin.firestore.FieldPath.documentId(), 'in', chunk)
+        .get();
+
+      for (const userDoc of usersSnapshot.docs) {
+        const email = userDoc.data()?.email as string | undefined;
+        if (email) {
+          emails.push(email);
+        }
+      }
+    }
+
+    logger.info('Resolved role member emails', {
+      roleName,
+      userCount: userIds.length,
+      emailCount: emails.length,
+    });
+
+    return emails;
+  } catch (error) {
+    logger.error('Failed to resolve role member emails', {
+      error: error instanceof Error ? error.message : String(error),
+      roleName,
+      deploymentId: context.deploymentId,
+    });
+    return [];
+  }
 }
 
 function interpolateTemplate(template: string, context: ExecutionContext): string {

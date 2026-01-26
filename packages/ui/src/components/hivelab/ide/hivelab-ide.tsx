@@ -24,6 +24,10 @@ import { AIChatPill, type AIChatPillRef } from './ai-chat-pill';
 import { CanvasMinimap } from './canvas-minimap';
 import { toast } from 'sonner';
 
+// Sprint 3: Connections
+import { ConnectionBuilderModal, type ConnectionCreateData } from './connection-builder-modal';
+import type { OtherToolData } from './other-tools-panel';
+
 // Sprint 4: Automations
 import type { AutomationSummary } from './automations-panel';
 import { AutomationBuilderModal, type AutomationData } from './automation-builder-modal';
@@ -105,6 +109,8 @@ export interface HiveLabIDEProps {
   onNewTool?: () => void;
   /** Initial prompt to pre-fill AI palette (opens AI panel on mount) */
   initialPrompt?: string | null;
+  /** Deployment ID for accessing automations API (required for automation features) */
+  deploymentId?: string;
 }
 
 export interface ConnectionFlowControls {
@@ -199,6 +205,7 @@ export function HiveLabIDE({
   onToolSelect,
   onNewTool,
   initialPrompt,
+  deploymentId,
 }: HiveLabIDEProps) {
   // Mobile gate
   const isMobile = useIsMobile();
@@ -239,6 +246,116 @@ export function HiveLabIDE({
   const [viewingAutomationId, setViewingAutomationId] = useState<string | null>(null);
   const [automationRuns, setAutomationRuns] = useState<AutomationRun[]>([]);
   const [automationRunsLoading, setAutomationRunsLoading] = useState(false);
+
+  // Sprint 3: Connection Builder state
+  const [connectionBuilderOpen, setConnectionBuilderOpen] = useState(false);
+  const [connectionCreating, setConnectionCreating] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | undefined>();
+  const [otherTools, setOtherTools] = useState<OtherToolData[]>([]);
+  const [otherToolsLoading, setOtherToolsLoading] = useState(false);
+  const [preSelectedConnectionSource, setPreSelectedConnectionSource] = useState<{
+    deploymentId: string;
+    path: string;
+    type: string;
+  } | undefined>();
+
+  // Fetch automations from API when deploymentId is available
+  useEffect(() => {
+    if (!deploymentId) {
+      setAutomations([]);
+      return;
+    }
+
+    const fetchAutomations = async () => {
+      setAutomationsLoading(true);
+      try {
+        const response = await fetch(`/api/tools/${deploymentId}/automations`);
+        if (response.ok) {
+          const data = await response.json();
+          // Convert ToolAutomation to AutomationSummary
+          const summaries: AutomationSummary[] = data.automations.map((auto: {
+            id: string;
+            name: string;
+            enabled: boolean;
+            trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number };
+            runCount: number;
+            errorCount: number;
+            lastRun?: string;
+          }) => ({
+            id: auto.id,
+            name: auto.name,
+            enabled: auto.enabled,
+            triggerType: auto.trigger.type as 'event' | 'schedule' | 'threshold',
+            triggerSummary: getTriggerSummaryFromTrigger(auto.trigger),
+            runCount: auto.runCount,
+            errorCount: auto.errorCount,
+            lastRun: auto.lastRun,
+          }));
+          setAutomations(summaries);
+        }
+      } catch (error) {
+        console.error('Failed to fetch automations:', error);
+      } finally {
+        setAutomationsLoading(false);
+      }
+    };
+
+    fetchAutomations();
+  }, [deploymentId]);
+
+  // Fetch other tools in the same space for cross-tool connections
+  useEffect(() => {
+    if (!deploymentId || !originSpaceId) {
+      setOtherTools([]);
+      return;
+    }
+
+    const fetchOtherTools = async () => {
+      setOtherToolsLoading(true);
+      try {
+        // Fetch tools deployed to the same space
+        const response = await fetch(`/api/spaces/${originSpaceId}/tools`);
+        if (response.ok) {
+          const data = await response.json();
+          // Filter out current tool and map to OtherToolData format
+          const tools: OtherToolData[] = (data.tools || [])
+            .filter((tool: { deploymentId: string }) => tool.deploymentId !== deploymentId)
+            .map((tool: {
+              deploymentId: string;
+              name: string;
+              toolId: string;
+              outputs?: Array<{ path: string; type: string; label?: string }>;
+            }) => ({
+              deploymentId: tool.deploymentId,
+              name: tool.name,
+              toolId: tool.toolId,
+              outputs: tool.outputs || [],
+            }));
+          setOtherTools(tools);
+        }
+      } catch (error) {
+        console.error('Failed to fetch other tools:', error);
+      } finally {
+        setOtherToolsLoading(false);
+      }
+    };
+
+    fetchOtherTools();
+  }, [deploymentId, originSpaceId]);
+
+  // Helper to generate trigger summary from API trigger data
+  function getTriggerSummaryFromTrigger(trigger: { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
+    switch (trigger.type) {
+      case 'event':
+        return `When ${trigger.event || 'event'} occurs`;
+      case 'schedule':
+        return `Scheduled: ${trigger.cron || 'custom'}`;
+      case 'threshold':
+        return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
+      default:
+        return 'Manual trigger';
+    }
+  }
 
   // Ref for floating action bar (includes AI input)
   const floatingBarRef = useRef<FloatingActionBarRef>(null);
@@ -1047,116 +1164,298 @@ export function HiveLabIDE({
   );
 
   // ============================================================================
-  // Sprint 4: Automation Handlers
+  // Sprint 4: Automation Handlers (Wired to API)
   // ============================================================================
 
   // Open automation builder for creating a new automation
   const handleCreateAutomation = useCallback(() => {
+    if (!deploymentId) {
+      toast.error('Deploy the tool first to add automations');
+      return;
+    }
     setEditingAutomation(null);
     setAutomationBuilderOpen(true);
-  }, []);
+  }, [deploymentId]);
 
   // Open automation builder for editing an existing automation
-  const handleEditAutomation = useCallback((id: string) => {
-    const automation = automations.find(a => a.id === id);
-    if (automation) {
-      // Convert AutomationSummary to AutomationData for editing
-      setEditingAutomation({
-        id: automation.id,
-        name: automation.name,
-        enabled: automation.enabled,
-        trigger: {
-          type: automation.triggerType,
-          // These would be fetched from the full automation data in a real implementation
-        } as AutomationData['trigger'],
-        conditions: [],
-        actions: [],
-        limits: { maxRunsPerDay: 100, cooldownSeconds: 60 },
-      });
-      setAutomationBuilderOpen(true);
+  const handleEditAutomation = useCallback(async (id: string) => {
+    if (!deploymentId) return;
+
+    try {
+      // Fetch full automation data from API
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        const auto = data.automation;
+        setEditingAutomation({
+          id: auto.id,
+          name: auto.name,
+          enabled: auto.enabled,
+          trigger: auto.trigger,
+          conditions: auto.conditions || [],
+          actions: auto.actions || [],
+          limits: auto.limits || { maxRunsPerDay: 100, cooldownSeconds: 60 },
+        });
+        setAutomationBuilderOpen(true);
+      } else {
+        toast.error('Failed to load automation');
+      }
+    } catch (error) {
+      console.error('Failed to fetch automation:', error);
+      toast.error('Failed to load automation');
     }
-  }, [automations]);
+  }, [deploymentId]);
 
   // Delete an automation
   const handleDeleteAutomation = useCallback(async (id: string) => {
-    // In a real implementation, this would call the API
-    setAutomations(prev => prev.filter(a => a.id !== id));
-    toast.success('Automation deleted');
-  }, []);
+    if (!deploymentId) return;
+
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setAutomations(prev => prev.filter(a => a.id !== id));
+        toast.success('Automation deleted');
+      } else {
+        const data = await response.json();
+        toast.error(data.error || 'Failed to delete automation');
+      }
+    } catch (error) {
+      console.error('Failed to delete automation:', error);
+      toast.error('Failed to delete automation');
+    }
+  }, [deploymentId]);
 
   // Toggle automation enabled state
   const handleToggleAutomation = useCallback(async (id: string, enabled: boolean) => {
-    // In a real implementation, this would call the API
+    if (!deploymentId) return;
+
+    // Optimistically update UI
     setAutomations(prev =>
       prev.map(a => a.id === id ? { ...a, enabled } : a)
     );
-    toast.success(enabled ? 'Automation enabled' : 'Automation paused');
-  }, []);
+
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+
+      if (response.ok) {
+        toast.success(enabled ? 'Automation enabled' : 'Automation paused');
+      } else {
+        // Revert on error
+        setAutomations(prev =>
+          prev.map(a => a.id === id ? { ...a, enabled: !enabled } : a)
+        );
+        const data = await response.json();
+        toast.error(data.error || 'Failed to update automation');
+      }
+    } catch (error) {
+      // Revert on error
+      setAutomations(prev =>
+        prev.map(a => a.id === id ? { ...a, enabled: !enabled } : a)
+      );
+      console.error('Failed to toggle automation:', error);
+      toast.error('Failed to update automation');
+    }
+  }, [deploymentId]);
 
   // View automation logs
-  const handleViewAutomationLogs = useCallback((id: string) => {
+  const handleViewAutomationLogs = useCallback(async (id: string) => {
+    if (!deploymentId) return;
+
     setViewingAutomationId(id);
     setAutomationLogsOpen(true);
-    // In a real implementation, this would fetch logs from the API
     setAutomationRunsLoading(true);
-    // Simulate loading logs
-    setTimeout(() => {
+
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${id}/runs?limit=50`);
+      if (response.ok) {
+        const data = await response.json();
+        setAutomationRuns(data.runs || []);
+      } else {
+        setAutomationRuns([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch automation runs:', error);
       setAutomationRuns([]);
+    } finally {
       setAutomationRunsLoading(false);
-    }, 500);
-  }, []);
-
-  // Run automation immediately
-  const handleRunAutomationNow = useCallback(async (id: string) => {
-    // In a real implementation, this would call the API
-    toast.success('Automation triggered');
-  }, []);
-
-  // Save automation from builder
-  const handleSaveAutomation = useCallback(async (data: AutomationData) => {
-    if (data.id) {
-      // Update existing
-      setAutomations(prev =>
-        prev.map(a => a.id === data.id ? {
-          ...a,
-          name: data.name,
-          enabled: data.enabled,
-          triggerType: data.trigger.type,
-          triggerSummary: getTriggerSummary(data.trigger),
-        } : a)
-      );
-      toast.success('Automation updated');
-    } else {
-      // Create new
-      const newAutomation: AutomationSummary = {
-        id: `auto_${Date.now()}`,
-        name: data.name,
-        enabled: data.enabled,
-        triggerType: data.trigger.type,
-        triggerSummary: getTriggerSummary(data.trigger),
-        runCount: 0,
-        errorCount: 0,
-      };
-      setAutomations(prev => [...prev, newAutomation]);
-      toast.success('Automation created');
     }
-    setAutomationBuilderOpen(false);
-    setEditingAutomation(null);
-  }, []);
+  }, [deploymentId]);
+
+  // Run automation immediately (manual trigger)
+  const handleRunAutomationNow = useCallback(async (id: string) => {
+    if (!deploymentId) return;
+
+    // For now, manual triggering is not implemented server-side
+    // This would require a separate trigger endpoint
+    toast.info('Manual triggering coming soon');
+  }, [deploymentId]);
+
+  // Save automation from builder (create or update)
+  const handleSaveAutomation = useCallback(async (data: AutomationData) => {
+    if (!deploymentId) {
+      toast.error('Deploy the tool first to add automations');
+      return;
+    }
+
+    try {
+      if (data.id) {
+        // Update existing automation
+        const response = await fetch(`/api/tools/${deploymentId}/automations/${data.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            enabled: data.enabled,
+            trigger: data.trigger,
+            conditions: data.conditions,
+            actions: data.actions,
+            limits: data.limits,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const auto = result.automation;
+          setAutomations(prev =>
+            prev.map(a => a.id === data.id ? {
+              id: auto.id,
+              name: auto.name,
+              enabled: auto.enabled,
+              triggerType: auto.trigger.type,
+              triggerSummary: getTriggerSummary(auto.trigger),
+              runCount: auto.runCount,
+              errorCount: auto.errorCount,
+              lastRun: auto.lastRun,
+            } : a)
+          );
+          toast.success('Automation updated');
+        } else {
+          const result = await response.json();
+          toast.error(result.error || 'Failed to update automation');
+          return;
+        }
+      } else {
+        // Create new automation
+        const response = await fetch(`/api/tools/${deploymentId}/automations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name,
+            trigger: data.trigger,
+            conditions: data.conditions,
+            actions: data.actions,
+            limits: data.limits,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const auto = result.automation;
+          const newAutomation: AutomationSummary = {
+            id: auto.id,
+            name: auto.name,
+            enabled: auto.enabled,
+            triggerType: auto.trigger.type,
+            triggerSummary: getTriggerSummary(auto.trigger),
+            runCount: 0,
+            errorCount: 0,
+          };
+          setAutomations(prev => [...prev, newAutomation]);
+          toast.success('Automation created');
+        } else {
+          const result = await response.json();
+          toast.error(result.error || 'Failed to create automation');
+          return;
+        }
+      }
+
+      setAutomationBuilderOpen(false);
+      setEditingAutomation(null);
+    } catch (error) {
+      console.error('Failed to save automation:', error);
+      toast.error('Failed to save automation');
+    }
+  }, [deploymentId]);
 
   // Helper to generate trigger summary text
-  function getTriggerSummary(trigger: AutomationData['trigger']): string {
+  function getTriggerSummary(trigger: AutomationData['trigger'] | { type: string; cron?: string; event?: string; path?: string; operator?: string; value?: number }): string {
     switch (trigger.type) {
       case 'event':
         return `When ${trigger.event || 'event'} occurs`;
       case 'schedule':
-        return `Every ${trigger.cron || 'day'}`;
+        return `Scheduled: ${trigger.cron || 'custom'}`;
       case 'threshold':
         return `When ${trigger.path || 'value'} ${trigger.operator || '>'} ${trigger.value || 0}`;
       default:
         return 'Manual trigger';
     }
   }
+
+  // ============================================================================
+  // Sprint 3: Connection Builder Handlers
+  // ============================================================================
+
+  // Open connection builder modal
+  const handleOpenConnectionBuilder = useCallback((preSelected?: {
+    deploymentId: string;
+    path: string;
+    type: string;
+  }) => {
+    if (!deploymentId) {
+      toast.error('Deploy the tool first to add connections');
+      return;
+    }
+    setPreSelectedConnectionSource(preSelected);
+    setConnectionError(undefined);
+    setConnectionBuilderOpen(true);
+  }, [deploymentId]);
+
+  // Create a new cross-tool connection
+  const handleCreateConnection = useCallback(async (data: ConnectionCreateData) => {
+    if (!deploymentId) {
+      toast.error('Deploy the tool first to add connections');
+      return;
+    }
+
+    setConnectionCreating(true);
+    setConnectionError(undefined);
+
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/connections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: data.source,
+          target: data.target,
+          transform: data.transform,
+          label: data.label,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Connection created');
+        setConnectionBuilderOpen(false);
+        setPreSelectedConnectionSource(undefined);
+      } else {
+        const result = await response.json();
+        setConnectionError(result.error || 'Failed to create connection');
+        toast.error(result.error || 'Failed to create connection');
+      }
+    } catch (error) {
+      console.error('Failed to create connection:', error);
+      setConnectionError('Failed to create connection');
+      toast.error('Failed to create connection');
+    } finally {
+      setConnectionCreating(false);
+    }
+  }, [deploymentId]);
 
   // Keyboard shortcuts
   useIDEKeyboard({
@@ -1222,6 +1521,17 @@ export function HiveLabIDE({
           userTools={userTools}
           onToolSelect={onToolSelect}
           onNewTool={onNewTool}
+          // Sprint 3: Cross-tool Connections
+          spaceTools={otherTools}
+          spaceToolsLoading={otherToolsLoading}
+          currentDeploymentId={deploymentId}
+          onCreateConnection={(sourceDeploymentId, outputPath, outputType) => {
+            handleOpenConnectionBuilder({
+              deploymentId: sourceDeploymentId,
+              path: outputPath,
+              type: outputType,
+            });
+          }}
           // Sprint 4: Automations
           automations={automations}
           automationsLoading={automationsLoading}
@@ -1346,6 +1656,7 @@ export function HiveLabIDE({
         initialData={editingAutomation || undefined}
         elements={elements}
         mode={editingAutomation ? 'edit' : 'create'}
+        deploymentId={deploymentId}
       />
 
       {/* Sprint 4: Automation Logs Viewer */}
@@ -1364,6 +1675,23 @@ export function HiveLabIDE({
         }}
         onLoadMore={() => {}}
         hasMore={false}
+      />
+
+      {/* Sprint 3: Connection Builder Modal */}
+      <ConnectionBuilderModal
+        isOpen={connectionBuilderOpen}
+        onClose={() => {
+          setConnectionBuilderOpen(false);
+          setPreSelectedConnectionSource(undefined);
+          setConnectionError(undefined);
+        }}
+        onCreate={handleCreateConnection}
+        sourceTools={otherTools}
+        targetElements={elements}
+        preSelectedSource={preSelectedConnectionSource}
+        currentDeploymentId={deploymentId || ''}
+        creating={connectionCreating}
+        error={connectionError}
       />
 
       {/* AI Chat Pill - Floating/Dockable */}

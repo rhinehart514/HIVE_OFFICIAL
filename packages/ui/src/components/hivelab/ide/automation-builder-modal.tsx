@@ -104,6 +104,33 @@ export interface AutomationData {
   };
 }
 
+/** Test result from the test endpoint */
+export interface AutomationTestResult {
+  automationId: string;
+  automationName: string;
+  enabled: boolean;
+  canRun: boolean;
+  canRunReason?: string;
+  triggerType: string;
+  conditionsEvaluated: boolean;
+  allConditionsMet: boolean;
+  conditionResults: Array<{
+    field: string;
+    operator: string;
+    expected: unknown;
+    actual: unknown;
+    passed: boolean;
+  }>;
+  actionsPreview: Array<{
+    type: string;
+    summary: string;
+    target?: string;
+    wouldExecute: boolean;
+  }>;
+  stateSnapshot: Record<string, unknown>;
+  timestamp: string;
+}
+
 interface AutomationBuilderModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -111,6 +138,8 @@ interface AutomationBuilderModalProps {
   initialData?: Partial<AutomationData>;
   elements?: Array<{ id: string; elementId: string; name?: string }>;
   mode?: 'create' | 'edit';
+  /** Deployment ID for testing (only available in edit mode) */
+  deploymentId?: string;
 }
 
 // ============================================================================
@@ -764,8 +793,12 @@ export function AutomationBuilderModal({
   initialData,
   elements,
   mode = 'create',
+  deploymentId,
 }: AutomationBuilderModalProps) {
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<AutomationTestResult | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
   const [data, setData] = useState<AutomationData>({
     name: '',
     enabled: true,
@@ -788,6 +821,9 @@ export function AutomationBuilderModal({
         limits: { maxRunsPerDay: 100, cooldownSeconds: 60 },
         ...initialData,
       });
+      // Clear test results when modal opens
+      setTestResult(null);
+      setTestError(null);
     }
   }, [isOpen, initialData]);
 
@@ -803,6 +839,38 @@ export function AutomationBuilderModal({
       setSaving(false);
     }
   };
+
+  // Test automation with current state (only available in edit mode)
+  const handleTest = async () => {
+    if (!deploymentId || !data.id) return;
+
+    setTesting(true);
+    setTestResult(null);
+    setTestError(null);
+
+    try {
+      const response = await fetch(`/api/tools/${deploymentId}/automations/${data.id}/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setTestResult(result.result);
+      } else {
+        setTestError(result.error || 'Test failed');
+      }
+    } catch (error) {
+      setTestError(error instanceof Error ? error.message : 'Test failed');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  // Can test only in edit mode with a saved automation
+  const canTest = mode === 'edit' && deploymentId && data.id;
 
   const isValid = data.name.trim() !== '' && data.actions.length > 0;
 
@@ -970,41 +1038,171 @@ export function AutomationBuilderModal({
                 </div>
               </div>
 
+              {/* Test Result Panel */}
+              {testResult && (
+                <div
+                  className="mx-5 mb-4 rounded-lg p-4"
+                  style={{
+                    backgroundColor: testResult.allConditionsMet && testResult.canRun
+                      ? 'rgba(34, 197, 94, 0.1)'
+                      : 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${testResult.allConditionsMet && testResult.canRun ? PANEL_COLORS.success : PANEL_COLORS.error}`,
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor: testResult.allConditionsMet && testResult.canRun
+                          ? PANEL_COLORS.success
+                          : PANEL_COLORS.error,
+                      }}
+                    />
+                    <span
+                      className="text-sm font-medium"
+                      style={{
+                        color: testResult.allConditionsMet && testResult.canRun
+                          ? PANEL_COLORS.success
+                          : PANEL_COLORS.error,
+                      }}
+                    >
+                      {testResult.allConditionsMet && testResult.canRun
+                        ? 'Automation would execute'
+                        : 'Automation would NOT execute'}
+                    </span>
+                  </div>
+
+                  {/* Rate limit status */}
+                  {!testResult.canRun && testResult.canRunReason && (
+                    <p className="text-xs mb-2" style={{ color: PANEL_COLORS.textSecondary }}>
+                      Reason: {testResult.canRunReason}
+                    </p>
+                  )}
+
+                  {/* Conditions */}
+                  {testResult.conditionResults.length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs font-medium mb-1" style={{ color: PANEL_COLORS.textSecondary }}>
+                        Conditions ({testResult.conditionResults.filter(c => c.passed).length}/{testResult.conditionResults.length} passed):
+                      </p>
+                      <div className="space-y-1">
+                        {testResult.conditionResults.map((cond, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 text-xs"
+                            style={{ color: cond.passed ? PANEL_COLORS.success : PANEL_COLORS.error }}
+                          >
+                            <span>{cond.passed ? '\u2713' : '\u2717'}</span>
+                            <span>{cond.field} {cond.operator} {String(cond.expected)}</span>
+                            <span style={{ color: PANEL_COLORS.textTertiary }}>
+                              (actual: {String(cond.actual ?? 'undefined')})
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions preview */}
+                  {testResult.actionsPreview.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium mb-1" style={{ color: PANEL_COLORS.textSecondary }}>
+                        Actions:
+                      </p>
+                      <div className="space-y-1">
+                        {testResult.actionsPreview.map((action, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-2 text-xs"
+                            style={{ color: action.wouldExecute ? PANEL_COLORS.textPrimary : PANEL_COLORS.textTertiary }}
+                          >
+                            <span>{action.wouldExecute ? '\u25B6' : '\u25A0'}</span>
+                            <span>{action.summary}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Test Error */}
+              {testError && (
+                <div
+                  className="mx-5 mb-4 rounded-lg p-3"
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: `1px solid ${PANEL_COLORS.error}`,
+                  }}
+                >
+                  <p className="text-xs" style={{ color: PANEL_COLORS.error }}>
+                    Test failed: {testError}
+                  </p>
+                </div>
+              )}
+
               {/* Footer */}
               <div
-                className="flex items-center justify-end gap-3 px-5 py-4"
+                className="flex items-center justify-between px-5 py-4"
                 style={{ borderTop: `1px solid ${PANEL_COLORS.border}` }}
               >
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-colors', focusRing)}
-                  style={{ color: PANEL_COLORS.textSecondary }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={!isValid || saving}
-                  className={cn(
-                    'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
-                    (!isValid || saving) && 'opacity-50 cursor-not-allowed',
-                    focusRing
+                {/* Left side: Test button (only in edit mode) */}
+                <div>
+                  {canTest && (
+                    <button
+                      type="button"
+                      onClick={handleTest}
+                      disabled={testing}
+                      className={cn(
+                        'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
+                        testing && 'opacity-50 cursor-not-allowed',
+                        focusRing
+                      )}
+                      style={{
+                        backgroundColor: PANEL_COLORS.bgActive,
+                        color: PANEL_COLORS.textPrimary,
+                        border: `1px solid ${PANEL_COLORS.border}`,
+                      }}
+                    >
+                      <BoltIcon className="w-4 h-4" />
+                      {testing ? 'Testing...' : 'Test'}
+                    </button>
                   )}
-                  style={{
-                    backgroundColor: PANEL_COLORS.accent,
-                    color: 'black',
-                  }}
-                >
-                  {saving ? 'Saving...' : mode === 'create' ? 'Create' : 'Save'}
-                </button>
+                </div>
+
+                {/* Right side: Cancel and Save buttons */}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-colors', focusRing)}
+                    style={{ color: PANEL_COLORS.textSecondary }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={!isValid || saving}
+                    className={cn(
+                      'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      (!isValid || saving) && 'opacity-50 cursor-not-allowed',
+                      focusRing
+                    )}
+                    style={{
+                      backgroundColor: PANEL_COLORS.accent,
+                      color: 'black',
+                    }}
+                  >
+                    {saving ? 'Saving...' : mode === 'create' ? 'Create' : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
