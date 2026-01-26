@@ -12,41 +12,9 @@ const Box = CubeIcon;
 const VIEWPORT_BUFFER = 200;
 
 // ============================================
-// HiveLab Dark Color Palette
+// HiveLab IDE Color Tokens
+// Uses CSS variables from globals.css (--hivelab-*)
 // ============================================
-const HIVELAB_COLORS = {
-  // Canvas background - dark
-  canvasBg: 'var(--hivelab-canvas, #0E0E0E)',
-  canvasGrid: 'var(--hivelab-grid, rgba(255, 255, 255, 0.04))',
-
-  // Node card colors - dark surfaces (not colored tints)
-  nodeBody: 'var(--hivelab-surface, #1A1A1A)',           // Dark card body
-  nodeHeader: 'var(--hivelab-surface-elevated, #242424)', // Slightly lighter header
-  nodeBorder: 'var(--hivelab-border, rgba(255,255,255,0.08))',
-  nodeBorderHover: 'var(--hivelab-border-emphasis, rgba(255,255,255,0.12))',
-  nodeBorderSelected: 'rgba(212, 175, 55, 0.5)',  // Gold selection
-
-  // Category indicator dots (small accent, not full background)
-  dotInput: '#FF6B6B',     // Pink/red for inputs
-  dotDisplay: '#64B5F6',   // Blue for display
-  dotAction: '#FFB74D',    // Orange for actions
-  dotLogic: '#BA68C8',     // Purple for logic
-  dotData: '#D4AF37',      // Gold for data
-
-  // Connections
-  connectionLine: 'var(--life-gold, #D4AF37)',
-  connectionDot: 'var(--life-gold, #D4AF37)',
-  connectionGlow: 'rgba(212, 175, 55, 0.3)',
-
-  // Text - use CSS variables
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-
-  // UI
-  panelBg: 'var(--hivelab-panel, #1A1A1A)',
-  panelBorder: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-};
 
 // Map element types to category dot colors (for the indicator dot, not full background)
 function getCategoryDotColor(elementId: string): string {
@@ -55,17 +23,20 @@ function getCategoryDotColor(elementId: string): string {
   const actionElements = ['poll', 'poll-element', 'quick-poll', 'rsvp-button', 'announcement'];
   const logicElements = ['filter-selector', 'countdown-timer', 'countdown', 'counter', 'timer', 'role-gate'];
 
-  if (inputElements.includes(elementId)) return HIVELAB_COLORS.dotInput;
-  if (displayElements.includes(elementId)) return HIVELAB_COLORS.dotDisplay;
-  if (actionElements.includes(elementId)) return HIVELAB_COLORS.dotAction;
-  if (logicElements.includes(elementId)) return HIVELAB_COLORS.dotLogic;
-  return HIVELAB_COLORS.dotData;
+  if (inputElements.includes(elementId)) return 'var(--hivelab-dot-input)';
+  if (displayElements.includes(elementId)) return 'var(--hivelab-dot-display)';
+  if (actionElements.includes(elementId)) return 'var(--hivelab-dot-action)';
+  if (logicElements.includes(elementId)) return 'var(--hivelab-dot-logic)';
+  return 'var(--hivelab-dot-data)';
 }
 import { cn } from '../../../lib/utils';
 import { springPresets, easingArrays } from '@hive/tokens';
 import { getElementById, type ElementSpec } from '@hive/core';
 import type { CanvasElement, Connection, ToolMode } from './types';
+import type { ElementProps } from '../../../lib/hivelab/element-system';
 import { SmartGuides, snapToGuides } from './smart-guides';
+import { ElementErrorBoundary } from '../elements/error-boundary';
+import { ElementRenderer, type PreviewMode, getElementModeFromPreviewMode } from './element-renderer';
 
 // ============================================
 // Port Info Helper
@@ -113,6 +84,23 @@ interface IDECanvasProps {
   flowingConnections?: Set<string>;
   /** ID of the element currently being dragged (for dimming other elements) */
   draggingElementIdGlobal?: string | null;
+  /**
+   * Element preview mode:
+   * - 'static': Fast visual previews (default)
+   * - 'live': Live element rendering in edit mode
+   * - 'interactive': Fully interactive elements
+   */
+  previewMode?: PreviewMode;
+  /** Shared state for live element rendering */
+  sharedState?: ElementProps['sharedState'];
+  /** User state for live element rendering */
+  userState?: ElementProps['userState'];
+  /** Runtime context for live elements */
+  elementContext?: ElementProps['context'];
+  /** Callback when element data changes (for live mode) */
+  onElementChange?: (elementId: string, data: Record<string, unknown>) => void;
+  /** Callback when element triggers an action (for live mode) */
+  onElementAction?: (elementId: string, action: string, data: Record<string, unknown>) => void;
   onSelect: (ids: string[], append?: boolean) => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onDeleteElements: (ids: string[]) => void;
@@ -146,6 +134,18 @@ interface ElementNodeProps {
   onTransformEnd?: () => void;
   /** Whether another element is currently being dragged (for dimming) */
   anotherElementDragging?: boolean;
+  /** Element preview mode: static (fast), live (edit mode), interactive (runtime) */
+  previewMode?: PreviewMode;
+  /** Shared state for live element rendering */
+  sharedState?: ElementProps['sharedState'];
+  /** User state for live element rendering */
+  userState?: ElementProps['userState'];
+  /** Runtime context for live elements */
+  elementContext?: ElementProps['context'];
+  /** Callback when element data changes */
+  onElementChange?: (data: Record<string, unknown>) => void;
+  /** Callback when element triggers an action */
+  onElementAction?: (action: string, data: Record<string, unknown>) => void;
 }
 
 // Minimum element dimensions
@@ -231,17 +231,17 @@ function ElementPreview({ element }: { element: CanvasElement }) {
 
       return (
         <div className="space-y-2">
-          <p className="text-label-sm font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+          <p className="text-label-sm font-medium" style={{ color: 'var(--hivelab-text-primary)' }}>
             {question}
           </p>
           <div className="space-y-1.5">
             {options.slice(0, 4).map((opt, i) => (
               <div key={i} className="space-y-0.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-label-xs truncate max-w-[70%]" style={{ color: HIVELAB_COLORS.textSecondary }}>
+                  <span className="text-label-xs truncate max-w-[70%]" style={{ color: 'var(--hivelab-text-secondary)' }}>
                     {String(opt)}
                   </span>
-                  <span className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+                  <span className="text-label-xs font-medium" style={{ color: 'var(--hivelab-text-primary)' }}>
                     {normalizedPcts[i]}%
                   </span>
                 </div>
@@ -250,7 +250,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${normalizedPcts[i]}%`,
-                      backgroundColor: i === 0 ? HIVELAB_COLORS.connectionLine : 'rgba(212, 175, 55, 0.5)'
+                      backgroundColor: i === 0 ? 'var(--hivelab-connection)' : 'rgba(212, 175, 55, 0.5)'
                     }}
                   />
                 </div>
@@ -258,7 +258,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
             ))}
           </div>
           {options.length > 4 && (
-            <p className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+            <p className="text-[8px]" style={{ color: 'var(--hivelab-text-tertiary)' }}>
               +{options.length - 4} more options
             </p>
           )}
@@ -277,12 +277,12 @@ function ElementPreview({ element }: { element: CanvasElement }) {
                 className="px-2 py-1 rounded text-sm font-mono font-bold"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.1)',
-                  color: HIVELAB_COLORS.textPrimary
+                  color: 'var(--hivelab-text-primary)'
                 }}
               >
                 {n}
               </div>
-              <span className="text-[8px] mt-0.5" style={{ color: HIVELAB_COLORS.textTertiary }}>
+              <span className="text-[8px] mt-0.5" style={{ color: 'var(--hivelab-text-tertiary)' }}>
                 {['hr', 'min', 'sec'][i]}
               </span>
             </div>
@@ -298,13 +298,13 @@ function ElementPreview({ element }: { element: CanvasElement }) {
             <div key={n} className="flex items-center gap-2 text-label-xs">
               <span
                 className="w-4 text-center font-bold"
-                style={{ color: n === 1 ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.textTertiary }}
+                style={{ color: n === 1 ? 'var(--hivelab-connection)' : 'var(--hivelab-text-tertiary)' }}
               >
                 #{n}
               </span>
               <div className="w-4 h-4 rounded-full bg-white/10" />
               <div className="flex-1 h-1.5 bg-white/10 rounded" />
-              <span style={{ color: HIVELAB_COLORS.textSecondary }}>{100 - n * 15}</span>
+              <span style={{ color: 'var(--hivelab-text-secondary)' }}>{100 - n * 15}</span>
             </div>
           ))}
         </div>
@@ -317,13 +317,13 @@ function ElementPreview({ element }: { element: CanvasElement }) {
           <div
             className="px-4 py-1.5 rounded-lg text-label-sm font-semibold"
             style={{
-              backgroundColor: HIVELAB_COLORS.connectionLine,
+              backgroundColor: 'var(--hivelab-connection)',
               color: '#000'
             }}
           >
             RSVP Now
           </div>
-          <span className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
+          <span className="text-label-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>
             12 attending
           </span>
         </div>
@@ -339,7 +339,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
               key={n}
               className="aspect-square rounded bg-white/10 flex items-center justify-center"
             >
-              <svg className="w-3 h-3" style={{ color: HIVELAB_COLORS.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3 h-3" style={{ color: 'var(--hivelab-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
             </div>
@@ -355,14 +355,14 @@ function ElementPreview({ element }: { element: CanvasElement }) {
             className="w-8 h-8 rounded flex flex-col items-center justify-center text-center"
             style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
           >
-            <span className="text-[8px] font-medium" style={{ color: HIVELAB_COLORS.textTertiary }}>JAN</span>
-            <span className="text-sm font-bold leading-none" style={{ color: HIVELAB_COLORS.textPrimary }}>21</span>
+            <span className="text-[8px] font-medium" style={{ color: 'var(--hivelab-text-tertiary)' }}>JAN</span>
+            <span className="text-sm font-bold leading-none" style={{ color: 'var(--hivelab-text-primary)' }}>21</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-label-xs font-medium truncate" style={{ color: HIVELAB_COLORS.textPrimary }}>
+            <p className="text-label-xs font-medium truncate" style={{ color: 'var(--hivelab-text-primary)' }}>
               {String(element.config?.title || 'Event Title')}
             </p>
-            <p className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>7:00 PM</p>
+            <p className="text-label-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>7:00 PM</p>
           </div>
         </div>
       );
@@ -372,9 +372,9 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <div
           className="p-2 rounded text-center"
-          style={{ backgroundColor: `${HIVELAB_COLORS.connectionLine}15` }}
+          style={{ backgroundColor: `${'var(--hivelab-connection)'}15` }}
         >
-          <p className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>
+          <p className="text-label-xs font-medium" style={{ color: 'var(--hivelab-connection)' }}>
             📢 {String(element.config?.message || 'Announcement')}
           </p>
         </div>
@@ -392,20 +392,20 @@ function ElementPreview({ element }: { element: CanvasElement }) {
 
       return (
         <div className="space-y-2">
-          <p className="text-label-xs font-medium" style={{ color: HIVELAB_COLORS.textPrimary }}>
+          <p className="text-label-xs font-medium" style={{ color: 'var(--hivelab-text-primary)' }}>
             {title}
           </p>
           <div className="space-y-1.5">
             {fields.slice(0, 3).map((field, i) => (
               <div key={i}>
-                <span className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+                <span className="text-[8px]" style={{ color: 'var(--hivelab-text-tertiary)' }}>
                   {typeof field === 'string' ? field : field.label}
                 </span>
                 <div
                   className="h-5 rounded border flex items-center px-1.5"
-                  style={{ borderColor: HIVELAB_COLORS.nodeBorder, backgroundColor: 'rgba(255,255,255,0.03)' }}
+                  style={{ borderColor: 'var(--hivelab-node-border)', backgroundColor: 'rgba(255,255,255,0.03)' }}
                 >
-                  <span className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+                  <span className="text-[8px]" style={{ color: 'var(--hivelab-text-tertiary)' }}>
                     {typeof field === 'string' ? 'Enter...' : field.type === 'email' ? 'email@...' : 'Enter...'}
                   </span>
                 </div>
@@ -413,7 +413,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
             ))}
           </div>
           {fields.length > 3 && (
-            <p className="text-[8px]" style={{ color: HIVELAB_COLORS.textTertiary }}>
+            <p className="text-[8px]" style={{ color: 'var(--hivelab-text-tertiary)' }}>
               +{fields.length - 3} more fields
             </p>
           )}
@@ -426,12 +426,12 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <div
           className="flex items-center gap-2 px-2 py-1.5 rounded-lg border"
-          style={{ borderColor: HIVELAB_COLORS.nodeBorder, backgroundColor: 'rgba(255,255,255,0.03)' }}
+          style={{ borderColor: 'var(--hivelab-node-border)', backgroundColor: 'rgba(255,255,255,0.03)' }}
         >
-          <svg className="w-3 h-3" style={{ color: HIVELAB_COLORS.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3 h-3" style={{ color: 'var(--hivelab-text-tertiary)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
-          <span className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>Search...</span>
+          <span className="text-label-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>Search...</span>
         </div>
       );
 
@@ -439,10 +439,90 @@ function ElementPreview({ element }: { element: CanvasElement }) {
     case 'stat-counter':
       return (
         <div className="text-center py-1">
-          <div className="text-2xl font-bold" style={{ color: HIVELAB_COLORS.connectionLine }}>247</div>
-          <p className="text-label-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
+          <div className="text-2xl font-bold" style={{ color: 'var(--hivelab-connection)' }}>247</div>
+          <p className="text-label-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>
             {String(element.config?.label || 'Total Count')}
           </p>
+        </div>
+      );
+
+    case 'chart-display':
+    case 'chart':
+    case 'bar-chart':
+    case 'line-chart': {
+      const chartType = String(element.config?.chartType || 'bar');
+      return (
+        <div className="flex items-end justify-center gap-1 h-full py-2">
+          {chartType === 'line' ? (
+            // Line chart preview
+            <svg viewBox="0 0 80 40" className="w-full h-full max-h-16">
+              <polyline
+                fill="none"
+                stroke="var(--hivelab-connection)"
+                strokeWidth="2"
+                points="5,30 20,20 35,25 50,10 65,15 75,8"
+              />
+              <circle cx="5" cy="30" r="2" fill="var(--hivelab-connection)" />
+              <circle cx="20" cy="20" r="2" fill="var(--hivelab-connection)" />
+              <circle cx="35" cy="25" r="2" fill="var(--hivelab-connection)" />
+              <circle cx="50" cy="10" r="2" fill="var(--hivelab-connection)" />
+              <circle cx="65" cy="15" r="2" fill="var(--hivelab-connection)" />
+              <circle cx="75" cy="8" r="2" fill="var(--hivelab-connection)" />
+            </svg>
+          ) : chartType === 'pie' || chartType === 'doughnut' ? (
+            // Pie chart preview
+            <svg viewBox="0 0 40 40" className="w-12 h-12">
+              <circle cx="20" cy="20" r="15" fill="rgba(255,255,255,0.1)" />
+              <path d="M20 20 L20 5 A15 15 0 0 1 35 20 Z" fill="var(--hivelab-connection)" />
+              <path d="M20 20 L35 20 A15 15 0 0 1 20 35 Z" fill="rgba(212, 175, 55, 0.6)" />
+              {chartType === 'doughnut' && <circle cx="20" cy="20" r="7" fill="var(--hivelab-node-body)" />}
+            </svg>
+          ) : (
+            // Bar chart preview (default)
+            [35, 55, 40, 70, 50].map((h, i) => (
+              <div
+                key={i}
+                className="w-3 rounded-t transition-all"
+                style={{
+                  height: `${h}%`,
+                  backgroundColor: i === 3 ? 'var(--hivelab-connection)' : 'rgba(212, 175, 55, 0.4)',
+                }}
+              />
+            ))
+          )}
+        </div>
+      );
+    }
+
+    case 'result-list':
+    case 'list':
+      return (
+        <div className="space-y-1.5">
+          {[1, 2, 3].map(n => (
+            <div key={n} className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-white/10" />
+              <div className="flex-1 space-y-1">
+                <div className="h-2 bg-white/15 rounded w-3/4" />
+                <div className="h-1.5 bg-white/10 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'notification-display':
+    case 'notifications':
+      return (
+        <div className="space-y-1.5">
+          {[1, 2].map(n => (
+            <div key={n} className="flex items-start gap-2 p-1.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+              <div className="w-2 h-2 mt-1 rounded-full" style={{ backgroundColor: n === 1 ? 'var(--hivelab-connection)' : 'var(--hivelab-text-tertiary)' }} />
+              <div className="flex-1">
+                <div className="h-2 bg-white/15 rounded w-full mb-1" />
+                <div className="h-1.5 bg-white/10 rounded w-2/3" />
+              </div>
+            </div>
+          ))}
         </div>
       );
 
@@ -451,7 +531,7 @@ function ElementPreview({ element }: { element: CanvasElement }) {
       return (
         <p
           className="text-xs line-clamp-2"
-          style={{ color: HIVELAB_COLORS.textSecondary }}
+          style={{ color: 'var(--hivelab-text-secondary)' }}
         >
           {String(
             element.config?.placeholder ||
@@ -481,6 +561,12 @@ function ElementNode({
   gridSize,
   onTransformEnd,
   anotherElementDragging,
+  previewMode = 'static',
+  sharedState,
+  userState,
+  elementContext,
+  onElementChange,
+  onElementAction,
 }: ElementNodeProps) {
   const prefersReducedMotion = useReducedMotion();
   const [isDragging, setIsDragging] = useState(false);
@@ -643,7 +729,7 @@ function ElementNode({
         scale: isDragging ? 1.02 : 1,
         y: isSelected && !isDragging ? -2 : 0,
         boxShadow: isSelected
-          ? `0 0 0 2px ${HIVELAB_COLORS.nodeBorderSelected}, 0 8px 24px rgba(0,0,0,0.15)`
+          ? `0 0 0 2px ${'var(--hivelab-node-border-selected)'}, 0 8px 24px rgba(0,0,0,0.15)`
           : isDragging
             ? '0 16px 32px rgba(0,0,0,0.2)'
             : '0 2px 8px rgba(0,0,0,0.08)',
@@ -668,10 +754,10 @@ function ElementNode({
         width: element.size.width,
         height: element.size.height,
         zIndex: isDragging ? 1000 : element.zIndex || 1,
-        backgroundColor: HIVELAB_COLORS.nodeBody,
+        backgroundColor: 'var(--hivelab-node-body)',
         border: isSelected
-          ? `2px solid ${HIVELAB_COLORS.nodeBorderSelected}`
-          : `1px solid ${HIVELAB_COLORS.nodeBorder}`,
+          ? `2px solid ${'var(--hivelab-node-border-selected)'}`
+          : `1px solid ${'var(--hivelab-node-border)'}`,
       }}
       onMouseDown={handleMouseDown}
     >
@@ -690,7 +776,7 @@ function ElementNode({
               scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
             }}
             className="absolute -inset-1 rounded-2xl border-2 pointer-events-none"
-            style={{ borderColor: HIVELAB_COLORS.connectionLine }}
+            style={{ borderColor: 'var(--hivelab-connection)' }}
           />
         )}
       </AnimatePresence>
@@ -705,63 +791,100 @@ function ElementNode({
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className="absolute -inset-1 rounded-2xl pointer-events-none"
             style={{
-              border: `2px solid ${HIVELAB_COLORS.connectionLine}`,
-              boxShadow: `0 0 20px ${HIVELAB_COLORS.connectionLine}60`,
+              border: `2px solid ${'var(--hivelab-connection)'}`,
+              boxShadow: `0 0 20px ${'var(--hivelab-connection)'}60`,
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* Header - Dark elevated surface */}
-      <div
-        className="flex items-center justify-between px-3 py-2.5 rounded-t-2xl"
-        style={{
-          borderBottom: `1px solid ${HIVELAB_COLORS.nodeBorder}`,
-          backgroundColor: HIVELAB_COLORS.nodeHeader,
-        }}
-      >
-        <div className="flex items-center gap-2.5">
-          {/* Category dot indicator - shows element type */}
-          <div
-            className="w-3 h-3 rounded-full"
-            style={{ backgroundColor: categoryDotColor }}
-          />
-          <span
-            className="text-sm font-semibold truncate max-w-[140px]"
-            style={{ color: HIVELAB_COLORS.textPrimary }}
-          >
-            {displayName}
-          </span>
-        </div>
-        {isSelected && (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className="p-1 rounded transition-colors hover:bg-white/10"
-              style={{ color: HIVELAB_COLORS.textTertiary }}
-              title="Move"
-            >
-              <Move className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
+      {/* Figma-style: Visual preview as the main content, label appears on hover/selection */}
+      <div className="relative h-full flex flex-col">
+        {/* Floating label - only visible on hover or selection */}
+        <AnimatePresence>
+          {(isSelected || isDragging) && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.15 }}
+              className="absolute -top-7 left-0 flex items-center gap-1.5 px-2 py-1 rounded-md z-10"
+              style={{
+                backgroundColor: 'var(--hivelab-panel)',
+                border: `1px solid var(--hivelab-node-border)`,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
               }}
-              className="p-1 rounded transition-colors hover:bg-red-500/20 hover:text-red-400"
-              style={{ color: HIVELAB_COLORS.textTertiary }}
-              title="Delete"
             >
-              <TrashIcon className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        )}
-      </div>
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: categoryDotColor }}
+              />
+              <span
+                className="text-xs font-medium"
+                style={{ color: 'var(--hivelab-text-primary)' }}
+              >
+                {displayName}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Content - Visual Preview */}
-      <div className="p-3 overflow-hidden">
-        <ElementPreview element={element} />
+        {/* Actions - floating top-right on selection */}
+        <AnimatePresence>
+          {isSelected && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="absolute -top-7 right-0 flex items-center gap-0.5 px-1 py-0.5 rounded-md z-10"
+              style={{
+                backgroundColor: 'var(--hivelab-panel)',
+                border: `1px solid var(--hivelab-node-border)`,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              <button
+                type="button"
+                className="p-1 rounded transition-colors hover:bg-white/10"
+                style={{ color: 'var(--hivelab-text-secondary)' }}
+                title="Move"
+              >
+                <Move className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1 rounded transition-colors hover:bg-red-500/20 hover:text-red-400"
+                style={{ color: 'var(--hivelab-text-secondary)' }}
+                title="Delete"
+              >
+                <TrashIcon className="h-3 w-3" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Visual Preview - fills the entire element */}
+        <div className="flex-1 p-4 overflow-hidden">
+          {previewMode === 'static' ? (
+            <ElementPreview element={element} />
+          ) : (
+            <ElementRenderer
+              element={element}
+              mode={getElementModeFromPreviewMode(previewMode) || 'edit'}
+              isSelected={isSelected}
+              sharedState={sharedState}
+              userState={userState}
+              context={elementContext}
+              onChange={onElementChange}
+              onAction={onElementAction}
+            />
+          )}
+        </div>
       </div>
 
       {/* Connection Ports - Make.com style with green dots */}
@@ -773,8 +896,8 @@ function ElementNode({
           mode === 'connect' && 'cursor-pointer hover:opacity-80'
         )}
         style={{
-          backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,
-          borderColor: mode === 'connect' ? HIVELAB_COLORS.connectionDot : HIVELAB_COLORS.nodeBorderHover,
+          backgroundColor: mode === 'connect' ? 'var(--hivelab-connection)' : 'var(--hivelab-panel)',
+          borderColor: mode === 'connect' ? 'var(--hivelab-connection)' : 'var(--hivelab-node-border-hover)',
           boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => {
@@ -794,8 +917,8 @@ function ElementNode({
           mode === 'connect' && 'cursor-pointer hover:opacity-80'
         )}
         style={{
-          backgroundColor: mode === 'connect' ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.panelBg,
-          borderColor: mode === 'connect' ? HIVELAB_COLORS.connectionDot : HIVELAB_COLORS.nodeBorderHover,
+          backgroundColor: mode === 'connect' ? 'var(--hivelab-connection)' : 'var(--hivelab-panel)',
+          borderColor: mode === 'connect' ? 'var(--hivelab-connection)' : 'var(--hivelab-node-border-hover)',
           boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => {
@@ -809,7 +932,7 @@ function ElementNode({
         {mode !== 'connect' && (
           <PlusIcon
             className="w-3 h-3"
-            style={{ color: HIVELAB_COLORS.textTertiary }}
+            style={{ color: 'var(--hivelab-text-tertiary)' }}
           />
         )}
       </button>
@@ -831,7 +954,7 @@ function ElementNode({
           >
             <path
               d="M11 1L1 11M11 6L6 11M11 11L11 11"
-              stroke={isResizing ? HIVELAB_COLORS.textPrimary : HIVELAB_COLORS.textTertiary}
+              stroke={isResizing ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)'}
               strokeWidth="1.5"
               strokeLinecap="round"
             />
@@ -973,7 +1096,7 @@ function ConnectionLine({
         <motion.path
           d={path}
           fill="none"
-          stroke={HIVELAB_COLORS.connectionLine}
+          stroke={'var(--hivelab-connection)'}
           strokeWidth={6}
           strokeLinecap="round"
           strokeOpacity={0.5}
@@ -987,7 +1110,7 @@ function ConnectionLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={isFlowing ? HIVELAB_COLORS.connectionLine : HIVELAB_COLORS.connectionLine}
+        stroke={isFlowing ? 'var(--hivelab-connection)' : 'var(--hivelab-connection)'}
         strokeWidth={isFlowing ? 12 : 8}
         strokeOpacity="0"
         strokeLinecap="round"
@@ -1002,7 +1125,7 @@ function ConnectionLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={HIVELAB_COLORS.connectionLine}
+        stroke={'var(--hivelab-connection)'}
         strokeWidth={isFlowing ? 3 : 2}
         strokeLinecap="round"
         initial={{ pathLength: 0, strokeOpacity: 0.3 }}
@@ -1020,7 +1143,7 @@ function ConnectionLine({
       {/* Animated flow particles along the path */}
       <motion.circle
         r={isFlowing ? 5 : 3}
-        fill={HIVELAB_COLORS.connectionLine}
+        fill={'var(--hivelab-connection)'}
         className="pointer-events-none"
         initial={{ opacity: 0 }}
         animate={{
@@ -1042,7 +1165,7 @@ function ConnectionLine({
       {isFlowing && (
         <motion.circle
           r={4}
-          fill={HIVELAB_COLORS.connectionLine}
+          fill={'var(--hivelab-connection)'}
           className="pointer-events-none"
           animate={{
             opacity: [0, 0.8, 0],
@@ -1064,7 +1187,7 @@ function ConnectionLine({
       <motion.circle
         cx={toX}
         cy={toY}
-        fill={HIVELAB_COLORS.connectionDot}
+        fill={'var(--hivelab-connection)'}
         initial={{ r: 0, opacity: 0 }}
         animate={{
           r: showFlowAnimation ? (isFlowing ? 8 : 6) : 5,
@@ -1078,7 +1201,7 @@ function ConnectionLine({
       <motion.circle
         cx={fromX}
         cy={fromY}
-        fill={HIVELAB_COLORS.connectionDot}
+        fill={'var(--hivelab-connection)'}
         initial={{ r: 0, opacity: 0 }}
         animate={{ r: 5, opacity: 1 }}
         transition={springPresets.snappy}
@@ -1092,7 +1215,7 @@ function ConnectionLine({
             cx={toX}
             cy={toY}
             fill="none"
-            stroke={HIVELAB_COLORS.connectionLine}
+            stroke={'var(--hivelab-connection)'}
             strokeWidth="2"
             initial={{ r: 4, opacity: 0.8 }}
             animate={{ r: isFlowing ? 16 : 12, opacity: 0 }}
@@ -1116,7 +1239,7 @@ function ConnectionLine({
               cx={(fromX + toX) / 2}
               cy={(fromY + toY) / 2}
               r="12"
-              fill={HIVELAB_COLORS.panelBg}
+              fill={'var(--hivelab-panel)'}
               stroke="#ef4444"
               strokeWidth="2"
               className="cursor-pointer"
@@ -1171,7 +1294,7 @@ function ConnectionPreviewLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={HIVELAB_COLORS.connectionLine}
+        stroke={'var(--hivelab-connection)'}
         strokeWidth={8}
         strokeOpacity={0.25}
         strokeLinecap="round"
@@ -1185,7 +1308,7 @@ function ConnectionPreviewLine({
       <motion.path
         d={path}
         fill="none"
-        stroke={HIVELAB_COLORS.connectionLine}
+        stroke={'var(--hivelab-connection)'}
         strokeWidth={2}
         strokeLinecap="round"
         strokeDasharray="8 4"
@@ -1197,7 +1320,7 @@ function ConnectionPreviewLine({
       {/* Animated dots along path */}
       <motion.circle
         r={4}
-        fill={HIVELAB_COLORS.connectionLine}
+        fill={'var(--hivelab-connection)'}
         animate={{
           opacity: [0.3, 1, 0.3],
           offsetDistance: ['0%', '100%'],
@@ -1217,7 +1340,7 @@ function ConnectionPreviewLine({
         cx={fromX}
         cy={fromY}
         r={6}
-        fill={HIVELAB_COLORS.connectionDot}
+        fill={'var(--hivelab-connection)'}
         initial={{ scale: 0 }}
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 0.5, repeat: Infinity }}
@@ -1229,7 +1352,7 @@ function ConnectionPreviewLine({
         cy={toY}
         r={8}
         fill="transparent"
-        stroke={HIVELAB_COLORS.connectionLine}
+        stroke={'var(--hivelab-connection)'}
         strokeWidth={2}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -1251,6 +1374,12 @@ export function IDECanvas({
   snapToGrid,
   mode,
   flowingConnections,
+  previewMode = 'static',
+  sharedState,
+  userState,
+  elementContext,
+  onElementChange,
+  onElementAction,
   onSelect,
   onUpdateElement,
   onDeleteElements,
@@ -1568,9 +1697,9 @@ export function IDECanvas({
       <div
         className="canvas-bg absolute inset-0 pointer-events-none"
         style={{
-          backgroundColor: HIVELAB_COLORS.canvasBg,
+          backgroundColor: 'var(--hivelab-canvas)',
           backgroundImage: showGrid
-            ? `radial-gradient(circle at 1px 1px, ${HIVELAB_COLORS.canvasGrid} 1px, transparent 0)`
+            ? `radial-gradient(circle at 1px 1px, ${'var(--hivelab-grid)'} 1px, transparent 0)`
             : 'none',
           backgroundSize: `${gridSize * zoom}px ${gridSize * zoom}px`,
           backgroundPosition: `${pan.x}px ${pan.y}px`,
@@ -1614,34 +1743,41 @@ export function IDECanvas({
 
         {/* Elements (virtualized - only visible ones rendered) */}
         {visibleElements.map((element) => (
-          <ElementNode
-            key={element.id}
-            element={element}
-            allElements={elements}
-            isSelected={selectedIds.includes(element.id)}
-            mode={mode}
-            onSelect={(append) =>
-              onSelect(
-                append
-                  ? selectedIds.includes(element.id)
-                    ? selectedIds.filter((id) => id !== element.id)
-                    : [...selectedIds, element.id]
-                  : [element.id]
-              )
-            }
-            onUpdate={(updates) => onUpdateElement(element.id, updates)}
-            onDelete={() => onDeleteElements([element.id])}
-            onStartConnection={(port) => handleStartConnection(element.instanceId, port)}
-            onEndConnection={(port) => handleEndConnection(element.instanceId, port)}
-            onDragStateChange={(isDragging) => {
-              setDraggingElementId(isDragging ? element.id : null);
-            }}
-            snapToGrid={snapToGrid}
-            snapToElements={snapToElements}
-            gridSize={gridSize}
-            onTransformEnd={onTransformEnd}
-            anotherElementDragging={draggingElementId !== null && draggingElementId !== element.id}
-          />
+          <ElementErrorBoundary key={element.id} elementType={element.elementId}>
+            <ElementNode
+              element={element}
+              allElements={elements}
+              isSelected={selectedIds.includes(element.id)}
+              mode={mode}
+              onSelect={(append) =>
+                onSelect(
+                  append
+                    ? selectedIds.includes(element.id)
+                      ? selectedIds.filter((id) => id !== element.id)
+                      : [...selectedIds, element.id]
+                    : [element.id]
+                )
+              }
+              onUpdate={(updates) => onUpdateElement(element.id, updates)}
+              onDelete={() => onDeleteElements([element.id])}
+              onStartConnection={(port) => handleStartConnection(element.instanceId, port)}
+              onEndConnection={(port) => handleEndConnection(element.instanceId, port)}
+              onDragStateChange={(isDragging) => {
+                setDraggingElementId(isDragging ? element.id : null);
+              }}
+              snapToGrid={snapToGrid}
+              snapToElements={snapToElements}
+              gridSize={gridSize}
+              onTransformEnd={onTransformEnd}
+              anotherElementDragging={draggingElementId !== null && draggingElementId !== element.id}
+              previewMode={previewMode}
+              sharedState={sharedState}
+              userState={userState}
+              elementContext={elementContext}
+              onElementChange={onElementChange ? (data) => onElementChange(element.id, data) : undefined}
+              onElementAction={onElementAction ? (action, data) => onElementAction(element.id, action, data) : undefined}
+            />
+          </ElementErrorBoundary>
         ))}
 
         {/* Smart Guides - show during drag */}
@@ -1663,8 +1799,8 @@ export function IDECanvas({
               top: Math.min(selectionRect.startY, selectionRect.endY),
               width: Math.abs(selectionRect.endX - selectionRect.startX),
               height: Math.abs(selectionRect.endY - selectionRect.startY),
-              border: `2px solid ${HIVELAB_COLORS.connectionLine}`,
-              backgroundColor: `${HIVELAB_COLORS.connectionGlow}`,
+              border: `2px solid ${'var(--hivelab-connection)'}`,
+              backgroundColor: `${'var(--hivelab-connection-glow)'}`,
             }}
           />
         )}
@@ -1677,24 +1813,24 @@ export function IDECanvas({
             <div
               className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center"
               style={{
-                backgroundColor: HIVELAB_COLORS.panelBg,
-                border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
+                backgroundColor: 'var(--hivelab-panel)',
+                border: `1px solid ${'var(--hivelab-border)'}`,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
               }}
             >
-              <Box className="h-10 w-10" style={{ color: HIVELAB_COLORS.textTertiary }} />
+              <Box className="h-10 w-10" style={{ color: 'var(--hivelab-text-tertiary)' }} />
             </div>
-            <h3 className="text-xl font-semibold" style={{ color: HIVELAB_COLORS.textPrimary }}>
+            <h3 className="text-xl font-semibold" style={{ color: 'var(--hivelab-text-primary)' }}>
               Start Building
             </h3>
-            <p className="text-sm" style={{ color: HIVELAB_COLORS.textSecondary }}>
+            <p className="text-sm" style={{ color: 'var(--hivelab-text-secondary)' }}>
               Drag elements from the left panel onto the canvas, or press{' '}
               <kbd
                 className="px-1.5 py-0.5 rounded text-xs font-mono"
                 style={{
-                  backgroundColor: HIVELAB_COLORS.panelBg,
-                  border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
-                  color: HIVELAB_COLORS.textPrimary,
+                  backgroundColor: 'var(--hivelab-panel)',
+                  border: `1px solid ${'var(--hivelab-border)'}`,
+                  color: 'var(--hivelab-text-primary)',
                 }}
               >
                 ⌘K
@@ -1712,12 +1848,12 @@ export function IDECanvas({
           <div
             className="px-2 py-1 rounded text-xs"
             style={{
-              backgroundColor: HIVELAB_COLORS.panelBg,
-              border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
-              color: HIVELAB_COLORS.textSecondary,
+              backgroundColor: 'var(--hivelab-panel)',
+              border: `1px solid ${'var(--hivelab-border)'}`,
+              color: 'var(--hivelab-text-secondary)',
             }}
           >
-            <span style={{ color: HIVELAB_COLORS.textPrimary }}>{visibleElements.length}</span>
+            <span style={{ color: 'var(--hivelab-text-primary)' }}>{visibleElements.length}</span>
             <span className="mx-1">/</span>
             <span>{elements.length}</span>
             <span className="ml-1">visible</span>
@@ -1726,9 +1862,9 @@ export function IDECanvas({
         <div
           className="px-2 py-1 rounded text-xs font-medium"
           style={{
-            backgroundColor: HIVELAB_COLORS.panelBg,
-            border: `1px solid ${HIVELAB_COLORS.panelBorder}`,
-            color: HIVELAB_COLORS.textSecondary,
+            backgroundColor: 'var(--hivelab-panel)',
+            border: `1px solid ${'var(--hivelab-border)'}`,
+            color: 'var(--hivelab-text-secondary)',
           }}
         >
           {Math.round(zoom * 100)}%
@@ -1743,19 +1879,19 @@ export function IDECanvas({
           exit={{ opacity: 0, y: -10 }}
           className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg"
           style={{
-            backgroundColor: HIVELAB_COLORS.panelBg,
-            border: `1px solid ${HIVELAB_COLORS.connectionLine}`,
+            backgroundColor: 'var(--hivelab-panel)',
+            border: `1px solid ${'var(--hivelab-connection)'}`,
           }}
         >
           <div className="flex items-center gap-3">
             <div
               className="w-3 h-3 rounded-full animate-pulse"
-              style={{ backgroundColor: HIVELAB_COLORS.connectionLine }}
+              style={{ backgroundColor: 'var(--hivelab-connection)' }}
             />
-            <span className="text-sm" style={{ color: HIVELAB_COLORS.textPrimary }}>
-              Click an <span className="font-medium" style={{ color: HIVELAB_COLORS.connectionLine }}>input port</span> to connect
+            <span className="text-sm" style={{ color: 'var(--hivelab-text-primary)' }}>
+              Click an <span className="font-medium" style={{ color: 'var(--hivelab-connection)' }}>input port</span> to connect
             </span>
-            <span className="text-xs" style={{ color: HIVELAB_COLORS.textTertiary }}>
+            <span className="text-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>
               or press ESC to cancel
             </span>
           </div>

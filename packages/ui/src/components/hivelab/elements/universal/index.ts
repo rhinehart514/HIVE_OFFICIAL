@@ -1,21 +1,28 @@
 /**
- * Universal Elements
+ * Universal Elements - Modular Architecture
  *
  * Core elements that work in any context (preview, deployed, space).
  * These are the building blocks for HiveLab tools.
+ *
+ * Each element is now in its own file for better maintainability
+ * and code splitting.
  */
 
-// Re-export from parent universal.tsx
-export {
-  SearchInputElement,
-  FilterSelectorElement,
-  ResultListElement,
-  DatePickerElement,
-  UserSelectorElement,
-  TagCloudElement,
-  MapViewElement,
-  ChartDisplayElement,
-  FormBuilderElement,
-  NotificationCenterElement,
-  PhotoGalleryElement,
-} from '../universal';
+// Search & Filter
+export { SearchInputElement } from './search-input-element';
+export { FilterSelectorElement } from './filter-selector-element';
+
+// Display
+export { ResultListElement } from './result-list-element';
+export { TagCloudElement } from './tag-cloud-element';
+export { ChartDisplayElement } from './chart-display-element';
+export { NotificationCenterElement } from './notification-center-element';
+export { PhotoGalleryElement } from './photo-gallery';
+
+// Input
+export { DatePickerElement } from './date-picker-element';
+export { FormBuilderElement } from './form-builder-element';
+export { UserSelectorElement } from './user-selector-element';
+
+// Spatial
+export { MapViewElement } from './map-view-element';

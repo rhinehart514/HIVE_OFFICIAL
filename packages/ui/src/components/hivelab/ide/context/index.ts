@@ -1,0 +1,18 @@
+export {
+  HiveLabProvider,
+  useHiveLab,
+  useElementActions,
+  useSelectionActions,
+  useHistoryActions,
+  type HiveLabState,
+  type IDEAction,
+  type IDEDocument,
+  type IDESelection,
+  type IDEViewport,
+  type IDEUI,
+  type IDEHistory,
+  type IDEConnectionBuilder,
+  type IDEAutomations,
+  type IDESpaceTools,
+  type HiveLabProviderProps,
+} from './HiveLabContext';
