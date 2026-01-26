@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!tool) {
     return {
-      title: 'Tool Not Found - HiveLab',
+      title: 'Tool Not Found',
       description: 'This tool could not be found.',
     };
   }
@@ -54,17 +54,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const category = tool.category || 'tool';
 
   return {
-    title: `${name} - HiveLab`,
+    title: `${name} · HiveLab`,
     description: description.slice(0, 160),
     openGraph: {
-      title: `${name} - HiveLab`,
+      title: `${name} · HiveLab | HIVE`,
       description: description.slice(0, 160),
       type: 'website',
       siteName: 'HIVE',
     },
     twitter: {
       card: 'summary',
-      title: `${name} - HiveLab`,
+      title: `${name} · HiveLab | HIVE`,
       description: description.slice(0, 160),
     },
     keywords: ['hive', 'hivelab', 'tool', category, name.toLowerCase()],

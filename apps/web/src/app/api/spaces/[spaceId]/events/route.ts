@@ -84,6 +84,8 @@ export const GET = withAuthAndErrors(async (
     );
 
     // Use flat /events collection with spaceId filter (for cross-space calendar queries)
+    // First, try with campusId for performance. If empty, fall back to spaceId-only query
+    // to handle imported/legacy events that may have different campusId values.
     let query: FirebaseFirestore.Query = dbAdmin
       .collection("events")
       .where("spaceId", "==", spaceId)
@@ -102,15 +104,47 @@ export const GET = withAuthAndErrors(async (
 
     query = query.offset(queryParams.offset).limit(queryParams.limit);
 
-    const eventsSnapshot = await query.get();
-    const events: Array<Record<string, unknown>> = [];
+    let eventsSnapshot = await query.get();
 
-    // GHOST MODE: Build viewer context for privacy checks
-    const viewerContext = ViewerContext.authenticated({
-      userId,
-      campusId,
-      memberOfSpaceIds: [spaceId] // Viewer is in this space
-    });
+    // Fallback: If no events found, try without campusId filter for imported/legacy events
+    // CampusLabs imported events may have different or missing campusId
+    if (eventsSnapshot.empty) {
+      logger.info('No events found with campusId, trying fallback query', { spaceId, campusId });
+      let fallbackQuery: FirebaseFirestore.Query = dbAdmin
+        .collection("events")
+        .where("spaceId", "==", spaceId);
+
+      if (queryParams.upcoming) {
+        fallbackQuery = fallbackQuery.where("startDate", ">=", now).orderBy("startDate", "asc");
+      } else {
+        fallbackQuery = fallbackQuery.where("startDate", "<", now).orderBy("startDate", "desc");
+      }
+
+      if (queryParams.type) {
+        fallbackQuery = fallbackQuery.where("type", "==", queryParams.type);
+      }
+
+      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(queryParams.limit);
+      eventsSnapshot = await fallbackQuery.get();
+    }
+
+    // Early return if no events - avoid unnecessary processing
+    if (eventsSnapshot.empty) {
+      return respond.success({
+        events: [],
+        hasMore: false,
+        pagination: {
+          limit: queryParams.limit,
+          offset: queryParams.offset,
+          nextOffset: null,
+        },
+      });
+    }
+
+    // COST OPTIMIZATION: Collect all unique IDs for batch fetching
+    const organizerIds = new Set<string>();
+    const eventIds: string[] = [];
+    const validDocs: FirebaseFirestore.QueryDocumentSnapshot[] = [];
 
     for (const doc of eventsSnapshot.docs) {
       const eventData = doc.data();
@@ -122,18 +156,91 @@ export const GET = withAuthAndErrors(async (
       if (isContentHidden(eventData)) {
         continue;
       }
-      const organizerDoc = await dbAdmin.collection("users").doc(eventData.organizerId).get();
-      const organizer = organizerDoc.exists ? organizerDoc.data() : null;
+      validDocs.push(doc);
+      eventIds.push(doc.id);
+      if (eventData.organizerId) {
+        organizerIds.add(eventData.organizerId);
+      }
+    }
+
+    // COST OPTIMIZATION: Batch fetch all organizers in ONE query (N+1 → 1)
+    const organizerMap = new Map<string, { id: string; data: Record<string, unknown> } | null>();
+    if (organizerIds.size > 0) {
+      const organizerRefs = Array.from(organizerIds).map(id => dbAdmin.collection("users").doc(id));
+      const organizerDocs = await dbAdmin.getAll(...organizerRefs);
+      for (const doc of organizerDocs) {
+        if (doc.exists) {
+          organizerMap.set(doc.id, { id: doc.id, data: doc.data() as Record<string, unknown> });
+        } else {
+          organizerMap.set(doc.id, null);
+        }
+      }
+    }
+
+    // COST OPTIMIZATION: Batch fetch user's RSVPs for all events (N+1 → 1)
+    // Note: Firestore 'in' queries support up to 30 values
+    const userRsvpMap = new Map<string, string>();
+    if (eventIds.length > 0) {
+      const chunks = [];
+      for (let i = 0; i < eventIds.length; i += 30) {
+        chunks.push(eventIds.slice(i, i + 30));
+      }
+      for (const chunk of chunks) {
+        const userRsvps = await dbAdmin
+          .collection("rsvps")
+          .where("eventId", "in", chunk)
+          .where("userId", "==", userId)
+          .get();
+        for (const rsvpDoc of userRsvps.docs) {
+          userRsvpMap.set(rsvpDoc.data().eventId, rsvpDoc.data().status);
+        }
+      }
+    }
+
+    // COST OPTIMIZATION: Batch fetch RSVP counts using aggregation or cached counts
+    // For now, use the event's cached attendeeCount if available, otherwise skip live count
+    // This avoids N queries for RSVP counts
+
+    // COST OPTIMIZATION: Batch fetch linked boards (N+1 → 1)
+    const linkedBoardMap = new Map<string, { boardId: string; boardName: string } | null>();
+    if (eventIds.length > 0) {
+      const boardsSnapshot = await dbAdmin
+        .collection("spaces")
+        .doc(spaceId)
+        .collection("boards")
+        .where("linkedEventId", "in", eventIds.slice(0, 30)) // Firestore 'in' limit
+        .get();
+      for (const boardDoc of boardsSnapshot.docs) {
+        const boardData = boardDoc.data();
+        linkedBoardMap.set(boardData.linkedEventId, {
+          boardId: boardDoc.id,
+          boardName: boardData.name,
+        });
+      }
+    }
+
+    // GHOST MODE: Build viewer context for privacy checks
+    const viewerContext = ViewerContext.authenticated({
+      userId,
+      campusId,
+      memberOfSpaceIds: [spaceId]
+    });
+
+    const events: Array<Record<string, unknown>> = [];
+
+    for (const doc of validDocs) {
+      const eventData = doc.data();
+      const organizerEntry = eventData.organizerId ? organizerMap.get(eventData.organizerId) : null;
+      const organizer = organizerEntry?.data || null;
 
       // GHOST MODE: Check if organizer's activity should be hidden
       let shouldHideOrganizer = false;
-      if (organizer) {
+      if (organizer && organizerEntry) {
         const organizerGhostUser: GhostModeUser = {
-          id: organizerDoc.id,
-          ghostMode: organizer.ghostMode,
-          visibility: organizer.visibility
+          id: organizerEntry.id,
+          ghostMode: organizer.ghostMode as GhostModeUser['ghostMode'],
+          visibility: organizer.visibility as GhostModeUser['visibility']
         };
-        // Both viewer and organizer are in this space
         shouldHideOrganizer = GhostModeService.shouldHideActivity(
           organizerGhostUser,
           viewerContext,
@@ -141,44 +248,23 @@ export const GET = withAuthAndErrors(async (
         );
       }
 
-      // RSVPs use flat /rsvps collection filtered by eventId
-      const rsvpSnapshot = await dbAdmin
-        .collection("rsvps")
-        .where("eventId", "==", doc.id)
-        .where("status", "==", "going")
-        .get();
-
-      const userRsvpQuery = await dbAdmin
-        .collection("rsvps")
-        .where("eventId", "==", doc.id)
-        .where("userId", "==", userId)
-        .limit(1)
-        .get();
-      const userRsvpDoc = userRsvpQuery.docs[0];
-
-      // Find linked board for this event
-      const linkedBoard = await findEventBoard(doc.id, spaceId);
-
       events.push({
         id: doc.id,
         ...eventData,
-        // GHOST MODE: Hide organizer identity if they have ghost mode with hideActivity
         organizer: shouldHideOrganizer
-          ? null  // Hide organizer identity but keep event visible
+          ? null
           : organizer
             ? {
-                id: organizerDoc.id,
+                id: organizerEntry?.id,
                 fullName: organizer.fullName,
                 handle: organizer.handle,
                 photoURL: organizer.photoURL,
               }
             : null,
-        currentAttendees: rsvpSnapshot.size,
-        userRSVP: userRsvpDoc?.exists ? userRsvpDoc.data()?.status : null,
-        // Include linked board info if exists
-        linkedBoard: linkedBoard
-          ? { id: linkedBoard.boardId, name: linkedBoard.boardName }
-          : undefined,
+        // Use cached count from event data, or 0 if not available (avoids N+1 RSVP queries)
+        currentAttendees: eventData.attendeeCount || eventData.rsvpCount || 0,
+        userRSVP: userRsvpMap.get(doc.id) || null,
+        linkedBoard: linkedBoardMap.get(doc.id) || undefined,
       });
     }
 

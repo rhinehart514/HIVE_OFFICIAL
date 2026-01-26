@@ -32,9 +32,7 @@
 
 import * as React from 'react';
 import { motion, type Variants, type Transition } from 'framer-motion';
-
-// LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_PREMIUM as EASE } from '../layout-tokens';
 
 // LOCKED: Stagger delays
 const DELAYS = {

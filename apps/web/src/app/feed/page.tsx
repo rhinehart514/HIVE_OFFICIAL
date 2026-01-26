@@ -152,7 +152,7 @@ function Section({ title, action, actionHref, children, delay = 0 }: SectionProp
       className="mb-10"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-label font-medium text-white/40 uppercase tracking-wider">
+        <h2 className="text-label font-medium text-white/40 tracking-wide">
           {title}
         </h2>
         {action && actionHref && (
@@ -211,9 +211,9 @@ function TodaySection({
       <Section title="Today" delay={0.1}>
         <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
           <p className="text-body text-white/50 mb-4">
-            Nothing on your plate today. Enjoy the calm.
+            Your day is open. Find something happening on campus.
           </p>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="default" size="sm" asChild>
             <Link href="/explore?tab=events">Browse events</Link>
           </Button>
         </GlassSurface>
@@ -436,9 +436,9 @@ function ThisWeekSection({
       <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
         <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
           <p className="text-body text-white/50 mb-4">
-            Nothing scheduled yet. Explore what's happening.
+            Nothing scheduled this week. Explore what's happening.
           </p>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="default" size="sm" asChild>
             <Link href="/explore?tab=events">Browse events</Link>
           </Button>
         </GlassSurface>
@@ -613,7 +613,7 @@ function DiscoverSection({
 function QuickActions() {
   return (
     <GlassSurface intensity="subtle" className="p-5 rounded-xl">
-      <h3 className="text-label font-medium text-white/40 uppercase tracking-wider mb-4">
+      <h3 className="text-label font-medium text-white/40 tracking-wide mb-4">
         Quick Actions
       </h3>
       <div className="space-y-2">

@@ -38,6 +38,7 @@ import {
   BoardCreationModal,
   MembersList,
   SpaceSettings,
+  SpaceInfoDrawer,
   type Member,
 } from './components';
 import {
@@ -56,6 +57,7 @@ export default function SpacePageUnified() {
   const [showBoardModal, setShowBoardModal] = React.useState(false);
   const [showMembersPanel, setShowMembersPanel] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
+  const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
   const [isFirstEntry, setIsFirstEntry] = React.useState(true);
 
   // Detect first entry to this space for ArrivalTransition
@@ -126,16 +128,26 @@ export default function SpacePageUnified() {
 
     // Add events
     upcomingEvents.forEach((event) => {
+      // Extended event type with userRsvp from API
+      const extendedEvent = event as typeof event & {
+        userRsvp?: 'going' | 'maybe' | 'not_going' | null;
+        description?: string;
+        startTime?: string;
+        isOnline?: boolean;
+        location?: string;
+      };
       items.push({
         id: event.id,
         type: 'event',
-        timestamp: event.time || new Date().toISOString(),
+        timestamp: extendedEvent.startTime || event.time || new Date().toISOString(),
         eventId: event.id,
         title: event.title,
-        description: event.title, // Use title as description fallback
-        startDate: event.time || new Date().toISOString(),
+        description: extendedEvent.description || event.title,
+        startDate: extendedEvent.startTime || event.time || new Date().toISOString(),
+        location: extendedEvent.location,
+        isOnline: extendedEvent.isOnline,
         rsvpCount: event.goingCount || 0,
-        userRsvp: null, // TODO: Get from event data
+        userRsvp: extendedEvent.userRsvp || null, // P1.4: Use userRsvp from API
       });
     });
 
@@ -285,11 +297,13 @@ export default function SpacePageUnified() {
                 onlineCount: space.onlineCount,
                 memberCount: space.memberCount,
                 isVerified: space.isVerified,
+                socialLinks: space.socialLinks,
               }}
               isLeader={space.isLeader}
               isMember={space.isMember}
               onMembersClick={() => setShowMembersPanel(true)}
               onSettingsClick={() => setShowSettingsModal(true)}
+              onSpaceInfoClick={() => setShowInfoDrawer(true)}
               onBuildToolClick={() => {
                 // Navigate to integrated tool creation with space context
                 // After tool creation, deploy modal will pre-select this space
@@ -474,9 +488,31 @@ export default function SpacePageUnified() {
           )}
         </AnimatePresence>
 
-        {/* Settings Modal */}
+        {/* Space Info Drawer (P2.3) */}
+        <SpaceInfoDrawer
+          isOpen={showInfoDrawer}
+          onClose={() => setShowInfoDrawer(false)}
+          space={{
+            id: space.id,
+            handle: space.handle,
+            name: space.name,
+            description: space.description,
+            avatarUrl: space.avatarUrl,
+            memberCount: space.memberCount,
+            isVerified: space.isVerified,
+            email: space.email,
+            contactName: space.contactName,
+            orgTypeName: space.orgTypeName,
+            foundedDate: space.foundedDate,
+            source: space.source,
+            sourceUrl: space.sourceUrl,
+            socialLinks: space.socialLinks,
+          }}
+        />
+
+        {/* Settings Modal - Available to members (leave) and leaders (full settings) */}
         <AnimatePresence>
-          {showSettingsModal && space.isLeader && (
+          {showSettingsModal && (
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-8"
               initial={{ opacity: 0 }}
@@ -520,8 +556,19 @@ export default function SpacePageUnified() {
                       description: space.description,
                       avatarUrl: space.avatarUrl,
                       isPublic: true,
+                      // CampusLabs metadata (P2.4)
+                      email: space.email,
+                      contactName: space.contactName,
+                      socialLinks: space.socialLinks,
                     }}
-                    onUpdate={async (updates) => {
+                    boards={boards.map(b => ({
+                      id: b.id,
+                      name: b.name,
+                      isDefault: b.name === 'general',
+                      isLocked: false,
+                    }))}
+                    isLeader={space.isLeader}
+                    onUpdate={space.isLeader ? async (updates) => {
                       try {
                         const response = await fetch(`/api/spaces/${space.id}`, {
                           method: 'PATCH',
@@ -535,8 +582,8 @@ export default function SpacePageUnified() {
                       } catch (error) {
                         console.error('Failed to update space:', error);
                       }
-                    }}
-                    onDelete={async () => {
+                    } : undefined}
+                    onDelete={space.isLeader ? async () => {
                       const confirmed = window.confirm(
                         'Are you sure you want to delete this space? This cannot be undone.'
                       );
@@ -549,6 +596,26 @@ export default function SpacePageUnified() {
                         router.push('/spaces');
                       } catch (error) {
                         console.error('Failed to delete space:', error);
+                      }
+                    } : undefined}
+                    onBoardDelete={space.isLeader ? async (boardId) => {
+                      const response = await fetch(`/api/spaces/${space.id}/boards/${boardId}`, {
+                        method: 'DELETE',
+                      });
+                      if (!response.ok) {
+                        const data = await response.json();
+                        throw new Error(data.error?.message || 'Failed to delete board');
+                      }
+                      // Trigger refresh to update boards list
+                      window.location.reload();
+                    } : undefined}
+                    onLeave={async () => {
+                      try {
+                        await leaveSpace();
+                        setShowSettingsModal(false);
+                        router.push('/spaces');
+                      } catch (error) {
+                        console.error('Failed to leave space:', error);
                       }
                     }}
                   />

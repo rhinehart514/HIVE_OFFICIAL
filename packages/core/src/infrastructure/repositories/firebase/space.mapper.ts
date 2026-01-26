@@ -33,6 +33,20 @@ export interface SpaceDocument {
   creatorId?: string;  // Legacy field name
   createdBy?: string;  // Current field name in DB
   visibility: 'public' | 'private';
+  // CampusLabs imported metadata
+  email?: string;
+  contactName?: string;
+  orgTypeName?: string;
+  foundedDate?: { toDate: () => Date } | Date | null;
+  socialLinks?: {
+    website?: string | null;
+    instagram?: string | null;
+    twitter?: string | null;
+    facebook?: string | null;
+    linkedin?: string | null;
+    youtube?: string | null;
+  };
+  sourceUrl?: string;
   /**
    * Space type - determines templates, suggestions, AI context
    */
@@ -285,6 +299,28 @@ export class SpaceMapper {
       space.setPublishStatus(data.publishStatus || 'live');
       if (data.wentLiveAt) space.setWentLiveAt(data.wentLiveAt.toDate());
 
+      // Hydrate CampusLabs imported metadata
+      if (data.email) space.setEmail(data.email);
+      if (data.contactName) space.setContactName(data.contactName);
+      if (data.orgTypeName) space.setOrgTypeName(data.orgTypeName);
+      if (data.foundedDate) {
+        const date = typeof data.foundedDate === 'object' && 'toDate' in data.foundedDate
+          ? data.foundedDate.toDate()
+          : data.foundedDate instanceof Date ? data.foundedDate : null;
+        if (date) space.setFoundedDate(date);
+      }
+      if (data.socialLinks) {
+        // Filter out null values from socialLinks
+        const cleanedLinks: Record<string, string> = {};
+        for (const [key, value] of Object.entries(data.socialLinks)) {
+          if (value) cleanedLinks[key] = value;
+        }
+        if (Object.keys(cleanedLinks).length > 0) {
+          space.setSocialLinks(cleanedLinks as any);
+        }
+      }
+      if (data.sourceUrl) space.setSourceUrl(data.sourceUrl);
+
       // Load tabs
       if (data.tabs && Array.isArray(data.tabs)) {
         const tabs = data.tabs.map((tabData: TabDocument) => {
@@ -393,7 +429,14 @@ export class SpaceMapper {
       })),
       tags: [],
       rushModeEnabled: space.rushMode?.isActive || false,
-      rushModeEndDate: space.rushMode?.endDate || null
+      rushModeEndDate: space.rushMode?.endDate || null,
+      // CampusLabs imported metadata (spread conditionally to avoid undefined fields)
+      ...(space.email && { email: space.email }),
+      ...(space.contactName && { contactName: space.contactName }),
+      ...(space.orgTypeName && { orgTypeName: space.orgTypeName }),
+      ...(space.foundedDate && { foundedDate: space.foundedDate }),
+      ...(space.socialLinks && { socialLinks: space.socialLinks }),
+      ...(space.sourceUrl && { sourceUrl: space.sourceUrl }),
     };
   }
 }

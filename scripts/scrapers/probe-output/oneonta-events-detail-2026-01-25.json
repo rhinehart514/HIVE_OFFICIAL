@@ -1,0 +1,84 @@
+[
+  {
+    "id": 12068538,
+    "institutionId": 36,
+    "organizationId": 29485,
+    "submittedByOrganizationId": 29485,
+    "organizationIds": [
+      29485,
+      168396
+    ],
+    "eventSubmissionId": 13724256,
+    "imagePath": "b0516d97-8cc6-46a0-89a0-da1dec4c4d2758d307c9-70ea-45a7-9b06-86a0dcf6b1ee.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/b0516d97-8cc6-46a0-89a0-da1dec4c4d2758d307c9-70ea-45a7-9b06-86a0dcf6b1ee.png",
+    "name": "Big Business (1929)",
+    "description": "<p class=\"sc-bf30a0e-3 uWiw sc-bf30a0e-4 dKgygM\" data-testid=\"plot\"><span class=\"sc-bf30a0e-2 bRimta\" role=\"presentation\" data-testid=\"plot-xl\">Ollie and Stanley are two Christmas Tree sales reps who get into one of their usual mutual-destruction fights with a disgruntled homeowner.&nbsp;</span></p>\r\n<p class=\"sc-bf30a0e-3 uWiw sc-bf30a0e-4 dKgygM\" data-testid=\"plot\"><span class=\"sc-bf30a0e-2 bRimta\" role=\"presentation\" data-testid=\"plot-xl\">Free for students; $5 for the public</span></p>",
+    "startsOn": "2026-01-24T20:00:00-05:00",
+    "endsOn": "2026-01-24T21:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Red Dragon Theatre",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": "",
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [
+      "FreeFood"
+    ],
+    "categories": [
+      {
+        "id": 660,
+        "name": "*Program/Special Event",
+        "isVisibleOnPublicSite": true
+      }
+    ],
+    "state": {
+      "eventId": 12068538,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 31428369,
+      "accountId": "42d649f6-4eff-44eb-9524-4fc48fa8903a",
+      "username": "VESPA212",
+      "campusEmail": "VESPA212@oneonta.edu",
+      "swipeCardIdentifier": "A01328653"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": true,
+    "hasSentRatingNotifications": true,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

@@ -49,7 +49,7 @@ const HiveContext = createContext<HiveContextType>({
       messaging: true,
     },
     theme: {
-      primaryColor: 'var(--hive-brand-secondary)',
+      primaryColor: 'var(--hive-gold)',
       mode: 'dark',
     },
   },
@@ -83,7 +83,7 @@ export const HiveProvider: React.FC<{
       messaging: initialConfig?.features?.messaging ?? true,
     },
     theme: {
-      primaryColor: initialConfig?.theme?.primaryColor || 'var(--hive-brand-secondary)',
+      primaryColor: initialConfig?.theme?.primaryColor || 'var(--hive-gold)',
       mode: initialConfig?.theme?.mode || 'dark',
     },
   });
@@ -334,7 +334,7 @@ export const LoadingWrapper: React.FC<{
       <div className={`loading-wrapper flex items-center justify-center min-h- ${className}`}>
         {fallback || (
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-4 border-4 border-[var(--hive-brand-secondary)] border-t-transparent rounded-full animate-spin" />
+            <div className="w-12 h-12 mx-auto mb-4 border-4 border-[var(--hive-gold)] border-t-transparent rounded-full animate-spin" />
             <p className="text-white/60">Loading...</p>
           </div>
         )}
@@ -376,7 +376,7 @@ export class ErrorBoundary extends React.Component<
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-[var(--hive-brand-secondary)] text-black font-medium rounded-lg hover:bg-[var(--hive-brand-secondary-hover)] transition-colors"
+              className="px-4 py-2 bg-[var(--hive-gold)] text-black font-medium rounded-lg hover:bg-[var(--hive-gold-hover)] transition-colors"
             >
               Reload Page
             </button>

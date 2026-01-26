@@ -15,14 +15,14 @@
  */
 
 import { motion } from 'framer-motion';
-import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, HiveConfirmModal, Input, HiveLogo } from '@hive/ui';
+import { ProfileBentoGrid, Button, Avatar, AvatarImage, AvatarFallback, HiveConfirmModal, Input, HiveLogo, EASE_PREMIUM } from '@hive/ui';
 import type { ProfileSystem } from '@hive/core';
 import { ArrowLeftIcon, CheckIcon, ArrowPathIcon, Bars3Icon, Cog6ToothIcon, XMarkIcon, PlusIcon, CameraIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { GhostModeModal } from '@/components/privacy';
 import { useProfileEdit } from '@/hooks/use-profile-edit';
 
 // LOCKED: Premium easing from design system
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 // Layer 3: Micro-motion - entrance only, subtle
 const fadeIn = (delay: number) => ({

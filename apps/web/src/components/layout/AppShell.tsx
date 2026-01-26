@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import {
   HomeIcon,
@@ -24,6 +24,9 @@ import {
   BeakerIcon,
   UserIcon,
   SettingsIcon,
+  LogOutIcon,
+  EASE_PREMIUM,
+  SIDEBAR_WIDTH,
 } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { cn } from '@/lib/utils';
@@ -83,8 +86,8 @@ const BOTTOM_ITEMS: NavItem[] = [
   },
 ];
 
-// Premium easing from /about
-const EASE = [0.22, 1, 0.36, 1] as const;
+// Premium easing from design system
+const EASE = EASE_PREMIUM;
 
 // ============================================================
 // Sidebar Component
@@ -118,8 +121,8 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
     router.push('/');
   };
 
-  // ChatGPT aesthetic: Always 260px, no collapse
-  const railWidth = 260;
+  // ChatGPT aesthetic: Fixed sidebar, no collapse
+  const railWidth = SIDEBAR_WIDTH;
 
   return (
     <motion.aside
@@ -253,7 +256,7 @@ function Sidebar({ isExpanded, onToggle, onNavigate }: SidebarProps) {
               initial={{ opacity: 0 }}
               whileHover={{ opacity: 1 }}
             />
-            <LogOut size={16} className="relative z-10" />
+            <LogOutIcon size={16} className="relative z-10" />
             <span className="relative z-10 tracking-[-0.01em]">Sign Out</span>
           </motion.button>
         )}
@@ -375,7 +378,7 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors"
                   >
-                    <LogOut size={20} />
+                    <LogOutIcon size={20} />
                     <span className="text-body font-medium">Sign Out</span>
                   </button>
                 )}
@@ -440,11 +443,11 @@ export function AppShell({ children }: AppShellProps) {
       {/* Mobile Nav */}
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
-      {/* Main Content - ChatGPT style: 260px offset, generous padding */}
+      {/* Main Content - ChatGPT style: sidebar offset, generous padding */}
       <main
         className="flex-1 overflow-y-auto"
         style={{
-          marginLeft: '260px',
+          marginLeft: `${SIDEBAR_WIDTH}px`,
         }}
       >
         {/* Mobile Header */}

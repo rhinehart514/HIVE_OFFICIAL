@@ -12,7 +12,7 @@ import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-mid
 
 const UpdateSpaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional(),
+  description: z.string().max(2000).optional(),
   category: z.string().optional(),
   visibility: z.enum(["public", "private"]).optional(),
   bannerUrl: z.string().url().optional(),
@@ -26,7 +26,18 @@ const UpdateSpaceSchema = z.object({
     allowGuestView: z.boolean().optional(),
     allowRSS: z.boolean().optional(),
     maxMembers: z.number().min(1).max(10000).optional()
-  }).optional()
+  }).optional(),
+  // CampusLabs imported fields - editable by leaders (P2.4)
+  email: z.string().email().optional().nullable(),
+  contactName: z.string().max(100).optional().nullable(),
+  socialLinks: z.object({
+    website: z.string().url().optional().nullable(),
+    instagram: z.string().url().optional().nullable(),
+    twitter: z.string().url().optional().nullable(),
+    facebook: z.string().url().optional().nullable(),
+    linkedin: z.string().url().optional().nullable(),
+    youtube: z.string().url().optional().nullable(),
+  }).optional(),
 });
 
 // Using unified toSpaceDetailDTO from @hive/core/server
@@ -235,6 +246,22 @@ export const PATCH = withAuthValidationAndErrors(
     }
 
     const space = result.getValue().data;
+
+    // Handle CampusLabs metadata fields directly (not part of DDD aggregate)
+    // These are supplemental fields that can be edited by leaders
+    const campusLabsFields: Record<string, unknown> = {};
+    if (updates.email !== undefined) campusLabsFields.email = updates.email;
+    if (updates.contactName !== undefined) campusLabsFields.contactName = updates.contactName;
+    if (updates.socialLinks !== undefined) campusLabsFields.socialLinks = updates.socialLinks;
+
+    if (Object.keys(campusLabsFields).length > 0) {
+      const { dbAdmin } = await import("@/lib/firebase-admin");
+      await dbAdmin.collection("spaces").doc(spaceId).update({
+        ...campusLabsFields,
+        updatedAt: new Date(),
+      });
+      logger.info(`Space CampusLabs metadata updated: ${spaceId}`, { fields: Object.keys(campusLabsFields) });
+    }
 
     logger.info(`Space updated via DDD: ${spaceId} by ${userId}`, { updates: updateKeys });
 

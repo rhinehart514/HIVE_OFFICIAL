@@ -91,6 +91,19 @@
   --hive-brand-primary: var(--hive-gold);
   --hive-brand-hover: var(--hive-gold-hover);
 
+  /* Short aliases (widely used across codebase) */
+  --bg-ground: var(--hive-bg-base);
+  --bg-surface: var(--hive-bg-surface);
+  --bg-elevated: var(--hive-bg-elevated);
+  --bg-muted: var(--hive-bg-surface);
+  --text-primary: var(--hive-text-primary);
+  --text-secondary: var(--hive-text-secondary);
+  --text-tertiary: var(--hive-text-subtle);
+  --text-muted: var(--hive-text-disabled);
+  --border-subtle: var(--hive-border-default);
+  --border-emphasis: var(--hive-border-strong);
+  --life-gold: var(--hive-gold);
+
   /* Interactive States */
   --hive-interactive-hover: rgba(255, 255, 255, 0.04);
   --hive-interactive-active: rgba(255, 255, 255, 0.08);

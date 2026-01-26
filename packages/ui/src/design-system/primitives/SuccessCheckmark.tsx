@@ -12,6 +12,7 @@
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 export interface SuccessCheckmarkProps {
   /** Size variant */
@@ -35,9 +36,6 @@ const sizeConfig = {
   lg: { size: 72, strokeWidth: 3 },
   xl: { size: 96, strokeWidth: 3 },
 };
-
-// LOCKED: Premium easing
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // LOCKED: Gold color palette
 const GOLD = {

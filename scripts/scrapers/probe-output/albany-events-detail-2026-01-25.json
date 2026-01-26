@@ -1,0 +1,75 @@
+[
+  {
+    "id": 12025229,
+    "institutionId": 39,
+    "organizationId": 45727,
+    "submittedByOrganizationId": 45727,
+    "organizationIds": [
+      45727
+    ],
+    "eventSubmissionId": 13726558,
+    "imagePath": "80fa054b-a682-41fa-b351-b5df125319c82e07c897-7bb9-470e-843b-2366f44f167d.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/80fa054b-a682-41fa-b351-b5df125319c82e07c897-7bb9-470e-843b-2366f44f167d.png",
+    "name": "Stuff-A-Plush Night! ",
+    "description": "<p>Join the Office of Student Engagement &amp; Belonging for a night of hands-on fun with <br />Stuff a Plush: DIY Patchwork T-Shirts 🧸👕✨</p>\r\n<p>🕗 8 &ndash; 10 PM<br />📍 Campus Center Ballroom<br />🗓 Saturday, January 24th</p>\r\n<p>Start the year off with a new friend! Pick your own stuff-a-plush and then decorate their t-shirt with patchwork designs. From cuddly plushies to custom tees, you&rsquo;ll create something totally your own 💜💛<br />* While supplies last. *</p>",
+    "startsOn": "2026-01-24T20:00:00-05:00",
+    "endsOn": "2026-01-24T22:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Campus Center",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": "",
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 12025229,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 38621126,
+      "accountId": "ffbf1362-038d-4cf5-b069-e4d7714973b6",
+      "username": "cs185913@albany.edu",
+      "campusEmail": "csantiago3@albany.edu",
+      "swipeCardIdentifier": "8081280184788472"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": true,
+    "hasSentRatingNotifications": true,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

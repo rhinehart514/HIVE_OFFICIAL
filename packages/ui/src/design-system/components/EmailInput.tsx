@@ -26,6 +26,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES
@@ -57,13 +58,6 @@ export interface EmailInputProps {
   /** Accessible label */
   label?: string;
 }
-
-// ============================================
-// CONSTANTS
-// ============================================
-
-// Premium easing
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // ============================================
 // MAIN COMPONENT

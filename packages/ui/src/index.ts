@@ -176,6 +176,29 @@ export type {
   ParallaxType,
 } from "./tokens/motion";
 
+// Layout Tokens (Jan 2026 - Consistent layout dimensions)
+export {
+  HEADER_HEIGHT,
+  HEADER_HEIGHT_CLASS,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_CLASS,
+  SIDEBAR_COLLAPSED_WIDTH,
+  MOBILE_NAV_WIDTH,
+  MOBILE_NAV_WIDTH_CLASS,
+  MOBILE_HEADER_HEIGHT,
+  MOBILE_BOTTOM_NAV_HEIGHT,
+  MAX_CONTENT_WIDTH,
+  MAX_CONTENT_WIDTH_CLASS,
+  CONTENT_PADDING_X,
+  CONTENT_PADDING_Y,
+  SPACING,
+  RADIUS,
+  Z_INDEX,
+  DURATION,
+  EASE,
+  EASE_PREMIUM,
+} from "./design-system/layout-tokens";
+
 // Dramatic Reveal Primitives (Jan 2026 - WordReveal, ThresholdReveal)
 export {
   WordReveal,
@@ -603,6 +626,7 @@ export {
   BellIcon,
   CalendarIcon,
   SettingsIcon,
+  LogOutIcon,
 } from "./shells/shell-icons";
 
 // Page Transition (Jan 2026 - Route animations)

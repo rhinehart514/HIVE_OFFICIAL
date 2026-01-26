@@ -18,13 +18,11 @@
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion, type Variants } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // MOTION CONSTANTS (About-page aligned)
 // ============================================
-
-/** Premium easing — the HIVE signature curve */
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 /** Duration scale */
 const DURATION = {

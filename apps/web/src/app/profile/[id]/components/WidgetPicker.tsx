@@ -12,10 +12,11 @@
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WidgetConfig } from '@hive/core';
+import { EASE_PREMIUM } from '@hive/ui';
 import { WIDGET_METADATA } from '../hooks/use-bento-grid';
 
 // LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 interface WidgetPickerProps {
   isOpen: boolean;

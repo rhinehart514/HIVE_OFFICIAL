@@ -1,4 +1,3 @@
-// TODO: Fix SendMessageInput metadata type
 import { z } from "zod";
 import {
   withAuthValidationAndErrors,

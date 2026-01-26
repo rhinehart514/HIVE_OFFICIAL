@@ -13,6 +13,7 @@ import { logger } from '@/lib/structured-logger';
 import { withErrors } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
 import { getDefaultCampusId } from '@/lib/campus-context';
+import { dbAdmin } from '@/lib/firebase-admin';
 
 // ============================================================
 // GET - Resolve slug to space ID (public with rate limiting)
@@ -36,7 +37,7 @@ export const GET = withErrors(async (
   try {
     const spaceRepo = getServerSpaceRepository();
 
-    // First try to resolve as a slug
+    // First try to resolve as a slug with campusId
     const slugResult = await spaceRepo.findBySlug(slug, campusId);
 
     if (slugResult.isSuccess) {
@@ -45,6 +46,31 @@ export const GET = withErrors(async (
         spaceId: space.spaceId.value,
         slug: space.slug?.value || slug,
         found: true,
+      });
+    }
+
+    // Fallback: Query by slug only (without campusId) for imported/legacy spaces
+    // This handles CampusLabs imported spaces that may have different or missing campusId
+    const slugOnlySnapshot = await dbAdmin
+      .collection('spaces')
+      .where('slug', '==', slug)
+      .limit(1)
+      .get();
+
+    if (!slugOnlySnapshot.empty) {
+      const doc = slugOnlySnapshot.docs[0];
+      const data = doc.data();
+      logger.info('Space found by slug without campusId match', {
+        spaceId: doc.id,
+        slug,
+        spaceCampusId: data?.campusId,
+        requestedCampusId: campusId,
+      });
+      return respond.success({
+        spaceId: doc.id,
+        slug: data?.slug || slug,
+        found: true,
+        isImported: true,
       });
     }
 
@@ -110,6 +136,24 @@ export const POST = withErrors(async (
         spaceId: space.spaceId.value,
         slug: space.slug?.value || slug,
         found: true,
+      });
+    }
+
+    // Fallback: Query by slug only (without campusId) for imported/legacy spaces
+    const slugOnlySnapshot = await dbAdmin
+      .collection('spaces')
+      .where('slug', '==', slug)
+      .limit(1)
+      .get();
+
+    if (!slugOnlySnapshot.empty) {
+      const doc = slugOnlySnapshot.docs[0];
+      const data = doc.data();
+      return respond.success({
+        spaceId: doc.id,
+        slug: data?.slug || slug,
+        found: true,
+        isImported: true,
       });
     }
 

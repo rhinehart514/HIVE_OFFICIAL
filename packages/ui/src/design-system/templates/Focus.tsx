@@ -70,6 +70,7 @@ import {
   useAtmosphere,
   type AtmosphereLevel
 } from '../AtmosphereProvider';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // HIVE LOGO
@@ -146,9 +147,6 @@ const MAX_WIDTH_VALUES: Record<MaxWidth, string> = {
   md: '480px',
   lg: '560px',
 };
-
-// Premium easing from LANGUAGE.md
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // Animation variants
 const containerVariants = {

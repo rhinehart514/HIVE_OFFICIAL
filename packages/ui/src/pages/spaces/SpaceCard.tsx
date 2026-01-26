@@ -113,10 +113,10 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
               }}
             />
           ) : (
-            <div className="h-28 w-full bg-gradient-to-r from-[rgba(255,214,102,0.25)] via-transparent to-[rgba(255,214,102,0.05)]" />
+            <div className="h-28 w-full bg-gradient-to-r from-[var(--space-banner-gold-start)] via-transparent to-[var(--space-banner-gold-end)]" />
           )}
           {space.category ? (
-            <span className="absolute left-4 top-4 rounded-full bg-[rgba(7,8,13,0.7)] px-3 py-1 text-xs font-semibold uppercase tracking-caps-wide text-[var(--hive-text-muted,#8d93a7)]">
+            <span className="absolute left-4 top-4 rounded-full bg-[var(--space-overlay-dark)] px-3 py-1 text-xs font-semibold uppercase tracking-caps-wide text-[var(--hive-text-muted,#8d93a7)]">
               {space.category}
             </span>
           ) : null}
@@ -124,7 +124,7 @@ export function SpaceCard({ space, ctaLabel = "Join space", onJoin }: SpaceCardP
           <AnimatePresence>
             {space.momentum ? (
               <motion.span
-                className="absolute bottom-4 left-4 rounded-full bg-[rgba(7,8,13,0.8)] px-3 py-1 text-xs font-semibold text-[var(--hive-brand-primary,#ffd166)]"
+                className="absolute bottom-4 left-4 rounded-full bg-[var(--space-overlay-darker)] px-3 py-1 text-xs font-semibold text-[var(--hive-brand-primary,#ffd166)]"
                 initial={{ opacity: 0, scale: 0.8, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, y: 10 }}

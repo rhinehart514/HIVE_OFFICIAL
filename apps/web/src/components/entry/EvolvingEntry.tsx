@@ -53,9 +53,11 @@ const CAMPUS_CONFIG = {
 interface EvolvingEntryProps {
   /** Callback to report emotional state for ambient glow */
   onEmotionalStateChange?: (state: EmotionalState) => void;
+  /** Callback to report loading state for overlay */
+  onLoadingStateChange?: (isLoading: boolean) => void;
 }
 
-export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
+export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: EvolvingEntryProps) {
   const entry = useEvolvingEntry({
     domain: CAMPUS_CONFIG.domain,
     campusId: CAMPUS_CONFIG.id,
@@ -88,6 +90,25 @@ export function EvolvingEntry({ onEmotionalStateChange }: EvolvingEntryProps) {
         setResidentialSpaces([]);
       });
   }, [entry.data.school?.id]);
+
+  // Report loading state for overlay
+  useEffect(() => {
+    if (!onLoadingStateChange) return;
+
+    const isLoading =
+      entry.isSubmittingEmail ||
+      entry.isVerifyingCode ||
+      entry.isSubmittingRole ||
+      entry.isSubmittingIdentity;
+
+    onLoadingStateChange(isLoading);
+  }, [
+    entry.isSubmittingEmail,
+    entry.isVerifyingCode,
+    entry.isSubmittingRole,
+    entry.isSubmittingIdentity,
+    onLoadingStateChange,
+  ]);
 
   // Report emotional state for ambient glow
   useEffect(() => {

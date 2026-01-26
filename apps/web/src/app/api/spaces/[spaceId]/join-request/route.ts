@@ -11,6 +11,7 @@ import {
 } from '@/lib/middleware';
 import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
+import { createBulkNotifications } from '@/lib/notification-service';
 
 /**
  * Space Join Request API
@@ -146,8 +147,36 @@ export const POST = withAuthValidationAndErrors(
       campusId,
     });
 
-    // 6. Optionally notify space leaders
-    // TODO: Add notification to space leaders about new join request
+    // 6. Notify space leaders about new join request
+    const leaderSnapshot = await dbAdmin
+      .collection('spaceMembers')
+      .where('spaceId', '==', spaceId)
+      .where('campusId', '==', campusId)
+      .where('isActive', '==', true)
+      .where('role', 'in', ['owner', 'admin', 'moderator'])
+      .get();
+
+    if (!leaderSnapshot.empty) {
+      const leaderIds = leaderSnapshot.docs.map(doc => doc.data().userId as string);
+      const userDoc = await dbAdmin.collection('users').doc(userId).get();
+      const userName = userDoc.data()?.displayName || userDoc.data()?.name || 'Someone';
+      const spaceName = space.name || 'your space';
+
+      await createBulkNotifications(leaderIds, {
+        type: 'space_join',
+        category: 'spaces',
+        title: `${userName} wants to join ${spaceName}`,
+        body: body.message || 'Review their request in the space settings.',
+        actionUrl: `/spaces/${spaceId}/settings?tab=requests`,
+        metadata: {
+          actorId: userId,
+          actorName: userName,
+          spaceId,
+          spaceName,
+          requestId: requestRef.id,
+        },
+      });
+    }
 
     return respond.success(
       {

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAnalytics } from "@hive/hooks";
-import { HiveLogo } from "@hive/ui";
+import { HiveLogo, EASE_PREMIUM } from "@hive/ui";
 
 /**
  * Leader Landing Page - January Launch Focus
@@ -20,8 +20,6 @@ import { HiveLogo } from "@hive/ui";
  *
  * MONOCHROME DISCIPLINE: Same as main landing
  */
-
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // Pre-seeded org examples to show variety
 const ORG_EXAMPLES = [

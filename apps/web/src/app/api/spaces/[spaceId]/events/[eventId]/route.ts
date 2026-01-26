@@ -34,6 +34,9 @@ const UpdateEventSchema = z.object({
   cost: z.number().nonnegative().optional(),
   currency: z.string().length(3).optional(),
   status: z.enum(['draft', 'published', 'ongoing', 'completed', 'cancelled']).optional(),
+  // CampusLabs imported event metadata (editable by leaders)
+  theme: z.string().max(50).optional(),
+  benefits: z.array(z.string().max(100)).max(10).optional(),
 });
 
 /**
@@ -139,6 +142,11 @@ async function serializeEvent(
       : null,
     currentAttendees: rsvpSnapshot.size,
     userRSVP: userRsvpDoc.exists ? userRsvpDoc.data()?.status : null,
+    // CampusLabs imported event metadata
+    theme: eventData.theme || null,
+    benefits: eventData.benefits || [],
+    source: eventData.source || 'user-created',
+    sourceUrl: eventData.sourceUrl || null,
   };
 }
 

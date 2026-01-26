@@ -34,6 +34,11 @@ export {
   type SpaceEventDetails,
   type EventDetailsModalProps,
 } from './EventDetailsModal';
+export {
+  EventEditModal,
+  type EventEditInput,
+  type EventEditModalProps,
+} from './EventEditModal';
 
 // ============================================
 // HUB + THEATER MODE COMPONENTS (Existing)

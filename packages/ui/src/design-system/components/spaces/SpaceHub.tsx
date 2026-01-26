@@ -23,9 +23,7 @@ import {
   LiveDotOnly,
   ActivityHeartbeatStrip,
 } from '../../primitives';
-
-// LOCKED: Premium easing from design system
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_PREMIUM as EASE } from '../../layout-tokens';
 
 // Layer 3: Micro-motion - entrance only, subtle
 const fadeIn = (delay: number) => ({

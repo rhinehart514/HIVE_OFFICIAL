@@ -274,6 +274,30 @@ interface EnhancedSpaceProps {
    * Universal spaces are auto-joined based on user identity checkboxes
    */
   isUniversal?: boolean;
+
+  // ============================================================
+  // CampusLabs Imported Metadata
+  // ============================================================
+
+  /** Contact email for the organization */
+  email?: string;
+  /** Primary contact person name */
+  contactName?: string;
+  /** Organization type from CampusLabs (e.g., "Student Organization", "Greek Organization") */
+  orgTypeName?: string;
+  /** When the organization was founded */
+  foundedDate?: Date;
+  /** Social media and website links */
+  socialLinks?: {
+    website?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
+  /** Original source URL from CampusLabs/UBLinked */
+  sourceUrl?: string;
 }
 
 export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
@@ -592,6 +616,51 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
     return this.props.isUniversal ?? false;
   }
 
+  // ============================================================
+  // CampusLabs Imported Metadata Getters
+  // ============================================================
+
+  /**
+   * Contact email for the organization
+   */
+  get email(): string | undefined {
+    return this.props.email;
+  }
+
+  /**
+   * Primary contact person name
+   */
+  get contactName(): string | undefined {
+    return this.props.contactName;
+  }
+
+  /**
+   * Organization type from CampusLabs
+   */
+  get orgTypeName(): string | undefined {
+    return this.props.orgTypeName;
+  }
+
+  /**
+   * When the organization was founded
+   */
+  get foundedDate(): Date | undefined {
+    return this.props.foundedDate;
+  }
+
+  /**
+   * Social media and website links
+   */
+  get socialLinks(): EnhancedSpaceProps['socialLinks'] {
+    return this.props.socialLinks;
+  }
+
+  /**
+   * Original source URL from CampusLabs/UBLinked
+   */
+  get sourceUrl(): string | undefined {
+    return this.props.sourceUrl;
+  }
 
   private constructor(props: EnhancedSpaceProps, id?: string) {
     // SECURITY FIX: Use crypto.randomUUID() for cryptographically secure IDs
@@ -2160,6 +2229,34 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   }
 
   // ============================================================
+  // CampusLabs Imported Metadata Setters (for mapper hydration)
+  // ============================================================
+
+  public setEmail(email: string | undefined): void {
+    (this.props as any).email = email;
+  }
+
+  public setContactName(name: string | undefined): void {
+    (this.props as any).contactName = name;
+  }
+
+  public setOrgTypeName(typeName: string | undefined): void {
+    (this.props as any).orgTypeName = typeName;
+  }
+
+  public setFoundedDate(date: Date | undefined): void {
+    (this.props as any).foundedDate = date;
+  }
+
+  public setSocialLinks(links: EnhancedSpaceProps['socialLinks']): void {
+    (this.props as any).socialLinks = links;
+  }
+
+  public setSourceUrl(url: string | undefined): void {
+    (this.props as any).sourceUrl = url;
+  }
+
+  // ============================================================
   // Basic Info Update (Phase 1 - DDD Foundation)
   // ============================================================
 
@@ -2369,6 +2466,13 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       unlockThreshold: this.props.unlockThreshold,
       communityType: this.props.communityType,
       isUniversal: this.props.isUniversal,
+      // CampusLabs imported metadata
+      email: this.props.email,
+      contactName: this.props.contactName,
+      orgTypeName: this.props.orgTypeName,
+      foundedDate: this.props.foundedDate,
+      socialLinks: this.props.socialLinks,
+      sourceUrl: this.props.sourceUrl,
     };
   }
 }

@@ -7,7 +7,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Calendar } from 'lucide-react';
+import { Users, Calendar, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Avatar,
@@ -35,6 +35,11 @@ export interface SpaceBrowseCardProps {
     nextEvent?: { title: string; startAt: string };
     mutualCount?: number;
     mutualAvatars?: string[];
+    // CampusLabs imported metadata
+    orgTypeName?: string;
+    email?: string;
+    source?: 'ublinked' | 'user-created';
+    hasLeader?: boolean;
   };
   index?: number;
   variant?: 'default' | 'featured';
@@ -111,6 +116,15 @@ export function SpaceBrowseCard({
               )}
             </div>
 
+            {/* Org type badge - visible and prominent (P1.2) */}
+            {space.orgTypeName && (
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-white/60 px-2 py-0.5 rounded-full bg-white/[0.06]">
+                  {space.orgTypeName}
+                </span>
+              </div>
+            )}
+
             {space.description && (
               <p
                 className={cn(
@@ -160,12 +174,31 @@ export function SpaceBrowseCard({
               <span>{space.mutualCount} friends</span>
             </div>
           )}
+
+          {/* Contact email (P2.1) */}
+          {space.email && (
+            <a
+              href={`mailto:${space.email}`}
+              className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Mail size={12} />
+              <span>Contact</span>
+            </a>
+          )}
         </div>
 
         {/* Member badge */}
         {space.isMember && (
           <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/[0.06] text-label-xs text-white/40 font-medium">
             Joined
+          </div>
+        )}
+
+        {/* Claim status badge (P1.3) - for imported spaces with no active leadership */}
+        {!space.isMember && space.source === 'ublinked' && ((space.memberCount ?? 0) === 0 || space.hasLeader === false) && (
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-blue-500/10 text-xs text-blue-300 font-medium">
+            Ready to claim
           </div>
         )}
 

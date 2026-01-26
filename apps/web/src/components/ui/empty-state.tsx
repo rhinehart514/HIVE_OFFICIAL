@@ -10,6 +10,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Button, Text } from '@hive/ui/design-system/primitives';
+import { EASE_PREMIUM } from '@hive/ui';
 
 interface EmptyStateAction {
   label: string;
@@ -28,7 +29,7 @@ interface EmptyStateProps {
 }
 
 // Locked animation tokens
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 export function EmptyState({
   icon,

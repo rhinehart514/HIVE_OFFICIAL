@@ -224,7 +224,7 @@ const SpaceCard: React.FC<SpaceCardProps> = ({
             className={cn(
               'w-20 h-20 rounded-2xl',
               'shadow-2xl',
-              'ring-4 ring-[rgba(18,18,18,0.92)]'
+              'ring-4 ring-[var(--space-avatar-ring)]'
             )}
           >
             {avatar && <AvatarImage src={avatar} alt={name} />}

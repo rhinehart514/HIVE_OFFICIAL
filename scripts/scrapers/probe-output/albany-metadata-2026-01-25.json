@@ -1,0 +1,237 @@
+{
+  "branches": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 1,
+    "items": [
+      {
+        "newOrganizationRegistrationId": null,
+        "newOrganizationRegistration": null,
+        "isVisible": false,
+        "id": 19872,
+        "communityId": 110,
+        "institutionId": 39,
+        "name": "MyInvolvement",
+        "shortName": "MyInvolvement",
+        "nameSortKey": "M",
+        "websiteKey": "myinvolvement",
+        "email": null,
+        "description": "<p><em><strong>Welcome to MyInvolvement!</strong>&nbsp;</em></p>\r\n<p>MyInvolvement is your site for finding organizations and student group information.</p>\r\n<p>Organization Officers who have <a href=\"http://albany.collegiatelink.net/Home?action=viewOrgNewsItem&position=3&orgID=1&itemID=1\"> registered their organization</a> get access to manage rosters, recruit new members, post polls or hold elections and more!</p>",
+        "summary": "Welcome to MyInvolvement! \r\nMyInvolvement is your site for finding organizations and student group information.\r\nOrganization Officers who have  registered their organization get access to manage rosters, recruit new members, post polls or hold ",
+        "status": "Active",
+        "comment": null,
+        "showJoin": false,
+        "statusChangeDateTime": null,
+        "startDate": "2007-08-22T00:00:00-04:00",
+        "endDate": null,
+        "parentId": null,
+        "wallId": null,
+        "discussionId": 26462,
+        "groupTypeId": null,
+        "organizationTypeId": 16909,
+        "cssConfigurationId": null,
+        "deleted": false,
+        "enableGoogleCalendar": false,
+        "modifiedOn": "2015-02-19T08:26:08.197-05:00",
+        "socialMedia": {
+          "ExternalWebsite": "http://myinvolvement.org",
+          "FlickrUrl": "",
+          "GoogleCalendarUrl": "",
+          "GooglePlusUrl": "",
+          "InstagramUrl": "",
+          "LinkedInUrl": "",
+          "PinterestUrl": "",
+          "TumblrUrl": "",
+          "VimeoUrl": "",
+          "YoutubeUrl": ""
+        },
+        "profilePicture": "cf58074d-e54e-41ad-afb7-9e1f907074f4dd1fb0bd-a2a3-475e-a2ae-3b99e6786710.jpg",
+        "organizationType": {
+          "id": 16909,
+          "branchId": 19872,
+          "name": "Branch",
+          "autoApproveRequests": false,
+          "showMembersToPublic": true,
+          "showOfficersToPublic": true,
+          "showMembersToLoggedInUsersByDefault": false,
+          "showOfficersToLoggedInUsersByDefault": false,
+          "eventsEnabled": true,
+          "serviceHoursEnabled": true,
+          "financeEnabled": true,
+          "financeRequestsEnabled": true,
+          "fundingRequestsEnabled": true,
+          "purchaseRequestsEnabled": true,
+          "budgetingEnabled": true,
+          "budgetingRequestsEnabled": true,
+          "reRegistrationAvailabilty": null,
+          "electionsEnabled": true,
+          "formsEnabled": true,
+          "galleryEnabled": true,
+          "outcomesEnabled": true,
+          "rosterEnabled": true,
+          "shownInPublicDirectory": false,
+          "documentsEnabled": true,
+          "isSystemType": true,
+          "adminOnly": false,
+          "isClosed": false
+        },
+        "primaryContactId": {
+          "communityMemberId": 1103759,
+          "accountId": "21f38ae8-f180-4627-8899-a1a900f87ae6"
+        },
+        "primaryContact": {
+          "id": "21f38ae8-f180-4627-8899-a1a900f87ae6",
+          "firstName": "Sari",
+          "preferredFirstName": null,
+          "lastName": "Khatib",
+          "primaryEmailAddress": null,
+          "profileImageFilePath": "fee486f8-42fe-4055-94f7-e61724fc4a1c3789cd93-6a7f-4265-8cc1-842f62f39a5f.jpg",
+          "institutionId": 39,
+          "privacy": "Unselected"
+        },
+        "isBranch": true,
+        "contactInfo": [],
+        "legacyKey": 11178,
+        "parentLegacyKey": null,
+        "legacyPrimaryContactKey": null,
+        "showFacebookWall": false,
+        "showTwitterFeed": false,
+        "submissions": [],
+        "visibility": "Public",
+        "isShownInPublicDirectory": false,
+        "isAdminOnly": false,
+        "categories": []
+      }
+    ]
+  },
+  "orgCategories": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 12,
+    "items": [
+      {
+        "id": 1324,
+        "institutionId": 39,
+        "legacyKey": 4913,
+        "name": "Academic",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1325,
+        "institutionId": 39,
+        "legacyKey": 4919,
+        "name": "Arts",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1326,
+        "institutionId": 39,
+        "legacyKey": 4921,
+        "name": "Recreation",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1327,
+        "institutionId": 39,
+        "legacyKey": 4917,
+        "name": "Cultural",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1328,
+        "institutionId": 39,
+        "legacyKey": 4912,
+        "name": "Fraternity or Sorority",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1329,
+        "institutionId": 39,
+        "legacyKey": 4920,
+        "name": "Media",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1331,
+        "institutionId": 39,
+        "legacyKey": 5235,
+        "name": "Political",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1332,
+        "institutionId": 39,
+        "legacyKey": 4914,
+        "name": "Pre-Professional",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1333,
+        "institutionId": 39,
+        "legacyKey": 4918,
+        "name": "Religious",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1334,
+        "institutionId": 39,
+        "legacyKey": 4915,
+        "name": "Service",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1335,
+        "institutionId": 39,
+        "legacyKey": 4916,
+        "name": "Social",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 4359,
+        "institutionId": 39,
+        "legacyKey": 0,
+        "name": "University Resources",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      }
+    ]
+  },
+  "eventCategories": {
+    "items": []
+  }
+}

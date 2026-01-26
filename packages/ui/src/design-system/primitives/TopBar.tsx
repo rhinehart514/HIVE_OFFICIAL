@@ -130,41 +130,44 @@ export function TopBarBreadcrumbs({ items }: TopBarBreadcrumbsProps) {
 
   return (
     <nav className="flex items-center gap-1.5">
-      {items.map((item, index) => (
-        <React.Fragment key={index}>
-          {index > 0 && (
-            <span className="text-body-sm" style={{ color: TOPBAR_TOKENS.textMuted }}>/</span>
-          )}
-          {item.onClick || item.href ? (
-            <button
-              onClick={item.onClick}
-              className={cn(
-                'text-body-sm font-medium transition-colors rounded px-1 -mx-1',
-                'hover:text-white',
-                FOCUS_RING
-              )}
-              style={{
-                color: index === items.length - 1
-                  ? TOPBAR_TOKENS.textPrimary
-                  : TOPBAR_TOKENS.textSecondary,
-              }}
-            >
-              {item.label}
-            </button>
-          ) : (
-            <span
-              className="text-body-sm font-medium"
-              style={{
-                color: index === items.length - 1
-                  ? TOPBAR_TOKENS.textPrimary
-                  : TOPBAR_TOKENS.textSecondary,
-              }}
-            >
-              {item.label}
-            </span>
-          )}
-        </React.Fragment>
-      ))}
+      {items.map((item, index) => {
+        const isCurrentPage = index === items.length - 1;
+        const isClickable = item.onClick || item.href;
+
+        return (
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <span className="text-body-sm" style={{ color: TOPBAR_TOKENS.textMuted }}>/</span>
+            )}
+            {isClickable && !isCurrentPage ? (
+              <button
+                onClick={item.onClick}
+                className={cn(
+                  'text-body-sm transition-colors rounded px-1 -mx-1',
+                  'hover:text-white',
+                  FOCUS_RING
+                )}
+                style={{ color: TOPBAR_TOKENS.textSecondary }}
+              >
+                {item.label}
+              </button>
+            ) : (
+              <span
+                className={cn(
+                  'text-body-sm',
+                  isCurrentPage && 'font-semibold'
+                )}
+                style={{
+                  color: isCurrentPage ? TOPBAR_TOKENS.textPrimary : TOPBAR_TOKENS.textSecondary,
+                }}
+                aria-current={isCurrentPage ? 'page' : undefined}
+              >
+                {item.label}
+              </span>
+            )}
+          </React.Fragment>
+        );
+      })}
     </nav>
   );
 }

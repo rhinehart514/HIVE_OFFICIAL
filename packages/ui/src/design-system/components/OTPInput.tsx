@@ -25,6 +25,7 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES
@@ -54,13 +55,6 @@ export interface OTPInputProps {
   /** Accessible label */
   label?: string;
 }
-
-// ============================================
-// CONSTANTS
-// ============================================
-
-// Premium easing from LANGUAGE.md
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // ============================================
 // MAIN COMPONENT

@@ -1,0 +1,61 @@
+[
+  {
+    "id": 11965350,
+    "institutionId": 4164,
+    "organizationId": 286783,
+    "submittedByOrganizationId": 286783,
+    "organizationIds": [
+      286783
+    ],
+    "eventSubmissionId": 13637695,
+    "imagePath": "d6c4ec8d-9917-453f-a825-f7bf2a61b2aa671c8d57-92e6-429f-bd21-56dea0836bdc.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/d6c4ec8d-9917-453f-a825-f7bf2a61b2aa671c8d57-92e6-429f-bd21-56dea0836bdc.png",
+    "name": "Military Monday - Forged By Valor - Tabling & Talk",
+    "description": "<p>Forged By Valor, a comprehensive welding and fabrication program, will be on site to share information about their training and certification opportunities.&nbsp; The training program is open to all.&nbsp; Veterans may qualify for full tuition coverage thanks to a partnership with the Veterans Outreach Center.</p>\r\n<p>Representatives from Forged By Valor will be in the Seymour Union from 11am to 1pm.</p>\r\n<p>A presentation by Forged By Valor will then take place in the Veterans Lounge (2nd Floor of Drake Memorial Library) at 2:30pm.</p>\r\n<p>&nbsp;</p>\r\n<p>For more information, please visit&nbsp;<a href=\"https://forgedbyvalor.com/\">https://forgedbyvalor.com/</a>&nbsp;</p>",
+    "startsOn": "2026-01-26T11:00:00-05:00",
+    "endsOn": "2026-01-26T13:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Seymour Union",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": "",
+      "provider": null
+    },
+    "theme": "ThoughtfulLearning",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 11965350,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 46329427,
+      "accountId": "c5c90ad8-20e5-45bd-be8b-efe09aaddf36",
+      "username": "kpardun",
+      "campusEmail": "kpardun@brockport.edu"
+    },
+    "accessCode": null,
+    "rsvpSettings": null,
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

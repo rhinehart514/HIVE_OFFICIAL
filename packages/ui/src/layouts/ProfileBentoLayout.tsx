@@ -14,9 +14,9 @@ export const ProfileBentoLayout: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Avatar */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl bg-gradient-to-br from-[var(--hive-brand-secondary)] to-[var(--hive-brand-secondary-hover)] p-1">
+              <div className="w-32 h-32 lg:w-40 lg:h-40 rounded-2xl bg-gradient-to-br from-[var(--hive-gold)] to-[var(--hive-gold-hover)] p-1">
                 <div className="w-full h-full bg-black rounded-xl flex items-center justify-center">
-                  <span className="text-5xl font-black text-[var(--hive-brand-secondary)]">JD</span>
+                  <span className="text-5xl font-black text-[var(--hive-gold)]">JD</span>
                 </div>
               </div>
             </div>
@@ -25,14 +25,14 @@ export const ProfileBentoLayout: React.FC = () => {
             <div className="flex-1 space-y-4">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-black text-white">John Doe</h1>
-                <p className="text-[var(--hive-brand-secondary)] text-lg">@johndoe</p>
+                <p className="text-[var(--hive-gold)] text-lg">@johndoe</p>
               </div>
               <p className="text-white/70 max-w-2xl">
                 CS Major • Class of 2026 • Building the future at HIVE. Passionate about AI,
                 web3, and making campus life better through technology.
               </p>
               <div className="flex gap-3">
-                <button className="px-6 py-2 bg-[var(--hive-brand-secondary)] text-black font-semibold rounded-lg hover:bg-[var(--hive-brand-secondary-hover)] transition-colors">
+                <button className="px-6 py-2 bg-[var(--hive-gold)] text-black font-semibold rounded-lg hover:bg-[var(--hive-gold-hover)] transition-colors">
                   Edit Profile
                 </button>
                 <button className="px-6 py-2 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors">
@@ -98,7 +98,7 @@ export const ProfileBentoLayout: React.FC = () => {
           <BentoCard
             className="lg:col-span-4 lg:row-span-2"
             title="Achievements"
-            gradient="from-[var(--hive-brand-secondary)]/10"
+            gradient="from-[var(--hive-gold)]/10"
           >
             <div className="flex gap-3 mt-4">
               <Badge icon="🏆" name="Early Adopter" />
@@ -117,9 +117,9 @@ export const ProfileBentoLayout: React.FC = () => {
               <span className="text-white/70 text-sm">First Light Progress</span>
               <div className="flex items-center gap-2">
                 <div className="w-24 bg-white/20 rounded-full h-2">
-                  <div className="h-full bg-[var(--hive-brand-secondary)] rounded-full w-[72%]" />
+                  <div className="h-full bg-[var(--hive-gold)] rounded-full w-[72%]" />
                 </div>
-                <span className="text-[var(--hive-brand-secondary)] text-sm font-semibold">72%</span>
+                <span className="text-[var(--hive-gold)] text-sm font-semibold">72%</span>
               </div>
             </div>
           </BentoCard>
@@ -159,7 +159,7 @@ const BentoCard: React.FC<{
     hover:border-white/20 transition-all group
     ${className}
   `}>
-    <h3 className="text-white font-semibold group-hover:text-[var(--hive-brand-secondary)] transition-colors">
+    <h3 className="text-white font-semibold group-hover:text-[var(--hive-gold)] transition-colors">
       {title}
     </h3>
     {children}
@@ -169,7 +169,7 @@ const BentoCard: React.FC<{
 // Sub-components
 const StatItem: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="text-center lg:text-left">
-    <div className="text-2xl font-bold text-[var(--hive-brand-secondary)]">{value}</div>
+    <div className="text-2xl font-bold text-[var(--hive-gold)]">{value}</div>
     <div className="text-white/60 text-sm">{label}</div>
   </div>
 );
@@ -181,7 +181,7 @@ const SpaceThumbnail = () => (
 const ToolItem: React.FC<{ name: string; uses: number }> = ({ name, uses }) => (
   <div className="flex items-center justify-between p-2 rounded hover:bg-white/5">
     <span className="text-white/80 text-sm">{name}</span>
-    <span className="text-[var(--hive-brand-secondary)] text-xs">{uses} uses</span>
+    <span className="text-[var(--hive-gold)] text-xs">{uses} uses</span>
   </div>
 );
 

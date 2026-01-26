@@ -83,16 +83,16 @@ const NavButton: React.FC<{
     default: cn(
       'flex items-center gap-3 px-4 py-3 rounded-lg font-medium',
       isActive
-        ? 'bg-[var(--hive-brand-secondary)]/10 text-[var(--hive-brand-secondary)] border-l-4 border-[var(--hive-brand-secondary)]'
+        ? 'bg-[var(--hive-gold)]/10 text-[var(--hive-gold)] border-l-4 border-[var(--hive-gold)]'
         : 'text-white/60 hover:text-white hover:bg-white/5'
     ),
     compact: cn(
       'p-2 rounded-lg',
-      isActive ? 'bg-[var(--hive-brand-secondary)] text-black' : 'text-white/60 hover:text-white'
+      isActive ? 'bg-[var(--hive-gold)] text-black' : 'text-white/60 hover:text-white'
     ),
     mobile: cn(
       'flex flex-col items-center justify-center p-3 min-w-[60px]',
-      isActive ? 'text-[var(--hive-brand-secondary)]' : 'text-white/60'
+      isActive ? 'text-[var(--hive-gold)]' : 'text-white/60'
     )
   };
 
@@ -123,14 +123,14 @@ const NavButton: React.FC<{
 
       {/* Badge */}
       {item.badge && variant !== 'mobile' && (
-        <span className="nav-badge ml-auto bg-[var(--hive-brand-secondary)] text-black text-xs font-bold px-2 py-1 rounded-full">
+        <span className="nav-badge ml-auto bg-[var(--hive-gold)] text-black text-xs font-bold px-2 py-1 rounded-full">
           {item.badge}
         </span>
       )}
 
       {/* Active Indicator for Mobile */}
       {variant === 'mobile' && isActive && (
-        <span className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--hive-brand-secondary)] rounded-full" />
+        <span className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-[var(--hive-gold)] rounded-full" />
       )}
     </button>
   );
@@ -227,7 +227,7 @@ export const CommandPalette: React.FC<{ open: boolean; onOpenChange: (open: bool
                   className={cn(
                     'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left',
                     index === selectedIndex
-                      ? 'bg-[var(--hive-brand-secondary)]/10 text-[var(--hive-brand-secondary)]'
+                      ? 'bg-[var(--hive-gold)]/10 text-[var(--hive-gold)]'
                       : 'text-white/60 hover:text-white hover:bg-white/5'
                   )}
                 >
@@ -266,7 +266,7 @@ export const Breadcrumbs: React.FC<{
           {item.path ? (
             <button
               onClick={() => router.push(item.path!)}
-              className="text-white/60 hover:text-[var(--hive-brand-secondary)] transition-colors"
+              className="text-white/60 hover:text-[var(--hive-gold)] transition-colors"
             >
               {item.label}
             </button>
@@ -295,7 +295,7 @@ export const TabNav: React.FC<{
           className={cn(
             'flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-all',
             activeTab === tab.id
-              ? 'bg-[var(--hive-brand-secondary)] text-black shadow-lg'
+              ? 'bg-[var(--hive-gold)] text-black shadow-lg'
               : 'text-white/60 hover:text-white hover:bg-white/5'
           )}
         >

@@ -31,10 +31,12 @@ export async function createBlankTool(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to create tool');
+    throw new Error(error.error || error.message || 'Failed to create tool');
   }
 
-  const data = await response.json();
+  const result = await response.json();
+  // API returns { success: true, data: { tool: {...} } }
+  const data = result.data || result;
   return data.tool.id;
 }
 
@@ -78,10 +80,12 @@ export async function createToolFromTemplateApi(
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to create tool from template');
+    throw new Error(error.error || error.message || 'Failed to create tool from template');
   }
 
-  const data = await response.json();
+  const result = await response.json();
+  // API returns { success: true, data: { tool: {...} } }
+  const data = result.data || result;
   return data.tool.id;
 }
 

@@ -77,6 +77,7 @@ import {
   type AtmosphereLevel
 } from '../AtmosphereProvider';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES
@@ -169,8 +170,6 @@ export interface GridProps {
 // ============================================
 // CONSTANTS
 // ============================================
-
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 const MAX_WIDTH_VALUES: Record<string, string> = {
   lg: '1024px',

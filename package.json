@@ -37,7 +37,15 @@
     "migration:run": "npx tsx scripts/migrations/runner.ts run",
     "migration:status": "npx tsx scripts/migrations/runner.ts status",
     "migration:rollback": "npx tsx scripts/migrations/runner.ts rollback",
-    "migration:create": "npx tsx scripts/migrations/runner.ts create"
+    "migration:create": "npx tsx scripts/migrations/runner.ts create",
+    "memory:check": "./scripts/check-memory.sh",
+    "memory:free": "./scripts/free-memory.sh",
+    "memory:close-apps": "./scripts/close-apps.sh",
+    "memory:cleanup": "./scripts/cleanup-memory.sh",
+    "memory:cleanup:aggressive": "./scripts/cleanup-memory.sh --aggressive",
+    "npm:reinstall": "./scripts/reinstall-npm.sh",
+    "claude:reinstall": "./scripts/reinstall-claude.sh",
+    "goose:generate-dataset": "NODE_OPTIONS='--max-old-space-size=4096' pnpm tsx packages/core/src/hivelab/goose/training/generate-dataset.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

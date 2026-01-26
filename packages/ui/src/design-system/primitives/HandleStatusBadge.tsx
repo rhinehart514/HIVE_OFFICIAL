@@ -14,6 +14,7 @@ import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 export type HandleBadgeStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
 
@@ -29,9 +30,6 @@ export interface HandleStatusBadgeProps {
   /** Additional class names */
   className?: string;
 }
-
-// LOCKED: Premium easing
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // Status configurations
 const statusConfig: Record<

@@ -55,9 +55,14 @@ function EntryPageFallback() {
  */
 function EntryContent() {
   const [emotionalState, setEmotionalState] = useState<EmotionalState>('neutral');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleEmotionalStateChange = useCallback((state: EmotionalState) => {
     setEmotionalState(state);
+  }, []);
+
+  const handleLoadingStateChange = useCallback((loading: boolean) => {
+    setIsLoading(loading);
   }, []);
 
   return (
@@ -65,8 +70,12 @@ function EntryContent() {
       emotionalState={emotionalState}
       showProgress={false}
       scrollable={true}
+      isLoading={isLoading}
     >
-      <EvolvingEntry onEmotionalStateChange={handleEmotionalStateChange} />
+      <EvolvingEntry
+        onEmotionalStateChange={handleEmotionalStateChange}
+        onLoadingStateChange={handleLoadingStateChange}
+      />
     </EntryShell>
   );
 }

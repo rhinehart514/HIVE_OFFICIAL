@@ -236,7 +236,7 @@ const ModalRenderer: React.FC<{
                 onClick={action.onClick}
                 className={cn(
                   'px-4 py-2 rounded-lg font-medium transition-all',
-                  action.variant === 'primary' && 'bg-[var(--hive-brand-secondary)] text-black hover:bg-[var(--hive-brand-secondary-hover)]',
+                  action.variant === 'primary' && 'bg-[var(--hive-gold)] text-black hover:bg-[var(--hive-gold-hover)]',
                   action.variant === 'secondary' && 'bg-white/10 text-white hover:bg-white/20',
                   action.variant === 'danger' && 'bg-red-500 text-white hover:bg-red-600',
                   !action.variant && 'bg-white/10 text-white hover:bg-white/20'
@@ -294,7 +294,7 @@ const ToastItem: React.FC<{
     success: 'border-green-500 bg-green-500/10',
     error: 'border-red-500 bg-red-500/10',
     warning: 'border-orange-500 bg-orange-500/10',
-    info: 'border-[var(--hive-brand-secondary)] bg-[var(--hive-brand-secondary)]/10',
+    info: 'border-[var(--hive-gold)] bg-[var(--hive-gold)]/10',
   };
 
   const typeIcons = {
@@ -321,7 +321,7 @@ const ToastItem: React.FC<{
           toast.type === 'success' && 'bg-green-500 text-white',
           toast.type === 'error' && 'bg-red-500 text-white',
           toast.type === 'warning' && 'bg-orange-500 text-white',
-          (!toast.type || toast.type === 'info') && 'bg-[var(--hive-brand-secondary)] text-black'
+          (!toast.type || toast.type === 'info') && 'bg-[var(--hive-gold)] text-black'
         )}>
           {typeIcons[toast.type || 'info']}
         </span>
@@ -335,7 +335,7 @@ const ToastItem: React.FC<{
           {toast.action && (
             <button
               onClick={toast.action.onClick}
-              className="mt-2 text-sm font-medium text-[var(--hive-brand-secondary)] hover:text-[var(--hive-brand-secondary-hover)] transition-colors"
+              className="mt-2 text-sm font-medium text-[var(--hive-gold)] hover:text-[var(--hive-gold-hover)] transition-colors"
             >
               {toast.action.label}
             </button>

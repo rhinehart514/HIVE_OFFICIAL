@@ -20,7 +20,7 @@ import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@hive/auth-logic';
 import { logger } from '@/lib/structured-logger';
-import { toast } from '@hive/ui';
+import { toast, EASE_PREMIUM } from '@hive/ui';
 import { Card, Button, Text } from '@hive/ui/design-system/primitives';
 import { ProfileContextProvider, useProfileContext } from '@/components/profile/ProfileContextProvider';
 import { ProfileSection } from './components/profile-section';
@@ -35,7 +35,7 @@ import { useDataExport } from './hooks/use-data-export';
 import type { UserSpace } from './types';
 
 // LOCKED: Premium easing from design system
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 // Layer 3: Micro-motion - entrance only, subtle
 const fadeIn = (delay: number) => ({

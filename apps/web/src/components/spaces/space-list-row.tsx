@@ -48,6 +48,10 @@ export interface SpaceListRowSpace {
   // Events
   upcomingEventCount?: number;
   nextEventTitle?: string;
+  // CampusLabs imported metadata
+  orgTypeName?: string;
+  email?: string;
+  source?: 'ublinked' | 'user-created';
 }
 
 export interface SpaceListRowProps {
@@ -236,6 +240,16 @@ export function SpaceListRow({
           <Text size="xs" className="text-white/40">
             {space.memberCount.toLocaleString()} {space.memberCount === 1 ? 'member' : 'members'}
           </Text>
+
+          {/* Org type (for imported spaces) */}
+          {space.orgTypeName && space.source === 'ublinked' && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-white/20" />
+              <Text size="xs" className="text-white/30 truncate max-w-[100px]">
+                {space.orgTypeName}
+              </Text>
+            </>
+          )}
 
           {/* Mutual friends */}
           {space.mutualCount != null && space.mutualCount > 0 && (

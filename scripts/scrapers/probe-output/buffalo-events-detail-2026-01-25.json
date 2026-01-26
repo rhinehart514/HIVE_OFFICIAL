@@ -1,0 +1,236 @@
+[
+  {
+    "id": 12105015,
+    "institutionId": 6,
+    "organizationId": 61070,
+    "submittedByOrganizationId": 61070,
+    "organizationIds": [
+      61070
+    ],
+    "eventSubmissionId": 13752239,
+    "imagePath": "7bcc0c35-41b8-4c0e-b263-cb28a994309a46221382-d460-4dc2-82d7-e8317eddfeeb.pdf",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/7bcc0c35-41b8-4c0e-b263-cb28a994309a46221382-d460-4dc2-82d7-e8317eddfeeb.pdf",
+    "name": "Late Night: Wicked For Good",
+    "description": "<p>Look to the western sky and join us in the Spaulding Movie Lounge for a showing of Wicked For Good! Popcorn, snacks, and refreshments will be available to snack on during the movie. First showing at 8 PM, and second showing at 10:30 PM on Friday and Saturday, January 23rd and 24th!</p>",
+    "startsOn": "2026-01-24T20:00:00-05:00",
+    "endsOn": "2026-01-24T23:45:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Spaulding Movie Lounge",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": null,
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [
+      "FreeFood"
+    ],
+    "categories": [],
+    "state": {
+      "eventId": 12105015,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 26259059,
+      "accountId": "63a9d586-bcf4-4539-8ad2-92e5992951dc",
+      "username": "50341885",
+      "campusEmail": "rcelish@buffalo.edu",
+      "swipeCardIdentifier": "50341885"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": true
+  },
+  {
+    "id": 12100556,
+    "institutionId": 6,
+    "organizationId": 61074,
+    "submittedByOrganizationId": 61074,
+    "organizationIds": [
+      61074
+    ],
+    "eventSubmissionId": 13748340,
+    "imagePath": null,
+    "imageUrl": "https://static.campuslabsengage.com/discovery/images/events/social.jpg",
+    "name": "Late Night Games @ Clement Hall",
+    "description": "<p>Join us in the Clement Hall main lobby and main lounge on the first floor every Friday and Saturdays from 8:30pm-12:00am.<br /><br />There are snacks, drinks, board games, card games, ping pong, and billiards supply rentals.&nbsp;<br /><br />Bring some friends for some fun, or make some new friends and learn a new game.&nbsp;</p>",
+    "startsOn": "2026-01-24T20:30:00-05:00",
+    "endsOn": "2026-01-24T23:45:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Clement Main Lounge",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": null,
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [
+      "FreeFood",
+      "Merchandise"
+    ],
+    "categories": [],
+    "state": {
+      "eventId": 12100556,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 30196982,
+      "accountId": "8c7a4cb4-700b-4d2e-965e-b50cbaebf83c",
+      "username": "50405247",
+      "campusEmail": "jlester5@buffalo.edu",
+      "swipeCardIdentifier": "50405247"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  },
+  {
+    "id": 12050707,
+    "institutionId": 6,
+    "organizationId": 365643,
+    "submittedByOrganizationId": 365643,
+    "organizationIds": [
+      365643
+    ],
+    "eventSubmissionId": 13707496,
+    "imagePath": "e93aee1d-aa47-49ac-b8d1-d826586786a2675fc5d2-16bb-4193-bbfd-f98bbd931286.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/e93aee1d-aa47-49ac-b8d1-d826586786a2675fc5d2-16bb-4193-bbfd-f98bbd931286.png",
+    "name": "H2O Sunday Service",
+    "description": "<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>\r\n<div>&nbsp;</div>\r\n</div>\r\n</div>\r\n</div>\r\n</div>\r\n</div>\r\n</div>\r\n<div>\r\n<p>The purpose of our Sunday Service is to gather together to worship God as a family. We believe that it is not just a meeting, but an opportunity to hear from God through His Word and through others. No matter where you are in your faith journey, you are welcome to join us as you are every Sunday.</p>\r\n<div class=\"DescriptionText\">\r\n<p>You can expect:</p>\r\n<ul>\r\n<li>Authentic worship music so that we may praise Him together</li>\r\n<li>Solid Biblical teaching that applies to your life</li>\r\n<li>Real stories about what God is doing in people&rsquo;s lives</li>\r\n<li>Conversation and fellowship before and after each gathering</li>\r\n</ul>\r\n<p>Our Sunday Services are at 10:30am on campus every week!&nbsp;</p>\r\n</div>\r\n</div>",
+    "startsOn": "2026-01-25T10:30:00-05:00",
+    "endsOn": "2026-01-25T11:45:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "SU 330 Pride & Tradition Assembly Hall",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": null,
+      "provider": null
+    },
+    "theme": "Spirituality",
+    "benefits": [],
+    "categories": [
+      {
+        "id": 19421,
+        "name": "Spiritual/Religion",
+        "isVisibleOnPublicSite": true
+      },
+      {
+        "id": 19427,
+        "name": "North Campus",
+        "isVisibleOnPublicSite": true
+      }
+    ],
+    "state": {
+      "eventId": 12050707,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 36393748,
+      "accountId": "cbdf9be1-32a0-4f32-8f16-af39ca99472c",
+      "username": "38375461",
+      "campusEmail": "Kgmayse@buffalo.edu"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

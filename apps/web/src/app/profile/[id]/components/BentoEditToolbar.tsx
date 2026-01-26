@@ -11,9 +11,10 @@
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EASE_PREMIUM } from '@hive/ui';
 
 // LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 interface BentoEditToolbarProps {
   isVisible: boolean;

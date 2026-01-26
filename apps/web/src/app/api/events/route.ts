@@ -43,6 +43,7 @@ export const GET = withAuthAndErrors(async (
     );
 
     // Build query for campus-wide events
+    // First try with campusId filter, then fall back to include imported events
     let query: FirebaseFirestore.Query = dbAdmin
       .collection("events")
       .where("campusId", "==", campusId);
@@ -72,9 +73,32 @@ export const GET = withAuthAndErrors(async (
 
     query = query.offset(queryParams.offset).limit(queryParams.limit);
 
-    const eventsSnapshot = await query.get();
-    const events: Array<Record<string, unknown>> = [];
+    let eventsSnapshot = await query.get();
 
+    // Fallback: If querying for a specific space and no events found,
+    // try without campusId filter to include imported/legacy events
+    if (eventsSnapshot.empty && queryParams.spaceId) {
+      logger.info('No events found with campusId, trying fallback query for space', {
+        spaceId: queryParams.spaceId,
+        campusId,
+      });
+      let fallbackQuery: FirebaseFirestore.Query = dbAdmin
+        .collection("events")
+        .where("spaceId", "==", queryParams.spaceId);
+
+      if (queryParams.upcoming) {
+        fallbackQuery = fallbackQuery.where("startDate", ">=", now).orderBy("startDate", "asc");
+      } else {
+        fallbackQuery = fallbackQuery.where("startDate", "<", now).orderBy("startDate", "desc");
+      }
+
+      if (queryParams.type) {
+        fallbackQuery = fallbackQuery.where("type", "==", queryParams.type);
+      }
+
+      fallbackQuery = fallbackQuery.offset(queryParams.offset).limit(queryParams.limit);
+      eventsSnapshot = await fallbackQuery.get();
+    }
     // Get user's spaces for membership-based filtering
     let userSpaceIds: Set<string> = new Set();
     if (queryParams.myEvents) {
@@ -88,22 +112,23 @@ export const GET = withAuthAndErrors(async (
       }));
     }
 
-    // Batch fetch organizer data for efficiency
+    // COST OPTIMIZATION: Collect all unique IDs for batch fetching
     const organizerIds = new Set<string>();
     const spaceIds = new Set<string>();
+    const eventIds: string[] = [];
 
     for (const doc of eventsSnapshot.docs) {
       const eventData = doc.data();
+      eventIds.push(doc.id);
       if (eventData.organizerId) organizerIds.add(eventData.organizerId);
       if (eventData.spaceId) spaceIds.add(eventData.spaceId);
     }
 
-    // Fetch all organizers in batch
+    // COST OPTIMIZATION: Batch fetch all organizers in ONE call (N+1 → 1)
     const organizerMap = new Map<string, Record<string, unknown>>();
     if (organizerIds.size > 0) {
-      const organizerDocs = await Promise.all(
-        Array.from(organizerIds).map(id => dbAdmin.collection("users").doc(id).get())
-      );
+      const organizerRefs = Array.from(organizerIds).map(id => dbAdmin.collection("users").doc(id));
+      const organizerDocs = await dbAdmin.getAll(...organizerRefs);
       for (const doc of organizerDocs) {
         if (doc.exists) {
           organizerMap.set(doc.id, doc.data() as Record<string, unknown>);
@@ -111,18 +136,44 @@ export const GET = withAuthAndErrors(async (
       }
     }
 
-    // Fetch all spaces in batch for space info
+    // COST OPTIMIZATION: Batch fetch all spaces in ONE call (N+1 → 1)
     const spaceMap = new Map<string, Record<string, unknown>>();
     if (spaceIds.size > 0) {
-      const spaceDocs = await Promise.all(
-        Array.from(spaceIds).map(id => dbAdmin.collection("spaces").doc(id).get())
-      );
+      const spaceRefs = Array.from(spaceIds).map(id => dbAdmin.collection("spaces").doc(id));
+      const spaceDocs = await dbAdmin.getAll(...spaceRefs);
       for (const doc of spaceDocs) {
         if (doc.exists) {
           spaceMap.set(doc.id, doc.data() as Record<string, unknown>);
         }
       }
     }
+
+    // COST OPTIMIZATION: Batch fetch user's RSVPs for all events (N+1 → 1)
+    // Note: Firestore 'in' queries support up to 30 values
+    const userRsvpMap = new Map<string, string>();
+    if (eventIds.length > 0) {
+      const chunks = [];
+      for (let i = 0; i < eventIds.length; i += 30) {
+        chunks.push(eventIds.slice(i, i + 30));
+      }
+      for (const chunk of chunks) {
+        const userRsvps = await dbAdmin
+          .collection("rsvps")
+          .where("eventId", "in", chunk)
+          .where("userId", "==", userId)
+          .get();
+        for (const rsvpDoc of userRsvps.docs) {
+          const rsvpData = rsvpDoc.data();
+          userRsvpMap.set(rsvpData.eventId, rsvpData.status);
+        }
+      }
+    }
+
+    // COST OPTIMIZATION: Use cached RSVP counts from event data instead of N+1 queries
+    // Events should store attendeeCount/goingCount that gets updated on RSVP changes
+    // This avoids N queries for RSVP counts
+
+    const events: Array<Record<string, unknown>> = [];
 
     for (const doc of eventsSnapshot.docs) {
       const eventData = doc.data();
@@ -152,21 +203,11 @@ export const GET = withAuthAndErrors(async (
 
       const organizer = eventData.organizerId ? organizerMap.get(eventData.organizerId) : null;
 
-      // Get user's RSVP status
-      const userRsvpQuery = await dbAdmin
-        .collection("rsvps")
-        .where("eventId", "==", doc.id)
-        .where("userId", "==", userId)
-        .limit(1)
-        .get();
-      const userRsvpDoc = userRsvpQuery.docs[0];
+      // Use batch-fetched RSVP status (no per-event query)
+      const userRsvpStatus = userRsvpMap.get(doc.id) || null;
 
-      // Get RSVP counts
-      const rsvpCountSnapshot = await dbAdmin
-        .collection("rsvps")
-        .where("eventId", "==", doc.id)
-        .where("status", "==", "going")
-        .get();
+      // Use cached count from event data (avoids N+1 RSVP count queries)
+      const goingCount = eventData.attendeeCount || eventData.goingCount || eventData.rsvpCount || 0;
 
       events.push({
         id: doc.id,
@@ -202,17 +243,22 @@ export const GET = withAuthAndErrors(async (
           : null,
         isCampusWide: eventData.isCampusWide === true || !eventData.spaceId,
         maxCapacity: eventData.maxAttendees || 100,
-        currentCapacity: rsvpCountSnapshot.size,
+        currentCapacity: goingCount,
         tags: eventData.tags || [],
         visibility: eventData.isPrivate ? 'invited_only' : 'public',
-        rsvpStatus: userRsvpDoc?.exists ? userRsvpDoc.data()?.status : null,
+        rsvpStatus: userRsvpStatus,
         isBookmarked: false, // Would need separate bookmarks collection
-        goingCount: rsvpCountSnapshot.size,
-        interestedCount: 0, // Would need separate query
-        commentsCount: 0, // Would need separate query
+        goingCount: goingCount,
+        interestedCount: 0, // Would need separate collection/cached field
+        commentsCount: 0, // Would need separate collection/cached field
         sharesCount: 0,
         createdAt: eventData.createdAt?.toDate?.()?.toISOString() || eventData.createdAt,
         updatedAt: eventData.updatedAt?.toDate?.()?.toISOString() || eventData.updatedAt,
+        // CampusLabs imported event metadata
+        theme: eventData.theme || null,
+        benefits: eventData.benefits || [],
+        source: eventData.source || 'user-created',
+        sourceUrl: eventData.sourceUrl || null,
       });
     }
 

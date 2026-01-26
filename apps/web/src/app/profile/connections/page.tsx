@@ -18,6 +18,7 @@ import {
   Text,
   getInitials,
 } from '@hive/ui/design-system/primitives';
+import { EASE_PREMIUM } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 
 // Types for connections API
@@ -71,7 +72,7 @@ interface ConnectionStats {
 }
 
 // LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 const fadeIn = (delay: number) => ({
   initial: { opacity: 0, y: 8 },

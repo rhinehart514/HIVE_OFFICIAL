@@ -41,6 +41,11 @@ export interface SpaceEventDetails {
     fullName: string;
     photoURL?: string;
   };
+  // CampusLabs imported event metadata
+  theme?: string;
+  benefits?: string[];
+  source?: 'ublinked' | 'user-created';
+  sourceUrl?: string;
 }
 
 export interface EventDetailsModalProps {
@@ -53,6 +58,10 @@ export interface EventDetailsModalProps {
   onViewBoard?: (boardId: string) => void;
   currentUserId?: string;
   spaceId?: string;
+  /** Whether the current user can edit this event (space leader/organizer) */
+  canEdit?: boolean;
+  /** Callback when user clicks edit */
+  onEdit?: (eventId: string) => void;
 }
 
 const EVENT_TYPE_ICONS: Record<string, string> = {
@@ -121,6 +130,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   onRSVP,
   onNavigateToBoard,
   onViewBoard,
+  canEdit,
+  onEdit,
 }) => {
   const [isUpdating, setIsUpdating] = React.useState(false);
   const [currentRSVP, setCurrentRSVP] = React.useState<RSVPStatus>(null);
@@ -185,6 +196,34 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <Text size="sm" className="text-[var(--color-text-secondary)]">
               {event.description}
             </Text>
+          )}
+
+          {/* Event Theme */}
+          {event.theme && (
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-full bg-[var(--color-bg-muted)] text-xs text-[var(--color-text-muted)]">
+                {event.theme}
+              </span>
+            </div>
+          )}
+
+          {/* Benefits (CampusLabs imported) */}
+          {event.benefits && event.benefits.length > 0 && (
+            <div className="space-y-2">
+              <Text size="xs" weight="medium" className="text-[var(--color-text-muted)]">
+                Benefits
+              </Text>
+              <div className="flex flex-wrap gap-1.5">
+                {event.benefits.map((benefit, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 rounded-md bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]"
+                  >
+                    {benefit}
+                  </span>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Date & Time */}
@@ -390,7 +429,20 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
           )}
         </div>
 
-        <ModalFooter>
+        <ModalFooter className="flex justify-between">
+          <div>
+            {canEdit && onEdit && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onEdit(event.id);
+                  handleOpenChange(false);
+                }}
+              >
+                Edit Event
+              </Button>
+            )}
+          </div>
           <Button variant="ghost" onClick={() => handleOpenChange(false)}>
             Close
           </Button>

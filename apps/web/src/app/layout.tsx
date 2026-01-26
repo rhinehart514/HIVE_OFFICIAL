@@ -94,7 +94,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head />
-      <body style={{ backgroundColor: '#0A0A09', color: '#FAFAFA', minHeight: '100vh' }}>
+      <body className="bg-[var(--bg-ground)] text-[var(--text-primary)] min-h-screen">
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>

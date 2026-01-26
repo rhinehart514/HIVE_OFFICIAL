@@ -50,3 +50,22 @@ test-results/
 
 # Archived skills (still accessible if needed, but not auto-loaded)
 .claude/skills/_archived/
+
+# Large training data files (can cause memory issues when parsed)
+**/goose/training/data/*.jsonl
+**/goose/training/data/*.json
+**/training/data/*.jsonl
+**/training/data/*.json
+
+# Large build artifacts and caches
+.next.bak/
+*.pack.gz
+*.cache
+webpack-cache/
+
+# Large binary and data files
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.backup

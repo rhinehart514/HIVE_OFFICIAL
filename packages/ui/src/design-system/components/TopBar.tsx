@@ -77,17 +77,22 @@ const Breadcrumb: React.FC<{
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
             )}
             onClick={item.onClick}
+            aria-current={i === items.length - 1 ? 'page' : undefined}
           >
             {item.label}
           </button>
         ) : (
-          <Text
-            size="sm"
-            tone={i === items.length - 1 ? undefined : 'muted'}
-            weight={i === items.length - 1 ? 'medium' : undefined}
+          <span
+            className={cn(
+              'text-sm',
+              i === items.length - 1
+                ? 'text-[var(--color-text-primary)] font-medium'
+                : 'text-[var(--color-text-muted)]'
+            )}
+            aria-current={i === items.length - 1 ? 'page' : undefined}
           >
             {item.label}
-          </Text>
+          </span>
         )}
       </React.Fragment>
     ))}

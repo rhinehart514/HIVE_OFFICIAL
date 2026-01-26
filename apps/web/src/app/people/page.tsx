@@ -27,6 +27,7 @@ import {
   CategoryScroller,
   type CategoryItem,
 } from '@hive/ui/design-system/primitives';
+import { EASE_PREMIUM } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { secureApiFetch } from '@/lib/secure-auth-utils';
 import { logger } from '@/lib/logger';
@@ -72,7 +73,7 @@ const FILTER_OPTIONS: CategoryItem[] = [
   { value: 'seniors', label: 'Seniors' },
 ];
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 const fadeIn = (delay: number = 0) => ({
   initial: { opacity: 0, y: 10 },

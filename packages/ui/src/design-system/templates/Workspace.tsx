@@ -66,6 +66,7 @@ import {
   type AtmosphereLevel
 } from '../AtmosphereProvider';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES
@@ -116,8 +117,6 @@ export interface WorkspaceProps {
 // ============================================
 // CONSTANTS
 // ============================================
-
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 const DEFAULT_LEFT_RAIL_WIDTH = 280;
 const DEFAULT_RIGHT_RAIL_WIDTH = 320;

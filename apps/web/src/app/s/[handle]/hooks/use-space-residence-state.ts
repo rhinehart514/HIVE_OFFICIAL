@@ -12,6 +12,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 import type { Board, SpacePanelOnlineMember, UpcomingEvent, PinnedItem } from '@hive/ui';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
 
@@ -34,6 +35,21 @@ export interface SpaceResidenceData {
   isVerified: boolean;
   isMember: boolean;
   isLeader: boolean;
+  // CampusLabs imported metadata (P2.2, P2.3)
+  email?: string;
+  contactName?: string;
+  orgTypeName?: string;
+  foundedDate?: string;
+  source?: 'ublinked' | 'user-created';
+  sourceUrl?: string;
+  socialLinks?: {
+    website?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
 }
 
 export interface ChatMessage {
@@ -122,6 +138,7 @@ const DEFAULT_BOARDS: Board[] = [
 export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateReturn {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   // URL-driven board selection
   const initialBoard = searchParams.get('board') || 'general';
@@ -167,27 +184,42 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           }
           throw new Error('Failed to resolve space');
         }
-        const { spaceId } = await resolveResponse.json();
+        const resolveResult = await resolveResponse.json();
+        const spaceId = resolveResult.data?.spaceId || resolveResult.spaceId;
+
+        if (!spaceId) {
+          setError('Space not found');
+          return;
+        }
 
         // Fetch space data
         const spaceResponse = await fetch(`/api/spaces/${spaceId}`);
         if (!spaceResponse.ok) {
           throw new Error('Failed to load space');
         }
-        const spaceData = await spaceResponse.json();
+        const spaceResult = await spaceResponse.json();
+        const spaceData = spaceResult.data || spaceResult;
 
         setSpace({
           id: spaceId,
           handle: spaceData.slug || handle,
           name: spaceData.name || handle,
           description: spaceData.description,
-          avatarUrl: spaceData.avatarUrl,
-          bannerUrl: spaceData.bannerUrl,
+          avatarUrl: spaceData.avatarUrl || spaceData.iconURL,
+          bannerUrl: spaceData.bannerUrl || spaceData.coverImageURL,
           memberCount: spaceData.memberCount || 0,
           onlineCount: spaceData.onlineCount || 0,
           isVerified: spaceData.isVerified || false,
           isMember: spaceData.isMember || false,
           isLeader: spaceData.isLeader || false,
+          // CampusLabs imported metadata (P2.2, P2.3)
+          email: spaceData.email,
+          contactName: spaceData.contactName,
+          orgTypeName: spaceData.orgTypeName,
+          foundedDate: spaceData.foundedDate,
+          source: spaceData.source,
+          sourceUrl: spaceData.sourceUrl,
+          socialLinks: spaceData.socialLinks,
         });
 
         // Fetch boards for this space
@@ -206,8 +238,8 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
           }
         }
 
-        // Fetch upcoming events for this space
-        const eventsResponse = await fetch(`/api/events?spaceId=${spaceId}&upcoming=true&limit=5`);
+        // Fetch upcoming events for this space (increased limit from 5 to 20 for better coverage)
+        const eventsResponse = await fetch(`/api/events?spaceId=${spaceId}&upcoming=true&limit=20`);
         if (eventsResponse.ok) {
           const eventsData = await eventsResponse.json();
           const events = eventsData.data?.events || eventsData.events || [];
@@ -217,12 +249,21 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
             startTime?: string;
             locationName?: string;
             goingCount?: number;
+            rsvpStatus?: 'going' | 'maybe' | 'not_going' | null;
+            description?: string;
+            locationType?: string;
+            virtualLink?: string;
           }) => ({
             id: e.id,
             title: e.title,
             startTime: e.startTime,
             location: e.locationName || 'TBD',
             goingCount: e.goingCount || 0,
+            // P1.4: Map rsvpStatus from API to userRsvp for proper RSVP button state
+            userRsvp: e.rsvpStatus || null,
+            description: e.description,
+            isOnline: e.locationType === 'virtual',
+            virtualLink: e.virtualLink,
           })));
         }
 
@@ -325,6 +366,91 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     loadMembers();
   }, [space?.id, space?.isMember]);
 
+  // Update user's own presence when viewing space (heartbeat)
+  React.useEffect(() => {
+    if (!space?.id || !space.isMember) return;
+
+    const updatePresence = async (status: 'online' | 'offline' = 'online') => {
+      try {
+        await fetch('/api/realtime/presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status,
+            activity: {
+              type: 'viewing',
+              context: {
+                spaceId: space.id,
+                spaceName: space.name,
+              },
+            },
+          }),
+        });
+      } catch {
+        // Silent fail - presence updates are non-critical
+      }
+    };
+
+    // Set online when entering space
+    updatePresence('online');
+
+    // Send heartbeat every 60 seconds to stay "online"
+    const heartbeatInterval = setInterval(() => updatePresence('online'), 60000);
+
+    // Set offline when leaving
+    return () => {
+      clearInterval(heartbeatInterval);
+      updatePresence('offline');
+    };
+  }, [space?.id, space?.isMember, space?.name]);
+
+  // Real-time presence polling - updates online count every 30 seconds
+  React.useEffect(() => {
+    if (!space?.id || !space.isMember) return;
+
+    const fetchPresence = async () => {
+      try {
+        const response = await fetch(`/api/realtime/presence?spaceId=${space.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const spacePresence = data.spacePresence;
+          if (spacePresence) {
+            // Update online count from presence data
+            setSpace((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    onlineCount: spacePresence.statistics?.totalOnline || prev.onlineCount,
+                  }
+                : null
+            );
+            // Update online members list for the panel
+            if (spacePresence.activeUsers && spacePresence.activeUsers.length > 0) {
+              setOnlineMembers(
+                spacePresence.activeUsers.map((u: { userId: string; userName: string; status: string }) => ({
+                  id: u.userId,
+                  name: u.userName,
+                  avatarUrl: undefined, // Presence API doesn't include avatars
+                  status: u.status,
+                }))
+              );
+            }
+          }
+        }
+      } catch {
+        // Silent fail - presence polling is non-critical
+      }
+    };
+
+    // Initial fetch
+    fetchPresence();
+
+    // Poll every 30 seconds
+    const interval = setInterval(fetchPresence, 30000);
+
+    return () => clearInterval(interval);
+  }, [space?.id, space?.isMember]);
+
   // Update URL when board changes
   const setActiveBoard = React.useCallback(
     (boardId: string) => {
@@ -386,9 +512,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       // Revert optimistic update
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       console.error('Failed to send message:', error);
+      toast.error("Message failed to send", "Please try again");
       throw error;
     }
-  }, [activeBoard, space?.id]);
+  }, [activeBoard, space?.id, toast]);
 
   const joinSpace = React.useCallback(async () => {
     if (!space?.id) return;
@@ -423,9 +550,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       // Revert optimistic update
       setSpace((prev) => (prev ? { ...prev, isMember: false, memberCount: prev.memberCount - 1 } : null));
       console.error('Failed to join space:', error);
+      toast.error("Couldn't join space", "Please try again");
       throw error;
     }
-  }, [space?.id]);
+  }, [space?.id, toast]);
 
   const leaveSpace = React.useCallback(async () => {
     if (!space?.id) return;
@@ -452,9 +580,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       // Revert optimistic update
       setSpace((prev) => (prev ? { ...prev, isMember: true, memberCount: prev.memberCount + 1 } : null));
       console.error('Failed to leave space:', error);
+      toast.error("Couldn't leave space", "Please try again");
       throw error;
     }
-  }, [space?.id]);
+  }, [space?.id, toast]);
 
   const rsvpToEvent = React.useCallback(async (eventId: string, status: 'going' | 'maybe' | 'not_going' = 'going') => {
     if (!space?.id) return;
@@ -488,9 +617,10 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
       // Revert optimistic update
       setUpcomingEvents(previousEvents);
       console.error('Failed to RSVP:', error);
+      toast.error("RSVP failed", "Please try again");
       throw error;
     }
-  }, [space?.id, upcomingEvents]);
+  }, [space?.id, upcomingEvents, toast]);
 
   // Navigation
   const navigateBack = React.useCallback(() => {

@@ -272,9 +272,11 @@ export function useProfilePageState(): UseProfilePageStateReturn {
           credentials: 'include',
         });
         if (response.ok) {
-          const data = await response.json();
-          if (data.tools) {
-            setUserTools(data.tools.map((tool: { id: string; name: string; deployments?: { spaceId: string }[]; usageCount?: number; status?: string; updatedAt?: string }) => ({
+          const result = await response.json();
+          // API returns { success: true, data: { tools: [...] } }
+          const tools = result.data?.tools || result.tools || [];
+          if (tools.length > 0) {
+            setUserTools(tools.map((tool: { id: string; name: string; deployments?: { spaceId: string }[]; usageCount?: number; status?: string; updatedAt?: string }) => ({
               id: tool.id,
               name: tool.name,
               deployedToSpaces: tool.deployments?.length ?? 0,

@@ -73,6 +73,7 @@ import {
   useAtmosphere,
   type AtmosphereLevel
 } from '../AtmosphereProvider';
+import { EASE_PREMIUM } from '../layout-tokens';
 
 // ============================================
 // TYPES
@@ -144,9 +145,6 @@ const CONTENT_PADDING: Record<NonNullable<StreamProps['contentPadding']>, string
   md: '1rem',
   lg: '1.5rem',
 };
-
-// Premium easing from design system
-const EASE_PREMIUM = [0.22, 1, 0.36, 1] as const;
 
 // Animation variants
 const itemVariants = {

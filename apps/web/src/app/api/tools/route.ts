@@ -282,11 +282,10 @@ export const POST = withAuthValidationAndErrors(
       } : null,
     };
 
-    // Validate the complete tool object
-    const validatedTool = ToolSchema.parse(tool);
-
     // Save to Firestore
-    const toolRef = await adminDb.collection("tools").add(validatedTool);
+    // Note: Input already validated by EnhancedCreateToolSchema middleware.
+    // Don't use ToolSchema.parse() as it strips campusId, ownerId, elements, etc.
+    const toolRef = await adminDb.collection("tools").add(tool);
 
     // Create initial version
     const initialVersion = {
@@ -440,7 +439,7 @@ export const POST = withAuthValidationAndErrors(
       } });
 
     const createdTool = {
-      ...validatedTool,
+      ...tool,
       id: toolRef.id,
     };
 

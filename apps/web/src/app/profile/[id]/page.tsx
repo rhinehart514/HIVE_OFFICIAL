@@ -51,27 +51,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!profile) {
     return {
-      title: 'Profile Not Found - HIVE',
+      title: 'Profile Not Found',
       description: 'This profile could not be found.',
     };
   }
 
-  const name = profile.fullName || profile.displayName || 'HIVE Member';
+  const name = profile.fullName || profile.displayName || 'Member';
   const bio = profile.bio || `${name} on HIVE - the student autonomy platform.`;
   const avatarUrl = profile.photoURL || profile.avatarUrl;
 
   return {
-    title: `${name} - HIVE`,
+    title: name,
     description: bio.slice(0, 160),
     openGraph: {
-      title: `${name} - HIVE`,
+      title: `${name} | HIVE`,
       description: bio.slice(0, 160),
       type: 'profile',
       ...(avatarUrl && { images: [{ url: avatarUrl, width: 400, height: 400, alt: name }] }),
     },
     twitter: {
       card: 'summary',
-      title: `${name} - HIVE`,
+      title: `${name} | HIVE`,
       description: bio.slice(0, 160),
       ...(avatarUrl && { images: [avatarUrl] }),
     },

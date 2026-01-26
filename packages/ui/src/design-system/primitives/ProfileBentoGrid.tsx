@@ -19,6 +19,7 @@ import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
+import { EASE_PREMIUM as EASE } from '../layout-tokens';
 
 // LOCKED: Spring animation config
 const springConfig = {
@@ -26,9 +27,6 @@ const springConfig = {
   stiffness: 400,
   damping: 30,
 };
-
-// LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Container variants
 const bentogridContainerVariants = cva(

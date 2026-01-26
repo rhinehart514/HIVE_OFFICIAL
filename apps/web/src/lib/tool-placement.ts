@@ -32,6 +32,10 @@ export async function createPlacementDocument(params: {
   visibility?: 'all' | 'members' | 'leaders';
   titleOverride?: string;
   configOverrides?: Record<string, unknown>;
+  // Tool metadata for profile display
+  name?: string;
+  description?: string;
+  icon?: string;
   // Legacy fields for backwards compat
   surface?: string;
   permissions?: Record<string, unknown>;
@@ -77,6 +81,11 @@ export async function createPlacementDocument(params: {
     visibility: params.visibility || 'all',
     titleOverride: params.titleOverride || null,
     isEditable: true,
+
+    // Tool metadata (for profile display)
+    name: params.name || null,
+    description: params.description || null,
+    icon: params.icon || null,
 
     // State management
     state: {},

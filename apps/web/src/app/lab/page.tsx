@@ -453,7 +453,7 @@ export default function BuilderDashboard() {
               transition={{ duration: 0.3, delay: 0.05, ease: EASE }}
               className="mb-8"
             >
-              <div className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
+              <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
                 Your Tools
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -648,8 +648,8 @@ export default function BuilderDashboard() {
               className="flex items-center gap-4 mb-8 max-w-xl mx-auto"
             >
               <div className="flex-1 h-px bg-white/[0.06]" />
-              <span className="text-white/30 text-xs uppercase tracking-wider">
-                Or describe what you need
+              <span className="text-white/30 text-xs tracking-wide">
+                or describe what you need
               </span>
               <div className="flex-1 h-px bg-white/[0.06]" />
             </motion.div>

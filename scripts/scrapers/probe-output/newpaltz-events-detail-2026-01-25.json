@@ -1,0 +1,74 @@
+[
+  {
+    "id": 12077789,
+    "institutionId": 4169,
+    "organizationId": 218133,
+    "submittedByOrganizationId": 218133,
+    "organizationIds": [
+      218133
+    ],
+    "eventSubmissionId": 13731916,
+    "imagePath": "2a563bea-6439-4779-861e-1ddf846f63366b501a56-fc87-4f8d-82f0-c836a6c6b326.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/2a563bea-6439-4779-861e-1ddf846f63366b501a56-fc87-4f8d-82f0-c836a6c6b326.png",
+    "name": "Martin Luther King Jr. Observed Day at SUNY New Paltz",
+    "description": "<p>Join us for an evening of reflection and creativity as we honor the legacy of Dr. Martin Luther King Jr. through a guided paint session centered on art, justice, and humanity. Students will explore themes connected to Dr. King&rsquo;s work while creating their own canvas to take home. All materials will be provided.</p>",
+    "startsOn": "2026-01-26T18:00:00-05:00",
+    "endsOn": "2026-01-26T19:30:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "SUB 62/63",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": null,
+      "provider": null
+    },
+    "theme": "Cultural",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 12077789,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 32094803,
+      "accountId": "ee63978c-30ee-4812-8cbb-411ae22327ab",
+      "username": "alvarezj22",
+      "campusEmail": "alvarezj22@newpaltz.edu"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

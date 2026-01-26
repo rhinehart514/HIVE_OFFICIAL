@@ -14,7 +14,7 @@
  */
 
 import * as React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
@@ -40,6 +40,8 @@ export interface EntryShellProps {
   className?: string;
   /** Enable scroll for evolving entry */
   scrollable?: boolean;
+  /** Show loading overlay during API calls */
+  isLoading?: boolean;
 }
 
 export function EntryShell({
@@ -49,6 +51,7 @@ export function EntryShell({
   showProgress = false,
   className,
   scrollable = false,
+  isLoading = false,
 }: EntryShellProps) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -101,6 +104,36 @@ export function EntryShell({
         transition={{ duration: DURATION.slow, ease: EASE_PREMIUM }}
         style={{ background: glowConfig.gradient }}
       />
+
+      {/* Loading overlay - premium fade during API calls */}
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: DURATION.smooth, ease: EASE_PREMIUM }}
+          >
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-[var(--color-bg-void)]/80 backdrop-blur-sm" />
+
+            {/* Loading indicator - subtle gold spinner with pulse */}
+            <motion.div
+              className="relative z-10"
+              animate={{ opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div
+                className="w-10 h-10 rounded-full border-2 border-white/10 animate-spin"
+                style={{
+                  borderTopColor: GOLD.primary,
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <motion.header

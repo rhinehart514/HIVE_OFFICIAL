@@ -8,18 +8,27 @@ import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 
 // Schema for tool deployment requests
+// Accepts either spaceId (legacy) or targetId/targetType (new modal format)
 const DeployToolSchema = z.object({
-  spaceId: z.string().min(1, "spaceId is required"),
+  spaceId: z.string().optional(),
+  targetId: z.string().optional(),
+  targetType: z.enum(['space', 'profile']).optional(),
+  surface: z.string().optional(),
   configuration: z.record(z.any()).default({}),
-  permissions: z.record(z.any()).default({})
-});
+  permissions: z.record(z.any()).default({}),
+  settings: z.record(z.any()).optional(),
+  privacy: z.string().optional(),
+}).refine(
+  (data) => data.spaceId || data.targetId,
+  { message: "Either spaceId or targetId is required" }
+);
 
 export const POST = withAuthValidationAndErrors(
   DeployToolSchema,
   async (
     request,
     { params }: { params: Promise<{ toolId: string }> },
-    { spaceId, configuration, permissions },
+    validatedData,
     respond
   ) => {
     const userId = getUserId(request as AuthenticatedRequest);
@@ -27,7 +36,84 @@ export const POST = withAuthValidationAndErrors(
     const { toolId } = await params;
     const db = dbAdmin;
 
-    // Verify user has admin access to the space (using flat spaceMembers collection)
+    // Support both legacy spaceId and new targetId format
+    const spaceId = validatedData.spaceId || validatedData.targetId;
+    const configuration = validatedData.configuration || {};
+    const permissions = validatedData.permissions || {};
+    const targetType = validatedData.targetType || 'space';
+
+    // Profile deployments are handled differently
+    if (targetType === 'profile') {
+      try {
+        // For profile deployments, we update the tool and create a placement document
+        const toolDoc = await db.collection("tools").doc(toolId).get();
+        if (!toolDoc.exists) {
+          return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
+        }
+        const toolData = toolDoc.data();
+        if (toolData?.ownerId !== userId) {
+          return respond.error("You can only deploy your own tools to your profile", "FORBIDDEN", { status: 403 });
+        }
+
+        const deploymentId = `profile_${toolId}`;
+        const placementId = `${deploymentId}_${toolId}`;
+
+        // Check if already deployed to profile (by doc ID, no query needed)
+        const existingPlacement = await db
+          .collection("users")
+          .doc(userId)
+          .collection("placed_tools")
+          .doc(placementId)
+          .get();
+
+        if (existingPlacement.exists) {
+          return respond.error("Tool is already deployed to your profile", "UNKNOWN_ERROR", { status: 409 });
+        }
+
+        // Update tool to show on profile
+        await db.collection("tools").doc(toolId).update({
+          showOnProfile: true,
+          status: 'published',
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        // Create placement document in user's placed_tools subcollection
+        await createPlacementDocument({
+          deployedTo: 'profile',
+          targetId: userId,
+          toolId,
+          deploymentId,
+          placedBy: userId,
+          campusId: campusId,
+          placement: 'sidebar',
+          visibility: 'all',
+          configOverrides: configuration,
+          // Include tool metadata for profile display
+          name: toolData.name,
+          description: toolData.description,
+          icon: toolData.icon,
+        });
+
+        return respond.success({
+          deploymentId,
+          deployment: { targetType: 'profile', toolId },
+        });
+      } catch (error) {
+        console.error('[Deploy Profile Error]', error);
+        return respond.error(
+          `Profile deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          "UNKNOWN_ERROR",
+          { status: 500 }
+        );
+      }
+    }
+
+    if (!spaceId) {
+      return respond.error("spaceId or targetId is required for space deployments", "INVALID_INPUT", { status: 400 });
+    }
+
+    // Verify user has admin access to the space
+    // Check spaceMembers collection first
     const membershipSnapshot = await db
       .collection("spaceMembers")
       .where("userId", "==", userId)
@@ -37,12 +123,31 @@ export const POST = withAuthValidationAndErrors(
       .limit(1)
       .get();
 
-    if (membershipSnapshot.empty) {
-      return respond.error("Access denied to this space", "FORBIDDEN", { status: 403 });
+    let hasPermission = false;
+    if (!membershipSnapshot.empty) {
+      const memberData = membershipSnapshot.docs[0].data();
+      if (['admin', 'owner', 'leader', 'builder', 'moderator'].includes(memberData?.role)) {
+        hasPermission = true;
+      }
     }
 
-    const memberData = membershipSnapshot.docs[0].data();
-    if (!['admin', 'owner', 'leader', 'builder', 'moderator'].includes(memberData?.role)) {
+    // Fallback: Check if user is the space owner or in leaders array
+    if (!hasPermission) {
+      const spaceDocCheck = await db.collection("spaces").doc(spaceId).get();
+      if (spaceDocCheck.exists) {
+        const spaceDataCheck = spaceDocCheck.data();
+        // Check if user is the creator/owner
+        if (spaceDataCheck?.createdBy === userId || spaceDataCheck?.ownerId === userId) {
+          hasPermission = true;
+        }
+        // Check if user is in leaders array
+        if (spaceDataCheck?.leaders?.includes(userId)) {
+          hasPermission = true;
+        }
+      }
+    }
+
+    if (!hasPermission) {
       return respond.error("Admin access required to deploy tools", "FORBIDDEN", { status: 403 });
     }
 
@@ -60,8 +165,13 @@ export const POST = withAuthValidationAndErrors(
     if (toolData?.campusId !== campusId) {
       return NextResponse.json(ApiResponseHelper.error("Access denied for this campus", "FORBIDDEN"), { status: HttpStatus.FORBIDDEN });
     }
-    if (toolData?.status !== "published") {
-      return NextResponse.json(ApiResponseHelper.error("Only published tools can be deployed", "INVALID_INPUT"), { status: HttpStatus.BAD_REQUEST });
+
+    // Auto-publish draft tools when deploying (deployment implies intent to publish)
+    if (toolData?.status === "draft") {
+      await db.collection("tools").doc(toolId).update({
+        status: "published",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
 
     // Check if tool is already deployed to this space

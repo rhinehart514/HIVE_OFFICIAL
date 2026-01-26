@@ -1,0 +1,74 @@
+[
+  {
+    "id": 12021281,
+    "institutionId": 4166,
+    "organizationId": 284839,
+    "submittedByOrganizationId": 284839,
+    "organizationIds": [
+      284839
+    ],
+    "eventSubmissionId": 13684302,
+    "imagePath": "c3c1c724-fe03-4187-867c-76bcb332065d1f3f778c-33e0-49de-b108-643429530d20.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/c3c1c724-fe03-4187-867c-76bcb332065d1f3f778c-33e0-49de-b108-643429530d20.png",
+    "name": "Paint & Sip",
+    "description": "<p>Paint and Sip in the Corey Union Function Room at 8pm 1/24! Pizza and Fruit Punch will be provided.&nbsp;</p>",
+    "startsOn": "2026-01-24T20:00:00-05:00",
+    "endsOn": "2026-01-24T22:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Corey Union Function Room ",
+      "address": "16 Neubig Rd",
+      "line1": "16 Neubig Rd",
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": 42.59587,
+      "longitude": -76.194,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": "",
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 12021281,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 12982820,
+      "accountId": "098d359a-14ca-4b26-9a36-a2d29a4ae060",
+      "username": "katelyn.goodman@cortland.edu",
+      "campusEmail": "katelyn.goodman@cortland.edu"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

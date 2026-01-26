@@ -1,0 +1,61 @@
+[
+  {
+    "id": 11992208,
+    "institutionId": 4171,
+    "organizationId": 388541,
+    "submittedByOrganizationId": 388541,
+    "organizationIds": [
+      388541
+    ],
+    "eventSubmissionId": 13652346,
+    "imagePath": "4e9797ef-28d0-4129-8134-d6aec3693df919fcecf1-25d0-4cc8-8efa-d1de9482fbef.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/4e9797ef-28d0-4129-8134-d6aec3693df919fcecf1-25d0-4cc8-8efa-d1de9482fbef.png",
+    "name": "Come hang out at Pete's Place for billiards and more!",
+    "description": "<p>Need a break or just something to do?&nbsp; Come to Pete's Place alone or with friends!&nbsp; We will entertain you!</p>\r\n<p>We have:</p>\r\n<ul>\r\n<li>4 full size billiard tables</li>\r\n<li>2 ping pong tables</li>\r\n<li>Air hockey</li>\r\n<li>Foosball</li>\r\n<li>Skeeball</li>\r\n<li>Electronic basketball</li>\r\n<li>Legos</li>\r\n<li>Pac Man</li>\r\n<li>Nintendo Switch</li>\r\n<li>Board games</li>\r\n</ul>",
+    "startsOn": "2026-01-25T17:00:00-05:00",
+    "endsOn": "2026-01-25T21:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "Pete's Place",
+      "address": "2nd floor of the Student Union",
+      "line1": "2nd floor of the Student Union",
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": null,
+      "provider": null
+    },
+    "theme": "Social",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 11992208,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 16077666,
+      "accountId": "546c105f-517a-4e2f-aea3-2da3a3334f66",
+      "username": "aumellcm@potsdam.edu",
+      "campusEmail": "aumellcm@potsdam.edu"
+    },
+    "accessCode": null,
+    "rsvpSettings": null,
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

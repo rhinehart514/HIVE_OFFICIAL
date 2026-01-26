@@ -17,11 +17,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WidgetConfig, WidgetSize } from '@hive/core';
+import { EASE_PREMIUM } from '@hive/ui';
 import { WIDGET_METADATA } from '../hooks/use-bento-grid';
 import { cn } from '@/lib/utils';
 
 // LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 // Size to grid span mapping
 const SIZE_CLASSES: Record<WidgetSize, string> = {

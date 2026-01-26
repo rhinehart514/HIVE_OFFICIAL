@@ -14,9 +14,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
-
-// LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+import { EASE_PREMIUM as EASE } from '../../layout-tokens';
 
 export interface ProfileStatsWidgetProps {
   spacesCount: number;

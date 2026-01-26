@@ -76,6 +76,8 @@ export interface SpaceBaseDTO {
   id: string;
   name: string;
   slug?: string;
+  /** URL-safe handle for routing (mirrors slug for client convenience) */
+  handle?: string;
   description: string;
   category: string;
   memberCount: number;
@@ -132,6 +134,27 @@ export interface SpaceBaseDTO {
   /** When the space went live (if applicable) */
   wentLiveAt?: Date;
   createdAt: Date;
+
+  // CampusLabs imported metadata
+  /** Contact email for the organization */
+  email?: string;
+  /** Primary contact person name */
+  contactName?: string;
+  /** Organization type from CampusLabs (e.g., "Student Organization", "Greek Organization") */
+  orgTypeName?: string;
+  /** When the organization was founded */
+  foundedDate?: Date;
+  /** Social media and website links */
+  socialLinks?: {
+    website?: string;
+    instagram?: string;
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    youtube?: string;
+  };
+  /** Original source URL from CampusLabs/UBLinked */
+  sourceUrl?: string;
 }
 
 /**

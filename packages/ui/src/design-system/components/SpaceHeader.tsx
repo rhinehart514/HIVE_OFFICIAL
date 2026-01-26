@@ -337,14 +337,21 @@ export function SpaceHeader({
               'border border-white/20',
               'hover:border-red-500/50 hover:text-red-400',
             ],
-            // Loading/disabled
-            (isLoading || isPending) && 'opacity-50 cursor-not-allowed'
+            // Pending - dimmed
+            isPending && 'opacity-50 cursor-not-allowed',
+            // Loading - keep visible with cursor change only
+            isLoading && 'cursor-wait'
           )}
           aria-label={isJoined ? 'Leave this space' : 'Join this space'}
         >
-          {isLoading && <LoaderIcon className="w-4 h-4" />}
-          {isJoined && !isLoading && <CheckIcon className="w-4 h-4" />}
-          <span>{buttonLabel}</span>
+          {isLoading ? (
+            <LoaderIcon className="w-4 h-4" />
+          ) : (
+            <>
+              {isJoined && <CheckIcon className="w-4 h-4" />}
+              <span>{buttonLabel}</span>
+            </>
+          )}
         </button>
       </div>
     </header>

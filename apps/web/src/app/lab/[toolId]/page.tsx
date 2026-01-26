@@ -97,8 +97,9 @@ async function fetchTool(toolId: string): Promise<ToolApiResponse['tool']> {
     }
     throw new Error('Failed to load tool');
   }
-  const data = await response.json();
-  return data.tool || data;
+  const result = await response.json();
+  // API returns { success: true, data: { ...tool } }
+  return result.data || result.tool || result;
 }
 
 // Fetch user's spaces for deployment

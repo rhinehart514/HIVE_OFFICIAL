@@ -17,9 +17,10 @@ import { toast } from 'sonner';
 import { useAuth } from '@hive/auth-logic';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { EASE_PREMIUM } from '@hive/ui';
 
 // Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 // Create a new tool via API
 async function createTool(name: string, description?: string): Promise<string> {

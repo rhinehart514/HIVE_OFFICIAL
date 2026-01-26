@@ -516,3 +516,32 @@ export const NAV_ICONS: Record<string, React.FC<ShellIconProps>> = {
 export function getNavIcon(name: string): React.FC<ShellIconProps> | undefined {
   return NAV_ICONS[name.toLowerCase()];
 }
+
+// ============================================
+// ACTION ICONS
+// ============================================
+
+/**
+ * LogOut/Sign out icon
+ */
+export const LogOutIcon: React.FC<ShellIconProps> = ({
+  className,
+  size = 16,
+  strokeWidth = 1.5,
+}) => (
+  <svg
+    className={className}
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={strokeWidth}
+      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+    />
+  </svg>
+);

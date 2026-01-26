@@ -1,0 +1,75 @@
+[
+  {
+    "id": 11773140,
+    "institutionId": 126,
+    "organizationId": 384221,
+    "submittedByOrganizationId": 384221,
+    "organizationIds": [
+      384221
+    ],
+    "eventSubmissionId": 13347925,
+    "imagePath": "e078b4a6-2fe3-4b76-a771-974e8649b4966b628bd7-5b95-4e63-806b-9e1c18f01a79.png",
+    "imageUrl": "https://se-images.campuslabs.com/clink/images/e078b4a6-2fe3-4b76-a771-974e8649b4966b628bd7-5b95-4e63-806b-9e1c18f01a79.png",
+    "name": "KISS Soccer Practice",
+    "description": "<p>This is an event where Korean students gather to play soccer and get to know each other.&nbsp;</p>",
+    "startsOn": "2026-01-24T20:00:00-05:00",
+    "endsOn": "2026-01-24T23:00:00-05:00",
+    "address": {
+      "locationId": null,
+      "name": "South Field A (Turf)",
+      "address": null,
+      "line1": null,
+      "line2": null,
+      "city": null,
+      "state": null,
+      "zip": null,
+      "latitude": null,
+      "longitude": null,
+      "onlineLocation": null,
+      "instructions": null,
+      "roomReservation": "",
+      "provider": null
+    },
+    "theme": "Cultural",
+    "benefits": [],
+    "categories": [],
+    "state": {
+      "eventId": 11773140,
+      "status": "Approved",
+      "comments": null,
+      "updatedByAccountId": "00000000-0000-0000-0000-000000000000"
+    },
+    "visibility": "Public",
+    "type": "Event",
+    "originalSubmissionId": null,
+    "sourceSubmissionId": null,
+    "submittedByAccountId": null,
+    "submittedById": {
+      "communityMemberId": 41866587,
+      "accountId": "c4dc5bdb-0995-4e9c-8a18-7f3c760d79a2",
+      "username": "yeonsokim@stonybrook.edu",
+      "campusEmail": "Yeonsoo.Kim.1@stonybrook.edu",
+      "swipeCardIdentifier": "116702489"
+    },
+    "accessCode": null,
+    "rsvpSettings": {
+      "isInviteOnly": false,
+      "totalAllowed": null,
+      "shouldShowRemainingRsvps": false,
+      "shouldAllowGuests": false,
+      "totalGuestsAllowedPerRsvp": null,
+      "shouldGuestsCountTowardsTotalAllowed": false,
+      "organizationRepresentationEnabled": false,
+      "organizationRepresentationRequired": false,
+      "totalRsvps": 0,
+      "totalGuests": 0,
+      "spotsAvailable": null,
+      "questions": null
+    },
+    "legacyKey": null,
+    "autoSendRatingNotifications": false,
+    "hasSentRatingNotifications": false,
+    "evaluationQuestions": null,
+    "allowDisplayOnTranscript": false
+  }
+]

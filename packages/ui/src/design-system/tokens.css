@@ -122,6 +122,20 @@
   --life-text: #FFD700;                    /* Gold text (rare) */
   --life-edge: rgba(255, 215, 0, 0.12);    /* Edge warmth (box-shadow inset) */
 
+  /* Space/Territory Colors - Banner gradients and overlays */
+  --space-banner-gold-start: rgba(255, 215, 0, 0.25);  /* Gold gradient start */
+  --space-banner-gold-end: rgba(255, 215, 0, 0.05);    /* Gold gradient end */
+  --space-overlay-dark: rgba(10, 10, 9, 0.7);          /* Dark overlay 70% */
+  --space-overlay-darker: rgba(10, 10, 9, 0.85);       /* Dark overlay 85% */
+  --space-avatar-ring: rgba(18, 18, 18, 0.92);         /* Avatar ring cutout */
+
+  /* Territory accent colors (for category badges/gradients) */
+  --territory-academic: #3B82F6;       /* Blue - academic/education */
+  --territory-creative: #A855F7;       /* Purple - creative/arts */
+  --territory-social: #F59E0B;         /* Amber - social/community */
+  --territory-professional: #10B981;   /* Emerald - professional/career */
+  --territory-wellness: #F43F5E;       /* Rose - wellness/health */
+
   /* Status Colors - Very rare, explicit feedback only */
   --status-error: #EF4444;
   --status-error-subtle: rgba(239, 68, 68, 0.15);

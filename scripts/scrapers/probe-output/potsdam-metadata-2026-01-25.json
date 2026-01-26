@@ -1,0 +1,267 @@
+{
+  "branches": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 1,
+    "items": [
+      {
+        "newOrganizationRegistrationId": 216453,
+        "newOrganizationRegistration": null,
+        "isVisible": true,
+        "id": 213194,
+        "communityId": 994,
+        "institutionId": 4171,
+        "name": "Get Involved Resources",
+        "shortName": "",
+        "nameSortKey": "G",
+        "websiteKey": "getinvolved",
+        "email": null,
+        "description": "<p><span style=\"font-weight: 400;\"><span style=\"text-decoration: underline;\"><strong>Get Involved<br /></strong></span></span></p>\r\n<p>Get Involved is your student activities calendar striving to promote involvement in campus events and student clubs/organizations. Get Involved includes a weekly event email sent on Monday's, table tents in the dining halls, and the Get Involved web page.</p>\r\n<p>&nbsp;</p>\r\n<p><span style=\"text-decoration: underline;\"><strong>Student Organization Resources</strong></span></p>\r\n<p>The Get Involved Resources page also provides information to support student clubs and organizations.&nbsp; You will find policy information as well as information on how to utilize Get Involved in the documents section below.&nbsp; &nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p><strong><u>Student Club/Organization Fundraiser Approval Form</u></strong></p>\r\n<p>Click <a href=\"https://getinvolved.potsdam.edu/submitter/form/start/691148\">here</a> to request approval to host a fundraiser including any type of event or bake sale.</p>\r\n<p>&nbsp;</p>\r\n<p><span style=\"font-weight: 400;\"><span style=\"text-decoration: underline;\"><strong>How to Submit an Event on Get Involved</strong></span></span></p>\r\n<p>Student clubs/orgs should create events right on their organization page on Get Involved. Campus Life will include these events on all other Get Involved publications if received by Wed at 12noon prior to the event date.&nbsp; For students and faculty/staff who do not have an organization page on Get Involved, submit your events using this <a href=\"https://getinvolved.potsdam.edu/submitter/form/start/229356\" target=\"_blank\" rel=\"noopener\"> form</a> by Wed. at 12noon the week prior to be included.</p>\r\n<p>&nbsp;</p>\r\n<p><a href=\"https://www.youtube.com/watch?v=qNTsAtKV3_E\">https://www.youtube.com/watch?v=qNTsAtKV3_E&nbsp;</a></p>\r\n<p>&nbsp;</p>\r\n<p><span style=\"font-weight: 400;\"><span style=\"text-decoration: underline;\"><strong>How to Track Event Attendance on Get Involved</strong></span></span></p>\r\n<p>Follow these instructions:</p>\r\n<p><a title=\"Attendance Tracking\" href=\"https://getinvolved.potsdam.edu/organization/getinvolved/documents/view/1776835\" target=\"_blank\" rel=\"noopener\">Attendance Tracking</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p><span style=\"font-weight: 400;\"><span style=\"text-decoration: underline;\"><strong>Get Involved YouTube Channel<br /></strong></span></span></p>\r\n<p><span style=\"font-weight: 400;\">Check out our <a href=\"https://www.youtube.com/channel/UCNkFx5l9Yu24FB6u-M2RgiA\" target=\"_blank\" rel=\"noopener\"> Get Involved YouTube channel</a> for a complete set of videos as well as the documents section below for more information on how to set up your profile, manage club/organization webpages, download your event pass, and how to utilize other great features on the site!&nbsp; A small sampling of videos are available below. If you need any assistance, please do not hesitate to contact the Campus Life Office: Student Union 208, 315-267-2013 or email Ruth Policella at <a href=\"mailto:policera@potsdam.edu\" target=\"_blank\" rel=\"noopener\">policera@potsdam.edu</a>.</span></p>\r\n<p>&nbsp;</p>\r\n<p><a href=\"https://youtu.be/J3xiCX9K4m0\" target=\"_blank\" rel=\"noopener\">https://youtu.be/J3xiCX9K4m0</a></p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p>&nbsp;</p>\r\n<p><a href=\"https://youtu.be/jAvaUNd1nDI\">https://youtu.be/jAvaUNd1nDI</a></p>",
+        "summary": "Learn how to submit events to Get Involved and get resources to help you navigate the site.",
+        "status": "Active",
+        "comment": null,
+        "showJoin": false,
+        "statusChangeDateTime": null,
+        "startDate": "2018-08-03T00:00:00-04:00",
+        "endDate": null,
+        "parentId": null,
+        "wallId": null,
+        "discussionId": 14022028,
+        "groupTypeId": null,
+        "organizationTypeId": 19637,
+        "cssConfigurationId": null,
+        "deleted": false,
+        "enableGoogleCalendar": false,
+        "modifiedOn": "2025-07-15T16:51:24-04:00",
+        "socialMedia": {
+          "ExternalWebsite": "",
+          "FlickrUrl": "",
+          "GoogleCalendarUrl": "",
+          "GooglePlusUrl": "",
+          "InstagramUrl": "",
+          "LinkedInUrl": "",
+          "PinterestUrl": "",
+          "TumblrUrl": "",
+          "VimeoUrl": "",
+          "YoutubeUrl": "https://www.youtube.com/channel/UCNkFx5l9Yu24FB6u-M2RgiA"
+        },
+        "profilePicture": "4a0b505c-c076-4a3f-bccf-624903c0e24ec1c5c63f-a97b-402e-bb72-b3ba96a6b8f6.png",
+        "organizationType": {
+          "id": 19637,
+          "branchId": 213194,
+          "name": "Branch",
+          "autoApproveRequests": false,
+          "showMembersToPublic": false,
+          "showOfficersToPublic": false,
+          "showMembersToLoggedInUsersByDefault": false,
+          "showOfficersToLoggedInUsersByDefault": false,
+          "eventsEnabled": true,
+          "serviceHoursEnabled": true,
+          "financeEnabled": true,
+          "financeRequestsEnabled": true,
+          "fundingRequestsEnabled": true,
+          "purchaseRequestsEnabled": true,
+          "budgetingEnabled": true,
+          "budgetingRequestsEnabled": true,
+          "reRegistrationAvailabilty": null,
+          "electionsEnabled": true,
+          "formsEnabled": true,
+          "galleryEnabled": true,
+          "outcomesEnabled": true,
+          "rosterEnabled": true,
+          "shownInPublicDirectory": true,
+          "documentsEnabled": true,
+          "isSystemType": true,
+          "adminOnly": false,
+          "isClosed": false
+        },
+        "primaryContactId": {
+          "communityMemberId": 15387925,
+          "accountId": "721647e5-80d4-4800-9cb5-1bfef53be866"
+        },
+        "primaryContact": {
+          "id": "721647e5-80d4-4800-9cb5-1bfef53be866",
+          "firstName": "Ruth",
+          "preferredFirstName": null,
+          "lastName": "Policella",
+          "primaryEmailAddress": null,
+          "profileImageFilePath": null,
+          "institutionId": 4171,
+          "privacy": "Unselected"
+        },
+        "isBranch": true,
+        "contactInfo": [],
+        "legacyKey": null,
+        "parentLegacyKey": null,
+        "legacyPrimaryContactKey": null,
+        "showFacebookWall": false,
+        "showTwitterFeed": false,
+        "submissions": [],
+        "visibility": "Public",
+        "isShownInPublicDirectory": true,
+        "isAdminOnly": false,
+        "categories": []
+      }
+    ]
+  },
+  "orgCategories": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 15,
+    "items": [
+      {
+        "id": 11496,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Academic",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11497,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Arts & Entertainment",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11498,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Campus Publications/Communication",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11499,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Community/Global/Leadership",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11500,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Crane",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11501,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Music",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11503,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Governing Group",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11504,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Greek Life",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11505,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Health & Wellness",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11506,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Multicultural",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11507,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Non-Traditional Student Groups",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11508,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Recreational",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11509,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Religious/Spiritual",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11510,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Political",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11511,
+        "institutionId": 4171,
+        "legacyKey": 0,
+        "name": "Department/Office",
+        "description": null,
+        "isAdminOnly": true,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      }
+    ]
+  },
+  "eventCategories": {
+    "items": []
+  }
+}

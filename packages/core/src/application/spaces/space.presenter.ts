@@ -32,6 +32,7 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     id: space.spaceId.value,
     name: space.name.value,
     slug: space.slug?.value,
+    handle: space.slug?.value, // Expose slug as handle for client URL construction
     description: space.description.value,
     category: space.category.value,
     memberCount: space.memberCount,
@@ -57,6 +58,13 @@ function toBaseDTO(space: EnhancedSpace): SpaceBaseDTO {
     isClaimed: space.status === 'claimed' || space.status === 'verified',
     wentLiveAt: space.wentLiveAt,
     createdAt: space.createdAt,
+    // CampusLabs imported metadata
+    email: space.email,
+    contactName: space.contactName,
+    orgTypeName: space.orgTypeName,
+    foundedDate: space.foundedDate,
+    socialLinks: space.socialLinks,
+    sourceUrl: space.sourceUrl,
   };
 }
 

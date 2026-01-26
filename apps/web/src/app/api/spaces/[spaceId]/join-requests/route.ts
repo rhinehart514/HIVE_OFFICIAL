@@ -11,6 +11,7 @@ import {
 } from '@/lib/middleware';
 import { addSecureCampusMetadata } from '@/lib/secure-firebase-queries';
 import { HttpStatus } from '@/lib/api-response-types';
+import { createNotification } from '@/lib/notification-service';
 
 /**
  * Space Join Requests Management API (for space leaders)
@@ -324,7 +325,23 @@ export const PATCH = withAuthValidationAndErrors(
         approvedBy: userId,
       });
 
-      // TODO: Notify the user that their request was approved
+      // Notify the user that their request was approved
+      const spaceDoc = await dbAdmin.collection('spaces').doc(spaceId).get();
+      const spaceName = spaceDoc.data()?.name || 'the space';
+
+      await createNotification({
+        userId: requestData.userId,
+        type: 'space_join',
+        category: 'spaces',
+        title: `Welcome to ${spaceName}!`,
+        body: 'Your request to join has been approved.',
+        actionUrl: `/spaces/${spaceId}`,
+        metadata: {
+          spaceId,
+          spaceName,
+          actorId: userId,
+        },
+      });
 
       return respond.success({
         message: 'Join request approved',
@@ -349,7 +366,23 @@ export const PATCH = withAuthValidationAndErrors(
         reason: body.rejectionReason,
       });
 
-      // TODO: Notify the user that their request was rejected
+      // Notify the user that their request was rejected
+      const spaceDocForReject = await dbAdmin.collection('spaces').doc(spaceId).get();
+      const spaceNameForReject = spaceDocForReject.data()?.name || 'the space';
+
+      await createNotification({
+        userId: requestData.userId,
+        type: 'system',
+        category: 'spaces',
+        title: `Your request to join ${spaceNameForReject} was declined`,
+        body: body.rejectionReason || 'The space leader has declined your request.',
+        actionUrl: `/spaces/browse`,
+        metadata: {
+          spaceId,
+          spaceName: spaceNameForReject,
+          rejectionReason: body.rejectionReason,
+        },
+      });
 
       return respond.success({
         message: 'Join request rejected',

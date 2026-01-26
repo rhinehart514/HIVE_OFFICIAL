@@ -1,0 +1,267 @@
+{
+  "branches": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 1,
+    "items": [
+      {
+        "newOrganizationRegistrationId": null,
+        "newOrganizationRegistration": null,
+        "isVisible": true,
+        "id": 29401,
+        "communityId": 140,
+        "institutionId": 36,
+        "name": "SUNY Oneonta",
+        "shortName": "OSC",
+        "nameSortKey": "S",
+        "websiteKey": "oneonta",
+        "email": null,
+        "description": "<p>The SUNY College at Oneonta's 250-acre campus overlooks the scenic Susquehanna River Valley in central New York about halfway between Albany and Binghamton.&nbsp; On nearby Otsego Lake in Cooperstown, the College maintains a complex which houses its Biological Field Station and Graduate Program in History Museum Studies.</p>",
+        "summary": "SUNY Oneonta's 250-acre campus overlooks the scenic Susquehanna River Valley in central New York about halfway between Albany and Binghamton.  On nearby Otsego Lake in Cooperstown, the College maintains a complex which houses its ",
+        "status": "Active",
+        "comment": null,
+        "showJoin": true,
+        "statusChangeDateTime": null,
+        "startDate": "2007-07-19T00:00:00-04:00",
+        "endDate": null,
+        "parentId": null,
+        "wallId": null,
+        "discussionId": 35991,
+        "groupTypeId": null,
+        "organizationTypeId": 16756,
+        "cssConfigurationId": null,
+        "deleted": false,
+        "enableGoogleCalendar": false,
+        "modifiedOn": "2018-01-31T13:55:09-05:00",
+        "socialMedia": {
+          "ExternalWebsite": "http://www.oneonta.edu",
+          "FlickrUrl": "",
+          "GoogleCalendarUrl": "",
+          "GooglePlusUrl": "",
+          "InstagramUrl": "",
+          "LinkedInUrl": "",
+          "PinterestUrl": "",
+          "TumblrUrl": "",
+          "VimeoUrl": "",
+          "YoutubeUrl": ""
+        },
+        "profilePicture": "63e4a258-b767-449e-98aa-2bb550578c738a345d12-5d6e-4b15-abe9-0c842416dd82.png",
+        "organizationType": {
+          "id": 16756,
+          "branchId": 29401,
+          "name": "Branch",
+          "autoApproveRequests": true,
+          "showMembersToPublic": false,
+          "showOfficersToPublic": false,
+          "showMembersToLoggedInUsersByDefault": false,
+          "showOfficersToLoggedInUsersByDefault": false,
+          "eventsEnabled": true,
+          "serviceHoursEnabled": false,
+          "financeEnabled": true,
+          "financeRequestsEnabled": true,
+          "fundingRequestsEnabled": false,
+          "purchaseRequestsEnabled": true,
+          "budgetingEnabled": true,
+          "budgetingRequestsEnabled": true,
+          "reRegistrationAvailabilty": null,
+          "electionsEnabled": true,
+          "formsEnabled": true,
+          "galleryEnabled": true,
+          "outcomesEnabled": true,
+          "rosterEnabled": true,
+          "shownInPublicDirectory": true,
+          "documentsEnabled": true,
+          "isSystemType": true,
+          "adminOnly": false,
+          "isClosed": false
+        },
+        "primaryContactId": {
+          "communityMemberId": 359126,
+          "accountId": "2aff5ec2-2ffe-47a2-8936-a06e00a3b31b"
+        },
+        "primaryContact": {
+          "id": "2aff5ec2-2ffe-47a2-8936-a06e00a3b31b",
+          "firstName": "bill",
+          "preferredFirstName": null,
+          "lastName": "harcleroad",
+          "primaryEmailAddress": null,
+          "profileImageFilePath": "9f738d4e-5e5f-455a-aea5-c29f41725f390f0a38ec-a686-4701-b12f-5e2fae385d92.jpg",
+          "institutionId": 36,
+          "privacy": "Unselected"
+        },
+        "isBranch": true,
+        "contactInfo": [],
+        "legacyKey": 12413,
+        "parentLegacyKey": null,
+        "legacyPrimaryContactKey": null,
+        "showFacebookWall": false,
+        "showTwitterFeed": false,
+        "submissions": [],
+        "visibility": "Public",
+        "isShownInPublicDirectory": true,
+        "isAdminOnly": false,
+        "categories": []
+      }
+    ]
+  },
+  "orgCategories": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 15,
+    "items": [
+      {
+        "id": 1711,
+        "institutionId": 36,
+        "legacyKey": 5945,
+        "name": "Athletics (Varsity)",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1712,
+        "institutionId": 36,
+        "legacyKey": 5943,
+        "name": "Fraternity/Sorority Life",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1713,
+        "institutionId": 36,
+        "legacyKey": 5944,
+        "name": "Honor Societies",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1714,
+        "institutionId": 36,
+        "legacyKey": 5946,
+        "name": "LEAD@Oneonta",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1715,
+        "institutionId": 36,
+        "legacyKey": 2425,
+        "name": "Club Sports & Recreation",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1717,
+        "institutionId": 36,
+        "legacyKey": 7073,
+        "name": "College Registered",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1718,
+        "institutionId": 36,
+        "legacyKey": 5948,
+        "name": "Residential Community Life",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1719,
+        "institutionId": 36,
+        "legacyKey": 5949,
+        "name": "Student Association",
+        "description": null,
+        "isAdminOnly": true,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1721,
+        "institutionId": 36,
+        "legacyKey": 5951,
+        "name": "Awareness and Activism",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1722,
+        "institutionId": 36,
+        "legacyKey": 5952,
+        "name": "Class Councils",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1723,
+        "institutionId": 36,
+        "legacyKey": 5953,
+        "name": "Cultural and Spiritual",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1724,
+        "institutionId": 36,
+        "legacyKey": 5954,
+        "name": "Curriculum Based",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1725,
+        "institutionId": 36,
+        "legacyKey": 5955,
+        "name": "Performance Organizations",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1726,
+        "institutionId": 36,
+        "legacyKey": 5956,
+        "name": "General Interest/Hobbies",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 1728,
+        "institutionId": 36,
+        "legacyKey": 5958,
+        "name": "Student Media",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      }
+    ]
+  },
+  "eventCategories": {
+    "items": []
+  }
+}

@@ -15,7 +15,7 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Settings, ChevronDown, Crown, Hammer } from 'lucide-react';
+import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
@@ -29,6 +29,15 @@ interface SpaceHeaderProps {
     onlineCount: number;
     memberCount: number;
     isVerified?: boolean;
+    // CampusLabs metadata (P2.2)
+    socialLinks?: {
+      website?: string;
+      instagram?: string;
+      twitter?: string;
+      facebook?: string;
+      linkedin?: string;
+      youtube?: string;
+    };
   };
   isLeader?: boolean;
   isMember?: boolean;
@@ -127,6 +136,84 @@ export function SpaceHeader({
                 </Text>
               </div>
             )}
+
+            {/* Social Links (P2.2) */}
+            {space.socialLinks && Object.values(space.socialLinks).some(Boolean) && (
+              <div className="flex items-center gap-2 ml-2 border-l border-white/[0.06] pl-3">
+                {space.socialLinks.website && (
+                  <a
+                    href={space.socialLinks.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="Website"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Globe className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {space.socialLinks.instagram && (
+                  <a
+                    href={space.socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="Instagram"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Instagram className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {space.socialLinks.twitter && (
+                  <a
+                    href={space.socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="Twitter/X"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Twitter className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {space.socialLinks.facebook && (
+                  <a
+                    href={space.socialLinks.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="Facebook"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Facebook className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {space.socialLinks.linkedin && (
+                  <a
+                    href={space.socialLinks.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="LinkedIn"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Linkedin className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {space.socialLinks.youtube && (
+                  <a
+                    href={space.socialLinks.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/40 hover:text-white/60 transition-colors"
+                    title="YouTube"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Youtube className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            )}
           </motion.div>
         </div>
       </button>
@@ -167,13 +254,14 @@ export function SpaceHeader({
           </Button>
         )}
 
-        {/* Settings (leader only) */}
-        {isLeader && onSettingsClick && (
+        {/* Settings - Available to all members (leaders get full access, members get leave option) */}
+        {isMember && onSettingsClick && (
           <Button
             variant="ghost"
             size="sm"
             onClick={onSettingsClick}
             className="text-white/40 hover:text-white/60"
+            title={isLeader ? "Space settings" : "Leave space"}
           >
             <Settings className="h-4 w-4" />
           </Button>

@@ -1,0 +1,447 @@
+{
+  "branches": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 1,
+    "items": [
+      {
+        "newOrganizationRegistrationId": 709045,
+        "newOrganizationRegistration": null,
+        "isVisible": true,
+        "id": 213549,
+        "communityId": 995,
+        "institutionId": 4169,
+        "name": "SUNY New Paltz ENGAGE Home",
+        "shortName": null,
+        "nameSortKey": "S",
+        "websiteKey": "sunynewpaltz",
+        "email": null,
+        "description": "<p>Engage is a partnership between the Student Association and the Center for Student Engagement. Not only will this platfrom serve as a vehicle for promoting student involvement, but will be the primary mechanism for student clubs to conduct all of their business with the college and the Student Association. We will be rolling out different features within the first year, so stay tuned.</p>",
+        "summary": "Engage is a partnership between the Student Association and the Center for Student Engagement. For contacting either the Student Association or Center for Student Engagement office, please see their unique organizational pages.",
+        "status": "Active",
+        "comment": null,
+        "showJoin": false,
+        "statusChangeDateTime": null,
+        "startDate": "2018-08-06T00:00:00-04:00",
+        "endDate": null,
+        "parentId": null,
+        "wallId": null,
+        "discussionId": 14165731,
+        "groupTypeId": null,
+        "organizationTypeId": 19653,
+        "cssConfigurationId": null,
+        "deleted": false,
+        "enableGoogleCalendar": false,
+        "modifiedOn": "2021-06-18T14:44:26-04:00",
+        "socialMedia": {
+          "ExternalWebsite": "",
+          "FlickrUrl": "",
+          "GoogleCalendarUrl": "",
+          "GooglePlusUrl": "",
+          "InstagramUrl": "",
+          "LinkedInUrl": "",
+          "PinterestUrl": "",
+          "TumblrUrl": "",
+          "VimeoUrl": "",
+          "YoutubeUrl": ""
+        },
+        "profilePicture": "7ea08328-0cda-43d8-a5be-cbf9ffb0bf897623f4db-f890-4bc4-bd64-5851facd530c.png",
+        "organizationType": {
+          "id": 19653,
+          "branchId": 213549,
+          "name": "Branch",
+          "autoApproveRequests": false,
+          "showMembersToPublic": false,
+          "showOfficersToPublic": false,
+          "showMembersToLoggedInUsersByDefault": false,
+          "showOfficersToLoggedInUsersByDefault": false,
+          "eventsEnabled": true,
+          "serviceHoursEnabled": false,
+          "financeEnabled": true,
+          "financeRequestsEnabled": true,
+          "fundingRequestsEnabled": true,
+          "purchaseRequestsEnabled": true,
+          "budgetingEnabled": true,
+          "budgetingRequestsEnabled": true,
+          "reRegistrationAvailabilty": null,
+          "electionsEnabled": true,
+          "formsEnabled": true,
+          "galleryEnabled": true,
+          "outcomesEnabled": true,
+          "rosterEnabled": true,
+          "shownInPublicDirectory": true,
+          "documentsEnabled": true,
+          "isSystemType": true,
+          "adminOnly": false,
+          "isClosed": false
+        },
+        "primaryContactId": {
+          "communityMemberId": 34503181,
+          "accountId": "44417a15-5988-4666-b273-e7c5d1ab51c5"
+        },
+        "primaryContact": {
+          "id": "44417a15-5988-4666-b273-e7c5d1ab51c5",
+          "firstName": "Ashley",
+          "preferredFirstName": null,
+          "lastName": "Walker",
+          "primaryEmailAddress": null,
+          "profileImageFilePath": "d197a8dd-3972-4ec0-9037-85c04b32a0e36c198091-9a4c-40f6-aac3-3b116617c66f.jpg",
+          "institutionId": 4169,
+          "privacy": "Unselected"
+        },
+        "isBranch": true,
+        "contactInfo": [],
+        "legacyKey": null,
+        "parentLegacyKey": null,
+        "legacyPrimaryContactKey": null,
+        "showFacebookWall": false,
+        "showTwitterFeed": false,
+        "submissions": [],
+        "visibility": "Public",
+        "isShownInPublicDirectory": true,
+        "isAdminOnly": false,
+        "categories": []
+      }
+    ]
+  },
+  "orgCategories": {
+    "skip": 0,
+    "take": 100,
+    "totalItems": 33,
+    "items": [
+      {
+        "id": 11622,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Academic",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11623,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Athletic",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11624,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Social and Cultural",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11625,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Fine and Performing Arts",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11626,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Fraternity and Sorority Life",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11627,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Residence Life",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11628,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Advocacy",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11629,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Media",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11630,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Music",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11631,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "International",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11632,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Theatre",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11633,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Dance",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11634,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Hobby",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11635,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Honor Society",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11636,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Business",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11637,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Science",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11638,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Engineering",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11639,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Education",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11640,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Graduate Student",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11641,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Leadership",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11642,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "LGBTQ+",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11643,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Games/Gaming",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11644,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Technology",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11645,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Religious",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11646,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Mind, Body, Soul",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11647,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Service and Volunteer",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11648,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Political",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11649,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Multicultural",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11650,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Student Government",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11651,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Programming",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11679,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Finance",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 11725,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Psychology",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      },
+      {
+        "id": 16344,
+        "institutionId": 4169,
+        "legacyKey": 0,
+        "name": "Wellness",
+        "description": null,
+        "isAdminOnly": false,
+        "shownOnPublicSite": true,
+        "isSystemCategory": false
+      }
+    ]
+  },
+  "eventCategories": {
+    "items": []
+  }
+}

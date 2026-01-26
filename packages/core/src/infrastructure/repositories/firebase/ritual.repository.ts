@@ -15,7 +15,8 @@ import {
   where,
   orderBy,
   limit as firestoreLimit,
-  Timestamp
+  Timestamp,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '@hive/firebase';
 import { IRitualRepository } from '../interfaces';
@@ -447,25 +448,52 @@ export class FirebaseRitualRepository implements IRitualRepository {
     }
   }
 
-  subscribeToRitual(_ritualId: any, _callback: (ritual: EnhancedRitual) => void): () => void {
-    // Simplified subscription implementation
-    // In production, this would use Firestore real-time listeners
-    // TODO: Implement Firestore real-time subscription
+  subscribeToRitual(ritualId: any, callback: (ritual: EnhancedRitual) => void): () => void {
+    const id = typeof ritualId === 'string' ? ritualId : ritualId.value;
+    const docRef = doc(db, this.collectionName, id);
 
-    // Return unsubscribe function
-    return () => {
-      // Cleanup subscription
-    };
+    const unsubscribe = onSnapshot(
+      docRef,
+      async (snapshot) => {
+        if (!snapshot.exists()) return;
+        const result = await this.toDomain(snapshot.id, snapshot.data());
+        if (result.isSuccess) {
+          callback(result.getValue());
+        }
+      },
+      (error) => {
+        console.error('[ritual.repository] subscribeToRitual error:', error);
+      }
+    );
+
+    return unsubscribe;
   }
 
-  subscribeToActiveRituals(_campusId: string, _callback: (rituals: EnhancedRitual[]) => void): () => void {
-    // Simplified subscription implementation
-    // In production, this would use Firestore real-time listeners
-    // TODO: Implement Firestore real-time subscription
+  subscribeToActiveRituals(campusId: string, callback: (rituals: EnhancedRitual[]) => void): () => void {
+    const q = query(
+      collection(db, this.collectionName),
+      where('campusId', '==', campusId),
+      where('isActive', '==', true),
+      orderBy('startDate', 'desc')
+    );
 
-    // Return unsubscribe function
-    return () => {
-      // Cleanup subscription
-    };
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        const rituals: EnhancedRitual[] = [];
+        for (const docSnap of snapshot.docs) {
+          const result = await this.toDomain(docSnap.id, docSnap.data());
+          if (result.isSuccess) {
+            rituals.push(result.getValue());
+          }
+        }
+        callback(rituals);
+      },
+      (error) => {
+        console.error('[ritual.repository] subscribeToActiveRituals error:', error);
+      }
+    );
+
+    return unsubscribe;
   }
 }

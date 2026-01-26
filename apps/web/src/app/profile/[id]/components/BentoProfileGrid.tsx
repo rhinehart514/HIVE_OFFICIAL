@@ -34,6 +34,7 @@ import {
 } from '@dnd-kit/sortable';
 import { motion } from 'framer-motion';
 import type { WidgetConfig, WidgetType } from '@hive/core';
+import { EASE_PREMIUM } from '@hive/ui';
 import { useBentoGrid } from '../hooks/use-bento-grid';
 import { BentoWidget } from './BentoWidget';
 import { BentoEditToolbar } from './BentoEditToolbar';
@@ -41,7 +42,7 @@ import { WidgetPicker } from './WidgetPicker';
 import { cn } from '@/lib/utils';
 
 // LOCKED: Premium easing
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EASE = EASE_PREMIUM;
 
 // Staggered entrance animation
 const containerVariants = {
