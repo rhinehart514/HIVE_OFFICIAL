@@ -14,6 +14,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import { SimpleTooltip } from '../../primitives/Tooltip';
 
 // ============================================================================
 // Types
@@ -106,13 +107,15 @@ export function ProfileActivityCard({
           {tool.emoji || '📊'}
         </span>
 
-        {/* Tool Name */}
-        <h4
-          className="text-lg font-semibold truncate mb-2"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {tool.name}
-        </h4>
+        {/* Tool Name with tooltip for truncated text */}
+        <SimpleTooltip content={tool.name}>
+          <h4
+            className="text-lg font-semibold truncate mb-2"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {tool.name}
+          </h4>
+        </SimpleTooltip>
 
         {/* Divider */}
         <div
@@ -141,6 +144,51 @@ export function ProfileActivityCard({
         )}
       </div>
     </motion.button>
+  );
+}
+
+// ============================================================================
+// Skeleton Component
+// ============================================================================
+
+export function ProfileActivityCardSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn('relative p-5 text-left overflow-hidden w-full animate-pulse', className)}
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: '16px',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+      }}
+    >
+      <div className="relative space-y-3">
+        {/* Emoji skeleton */}
+        <div
+          className="w-8 h-8 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+        />
+        {/* Tool name skeleton */}
+        <div
+          className="h-5 w-3/4 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+        />
+        {/* Divider skeleton */}
+        <div
+          className="w-full h-px"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+        />
+        {/* Runs skeleton */}
+        <div
+          className="h-4 w-20 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+        />
+        {/* Context skeleton */}
+        <div
+          className="h-3 w-28 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+        />
+      </div>
+    </div>
   );
 }
 

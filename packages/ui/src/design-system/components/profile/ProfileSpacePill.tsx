@@ -14,6 +14,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import { SimpleTooltip } from '../../primitives/Tooltip';
 
 // ============================================================================
 // Types
@@ -65,13 +66,15 @@ export function ProfileSpacePill({
         </span>
       )}
 
-      {/* Space name */}
-      <span
-        className="text-[13px] font-medium truncate max-w-[120px]"
-        style={{ color: 'var(--text-primary)' }}
-      >
-        {space.name}
-      </span>
+      {/* Space name with tooltip for truncated text */}
+      <SimpleTooltip content={space.name}>
+        <span
+          className="text-[13px] font-medium truncate max-w-[120px]"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {space.name}
+        </span>
+      </SimpleTooltip>
 
       {/* Leader star */}
       {space.isLeader && (
@@ -83,6 +86,33 @@ export function ProfileSpacePill({
         </span>
       )}
     </motion.button>
+  );
+}
+
+// ============================================================================
+// Skeleton Component
+// ============================================================================
+
+export function ProfileSpacePillSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn('inline-flex items-center gap-1.5 px-3 py-2 animate-pulse', className)}
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.04)',
+        borderRadius: '12px',
+      }}
+    >
+      {/* Emoji skeleton */}
+      <div
+        className="w-4 h-4 rounded flex-shrink-0"
+        style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+      />
+      {/* Space name skeleton */}
+      <div
+        className="h-3 w-20 rounded"
+        style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+      />
+    </div>
   );
 }
 

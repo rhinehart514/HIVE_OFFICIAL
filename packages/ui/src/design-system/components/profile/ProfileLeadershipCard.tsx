@@ -15,6 +15,7 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../../lib/utils';
+import { SimpleTooltip } from '../../primitives/Tooltip';
 
 // ============================================================================
 // Types
@@ -85,12 +86,14 @@ export function ProfileLeadershipCard({
           >
             ★
           </span>
-          <h4
-            className="text-base font-semibold truncate"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {space.name}
-          </h4>
+          <SimpleTooltip content={space.name}>
+            <h4
+              className="text-base font-semibold truncate"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {space.name}
+            </h4>
+          </SimpleTooltip>
         </div>
 
         {/* Role + Tenure */}
@@ -111,6 +114,48 @@ export function ProfileLeadershipCard({
         </p>
       </div>
     </motion.button>
+  );
+}
+
+// ============================================================================
+// Skeleton Component
+// ============================================================================
+
+export function ProfileLeadershipCardSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn('relative p-4 text-left overflow-hidden w-full animate-pulse', className)}
+      style={{
+        backgroundColor: 'var(--bg-surface)',
+        borderRadius: '16px',
+        borderLeft: '2px solid rgba(255,215,0,0.3)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+      }}
+    >
+      <div className="relative space-y-2">
+        {/* Header with star skeleton */}
+        <div className="flex items-center gap-2">
+          <div
+            className="w-4 h-4 rounded"
+            style={{ backgroundColor: 'rgba(255,215,0,0.2)' }}
+          />
+          <div
+            className="h-4 w-32 rounded"
+            style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+          />
+        </div>
+        {/* Role skeleton */}
+        <div
+          className="h-3 w-24 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}
+        />
+        {/* Member count skeleton */}
+        <div
+          className="h-3 w-20 rounded"
+          style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+        />
+      </div>
+    </div>
   );
 }
 
