@@ -4,7 +4,7 @@
 ╔═══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                               ║
 ║   Source of Truth: /docs/SURFACE_AUDIT.md (Surface Lab)                       ║
-║   Updated: January 26, 2026                                                   ║
+║   Updated: January 27, 2026                                                   ║
 ║   Mode: Campus One — First Deployment                                         ║
 ║   Goal: Infrastructure-grade platform ready for campus deployment             ║
 ║                                                                               ║
@@ -1489,7 +1489,7 @@ Fix: Only include connections when isOwner === true
 |---|------|------|------|--------|--------|
 | C3 | Add max limit to admin users endpoint | `api/admin/users/route.ts:26` | `?limit=100000` accepted, OOM risk | S | `[ ]` |
 | C4 | Add max limit to chat messages | `api/spaces/[spaceId]/chat/route.ts:110` | Unbounded message fetch | S | `[ ]` |
-| C5 | Handle Firestore 500 doc limit | `api/spaces/[spaceId]/members/route.ts:268-296` | Silent failure for spaces >500 members | M | `[ ]` |
+| C5 | Handle Firestore 500 doc limit | `api/spaces/[spaceId]/members/route.ts:268-296` | Silent failure for spaces >500 members | M | `[x]` |
 
 ---
 
@@ -1538,7 +1538,7 @@ Fix: Only include connections when isOwner === true
 |------|------|------|--------|--------|
 | Admin can suspend users from other campuses | `api/admin/users/[userId]/suspend/route.ts:33-69` | Cross-campus attack | M | `[ ]` |
 | Rate limiting gap on code sending | `api/auth/send-code/route.ts` | Account enumeration | M | `[ ]` |
-| Deleted admins retain session access | `apps/admin/src/lib/admin-auth.ts:202-207` | Zombie admin sessions | M | `[ ]` |
+| Deleted admins retain session access | `apps/admin/src/lib/admin-auth.ts:202-207` | Zombie admin sessions | M | `[x]` |
 | Profile fetch without campus validation | `api/profile/[userId]/route.ts:29-36` | Cross-campus data | S | `[ ]` |
 | CSRF check skipable via option | `lib/middleware/index.ts:283-284` | CSRF bypass | S | `[ ]` |
 | Session cookie missing SameSite | `middleware.ts:82` | CSRF on non-admin | S | `[ ]` |
@@ -1791,7 +1791,7 @@ functions/src/auth/sendMagicLink.ts   → Email debug (REMOVE)
 | 4 | Wrap 8 unprotected admin routes | S | `[x]` ✅ Already protected |
 | 5 | Add `hasPermission()` enforcement | M | `[x]` ✅ withAdminPermission middleware |
 | 6 | Fix rate limiting gap on code sending | M | `[x]` ✅ magicLink→signinCode preset |
-| 7 | Fix deleted admin session retention | M | `[ ]` |
+| 7 | Fix deleted admin session retention | M | `[x]` |
 | 8 | Implement Redis rate limiting | M | `[ ]` |
 | 9 | Move CSRF to persistent storage | M | `[ ]` |
 | 10 | Add campusId validation to profile fetch | S | `[x]` ✅ Cross-campus isolation |
@@ -2108,6 +2108,7 @@ Every surface ships when:
 | 2026-01-26 | D1 | **D1 ENTRY SPRINT**: Raised Entry design health 60%→85%. Created StepCounter, VerificationPending, RoleCard, morph-transition.ts. Updated all identity sections + EmailSection + CodeSection + RoleSection with premium animations. Gold focus rings on all inputs. | 6 tasks |
 | 2026-01-26 | D1 | **D1 COMPLETE**: Entry error recovery (EntryError taxonomy, timeout handling, code expiration, partial recovery). Feed redesign (FEED.md docs, feed-tokens.ts hierarchy, FeedEmptyState, DensityToggle, useFeedDensity). Entry 85%→95%, Feed 20%→70%. | 6 tasks |
 | 2026-01-26 | D-P1-6 | **PROFILE DESIGN SPRINT COMPLETE**: 3-zone layout (Identity, Activity, Presence). 7 new components: ProfileIdentityHero, ProfileActivityCard, ProfileLeadershipCard, ProfileEventCard, ProfileSpacePill, ProfileConnectionFooter, ProfileOverflowChip. Replaced bento grid with fixed layout. Profile design health 20%→90%. | 8 tasks |
+| 2026-01-27 | — | **CAMPUS ONE DEPLOYMENT READINESS**: API contracts + security hardening. Cursor pagination for members (C5), bounded queries on feed/search, zombie admin fix with 5-min cached Firestore verification, graceful degradation patterns. All routes verified for campusId isolation. | 6 tasks |
 
 ---
 
