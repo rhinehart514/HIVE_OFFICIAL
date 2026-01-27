@@ -320,8 +320,8 @@ export function useHiveQuery<T>(
       setState((prev: HiveQueryState<T>) => ({ ...prev, loadingMore: true, error: null }));
 
       try {
-        // If queryFn returns paginated data, it should accept cursor
-        const data = await queryFn();
+        // Pass cursor to queryFn for pagination
+        const data = await queryFn(cursor);
 
         if (!isMounted.current) return;
 
@@ -419,7 +419,10 @@ export function useHiveQuery<T>(
     setState((prev: HiveQueryState<T>) => ({ ...prev, isRealtime: true }));
 
     return () => {
-      unsubscribe();
+      if (realtimeUnsubscribe.current) {
+        realtimeUnsubscribe.current();
+        realtimeUnsubscribe.current = null;
+      }
       setState((prev: HiveQueryState<T>) => ({ ...prev, isRealtime: false }));
     };
   }, [enableRealtime, realtimeFn, cacheKey, queryKey, enableOfflineCache]);

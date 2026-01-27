@@ -1,8 +1,40 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Button as Button, HiveCard as Card, CardContent, CardHeader, CardTitle, Badge } from "@hive/ui";
+import {
+  Button as Button,
+  HiveCard as Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Badge,
+  Input,
+  Textarea,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PencilIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
+
+const ChevronLeft = ChevronLeftIcon;
+const ChevronRight = ChevronRightIcon;
+const Pencil = PencilIcon;
+const AlertTriangle = ExclamationTriangleIcon;
 
 interface Space {
   id: string;
@@ -31,6 +63,16 @@ interface SpaceSearchResult {
   limit: number;
 }
 
+const PAGE_SIZE = 25;
+
+interface SpaceEditForm {
+  name: string;
+  description: string;
+  type: Space['type'];
+  visibility: 'public' | 'private' | 'members_only';
+  featured: boolean;
+}
+
 export function SpaceManagementDashboard() {
   const { admin } = useAdminAuth();
   const [spaces, setSpaces] = useState<SpaceSearchResult | null>(null);
@@ -40,6 +82,25 @@ export function SpaceManagementDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Edit modal state
+  const [editingSpace, setEditingSpace] = useState<Space | null>(null);
+  const [editForm, setEditForm] = useState<SpaceEditForm>({
+    name: '',
+    description: '',
+    type: 'student_organizations',
+    visibility: 'public',
+    featured: false,
+  });
+  const [editSaving, setEditSaving] = useState(false);
+
+  // Confirmation dialog state
+  const [confirmAction, setConfirmAction] = useState<{
+    action: 'archive' | 'freeze' | 'transfer';
+    spaceId: string;
+    spaceName: string;
+  } | null>(null);
 
   const spaceTypes = [
     { value: 'campus_living', label: 'Campus Living' },
@@ -49,7 +110,7 @@ export function SpaceManagementDashboard() {
     { value: 'university_organizations', label: 'University Orgs' },
   ];
 
-  const searchSpaces = useCallback(async () => {
+  const searchSpaces = useCallback(async (page = currentPage) => {
     if (!admin) return;
 
     setLoading(true);
@@ -67,7 +128,8 @@ export function SpaceManagementDashboard() {
           query: searchTerm,
           type: selectedType !== 'all' ? selectedType : undefined,
           status: selectedStatus !== 'all' ? selectedStatus : undefined,
-          limit: 50,
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
         }),
       });
 
@@ -76,13 +138,13 @@ export function SpaceManagementDashboard() {
       }
 
       const data = await response.json();
-      setSpaces(data.spaces || { spaces: [], total: 0, page: 1, limit: 50 });
+      setSpaces(data.spaces || { spaces: [], total: 0, page, limit: PAGE_SIZE });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Search failed');
     } finally {
       setLoading(false);
     }
-  }, [admin, searchTerm, selectedStatus, selectedType]);
+  }, [admin, searchTerm, selectedStatus, selectedType, currentPage]);
 
   const handleSpaceAction = async (action: string, spaceId: string) => {
     if (!admin) return;
@@ -152,9 +214,98 @@ export function SpaceManagementDashboard() {
     }
   };
 
+  // Open edit modal
+  const openEditModal = (space: Space) => {
+    setEditingSpace(space);
+    setEditForm({
+      name: space.name,
+      description: space.description,
+      type: space.type,
+      visibility: 'public', // Default, could be pulled from space data if available
+      featured: false, // Default, could be pulled from space data if available
+    });
+  };
+
+  // Save space edits
+  const saveSpaceEdit = async () => {
+    if (!admin || !editingSpace) return;
+
+    setEditSaving(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/admin/spaces/${editingSpace.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${admin.id}`,
+        },
+        body: JSON.stringify({
+          name: editForm.name,
+          description: editForm.description,
+          type: editForm.type,
+          visibility: editForm.visibility,
+          featured: editForm.featured,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update space');
+      }
+
+      // Optimistic update
+      if (spaces) {
+        setSpaces({
+          ...spaces,
+          spaces: spaces.spaces.map(s =>
+            s.id === editingSpace.id
+              ? { ...s, name: editForm.name, description: editForm.description, type: editForm.type }
+              : s
+          ),
+        });
+      }
+
+      // Close modal
+      setEditingSpace(null);
+
+      // Refresh to get server state
+      await searchSpaces(currentPage);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // Handle destructive action with confirmation
+  const executeConfirmedAction = async () => {
+    if (!confirmAction || !admin) return;
+
+    setLoading(true);
+    try {
+      await handleSpaceAction(confirmAction.action, confirmAction.spaceId);
+    } finally {
+      setConfirmAction(null);
+      setLoading(false);
+    }
+  };
+
+  // Reset to page 1 when filters change
   useEffect(() => {
-    searchSpaces();
-  }, [searchSpaces]);
+    setCurrentPage(1);
+  }, [searchTerm, selectedType, selectedStatus]);
+
+  useEffect(() => {
+    searchSpaces(currentPage);
+  }, [currentPage, searchSpaces]);
+
+  const totalPages = spaces ? Math.ceil(spaces.total / PAGE_SIZE) : 0;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -191,11 +342,11 @@ export function SpaceManagementDashboard() {
                 placeholder="Search spaces by name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && searchSpaces()}
+                onKeyPress={(e) => e.key === 'Enter' && searchSpaces(currentPage)}
                 className="flex-1 rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-white placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
               />
-              <Button 
-                onClick={searchSpaces}
+              <Button
+                onClick={() => searchSpaces(currentPage)}
                 disabled={loading}
                 className="bg-amber-500 hover:bg-amber-600"
               >
@@ -253,7 +404,7 @@ export function SpaceManagementDashboard() {
           <CardContent>
             <div className="space-y-4">
               {spaces.spaces.map((space) => (
-                <div 
+                <div
                   key={space.id}
                   className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 p-4"
                 >
@@ -283,10 +434,19 @@ export function SpaceManagementDashboard() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => openEditModal(space)}
+                      className="border-amber-600 text-amber-400 hover:bg-amber-600/10"
+                    >
+                      <Pencil className="h-3.5 w-3.5 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setSelectedSpace(space)}
                       className="border-gray-600 text-gray-300 hover:bg-gray-700"
                     >
-                      View Details
+                      View
                     </Button>
                     {space.status === 'activated' ? (
                       <Button
@@ -310,6 +470,38 @@ export function SpaceManagementDashboard() {
                   </div>
                 </div>
               ))}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-gray-700 mt-4">
+                  <span className="text-sm text-gray-400">
+                    Showing {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, spaces.total)} of {spaces.total}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={currentPage === 1}
+                      onClick={() => goToPage(currentPage - 1)}
+                      className="text-gray-400 hover:text-white disabled:opacity-50"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-white px-2">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => goToPage(currentPage + 1)}
+                      className="text-gray-400 hover:text-white disabled:opacity-50"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -382,6 +574,15 @@ export function SpaceManagementDashboard() {
             <div className="mt-6 pt-4 border-t border-gray-700">
               <h4 className="font-semibold text-white mb-3">Admin Actions</h4>
               <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditModal(selectedSpace)}
+                  className="border-amber-600 text-amber-400 hover:bg-amber-600/10"
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit Space
+                </Button>
                 {selectedSpace.status === 'activated' ? (
                   <Button
                     variant="outline"
@@ -404,7 +605,7 @@ export function SpaceManagementDashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSpaceAction('freeze', selectedSpace.id)}
+                  onClick={() => setConfirmAction({ action: 'freeze', spaceId: selectedSpace.id, spaceName: selectedSpace.name })}
                   className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
                 >
                   Freeze Space
@@ -412,7 +613,7 @@ export function SpaceManagementDashboard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleSpaceAction('archive', selectedSpace.id)}
+                  onClick={() => setConfirmAction({ action: 'archive', spaceId: selectedSpace.id, spaceName: selectedSpace.name })}
                   className="border-gray-600 text-gray-400 hover:bg-gray-600/10"
                 >
                   Archive Space
@@ -422,6 +623,160 @@ export function SpaceManagementDashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Space Modal */}
+      <Dialog open={!!editingSpace} onOpenChange={() => setEditingSpace(null)}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Space</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Update space details and settings
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Name</label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                className="bg-gray-800 border-gray-600 text-white"
+                placeholder="Space name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Description</label>
+              <Textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                className="bg-gray-800 border-gray-600 text-white min-h-[100px]"
+                placeholder="Space description"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Category</label>
+              <Select
+                value={editForm.type}
+                onValueChange={(value: Space['type']) => setEditForm({ ...editForm, type: value })}
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  {spaceTypes.map(type => (
+                    <SelectItem key={type.value} value={type.value} className="text-white">
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Visibility</label>
+              <Select
+                value={editForm.visibility}
+                onValueChange={(value: 'public' | 'private' | 'members_only') =>
+                  setEditForm({ ...editForm, visibility: value })
+                }
+              >
+                <SelectTrigger className="bg-gray-800 border-gray-600 text-white">
+                  <SelectValue placeholder="Select visibility" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-800 border-gray-600">
+                  <SelectItem value="public" className="text-white">Public</SelectItem>
+                  <SelectItem value="private" className="text-white">Private</SelectItem>
+                  <SelectItem value="members_only" className="text-white">Members Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <label className="text-sm font-medium text-gray-300">Featured Space</label>
+                <p className="text-xs text-gray-500">Show in featured section on browse page</p>
+              </div>
+              <Switch
+                checked={editForm.featured}
+                onCheckedChange={(checked) => setEditForm({ ...editForm, featured: checked })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setEditingSpace(null)}
+              className="border-gray-600 text-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveSpaceEdit}
+              disabled={editSaving || !editForm.name.trim()}
+              className="bg-amber-500 hover:bg-amber-600 text-black"
+            >
+              {editSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirm Action
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {confirmAction?.action === 'archive' && (
+                <>
+                  Are you sure you want to archive <strong className="text-white">{confirmAction.spaceName}</strong>?
+                  This will hide the space from all users.
+                </>
+              )}
+              {confirmAction?.action === 'freeze' && (
+                <>
+                  Are you sure you want to freeze <strong className="text-white">{confirmAction.spaceName}</strong>?
+                  Users will not be able to post or interact until unfrozen.
+                </>
+              )}
+              {confirmAction?.action === 'transfer' && (
+                <>
+                  Are you sure you want to transfer ownership of <strong className="text-white">{confirmAction.spaceName}</strong>?
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmAction(null)}
+              className="border-gray-600 text-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={executeConfirmedAction}
+              disabled={loading}
+              className={
+                confirmAction?.action === 'archive'
+                  ? 'bg-gray-600 hover:bg-gray-700'
+                  : confirmAction?.action === 'freeze'
+                  ? 'bg-yellow-600 hover:bg-yellow-700'
+                  : 'bg-red-600 hover:bg-red-700'
+              }
+            >
+              {loading ? 'Processing...' : `Yes, ${confirmAction?.action}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

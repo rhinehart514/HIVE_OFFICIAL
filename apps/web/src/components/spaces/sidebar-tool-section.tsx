@@ -8,14 +8,32 @@
  * - List of SidebarToolCard components
  * - Empty state with "Add from HiveLab" CTA
  * - Loading skeleton
+ * - Drag-to-reorder for leaders
  *
- * @version 1.0.0 - HiveLab Sprint 1 (Jan 2026)
+ * @version 1.1.0 - HiveLab Phase 0 Polish (Jan 2026)
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDownIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Text } from '@hive/ui/design-system/primitives';
 import { MOTION } from '@hive/tokens';
@@ -31,7 +49,7 @@ export interface SidebarToolSectionProps {
   tools: PlacedToolDTO[];
   /** Loading state */
   isLoading?: boolean;
-  /** Whether current user is a leader (can add tools) */
+  /** Whether current user is a leader (can add/reorder tools) */
   isLeader?: boolean;
   /** Currently active/selected tool ID */
   activeToolId?: string;
@@ -43,8 +61,66 @@ export interface SidebarToolSectionProps {
   onToolViewFull?: (tool: PlacedToolDTO) => void;
   /** Handler for "Add Tool" button (leaders only) */
   onAddTool?: () => void;
+  /** Handler for tool reorder (leaders only) */
+  onReorder?: (orderedPlacementIds: string[]) => void;
   /** Initial collapsed state */
   defaultCollapsed?: boolean;
+}
+
+// ============================================================
+// Sortable Tool Card Wrapper
+// ============================================================
+
+interface SortableToolCardProps {
+  tool: PlacedToolDTO;
+  isActive: boolean;
+  isLeader: boolean;
+  onToolClick?: (tool: PlacedToolDTO) => void;
+  onToolRun?: (tool: PlacedToolDTO) => void;
+  onToolViewFull?: (tool: PlacedToolDTO) => void;
+}
+
+function SortableToolCard({
+  tool,
+  isActive,
+  isLeader,
+  onToolClick,
+  onToolRun,
+  onToolViewFull,
+}: SortableToolCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tool.placementId, disabled: !isLeader });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: isLeader ? 'grab' : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...(isLeader ? listeners : {})}
+    >
+      <SidebarToolCard
+        tool={tool}
+        isActive={isActive}
+        isDraggable={isLeader}
+        onClick={() => onToolClick?.(tool)}
+        onRun={() => onToolRun?.(tool)}
+        onViewFull={() => onToolViewFull?.(tool)}
+      />
+    </div>
+  );
 }
 
 // ============================================================
@@ -161,9 +237,55 @@ export function SidebarToolSection({
   onToolRun,
   onToolViewFull,
   onAddTool,
+  onReorder,
   defaultCollapsed = false,
 }: SidebarToolSectionProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
+
+  // Sort tools: leader-pinned first, then by order
+  const sortedTools = React.useMemo(() => {
+    return [...tools].sort((a, b) => {
+      // Leader-pinned tools first
+      if (a.source === 'leader' && b.source !== 'leader') return -1;
+      if (a.source !== 'leader' && b.source === 'leader') return 1;
+      // Then by order
+      return a.order - b.order;
+    });
+  }, [tools]);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px drag before activating
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Handle drag end
+  const handleDragEnd = React.useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+
+      if (over && active.id !== over.id) {
+        const oldIndex = sortedTools.findIndex(
+          (t) => t.placementId === active.id
+        );
+        const newIndex = sortedTools.findIndex(
+          (t) => t.placementId === over.id
+        );
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const reordered = arrayMove(sortedTools, oldIndex, newIndex);
+          onReorder?.(reordered.map((t) => t.placementId));
+        }
+      }
+    },
+    [sortedTools, onReorder]
+  );
 
   // Don't render section if loading is done and no tools + not a leader
   if (!isLoading && tools.length === 0 && !isLeader) {
@@ -180,7 +302,7 @@ export function SidebarToolSection({
       {/* Section Header */}
       <SectionHeader
         isCollapsed={isCollapsed}
-        toolCount={tools.length}
+        toolCount={sortedTools.length}
         onToggle={() => setIsCollapsed(!isCollapsed)}
       />
 
@@ -196,11 +318,36 @@ export function SidebarToolSection({
           >
             {isLoading ? (
               <ToolSectionSkeleton />
-            ) : tools.length === 0 ? (
+            ) : sortedTools.length === 0 ? (
               <EmptyState isLeader={isLeader} onAddTool={onAddTool} />
+            ) : isLeader && onReorder ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedTools.map((t) => t.placementId)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-1 py-1">
+                    {sortedTools.map((tool) => (
+                      <SortableToolCard
+                        key={tool.placementId}
+                        tool={tool}
+                        isActive={tool.placementId === activeToolId}
+                        isLeader={isLeader}
+                        onToolClick={onToolClick}
+                        onToolRun={onToolRun}
+                        onToolViewFull={onToolViewFull}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
             ) : (
               <div className="space-y-1 py-1">
-                {tools.map((tool) => (
+                {sortedTools.map((tool) => (
                   <SidebarToolCard
                     key={tool.placementId}
                     tool={tool}
@@ -214,7 +361,7 @@ export function SidebarToolSection({
             )}
 
             {/* Add Tool Button (leaders only, shown below tools) */}
-            {!isLoading && tools.length > 0 && isLeader && onAddTool && (
+            {!isLoading && sortedTools.length > 0 && isLeader && onAddTool && (
               <motion.button
                 onClick={onAddTool}
                 className={cn(

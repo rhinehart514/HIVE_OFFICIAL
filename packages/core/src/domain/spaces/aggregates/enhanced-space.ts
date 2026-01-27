@@ -33,6 +33,7 @@ import {
   PlacedToolActivatedEvent,
   PlacedToolDeactivatedEvent,
   PlacedToolsReorderedEvent,
+  PlacedToolStateUpdatedEvent,
   SpaceStatusChangedEvent,
   SpaceWentLiveEvent,
   type SpacePublishStatus,
@@ -1718,6 +1719,7 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
 
   /**
    * Update the runtime state of a placed tool
+   * Emits PlacedToolStateUpdatedEvent for audit and sync purposes.
    */
   public updatePlacedToolState(
     placementId: string,
@@ -1735,7 +1737,17 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
       placedTool.updateState(state);
     }
 
-    // Don't emit event for state updates (too noisy) but update activity
+    // Emit state update event for audit trail and real-time sync
+    const stateKeys = Object.keys(state);
+    if (stateKeys.length > 0) {
+      this.addDomainEvent(new PlacedToolStateUpdatedEvent(
+        this.id,
+        placementId,
+        placedTool.toolId,
+        stateKeys
+      ));
+    }
+
     this.updateLastActivity();
 
     return Result.ok<void>();
@@ -1755,10 +1767,29 @@ export class EnhancedSpace extends AggregateRoot<EnhancedSpaceProps> {
   /**
    * Transition space from stealth to live.
    *
-   * This is typically called when a platform admin verifies the space leader.
-   * While in stealth mode, the leader can fully use the space (post, events,
-   * invite specific people) - they get instant value. Once verified, the space
-   * becomes publicly discoverable.
+   * ## Stealth → Live Lifecycle
+   *
+   * **Stealth Mode (publishStatus: 'stealth')**
+   * - Space is only visible to its leaders (owner/admin)
+   * - Leaders can fully use the space: post, create events, invite members, deploy tools
+   * - Space does NOT appear in browse/discovery endpoints
+   * - This allows leaders to set up the space before public launch
+   *
+   * **Trigger Conditions for goLive()**
+   * 1. Admin verifies leader request (most common path)
+   * 2. Auto-verification after setup completion (if enabled)
+   * 3. Manual admin action via admin dashboard
+   *
+   * **What Changes When Going Live**
+   * - publishStatus: 'stealth' → 'live'
+   * - isVerified: false → true
+   * - wentLiveAt: set to current timestamp
+   * - Space becomes publicly discoverable in browse endpoints
+   * - Space appears in category listings and search results
+   *
+   * **Events Emitted**
+   * - SpaceStatusChangedEvent (for audit/analytics)
+   * - SpaceWentLiveEvent (for notifications/celebrations)
    *
    * @param verifiedBy - The admin or system that verified the leader
    */

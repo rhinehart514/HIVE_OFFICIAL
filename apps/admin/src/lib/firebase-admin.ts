@@ -5,6 +5,7 @@
  * based on the environment (development, staging, production).
  */
 
+import 'server-only';
 import * as admin from "firebase-admin";
 
 // Environment detection

@@ -120,6 +120,9 @@ interface UseSpaceResidenceStateReturn {
   sidebarTools: PlacedToolDTO[];
   isLoadingTools: boolean;
   refreshTools: () => Promise<void>;
+
+  // Refresh
+  refreshSpace: () => Promise<void>;
 }
 
 // ============================================
@@ -649,6 +652,49 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     }
   }, [space?.id]);
 
+  // Refresh space data (for after settings updates)
+  const refreshSpace = React.useCallback(async () => {
+    if (!space?.id) return;
+
+    try {
+      // Refetch space data
+      const spaceResponse = await fetch(`/api/spaces/${space.id}`);
+      if (spaceResponse.ok) {
+        const spaceResult = await spaceResponse.json();
+        const spaceData = spaceResult.data || spaceResult;
+
+        setSpace((prev) => prev ? {
+          ...prev,
+          name: spaceData.name || prev.name,
+          description: spaceData.description,
+          avatarUrl: spaceData.avatarUrl || spaceData.iconURL,
+          bannerUrl: spaceData.bannerUrl || spaceData.coverImageURL,
+          memberCount: spaceData.memberCount || prev.memberCount,
+          onlineCount: spaceData.onlineCount || prev.onlineCount,
+          isVerified: spaceData.isVerified || prev.isVerified,
+          email: spaceData.email,
+          contactName: spaceData.contactName,
+          socialLinks: spaceData.socialLinks,
+        } : null);
+      }
+
+      // Refetch boards
+      const boardsResponse = await fetch(`/api/spaces/${space.id}/boards`);
+      if (boardsResponse.ok) {
+        const boardsData = await boardsResponse.json();
+        if (boardsData.boards && boardsData.boards.length > 0) {
+          const boardsWithUnread = boardsData.boards.map((board: Board) => ({
+            ...board,
+            unreadCount: board.unreadCount ?? 0,
+          }));
+          setBoards(boardsWithUnread);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh space:', error);
+    }
+  }, [space?.id]);
+
   return {
     // Space data
     space,
@@ -693,6 +739,9 @@ export function useSpaceResidenceState(handle: string): UseSpaceResidenceStateRe
     sidebarTools,
     isLoadingTools,
     refreshTools,
+
+    // Refresh
+    refreshSpace,
   };
 }
 

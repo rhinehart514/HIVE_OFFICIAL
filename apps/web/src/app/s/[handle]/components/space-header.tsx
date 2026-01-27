@@ -15,10 +15,12 @@
 
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink } from 'lucide-react';
+import { Settings, ChevronDown, Crown, Hammer, Globe, Instagram, Twitter, Facebook, Linkedin, Youtube, ExternalLink, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button, Text, Avatar, AvatarImage, AvatarFallback, getInitials } from '@hive/ui';
 import { MOTION, durationSeconds } from '@hive/tokens';
+
+type EnergyLevel = 'busy' | 'active' | 'quiet' | 'none';
 
 interface SpaceHeaderProps {
   space: {
@@ -38,6 +40,8 @@ interface SpaceHeaderProps {
       linkedin?: string;
       youtube?: string;
     };
+    // Energy signals (Sprint 3)
+    recentMessageCount?: number;
   };
   isLeader?: boolean;
   isMember?: boolean;
@@ -45,7 +49,42 @@ interface SpaceHeaderProps {
   onMembersClick?: () => void;
   onSpaceInfoClick?: () => void;
   onBuildToolClick?: () => void;
+  onCreateEventClick?: () => void;
   className?: string;
+}
+
+/**
+ * Calculate energy level from recent message count (last 24 hours)
+ * - busy: 20+ messages
+ * - active: 5-19 messages
+ * - quiet: 1-4 messages
+ * - none: 0 messages
+ */
+function getEnergyLevel(messageCount: number = 0): EnergyLevel {
+  if (messageCount >= 20) return 'busy';
+  if (messageCount >= 5) return 'active';
+  if (messageCount >= 1) return 'quiet';
+  return 'none';
+}
+
+/**
+ * Energy dots component
+ */
+function EnergyDots({ level }: { level: EnergyLevel }) {
+  if (level === 'none') return null;
+
+  const dotCount = level === 'busy' ? 3 : level === 'active' ? 2 : 1;
+
+  return (
+    <div className="flex items-center gap-0.5 mr-1.5">
+      {[...Array(dotCount)].map((_, i) => (
+        <span
+          key={i}
+          className="w-1 h-1 rounded-full bg-[var(--color-gold)]"
+        />
+      ))}
+    </div>
+  );
 }
 
 export function SpaceHeader({
@@ -56,6 +95,7 @@ export function SpaceHeader({
   onMembersClick,
   onSpaceInfoClick,
   onBuildToolClick,
+  onCreateEventClick,
   className,
 }: SpaceHeaderProps) {
   return (
@@ -127,15 +167,33 @@ export function SpaceHeader({
               @{space.handle}
             </Text>
 
-            {/* Online indicator - gold when active */}
-            {space.onlineCount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
-                <Text size="xs" className="text-[var(--color-gold)]/70">
-                  {space.onlineCount} online
-                </Text>
-              </div>
-            )}
+            {/* Energy indicator - shows activity level and presence */}
+            {(() => {
+              const energyLevel = getEnergyLevel(space.recentMessageCount);
+              return (
+                <div className="flex items-center gap-2">
+                  {/* Energy dots */}
+                  {energyLevel !== 'none' && (
+                    <div className="flex items-center gap-1">
+                      <EnergyDots level={energyLevel} />
+                      <Text size="xs" className="text-white/40">
+                        {energyLevel}
+                      </Text>
+                    </div>
+                  )}
+
+                  {/* Presence count - "here now" instead of "online" */}
+                  {space.onlineCount > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
+                      <Text size="xs" className="text-[var(--color-gold)]/70">
+                        {space.onlineCount} here now
+                      </Text>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Social Links (P2.2) */}
             {space.socialLinks && Object.values(space.socialLinks).some(Boolean) && (
@@ -251,6 +309,20 @@ export function SpaceHeader({
           >
             <Hammer className="h-4 w-4" />
             <span className="hidden sm:inline ml-2 text-xs">Build</span>
+          </Button>
+        )}
+
+        {/* Create Event (leader only) */}
+        {isLeader && onCreateEventClick && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onCreateEventClick}
+            className="text-[var(--color-gold)]/60 hover:text-[var(--color-gold)]"
+            title="Create an event for this space"
+          >
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline ml-2 text-xs">Event</span>
           </Button>
         )}
 

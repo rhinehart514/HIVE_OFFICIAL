@@ -1,6 +1,9 @@
 /**
  * Spaces Browse API
  *
+ * @deprecated Use /api/spaces/browse-v2 instead.
+ * This route is maintained for backwards compatibility and will be removed.
+ *
  * Serves category-specific browse experiences with personalization.
  * Maps UI quadrants to data categories with rich metadata.
  *
@@ -308,7 +311,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
       spaces: toSpaceBrowseDTOList(schoolSpaces, new Set(), enrichment),
     }));
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       category: 'major',
       userMajor: userMajorSpaceDTO
         ? {
@@ -321,6 +324,13 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
       copy: CATEGORY_COPY.major,
       totalCount: spaces.length,
     });
+
+    // Deprecation headers
+    response.headers.set('Deprecation', 'true');
+    response.headers.set('Sunset', '2026-06-01');
+    response.headers.set('Link', '</api/spaces/browse-v2>; rel="successor-version"');
+
+    return response;
   }
 
   // ============================================================
@@ -382,7 +392,7 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
   // Transform to DTOs
   const spaceDTOs = toSpaceBrowseDTOList(resultSpaces, new Set(), enrichment);
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     category,
     spaces: spaceDTOs,
     copy: CATEGORY_COPY[category],
@@ -390,4 +400,11 @@ export const GET = withOptionalAuth(async (request, _context, respond) => {
     hasMore,
     nextCursor,
   });
+
+  // Deprecation headers
+  response.headers.set('Deprecation', 'true');
+  response.headers.set('Sunset', '2026-06-01');
+  response.headers.set('Link', '</api/spaces/browse-v2>; rel="successor-version"');
+
+  return response;
 });

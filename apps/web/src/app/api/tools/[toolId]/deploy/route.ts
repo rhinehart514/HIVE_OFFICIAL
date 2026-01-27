@@ -45,13 +45,21 @@ export const POST = withAuthValidationAndErrors(
     // Profile deployments are handled differently
     if (targetType === 'profile') {
       try {
+        // Validate required context
+        if (!campusId) {
+          return respond.error("Campus context required for deployment", "INVALID_INPUT", { status: 400 });
+        }
+
         // For profile deployments, we update the tool and create a placement document
         const toolDoc = await db.collection("tools").doc(toolId).get();
         if (!toolDoc.exists) {
           return respond.error("Tool not found", "RESOURCE_NOT_FOUND", { status: 404 });
         }
         const toolData = toolDoc.data();
-        if (toolData?.ownerId !== userId) {
+
+        // Check ownership - support both ownerId and createdBy for backwards compat
+        const isOwner = toolData?.ownerId === userId || toolData?.createdBy === userId;
+        if (!isOwner) {
           return respond.error("You can only deploy your own tools to your profile", "FORBIDDEN", { status: 403 });
         }
 

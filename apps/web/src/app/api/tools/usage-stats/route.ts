@@ -152,8 +152,13 @@ const fetchUsageStats = async (userId: string, campusId: string): Promise<ToolUs
       weeklyActivity,
     };
   } catch (error) {
-    logger.error('Error fetching usage stats', { error, userId });
-    // Return empty state on error
+    // GRACEFUL DEGRADATION: Stats are non-critical, log at warn level
+    logger.warn('Error fetching usage stats - returning empty state (graceful degradation)', {
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      campusId
+    });
+    // Return empty state - caller should check _degraded flag
     return {
       totalTools: 0,
       weeklyUsage: 0,

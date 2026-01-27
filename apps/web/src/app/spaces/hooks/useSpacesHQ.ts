@@ -19,6 +19,7 @@ export interface Space {
   isVerified?: boolean;
   onlineCount?: number;
   unreadCount?: number;
+  recentMessageCount?: number; // Messages in last 24h for energy calculation
 }
 
 export interface IdentityClaim {
@@ -29,35 +30,8 @@ export interface IdentityClaim {
   spaceAvatarUrl?: string;
   memberCount: number;
   claimedAt: Date;
-}
-
-export interface AttentionItem {
-  id: string;
-  type: 'vote' | 'rsvp' | 'deadline' | 'mention';
-  spaceId: string;
-  spaceName: string;
-  spaceAvatarUrl?: string;
-  title: string;
-  urgency: 'low' | 'medium' | 'high';
-  deadline?: Date;
-}
-
-export interface LiveSpace {
-  id: string;
-  name: string;
-  avatarUrl?: string;
-  eventName?: string;
-  participantCount: number;
-}
-
-export interface RecentActivity {
-  id: string;
-  spaceId: string;
-  spaceName: string;
-  spaceAvatarUrl?: string;
-  type: 'message' | 'event' | 'post';
-  preview: string;
-  timestamp: Date;
+  recentMessageCount?: number; // Messages in last 24h for energy calculation
+  onlineCount?: number; // Current presence count
 }
 
 export type HQState = 'empty' | 'onboarding' | 'active';
@@ -70,6 +44,8 @@ interface SpaceMembershipDTO {
   category: string;
   memberCount: number;
   isVerified?: boolean;
+  recentMessageCount?: number;
+  onlineCount?: number;
   membership: {
     role: string;
     joinedAt: string;
@@ -107,13 +83,6 @@ export interface UseSpacesHQReturn {
 
   // Organizations (non-identity spaces)
   organizations: Space[];
-
-  // Attention items
-  actions: AttentionItem[];
-  liveSpaces: LiveSpace[];
-
-  // Recent activity
-  recentActivity: RecentActivity[];
 
   // Actions
   refresh: () => void;
@@ -165,17 +134,40 @@ export function useSpacesHQ(): UseSpacesHQReturn {
           category: s.category || 'general',
           memberCount: s.memberCount || 0,
           isVerified: s.isVerified,
+          recentMessageCount: s.recentMessageCount || 0,
+          onlineCount: s.onlineCount || 0,
           membership: s.membership,
         }))
       );
 
-      // Process identity claims
+      // Process identity claims - enrich with energy data from spaces
       const identityData: IdentityClaimsResponse = await identityRes.json();
       const claims = identityData.claims || { residential: null, major: null, greek: null };
+
+      // Create a map for quick lookup of space energy data
+      type EnergyData = { recentMessageCount: number; onlineCount: number };
+      const spaceEnergyMap = new Map<string, EnergyData>(
+        activeSpaces.map((s: SpaceMembershipDTO) => [
+          s.id,
+          { recentMessageCount: s.recentMessageCount || 0, onlineCount: s.onlineCount || 0 },
+        ])
+      );
+
+      // Enrich identity claims with energy data
+      const enrichClaim = (claim: IdentityClaim | null): IdentityClaim | null => {
+        if (!claim) return null;
+        const energyData = spaceEnergyMap.get(claim.spaceId);
+        return {
+          ...claim,
+          recentMessageCount: energyData?.recentMessageCount ?? 0,
+          onlineCount: energyData?.onlineCount ?? 0,
+        };
+      };
+
       setIdentityClaims({
-        major: claims.major,
-        home: claims.residential, // Map residential to home
-        greek: claims.greek,
+        major: enrichClaim(claims.major),
+        home: enrichClaim(claims.residential), // Map residential to home
+        greek: enrichClaim(claims.greek),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load spaces');
@@ -220,40 +212,10 @@ export function useSpacesHQ(): UseSpacesHQReturn {
         memberCount: s.memberCount,
         isVerified: s.isVerified,
         unreadCount: s.membership?.notifications || 0,
+        recentMessageCount: s.recentMessageCount || 0,
+        onlineCount: s.onlineCount || 0,
       }));
   }, [allSpaces, identityClaims]);
-
-  // Mock attention items (would come from API in production)
-  const actions: AttentionItem[] = React.useMemo(() => {
-    // TODO: Fetch from /api/spaces/attention or similar
-    return [];
-  }, []);
-
-  // Mock live spaces (would come from presence API)
-  const liveSpaces: LiveSpace[] = React.useMemo(() => {
-    // TODO: Fetch from presence/realtime API
-    return organizations
-      .slice(0, 2)
-      .map((s) => ({
-        id: s.id,
-        name: s.name,
-        avatarUrl: s.avatarUrl,
-        participantCount: Math.floor(Math.random() * 20) + 5,
-      }));
-  }, [organizations]);
-
-  // Mock recent activity
-  const recentActivity: RecentActivity[] = React.useMemo(() => {
-    return allSpaces.slice(0, 4).map((s, i) => ({
-      id: `activity-${s.id}`,
-      spaceId: s.id,
-      spaceName: s.name,
-      spaceAvatarUrl: s.avatarUrl,
-      type: ['message', 'event', 'post'][i % 3] as 'message' | 'event' | 'post',
-      preview: 'New activity in this space',
-      timestamp: new Date(Date.now() - i * 3600000),
-    }));
-  }, [allSpaces]);
 
   return {
     state,
@@ -262,9 +224,6 @@ export function useSpacesHQ(): UseSpacesHQReturn {
     identityClaims,
     identityProgress,
     organizations,
-    actions,
-    liveSpaces,
-    recentActivity,
     refresh: fetchData,
   };
 }

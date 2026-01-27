@@ -2,7 +2,14 @@ import { z } from "zod";
 import { dbAdmin as adminDb } from "@/lib/firebase-admin";
 import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
-import { ToolSchema, createToolDefaults as coreCreateToolDefaults, type PlacementTargetType } from "@hive/core";
+import {
+  ToolSchema,
+  createToolDefaults as coreCreateToolDefaults,
+  type PlacementTargetType,
+  validateToolComposition,
+  type CanvasElementForValidation,
+  type ConnectionForValidation,
+} from "@hive/core";
 import { createPlacementDocument, buildPlacementCompositeId } from "@/lib/tool-placement";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateToolContext } from "@hive/core/infrastructure/api/validate-tool-context";
@@ -69,10 +76,81 @@ export const GET = withAuthAndErrors(async (request, context, respond) => {
     query = query.limit(limit).offset(offset);
 
     const snapshot = await query.get();
-    const tools = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const toolIds = snapshot.docs.map((doc) => doc.id);
+
+    // Batch fetch deployments for these tools to get space context
+    let deploymentsMap = new Map<string, Array<{ spaceId: string; spaceName: string }>>();
+    if (toolIds.length > 0) {
+      // Firestore 'in' queries support up to 30 values
+      const chunks: string[][] = [];
+      for (let i = 0; i < toolIds.length; i += 30) {
+        chunks.push(toolIds.slice(i, i + 30));
+      }
+
+      for (const chunk of chunks) {
+        const deploymentsSnap = await adminDb
+          .collection('deployedTools')
+          .where('toolId', 'in', chunk)
+          .where('deployedTo', '==', 'space')
+          .get();
+
+        for (const doc of deploymentsSnap.docs) {
+          const data = doc.data();
+          const toolId = data.toolId as string;
+          const spaceId = data.targetId as string || data.spaceId as string;
+          const spaceName = (data.spaceName as string) || 'Space';
+
+          if (!deploymentsMap.has(toolId)) {
+            deploymentsMap.set(toolId, []);
+          }
+          deploymentsMap.get(toolId)!.push({ spaceId, spaceName });
+        }
+      }
+
+      // If spaceName not cached, batch fetch space names
+      const spaceIdsToFetch = new Set<string>();
+      for (const deployments of deploymentsMap.values()) {
+        for (const d of deployments) {
+          if (d.spaceName === 'Space') {
+            spaceIdsToFetch.add(d.spaceId);
+          }
+        }
+      }
+
+      if (spaceIdsToFetch.size > 0) {
+        const spaceRefs = Array.from(spaceIdsToFetch).map(id => adminDb.collection('spaces').doc(id));
+        const spaceDocs = await adminDb.getAll(...spaceRefs);
+        const spaceNames = new Map<string, string>();
+        for (const doc of spaceDocs) {
+          if (doc.exists) {
+            spaceNames.set(doc.id, (doc.data()?.name as string) || 'Space');
+          }
+        }
+
+        // Update deployment entries with real space names
+        for (const deployments of deploymentsMap.values()) {
+          for (const d of deployments) {
+            if (d.spaceName === 'Space' && spaceNames.has(d.spaceId)) {
+              d.spaceName = spaceNames.get(d.spaceId)!;
+            }
+          }
+        }
+      }
+    }
+
+    // Map tools with deployment info
+    const tools = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const deployments = deploymentsMap.get(doc.id) || [];
+      return {
+        id: doc.id,
+        ...data,
+        // Add deployment context for profile display
+        deployments,
+        deployedToSpaces: deployments.length,
+        primarySpaceName: deployments.length > 0 ? deployments[0].spaceName : undefined,
+      };
+    });
 
     // Get total count for pagination
     const countQuery = adminDb.collection("tools")
@@ -298,6 +376,53 @@ export const POST = withAuthValidationAndErrors(
       } : null,
     };
 
+    // COMPOSITION VALIDATION: Validate tool structure before saving
+    // This catches invalid compositions early (unknown elements, bad configs, cycles)
+    const elementsToValidate = (tool.elements || []) as CanvasElementForValidation[];
+    const connectionsToValidate = (tool.connections || []).map((conn: Record<string, unknown>) => ({
+      id: conn.id as string | undefined,
+      from: {
+        instanceId: (conn.sourceElementId as string) || '',
+        output: conn.sourceOutput as string | undefined,
+      },
+      to: {
+        instanceId: (conn.targetElementId as string) || '',
+        input: conn.targetInput as string | undefined,
+      },
+    })) as ConnectionForValidation[];
+
+    if (elementsToValidate.length > 0) {
+      const compositionValidation = validateToolComposition(elementsToValidate, connectionsToValidate);
+
+      if (!compositionValidation.valid) {
+        logger.warn('[tools] Composition validation failed', {
+          userId,
+          errors: compositionValidation.errors,
+          warnings: compositionValidation.warnings,
+        });
+        const errorDetails = [
+          ...compositionValidation.errors.map(e => `Error: ${e.message}`),
+          ...compositionValidation.warnings.map(w => `Warning: ${w.message}`),
+        ];
+        return respond.error(
+          'Invalid tool composition',
+          "VALIDATION_ERROR",
+          {
+            status: 400,
+            details: errorDetails,
+          }
+        );
+      }
+
+      // Log warnings even if valid (for monitoring)
+      if (compositionValidation.warnings.length > 0) {
+        logger.info('[tools] Composition validation passed with warnings', {
+          userId,
+          warnings: compositionValidation.warnings,
+        });
+      }
+    }
+
     // Save to Firestore
     // Note: Input already validated by EnhancedCreateToolSchema middleware.
     // Don't use ToolSchema.parse() as it strips campusId, ownerId, elements, etc.
@@ -513,6 +638,55 @@ export const PUT = withAuthValidationAndErrors(
       // Explicitly preserve originalContext from existing tool
       originalContext: existingTool?.originalContext || null,
     };
+
+    // COMPOSITION VALIDATION: Validate tool structure before updating
+    // Only validate if elements are being updated
+    if (updateData.elements && Array.isArray(updateData.elements)) {
+      const elementsToValidate = updateData.elements as CanvasElementForValidation[];
+      const connectionsToValidate = ((updateData.connections || existingTool?.connections || []) as Record<string, unknown>[]).map((conn) => ({
+        id: conn.id as string | undefined,
+        from: {
+          instanceId: (conn.sourceElementId as string) || '',
+          output: conn.sourceOutput as string | undefined,
+        },
+        to: {
+          instanceId: (conn.targetElementId as string) || '',
+          input: conn.targetInput as string | undefined,
+        },
+      })) as ConnectionForValidation[];
+
+      const compositionValidation = validateToolComposition(elementsToValidate, connectionsToValidate);
+
+      if (!compositionValidation.valid) {
+        logger.warn('[tools] Composition validation failed on update', {
+          userId,
+          toolId,
+          errors: compositionValidation.errors,
+          warnings: compositionValidation.warnings,
+        });
+        const errorDetails = [
+          ...compositionValidation.errors.map(e => `Error: ${e.message}`),
+          ...compositionValidation.warnings.map(w => `Warning: ${w.message}`),
+        ];
+        return respond.error(
+          'Invalid tool composition',
+          "VALIDATION_ERROR",
+          {
+            status: 400,
+            details: errorDetails,
+          }
+        );
+      }
+
+      // Log warnings even if valid
+      if (compositionValidation.warnings.length > 0) {
+        logger.info('[tools] Composition validation passed with warnings', {
+          userId,
+          toolId,
+          warnings: compositionValidation.warnings,
+        });
+      }
+    }
 
     // Update the tool
     await adminDb.collection("tools").doc(toolId).update(updatedTool);

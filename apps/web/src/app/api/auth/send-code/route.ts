@@ -86,6 +86,8 @@ function hashCode(code: string): string {
  * Invalidate any existing pending codes for this email
  */
 async function invalidatePreviousCodes(email: string): Promise<void> {
+  // DEV BYPASS: Skip code invalidation in development
+  if (currentEnvironment === 'development') return;
   if (!isFirebaseConfigured) return;
 
   const pendingCodes = await dbAdmin
@@ -111,6 +113,8 @@ async function invalidatePreviousCodes(email: string): Promise<void> {
  * Check rate limit for code generation (per email)
  */
 async function checkEmailRateLimit(email: string): Promise<boolean> {
+  // DEV BYPASS: Skip rate limit check in development
+  if (currentEnvironment === 'development') return true;
   if (!isFirebaseConfigured) return true;
 
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
@@ -175,6 +179,18 @@ async function checkAccessWhitelist(email: string): Promise<boolean> {
  * Validate school exists and is active
  */
 async function validateSchool(schoolId: string): Promise<SchoolData | null> {
+  // DEV BYPASS: Return hardcoded school data for ub-buffalo in development
+  // This avoids Firebase entirely when quota is exhausted
+  if (currentEnvironment === 'development' && (schoolId === 'ub-buffalo' || schoolId === 'ub')) {
+    logger.info('DEV MODE: Using hardcoded school data for ub-buffalo');
+    return {
+      id: 'ub-buffalo',
+      domain: 'buffalo.edu',
+      name: 'University at Buffalo',
+      active: true
+    };
+  }
+
   if (isFirebaseConfigured) {
     try {
       const schoolDoc = await dbAdmin.collection("schools").doc(schoolId).get();
@@ -471,8 +487,8 @@ export const POST = withValidation(
         return respond.error("Invalid request origin", "FORBIDDEN", { status: 403 });
       }
 
-      // Rate limiting
-      const rateLimitResult = await enforceRateLimit('magicLink', request as NextRequest);
+      // Rate limiting - SECURITY: Use signinCode preset (5 requests per 5 min)
+      const rateLimitResult = await enforceRateLimit('signinCode', request as NextRequest);
       if (!rateLimitResult.allowed) {
         return respond.error(rateLimitResult.error || "Rate limit exceeded", "RATE_LIMITED", {
           status: rateLimitResult.status
@@ -581,8 +597,8 @@ export const POST = withValidation(
         console.log('========================================\n');
       }
 
-      // Store in Firestore
-      if (isFirebaseConfigured) {
+      // Store in Firestore (skip in development to avoid quota issues)
+      if (isFirebaseConfigured && currentEnvironment !== 'development') {
         const now = new Date();
         const expiresAt = new Date(now.getTime() + CODE_TTL_SECONDS * 1000);
 

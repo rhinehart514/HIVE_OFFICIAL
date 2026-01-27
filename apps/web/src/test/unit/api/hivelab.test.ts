@@ -1,14 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextResponse } from 'next/server';
 
-// Mock Next.js server components
-vi.mock('next/server', () => ({
-  NextRequest: vi.fn(),
-  NextResponse: {
-    json: vi.fn((data, init) => ({ data, init, ok: true })),
-    error: vi.fn(() => ({ ok: false })),
-  },
-}));
+/**
+ * Helper to create mock Response-like objects for testing
+ * Mimics mockJson() return shape
+ */
+function mockJson<T>(data: T, init?: { status?: number }) {
+  return { data, init, ok: true };
+}
 
 describe('HiveLab Tools API', () => {
   beforeEach(() => {
@@ -38,30 +36,31 @@ describe('HiveLab Tools API', () => {
           voters: string[];
         };
         if (!state) {
-          return NextResponse.json({ error: 'Tool instance not found' }, { status: 404 });
+          return mockJson({ error: 'Tool instance not found' }, { status: 404 });
         }
 
         if (action === 'vote') {
           const option = payload.option as string;
-          if (!state.votes[option]) {
-            return NextResponse.json({ error: 'Invalid option' }, { status: 400 });
+          // Check if option exists (not if value is truthy, since 0 is valid)
+          if (!(option in state.votes)) {
+            return mockJson({ error: 'Invalid option' }, { status: 400 });
           }
 
           // Check if already voted
           if (state.voters.includes(userId)) {
-            return NextResponse.json({ error: 'Already voted' }, { status: 400 });
+            return mockJson({ error: 'Already voted' }, { status: 400 });
           }
 
           state.votes[option] += 1;
           state.voters.push(userId);
 
-          return NextResponse.json({
+          return mockJson({
             success: true,
             newState: state,
           });
         }
 
-        return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+        return mockJson({ error: 'Unknown action' }, { status: 400 });
       };
 
       // Cast a vote
@@ -127,7 +126,7 @@ describe('HiveLab Tools API', () => {
       ) => {
         // Only space leaders can deploy to spaces
         if (targetType === 'space' && !isSpaceLeader) {
-          return NextResponse.json(
+          return mockJson(
             { error: 'Only space leaders can deploy tools to spaces' },
             { status: 403 }
           );
@@ -143,7 +142,7 @@ describe('HiveLab Tools API', () => {
           status: 'active',
         };
 
-        return NextResponse.json(deployment, { status: 201 });
+        return mockJson(deployment, { status: 201 });
       };
 
       // Leader deploys to space
@@ -209,15 +208,15 @@ describe('HiveLab Tools API', () => {
           state,
           updatedAt: new Date().toISOString(),
         };
-        return NextResponse.json({ success: true });
+        return mockJson({ success: true });
       };
 
       const getState = async (instanceId: string) => {
         const stored = stateStore[instanceId];
         if (!stored) {
-          return NextResponse.json({ error: 'State not found' }, { status: 404 });
+          return mockJson({ error: 'State not found' }, { status: 404 });
         }
-        return NextResponse.json(stored);
+        return mockJson(stored);
       };
 
       // Save state
@@ -240,12 +239,12 @@ describe('HiveLab Tools API', () => {
       const debouncedSave = async (instanceId: string, state: unknown) => {
         const now = Date.now();
         if (now - lastSaveTime < DEBOUNCE_MS) {
-          return NextResponse.json({ queued: true });
+          return mockJson({ queued: true });
         }
 
         lastSaveTime = now;
         saveCount++;
-        return NextResponse.json({ saved: true, saveCount });
+        return mockJson({ saved: true, saveCount });
       };
 
       // First save goes through
@@ -372,10 +371,10 @@ describe('HiveLab Tools API', () => {
         }
 
         if (elements.length === 0) {
-          return NextResponse.json({ error: 'Could not generate tool from prompt' }, { status: 400 });
+          return mockJson({ error: 'Could not generate tool from prompt' }, { status: 400 });
         }
 
-        return NextResponse.json({
+        return mockJson({
           composition: {
             elements,
             connections: [],
@@ -421,7 +420,7 @@ describe('HiveLab Tools API', () => {
           userId,
         });
 
-        return NextResponse.json({ tracked: true });
+        return mockJson({ tracked: true });
       };
 
       await trackEvent('tool-1', 'view', 'user-1');
@@ -435,7 +434,7 @@ describe('HiveLab Tools API', () => {
     it('should aggregate analytics for tool dashboard', async () => {
       const getToolAnalytics = async (toolId: string, timeRange: '7d' | '30d') => {
         // Mock aggregated analytics
-        return NextResponse.json({
+        return mockJson({
           toolId,
           timeRange,
           metrics: {

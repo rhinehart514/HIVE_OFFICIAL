@@ -24,11 +24,7 @@
       "@hive/ui": ["../../packages/ui/src"],
       "@hive/tokens": ["../../packages/tokens/src"],
       "@hive/hooks": ["../../packages/hooks/src"],
-      "@hive/utilities": ["../../packages/utilities/src"],
       "@hive/validation": ["../../packages/validation/src"],
-      "@hive/i18n": ["../../packages/i18n/src"],
-      "@hive/analytics": ["../../packages/analytics/src"],
-      "@hive/api-client": ["../../packages/api-client/src"],
       "@hive/auth-logic": ["../../packages/auth-logic/src"],
       "@hive/firebase": ["../../packages/firebase/src"],
       "@hive/core": ["../../packages/core/src"]

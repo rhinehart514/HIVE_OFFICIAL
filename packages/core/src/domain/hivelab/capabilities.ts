@@ -8,6 +8,23 @@
  */
 
 // =============================================================================
+// Generic Firestore Interface (avoids importing firebase-admin on client)
+// =============================================================================
+
+/**
+ * Minimal Firestore interface for budget operations.
+ * Works with both firebase-admin and firebase client SDK.
+ */
+interface FirestoreDB {
+  collection(path: string): {
+    doc(id: string): {
+      get(): Promise<{ exists: boolean; data(): Record<string, unknown> | undefined }>;
+      set(data: Record<string, unknown>, options?: { merge?: boolean }): Promise<unknown>;
+    };
+  };
+}
+
+// =============================================================================
 // Capability Types
 // =============================================================================
 
@@ -552,3 +569,188 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   layout: 'full',
   showWidgetWhenActive: false,
 };
+
+// =============================================================================
+// Budget Tracking Functions
+// =============================================================================
+
+/**
+ * Get the current date key for budget tracking (YYYY-MM-DD)
+ */
+export function getBudgetDateKey(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Get the current hour key for rate limiting (YYYY-MM-DD-HH)
+ */
+export function getBudgetHourKey(): string {
+  const now = new Date();
+  const date = now.toISOString().split('T')[0];
+  const hour = now.getUTCHours().toString().padStart(2, '0');
+  return `${date}-${hour}`;
+}
+
+/**
+ * Budget check result with reset time information
+ */
+export interface BudgetCheckResult {
+  allowed: boolean;
+  reason?: string;
+  limit?: number;
+  used?: number;
+  resetAt?: Date;
+}
+
+/**
+ * Check budget usage from Firestore.
+ * This is the async version that reads from the database.
+ */
+export async function checkBudgetFromDb(
+  db: FirestoreDB,
+  budgets: ToolBudgets,
+  deploymentId: string,
+  userId: string,
+  action: {
+    sendingNotification?: boolean;
+    creatingPost?: boolean;
+    triggeringAutomation?: boolean;
+  }
+): Promise<BudgetCheckResult> {
+  const dateKey = getBudgetDateKey();
+  const hourKey = getBudgetHourKey();
+
+  // Get daily budget usage
+  const dailyRef = db.collection('budget_usage').doc(`${deploymentId}_${dateKey}`);
+  const dailyDoc = await dailyRef.get();
+  const dailyUsage = dailyDoc.exists ? (dailyDoc.data() as Partial<BudgetUsage>) : {};
+
+  // Get hourly user execution count
+  const hourlyRef = db.collection('budget_usage_hourly').doc(`${deploymentId}_${userId}_${hourKey}`);
+  const hourlyDoc = await hourlyRef.get();
+  const hourlyData = hourlyDoc.exists ? (hourlyDoc.data() as { count?: number } | undefined) : undefined;
+  const hourlyCount: number = hourlyData?.count ?? 0;
+
+  // Calculate reset times
+  const now = new Date();
+  const nextHour = new Date(now);
+  nextHour.setMinutes(0, 0, 0);
+  nextHour.setHours(nextHour.getHours() + 1);
+
+  const nextDay = new Date(now);
+  nextDay.setHours(0, 0, 0, 0);
+  nextDay.setDate(nextDay.getDate() + 1);
+
+  // Check user hourly execution limit
+  if (hourlyCount >= budgets.executionsPerUserPerHour) {
+    return {
+      allowed: false,
+      reason: `Hourly execution limit reached (${budgets.executionsPerUserPerHour}/hour)`,
+      limit: budgets.executionsPerUserPerHour,
+      used: hourlyCount,
+      resetAt: nextHour,
+    };
+  }
+
+  // Check daily notification limit
+  if (action.sendingNotification) {
+    const sent = dailyUsage.notificationsSent ?? 0;
+    if (sent >= budgets.notificationsPerDay) {
+      return {
+        allowed: false,
+        reason: `Daily notification limit reached (${budgets.notificationsPerDay}/day)`,
+        limit: budgets.notificationsPerDay,
+        used: sent,
+        resetAt: nextDay,
+      };
+    }
+  }
+
+  // Check daily post limit
+  if (action.creatingPost) {
+    const created = dailyUsage.postsCreated ?? 0;
+    if (created >= budgets.postsPerDay) {
+      return {
+        allowed: false,
+        reason: `Daily post limit reached (${budgets.postsPerDay}/day)`,
+        limit: budgets.postsPerDay,
+        used: created,
+        resetAt: nextDay,
+      };
+    }
+  }
+
+  // Check daily automation limit
+  if (action.triggeringAutomation) {
+    const triggered = dailyUsage.automationsTriggered ?? 0;
+    if (triggered >= budgets.automationsPerDay) {
+      return {
+        allowed: false,
+        reason: `Daily automation limit reached (${budgets.automationsPerDay}/day)`,
+        limit: budgets.automationsPerDay,
+        used: triggered,
+        resetAt: nextDay,
+      };
+    }
+  }
+
+  return { allowed: true };
+}
+
+/**
+ * Record budget usage after successful execution.
+ * NOTE: This function is server-only and requires FieldValue to be passed in.
+ */
+export async function recordBudgetUsage(
+  db: FirestoreDB,
+  deploymentId: string,
+  userId: string,
+  action: {
+    sentNotification?: boolean;
+    createdPost?: boolean;
+    triggeredAutomation?: boolean;
+  },
+  // FieldValue must be passed by caller (server-side only)
+  FieldValue?: {
+    serverTimestamp: () => unknown;
+    increment: (n: number) => unknown;
+  }
+): Promise<void> {
+  // Server-only guard
+  if (typeof window !== 'undefined' || !FieldValue) {
+    return;
+  }
+
+  const dateKey = getBudgetDateKey();
+  const hourKey = getBudgetHourKey();
+
+  // Update daily budget usage
+  const dailyRef = db.collection('budget_usage').doc(`${deploymentId}_${dateKey}`);
+  const dailyUpdate: Record<string, unknown> = {
+    deploymentId,
+    date: dateKey,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (action.sentNotification) {
+    dailyUpdate.notificationsSent = FieldValue.increment(1);
+  }
+  if (action.createdPost) {
+    dailyUpdate.postsCreated = FieldValue.increment(1);
+  }
+  if (action.triggeredAutomation) {
+    dailyUpdate.automationsTriggered = FieldValue.increment(1);
+  }
+
+  await dailyRef.set(dailyUpdate, { merge: true });
+
+  // Update hourly user execution count
+  const hourlyRef = db.collection('budget_usage_hourly').doc(`${deploymentId}_${userId}_${hourKey}`);
+  await hourlyRef.set({
+    deploymentId,
+    userId,
+    hourKey,
+    count: FieldValue.increment(1),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+}

@@ -36,9 +36,13 @@ import {
   hasCapability,
   validateActionCapabilities,
   checkBudget,
+  checkBudgetFromDb,
+  recordBudgetUsage,
   CAPABILITY_PRESETS,
   DEFAULT_BUDGETS,
   createConnectionResolver,
+  getActionRequiredCapabilities,
+  deploymentHasActionCapabilities,
 } from '@hive/core';
 
 // Feature flags for Phase 1 Scaling Architecture (enable after migration)
@@ -1370,6 +1374,68 @@ export const POST = withAuthValidationAndErrors(
         return respond.error(permissionCheck.reason, permissionCheck.code, { status: 403 });
     }
 
+    // =========================================================================
+    // CAPABILITY ENFORCEMENT: Check element/action capabilities before execution
+    // =========================================================================
+    const deploymentCapabilities = (deployment as Record<string, unknown>).capabilities as Partial<ToolCapabilities> | undefined;
+
+    if (elementId) {
+      const capabilityCheck = deploymentHasActionCapabilities(deploymentCapabilities, elementId, action);
+      if (!capabilityCheck.allowed) {
+        logger.warn('[execute] Capability check failed', {
+          deploymentId,
+          elementId,
+          action,
+          missing: capabilityCheck.missing,
+        });
+        return respond.error(
+          `Action "${action}" on element "${elementId}" requires capabilities: ${capabilityCheck.missing.join(', ')}`,
+          "FORBIDDEN",
+          { status: 403 }
+        );
+      }
+    }
+
+    // =========================================================================
+    // BUDGET ENFORCEMENT: Check rate limits before execution
+    // =========================================================================
+    const deploymentBudgets = ((deployment as Record<string, unknown>).budgets as ToolBudgets) || DEFAULT_BUDGETS.safe;
+
+    // Determine what type of action this is for budget purposes
+    const budgetAction = {
+      sendingNotification: action.includes('notify') || action.includes('notification'),
+      creatingPost: action.includes('post') || action.includes('create_post'),
+      triggeringAutomation: action.includes('automation') || action.includes('trigger'),
+    };
+
+    const budgetCheck = await checkBudgetFromDb(
+      dbAdmin,
+      deploymentBudgets,
+      deploymentId,
+      userId,
+      budgetAction
+    );
+
+    if (!budgetCheck.allowed) {
+      logger.warn('[execute] Budget limit exceeded', {
+        deploymentId,
+        userId,
+        reason: budgetCheck.reason,
+        limit: budgetCheck.limit,
+        used: budgetCheck.used,
+      });
+      const budgetDetails = [
+        budgetCheck.reason || 'Budget limit exceeded',
+        budgetCheck.resetAt ? `Resets at: ${budgetCheck.resetAt.toISOString()}` : null,
+        budgetCheck.limit ? `Limit: ${budgetCheck.limit}` : null,
+        budgetCheck.used ? `Used: ${budgetCheck.used}` : null,
+      ].filter(Boolean);
+      return respond.error(budgetCheck.reason || 'Budget limit exceeded', "UNKNOWN_ERROR", {
+        status: 429,
+        details: budgetDetails,
+      });
+    }
+
     // Get tool details
     if (!deployment.toolId) {
         return respond.error("Invalid deployment: missing toolId", "INVALID_DATA", { status: 400 });
@@ -1448,6 +1514,24 @@ export const POST = withAuthValidationAndErrors(
       activityEvent.duration = sanitizedContext.duration;
     }
     await dbAdmin.collection('activityEvents').add(activityEvent);
+
+    // =========================================================================
+    // BUDGET TRACKING: Record usage after successful execution
+    // =========================================================================
+    try {
+      await recordBudgetUsage(dbAdmin, deploymentId, userId, {
+        sentNotification: budgetAction.sendingNotification,
+        createdPost: budgetAction.creatingPost,
+        triggeredAutomation: budgetAction.triggeringAutomation,
+      });
+    } catch (budgetError) {
+      // Log but don't fail the request - budget tracking is non-critical
+      logger.warn('[execute] Failed to record budget usage', {
+        deploymentId,
+        userId,
+        error: budgetError instanceof Error ? budgetError.message : String(budgetError),
+      });
+    }
 
     // Record analytics event for tool usage tracking
     // This powers the analytics dashboard at /tools/[toolId]/analytics
@@ -2222,6 +2306,69 @@ async function executeToolAction(params: {
           }
 
           await batch.commit();
+        }
+
+        // =====================================================================
+        // Sprint 4: Emit Events for Automation Processing
+        // Events are written to deployedTools/{id}/events for Cloud Function triggers
+        // =====================================================================
+        if (result.success && (hasSharedStateUpdate || hasUserStateUpdate)) {
+          try {
+            const spaceId = targetType === 'space' ? targetId as string : undefined;
+
+            // Determine event type based on action and result
+            const eventType = result.sharedStateUpdate?.counterDeltas
+              ? 'counter_updated'
+              : result.sharedStateUpdate?.collectionUpserts
+                ? 'collection_updated'
+                : result.sharedStateUpdate?.timelineAppend
+                  ? 'timeline_appended'
+                  : 'action_completed';
+
+            // Build event data with relevant context
+            const eventData: Record<string, unknown> = {
+              type: eventType,
+              action,
+              elementId: elementId || null,
+              userId: user.uid,
+              timestamp: admin.firestore.FieldValue.serverTimestamp(),
+              processed: false,
+              spaceId: spaceId || null,
+            };
+
+            // Include state change metadata for threshold triggers
+            if (result.sharedStateUpdate?.counterDeltas) {
+              eventData.counterDeltas = result.sharedStateUpdate.counterDeltas;
+              // Also include current counter values for threshold evaluation
+              if (USE_SHARDED_COUNTERS) {
+                const counterKeys = Object.keys(result.sharedStateUpdate.counterDeltas);
+                eventData.counterValues = await shardedCounterService.getCountBatch(deployment.id, counterKeys);
+              }
+            }
+
+            if (result.sharedStateUpdate?.collectionUpserts) {
+              eventData.collectionKeys = Object.keys(result.sharedStateUpdate.collectionUpserts);
+            }
+
+            // Write event to Firestore - Cloud Function will pick it up
+            await dbAdmin
+              .collection('deployedTools')
+              .doc(deployment.id)
+              .collection('events')
+              .add(eventData);
+
+            logger.info('[execute] Emitted automation event', {
+              deploymentId: deployment.id,
+              eventType,
+              action,
+            });
+          } catch (eventError) {
+            // Log but don't fail - event emission is best-effort
+            logger.warn('[execute] Failed to emit automation event', {
+              error: eventError instanceof Error ? eventError.message : String(eventError),
+              deploymentId: deployment.id,
+            });
+          }
         }
 
         // =====================================================================

@@ -1051,7 +1051,15 @@ export {
 // ============================================
 
 export {
-  // ProfileBentoCard - Apple-style widget card for bento grid
+  // 3-Zone Profile Layout (New)
+  ProfileIdentityHero,
+  ProfileActivityCard,
+  ProfileLeadershipCard,
+  ProfileEventCard,
+  ProfileSpacePill,
+  ProfileConnectionFooter,
+  ProfileOverflowChip,
+  // ProfileBentoCard - Apple-style widget card for bento grid (Legacy)
   ProfileBentoCard,
   ProfileCard as ProfileBentoCardLegacy,
   // Other profile components
@@ -1067,6 +1075,20 @@ export {
 } from './profile';
 
 export type {
+  // 3-Zone Profile Layout Types (New)
+  ProfileIdentityHeroUser,
+  ProfileIdentityHeroProps,
+  ProfileActivityTool,
+  ProfileActivityCardProps,
+  ProfileLeadershipSpace,
+  ProfileLeadershipCardProps,
+  ProfileEvent,
+  ProfileEventCardProps,
+  ProfileSpacePillSpace,
+  ProfileSpacePillProps,
+  ProfileConnectionFooterProps,
+  ProfileOverflowChipProps,
+  // Legacy Types
   ProfileBentoCardProps,
   ProfileCardProps as ProfileBentoCardLegacyProps,
   ProfileHeroProps,

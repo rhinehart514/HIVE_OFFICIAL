@@ -19,6 +19,7 @@ import {
   ArrowTopRightOnSquareIcon,
   WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline';
+import { MapPinIcon } from '@heroicons/react/20/solid';
 import { cn } from '@/lib/utils';
 import { Text } from '@hive/ui/design-system/primitives';
 import type { PlacedToolDTO } from '@/hooks/use-space-tools';
@@ -32,6 +33,8 @@ export interface SidebarToolCardProps {
   tool: PlacedToolDTO;
   /** Whether this tool is currently active/selected */
   isActive?: boolean;
+  /** Whether drag handle should be shown (leaders only) */
+  isDraggable?: boolean;
   /** Handler when tool is clicked (default action) */
   onClick?: () => void;
   /** Handler for "Run" action (opens tool in modal) */
@@ -168,6 +171,7 @@ function HoverActions({
 export function SidebarToolCard({
   tool,
   isActive = false,
+  isDraggable = false,
   onClick,
   onRun,
   onViewFull,
@@ -179,6 +183,9 @@ export function SidebarToolCard({
 
   // Display name (use override if set)
   const displayName = tool.titleOverride || tool.name;
+
+  // Is this a leader-pinned tool?
+  const isPinned = tool.source === 'leader';
 
   return (
     <motion.button
@@ -206,8 +213,16 @@ export function SidebarToolCard({
       whileHover={{ x: 2 }}
       whileTap={{ scale: 0.98 }}
     >
-      {/* Tool Icon */}
-      <ToolIcon category={tool.category} isActive={isActive} />
+      {/* Tool Icon with Pin Indicator */}
+      <div className="relative flex-shrink-0">
+        <ToolIcon category={tool.category} isActive={isActive} />
+        {isPinned && (
+          <MapPinIcon
+            className="absolute -top-1 -right-1 w-2.5 h-2.5 text-[var(--color-accent-gold,#FFD700)]"
+            aria-label="Pinned by leader"
+          />
+        )}
+      </div>
 
       {/* Tool Name */}
       <Text

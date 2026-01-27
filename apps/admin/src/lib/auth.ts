@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@hive/firebase';
-import type { AdminUser } from './admin-auth';
+import type { AdminUser } from './types';
 
 /**
  * Admin Panel Client-Side Authentication

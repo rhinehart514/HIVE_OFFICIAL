@@ -492,3 +492,117 @@ export const RATE_LIMIT_PRESETS = {
 } as const;
 
 export type RateLimitPreset = keyof typeof RATE_LIMIT_PRESETS;
+
+/**
+ * Admin permission types for RBAC enforcement
+ * Maps to role permissions in admin-auth.ts:
+ * - viewer: ['read']
+ * - moderator: ['read', 'moderate', 'delete_content']
+ * - admin: ['read', 'write', 'moderate', 'delete_content', 'manage_users']
+ * - super_admin: all permissions
+ */
+export type AdminPermission =
+  | 'read'
+  | 'write'
+  | 'moderate'
+  | 'delete_content'
+  | 'manage_users'
+  | 'manage_admins'
+  | 'system_config';
+
+/**
+ * Admin route with permission enforcement
+ * Extends withAdminAuthAndErrors to verify admin has specific permission(s)
+ *
+ * SECURITY: Use this for any admin operation that shouldn't be accessible to all admin roles
+ *
+ * @example
+ * // Only admins with 'manage_users' permission can suspend users
+ * export const POST = withAdminPermission('manage_users', async (request, context, respond) => {
+ *   // ... handler logic
+ * });
+ *
+ * // Require multiple permissions
+ * export const DELETE = withAdminPermission(['manage_users', 'delete_content'], async (req, ctx, respond) => {
+ *   // ...
+ * });
+ */
+export function withAdminPermission<T = RouteParams>(
+  requiredPermissions: AdminPermission | AdminPermission[],
+  handler: (
+    request: AuthenticatedRequest,
+    context: T,
+    respond: typeof ResponseFormatter
+  ) => Promise<Response>,
+  options?: MiddlewareOptions
+): ApiHandler {
+  const permissions = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
+
+  return withAdminAuthAndErrors<T>(async (request, context, respond) => {
+    // Get admin session to check permissions
+    const adminSessionCookie = request.cookies.get('hive_admin_session');
+
+    if (!adminSessionCookie?.value) {
+      return respond.error('Admin session required for this operation', 'FORBIDDEN', {
+        status: 403,
+      });
+    }
+
+    // Verify admin session and extract permissions
+    const { jwtVerify } = await import('jose');
+    const secret = process.env.ADMIN_JWT_SECRET
+      ? new TextEncoder().encode(process.env.ADMIN_JWT_SECRET)
+      : (process.env.NODE_ENV === 'development'
+        ? new TextEncoder().encode('dev-only-secret-do-not-use-in-production')
+        : null);
+
+    if (!secret) {
+      return respond.error('Admin authentication not configured', 'INTERNAL_ERROR', {
+        status: 500,
+      });
+    }
+
+    try {
+      const { payload } = await jwtVerify(adminSessionCookie.value, secret, {
+        algorithms: ['HS256'],
+      });
+
+      const adminRole = payload.role as string;
+      const adminPermissions = (payload.permissions as string[]) || [];
+
+      // super_admin has all permissions
+      if (adminRole === 'super_admin') {
+        return handler(request, context, respond);
+      }
+
+      // Check if admin has all required permissions
+      const hasAllPermissions = permissions.every(
+        perm => adminPermissions.includes(perm)
+      );
+
+      if (!hasAllPermissions) {
+        const { logger } = await import('@/lib/structured-logger');
+        logger.warn('Admin permission denied', {
+          adminId: payload.userId,
+          role: adminRole,
+          required: permissions,
+          actual: adminPermissions,
+          endpoint: request.url,
+        });
+
+        return respond.error(
+          `Insufficient permissions. Required: ${permissions.join(', ')}`,
+          'FORBIDDEN',
+          { status: 403 }
+        );
+      }
+
+      return handler(request, context, respond);
+
+    } catch {
+      return respond.error('Invalid admin session', 'FORBIDDEN', {
+        status: 403,
+      });
+    }
+  }, options);
+}

@@ -14,6 +14,26 @@ const nextConfig = {
   // Keep firebase-admin server-side only
   serverExternalPackages: ['firebase-admin'],
 
+  // Webpack config to handle firebase-admin in transpiled packages
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't bundle firebase-admin on client
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        tls: false,
+        fs: false,
+        dns: false,
+        child_process: false,
+        'firebase-admin': false,
+        'firebase-admin/firestore': false,
+        'firebase-admin/auth': false,
+        'firebase-admin/app': false,
+      };
+    }
+    return config;
+  },
+
   // Image optimization
   images: {
     domains: ['localhost'],
@@ -28,6 +48,20 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
+  },
+
+  // Proxy admin API requests to the web app
+  // Keep local auth routes on the admin app
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Proxy admin-specific API routes to web app
+        {
+          source: '/api/admin/:path*',
+          destination: 'http://localhost:3000/api/admin/:path*',
+        },
+      ],
+    };
   },
 
   // Headers for security

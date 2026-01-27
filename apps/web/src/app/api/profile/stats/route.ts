@@ -1,6 +1,6 @@
 import { withAuthAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { logger } from "@/lib/logger";
+import { logger } from "@/lib/structured-logger";
 import { HttpStatus } from "@/lib/api-response-types";
 import { getServerProfileRepository } from '@hive/core/server';
 import { isTestUserId } from "@/lib/security-service";
@@ -101,8 +101,14 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         toolsUsed += d.toolsUsed || 0;
         timeSpent += d.timeSpentMinutes || d.timeSpent || 0;
       });
-    } catch {
-      // Silently ignore if collection or indexes are missing
+    } catch (error) {
+      // GRACEFUL DEGRADATION: Fall back to cached user data if activitySummaries unavailable
+      logger.warn('Activity summaries unavailable - using cached user data', {
+        userId,
+        campusId,
+        timeRange,
+        error: error instanceof Error ? error.message : String(error),
+      });
       posts = userData.weeklyPosts || 0;
       comments = userData.weeklyComments || 0;
       reactions = userData.weeklyReactions || 0;

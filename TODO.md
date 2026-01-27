@@ -1,594 +1,2154 @@
-# HIVE TODO — Platform Build + System Health
-
-**Updated:** January 25, 2026
-**Mode:** GTM Sprint
-**Goal:** Infrastructure-grade platform ready for campus deployment
-
----
-
-## Status Dashboard
-
-| System | Health | Notes |
-|--------|--------|-------|
-| **Design System** | 7/10 | 96 primitives, 114 components, CSS variable mismatch |
-| **Feed** | C+ | Shell exists, no data binding, hardcoded typography |
-| **Spaces** | B- | Functional, inline gradients, typography issues |
-| **Explore** | B | Good state coverage, typography hardcoded |
-| **Profile** | C | Redirect only, minimal actual UI |
-| **/about** | A | Reference standard |
-
-### Audit Scores by Category
-
-| Category | Score | Blockers |
-|----------|-------|----------|
-| Token Compliance | 5/10 | CSS vars don't match token defs, 64 hardcoded gold values |
-| Typography | 4/10 | `text-[Npx]` throughout all product pages |
-| State Coverage | 6/10 | Empty states good, loading/error inconsistent |
-| Motion | 8/10 | MOTION tokens used well, consistent easing |
-| Layout | 7/10 | Spacing mostly correct, some drift |
-
----
-
-## P0: Ship Blockers
-
-**Must fix before any GTM deployment. These break trust or function.**
-
-### CSS Variable Mismatch
-Primitives reference CSS variables that don't exist in the token definitions.
-
-- [ ] **Audit Text/Heading/Button primitives** — map all `var(--font-size-*)` references
-- [ ] **Create missing CSS variables** or update primitives to use correct tokens
-- [ ] **Verify cascade** — tokens → CSS vars → component usage
-- [ ] **Add token validation test** — CI should catch var mismatches
-
-**Files:** `packages/ui/src/design-system/primitives/typography/`
-
-### Unified Loading State Pattern
-Mix of spinners and skeletons with no standard. Loading states communicate system health.
-
-- [ ] **Create LoadingState primitive** — skeleton-first approach
-- [ ] **Define loading state types:** inline, card, page, overlay
-- [ ] **Document pattern** in design system docs
-- [ ] **Audit and replace** all spinner-based loading states
-
-**Decision:** Skeleton > Spinner. Skeleton shows structure, spinner shows activity. Structure builds trust.
-
-### Feed Data Binding
-Feed exists as shell but isn't wired to real data.
-
-- [ ] **Wire Feed to Firestore** — posts collection, real-time subscription
-- [ ] **Implement recap aggregation** — group by space/time
-- [ ] **Add "Since you left" logic** — track last visit timestamp
-- [ ] **Handle empty state** — first-time user vs returning with no new content
-
-**Pattern:** Feed should be recap-style, not infinite scroll. Memory, not stream.
-
-### Profile UI
-Currently redirects. Profile is how users understand themselves on the platform.
-
-- [ ] **Build `/profile` page** — own profile view
-- [ ] **Build `/profile/[id]` page** — other user view
-- [ ] **Build `/u/[handle]` page** — public profile
-- [ ] **Show actions over bio** — spaces joined, tools created, events attended
-
-**Invariant:** Profile shows what you've done, not what you claim. Bio optional.
-
----
-
-## P1: Design System Debt
-
-**Token and consistency fixes. These undermine system coherence.**
-
-### Typography Standardization
-All product pages use hardcoded `text-[Npx]` instead of typography tokens.
-
-- [ ] **Create typography token scale:**
-  ```
-  text-label-xs    → 10px (rarely used)
-  text-label-sm    → 11px
-  text-label       → 12px
-  text-body-sm     → 13px
-  text-body        → 14px
-  text-body-lg     → 16px
-  text-title-sm    → 18px
-  text-title       → 20px
-  text-title-lg    → 24px
-  text-heading-sm  → 28px
-  text-heading     → 32px
-  text-heading-lg  → 40px
-  text-display-sm  → 48px
-  text-display     → 56px
-  text-display-lg  → 64px
-  ```
-- [ ] **Add to Tailwind config** as custom utilities
-- [ ] **Audit Feed page** — replace all `text-[Npx]`
-- [ ] **Audit Spaces page** — replace all `text-[Npx]`
-- [ ] **Audit Explore page** — replace all `text-[Npx]`
-- [ ] **Audit Profile page** — replace all `text-[Npx]`
-
-**Enforcement:** Lint rule to flag `text-[` pattern in product pages.
-
-### Gold Value Consolidation
-64 instances of hardcoded `#FFD700`, `rgb(255, 215, 0)`, or Tailwind `yellow-*` instead of life-gold token.
-
-- [ ] **Grep and catalog all gold usages** — build replacement map
-- [ ] **Create gold variants if needed:**
-  ```css
-  --life-gold: #FFD700
-  --life-gold-dim: rgba(255, 215, 0, 0.6)
-  --life-gold-glow: rgba(255, 215, 0, 0.2)
-  ```
-- [ ] **Replace all hardcoded instances**
-- [ ] **Document gold budget** — when to use gold (achievements, claims, important actions)
-
-**Gold budget rule:** Gold marks significance. Overuse destroys meaning.
-
-### Opacity Tokenization
-`white/30`, `white/40`, `white/50` patterns scattered without semantic meaning.
-
-- [ ] **Create opacity scale:**
-  ```css
-  --opacity-ghost: 0.1
-  --opacity-subtle: 0.2
-  --opacity-muted: 0.3
-  --opacity-soft: 0.4
-  --opacity-mid: 0.5
-  --opacity-visible: 0.6
-  --opacity-strong: 0.8
-  --opacity-full: 1.0
-  ```
-- [ ] **Create semantic opacity tokens:**
-  ```css
-  --glass-opacity: var(--opacity-subtle)
-  --hover-opacity: var(--opacity-ghost)
-  --disabled-opacity: var(--opacity-muted)
-  --border-opacity: var(--opacity-subtle)
-  ```
-- [ ] **Audit and replace** all inline opacity values
-
-### Gradient Standardization
-Inline `rgba()` gradients in Spaces and elsewhere instead of glass tokens.
-
-- [ ] **Catalog glass/gradient patterns** in codebase
-- [ ] **Verify glass tokens exist** in design system
-- [ ] **Create missing glass variants** if needed
-- [ ] **Replace inline gradients** with token references
-
-**Files to audit:** `apps/web/src/app/(protected)/spaces/`
-
-### Motion Token Sync
-Motion defined in TypeScript (`MOTION.ease.premium`) and CSS separately. No sync mechanism.
-
-- [ ] **Audit motion token usage** — TypeScript vs CSS
-- [ ] **Create single source of truth** — prefer TypeScript, generate CSS
-- [ ] **Document motion patterns** with examples
-
----
-
-## P2: Page Compliance
-
-**Bring each page to /about quality standard.**
-
-### Feed (C+ → A)
-
-Current issues:
-- Typography hardcoded (`text-[12px]`, `text-[14px]`)
-- Opacity values inline (`white/30`, `white/40`)
-- No structured loading state
-- Shell without real data
-
-Tasks:
-- [ ] Replace hardcoded typography with tokens
-- [ ] Tokenize opacity values
-- [ ] Implement skeleton loading state
-- [ ] Wire to real data (see P0)
-- [ ] Add "since you left" header
-- [ ] Implement space grouping
-
-### Spaces (B- → A)
-
-Current issues:
-- Inline `rgba()` gradients instead of glass tokens
-- Typography hardcoded
-- Member list styling inconsistent
-
-Tasks:
-- [ ] Replace inline gradients with glass tokens
-- [ ] Replace hardcoded typography
-- [ ] Standardize member list component
-- [ ] Add presence indicators (see P3)
-- [ ] Verify empty state
-
-### Explore (B → A)
-
-Current issues:
-- Typography hardcoded
-- Card spacing slightly inconsistent
-- Search state transitions need polish
-
-Tasks:
-- [ ] Replace hardcoded typography with tokens
-- [ ] Audit card spacing against 4/8/12/16/24/32 scale
-- [ ] Polish search state transitions
-- [ ] Verify all tab states
-
-### Profile (C → A)
-
-Current issues:
-- Essentially just a redirect
-- No actual profile UI built
-- Event type colors hardcoded
-
-Tasks:
-- [ ] Build profile layout (see P0)
-- [ ] Replace hardcoded event type colors with tokens
-- [ ] Add profile completion indicator
-- [ ] Implement mutual context ("X spaces in common")
-- [ ] Create edit profile flow
-
-### Entry/Auth (Polish)
-
-Current issues:
-- Minor typography inconsistencies
-- Loading states need verification
-
-Tasks:
-- [ ] Audit typography against tokens
-- [ ] Verify all loading states use skeleton pattern
-- [ ] Test "You're in" moment motion
-- [ ] Verify OTP input states
-
-### Onboarding (Polish)
-
-Current issues:
-- Territory map performance on large datasets
-- Claimed state motion needs refinement
-
-Tasks:
-- [ ] Optimize territory rendering
-- [ ] Polish claimed reveal motion
-- [ ] Verify skip flow works correctly
-- [ ] Test handle availability UX
-
----
-
-## P3: Infrastructure Gaps
-
-**Systems that don't exist yet but are needed for full experience.**
-
-### Presence System
-**Priority:** High
-**Dependency:** Firebase Realtime Database
-
-- [ ] **Set up Firebase RTDB** for presence (not Firestore)
-- [ ] **Create presence hook** — `usePresence(spaceId)`
-- [ ] **Implement "X online" display**
-- [ ] **Add typing indicators**
-- [ ] **Handle disconnect gracefully**
-
-**Pattern:** Presence shows life. Dead spaces feel abandoned.
-
-### Unread System
-**Priority:** High
-**Dependency:** Firestore collection
-
-- [ ] **Create `userBoardReads` collection** — track last read timestamps
-- [ ] **Implement unread count hook** — `useUnreadCount(spaceId)`
-- [ ] **Add unread badges** to space cards and navigation
-- [ ] **Implement "mark as read" logic**
-
-### Real-Time Feed Updates
-**Priority:** Medium
-**Dependency:** SSE or Firestore listeners
-
-- [ ] **Implement SSE endpoint** for feed updates
-- [ ] **Create "new content" indicator**
-- [ ] **Handle content insertion animation**
-- [ ] **Implement recap summarization** (AI-assisted grouping)
-
-### Tool Analytics (Real)
-**Priority:** Medium
-**Dependency:** Analytics collection
-
-- [ ] **Replace mock analytics data** with real queries
-- [ ] **Track tool usage events** — runs, responses, errors
-- [ ] **Create analytics aggregation** — hourly/daily/weekly
-- [ ] **Build analytics visualization**
-
-### Post-Event Recaps
-**Priority:** Low
-**Dependency:** Event end detection
-
-- [ ] **Detect event completion**
-- [ ] **Generate recap data** — attendees, duration, photos
-- [ ] **Create recap component**
-- [ ] **Send recap notification**
-
----
-
-## P4: Feature Decisions
-
-**72 decisions from product definition. Work through these as slices are addressed.**
-
-### Slice 1: Entry & Auth
-Routes: `/`, `/enter`, `/about`, `/schools`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 1.1 | Landing hero: inline email vs separate CTA | Layout | `[ ]` |
-| 1.2 | Landing: what stats/proof to show | Copy | `[ ]` |
-| 1.3 | Enter: single page vs multi-step states | Flow | `[ ]` |
-| 1.4 | Enter: OTP input style (6 boxes vs single field) | Component | `[ ]` |
-| 1.5 | "You're in" moment: copy + motion | Copy/Motion | `[ ]` |
-| 1.6 | Schools: card layout vs list | Layout | `[ ]` |
-| 1.7 | Schools: what data per campus | Copy | `[ ]` |
-
-### Slice 2: Onboarding
-Routes: `/welcome`, `/welcome/identity`, `/welcome/territory`, `/welcome/claimed`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 2.1 | Welcome hero: copy + visual treatment | Copy/Layout | `[ ]` |
-| 2.2 | Identity: what fields required vs optional | Flow | `[ ]` |
-| 2.3 | Identity: handle input UX (suggestions, availability) | Component | `[ ]` |
-| 2.4 | Territory: map visual vs list vs cards | Layout | `[ ]` |
-| 2.5 | Territory: ghost space presentation | Component | `[ ]` |
-| 2.6 | Claim flow: confirmation step or direct? | Flow | `[ ]` |
-| 2.7 | Claimed: the reveal moment (copy + motion) | Copy/Motion | `[ ]` |
-| 2.8 | Skip flow: what if they don't claim? | Flow | `[ ]` |
-
-### Slice 3: Spaces
-Routes: `/spaces`, `/spaces/new/*`, `/spaces/claim`, `/s/[handle]`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 3.1 | Space residence layout (split, tabs, panels) | Layout | `[ ]` |
-| 3.2 | Chat: message grouping + timestamps | Component | `[ ]` |
-| 3.3 | Chat: composer position + behavior | Component | `[ ]` |
-| 3.4 | Presence: how to show "X online" | Component | `[ ]` |
-| 3.5 | First message in empty space: copy + state | Copy/State | `[ ]` |
-| 3.6 | Space header: what info, what hierarchy | Layout | `[ ]` |
-| 3.7 | Member milestone (10, 50, 100): how to mark | Motion/Copy | `[ ]` |
-| 3.8 | New launch celebration: copy + motion | Copy/Motion | `[ ]` |
-| 3.9 | Join confirmation: inline vs modal | Component | `[ ]` |
-
-### Slice 4: Discovery
-Routes: `/explore`, `/explore?tab=*`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 4.1 | Explore hero: what headline + stats | Copy | `[ ]` |
-| 4.2 | Search: ChatGPT-style vs traditional | Component | `[ ]` |
-| 4.3 | Tab order: spaces first or events first? | Flow | `[ ]` |
-| 4.4 | Ghost spaces: how prominent, what CTA | Component/Copy | `[ ]` |
-| 4.5 | Space cards: what info to show | Layout | `[ ]` |
-| 4.6 | People cards: what info, mutual context | Layout | `[ ]` |
-| 4.7 | Empty search: what to show | State | `[ ]` |
-| 4.8 | Join space from explore: inline or redirect | Flow | `[ ]` |
-
-### Slice 5: Feed
-Routes: `/feed`, `/feed/settings`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 5.1 | Feed structure: stream vs recap vs grouped | Layout | `[ ]` |
-| 5.2 | Card types: what kinds of content, how styled | Component | `[ ]` |
-| 5.3 | Empty feed (new user): what to show | State/Copy | `[ ]` |
-| 5.4 | "Since you left" header: how to present | Copy/Layout | `[ ]` |
-| 5.5 | Real-time: how new content appears | Motion | `[ ]` |
-| 5.6 | Space grouping: collapsed vs expanded | Layout | `[ ]` |
-| 5.7 | Filters: what options, where placed | Component | `[ ]` |
-
-### Slice 6: HiveLab
-Routes: `/hivelab`, `/tools/*`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 6.1 | HiveLab landing: hero copy + CTA | Copy/Layout | `[ ]` |
-| 6.2 | AI input: how it looks, what placeholder | Component/Copy | `[ ]` |
-| 6.3 | AI generation: reveal animation | Motion | `[ ]` |
-| 6.4 | Tool cards: what info, how styled | Component | `[ ]` |
-| 6.5 | Deploy flow: confirm step or direct? | Flow | `[ ]` |
-| 6.6 | Deploy success: copy + motion | Copy/Motion | `[ ]` |
-| 6.7 | Analytics: what metrics, how presented | Layout/Copy | `[ ]` |
-| 6.8 | First response notification: copy | Copy | `[ ]` |
-| 6.9 | Empty tools state: what to show | State/Copy | `[ ]` |
-
-### Slice 7: Events
-Routes: `/events`, `/events/[eventId]`, `/calendar`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 7.1 | Events list: chronological vs grouped | Layout | `[ ]` |
-| 7.2 | Event cards: what info, how compact | Component | `[ ]` |
-| 7.3 | RSVP button: states + feedback | Component/Motion | `[ ]` |
-| 7.4 | "X going" display: face piles or count | Component | `[ ]` |
-| 7.5 | Event detail: hero layout | Layout | `[ ]` |
-| 7.6 | Post-event recap: what to show | Layout/Copy | `[ ]` |
-| 7.7 | Calendar: month vs week vs list default | Layout | `[ ]` |
-| 7.8 | "Happening now" treatment | Component/Copy | `[ ]` |
-
-### Slice 8: Profiles
-Routes: `/profile`, `/profile/[id]`, `/u/[handle]`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 8.1 | Profile layout: hero vs compact header | Layout | `[ ]` |
-| 8.2 | What sections: spaces, creations, events | Layout | `[ ]` |
-| 8.3 | Bio: where placed, how prominent | Layout/Copy | `[ ]` |
-| 8.4 | Stats: what to show ("Since Sept", "X spaces") | Copy | `[ ]` |
-| 8.5 | Mutual context: "X spaces in common" treatment | Component | `[ ]` |
-| 8.6 | Edit: what fields required vs optional | Flow | `[ ]` |
-| 8.7 | Avatar: upload UX, cropping | Component | `[ ]` |
-| 8.8 | Public profile: what visible to others | Layout | `[ ]` |
-
-### Slice 9: Settings
-Routes: `/settings`, `/notifications/*`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 9.1 | Settings layout: sections vs single page | Layout | `[ ]` |
-| 9.2 | Notification center: list vs grouped | Layout | `[ ]` |
-| 9.3 | Notification cards: what info, how compact | Component | `[ ]` |
-| 9.4 | "Mark all read" behavior | Flow | `[ ]` |
-| 9.5 | Dangerous actions: confirmation style | Flow/Copy | `[ ]` |
-| 9.6 | Privacy controls: what options | Layout | `[ ]` |
-| 9.7 | Save confirmation: toast vs inline | Component | `[ ]` |
-
-### Slice 10: Support & Legal
-Routes: `/legal/*`, `/resources`, `/offline`
-
-| # | Decision | Type | Status |
-|---|----------|------|--------|
-| 10.1 | Legal page layout: sticky nav vs scroll | Layout | `[ ]` |
-| 10.2 | Terms: plain language summary at top? | Copy | `[ ]` |
-| 10.3 | Privacy: data export link placement | Layout | `[ ]` |
-| 10.4 | Guidelines: examples format (do/don't) | Copy/Layout | `[ ]` |
-| 10.5 | Resources: categories vs search-first | Layout | `[ ]` |
-
----
-
-## Quality Bar Checklist
-
-**Use this template when auditing any page.**
-
-```markdown
-## Page Audit: [Route]
-
-### Token Compliance
-- [ ] No hardcoded colors (no #, rgb(), tailwind color classes)
-- [ ] No hardcoded typography (no text-[Npx])
-- [ ] Spacing on 4/8/12/16/24/32 scale
-- [ ] Motion uses MOTION tokens
-- [ ] Glass/gradient uses glass tokens
-
-### State Coverage
-- [ ] Empty state with clear CTA
-- [ ] Loading state (skeleton, not spinner)
-- [ ] Error state with recovery action
-- [ ] Partial data state
-- [ ] Success/confirmation state
-
-### Motion
-- [ ] Entrance animations use MOTION.ease.premium
-- [ ] Proper viewport margins for scroll triggers
-- [ ] No instant transitions (minimum 150ms)
-- [ ] Exit animations considered
-
-### Interaction
-- [ ] Hover feedback on all interactive elements
-- [ ] Active/pressed states
-- [ ] Disabled states with clear reason
-- [ ] Focus states for accessibility
-
-### Invariant Check
-- [ ] Witnessed: Creates memory, not ephemeral
-- [ ] Steward: Ownership feels like responsibility
-- [ ] Action: Asks for action, not identity
-- [ ] Memory: Users ask "will this work?" not "will this look good?"
-
-### Grade: [A/B/C/D/F]
+# HIVE TODO
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║   Source of Truth: /docs/SURFACE_AUDIT.md (Surface Lab)                       ║
+║   Updated: January 26, 2026                                                   ║
+║   Mode: Campus One — First Deployment                                         ║
+║   Goal: Infrastructure-grade platform ready for campus deployment             ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Storybook Coverage
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 1: COMMAND CENTER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Current:** 32 stories / 96 primitives = 36% coverage
+## 1.1 Executive Dashboard
 
-### Primitives Needing Stories (Priority)
-
-**Typography (Critical)**
-- [ ] Text variants
-- [ ] Heading variants
-- [ ] Display variants
-
-**Interactive (Critical)**
-- [ ] Button all states
-- [ ] Input all states
-- [ ] Form patterns
-
-**Layout (Medium)**
-- [ ] Card variants
-- [ ] Stack/Flex utilities
-- [ ] Container patterns
-
-**Motion (Medium)**
-- [ ] RevealSection
-- [ ] NarrativeReveal
-- [ ] AnimatedBorder
-- [ ] ParallaxText
-
-**Feedback (Low)**
-- [ ] Badge variants
-- [ ] Tooltip
-- [ ] Toast patterns
-
----
-
-## Documentation Drift
-
-**Issues to fix:**
-
-- [ ] `PRIMITIVES.md` says "20+ primitives" — actual count is 96
-- [ ] Component count in docs outdated (says ~100, actual is 114)
-- [ ] Motion token documentation incomplete
-- [ ] Glass token patterns undocumented
-
----
-
-## Governing Principle
-
-**HIVE fights erasure, not chaos.**
-
-Students aren't lonely because they lack people. They're lonely because they lack stable contexts where contribution matters.
-
-Every page, feature, and interaction passes through four invariants:
-
-| Invariant | The Shift | Enforcement |
-|-----------|-----------|-------------|
-| **Witnessed** | Unwitnessed → Witnessed | Recaps, not feeds. "Here's what happened." |
-| **Steward** | Perform → Steward | Weight, not celebration. "It's yours." |
-| **Action** | Define yourself → Just act | Low narrative burden. "What are you building?" |
-| **Memory** | Visibility → Memory | Artifacts, not applause. "Will this work?" |
-
-**Copy rules (enforced everywhere):**
-- Never: "Sign up", "Great job!", "Don't miss out!", "Trending"
-- Always: "Enter", "It's yours.", "Here's what happened", "Your spaces"
-
-**Full framework:** `docs/design-system/DRAMA.md`
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   H I V E   C A M P U S   O N E                      Updated: 2026-01-27   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   READINESS METRICS                                                         │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   CODE COMPLETENESS        DESIGN READINESS        STRUCTURAL HEALTH        │
+│   ██████████████████░░     █████████████░░         ████████░░               │
+│   94%                      65%                     78%                       │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ISSUE BREAKDOWN                                                           │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   ┌──────────────┬──────────────┬──────────────┬──────────────┐            │
+│   │   CRITICAL   │     HIGH     │    MEDIUM    │     LOW      │            │
+│   │      0 ✅    │      7       │      43      │      31      │            │
+│   │   ░░░░░░░░   │   ███░░░░░   │   ░░░░░░░░   │   ░░░░░░░░   │            │
+│   │   resolved   │   Sprint 2   │   polish     │   debt       │            │
+│   └──────────────┴──────────────┴──────────────┴──────────────┘            │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ACTIVE SPRINTS                                                            │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   Structural │ 0.4 — Cleanup           │ ██████████ │ 12/12 ✅ COMPLETE     │
+│   Code       │ 0.5 — Security          │ ██████████ │ 10/10 ✅ COMPLETE     │
+│   Code       │ 0.6 — Stability         │ ██████████ │ 8/8   ✅ COMPLETE     │
+│   Code       │ 0.7 — Features          │ ██████████ │ 8/9   ✅ COMPLETE     │
+│   Code       │ 1   — Entry Flow        │ ██████████ │ 5/7   ✅ COMPLETE     │
+│   Design     │ D0  — Foundation        │ ██████████ │ 6/6   ✅ COMPLETE     │
+│   Design     │ D1  — Entry + Feed      │ ██████████ │ 6/6   ✅ COMPLETE     │
+│   Design     │ D-P — Profile           │ ██████████ │ 6/6   ✅ COMPLETE     │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   🎯 NEXT ACTIONS                                                           │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   CODE: Sprint 2 — Feed & Core Loop                                         │
+│   Task 1: Fix isLive flag                                                   │
+│   Effort: S (<1 hour)                                                       │
+│                                                                             │
+│   DESIGN: D2 — Spaces + Browse (Profile ✅ DONE)                            │
+│   Start: D-S1 Clarify hub vs browse                                         │
+│   Effort: M (1-4 hours)                                                     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Success Criteria
+## 1.2 Surface Health Matrix
 
-Platform is ready when:
-
-- [ ] All pages score A on audit checklist
-- [ ] P0 ship blockers resolved
-- [ ] P1 design system debt <10 issues
-- [ ] Token compliance >95% across product pages
-- [ ] Loading states consistent (skeleton-first)
-- [ ] Presence system operational
-- [ ] Unread counts working
-- [ ] Feed wired to real data
-- [ ] Profile pages built
-- [ ] Storybook coverage >60%
-
-**The test:** Would a dean walk through this and see infrastructure, not an experiment?
-
----
-
-## Priority Sequence
-
-1. **P0 Ship Blockers** — Fix what breaks function or trust
-2. **P1 Design System Debt** — Fix tokens, then pages inherit fixes
-3. **P2 Page Compliance** — Bring each page to /about standard
-4. **P3 Infrastructure** — Add presence, unread, real-time
-5. **P4 Feature Decisions** — Work through 72 decisions by slice
-
-**Do not skip ahead.** Token fixes propagate to all pages. Infrastructure enables features. Decisions are only valuable when the system is coherent.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   SURFACE HEALTH (Code / Design)                                            │
+│                                                                             │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   Surface          Code Health         Design Health        Status          │
+│   ─────────────────────────────────────────────────────────────────────────│
+│   Gate             ████████░░ 80%      ██████████ 100%     🟢 Ready        │
+│   Entry/Onboard    █████████░ 95%      █████████░  95%     🟢 Ready        │
+│   Feed             ███████░░░ 73%      ███████░░░  70%     🟡 Refine       │
+│   Spaces           █████████░ 93%      █████░░░░░  50%     🟡 Refine       │
+│   Browse/Explore   ██████░░░░ 60%      ███░░░░░░░  30%     🟡 Direction     │
+│   Profile          ████████░░ 81%      █████████░  90%     🟢 Ready        │
+│   HiveLab          ████████░░ 88%      █████░░░░░  50%     🟡 Refine       │
+│   Calendar         ██████░░░░ 60%      ███░░░░░░░  30%     🔴 Blocked      │
+│   Admin            ████████░░ 85%      █████░░░░░  50%     🟡 Refine       │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-*This document reflects the January 25, 2026 platform audit. All P0 items must be resolved before GTM.*
+## 1.3 Impact × Effort Matrix
+
+```
+                              HIGH IMPACT
+                                   ↑
+                                   │
+        ┌──────────────────────────┼──────────────────────────┐
+        │                          │                          │
+        │      🎯 QUICK WINS       │      📐 STRATEGIC        │
+        │      Do these first      │      Plan carefully      │
+        │                          │                          │
+        │  ┌─────────────────────┐ │ ┌─────────────────────┐  │
+        │  │ STRUCTURAL          │ │ │ FEATURES            │  │
+        │  │ ✅ S1-7 COMPLETE    │ │ │ ✅ C13 Search v2    │  │
+        │  │                     │ │ │ ✅ C17 Calendar     │  │
+        │  │                     │ │ │ ⏸️ C18 Feed (defer) │  │
+        │  │                     │ │ │ ✅ C21 Event edit   │  │
+        │  ├─────────────────────┤ │ │ C22 Tool AI gen     │  │
+        │  │ SECURITY ✅ DONE    │ │ │ C25 Discovery       │  │
+        │  │ ✅ C1 Admin escal.  │ │ ├─────────────────────┤  │
+        │  │ ✅ C2 Privacy       │ │ │ ARCHITECTURE        │  │
+        │  │ ✅ C3 Admin limit   │ │ │ S10 Reorg web/lib/  │  │
+        │  │ ✅ C4 Chat limit    │ │ │ S11 Extract HiveLab │  │
+        │  │ ✅ C6-11 Err pages  │ │ │ S8  Test baseline   │  │
+        │  └─────────────────────┘ │ └─────────────────────┘  │
+        │                          │                          │
+ LOW    ├──────────────────────────┼──────────────────────────┤  HIGH
+ EFFORT │                          │                          │  EFFORT
+        │      🧹 FILL-INS         │      💰 DEBT PAYDOWN     │
+        │      When time allows    │      Schedule later      │
+        │                          │                          │
+        │  ┌─────────────────────┐ │ ┌─────────────────────┐  │
+        │  │ POLISH              │ │ │ TECH DEBT           │  │
+        │  │ Button states       │ │ │ 40+ admin colors    │  │
+        │  │ Focus rings         │ │ │ 30+ design viols    │  │
+        │  │ Accessibility attrs │ │ │ N+1 query fixes     │  │
+        │  │ Console.log cleanup │ │ │ Deprecated removal  │  │
+        │  │ S12 Package READMEs │ │ │ S9 Admin component  │  │
+        │  └─────────────────────┘ │ └─────────────────────┘  │
+        │                          │                          │
+        └──────────────────────────┼──────────────────────────┘
+                                   │
+                                   ↓
+                              LOW IMPACT
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ LEGEND                                                                      │
+│ C# = Critical (blocks ship)  S# = Structural (codebase health)              │
+│ Effort: S = <1hr, M = 1-4hr, L = 4hr+                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 1.4 Critical Path & Dependencies
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║   SPRINT 0.4 — STRUCTURAL                           No external dependencies  ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   ✅ S1 .env removal ──────┐                                                  ║
+║                            ├──→ Security baseline ──→ S8-S12 remaining       ║
+║   ✅ S2-S5 Delete orphans ─┤                                                  ║
+║                            │                                                  ║
+║   ✅ S6 Admin tsconfig ────┤                                                  ║
+║                            │                                                  ║
+║   ✅ S7 Debug artifacts ───┘                                                  ║
+║                                                                               ║
+║                            ↓                                                  ║
+║                    Depends on 0.4                                             ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   SPRINT 0.5 — SECURITY ✅ COMPLETE                        Depends on 0.4    ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   ✅ C1 Admin escalation ──┐                                                  ║
+║                            ├──→ All admin routes secure ──→ ✅ SPRINT 0.5    ║
+║   ✅ C2 Privacy bypass ────┤                                                  ║
+║                            │                                                  ║
+║   ✅ 8 routes protected ───┤                                                  ║
+║                            │                                                  ║
+║   ✅ hasPermission() ──────┘                                                  ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   SPRINT 0.6 — STABILITY ✅ COMPLETE                       Depends on 0.5    ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   ✅ C6 Root error.tsx ────┬──→ ✅ C7 /enter error.tsx                       ║
+║                            ├──→ ✅ C8 /feed error.tsx                         ║
+║                            ├──→ ✅ C9 /spaces error.tsx ──→ ✅ SPRINT 0.6    ║
+║                            ├──→ ✅ C10 /login error.tsx                       ║
+║                            └──→ ✅ C11 /lab error.tsx                         ║
+║                                                                               ║
+║   ✅ C3 Admin limit ───────┐                                                  ║
+║   ✅ C4 Chat limit ────────┼──→ No unbounded queries ──→ ✅ SPRINT 0.6       ║
+║   ✅ C5 Firestore 500 ─────┘                                                  ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   SPRINT 0.7 — FEATURES ✅ COMPLETE                        Depends on 0.6    ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   ✅ C12 Email delivery ───┬──→ Auth codes work                              ║
+║                            └──→ ✅ C26 Alumni onboarding ──→ Full onboarding ║
+║                                                                               ║
+║   ✅ C13 Search v2 ────────────→ Discovery works                             ║
+║                                                                               ║
+║   ✅ C14 Space deletion ───────→ Admin can clean up                          ║
+║                                                                               ║
+║   ✅ C17 Calendar OAuth ───┬──→ ✅ C21 Event editing                         ║
+║                            └──→ Calendar useful ──→ ✅ SPRINT 0.7            ║
+║                                                                               ║
+║   ✅ C24 Account deletion ─────→ GDPR compliance                             ║
+║                                                                               ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   CROSS-CUTTING BLOCKERS ✅ ALL RESOLVED                                      ║
+║                                                                               ║
+║   ┌─────────────────────────────────────────────────────────────────────┐    ║
+║   │ SHIP READY:                                                         │    ║
+║   │                                                                     │    ║
+║   │ ✅ 1. Zero privilege escalation vectors (C1, admin routes)         │    ║
+║   │ ✅ 2. Zero privacy bypass vectors (C2)                             │    ║
+║   │ ✅ 3. Every main route has error boundary (C6-C11)                 │    ║
+║   │ ✅ 4. Auth emails actually send (C12)                              │    ║
+║   └─────────────────────────────────────────────────────────────────────┘    ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 2: HEALTH DASHBOARDS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 2.1 Design Health Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   D E S I G N   H E A L T H                          Updated: 2026-01-26   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   MATURITY BY LAYER                                                         │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   Information Architecture   ██░░░░░░░░ 20%   🔴 Not defined               │
+│   Layout Systems             ███░░░░░░░ 30%   🔴 Ad-hoc per surface        │
+│   Interaction Patterns       ████░░░░░░ 40%   🟡 Inconsistent              │
+│   Visual Language            ███████░░░ 70%   🟡 Tokens exist, not enforced│
+│   Motion Language            ██░░░░░░░░ 20%   🔴 Defined, not implemented  │
+│   Empty States               ██░░░░░░░░ 20%   🔴 Treated as bugs, not UX   │
+│   Component Coverage         ███████░░░ 70%   🟡 93 primitives, gaps remain│
+│                                                                             │
+│   ─────────────────────────────────────────────────────────────────────────│
+│   OVERALL: ██████░░░░ 55%                                                   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   SURFACES NEEDING DESIGN EXPLORATION                                       │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   🔴 CRITICAL — No clear design direction                                   │
+│      • Feed — What's the information hierarchy? Density model?              │
+│      • Browse/Explore — Discovery UX undefined                              │
+│                                                                             │
+│   🟡 PARTIAL — Direction exists, needs refinement                           │
+│      • Spaces — Structure exists, personality missing                       │
+│      • HiveLab — Functional, not delightful                                 │
+│                                                                             │
+│   🟢 READY — Design direction clear                                         │
+│      • Entry/Onboarding — Premium transitions, verification, role cards     │
+│      • /about — The quality bar (reference surface)                         │
+│      • Gate — Simple, intentional                                           │
+│      • Profile — 3-zone layout (Identity, Activity, Presence)                                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 2.2 Structural Health Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   S T R U C T U R A L   H E A L T H                  Updated: 2026-01-26   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   HEALTH BY AREA                                                            │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   Apps Structure        ██████░░░░ 60%   🟡 Web good, admin incomplete     │
+│   Packages Structure    ████████░░ 65%   🟡 4 orphaned, HiveLab embedded   │
+│   Documentation         ██████░░░░ 60%   🟡 Product docs good, eng weak   │
+│   Configuration         █████░░░░░ 50%   🔴 Admin config incomplete       │
+│   Test Coverage         █░░░░░░░░░ 10%   🔴 Zero test files               │
+│   Security              ██░░░░░░░░ 20%   🔴 .env exposed in git           │
+│                                                                             │
+│   ─────────────────────────────────────────────────────────────────────────│
+│   OVERALL: █████░░░░░ 53%                                                   │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   CRITICAL STRUCTURAL ISSUES                                                │
+│   ─────────────────────────────────────────────────────────────────────────│
+│                                                                             │
+│   🔴 .env.production.local in git (credentials exposed)                    │
+│   🔴 4 orphaned empty packages (analytics, api-client, i18n, utilities)   │
+│   🔴 apps/web/src/lib/ has 104 flat files (unmaintainable)                │
+│   🔴 Admin tsconfig missing @hive/* path aliases                          │
+│   🔴 Zero test files across entire codebase                                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 3: DECISION LOG
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> Architectural and strategic decisions made during development.
+> Reference this before revisiting closed questions.
+
+## 3.1 Decisions Made
+
+| Date | Decision | Context | Alternatives Rejected |
+|------|----------|---------|----------------------|
+| 2026-01-26 | Audit-first before Campus One | Deep audit found 26 critical issues, 54 high | Ship and patch later — too risky |
+| 2026-01-26 | Structural sprint (0.4) before security | 53% structural health, 4 orphaned packages, .env exposed | Clean during features — compounds debt |
+| 2026-01-26 | Security sprint (0.5) before features | Privilege escalation found in admin grant | Features first — unacceptable risk |
+| 2026-01-26 | Error boundaries before polish | 6 main routes have no error recovery | Polish first — crashes lose users |
+| 2026-01-26 | Delete orphaned packages immediately | analytics/, api-client/, i18n/, utilities/ empty | Keep as placeholders — confuses contributors |
+| 2026-01-26 | Extract HiveLab from core | Embedded in packages/core/src/hivelab/ | Keep embedded — violates separation |
+| 2026-01-26 | Calendar OAuth is L effort | Full sync requires event editing, conflict detection | Quick stub — creates tech debt |
+| 2026-01-26 | Search v2 before explore | Discovery depends on working search | Build explore first — no foundation |
+| 2026-01-26 | Parallel design sprint track | Design debt is 48%, surfaces need EXPLORE | Design after code — results in rework |
+| 2026-01-26 | Design must lead implementation | Feed, Browse, Profile need design research | Code first, design later — builds wrong thing |
+| 2026-01-26 | Browse vs Explore: Keep both, differentiate | Complementary surfaces: Browse (emotional, category-first) for new users, Explore (search-first, multi-entity) for power users | Merge — loses emotional Browse experience. Browse as subset — doesn't capture Explore's scope |
+
+---
+
+## 3.2 Pending Decisions
+
+| Question | Options | Blocking | Target |
+|----------|---------|----------|--------|
+| Feed: Chronological vs Algorithmic? | A) Pure chrono, B) 8-factor ranking, C) User toggle | D1, Sprint 2 | — |
+| Feed: What's the job? | A) Stay informed, B) Jump into action, C) Catch up and go | D1 | — |
+| Feed: Sidebar or full-width? | A) Full-width, B) Right sidebar, C) Left nav | D1 | — |
+| Ghost mode: Full invisibility? | A) Full ghost, B) Hide activity only, C) Timed modes | Sprint 4 | — |
+| Tool marketplace scope? | A) Campus isolated, B) Federated, C) Global | Sprint 5 | — |
+| Navigation model correct? | A) Keep as-is, B) Add top nav, C) Redesign entirely | D0 | — |
+| URL philosophy: Vanity handles? | A) All entities, B) Spaces only, C) ID-based | D0 | — |
+| Profile: What story? | **RESOLVED: B+D) Identity + Activity** — "Who is this person, and what do they DO on campus?" 3-zone layout. See plan D-P1-6. | — | ✅ |
+| Browse vs Explore: Same thing? | **RESOLVED: B) Keep separate** — Complementary surfaces for different discovery modes. See docs/INFORMATION_ARCHITECTURE.md §5.2 | — | ✅ |
+| Density modes: User preference? | A) Fixed, B) User toggle, C) Context-adaptive | D1 | — |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 4: DESIGN RESEARCH LAYER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> **The technical audit found bugs. This section addresses the harder question:**
+> **"What should these surfaces actually be?"**
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   THREE TYPES OF WORK                                                       │
+│                                                                             │
+│   ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐│
+│   │        BUGS         │  │       POLISH        │  │      DESIGN         ││
+│   │                     │  │                     │  │      RESEARCH       ││
+│   │  Broken code        │  │  Hardcoded values   │  │                     ││
+│   │  Security holes     │  │  Missing hover      │  │  "What should       ││
+│   │  Missing states     │  │  Inconsistent       │  │   this be?"         ││
+│   │                     │  │                     │  │                     ││
+│   │  ══════════════     │  │  ══════════════     │  │  ══════════════     ││
+│   │  FIX IT             │  │  CLEAN IT           │  │  EXPLORE IT         ││
+│   │                     │  │                     │  │                     ││
+│   │  (Current TODO      │  │  (Scattered in      │  │  (MISSING           ││
+│   │   focus)            │  │   TODO)             │  │   UNTIL NOW)        ││
+│   └─────────────────────┘  └─────────────────────┘  └─────────────────────┘│
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4.1 Information Architecture Audit
+
+> **IA = How information is organized, labeled, and connected.**
+> **Before building UI, the IA must be solid.**
+
+### Current State: 🔴 NOT DEFINED
+
+| Aspect | Status | Gap |
+|--------|--------|-----|
+| **Site Map** | ❌ Missing | No documented page hierarchy |
+| **Navigation Model** | ⚠️ Implicit | Bottom nav exists, no defined pattern |
+| **URL Structure** | ⚠️ Inconsistent | `/s/[handle]` vs `/spaces/[id]` vs `/profile/[id]` |
+| **Labeling System** | ❌ Missing | No defined vocabulary (Space vs Group vs Community?) |
+| **Search Model** | ❌ Missing | What's searchable? How are results ranked? |
+| **Cross-linking** | ❌ Missing | How do surfaces reference each other? |
+
+### IA Research Tasks
+
+| # | Task | Type | Blocking | Status |
+|---|------|------|----------|--------|
+| IA1 | Define complete site map with page hierarchy | Research | All navigation work | `[x]` |
+| IA2 | Document navigation model (primary, secondary, contextual) | Research | Nav implementation | `[x]` |
+| IA3 | Standardize URL structure across all surfaces | Decision | Routing changes | `[x]` |
+| IA4 | Create labeling system / vocabulary guide | Research | All copy | `[x]` |
+| IA5 | Define search scope and ranking model | Research | Search v2 | `[ ]` |
+| IA6 | Map cross-surface relationships | Research | Deep linking | `[ ]` |
+
+### Open IA Questions
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│ 1. NAVIGATION MODEL                                                         │
+│    ─────────────────────────────────────────────────────────────────────── │
+│    Current: Bottom nav (Feed, Spaces, Lab, Profile)                         │
+│                                                                             │
+│    Questions:                                                               │
+│    • Is this the right primary nav?                                         │
+│    • Where does Browse/Explore live?                                        │
+│    • Where do Notifications live?                                           │
+│    • Where does Search live?                                                │
+│    • What's the secondary nav pattern?                                      │
+│                                                                             │
+│ 2. URL PHILOSOPHY                                                           │
+│    ─────────────────────────────────────────────────────────────────────── │
+│    Current: Mixed patterns                                                  │
+│    • /s/[handle] — vanity URLs for spaces                                   │
+│    • /profile/[id] — ID-based for profiles                                  │
+│    • /spaces/browse — action-based                                          │
+│                                                                             │
+│    Questions:                                                               │
+│    • Should profiles have vanity URLs? /@[handle]?                          │
+│    • Should all entities use handles or IDs?                                │
+│    • What's the canonical URL pattern?                                      │
+│                                                                             │
+│ 3. CONTENT HIERARCHY                                                        │
+│    ─────────────────────────────────────────────────────────────────────── │
+│    What's the mental model?                                                 │
+│    • Campus > Spaces > Posts > Comments?                                    │
+│    • User > Spaces > Activity?                                              │
+│    • How do Events fit? Calendar is separate or integrated?                 │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4.2 Layout Systems Audit
+
+> **Layout = Grid, spacing, density, responsive behavior.**
+> **Without a system, every surface is a snowflake.**
+
+### Current State: 🔴 AD-HOC
+
+| Aspect | Status | Gap |
+|--------|--------|-----|
+| **Grid System** | ❌ Missing | No defined columns, gutters, margins |
+| **Density Modes** | ❌ Missing | No compact/comfortable/spacious options |
+| **Responsive Strategy** | ⚠️ Implicit | Breakpoints exist, no documented behavior |
+| **Container Widths** | ⚠️ Hardcoded | `max-w-2xl`, `max-w-4xl` scattered |
+| **Spacing Scale** | ✅ Exists | 4/8/12/16/24/32 defined in tokens |
+| **Page Templates** | ❌ Missing | No defined page layouts |
+
+### Layout Research Tasks
+
+| # | Task | Type | Blocking | Status |
+|---|------|------|----------|--------|
+| L1 | Define grid system (columns, gutters, margins) | Research | All layouts | `[ ]` |
+| L2 | Create density mode system | Research | Feed, Lists | `[ ]` |
+| L3 | Document responsive behavior per breakpoint | Research | Mobile polish | `[ ]` |
+| L4 | Standardize container widths | Decision | Layout consistency | `[ ]` |
+| L5 | Create page template library | Design | New pages | `[ ]` |
+| L6 | Define sidebar/panel patterns | Research | Space view, Settings | `[ ]` |
+
+### Page Templates Needed
+
+```
+PAGE TEMPLATES (not yet defined)
+═══════════════════════════════════════════════════════════════════════════════
+
+1. FEED LAYOUT
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ [Header]                                                        │
+   ├─────────────────────────────────────────────────────────────────┤
+   │                                                                 │
+   │  ┌───────────────────────────────────────┐  ┌───────────────┐  │
+   │  │                                       │  │               │  │
+   │  │           Main Content                │  │   Sidebar?    │  │
+   │  │           (Feed items)                │  │   (Optional)  │  │
+   │  │                                       │  │               │  │
+   │  └───────────────────────────────────────┘  └───────────────┘  │
+   │                                                                 │
+   └─────────────────────────────────────────────────────────────────┘
+
+   Questions: Sidebar? Fixed or fluid? Max content width?
+
+2. DETAIL LAYOUT (Profile, Space View)
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ [Hero / Header]                                                 │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ [Tab Navigation]                                                │
+   ├─────────────────────────────────────────────────────────────────┤
+   │                                                                 │
+   │  [Content Area - varies by tab]                                 │
+   │                                                                 │
+   └─────────────────────────────────────────────────────────────────┘
+
+   Questions: Sticky header? Tab placement? Content width?
+
+3. BROWSE/GRID LAYOUT
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ [Filters / Search]                                              │
+   ├─────────────────────────────────────────────────────────────────┤
+   │                                                                 │
+   │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                               │
+   │  │     │ │     │ │     │ │     │                               │
+   │  └─────┘ └─────┘ └─────┘ └─────┘                               │
+   │  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                               │
+   │  │     │ │     │ │     │ │     │                               │
+   │  └─────┘ └─────┘ └─────┘ └─────┘                               │
+   │                                                                 │
+   └─────────────────────────────────────────────────────────────────┘
+
+   Questions: Columns per breakpoint? Card ratios? Filter placement?
+
+4. TOOL/EDITOR LAYOUT (HiveLab)
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ [Toolbar]                                                       │
+   ├───────────────┬─────────────────────────────┬───────────────────┤
+   │               │                             │                   │
+   │   Sidebar     │      Canvas / Editor        │    Properties     │
+   │   (optional)  │                             │    (optional)     │
+   │               │                             │                   │
+   └───────────────┴─────────────────────────────┴───────────────────┘
+
+   Questions: Collapsible panels? Full-screen mode? Keyboard overlay?
+```
+
+---
+
+## 4.3 Interaction Patterns Audit
+
+> **Interactions = How users manipulate the interface.**
+> **Consistency here builds muscle memory.**
+
+### Current State: 🟡 INCONSISTENT
+
+| Pattern | Status | Gap |
+|---------|--------|-----|
+| **Button States** | ⚠️ 30% | Most buttons missing disabled/loading states |
+| **Form Patterns** | ⚠️ Partial | Validation exists, feedback inconsistent |
+| **Selection** | ❌ Missing | No defined single/multi-select patterns |
+| **Drag & Drop** | ❌ Missing | Not implemented anywhere |
+| **Infinite Scroll** | ⚠️ Implicit | Feed uses it, no defined pattern |
+| **Modal/Dialog** | ✅ Exists | Design system has it |
+| **Toast/Notifications** | ✅ Exists | Design system has it |
+| **Hover States** | ⚠️ Inconsistent | Some surfaces have, others don't |
+| **Keyboard Navigation** | ❌ Missing | Almost no keyboard support |
+| **Touch Gestures** | ❌ Missing | No swipe, pinch, long-press defined |
+
+### Interaction Research Tasks
+
+| # | Task | Type | Blocking | Status |
+|---|------|------|----------|--------|
+| I1 | Audit all button states across surfaces | Audit | Button consistency | `[ ]` |
+| I2 | Define selection patterns (single, multi, range) | Research | Lists, Browse | `[ ]` |
+| I3 | Design keyboard navigation model | Research | Accessibility | `[ ]` |
+| I4 | Define touch gesture vocabulary | Research | Mobile | `[ ]` |
+| I5 | Create loading state patterns (skeleton, spinner, progressive) | Research | All surfaces | `[ ]` |
+| I6 | Define error state patterns (inline, toast, page-level) | Research | Error handling | `[ ]` |
+| I7 | Create hover/focus state system | Research | All interactive | `[ ]` |
+
+### Interaction State Machine Example
+
+```
+POST INTERACTION STATES
+═══════════════════════════════════════════════════════════════════════════════
+
+                    ┌─────────────┐
+                    │   DEFAULT   │
+                    └──────┬──────┘
+                           │
+            ┌──────────────┼──────────────┐
+            ▼              ▼              ▼
+      ┌──────────┐  ┌──────────┐  ┌──────────┐
+      │  HOVER   │  │  FOCUS   │  │ LOADING  │
+      └────┬─────┘  └────┬─────┘  └────┬─────┘
+           │             │             │
+           ▼             ▼             ▼
+      ┌──────────┐  ┌──────────┐  ┌──────────┐
+      │ EXPANDED │  │ SELECTED │  │  ERROR   │
+      │ (preview)│  │(keyboard)│  │(retry UI)│
+      └──────────┘  └──────────┘  └──────────┘
+
+Currently implemented: DEFAULT, HOVER (partial)
+Missing: FOCUS, LOADING, EXPANDED, SELECTED, ERROR
+
+APPLIES TO: Feed posts, Space cards, User cards, Tool cards, Event cards
+```
+
+---
+
+## 4.4 Motion Language Audit
+
+> **Motion = Transitions, animations, feedback.**
+> **CLAUDE.md defines this beautifully. Reality doesn't match.**
+
+### Current State: 🔴 DEFINED BUT NOT IMPLEMENTED
+
+| Tier | Definition | Implementation | Gap |
+|------|------------|----------------|-----|
+| **T1 (500-700ms)** | Achievements, celebrations | ❌ Not used | No celebration moments exist |
+| **T2 (300ms)** | Standard interactions | ⚠️ Partial | Some transitions, inconsistent |
+| **T3 (150ms)** | Hovers, toggles | ⚠️ Partial | Some hover states |
+| **T4 (0-50ms)** | Reduced motion | ❌ Missing | No reduced motion support |
+
+### Motion Aesthetic from CLAUDE.md
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+
+"HIVE Motion = Buttery, not snappy"
+
+   Wrong: ·───→  (instant, mechanical)
+   Wrong: ·~~~~~→  (bouncy, playful)
+   Right: ·══════───→  (weighted, deliberate)
+
+"The animation has MASS. It settles, not snaps."
+
+CURRENT REALITY:
+• Most transitions are instant or CSS defaults
+• No easing curves defined in code
+• No motion tokens in design system
+• Framer Motion imported but barely used
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+### Motion Research Tasks
+
+| # | Task | Type | Blocking | Status |
+|---|------|------|----------|--------|
+| M1 | Audit current motion usage across codebase | Audit | Motion consistency | `[ ]` |
+| M2 | Create motion token system (durations, easings) | Design | All animation | `[ ]` |
+| M3 | Define entrance/exit patterns | Research | Page transitions | `[ ]` |
+| M4 | Create celebration moments (T1 animations) | Design | Achievements | `[ ]` |
+| M5 | Implement reduced motion support | Implementation | Accessibility | `[ ]` |
+| M6 | Define scroll-linked animations | Research | Parallax, reveals | `[ ]` |
+
+---
+
+## 4.5 Empty States Audit
+
+> **Empty states are not bugs. They're design opportunities.**
+> **First-time users see empty states. Make them count.**
+
+### Current State: 🔴 TREATED AS BUGS
+
+| Surface | Empty State | Current | Needed |
+|---------|-------------|---------|--------|
+| Feed | No posts | Generic "No posts" | Onboarding prompt, suggested actions |
+| Spaces | No spaces joined | List is empty | "Your spaces will appear here" + browse CTA |
+| Space Chat | No messages | Blank | "Start the conversation" + ice breaker |
+| Profile | No activity | Empty sections | Prompts to complete profile |
+| Notifications | No notifications | "No notifications" | "You're all caught up" + what triggers |
+| HiveLab | No tools | Empty grid | "Create your first tool" + templates |
+| Calendar | No events | Empty calendar | "No events this week" + create CTA |
+| Search | No results | "No results" | Search suggestions, did-you-mean |
+
+### Empty State Design Tasks
+
+| # | Task | Surface | Status |
+|---|------|---------|--------|
+| E1 | Design Feed empty state (new user) | `/feed` | `[ ]` |
+| E2 | Design Feed empty state (filtered, no results) | `/feed` | `[ ]` |
+| E3 | Design Spaces empty state | `/spaces` | `[ ]` |
+| E4 | Design Space Chat empty state | `/s/[handle]` | `[ ]` |
+| E5 | Design Profile empty sections | `/profile/[id]` | `[ ]` |
+| E6 | Design Notifications empty state | `/notifications` | `[ ]` |
+| E7 | Design HiveLab empty state | `/lab` | `[ ]` |
+| E8 | Design Search no-results state | Search | `[ ]` |
+| E9 | Design Calendar empty state | `/calendar` | `[ ]` |
+
+### Empty State Principles
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│   EMPTY STATE PRINCIPLES                                                    │
+│                                                                             │
+│   1. NEVER just "No [items]"                                                │
+│      • Explain what would be here                                           │
+│      • Give a path to fill the space                                        │
+│                                                                             │
+│   2. CONTEXT MATTERS                                                        │
+│      • New user empty ≠ Filtered empty ≠ Deleted empty                      │
+│      • Each has different copy and CTAs                                     │
+│                                                                             │
+│   3. EMPTY IS AN OPPORTUNITY                                                │
+│      • Teach the user something                                             │
+│      • Suggest next action                                                  │
+│      • Show what's possible                                                 │
+│                                                                             │
+│   4. MATCH THE TONE                                                         │
+│      • "You're all caught up" (positive completion)                         │
+│      • "Nothing here yet" (neutral, prompting)                              │
+│      • "No results found" (search failure, suggest retry)                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 4.6 User Journey Mapping
+
+> **Before polishing surfaces, understand how users flow between them.**
+
+### Current State: ❌ NOT MAPPED
+
+### Critical Journeys to Define
+
+| Journey | Start | End | Current State |
+|---------|-------|-----|---------------|
+| **First-time Activation** | Gate | First meaningful action | Onboarding exists, activation unclear |
+| **Daily Return** | Open app | Caught up + action taken | Feed exists, "caught up" not defined |
+| **Space Discovery** | Browse | Join + participate | Browse exists, participation not tracked |
+| **Content Creation** | Idea | Published post/event | Creation exists, no encouragement |
+| **Tool Building** | Need | Published tool | HiveLab exists, journey not designed |
+| **Social Connection** | See someone | Connected | Profile exists, connection unclear |
+
+### Journey Research Tasks
+
+| # | Task | Type | Status |
+|---|------|------|--------|
+| J1 | Map first-time user journey (signup → activation) | Research | `[ ]` |
+| J2 | Define "activation" — what's the aha moment? | Decision | `[ ]` |
+| J3 | Map daily return journey | Research | `[ ]` |
+| J4 | Map content creation journey | Research | `[ ]` |
+| J5 | Map social connection journey | Research | `[ ]` |
+| J6 | Identify drop-off points in current flows | Audit | `[ ]` |
+
+### First-Time User Journey (Draft)
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+
+Gate ──→ Enter Email ──→ Verify Code ──→ School Detected ──→ Choose Handle
+  │           │              │                │                    │
+  ▼           ▼              ▼                ▼                    ▼
+"Enter"    "Check       "Welcome to      "You're at         "You're
+           your          HIVE"            [School]"          @handle"
+           email"
+
+
+──→ Identity ──→ Interests ──→ Space Recs ──→ Join Spaces ──→ Feed
+        │            │              │              │            │
+        ▼            ▼              ▼              ▼            ▼
+    "Tell us      "What are     "Spaces we     "Join at     "You're
+     about         you into?"    think          least 3"     in."
+     you"                        you'll love"
+
+
+QUESTIONS:
+• Where do users drop off?
+• What's the "aha moment"? First post? First reply? First space?
+• How long should onboarding take?
+• Can users skip steps?
+• What happens if they don't join any spaces?
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## 4.7 Component Gap Analysis
+
+> **93 primitives, 138 components exist. What's missing?**
+
+### Current State: 🟡 COVERAGE GAPS
+
+| Category | Has | Missing |
+|----------|-----|---------|
+| **Data Display** | Card, Table, List | Timeline, Tree, Diff |
+| **Input** | TextField, Select, Checkbox | DatePicker, TimePicker, ColorPicker |
+| **Navigation** | Tabs, Breadcrumb, Pagination | CommandPalette, SideNav |
+| **Feedback** | Toast, Alert, Progress | Confetti, Pulse, Skeleton |
+| **Overlay** | Modal, Drawer, Popover | Spotlight, Tour, Coachmark |
+| **Media** | Avatar, Image | Video, Audio, Carousel |
+| **Layout** | Grid, Stack, Flex | Masonry, Dock, Split |
+
+### Component Research Tasks
+
+| # | Task | Type | Status |
+|---|------|------|--------|
+| CP1 | Audit which components are actually used | Audit | `[ ]` |
+| CP2 | Identify components needed but missing | Gap Analysis | `[ ]` |
+| CP3 | Review component API consistency | Audit | `[ ]` |
+| CP4 | Document component composition patterns | Research | `[ ]` |
+| CP5 | Create missing Skeleton component | Implementation | `[ ]` |
+| CP6 | Create CommandPalette component | Implementation | `[ ]` |
+| CP7 | Create Tour/Coachmark component | Implementation | `[ ]` |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 5: SURFACE-BY-SURFACE DESIGN AUDIT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> **For each surface: Job, IA, Layout, Interactions, Motion, States**
+> **Score: 🔴 Needs Research | 🟡 Needs Refinement | 🟢 Ready**
+
+---
+
+## 5.1 Gate (`/`)
+
+### Design Score: 🟢 READY
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | Clear — "Enter or leave" |
+| **IA** | 🟢 | Minimal — single CTA |
+| **Layout** | 🟢 | Centered, dramatic |
+| **Interactions** | 🟢 | Single button |
+| **Motion** | 🟡 | Could use entrance animation |
+| **Empty State** | N/A | Always has content |
+
+**Design Research Needed:** None — use as reference.
+
+---
+
+## 5.2 Entry/Onboarding (`/enter/*`)
+
+### Design Score: 🟡 NEEDS REFINEMENT
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | Clear — "Become a member" |
+| **IA** | 🟡 | Steps exist, progression unclear |
+| **Layout** | 🟡 | Centered works, density varies |
+| **Interactions** | 🔴 | Missing disabled states, loading feedback |
+| **Motion** | 🔴 | Step transitions are instant |
+| **Empty State** | 🟡 | Error states exist, could be friendlier |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-E1 | Design step-to-step transition animations | HIGH |
+| D-E2 | Create progress indicator with personality | MEDIUM |
+| D-E3 | Design error recovery flows | HIGH |
+| D-E4 | Design "verification pending" waiting state | MEDIUM |
+
+---
+
+## 5.3 Feed (`/feed`)
+
+### Design Score: 🔴 NEEDS RESEARCH
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🔴 | Unclear — "See what's happening" vs "Take action" vs "Catch up" |
+| **IA** | 🔴 | What's the hierarchy? Spaces? Time? Importance? |
+| **Layout** | 🔴 | Single column? With sidebar? How wide? |
+| **Interactions** | 🟡 | Like/comment exist, expand/collapse missing |
+| **Motion** | 🔴 | No scroll animations, no lazy reveal |
+| **Empty State** | 🔴 | Just "No posts" |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-F1 | Define Feed's job — what should user feel/do here? | CRITICAL |
+| D-F2 | Explore information hierarchy options | CRITICAL |
+| D-F3 | Design "while you were away" pattern | HIGH |
+| D-F4 | Design post density modes (compact/comfortable) | HIGH |
+| D-F5 | Design real-time update indicator | MEDIUM |
+| D-F6 | Design infinite scroll behavior (load trigger, skeleton) | HIGH |
+| D-F7 | Design feed filtering UI | MEDIUM |
+| D-F8 | Design empty feed (new user, no follows, filtered empty) | HIGH |
+
+### Feed Open Questions
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+
+1. WHAT'S THE JOB?
+   Option A: "Stay informed" — passive consumption
+   Option B: "Jump into action" — activity launcher
+   Option C: "Catch up and go" — efficiency-focused
+   Impact: Changes the entire hierarchy and feature set.
+
+2. INFORMATION HIERARCHY
+   Option A: Time-based (newest first)
+   Option B: Space-grouped (your spaces, then others)
+   Option C: Importance-ranked (algorithm decides)
+   Option D: User-controlled (toggle between modes)
+   Current: 8-factor algorithm (but feels random to user)
+
+3. DENSITY
+   Option A: Cards (image-forward, like Instagram)
+   Option B: List (text-forward, like Twitter)
+   Option C: Hybrid (collapsible cards)
+   Option D: User preference toggle
+   Current: Medium-density cards, fixed.
+
+4. SIDEBAR OR NOT?
+   Option A: Full-width feed (mobile-first)
+   Option B: Feed + right sidebar (trending, spaces, people)
+   Option C: Feed + left nav (persistent navigation)
+   Current: Full-width feed.
+
+5. REAL-TIME BEHAVIOR
+   Option A: Auto-update (items appear, push down)
+   Option B: "New posts" banner (click to load)
+   Option C: Background update, notify on return
+   Current: Real-time but no visual indicator.
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## 5.4 Spaces Hub (`/spaces`)
+
+### Design Score: 🟡 NEEDS REFINEMENT
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟡 | "See your spaces" — but also browse? |
+| **IA** | 🟡 | My spaces vs browse vs create — unclear |
+| **Layout** | 🟡 | Grid exists, could be more dynamic |
+| **Interactions** | 🔴 | Space cards have minimal interaction |
+| **Motion** | 🔴 | No card hover animations |
+| **Empty State** | 🔴 | Just empty grid |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-S1 | Clarify hub vs browse — same page or separate? | HIGH |
+| D-S2 | Design space card states (hover, active, joined, invited) | HIGH |
+| D-S3 | Design "space health" indicators | MEDIUM |
+| D-S4 | Design empty hub (no spaces joined) | HIGH |
+| D-S5 | Design space quick-actions (mute, leave, settings) | MEDIUM |
+
+---
+
+## 5.5 Space View (`/s/[handle]`)
+
+### Design Score: 🟡 NEEDS REFINEMENT
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | "This is your space" — clear |
+| **IA** | 🟡 | Tabs exist, hierarchy within tabs unclear |
+| **Layout** | 🟡 | Works, but header takes too much space |
+| **Interactions** | 🟡 | Basic interactions, missing admin tools |
+| **Motion** | 🔴 | Tab switches are instant |
+| **Empty State** | 🔴 | Per-tab empty states not designed |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-SV1 | Redesign space header (less height, more info) | MEDIUM |
+| D-SV2 | Design tab transition animations | LOW |
+| D-SV3 | Design per-tab empty states | HIGH |
+| D-SV4 | Design member list with roles visible | MEDIUM |
+| D-SV5 | Design space settings panel | MEDIUM |
+
+---
+
+## 5.6 Browse/Explore (`/spaces/browse`, `/explore`)
+
+### Design Score: 🟡 DIRECTION DEFINED
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | **RESOLVED** — Browse = emotional discovery, Explore = targeted search |
+| **IA** | 🟢 | **RESOLVED** — Complementary surfaces, documented in INFORMATION_ARCHITECTURE.md §5.2 |
+| **Layout** | 🔴 | Grid, but what density? What sorting? |
+| **Interactions** | 🔴 | Filter by what? Sort by what? |
+| **Motion** | 🔴 | None |
+| **Empty State** | 🔴 | Not designed |
+
+**Design Research Status:**
+
+| # | Task | Status |
+|---|------|--------|
+| D-B1 | Define Browse vs Explore — same thing? | ✅ **RESOLVED** — Complementary, not redundant |
+| D-B2 | Design discovery UX — how do users find spaces? | ✅ **RESOLVED** — Browse (category-first) + Explore (search-first) |
+| D-B3 | Design filter/sort paradigm | 🔴 HIGH |
+| D-B4 | Design category navigation | HIGH |
+| D-B5 | Design "spaces your friends are in" feature | MEDIUM |
+| D-B6 | Design "recommended for you" section | MEDIUM |
+| D-B7 | Design search-within-browse | HIGH |
+
+---
+
+## 5.7 Profile (`/profile/[id]`)
+
+### Design Score: 🟢 IMPLEMENTED (2026-01-26)
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | "Who is this person, and what do they DO on campus?" |
+| **IA** | 🟢 | 3-Zone Layout: Identity → Activity → Campus Presence |
+| **Layout** | 🟢 | Single-viewport, hierarchy-driven |
+| **Interactions** | 🟢 | Connect + Message in Zone 1 Hero |
+| **Motion** | 🟢 | Premium easing, staggered zone entrance |
+| **Empty State** | 🟢 | "Just getting started..." graceful empty |
+
+**Design Implementation Complete:**
+
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| D-P1 | Define what a HIVE profile communicates | CRITICAL | ✅ DONE |
+| D-P2 | Design profile sections and hierarchy | HIGH | ✅ DONE |
+| D-P3 | Design own-profile vs other-profile differences | HIGH | ✅ DONE |
+| D-P4 | Design connection/social actions | HIGH | ✅ DONE |
+| D-P5 | Design activity feed on profile | MEDIUM | ✅ DONE |
+| D-P6 | Design profile completeness indicator | MEDIUM | ✅ DONE |
+
+### Profile Implementation Summary
+
+```
+═══════════════════════════════════════════════════════════════════════════════
+
+ANSWER: "Who is this person, and what do they DO on campus?"
+
+3-ZONE LAYOUT:
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ZONE 1: IDENTITY (Hero)                                                    │
+│  • Avatar (80px, rounded-lg), name, handle, credentials                     │
+│  • Bio (2-3 lines)                                                          │
+│  • Connect + Message buttons (or Edit Profile for own)                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ZONE 2: ACTIVITY (What They DO)                                            │
+│  • Building: ProfileActivityCard (tools with runs, gold border if 100+)     │
+│  • Leading: ProfileLeadershipCard (spaces led, gold star)                   │
+│  • Organizing: ProfileEventCard (upcoming events)                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ZONE 3: CAMPUS PRESENCE                                                    │
+│  • ProfileSpacePill (compact space membership)                              │
+│  • ProfileConnectionFooter (shared spaces, mutual connections)              │
+│  • Hidden for own profile                                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+NEW COMPONENTS CREATED:
+• ProfileIdentityHero      — Zone 1: Identity hero
+• ProfileActivityCard      — Zone 2: Tools with impact metrics
+• ProfileLeadershipCard    — Zone 2: Spaces they lead
+• ProfileEventCard         — Zone 2: Events organizing
+• ProfileSpacePill         — Zone 3: Compact space pill
+• ProfileConnectionFooter  — Zone 3: Relationship context
+• ProfileOverflowChip      — Overflow handling
+
+GOLD ACCENT RULES:
+• ProfileActivityCard: Gold bottom border when runs >= 100
+• ProfileLeadershipCard: Gold left border, gold star
+• EARNED through activity, not decoration
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+
+---
+
+## 5.8 HiveLab (`/lab`)
+
+### Design Score: 🟡 NEEDS REFINEMENT
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | "Build tools" — clear |
+| **IA** | 🟡 | My tools, browse, create — could be clearer |
+| **Layout** | 🟡 | Editor exists, could be more powerful |
+| **Interactions** | 🟡 | Basic editing, missing power features |
+| **Motion** | 🔴 | None |
+| **Empty State** | 🔴 | Not inspiring |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-L1 | Design onboarding for first-time tool creators | HIGH |
+| D-L2 | Design template gallery | HIGH |
+| D-L3 | Design tool preview/test mode | MEDIUM |
+| D-L4 | Design collaboration UI | MEDIUM |
+| D-L5 | Design version history UI | LOW |
+
+---
+
+## 5.9 Admin (`/admin`)
+
+### Design Score: 🟡 NEEDS REFINEMENT
+
+| Dimension | Score | Notes |
+|-----------|-------|-------|
+| **Job** | 🟢 | "Manage the platform" — clear |
+| **IA** | 🟡 | Sections exist, could be better organized |
+| **Layout** | 🟡 | Dashboard layout, functional |
+| **Interactions** | 🔴 | Bulk operations clunky |
+| **Motion** | 🔴 | None |
+| **Empty State** | 🔴 | "No users" etc not designed |
+
+**Design Research Needed:**
+
+| # | Task | Priority |
+|---|------|----------|
+| D-A1 | Design admin navigation hierarchy | MEDIUM |
+| D-A2 | Design bulk operation feedback | HIGH |
+| D-A3 | Design confirmation dialogs (replace browser confirm) | HIGH |
+| D-A4 | Design audit log viewer | MEDIUM |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 6: DESIGN SPRINT TRACK
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> **Design sprints run parallel to implementation sprints.**
+> **Design must be ahead of implementation.**
+
+```
+SPRINT RELATIONSHIP
+═══════════════════════════════════════════════════════════════════════════════
+
+  DESIGN TRACK               │         IMPLEMENTATION TRACK
+                             │
+  D0: Foundation             │
+  (IA, Layout, Motion        │
+   tokens)                   │
+          │                  │
+          ▼                  │
+  D1: Entry + Feed           │──────────▶  Sprint 1: Entry Flow
+          │                  │
+          ▼                  │
+  D2: Spaces + Browse        │──────────▶  Sprint 2: Feed
+          │                  │             Sprint 3: Spaces
+          ▼                  │
+  D3: Profile + Social       │──────────▶  Sprint 4: Supporting
+          │                  │
+          ▼                  │
+  D4: HiveLab                │──────────▶  Sprint 5: HiveLab
+          │                  │
+          ▼                  │
+  D5: Polish + Motion        │──────────▶  Sprint 6: Polish
+
+Design sprint outputs feed into implementation sprints.
+Implementation never starts without design direction.
+```
+
+---
+
+## D0: Foundation ✅ COMPLETE
+
+**Goal:** Establish design infrastructure before surface work.
+**Status:** All 6 tasks complete. Design infrastructure documented.
+
+| # | Task | Type | Effort | Status |
+|---|------|------|--------|--------|
+| 1 | Complete site map (IA1) | Research | M | `[x]` |
+| 2 | Define navigation model (IA2) | Research | M | `[x]` |
+| 3 | Create grid system (L1) | Design | M | `[x]` ✅ LAYOUT.md |
+| 4 | Create motion token system (M2) | Design | M | `[x]` ✅ MOTION.md (existed) |
+| 5 | Define page templates (L5) | Design | L | `[x]` ✅ TEMPLATES.md (existed) |
+| 6 | Create interaction state system (I7) | Design | M | `[x]` ✅ INTERACTION_STATES.md |
+
+**Exit Criteria:**
+- [x] Site map documented
+- [x] Navigation model defined
+- [x] Grid system implemented → `docs/design-system/LAYOUT.md`
+- [x] Motion tokens in design system → `docs/design-system/MOTION.md`
+- [x] 5 page templates defined → `docs/design-system/TEMPLATES.md`
+- [x] Interaction states documented → `docs/design-system/INTERACTION_STATES.md`
+
+---
+
+## D1: Entry + Feed ✅ COMPLETE
+
+**Goal:** Design the two most critical user surfaces.
+**Depends on:** D0
+**Blocks:** Implementation Sprint 1, 2
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Design onboarding transitions (D-E1) | Entry | M | `[x]` ✅ |
+| 2 | Design error recovery flows (D-E3) | Entry | M | `[x]` ✅ |
+| 3 | Define Feed's job (D-F1) | Feed | L | `[x]` ✅ |
+| 4 | Design information hierarchy (D-F2) | Feed | L | `[x]` ✅ |
+| 5 | Design empty feed states (D-F8) | Feed | M | `[x]` ✅ |
+| 6 | Design density modes (D-F4) | Feed | M | `[x]` ✅ |
+
+**Exit Criteria:**
+- [x] Onboarding has designed transitions ✅
+- [x] Onboarding has error recovery flows ✅
+- [x] Feed has defined job and hierarchy ✅
+- [x] Empty states designed for both surfaces ✅
+- [x] Feed has density controls ✅
+
+---
+
+## D2: Spaces + Browse
+
+**Goal:** Design space ecosystem.
+**Depends on:** D1
+**Blocks:** Implementation Sprint 3
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Clarify hub vs browse (D-S1) | Spaces | M | `[ ]` |
+| 2 | Design space card states (D-S2) | Spaces | M | `[ ]` |
+| 3 | Design discovery UX (D-B2) | Browse | — | `[x]` ✅ |
+| 4 | Design filter/sort paradigm (D-B3) | Browse | M | `[ ]` |
+| 5 | Design per-tab empty states (D-SV3) | Space View | M | `[ ]` |
+
+**Exit Criteria:**
+- [ ] Space hub and browse relationship clear
+- [ ] Discovery UX designed
+- [ ] Space cards fully specified
+
+---
+
+## D3: Profile + Social
+
+**Goal:** Design identity and connection.
+**Depends on:** D2
+**Blocks:** Implementation Sprint 4
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Define profile story (D-P1) | Profile | L | `[x]` ✅ |
+| 2 | Design profile sections (D-P2) | Profile | M | `[x]` ✅ |
+| 3 | Design connection actions (D-P4) | Profile | M | `[x]` ✅ |
+| 4 | Design notifications empty state (E6) | Notifications | S | `[ ]` |
+| 5 | Design connection flows | Social | M | `[ ]` |
+
+**Exit Criteria:**
+- [x] Profile has clear purpose and sections (3-zone: Identity, Activity, Presence)
+- [ ] Connection UX designed
+- [ ] Notification states designed
+
+---
+
+## D4: HiveLab
+
+**Goal:** Design the builder experience.
+**Depends on:** D3
+**Blocks:** Implementation Sprint 5
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Design creator onboarding (D-L1) | Lab | M | `[ ]` |
+| 2 | Design template gallery (D-L2) | Lab | M | `[ ]` |
+| 3 | Design empty lab state (E7) | Lab | S | `[ ]` |
+| 4 | Design tool preview mode (D-L3) | Lab | M | `[ ]` |
+
+**Exit Criteria:**
+- [ ] First-time lab experience designed
+- [ ] Templates gallery designed
+- [ ] Tool creation flow complete
+
+---
+
+## D5: Polish + Motion
+
+**Goal:** Bring everything to /about quality.
+**Depends on:** D4
+**Blocks:** Campus One
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Implement T1 celebration animations | All | L | `[ ]` |
+| 2 | Implement page transitions | All | M | `[ ]` |
+| 3 | Add reduced motion support (M5) | All | M | `[ ]` |
+| 4 | Final interaction polish pass | All | L | `[ ]` |
+| 5 | Final empty state pass | All | M | `[ ]` |
+
+**Exit Criteria:**
+- [ ] Every surface feels like /about
+- [ ] Motion is consistent and intentional
+- [ ] Accessibility motion preferences work
+- [ ] No dead ends anywhere
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 7: AUDIT RESULTS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 7.1 Deep Platform Audit Summary (2026-01-26)
+
+| Category | Gaps Found | Critical | High | Medium | Low |
+|----------|------------|----------|------|--------|-----|
+| Security | 27 | 2 | 10 | 13 | 2 |
+| Error Handling | 60+ | 6 | 15 | 25 | 14 |
+| State Management | 8 | 0 | 3 | 3 | 2 |
+| Design System | 50+ | 0 | 7 | 30 | 13 |
+| API Contracts | 12 | 3 | 4 | 4 | 1 |
+| Incomplete Code | 91 TODOs | 9 | 11 | 40 | 31 |
+| Feature Specs | 15 gaps | 8 | 4 | 2 | 1 |
+
+**Total Critical Issues:** 26
+**Total High Priority Issues:** 54
+
+---
+
+## 7.2 Feature Completeness by System
+
+| System | Complete | Partial | Stubbed | Score | Status |
+|--------|----------|---------|---------|-------|--------|
+| Entry/Onboarding | 13 | 2 | 1 | 81% | 🟡 Partial |
+| Spaces | 14 | 0 | 1 | 93% | 🟢 Ready |
+| Feed/Social | 11 | 2 | 2 | 73% | 🟡 Partial |
+| Profile/Settings | 13 | 2 | 1 | 81% | 🟡 Partial |
+| HiveLab/Tools | 15 | 0 | 2 | 88% | 🟢 Ready |
+| Events/Calendar | 9 | 3 | 3 | 60% | 🔴 Blocked |
+| Admin | 17 | 2 | 1 | 85% | 🟢 Ready |
+
+**Overall Platform Completeness:** 80%
+
+---
+
+## 7.3 Critical Feature Gaps
+
+| # | Feature | System | Impact | Blocker Type |
+|---|---------|--------|--------|--------------|
+| F1 | Event Editing | Calendar | Users cannot modify events | No implementation |
+| F2 | Google Calendar Sync | Calendar | OAuth works, sync stubbed | Stubbed |
+| F3 | Tool AI Generation | HiveLab | UI exists, not wired | Not wired |
+| F4 | Tool Sharing/Export | HiveLab | No implementation | Missing |
+| F5 | Explore/Discovery | Feed | No recommendations | Missing |
+| F6 | Account Deletion | Profile | Button exists, no action | Stubbed |
+| F7 | Space Announcements | Spaces | Schema exists, no UI | Missing UI |
+| F8 | Alumni Onboarding | Entry | Student flow only | Stubbed |
+
+---
+
+## 7.4 Feature Details by System
+
+### Entry/Onboarding (81%)
+```
+✅ Complete: Email verification, school detection, handle selection,
+   identity step, interests selection, space recommendations,
+   profile creation, session creation, redirect logic
+
+⚠️ Partial: Avatar picker (UI only), network error recovery
+
+❌ Stubbed: Alumni flow (returns placeholder)
+```
+
+### Spaces (93%)
+```
+✅ Complete: Space creation, browsing, joining, member management,
+   role assignment, settings, deletion (admin), chat system,
+   resources, events in spaces, activity feed, search,
+   privacy controls, archival
+
+❌ Missing: Announcements (schema exists, no UI)
+```
+
+### Feed/Social (73%)
+```
+✅ Complete: Post creation, rendering, likes/reactions, comments,
+   threading, share, real-time updates, space filtering,
+   8-factor ranking, ghost mode filtering
+
+⚠️ Partial: Search (v1 works, v2 stubbed), content moderation (UI only)
+
+❌ Missing: Explore/Discovery, AI summaries
+```
+
+### Profile/Settings (81%)
+```
+✅ Complete: Profile viewing/editing, avatar upload, handle management,
+   interests, privacy settings (3 levels), session management,
+   notification preferences, FCM token, theme settings,
+   connection management, block/unblock
+
+⚠️ Partial: Ghost mode (toggle works, timer stubbed), linked accounts (UI only)
+
+❌ Stubbed: Account deletion (button exists, no implementation)
+```
+
+### HiveLab/Tools (88%)
+```
+✅ Complete: Tool creation/editing/preview/versioning/publishing,
+   browsing, installation, configuration, sandboxed execution,
+   permission system, analytics, search, draft saving,
+   collaboration invites, embedding
+
+❌ Stubbed: AI generation (UI exists, not wired), Tool sharing/export
+```
+
+### Events/Calendar (60%)
+```
+✅ Complete: Event creation/viewing/listing, RSVP, calendar view,
+   date navigation, filtering, recurring events (basic), reminders
+
+⚠️ Partial: Event editing (view only), notifications (no delivery),
+   conflict detection (UI only)
+
+❌ Stubbed: Google Calendar sync (OAuth works, sync stubbed),
+   calendar export, availability sharing
+```
+
+### Admin (85%)
+```
+✅ Complete: User management/search/suspension, bulk operations,
+   space management/moderation, feature flags, school management,
+   system health, analytics dashboard, moderation queue,
+   report handling, activity logs, role management, audit logging (schema)
+
+⚠️ Partial: Notifications (TODO, no send), AI quality dashboard (charts only)
+
+❌ Stubbed: Tool approval queue (UI exists, no workflow)
+```
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 8: CRITICAL BLOCKERS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> **These MUST be fixed before any campus deployment. No exceptions.**
+
+## 8.1 Critical Security (2 issues)
+
+| # | Task | File | Risk | Effort | Status |
+|---|------|------|------|--------|--------|
+| C1 | Fix admin grant privilege escalation | `api/auth/check-admin-grant/route.ts:43-56` | Any authenticated user can invoke admin grant | S | `[x]` ✅ |
+| C2 | Fix profile connections privacy bypass | `api/profile/route.ts:228-229` | Full social graph exposed despite privacy | S | `[x]` ✅ |
+
+### C1 Detail: Admin Grant Privilege Escalation
+```
+Vulnerability: Endpoint checks shouldGrantAdmin(normalizedEmail) but NO verification
+that the currently authenticated user has permission to grant admin access.
+Any authenticated user can call this endpoint.
+
+Impact: CRITICAL — privilege escalation to admin role
+
+Fix: Add requireAdmin() or requireSuperAdmin() check before shouldGrantAdmin()
+```
+
+### C2 Detail: Profile Connections Privacy Bypass
+```
+Vulnerability: response.connections = profile.connections || [] returns full
+connections array even for public profile views. Privacy check fails to remove
+this field for non-owners.
+
+Impact: CRITICAL — user social network graph enumeration
+
+Fix: Only include connections when isOwner === true
+```
+
+---
+
+## 8.2 Critical API Contracts (3 issues)
+
+| # | Task | File | Risk | Effort | Status |
+|---|------|------|------|--------|--------|
+| C3 | Add max limit to admin users endpoint | `api/admin/users/route.ts:26` | `?limit=100000` accepted, OOM risk | S | `[ ]` |
+| C4 | Add max limit to chat messages | `api/spaces/[spaceId]/chat/route.ts:110` | Unbounded message fetch | S | `[ ]` |
+| C5 | Handle Firestore 500 doc limit | `api/spaces/[spaceId]/members/route.ts:268-296` | Silent failure for spaces >500 members | M | `[ ]` |
+
+---
+
+## 8.3 Critical Error Handling (6 issues)
+
+| # | Task | File | Risk | Effort | Status |
+|---|------|------|------|--------|--------|
+| C6 | Add root `error.tsx` | `apps/web/src/app/error.tsx` | Global fallback missing | S | `[ ]` |
+| C7 | Add `error.tsx` to `/enter` | `apps/web/src/app/enter/error.tsx` | App crashes, no recovery | S | `[ ]` |
+| C8 | Add `error.tsx` to `/feed` | `apps/web/src/app/feed/error.tsx` | App crashes, no recovery | S | `[ ]` |
+| C9 | Add `error.tsx` to `/spaces` | `apps/web/src/app/spaces/error.tsx` | App crashes, no recovery | S | `[ ]` |
+| C10 | Add `error.tsx` to `/login` | `apps/web/src/app/login/error.tsx` | App crashes, no recovery | S | `[ ]` |
+| C11 | Add `error.tsx` to `/lab` | `apps/web/src/app/lab/error.tsx` | App crashes, no recovery | S | `[ ]` |
+
+---
+
+## 8.4 Critical Incomplete Features (15 issues)
+
+| # | Task | File | Impact | Effort | Status |
+|---|------|------|--------|--------|--------|
+| C12 | Implement email delivery | `lib/firebase-auth-email.ts:37` | Auth codes not sent | M | `[ ]` |
+| C13 | Implement Search API v2 | `api/search/v2/route.ts:30` | Returns error stub | L | `[ ]` |
+| C14 | Implement space deletion | `api/spaces/[spaceId]/route.ts:324` | Admins can't delete | M | `[ ]` |
+| C15 | Implement admin tool approval queue | `admin/builder-queue.tsx:12` | Tools stuck pending | M | `[x]` |
+| C16 | Implement admin user search | `admin/user-lookup.tsx:24` | Can't find users | M | `[x]` |
+| C17 | Implement Calendar OAuth sync | `lib/calendar-api.ts:175` | Calendar shows mock | L | `[ ]` |
+| C18 | Wire feed aggregation engine | `api/feed/cache/route.ts:331` | Feed not optimized | M | `[ ]` |
+| C19 | Implement admin nudge API | `admin/leader-health-dashboard.tsx:111` | Can't nudge leaders | M | `[ ]` |
+| C20 | Implement avatar picker | `welcome/identity/page.tsx:126` | Onboarding incomplete | M | `[ ]` |
+| C21 | Implement event editing | `api/calendar/[eventId]/route.ts` | Events immutable | M | `[ ]` |
+| C22 | Wire Tool AI generation | `lab/components/ai-generator.tsx` | UI exists, no backend | L | `[ ]` |
+| C23 | Implement tool sharing/export | `lab/tools/[toolId]/share/` | No implementation | L | `[ ]` |
+| C24 | Implement account deletion | `api/profile/delete/route.ts` | Button exists, no action | M | `[ ]` |
+| C25 | Implement explore/discovery | `api/feed/explore/route.ts` | No recommendations | L | `[ ]` |
+| C26 | Implement alumni onboarding | `enter/alumni/page.tsx` | Student flow only | M | `[ ]` |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 9: HIGH PRIORITY ISSUES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 9.1 Security (10 issues)
+
+| Task | File | Risk | Effort | Status |
+|------|------|------|--------|--------|
+| Admin can suspend users from other campuses | `api/admin/users/[userId]/suspend/route.ts:33-69` | Cross-campus attack | M | `[ ]` |
+| Rate limiting gap on code sending | `api/auth/send-code/route.ts` | Account enumeration | M | `[ ]` |
+| Deleted admins retain session access | `apps/admin/src/lib/admin-auth.ts:202-207` | Zombie admin sessions | M | `[ ]` |
+| Profile fetch without campus validation | `api/profile/[userId]/route.ts:29-36` | Cross-campus data | S | `[ ]` |
+| CSRF check skipable via option | `lib/middleware/index.ts:283-284` | CSRF bypass | S | `[ ]` |
+| Session cookie missing SameSite | `middleware.ts:82` | CSRF on non-admin | S | `[ ]` |
+| Wrap 8 unprotected admin routes | See list below | Anyone can modify | S | `[ ]` |
+| Add `hasPermission()` enforcement | `apps/admin/src/lib/admin-auth.ts` | Role bypass | M | `[ ]` |
+| Implement Redis rate limiting | `lib/rate-limit.ts` | In-memory bypassed | M | `[ ]` |
+| Move CSRF to persistent storage | `lib/csrf-protection.ts:68` | Lost on restart | M | `[ ]` |
+
+### Unprotected Admin Routes (8)
+```
+/api/admin/feature-flags/route.ts
+/api/admin/feature-flags/[flagId]/route.ts
+/api/admin/schools/route.ts
+/api/admin/schools/[schoolId]/route.ts
+/api/admin/ai-quality/metrics/route.ts
+/api/admin/ai-quality/failures/route.ts
+/api/admin/ai-quality/generations/route.ts
+/api/admin/ai-quality/edits/route.ts
+```
+
+---
+
+## 9.2 Error Handling (15 issues)
+
+| Task | File | Impact | Effort | Status |
+|------|------|--------|--------|--------|
+| Fix 12+ silent `.catch(() => {})` patterns | Multiple | Operations fail silently | M | `[ ]` |
+| Fix privacy bypass via null swallowing | `api/profile/v2/route.ts:248,328-329` | Privacy fails open | S | `[ ]` |
+| Fix service worker silent failure | `lib/cross-platform-notifications.ts:720-726` | Push never works | M | `[ ]` |
+| Fix notification preferences lost | `lib/cross-platform-notifications.ts:410-418` | Settings don't save | M | `[ ]` |
+| Add timeout to feed ranking | `api/feed/route.ts:536` | Request can hang | S | `[ ]` |
+| Add timeout to ghost mode filtering | `api/feed/route.ts:268-293` | 10s+ delays | S | `[ ]` |
+| Replace browser `confirm()` (3 locations) | See list | No audit trail | M | `[ ]` |
+| Wire audit logging to feature flags | `/api/admin/feature-flags/*` | No change record | M | `[ ]` |
+| Wire audit logging to space moderation | `/api/admin/spaces/[spaceId]/moderation` | No action record | M | `[ ]` |
+| Wire audit logging to tool approval | `/api/admin/tools/[toolId]/approve` | No approval record | M | `[ ]` |
+
+### Silent Failure Patterns (12+ files)
+```
+lib/services/tool-state-broadcaster.service.ts:252,288,430
+hooks/chat/use-chat-typing.ts:64,97,109,157,169,175
+api/spaces/[spaceId]/resources/[resourceId]/route.ts:66-68
+api/profile/v2/route.ts:248,328-329
+```
+
+### Browser Confirm Dialogs (3)
+```
+apps/admin/src/components/school-management-dashboard.tsx:215
+apps/admin/src/components/alert-panel.tsx
+apps/admin/src/components/admin-activity-log.tsx:142
+```
+
+---
+
+## 9.3 State Management (3 issues)
+
+| Task | File | Impact | Effort | Status |
+|------|------|--------|--------|--------|
+| Fix stale data after navigation | `hooks/use-realtime-collection.ts:144-151` | Old data displays | M | `[ ]` |
+| Add beforeunload to profile edit | `hooks/use-profile-edit.ts:206-211` | Form data lost | S | `[ ]` |
+| Add error message to space join failure | `hooks/use-space.ts:56-65` | Silent rejection | S | `[ ]` |
+
+---
+
+## 9.4 API Contracts (4 issues)
+
+| Task | File | Impact | Effort | Status |
+|------|------|--------|--------|--------|
+| Fix N+1 queries in members endpoint | `api/spaces/[spaceId]/members/route.ts:314-390` | 18-21 queries per request | L | `[ ]` |
+| Fix inconsistent pagination shapes | feed, tools, admin endpoints | Client confusion | M | `[ ]` |
+| Add rate limiting to browse endpoint | `api/spaces/browse/route.ts:209-410` | Resource exhaustion | M | `[ ]` |
+| Type profile response properly | `api/profile/[userId]/route.ts:180` | `Record<string, any>` | S | `[ ]` |
+
+---
+
+## 9.5 Design System (7 issues)
+
+| Task | File | Issue | Effort | Status |
+|------|------|-------|--------|--------|
+| Fix 40+ hardcoded admin colors | `admin/analytics-dashboard.tsx` | Tailwind vs tokens | L | `[ ]` |
+| Fix 25+ hardcoded overview colors | `admin/overview-dashboard.tsx` | Tailwind vs tokens | M | `[ ]` |
+| Remove blue from codebase | Multiple admin files | Blue not in system | M | `[ ]` |
+| Fix status color mismatch | Multiple files | green-400 ≠ emerald | S | `[ ]` |
+| Add accessibility to SVG icons | MajorSpaceCard, EntryShell | Missing aria | S | `[ ]` |
+| Add role="status" to spinners | EntryShell:122 | No screen reader | S | `[ ]` |
+| Move inline colors to CSS vars | EntryShell:130 | `borderTopColor: GOLD.primary` | S | `[ ]` |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 10: MEDIUM & LOW PRIORITY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 10.1 Medium Priority
+
+### Admin Dashboard (8 issues)
+
+| Task | Severity | Effort | Status |
+|------|----------|--------|--------|
+| Add pagination to user list (loads ALL users) | HIGH | M | `[ ]` |
+| Add pagination to space list | HIGH | M | `[ ]` |
+| Add success/failure feedback per item in bulk operations | MEDIUM | M | `[ ]` |
+| Remove 3 duplicate components (BuilderQueue, FlagQueue, UserLookup) | LOW | S | `[ ]` |
+| Fix 12 active TODOs in admin components | MEDIUM | M | `[ ]` |
+| Add loading state to Space Management | MEDIUM | S | `[ ]` |
+| Add loading state to System Health | MEDIUM | S | `[ ]` |
+| Implement notification email on user suspension | MEDIUM | M | `[ ]` |
+
+### State Handling (5 issues)
+
+| Task | Surface | Effort | Status |
+|------|---------|--------|--------|
+| Add partial loading (section-by-section) | `/feed` | M | `[ ]` |
+| Add loading indicator during tab switching | `/explore` | S | `[ ]` |
+| Render loading state (defined but not shown) | `/spaces` | S | `[ ]` |
+| Fix feed update indicator (never refreshes) | `/feed` | M | `[ ]` |
+| Fix memory leak from rapid navigation | realtime hooks | M | `[ ]` |
+
+### Button States (70% missing)
+
+| Task | Affected | Effort | Status |
+|------|----------|--------|--------|
+| Add `disabled={isLoading}` to all submit buttons | Entry, Forms, RSVP | M | `[ ]` |
+| Add `cursor-not-allowed opacity-50` when disabled | All buttons | S | `[ ]` |
+| Add `active:scale-[0.98]` click feedback | Explore, Feed | S | `[ ]` |
+| Add focus rings for keyboard navigation | All interactive | M | `[ ]` |
+
+### Design System Violations (30+ issues)
+
+| Task | File | Issue | Effort | Status |
+|------|------|-------|--------|--------|
+| Replace 8 hardcoded pixel values | `mobile-optimizations.css` | `12px 16px`, etc. | S | `[ ]` |
+| Unify admin color system with PRD tokens | `admin/globals.css` | HSL vs hex | M | `[ ]` |
+| Replace `border-white/[0.08]` with token | 10+ files | Hardcoded opacity | M | `[ ]` |
+| Replace `bg-[#1a1a19]` with token | Entry sections | Hardcoded bg | S | `[ ]` |
+| Move school colors to tokens | SchoolSection.tsx | Inline styles | S | `[ ]` |
+| Standardize opacity tokens | Multiple | white/10 vs [0.06] | M | `[ ]` |
+
+### Mobile CSS Violations
+```css
+Line 36: padding: 12px 16px;      → var(--hive-space-3) var(--hive-space-4)
+Line 43: padding: 12px 16px;      → var(--hive-space-3) var(--hive-space-4)
+Line 44: border-radius: 8px;      → var(--hive-radius-md)
+Line 59: padding: 16px 20px;      → var(--hive-space-4) var(--hive-space-5)
+Line 60: min-height: 56px;        → var(--hive-size-touch-target)
+Line 65: padding: 16px;           → var(--hive-space-4)
+Line 67: border-radius: 16px;     → var(--hive-radius-lg)
+```
+
+### Admin Color Token Map
+```
+text-gray-400     → semantic.text.muted (#9B9B9F)
+text-red-400      → semantic.status.error (#FF3737)
+text-green-400    → semantic.status.success (#00D46A)
+text-blue-400     → REMOVE (no blue in system, use white)
+text-yellow-400   → semantic.status.warning (#FFD700)
+border-gray-700   → semantic.border.secondary (#1A1A1C)
+bg-gray-900/50    → semantic.background.secondary (#111113)
+```
+
+---
+
+## 10.2 Low Priority (Polish)
+
+### Incomplete Code (31 TODOs)
+
+Infrastructure TODOs that don't block shipping:
+```
+lib/platform-integration.ts:2      → Fix unknown→typed conversions
+lib/feed-config.ts:1               → Fix environment type mismatch
+lib/production-auth.ts:113         → Send to security monitoring
+lib/error-resilience-system.ts:2   → Fix details type
+lib/email.ts:2                     → Fix SendGrid type
+lib/profile-transformers.ts:21    → Move to @hive/core
+lib/security-middleware.ts:1       → Fix generic type constraint
+lib/cache/cache-service.ts:1       → Remove types from core
+lib/form-validation.ts:1           → Consider migration
+lib/error-reporting.ts:61          → Integrate error tracking
+lib/auth-utils.ts:148              → Implement token refresh
+```
+
+### Deprecated Code to Remove
+```
+apps/web/src/hooks/use-session.ts:37           → Old auth wrapper
+apps/web/src/app/spaces/create/page.tsx:6      → Old space creator
+apps/web/src/contexts/SpaceContext.tsx:4       → Old context
+apps/web/src/app/welcome/*                     → Redundant with /enter
+apps/web/src/components/lazy-page-loader.tsx   → 8 commented imports
+```
+
+### Console Statements to Extract (300+)
+```
+lib/firebase-admin.ts                  → 40+ debug logs
+infrastructure/firebase/scripts/*      → Setup scripts (acceptable)
+functions/src/auth/sendMagicLink.ts   → Email debug (REMOVE)
+```
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 11: SPRINT ROADMAP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## Sprint 0: Infrastructure Foundation ✅ COMPLETE
+
+**Outcome:** All critical blockers resolved. Real-time infrastructure solid.
+
+---
+
+## Sprint 0.4: Structural Cleanup 🚨 IMMEDIATE
+
+**Goal:** Clean codebase structure, remove security artifacts, establish maintainability baseline.
+**Depends on:** Nothing
+**Blocks:** Sprint 0.5 (clean repo before security audit)
+
+| # | Task | File/Dir | Impact | Effort | Status |
+|---|------|----------|--------|--------|--------|
+| S1 | Remove .env.production.local from git | `.env.production.local` | Security risk | S | `[x]` ✅ Already gitignored |
+| S2 | Delete packages/analytics/ | `packages/analytics/` | Clutter | S | `[x]` ✅ |
+| S3 | Delete packages/api-client/ | `packages/api-client/` | Clutter | S | `[x]` ✅ |
+| S4 | Delete packages/i18n/ | `packages/i18n/` | Clutter | S | `[x]` ✅ |
+| S5 | Delete packages/utilities/ | `packages/utilities/` | Clutter | S | `[x]` ✅ |
+| S6 | Fix admin tsconfig.json aliases | `apps/admin/tsconfig.json` | Build failures | S | `[x]` ✅ |
+| S7 | Delete debug artifacts | `apps/admin/lint-*.txt, typecheck-*.txt` | Clutter | S | `[x]` ✅ |
+| S8 | Audit admin components vs @hive/ui | `apps/admin/src/components/` | Duplication | M | `[ ]` |
+| S9 | Complete admin next.config.js | `apps/admin/next.config.js` | Config drift | M | `[ ]` |
+| S10 | Reorganize web/src/lib/ | `apps/web/src/lib/` | Maintainability | L | `[ ]` |
+| S11 | Extract HiveLab package | `packages/core/src/hivelab/` → `packages/hivelab/` | Architecture | L | `[ ]` |
+| S12 | Add package READMEs | `packages/*/README.md` | Onboarding | M | `[ ]` |
+
+**Exit Criteria:**
+- [x] No credentials in git history (verified - .env files gitignored)
+- [x] Zero orphaned packages (deleted analytics, api-client, i18n, utilities)
+- [x] Admin builds with full path aliases (tsconfig fixed)
+- [x] No debug artifacts committed (12 files deleted)
+
+---
+
+## Sprint 0.5: Critical Security 🚨 IMMEDIATE
+
+**Goal:** Fix 2 critical + 10 high security issues.
+**Depends on:** Sprint 0.4 (clean repo first)
+**Blocks:** Everything else
+
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 1 | Fix admin grant privilege escalation (C1) | S | `[x]` ✅ |
+| 2 | Fix profile connections privacy bypass (C2) | S | `[x]` ✅ |
+| 3 | Fix cross-campus suspend (H1) | M | `[x]` ✅ |
+| 4 | Wrap 8 unprotected admin routes | S | `[x]` ✅ Already protected |
+| 5 | Add `hasPermission()` enforcement | M | `[x]` ✅ withAdminPermission middleware |
+| 6 | Fix rate limiting gap on code sending | M | `[x]` ✅ magicLink→signinCode preset |
+| 7 | Fix deleted admin session retention | M | `[ ]` |
+| 8 | Implement Redis rate limiting | M | `[ ]` |
+| 9 | Move CSRF to persistent storage | M | `[ ]` |
+| 10 | Add campusId validation to profile fetch | S | `[x]` ✅ Cross-campus isolation |
+
+**Exit Criteria:**
+- [ ] Zero privilege escalation vectors
+- [ ] Zero privacy bypass vectors
+- [ ] All admin routes require authentication
+- [ ] Campus isolation has zero violations
+
+---
+
+## Sprint 0.6: Critical Stability 🚨 IMMEDIATE
+
+**Goal:** App recovers gracefully from any error.
+**Depends on:** Sprint 0.5
+**Blocks:** Sprint 0.7, Sprint 1
+
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 1 | Add root `error.tsx` (C6) | S | `[ ]` |
+| 2 | Add `error.tsx` to 5 main routes (C7-C11) | S | `[ ]` |
+| 3 | Add max limit to admin users (C3) | S | `[ ]` |
+| 4 | Add max limit to chat messages (C4) | S | `[ ]` |
+| 5 | Handle Firestore 500 doc limit (C5) | M | `[ ]` |
+| 6 | Replace browser `confirm()` dialogs (3) | M | `[ ]` |
+| 7 | Fix 12+ silent catch patterns | M | `[ ]` |
+| 8 | Add timeout to feed ranking | S | `[ ]` |
+
+**Exit Criteria:**
+- [ ] Every main route has error boundary
+- [ ] No unbounded API queries
+- [ ] No silent failures in user-facing code
+- [ ] All destructive actions use proper dialogs
+
+---
+
+## Sprint 0.7: Critical Features ✅ COMPLETE
+
+**Goal:** Complete blocking features that break user flows.
+**Depends on:** Sprint 0.6
+**Blocks:** Campus One
+
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 1 | Implement email delivery (C12) | M | `[x]` |
+| 2 | Implement Search API v2 (C13) | L | `[x]` |
+| 3 | Implement space deletion (C14) | M | `[x]` |
+| 4 | Implement admin tool approval (C15) | M | `[x]` |
+| 5 | Implement admin user search (C16) | M | `[x]` |
+| 6 | Implement Calendar OAuth sync (C17) | L | `[x]` |
+| 7 | Wire feed aggregation (C18) | M | `[~]` deferred post-launch |
+| 8 | Implement event editing (C21) | M | `[x]` |
+| 9 | Implement account deletion (C24) | M | `[x]` |
+
+**Exit Criteria:**
+- [x] Auth emails actually send (Resend/SendGrid)
+- [x] Search returns results (v2 re-exports v1)
+- [x] Admins can delete spaces (with permission check)
+- [x] Tool approval queue works (BuilderQueue wired up)
+- [x] Events can be edited after creation
+- [x] Users can delete their accounts (GDPR-compliant)
+- [x] Calendar syncs with Google (OAuth flow exists)
+
+---
+
+## Sprint 1: Entry Flow Polish
+
+**Goal:** First 30 seconds set expectations.
+**Depends on:** Sprint 0.7
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Activity pulse on Gate | `/` | S | `[SKIP]` |
+| 2 | Simplify identity fields | `/enter` | M | `[x]` |
+| 3 | Auto-detect school from email | `/enter` | M | `[SKIP]` |
+| 4 | Delete deprecated `/welcome` | `/welcome/*` | S | `[x]` |
+| 5 | Implement avatar picker (C20) | `/enter` | M | `[x]` |
+| 6 | Add network error recovery | `/enter` | M | `[x]` |
+| 7 | Add button disabled states | `/enter` | S | `[x]` |
+
+**Sprint 1 Complete (5/7 tasks, 2 skipped)**
+- Task 1 skipped: Gate activity pulse deferred to D1 design sprint
+- Task 3 skipped: Current flow has school before email, auto-detect impractical
+
+---
+
+## Sprint 2: Feed & Core Loop
+
+**Goal:** Make the feed feel alive.
+**Depends on:** Sprint 1
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Fix `isLive` flag | `/feed` | S | `[ ]` |
+| 2 | Empty state handling | `/feed` | M | `[ ]` |
+| 3 | "Since you left" logic | `/feed` | M | `[ ]` |
+| 4 | Partial loading | `/feed` | M | `[ ]` |
+| 5 | Skeleton loading | `/feed` | S | `[ ]` |
+| 6 | Fix N+1 members query | API | L | `[ ]` |
+
+---
+
+## Sprint 3: Spaces Polish
+
+**Goal:** Spaces feel like home.
+**Depends on:** Sprint 2
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Space health indicators | `/spaces` | M | `[ ]` |
+| 2 | "Who you know" display | `/spaces/browse` | M | `[ ]` |
+| 3 | Fix role management | `/s/[handle]` | L | `[ ]` |
+| 4 | Loading skeleton | `/spaces` | S | `[ ]` |
+| 5 | Add space join error message | hooks | S | `[ ]` |
+
+---
+
+## Sprint 4: Supporting Surfaces
+
+**Goal:** Complete the product loop.
+**Depends on:** Sprint 3
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Profile audit | `/profile/[id]` | M | `[ ]` |
+| 2 | Notification sending | `/notifications` | M | `[ ]` |
+| 3 | Tab switching loading | `/explore` | S | `[ ]` |
+| 4 | Persist search state | `/explore` | M | `[ ]` |
+
+---
+
+## Sprint 5: HiveLab
+
+**Goal:** Tools for power users.
+**Depends on:** Sprint 4
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Tool sandbox domain restrictions | `/lab` | M | `[ ]` |
+| 2 | Secure tool storage | `/lab` | L | `[ ]` |
+| 3 | Tool creation flow | `/lab` | L | `[ ]` |
+| 4 | Wire Tool AI generation (C22) | `/lab` | L | `[ ]` |
+| 5 | Implement tool sharing/export (C23) | `/lab` | L | `[ ]` |
+
+---
+
+## Sprint 6: Polish & Hardening
+
+**Goal:** Infrastructure-grade quality.
+**Depends on:** Sprint 5
+
+| # | Task | Surface | Effort | Status |
+|---|------|---------|--------|--------|
+| 1 | Fix 40+ admin color violations | Admin | L | `[ ]` |
+| 2 | Fix 30+ design system violations | UI | M | `[ ]` |
+| 3 | Add accessibility attributes | UI | M | `[ ]` |
+| 4 | Extract console.log to logger | Infra | M | `[ ]` |
+| 5 | Remove deprecated code | Multiple | S | `[ ]` |
+| 6 | Implement explore/discovery (C25) | `/feed` | L | `[ ]` |
+| 7 | Implement alumni onboarding (C26) | `/enter` | M | `[ ]` |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 12: SURFACE DETAILS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 12.1 Entry & First Contact
+
+### `/` — The Gate
+**Status:** ✅ FUNCTIONAL | **Sprint:** 1
+
+### `/enter` — Becoming a Member
+**Status:** ✅ FUNCTIONAL | **Sprint:** 1 ✅ COMPLETE
+
+**Sprint 1 Changes (2026-01-26):**
+- ✅ Added network error recovery with `ErrorWithRetry` component
+- ✅ Added offline detection with `OfflineBanner` component
+- ✅ Added button loading states across all sections
+- ✅ Removed ghost fields (residenceType, communityIdentities)
+- ✅ Added Gravatar fallback for avatars
+
+**Remaining:**
+- No timeout indication during code verification
+- Hardcoded school colors (inline styles)
+- `border-white/[0.08]` repeated instead of token
+
+### `/welcome` — DELETED
+**Status:** ✅ DELETED | **Sprint:** 1 ✅ COMPLETE
+
+Deleted 2026-01-26: All 4 routes removed, WelcomeShell, TerritoryMap, WelcomeMat components deleted.
+
+---
+
+## 12.2 Feed
+
+### `/feed` — Campus Heartbeat
+**Status:** 🚧 75% Complete | **Sprint:** 2
+
+**Audit Findings:**
+- No partial loading (all-or-nothing)
+- No retry mechanism
+- Feed ranking has no timeout (`route.ts:536`)
+- Ghost mode filtering can cause 10s+ delays
+- Container max-widths hardcoded
+
+---
+
+## 12.3 Spaces
+
+### `/spaces` — Hub
+**Status:** 🚧 65% Complete | **Sprint:** 3
+
+**Audit Findings:**
+- Loading state defined but never rendered
+- Missing `error.tsx` (CRITICAL)
+- Progress dot colors hardcoded
+- Space join fails silently (no error message)
+
+### `/s/[handle]` — Space View
+**Status:** 🚧 Core built | **Sprint:** 3
+
+**Audit Findings:**
+- Role management stubbed
+- Members endpoint has N+1 queries (18-21 per request)
+- 500 member limit not handled
+
+---
+
+## 12.4 Profile
+
+### `/profile/[id]` — Public Profile
+**Status:** ⚠️ SECURITY CONCERN | **Sprint:** 4
+
+**Critical Issues:**
+- Connections exposed despite privacy (C2)
+- Returns `Record<string, any>` (no type safety)
+- Social info exposed without filter
+
+---
+
+## 12.5 Admin
+
+### Admin Dashboard
+**Status:** ⚠️ 60% Production-Ready | **Sprint:** 0.5
+
+**Critical Issues:**
+- Admin grant privilege escalation (C1)
+- 8 routes unprotected
+- `hasPermission()` never called
+- Cross-campus suspend possible
+- 40+ hardcoded Tailwind colors
+
+---
+
+## 12.6 HiveLab
+
+### `/lab` — Dashboard
+**Status:** 🚧 60% Complete | **Sprint:** 5
+
+**Security Issues:**
+- Tool sandbox allows HTTP to any domain
+- Storage implementation stubbed
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 13: QUALITY BAR & SESSION LOG
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+## 13.1 Quality Bar
+
+Every surface ships when:
+
+- [ ] All states handled (empty, loading, error, success, partial)
+- [ ] All interactions have feedback (hover, active, disabled, loading)
+- [ ] No hardcoded values (colors, typography, spacing)
+- [ ] No dead ends (always a next action)
+- [ ] Error boundaries catch failures gracefully
+- [ ] No privilege escalation vectors
+- [ ] No privacy bypass vectors
+- [ ] No unbounded queries
+- [ ] Passes the dean test: infrastructure, not experiment
+
+**Reference:** `/about` is the quality bar. Match it.
+
+---
+
+## 13.2 Session Log
+
+| Date | Sprint | Work Done | Velocity |
+|------|--------|-----------|----------|
+| 2026-01-26 | 0 | Fixed useHiveQuery subscription leak, created realtime hooks | — |
+| 2026-01-26 | 0 | Created admin content-moderation, activity-logs endpoints | — |
+| 2026-01-26 | — | **PLATFORM AUDIT**: 6-dimension analysis, 30+ critical gaps | — |
+| 2026-01-26 | — | **DEEP AUDIT**: 27 security, 60+ error, 50+ design, 91 TODOs | — |
+| 2026-01-26 | — | **FEATURE AUDIT**: 7 systems, 80% complete, 8 critical gaps found | — |
+| 2026-01-26 | — | **TODO.md ENHANCED**: Added dashboard, matrix, dependencies, decisions | — |
+| 2026-01-26 | — | **DESIGN LAYER**: Added IA, Layout, Interaction, Motion, Empty State audits | — |
+| 2026-01-26 | — | **DESIGN SPRINTS**: D0-D5 parallel track, surface-by-surface design audit | — |
+| 2026-01-26 | — | **CLAUDE.md INTEGRATION**: Added TODO.md reference, session protocol | — |
+| 2026-01-26 | — | **STRUCTURAL AUDIT**: 5.3/10 health, .env exposed, 4 orphaned packages | — |
+| 2026-01-26 | — | **SPRINT 0.4 ADDED**: Structural cleanup sprint before security (12 tasks) | — |
+| 2026-01-26 | — | **TODO.md REORGANIZED**: Visual hierarchy, cleaner sections, better formatting | — |
+| 2026-01-26 | 0.4 | **SPRINT 0.4 QUICK WINS**: S1-S7 complete. Deleted 4 orphaned packages, fixed tsconfig, removed 12 debug artifacts | 7 tasks |
+| 2026-01-26 | 0.5 | **SPRINT 0.5 SECURITY**: C1 (admin privilege escalation) + C2 (privacy bypass) fixed. Bootstrap-only admin grant, privacy-aware connections | 2 tasks |
+| 2026-01-26 | 0.5 | **SPRINT 0.5 SECURITY**: H1 (cross-campus suspend) fixed + verified 8 admin routes already protected | 2 tasks |
+| 2026-01-26 | 0.5 | **SPRINT 0.5 SECURITY**: Task 5 (hasPermission) - added withAdminPermission middleware + applied to suspend/unsuspend/bulk routes | 1 task |
+| 2026-01-26 | 0.5 | **SPRINT 0.5 SECURITY**: Task 6 (rate limit) - fixed magicLink→signinCode preset (100/min→5/5min) | 1 task |
+| 2026-01-26 | 0.5 | **SPRINT 0.5 SECURITY**: Task 10 (campusId validation) - added cross-campus isolation to profile routes | 1 task |
+| 2026-01-26 | D0 | **D0 FOUNDATION COMPLETE**: Created LAYOUT.md + INTERACTION_STATES.md. MOTION.md + TEMPLATES.md already existed. Updated INDEX.md. D0 → 6/6 | 4 tasks |
+| 2026-01-26 | 1 | **SPRINT 1 COMPLETE**: Entry Flow Polish. Deleted /welcome (4 routes + components). Added ErrorWithRetry, OfflineBanner, useOnlineStatus. Button loading states. Gravatar fallback. Removed ghost fields from useEvolvingEntry. 5/7 tasks (2 skipped). | 5 tasks |
+| 2026-01-26 | D1 | **D1 ENTRY SPRINT**: Raised Entry design health 60%→85%. Created StepCounter, VerificationPending, RoleCard, morph-transition.ts. Updated all identity sections + EmailSection + CodeSection + RoleSection with premium animations. Gold focus rings on all inputs. | 6 tasks |
+| 2026-01-26 | D1 | **D1 COMPLETE**: Entry error recovery (EntryError taxonomy, timeout handling, code expiration, partial recovery). Feed redesign (FEED.md docs, feed-tokens.ts hierarchy, FeedEmptyState, DensityToggle, useFeedDensity). Entry 85%→95%, Feed 20%→70%. | 6 tasks |
+| 2026-01-26 | D-P1-6 | **PROFILE DESIGN SPRINT COMPLETE**: 3-zone layout (Identity, Activity, Presence). 7 new components: ProfileIdentityHero, ProfileActivityCard, ProfileLeadershipCard, ProfileEventCard, ProfileSpacePill, ProfileConnectionFooter, ProfileOverflowChip. Replaced bento grid with fixed layout. Profile design health 20%→90%. | 8 tasks |
+
+---
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PART 14: BRAINSTORM QUEUE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+> Open questions requiring EXPLORE mode before execution.
+
+## Feed Philosophy
+- Chronological vs. Algorithmic?
+- AI "while you were away" summaries?
+- Cross-space aggregation without noise?
+
+## Identity & Privacy
+- Progressive disclosure strategy?
+- Ghost mode boundaries?
+- Handle permanence rules?
+
+## Spaces as Living Things
+- Space energy indicators?
+- Space death detection?
+- Space evolution paths?
+
+## HiveLab Direction
+- Tool marketplace across campuses?
+- AI tool generation?
+- Security sandbox model?
+
+## Platform Questions
+- Multi-campus space spanning?
+- Alumni experience?
+- Faculty/staff accounts?
+
+---
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║   This document driven by /docs/SURFACE_AUDIT.md                              ║
+║   Update both when completing work.                                           ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```

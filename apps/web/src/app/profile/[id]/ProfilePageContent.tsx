@@ -1,45 +1,82 @@
 "use client";
 
 /**
- * ProfilePageContent - Apple-style Bento Grid Profile
+ * ProfilePageContent - 3-Zone Profile Layout
  *
- * Configurable widget grid with drag-drop reordering.
- * Dense, scannable, Linear-precision with HIVE's warm dark aesthetic.
+ * A profile answers: "Who is this person, and what do they DO on campus?"
  *
- * Widget Catalog:
- * - identity: Avatar, name, handle, bio, presence, actions
- * - heatmap: Contribution graph, streak badge
- * - spaces: Space list with leader badges
- * - tools: Tool grid with run counts
- * - connections: Avatar stack, mutual count
- * - interests: Interest pills with shared highlighting
- * - stats: Spaces/Tools/Activity/Streak counters
- * - featuredTool: Pinned tool showcase
+ * Zone 1: IDENTITY (Hero) — Who they are
+ * Zone 2: ACTIVITY (What they do) — Building, Leading, Organizing
+ * Zone 3: CAMPUS PRESENCE — Where they show up, relationship context
  *
- * @version 23.0.0 - Apple bento grid
+ * @version 24.0.0 - 3-Zone Profile Layout (Design Sprint)
  */
 
+import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import type { WidgetType } from '@hive/core';
+import { motion } from 'framer-motion';
 import {
+  ProfileIdentityHero,
+  ProfileActivityCard,
+  ProfileLeadershipCard,
+  ProfileEventCard,
+  ProfileSpacePill,
+  ProfileConnectionFooter,
+  ProfileOverflowChip,
   ProfileToolModal,
-  ProfileHero,
-  ProfileSpacesCard,
-  ProfileToolsCard,
-  ProfileConnectionsCard,
-  ProfileInterestsCard,
-  ProfileActivityHeatmap,
-  ProfileStatsWidget,
-  ProfileFeaturedToolCard,
+  type ProfileActivityTool,
+  type ProfileLeadershipSpace,
+  type ProfileEvent,
+  type ProfileSpacePillSpace,
 } from '@hive/ui';
 import { useProfilePageState } from './hooks';
-import { useFollow } from '@/hooks/use-follow';
 import {
-  BentoProfileGrid,
   ProfileLoadingState,
   ProfileErrorState,
   ProfileNotFoundState,
 } from './components';
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const MAX_TOOLS_VISIBLE = 3;
+const MAX_LEADERSHIP_VISIBLE = 3;
+const MAX_EVENTS_VISIBLE = 2;
+const MAX_SPACES_VISIBLE = 6;
+
+const EASE_PREMIUM: [number, number, number, number] = [0.22, 1, 0.36, 1];
+
+// ============================================================================
+// Animation Variants
+// ============================================================================
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const zoneVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: EASE_PREMIUM,
+    },
+  },
+};
+
+// ============================================================================
+// Component
+// ============================================================================
 
 export default function ProfilePageContent() {
   const router = useRouter();
@@ -53,19 +90,15 @@ export default function ProfilePageContent() {
     profileData,
     heroUser,
     heroPresence,
-    heroBadges,
     profileSpaces,
     profileTools,
     profileConnections,
     totalConnections,
-    interests,
-    sharedInterests,
-    activityContributions,
-    totalActivityCount,
-    currentStreak,
+    spacesLed,
     selectedTool,
+    organizingEvents,
+    sharedSpacesCount,
     handleEditProfile,
-    handleViewConnections,
     handleToolModalClose,
     handleToolUpdateVisibility,
     handleToolRemove,
@@ -75,129 +108,292 @@ export default function ProfilePageContent() {
     handleMessage,
   } = state;
 
-  // Follow state for non-own profiles
-  const {
-    isFollowing,
-    isMutual,
-    isActionPending,
-    toggleFollow,
-  } = useFollow(profileId);
+  // ============================================================================
+  // Loading/Error States
+  // ============================================================================
 
   if (isLoading) return <ProfileLoadingState />;
   if (error) return <ProfileErrorState error={error} onNavigate={() => router.push('/spaces')} />;
   if (!profileData || !heroUser) return <ProfileNotFoundState onNavigate={() => router.push('/feed')} />;
 
-  // Get featured tool (first tool with highest runs)
-  const featuredTool = profileTools.length > 0
-    ? [...profileTools].sort((a, b) => (b.runs || 0) - (a.runs || 0))[0]
-    : null;
+  // ============================================================================
+  // Data Transformations
+  // ============================================================================
 
-  // Widget renderer - maps widget type to component
-  const renderWidget = (type: WidgetType, isEditMode: boolean) => {
-    switch (type) {
-      case 'identity':
-        return (
-          <ProfileHero
-            user={heroUser}
-            presence={heroPresence}
-            badges={heroBadges}
-            isOwnProfile={isOwnProfile}
-            onEdit={handleEditProfile}
-            onConnect={isOwnProfile ? undefined : handleConnect}
-            onMessage={isOwnProfile ? undefined : handleMessage}
-          />
-        );
+  // Transform tools for ProfileActivityCard
+  const activityTools: ProfileActivityTool[] = React.useMemo(() => {
+    return profileTools
+      .sort((a, b) => (b.runs || 0) - (a.runs || 0))
+      .map((tool) => ({
+        id: tool.id,
+        name: tool.name,
+        emoji: tool.emoji,
+        runs: tool.runs || 0,
+        spaceName: (tool as unknown as { spaceName?: string }).spaceName,
+      }));
+  }, [profileTools]);
 
-      case 'spaces':
-        return (
-          <ProfileSpacesCard
-            spaces={profileSpaces}
-            maxVisible={4}
-            onSpaceClick={handleSpaceClick}
-            onViewAll={() => router.push('/spaces')}
-          />
-        );
+  // Transform spaces led for ProfileLeadershipCard
+  const leadershipSpaces: ProfileLeadershipSpace[] = React.useMemo(() => {
+    return spacesLed.map((space) => {
+      const spaceWithTenure = space as unknown as { tenure?: number; tenureLabel?: string };
+      return {
+        id: space.id,
+        name: space.name,
+        emoji: undefined,
+        memberCount: space.memberCount || 0,
+        tenure: spaceWithTenure.tenureLabel,
+        role: (space.role === 'Lead' ? 'admin' : space.role) as 'owner' | 'admin',
+      };
+    });
+  }, [spacesLed]);
 
-      case 'tools':
-        return (
-          <ProfileToolsCard
-            tools={profileTools.map(t => ({
-              ...t,
-              deployedSpaces: t.deployedSpaces || 0,
-            }))}
-            onToolClick={handleToolClick}
-            onViewAll={() => router.push(`/tools?userId=${heroUser.id}`)}
-          />
-        );
+  // Transform all spaces for ProfileSpacePill
+  const spacePills: ProfileSpacePillSpace[] = React.useMemo(() => {
+    return profileSpaces.map((space) => ({
+      id: space.id,
+      name: space.name,
+      emoji: space.emoji,
+      isLeader: space.isLeader,
+    }));
+  }, [profileSpaces]);
 
-      case 'connections':
-        return (
-          <ProfileConnectionsCard
-            totalConnections={totalConnections}
-            mutualConnections={profileConnections}
-            onViewAll={handleViewConnections}
-          />
-        );
+  // Events they're organizing (from API)
+  const profileOrganizingEvents: ProfileEvent[] = React.useMemo(() => {
+    return organizingEvents.map((event) => ({
+      id: event.id,
+      name: event.title,
+      date: event.dateDisplay,
+      emoji: event.emoji,
+      rsvpCount: event.attendeeCount,
+      spaceName: event.spaceName || undefined,
+    }));
+  }, [organizingEvents]);
 
-      case 'interests':
-        return (
-          <ProfileInterestsCard
-            interests={interests}
-            sharedInterests={sharedInterests}
-          />
-        );
+  // Shared spaces count from hook (computed via API)
 
-      case 'heatmap':
-        return (
-          <ProfileActivityHeatmap
-            contributions={activityContributions}
-            totalContributions={totalActivityCount}
-            streak={currentStreak}
-          />
-        );
+  // Calculate mutual connections
+  const mutualConnectionsCount = profileConnections.length;
 
-      case 'stats':
-        return (
-          <ProfileStatsWidget
-            spacesCount={profileSpaces.length}
-            toolsCount={profileTools.length}
-            activityCount={totalActivityCount}
-            streakDays={currentStreak}
-          />
-        );
+  // ============================================================================
+  // Computed Display Logic
+  // ============================================================================
 
-      case 'featuredTool':
-        return (
-          <ProfileFeaturedToolCard
-            tool={featuredTool ? {
-              id: featuredTool.id,
-              name: featuredTool.name,
-              emoji: featuredTool.emoji,
-              description: featuredTool.description,
-              runs: featuredTool.runs || 0,
-              deployedSpaces: typeof featuredTool.deployedSpaces === 'number'
-                ? featuredTool.deployedSpaces
-                : 0,
-            } : null}
-            isOwnProfile={isOwnProfile}
-            onToolClick={handleToolClick}
-            onSelectTool={() => router.push(`/tools?userId=${heroUser.id}`)}
-          />
-        );
+  const visibleTools = activityTools.slice(0, MAX_TOOLS_VISIBLE);
+  const overflowToolsCount = activityTools.length - MAX_TOOLS_VISIBLE;
 
-      default:
-        return null;
-    }
-  };
+  const visibleLeadership = leadershipSpaces.slice(0, MAX_LEADERSHIP_VISIBLE);
+  const visibleEvents = profileOrganizingEvents.slice(0, MAX_EVENTS_VISIBLE);
+
+  const visibleSpaces = spacePills.slice(0, MAX_SPACES_VISIBLE);
+  const overflowSpacesCount = spacePills.length - MAX_SPACES_VISIBLE;
+
+  const hasActivity = activityTools.length > 0 || leadershipSpaces.length > 0 || profileOrganizingEvents.length > 0;
+  const hasSpaces = spacePills.length > 0;
+
+  // Check if profile is incomplete (for own profile prompts)
+  const profileIncomplete = isOwnProfile && !heroUser.bio;
+
+  // ============================================================================
+  // Render
+  // ============================================================================
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-[#0A0A09]">
-      <div className="py-8 md:py-12">
-        <BentoProfileGrid
-          isOwnProfile={isOwnProfile}
-          renderWidget={renderWidget}
-        />
-      </div>
+    <div className="min-h-full w-full overflow-y-auto" style={{ backgroundColor: 'var(--bg-base)' }}>
+      <motion.div
+        className="max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-12"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* ================================================================
+            ZONE 1: IDENTITY (Hero — Who They Are)
+            ================================================================ */}
+        <motion.section variants={zoneVariants}>
+          <ProfileIdentityHero
+            user={heroUser}
+            isOwnProfile={isOwnProfile}
+            isOnline={heroPresence.isOnline}
+            profileIncomplete={profileIncomplete}
+            onEdit={handleEditProfile}
+            onConnect={handleConnect}
+            onMessage={handleMessage}
+          />
+        </motion.section>
+
+        {/* ================================================================
+            ZONE 2: ACTIVITY (What They Do — Building, Leading, Organizing)
+            ================================================================ */}
+        <motion.section variants={zoneVariants} className="mt-6">
+          <div
+            className="p-6 sm:p-8"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: '24px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+            }}
+          >
+            {hasActivity ? (
+              <div className="space-y-6">
+                {/* Building Section */}
+                {visibleTools.length > 0 && (
+                  <div>
+                    <h3
+                      className="text-xs font-semibold uppercase tracking-wider mb-4"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      Building
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {visibleTools.map((tool) => (
+                        <ProfileActivityCard
+                          key={tool.id}
+                          tool={tool}
+                          onClick={() => handleToolClick(tool.id)}
+                        />
+                      ))}
+                      {overflowToolsCount > 0 && (
+                        <ProfileOverflowChip
+                          count={overflowToolsCount}
+                          label="more"
+                          onClick={() => router.push(`/tools?userId=${heroUser.id}`)}
+                          className="h-full min-h-[100px] flex items-center justify-center"
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Leading Section */}
+                {visibleLeadership.length > 0 && (
+                  <div>
+                    <h3
+                      className="text-xs font-semibold uppercase tracking-wider mb-4"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      Leading
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {visibleLeadership.map((space) => (
+                        <ProfileLeadershipCard
+                          key={space.id}
+                          space={space}
+                          onClick={() => handleSpaceClick(space.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Organizing Section */}
+                {visibleEvents.length > 0 && (
+                  <div>
+                    <h3
+                      className="text-xs font-semibold uppercase tracking-wider mb-4"
+                      style={{ color: 'var(--text-tertiary)' }}
+                    >
+                      Organizing
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {visibleEvents.map((event) => (
+                        <ProfileEventCard
+                          key={event.id}
+                          event={event}
+                          onClick={() => router.push(`/events/${event.id}`)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Empty state for activity
+              <div
+                className="py-8 text-center"
+                style={{
+                  border: '1px dashed var(--border-default)',
+                  borderRadius: '16px',
+                }}
+              >
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  Just getting started...
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* ================================================================
+            ZONE 3: CAMPUS PRESENCE (Where They Show Up)
+            ================================================================ */}
+        <motion.section variants={zoneVariants} className="mt-6">
+          <div
+            className="p-6 sm:p-8"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              borderRadius: '24px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+            }}
+          >
+            {/* Spaces Section */}
+            {hasSpaces && (
+              <div className="mb-6">
+                <h3
+                  className="text-xs font-semibold uppercase tracking-wider mb-4"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  Spaces
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {visibleSpaces.map((space) => (
+                    <ProfileSpacePill
+                      key={space.id}
+                      space={space}
+                      onClick={() => handleSpaceClick(space.id)}
+                    />
+                  ))}
+                  {overflowSpacesCount > 0 && (
+                    <ProfileOverflowChip
+                      count={overflowSpacesCount}
+                      onClick={() => router.push('/spaces')}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Connection Footer - Hidden for own profile */}
+            {!isOwnProfile && (
+              <ProfileConnectionFooter
+                userName={heroUser.fullName}
+                sharedSpacesCount={sharedSpacesCount}
+                mutualConnectionsCount={mutualConnectionsCount}
+              />
+            )}
+
+            {/* Empty state for no spaces */}
+            {!hasSpaces && (
+              <div
+                className="py-6 text-center"
+                style={{
+                  border: '1px dashed var(--border-default)',
+                  borderRadius: '16px',
+                }}
+              >
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  No spaces yet
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.section>
+      </motion.div>
 
       {/* Tool Modal */}
       <ProfileToolModal

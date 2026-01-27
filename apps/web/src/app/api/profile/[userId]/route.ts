@@ -52,9 +52,25 @@ export const GET = withOptionalAuth(
       // Check if viewer is the profile owner (always full access)
       const isOwnProfile = viewerId === targetUserId;
 
+      // SECURITY: Cross-campus isolation
+      // Non-public profiles from different campuses are not accessible
+      const targetCampusId = profile.campusId.id;
+      const isCrossCampus = viewerCampusId && targetCampusId !== viewerCampusId;
+
+      if (isCrossCampus && !isOwnProfile && privacy.level !== PrivacyLevel.PUBLIC) {
+        logger.warn('Cross-campus profile access blocked', {
+          targetUserId,
+          targetCampusId,
+          viewerCampusId,
+          viewerId,
+          privacyLevel: privacy.level
+        });
+        return respond.error('Profile not found', 'RESOURCE_NOT_FOUND', { status: 404 });
+      }
+
       if (!isOwnProfile && viewerId) {
         // Determine viewer type based on relationship
-        if (viewerCampusId && profile.campusId.id === viewerCampusId) {
+        if (viewerCampusId && targetCampusId === viewerCampusId) {
           viewerType = 'campus';
 
           // Check if they're connected

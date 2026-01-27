@@ -29,6 +29,7 @@ import {
   ArrivalTransition,
   ArrivalZone,
 } from '@hive/ui/design-system/primitives';
+import { ConfirmDialog } from '@hive/ui';
 import { useAuth } from '@hive/auth-logic';
 import { useSpaceResidenceState } from './hooks';
 import {
@@ -47,6 +48,8 @@ import {
   type Board,
   type FeedItem,
 } from '@/components/spaces';
+import { CreateEventModal, type CreateEventData } from '@/components/events/create-event-modal';
+import { toast } from '@hive/ui';
 
 export default function SpacePageUnified() {
   const params = useParams();
@@ -58,7 +61,13 @@ export default function SpacePageUnified() {
   const [showMembersPanel, setShowMembersPanel] = React.useState(false);
   const [showSettingsModal, setShowSettingsModal] = React.useState(false);
   const [showInfoDrawer, setShowInfoDrawer] = React.useState(false);
+  const [showEventModal, setShowEventModal] = React.useState(false);
   const [isFirstEntry, setIsFirstEntry] = React.useState(true);
+  const [showDeleteSpaceConfirm, setShowDeleteSpaceConfirm] = React.useState(false);
+  const [showDeleteBoardConfirm, setShowDeleteBoardConfirm] = React.useState<string | null>(null);
+  const [isCreatingBoard, setIsCreatingBoard] = React.useState(false);
+  const [isDeletingSpace, setIsDeletingSpace] = React.useState(false);
+  const [isDeletingBoard, setIsDeletingBoard] = React.useState(false);
 
   // Detect first entry to this space for ArrivalTransition
   React.useEffect(() => {
@@ -90,6 +99,8 @@ export default function SpacePageUnified() {
     // Tools (HiveLab Sprint 1)
     sidebarTools,
     isLoadingTools,
+    // Refresh
+    refreshSpace,
   } = useSpaceResidenceState(handle);
 
   // Transform boards for sidebar
@@ -162,6 +173,11 @@ export default function SpacePageUnified() {
     setIsJoining(true);
     try {
       await joinSpace();
+      toast.success('Welcome to the space!');
+    } catch (error) {
+      console.error('Join failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to join space');
+      // Don't re-throw - error is handled via toast
     } finally {
       setIsJoining(false);
     }
@@ -175,25 +191,38 @@ export default function SpacePageUnified() {
   const handleBoardCreate = async (name: string, description?: string) => {
     if (!space?.id) return;
 
-    // Create board via API
-    const response = await fetch(`/api/spaces/${space.id}/boards`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, description }),
-    });
+    setIsCreatingBoard(true);
+    try {
+      // Create board via API
+      const response = await fetch(`/api/spaces/${space.id}/boards`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description }),
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to create board');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || 'Failed to create board');
+      }
+
+      const newBoard = await response.json();
+
+      // Close modal
+      setShowBoardModal(false);
+
+      // Refresh space data to update boards list
+      await refreshSpace();
+
+      // Switch to the new board
+      setActiveBoard(newBoard.id);
+
+      toast.success('Board created');
+    } catch (error) {
+      console.error('Failed to create board:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create board');
+    } finally {
+      setIsCreatingBoard(false);
     }
-
-    const newBoard = await response.json();
-
-    // Refresh boards list (in a real app, this would be handled by the hook)
-    // For now, just close the modal - the hook will refetch on next load
-    setShowBoardModal(false);
-
-    // Switch to the new board
-    setActiveBoard(newBoard.id);
   };
 
   // Handle board reorder
@@ -207,6 +236,41 @@ export default function SpacePageUnified() {
       });
     } catch (error) {
       console.error('Failed to reorder boards:', error);
+    }
+  };
+
+  // Handle event creation from space
+  const handleCreateEvent = async (eventData: CreateEventData) => {
+    if (!space?.id) return;
+
+    try {
+      const response = await fetch(`/api/spaces/${space.id}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: eventData.title,
+          description: eventData.description,
+          type: eventData.type,
+          startDate: eventData.datetime.start,
+          endDate: eventData.datetime.end,
+          location: eventData.location.name,
+          virtualLink: eventData.location.virtualLink,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create event');
+      }
+
+      const result = await response.json();
+      setShowEventModal(false);
+      toast.success('Event created successfully');
+
+      // The event will appear in the feed after next data refresh
+    } catch (error) {
+      console.error('Event creation failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create event');
     }
   };
 
@@ -298,6 +362,8 @@ export default function SpacePageUnified() {
                 memberCount: space.memberCount,
                 isVerified: space.isVerified,
                 socialLinks: space.socialLinks,
+                // Energy signals: count of recent messages (proxy for activity)
+                recentMessageCount: messages.length,
               }}
               isLeader={space.isLeader}
               isMember={space.isMember}
@@ -312,6 +378,7 @@ export default function SpacePageUnified() {
                 });
                 router.push(`/lab?${params.toString()}`);
               }}
+              onCreateEventClick={() => setShowEventModal(true)}
             />
           </ArrivalZone>
 
@@ -391,22 +458,20 @@ export default function SpacePageUnified() {
                 isLoadingTools={isLoadingTools}
                 isLeader={space.isLeader}
                 onToolRun={(tool) => {
-                  // Open tool in modal (TODO: implement tool modal)
-                  // For now, navigate to the tool page
-                  const params = new URLSearchParams({
-                    placementId: tool.placementId,
-                    spaceId: space?.id || '',
-                  });
-                  router.push(`/lab/${tool.toolId}?${params.toString()}`);
+                  // Navigate to space tool page with full context injection
+                  const params = new URLSearchParams();
+                  if (tool.deploymentId) {
+                    params.set('deploymentId', tool.deploymentId);
+                  }
+                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
                 }}
                 onToolViewFull={(tool) => {
-                  // Navigate to full app view
-                  const params = new URLSearchParams({
-                    deploymentId: tool.deploymentId,
-                    spaceId: space?.id || '',
-                    mode: 'app',
-                  });
-                  router.push(`/lab/${tool.toolId}?${params.toString()}`);
+                  // Navigate to full app view within space context
+                  const params = new URLSearchParams();
+                  if (tool.deploymentId) {
+                    params.set('deploymentId', tool.deploymentId);
+                  }
+                  router.push(`/s/${handle}/tools/${tool.toolId}?${params.toString()}`);
                 }}
                 onAddTool={() => {
                   // Navigate to Lab with space context
@@ -432,6 +497,15 @@ export default function SpacePageUnified() {
             />
           )}
         </AnimatePresence>
+
+        {/* Event Creation Modal */}
+        <CreateEventModal
+          isOpen={showEventModal}
+          onClose={() => setShowEventModal(false)}
+          onCreateEvent={handleCreateEvent}
+          spaceId={space.id}
+          spaceName={space.name}
+        />
 
         {/* Members Slide-Over Panel */}
         <AnimatePresence>
@@ -568,6 +642,8 @@ export default function SpacePageUnified() {
                       isLocked: false,
                     }))}
                     isLeader={space.isLeader}
+                    currentUserId={user?.id}
+                    currentUserRole={space.isLeader ? 'admin' : 'member'}
                     onUpdate={space.isLeader ? async (updates) => {
                       try {
                         const response = await fetch(`/api/spaces/${space.id}`, {
@@ -577,37 +653,21 @@ export default function SpacePageUnified() {
                         });
                         if (!response.ok) throw new Error('Failed to update space');
                         setShowSettingsModal(false);
-                        // Trigger a refresh of space data
-                        window.location.reload();
+                        // Refresh space data
+                        await refreshSpace();
+                        toast.success('Space updated');
                       } catch (error) {
                         console.error('Failed to update space:', error);
+                        toast.error('Failed to update space');
                       }
                     } : undefined}
                     onDelete={space.isLeader ? async () => {
-                      const confirmed = window.confirm(
-                        'Are you sure you want to delete this space? This cannot be undone.'
-                      );
-                      if (!confirmed) return;
-                      try {
-                        const response = await fetch(`/api/spaces/${space.id}`, {
-                          method: 'DELETE',
-                        });
-                        if (!response.ok) throw new Error('Failed to delete space');
-                        router.push('/spaces');
-                      } catch (error) {
-                        console.error('Failed to delete space:', error);
-                      }
+                      // Open confirmation dialog instead of window.confirm
+                      setShowDeleteSpaceConfirm(true);
                     } : undefined}
                     onBoardDelete={space.isLeader ? async (boardId) => {
-                      const response = await fetch(`/api/spaces/${space.id}/boards/${boardId}`, {
-                        method: 'DELETE',
-                      });
-                      if (!response.ok) {
-                        const data = await response.json();
-                        throw new Error(data.error?.message || 'Failed to delete board');
-                      }
-                      // Trigger refresh to update boards list
-                      window.location.reload();
+                      // Open confirmation dialog for board deletion
+                      setShowDeleteBoardConfirm(boardId);
                     } : undefined}
                     onLeave={async () => {
                       try {
@@ -624,6 +684,70 @@ export default function SpacePageUnified() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Delete Space Confirmation */}
+        <ConfirmDialog
+          open={showDeleteSpaceConfirm}
+          onOpenChange={setShowDeleteSpaceConfirm}
+          title="Delete Space"
+          description="This cannot be undone. All messages, boards, and tools will be permanently deleted."
+          variant="danger"
+          confirmText="Delete"
+          cancelText="Cancel"
+          loading={isDeletingSpace}
+          onConfirm={async () => {
+            setIsDeletingSpace(true);
+            try {
+              const response = await fetch(`/api/spaces/${space.id}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) throw new Error('Failed to delete space');
+              setShowDeleteSpaceConfirm(false);
+              setShowSettingsModal(false);
+              toast.success('Space deleted');
+              router.push('/spaces');
+            } catch (error) {
+              console.error('Failed to delete space:', error);
+              toast.error('Failed to delete space');
+            } finally {
+              setIsDeletingSpace(false);
+            }
+          }}
+        />
+
+        {/* Delete Board Confirmation */}
+        <ConfirmDialog
+          open={!!showDeleteBoardConfirm}
+          onOpenChange={(open) => !open && setShowDeleteBoardConfirm(null)}
+          title="Delete Board"
+          description="All messages in this board will be permanently deleted. This cannot be undone."
+          variant="danger"
+          confirmText="Delete"
+          cancelText="Cancel"
+          loading={isDeletingBoard}
+          onConfirm={async () => {
+            if (!showDeleteBoardConfirm) return;
+            setIsDeletingBoard(true);
+            try {
+              const response = await fetch(`/api/spaces/${space.id}/boards/${showDeleteBoardConfirm}`, {
+                method: 'DELETE',
+              });
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error?.message || 'Failed to delete board');
+              }
+              setShowDeleteBoardConfirm(null);
+              // Refresh space data to update boards list
+              await refreshSpace();
+              toast.success('Board deleted');
+            } catch (error) {
+              console.error('Failed to delete board:', error);
+              toast.error(error instanceof Error ? error.message : 'Failed to delete board');
+            } finally {
+              setIsDeletingBoard(false);
+            }
+          }}
+        />
       </motion.div>
     </AnimatePresence>
   );
@@ -639,10 +763,22 @@ function SpacePageSkeleton() {
         animate={{ opacity: 1 }}
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
       >
-        <div className="h-10 w-10 rounded-lg bg-white/[0.06] animate-pulse" />
+        <motion.div
+          className="h-10 w-10 rounded-lg bg-white/[0.06]"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
+        />
         <div className="space-y-2">
-          <div className="h-4 w-32 rounded bg-white/[0.06] animate-pulse" />
-          <div className="h-3 w-24 rounded bg-white/[0.06] animate-pulse" />
+          <motion.div
+            className="h-4 w-32 rounded bg-white/[0.06]"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
+          />
+          <motion.div
+            className="h-3 w-24 rounded bg-white/[0.06]"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+          />
         </div>
       </motion.div>
 
@@ -656,10 +792,16 @@ function SpacePageSkeleton() {
         {/* Feed skeleton (left, 60%) */}
         <div className="flex-1 space-y-4">
           {[1, 2, 3, 4].map((i) => (
-            <div
+            <motion.div
               key={i}
-              className="h-20 rounded-xl bg-white/[0.04] animate-pulse"
-              style={{ animationDelay: `${i * 100}ms` }}
+              className="h-20 rounded-xl bg-white/[0.04]"
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: i * 0.1,
+                ease: MOTION.ease.smooth,
+              }}
             />
           ))}
         </div>
@@ -667,7 +809,17 @@ function SpacePageSkeleton() {
         {/* Sidebar skeleton (right, 40%) */}
         <div className="w-56 space-y-2 border-l border-white/[0.06] pl-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-8 rounded-lg bg-white/[0.04] animate-pulse" />
+            <motion.div
+              key={i}
+              className="h-8 rounded-lg bg-white/[0.04]"
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: 0.3 + i * 0.1,
+                ease: MOTION.ease.smooth,
+              }}
+            />
           ))}
         </div>
       </motion.div>

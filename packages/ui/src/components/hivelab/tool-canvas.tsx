@@ -9,8 +9,19 @@ const BoxSelect = ViewfinderCircleIcon;
 import { renderElementSafe } from './element-renderers';
 import { cn } from '../../lib/utils';
 import type { ElementProps, ElementSharedState, ElementUserState } from '../../lib/hivelab/element-system';
-import type { ResolvedToolTheme, ToolThemePalette, ToolError } from '@hive/core';
-import { isToolError, isRecoverableError } from '@hive/core';
+import type {
+  ResolvedToolTheme,
+  ToolError,
+  ToolRuntimeContext,
+  VisibilityCondition,
+  ConditionGroup,
+} from '@hive/core';
+import {
+  isToolError,
+  isRecoverableError,
+  evaluateCondition,
+  evaluateConditionGroup,
+} from '@hive/core';
 
 // ============================================================================
 // DESIGN TOKENS
@@ -51,6 +62,8 @@ export interface ToolElement {
   config: Record<string, unknown>;
   position?: { x: number; y: number };
   size?: { width: number; height: number };
+  /** Visibility conditions for conditional rendering */
+  visibilityConditions?: VisibilityCondition[] | ConditionGroup;
 }
 
 export interface ToolCanvasContext {
@@ -62,6 +75,10 @@ export interface ToolCanvasContext {
   userId?: string;
   /** Whether user is a space leader */
   isSpaceLeader?: boolean;
+  /** Campus ID for campus-scoped data (replaces hardcoded value) */
+  campusId?: string;
+  /** Full runtime context for visibility evaluation and interpolation */
+  runtimeContext?: ToolRuntimeContext;
 }
 
 export interface ToolCanvasProps {
@@ -278,6 +295,30 @@ function ElementWrapper({
   sharedState?: ElementSharedState;
   userState?: ElementUserState;
 }) {
+  // Evaluate visibility conditions if present
+  const isVisible = React.useMemo(() => {
+    const conditions = element.visibilityConditions;
+    if (!conditions) return true;
+
+    // Need runtime context to evaluate conditions
+    const runtimeContext = context?.runtimeContext;
+    if (!runtimeContext) return true; // Show by default if no context
+
+    // Handle both array of conditions (implicit AND) and ConditionGroup
+    if (Array.isArray(conditions)) {
+      // Array of conditions - all must be true (AND logic)
+      return conditions.every((condition) => evaluateCondition(condition, runtimeContext));
+    }
+
+    // ConditionGroup with explicit logic
+    return evaluateConditionGroup(conditions, runtimeContext);
+  }, [element.visibilityConditions, context?.runtimeContext]);
+
+  // Don't render hidden elements
+  if (!isVisible) {
+    return null;
+  }
+
   const elementState = state[element.instanceId];
 
   const handleChange = React.useCallback(
@@ -295,11 +336,18 @@ function ElementWrapper({
   );
 
   // Convert ToolCanvasContext to ElementProps context format
+  // Include full context objects from runtimeContext if available
+  const runtimeCtx = context?.runtimeContext;
   const elementContext = context ? {
     userId: context.userId,
     spaceId: context.spaceId,
     isSpaceLeader: context.isSpaceLeader,
-    campusId: 'ub-buffalo', // Current campus - will be configurable
+    campusId: context.campusId || runtimeCtx?.campusId,
+    // Sprint 2: Full context objects for advanced element personalization
+    temporal: runtimeCtx?.temporal,
+    space: runtimeCtx?.space,
+    member: runtimeCtx?.member,
+    capabilities: runtimeCtx?.capabilities,
   } : undefined;
 
   const props: ElementProps = {
@@ -312,6 +360,8 @@ function ElementWrapper({
     // Phase 1: SharedState Architecture
     sharedState,
     userState,
+    // Sprint 2: Visibility conditions (pass through for element self-awareness)
+    visibilityConditions: element.visibilityConditions,
   };
 
   return renderElementSafe(element.elementId, props);

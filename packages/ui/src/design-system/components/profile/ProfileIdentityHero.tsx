@@ -1,0 +1,272 @@
+'use client';
+
+/**
+ * ProfileIdentityHero - Zone 1: The hero identity card
+ *
+ * Design Philosophy:
+ * - Identity as PRIMARY — who they are at a glance
+ * - 80px avatar, rounded-lg (8px), NEVER circle
+ * - Name, handle, credentials (major · year · school)
+ * - Bio (2-3 lines max)
+ * - Connect + Message buttons (or Edit Profile for own profile)
+ *
+ * @version 1.0.0 - 3-Zone Profile Layout
+ */
+
+import * as React from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '../../../lib/utils';
+
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface ProfileIdentityHeroUser {
+  id: string;
+  fullName: string;
+  handle: string;
+  avatarUrl?: string;
+  bio?: string;
+  classYear?: string;
+  major?: string;
+  campusName?: string;
+}
+
+export interface ProfileIdentityHeroProps {
+  user: ProfileIdentityHeroUser;
+  isOwnProfile: boolean;
+  isOnline?: boolean;
+  profileIncomplete?: boolean;
+  onEdit?: () => void;
+  onConnect?: () => void;
+  onMessage?: () => void;
+  className?: string;
+}
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+function getInitials(name: string): string {
+  const parts = name.split(' ').filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export function ProfileIdentityHero({
+  user,
+  isOwnProfile,
+  isOnline = false,
+  profileIncomplete = false,
+  onEdit,
+  onConnect,
+  onMessage,
+  className,
+}: ProfileIdentityHeroProps) {
+  const initials = getInitials(user.fullName);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+
+  // Build credentials string
+  const credentials: string[] = [];
+  if (user.major) credentials.push(user.major);
+  if (user.classYear) credentials.push(`'${user.classYear.slice(-2)}`);
+  if (user.campusName) credentials.push(user.campusName);
+  const credentialsText = credentials.join(' · ');
+
+  return (
+    <motion.div
+      className={cn('relative w-full', className)}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {/* Card Container */}
+      <div
+        className="relative overflow-hidden p-8"
+        style={{
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: '24px',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
+        }}
+      >
+        {/* Subtle glass overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 40%)',
+            borderRadius: '24px',
+          }}
+        />
+
+        <div className="relative flex flex-col sm:flex-row gap-6 sm:gap-8">
+          {/* Avatar - 80px, rounded-lg (8px), NEVER circle */}
+          <div className="relative flex-shrink-0">
+            <div
+              className="w-20 h-20 overflow-hidden flex items-center justify-center"
+              style={{
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-elevated)',
+              }}
+            >
+              {user.avatarUrl ? (
+                <motion.img
+                  src={user.avatarUrl}
+                  alt={user.fullName}
+                  className="w-full h-full object-cover"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: imageLoaded ? 1 : 0 }}
+                  onLoad={() => setImageLoaded(true)}
+                />
+              ) : (
+                <span
+                  className="text-2xl font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {initials}
+                </span>
+              )}
+            </div>
+
+            {/* Online indicator */}
+            {isOnline && (
+              <motion.div
+                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full"
+                style={{
+                  backgroundColor: 'var(--life-gold)',
+                  border: '2px solid var(--bg-surface)',
+                }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 400 }}
+              />
+            )}
+          </div>
+
+          {/* Identity Info */}
+          <div className="flex-1 min-w-0">
+            {/* Name */}
+            <h1
+              className="text-[28px] font-semibold leading-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              {user.fullName}
+            </h1>
+
+            {/* Handle */}
+            <p
+              className="text-base font-normal mt-0.5"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              @{user.handle}
+            </p>
+
+            {/* Credentials */}
+            {credentialsText && (
+              <p
+                className="text-sm font-normal mt-1"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                {credentialsText}
+              </p>
+            )}
+
+            {/* Bio */}
+            {user.bio && (
+              <p
+                className="text-base font-normal mt-4 line-clamp-3"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                {user.bio}
+              </p>
+            )}
+
+            {/* Profile incomplete prompt (own profile only) */}
+            {isOwnProfile && profileIncomplete && !user.bio && (
+              <div
+                className="mt-4 px-4 py-3"
+                style={{
+                  border: '1px dashed var(--border-default)',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                }}
+              >
+                <p
+                  className="text-sm"
+                  style={{ color: 'var(--text-tertiary)' }}
+                >
+                  Add a bio to help others know who you are →
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 mt-6">
+              {isOwnProfile ? (
+                <motion.button
+                  onClick={onEdit}
+                  className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.08)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                  }}
+                  whileHover={{
+                    backgroundColor: 'rgba(255,255,255,0.12)',
+                  }}
+                  whileTap={{ opacity: 0.8 }}
+                >
+                  Edit Profile
+                </motion.button>
+              ) : (
+                <>
+                  {/* Connect - Primary action */}
+                  <motion.button
+                    onClick={onConnect}
+                    className="px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
+                    style={{
+                      backgroundColor: 'rgba(255,215,0,0.1)',
+                      color: 'var(--life-gold)',
+                      border: '1px solid rgba(255,215,0,0.4)',
+                      boxShadow: '0 0 20px rgba(255,215,0,0.15)',
+                    }}
+                    whileHover={{
+                      backgroundColor: 'rgba(255,215,0,0.15)',
+                      boxShadow: '0 0 30px rgba(255,215,0,0.25)',
+                    }}
+                    whileTap={{ opacity: 0.8 }}
+                  >
+                    Connect
+                  </motion.button>
+
+                  {/* Message - Secondary action */}
+                  <motion.button
+                    onClick={onMessage}
+                    className="px-5 py-2.5 rounded-full text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary)',
+                      border: '1px solid var(--border-default)',
+                    }}
+                    whileHover={{
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                    }}
+                    whileTap={{ opacity: 0.8 }}
+                  >
+                    Message
+                  </motion.button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+export default ProfileIdentityHero;

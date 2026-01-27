@@ -11,7 +11,8 @@ export { useOnboardingAnalytics } from './use-onboarding-analytics';
 export type { OnboardingStepName } from './use-onboarding-analytics';
 
 // Data fetching hooks
-export { useSpaces } from './use-spaces';
+export { useSpaces, useSpace } from './use-spaces';
+export type { Space, UseSpacesConfig } from './use-spaces';
 export { useProfile } from './use-profile';
 
 // Loading State Hooks (Nov 2025 - Loading Architecture)
@@ -68,3 +69,12 @@ export * from './use-cognitive-budget';
 
 // Legacy topology budget hook (use use-cognitive-budget.ts instead)
 export { useCognitiveBudget as useCognitiveBudgetLegacy } from './topology/use-cognitive-budget';
+
+// Real-time Firestore hooks
+export { useRealtimeCollection } from './use-realtime-collection';
+export type { UseRealtimeCollectionOptions, UseRealtimeCollectionReturn } from './use-realtime-collection';
+
+export { useRealtimeDocument } from './use-realtime-document';
+export type { UseRealtimeDocumentOptions, UseRealtimeDocumentReturn } from './use-realtime-document';
+
+export { parseTimestamp, mapDocument, isTimestamp, parseOptionalTimestamp } from './realtime-utils';

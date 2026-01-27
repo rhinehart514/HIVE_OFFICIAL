@@ -13,6 +13,10 @@ export {
 } from './automations/on-state-change';
 
 export {
+  onToolEvent,
+} from './automations/on-event';
+
+export {
   runScheduledAutomations,
   runScheduledAutomationsHttp,
 } from './automations/run-scheduled';

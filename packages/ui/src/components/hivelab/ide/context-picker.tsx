@@ -647,9 +647,9 @@ export function ContextPicker({
 }: ContextPickerProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  // Track expanded categories
+  // Track expanded categories - start with none expanded to reduce overwhelm
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
-    new Set(['temporal']) // Start with temporal expanded since it doesn't require space
+    new Set() // Don't auto-expand any category
   );
 
   // Convert requirements to a Set of selected field paths

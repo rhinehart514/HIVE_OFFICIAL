@@ -137,12 +137,13 @@ async function searchProfiles(
 
   try {
     // Search by handle prefix (handles are lowercase)
+    // BOUNDED QUERY: Cap at 100 docs to prevent OOM, even with filtering
     const handleSnapshot = await dbAdmin
       .collection('profiles')
       .where('campusId', '==', campusId)
       .where('handle', '>=', lowercaseQuery)
       .where('handle', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit * 2) // Fetch extra to account for filtering
+      .limit(Math.min(limit * 2, 100))
       .get();
 
     for (const doc of handleSnapshot.docs) {
@@ -154,13 +155,15 @@ async function searchProfiles(
     }
 
     // Search by displayName_lowercase if we have room
-    if (profileIds.length < limit * 2) {
+    // BOUNDED QUERY: Cap at 100 total docs to prevent OOM
+    const maxProfiles = Math.min(limit * 2, 100);
+    if (profileIds.length < maxProfiles) {
       const nameSnapshot = await dbAdmin
         .collection('profiles')
         .where('campusId', '==', campusId)
         .where('displayName_lowercase', '>=', lowercaseQuery)
         .where('displayName_lowercase', '<=', lowercaseQuery + '\uf8ff')
-        .limit((limit * 2) - profileIds.length)
+        .limit(maxProfiles - profileIds.length)
         .get();
 
       for (const doc of nameSnapshot.docs) {
@@ -243,12 +246,13 @@ async function searchPosts(
 
   try {
     // Search by title if posts have titles
+    // BOUNDED QUERY: Cap at 100 docs to prevent OOM, even with moderation filtering
     const titleSnapshot = await dbAdmin
       .collection('posts')
       .where('campusId', '==', campusId)
       .where('title_lowercase', '>=', lowercaseQuery)
       .where('title_lowercase', '<=', lowercaseQuery + '\uf8ff')
-      .limit(limit * 2) // Fetch extra to account for moderation filtering
+      .limit(Math.min(limit * 2, 100))
       .get();
 
     for (const doc of titleSnapshot.docs) {
@@ -275,12 +279,13 @@ async function searchPosts(
     }
 
     // Search by tags if available
+    // BOUNDED QUERY: Cap at 100 docs to prevent OOM
     if (results.length < limit) {
       const tagSnapshot = await dbAdmin
         .collection('posts')
         .where('campusId', '==', campusId)
         .where('tags', 'array-contains', lowercaseQuery)
-        .limit((limit - results.length) * 2)
+        .limit(Math.min((limit - results.length) * 2, 100))
         .get();
 
       for (const doc of tagSnapshot.docs) {

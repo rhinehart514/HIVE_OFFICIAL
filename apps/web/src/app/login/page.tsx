@@ -17,10 +17,10 @@ import { Button } from '@hive/ui/design-system/primitives';
 import {
   EntryShell,
   EntryShellStatic,
-  EmailState,
-  CodeState,
   type EmotionalState,
 } from '@/components/entry';
+import { EmailState } from '@/components/entry/states/EmailState';
+import { CodeState } from '@/components/entry/states/CodeState';
 import { ConfettiBurst } from '@/components/entry/motion/ConfettiBurst';
 import {
   stateVariants,

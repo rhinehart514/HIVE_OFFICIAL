@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { createHash } from 'crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 import { withAuthValidationAndErrors, respond, getUserId, type ResponseFormatter, type AuthenticatedRequest } from '@/lib/middleware';
 import { dbAdmin, isFirebaseConfigured } from '@/lib/firebase-admin';
@@ -9,6 +10,39 @@ import { checkHandleAvailabilityInTransaction, reserveHandleInTransaction, valid
 import { logger } from '@/lib/logger';
 import { SecureSchemas } from '@/lib/secure-input-validation';
 import { enforceRateLimit } from '@/lib/secure-rate-limiter';
+
+/**
+ * Generate Gravatar URL from email hash.
+ * Uses d=404 to return 404 if no Gravatar exists.
+ */
+function getGravatarUrl(email: string, size = 200): string {
+  const hash = createHash('md5')
+    .update(email.toLowerCase().trim())
+    .digest('hex');
+  return `https://www.gravatar.com/avatar/${hash}?s=${size}&d=404`;
+}
+
+/**
+ * Check if Gravatar exists for email.
+ * Returns URL if found, null if not.
+ */
+async function checkGravatar(email: string): Promise<string | null> {
+  try {
+    const url = getGravatarUrl(email);
+    const response = await fetch(url, { method: 'HEAD' });
+    if (response.ok) {
+      // Gravatar exists - return URL without d=404 for actual use
+      const hash = createHash('md5')
+        .update(email.toLowerCase().trim())
+        .digest('hex');
+      return `https://www.gravatar.com/avatar/${hash}?s=200&d=mp`;
+    }
+    return null;
+  } catch {
+    // Network error or timeout - don't block entry
+    return null;
+  }
+}
 
 /**
  * Complete Entry - Simplified onboarding endpoint
@@ -29,19 +63,21 @@ const ALLOW_DEV_BYPASS =
   !isFirebaseConfigured &&
   process.env.DEV_AUTH_BYPASS === 'true';
 
-// Schema with identity fields for decision-reducing onboarding
-// UPDATED: Jan 23, 2026 - Made major and residenceType optional (deferred to in-platform)
+// Schema with identity fields for The Threshold entry flow
+// UPDATED: Jan 26, 2026 - Interests 2-5, role field added
 const schema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50),
   lastName: z.string().min(1, 'Last name is required').max(50),
   handle: SecureSchemas.handle,
-  // Identity fields - now optional for streamlined onboarding
+  // Role field from entry flow
+  role: z.enum(['student', 'faculty', 'alumni']),
+  // Identity fields - optional for flexibility
   major: z.string().max(100).optional().nullable(),
   graduationYear: z.number().min(2015).max(2035).optional().nullable(),
   residenceType: z.enum(['on-campus', 'off-campus', 'commuter']).optional().nullable(),
   residentialSpaceId: z.string().max(100).optional().nullable(),
-  // Interests (2-3 required)
-  interests: z.array(z.string()).min(2).max(3),
+  // Interests (2-5 for The Threshold)
+  interests: z.array(z.string()).min(2).max(5),
   // Community identities (all optional)
   communityIdentities: z.object({
     international: z.boolean().optional(),
@@ -140,6 +176,9 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
   }
 
   try {
+    // Check for Gravatar (non-blocking, runs before transaction)
+    const avatarUrl = await checkGravatar(email || '');
+
     await dbAdmin.runTransaction(async (transaction) => {
       // =========================================================================
       // PHASE 1: ALL READS FIRST (Firebase requires all reads before any writes)
@@ -222,6 +261,8 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         lastName: body.lastName.trim(),
         handle: normalizedHandle,
         email: email || '',
+        // Gravatar fallback (if available)
+        ...(avatarUrl && { avatarUrl }),
         // Decision-reducing identity fields (now optional)
         ...(body.major && { major: body.major }),
         graduationYear: body.graduationYear || null,
@@ -240,7 +281,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         onboardingCompletedAt: new Date().toISOString(),
         // Status
         isActive: true,
-        userType: 'student', // Default, can be changed in profile
+        userType: body.role || 'student',
         // Timestamps
         updatedAt: new Date().toISOString(),
         createdAt: existingUser.exists ? existingUser.data()?.createdAt : new Date().toISOString(),
@@ -384,6 +425,7 @@ export const POST = withAuthValidationAndErrors(schema, async (request, _ctx: Re
         fullName,
         firstName: body.firstName.trim(),
         lastName: body.lastName.trim(),
+        ...(avatarUrl && { avatarUrl }),
       },
       redirect: '/spaces',
     });

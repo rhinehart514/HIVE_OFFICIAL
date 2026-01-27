@@ -8,34 +8,15 @@
 export { EntryShell, EntryShellStatic, type EntryShellProps, type EntryStep } from './EntryShell';
 export { EntryProgress } from './EntryProgress';
 
-// Evolving Entry (new single-page flow)
+// Evolving Entry (single-page flow)
 export { EvolvingEntry } from './EvolvingEntry';
 
-// State components (legacy - kept for reference)
-export {
-  SchoolState,
-  type SchoolStateProps,
-  type School as LegacySchool,
-  EmailState,
-  type EmailStateProps,
-  CodeState,
-  type CodeStateProps,
-  RoleState,
-  type RoleStateProps,
-  type UserRole as LegacyUserRole,
-  IdentityState,
-  type IdentityStateProps,
-  ArrivalState,
-  type ArrivalStateProps,
-  AlumniWaitlistState,
-  type AlumniWaitlistStateProps,
-} from './states';
-
-// Section components (new evolving flow)
+// Section components
 export {
   SchoolSection,
   AVAILABLE_SCHOOLS,
-  EntryCodeSection,
+  EmailSection,
+  CodeSection,
   RoleSection,
   IdentitySection,
   ArrivalSection,
@@ -50,11 +31,6 @@ export * from './motion';
 
 // Hooks
 export {
-  useEntryMachine,
-  type EntryState,
-  type EntryData,
-  type UseEntryMachineOptions,
-  type UseEntryMachineReturn,
   useEvolvingEntry,
   type SectionId,
   type SectionState,

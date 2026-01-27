@@ -15,18 +15,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { cn } from '../../../lib/utils';
 
-// HiveLab Dark Header Theme
-const HEADER_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  text: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  accent: 'var(--life-gold, #D4AF37)',
-  accentHover: 'var(--life-gold, #D4AF37)',
-  inputBg: 'var(--hivelab-surface, #141414)',
-  hoverBg: 'var(--hivelab-surface-hover, #1A1A1A)',
-};
+// ============================================
+// HiveLab Header - Uses CSS variables from globals.css
+// ============================================
 
 // Focus ring - white for dark theme
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
@@ -113,8 +104,8 @@ export function HeaderBar({
     <header
       className="h-12 flex items-center justify-between px-4"
       style={{
-        backgroundColor: HEADER_COLORS.bg,
-        borderBottom: `1px solid ${HEADER_COLORS.border}`,
+        backgroundColor: 'var(--hivelab-panel)',
+        borderBottom: `1px solid ${'var(--hivelab-border)'}`,
       }}
     >
       {/* Left: Back + Logo + Mode Toggle */}
@@ -127,13 +118,13 @@ export function HeaderBar({
               'p-2 -ml-2 rounded-lg transition-colors duration-200',
               focusRing
             )}
-            style={{ color: HEADER_COLORS.textSecondary }}
+            style={{ color: 'var(--hivelab-text-secondary)' }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = HEADER_COLORS.text;
-              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+              e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+              e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = HEADER_COLORS.textSecondary;
+              e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
             title="Back to HiveLab"
@@ -147,15 +138,15 @@ export function HeaderBar({
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{
-              backgroundColor: HEADER_COLORS.accent,
-              boxShadow: `0 2px 8px ${HEADER_COLORS.accent}40`,
+              backgroundColor: 'var(--hivelab-connection)',
+              boxShadow: `0 2px 8px ${'var(--hivelab-connection)'}40`,
             }}
           >
             <span className="text-white font-bold text-xs">H</span>
           </div>
           <span
             className="font-semibold text-sm hidden sm:block"
-            style={{ color: HEADER_COLORS.text }}
+            style={{ color: 'var(--hivelab-text-primary)' }}
           >
             HiveLab
           </span>
@@ -166,7 +157,7 @@ export function HeaderBar({
           <div className="hidden sm:flex items-center ml-4">
             <div
               className="flex items-center p-0.5 rounded-lg"
-              style={{ backgroundColor: HEADER_COLORS.inputBg }}
+              style={{ backgroundColor: 'var(--hivelab-surface)' }}
             >
               <button
                 type="button"
@@ -176,8 +167,8 @@ export function HeaderBar({
                   focusRing
                 )}
                 style={{
-                  backgroundColor: mode === 'edit' ? HEADER_COLORS.hoverBg : 'transparent',
-                  color: mode === 'edit' ? HEADER_COLORS.text : HEADER_COLORS.textSecondary,
+                  backgroundColor: mode === 'edit' ? 'var(--hivelab-surface-hover)' : 'transparent',
+                  color: mode === 'edit' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-secondary)',
                   boxShadow: mode === 'edit' ? `0 1px 2px rgba(0,0,0,0.2)` : 'none',
                 }}
               >
@@ -192,8 +183,8 @@ export function HeaderBar({
                   focusRing
                 )}
                 style={{
-                  backgroundColor: mode === 'use' ? HEADER_COLORS.hoverBg : 'transparent',
-                  color: mode === 'use' ? HEADER_COLORS.text : HEADER_COLORS.textSecondary,
+                  backgroundColor: mode === 'use' ? 'var(--hivelab-surface-hover)' : 'transparent',
+                  color: mode === 'use' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-secondary)',
                   boxShadow: mode === 'use' ? `0 1px 2px rgba(0,0,0,0.2)` : 'none',
                 }}
               >
@@ -234,9 +225,9 @@ export function HeaderBar({
                   focusRing
                 )}
                 style={{
-                  backgroundColor: HEADER_COLORS.inputBg,
-                  borderColor: HEADER_COLORS.border,
-                  color: HEADER_COLORS.text,
+                  backgroundColor: 'var(--hivelab-surface)',
+                  borderColor: 'var(--hivelab-border)',
+                  color: 'var(--hivelab-text-primary)',
                 }}
                 autoFocus
                 placeholder="Tool name..."
@@ -257,9 +248,9 @@ export function HeaderBar({
                 'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors group',
                 focusRing
               )}
-              style={{ color: HEADER_COLORS.text }}
+              style={{ color: 'var(--hivelab-text-primary)' }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
@@ -271,13 +262,13 @@ export function HeaderBar({
               {hasUnsavedChanges && (
                 <span
                   className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: HEADER_COLORS.accent }}
+                  style={{ backgroundColor: 'var(--hivelab-connection)' }}
                   title="Unsaved changes"
                 />
               )}
               <ChevronDownIcon
                 className="h-3.5 w-3.5 transition-colors"
-                style={{ color: HEADER_COLORS.textTertiary }}
+                style={{ color: 'var(--hivelab-text-tertiary)' }}
               />
             </motion.button>
           )}
@@ -292,7 +283,7 @@ export function HeaderBar({
               exit={{ opacity: 0, x: 10 }}
               transition={{ duration: 0.2 }}
               className="flex items-center gap-1.5 ml-3 text-xs font-medium"
-              style={{ color: HEADER_COLORS.accent }}
+              style={{ color: 'var(--hivelab-connection)' }}
             >
               <CheckIcon className="h-3 w-3" />
               <span>Saved</span>
@@ -313,7 +304,7 @@ export function HeaderBar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex items-center gap-1.5"
-                style={{ color: HEADER_COLORS.textSecondary }}
+                style={{ color: 'var(--hivelab-text-secondary)' }}
               >
                 <motion.div
                   animate={{ rotate: 360 }}
@@ -330,7 +321,7 @@ export function HeaderBar({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex items-center gap-1.5"
-                style={{ color: HEADER_COLORS.accent }}
+                style={{ color: 'var(--hivelab-connection)' }}
               >
                 <CheckIcon className="h-3.5 w-3.5" />
                 <span className="hidden sm:block">Saved</span>
@@ -342,11 +333,11 @@ export function HeaderBar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex items-center gap-1.5"
-                style={{ color: HEADER_COLORS.textTertiary }}
+                style={{ color: 'var(--hivelab-text-tertiary)' }}
               >
                 <div
                   className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: HEADER_COLORS.accent }}
+                  style={{ backgroundColor: 'var(--hivelab-connection)' }}
                 />
                 <span className="hidden sm:block">Editing</span>
               </motion.div>
@@ -357,7 +348,7 @@ export function HeaderBar({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="flex items-center gap-1.5"
-                style={{ color: HEADER_COLORS.textTertiary }}
+                style={{ color: 'var(--hivelab-text-tertiary)' }}
               >
                 <CheckIcon className="h-3.5 w-3.5" />
                 <span className="hidden sm:block">Saved</span>
@@ -378,18 +369,18 @@ export function HeaderBar({
               focusRing
             )}
             style={{
-              backgroundColor: HEADER_COLORS.accent,
-              boxShadow: `0 2px 8px ${HEADER_COLORS.accent}30`,
+              backgroundColor: 'var(--hivelab-connection)',
+              boxShadow: `0 2px 8px ${'var(--hivelab-connection)'}30`,
             }}
             onMouseEnter={(e) => {
               if (!deploying) {
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = `0 4px 12px ${HEADER_COLORS.accent}40`;
+                e.currentTarget.style.boxShadow = `0 4px 12px ${'var(--hivelab-connection)'}40`;
               }
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = `0 2px 8px ${HEADER_COLORS.accent}30`;
+              e.currentTarget.style.boxShadow = `0 2px 8px ${'var(--hivelab-connection)'}30`;
             }}
           >
             {deploying ? (
@@ -420,13 +411,13 @@ export function HeaderBar({
               'p-2 rounded-lg transition-colors',
               focusRing
             )}
-            style={{ color: HEADER_COLORS.textSecondary }}
+            style={{ color: 'var(--hivelab-text-secondary)' }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = HEADER_COLORS.text;
-              e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+              e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+              e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = HEADER_COLORS.textSecondary;
+              e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
@@ -451,8 +442,8 @@ export function HeaderBar({
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 top-full mt-1 z-50 min-w-[180px] py-1 rounded-lg shadow-lg"
                   style={{
-                    backgroundColor: HEADER_COLORS.bg,
-                    border: `1px solid ${HEADER_COLORS.border}`,
+                    backgroundColor: 'var(--hivelab-panel)',
+                    border: `1px solid ${'var(--hivelab-border)'}`,
                   }}
                 >
                   {onAnalytics && (
@@ -463,9 +454,9 @@ export function HeaderBar({
                         onAnalytics();
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors"
-                      style={{ color: HEADER_COLORS.text }}
+                      style={{ color: 'var(--hivelab-text-primary)' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                        e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
@@ -486,9 +477,9 @@ export function HeaderBar({
                         onSettings();
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors"
-                      style={{ color: HEADER_COLORS.text }}
+                      style={{ color: 'var(--hivelab-text-primary)' }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = HEADER_COLORS.hoverBg;
+                        e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'transparent';
@@ -503,7 +494,7 @@ export function HeaderBar({
                   {(onAnalytics || onSettings) && (
                     <div
                       className="my-1 h-px mx-2"
-                      style={{ backgroundColor: HEADER_COLORS.border }}
+                      style={{ backgroundColor: 'var(--hivelab-border)' }}
                     />
                   )}
 
@@ -511,22 +502,22 @@ export function HeaderBar({
                   <div className="px-3 py-2">
                     <div
                       className="text-xs font-medium mb-1.5"
-                      style={{ color: HEADER_COLORS.textTertiary }}
+                      style={{ color: 'var(--hivelab-text-tertiary)' }}
                     >
                       Shortcuts
                     </div>
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--hivelab-text-secondary)' }}>
                         <span>Save</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘S</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: 'var(--hivelab-surface)' }}>⌘S</kbd>
                       </div>
-                      <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--hivelab-text-secondary)' }}>
                         <span>AI Prompt</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘K</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: 'var(--hivelab-surface)' }}>⌘K</kbd>
                       </div>
-                      <div className="flex items-center justify-between text-xs" style={{ color: HEADER_COLORS.textSecondary }}>
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--hivelab-text-secondary)' }}>
                         <span>Undo</span>
-                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: HEADER_COLORS.inputBg }}>⌘Z</kbd>
+                        <kbd className="px-1.5 py-0.5 rounded text-label-xs" style={{ backgroundColor: 'var(--hivelab-surface)' }}>⌘Z</kbd>
                       </div>
                     </div>
                   </div>

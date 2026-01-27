@@ -18,14 +18,16 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@hive/ui": ["../../packages/ui/src"],
       "@hive/tokens": ["../../packages/tokens/src"],
-      "@hive/utilities": ["../../packages/utilities/src"],
+      "@hive/core": ["../../packages/core/src"],
       "@hive/firebase": ["../../packages/firebase/src"]
     },
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "next-env.d.ts",
@@ -34,6 +36,8 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next",
+    "dist"
   ]
 }

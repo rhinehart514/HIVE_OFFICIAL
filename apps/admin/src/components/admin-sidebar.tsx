@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@hive/ui";
+import { CompactModeSwitcher } from "./ModeSwitcher";
 import {
   Squares2X2Icon,
   UsersIcon,
@@ -24,7 +25,11 @@ import {
   DocumentTextIcon as ScrollTextIcon,
   TrophyIcon,
   HeartIcon,
+  PresentationChartBarIcon,
+  InboxStackIcon,
 } from "@heroicons/react/24/outline";
+
+type AdminMode = "command" | "operations";
 
 // Aliases for lucide compatibility
 const LayoutDashboard = Squares2X2Icon;
@@ -58,6 +63,9 @@ interface AdminSidebarProps {
     alerts?: number;
     pendingClaims?: number;
   };
+  // Mode switcher props
+  currentMode?: AdminMode;
+  onModeChange?: (mode: AdminMode) => void;
 }
 
 const navigationItems = [
@@ -186,6 +194,8 @@ export function AdminSidebar({
   activeTab,
   onTabChange,
   pendingCounts,
+  currentMode = "operations",
+  onModeChange,
 }: AdminSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -231,6 +241,49 @@ export function AdminSidebar({
           )}
         </button>
       </div>
+
+      {/* Mode Switcher */}
+      {onModeChange && (
+        <div className="px-3 py-2 border-b border-white/10">
+          {!isCollapsed ? (
+            <div className="space-y-2">
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Mode
+              </span>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => onModeChange("command")}
+                  className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    currentMode === "command"
+                      ? "bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <PresentationChartBarIcon className="h-4 w-4" />
+                  <span className="text-xs font-medium">Command</span>
+                </button>
+                <button
+                  onClick={() => onModeChange("operations")}
+                  className={`flex-1 flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    currentMode === "operations"
+                      ? "bg-white/10 text-white border border-white/30"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <InboxStackIcon className="h-4 w-4" />
+                  <span className="text-xs font-medium">Ops</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <CompactModeSwitcher
+              currentMode={currentMode}
+              onModeChange={onModeChange}
+              className="w-full justify-center"
+            />
+          )}
+        </div>
+      )}
 
       {/* Main Navigation */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">

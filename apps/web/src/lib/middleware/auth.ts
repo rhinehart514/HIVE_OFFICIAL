@@ -5,6 +5,50 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 import { ApiResponseHelper, HttpStatus } from "@/lib/api-response-types";
 import { logger } from "@/lib/structured-logger";
 import { verifySession, type SessionData } from "@/lib/session";
+import { jwtVerify } from 'jose';
+
+// Admin session verification (matches admin app's JWT secret)
+const ADMIN_SESSION_COOKIE_NAME = 'hive_admin_session';
+
+function getAdminJwtSecret(): Uint8Array {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === 'development') {
+    // Must match admin app's dev fallback
+    return new TextEncoder().encode('dev-only-secret-do-not-use-in-production');
+  }
+  if (!secret) {
+    throw new Error('ADMIN_JWT_SECRET required for admin session verification');
+  }
+  return new TextEncoder().encode(secret);
+}
+
+interface AdminSessionPayload {
+  userId: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  campusId?: string;
+}
+
+async function verifyAdminSessionCookie(token: string): Promise<AdminSessionPayload | null> {
+  try {
+    const secret = getAdminJwtSecret();
+    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
+
+    if (payload.userId && payload.email && payload.role) {
+      return {
+        userId: payload.userId as string,
+        email: payload.email as string,
+        role: payload.role as string,
+        permissions: (payload.permissions as string[]) || [],
+        campusId: payload.campusId as string | undefined,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Type-safe user attachment using Symbol to avoid property mutation issues
@@ -228,10 +272,72 @@ export function withAuth<T extends RouteParams>(
           return await handler(authenticatedRequest, context);
         }
 
-        // Session verification failed - log and continue to Bearer token check
+        // Session verification failed - log and continue to admin session check
         logger.warn('Session cookie verification failed', {
           endpoint: request.url,
           reason: 'invalid_signature_or_expired'
+        });
+      }
+
+      // Check for admin session cookie (from admin dashboard)
+      const adminSessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE_NAME);
+
+      if (adminSessionCookie?.value) {
+        const adminSession = await verifyAdminSessionCookie(adminSessionCookie.value);
+
+        if (adminSession && adminSession.userId && adminSession.email) {
+          // Resolve campus - admin users may have explicit campusId or derive from email
+          const { campusId, error } = resolveCampusId(
+            adminSession.campusId,
+            adminSession.email,
+            adminSession.userId
+          );
+
+          if (error) {
+            return error;
+          }
+
+          // Create user context from admin session
+          const userContext: UserContext = {
+            uid: adminSession.userId,
+            email: adminSession.email,
+            campusId: campusId!,
+            decodedToken: {
+              uid: adminSession.userId,
+              email: adminSession.email,
+              email_verified: true,
+              aud: 'hive-admin-session',
+              auth_time: Math.floor(Date.now() / 1000),
+              exp: Math.floor(Date.now() / 1000) + 86400,
+              iat: Math.floor(Date.now() / 1000),
+              iss: 'hive-admin-session',
+              sub: adminSession.userId,
+              firebase: {
+                identities: {},
+                sign_in_provider: 'custom'
+              }
+            } as DecodedIdToken
+          };
+
+          // Attach via symbol for type-safe access
+          attachUser(request, userContext);
+
+          // Also attach to .user for backward compatibility
+          const authenticatedRequest = request as AuthenticatedRequest;
+          authenticatedRequest.user = userContext;
+
+          logger.info('Admin session authenticated', {
+            userId: adminSession.userId,
+            role: adminSession.role,
+            endpoint: request.url
+          });
+
+          return await handler(authenticatedRequest, context);
+        }
+
+        // Admin session verification failed
+        logger.warn('Admin session cookie verification failed', {
+          endpoint: request.url
         });
       }
 
@@ -315,15 +421,61 @@ export function withAuth<T extends RouteParams>(
   };
 }
 
+// SECURITY FIX: Cache admin status with short TTL to prevent zombie sessions
+// This prevents deleted admins from retaining access while avoiding Firestore lookup on every request
+const adminStatusCache = new Map<string, { isAdmin: boolean; expiry: number }>();
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Verify admin status in Firestore with caching
+ * This catches the "zombie admin" case where an admin is removed but their session is still valid
+ */
+async function verifyAdminStatusInFirestore(userId: string): Promise<boolean> {
+  // Check cache first
+  const cached = adminStatusCache.get(userId);
+  if (cached && Date.now() < cached.expiry) {
+    return cached.isAdmin;
+  }
+
+  try {
+    // Lazy import to avoid circular dependency
+    const { dbAdmin } = await import('@/lib/firebase-admin');
+
+    // Check if user exists in admins collection with active status
+    const adminDoc = await dbAdmin.collection('admins').doc(userId).get();
+    const isAdmin = adminDoc.exists && adminDoc.data()?.isActive !== false;
+
+    // Cache the result
+    adminStatusCache.set(userId, {
+      isAdmin,
+      expiry: Date.now() + ADMIN_CACHE_TTL_MS
+    });
+
+    return isAdmin;
+  } catch (error) {
+    logger.warn('Failed to verify admin status in Firestore', {
+      userId,
+      error: error instanceof Error ? error.message : 'unknown'
+    });
+    // On error, deny access (fail secure)
+    return false;
+  }
+}
+
 /**
  * Admin-only auth wrapper for admin routes
  * Extends withAuth to verify admin privileges
+ *
+ * SECURITY: Now includes real-time Firestore verification (with caching)
+ * to prevent "zombie admin" sessions where removed admins retain access.
  */
 export function withAdminAuth<T extends RouteParams>(
   handler: AuthenticatedHandler<T>
 ): NextRouteHandler<T> {
   return withAuth(async (request: AuthenticatedRequest, context: T) => {
     try {
+      const userId = request.user.uid;
+
       // Check if user has admin claims in Firebase token
       // DecodedIdToken doesn't have customClaims, but the token itself may have custom claims
       const decodedToken = request.user.decodedToken as DecodedIdToken & { admin?: boolean; role?: string };
@@ -338,9 +490,39 @@ export function withAdminAuth<T extends RouteParams>(
         hasSessionAdmin = session?.isAdmin === true;
       }
 
-      if (!hasAdminClaim && !hasSessionAdmin) {
+      // Check for admin session cookie (from admin dashboard)
+      // Users authenticated via hive_admin_session are always admins
+      const adminSessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE_NAME);
+      let hasAdminSessionCookie = false;
+
+      if (adminSessionCookie?.value) {
+        const adminSession = await verifyAdminSessionCookie(adminSessionCookie.value);
+        // If admin session is valid and has admin/super_admin role, grant access
+        hasAdminSessionCookie = adminSession !== null &&
+          ['admin', 'super_admin', 'moderator'].includes(adminSession.role);
+      }
+
+      // First check: Must have some form of admin claim/session
+      if (!hasAdminClaim && !hasSessionAdmin && !hasAdminSessionCookie) {
         return NextResponse.json(
           ApiResponseHelper.error("Admin access required", "FORBIDDEN"),
+          { status: HttpStatus.FORBIDDEN }
+        );
+      }
+
+      // SECURITY FIX: Second check - verify admin status in Firestore
+      // This catches "zombie admins" who have valid tokens but were removed from admin list
+      const firestoreAdminStatus = await verifyAdminStatusInFirestore(userId);
+      if (!firestoreAdminStatus) {
+        logger.warn('Admin access denied - not found in admins collection', {
+          userId,
+          hadAdminClaim: hasAdminClaim,
+          hadSessionAdmin: hasSessionAdmin,
+          hadAdminSessionCookie: hasAdminSessionCookie,
+          endpoint: request.url
+        });
+        return NextResponse.json(
+          ApiResponseHelper.error("Admin access revoked", "FORBIDDEN"),
           { status: HttpStatus.FORBIDDEN }
         );
       }

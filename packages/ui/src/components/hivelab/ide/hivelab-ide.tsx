@@ -14,6 +14,9 @@ import type { ElementConnection } from '@hive/core';
 import { IDECanvas } from './ide-canvas';
 import { useIDEKeyboard } from './use-ide-keyboard';
 
+// Context provider for state management (Phase 2)
+import { HiveLabProvider } from './context';
+
 // New layout components
 import { ElementRail, type RailState, type RailTab, type UserToolItem } from './element-rail';
 import { ContextRail, type AlignmentType } from './context-rail';
@@ -828,7 +831,7 @@ export function HiveLabIDE({
 
   // Connection flow feedback
   const triggerConnectionFlow = useCallback(
-    (connectionIds: string[], duration = 600) => {
+    (connectionIds: string[], duration = 300) => {
       if (connectionIds.length === 0) return;
       setFlowingConnections((prev) => {
         const next = new Set(prev);
@@ -862,7 +865,7 @@ export function HiveLabIDE({
       const newConnection: Connection = { id: connectionId, from, to };
       setConnections((prev) => [...prev, newConnection]);
       pushHistory('Add connection');
-      setTimeout(() => triggerConnectionFlow([connectionId], 800), 50);
+      setTimeout(() => triggerConnectionFlow([connectionId]), 50);
     },
     [pushHistory, triggerConnectionFlow]
   );
@@ -1491,7 +1494,18 @@ export function HiveLabIDE({
     return <MobileGate onBack={onCancel} />;
   }
 
+  // Wrap with HiveLabProvider for context-based state management
+  // Components can progressively migrate to using useHiveLab() hook
   return (
+    <HiveLabProvider
+      initialDocument={{
+        id: toolId,
+        name: toolName,
+        description: toolDescription,
+        elements,
+        connections,
+      }}
+    >
     <div
       className="h-full w-full flex overflow-hidden bg-[var(--hivelab-bg)]"
     >
@@ -1601,20 +1615,22 @@ export function HiveLabIDE({
           )}
         </div>
 
-        {/* Context Rail (Right) - auto-show on selection */}
-        <ContextRail
-          selectedElements={selectedElements}
-          allElements={elements}
-          connections={connections}
-          selectedConnectionId={selectedConnectionId}
-          onUpdateElement={updateElement}
-          onDeleteElements={deleteElements}
-          onDuplicateElements={duplicateElements}
-          onAlignElements={alignElements}
-          onDistributeElements={distributeElements}
-          onUpdateConnection={updateConnection}
-          onDeleteConnection={deleteConnection}
-        />
+        {/* Context Rail (Right) - only shows when elements are selected */}
+        {selectedElements.length > 0 && (
+          <ContextRail
+            selectedElements={selectedElements}
+            allElements={elements}
+            connections={connections}
+            selectedConnectionId={selectedConnectionId}
+            onUpdateElement={updateElement}
+            onDeleteElements={deleteElements}
+            onDuplicateElements={duplicateElements}
+            onAlignElements={alignElements}
+            onDistributeElements={distributeElements}
+            onUpdateConnection={updateConnection}
+            onDeleteConnection={deleteConnection}
+          />
+        )}
 
       {/* Unified Floating Action Bar with AI Input */}
       <FloatingActionBar
@@ -1820,5 +1836,6 @@ export function HiveLabIDE({
         )}
       </AnimatePresence>
     </div>
+    </HiveLabProvider>
   );
 }

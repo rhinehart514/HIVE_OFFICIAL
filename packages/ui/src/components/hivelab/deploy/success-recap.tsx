@@ -41,10 +41,12 @@ interface ConfettiParticle {
 interface SuccessRecapProps {
   toolName: string;
   spaceName: string;
+  spaceHandle?: string;
   memberCount: number;
   confettiParticles: ConfettiParticle[];
   onViewInSpace: () => void;
   onContinueEditing: () => void;
+  onCopyLink?: () => void;
 }
 
 /**
@@ -86,6 +88,7 @@ export function SuccessRecap({
   confettiParticles,
   onViewInSpace,
   onContinueEditing,
+  onCopyLink,
 }: SuccessRecapProps) {
   const shouldReduceMotion = useReducedMotion();
 
@@ -230,12 +233,12 @@ export function SuccessRecap({
           delay: shouldReduceMotion ? 0 : 0.6,
           ease: EASE,
         }}
-        className="flex items-center justify-center gap-4"
+        className="flex items-center justify-center gap-3"
       >
         <button
           type="button"
           onClick={onContinueEditing}
-          className="px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+          className="px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
           style={{
             backgroundColor: COLORS.surface,
             color: COLORS.textSecondary,
@@ -252,6 +255,32 @@ export function SuccessRecap({
         >
           Keep building
         </button>
+
+        {onCopyLink && (
+          <button
+            type="button"
+            onClick={onCopyLink}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
+            style={{
+              backgroundColor: COLORS.surface,
+              color: COLORS.textSecondary,
+              border: `1px solid ${COLORS.border}`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = COLORS.panel;
+              e.currentTarget.style.color = COLORS.textPrimary;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = COLORS.surface;
+              e.currentTarget.style.color = COLORS.textSecondary;
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+            </svg>
+            Copy link
+          </button>
+        )}
 
         <button
           type="button"

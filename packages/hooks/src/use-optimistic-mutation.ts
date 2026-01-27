@@ -10,8 +10,9 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useHiveMutation, useMutationWithInvalidation } from './use-hive-mutation';
-import type { HiveMutationConfig, HiveError } from '@hive/core';
+import type { HiveError } from '@hive/core';
 
 /**
  * Optimistic list operations
@@ -248,7 +249,7 @@ export function useOptimisticRemove<TData = unknown>({
  * ```tsx
  * const { mutate: updatePost, loading } = useOptimisticUpdate({
  *   mutationFn: ({ id, updates }) => updatePost(id, updates),
- *   getOptimisticData: ({ original, updates }) => ({ ...original, ...updates }),
+ *   getOptimisticData: (variables) => variables.updates, // Returns optimistic preview
  *   invalidateKeys: [['feed'], ['post', { id }]],
  * });
  *
@@ -268,13 +269,15 @@ export function useOptimisticUpdate<TData, TUpdates = Partial<TData>>({
   onError,
 }: {
   mutationFn: (variables: { id: string; updates: TUpdates }) => Promise<TData>;
-  getOptimisticData: (variables: { original: TData; updates: TUpdates }) => TData;
+  getOptimisticData?: (variables: { id: string; updates: TUpdates }) => TData;
   invalidateKeys?: Array<ReadonlyArray<string | number | boolean | Record<string, unknown> | null | undefined>>;
   onSuccess?: (data: TData, variables: { id: string; updates: TUpdates }) => void;
   onError?: (error: HiveError, variables: { id: string; updates: TUpdates }, rollback: () => void) => void;
 }) {
-  return useHiveMutation({
+  return useMutationWithInvalidation({
     mutationFn,
+    optimisticUpdate: getOptimisticData,
+    invalidateKeys,
     onSuccess,
     onError,
   });
@@ -309,10 +312,13 @@ export function useBatchMutation<TVariables, TData = unknown>({
   onError?: (errors: HiveError[]) => void;
 }) {
   const mutation = useHiveMutation({ mutationFn });
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
 
   const mutateBatch = async (items: TVariables[]) => {
     const results: Array<{ data: TData | null; error: HiveError | null }> = [];
     const errors: HiveError[] = [];
+
+    setProgress({ current: 0, total: items.length });
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
@@ -328,6 +334,8 @@ export function useBatchMutation<TVariables, TData = unknown>({
         errors.push(hiveError);
         onItemError?.(hiveError, item, i);
       }
+
+      setProgress({ current: i + 1, total: items.length });
     }
 
     if (errors.length > 0) {
@@ -340,9 +348,6 @@ export function useBatchMutation<TVariables, TData = unknown>({
   return {
     mutateBatch,
     loading: mutation.loading,
-    progress: {
-      current: 0, // This would need state tracking for real progress
-      total: 0,
-    },
+    progress,
   };
 }

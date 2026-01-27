@@ -29,6 +29,12 @@ const ADMIN_USERS = [
     name: 'Noah',
     role: 'admin',
     permissions: ['read', 'write', 'delete', 'moderate', 'manage_users', 'manage_spaces', 'feature_flags']
+  },
+  {
+    email: 'rhinehart514@gmail.com',
+    name: 'Flynn Rhinehart',
+    role: 'super_admin',
+    permissions: ['all']
   }
 ];
 

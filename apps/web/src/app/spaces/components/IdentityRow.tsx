@@ -7,9 +7,10 @@
  * - Avatar with ring
  * - Category label
  * - Space name
- * - Online indicator
- * - Unread badge
+ * - Energy dots (activity indicator)
  * - Hover reveals arrow
+ *
+ * @version 2.0.0 - Added energy dots (Sprint 3, Jan 2026)
  */
 
 import * as React from 'react';
@@ -24,6 +25,7 @@ import {
   getInitials,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { getEnergyLevel, getEnergyDotCount } from '@/lib/energy-utils';
 import type { IdentityClaim } from '../hooks/useSpacesHQ';
 
 // ============================================================
@@ -74,6 +76,25 @@ const IDENTITY_CONFIG = {
 };
 
 // ============================================================
+// Energy Dots Component
+// ============================================================
+
+function EnergyDots({ count }: { count: number }) {
+  if (count === 0) return null;
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {[...Array(count)].map((_, i) => (
+        <span
+          key={i}
+          className="w-1 h-1 rounded-full bg-[var(--color-gold)]"
+        />
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
 // Identity Card
 // ============================================================
 
@@ -82,6 +103,10 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
   const config = IDENTITY_CONFIG[type];
   const [isHovered, setIsHovered] = React.useState(false);
 
+  // Calculate energy level for this space
+  const energyLevel = claim ? getEnergyLevel(claim.recentMessageCount) : 'none';
+  const energyDotCount = getEnergyDotCount(energyLevel);
+
   const handleClick = () => {
     if (claim) {
       router.push(`/s/${claim.spaceId}`);
@@ -89,10 +114,6 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
       router.push(config.browseUrl);
     }
   };
-
-  // Mock online count (would come from presence API)
-  const onlineCount = claim ? Math.floor(Math.random() * 30) + 5 : 0;
-  const unreadCount = 0; // Would come from notifications
 
   return (
     <motion.button
@@ -127,6 +148,13 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
         )}
       />
 
+      {/* Energy dots - top right corner */}
+      {claim && energyDotCount > 0 && (
+        <div className="absolute top-4 right-4 z-20">
+          <EnergyDots count={energyDotCount} />
+        </div>
+      )}
+
       {/* Content */}
       <div className="relative z-10 flex flex-col h-full">
         {/* Top: Category label */}
@@ -157,22 +185,20 @@ function IdentityCard({ type, claim, index }: IdentityCardProps) {
           )}
         </div>
 
-        {/* Bottom: Stats */}
+        {/* Bottom: Member count + presence */}
         {claim && (
           <div className="flex items-center gap-3 mt-3">
-            {/* Online indicator */}
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-label text-white/30">
-                {onlineCount} online
-              </span>
-            </div>
-
-            {/* Unread badge */}
-            {unreadCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-label-sm font-medium">
-                {unreadCount} new
-              </span>
+            <span className="text-label text-white/30">
+              {claim.memberCount} {claim.memberCount === 1 ? 'member' : 'members'}
+            </span>
+            {/* Show "here now" if online count > 0 */}
+            {(claim.onlineCount ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-gold)] animate-pulse" />
+                <span className="text-label text-[var(--color-gold)]/60">
+                  {claim.onlineCount} here
+                </span>
+              </div>
             )}
           </div>
         )}

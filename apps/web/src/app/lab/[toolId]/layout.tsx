@@ -24,8 +24,12 @@ async function fetchToolForMetadata(toolId: string) {
       return null;
     }
 
-    const data = await response.json();
-    return data.tool || data;
+    const json = await response.json();
+    // Handle different response shapes:
+    // - Standard middleware: { success: true, data: { ...tool } }
+    // - Legacy format: { tool: { ...tool } }
+    // - Direct format: { id, name, ... }
+    return json.data || json.tool || (json.id ? json : null);
   } catch {
     return null;
   }

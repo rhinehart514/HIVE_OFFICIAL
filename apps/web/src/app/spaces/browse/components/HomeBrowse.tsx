@@ -6,6 +6,7 @@
  */
 
 import * as React from 'react';
+import { Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   motion,
@@ -101,9 +102,25 @@ export function HomeBrowse({ searchQuery }: HomeBrowseProps) {
 
   if (!data) {
     return (
-      <div className="text-center py-16">
-        <p className="text-white/40">Failed to load residential spaces</p>
-      </div>
+      <RevealSection>
+        <div className="text-center py-16">
+          <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
+            <Home size={24} className="text-white/40" />
+          </div>
+          <h3 className="text-title-sm font-medium text-white/80 mb-2">
+            Couldn&apos;t load residences
+          </h3>
+          <p className="text-body text-white/40 max-w-md mx-auto mb-6">
+            We had trouble loading residential spaces. This might be a temporary issue.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg bg-white/[0.06] text-white/60 hover:bg-white/[0.08] hover:text-white/80 transition-colors text-body"
+          >
+            Try again
+          </button>
+        </div>
+      </RevealSection>
     );
   }
 
@@ -160,8 +177,8 @@ export function HomeBrowse({ searchQuery }: HomeBrowseProps) {
       {hasNoResults && (
         <RevealSection>
           <div className="text-center py-16">
-            <div className="mb-6">
-              <span className="text-4xl">🏠</span>
+            <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
+              <Home size={24} className="text-white/40" />
             </div>
             <h3 className="text-title-sm font-medium text-white/80 mb-2">
               {searchQuery ? 'No results' : 'No residential spaces yet'}
@@ -181,13 +198,23 @@ export function HomeBrowse({ searchQuery }: HomeBrowseProps) {
 function HomeBrowseSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="h-4 w-32 rounded bg-white/[0.02] animate-pulse" />
+      <motion.div
+        className="h-4 w-32 rounded bg-white/[0.02]"
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 9 }).map((_, i) => (
-          <div
+          <motion.div
             key={i}
-            className="h-36 rounded-2xl bg-white/[0.02] animate-pulse"
-            style={{ animationDelay: `${i * 50}ms` }}
+            className="h-36 rounded-2xl bg-white/[0.02]"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: i * 0.05,
+              ease: MOTION.ease.smooth,
+            }}
           />
         ))}
       </div>

@@ -13,6 +13,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onRequest } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
+import { parseExpression } from 'cron-parser';
 import type {
   ToolAutomation,
   ToolAutomationRun,
@@ -170,16 +171,31 @@ async function getToolState(deploymentId: string): Promise<ToolSharedState | nul
 }
 
 /**
- * Calculate next run time from cron expression (simplified)
- * Real implementation would use a cron parsing library
+ * Calculate next run time from cron expression using cron-parser
+ *
+ * @param cron - Cron expression (e.g., "0 9 * * *" for 9 AM daily)
+ * @param timezone - IANA timezone (e.g., "America/New_York"), defaults to America/New_York
+ * @returns Next scheduled run time
  */
-function calculateNextRun(cron: string, timezone?: string): Date {
-  // Simplified: add 1 hour to current time
-  // TODO: Replace with actual cron parsing using cron-parser library
-  const next = new Date();
-  next.setHours(next.getHours() + 1);
-  next.setMinutes(0, 0, 0);
-  return next;
+function calculateNextRun(cron: string, timezone: string = 'America/New_York'): Date {
+  try {
+    const interval = parseExpression(cron, {
+      tz: timezone,
+      currentDate: new Date(),
+    });
+    return interval.next().toDate();
+  } catch (error) {
+    // If cron parsing fails, fall back to 1 hour from now
+    logger.warn('Failed to parse cron expression, using fallback', {
+      cron,
+      timezone,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    const next = new Date();
+    next.setHours(next.getHours() + 1);
+    next.setMinutes(0, 0, 0);
+    return next;
+  }
 }
 
 /**

@@ -1,19 +1,8 @@
 /**
  * Onboarding Components
- * Export all onboarding-related components
+ * Legacy /welcome routes have been deleted.
+ * Entry flow now uses /enter with evolving sections.
  */
 
-export {
-  WelcomeShell,
-  WelcomeAction,
-  WelcomeHeading,
-  type WelcomeShellProps,
-  type WelcomeActionProps,
-  type WelcomeHeadingProps,
-} from './WelcomeShell';
-
-export {
-  TerritoryMap,
-  type TerritoryMapProps,
-  type TerritorySpace,
-} from './TerritoryMap';
+// No exports - all legacy components removed
+export {};

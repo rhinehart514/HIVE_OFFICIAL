@@ -7,7 +7,7 @@
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
 import {
-  withAdminAuthAndErrors,
+  withAdminPermission,
   getUserId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
@@ -34,8 +34,11 @@ interface BulkResult {
 /**
  * POST /api/admin/users/bulk
  * Execute bulk operations on multiple users
+ *
+ * SECURITY: Requires 'manage_users' permission (admin or super_admin only)
+ * Bulk operations are powerful and should not be accessible to viewers or moderators
  */
-export const POST = withAdminAuthAndErrors(async (request, _context, respond) => {
+export const POST = withAdminPermission('manage_users', async (request, _context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
 
   try {

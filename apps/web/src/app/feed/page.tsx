@@ -6,16 +6,18 @@
  * Dynamic dashboard that anticipates needs.
  * Premium motion, presence indicators, activity signals.
  *
- * Sections:
- * - Today (events + unread messages)
- * - Your Spaces (navigation tiles with activity dots)
- * - This Week (upcoming events)
- * - Your Creations (HiveLab tools)
- * - Discover (recommendations)
+ * Sections (priority order):
+ * 1. Today (events + unread messages) — PRIMARY
+ * 2. Your Spaces (navigation tiles with activity dots) — SECONDARY
+ * 3. This Week (upcoming events) — SECONDARY
+ * 4. Your Creations (HiveLab tools) — TERTIARY
+ * 5. Discover (recommendations) — TERTIARY
+ *
+ * Updated: Jan 26, 2026 - Added hierarchy, density, unified empty states
  */
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -29,6 +31,18 @@ import {
   MOTION,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+
+// Feed-specific components
+import { FeedEmptyState } from './components/FeedEmptyState';
+import { DensityToggle } from './components/DensityToggle';
+import { useFeedDensity } from './hooks/useFeedDensity';
+import {
+  FEED_HIERARCHY,
+  SECTION_PRIORITY,
+  SECTION_DELAYS,
+  type FeedSection,
+  type FeedPriority,
+} from './feed-tokens';
 
 // ============================================
 // TYPES
@@ -76,6 +90,13 @@ interface RecommendedSpace {
   reason: string;
   memberCount: number;
   category?: string;
+}
+
+interface FeedUpdateData {
+  hasNewPosts: boolean;
+  newPostCount: number;
+  lastViewedAt: string | null;
+  lastPostAt: string | null;
 }
 
 // ============================================
@@ -127,19 +148,40 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
+function formatTimeSince(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 5) return 'just now';
+  if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+  if (diffHours === 1) return '1 hour ago';
+  if (diffHours < 24) return `${diffHours} hours ago`;
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // ============================================
-// SECTION COMPONENTS
+// SECTION WRAPPER
 // ============================================
 
 interface SectionProps {
+  section: FeedSection;
   title: string;
   action?: string;
   actionHref?: string;
   children: React.ReactNode;
-  delay?: number;
+  className?: string;
 }
 
-function Section({ title, action, actionHref, children, delay = 0 }: SectionProps) {
+function Section({ section, title, action, actionHref, children, className }: SectionProps) {
+  const hierarchy = FEED_HIERARCHY[SECTION_PRIORITY[section]];
+  const delay = SECTION_DELAYS[section];
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 20 }}
@@ -149,10 +191,10 @@ function Section({ title, action, actionHref, children, delay = 0 }: SectionProp
         delay,
         ease: MOTION.ease.premium,
       }}
-      className="mb-10"
+      className={cn('mb-10', className)}
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-label font-medium text-white/40 tracking-wide">
+        <h2 className={cn('tracking-wide', hierarchy.title)}>
           {title}
         </h2>
         {action && actionHref && (
@@ -169,26 +211,38 @@ function Section({ title, action, actionHref, children, delay = 0 }: SectionProp
   );
 }
 
-// TODAY Section
+// ============================================
+// TODAY SECTION
+// ============================================
+
 function TodaySection({
   events,
   unreadSpaces,
   loading,
+  density,
 }: {
   events: EventData[];
   unreadSpaces: SpaceData[];
   loading: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
 }) {
   const router = useRouter();
+  const hierarchy = FEED_HIERARCHY.primary;
 
   if (loading) {
     return (
-      <Section title="Today" delay={0.1}>
-        <div className="space-y-3">
+      <Section section="today" title="Today">
+        <div className={cn('space-y-3', density.cardGap)}>
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
+              className={cn(
+                'rounded-xl animate-pulse',
+                density.cardPadding,
+                hierarchy.cardBg,
+                'border',
+                hierarchy.cardBorder
+              )}
             >
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white/[0.04]" />
@@ -208,27 +262,20 @@ function TodaySection({
 
   if (!hasContent) {
     return (
-      <Section title="Today" delay={0.1}>
-        <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
-          <p className="text-body text-white/50 mb-4">
-            Your day is open. Find something happening on campus.
-          </p>
-          <Button variant="default" size="sm" asChild>
-            <Link href="/explore?tab=events">Browse events</Link>
-          </Button>
-        </GlassSurface>
+      <Section section="today" title="Today">
+        <FeedEmptyState variant="today" />
       </Section>
     );
   }
 
   return (
-    <Section title="Today" delay={0.1}>
-      <div className="space-y-3">
+    <Section section="today" title="Today">
+      <div className={cn('space-y-3', density.cardGap)}>
         {/* Live events first */}
         {events
           .filter((e) => e.isLive)
           .map((event) => (
-            <Tilt key={event.id} intensity={4}>
+            <Tilt key={event.id} intensity={density.tiltIntensity}>
               <button
                 type="button"
                 onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
@@ -236,7 +283,10 @@ function TodaySection({
               >
                 <GlassSurface
                   intensity="subtle"
-                  className="p-4 rounded-xl border border-[var(--life-gold)]/20"
+                  className={cn(
+                    'rounded-xl border border-[var(--life-gold)]/20',
+                    density.cardPadding
+                  )}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[var(--life-gold)]/10 flex items-center justify-center">
@@ -266,13 +316,16 @@ function TodaySection({
         {events
           .filter((e) => !e.isLive)
           .map((event) => (
-            <Tilt key={event.id} intensity={4}>
+            <Tilt key={event.id} intensity={density.tiltIntensity}>
               <button
                 type="button"
                 onClick={() => router.push(`/s/${event.spaceHandle || event.spaceId}`)}
                 className="w-full text-left"
               >
-                <GlassSurface intensity="subtle" className="p-4 rounded-xl">
+                <GlassSurface
+                  intensity="subtle"
+                  className={cn('rounded-xl', density.cardPadding)}
+                >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                       📅
@@ -300,13 +353,16 @@ function TodaySection({
 
         {/* Unread messages */}
         {unreadSpaces.map((space) => (
-          <Tilt key={space.id} intensity={4}>
+          <Tilt key={space.id} intensity={density.tiltIntensity}>
             <button
               type="button"
               onClick={() => router.push(`/s/${space.handle || space.id}`)}
               className="w-full text-left"
             >
-              <GlassSurface intensity="subtle" className="p-4 rounded-xl">
+              <GlassSurface
+                intensity="subtle"
+                className={cn('rounded-xl', density.cardPadding)}
+              >
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                     💬
@@ -330,19 +386,26 @@ function TodaySection({
   );
 }
 
-// YOUR SPACES Section
+// ============================================
+// YOUR SPACES SECTION
+// ============================================
+
 function YourSpacesSection({
   spaces,
   loading,
+  density,
 }: {
   spaces: SpaceData[];
   loading: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
 }) {
+  const maxItems = density.maxItems.spaces;
+
   if (loading) {
     return (
-      <Section title="Your Spaces" action="Browse" actionHref="/spaces" delay={0.2}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
+      <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/spaces">
+        <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
+          {Array.from({ length: maxItems + 1 }).map((_, i) => (
             <div
               key={i}
               className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
@@ -353,16 +416,27 @@ function YourSpacesSection({
     );
   }
 
+  if (spaces.length === 0) {
+    return (
+      <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/spaces">
+        <FeedEmptyState variant="spaces" />
+      </Section>
+    );
+  }
+
   return (
-    <Section title="Your Spaces" action="Browse" actionHref="/spaces" delay={0.2}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {spaces.slice(0, 3).map((space, i) => (
-          <Tilt key={space.id} intensity={6}>
+    <Section section="spaces" title="Your Spaces" action="Browse" actionHref="/spaces">
+      <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
+        {spaces.slice(0, maxItems).map((space) => (
+          <Tilt key={space.id} intensity={density.tiltIntensity + 1}>
             <Link href={`/s/${space.handle || space.id}`}>
               <GlassSurface
                 intensity="subtle"
                 interactive
-                className="aspect-square rounded-xl p-4 flex flex-col justify-between"
+                className={cn(
+                  'aspect-square rounded-xl flex flex-col justify-between',
+                  density.cardPadding
+                )}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-body-sm font-medium text-white truncate flex-1">
@@ -386,12 +460,15 @@ function YourSpacesSection({
         ))}
 
         {/* Browse tile */}
-        <Tilt intensity={6}>
+        <Tilt intensity={density.tiltIntensity + 1}>
           <Link href="/spaces">
             <GlassSurface
               intensity="subtle"
               interactive
-              className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
+              className={cn(
+                'aspect-square rounded-xl flex flex-col items-center justify-center border-dashed',
+                density.cardPadding
+              )}
             >
               <span className="text-title-lg mb-2">+</span>
               <span className="text-label text-white/40">Browse All</span>
@@ -403,24 +480,33 @@ function YourSpacesSection({
   );
 }
 
-// THIS WEEK Section
+// ============================================
+// THIS WEEK SECTION
+// ============================================
+
 function ThisWeekSection({
   events,
   loading,
+  density,
 }: {
   events: EventData[];
   loading: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
 }) {
   const router = useRouter();
+  const maxItems = density.maxItems.events;
 
   if (loading) {
     return (
-      <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
-        <div className="space-y-3">
+      <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
+        <div className={cn('space-y-2', density.cardGap)}>
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
+              className={cn(
+                'rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse',
+                density.cardPadding
+              )}
             >
               <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
               <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
@@ -433,23 +519,16 @@ function ThisWeekSection({
 
   if (events.length === 0) {
     return (
-      <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
-        <GlassSurface intensity="subtle" className="p-6 rounded-xl text-center">
-          <p className="text-body text-white/50 mb-4">
-            Nothing scheduled this week. Explore what's happening.
-          </p>
-          <Button variant="default" size="sm" asChild>
-            <Link href="/explore?tab=events">Browse events</Link>
-          </Button>
-        </GlassSurface>
+      <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
+        <FeedEmptyState variant="events" compact />
       </Section>
     );
   }
 
   return (
-    <Section title="This Week" action="All events" actionHref="/explore?tab=events" delay={0.3}>
-      <div className="space-y-2">
-        {events.slice(0, 4).map((event) => (
+    <Section section="events" title="This Week" action="All events" actionHref="/explore?tab=events">
+      <div className={cn('space-y-2', density.cardGap)}>
+        {events.slice(0, maxItems).map((event) => (
           <button
             key={event.id}
             type="button"
@@ -459,7 +538,7 @@ function ThisWeekSection({
             <GlassSurface
               intensity="subtle"
               interactive
-              className="p-3 rounded-lg"
+              className={cn('rounded-lg', density.cardPadding)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
@@ -483,23 +562,30 @@ function ThisWeekSection({
   );
 }
 
-// YOUR CREATIONS Section
+// ============================================
+// YOUR CREATIONS SECTION
+// ============================================
+
 function YourCreationsSection({
   tools,
   loading,
   isBuilder,
+  density,
 }: {
   tools: ToolData[];
   loading: boolean;
   isBuilder: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
 }) {
+  const maxItems = density.maxItems.tools;
+
   if (!isBuilder) return null;
 
   if (loading) {
     return (
-      <Section title="Your Creations" action="HiveLab" actionHref="/hivelab" delay={0.4}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[1, 2, 3, 4].map((i) => (
+      <Section section="creations" title="Your Creations" action="HiveLab" actionHref="/hivelab">
+        <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
+          {Array.from({ length: maxItems + 1 }).map((_, i) => (
             <div
               key={i}
               className="aspect-square rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse"
@@ -510,16 +596,27 @@ function YourCreationsSection({
     );
   }
 
+  if (tools.length === 0) {
+    return (
+      <Section section="creations" title="Your Creations" action="HiveLab" actionHref="/hivelab">
+        <FeedEmptyState variant="creations" />
+      </Section>
+    );
+  }
+
   return (
-    <Section title="Your Creations" action="HiveLab" actionHref="/hivelab" delay={0.4}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {tools.slice(0, 3).map((tool) => (
-          <Tilt key={tool.id} intensity={6}>
+    <Section section="creations" title="Your Creations" action="HiveLab" actionHref="/hivelab">
+      <div className={cn('grid grid-cols-2 md:grid-cols-4', density.cardGap)}>
+        {tools.slice(0, maxItems).map((tool) => (
+          <Tilt key={tool.id} intensity={density.tiltIntensity + 1}>
             <Link href={`/lab/${tool.id}`}>
               <GlassSurface
                 intensity="subtle"
                 interactive
-                className="aspect-square rounded-xl p-4 flex flex-col justify-between"
+                className={cn(
+                  'aspect-square rounded-xl flex flex-col justify-between',
+                  density.cardPadding
+                )}
               >
                 <span className="text-title">{tool.icon || '🛠️'}</span>
                 <div>
@@ -538,12 +635,15 @@ function YourCreationsSection({
         ))}
 
         {/* Create tile */}
-        <Tilt intensity={6}>
+        <Tilt intensity={density.tiltIntensity + 1}>
           <Link href="/lab/new">
             <GlassSurface
               intensity="subtle"
               interactive
-              className="aspect-square rounded-xl p-4 flex flex-col items-center justify-center border-dashed"
+              className={cn(
+                'aspect-square rounded-xl flex flex-col items-center justify-center border-dashed',
+                density.cardPadding
+              )}
             >
               <span className="text-title-lg mb-2">+</span>
               <span className="text-label text-white/40">Create Tool</span>
@@ -555,19 +655,29 @@ function YourCreationsSection({
   );
 }
 
-// DISCOVER Section
+// ============================================
+// DISCOVER SECTION
+// ============================================
+
 function DiscoverSection({
   recommendations,
   loading,
+  density,
 }: {
   recommendations: RecommendedSpace[];
   loading: boolean;
+  density: ReturnType<typeof useFeedDensity>['config'];
 }) {
+  const maxItems = density.maxItems.discover;
+
   if (loading) {
     return (
-      <Section title="Discover" delay={0.5}>
-        <div className="space-y-3">
-          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse">
+      <Section section="discover" title="Discover">
+        <div className={cn('space-y-3', density.cardGap)}>
+          <div className={cn(
+            'rounded-xl bg-white/[0.02] border border-white/[0.06] animate-pulse',
+            density.cardPadding
+          )}>
             <div className="h-4 w-3/4 bg-white/[0.06] rounded mb-2" />
             <div className="h-3 w-1/2 bg-white/[0.04] rounded" />
           </div>
@@ -577,16 +687,24 @@ function DiscoverSection({
   }
 
   if (recommendations.length === 0) {
-    return null;
+    return (
+      <Section section="discover" title="Discover" action="Explore" actionHref="/explore">
+        <FeedEmptyState variant="discover" compact />
+      </Section>
+    );
   }
 
   return (
-    <Section title="Discover" action="Explore" actionHref="/explore" delay={0.5}>
-      <div className="space-y-3">
-        {recommendations.slice(0, 2).map((space) => (
-          <Tilt key={space.id} intensity={4}>
+    <Section section="discover" title="Discover" action="Explore" actionHref="/explore">
+      <div className={cn('space-y-3', density.cardGap)}>
+        {recommendations.slice(0, maxItems).map((space) => (
+          <Tilt key={space.id} intensity={density.tiltIntensity}>
             <Link href={`/s/${space.handle}`}>
-              <GlassSurface intensity="subtle" interactive className="p-4 rounded-xl">
+              <GlassSurface
+                intensity="subtle"
+                interactive
+                className={cn('rounded-xl', density.cardPadding)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-white/[0.04] flex items-center justify-center text-title-sm">
                     ✨
@@ -609,7 +727,10 @@ function DiscoverSection({
   );
 }
 
-// QUICK ACTIONS Sidebar
+// ============================================
+// QUICK ACTIONS SIDEBAR
+// ============================================
+
 function QuickActions() {
   return (
     <GlassSurface intensity="subtle" className="p-5 rounded-xl">
@@ -650,6 +771,7 @@ function QuickActions() {
 export default function FeedPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const { density, setDensity, config: densityConfig, isLoaded: densityLoaded } = useFeedDensity();
 
   // Data states
   const [spaces, setSpaces] = useState<SpaceData[]>([]);
@@ -658,6 +780,7 @@ export default function FeedPage() {
   const [tools, setTools] = useState<ToolData[]>([]);
   const [recommendations, setRecommendations] = useState<RecommendedSpace[]>([]);
   const [unreadSpaces, setUnreadSpaces] = useState<SpaceData[]>([]);
+  const [feedUpdate, setFeedUpdate] = useState<FeedUpdateData | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Fetch all feed data
@@ -669,12 +792,13 @@ export default function FeedPage() {
 
       try {
         // Parallel fetch all data sources
-        const [spacesRes, dashboardRes, toolsRes] = await Promise.all([
+        const [spacesRes, dashboardRes, toolsRes, feedUpdateRes] = await Promise.all([
           fetch('/api/profile/my-spaces', { credentials: 'include' }),
           fetch('/api/profile/dashboard?includeRecommendations=true', {
             credentials: 'include',
           }),
           fetch('/api/tools?limit=10', { credentials: 'include' }),
+          fetch('/api/feed/updates?action=check', { credentials: 'include' }),
         ]);
 
         // Process spaces
@@ -726,6 +850,19 @@ export default function FeedPage() {
           const toolsData = await toolsRes.json();
           setTools(toolsData.tools || []);
         }
+
+        // Process feed updates ("since you left")
+        if (feedUpdateRes.ok) {
+          const feedUpdateData = await feedUpdateRes.json();
+          if (feedUpdateData.data?.update) {
+            setFeedUpdate({
+              hasNewPosts: feedUpdateData.data.update.hasNewPosts,
+              newPostCount: feedUpdateData.data.update.newPostCount,
+              lastViewedAt: feedUpdateData.data.update.lastCheckedAt,
+              lastPostAt: feedUpdateData.data.update.lastPostAt,
+            });
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch feed data:', error);
       } finally {
@@ -734,10 +871,31 @@ export default function FeedPage() {
     }
 
     fetchFeedData();
+
+    // Mark feed as viewed after 5 seconds on the page
+    const markViewedTimeout = setTimeout(() => {
+      fetch('/api/feed/updates?action=mark_viewed&itemIds=feed_view', {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(console.error);
+    }, 5000);
+
+    return () => clearTimeout(markViewedTimeout);
   }, [authLoading, user]);
 
+  // Check if all sections are empty
+  const isAllEmpty = useMemo(() => {
+    if (loading) return false;
+    const hasToday = todayEvents.length > 0 || unreadSpaces.length > 0;
+    const hasSpaces = spaces.length > 0;
+    const hasWeek = weekEvents.length > 0;
+    const hasCreations = (user?.isBuilder ?? false) && tools.length > 0;
+    const hasDiscover = recommendations.length > 0;
+    return !hasToday && !hasSpaces && !hasWeek && !hasCreations && !hasDiscover;
+  }, [loading, todayEvents, unreadSpaces, spaces, weekEvents, tools, recommendations, user?.isBuilder]);
+
   // Loading state
-  if (authLoading) {
+  if (authLoading || !densityLoaded) {
     return (
       <div className="min-h-screen bg-[var(--bg-ground)]">
         <div className="max-w-5xl mx-auto px-6 py-10">
@@ -762,53 +920,133 @@ export default function FeedPage() {
 
   const firstName = user?.displayName?.split(' ')[0] || user?.fullName?.split(' ')[0] || '';
 
+  // Page-level empty state
+  if (isAllEmpty) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-ground)]">
+        {/* Header */}
+        <div className="border-b border-white/[0.06]">
+          <div className="max-w-5xl mx-auto px-6 py-6">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+            >
+              <h1 className="text-title-lg font-semibold text-white">
+                {getGreeting()}
+                {firstName && (
+                  <>
+                    , <GradientText variant="gold">{firstName}</GradientText>
+                  </>
+                )}
+              </h1>
+              <p className="text-body text-white/50 mt-1">
+                Here's what's happening in your world
+              </p>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Empty state */}
+        <main className="max-w-xl mx-auto px-6 py-16">
+          <FeedEmptyState variant="page" />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[var(--bg-ground)]">
       {/* Header */}
       <div className="border-b border-white/[0.06]">
         <div className="max-w-5xl mx-auto px-6 py-6">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
-          >
-            <h1 className="text-title-lg font-semibold text-white">
-              {getGreeting()}
-              {firstName && (
-                <>
-                  , <GradientText variant="gold">{firstName}</GradientText>
-                </>
+          <div className="flex items-start justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+            >
+              <h1 className="text-title-lg font-semibold text-white">
+                {getGreeting()}
+                {firstName && (
+                  <>
+                    , <GradientText variant="gold">{firstName}</GradientText>
+                  </>
+                )}
+              </h1>
+              {/* "Since you left" indicator */}
+              {feedUpdate && feedUpdate.hasNewPosts && feedUpdate.newPostCount > 0 ? (
+                <motion.p
+                  className="text-body text-white/50 mt-1 flex items-center gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-[var(--life-gold)] animate-pulse" />
+                    <span className="text-[var(--life-gold)]">
+                      {feedUpdate.newPostCount} new
+                    </span>
+                  </span>
+                  {feedUpdate.lastViewedAt && (
+                    <span>since you were here {formatTimeSince(feedUpdate.lastViewedAt)}</span>
+                  )}
+                </motion.p>
+              ) : (
+                <p className="text-body text-white/50 mt-1">
+                  Here's what's happening in your world
+                </p>
               )}
-            </h1>
-            <p className="text-body text-white/50 mt-1">
-              Here's what's happening in your world
-            </p>
-          </motion.div>
+            </motion.div>
+
+            {/* Density toggle */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <DensityToggle value={density} onChange={setDensity} />
+            </motion.div>
+          </div>
         </div>
       </div>
 
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid gap-8 lg:grid-cols-[1fr_280px]">
+        <div className={cn('grid lg:grid-cols-[1fr_280px]', densityConfig.sectionGap)}>
           {/* Main column */}
           <div>
             <TodaySection
               events={todayEvents}
               unreadSpaces={unreadSpaces}
               loading={loading}
+              density={densityConfig}
             />
 
-            <YourSpacesSection spaces={spaces} loading={loading} />
+            <YourSpacesSection
+              spaces={spaces}
+              loading={loading}
+              density={densityConfig}
+            />
 
-            <ThisWeekSection events={weekEvents} loading={loading} />
+            <ThisWeekSection
+              events={weekEvents}
+              loading={loading}
+              density={densityConfig}
+            />
 
             <YourCreationsSection
               tools={tools}
               loading={loading}
               isBuilder={user?.isBuilder ?? false}
+              density={densityConfig}
             />
 
-            <DiscoverSection recommendations={recommendations} loading={loading} />
+            <DiscoverSection
+              recommendations={recommendations}
+              loading={loading}
+              density={densityConfig}
+            />
           </div>
 
           {/* Sidebar */}

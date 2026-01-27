@@ -23,6 +23,9 @@ import { useToolRuntime } from '@/hooks/use-tool-runtime';
 import { ToolAnalyticsPanel } from './components/analytics-panel';
 import { AutomationAwarenessPanel } from './components/automation-awareness-panel';
 
+// Feature flag: Automations are non-functional, hide UI until backend is ready
+const AUTOMATIONS_ENABLED = false;
+
 /**
  * Tool Studio Page - Full HiveLabIDE Experience
  *
@@ -691,8 +694,8 @@ export default function ToolStudioPage({ params }: Props) {
         />
       )}
 
-      {/* Automation Awareness Panel */}
-      {automationsOpen && (
+      {/* Automation Awareness Panel (hidden until backend ready) */}
+      {AUTOMATIONS_ENABLED && automationsOpen && (
         <AutomationAwarenessPanel
           toolId={toolId}
           toolName={composition.name || 'Untitled Tool'}

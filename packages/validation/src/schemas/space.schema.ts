@@ -41,7 +41,7 @@ export const spaceSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters').max(50, 'Name must be 50 characters or less'),
   description: z.string().min(10, 'Description must be at least 10 characters').max(500, 'Description must be 500 characters or less'),
   imageUrl: z.string().url('Invalid URL format').optional(),
-  category: z.enum(['Major', 'Residential', 'Student Life', 'Club', 'General', 'Greek Life', 'Academic', 'Cultural', 'Sports', 'Arts', 'Service', 'Professional', 'Special Interest']),
+  category: z.enum(['major', 'residential', 'greek_life', 'student_organizations', 'university_organizations', 'campus_living', 'hive_exclusive', 'interest', 'community', 'academic', 'cultural', 'sports', 'arts', 'service', 'professional']),
   memberCount: z.number().int().nonnegative().default(0),
   isPublic: z.boolean().default(true),
   visibility: z.enum(['public', 'private']).default('public'),

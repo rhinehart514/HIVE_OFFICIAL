@@ -133,12 +133,21 @@ export function ProfileHero({
                 background: 'linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%)',
               }}
             >
-              <span
-                className="text-7xl sm:text-8xl font-bold"
-                style={{ color: 'var(--text-tertiary)' }}
+              {/* Contained avatar circle - 80px on mobile, 96px on desktop */}
+              <div
+                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
               >
-                {initials}
-              </span>
+                <span
+                  className="text-2xl sm:text-3xl font-semibold"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
+                  {initials}
+                </span>
+              </div>
             </div>
           )}
 

@@ -107,7 +107,7 @@ export const GET = withAuthAndErrors(async (
   const url = new URL(request.url);
 
   const boardId = url.searchParams.get('boardId');
-  const limit = parseInt(url.searchParams.get('limit') || '50', 10);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
   const before = url.searchParams.get('before');
   const after = url.searchParams.get('after');
 

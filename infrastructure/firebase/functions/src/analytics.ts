@@ -268,6 +268,119 @@ async function updateContentViewCount(
 }
 
 /**
+ * Scheduled function to calculate space trending scores (runs every hour)
+ *
+ * Algorithm factors:
+ * - memberCount: base signal (log scale to prevent mega-spaces from dominating)
+ * - recentJoins: members joined in last 7 days (growth signal)
+ * - postCount: activity signal
+ * - lastActivityAt: recency decay (stale spaces score lower)
+ */
+export const calculateSpaceTrendingScores = functions.pubsub
+  .schedule("0 * * * *") // Run every hour
+  .timeZone("America/New_York")
+  .onRun(async (): Promise<null> => {
+    try {
+      logger.info("Starting space trending score calculation");
+
+      const db = firestore();
+      const now = Timestamp.now();
+      const sevenDaysAgo = new Date(now.toMillis() - 7 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(now.toMillis() - 14 * 24 * 60 * 60 * 1000);
+
+      // Get all active spaces
+      const spacesSnapshot = await db
+        .collection("spaces")
+        .where("isActive", "==", true)
+        .get();
+
+      if (spacesSnapshot.empty) {
+        logger.info("No active spaces found");
+        return null;
+      }
+
+      const batch = db.batch();
+      let updatedCount = 0;
+
+      for (const spaceDoc of spacesSnapshot.docs) {
+        const spaceId = spaceDoc.id;
+        const spaceData = spaceDoc.data();
+
+        // Get member count (from metrics or count directly)
+        const memberCount = spaceData.metrics?.memberCount || spaceData.memberCount || 0;
+
+        // Count recent joins (members who joined in last 7 days)
+        const recentJoinsSnapshot = await db
+          .collection("spaceMembers")
+          .where("spaceId", "==", spaceId)
+          .where("joinedAt", ">", sevenDaysAgo)
+          .count()
+          .get();
+        const recentJoins = recentJoinsSnapshot.data().count;
+
+        // Get post count
+        const postCount = spaceData.metrics?.postCount || 0;
+
+        // Calculate recency multiplier based on last activity
+        const lastActivityAt = spaceData.lastActivityAt?.toDate() || spaceData.updatedAt?.toDate();
+        let recencyMultiplier = 1.0;
+        if (lastActivityAt) {
+          const daysSinceActivity = (now.toMillis() - lastActivityAt.getTime()) / (24 * 60 * 60 * 1000);
+          if (daysSinceActivity > 14) {
+            recencyMultiplier = 0.5; // Heavy decay for inactive spaces
+          } else if (daysSinceActivity > 7) {
+            recencyMultiplier = 0.75; // Moderate decay
+          } else if (daysSinceActivity > 3) {
+            recencyMultiplier = 0.9; // Slight decay
+          }
+        } else {
+          recencyMultiplier = 0.6; // No activity data = lower score
+        }
+
+        // Calculate trending score
+        // - Log scale for members (0-60 pts, logarithmic to prevent mega-spaces from dominating)
+        // - Recent joins (0-25 pts, capped at 5 joins)
+        // - Post activity (0-20 pts, capped at 10 posts)
+        // - Recency multiplier (0.5-1.0x)
+        const trendingScore = Math.round(
+          (
+            Math.log10(memberCount + 1) * 20 +           // 0-60 pts (log scale)
+            Math.min(recentJoins, 5) * 5 +               // 0-25 pts
+            Math.min(postCount, 10) * 2                  // 0-20 pts
+          ) * recencyMultiplier
+        );
+
+        // Update space with trending score
+        batch.update(spaceDoc.ref, {
+          trendingScore,
+          trendingUpdatedAt: now,
+        });
+        updatedCount++;
+
+        // Firestore batch limit is 500 operations
+        if (updatedCount % 400 === 0) {
+          await batch.commit();
+          logger.info(`Committed batch of ${updatedCount} space trending scores`);
+        }
+      }
+
+      // Commit remaining updates
+      if (updatedCount % 400 !== 0) {
+        await batch.commit();
+      }
+
+      logger.info("Space trending score calculation completed", {
+        spacesUpdated: updatedCount,
+      });
+
+      return null;
+    } catch (error) {
+      logger.error("Error calculating space trending scores", error);
+      return null;
+    }
+  });
+
+/**
  * Scheduled function to calculate trending content (runs every 3 hours)
  */
 export const calculateTrendingContent = functions.pubsub

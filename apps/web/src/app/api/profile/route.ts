@@ -131,6 +131,32 @@ export const GET = withAuthAndErrors(
       // Use DDD repository to get profile
       const profileResult = await profileRepository.findById(targetUserId);
 
+      if (profileResult.isSuccess) {
+        const profile = profileResult.getValue();
+
+        // SECURITY: Cross-campus isolation for non-own profiles
+        // Users can only view profiles from their own campus unless PUBLIC
+        if (!isOwnProfile) {
+          const targetCampusId = profile.campusId.id;
+          const isCrossCampus = targetCampusId !== campusId;
+
+          if (isCrossCampus && profile.privacy.level !== PrivacyLevel.PUBLIC) {
+            logger.warn('Cross-campus profile access blocked', {
+              targetUserId,
+              targetCampusId,
+              viewerCampusId: campusId,
+              viewerId: userId,
+              privacyLevel: profile.privacy.level,
+              endpoint: '/api/profile'
+            });
+            return NextResponse.json({
+              success: false,
+              error: 'Profile not found'
+            }, { status: 404 });
+          }
+        }
+      }
+
       if (profileResult.isFailure) {
         // Fallback to direct Firestore check for onboarding detection
         const userSnapshot = await dbAdmin.collection('users').doc(targetUserId).get();
@@ -150,6 +176,29 @@ export const GET = withAuthAndErrors(
 
         // Profile exists but failed to load as domain object - use legacy path
         const userData = userSnapshot.data()!;
+
+        // SECURITY: Cross-campus isolation for legacy path
+        if (!isOwnProfile) {
+          const targetCampusId = userData.campusId;
+          const isCrossCampus = targetCampusId && targetCampusId !== campusId;
+          const isPrivate = userData.privacySettings?.level !== 'public' &&
+                           userData.privacySettings?.isPublic !== true;
+
+          if (isCrossCampus && isPrivate) {
+            logger.warn('Cross-campus profile access blocked (legacy path)', {
+              targetUserId,
+              targetCampusId,
+              viewerCampusId: campusId,
+              viewerId: userId,
+              endpoint: '/api/profile'
+            });
+            return NextResponse.json({
+              success: false,
+              error: 'Profile not found'
+            }, { status: 404 });
+          }
+        }
+
         return buildLegacyResponse(targetUserId, userData, campusId, isOwnProfile, includes);
       }
 
@@ -212,11 +261,11 @@ export const GET = withAuthAndErrors(
             showDorm: profile.privacy.showDorm,
             showSchedule: profile.privacy.showSchedule,
             showActivity: profile.privacy.showActivity,
-            // Legacy fields for backward compatibility
-            showSpaces: true,
-            showConnections: true,
-            allowDirectMessages: true,
-            showOnlineStatus: true
+            // Derived from privacy level (PUBLIC/CAMPUS_ONLY show, PRIVATE/CONNECTIONS_ONLY hide)
+            showSpaces: profile.privacy.level !== PrivacyLevel.PRIVATE,
+            showConnections: profile.privacy.level !== PrivacyLevel.PRIVATE,
+            allowDirectMessages: profile.privacy.level !== PrivacyLevel.PRIVATE,
+            showOnlineStatus: profile.privacy.level !== PrivacyLevel.PRIVATE
           },
           stats: {
             connectionCount: profile.connectionCount,
@@ -225,8 +274,10 @@ export const GET = withAuthAndErrors(
             activityScore: profile.activityScore,
             spacesJoined: profile.spaces.length
           },
-          spaces: profile.spaces || [],
-          connections: profile.connections || [],
+          // SECURITY: Respect privacy level for spaces and connections
+          // Private profiles don't expose social graph to other users
+          spaces: (isOwnProfile || profile.privacy.level !== PrivacyLevel.PRIVATE) ? (profile.spaces || []) : [],
+          connections: (isOwnProfile || profile.privacy.level !== PrivacyLevel.PRIVATE) ? (profile.connections || []) : [],
           achievements: profile.badges || [],
           metadata: {
             campusId: profile.campusId.id,

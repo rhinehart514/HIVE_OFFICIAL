@@ -1,25 +1,28 @@
 'use client';
 
 /**
- * IdentitySection - Profile setup
- * REDESIGNED: Jan 21, 2026
+ * IdentitySection - The Naming Phase
+ * UPDATED: Jan 26, 2026 - The Threshold Entry Flow
+ *
+ * Collects identity for the ceremonial entry:
+ * - First name + Last name
+ * - Handle (the earned moment)
+ * - Major (dropdown)
+ * - Graduation year (dropdown)
+ * - Interests (multi-select chips)
  *
  * Premium form design:
  * - Apple-style inputs (h-14, rounded-2xl)
  * - Clash Display for headers
- * - Gold CTA button (earned moment - final step)
+ * - Multi-select interest chips
  */
 
 import * as React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, Check } from 'lucide-react';
 import {
   HandleInput,
   HandleStatusBadge,
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
   Button,
   type HandleStatus,
 } from '@hive/ui/design-system/primitives';
@@ -30,8 +33,64 @@ import {
   shakeVariants,
   errorInlineVariants,
 } from '../motion/section-motion';
-import { DURATION, EASE_PREMIUM } from '../motion/entry-motion';
 import type { SectionState } from '../hooks/useEvolvingEntry';
+
+// Major options
+const MAJOR_OPTIONS = [
+  'Undeclared',
+  'Accounting',
+  'Architecture',
+  'Art',
+  'Biology',
+  'Business',
+  'Chemistry',
+  'Communications',
+  'Computer Science',
+  'Economics',
+  'Education',
+  'Engineering',
+  'English',
+  'Film',
+  'Finance',
+  'History',
+  'Information Science',
+  'Journalism',
+  'Law',
+  'Marketing',
+  'Mathematics',
+  'Medicine',
+  'Music',
+  'Nursing',
+  'Philosophy',
+  'Physics',
+  'Political Science',
+  'Psychology',
+  'Sociology',
+  'Theater',
+  'Other',
+];
+
+// Graduation year options (current year to +6)
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: 7 }, (_, i) => currentYear + i);
+
+// Interest options
+const INTEREST_OPTIONS = [
+  'Startups',
+  'Tech',
+  'Arts',
+  'Music',
+  'Climate',
+  'Politics',
+  'Health',
+  'Sports',
+  'Business',
+  'Science',
+  'Culture',
+  'Social Justice',
+  'Gaming',
+  'Media',
+];
 
 interface IdentitySectionProps {
   section: SectionState;
@@ -42,60 +101,17 @@ interface IdentitySectionProps {
   handleSuggestions: string[];
   major: string;
   graduationYear: number | null;
-  residenceType: 'on-campus' | 'off-campus' | 'commuter' | '';
-  residentialSpaceId: string;
   interests: string[];
-  communityIdentities: {
-    international?: boolean;
-    transfer?: boolean;
-    firstGen?: boolean;
-    commuter?: boolean;
-    graduate?: boolean;
-    veteran?: boolean;
-  };
   onFirstNameChange: (name: string) => void;
   onLastNameChange: (name: string) => void;
   onHandleChange: (handle: string) => void;
   onSuggestionClick: (handle: string) => void;
   onMajorChange: (major: string) => void;
-  onGraduationYearChange: (year: number | null) => void;
-  onResidenceTypeChange: (type: 'on-campus' | 'off-campus' | 'commuter') => void;
-  onResidentialChange: (spaceId: string) => void;
+  onYearChange: (year: number | null) => void;
   onInterestsChange: (interests: string[]) => void;
-  onCommunityIdentitiesChange: (identities: Record<string, boolean>) => void;
   onSubmit: () => void;
   isLoading: boolean;
-  majors: string[];
-  graduationYears: number[];
-  residentialSpaces: Array<{ id: string; name: string }>;
 }
-
-// Campus-authentic interests - curated from UB_INTEREST_CATEGORIES
-// These are the most universally relatable interests that create connection
-const CURATED_INTERESTS = [
-  // Academic vibes (broad, relatable)
-  { label: 'CS / Tech', value: 'cs' },
-  { label: 'Pre-med / Bio', value: 'pre-med' },
-  { label: 'Business', value: 'business' },
-  { label: 'Engineering', value: 'engineering' },
-  { label: 'Arts / Creative', value: 'arts' },
-  { label: 'Social Sciences', value: 'social-sci' },
-  // Study style (everyone relates)
-  { label: 'Finals crammer', value: 'finals-crammer' },
-  { label: 'Solo grinder', value: 'solo-grinder' },
-  { label: 'Study pods', value: 'study-pods' },
-  // Life vibes
-  { label: 'Gaming', value: 'gaming' },
-  { label: 'Music', value: 'music' },
-  { label: 'Fitness', value: 'fitness' },
-  { label: 'Film / TV', value: 'film' },
-  { label: 'Sports', value: 'sports' },
-  { label: 'Food culture', value: 'food' },
-  // Builder energy
-  { label: 'Side projects', value: 'side-projects' },
-  { label: 'Startups', value: 'startups' },
-  { label: 'AI / ML curious', value: 'ai-ml' },
-];
 
 export function IdentitySection({
   section,
@@ -106,39 +122,58 @@ export function IdentitySection({
   handleSuggestions,
   major,
   graduationYear,
-  residenceType,
-  residentialSpaceId,
   interests,
-  communityIdentities,
   onFirstNameChange,
   onLastNameChange,
   onHandleChange,
   onSuggestionClick,
   onMajorChange,
-  onGraduationYearChange,
-  onResidenceTypeChange,
-  onResidentialChange,
+  onYearChange,
   onInterestsChange,
-  onCommunityIdentitiesChange,
   onSubmit,
   isLoading,
-  majors,
-  graduationYears,
-  residentialSpaces,
 }: IdentitySectionProps) {
-  const isActive = section.status === 'active';
+  const [majorOpen, setMajorOpen] = React.useState(false);
+  const [yearOpen, setYearOpen] = React.useState(false);
+  const majorRef = React.useRef<HTMLDivElement>(null);
+  const yearRef = React.useRef<HTMLDivElement>(null);
+
   const hasError = !!section.error;
 
-  // Required: name, handle available, 2-3 interests
-  // Optional: major, graduation year, community identities
-  // NOTE: Living situation deferred to in-platform progressive profiling
+  // Close dropdowns on outside click
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (majorRef.current && !majorRef.current.contains(event.target as Node)) {
+        setMajorOpen(false);
+      }
+      if (yearRef.current && !yearRef.current.contains(event.target as Node)) {
+        setYearOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Toggle interest selection
+  const toggleInterest = React.useCallback(
+    (interest: string) => {
+      if (interests.includes(interest)) {
+        onInterestsChange(interests.filter((i) => i !== interest));
+      } else if (interests.length < 5) {
+        onInterestsChange([...interests, interest]);
+      }
+    },
+    [interests, onInterestsChange]
+  );
+
+  // Validation: name + available handle + at least 2 interests
   const canSubmit =
     firstName.trim() &&
     lastName.trim() &&
     handle.trim() &&
     handleStatus === 'available' &&
     interests.length >= 2 &&
-    interests.length <= 3 &&
     !isLoading;
 
   const handleKeyDown = React.useCallback(
@@ -156,7 +191,7 @@ export function IdentitySection({
   }
 
   // Locked/complete state - identity section doesn't show a chip
-  // (arrival section takes over)
+  // (crossing/arrival section takes over)
   if (section.status === 'locked' || section.status === 'complete') {
     return null;
   }
@@ -170,7 +205,7 @@ export function IdentitySection({
       exit="exit"
       className="space-y-5"
     >
-      {/* Header - premium /about-style typography */}
+      {/* Header - The Naming */}
       <motion.div variants={sectionChildVariants} className="space-y-2 mb-2">
         <h2
           className="text-title-lg font-semibold text-white tracking-tight"
@@ -185,7 +220,7 @@ export function IdentitySection({
 
       {/* Form */}
       <div className="space-y-4">
-        {/* Name row - Apple-style inputs */}
+        {/* Name row */}
         <motion.div
           variants={sectionChildVariants}
           className="grid grid-cols-2 gap-3"
@@ -259,136 +294,154 @@ export function IdentitySection({
           />
         </motion.div>
 
-        {/* Identity dropdowns - Optional fields */}
+        {/* Major and Year row */}
+        <motion.div
+          variants={sectionChildVariants}
+          className="grid grid-cols-2 gap-3"
+        >
+          {/* Major dropdown */}
+          <div ref={majorRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMajorOpen(!majorOpen)}
+              disabled={isLoading}
+              className={cn(
+                'w-full flex items-center justify-between h-14 px-4 rounded-2xl border transition-all duration-200',
+                'bg-white/[0.03] border-white/[0.08]',
+                majorOpen && 'bg-white/[0.05] border-white/20',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
+                'disabled:opacity-50'
+              )}
+            >
+              <span className={cn('text-body-lg', major ? 'text-white' : 'text-white/25')}>
+                {major || 'Major'}
+              </span>
+              <ChevronDown
+                className={cn(
+                  'w-5 h-5 text-white/40 transition-transform',
+                  majorOpen && 'rotate-180'
+                )}
+              />
+            </button>
+
+            <AnimatePresence>
+              {majorOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#1a1a19] border border-white/[0.08] rounded-xl shadow-xl max-h-[240px] overflow-y-auto"
+                >
+                  {MAJOR_OPTIONS.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => {
+                        onMajorChange(m);
+                        setMajorOpen(false);
+                      }}
+                      className={cn(
+                        'w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors',
+                        'hover:bg-white/[0.04]',
+                        major === m && 'bg-white/[0.06]'
+                      )}
+                    >
+                      <span className={cn('text-body', major === m ? 'text-white' : 'text-white/70')}>
+                        {m}
+                      </span>
+                      {major === m && <Check size={16} className="text-[var(--life-gold)]" />}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Year dropdown */}
+          <div ref={yearRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setYearOpen(!yearOpen)}
+              disabled={isLoading}
+              className={cn(
+                'w-full flex items-center justify-between h-14 px-4 rounded-2xl border transition-all duration-200',
+                'bg-white/[0.03] border-white/[0.08]',
+                yearOpen && 'bg-white/[0.05] border-white/20',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
+                'disabled:opacity-50'
+              )}
+            >
+              <span className={cn('text-body-lg', graduationYear ? 'text-white' : 'text-white/25')}>
+                {graduationYear || 'Year'}
+              </span>
+              <ChevronDown
+                className={cn(
+                  'w-5 h-5 text-white/40 transition-transform',
+                  yearOpen && 'rotate-180'
+                )}
+              />
+            </button>
+
+            <AnimatePresence>
+              {yearOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 z-50 py-2 bg-[#1a1a19] border border-white/[0.08] rounded-xl shadow-xl"
+                >
+                  {YEAR_OPTIONS.map((y) => (
+                    <button
+                      key={y}
+                      type="button"
+                      onClick={() => {
+                        onYearChange(y);
+                        setYearOpen(false);
+                      }}
+                      className={cn(
+                        'w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors',
+                        'hover:bg-white/[0.04]',
+                        graduationYear === y && 'bg-white/[0.06]'
+                      )}
+                    >
+                      <span className={cn('text-body', graduationYear === y ? 'text-white' : 'text-white/70')}>
+                        {y}
+                      </span>
+                      {graduationYear === y && <Check size={16} className="text-[var(--life-gold)]" />}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
+        {/* Interests - multi-select chips */}
         <motion.div variants={sectionChildVariants} className="space-y-3">
-          {/* Major - Optional */}
-          <div className="space-y-1.5">
-            <label className="text-label text-white/40">
-              Major <span className="text-white/20">(optional)</span>
-            </label>
-            <Select
-              value={major}
-              onValueChange={onMajorChange}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your major" />
-              </SelectTrigger>
-              <SelectContent>
-                {majors.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Graduation year - Optional */}
-          <div className="space-y-1.5">
-            <label className="text-label text-white/40">
-              Graduation year <span className="text-white/20">(optional)</span>
-            </label>
-            <Select
-              value={graduationYear?.toString() || ''}
-              onValueChange={(v) => onGraduationYearChange(parseInt(v, 10))}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select year" />
-              </SelectTrigger>
-              <SelectContent>
-                {graduationYears.map((y) => (
-                  <SelectItem key={y} value={y.toString()}>
-                    Class of {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </motion.div>
-
-        {/* Interests multi-select - curated campus-authentic options */}
-        <motion.div variants={sectionChildVariants} className="space-y-2">
-          <label className="text-label text-white/40">
-            What are you into? <span className="text-white/60">(pick 2-3)</span>
-          </label>
+          <p className="text-body-sm text-white/40">
+            Interests <span className="text-white/25">(select 2-5)</span>
+          </p>
           <div className="flex flex-wrap gap-2">
-            {CURATED_INTERESTS.map(({ label, value }) => {
-              const isSelected = interests.includes(value);
-              const canSelect = !isSelected && interests.length < 3;
-              const canDeselect = isSelected;
-
+            {INTEREST_OPTIONS.map((interest) => {
+              const isSelected = interests.includes(interest);
               return (
                 <button
-                  key={value}
+                  key={interest}
                   type="button"
-                  onClick={() => {
-                    if (isSelected) {
-                      onInterestsChange(interests.filter((i) => i !== value));
-                    } else if (canSelect) {
-                      onInterestsChange([...interests, value]);
-                    }
-                  }}
-                  disabled={isLoading || (!canSelect && !canDeselect)}
+                  onClick={() => toggleInterest(interest)}
+                  disabled={isLoading || (!isSelected && interests.length >= 5)}
                   className={cn(
-                    'h-9 px-3.5 rounded-full text-body-sm font-medium transition-all duration-200',
-                    'border',
+                    'px-3.5 py-2 rounded-full text-body-sm font-medium transition-all duration-200',
+                    'border focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30',
                     isSelected
-                      ? 'bg-[var(--color-gold)]/10 border-[var(--color-gold)]/30 text-[var(--color-gold)]'
-                      : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:bg-white/[0.05] hover:border-white/15',
-                    (!canSelect && !canDeselect) && 'opacity-30 cursor-not-allowed',
-                    'disabled:opacity-50'
+                      ? 'bg-white/10 border-white/20 text-white'
+                      : 'bg-white/[0.02] border-white/[0.06] text-white/50 hover:bg-white/[0.04] hover:border-white/[0.08] hover:text-white/70',
+                    'disabled:opacity-40 disabled:cursor-not-allowed'
                   )}
                 >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          {interests.length > 0 && (
-            <p className="text-label-sm text-white/30">
-              {interests.length}/3 selected
-            </p>
-          )}
-        </motion.div>
-
-        {/* Community identities - compact pills for optional self-identification */}
-        <motion.div variants={sectionChildVariants} className="space-y-2">
-          <label className="text-label text-white/40">
-            Describe you? <span className="text-white/20">(optional)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { key: 'international', label: 'International' },
-              { key: 'transfer', label: 'Transfer' },
-              { key: 'firstGen', label: 'First-Gen' },
-              { key: 'commuter', label: 'Commuter' },
-              { key: 'graduate', label: 'Grad Student' },
-              { key: 'veteran', label: 'Veteran' },
-            ].map(({ key, label }) => {
-              const isSelected = communityIdentities[key as keyof typeof communityIdentities] || false;
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => {
-                    onCommunityIdentitiesChange({
-                      ...communityIdentities,
-                      [key]: !isSelected,
-                    });
-                  }}
-                  disabled={isLoading}
-                  className={cn(
-                    'h-9 px-3.5 rounded-full text-body-sm font-medium transition-all duration-200',
-                    'border',
-                    isSelected
-                      ? 'bg-white/10 border-white/25 text-white'
-                      : 'bg-white/[0.03] border-white/[0.08] text-white/50 hover:bg-white/[0.05] hover:border-white/15',
-                    'disabled:opacity-50'
-                  )}
-                >
-                  {label}
+                  {interest}
                 </button>
               );
             })}
@@ -410,7 +463,7 @@ export function IdentitySection({
           )}
         </AnimatePresence>
 
-        {/* CTA Button - Gold (earned moment) */}
+        {/* CTA Button - Continue to preview */}
         <motion.div variants={sectionChildVariants}>
           <Button
             variant="cta"
@@ -420,16 +473,16 @@ export function IdentitySection({
             loading={isLoading}
             className="w-full"
           >
-            {isLoading ? 'Setting up...' : 'Enter HIVE'}
+            {isLoading ? 'Setting up...' : 'Continue'}
           </Button>
         </motion.div>
 
-        {/* Subtext */}
+        {/* Manifesto line */}
         <motion.p
           variants={sectionChildVariants}
-          className="text-label text-white/25 text-center"
+          className="text-body-sm text-white/30 text-center"
         >
-          You can change your handle later
+          Your handle is permanent. Your profile is yours.
         </motion.p>
       </div>
     </motion.div>

@@ -9,6 +9,7 @@ import { logger } from "@/lib/structured-logger";
 import { withAuthAndErrors, withAuthValidationAndErrors, getUserId, getCampusId, type AuthenticatedRequest } from "@/lib/middleware";
 import { SecurityScanner } from "@/lib/secure-input-validation";
 import { checkSpacePermission, type SpaceRole } from "@/lib/space-permission-middleware";
+import { isAdmin } from "@/lib/admin-auth";
 
 const UpdateSpaceSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -273,7 +274,7 @@ export const PATCH = withAuthValidationAndErrors(
   }
 );
 
-// DELETE /api/spaces/[spaceId] - Delete space (owner only, requires verified claim)
+// DELETE /api/spaces/[spaceId] - Delete space (owner or platform admin)
 export const DELETE = withAuthAndErrors(async (
   request,
   { params }: { params: Promise<{ spaceId: string }> },
@@ -297,37 +298,43 @@ export const DELETE = withAuthAndErrors(async (
 
   const space = result.getValue();
 
-  // Enforce campus isolation
+  // Check if user is a platform admin (admins can delete any space on their campus)
+  const userIsAdmin = await isAdmin(userId);
+
+  // Enforce campus isolation (admins can only delete spaces on their campus)
   if (space.campusId.id !== campusId) {
     return respond.error("Access denied - campus mismatch", "FORBIDDEN", { status: 403 });
   }
 
-  // Check if user is the owner
-  if (space.owner?.id !== userId) {
-    return respond.error("Only the space owner can delete a space", "FORBIDDEN", { status: 403 });
+  // Check if user is the owner OR a platform admin
+  const isOwner = space.owner?.id === userId;
+  if (!isOwner && !userIsAdmin) {
+    return respond.error("Only the space owner or a platform admin can delete a space", "FORBIDDEN", { status: 403 });
   }
 
-  // Check if user has provisional access (pending verification)
-  const userLeaderRequest = space.leaderRequests?.find(
-    r => r.profileId.id === userId && r.status === 'pending'
-  );
-
-  if (userLeaderRequest?.provisionalAccessGranted && !userLeaderRequest.reviewedAt) {
-    return respond.error(
-      "Space deletion is disabled while your leader verification is pending. Please wait for verification to complete.",
-      "PROVISIONAL_ACCESS_RESTRICTED",
-      { status: 403 }
+  // Check if user has provisional access (pending verification) - only applies to owners
+  if (isOwner && !userIsAdmin) {
+    const userLeaderRequest = space.leaderRequests?.find(
+      r => r.profileId.id === userId && r.status === 'pending'
     );
+
+    if (userLeaderRequest?.provisionalAccessGranted && !userLeaderRequest.reviewedAt) {
+      return respond.error(
+        "Space deletion is disabled while your leader verification is pending. Please wait for verification to complete.",
+        "PROVISIONAL_ACCESS_RESTRICTED",
+        { status: 403 }
+      );
+    }
   }
 
-  // Proceed with deletion using the repository directly
-  // Note: deleteSpace method not yet implemented in SpaceManagementService
+  // Proceed with deletion
   const deleteResult = await spaceRepo.delete(spaceId);
 
   if (deleteResult.isFailure) {
     logger.error("Failed to delete space", {
       spaceId,
       userId,
+      isAdmin: userIsAdmin,
       error: deleteResult.error,
     });
     return respond.error(
@@ -337,6 +344,6 @@ export const DELETE = withAuthAndErrors(async (
     );
   }
 
-  logger.info("Space deleted", { spaceId, userId });
+  logger.info("Space deleted", { spaceId, userId, deletedByAdmin: userIsAdmin && !isOwner });
   return respond.success({ message: "Space deleted successfully" });
 });

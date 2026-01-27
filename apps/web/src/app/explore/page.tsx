@@ -331,10 +331,10 @@ function ExploreContent() {
           className="text-center mb-8"
         >
           <h1 className="text-heading-sm font-semibold text-white mb-2">
-            Explore {campusName}
+            Discover Your Campus
           </h1>
           <p className="text-body text-white/50">
-            Discover spaces, people, events, and tools
+            Find your people, your spaces, your opportunities
           </p>
         </motion.div>
 

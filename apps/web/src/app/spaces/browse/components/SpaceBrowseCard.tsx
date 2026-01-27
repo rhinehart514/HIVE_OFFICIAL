@@ -74,13 +74,13 @@ export function SpaceBrowseCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        duration: 0.5,
-        delay: index * 0.03,
+        duration: MOTION.duration.base,
+        delay: index * MOTION.stagger.tight,
         ease: MOTION.ease.premium,
       }}
       whileHover={{
         scale: 1.01,
-        transition: { duration: 0.2 },
+        transition: { duration: MOTION.duration.instant },
       }}
     >
       {/* Hover glow effect */}
@@ -140,11 +140,16 @@ export function SpaceBrowseCard({
 
         {/* Meta Row */}
         <div className="flex items-center gap-4 text-label text-white/30">
-          {/* Member count */}
-          {(space.memberCount ?? 0) > 0 && (
+          {/* Member count - show "Be the first" for empty spaces */}
+          {(space.memberCount ?? 0) > 0 ? (
             <div className="flex items-center gap-1.5">
               <Users size={12} />
-              <span>{space.memberCount} members</span>
+              <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-[var(--color-gold,#C9A227)]/70">
+              <Users size={12} />
+              <span className="font-medium">Be the first to join</span>
             </div>
           )}
 
@@ -227,7 +232,7 @@ export function FeaturedSpaceCard({
       className={cn('relative', className)}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: MOTION.ease.premium }}
+      transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
     >
       {/* Gold border animation */}
       <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
@@ -235,28 +240,28 @@ export function FeaturedSpaceCard({
           className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.slow, delay: 0.2, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'left' }}
         />
         <motion.div
           className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.slow, delay: 0.3, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'right' }}
         />
         <motion.div
           className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.slow, delay: 0.4, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'top' }}
         />
         <motion.div
           className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-[var(--color-gold,#C9A227)]/40 to-transparent"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: 1 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: MOTION.ease.premium }}
+          transition={{ duration: MOTION.duration.slow, delay: 0.5, ease: MOTION.ease.premium }}
           style={{ transformOrigin: 'bottom' }}
         />
       </div>
@@ -270,7 +275,7 @@ export function FeaturedSpaceCard({
         }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.6, ease: MOTION.ease.premium }}
+        transition={{ duration: MOTION.duration.base, delay: MOTION.duration.base, ease: MOTION.ease.premium }}
         whileHover={{ scale: 1.01 }}
       >
         {/* Label */}
@@ -305,10 +310,15 @@ export function FeaturedSpaceCard({
 
         {/* Meta */}
         <div className="flex items-center gap-4 text-body-sm text-white/30">
-          {(space.memberCount ?? 0) > 0 && (
+          {(space.memberCount ?? 0) > 0 ? (
             <div className="flex items-center gap-1.5">
               <Users size={14} />
-              <span>{space.memberCount} members</span>
+              <span>{space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-[var(--color-gold,#C9A227)]/70">
+              <Users size={14} />
+              <span className="font-medium">Be the first to join</span>
             </div>
           )}
           {space.nextEvent && (

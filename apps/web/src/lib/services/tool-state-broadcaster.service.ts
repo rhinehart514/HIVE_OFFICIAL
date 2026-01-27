@@ -384,6 +384,118 @@ export class ToolStateBroadcasterService {
     });
   }
 
+  // ============================================================================
+  // TOOL-TO-TOOL CONNECTION SYNC
+  // ============================================================================
+
+  /**
+   * Get the RTDB path for connection updates to a target tool
+   */
+  private getConnectionUpdatesPath(targetDeploymentId: string): string {
+    return `tool_connections/${targetDeploymentId}/updates`;
+  }
+
+  /**
+   * Broadcast that a source tool's state has changed, notifying all connected target tools.
+   * This allows target tools to refresh their resolved connection values.
+   *
+   * @param sourceDeploymentId - The source tool that changed
+   * @param changedPaths - The paths that changed (e.g., ['counters.votes', 'collections.responses'])
+   * @param targetDeploymentIds - IDs of tools that have connections from this source
+   */
+  async broadcastConnectionUpdate(
+    sourceDeploymentId: string,
+    changedPaths: string[],
+    targetDeploymentIds: string[]
+  ): Promise<void> {
+    if (!this.enabled || targetDeploymentIds.length === 0) return;
+
+    const updatePayload = {
+      sourceDeploymentId,
+      changedPaths,
+      timestamp: admin.database.ServerValue.TIMESTAMP,
+      id: `conn_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    };
+
+    // Notify each target tool in parallel
+    await Promise.all(
+      targetDeploymentIds.map(async (targetId) => {
+        const updatesPath = this.getConnectionUpdatesPath(targetId);
+        const updatesRef = this.rtdb.ref(updatesPath);
+
+        // Push new update notification
+        await updatesRef.push(updatePayload);
+
+        // Prune old updates (keep last 10)
+        this.pruneConnectionUpdates(targetId).catch(() => {
+          // Ignore pruning errors
+        });
+      })
+    );
+  }
+
+  /**
+   * Broadcast a single connection value update directly to the target element.
+   * Used for immediate real-time sync without requiring the target to re-resolve.
+   *
+   * @param targetDeploymentId - The target tool
+   * @param elementId - The target element
+   * @param inputPath - The input path that was updated
+   * @param value - The new resolved value
+   */
+  async broadcastConnectionValue(
+    targetDeploymentId: string,
+    elementId: string,
+    inputPath: string,
+    value: unknown
+  ): Promise<void> {
+    if (!this.enabled) return;
+
+    const valuePath = `tool_connections/${targetDeploymentId}/values/${elementId}/${inputPath.replace(/\./g, '_')}`;
+    await this.rtdb.ref(valuePath).set({
+      value,
+      updatedAt: admin.database.ServerValue.TIMESTAMP,
+    });
+  }
+
+  /**
+   * Clear connection values for a target tool (on disconnect)
+   */
+  async clearConnectionValues(targetDeploymentId: string): Promise<void> {
+    if (!this.enabled) return;
+
+    const valuesPath = `tool_connections/${targetDeploymentId}/values`;
+    await this.rtdb.ref(valuesPath).remove();
+  }
+
+  /**
+   * Prune old connection update notifications
+   */
+  private async pruneConnectionUpdates(targetDeploymentId: string): Promise<void> {
+    if (!this.enabled) return;
+
+    const updatesPath = this.getConnectionUpdatesPath(targetDeploymentId);
+    const updatesRef = this.rtdb.ref(updatesPath);
+
+    const snapshot = await updatesRef.once('value');
+    const updates = snapshot.val();
+    if (!updates) return;
+
+    const updateKeys = Object.keys(updates);
+    if (updateKeys.length <= 10) return;
+
+    // Sort by key (chronological) and remove old ones
+    updateKeys.sort();
+    const keysToRemove = updateKeys.slice(0, updateKeys.length - 10);
+
+    const deleteUpdates: Record<string, null> = {};
+    for (const key of keysToRemove) {
+      deleteUpdates[`${updatesPath}/${key}`] = null;
+    }
+
+    await this.rtdb.ref().update(deleteUpdates);
+  }
+
   /**
    * Remove broadcast state for a deployment (on tool removal)
    *
@@ -394,6 +506,9 @@ export class ToolStateBroadcasterService {
 
     const statePath = this.getStatePath(deploymentId);
     await this.rtdb.ref(statePath).remove();
+
+    // Also clear connection data
+    await this.rtdb.ref(`tool_connections/${deploymentId}`).remove();
   }
 
   /**

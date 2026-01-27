@@ -12,25 +12,9 @@ import { ConnectionsPanel, type ConnectionWithMetadata } from './connections-pan
 import type { CanvasElement } from './types';
 import type { ContextRequirements, VisibilityCondition, ConditionGroup, ToolConnection } from '@hive/core';
 
-// HiveLab Dark Panel Colors (consistent with context-rail.tsx)
-const PANEL_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgHover: 'var(--hivelab-surface-hover, #1A1A1A)',
-  bgActive: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  borderEmphasis: 'var(--hivelab-border-emphasis, rgba(255, 255, 255, 0.12))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  accent: 'var(--life-gold, #D4AF37)',
-  accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: '#f44336',
-  errorLight: 'rgba(244, 67, 54, 0.1)',
-  success: '#22c55e',
-  successLight: 'rgba(34, 197, 94, 0.1)',
-  warning: '#f59e0b',
-  warningLight: 'rgba(245, 158, 11, 0.1)',
-};
+// ============================================
+// HiveLab Properties Panel - Uses CSS variables from globals.css
+// ============================================
 
 // Workshop tokens
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
@@ -376,9 +360,9 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               focusRing
             )}
             style={{
-              backgroundColor: PANEL_COLORS.bgHover,
-              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
-              color: PANEL_COLORS.textPrimary,
+              backgroundColor: 'var(--hivelab-surface-hover)',
+              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              color: 'var(--hivelab-text-primary)',
             }}
           />
           {hasError && (
@@ -387,7 +371,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               animate={{ opacity: 1, scale: 1 }}
               className="absolute right-2 top-1/2 -translate-y-1/2"
             >
-              <ExclamationCircleIcon className="h-4 w-4" style={{ color: PANEL_COLORS.error }} />
+              <ExclamationCircleIcon className="h-4 w-4" style={{ color: 'var(--hive-status-error)' }} />
             </motion.div>
           )}
         </motion.div>
@@ -424,9 +408,9 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               focusRing
             )}
             style={{
-              backgroundColor: PANEL_COLORS.bgHover,
-              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
-              color: PANEL_COLORS.textPrimary,
+              backgroundColor: 'var(--hivelab-surface-hover)',
+              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              color: 'var(--hivelab-text-primary)',
             }}
           />
           {/* Arrow key feedback indicator */}
@@ -440,7 +424,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                   'absolute right-2 top-1/2 -translate-y-1/2',
                   nudgeDirection === 'up' ? 'rotate-180' : ''
                 )}
-                style={{ color: PANEL_COLORS.accent }}
+                style={{ color: 'var(--hivelab-connection)' }}
               >
                 <ChevronDownIcon className="h-3 w-3" />
               </motion.div>
@@ -460,7 +444,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
           aria-label={`${schema.label}: ${currentValue ? 'enabled' : 'disabled'}`}
           className="w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200"
           style={{
-            backgroundColor: Boolean(currentValue) ? PANEL_COLORS.success : PANEL_COLORS.bgActive,
+            backgroundColor: Boolean(currentValue) ? 'var(--hive-status-success)' : 'var(--hivelab-surface-active)',
           }}
         >
           {/* Track glow when on */}
@@ -469,7 +453,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.3 }}
               className="absolute inset-0 rounded-full blur-sm"
-              style={{ backgroundColor: PANEL_COLORS.success }}
+              style={{ backgroundColor: 'var(--hive-status-success)' }}
             />
           )}
           {/* Thumb with spring physics */}
@@ -490,7 +474,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ delay: 0.1 }}
                 className="absolute left-[26px] top-1.5 w-3 h-3 z-20"
-                style={{ color: PANEL_COLORS.success }}
+                style={{ color: 'var(--hive-status-success)' }}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -520,9 +504,9 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               focusRing
             )}
             style={{
-              backgroundColor: PANEL_COLORS.bgHover,
-              border: `1px solid ${hasError ? PANEL_COLORS.error : isFocused ? PANEL_COLORS.borderEmphasis : PANEL_COLORS.border}`,
-              color: PANEL_COLORS.textPrimary,
+              backgroundColor: 'var(--hivelab-surface-hover)',
+              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              color: 'var(--hivelab-text-primary)',
             }}
           >
             {schema.options?.map((option) => (
@@ -548,8 +532,221 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
       );
 
     default:
-      return <span className="text-xs" style={{ color: PANEL_COLORS.textTertiary }}>Unsupported type</span>;
+      return <span className="text-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>Unsupported type</span>;
   }
+}
+
+/**
+ * AdvancedSection — Collapsed by default, contains Context/Visibility/Connections
+ * Only visible to users who explicitly want to configure advanced behavior
+ */
+function AdvancedSection({
+  selectedElement,
+  onUpdateElement,
+  elementConnections,
+  connectionsLoading,
+  onEditConnection,
+  onDeleteConnection,
+  onToggleConnection,
+  onTestConnection,
+  onAddConnection,
+  onRefreshConnections,
+}: {
+  selectedElement: CanvasElement;
+  onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
+  elementConnections?: ConnectionWithMetadata[];
+  connectionsLoading?: boolean;
+  onEditConnection?: (connection: ToolConnection) => void;
+  onDeleteConnection?: (connectionId: string) => void;
+  onToggleConnection?: (connectionId: string, enabled: boolean) => void;
+  onTestConnection?: (connectionId: string) => void;
+  onAddConnection?: () => void;
+  onRefreshConnections?: () => void;
+}) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [activeTab, setActiveTab] = useState<'context' | 'visibility' | 'connections'>('context');
+  const prefersReducedMotion = useReducedMotion();
+
+  // Count configured items for badge
+  const contextCount = selectedElement.contextRequirements
+    ? Object.values(selectedElement.contextRequirements).filter(Boolean).length
+    : 0;
+  const visibilityCount = Array.isArray(selectedElement.visibilityConditions)
+    ? selectedElement.visibilityConditions.length
+    : selectedElement.visibilityConditions ? 1 : 0;
+  const connectionCount = elementConnections?.length || 0;
+  const totalConfigured = contextCount + visibilityCount + connectionCount;
+
+  if (!showAdvanced) {
+    return (
+      <div className="px-4 py-3">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(true)}
+          className={cn(
+            'w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all duration-200',
+            focusRing
+          )}
+          style={{
+            backgroundColor: 'transparent',
+            border: `1px dashed var(--hivelab-border)`,
+            color: 'var(--hivelab-text-tertiary)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderStyle = 'solid';
+            e.currentTarget.style.borderColor = 'var(--hivelab-border-emphasis)';
+            e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderStyle = 'dashed';
+            e.currentTarget.style.borderColor = 'var(--hivelab-border)';
+            e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
+          }}
+        >
+          <Cog6ToothIcon className="w-3.5 h-3.5" />
+          Advanced settings
+          {totalConfigured > 0 && (
+            <span
+              className="px-1.5 py-0.5 rounded-full text-[10px] font-medium"
+              style={{
+                backgroundColor: 'var(--hive-gold)',
+                color: '#000',
+              }}
+            >
+              {totalConfigured}
+            </span>
+          )}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      className="overflow-hidden"
+    >
+      {/* Advanced header with close */}
+      <div
+        className="px-4 py-2 flex items-center justify-between"
+        style={{ borderBottom: `1px solid var(--hivelab-border)` }}
+      >
+        <span
+          className="text-label-xs font-medium uppercase tracking-wider"
+          style={{ color: 'var(--hivelab-text-tertiary)' }}
+        >
+          Advanced
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(false)}
+          className={cn('p-1 rounded transition-colors', focusRing)}
+          style={{ color: 'var(--hivelab-text-tertiary)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <ChevronDownIcon className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex px-4 pt-2 gap-1">
+        {(['context', 'visibility', 'connections'] as const).map((tab) => {
+          const count = tab === 'context' ? contextCount : tab === 'visibility' ? visibilityCount : connectionCount;
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={cn('flex-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all', focusRing)}
+              style={{
+                backgroundColor: activeTab === tab ? 'var(--hivelab-surface-hover)' : 'transparent',
+                color: activeTab === tab ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
+              }}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {count > 0 && (
+                <span className="ml-1 text-[10px]" style={{ color: 'var(--hive-gold)' }}>
+                  ({count})
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab content */}
+      <div className="px-4 py-3">
+        <AnimatePresence mode="wait">
+          {activeTab === 'context' && (
+            <motion.div
+              key="context"
+              initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ContextPicker
+                requirements={selectedElement.contextRequirements as ContextRequirements | undefined}
+                onChange={(requirements) =>
+                  onUpdateElement(selectedElement.id, {
+                    contextRequirements: requirements,
+                  })
+                }
+                compact
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'visibility' && (
+            <motion.div
+              key="visibility"
+              initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ConditionBuilder
+                conditions={selectedElement.visibilityConditions as VisibilityCondition[] | ConditionGroup | undefined}
+                onChange={(conditions) =>
+                  onUpdateElement(selectedElement.id, {
+                    visibilityConditions: conditions,
+                  })
+                }
+                compact
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'connections' && (
+            <motion.div
+              key="connections"
+              initial={prefersReducedMotion ? {} : { opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={prefersReducedMotion ? {} : { opacity: 0, x: 10 }}
+              transition={{ duration: 0.15 }}
+            >
+              <ConnectionsPanel
+                incomingConnections={elementConnections || []}
+                loading={connectionsLoading}
+                onEdit={onEditConnection}
+                onDelete={onDeleteConnection}
+                onToggleEnabled={onToggleConnection}
+                onTest={onTestConnection}
+                onAddConnection={onAddConnection}
+                onRefresh={onRefreshConnections}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
 }
 
 function Section({
@@ -566,7 +763,7 @@ function Section({
   const sectionId = `section-${title.toLowerCase().replace(/\s+/g, '-')}`;
 
   return (
-    <div style={{ borderBottom: `1px solid ${PANEL_COLORS.border}` }}>
+    <div style={{ borderBottom: `1px solid ${'var(--hivelab-border)'}` }}>
       <motion.button
         type="button"
         onClick={() => setExpanded(!expanded)}
@@ -578,7 +775,7 @@ function Section({
           focusRing
         )}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+          e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.backgroundColor = 'transparent';
@@ -586,7 +783,7 @@ function Section({
       >
         <span
           className="text-label-xs font-medium uppercase tracking-wider"
-          style={{ color: PANEL_COLORS.textTertiary }}
+          style={{ color: 'var(--hivelab-text-tertiary)' }}
         >
           {title}
         </span>
@@ -595,7 +792,7 @@ function Section({
           animate={{ rotate: expanded ? 90 : 0 }}
           transition={prefersReducedMotion ? { duration: 0 } : springPresets.snappy}
         >
-          <ChevronRightIcon className="h-3.5 w-3.5" style={{ color: PANEL_COLORS.textTertiary }} />
+          <ChevronRightIcon className="h-3.5 w-3.5" style={{ color: 'var(--hivelab-text-tertiary)' }} />
         </motion.div>
       </motion.button>
       <AnimatePresence>
@@ -665,10 +862,10 @@ export function PropertiesPanel({
             ease: 'easeInOut',
           }}
         >
-          <Cog6ToothIcon className="h-12 w-12 mb-4" style={{ color: `${PANEL_COLORS.textTertiary}50` }} />
+          <Cog6ToothIcon className="h-12 w-12 mb-4" style={{ color: `${'var(--hivelab-text-tertiary)'}50` }} />
         </motion.div>
-        <h3 className="text-sm font-medium mb-1" style={{ color: PANEL_COLORS.textPrimary }}>No Selection</h3>
-        <p className="text-xs" style={{ color: PANEL_COLORS.textTertiary }}>Select an element to view its properties</p>
+        <h3 className="text-sm font-medium mb-1" style={{ color: 'var(--hivelab-text-primary)' }}>No Selection</h3>
+        <p className="text-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>Select an element to view its properties</p>
       </motion.div>
     );
   }
@@ -694,14 +891,14 @@ export function PropertiesPanel({
       className="flex flex-col h-full"
     >
       {/* Header */}
-      <div className="px-4 py-4" style={{ borderBottom: `1px solid ${PANEL_COLORS.border}` }}>
+      <div className="px-4 py-4" style={{ borderBottom: `1px solid ${'var(--hivelab-border)'}` }}>
         <div className="flex items-center justify-between">
           <motion.h3
             initial={prefersReducedMotion ? {} : { opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
             className="text-sm font-semibold"
-            style={{ color: PANEL_COLORS.textPrimary }}
+            style={{ color: 'var(--hivelab-text-primary)' }}
           >
             {displayName}
           </motion.h3>
@@ -714,13 +911,13 @@ export function PropertiesPanel({
               whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
               whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
               className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
-              style={{ color: PANEL_COLORS.textTertiary }}
+              style={{ color: 'var(--hivelab-text-tertiary)' }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.color = PANEL_COLORS.textPrimary;
-                e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+                e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+                e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.color = PANEL_COLORS.textTertiary;
+                e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
               aria-label={selectedElement.visible ? 'Hide element' : 'Show element'}
@@ -765,18 +962,18 @@ export function PropertiesPanel({
               transition={{ duration: 0.3 }}
               className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
               style={{
-                color: selectedElement.locked ? PANEL_COLORS.warning : PANEL_COLORS.textTertiary,
-                backgroundColor: selectedElement.locked ? PANEL_COLORS.warningLight : 'transparent',
+                color: selectedElement.locked ? 'var(--hive-status-warning)' : 'var(--hivelab-text-tertiary)',
+                backgroundColor: selectedElement.locked ? 'var(--hive-status-warning-dim)' : 'transparent',
               }}
               onMouseEnter={(e) => {
                 if (!selectedElement.locked) {
-                  e.currentTarget.style.color = PANEL_COLORS.textPrimary;
-                  e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
+                  e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+                  e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!selectedElement.locked) {
-                  e.currentTarget.style.color = PANEL_COLORS.textTertiary;
+                  e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }
               }}
@@ -792,10 +989,65 @@ export function PropertiesPanel({
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
           className="text-xs mt-1 font-mono"
-          style={{ color: PANEL_COLORS.textTertiary }}
+          style={{ color: 'var(--hivelab-text-tertiary)' }}
         >
           ID: {selectedElement.id.slice(0, 20)}...
         </motion.p>
+      </div>
+
+      {/* Quick Actions */}
+      <div
+        className="flex items-center gap-1.5 px-4 py-2"
+        style={{ borderBottom: `1px solid ${'var(--hivelab-border)'}` }}
+      >
+        <button
+          type="button"
+          onClick={() => onDuplicateElement(selectedElement.id)}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-150',
+            focusRing
+          )}
+          style={{
+            backgroundColor: 'var(--hivelab-surface-hover)',
+            color: 'var(--hivelab-text-secondary)',
+            border: `1px solid ${'var(--hivelab-border)'}`,
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-active)';
+            e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
+            e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
+          }}
+          aria-label={`Duplicate ${displayName}`}
+        >
+          <ClipboardDocumentIcon className="h-3.5 w-3.5" />
+          Duplicate
+        </button>
+        <button
+          type="button"
+          onClick={() => onDeleteElement(selectedElement.id)}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-150',
+            focusRing
+          )}
+          style={{
+            backgroundColor: 'var(--hive-status-error-dim)',
+            color: 'var(--hive-status-error)',
+            border: '1px solid rgba(244, 67, 54, 0.2)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--hive-status-error-dim)';
+          }}
+          aria-label={`Delete ${displayName}`}
+        >
+          <TrashIcon className="h-3.5 w-3.5" />
+          Delete
+        </button>
       </div>
 
       {/* Properties */}
@@ -804,7 +1056,7 @@ export function PropertiesPanel({
         <Section title="Transform">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>X</label>
+              <label className="text-xs mb-1.5 block" style={{ color: 'var(--hivelab-text-tertiary)' }}>X</label>
               <input
                 type="number"
                 value={Math.round(selectedElement.position.x)}
@@ -815,14 +1067,14 @@ export function PropertiesPanel({
                 }
                 className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
                 style={{
-                  backgroundColor: PANEL_COLORS.bgHover,
-                  border: `1px solid ${PANEL_COLORS.border}`,
-                  color: PANEL_COLORS.textPrimary,
+                  backgroundColor: 'var(--hivelab-surface-hover)',
+                  border: `1px solid ${'var(--hivelab-border)'}`,
+                  color: 'var(--hivelab-text-primary)',
                 }}
               />
             </div>
             <div>
-              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Y</label>
+              <label className="text-xs mb-1.5 block" style={{ color: 'var(--hivelab-text-tertiary)' }}>Y</label>
               <input
                 type="number"
                 value={Math.round(selectedElement.position.y)}
@@ -833,14 +1085,14 @@ export function PropertiesPanel({
                 }
                 className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
                 style={{
-                  backgroundColor: PANEL_COLORS.bgHover,
-                  border: `1px solid ${PANEL_COLORS.border}`,
-                  color: PANEL_COLORS.textPrimary,
+                  backgroundColor: 'var(--hivelab-surface-hover)',
+                  border: `1px solid ${'var(--hivelab-border)'}`,
+                  color: 'var(--hivelab-text-primary)',
                 }}
               />
             </div>
             <div>
-              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Width</label>
+              <label className="text-xs mb-1.5 block" style={{ color: 'var(--hivelab-text-tertiary)' }}>Width</label>
               <input
                 type="number"
                 min={50}
@@ -854,14 +1106,14 @@ export function PropertiesPanel({
                 }}
                 className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
                 style={{
-                  backgroundColor: PANEL_COLORS.bgHover,
-                  border: `1px solid ${PANEL_COLORS.border}`,
-                  color: PANEL_COLORS.textPrimary,
+                  backgroundColor: 'var(--hivelab-surface-hover)',
+                  border: `1px solid ${'var(--hivelab-border)'}`,
+                  color: 'var(--hivelab-text-primary)',
                 }}
               />
             </div>
             <div>
-              <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Height</label>
+              <label className="text-xs mb-1.5 block" style={{ color: 'var(--hivelab-text-tertiary)' }}>Height</label>
               <input
                 type="number"
                 min={30}
@@ -875,9 +1127,9 @@ export function PropertiesPanel({
                 }}
                 className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
                 style={{
-                  backgroundColor: PANEL_COLORS.bgHover,
-                  border: `1px solid ${PANEL_COLORS.border}`,
-                  color: PANEL_COLORS.textPrimary,
+                  backgroundColor: 'var(--hivelab-surface-hover)',
+                  border: `1px solid ${'var(--hivelab-border)'}`,
+                  color: 'var(--hivelab-text-primary)',
                 }}
               />
             </div>
@@ -889,7 +1141,7 @@ export function PropertiesPanel({
           <Section title="Configuration">
             {schema.map((prop) => (
               <div key={prop.key}>
-                <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>{prop.label}</label>
+                <label className="text-xs mb-1.5 block" style={{ color: 'var(--hivelab-text-tertiary)' }}>{prop.label}</label>
                 <PropertyField
                   schema={prop}
                   value={selectedElement.config[prop.key]}
@@ -900,10 +1152,10 @@ export function PropertiesPanel({
           </Section>
         )}
 
-        {/* Layout */}
-        <Section title="Layout" defaultExpanded={false}>
-          <div>
-            <label className="text-xs mb-1.5 block" style={{ color: PANEL_COLORS.textTertiary }}>Z-Index</label>
+        {/* Layout - Z-Index inline, no section */}
+        <div className="px-4 py-3" style={{ borderBottom: `1px solid var(--hivelab-border)` }}>
+          <div className="flex items-center justify-between">
+            <label className="text-xs" style={{ color: 'var(--hivelab-text-tertiary)' }}>Z-Index</label>
             <input
               type="number"
               min={1}
@@ -913,126 +1165,31 @@ export function PropertiesPanel({
                 const value = Math.max(1, Math.min(999, Number(e.target.value) || 1));
                 onUpdateElement(selectedElement.id, { zIndex: value });
               }}
-              className={cn('w-full rounded-lg px-3 py-2 text-sm font-mono outline-none transition-all duration-200', focusRing)}
+              className={cn('w-16 rounded-md px-2 py-1 text-sm font-mono text-right outline-none transition-all duration-200', focusRing)}
               style={{
-                backgroundColor: PANEL_COLORS.bgHover,
-                border: `1px solid ${PANEL_COLORS.border}`,
-                color: PANEL_COLORS.textPrimary,
+                backgroundColor: 'var(--hivelab-surface-hover)',
+                border: `1px solid var(--hivelab-border)`,
+                color: 'var(--hivelab-text-primary)',
               }}
             />
           </div>
-        </Section>
+        </div>
 
-        {/* Sprint 2: Context Requirements */}
-        <Section title="Context" defaultExpanded={false}>
-          <ContextPicker
-            requirements={selectedElement.contextRequirements as ContextRequirements | undefined}
-            onChange={(requirements) =>
-              onUpdateElement(selectedElement.id, {
-                contextRequirements: requirements,
-              })
-            }
-            compact
-          />
-        </Section>
-
-        {/* Sprint 2: Visibility Conditions */}
-        <Section title="Visibility" defaultExpanded={false}>
-          <ConditionBuilder
-            conditions={selectedElement.visibilityConditions as VisibilityCondition[] | ConditionGroup | undefined}
-            onChange={(conditions) =>
-              onUpdateElement(selectedElement.id, {
-                visibilityConditions: conditions,
-              })
-            }
-            compact
-          />
-        </Section>
-
-        {/* Sprint 3: Connections */}
-        <Section title="Connections" defaultExpanded={false}>
-          <ConnectionsPanel
-            incomingConnections={elementConnections || []}
-            loading={connectionsLoading}
-            onEdit={onEditConnection}
-            onDelete={onDeleteConnection}
-            onToggleEnabled={onToggleConnection}
-            onTest={onTestConnection}
-            onAddConnection={onAddConnection}
-            onRefresh={onRefreshConnections}
-          />
-        </Section>
+        {/* Advanced Section - Hidden by default, contains Context/Visibility/Connections */}
+        <AdvancedSection
+          selectedElement={selectedElement}
+          onUpdateElement={onUpdateElement}
+          elementConnections={elementConnections}
+          connectionsLoading={connectionsLoading}
+          onEditConnection={onEditConnection}
+          onDeleteConnection={onDeleteConnection}
+          onToggleConnection={onToggleConnection}
+          onTestConnection={onTestConnection}
+          onAddConnection={onAddConnection}
+          onRefreshConnections={onRefreshConnections}
+        />
       </div>
 
-      {/* Actions */}
-      <motion.div
-        initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="px-4 py-4 space-y-2"
-        style={{ borderTop: `1px solid ${PANEL_COLORS.border}` }}
-      >
-        <motion.button
-          type="button"
-          onClick={() => onDuplicateElement(selectedElement.id)}
-          whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
-          whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
-          aria-label={`Duplicate ${displayName}`}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
-            focusRing
-          )}
-          style={{
-            backgroundColor: PANEL_COLORS.bgHover,
-            color: PANEL_COLORS.textPrimary,
-            border: `1px solid ${PANEL_COLORS.border}`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = PANEL_COLORS.bgActive;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
-          }}
-        >
-          <motion.div
-            whileHover={prefersReducedMotion ? {} : { rotate: 15 }}
-            transition={springPresets.snappy}
-          >
-            <ClipboardDocumentIcon className="h-4 w-4" style={{ color: PANEL_COLORS.textSecondary }} />
-          </motion.div>
-          Duplicate
-        </motion.button>
-        <motion.button
-          type="button"
-          onClick={() => onDeleteElement(selectedElement.id)}
-          whileHover={prefersReducedMotion ? {} : { opacity: 0.9 }}
-          whileTap={prefersReducedMotion ? {} : { opacity: 0.8 }}
-          aria-label={`Delete ${displayName}`}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200',
-            focusRing
-          )}
-          style={{
-            backgroundColor: PANEL_COLORS.errorLight,
-            color: PANEL_COLORS.error,
-            border: `1px solid rgba(244, 67, 54, 0.2)`,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = PANEL_COLORS.errorLight;
-          }}
-        >
-          <motion.div
-            whileHover={prefersReducedMotion ? {} : { rotate: -10, opacity: 0.9 }}
-            transition={springPresets.snappy}
-          >
-            <TrashIcon className="h-4 w-4" />
-          </motion.div>
-          Delete
-        </motion.button>
-      </motion.div>
     </motion.div>
   );
 }

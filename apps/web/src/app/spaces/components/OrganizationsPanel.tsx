@@ -1,15 +1,19 @@
 'use client';
 
 /**
- * OrganizationsPanel — Compact table of clubs/orgs
+ * OrganizationsPanel — Grid of your spaces
  *
- * Columns: Avatar+Name | Online indicator | Unread badge
- * Max 8-10 visible, "X more" link to browse
+ * Clean cards with real data only:
+ * - Avatar + Name
+ * - Member count (real)
+ * - Unread badge (real)
+ * - Energy dots (activity indicator)
+ *
+ * @version 2.0.0 - Added energy dots (Sprint 3, Jan 2026)
  */
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight } from 'lucide-react';
 import {
   motion,
   MOTION,
@@ -19,6 +23,7 @@ import {
   getInitials,
 } from '@hive/ui/design-system/primitives';
 import { cn } from '@/lib/utils';
+import { getEnergyLevel, getEnergyDotCount } from '@/lib/energy-utils';
 import type { Space } from '../hooks/useSpacesHQ';
 
 // ============================================================
@@ -31,10 +36,29 @@ interface OrganizationsPanelProps {
 }
 
 // ============================================================
-// Organization Row
+// Energy Dots Component
 // ============================================================
 
-function OrganizationRow({
+function EnergyDots({ count }: { count: number }) {
+  if (count === 0) return null;
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {[...Array(count)].map((_, i) => (
+        <span
+          key={i}
+          className="w-1 h-1 rounded-full bg-[var(--color-gold)]"
+        />
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// Space Card
+// ============================================================
+
+function SpaceCard({
   space,
   index,
 }: {
@@ -42,65 +66,67 @@ function OrganizationRow({
   index: number;
 }) {
   const router = useRouter();
-  const [isHovered, setIsHovered] = React.useState(false);
 
-  // Mock online count
-  const onlineCount = Math.floor(Math.random() * 15) + 3;
+  // Calculate energy level for this space
+  const energyLevel = getEnergyLevel(space.recentMessageCount);
+  const energyDotCount = getEnergyDotCount(energyLevel);
 
   return (
     <motion.button
       onClick={() => router.push(`/s/${space.handle || space.id}`)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left',
+        'flex flex-col items-center gap-3 p-4 rounded-xl text-center',
         'transition-all duration-200',
-        'hover:bg-white/[0.03]'
+        'bg-white/[0.02] hover:bg-white/[0.05]',
+        'ring-1 ring-white/[0.04] hover:ring-white/[0.08]'
       )}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{
         duration: MOTION.duration.fast,
-        delay: 0.1 + index * MOTION.stagger.tight,
+        delay: index * MOTION.stagger.tight,
         ease: MOTION.ease.premium,
       }}
     >
       {/* Avatar */}
-      <Avatar size="sm" className="ring-1 ring-white/[0.06] shrink-0">
-        {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
-        <AvatarFallback className="text-label-sm bg-white/[0.04]">
-          {getInitials(space.name)}
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative">
+        <Avatar size="lg" className="ring-1 ring-white/[0.06]">
+          {space.avatarUrl && <AvatarImage src={space.avatarUrl} />}
+          <AvatarFallback className="text-body bg-white/[0.04]">
+            {getInitials(space.name)}
+          </AvatarFallback>
+        </Avatar>
+
+        {/* Unread badge - takes priority position */}
+        {space.unreadCount && space.unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-amber-500 text-[10px] font-semibold text-black">
+            {space.unreadCount > 9 ? '9+' : space.unreadCount}
+          </span>
+        )}
+
+        {/* Energy dots - bottom right of avatar */}
+        {energyDotCount > 0 && !space.unreadCount && (
+          <div className="absolute -bottom-0.5 -right-0.5 p-0.5 rounded-full bg-[#0A0A0A]">
+            <EnergyDots count={energyDotCount} />
+          </div>
+        )}
+      </div>
 
       {/* Name */}
-      <span className="flex-1 text-body text-white/70 truncate">
+      <span className="text-body-sm text-white/70 line-clamp-2 leading-snug">
         {space.name}
       </span>
 
-      {/* Online indicator */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
-        <span className="text-label text-white/25 tabular-nums w-6 text-right">
-          {onlineCount}
+      {/* Member count + energy indicator */}
+      <div className="flex items-center gap-2">
+        <span className="text-label text-white/30">
+          {space.memberCount} {space.memberCount === 1 ? 'member' : 'members'}
         </span>
+        {/* Show energy dots inline if there are unreads (since badge takes position) */}
+        {energyDotCount > 0 && space.unreadCount && space.unreadCount > 0 && (
+          <EnergyDots count={energyDotCount} />
+        )}
       </div>
-
-      {/* Unread badge */}
-      {space.unreadCount && space.unreadCount > 0 ? (
-        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-label-sm font-medium shrink-0">
-          {space.unreadCount} new
-        </span>
-      ) : null}
-
-      {/* Hover arrow */}
-      <motion.div
-        initial={{ opacity: 0, x: -5 }}
-        animate={{ opacity: isHovered ? 0.5 : 0, x: isHovered ? 0 : -5 }}
-        transition={{ duration: 0.15 }}
-      >
-        <ChevronRight size={14} className="text-white/30" />
-      </motion.div>
     </motion.button>
   );
 }
@@ -109,17 +135,17 @@ function OrganizationRow({
 // Empty State
 // ============================================================
 
-function EmptyOrganizations() {
+function EmptySpaces() {
   const router = useRouter();
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-6">
-      <p className="text-body-sm text-white/30 text-center mb-4">
-        No organizations yet
+    <div className="col-span-full flex flex-col items-center justify-center py-12">
+      <p className="text-body text-white/30 text-center mb-4">
+        You haven't joined any spaces yet
       </p>
       <button
         onClick={() => router.push('/spaces/browse')}
-        className="text-label text-white/50 hover:text-white/70 transition-colors"
+        className="text-body-sm text-white/50 hover:text-white/70 transition-colors"
       >
         Browse spaces →
       </button>
@@ -133,67 +159,40 @@ function EmptyOrganizations() {
 
 export function OrganizationsPanel({
   spaces,
-  maxVisible = 8,
+  maxVisible = 12,
 }: OrganizationsPanelProps) {
   const router = useRouter();
   const visibleSpaces = spaces.slice(0, maxVisible);
   const remainingCount = Math.max(0, spaces.length - maxVisible);
 
+  if (visibleSpaces.length === 0) {
+    return <EmptySpaces />;
+  }
+
   return (
-    <motion.div
-      className="h-full rounded-2xl backdrop-blur-xl overflow-hidden flex flex-col"
-      style={{
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(255,255,255,0.03)',
-      }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: MOTION.duration.base,
-        delay: 0.1,
-        ease: MOTION.ease.premium,
-      }}
-    >
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-white/[0.04] flex items-center justify-between shrink-0">
-        <span className="text-body-sm font-medium text-white/40 uppercase tracking-wider">
-          Organizations
-        </span>
-        {spaces.length > 0 && (
-          <button
-            onClick={() => router.push('/spaces/browse')}
-            className="text-label-sm text-white/20 hover:text-white/40 transition-colors"
-          >
-            Browse all
-          </button>
-        )}
-      </div>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+      {visibleSpaces.map((space, i) => (
+        <SpaceCard key={space.id} space={space} index={i} />
+      ))}
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-2 min-h-0">
-        {visibleSpaces.length === 0 ? (
-          <EmptyOrganizations />
-        ) : (
-          <div className="space-y-0.5">
-            {visibleSpaces.map((space, i) => (
-              <OrganizationRow key={space.id} space={space} index={i} />
-            ))}
-
-            {/* More link */}
-            {remainingCount > 0 && (
-              <motion.button
-                onClick={() => router.push('/spaces/browse')}
-                className="w-full px-4 py-3 text-body-sm text-white/30 hover:text-white/50 transition-colors text-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                +{remainingCount} more
-              </motion.button>
-            )}
-          </div>
-        )}
-      </div>
-    </motion.div>
+      {/* More card */}
+      {remainingCount > 0 && (
+        <motion.button
+          onClick={() => router.push('/spaces/browse')}
+          className={cn(
+            'flex flex-col items-center justify-center gap-2 p-4 rounded-xl',
+            'bg-white/[0.02] hover:bg-white/[0.04]',
+            'ring-1 ring-white/[0.04] hover:ring-white/[0.06]',
+            'transition-all duration-200'
+          )}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.15 }}
+        >
+          <span className="text-heading text-white/20">+{remainingCount}</span>
+          <span className="text-label text-white/30">more</span>
+        </motion.button>
+      )}
+    </div>
   );
 }

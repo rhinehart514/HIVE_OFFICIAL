@@ -1,6 +1,6 @@
 // Re-export hooks only (no providers for now to fix build)
 export { useShell } from "./use-shell"
-export { useWelcomeMat } from "./use-welcome-mat"
+// useWelcomeMat - REMOVED (Jan 2026) - Legacy /welcome flow deleted
 
 // HiveLab hooks
 export { useToolState, type UseToolStateOptions, type UseToolStateReturn } from "./hivelab/use-tool-state"
@@ -9,6 +9,8 @@ export {
   type CascadeContext,
   type CascadeResult,
 } from "./hivelab/use-connection-cascade"
+export { useSpaceContext } from "./hivelab/use-space-context"
+export { useMemberContext } from "./hivelab/use-member-context"
 export {
   useMediaQuery,
   useIsDesktop,

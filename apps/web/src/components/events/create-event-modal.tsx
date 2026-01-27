@@ -49,9 +49,10 @@ export interface CreateEventModalProps {
 const EVENT_TYPES = [
   { value: "academic", label: "Academic", icon: "📚" },
   { value: "social", label: "Social", icon: "🎉" },
-  { value: "professional", label: "Professional", icon: "💼" },
   { value: "recreational", label: "Recreational", icon: "🎮" },
-  { value: "official", label: "Official", icon: "🏛️" },
+  { value: "cultural", label: "Cultural", icon: "🎭" },
+  { value: "meeting", label: "Meeting", icon: "👥" },
+  { value: "virtual", label: "Virtual", icon: "💻" },
 ] as const;
 
 const LOCATION_TYPES = [

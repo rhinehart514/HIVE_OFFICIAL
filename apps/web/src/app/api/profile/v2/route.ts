@@ -103,6 +103,27 @@ const formatTimestamp = (value: unknown): string | null => {
   return null;
 };
 
+/**
+ * Format leadership tenure in days to human-readable string
+ */
+const formatTenure = (days: number): string => {
+  if (days < 7) return `${days} day${days !== 1 ? 's' : ''}`;
+  if (days < 30) {
+    const weeks = Math.floor(days / 7);
+    return `${weeks} week${weeks !== 1 ? 's' : ''}`;
+  }
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return `${months} month${months !== 1 ? 's' : ''}`;
+  }
+  const years = Math.floor(days / 365);
+  const remainingMonths = Math.floor((days % 365) / 30);
+  if (remainingMonths > 0) {
+    return `${years} year${years !== 1 ? 's' : ''}, ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+  }
+  return `${years} year${years !== 1 ? 's' : ''}`;
+};
+
 const normalizeGrid = (grid: unknown) => {
   if (!grid) {
     return { ...DEFAULT_GRID, lastModified: new Date().toISOString() };
@@ -381,7 +402,26 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
       discovery: normalizeWidgetLevel('discovery', privacyDoc, { level: 'campus' }),
     };
 
-    const [spacesSnap, connectionsListSnap, suggestionSnap] = await Promise.all([
+    // Fetch viewer's spaces for shared space computation (only if viewing another profile)
+    const viewerSpacesPromise = !isOwnProfile
+      ? dbAdmin
+          .collection('spaces')
+          .where('campusId', '==', campusId)
+          .where('members', 'array-contains', viewerId)
+          .select()
+          .get()
+          .catch(() => ({ docs: [] } as unknown as FirebaseFirestore.QuerySnapshot))
+      : Promise.resolve({ docs: [] } as unknown as FirebaseFirestore.QuerySnapshot);
+
+    // Fetch leadership membership data for tenure calculation
+    const leadershipMembersPromise = dbAdmin
+      .collection('spaceMembers')
+      .where('userId', '==', targetUserId)
+      .where('role', 'in', ['owner', 'admin', 'leader', 'Lead'])
+      .get()
+      .catch(() => ({ docs: [] } as unknown as FirebaseFirestore.QuerySnapshot));
+
+    const [spacesSnap, connectionsListSnap, suggestionSnap, viewerSpacesSnap, leadershipMembersSnap] = await Promise.all([
       dbAdmin
         .collection('spaces')
         .where('campusId', '==', campusId)
@@ -402,16 +442,40 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         .limit(6)
         .get()
         .catch(() => ({ empty: true, docs: [] } as unknown as FirebaseFirestore.QuerySnapshot)),
+      viewerSpacesPromise,
+      leadershipMembersPromise,
     ]);
+
+    // Build viewer's space IDs for shared space detection
+    const viewerSpaceIds = new Set(viewerSpacesSnap.docs.map((doc) => doc.id));
+
+    // Build tenure map from spaceMembers data
+    const tenureMap = new Map<string, { days: number; label: string; joinedAt: string }>();
+    for (const doc of leadershipMembersSnap.docs) {
+      const data = doc.data();
+      const spaceId = data.spaceId || doc.id.split('_')[0];
+      const joinedAt = data.joinedAt?.toDate?.() || data.createdAt?.toDate?.() || null;
+      if (joinedAt) {
+        const days = Math.floor((Date.now() - joinedAt.getTime()) / (1000 * 60 * 60 * 24));
+        tenureMap.set(spaceId, {
+          days,
+          label: formatTenure(days),
+          joinedAt: joinedAt.toISOString(),
+        });
+      }
+    }
 
     const spaces = spacesSnap.docs.map((doc) => {
       const space = doc.data();
       const memberIds: string[] = Array.isArray(space.members) ? space.members : [];
       const leaderIds: string[] = Array.isArray(space.leaders) ? space.leaders : [];
+      const isLeader = leaderIds.includes(targetUserId);
+      const tenure = tenureMap.get(doc.id);
+
       return {
         id: doc.id,
         name: space.name ?? 'Campus Space',
-        role: leaderIds.includes(targetUserId)
+        role: isLeader
           ? 'Lead'
           : memberIds.includes(targetUserId)
             ? 'Member'
@@ -419,8 +483,15 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         memberCount: space.memberCount ?? memberIds.length ?? 0,
         lastActivityAt: formatTimestamp(space.lastActivityAt) ?? new Date().toISOString(),
         headline: space.tagline ?? space.subtitle ?? '',
+        // New fields for profile slice
+        isShared: viewerSpaceIds.has(doc.id),
+        tenure: isLeader && tenure ? tenure.days : undefined,
+        tenureLabel: isLeader && tenure ? tenure.label : undefined,
       };
     });
+
+    // Calculate shared space count
+    const sharedSpaceCount = spaces.filter((s) => s.isShared).length;
 
     const connections = connectionsListSnap.docs.map((doc) => {
       const connection = doc.data();
@@ -528,6 +599,7 @@ export const GET = withAuthAndErrors(async (request, _ctx, respond) => {
         isOwnProfile,
         isConnection: viewerRelationship === 'connection' || viewerRelationship === 'friend',
         isFriend: viewerRelationship === 'friend',
+        sharedSpaceCount: !isOwnProfile ? sharedSpaceCount : 0,
       },
       privacy: {
         profileLevel: profileVisibilityLevel,

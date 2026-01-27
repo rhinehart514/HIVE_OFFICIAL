@@ -3,14 +3,6 @@
  */
 
 export {
-  useEntryMachine,
-  type EntryState,
-  type EntryData,
-  type UseEntryMachineOptions,
-  type UseEntryMachineReturn,
-} from './useEntryMachine';
-
-export {
   useEvolvingEntry,
   type SectionId,
   type SectionState,

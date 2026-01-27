@@ -20,6 +20,9 @@ const updateSpacePreferencesSchema = z.object({
 /**
  * GET /api/spaces/my - Get user's spaces with membership data
  *
+ * @deprecated Use /api/spaces/mine instead for the new unified format.
+ * This route is maintained for backwards compatibility.
+ *
  * Returns spaces with membership info, activity, and widget-specific data.
  * Uses DDD repository for space data, spaceMembers collection for membership.
  */

@@ -17,6 +17,8 @@ import {
  * - Uses centralized admin role helpers for consistent security checks
  * - Admin auto-grant is DISABLED by default in production
  * - Requires ALLOW_ADMIN_AUTO_GRANT=true env var to enable in production
+ * - CRITICAL: Self-grant only allowed during bootstrap (when no admins exist)
+ * - Once admins exist, new admins must be granted by existing super_admins
  * - All grants are audited with operation logging
  *
  * POST /api/auth/check-admin-grant
@@ -40,6 +42,29 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
 
     const normalizedEmail = userEmail.toLowerCase();
 
+    // SECURITY: Check if any admins already exist
+    // Self-grant is only allowed during bootstrap (no existing admins)
+    const existingAdmins = await dbAdmin
+      .collection('admins')
+      .where('active', '==', true)
+      .limit(1)
+      .get();
+
+    const isBootstrapMode = existingAdmins.empty;
+
+    if (!isBootstrapMode) {
+      // Admins exist - self-grant is no longer allowed
+      logAdminOperation('admin_grant_rejected', userId, normalizedEmail, {
+        reason: 'Self-grant disabled after bootstrap. Contact existing admin.',
+        existingAdminCount: existingAdmins.size,
+      });
+
+      return respond.success({
+        granted: false,
+        reason: 'Admin self-grant is disabled. Contact an existing administrator to request access.'
+      });
+    }
+
     // Use centralized admin grant check (includes production guard)
     const grantCheck = shouldGrantAdmin(normalizedEmail);
 
@@ -47,6 +72,7 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
       // Log the rejection for audit
       logAdminOperation('admin_grant_rejected', userId, normalizedEmail, {
         reason: grantCheck.reason,
+        isBootstrapMode,
       });
 
       return respond.success({
@@ -78,7 +104,8 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
     logAdminOperation('admin_grant_initiated', userId, normalizedEmail, {
       role,
       permissions: permissions.slice(),
-      grantedBy: 'auto-grant',
+      grantedBy: 'bootstrap-auto-grant',
+      isBootstrapMode: true,
       userAgent: request.headers.get('user-agent')?.substring(0, 100),
       ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
     });
@@ -99,7 +126,8 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
       adminRole: role,
       adminPermissions: permissions.slice(),
       adminGrantedAt: new Date().toISOString(),
-      adminGrantedBy: 'auto-grant',
+      adminGrantedBy: 'bootstrap-auto-grant',
+      adminGrantedVia: 'check-admin-grant-endpoint',
       email: normalizedEmail
     };
 
@@ -114,8 +142,9 @@ export const POST = withAuthAndErrors(async (request, _context: Record<string, s
       permissions: permissions.slice(),
       active: true,
       createdAt: new Date().toISOString(),
-      grantedBy: 'auto-grant',
+      grantedBy: 'bootstrap-auto-grant',
       grantedVia: 'check-admin-grant-endpoint',
+      isBootstrapAdmin: true,
       userAgent: request.headers.get('user-agent')?.substring(0, 200),
       grantedFromIp: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     });

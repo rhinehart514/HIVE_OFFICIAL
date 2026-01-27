@@ -1098,9 +1098,8 @@ export const NotificationSystem: React.FC<{
   disabled?: boolean;
 }> = () => null; // Deprecated - use Toaster from design-system
 
-// Welcome mat - (Using placeholder from welcome-mat.tsx)
-export { WelcomeMat, useWelcomeMat } from "./components/welcome/welcome-mat";
-export type { WelcomeMatProps } from "./components/welcome/welcome-mat";
+// Welcome mat - REMOVED (Jan 2026)
+// Legacy WelcomeMat was deprecated. Entry flow now uses /enter with evolving sections.
 
 // Gesture Actions Hook (Dec 2025 - Mobile interactions)
 export {
@@ -1126,6 +1125,21 @@ export type { VisualToolComposerProps } from "./components/hivelab/visual-tool-c
 // HiveLab: Tool Canvas (runtime rendering)
 export { ToolCanvas } from "./components/hivelab/tool-canvas";
 export type { ToolCanvasProps, ToolElement, ToolCanvasContext } from "./components/hivelab/tool-canvas";
+
+// HiveLab: Tool Runtime Provider (context injection for space-deployed tools)
+export {
+  ToolRuntimeProvider,
+  useToolRuntimeContext,
+  useToolContext,
+  useToolSpaceContext,
+  useToolMemberContext,
+  useToolTemporalContext,
+  useToolCapabilities,
+  useToolCapability,
+  useHasRole,
+  useIsSpaceLeader,
+} from "./components/hivelab/tool-runtime-provider";
+export type { ToolRuntimeProviderProps } from "./components/hivelab/tool-runtime-provider";
 
 // HiveLab: Element Renderers
 export {
@@ -1784,6 +1798,15 @@ export type { CampusDrawerProps } from "./design-system/components/mobile";
 // ============================================
 
 export {
+  // 3-Zone Profile Layout (New - Design Sprint)
+  ProfileIdentityHero,
+  ProfileActivityCard,
+  ProfileLeadershipCard,
+  ProfileEventCard,
+  ProfileSpacePill,
+  ProfileConnectionFooter,
+  ProfileOverflowChip,
+  // Legacy Profile Components
   ProfileCard,
   ProfileHero,
   ProfileStatsRow,
@@ -1798,6 +1821,20 @@ export {
 } from "./design-system/components/profile";
 
 export type {
+  // 3-Zone Profile Layout Types (New)
+  ProfileIdentityHeroUser,
+  ProfileIdentityHeroProps,
+  ProfileActivityTool,
+  ProfileActivityCardProps,
+  ProfileLeadershipSpace,
+  ProfileLeadershipCardProps,
+  ProfileEvent,
+  ProfileEventCardProps,
+  ProfileSpacePillSpace,
+  ProfileSpacePillProps,
+  ProfileConnectionFooterProps,
+  ProfileOverflowChipProps,
+  // Legacy Profile Types
   ProfileCardProps,
   ProfileHeroProps,
   ProfileHeroUser,

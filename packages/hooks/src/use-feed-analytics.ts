@@ -111,6 +111,13 @@ export const useFeedAnalytics = ({
   const activeTimeRef = useRef<number>(0)
   const lastHeartbeatRef = useRef<Date>(new Date())
 
+  // Refs to avoid stale closures in callbacks
+  const isSessionActiveRef = useRef(isSessionActive)
+  isSessionActiveRef.current = isSessionActive
+
+  // Ref to always call latest heartbeat function (prevents interval leak)
+  const sendHeartbeatRef = useRef<() => void>(() => {})
+
   // Event batching
   const eventBatchRef = useRef<FeedAnalyticsEvent[]>([])
   const batchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
@@ -185,9 +192,9 @@ export const useFeedAnalytics = ({
     lastInteractionRef.current = new Date()
   }, [])
   
-  // Heartbeat function
+  // Heartbeat function (uses ref to avoid stale closure)
   const sendHeartbeat = useCallback(() => {
-    if (!isSessionActive || !sessionIdRef.current) return
+    if (!isSessionActiveRef.current || !sessionIdRef.current) return
     
     const now = new Date()
     const timeSinceLastHeartbeat = now.getTime() - lastHeartbeatRef.current.getTime()
@@ -215,7 +222,10 @@ export const useFeedAnalytics = ({
     })
     
     addEventToBatch(heartbeatEvent)
-  }, [isSessionActive, analyticsConfig.hashUserIds, userId, spaceId, addEventToBatch])
+  }, [analyticsConfig.hashUserIds, userId, spaceId, addEventToBatch])
+
+  // Keep ref updated to latest heartbeat function
+  sendHeartbeatRef.current = sendHeartbeat
 
   // Start session
   const startSession = useCallback(() => {
@@ -227,8 +237,8 @@ export const useFeedAnalytics = ({
     lastHeartbeatRef.current = new Date()
     activeTimeRef.current = 0
     
-    // Start heartbeat
-    heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30000) // Every 30 seconds
+    // Start heartbeat (use ref to always call latest function, preventing interval leak)
+    heartbeatIntervalRef.current = setInterval(() => sendHeartbeatRef.current(), 30000)
     
     // Track session start with space heartbeat
     const sessionStartEvent = createFeedEvent('space_heartbeat', {
@@ -244,7 +254,7 @@ export const useFeedAnalytics = ({
     })
     
     addEventToBatch(sessionStartEvent)
-  }, [isSessionActive, generateSessionId, sendHeartbeat, spaceId, userId, analyticsConfig.hashUserIds, addEventToBatch])
+  }, [isSessionActive, generateSessionId, spaceId, userId, analyticsConfig.hashUserIds, addEventToBatch])
 
   // End session
   const endSession = useCallback(() => {
@@ -497,6 +507,11 @@ export const useFeedAnalytics = ({
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       endSession()
+      // Clear batch timeout to prevent memory leak
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current)
+        batchTimeoutRef.current = undefined
+      }
     }
   }, [startSession, endSession])
 

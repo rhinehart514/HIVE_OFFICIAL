@@ -7,7 +7,7 @@
  */
 
 import * as React from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, GraduationCap, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   motion,
@@ -101,9 +101,25 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
 
   if (!data) {
     return (
-      <div className="text-center py-16">
-        <p className="text-white/40">Failed to load major spaces</p>
-      </div>
+      <RevealSection>
+        <div className="text-center py-16">
+          <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
+            <BookOpen size={24} className="text-white/40" />
+          </div>
+          <h3 className="text-title-sm font-medium text-white/80 mb-2">
+            Couldn&apos;t load majors
+          </h3>
+          <p className="text-body text-white/40 max-w-md mx-auto mb-6">
+            We had trouble loading academic spaces. This might be a temporary issue.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg bg-white/[0.06] text-white/60 hover:bg-white/[0.08] hover:text-white/80 transition-colors text-body"
+          >
+            Try again
+          </button>
+        </div>
+      </RevealSection>
     );
   }
 
@@ -150,8 +166,8 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.5,
-                    delay: 0.1 + sectionIndex * 0.05,
+                    duration: MOTION.duration.base,
+                    delay: MOTION.stagger.base + sectionIndex * MOTION.stagger.tight,
                     ease: MOTION.ease.premium,
                   }}
                   className="rounded-2xl overflow-hidden"
@@ -186,7 +202,7 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: MOTION.ease.premium }}
+                      transition={{ duration: MOTION.duration.fast, ease: MOTION.ease.premium }}
                       className="px-4 pb-4"
                     >
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-2">
@@ -209,13 +225,21 @@ export function MajorBrowse({ searchQuery }: MajorBrowseProps) {
 
       {/* No Results */}
       {hasNoResults && (
-        <div className="text-center py-16">
-          <p className="text-white/40">
-            {searchQuery
-              ? `No majors found matching "${searchQuery}"`
-              : 'No major spaces available yet'}
-          </p>
-        </div>
+        <RevealSection>
+          <div className="text-center py-16">
+            <div className="w-12 h-12 rounded-full bg-white/[0.06] flex items-center justify-center mx-auto mb-6">
+              <GraduationCap size={24} className="text-white/40" />
+            </div>
+            <h3 className="text-title-sm font-medium text-white/80 mb-2">
+              {searchQuery ? 'No results' : 'No majors yet'}
+            </h3>
+            <p className="text-body text-white/40 max-w-md mx-auto">
+              {searchQuery
+                ? `No academic spaces found matching "${searchQuery}"`
+                : 'Academic spaces will appear here as they join HIVE.'}
+            </p>
+          </div>
+        </RevealSection>
       )}
     </div>
   );
@@ -226,18 +250,36 @@ function MajorBrowseSkeleton() {
     <div className="space-y-12">
       {/* Featured skeleton */}
       <div className="space-y-4">
-        <div className="h-4 w-24 rounded bg-white/[0.02] animate-pulse" />
-        <div className="h-48 rounded-2xl bg-white/[0.02] animate-pulse" />
+        <motion.div
+          className="h-4 w-24 rounded bg-white/[0.02]"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
+        />
+        <motion.div
+          className="h-48 rounded-2xl bg-white/[0.02]"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: 0.1, ease: MOTION.ease.smooth }}
+        />
       </div>
 
       {/* Schools skeleton */}
       <div className="space-y-4">
-        <div className="h-4 w-32 rounded bg-white/[0.02] animate-pulse" />
+        <motion.div
+          className="h-4 w-32 rounded bg-white/[0.02]"
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+        />
         {[1, 2, 3].map((i) => (
-          <div
+          <motion.div
             key={i}
-            className="h-16 rounded-2xl bg-white/[0.02] animate-pulse"
-            style={{ animationDelay: `${i * 100}ms` }}
+            className="h-16 rounded-2xl bg-white/[0.02]"
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              delay: 0.3 + i * 0.1,
+              ease: MOTION.ease.smooth,
+            }}
           />
         ))}
       </div>

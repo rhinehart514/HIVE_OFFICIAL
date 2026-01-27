@@ -116,8 +116,8 @@ export interface HiveQueryConfig<T> {
   /** Unique key for this query (for caching and deduplication) */
   queryKey: QueryKey;
 
-  /** Function to fetch the data */
-  queryFn: () => Promise<T>;
+  /** Function to fetch the data (cursor optional for pagination) */
+  queryFn: (cursor?: PaginationCursor) => Promise<T>;
 
   /** Optional real-time subscription function */
   realtimeFn?: (onUpdate: (data: T) => void) => () => void;

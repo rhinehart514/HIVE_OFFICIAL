@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Compass } from 'lucide-react';
 import { Logo, NoiseOverlay } from '@hive/ui/design-system/primitives';
 import {
   HomeIcon,
@@ -47,6 +47,7 @@ interface NavItem {
 // Navigation Config
 // ============================================================
 
+// Desktop nav: Full 5-item navigation
 const NAV_ITEMS: NavItem[] = [
   {
     id: 'feed',
@@ -62,6 +63,13 @@ const NAV_ITEMS: NavItem[] = [
     matchPattern: /^\/s(paces)?(\/|$)/,
   },
   {
+    id: 'explore',
+    label: 'Explore',
+    href: '/explore',
+    icon: Compass,
+    matchPattern: /^\/explore(\/|$)/,
+  },
+  {
     id: 'lab',
     label: 'Lab',
     href: '/lab',
@@ -74,6 +82,48 @@ const NAV_ITEMS: NavItem[] = [
     href: '/profile',
     icon: UserIcon,
     matchPattern: /^\/profile(\/|$)|^\/u\//,
+  },
+];
+
+// Mobile nav: 4 items (Lab moves to drawer for space constraints)
+const MOBILE_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'feed',
+    label: 'Feed',
+    href: '/feed',
+    icon: HomeIcon,
+  },
+  {
+    id: 'spaces',
+    label: 'Spaces',
+    href: '/spaces',
+    icon: UsersIcon,
+    matchPattern: /^\/s(paces)?(\/|$)/,
+  },
+  {
+    id: 'explore',
+    label: 'Explore',
+    href: '/explore',
+    icon: Compass,
+    matchPattern: /^\/explore(\/|$)/,
+  },
+  {
+    id: 'profile',
+    label: 'Profile',
+    href: '/profile',
+    icon: UserIcon,
+    matchPattern: /^\/profile(\/|$)|^\/u\//,
+  },
+];
+
+// Mobile drawer items: Lab + Settings
+const MOBILE_DRAWER_ITEMS: NavItem[] = [
+  {
+    id: 'lab',
+    label: 'Lab',
+    href: '/lab',
+    icon: BeakerIcon,
+    matchPattern: /^\/lab(\/|$)/,
   },
 ];
 
@@ -330,9 +380,9 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 </button>
               </div>
 
-              {/* Navigation */}
+              {/* Primary Navigation - 4 items on mobile */}
               <nav className="flex-1 py-4 px-3 space-y-1">
-                {NAV_ITEMS.map((item) => {
+                {MOBILE_NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const active = isActive(item);
 
@@ -357,8 +407,33 @@ function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 })}
               </nav>
 
-              {/* Bottom */}
+              {/* Bottom: Lab + Settings + Sign Out */}
               <div className="py-4 px-3 space-y-1 border-t border-white/[0.06]">
+                {/* Lab - moved from primary nav on mobile */}
+                {MOBILE_DRAWER_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item);
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.href)}
+                      className={cn(
+                        'relative w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
+                        active
+                          ? 'text-white bg-white/[0.06]'
+                          : 'text-white/60 hover:text-white hover:bg-white/[0.03]'
+                      )}
+                    >
+                      {active && (
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[var(--color-gold)] rounded-r" />
+                      )}
+                      <Icon size={20} />
+                      <span className="text-body font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Settings */}
                 {BOTTOM_ITEMS.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -422,6 +497,7 @@ export function AppShell({ children }: AppShellProps) {
   const isWideContentPage =
     pathname.startsWith('/profile') ||
     pathname.startsWith('/spaces') ||
+    pathname.startsWith('/explore') ||
     pathname.startsWith('/lab');
 
   if (isStandalonePage) {

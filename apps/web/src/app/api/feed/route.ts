@@ -177,7 +177,10 @@ async function fetchCandidates(
       postsQuery = postsQuery.where('spaceId', '==', spaceId);
     }
 
-    const snapshot = await postsQuery.limit(limit * 3).get(); // Fetch more for ranking
+    // BOUNDED QUERY: Cap internal fetch at 150 docs to prevent OOM
+    // Fetch more than requested limit to allow for filtering/ranking, but not unbounded
+    const internalLimit = Math.min(limit * 3, 150);
+    const snapshot = await postsQuery.limit(internalLimit).get();
 
     const candidates = snapshot.docs
     .map((doc: FirebaseFirestore.QueryDocumentSnapshot): RankingCandidate | null => {
@@ -370,6 +373,7 @@ async function getChronologicalFeed(
     postsQuery = postsQuery.where('spaceId', '==', spaceId);
   }
 
+  // BOUNDED QUERY: Hard limit of 100 docs for chronological feed to prevent OOM
   const snapshot = await postsQuery.limit(100).get();
 
   let posts = snapshot.docs

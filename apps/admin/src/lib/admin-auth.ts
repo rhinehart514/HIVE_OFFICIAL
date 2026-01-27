@@ -7,10 +7,12 @@
  * Session Management: Uses jose for JWT session tokens stored in HTTP-only cookies
  */
 
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 import { cookies } from 'next/headers';
 import { auth as authAdmin, db as dbAdmin } from './firebase-admin';
+import type { AdminUser } from './types';
 
 // Session configuration
 const SESSION_COOKIE_NAME = 'hive_admin_session';
@@ -38,14 +40,8 @@ interface AdminSessionPayload extends JWTPayload {
   campusId?: string;
 }
 
-export interface AdminUser {
-  id: string;
-  email: string;
-  role: 'super_admin' | 'admin' | 'moderator' | 'viewer';
-  permissions: string[];
-  lastLogin: Date;
-  campusId?: string;
-}
+// Re-export from shared types for backwards compatibility
+export type { AdminUser } from './types';
 
 // Get Firestore instance for admin checks
 function getAdminDb() {
@@ -207,6 +203,11 @@ export async function verifyAdminSession(): Promise<AdminUser | null> {
     // Re-validate admin status in Firestore (ensures revoked admins can't use old sessions)
     const isStillAdmin = await isAdmin(sessionPayload.userId);
     if (!isStillAdmin) {
+      // Log the blocked revoked session attempt for audit trail
+      await logAdminActivity(sessionPayload.userId, 'revoked_session_blocked', {
+        attemptedAt: new Date().toISOString(),
+        email: sessionPayload.email
+      });
       return null;
     }
 
@@ -379,5 +380,77 @@ export async function logAdminActivity(
     });
   } catch {
     // Activity logging is non-critical - fail silently
+  }
+}
+
+/**
+ * Revoke admin access with full audit trail
+ * SECURITY: Use this function to properly deactivate admin accounts
+ *
+ * @param adminId - The user ID of the admin to revoke
+ * @param revokedBy - The user ID of the admin performing the revocation
+ * @param reason - Reason for revocation (for audit trail)
+ */
+export async function revokeAdminAccess(
+  adminId: string,
+  revokedBy: string,
+  reason: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const db = getAdminDb();
+
+    // Verify the admin exists and is currently active
+    const adminDoc = await db.collection('admins').doc(adminId).get();
+    if (!adminDoc.exists) {
+      return { success: false, error: 'Admin not found' };
+    }
+
+    const adminData = adminDoc.data();
+    if (adminData?.active === false) {
+      return { success: false, error: 'Admin is already inactive' };
+    }
+
+    // Update admin document to inactive with revocation metadata
+    await db.collection('admins').doc(adminId).update({
+      active: false,
+      revokedAt: new Date(),
+      revokedBy,
+      revocationReason: reason
+    });
+
+    // Remove admin custom claims from Firebase Auth
+    try {
+      const user = await authAdmin.getUser(adminId);
+      const existingClaims = user.customClaims || {};
+      await authAdmin.setCustomUserClaims(adminId, {
+        ...existingClaims,
+        admin: false,
+        adminRole: null
+      });
+    } catch {
+      // User may not exist in Auth, continue with Firestore update
+    }
+
+    // Log the revocation event for audit trail
+    await logAdminActivity(revokedBy, 'admin_access_revoked', {
+      targetAdminId: adminId,
+      targetEmail: adminData?.email,
+      reason,
+      previousRole: adminData?.role
+    });
+
+    return { success: true };
+  } catch (error) {
+    // Log the failure
+    await logAdminActivity(revokedBy, 'admin_revocation_failed', {
+      targetAdminId: adminId,
+      reason,
+      error: error instanceof Error ? error.message : 'unknown'
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to revoke admin access'
+    };
   }
 }

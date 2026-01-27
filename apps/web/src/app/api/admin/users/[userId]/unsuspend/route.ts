@@ -7,8 +7,9 @@
 import { z } from 'zod';
 import { logger } from '@/lib/structured-logger';
 import {
-  withAdminAuthAndErrors,
+  withAdminPermission,
   getUserId,
+  getCampusId,
   type AuthenticatedRequest,
 } from '@/lib/middleware';
 import { HttpStatus } from '@/lib/api-response-types';
@@ -27,8 +28,10 @@ const UnsuspendSchema = z.object({
 /**
  * POST /api/admin/users/[userId]/unsuspend
  * Restore a suspended user account
+ *
+ * SECURITY: Requires 'manage_users' permission (admin or super_admin only)
  */
-export const POST = withAdminAuthAndErrors<RouteContext>(async (request, context, respond) => {
+export const POST = withAdminPermission<RouteContext>('manage_users', async (request, context, respond) => {
   const adminId = getUserId(request as AuthenticatedRequest);
   const { userId } = await context.params;
 
@@ -61,6 +64,22 @@ export const POST = withAdminAuthAndErrors<RouteContext>(async (request, context
     }
 
     const userData = userDoc.data();
+
+    // SECURITY: Verify campus isolation - admins can only unsuspend users in their campus
+    const adminCampusId = getCampusId(request as AuthenticatedRequest);
+    const userCampusId = userData?.campusId;
+
+    if (adminCampusId && userCampusId && adminCampusId !== userCampusId) {
+      logger.warn('Cross-campus unsuspend attempt blocked', {
+        adminId,
+        adminCampus: adminCampusId,
+        targetUserId: userId,
+        targetCampus: userCampusId,
+      });
+      return respond.error('Cannot unsuspend users from a different campus', 'FORBIDDEN', {
+        status: HttpStatus.FORBIDDEN,
+      });
+    }
 
     // Check if actually suspended
     if (userData?.status !== 'suspended') {

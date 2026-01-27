@@ -349,6 +349,26 @@ export class PlacedToolsReorderedEvent extends DomainEvent {
   }
 }
 
+/**
+ * Emitted when a placed tool's runtime state is updated
+ * This is separate from PlacedToolUpdatedEvent which handles config/visibility changes.
+ * State updates track runtime data like poll results, calendar data, etc.
+ */
+export class PlacedToolStateUpdatedEvent extends DomainEvent {
+  constructor(
+    aggregateId: string,
+    public readonly placementId: string,
+    public readonly toolId: string,
+    public readonly stateKeys: string[]
+  ) {
+    super(aggregateId);
+  }
+
+  getEventName(): string {
+    return 'PlacedToolStateUpdated';
+  }
+}
+
 // ============================================================
 // Board Events (Chat Channels)
 // ============================================================

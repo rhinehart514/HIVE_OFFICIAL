@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
 import { useAdminAuth } from "@/lib/auth";
+import { fetchWithAuth } from "@/hooks/use-admin-api";
 import { AdminSidebar } from "./admin-sidebar";
 import { OverviewDashboard } from "./overview-dashboard";
 import { UserManagementDashboard } from "./user-management-dashboard";
@@ -22,11 +23,17 @@ import { SystemHealthDashboard } from "./system-health-dashboard";
 import { ActivityLogViewer } from "./activity-log-viewer";
 import { ClaimsQueue } from "./claims-queue";
 import { LeaderHealthDashboard } from "./leader-health-dashboard";
+import { CommandCenterDashboard } from "./command";
+import { OperationsCenterDashboard } from "./operations";
+import { ModeSwitcher } from "./ModeSwitcher";
+import { NotificationPanel } from "./notifications/NotificationPanel";
 import {
   BellIcon,
   MagnifyingGlassIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+
+type AdminMode = "command" | "operations";
 
 // Aliases for lucide compatibility
 const Bell = BellIcon;
@@ -40,6 +47,9 @@ interface AdminDashboardProps {
 export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDashboardProps) {
   const { admin } = useAdminAuth();
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [adminMode, setAdminMode] = useState<AdminMode>("operations");
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationBellRef = useRef<HTMLButtonElement>(null);
   const [pendingCounts, setPendingCounts] = useState({
     builderRequests: 0,
     flaggedContent: 0,
@@ -52,15 +62,9 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
 
     try {
       const [builderResponse, contentResponse, claimsResponse] = await Promise.all([
-        fetch('/api/admin/builder-requests', {
-          headers: { 'Authorization': `Bearer ${admin.id}` },
-        }),
-        fetch('/api/admin/content-moderation', {
-          headers: { 'Authorization': `Bearer ${admin.id}` },
-        }),
-        fetch('/api/admin/claims?status=pending', {
-          headers: { 'Authorization': `Bearer ${admin.id}` },
-        }),
+        fetchWithAuth('/api/admin/builder-requests'),
+        fetchWithAuth('/api/admin/content-moderation'),
+        fetchWithAuth('/api/admin/claims?status=pending'),
       ]);
 
       const builderData = await builderResponse.json();
@@ -210,6 +214,22 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
     );
   }
 
+  // If in Command mode, show Command Center directly
+  if (adminMode === "command") {
+    return (
+      <div className="min-h-screen bg-black">
+        {/* Floating mode switcher for Command Center */}
+        <div className="fixed top-4 right-4 z-50">
+          <ModeSwitcher
+            currentMode={adminMode}
+            onModeChange={setAdminMode}
+          />
+        </div>
+        <CommandCenterDashboard />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
       {/* Sidebar */}
@@ -217,6 +237,8 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
         activeTab={activeTab}
         onTabChange={setActiveTab}
         pendingCounts={pendingCounts}
+        currentMode={adminMode}
+        onModeChange={setAdminMode}
       />
 
       {/* Main Content */}
@@ -241,12 +263,23 @@ export function ComprehensiveAdminDashboard({ initialTab = 'overview' }: AdminDa
             </div>
 
             {/* Notifications */}
-            <button className="relative p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
-              <Bell className="h-5 w-5" />
-              {(pendingCounts.builderRequests + pendingCounts.flaggedContent) > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              )}
-            </button>
+            <div className="relative">
+              <button
+                ref={notificationBellRef}
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="relative p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                {(pendingCounts.builderRequests + pendingCounts.flaggedContent + pendingCounts.pendingClaims) > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                )}
+              </button>
+              <NotificationPanel
+                isOpen={showNotifications}
+                onClose={() => setShowNotifications(false)}
+                anchorRef={notificationBellRef}
+              />
+            </div>
 
             {/* User Menu */}
             <div className="flex items-center gap-3 pl-4 border-l border-white/10">

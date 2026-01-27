@@ -74,8 +74,8 @@ async function fetchUserTools(): Promise<ToolData[]> {
   return (data.tools || []) as ToolData[];
 }
 
-// Submit ceremony phases
-type CeremonyPhase = 'idle' | 'morphing' | 'dimming' | 'creating' | 'building' | 'redirecting';
+// Submit loading state (simplified - no ceremony)
+type CeremonyPhase = 'idle' | 'creating';
 
 /**
  * WordReveal — Word-by-word text animation
@@ -297,30 +297,18 @@ export default function BuilderDashboard() {
     }
   }, [authLoading, user, titleRevealed, isNewUser]);
 
-  // Handle submit with ceremony
+  // Handle submit - instant feedback, no ceremony
   const handleSubmit = useCallback(async () => {
     if (!prompt.trim() || ceremonyPhase !== 'idle') return;
 
     const toolName = generateToolName(prompt);
-
-    setCeremonyPhase('morphing');
-    setTimeout(() => setCeremonyPhase('dimming'), 200);
-    setTimeout(() => {
-      setCeremonyPhase('creating');
-      setStatusText('Creating...');
-    }, 400);
-    setTimeout(() => {
-      setCeremonyPhase('building');
-      setStatusText(`Building ${toolName}...`);
-    }, 600);
+    setCeremonyPhase('creating');
+    setStatusText(`Creating ${toolName}...`);
 
     try {
       const toolId = await createBlankTool(toolName, prompt);
-      setTimeout(() => {
-        setCeremonyPhase('redirecting');
-        const encodedPrompt = encodeURIComponent(prompt.trim());
-        router.push(`/lab/${toolId}?new=true&prompt=${encodedPrompt}`);
-      }, 800);
+      const encodedPrompt = encodeURIComponent(prompt.trim());
+      router.push(`/lab/${toolId}?new=true&prompt=${encodedPrompt}`);
     } catch (error) {
       toast.error('Failed to create tool');
       setCeremonyPhase('idle');
@@ -338,8 +326,6 @@ export default function BuilderDashboard() {
 
     try {
       const toolId = await createToolFromTemplateApi(template);
-      setCeremonyPhase('redirecting');
-      setStatusText('Opening in editor...');
       router.push(`/lab/${toolId}`);
     } catch (error) {
       toast.error('Failed to create tool from template');
@@ -417,7 +403,7 @@ export default function BuilderDashboard() {
   }
 
   const isSubmitting = ceremonyPhase !== 'idle';
-  const showStatus = ceremonyPhase === 'creating' || ceremonyPhase === 'building' || ceremonyPhase === 'redirecting';
+  const showStatus = ceremonyPhase === 'creating';
 
   return (
     <div className="min-h-screen bg-[var(--bg-ground,#0A0A09)]">

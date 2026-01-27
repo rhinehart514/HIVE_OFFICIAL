@@ -43,6 +43,10 @@ export type SectionId =
   | 'code'
   | 'role'
   | 'identity'
+  | 'identity-name'
+  | 'identity-handle'
+  | 'identity-field'
+  | 'identity-interests'
   | 'arrival'
   | 'alumni-waitlist';
 
@@ -65,17 +69,7 @@ export interface EntryData {
   handle: string;
   major: string;
   graduationYear: number | null;
-  residenceType: 'on-campus' | 'off-campus' | 'commuter' | '';
-  residentialSpaceId: string;
   interests: string[];
-  communityIdentities: {
-    international?: boolean;
-    transfer?: boolean;
-    firstGen?: boolean;
-    commuter?: boolean;
-    graduate?: boolean;
-    veteran?: boolean;
-  };
 }
 
 export interface UseEvolvingEntryOptions {
@@ -88,11 +82,22 @@ export interface UseEvolvingEntryOptions {
 // Resend cooldown duration in seconds
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// localStorage key for partial recovery
+const PARTIAL_PROGRESS_KEY = 'hive-entry-progress';
+
 // Type for access code lockout (used by landing page components)
 export interface AccessCodeLockout {
   locked: boolean;
   remainingMinutes: number;
   attemptsRemaining?: number;
+}
+
+// Type for partial progress recovery
+interface PartialProgress {
+  email: string;
+  schoolId: string;
+  sectionId: SectionId;
+  timestamp: number;
 }
 
 export interface UseEvolvingEntryReturn {
@@ -115,6 +120,15 @@ export interface UseEvolvingEntryReturn {
   // Email cooldown
   resendCooldown: number;
 
+  // Code expiration tracking
+  codeSentAt: number | null;
+
+  // Partial recovery
+  hasPartialProgress: boolean;
+  partialProgressEmail: string | null;
+  resumePartialProgress: () => void;
+  clearPartialProgress: () => void;
+
   // Handle checking
   handleStatus: HandleStatus;
   handleSuggestions: string[];
@@ -131,10 +145,7 @@ export interface UseEvolvingEntryReturn {
   selectSuggestion: (handle: string) => void;
   setMajor: (major: string) => void;
   setGraduationYear: (year: number | null) => void;
-  setResidenceType: (type: 'on-campus' | 'off-campus' | 'commuter') => void;
-  setResidentialSpaceId: (spaceId: string) => void;
   setInterests: (interests: string[]) => void;
-  setCommunityIdentities: (identities: { international?: boolean; transfer?: boolean; firstGen?: boolean; commuter?: boolean; graduate?: boolean; veteran?: boolean }) => void;
 
   // Section actions
   confirmSchool: () => void;
@@ -142,6 +153,11 @@ export interface UseEvolvingEntryReturn {
   verifyEmailCode: (codeString: string) => Promise<void>;
   resendCode: () => Promise<void>;
   submitRole: () => Promise<void>;
+
+  // Identity sub-step navigation
+  advanceToHandle: () => void;
+  advanceToField: () => void;
+  advanceToInterests: () => void;
   completeIdentity: () => Promise<void>;
 
   // Edit actions (go back)
@@ -207,13 +223,18 @@ function generateHandleSuggestions(
 // ============================================
 
 const createInitialSections = (): Record<SectionId, SectionState> => {
-  // Flow: school → email → code → role → identity → arrival
+  // Flow: school → email → code → role → identity-* → arrival
+  // Identity is now paginated: name → handle → field → interests
   return {
     school: { id: 'school', status: 'active' },
     email: { id: 'email', status: 'hidden' },
     code: { id: 'code', status: 'hidden' },
     role: { id: 'role', status: 'hidden' },
-    identity: { id: 'identity', status: 'hidden' },
+    identity: { id: 'identity', status: 'hidden' }, // Legacy - kept for compatibility
+    'identity-name': { id: 'identity-name', status: 'hidden' },
+    'identity-handle': { id: 'identity-handle', status: 'hidden' },
+    'identity-field': { id: 'identity-field', status: 'hidden' },
+    'identity-interests': { id: 'identity-interests', status: 'hidden' },
     arrival: { id: 'arrival', status: 'hidden' },
     'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
   };
@@ -247,10 +268,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     handle: '',
     major: '',
     graduationYear: null,
-    residenceType: '',
-    residentialSpaceId: '',
     interests: [],
-    communityIdentities: {},
   });
 
   // User state
@@ -265,6 +283,12 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
   // Email resend cooldown (seconds remaining)
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Code sent timestamp (for expiration tracking)
+  const [codeSentAt, setCodeSentAt] = useState<number | null>(null);
+
+  // Partial progress recovery
+  const [partialProgress, setPartialProgress] = useState<PartialProgress | null>(null);
 
   // Handle checking
   const [handleStatus, setHandleStatus] = useState<HandleStatus>('idle');
@@ -290,6 +314,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
       'code',
       'role',
       'identity',
+      'identity-name',
+      'identity-handle',
+      'identity-field',
+      'identity-interests',
       'arrival',
       'alumni-waitlist',
     ];
@@ -310,6 +338,32 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     }, 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
+
+  // Effect: Check for partial progress on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PARTIAL_PROGRESS_KEY);
+      if (!stored) return;
+
+      const progress = JSON.parse(stored) as PartialProgress;
+
+      // Only recover if:
+      // 1. Progress is from same school
+      // 2. Progress is less than 30 minutes old
+      // 3. Progress has a valid email
+      const isValidSchool = progress.schoolId === schoolId;
+      const isRecent = Date.now() - progress.timestamp < 30 * 60 * 1000;
+      const hasEmail = Boolean(progress.email);
+
+      if (isValidSchool && isRecent && hasEmail) {
+        setPartialProgress(progress);
+      } else {
+        localStorage.removeItem(PARTIAL_PROGRESS_KEY);
+      }
+    } catch {
+      localStorage.removeItem(PARTIAL_PROGRESS_KEY);
+    }
+  }, [schoolId]);
 
   // ============================================
   // SECTION STATE HELPERS
@@ -359,6 +413,48 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     },
     [updateSection]
   );
+
+  // ============================================
+  // PARTIAL PROGRESS HELPERS
+  // ============================================
+
+  const savePartialProgress = useCallback(
+    (sectionId: SectionId) => {
+      if (!dataRef.current.email) return;
+
+      const progress: PartialProgress = {
+        email: dataRef.current.email,
+        schoolId: dataRef.current.school?.id || schoolId,
+        sectionId,
+        timestamp: Date.now(),
+      };
+
+      try {
+        localStorage.setItem(PARTIAL_PROGRESS_KEY, JSON.stringify(progress));
+      } catch {
+        // localStorage unavailable, continue without persistence
+      }
+    },
+    [schoolId]
+  );
+
+  const resumePartialProgress = useCallback(() => {
+    if (!partialProgress) return;
+
+    // Restore email and move to code section
+    setData((prev) => ({ ...prev, email: partialProgress.email }));
+    lockSection('school');
+    activateSection('email');
+    setPartialProgress(null);
+
+    // Clear stored progress
+    localStorage.removeItem(PARTIAL_PROGRESS_KEY);
+  }, [partialProgress, lockSection, activateSection]);
+
+  const clearPartialProgress = useCallback(() => {
+    setPartialProgress(null);
+    localStorage.removeItem(PARTIAL_PROGRESS_KEY);
+  }, []);
 
   // ============================================
   // EFFECTS
@@ -489,20 +585,8 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     setData((prev) => ({ ...prev, graduationYear }));
   }, []);
 
-  const setResidenceType = useCallback((residenceType: 'on-campus' | 'off-campus' | 'commuter') => {
-    setData((prev) => ({ ...prev, residenceType }));
-  }, []);
-
-  const setResidentialSpaceId = useCallback((residentialSpaceId: string) => {
-    setData((prev) => ({ ...prev, residentialSpaceId }));
-  }, []);
-
   const setInterests = useCallback((interests: string[]) => {
     setData((prev) => ({ ...prev, interests }));
-  }, []);
-
-  const setCommunityIdentities = useCallback((communityIdentities: { international?: boolean; transfer?: boolean; firstGen?: boolean; commuter?: boolean; graduate?: boolean; veteran?: boolean }) => {
-    setData((prev) => ({ ...prev, communityIdentities }));
   }, []);
 
   // ============================================
@@ -555,14 +639,18 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
 
       // Success - move to code section and start cooldown
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      setCodeSentAt(Date.now());
       lockSection('email');
       activateSection('code');
+
+      // Save partial progress for recovery
+      savePartialProgress('code');
     } catch {
       setSectionError('email', 'Failed to send code');
     } finally {
       setIsSubmittingEmail(false);
     }
-  }, [data.school?.id, schoolId, domain, lockSection, activateSection, setSectionError, clearSectionError]);
+  }, [data.school?.id, schoolId, domain, lockSection, activateSection, setSectionError, clearSectionError, savePartialProgress]);
 
   // Code: Verify email code and create session
   const verifyEmailCode = useCallback(
@@ -611,6 +699,9 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
           lockSection('code');
           completeSection('arrival');
           activateSection('arrival');
+
+          // Clear partial progress on successful verification
+          localStorage.removeItem(PARTIAL_PROGRESS_KEY);
           return;
         }
 
@@ -619,6 +710,9 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
         setIsReturningUser(false);
         lockSection('code');
         activateSection('role');
+
+        // Clear partial progress on successful verification
+        localStorage.removeItem(PARTIAL_PROGRESS_KEY);
       } catch {
         setData((prev) => ({ ...prev, verificationCode: ['', '', '', '', '', ''] }));
         setSectionError('code', 'Verification failed');
@@ -660,6 +754,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
       // Success - reset code and start cooldown
       setData((prev) => ({ ...prev, verificationCode: ['', '', '', '', '', ''] }));
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      setCodeSentAt(Date.now());
     } catch {
       setSectionError('code', 'Failed to resend code');
     } finally {
@@ -737,9 +832,9 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
         return;
       }
 
-      // Student flow - proceed to identity
+      // Student flow - proceed to paginated identity flow (starts with name)
       lockSection('role');
-      activateSection('identity');
+      activateSection('identity-name');
     } catch (err) {
       setSectionError('role', err instanceof Error ? err.message : 'Setup failed');
     } finally {
@@ -755,22 +850,45 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     clearSectionError,
   ]);
 
-  // Identity: Complete profile setup
-  const completeIdentity = useCallback(async () => {
+  // Identity Step 1: Name → Handle (auto-advance on valid input)
+  const advanceToHandle = useCallback(() => {
     if (!data.firstName.trim() || !data.lastName.trim()) {
-      setSectionError('identity', 'Enter your name');
+      setSectionError('identity-name', 'Enter your full name');
       return;
     }
+    lockSection('identity-name');
+    activateSection('identity-handle');
+  }, [data.firstName, data.lastName, lockSection, activateSection, setSectionError]);
 
+  // Identity Step 2: Handle → Field (auto-advance on available handle)
+  const advanceToField = useCallback(() => {
     if (!data.handle.trim() || handleStatus !== 'available') {
-      setSectionError('identity', 'Choose an available handle');
+      setSectionError('identity-handle', 'Choose an available handle');
+      return;
+    }
+    lockSection('identity-handle');
+    activateSection('identity-field');
+  }, [data.handle, handleStatus, lockSection, activateSection, setSectionError]);
+
+  // Identity Step 3: Field → Interests (auto-advance on major+year selection)
+  const advanceToInterests = useCallback(() => {
+    // Major and year are optional - allow advancement
+    lockSection('identity-field');
+    activateSection('identity-interests');
+  }, [lockSection, activateSection]);
+
+  // Identity Step 4: Complete interests and finish profile
+  const completeIdentity = useCallback(async () => {
+    if (data.interests.length < 2) {
+      setSectionError('identity-interests', 'Select at least 2 interests');
       return;
     }
 
     setIsSubmittingIdentity(true);
-    clearSectionError('identity');
+    clearSectionError('identity-interests');
 
     try {
+      // Send identity fields including major, year, interests
       const response = await fetch('/api/auth/complete-entry', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -782,10 +900,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
           role: data.role || 'student',
           major: data.major || null,
           graduationYear: data.graduationYear || null,
-          residenceType: data.residenceType || 'off-campus',
-          residentialSpaceId: data.residentialSpaceId === 'off-campus' ? null : (data.residentialSpaceId || null),
-          interests: data.interests || [],
-          communityIdentities: data.communityIdentities || {},
+          interests: data.interests,
         }),
       });
 
@@ -795,17 +910,16 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
         throw new Error(result.error || 'Failed to complete setup');
       }
 
-      lockSection('identity');
+      lockSection('identity-interests');
       completeSection('arrival');
       activateSection('arrival');
     } catch (err) {
-      setSectionError('identity', err instanceof Error ? err.message : 'Setup failed');
+      setSectionError('identity-interests', err instanceof Error ? err.message : 'Setup failed');
     } finally {
       setIsSubmittingIdentity(false);
     }
   }, [
     data,
-    handleStatus,
     lockSection,
     activateSection,
     completeSection,
@@ -825,6 +939,10 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
       code: { id: 'code', status: 'hidden' },
       role: { id: 'role', status: 'hidden' },
       identity: { id: 'identity', status: 'hidden' },
+      'identity-name': { id: 'identity-name', status: 'hidden' },
+      'identity-handle': { id: 'identity-handle', status: 'hidden' },
+      'identity-field': { id: 'identity-field', status: 'hidden' },
+      'identity-interests': { id: 'identity-interests', status: 'hidden' },
       arrival: { id: 'arrival', status: 'hidden' },
       'alumni-waitlist': { id: 'alumni-waitlist', status: 'hidden' },
     });
@@ -895,6 +1013,15 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     // Email cooldown
     resendCooldown,
 
+    // Code expiration tracking
+    codeSentAt,
+
+    // Partial recovery
+    hasPartialProgress: Boolean(partialProgress),
+    partialProgressEmail: partialProgress?.email || null,
+    resumePartialProgress,
+    clearPartialProgress,
+
     // Handle checking
     handleStatus,
     handleSuggestions,
@@ -911,10 +1038,7 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     selectSuggestion,
     setMajor,
     setGraduationYear,
-    setResidenceType,
-    setResidentialSpaceId,
     setInterests,
-    setCommunityIdentities,
 
     // Section actions
     confirmSchool,
@@ -922,6 +1046,11 @@ export function useEvolvingEntry(options: UseEvolvingEntryOptions): UseEvolvingE
     verifyEmailCode,
     resendCode,
     submitRole,
+
+    // Identity sub-step navigation
+    advanceToHandle,
+    advanceToField,
+    advanceToInterests,
     completeIdentity,
 
     // Edit actions

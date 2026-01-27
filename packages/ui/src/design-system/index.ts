@@ -176,7 +176,10 @@ export {
   OTPInput, EmailInput, getFullEmail, isValidEmailUsername, AuthSuccessState, AuthSuccessStateCompact,
   // Space Header
   SpaceHeader, SpaceHeaderCompact,
-  // Profile
+  // Profile - 3-Zone Layout (New)
+  ProfileIdentityHero, ProfileActivityCard, ProfileLeadershipCard, ProfileEventCard,
+  ProfileSpacePill, ProfileConnectionFooter, ProfileOverflowChip,
+  // Profile - Legacy Bento
   ProfileBentoCard, ProfileBentoCardLegacy, ProfileHero, ProfileStatsRow, ContextBanner,
   ProfileSpacesCard, ProfileToolsCard, ProfileConnectionsCard, ProfileInterestsCard,
   ProfileActivityHeatmap, ProfileToolModal,
@@ -251,6 +254,14 @@ export type {
   SlotProps, SlottableProps, SlotCloneProps,
   OTPInputProps, EmailInputProps, AuthSuccessStateProps,
   SpaceHeaderProps, SpaceHeaderCompactProps, MembershipState,
+  // Profile - 3-Zone Layout Types (New)
+  ProfileIdentityHeroUser, ProfileIdentityHeroProps,
+  ProfileActivityTool, ProfileActivityCardProps,
+  ProfileLeadershipSpace, ProfileLeadershipCardProps,
+  ProfileEvent, ProfileEventCardProps,
+  ProfileSpacePillSpace, ProfileSpacePillProps,
+  ProfileConnectionFooterProps, ProfileOverflowChipProps,
+  // Profile - Legacy Types
   ProfileBentoCardProps, ProfileBentoCardLegacyProps, ProfileHeroProps, ProfileHeroUser,
   ProfileHeroPresence, ProfileHeroBadges, ProfileStatsRowProps, ContextBannerProps,
   ProfileSpacesCardProps, ProfileSpace, ProfileToolsCardProps, ProfileTool,

@@ -11,19 +11,23 @@
  * - 6-digit OTP input
  * - Redirects to /enter on success for role/identity setup
  * - "What is HIVE?" link
+ * - "No code?" waitlist signup modal
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { AnimatePresence } from 'framer-motion';
 import {
   motion,
   NoiseOverlay,
   Logo,
   OTPInput,
+  Input,
+  Button,
   MOTION,
 } from '@hive/ui/design-system/primitives';
-import { Lock, Clock } from 'lucide-react';
+import { Lock, Clock, X, Check, Sparkles } from 'lucide-react';
 
 const EASE_PREMIUM = MOTION.ease.premium;
 
@@ -43,10 +47,53 @@ export default function LandingPage() {
   const [entryCodeLockout, setEntryCodeLockout] = useState<EntryCodeLockout | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  // Waitlist modal state
+  const [showWaitlist, setShowWaitlist] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistSchool, setWaitlistSchool] = useState('');
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+
   // Check if already authenticated on mount
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle waitlist submission
+  const handleWaitlistSubmit = useCallback(async () => {
+    if (!waitlistEmail.trim() || !waitlistSchool.trim()) {
+      setWaitlistError('Please fill in both fields');
+      return;
+    }
+
+    setWaitlistSubmitting(true);
+    setWaitlistError('');
+
+    try {
+      const response = await fetch('/api/waitlist/school-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: waitlistEmail.trim(),
+          schoolName: waitlistSchool.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setWaitlistError(result.error || 'Failed to join waitlist');
+        return;
+      }
+
+      setWaitlistSuccess(true);
+    } catch {
+      setWaitlistError('Something went wrong. Try again.');
+    } finally {
+      setWaitlistSubmitting(false);
+    }
+  }, [waitlistEmail, waitlistSchool]);
 
   // Word-by-word reveal for headline
   const headlineWords = ['Enter', 'your', 'code'];
@@ -247,19 +294,36 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Help text */}
+            {/* Help text - now clickable */}
             <p className="text-body-sm text-white/40 text-center">
-              Don&apos;t have a code? Contact your campus ambassador.
+              Don&apos;t have a code?{' '}
+              <button
+                type="button"
+                onClick={() => setShowWaitlist(true)}
+                className="text-[var(--life-gold)] hover:text-[var(--life-gold-light)] transition-colors underline underline-offset-2"
+              >
+                Join the waitlist
+              </button>
             </p>
           </motion.div>
         )}
 
-        {/* What is HIVE? link */}
-        <motion.div
-          className="mt-12"
+        {/* Manifesto line - quiet, intentional */}
+        <motion.p
+          className="mt-8 text-body-sm text-white/30 max-w-[280px] text-center leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 1.2, ease: EASE_PREMIUM }}
+          transition={{ duration: 0.6, delay: 1.1, ease: EASE_PREMIUM }}
+        >
+          Your invitation to what students are building.
+        </motion.p>
+
+        {/* What is HIVE? link */}
+        <motion.div
+          className="mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 1.3, ease: EASE_PREMIUM }}
         >
           <Link
             href="/about"
@@ -269,6 +333,141 @@ export default function LandingPage() {
           </Link>
         </motion.div>
       </main>
+
+      {/* Waitlist Modal */}
+      <AnimatePresence>
+        {showWaitlist && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          >
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              onClick={() => !waitlistSubmitting && setShowWaitlist(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.3, ease: EASE_PREMIUM }}
+              className="relative w-full max-w-md bg-[var(--color-bg-elevated)] border border-white/10 rounded-2xl p-6 shadow-2xl"
+            >
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => !waitlistSubmitting && setShowWaitlist(false)}
+                className="absolute top-4 right-4 p-2 text-white/40 hover:text-white/60 transition-colors"
+                disabled={waitlistSubmitting}
+              >
+                <X size={20} />
+              </button>
+
+              {waitlistSuccess ? (
+                /* Success State */
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center py-6"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="w-16 h-16 mx-auto mb-6 rounded-full bg-[var(--life-gold)]/20 flex items-center justify-center"
+                  >
+                    <Check className="w-8 h-8 text-[var(--life-gold)]" />
+                  </motion.div>
+                  <h2 className="text-title-lg font-semibold text-white mb-2">
+                    You&apos;re on the list
+                  </h2>
+                  <p className="text-body text-white/50 mb-6">
+                    We&apos;ll notify you when {waitlistSchool} joins HIVE.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowWaitlist(false);
+                      setWaitlistSuccess(false);
+                      setWaitlistEmail('');
+                      setWaitlistSchool('');
+                    }}
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              ) : (
+                /* Form State */
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--life-gold)]/10 flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-[var(--life-gold)]" />
+                    </div>
+                    <h2 className="text-title-lg font-semibold text-white mb-1">
+                      Join the waitlist
+                    </h2>
+                    <p className="text-body-sm text-white/50">
+                      We&apos;ll let you know when your school is on HIVE.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-label text-white/60">Email</label>
+                      <Input
+                        type="email"
+                        placeholder="you@school.edu"
+                        value={waitlistEmail}
+                        onChange={(e) => setWaitlistEmail(e.target.value)}
+                        disabled={waitlistSubmitting}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-label text-white/60">School name</label>
+                      <Input
+                        type="text"
+                        placeholder="University of..."
+                        value={waitlistSchool}
+                        onChange={(e) => setWaitlistSchool(e.target.value)}
+                        disabled={waitlistSubmitting}
+                      />
+                    </div>
+                  </div>
+
+                  {waitlistError && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-body-sm text-red-400 text-center"
+                    >
+                      {waitlistError}
+                    </motion.p>
+                  )}
+
+                  <Button
+                    variant="cta"
+                    className="w-full"
+                    onClick={handleWaitlistSubmit}
+                    disabled={waitlistSubmitting || !waitlistEmail.trim() || !waitlistSchool.trim()}
+                    loading={waitlistSubmitting}
+                  >
+                    {waitlistSubmitting ? 'Joining...' : 'Notify me'}
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Footer — minimal */}
       <footer className="py-6 px-6 flex justify-between items-center text-label text-white/30">

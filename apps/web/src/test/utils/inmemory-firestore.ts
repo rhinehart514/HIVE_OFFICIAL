@@ -126,6 +126,16 @@ export const dbAdminMock = {
       delete: (_ref: any) => {},
       commit: async () => {}
     };
+  },
+  runTransaction: async <T>(callback: (transaction: any) => Promise<T>): Promise<T> => {
+    // Simple transaction mock that executes operations immediately
+    const transaction = {
+      get: async (ref: any) => ref.get(),
+      set: (ref: any, data: DocData) => { ref.set(data); return transaction; },
+      update: (ref: any, data: DocData) => { ref.update(data); return transaction; },
+      delete: (_ref: any) => { return transaction; },
+    };
+    return await callback(transaction);
   }
 };
 

@@ -12,3 +12,4 @@ export { MembersList } from './members-list';
 export type { Member } from './members-list';
 export { SpaceSettings } from './space-settings';
 export { SpaceInfoDrawer } from './space-info-drawer';
+export { MemberManagement } from './member-management';

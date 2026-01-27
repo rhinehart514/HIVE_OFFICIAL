@@ -24,6 +24,7 @@ import {
   RevealSection,
   NarrativeReveal,
 } from '@hive/ui/design-system/primitives';
+import { useDebounce } from '@hive/hooks';
 import { MajorBrowse } from './components/MajorBrowse';
 import { InterestsBrowse } from './components/InterestsBrowse';
 import { HomeBrowse } from './components/HomeBrowse';
@@ -91,6 +92,27 @@ export default function SpacesBrowsePage() {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [showSearch, setShowSearch] = React.useState(false);
 
+  // Debounce search query for API calls (300ms) while keeping immediate UI feedback
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Keyboard shortcut: Cmd+K to open search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowSearch(true);
+      }
+      // Escape to close search
+      if (e.key === 'Escape' && showSearch) {
+        setShowSearch(false);
+        setSearchQuery('');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showSearch]);
+
   // Handle category change
   const handleCategoryChange = (newCategory: BrowseCategory) => {
     setSearchQuery('');
@@ -98,18 +120,19 @@ export default function SpacesBrowsePage() {
   };
 
   // Render category-specific browse content
+  // Uses debouncedSearchQuery for API calls to prevent excessive requests
   const renderBrowseContent = () => {
     switch (category) {
       case 'major':
-        return <MajorBrowse searchQuery={searchQuery} />;
+        return <MajorBrowse searchQuery={debouncedSearchQuery} />;
       case 'interests':
-        return <InterestsBrowse searchQuery={searchQuery} />;
+        return <InterestsBrowse searchQuery={debouncedSearchQuery} />;
       case 'home':
-        return <HomeBrowse searchQuery={searchQuery} />;
+        return <HomeBrowse searchQuery={debouncedSearchQuery} />;
       case 'greek':
-        return <GreekBrowse searchQuery={searchQuery} />;
+        return <GreekBrowse searchQuery={debouncedSearchQuery} />;
       default:
-        return <MajorBrowse searchQuery={searchQuery} />;
+        return <MajorBrowse searchQuery={debouncedSearchQuery} />;
     }
   };
 
@@ -130,10 +153,16 @@ export default function SpacesBrowsePage() {
             </Button>
 
             {/* Category Pills */}
-            <nav className="hidden md:flex items-center gap-1 ml-4">
+            <nav
+              className="hidden md:flex items-center gap-1 ml-4"
+              role="tablist"
+              aria-label="Browse categories"
+            >
               {CATEGORY_NAV.map((cat) => (
                 <button
                   key={cat.id}
+                  role="tab"
+                  aria-selected={category === cat.id}
                   onClick={() => handleCategoryChange(cat.id as BrowseCategory)}
                   className={cn(
                     'px-3 py-1.5 rounded-full text-body-sm font-medium transition-all duration-200',
@@ -155,16 +184,38 @@ export default function SpacesBrowsePage() {
                 className="flex items-center gap-2"
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: MOTION.duration.instant }}
               >
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search spaces..."
-                  autoFocus
-                  className="w-48 md:w-64 px-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-body text-white/90 placeholder:text-white/30 focus:outline-none focus:border-white/[0.12]"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search spaces..."
+                    autoFocus
+                    aria-label="Search spaces"
+                    className={cn(
+                      'w-48 md:w-64 px-3 py-1.5 rounded-lg bg-white/[0.04] border text-body text-white/90 placeholder:text-white/30 focus:outline-none transition-colors',
+                      searchQuery !== debouncedSearchQuery
+                        ? 'border-white/[0.15]' // Subtle highlight while searching
+                        : 'border-white/[0.06] focus:border-white/[0.12]'
+                    )}
+                  />
+                  {/* Search loading indicator */}
+                  {searchQuery !== debouncedSearchQuery && (
+                    <motion.div
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <motion.div
+                        className="w-3.5 h-3.5 border-2 border-white/20 border-t-white/60 rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                      />
+                    </motion.div>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -172,6 +223,7 @@ export default function SpacesBrowsePage() {
                     setShowSearch(false);
                     setSearchQuery('');
                   }}
+                  aria-label="Clear search"
                   className="text-white/40 hover:text-white/70"
                 >
                   <X size={16} />
@@ -191,10 +243,16 @@ export default function SpacesBrowsePage() {
         </div>
 
         {/* Mobile Category Pills */}
-        <div className="md:hidden px-6 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+        <div
+          className="md:hidden px-6 pb-3 flex gap-2 overflow-x-auto scrollbar-hide"
+          role="tablist"
+          aria-label="Browse categories"
+        >
           {CATEGORY_NAV.map((cat) => (
             <button
               key={cat.id}
+              role="tab"
+              aria-selected={category === cat.id}
               onClick={() => handleCategoryChange(cat.id as BrowseCategory)}
               className={cn(
                 'px-3 py-1.5 rounded-full text-body-sm font-medium whitespace-nowrap transition-all duration-200',
@@ -225,7 +283,7 @@ export default function SpacesBrowsePage() {
             key={category}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: MOTION.ease.premium }}
+            transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
             className="max-w-3xl"
           >
             <h1

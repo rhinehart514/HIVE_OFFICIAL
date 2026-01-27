@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 import { Text, Button, toast } from '@hive/ui';
 import { MOTION } from '@hive/tokens';
 import { InviteLinkModal } from '@/components/spaces/invite-link-modal';
+import { MemberManagement } from './member-management';
 
 interface Board {
   id: string;
@@ -59,6 +60,8 @@ interface SpaceSettingsProps {
   };
   boards?: Board[];
   isLeader?: boolean;
+  currentUserId?: string;
+  currentUserRole?: 'owner' | 'admin' | 'moderator' | 'member';
   onUpdate?: (updates: Record<string, unknown>) => Promise<void>;
   onDelete?: () => Promise<void>;
   onLeave?: () => Promise<void>;
@@ -66,7 +69,7 @@ interface SpaceSettingsProps {
   className?: string;
 }
 
-export function SpaceSettings({ space, boards = [], isLeader = false, onUpdate, onDelete, onLeave, onBoardDelete, className }: SpaceSettingsProps) {
+export function SpaceSettings({ space, boards = [], isLeader = false, currentUserId, currentUserRole = 'member', onUpdate, onDelete, onLeave, onBoardDelete, className }: SpaceSettingsProps) {
   const [activeSection, setActiveSection] = React.useState<'general' | 'contact' | 'members' | 'boards' | 'danger'>('general');
   const [isSaving, setIsSaving] = React.useState(false);
   const [isLeaving, setIsLeaving] = React.useState(false);
@@ -381,8 +384,8 @@ export function SpaceSettings({ space, boards = [], isLeader = false, onUpdate, 
 
               {/* Invite Members Section */}
               {isLeader && (
-                <div className="mb-8">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="mb-8 pb-6 border-b border-white/[0.06]">
+                  <div className="flex items-center justify-between">
                     <div>
                       <Text weight="medium" className="mb-1">Invite Members</Text>
                       <Text size="sm" tone="muted">
@@ -401,12 +404,14 @@ export function SpaceSettings({ space, boards = [], isLeader = false, onUpdate, 
                 </div>
               )}
 
-              {/* Placeholder for future member list */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-                <Text size="sm" tone="muted">
-                  Role management and member list coming soon
-                </Text>
-              </div>
+              {/* Member Management */}
+              {currentUserId && (
+                <MemberManagement
+                  spaceId={space.id}
+                  currentUserId={currentUserId}
+                  currentUserRole={currentUserRole}
+                />
+              )}
             </>
           )}
 

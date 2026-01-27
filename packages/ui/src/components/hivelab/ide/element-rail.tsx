@@ -14,27 +14,19 @@ import { OtherToolsPanel, type OtherToolData } from './other-tools-panel';
 import { AutomationsPanel, type AutomationSummary } from './automations-panel';
 import type { CanvasElement, Connection } from './types';
 
-// HiveLab Dark Sidebar Colors
-const SIDEBAR_COLORS = {
-  bg: 'var(--hivelab-panel, #1A1A1A)',
-  bgHover: 'var(--hivelab-surface-hover, #2a2a2a)',
-  bgActive: 'var(--hivelab-surface, #333333)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  iconDefault: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
-  iconHover: 'var(--hivelab-text-secondary, rgba(255,255,255,0.8))',
-  iconActive: 'var(--hivelab-text-primary, #ffffff)',
-  textPrimary: 'var(--hivelab-text-primary, #ffffff)',
-  textSecondary: 'var(--hivelab-text-secondary, rgba(255,255,255,0.7))',
-  textTertiary: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
-  accent: 'var(--life-gold, #D4AF37)',
-};
+// Feature flag: Automations are non-functional, hide UI until backend is ready
+const AUTOMATIONS_ENABLED = false;
+
+// ============================================
+// HiveLab Element Rail - Uses CSS variables from globals.css
+// ============================================
 
 // Workshop tokens
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]';
 const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
 
 export type RailState = 'expanded' | 'collapsed' | 'hidden';
-export type RailTab = 'start' | 'elements' | 'layers' | 'tools' | 'spaceTools' | 'automations';
+export type RailTab = 'elements' | 'layers' | 'spaceTools' | 'automations';
 
 const EXPANDED_WIDTH = 260;
 const COLLAPSED_WIDTH = 64;
@@ -197,7 +189,7 @@ function CollapsedRail({
     <div
       className="w-16 h-full flex flex-col items-center py-3 gap-0.5"
       style={{
-        backgroundColor: SIDEBAR_COLORS.bg,
+        backgroundColor: 'var(--hivelab-panel)',
         borderTopLeftRadius: '24px',
         borderBottomLeftRadius: '24px',
       }}
@@ -221,13 +213,13 @@ function CollapsedRail({
           'transition-colors duration-200 mb-2',
           focusRing
         )}
-        style={{ color: SIDEBAR_COLORS.iconDefault }}
+        style={{ color: 'var(--hivelab-text-tertiary)' }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconHover;
-          e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+          e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
+          e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconDefault;
+          e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
           e.currentTarget.style.backgroundColor = 'transparent';
         }}
         title="Add module"
@@ -248,7 +240,7 @@ function CollapsedRail({
         )}
         style={{
           backgroundColor: 'white',
-          color: SIDEBAR_COLORS.bg,
+          color: 'var(--hivelab-panel)',
         }}
         title="Home"
       >
@@ -271,17 +263,19 @@ function CollapsedRail({
         active={activeTab === 'spaceTools'}
         onClick={() => { onTabChange('spaceTools'); onExpand(); }}
       />
-      {/* Automations Tab - Sprint 4 */}
-      <TabButton
-        icon={
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-          </svg>
-        }
-        label="Automations"
-        active={activeTab === 'automations'}
-        onClick={() => { onTabChange('automations'); onExpand(); }}
-      />
+      {/* Automations Tab - Sprint 4 (hidden until backend ready) */}
+      {AUTOMATIONS_ENABLED && (
+        <TabButton
+          icon={
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+            </svg>
+          }
+          label="Automations"
+          active={activeTab === 'automations'}
+          onClick={() => { onTabChange('automations'); onExpand(); }}
+        />
+      )}
 
       {/* Spacer */}
       <div className="flex-1" />
@@ -294,13 +288,13 @@ function CollapsedRail({
           'transition-colors duration-200',
           focusRing
         )}
-        style={{ color: SIDEBAR_COLORS.iconDefault }}
+        style={{ color: 'var(--hivelab-text-tertiary)' }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconHover;
-          e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+          e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
+          e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconDefault;
+          e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
           e.currentTarget.style.backgroundColor = 'transparent';
         }}
         title="Help"
@@ -335,18 +329,18 @@ function TabButton({
         focusRing
       )}
       style={{
-        color: active ? SIDEBAR_COLORS.iconActive : SIDEBAR_COLORS.iconDefault,
-        backgroundColor: active ? SIDEBAR_COLORS.bgActive : 'transparent',
+        color: active ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
+        backgroundColor: active ? 'var(--hivelab-surface-active)' : 'transparent',
       }}
       onMouseEnter={(e) => {
         if (!active) {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconHover;
-          e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+          e.currentTarget.style.color = 'var(--hivelab-text-secondary)';
+          e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
         }
       }}
       onMouseLeave={(e) => {
         if (!active) {
-          e.currentTarget.style.color = SIDEBAR_COLORS.iconDefault;
+          e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
           e.currentTarget.style.backgroundColor = 'transparent';
         }
       }}
@@ -436,14 +430,14 @@ function ExpandedRail({
       className="h-full flex flex-col"
       style={{
         width: EXPANDED_WIDTH,
-        backgroundColor: SIDEBAR_COLORS.bg,
-        borderRight: `1px solid ${SIDEBAR_COLORS.border}`,
+        backgroundColor: 'var(--hivelab-panel)',
+        borderRight: `1px solid ${'var(--hivelab-border)'}`,
       }}
     >
       {/* Header with collapse button - dark theme */}
       <div
         className="flex items-center justify-between px-3 py-2"
-        style={{ borderBottom: `1px solid ${SIDEBAR_COLORS.border}` }}
+        style={{ borderBottom: `1px solid ${'var(--hivelab-border)'}` }}
       >
         <div className="flex items-center gap-0.5 flex-1 min-w-0">
           <button
@@ -458,7 +452,7 @@ function ExpandedRail({
               focusRing
             )}
             style={{
-              color: activeTab === 'elements' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+              color: activeTab === 'elements' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
             }}
           >
             Elements
@@ -475,27 +469,10 @@ function ExpandedRail({
               focusRing
             )}
             style={{
-              color: activeTab === 'layers' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+              color: activeTab === 'layers' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
             }}
           >
             Layers
-          </button>
-          <button
-            type="button"
-            onClick={() => onTabChange('tools')}
-            className={cn(
-              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-              'transition-all duration-200',
-              activeTab === 'tools'
-                ? 'bg-[var(--hivelab-surface)] shadow-sm'
-                : 'hover:bg-[var(--hivelab-surface-hover)]',
-              focusRing
-            )}
-            style={{
-              color: activeTab === 'tools' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
-            }}
-          >
-            Tools
           </button>
           <button
             type="button"
@@ -509,28 +486,30 @@ function ExpandedRail({
               focusRing
             )}
             style={{
-              color: activeTab === 'spaceTools' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
+              color: activeTab === 'spaceTools' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
             }}
           >
             Space
           </button>
-          <button
-            type="button"
-            onClick={() => onTabChange('automations')}
-            className={cn(
-              'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
-              'transition-all duration-200',
-              activeTab === 'automations'
-                ? 'bg-[var(--hivelab-surface)] shadow-sm'
-                : 'hover:bg-[var(--hivelab-surface-hover)]',
-              focusRing
-            )}
-            style={{
-              color: activeTab === 'automations' ? SIDEBAR_COLORS.textPrimary : SIDEBAR_COLORS.textTertiary,
-            }}
-          >
-            Auto
-          </button>
+          {AUTOMATIONS_ENABLED && (
+            <button
+              type="button"
+              onClick={() => onTabChange('automations')}
+              className={cn(
+                'px-2 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap',
+                'transition-all duration-200',
+                activeTab === 'automations'
+                  ? 'bg-[var(--hivelab-surface)] shadow-sm'
+                  : 'hover:bg-[var(--hivelab-surface-hover)]',
+                focusRing
+              )}
+              style={{
+                color: activeTab === 'automations' ? 'var(--hivelab-text-primary)' : 'var(--hivelab-text-tertiary)',
+              }}
+            >
+              Auto
+            </button>
+          )}
         </div>
         <button
           type="button"
@@ -539,13 +518,13 @@ function ExpandedRail({
             'p-1.5 rounded-lg transition-colors duration-200',
             focusRing
           )}
-          style={{ color: SIDEBAR_COLORS.textTertiary }}
+          style={{ color: 'var(--hivelab-text-tertiary)' }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.color = SIDEBAR_COLORS.textPrimary;
-            e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+            e.currentTarget.style.color = 'var(--hivelab-text-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.color = SIDEBAR_COLORS.textTertiary;
+            e.currentTarget.style.color = 'var(--hivelab-text-tertiary)';
             e.currentTarget.style.backgroundColor = 'transparent';
           }}
           title="Collapse panel"
@@ -558,7 +537,7 @@ function ExpandedRail({
       {activeTab === 'elements' && (
         <div
           className="px-3 py-3 space-y-2"
-          style={{ borderBottom: `1px solid ${SIDEBAR_COLORS.border}` }}
+          style={{ borderBottom: `1px solid ${'var(--hivelab-border)'}` }}
         >
           <button
             type="button"
@@ -569,16 +548,16 @@ function ExpandedRail({
               focusRing
             )}
             style={{
-              backgroundColor: `${SIDEBAR_COLORS.accent}15`,
-              color: SIDEBAR_COLORS.accent,
-              border: `1px solid ${SIDEBAR_COLORS.accent}30`,
+              backgroundColor: `${'var(--hivelab-connection)'}15`,
+              color: 'var(--hivelab-connection)',
+              border: `1px solid ${'var(--hivelab-connection)'}30`,
             }}
           >
             <SparklesIcon className="h-4 w-4" />
             Describe with AI
             <kbd
               className="ml-auto px-1.5 py-0.5 text-label-xs rounded"
-              style={{ backgroundColor: `${SIDEBAR_COLORS.accent}20` }}
+              style={{ backgroundColor: `${'var(--hivelab-connection)'}20` }}
             >
               ⌘K
             </kbd>
@@ -592,9 +571,9 @@ function ExpandedRail({
               focusRing
             )}
             style={{
-              backgroundColor: SIDEBAR_COLORS.bgHover,
-              color: SIDEBAR_COLORS.textSecondary,
-              border: `1px solid ${SIDEBAR_COLORS.border}`,
+              backgroundColor: 'var(--hivelab-surface-hover)',
+              color: 'var(--hivelab-text-secondary)',
+              border: `1px solid ${'var(--hivelab-border)'}`,
             }}
           >
             <ClockIcon className="h-4 w-4" />
@@ -602,8 +581,8 @@ function ExpandedRail({
             <kbd
               className="ml-auto px-1.5 py-0.5 text-label-xs rounded"
               style={{
-                backgroundColor: SIDEBAR_COLORS.bg,
-                color: SIDEBAR_COLORS.textTertiary,
+                backgroundColor: 'var(--hivelab-panel)',
+                color: 'var(--hivelab-text-tertiary)',
               }}
             >
               ⌘T
@@ -668,7 +647,7 @@ function ExpandedRail({
                 onRefresh={onRefreshSpaceTools}
               />
             </motion.div>
-          ) : activeTab === 'automations' ? (
+          ) : (AUTOMATIONS_ENABLED && activeTab === 'automations') ? (
             <motion.div
               key="automations"
               initial={{ opacity: 0, x: 10 }}
@@ -735,9 +714,9 @@ function ToolsPanel({
       case 'deployed':
         return { label: 'Live', color: '#22c55e' };
       case 'published':
-        return { label: 'Published', color: SIDEBAR_COLORS.accent };
+        return { label: 'Published', color: 'var(--hivelab-connection)' };
       default:
-        return { label: 'Draft', color: SIDEBAR_COLORS.textTertiary };
+        return { label: 'Draft', color: 'var(--hivelab-text-tertiary)' };
     }
   };
 
@@ -754,9 +733,9 @@ function ToolsPanel({
           focusRing
         )}
         style={{
-          backgroundColor: `${SIDEBAR_COLORS.accent}15`,
-          color: SIDEBAR_COLORS.accent,
-          border: `1px solid ${SIDEBAR_COLORS.accent}30`,
+          backgroundColor: `${'var(--hivelab-connection)'}15`,
+          color: 'var(--hivelab-connection)',
+          border: `1px solid ${'var(--hivelab-connection)'}30`,
         }}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -771,19 +750,19 @@ function ToolsPanel({
           {/* Animated sparkle icon */}
           <div
             className="w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center"
-            style={{ backgroundColor: `${SIDEBAR_COLORS.accent}10` }}
+            style={{ backgroundColor: `${'var(--hivelab-connection)'}10` }}
           >
-            <SparklesIcon className="h-7 w-7" style={{ color: SIDEBAR_COLORS.accent }} />
+            <SparklesIcon className="h-7 w-7" style={{ color: 'var(--hivelab-connection)' }} />
           </div>
           <p
             className="text-sm font-medium mb-1"
-            style={{ color: SIDEBAR_COLORS.textPrimary }}
+            style={{ color: 'var(--hivelab-text-primary)' }}
           >
             Create your first tool
           </p>
           <p
             className="text-xs leading-relaxed mb-4"
-            style={{ color: SIDEBAR_COLORS.textTertiary }}
+            style={{ color: 'var(--hivelab-text-tertiary)' }}
           >
             Build tools your community will love — polls, signups, countdowns, and more.
           </p>
@@ -798,7 +777,7 @@ function ToolsPanel({
               focusRing
             )}
             style={{
-              backgroundColor: SIDEBAR_COLORS.accent,
+              backgroundColor: 'var(--hivelab-connection)',
               color: '#000',
             }}
           >
@@ -809,9 +788,9 @@ function ToolsPanel({
           <a
             href="/tools/templates"
             className="inline-block mt-3 text-xs transition-colors"
-            style={{ color: SIDEBAR_COLORS.textTertiary }}
-            onMouseEnter={(e) => { e.currentTarget.style.color = SIDEBAR_COLORS.accent; }}
-            onMouseLeave={(e) => { e.currentTarget.style.color = SIDEBAR_COLORS.textTertiary; }}
+            style={{ color: 'var(--hivelab-text-tertiary)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--hivelab-connection)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--hivelab-text-tertiary)'; }}
           >
             or browse 25+ templates →
           </a>
@@ -830,9 +809,9 @@ function ToolsPanel({
                   'transition-colors duration-200',
                   focusRing
                 )}
-                style={{ color: SIDEBAR_COLORS.textPrimary }}
+                style={{ color: 'var(--hivelab-text-primary)' }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = SIDEBAR_COLORS.bgHover;
+                  e.currentTarget.style.backgroundColor = 'var(--hivelab-surface-hover)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'transparent';
@@ -854,7 +833,7 @@ function ToolsPanel({
                 </div>
                 <p
                   className="text-xs mt-0.5"
-                  style={{ color: SIDEBAR_COLORS.textTertiary }}
+                  style={{ color: 'var(--hivelab-text-tertiary)' }}
                 >
                   {formatDate(tool.updatedAt)}
                 </p>

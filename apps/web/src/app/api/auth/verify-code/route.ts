@@ -46,6 +46,8 @@ function hashCode(code: string): string {
  * Check if email is locked out due to too many attempts
  */
 async function checkLockout(email: string): Promise<{ locked: boolean; retryAfter?: number }> {
+  // DEV BYPASS: Skip lockout check in development
+  if (SESSION_CONFIG.isDevelopment) return { locked: false };
   if (!isFirebaseConfigured) return { locked: false };
 
   const lockoutDoc = await dbAdmin
@@ -130,6 +132,20 @@ export const POST = withValidation(
           "RATE_LIMITED",
           { status: 429 }
         );
+      }
+
+      // DEV BYPASS: In development mode, accept any valid 6-digit code
+      // This avoids Firebase quota issues during testing
+      if (SESSION_CONFIG.isDevelopment) {
+        logger.info('DEV MODE: Bypassing Firebase code verification', {
+          component: 'verify-code',
+          email: normalizedEmail.replace(/(.{3}).*@/, '$1***@'),
+        });
+        if (normalizedCode.length === 6 && /^\d+$/.test(normalizedCode)) {
+          // Create session in dev mode
+          return await createSessionResponse(normalizedEmail, schoolId, true, respond);
+        }
+        return respond.error("Invalid code format", "INVALID_CODE", { status: 400 });
       }
 
       // Find the most recent pending code for this email
@@ -290,7 +306,12 @@ async function createSessionResponse(
   let needsOnboarding = true;
   let isAdmin = false;
 
-  if (isFirebaseConfigured) {
+  // DEV BYPASS: Skip Firebase user lookup in development mode
+  if (SESSION_CONFIG.isDevelopment || isDevMode) {
+    userId = `dev-${email.replace(/[^a-zA-Z0-9]/g, '-')}`;
+    needsOnboarding = true;
+    logger.info('DEV MODE: Using dev user ID', { userId, email: email.replace(/(.{3}).*@/, '$1***@') });
+  } else if (isFirebaseConfigured) {
     // Check if user exists
     const existingUsers = await dbAdmin
       .collection('users')

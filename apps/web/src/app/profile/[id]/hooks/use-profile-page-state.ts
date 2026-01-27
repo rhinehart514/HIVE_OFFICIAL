@@ -34,6 +34,20 @@ import type {
 // Types
 // ============================================================================
 
+/** Event organized by the profile user */
+export interface ProfileOrganizingEvent {
+  id: string;
+  title: string;
+  date: string;
+  dateDisplay: string;
+  location: string;
+  emoji?: string;
+  attendeeCount: number;
+  type: string;
+  spaceId: string | null;
+  spaceName: string | null;
+}
+
 export interface UseProfilePageStateReturn {
   // Navigation
   profileId: string;
@@ -91,6 +105,7 @@ export interface UseProfilePageStateReturn {
 
   /** Data for ContextBanner */
   sharedSpaceNames: string[];
+  sharedSpacesCount: number;
   mutualFriendsCount: number;
   viewerIsBuilder: boolean;
 
@@ -98,6 +113,9 @@ export interface UseProfilePageStateReturn {
   activityContributions: ActivityContribution[];
   totalActivityCount: number;
   currentStreak: number;
+
+  /** Events the user is organizing */
+  organizingEvents: ProfileOrganizingEvent[];
 
   // ============================================================================
   // Handlers
@@ -172,6 +190,15 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   // Notifications state
   const [notifiedFeatures, setNotifiedFeatures] = React.useState<FeatureKey[]>([]);
   const [isNotifySaving, setIsNotifySaving] = React.useState(false);
+
+  // Events state
+  const [organizingEvents, setOrganizingEvents] = React.useState<ProfileOrganizingEvent[]>([]);
+
+  // Mutual connections state (from API)
+  const [mutualConnectionsData, setMutualConnectionsData] = React.useState<{
+    connections: Array<{ id: string; name: string; avatarUrl?: string }>;
+    count: number;
+  }>({ connections: [], count: 0 });
 
   const isOwnProfile = currentUser?.id === profileId;
   const hasProfileData = profileData !== null;
@@ -363,6 +390,60 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     fetchNotifications();
   }, [isOwnProfile, currentUser?.id]);
 
+  // Fetch organizing events
+  React.useEffect(() => {
+    if (!profileId) return;
+
+    const fetchOrganizingEvents = async () => {
+      try {
+        const response = await fetch(`/api/profile/${profileId}/events`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          const events = result.data?.events || [];
+          setOrganizingEvents(events);
+        }
+      } catch (err) {
+        logger.error('Failed to fetch organizing events', { component: 'ProfilePageContent' }, err instanceof Error ? err : undefined);
+      }
+    };
+
+    fetchOrganizingEvents();
+  }, [profileId]);
+
+  // Fetch mutual connections (when viewing another user's profile)
+  React.useEffect(() => {
+    if (!profileId || isOwnProfile) return;
+
+    const fetchMutualConnections = async () => {
+      try {
+        const response = await fetch(`/api/profile/${profileId}/connections?type=mutual`, {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const result = await response.json();
+          // API returns { mutualConnections, mutualCount, totalConnections }
+          const data = result.data || result;
+          const mutualConnections = data.mutualConnections || [];
+          setMutualConnectionsData({
+            connections: mutualConnections.map((c: { id: string; firstName?: string; lastName?: string; handle?: string; profilePhoto?: string }) => ({
+              id: c.id,
+              name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.handle || 'Student',
+              avatarUrl: c.profilePhoto,
+            })),
+            count: data.mutualCount ?? mutualConnections.length,
+          });
+        }
+      } catch (err) {
+        // Silently fail - mutual connections are optional enhancement
+        logger.warn('Failed to fetch mutual connections', { component: 'ProfilePageContent', error: err instanceof Error ? err.message : String(err) });
+      }
+    };
+
+    fetchMutualConnections();
+  }, [profileId, isOwnProfile]);
+
   // ============================================================================
   // Computed Values
   // ============================================================================
@@ -396,9 +477,14 @@ export function useProfilePageState(): UseProfilePageStateReturn {
 
   const spacesLed = React.useMemo(() => {
     if (!profileData?.spaces) return [];
-    return profileData.spaces.filter(
-      (space) => space.role === 'owner' || space.role === 'admin'
-    );
+    return profileData.spaces
+      .filter((space) => space.role === 'owner' || space.role === 'admin' || space.role === 'Lead')
+      .map((space) => ({
+        ...space,
+        // Include tenure from API if available
+        tenure: (space as unknown as { tenure?: number }).tenure,
+        tenureLabel: (space as unknown as { tenureLabel?: string }).tenureLabel,
+      }));
   }, [profileData?.spaces]);
 
   const statItems = React.useMemo(() => {
@@ -452,16 +538,13 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   // ProfileSpacesCard data
   const profileSpaces: ProfileSpace[] = React.useMemo(() => {
     if (!profileData?.spaces) return [];
-    // Get viewer's spaces to determine shared
-    // NOTE: Viewer context not available in this hook - shared space detection requires
-    // fetching viewer's spaces which would add latency. For now, show all spaces without "shared" badge.
-    const viewerSpaceIds = new Set<string>();
+    // API now returns isShared from server-side computation
     return profileData.spaces.map((space) => ({
       id: space.id,
       name: space.name,
       emoji: undefined, // API doesn't return emoji currently
-      isLeader: space.role === 'owner' || space.role === 'admin',
-      isShared: viewerSpaceIds.has(space.id),
+      isLeader: space.role === 'owner' || space.role === 'admin' || space.role === 'Lead',
+      isShared: (space as unknown as { isShared?: boolean }).isShared ?? false,
     }));
   }, [profileData?.spaces]);
 
@@ -474,6 +557,8 @@ export function useProfilePageState(): UseProfilePageStateReturn {
       description: undefined,
       runs: tool.usageCount ?? 0,
       deployedSpaces: tool.deployedToSpaces ?? 0,
+      // Space context from enhanced tools API
+      spaceName: (tool as unknown as { primarySpaceName?: string }).primarySpaceName,
     }));
   }, [userTools]);
 
@@ -500,13 +585,23 @@ export function useProfilePageState(): UseProfilePageStateReturn {
   const sharedInterests: string[] = [];
 
   // ContextBanner data
-  // NOTE: Shared space names require viewer's space list for comparison.
-  // Empty for now - ContextBanner will show mutual connections instead.
-  const sharedSpaceNames: string[] = React.useMemo(() => [], []);
+  // Shared space names computed from profileSpaces with isShared flag
+  const sharedSpaceNames: string[] = React.useMemo(() => {
+    return profileSpaces.filter((s) => s.isShared).map((s) => s.name);
+  }, [profileSpaces]);
 
+  // Shared spaces count from API viewer data
+  const sharedSpacesCount = React.useMemo(() => {
+    return (profileData?.viewer as unknown as { sharedSpaceCount?: number })?.sharedSpaceCount ?? sharedSpaceNames.length;
+  }, [profileData?.viewer, sharedSpaceNames.length]);
+
+  // Mutual friends count: prefer API data, fall back to computed
   const mutualFriendsCount = React.useMemo(() => {
+    if (mutualConnectionsData.count > 0) {
+      return mutualConnectionsData.count;
+    }
     return profileData?.connections?.filter((c) => c.isFriend && (c.mutualConnections ?? 0) > 0).length ?? 0;
-  }, [profileData?.connections]);
+  }, [mutualConnectionsData.count, profileData?.connections]);
 
   // NOTE: Builder status determined by whether viewer has created tools.
   // Not fetched here to avoid extra API calls - shows tools to all viewers.
@@ -685,11 +780,13 @@ export function useProfilePageState(): UseProfilePageStateReturn {
     interests,
     sharedInterests,
     sharedSpaceNames,
+    sharedSpacesCount,
     mutualFriendsCount,
     viewerIsBuilder,
     activityContributions,
     totalActivityCount,
     currentStreak,
+    organizingEvents,
 
     // Handlers
     handleEditProfile,

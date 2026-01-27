@@ -2,15 +2,15 @@
 
 /**
  * EvolvingEntry - Single-page evolving entry flow orchestrator
- * UPDATED: Jan 23, 2026
+ * UPDATED: Jan 26, 2026 - Sprint 1: Entry Flow Polish
  *
  * Coordinates all sections in a single scrollable page that evolves
  * as the user progresses through entry.
  *
- * Flow: school → email → code → role → identity → arrival
+ * Flow: school → email → code → role → identity-* → arrival
  *
- * Access granted via 716514 code on landing page.
- * Email verification happens during onboarding.
+ * Identity is now paginated into 4 steps:
+ * name → handle → field (major/year) → interests
  *
  * Motion philosophy (aligned with /about):
  * - Luxuriously slow hero entrance (1.2s)
@@ -19,29 +19,37 @@
  * - Gold glow for emotional moments
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MAJOR_CATALOG } from '@hive/core/domain/profile/value-objects/major';
 import { useEvolvingEntry } from './hooks/useEvolvingEntry';
 import {
   SchoolSection,
   EmailSection,
   CodeSection,
   RoleSection,
-  IdentitySection,
   ArrivalSection,
   AlumniWaitlistSection,
 } from './sections';
+import { IdentityNameSection } from './sections/IdentityNameSection';
+import { IdentityHandleSection } from './sections/IdentityHandleSection';
+import { IdentityFieldSection } from './sections/IdentityFieldSection';
+import { IdentityInterestsSection } from './sections/IdentityInterestsSection';
 import {
-  DURATION,
-  EASE_PREMIUM,
   heroEntranceVariants,
-  subtitleEntranceVariants,
   lineDrawVariants,
   wordRevealVariants,
   createWordReveal,
   type EmotionalState,
 } from './motion/entry-motion';
+import { OfflineBanner } from './primitives';
+
+// Interest category type
+interface InterestCategory {
+  id: string;
+  title: string;
+  icon?: string;
+  items: string[];
+}
 
 // Campus configuration
 const CAMPUS_CONFIG = {
@@ -64,32 +72,25 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
     schoolId: CAMPUS_CONFIG.schoolId,
   });
 
-  // Compute majors list from catalog
-  const majors = useMemo(() => Object.keys(MAJOR_CATALOG).sort(), []);
+  // Fetch interest categories from onboarding catalog
+  const [interestCategories, setInterestCategories] = useState<InterestCategory[]>([]);
 
-  // Compute graduation years
-  const graduationYears = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return [currentYear, currentYear + 1, currentYear + 2, currentYear + 3, currentYear + 4];
-  }, []);
-
-  // Residential spaces
-  const [residentialSpaces, setResidentialSpaces] = useState<Array<{ id: string; name: string }>>([]);
-
-  // Fetch residential spaces when school is selected
   useEffect(() => {
-    const campusId = entry.data.school?.id || CAMPUS_CONFIG.id;
-    fetch(`/api/spaces/residential?campusId=${campusId}`)
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.success && result.spaces) {
-          setResidentialSpaces(result.spaces);
+    async function fetchCatalog() {
+      try {
+        const response = await fetch('/api/onboarding/catalog');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data?.interests) {
+            setInterestCategories(data.data.interests);
+          }
         }
-      })
-      .catch(() => {
-        setResidentialSpaces([]);
-      });
-  }, [entry.data.school?.id]);
+      } catch {
+        // Silently fail - will use empty array
+      }
+    }
+    fetchCatalog();
+  }, []);
 
   // Report loading state for overlay
   useEffect(() => {
@@ -131,8 +132,14 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
       return;
     }
 
-    // Identity section (almost there) gets anticipation
-    if (activeSection === 'identity') {
+    // Identity sections (building profile) get anticipation
+    if (
+      activeSection === 'identity' ||
+      activeSection === 'identity-name' ||
+      activeSection === 'identity-handle' ||
+      activeSection === 'identity-field' ||
+      activeSection === 'identity-interests'
+    ) {
       onEmotionalStateChange('anticipation');
       return;
     }
@@ -147,9 +154,9 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
     entry.sections.arrival.status === 'complete' ||
     entry.sections['alumni-waitlist'].status === 'active';
 
-  // Word-by-word reveal for headline - premium /about-style typography
-  const headlineWords = ['Enter', 'HIVE'];
-  const subtitleWords = ['Infrastructure', 'for', 'what', "you're", 'building.'];
+  // Word-by-word reveal for headline - The Threshold
+  const headlineWords = ['The', 'Threshold'];
+  const subtitleWords = ['Prove', 'you', 'belong.'];
 
   return (
     <div className="space-y-6">
@@ -234,6 +241,7 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
             onEmailChange={entry.setEmail}
             onSubmit={entry.submitEmail}
             onEdit={entry.editEmail}
+            onRetry={entry.submitEmail}
             isLoading={entry.isSubmittingEmail}
           />
         )}
@@ -248,6 +256,7 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
             onVerify={entry.verifyEmailCode}
             onResend={entry.resendCode}
             onChangeEmail={entry.editEmail}
+            onRetry={() => entry.verifyEmailCode(entry.data.verificationCode.join(''))}
             isLoading={entry.isVerifyingCode}
             resendCooldown={entry.resendCooldown}
           />
@@ -266,46 +275,67 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
           />
         )}
 
-        {/* Identity section (students only) */}
-        {!isTerminal && entry.sections.identity.status !== 'hidden' && (
-          <IdentitySection
-            section={entry.sections.identity}
+        {/* Paginated Identity Flow - Building your profile */}
+
+        {/* Step 1: Name */}
+        {!isTerminal && entry.sections['identity-name'].status === 'active' && (
+          <IdentityNameSection
+            section={entry.sections['identity-name']}
             firstName={entry.data.firstName}
             lastName={entry.data.lastName}
-            handle={entry.data.handle}
-            handleStatus={entry.handleStatus}
-            handleSuggestions={entry.handleSuggestions}
-            major={entry.data.major}
-            graduationYear={entry.data.graduationYear}
-            residenceType={entry.data.residenceType}
-            residentialSpaceId={entry.data.residentialSpaceId}
-            interests={entry.data.interests}
-            communityIdentities={entry.data.communityIdentities}
             onFirstNameChange={entry.setFirstName}
             onLastNameChange={entry.setLastName}
-            onHandleChange={entry.setHandle}
-            onSuggestionClick={entry.selectSuggestion}
-            onMajorChange={entry.setMajor}
-            onGraduationYearChange={entry.setGraduationYear}
-            onResidenceTypeChange={entry.setResidenceType}
-            onResidentialChange={entry.setResidentialSpaceId}
-            onInterestsChange={entry.setInterests}
-            onCommunityIdentitiesChange={entry.setCommunityIdentities}
-            onSubmit={entry.completeIdentity}
-            isLoading={entry.isSubmittingIdentity}
-            majors={majors}
-            graduationYears={graduationYears}
-            residentialSpaces={residentialSpaces}
+            onAdvance={entry.advanceToHandle}
           />
         )}
 
-        {/* Terminal states */}
+        {/* Step 2: Handle */}
+        {!isTerminal && entry.sections['identity-handle'].status === 'active' && (
+          <IdentityHandleSection
+            section={entry.sections['identity-handle']}
+            handle={entry.data.handle}
+            handleStatus={entry.handleStatus}
+            handleSuggestions={entry.handleSuggestions}
+            onHandleChange={entry.setHandle}
+            onSuggestionClick={entry.selectSuggestion}
+            onAdvance={entry.advanceToField}
+          />
+        )}
+
+        {/* Step 3: Field (Major + Year) */}
+        {!isTerminal && entry.sections['identity-field'].status === 'active' && (
+          <IdentityFieldSection
+            section={entry.sections['identity-field']}
+            major={entry.data.major}
+            graduationYear={entry.data.graduationYear}
+            onMajorChange={entry.setMajor}
+            onYearChange={entry.setGraduationYear}
+            onAdvance={entry.advanceToInterests}
+          />
+        )}
+
+        {/* Step 4: Interests */}
+        {!isTerminal && entry.sections['identity-interests'].status === 'active' && (
+          <IdentityInterestsSection
+            section={entry.sections['identity-interests']}
+            interests={entry.data.interests}
+            categories={interestCategories}
+            onInterestsChange={entry.setInterests}
+            onSubmit={entry.completeIdentity}
+            isLoading={entry.isSubmittingIdentity}
+          />
+        )}
+
+        {/* Terminal states - The Crossing */}
         <AnimatePresence>
           {entry.sections.arrival.status === 'active' && (
             <ArrivalSection
               section={entry.sections.arrival}
               firstName={entry.data.firstName || 'there'}
               handle={entry.data.handle}
+              major={entry.data.major}
+              graduationYear={entry.data.graduationYear}
+              interests={entry.data.interests}
               isNewUser={entry.isNewUser}
               isReturningUser={entry.isReturningUser}
               onComplete={entry.handleArrivalComplete}
@@ -322,6 +352,9 @@ export function EvolvingEntry({ onEmotionalStateChange, onLoadingStateChange }: 
             />
           )}
         </AnimatePresence>
+
+        {/* Offline banner - shows when network is unavailable */}
+        {!isTerminal && <OfflineBanner />}
       </div>
     </div>
   );

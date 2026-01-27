@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { HiveCard as Card, CardContent, CardHeader, CardTitle } from "@hive/ui";
+import { fetchWithAuth } from "../hooks/use-admin-api";
 import {
   UsersIcon,
   HashtagIcon,
@@ -87,9 +88,7 @@ export function OverviewDashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await fetch("/api/admin/analytics/comprehensive?timeRange=7d", {
-        credentials: "include",
-      });
+      const response = await fetchWithAuth("/api/admin/analytics/comprehensive?timeRange=7d");
 
       if (!response.ok) {
         throw new Error("Failed to fetch analytics");
@@ -138,8 +137,8 @@ export function OverviewDashboard() {
       // Fetch pending actions
       try {
         const [builderRes, contentRes] = await Promise.all([
-          fetch("/api/admin/builder-requests", { credentials: "include" }),
-          fetch("/api/admin/content-moderation", { credentials: "include" }),
+          fetchWithAuth("/api/admin/builder-requests"),
+          fetchWithAuth("/api/admin/content-moderation"),
         ]);
 
         const builderData = await builderRes.json();

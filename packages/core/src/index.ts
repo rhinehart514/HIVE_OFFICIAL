@@ -410,6 +410,11 @@ export {
   hasCapability,
   validateActionCapabilities,
   checkBudget,
+  // Budget tracking (async database operations)
+  checkBudgetFromDb,
+  recordBudgetUsage,
+  getBudgetDateKey,
+  getBudgetHourKey,
   // P0: Object Capabilities
   OBJECT_TYPE_ID_PATTERN,
   isValidObjectTypeId,
@@ -428,11 +433,26 @@ export type {
   BudgetUsage,
   CapabilityLane,
   DeploymentGovernance,
+  BudgetCheckResult,
   // P0: New Types
   TrustTier,
   SurfaceModes,
   AppConfig,
 } from "./domain/hivelab/capabilities";
+
+// HiveLab Element-to-Capability Mapping (Deploy & Execute Time Enforcement)
+export {
+  ELEMENT_CAPABILITY_REQUIREMENTS,
+  ACTION_CAPABILITY_REQUIREMENTS,
+  TRUST_TIER_CAPABILITY_LIMITS,
+  getElementRequiredCapabilities,
+  getActionRequiredCapabilities,
+  deploymentHasElementCapabilities,
+  deploymentHasActionCapabilities,
+  getToolRequiredCapabilities,
+  trustTierAllowsCapability,
+  validateToolTrustTier,
+} from "./domain/hivelab/element-capabilities";
 
 // HiveLab Automation Entity (Phase 3)
 export {
@@ -537,6 +557,17 @@ export {
   ElementConnectionSchema,
   PositionSchema,
   SizeSchema,
+  // Tool Composition Validation (creation-time checks)
+  validateToolComposition,
+  validateElement as validateHiveLabElement,
+  validateConnection as validateHiveLabConnection,
+  type CanvasElementForValidation,
+  type ConnectionForValidation,
+  type CompositionValidationResult,
+  type CompositionError,
+  type CompositionWarning,
+  type CompositionErrorCode,
+  type CompositionWarningCode,
   // Services
   CompositionValidatorService,
   validateComposition,

@@ -23,6 +23,7 @@ export interface EventData {
   spaceHandle?: string;
   rsvpCount: number;
   isLive?: boolean;
+  userRsvp?: 'going' | 'maybe' | 'not_going';
 }
 
 export interface EventListProps {
@@ -43,7 +44,7 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
     );
   }
 
-  // Empty state
+  // Empty state with HIVE personality
   if (events.length === 0) {
     return (
       <motion.div
@@ -52,14 +53,25 @@ export function EventList({ events, loading, searchQuery }: EventListProps) {
         transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
         className="text-center py-16"
       >
-        <p className="text-white/40 text-body mb-2">
-          {searchQuery
-            ? `No events match "${searchQuery}"`
-            : 'No upcoming events'}
-        </p>
-        <p className="text-white/25 text-body-sm">
-          Events from your spaces will appear here
-        </p>
+        {searchQuery ? (
+          <>
+            <p className="text-white/40 text-body mb-2">
+              No events match "{searchQuery}"
+            </p>
+            <p className="text-white/25 text-body-sm">
+              Try a different search term
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-white/40 text-body mb-2">
+              Nothing on the calendar yet
+            </p>
+            <p className="text-white/25 text-body-sm">
+              Join spaces to see their upcoming events
+            </p>
+          </>
+        )}
       </motion.div>
     );
   }
@@ -97,6 +109,10 @@ interface EventCardProps {
 function EventCard({ event, index }: EventCardProps) {
   const timeString = formatEventTime(event.startTime, event.endTime);
 
+  // Determine RSVP button state
+  const isGoing = event.userRsvp === 'going';
+  const rsvpLabel = isGoing ? 'Going ✓' : 'RSVP';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -107,62 +123,79 @@ function EventCard({ event, index }: EventCardProps) {
         ease: MOTION.ease.premium,
       }}
     >
-      <GlassSurface
-        intensity="subtle"
-        className={cn(
-          'p-4 rounded-xl transition-all duration-200',
-          'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]',
-          event.isLive && 'border-[var(--life-gold)]/30'
-        )}
-      >
-        <div className="flex items-start gap-4">
-          {/* Time column */}
-          <div className="w-16 shrink-0 text-center">
-            <p className="text-label text-white/40">{timeString.time}</p>
-            {event.isLive && (
-              <Badge variant="gold" size="sm" className="mt-1">
-                Live
-              </Badge>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <h3 className="text-body font-medium text-white truncate">
-              {event.title}
-            </h3>
-
-            {event.description && (
-              <p className="text-body-sm text-white/50 line-clamp-1 mt-0.5">
-                {event.description}
+      <Link href={event.spaceHandle ? `/s/${event.spaceHandle}/events/${event.id}` : '#'}>
+        <GlassSurface
+          intensity="subtle"
+          className={cn(
+            'group p-4 rounded-xl transition-all duration-200',
+            'border border-white/[0.06] hover:border-white/10 hover:bg-white/[0.02]',
+            event.isLive && 'border-[var(--life-gold)]/30'
+          )}
+        >
+          <div className="flex items-start gap-4">
+            {/* Time column */}
+            <div className="w-16 shrink-0 text-center">
+              <p className="text-label text-white/40 group-hover:text-white/60 transition-colors">
+                {timeString.time}
               </p>
-            )}
-
-            <div className="flex items-center gap-3 mt-2 text-label text-white/30">
-              {event.location && <span>{event.location}</span>}
-              {event.spaceName && (
-                <>
-                  {event.location && <span>·</span>}
-                  <Link
-                    href={`/s/${event.spaceHandle}`}
-                    className="hover:text-white/50"
-                  >
-                    @{event.spaceHandle}
-                  </Link>
-                </>
+              {event.isLive && (
+                <Badge variant="gold" size="sm" className="mt-1">
+                  Live
+                </Badge>
               )}
             </div>
-          </div>
 
-          {/* RSVP */}
-          <div className="shrink-0 text-right">
-            <p className="text-label text-white/40">{event.rsvpCount} going</p>
-            <Button variant="ghost" size="sm" className="mt-1">
-              RSVP
-            </Button>
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              {/* Space context - now more prominent */}
+              {event.spaceName && (
+                <p className="text-label-sm text-white/30 mb-1">
+                  {event.spaceName}
+                </p>
+              )}
+
+              <h3 className="text-body font-medium text-white truncate group-hover:text-white/90">
+                {event.title}
+              </h3>
+
+              {event.description && (
+                <p className="text-body-sm text-white/50 line-clamp-1 mt-0.5">
+                  {event.description}
+                </p>
+              )}
+
+              {/* Location and attendees */}
+              <div className="flex items-center gap-3 mt-2 text-label text-white/30">
+                {event.location && <span>{event.location}</span>}
+                {event.rsvpCount > 0 && (
+                  <>
+                    {event.location && <span>·</span>}
+                    <span>{event.rsvpCount} going</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* RSVP - shows user state */}
+            <div className="shrink-0 text-right">
+              <Button
+                variant={isGoing ? 'secondary' : 'ghost'}
+                size="sm"
+                className={cn(
+                  isGoing && 'text-[var(--life-gold)] border-[var(--life-gold)]/30'
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // RSVP action would go here once API is wired
+                }}
+              >
+                {rsvpLabel}
+              </Button>
+            </div>
           </div>
-        </div>
-      </GlassSurface>
+        </GlassSurface>
+      </Link>
     </motion.div>
   );
 }

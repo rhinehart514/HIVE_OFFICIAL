@@ -142,7 +142,10 @@ export async function POST(request: NextRequest) {
       } | null = null;
       let needsOnboarding = true;
 
-      if (isFirebaseConfigured) {
+      // DEV BYPASS: Skip Firebase operations for test code in development
+      const isDevBypass = process.env.NODE_ENV === 'development' && result.codeId === 'dev-test-code';
+
+      if (isFirebaseConfigured && !isDevBypass) {
         // Check if there's already a user created from this code
         const existingUsers = await dbAdmin
           .collection('users')
@@ -198,6 +201,7 @@ export async function POST(request: NextRequest) {
       const sessionId = nanoid(21);
       const sessionPayload = {
         userId: user.id,
+        email: `${user.id}@dev.hive.local`, // Placeholder email for access code auth
         campusId: effectiveCampusId,
         schoolId: effectiveSchoolId,
         isAdmin: false,

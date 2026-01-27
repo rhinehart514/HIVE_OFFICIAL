@@ -68,13 +68,13 @@ export function ProfileHeader({
                 style={{ backgroundColor: 'var(--life-glow)' }}
               />
             )}
-            <Avatar className="relative h-32 w-32 border-2 border-[var(--border)]">
+            <Avatar className="relative h-24 w-24 border-2 border-[var(--border)]">
               <AvatarImage
                 src={profileData.profile.avatarUrl ?? undefined}
                 alt={profileData.profile.fullName}
                 className="object-cover"
               />
-              <AvatarFallback className="text-4xl font-bold bg-[var(--bg-surface)] text-white">
+              <AvatarFallback className="text-2xl font-semibold bg-[var(--bg-surface)] text-white/80">
                 {initials}
               </AvatarFallback>
             </Avatar>

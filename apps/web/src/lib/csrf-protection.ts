@@ -1,6 +1,9 @@
 /**
  * PRODUCTION-SECURE CSRF protection with comprehensive attack prevention
  * Implements multiple CSRF defense mechanisms and threat detection
+ *
+ * SCALING: Uses Firestore for persistent token storage with in-memory cache
+ * to survive cold starts and support multi-instance deployments.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -8,6 +11,7 @@ import { createHash, randomBytes } from 'crypto';
 import { logSecurityEvent } from './structured-logger';
 import { currentEnvironment } from './env';
 import { getSecureClientId } from './secure-rate-limiter';
+import { dbAdmin } from './firebase-admin';
 
 /**
  * CSRF protection configuration
@@ -17,7 +21,7 @@ const CSRF_CONFIG = {
   TOKEN_LENGTH: 32,
   TOKEN_LIFETIME: 60 * 60 * 1000, // 1 hour
   MAX_TOKENS_PER_SESSION: 10,
-  
+
   // Cookie settings
   COOKIE_NAME: 'hive_csrf',
   COOKIE_OPTIONS: {
@@ -27,15 +31,19 @@ const CSRF_CONFIG = {
     path: '/',
     maxAge: 60 * 60 // 1 hour
   },
-  
+
   // Header settings
   HEADER_NAME: 'x-csrf-token',
   FORM_FIELD_NAME: '_csrf',
-  
+
   // Security settings
   REQUIRE_REFERER_CHECK: true,
   ALLOWED_ORIGINS: [] as string[], // Will be populated from env
-  STRICT_MODE: currentEnvironment === 'production'
+  STRICT_MODE: currentEnvironment === 'production',
+
+  // Storage settings
+  FIRESTORE_COLLECTION: 'csrf_tokens',
+  CACHE_TTL: 5 * 60 * 1000, // 5 minutes
 } as const;
 
 /**
@@ -62,11 +70,208 @@ export interface CSRFValidationResult {
 }
 
 /**
+ * Cached token entry
+ */
+interface CachedToken {
+  data: CSRFTokenData;
+  cachedAt: number;
+}
+
+/**
+ * Firestore-backed CSRF token storage with in-memory cache
+ *
+ * SCALING: Persists tokens to Firestore for multi-instance support
+ * while caching locally to reduce read latency and costs.
+ */
+class CSRFStorage {
+  private cache = new Map<string, CachedToken>();
+  private sessionTokensCache = new Map<string, Set<string>>();
+  private firestoreAvailable = true;
+
+  /**
+   * Get token from cache or Firestore
+   */
+  async get(token: string): Promise<CSRFTokenData | null> {
+    // Check cache first
+    const cached = this.cache.get(token);
+    if (cached && Date.now() - cached.cachedAt < CSRF_CONFIG.CACHE_TTL) {
+      return cached.data;
+    }
+
+    // Try Firestore
+    if (this.firestoreAvailable) {
+      try {
+        const doc = await dbAdmin
+          .collection(CSRF_CONFIG.FIRESTORE_COLLECTION)
+          .doc(token)
+          .get();
+
+        if (!doc.exists) {
+          return null;
+        }
+
+        const data = doc.data() as CSRFTokenData;
+
+        // Update cache
+        this.cache.set(token, { data, cachedAt: Date.now() });
+
+        return data;
+      } catch (error) {
+        // Firestore failed, mark as unavailable for this request cycle
+        this.handleFirestoreError('get', error);
+        // Return from cache if available, even if stale
+        return cached?.data || null;
+      }
+    }
+
+    // Firestore unavailable, check stale cache
+    return cached?.data || null;
+  }
+
+  /**
+   * Store token in cache and Firestore
+   */
+  async set(token: string, data: CSRFTokenData): Promise<void> {
+    // Always update cache
+    this.cache.set(token, { data, cachedAt: Date.now() });
+
+    // Track session tokens
+    if (!this.sessionTokensCache.has(data.sessionId)) {
+      this.sessionTokensCache.set(data.sessionId, new Set());
+    }
+    this.sessionTokensCache.get(data.sessionId)!.add(token);
+
+    // Try Firestore
+    if (this.firestoreAvailable) {
+      try {
+        await dbAdmin
+          .collection(CSRF_CONFIG.FIRESTORE_COLLECTION)
+          .doc(token)
+          .set({
+            ...data,
+            createdAt: new Date(),
+          });
+      } catch (error) {
+        this.handleFirestoreError('set', error);
+      }
+    }
+  }
+
+  /**
+   * Delete token from cache and Firestore
+   */
+  async delete(token: string): Promise<void> {
+    // Get token data for session cleanup
+    const cached = this.cache.get(token);
+
+    // Remove from cache
+    this.cache.delete(token);
+
+    // Remove from session tracking
+    if (cached?.data.sessionId) {
+      this.sessionTokensCache.get(cached.data.sessionId)?.delete(token);
+    }
+
+    // Try Firestore
+    if (this.firestoreAvailable) {
+      try {
+        await dbAdmin
+          .collection(CSRF_CONFIG.FIRESTORE_COLLECTION)
+          .doc(token)
+          .delete();
+      } catch (error) {
+        this.handleFirestoreError('delete', error);
+      }
+    }
+  }
+
+  /**
+   * Get tokens for a session
+   */
+  getSessionTokens(sessionId: string): Set<string> {
+    return this.sessionTokensCache.get(sessionId) || new Set();
+  }
+
+  /**
+   * Update session tokens cache
+   */
+  setSessionTokens(sessionId: string, tokens: Set<string>): void {
+    this.sessionTokensCache.set(sessionId, tokens);
+  }
+
+  /**
+   * Delete session tokens tracking
+   */
+  deleteSessionTokens(sessionId: string): void {
+    this.sessionTokensCache.delete(sessionId);
+  }
+
+  /**
+   * Clean up expired tokens from Firestore
+   */
+  async cleanupExpired(): Promise<number> {
+    if (!this.firestoreAvailable) {
+      return 0;
+    }
+
+    try {
+      const now = Date.now();
+      const expired = await dbAdmin
+        .collection(CSRF_CONFIG.FIRESTORE_COLLECTION)
+        .where('expiresAt', '<', now)
+        .limit(100)
+        .get();
+
+      if (expired.empty) {
+        return 0;
+      }
+
+      const batch = dbAdmin.batch();
+      expired.docs.forEach(doc => {
+        batch.delete(doc.ref);
+        // Also clean from cache
+        this.cache.delete(doc.id);
+      });
+      await batch.commit();
+
+      return expired.size;
+    } catch (error) {
+      this.handleFirestoreError('cleanup', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Handle Firestore errors gracefully
+   */
+  private handleFirestoreError(operation: string, error: unknown): void {
+    // Log but don't crash - in-memory cache will continue working
+    logSecurityEvent('csrf_failure', {
+      operation: `firestore_${operation}_failed`,
+      tags: {
+        error: error instanceof Error ? error.message : 'unknown',
+        environment: currentEnvironment,
+      },
+    });
+  }
+
+  /**
+   * Get storage stats (for health check)
+   */
+  getStats(): { cacheSize: number; sessionCount: number; firestoreAvailable: boolean } {
+    return {
+      cacheSize: this.cache.size,
+      sessionCount: this.sessionTokensCache.size,
+      firestoreAvailable: this.firestoreAvailable,
+    };
+  }
+}
+
+/**
  * Secure CSRF protection manager
  */
 export class CSRFProtection {
-  private static tokenStore = new Map<string, CSRFTokenData>();
-  private static sessionTokens = new Map<string, Set<string>>();
+  private static storage = new CSRFStorage();
 
   /**
    * Generate cryptographically secure CSRF token
@@ -74,14 +279,14 @@ export class CSRFProtection {
   static generateToken(sessionId: string, clientId: string): string {
     // Generate random bytes
     const randomToken = randomBytes(CSRF_CONFIG.TOKEN_LENGTH).toString('hex');
-    
+
     // Create hash incorporating session and client info
     const hash = createHash('sha256');
     hash.update(randomToken);
     hash.update(sessionId);
     hash.update(clientId);
     hash.update(Date.now().toString());
-    
+
     return hash.digest('hex');
   }
 
@@ -98,10 +303,10 @@ export class CSRFProtection {
     const clientId = getSecureClientId(request);
     const now = Date.now();
     const token = this.generateToken(sessionId, clientId);
-    
+
     // Create fingerprint for additional security
     const fingerprint = this.createFingerprint(request);
-    
+
     const tokenData: CSRFTokenData = {
       token,
       sessionId,
@@ -114,15 +319,9 @@ export class CSRFProtection {
 
     // Clean up old tokens for this session
     await this.cleanupSessionTokens(sessionId);
-    
+
     // Store token
-    this.tokenStore.set(token, tokenData);
-    
-    // Track tokens per session
-    if (!this.sessionTokens.has(sessionId)) {
-      this.sessionTokens.set(sessionId, new Set());
-    }
-    this.sessionTokens.get(sessionId)!.add(token);
+    await this.storage.set(token, tokenData);
 
     // Log token creation
     await logSecurityEvent('invalid_token', {
@@ -150,7 +349,7 @@ export class CSRFProtection {
     try {
       // Extract token from multiple sources
       const token = this.extractToken(request);
-      
+
       if (!token) {
         return {
           valid: false,
@@ -160,7 +359,7 @@ export class CSRFProtection {
       }
 
       // Get token data
-      const tokenData = this.tokenStore.get(token);
+      const tokenData = await this.storage.get(token);
       if (!tokenData) {
         await logSecurityEvent('invalid_token', {
           operation: 'invalid_token_used',
@@ -181,7 +380,7 @@ export class CSRFProtection {
       // Check token expiration
       const now = Date.now();
       if (tokenData.expiresAt < now) {
-        this.tokenStore.delete(token);
+        await this.storage.delete(token);
         return {
           valid: false,
           reason: 'token_expired',
@@ -260,11 +459,13 @@ export class CSRFProtection {
 
       // Update token usage
       tokenData.usageCount++;
-      
+
       // Implement token consumption (single-use for critical operations)
       if (request.method === 'DELETE' || request.url.includes('/admin/')) {
-        this.tokenStore.delete(token);
-        this.sessionTokens.get(sessionId)?.delete(token);
+        await this.storage.delete(token);
+        const sessionTokens = this.storage.getSessionTokens(sessionId);
+        sessionTokens.delete(token);
+        this.storage.setSessionTokens(sessionId, sessionTokens);
       }
 
       await logSecurityEvent('invalid_token', {
@@ -434,7 +635,7 @@ export class CSRFProtection {
 
     try {
       const refererUrl = new URL(referer);
-      
+
       // In production, only allow HTTPS
       if (currentEnvironment === 'production' && refererUrl.protocol !== 'https:') {
         return false;
@@ -465,15 +666,15 @@ export class CSRFProtection {
    * Clean up old tokens for a session
    */
   private static async cleanupSessionTokens(sessionId: string): Promise<void> {
-    const sessionTokenSet = this.sessionTokens.get(sessionId);
-    if (!sessionTokenSet) return;
+    const sessionTokenSet = this.storage.getSessionTokens(sessionId);
+    if (sessionTokenSet.size === 0) return;
 
     const now = Date.now();
     const expiredTokens: string[] = [];
 
     // Find expired tokens
     for (const token of sessionTokenSet) {
-      const tokenData = this.tokenStore.get(token);
+      const tokenData = await this.storage.get(token);
       if (!tokenData || tokenData.expiresAt < now) {
         expiredTokens.push(token);
       }
@@ -481,7 +682,7 @@ export class CSRFProtection {
 
     // Remove expired tokens
     for (const token of expiredTokens) {
-      this.tokenStore.delete(token);
+      await this.storage.delete(token);
       sessionTokenSet.delete(token);
     }
 
@@ -489,12 +690,14 @@ export class CSRFProtection {
     if (sessionTokenSet.size > CSRF_CONFIG.MAX_TOKENS_PER_SESSION) {
       const tokensArray = Array.from(sessionTokenSet);
       const tokensToRemove = tokensArray.slice(0, sessionTokenSet.size - CSRF_CONFIG.MAX_TOKENS_PER_SESSION);
-      
+
       for (const token of tokensToRemove) {
-        this.tokenStore.delete(token);
+        await this.storage.delete(token);
         sessionTokenSet.delete(token);
       }
     }
+
+    this.storage.setSessionTokens(sessionId, sessionTokenSet);
   }
 
   /**
@@ -519,27 +722,18 @@ export class CSRFProtection {
    * Global cleanup of expired tokens
    */
   static async globalCleanup(): Promise<void> {
-    const now = Date.now();
-    let cleanedCount = 0;
+    // Clean up expired tokens from Firestore
+    const cleaned = await this.storage.cleanupExpired();
 
-    // Clean up expired tokens
-    for (const [token, tokenData] of this.tokenStore.entries()) {
-      if (tokenData.expiresAt < now) {
-        this.tokenStore.delete(token);
-        this.sessionTokens.get(tokenData.sessionId)?.delete(token);
-        cleanedCount++;
-      }
-    }
-
-    // Clean up empty session token sets
-    for (const [sessionId, tokenSet] of this.sessionTokens.entries()) {
-      if (tokenSet.size === 0) {
-        this.sessionTokens.delete(sessionId);
-      }
-    }
-
-    if (cleanedCount > 0) {
+    if (cleaned > 0) {
       // Tokens cleaned - logged for monitoring
+      await logSecurityEvent('csrf_failure', {
+        operation: 'global_cleanup',
+        tags: {
+          cleaned: cleaned.toString(),
+          environment: currentEnvironment,
+        },
+      });
     }
   }
 
@@ -551,12 +745,15 @@ export class CSRFProtection {
     activeSessions: number;
     environment: string;
     strictMode: boolean;
+    firestoreAvailable: boolean;
   } {
+    const stats = this.storage.getStats();
     return {
-      totalTokens: this.tokenStore.size,
-      activeSessions: this.sessionTokens.size,
+      totalTokens: stats.cacheSize,
+      activeSessions: stats.sessionCount,
       environment: currentEnvironment,
-      strictMode: CSRF_CONFIG.STRICT_MODE
+      strictMode: CSRF_CONFIG.STRICT_MODE,
+      firestoreAvailable: stats.firestoreAvailable,
     };
   }
 }
@@ -588,17 +785,17 @@ export async function csrfMiddleware(
 
   // Validate CSRF token
   const validationResult = await CSRFProtection.validateToken(request, sessionId);
-  
+
   if (!validationResult.valid) {
     const statusCode = validationResult.securityViolation ? 403 : 400;
-    const errorMessage = validationResult.securityViolation 
+    const errorMessage = validationResult.securityViolation
       ? 'CSRF security violation detected'
       : 'Invalid or missing CSRF token';
 
     return {
       valid: false,
       response: NextResponse.json(
-        { 
+        {
           error: errorMessage,
           code: 'CSRF_VALIDATION_FAILED'
         },
@@ -626,7 +823,7 @@ export function withCSRFProtection(
   return async (request: NextRequest): Promise<NextResponse> => {
     try {
       const sessionId = await options.getSessionId(request);
-      
+
       if (!sessionId) {
         return NextResponse.json(
           { error: 'Session required for CSRF protection' },

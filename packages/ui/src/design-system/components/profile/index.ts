@@ -15,7 +15,55 @@ export {
 } from './ProfileToolModal';
 
 // ============================================
-// PROFILE DISPLAY COMPONENTS (Existing)
+// 3-ZONE PROFILE LAYOUT (New - Design Sprint)
+// ============================================
+
+// Zone 1: Identity Hero
+export {
+  ProfileIdentityHero,
+  type ProfileIdentityHeroUser,
+  type ProfileIdentityHeroProps,
+} from './ProfileIdentityHero';
+
+// Zone 2: Activity Cards (Building, Leading, Organizing)
+export {
+  ProfileActivityCard,
+  type ProfileActivityTool,
+  type ProfileActivityCardProps,
+} from './ProfileActivityCard';
+
+export {
+  ProfileLeadershipCard,
+  type ProfileLeadershipSpace,
+  type ProfileLeadershipCardProps,
+} from './ProfileLeadershipCard';
+
+export {
+  ProfileEventCard,
+  type ProfileEvent,
+  type ProfileEventCardProps,
+} from './ProfileEventCard';
+
+// Zone 3: Campus Presence
+export {
+  ProfileSpacePill,
+  type ProfileSpacePillSpace,
+  type ProfileSpacePillProps,
+} from './ProfileSpacePill';
+
+export {
+  ProfileConnectionFooter,
+  type ProfileConnectionFooterProps,
+} from './ProfileConnectionFooter';
+
+// Shared
+export {
+  ProfileOverflowChip,
+  type ProfileOverflowChipProps,
+} from './ProfileOverflowChip';
+
+// ============================================
+// PROFILE DISPLAY COMPONENTS (Legacy - Bento)
 // ============================================
 
 // ProfileBentoCard - Apple-style widget card for bento grid

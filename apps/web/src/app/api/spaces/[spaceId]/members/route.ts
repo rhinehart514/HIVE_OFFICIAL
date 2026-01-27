@@ -28,7 +28,7 @@ import {
 
 const GetMembersQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(50),
-  offset: z.coerce.number().min(0).default(0),
+  cursor: z.string().optional(), // Cursor-based pagination (member doc ID)
   role: z.enum(["owner", "admin", "moderator", "member", "guest"]).optional(),
   search: z.string().optional(),
   includeOffline: z.coerce.boolean().default(true),
@@ -244,7 +244,7 @@ export const GET = withAuthAndErrors(async (
   );
 
   const roleFilter = queryParams.role;
-  let memberQuery = dbAdmin
+  let memberQuery: FirebaseFirestore.Query = dbAdmin
     .collection("spaceMembers")
     .where("spaceId", "==", spaceId)
     .where("isActive", "==", true)
@@ -254,10 +254,17 @@ export const GET = withAuthAndErrors(async (
     memberQuery = memberQuery.where("role", "==", roleFilter);
   }
 
-  memberQuery = memberQuery
-    .orderBy("joinedAt", "desc")
-    .offset(queryParams.offset)
-    .limit(queryParams.limit);
+  memberQuery = memberQuery.orderBy("joinedAt", "desc");
+
+  // Cursor-based pagination: get cursor document if provided
+  if (queryParams.cursor) {
+    const cursorDoc = await dbAdmin.collection("spaceMembers").doc(queryParams.cursor).get();
+    if (cursorDoc.exists) {
+      memberQuery = memberQuery.startAfter(cursorDoc);
+    }
+  }
+
+  memberQuery = memberQuery.limit(queryParams.limit);
 
   const membersSnapshot = await memberQuery.get();
   const members: Array<Record<string, unknown>> = [];
@@ -265,9 +272,24 @@ export const GET = withAuthAndErrors(async (
   // PERFORMANCE FIX: Batch fetch all user data and activity instead of N+1 queries
   const memberIds = membersSnapshot.docs.map(doc => doc.data().userId || doc.id);
 
-  // Batch fetch user documents (Firestore getAll supports up to 500 docs)
+  // Helper: Chunk getAll() calls to respect Firestore 500 doc limit
+  const GETALL_LIMIT = 500;
+  async function chunkedGetAll<T extends FirebaseFirestore.DocumentReference>(
+    refs: T[]
+  ): Promise<FirebaseFirestore.DocumentSnapshot[]> {
+    if (refs.length === 0) return [];
+    const results: FirebaseFirestore.DocumentSnapshot[] = [];
+    for (let i = 0; i < refs.length; i += GETALL_LIMIT) {
+      const chunk = refs.slice(i, i + GETALL_LIMIT);
+      const chunkDocs = await dbAdmin.getAll(...chunk);
+      results.push(...chunkDocs);
+    }
+    return results;
+  }
+
+  // Batch fetch user documents (chunked for >500 members)
   const userRefs = memberIds.map(id => dbAdmin.collection("users").doc(id));
-  const userDocs = userRefs.length > 0 ? await dbAdmin.getAll(...userRefs) : [];
+  const userDocs = await chunkedGetAll(userRefs);
   const usersById = new Map<string, FirebaseFirestore.DocumentData>();
   userDocs.forEach(doc => {
     if (doc.exists) {
@@ -275,9 +297,9 @@ export const GET = withAuthAndErrors(async (
     }
   });
 
-  // Batch fetch presence data for online status (presence collection tracks real-time status)
+  // Batch fetch presence data for online status (chunked for >500 members)
   const presenceRefs = memberIds.map(id => dbAdmin.collection("presence").doc(id));
-  const presenceDocs = presenceRefs.length > 0 ? await dbAdmin.getAll(...presenceRefs) : [];
+  const presenceDocs = await chunkedGetAll(presenceRefs);
   const presenceById = new Map<string, FirebaseFirestore.DocumentData>();
   presenceDocs.forEach(doc => {
     if (doc.exists) {
@@ -285,9 +307,9 @@ export const GET = withAuthAndErrors(async (
     }
   });
 
-  // Batch fetch privacy settings for ghost mode filtering
+  // Batch fetch privacy settings for ghost mode filtering (chunked for >500 members)
   const privacyRefs = memberIds.map(id => dbAdmin.collection("privacySettings").doc(id));
-  const privacyDocs = privacyRefs.length > 0 ? await dbAdmin.getAll(...privacyRefs) : [];
+  const privacyDocs = await chunkedGetAll(privacyRefs);
   const privacyById = new Map<string, FirebaseFirestore.DocumentData>();
   privacyDocs.forEach(doc => {
     if (doc.exists) {
@@ -493,19 +515,23 @@ export const GET = withAuthAndErrors(async (
     return new Date(b.joinedAt as string | number | Date).getTime() - new Date(a.joinedAt as string | number | Date).getTime();
   });
 
-  const totalMembersSnapshot = await dbAdmin
-    .collection("spaceMembers")
-    .where("spaceId", "==", spaceId)
-    .where("isActive", "==", true)
-    .where("campusId", "==", campusId)
-    .get();
+  // PERFORMANCE FIX: Use cached member count from space document instead of unbounded query
+  // This avoids O(N) count query that could OOM on spaces with 500+ members
+  const spaceDoc = await dbAdmin.collection("spaces").doc(spaceId).get();
+  const spaceData = spaceDoc.data();
+  const cachedMemberCount = spaceData?.metrics?.memberCount ?? spaceData?.memberCount ?? members.length;
 
   const onlineMembers = members.filter((member) => member.status !== "offline").length;
+
+  // Determine next cursor for pagination
+  const hasMore = membersSnapshot.size === queryParams.limit;
+  const lastDoc = membersSnapshot.docs[membersSnapshot.docs.length - 1];
+  const nextCursor = hasMore && lastDoc ? lastDoc.id : null;
 
   return respond.success({
     members,
     summary: {
-      totalMembers: totalMembersSnapshot.size,
+      totalMembers: cachedMemberCount,
       onlineMembers,
       activeMembers: members.filter((member) => {
         const daysSinceActive =
@@ -515,11 +541,9 @@ export const GET = withAuthAndErrors(async (
     },
     pagination: {
       limit: queryParams.limit,
-      offset: queryParams.offset,
-      hasMore: membersSnapshot.size === queryParams.limit,
-      nextOffset: membersSnapshot.size === queryParams.limit
-        ? queryParams.offset + queryParams.limit
-        : null,
+      cursor: queryParams.cursor,
+      hasMore,
+      nextCursor,
     },
   });
 });
@@ -536,6 +560,7 @@ export const POST = withAuthValidationAndErrors(
       const inviterId = getUserId(request as AuthenticatedRequest);
       const campusId = getCampusId(request as AuthenticatedRequest);
       const { spaceId } = await params;
+      const spaceRepo = getServerSpaceRepository();
 
       // Verify inviter has permission using DDD validation
       const validation = await validateSpaceAndMembership(spaceId, inviterId, campusId);
@@ -587,6 +612,25 @@ export const POST = withAuthValidationAndErrors(
         isReactivation: result.isReactivation,
         endpoint: '/api/spaces/[spaceId]/members'
       });
+
+      // Fix 3: Auto-unlock major spaces when threshold is reached
+      // Check if space is a major type and should unlock after adding this member
+      const spaceResult = await spaceRepo.findById(spaceId);
+      if (spaceResult.isSuccess) {
+        const space = spaceResult.getValue();
+        if (space.identityType === 'major' && space.shouldUnlock()) {
+          const unlockResult = space.unlock();
+          if (unlockResult.isSuccess) {
+            await spaceRepo.save(space);
+            logger.info('✅ Major space auto-unlocked', {
+              spaceId,
+              memberCount: space.memberCount,
+              threshold: space.unlockThreshold,
+              endpoint: '/api/spaces/[spaceId]/members'
+            });
+          }
+        }
+      }
 
       return respond.success({
         success: true,

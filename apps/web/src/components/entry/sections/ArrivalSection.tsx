@@ -1,20 +1,20 @@
 'use client';
 
 /**
- * ArrivalSection - Welcome celebration
- * REDESIGNED: Jan 21, 2026
+ * ArrivalSection - The Crossing
+ * REDESIGNED: Jan 26, 2026 - The Threshold Entry Flow
  *
- * Triumphant arrival moment with weight:
- * - 800ms "Preparing your campus..." pause builds anticipation
- * - Gold checkmark icon scales in with glow
- * - Word-by-word reveal for "You're in, {name}."
- * - Handle badge fades in
- * - No confetti - gold glow is the celebration
+ * The final ceremonial moment:
+ * - Identity card preview showing @handle, major, year, interests
+ * - Word-by-word manifesto reveal: "We stopped waiting for institutions."
+ * - Gold "Enter HIVE" CTA with pulse animation
+ * - Celebration flash transition to /spaces
+ *
+ * For returning users: Simple "Welcome back" without the ceremony
  */
 
 import * as React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Check } from 'lucide-react';
 import { Button } from '@hive/ui/design-system/primitives';
 import {
   arrivalGlowVariants,
@@ -33,6 +33,9 @@ interface ArrivalSectionProps {
   section: SectionState;
   firstName: string;
   handle: string;
+  major?: string;
+  graduationYear?: number | null;
+  interests?: string[];
   isNewUser: boolean;
   isReturningUser: boolean;
   onComplete: () => void;
@@ -42,6 +45,9 @@ export function ArrivalSection({
   section,
   firstName,
   handle,
+  major,
+  graduationYear,
+  interests = [],
   isNewUser,
   isReturningUser,
   onComplete,
@@ -49,6 +55,7 @@ export function ArrivalSection({
   const shouldReduceMotion = useReducedMotion();
   const [phase, setPhase] = React.useState<'preparing' | 'revealing' | 'ready'>('preparing');
   const [isNavigating, setIsNavigating] = React.useState(false);
+  const [showFlash, setShowFlash] = React.useState(false);
 
   // Hidden state
   if (section.status === 'hidden') {
@@ -58,15 +65,15 @@ export function ArrivalSection({
   // Phased reveal: preparing → revealing → ready
   React.useEffect(() => {
     if (section.status === 'active' || section.status === 'complete') {
-      // Phase 1: Show "Preparing your campus..." for 800ms
+      // Phase 1: Brief pause for anticipation
       const preparingTimer = setTimeout(() => {
         setPhase('revealing');
-      }, 800);
+      }, 400);
 
-      // Phase 2: After reveal animations complete, mark as ready
+      // Phase 2: After reveal animations complete
       const readyTimer = setTimeout(() => {
         setPhase('ready');
-      }, 2000);
+      }, 1600);
 
       return () => {
         clearTimeout(preparingTimer);
@@ -77,16 +84,69 @@ export function ArrivalSection({
 
   const handleComplete = () => {
     setIsNavigating(true);
-    onComplete();
+    // Celebration flash
+    setShowFlash(true);
+    setTimeout(() => {
+      onComplete();
+    }, 300);
   };
 
-  // Word-by-word for the headline
-  const headlineWords = isReturningUser
-    ? ['Welcome', 'back,', firstName || 'friend']
-    : ["You're", 'in,', firstName || 'friend'] ;
+  // Word-by-word for the manifesto
+  const manifestoWords = ['We', 'stopped', 'waiting', 'for', 'institutions.'];
 
   const isRevealing = phase === 'revealing' || phase === 'ready';
 
+  // Returning user - simple welcome back
+  if (isReturningUser) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: DURATION.slow, ease: EASE_PREMIUM }}
+        className="flex flex-col items-center text-center relative py-8"
+      >
+        {/* Simple welcome */}
+        <motion.h1
+          className="text-heading-lg font-semibold text-white mb-4"
+          style={{ fontFamily: 'var(--font-display)' }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          Welcome back, {firstName || 'friend'}
+        </motion.h1>
+
+        <motion.p
+          className="text-body-lg text-white/50 mb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          Your campus is ready.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="w-full max-w-[300px]"
+        >
+          <Button
+            variant="cta"
+            size="lg"
+            onClick={handleComplete}
+            disabled={isNavigating}
+            loading={isNavigating}
+            className="w-full"
+          >
+            {isNavigating ? 'Loading...' : 'Enter HIVE'}
+          </Button>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  // New user - The Crossing ceremony
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -94,7 +154,18 @@ export function ArrivalSection({
       transition={{ duration: DURATION.slow, ease: EASE_PREMIUM }}
       className="flex flex-col items-center text-center relative py-8"
     >
-      {/* Layered glow effects */}
+      {/* Celebration flash overlay */}
+      {showFlash && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.6, 0] }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="fixed inset-0 z-50 pointer-events-none"
+          style={{ backgroundColor: GOLD.primary }}
+        />
+      )}
+
+      {/* Background glow */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         variants={arrivalGlowVariants}
@@ -104,220 +175,186 @@ export function ArrivalSection({
           background: `radial-gradient(ellipse 100% 60% at 50% 20%, ${GOLD.glow}, transparent 60%)`,
         }}
       />
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isRevealing ? 0.5 : 0 }}
-        transition={{ duration: 2, ease: EASE_PREMIUM }}
-        style={{
-          background: `radial-gradient(circle at 50% 30%, ${GOLD.glowSoft}, transparent 50%)`,
-        }}
-      />
 
-      {/* Preparing state - pulse animation */}
+      {/* Preparing state */}
       {phase === 'preparing' && (
         <motion.div
           className="relative z-10 flex flex-col items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center mb-6"
+            className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center"
             animate={{
-              scale: [1, 1.05, 1],
               borderColor: ['rgba(255,255,255,0.2)', 'rgba(255,215,0,0.3)', 'rgba(255,255,255,0.2)'],
             }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
           >
             <motion.div
               className="w-2 h-2 rounded-full bg-white/40"
               animate={{ scale: [1, 1.2, 1] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
             />
           </motion.div>
-          <p className="text-body-lg text-white/50">Preparing your campus...</p>
         </motion.div>
       )}
 
-      {/* Reveal state */}
+      {/* Reveal state - The Crossing */}
       {isRevealing && (
         <>
-          {/* Gold checkmark hero */}
+          {/* Identity Card Preview */}
           <motion.div
-            className="relative z-10 mb-8"
-            initial={shouldReduceMotion ? { scale: 1 } : { scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={SPRING_BOUNCY}
+            className="relative z-10 w-full max-w-[340px] mb-10"
+            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ ...SPRING_BOUNCY, delay: 0.1 }}
           >
-            <motion.div
-              className="w-20 h-20 rounded-full flex items-center justify-center"
+            <div
+              className="p-6 rounded-2xl border"
               style={{
-                background: `linear-gradient(135deg, ${GOLD.primary}, ${GOLD.dark})`,
-              }}
-              animate={{
-                boxShadow: [
-                  `0 0 40px ${GOLD.glow}, 0 0 80px ${GOLD.glowSubtle}`,
-                  `0 0 60px ${GOLD.glow}, 0 0 120px ${GOLD.glowSubtle}`,
-                  `0 0 40px ${GOLD.glow}, 0 0 80px ${GOLD.glowSubtle}`,
-                ],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: 'easeInOut',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%)',
+                borderColor: 'rgba(255,215,0,0.15)',
+                boxShadow: `0 0 40px ${GOLD.glowSubtle}, inset 0 1px 0 rgba(255,255,255,0.05)`,
               }}
             >
-              <Check className="w-10 h-10 text-black" strokeWidth={3} />
-            </motion.div>
+              {/* Handle - hero element */}
+              <motion.div
+                className="mb-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                <span
+                  className="text-heading font-semibold"
+                  style={{
+                    color: GOLD.primary,
+                    textShadow: `0 0 30px ${GOLD.glowSubtle}`,
+                  }}
+                >
+                  @{handle}
+                </span>
+              </motion.div>
+
+              {/* Name */}
+              <motion.p
+                className="text-body-lg text-white font-medium mb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                {firstName}
+              </motion.p>
+
+              {/* Major & Year */}
+              {(major || graduationYear) && (
+                <motion.div
+                  className="flex items-center gap-2 mb-4 text-body text-white/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.4 }}
+                >
+                  {major && <span>{major}</span>}
+                  {major && graduationYear && <span className="text-white/30">·</span>}
+                  {graduationYear && <span>Class of {graduationYear}</span>}
+                </motion.div>
+              )}
+
+              {/* Interests */}
+              {interests.length > 0 && (
+                <motion.div
+                  className="flex flex-wrap gap-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.4 }}
+                >
+                  {interests.map((interest, idx) => (
+                    <motion.span
+                      key={interest}
+                      className="px-2.5 py-1 rounded-full text-label-sm bg-white/[0.06] text-white/60 border border-white/[0.08]"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.65 + idx * 0.05, duration: 0.3 }}
+                    >
+                      {interest}
+                    </motion.span>
+                  ))}
+                </motion.div>
+              )}
+            </div>
           </motion.div>
 
-          {/* Main message - word-by-word */}
+          {/* Manifesto - word by word */}
           <motion.div
-            className="mb-6 relative z-10"
-            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: DURATION.slow,
-              delay: 0.3,
-              ease: EASE_PREMIUM,
-            }}
+            className="mb-10 relative z-10"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.4 }}
           >
-            <h1
-              className="text-heading-lg md:text-display font-semibold tracking-tight text-white leading-[1.0]"
+            <p
+              className="text-body-lg text-white/60 leading-relaxed"
               style={{
                 fontFamily: 'var(--font-display)',
-                textShadow: `0 0 80px ${GOLD.glowSubtle}`,
+                textShadow: `0 0 40px ${GOLD.glowSubtle}`,
               }}
             >
-              {headlineWords.map((word, i) => (
+              {manifestoWords.map((word, i) => (
                 <motion.span
                   key={i}
-                  className="inline-block mr-[0.2em]"
+                  className="inline-block mr-[0.25em]"
                   variants={wordRevealVariants}
                   initial="initial"
                   animate="animate"
-                  transition={createWordReveal(i, 0.1)}
+                  transition={createWordReveal(i, 0.08)}
+                  style={{ transitionDelay: `${0.9 + i * 0.08}s` }}
                 >
                   {word}
                 </motion.span>
               ))}
-            </h1>
+            </p>
           </motion.div>
 
-          {/* Handle badge - the earned moment */}
-          {handle && !isReturningUser && (
-            <motion.div
-              className="mb-10 relative z-10"
-              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{
-                duration: DURATION.gentle,
-                delay: 0.6,
-                ease: EASE_PREMIUM,
-              }}
-            >
-              <div
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border"
-                style={{
-                  backgroundColor: 'rgba(255, 215, 0, 0.08)',
-                  borderColor: 'rgba(255, 215, 0, 0.2)',
-                }}
-              >
-                <span
-                  className="text-title-sm font-medium"
-                  style={{ color: GOLD.primary }}
-                >
-                  @{handle}
-                </span>
-                <span className="text-body text-white/40">is yours</span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Returning user message */}
-          {isReturningUser && (
-            <motion.p
-              className="mb-10 text-body-lg text-white/50 relative z-10"
-              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: DURATION.smooth,
-                delay: 0.5,
-                ease: EASE_PREMIUM,
-              }}
-            >
-              Your campus is ready.
-            </motion.p>
-          )}
-
-          {/* CTA - Gold, prominent */}
+          {/* CTA - Gold with pulse */}
           <motion.div
             initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
               duration: DURATION.gentle,
-              delay: 0.8,
+              delay: 1.4,
               ease: EASE_PREMIUM,
             }}
             className="w-full max-w-[300px] relative z-10"
           >
-            <Button
-              variant="cta"
-              size="lg"
-              onClick={handleComplete}
-              disabled={isNavigating}
-              loading={isNavigating}
-              className="w-full text-body-lg"
+            <motion.div
+              animate={
+                phase === 'ready' && !isNavigating
+                  ? {
+                      boxShadow: [
+                        `0 0 20px ${GOLD.glowSubtle}`,
+                        `0 0 40px ${GOLD.glow}`,
+                        `0 0 20px ${GOLD.glowSubtle}`,
+                      ],
+                    }
+                  : {}
+              }
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="rounded-xl"
             >
-              {isNavigating ? 'Loading...' : 'Enter HIVE'}
-            </Button>
-          </motion.div>
-
-          {/* Teaser */}
-          <motion.div
-            className="mt-10 relative z-10"
-            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: DURATION.smooth,
-              delay: 1.2,
-              ease: EASE_PREMIUM,
-            }}
-          >
-            <p className="text-body-sm text-white/30 mb-3">Your campus is waiting</p>
-            <div className="flex items-center justify-center gap-2">
-              {/* Mini space indicators */}
-              {[1, 2, 3, 4, 5].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.08]"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: 1.3 + i * 0.05,
-                    ease: EASE_PREMIUM,
-                  }}
-                />
-              ))}
-              <motion.span
-                className="text-label text-white/20 ml-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 1.6 }}
+              <Button
+                variant="cta"
+                size="lg"
+                onClick={handleComplete}
+                disabled={isNavigating}
+                loading={isNavigating}
+                className="w-full text-body-lg"
               >
-                +400
-              </motion.span>
-            </div>
+                {isNavigating ? 'Loading...' : 'Enter HIVE'}
+              </Button>
+            </motion.div>
           </motion.div>
         </>
       )}

@@ -17,7 +17,6 @@
       "@hive/hooks": ["../hooks/src"],
       "@hive/ui": ["../ui/src"],
       "@hive/tokens": ["../tokens"],
-      "@hive/utilities": ["../utilities/src"],
       "@hive/validation": ["../validation/src"]
     },
     "typeRoots": ["../../node_modules/@types", "../../node_modules"],

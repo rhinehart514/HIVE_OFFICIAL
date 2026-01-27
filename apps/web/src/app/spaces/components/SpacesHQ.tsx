@@ -1,26 +1,24 @@
 'use client';
 
 /**
- * SpacesHQ — Command Center for Campus Life
+ * SpacesHQ — Your Spaces Hub
  *
- * A viewport-fit dashboard with:
+ * Clean layout with real data only:
  * - Identity row (Major, Home, Greek)
- * - Organizations panel (clubs/orgs)
- * - Attention panel (actions + live)
- * - Recent activity footer
+ * - Your spaces grid
+ * - Browse link
  *
  * States: empty, onboarding, active
  */
 
 import * as React from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Plus } from 'lucide-react';
+import { Plus, ArrowRight, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion, MOTION, Button } from '@hive/ui/design-system/primitives';
-import { useSpacesHQ, type HQState } from '../hooks/useSpacesHQ';
+import { useSpacesHQ } from '../hooks/useSpacesHQ';
 import { IdentityRow } from './IdentityRow';
 import { OrganizationsPanel } from './OrganizationsPanel';
-import { AttentionPanel } from './AttentionPanel';
-import { RecentActivity } from './RecentActivity';
 import { SpaceCreationModal } from '@/components/spaces/SpaceCreationModal';
 
 // ============================================================
@@ -43,12 +41,11 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
           Join spaces to connect with your major, residence, Greek life, and campus organizations.
         </p>
         <div className="flex gap-3 justify-center">
-          <Button
-            onClick={() => window.location.href = '/spaces/browse'}
-            className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90"
-          >
-            Browse Spaces
-          </Button>
+          <Link href="/spaces/browse">
+            <Button className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90">
+              Browse Spaces
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             onClick={onCreateSpace}
@@ -67,7 +64,7 @@ function EmptyState({ onCreateSpace }: { onCreateSpace: () => void }) {
 // Onboarding State
 // ============================================================
 
-function OnboardingBanner({ progress }: { progress: number }) {
+function OnboardingBanner({ progress, onBrowse }: { progress: number; onBrowse: () => void }) {
   const remaining = 3 - progress;
 
   return (
@@ -83,13 +80,13 @@ function OnboardingBanner({ progress }: { progress: number }) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Progress dots */}
+          {/* Progress dots - gold for completed */}
           <div className="flex gap-1.5">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  i < progress ? 'bg-emerald-500' : 'bg-white/10'
+                  i < progress ? 'bg-[var(--color-gold)]' : 'bg-white/10'
                 }`}
               />
             ))}
@@ -99,7 +96,7 @@ function OnboardingBanner({ progress }: { progress: number }) {
           </span>
         </div>
         <button
-          onClick={() => window.location.href = '/spaces/browse'}
+          onClick={onBrowse}
           className="text-label text-white/40 hover:text-white/60 transition-colors"
         >
           Complete setup
@@ -115,22 +112,103 @@ function OnboardingBanner({ progress }: { progress: number }) {
 
 function LoadingState() {
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="flex gap-1">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-2 h-2 rounded-full bg-white/20"
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              delay: i * 0.15,
-            }}
-          />
-        ))}
+    <div className="flex-1 px-6 pb-8 flex flex-col gap-8">
+      {/* Identity Row Skeleton */}
+      <section>
+        <motion.div
+          className="h-4 w-24 rounded bg-white/[0.04] mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: MOTION.ease.smooth }}
+        />
+        <div className="grid grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="h-24 rounded-xl bg-white/[0.02]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: i * 0.1,
+                ease: MOTION.ease.smooth,
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Your Spaces Skeleton */}
+      <section className="flex-1">
+        <motion.div
+          className="h-4 w-28 rounded bg-white/[0.04] mb-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: 0.2, ease: MOTION.ease.smooth }}
+        />
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <motion.div
+              key={i}
+              className="h-16 rounded-lg bg-white/[0.02]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0.3, 0.6, 0.3] }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                delay: 0.3 + i * 0.05,
+                ease: MOTION.ease.smooth,
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Browse link skeleton */}
+      <div className="pt-4 border-t border-white/[0.06]">
+        <motion.div
+          className="h-4 w-36 rounded bg-white/[0.04]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 1.5, repeat: Infinity, delay: 0.5, ease: MOTION.ease.smooth }}
+        />
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// Error State
+// ============================================================
+
+function ErrorState({ error, onRetry }: { error: string; onRetry: () => void }) {
+  return (
+    <motion.div
+      className="flex-1 flex flex-col items-center justify-center px-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: MOTION.duration.base, ease: MOTION.ease.premium }}
+    >
+      <div className="text-center max-w-md">
+        <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
+          <AlertCircle size={24} className="text-red-500" />
+        </div>
+        <h2 className="text-heading font-medium text-white/90 tracking-tight mb-2">
+          Something went wrong
+        </h2>
+        <p className="text-body text-white/40 leading-relaxed mb-6">
+          {error || 'Failed to load your spaces. Please try again.'}
+        </p>
+        <Button
+          onClick={onRetry}
+          className="bg-white/[0.08] hover:bg-white/[0.12] text-white/90"
+        >
+          <RefreshCw size={16} className="mr-2" />
+          Try again
+        </Button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -154,13 +232,22 @@ export function SpacesHQ() {
   const {
     state,
     loading,
+    error,
     identityClaims,
     identityProgress,
     organizations,
-    actions,
-    liveSpaces,
-    recentActivity,
+    refresh,
   } = useSpacesHQ();
+
+  // Error state
+  if (error) {
+    return (
+      <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+        <Header onCreateSpace={() => setShowCreateModal(true)} />
+        <ErrorState error={error} onRetry={refresh} />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -186,36 +273,52 @@ export function SpacesHQ() {
   }
 
   return (
-    <div className="h-screen bg-[#0A0A0A] flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
       <Header onCreateSpace={() => setShowCreateModal(true)} />
 
       {/* Onboarding banner */}
-      {state === 'onboarding' && <OnboardingBanner progress={identityProgress} />}
-
-      {/* Main content - no scroll */}
-      <main className="flex-1 px-6 pb-6 min-h-0 flex flex-col gap-5">
-        {/* Identity Row */}
-        <IdentityRow
-          majorSpace={identityClaims.major}
-          homeSpace={identityClaims.home}
-          greekSpace={identityClaims.greek}
+      {state === 'onboarding' && (
+        <OnboardingBanner
+          progress={identityProgress}
+          onBrowse={() => router.push('/spaces/browse')}
         />
+      )}
 
-        {/* Middle section: Organizations + Attention */}
-        <div className="flex-1 grid grid-cols-12 gap-5 min-h-0">
-          {/* Organizations Panel - spans 8 cols */}
-          <div className="col-span-8 min-h-0">
-            <OrganizationsPanel spaces={organizations} maxVisible={8} />
-          </div>
+      {/* Main content */}
+      <main className="flex-1 px-6 pb-8 flex flex-col gap-8">
+        {/* Identity Row */}
+        <section>
+          <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
+            Your Identity
+          </h2>
+          <IdentityRow
+            majorSpace={identityClaims.major}
+            homeSpace={identityClaims.home}
+            greekSpace={identityClaims.greek}
+          />
+        </section>
 
-          {/* Attention Panel - spans 4 cols */}
-          <div className="col-span-4 min-h-0">
-            <AttentionPanel actions={actions} liveSpaces={liveSpaces} />
-          </div>
+        {/* Your Spaces - full width */}
+        <section className="flex-1">
+          <h2 className="text-label text-white/40 uppercase tracking-wider mb-4">
+            Your Spaces
+          </h2>
+          <OrganizationsPanel spaces={organizations} maxVisible={12} />
+        </section>
+
+        {/* Browse link */}
+        <div className="pt-4 border-t border-white/[0.06]">
+          <Link
+            href="/spaces/browse"
+            className="group flex items-center gap-2 text-body text-white/50 hover:text-white/80 transition-colors"
+          >
+            Browse more spaces
+            <ArrowRight
+              size={16}
+              className="transition-transform group-hover:translate-x-1"
+            />
+          </Link>
         </div>
-
-        {/* Recent Activity Footer */}
-        <RecentActivity activities={recentActivity} maxVisible={4} />
       </main>
 
       <SpaceCreationModal

@@ -70,6 +70,9 @@ export * from "./moderation";
 // Export social graph analysis functions
 export * from "./social_graph";
 
+// Export admin dashboard functions
+export * from "./admin";
+
 // Export a simple health check function
 export const healthCheck = functions.https.onRequest((request, response) => {
   logger.info("Health check request received");

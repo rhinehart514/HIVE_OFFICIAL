@@ -21,6 +21,20 @@ export {
   SizeSchema,
 } from './element-schemas';
 
+// Tool composition validation (creation-time checks)
+export {
+  validateToolComposition,
+  validateElement,
+  validateConnection,
+  type CanvasElementForValidation,
+  type ConnectionForValidation,
+  type CompositionValidationResult,
+  type CompositionError,
+  type CompositionWarning,
+  type CompositionErrorCode,
+  type CompositionWarningCode,
+} from './validate-composition';
+
 // Composition validator service (re-export from application layer)
 export {
   CompositionValidatorService,

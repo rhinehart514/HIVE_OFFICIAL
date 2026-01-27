@@ -281,6 +281,61 @@
   --hive-foundation-black: var(--hive-black);
   --hive-foundation-white: var(--hive-white);
   --hive-foundation-gold-500: var(--hive-gold);
+
+  /* ===================================
+   * HIVELAB IDE TOKENS
+   * Consolidated design tokens for HiveLab visual builder
+   * Single source of truth - no duplicate color objects
+   * =================================== */
+
+  /* Canvas - the darkest layer */
+  --hivelab-canvas: #0A0A0A;
+  --hivelab-grid: rgba(255, 255, 255, 0.04);
+  --hivelab-bg: #0A0A0A;
+
+  /* Surfaces */
+  --hivelab-surface: #141414;
+  --hivelab-surface-elevated: #1A1A1A;
+  --hivelab-surface-active: #242424;
+  --hivelab-surface-hover: #1F1F1F;
+  --hivelab-panel: #1A1A1A;
+
+  /* Borders */
+  --hivelab-border: rgba(255, 255, 255, 0.08);
+  --hivelab-border-hover: rgba(255, 255, 255, 0.12);
+  --hivelab-border-emphasis: rgba(255, 255, 255, 0.16);
+  --hivelab-border-focus: rgba(255, 255, 255, 0.2);
+
+  /* Text */
+  --hivelab-text-primary: #FAF9F7;
+  --hivelab-text-secondary: #8A8A8A;
+  --hivelab-text-tertiary: #5A5A5A;
+  --hivelab-text-muted: #4A4A4A;
+
+  /* Node Element Colors */
+  --hivelab-node-body: #1A1A1A;
+  --hivelab-node-header: #242424;
+  --hivelab-node-border: rgba(255, 255, 255, 0.08);
+  --hivelab-node-border-hover: rgba(255, 255, 255, 0.12);
+  --hivelab-node-border-selected: rgba(212, 175, 55, 0.5);
+
+  /* Category Dot Colors (element type indicators) */
+  --hivelab-dot-input: #FF6B6B;
+  --hivelab-dot-display: #64B5F6;
+  --hivelab-dot-action: #FFB74D;
+  --hivelab-dot-logic: #BA68C8;
+  --hivelab-dot-data: #D4AF37;
+
+  /* Connections */
+  --hivelab-connection: #D4AF37;
+  --hivelab-connection-glow: rgba(212, 175, 55, 0.3);
+
+  /* Motion - standard interaction timing */
+  --hivelab-duration-instant: 100ms;
+  --hivelab-duration-fast: 150ms;
+  --hivelab-duration-normal: 200ms;
+  --hivelab-duration-slow: 300ms;
+  --hivelab-duration-celebration: 700ms;
 }
 
 /* Base Styles */

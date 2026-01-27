@@ -42,13 +42,14 @@ describe('Tools Analytics Backend', () => {
   beforeEach(() => {
     resetCollections();
     // Seed a tool and related docs
+    // Note: Use 'ub-buffalo' to match the auth middleware campus fallback for test.edu emails
     const tools = getCollection('tools');
     const toolRef = tools.doc('t1');
-    toolRef.set({ name: 'Poll Maker', ownerId: 'u1', status: 'published', campusId: 'ub', currentVersion: '1.0.0', installCount: 3, elements: [] });
+    toolRef.set({ name: 'Poll Maker', ownerId: 'u1', status: 'published', campusId: 'ub-buffalo', currentVersion: '1.0.0', installCount: 3, elements: [] });
 
     // One active deployment to a space
-    getCollection('deployedTools').doc('dep1').set({ toolId: 't1', deployedTo: 'space', targetId: 's1', status: 'active', usageCount: 7, campusId: 'ub' });
-    getCollection('spaces').doc('s1').set({ name: 'CS Club', campusId: 'ub', members: { u1: { role: 'admin' }, u2: { role: 'member' } } });
+    getCollection('deployedTools').doc('dep1').set({ toolId: 't1', deployedTo: 'space', targetId: 's1', status: 'active', usageCount: 7, campusId: 'ub-buffalo' });
+    getCollection('spaces').doc('s1').set({ name: 'CS Club', campusId: 'ub-buffalo', members: { u1: { role: 'admin' }, u2: { role: 'member' } } });
 
     // A few analytics events over the last 7d
     const now = new Date();
@@ -60,8 +61,8 @@ describe('Tools Analytics Backend', () => {
 
     // Reviews
     const reviews = getCollection('toolReviews');
-    reviews.doc().set({ toolId: 't1', campusId: 'ub', status: 'published', rating: 5, title: 'Great', createdAt: daysAgo(1), userId: 'u2' });
-    reviews.doc().set({ toolId: 't1', campusId: 'ub', status: 'published', rating: 4, title: 'Solid', createdAt: daysAgo(3), userId: 'u3' });
+    reviews.doc().set({ toolId: 't1', campusId: 'ub-buffalo', status: 'published', rating: 5, title: 'Great', createdAt: daysAgo(1), userId: 'u2' });
+    reviews.doc().set({ toolId: 't1', campusId: 'ub-buffalo', status: 'published', rating: 4, title: 'Solid', createdAt: daysAgo(3), userId: 'u3' });
   });
 
   it('GET /api/tools/[toolId]/analytics returns aggregated analytics', async () => {
