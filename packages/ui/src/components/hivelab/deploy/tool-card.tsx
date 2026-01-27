@@ -7,14 +7,15 @@
 import { motion } from 'framer-motion';
 import { CubeIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 
+// Colors - tokens are wired in globals.css
 const COLORS = {
-  panel: 'var(--hivelab-panel, #1A1A1A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  gold: 'var(--life-gold, #D4AF37)',
+  panel: 'var(--hivelab-panel)',
+  surface: 'var(--hivelab-surface)',
+  border: 'var(--hivelab-border)',
+  textPrimary: 'var(--hivelab-text-primary)',
+  textSecondary: 'var(--hivelab-text-secondary)',
+  textTertiary: 'var(--hivelab-text-tertiary)',
+  gold: 'var(--life-gold)',
 };
 
 interface ToolCardProps {

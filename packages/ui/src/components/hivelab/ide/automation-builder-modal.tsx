@@ -40,9 +40,9 @@ const PANEL_COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
   accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: '#f44336',
-  errorLight: 'rgba(244, 67, 54, 0.1)',
-  success: '#22c55e',
+  error: 'var(--hivelab-status-error)',
+  errorLight: 'var(--hivelab-status-error-muted)',
+  success: 'var(--hivelab-status-success)',
 };
 
 const focusRing =

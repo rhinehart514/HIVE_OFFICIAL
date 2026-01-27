@@ -18,9 +18,10 @@ import { MOTION } from '../../../tokens/motion';
 
 const EASE = MOTION.ease.premium;
 
+// Colors - tokens are wired in globals.css
 const COLORS = {
-  gold: 'var(--life-gold, #D4AF37)',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
+  gold: 'var(--life-gold)',
+  textPrimary: 'var(--hivelab-text-primary)',
 };
 
 interface Space {

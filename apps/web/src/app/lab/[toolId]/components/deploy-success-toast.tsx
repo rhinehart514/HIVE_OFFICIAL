@@ -66,7 +66,7 @@ export function DeploySuccessToast({
               onViewInSpace();
               onDismiss?.();
             }}
-            className="mt-3 inline-flex items-center gap-1.5 text-xs text-[var(--life-gold)] hover:underline"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors"
           >
             View in space
             <ArrowRightIcon className="w-3 h-3" />

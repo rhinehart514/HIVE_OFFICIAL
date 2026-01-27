@@ -22,7 +22,7 @@ const AUTOMATIONS_ENABLED = false;
 // ============================================
 
 // Workshop tokens
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]';
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
 const workshopTransition = { type: 'spring' as const, stiffness: 400, damping: 25 };
 
 export type RailState = 'expanded' | 'collapsed' | 'hidden';
@@ -712,7 +712,7 @@ function ToolsPanel({
   const getStatusBadge = (status: 'draft' | 'published' | 'deployed') => {
     switch (status) {
       case 'deployed':
-        return { label: 'Live', color: '#22c55e' };
+        return { label: 'Live', color: 'var(--hivelab-status-success)' };
       case 'published':
         return { label: 'Published', color: 'var(--hivelab-connection)' };
       default:

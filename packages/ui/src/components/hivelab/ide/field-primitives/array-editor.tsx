@@ -15,7 +15,7 @@ const COLORS = {
   textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
-  error: '#ef4444',
+  error: 'var(--hivelab-status-error)',
 };
 
 export interface ArrayEditorProps {
@@ -217,7 +217,7 @@ export function ArrayEditor({
               onKeyDown={(e) => handleKeyDown(e)}
               placeholder={placeholder}
               disabled={disabled}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-[#5A5A5A]"
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-[var(--hivelab-text-tertiary)]"
               style={{ color: COLORS.text }}
             />
             {newItemValue.trim() && (

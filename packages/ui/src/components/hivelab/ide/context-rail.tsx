@@ -30,8 +30,8 @@ const PANEL_COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
   accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: '#f44336',
-  errorLight: 'rgba(244, 67, 54, 0.1)',
+  error: 'var(--hivelab-status-error)',
+  errorLight: 'var(--hivelab-status-error-muted)',
 };
 
 // Workshop tokens
@@ -522,14 +522,14 @@ function SearchableToolsPanel({ onDragStart }: { onDragStart?: (elementId: strin
             focusRing
           )}
           style={{
-            backgroundColor: '#1a1a1a',
-            color: 'white',
+            backgroundColor: PANEL_COLORS.bg,
+            color: PANEL_COLORS.textPrimary,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#2a2a2a';
+            e.currentTarget.style.backgroundColor = PANEL_COLORS.bgHover;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#1a1a1a';
+            e.currentTarget.style.backgroundColor = PANEL_COLORS.bg;
           }}
         >
           <div className="flex items-center gap-2">
@@ -540,7 +540,7 @@ function SearchableToolsPanel({ onDragStart }: { onDragStart?: (elementId: strin
           <span
             className="px-2 py-0.5 rounded-full text-label-xs font-medium"
             style={{
-              backgroundColor: '#4CAF50',
+              backgroundColor: 'var(--hivelab-status-success)',
               color: 'white',
             }}
           >

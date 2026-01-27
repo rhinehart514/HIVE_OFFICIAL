@@ -173,7 +173,7 @@ export function StudioHeader({
             </motion.span>
           )}
           {hasUnsavedChanges && !isSaving && (
-            <span className="w-2 h-2 rounded-full bg-[#FFD700]" title="Unsaved changes" />
+            <span className="w-2 h-2 rounded-full bg-[var(--life-gold)]" title="Unsaved changes" />
           )}
         </div>
       </div>

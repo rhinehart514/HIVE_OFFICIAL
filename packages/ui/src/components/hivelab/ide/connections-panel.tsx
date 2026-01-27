@@ -67,13 +67,13 @@ const COLORS = {
   textSecondary: 'var(--hivelab-text-secondary, rgba(255,255,255,0.7))',
   textTertiary: 'var(--hivelab-text-tertiary, rgba(255,255,255,0.5))',
   accent: 'var(--life-gold, #D4AF37)',
-  success: '#22c55e',
-  error: '#ef4444',
-  warning: '#f59e0b',
+  success: 'var(--hivelab-status-success)',
+  error: 'var(--hivelab-status-error)',
+  warning: 'var(--hivelab-status-warning)',
 };
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
 
 // ============================================================================
 // STATUS INDICATOR

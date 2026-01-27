@@ -200,14 +200,14 @@ export function ElementPopover({
                     onClick={() => handleChange(field.key, !config[field.key])}
                     className={`
                       relative w-10 h-6 rounded-full transition-colors duration-200
-                      ${config[field.key] ? 'bg-[#FFD700]/30' : 'bg-white/[0.06]'}
+                      ${config[field.key] ? 'bg-[var(--life-gold)]/30' : 'bg-white/[0.06]'}
                     `}
                   >
                     <div
                       className={`
                         absolute top-1 w-4 h-4 rounded-full transition-all duration-200
                         ${config[field.key]
-                          ? 'left-5 bg-[#FFD700]'
+                          ? 'left-5 bg-[var(--life-gold)]'
                           : 'left-1 bg-[#6B6B70]'
                         }
                       `}

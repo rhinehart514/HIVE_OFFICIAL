@@ -19,16 +19,16 @@ import { SuccessRecap } from './success-recap';
 
 const EASE = MOTION.ease.premium;
 
-// Colors
+// Colors - tokens are wired in globals.css
 const COLORS = {
-  bg: 'var(--hivelab-bg, #0A0A0A)',
-  panel: 'var(--hivelab-panel, #1A1A1A)',
-  surface: 'var(--hivelab-surface, #141414)',
-  border: 'var(--hivelab-border, rgba(255, 255, 255, 0.08))',
-  textPrimary: 'var(--hivelab-text-primary, #FAF9F7)',
-  textSecondary: 'var(--hivelab-text-secondary, #8A8A8A)',
-  textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
-  gold: 'var(--life-gold, #D4AF37)',
+  bg: 'var(--hivelab-bg)',
+  panel: 'var(--hivelab-panel)',
+  surface: 'var(--hivelab-surface)',
+  border: 'var(--hivelab-border)',
+  textPrimary: 'var(--hivelab-text-primary)',
+  textSecondary: 'var(--hivelab-text-secondary)',
+  textTertiary: 'var(--hivelab-text-tertiary)',
+  gold: 'var(--life-gold)',
 };
 
 // Deployment phases
@@ -240,9 +240,9 @@ export function DeployTakeover({
                         animate={{ opacity: 1, y: 0 }}
                         className="mb-4 px-4 py-2 rounded-lg text-sm text-center"
                         style={{
-                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                          color: '#ef4444',
-                          border: '1px solid rgba(239, 68, 68, 0.2)',
+                          backgroundColor: 'var(--hivelab-status-error-muted)',
+                          color: 'var(--hivelab-status-error)',
+                          border: '1px solid var(--hivelab-status-error-muted)',
                         }}
                       >
                         {error}
@@ -252,8 +252,33 @@ export function DeployTakeover({
                     {/* Spaces List */}
                     <div className="space-y-2 max-h-[40vh] overflow-y-auto p-1">
                       {spacesLoading ? (
-                        <div className="text-center py-8" style={{ color: COLORS.textTertiary }}>
-                          Loading your spaces...
+                        <div className="space-y-2">
+                          {Array.from({ length: 3 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center gap-3 px-4 py-3 rounded-xl border animate-pulse"
+                              style={{
+                                backgroundColor: COLORS.surface,
+                                borderColor: COLORS.border,
+                                animationDelay: `${i * 100}ms`,
+                              }}
+                            >
+                              <div
+                                className="w-10 h-10 rounded-lg"
+                                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                              />
+                              <div className="flex-1 space-y-2">
+                                <div
+                                  className="h-4 w-24 rounded"
+                                  style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
+                                />
+                                <div
+                                  className="h-3 w-16 rounded"
+                                  style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+                                />
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       ) : spaces.length === 0 ? (
                         <div className="text-center py-8" style={{ color: COLORS.textTertiary }}>

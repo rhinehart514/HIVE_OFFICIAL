@@ -58,7 +58,7 @@ const COLORS = {
 };
 
 const focusRing =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1a]';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--hivelab-panel)]';
 
 // ============================================================================
 // OUTPUT TYPE BADGE
@@ -328,13 +328,13 @@ export function OtherToolsPanel({
       <div className="p-4 text-center">
         <div
           className="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: '#ef444420' }}
+          style={{ backgroundColor: 'var(--hivelab-status-error-muted)' }}
         >
           <svg
             className="w-6 h-6"
             fill="none"
             viewBox="0 0 24 24"
-            stroke="#ef4444"
+            stroke="var(--hivelab-status-error)"
             strokeWidth={1.5}
           >
             <path

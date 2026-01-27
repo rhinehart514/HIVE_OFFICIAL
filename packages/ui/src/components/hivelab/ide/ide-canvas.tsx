@@ -1240,7 +1240,7 @@ function ConnectionLine({
               cy={(fromY + toY) / 2}
               r="12"
               fill={'var(--hivelab-panel)'}
-              stroke="#ef4444"
+              stroke="var(--hivelab-status-error)"
               strokeWidth="2"
               className="cursor-pointer"
               onClick={onDelete}
@@ -1251,7 +1251,7 @@ function ConnectionLine({
               textAnchor="middle"
               dominantBaseline="middle"
               className="text-label-xs font-bold select-none pointer-events-none"
-              fill="#ef4444"
+              fill="var(--hivelab-status-error)"
             >
               ×
             </text>

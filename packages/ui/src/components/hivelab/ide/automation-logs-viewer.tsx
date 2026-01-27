@@ -38,12 +38,12 @@ const PANEL_COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
   accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: '#f44336',
-  errorLight: 'rgba(244, 67, 54, 0.1)',
-  success: '#22c55e',
-  successLight: 'rgba(34, 197, 94, 0.1)',
-  warning: '#f59e0b',
-  warningLight: 'rgba(245, 158, 11, 0.1)',
+  error: 'var(--hivelab-status-error)',
+  errorLight: 'var(--hivelab-status-error-muted)',
+  success: 'var(--hivelab-status-success)',
+  successLight: 'var(--hivelab-status-success-muted)',
+  warning: 'var(--hivelab-status-warning)',
+  warningLight: 'var(--hivelab-status-warning-muted)',
 };
 
 const focusRing =

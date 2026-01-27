@@ -361,7 +361,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             )}
             style={{
               backgroundColor: 'var(--hivelab-surface-hover)',
-              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              border: `1px solid ${hasError ? 'var(--hivelab-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
               color: 'var(--hivelab-text-primary)',
             }}
           />
@@ -371,7 +371,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               animate={{ opacity: 1, scale: 1 }}
               className="absolute right-2 top-1/2 -translate-y-1/2"
             >
-              <ExclamationCircleIcon className="h-4 w-4" style={{ color: 'var(--hive-status-error)' }} />
+              <ExclamationCircleIcon className="h-4 w-4" style={{ color: 'var(--hivelab-status-error)' }} />
             </motion.div>
           )}
         </motion.div>
@@ -409,7 +409,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             )}
             style={{
               backgroundColor: 'var(--hivelab-surface-hover)',
-              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              border: `1px solid ${hasError ? 'var(--hivelab-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
               color: 'var(--hivelab-text-primary)',
             }}
           />
@@ -444,7 +444,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
           aria-label={`${schema.label}: ${currentValue ? 'enabled' : 'disabled'}`}
           className="w-12 h-6 rounded-full relative cursor-pointer transition-colors duration-200"
           style={{
-            backgroundColor: Boolean(currentValue) ? 'var(--hive-status-success)' : 'var(--hivelab-surface-active)',
+            backgroundColor: Boolean(currentValue) ? 'var(--hivelab-status-success)' : 'var(--hivelab-surface-active)',
           }}
         >
           {/* Track glow when on */}
@@ -453,7 +453,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.3 }}
               className="absolute inset-0 rounded-full blur-sm"
-              style={{ backgroundColor: 'var(--hive-status-success)' }}
+              style={{ backgroundColor: 'var(--hivelab-status-success)' }}
             />
           )}
           {/* Thumb with spring physics */}
@@ -474,7 +474,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
                 exit={{ opacity: 0, scale: 0 }}
                 transition={{ delay: 0.1 }}
                 className="absolute left-[26px] top-1.5 w-3 h-3 z-20"
-                style={{ color: 'var(--hive-status-success)' }}
+                style={{ color: 'var(--hivelab-status-success)' }}
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -505,7 +505,7 @@ function PropertyField({ schema, value, onChange, hasError = false }: PropertyFi
             )}
             style={{
               backgroundColor: 'var(--hivelab-surface-hover)',
-              border: `1px solid ${hasError ? 'var(--hive-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
+              border: `1px solid ${hasError ? 'var(--hivelab-status-error)' : isFocused ? 'var(--hivelab-border-emphasis)' : 'var(--hivelab-border)'}`,
               color: 'var(--hivelab-text-primary)',
             }}
           >
@@ -609,7 +609,7 @@ function AdvancedSection({
             <span
               className="px-1.5 py-0.5 rounded-full text-[10px] font-medium"
               style={{
-                backgroundColor: 'var(--hive-gold)',
+                backgroundColor: 'var(--life-gold)',
                 color: '#000',
               }}
             >
@@ -671,7 +671,7 @@ function AdvancedSection({
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {count > 0 && (
-                <span className="ml-1 text-[10px]" style={{ color: 'var(--hive-gold)' }}>
+                <span className="ml-1 text-[10px]" style={{ color: 'var(--life-gold)' }}>
                   ({count})
                 </span>
               )}
@@ -962,7 +962,7 @@ export function PropertiesPanel({
               transition={{ duration: 0.3 }}
               className={cn('p-1.5 rounded-lg transition-colors duration-200', focusRing)}
               style={{
-                color: selectedElement.locked ? 'var(--hive-status-warning)' : 'var(--hivelab-text-tertiary)',
+                color: selectedElement.locked ? 'var(--hivelab-status-warning)' : 'var(--hivelab-text-tertiary)',
                 backgroundColor: selectedElement.locked ? 'var(--hive-status-warning-dim)' : 'transparent',
               }}
               onMouseEnter={(e) => {
@@ -1034,7 +1034,7 @@ export function PropertiesPanel({
           )}
           style={{
             backgroundColor: 'var(--hive-status-error-dim)',
-            color: 'var(--hive-status-error)',
+            color: 'var(--hivelab-status-error)',
             border: '1px solid rgba(244, 67, 54, 0.2)',
           }}
           onMouseEnter={(e) => {

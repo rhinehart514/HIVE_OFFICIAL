@@ -18,10 +18,10 @@ const PICKER_COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
   accentLight: 'rgba(212, 175, 55, 0.1)',
-  outputGreen: '#22C55E',
-  outputGreenLight: 'rgba(34, 197, 94, 0.15)',
-  inputBlue: '#3B82F6',
-  inputBlueLight: 'rgba(59, 130, 246, 0.15)',
+  outputGreen: 'var(--hivelab-flow-output)',
+  outputGreenLight: 'var(--hivelab-status-success-muted)',
+  inputBlue: 'var(--hivelab-flow-input)',
+  inputBlueLight: 'var(--hivelab-status-info-muted)',
 };
 
 export interface PortPickerProps {

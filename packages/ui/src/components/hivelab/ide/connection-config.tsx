@@ -18,10 +18,10 @@ const PANEL_COLORS = {
   textTertiary: 'var(--hivelab-text-tertiary, #5A5A5A)',
   accent: 'var(--life-gold, #D4AF37)',
   accentLight: 'rgba(212, 175, 55, 0.1)',
-  error: '#ef4444',
-  errorLight: 'rgba(239, 68, 68, 0.1)',
-  outputGreen: '#22C55E',
-  inputBlue: '#3B82F6',
+  error: 'var(--hivelab-status-error)',
+  errorLight: 'var(--hivelab-status-error-muted)',
+  outputGreen: 'var(--hivelab-flow-output)',
+  inputBlue: 'var(--hivelab-flow-input)',
 };
 
 // Available transforms for connections

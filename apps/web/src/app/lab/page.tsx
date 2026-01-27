@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -162,7 +162,7 @@ function GoldBorderInput({
       <div className="relative rounded-2xl overflow-hidden">
         {/* Top border */}
         <motion.div
-          className="absolute top-0 left-0 right-0 h-px bg-[var(--color-gold,#FFD700)]/20"
+          className="absolute top-0 left-0 right-0 h-px bg-[var(--life-gold)]/20"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -174,7 +174,7 @@ function GoldBorderInput({
         />
         {/* Bottom border */}
         <motion.div
-          className="absolute bottom-0 left-0 right-0 h-px bg-[var(--color-gold,#FFD700)]/20"
+          className="absolute bottom-0 left-0 right-0 h-px bg-[var(--life-gold)]/20"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: isFocused ? 1 : 0 }}
           transition={{
@@ -186,7 +186,7 @@ function GoldBorderInput({
         />
         {/* Left border */}
         <motion.div
-          className="absolute top-0 bottom-0 left-0 w-px bg-[var(--color-gold,#FFD700)]/20"
+          className="absolute top-0 bottom-0 left-0 w-px bg-[var(--life-gold)]/20"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -198,7 +198,7 @@ function GoldBorderInput({
         />
         {/* Right border */}
         <motion.div
-          className="absolute top-0 bottom-0 right-0 w-px bg-[var(--color-gold,#FFD700)]/20"
+          className="absolute top-0 bottom-0 right-0 w-px bg-[var(--life-gold)]/20"
           initial={{ scaleY: 0 }}
           animate={{ scaleY: isFocused ? 1 : 0 }}
           transition={{
@@ -258,6 +258,7 @@ function GoldBorderInput({
 
 export default function BuilderDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoading: authLoading } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -267,6 +268,10 @@ export default function BuilderDashboard() {
   const [creatingFromTemplate, setCreatingFromTemplate] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // Preserve space context when arriving from a space's "Build Tool" button
+  const originSpaceId = searchParams.get('spaceId');
+  const deploySurface = searchParams.get('deploy'); // 'sidebar' when from space
 
   // Get featured templates
   const featuredTemplates = FEATURED_TEMPLATE_IDS
@@ -308,13 +313,15 @@ export default function BuilderDashboard() {
     try {
       const toolId = await createBlankTool(toolName, prompt);
       const encodedPrompt = encodeURIComponent(prompt.trim());
-      router.push(`/lab/${toolId}?new=true&prompt=${encodedPrompt}`);
+      // Preserve space context for deploy pre-selection
+      const spaceParam = originSpaceId ? `&spaceId=${originSpaceId}` : '';
+      router.push(`/lab/${toolId}?new=true&prompt=${encodedPrompt}${spaceParam}`);
     } catch (error) {
       toast.error('Failed to create tool');
       setCeremonyPhase('idle');
       setStatusText('');
     }
-  }, [prompt, ceremonyPhase, router]);
+  }, [prompt, ceremonyPhase, router, originSpaceId]);
 
   // Handle template click - create tool and redirect to IDE
   const handleTemplateClick = useCallback(async (template: QuickTemplate) => {
@@ -326,14 +333,16 @@ export default function BuilderDashboard() {
 
     try {
       const toolId = await createToolFromTemplateApi(template);
-      router.push(`/lab/${toolId}`);
+      // Preserve space context for deploy pre-selection
+      const spaceParam = originSpaceId ? `?spaceId=${originSpaceId}` : '';
+      router.push(`/lab/${toolId}${spaceParam}`);
     } catch (error) {
       toast.error('Failed to create tool from template');
       setCeremonyPhase('idle');
       setCreatingFromTemplate(false);
       setStatusText('');
     }
-  }, [ceremonyPhase, creatingFromTemplate, router]);
+  }, [ceremonyPhase, creatingFromTemplate, router, originSpaceId]);
 
   // Handle keyboard
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -567,7 +576,7 @@ export default function BuilderDashboard() {
                     transition={{ duration: 0.3, ease: EASE }}
                     className="flex justify-center mt-4"
                   >
-                    <span className="text-[var(--color-gold,#FFD700)]/80 text-sm font-medium">
+                    <span className="text-[var(--life-gold)]/80 text-sm font-medium">
                       {statusText}
                     </span>
                   </motion.div>
@@ -720,7 +729,7 @@ export default function BuilderDashboard() {
                     transition={{ duration: 0.3, ease: EASE }}
                     className="flex justify-center mt-4"
                   >
-                    <span className="text-[var(--color-gold,#FFD700)]/80 text-sm font-medium">
+                    <span className="text-[var(--life-gold)]/80 text-sm font-medium">
                       {statusText}
                     </span>
                   </motion.div>
@@ -746,11 +755,30 @@ export default function BuilderDashboard() {
           </>
         )}
 
-        {/* Loading tools state */}
+        {/* Loading tools state - skeleton grid */}
         {toolsLoading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <BrandSpinner size="md" variant="gold" />
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="h-6 w-24 rounded-lg bg-white/[0.06] animate-pulse" />
+              <div className="h-8 w-16 rounded-lg bg-white/[0.04] animate-pulse" />
+            </div>
+            <div className="text-xs font-medium text-white/40 tracking-wide mb-3">
+              Your Tools
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-xl bg-white/[0.03] animate-pulse"
+                  style={{ animationDelay: `${i * 100}ms` }}
+                />
+              ))}
+            </div>
+          </motion.div>
         )}
       </div>
     </div>
